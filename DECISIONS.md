@@ -10,7 +10,10 @@
 ## Environment Variables
 - Added .env.example with required Supabase variables
 - Updated .gitignore to exclude .env files but include .env.example
+- Added wrangler.toml for Cloudflare Pages with public Supabase variables (NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY)
+- SUPABASE_SERVICE_ROLE must be added as an encrypted secret in Cloudflare Pages dashboard or via wrangler CLI
 
 ## Authentication
 - Supabase CLI requires authentication via `supabase login` or setting the `SUPABASE_ACCESS_TOKEN` environment variable for operations like `link` and `db pull`
 - For CI/CD, GitHub Actions secrets need to be configured with `SUPABASE_DB_PASSWORD` and `SUPABASE_ACCESS_TOKEN`
+- For Cloudflare Pages, the SUPABASE_SERVICE_ROLE must be added as an encrypted secret using the Cloudflare dashboard or wrangler CLI
