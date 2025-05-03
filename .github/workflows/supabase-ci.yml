@@ -23,7 +23,7 @@ jobs:
         
       - name: Install Supabase CLI
         run: |
-          curl -fsSL https://github.com/supabase/cli/releases/download/v2.22.6/supabase_2.22.6_linux_amd64.tar.gz | tar -xz
+          curl -fsSL https://github.com/supabase/cli/releases/download/v2.22.6/supabase_linux_amd64.tar.gz | tar -xz
           sudo mv supabase /usr/local/bin/supabase
           supabase --version
         
