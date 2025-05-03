@@ -59,6 +59,18 @@ This project is built with .
 - React
 - shadcn-ui
 - Tailwind CSS
+- Supabase
+
+## Supabase Integration
+
+This project uses Supabase for backend services. To work with Supabase:
+
+1. Set up your environment variables by copying `.env.example` to `.env` and filling in the values
+2. Run `export SUPABASE_DB_PASSWORD=your-password-here` before running any Supabase commands
+3. Use `npx supabase status` to check the health of your Supabase connection
+4. Use `npx supabase db pull` to pull schema changes from the remote database
+
+For more details, see the [Developer Onboarding Guide](./docs/dev_onboarding.md).
 
 ## How can I deploy this project?
 
