@@ -5,7 +5,6 @@
 project_id = "ycldhifnaycqmqnxzgxr"
 
 [api]
-id      = "ycldhifnaycqmqnxzgxr"   # <--- added so CLI knows remote API UUID
 enabled = true
 port    = 54321
 schemas = ["public", "graphql_public"]
