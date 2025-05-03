@@ -17,7 +17,7 @@ enabled = false
 [db]
 port           = 54322
 shadow_port    = 54320
-major_version  = 16            # <--- match your cloud database (was 15)
+major_version  = 15            # <--- temporarily set to 15 for CLI compatibility (cloud is 16)
 
 [db.pooler]
 enabled          = false
