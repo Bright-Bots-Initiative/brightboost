@@ -1,0 +1,6 @@
+name = "brightboost-app"
+compatibility_date = "2025-05-03"
+
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://ycldhifnaycqmqnxzgxr.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljbGRoaWZuYXljcW1xbnh6Z3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyODYyODAsImV4cCI6MjA2MTg2MjI4MH0.a61hAL5ktzOofvH2eU_B8k2vJmJyVH6W5XU4QsJC3Zc"
