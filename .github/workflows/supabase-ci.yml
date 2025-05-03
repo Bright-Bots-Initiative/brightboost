@@ -31,16 +31,22 @@ jobs:
         run: |
           mkdir -p supabase/migrations
           
+      - name: Link Supabase project
+        run: |
+          supabase link --project-ref ycldhifnaycqmqnxzgxr
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          
       - name: Validate migrations (diff check)
         run: |
-          export SUPABASE_DB_PASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }}
           supabase db diff --use-migra || (echo "Migrations out of sync! Run 'npx supabase db pull' locally" && exit 1)
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           
       - name: Check Supabase health
         run: |
-          export SUPABASE_DB_PASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }}
           supabase status | grep "Healthy" || (echo "Supabase status not healthy" && exit 1)
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
