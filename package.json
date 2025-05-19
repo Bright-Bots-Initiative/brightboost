@@ -34,14 +34,10 @@
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
-||||||| 1e5261c
-=======
     "@types/cypress": "^0.1.6",
     "@types/cypress-image-snapshot": "^3.1.9",
->>>>>>> main
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
@@ -62,7 +58,7 @@
     "postcss": "^8.4.31",
     "supabase": "^2.22.6",
     "tailwindcss": "^3.3.5",
-    "typescript": "^5.2.2",
+    "typescript": "^5.8.3",
     "vite": "^5.0.0",
     "vitest": "^3.1.3"
   },

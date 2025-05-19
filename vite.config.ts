@@ -31,5 +31,8 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      external: ['**/__tests__/**', '**/test/**']
+    }
   }
 }));
