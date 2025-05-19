@@ -14,7 +14,9 @@
     "dev:server": "nodemon server.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -34,7 +36,6 @@
     "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@chromatic-com/storybook": "^3.2.6",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-onboarding": "^8.6.14",
@@ -43,11 +44,10 @@
     "@storybook/react": "^8.6.14",
     "@storybook/react-vite": "^8.6.14",
     "@storybook/test": "^8.6.14",
-||||||| 1e5261c
-=======
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/cypress": "^0.1.6",
     "@types/cypress-image-snapshot": "^3.1.9",
->>>>>>> main
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
@@ -64,13 +64,14 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
     "eslint-plugin-storybook": "^0.12.0",
+    "jsdom": "^26.1.0",
     "nodemon": "^3.0.1",
     "playwright": "^1.52.0",
     "postcss": "^8.4.31",
     "storybook": "^8.6.14",
     "supabase": "^2.22.6",
     "tailwindcss": "^3.3.5",
-    "typescript": "^5.2.2",
+    "typescript": "^5.8.3",
     "vite": "^5.0.0",
     "vitest": "^3.1.3"
   },
