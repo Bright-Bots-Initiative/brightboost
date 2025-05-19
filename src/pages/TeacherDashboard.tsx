@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
+import Sidebar from '../components/TeacherDashboard/Sidebar';
+import MainContent from '../components/TeacherDashboard/MainContent';
+import { Lesson } from '../components/TeacherDashboard/types';
 
 interface Class {
   id: string;
@@ -22,6 +25,7 @@ interface Assignment {
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<string>('Lessons');
   // Using useState but ignoring setters for now - will be used in future features
   const [isLoading] = React.useState(false);
   const [classes] = React.useState<Class[]>([
@@ -31,6 +35,11 @@ const TeacherDashboard: React.FC = () => {
   const [assignments] = React.useState<Assignment[]>([
     { id: '1', title: 'Algebra Quiz', dueDate: '2025-04-10', submissions: 15 },
     { id: '2', title: 'Science Project', dueDate: '2025-04-20', submissions: 8 }
+  ]);
+  const [lessonsData, setLessonsData] = useState<Lesson[]>([
+    { id: '1', title: 'Introduction to Algebra', category: 'Math', date: '2025-05-01', status: 'Published' },
+    { id: '2', title: 'Advanced Geometry', category: 'Math', date: '2025-05-10', status: 'Draft' },
+    { id: '3', title: 'Chemistry Basics', category: 'Science', date: '2025-05-15', status: 'Review' }
   ]);
 
   const handleLogout = () => {
@@ -60,72 +69,15 @@ const TeacherDashboard: React.FC = () => {
           </div>
         </nav>
 
-        <main className="container mx-auto p-4 flex-grow">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-brightboost-navy">Teacher Dashboard</h2>
-            <span className="badge badge-points">XP: 1250</span>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-gray-500">Loading dashboard data...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="game-card">
-                <div className="bg-brightboost-blue text-white p-4 rounded-t-xl">
-                  <h2 className="text-xl font-semibold">Your Classes</h2>
-                </div>
-                <div className="p-4">
-                  {classes.length === 0 ? (
-                    <p className="text-gray-500">No classes found.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {classes.map((cls) => (
-                        <div key={cls.id} className="border-b pb-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                          <h3 className="font-medium text-brightboost-navy">{cls.name}</h3>
-                          <div className="flex justify-between">
-                            <p className="text-sm text-gray-600">Students: {cls.students}</p>
-                            <p className="text-sm text-gray-600">Schedule: {cls.schedule}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button className="game-button mt-4 w-full">Add New Class</button>
-                </div>
-              </div>
+        {/* Sidebar Component */}
+        <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
-              <div className="game-card">
-                <div className="bg-brightboost-lightblue text-brightboost-navy p-4 rounded-t-xl">
-                  <h2 className="text-xl font-semibold">Assignments</h2>
-                </div>
-                <div className="p-4">
-                  {assignments.length === 0 ? (
-                    <p className="text-gray-500">No assignments found.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {assignments.map((assignment) => (
-                        <div key={assignment.id} className="border-b pb-3 hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                          <h3 className="font-medium text-brightboost-navy">{assignment.title}</h3>
-                          <div className="flex justify-between">
-                            <p className="text-sm text-gray-600">Due: {assignment.dueDate}</p>
-                            <div>
-                              <span className="badge-achievement">
-                                {assignment.submissions} Submissions
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button className="game-button mt-4 w-full">Create Assignment</button>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
+        {/* Main Content Component */}
+        <MainContent 
+          activeView={activeView} 
+          lessonsData={lessonsData} 
+          setLessonsData={setLessonsData} 
+        />
       </div>
     </GameBackground>
   );
