@@ -1,0 +1,1 @@
+bash\ngit checkout -b chore/dev-workflow-doc\necho '# Dev Workflow' > docs/dev-workflow.md # if Copilot wrote to clipboard, paste instead\n# …paste full doc…\ngit add docs/dev-workflow.md\ngit commit -m \"docs: add dev-workflow baseline\"\ngit push --set-upstream origin chore/dev-workflow-doc\ngh pr create --fill --label documentation\n
