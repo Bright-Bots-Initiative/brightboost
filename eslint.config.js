@@ -11,7 +11,12 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: (() => {
+        const browserGlobals = { ...globals.browser };
+        delete browserGlobals['AudioWorkletGlobalScope '];
+        browserGlobals['AudioWorkletGlobalScope'] = browserGlobals['AudioWorkletGlobalScope'] || true;
+        return browserGlobals;
+      })(),
     },
     plugins: {
       "react-hooks": reactHooks,
