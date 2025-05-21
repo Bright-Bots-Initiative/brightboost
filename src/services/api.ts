@@ -95,11 +95,11 @@ export const useApi = () => {
   
   return {
     get: (endpoint: string) => authFetch(endpoint),
-    post: (endpoint: string, data: any) => authFetch(endpoint, {
+    post: (endpoint: string, data: Record<string, unknown>) => authFetch(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    put: (endpoint: string, data: any) => authFetch(endpoint, {
+    put: (endpoint: string, data: Record<string, unknown>) => authFetch(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),

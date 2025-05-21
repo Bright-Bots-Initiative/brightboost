@@ -1,5 +1,4 @@
 
-// @ts-nocheck
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -12,7 +11,6 @@ const debugAuth = () => {
   localStorage.setItem = function(key: string, value: string) {
     const event = new Event('storageChange');
     document.dispatchEvent(event);
-    // @ts-ignore
     originalSetItem.call(localStorage, key, value);
     console.log(`localStorage.setItem('${key}', '${value.substring(0, 20)}${value.length > 20 ? '...' : ''}')`);
   };
