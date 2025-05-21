@@ -17,12 +17,16 @@ interface CustomMatchers<R = unknown> {
   toHaveAttribute: (attr: string, value?: string) => R;
   toHaveClass: (...classNames: string[]) => R;
   toHaveFocus: () => R;
-  toHaveFormValues: (expectedValues: Record<string, any>) => R;
-  toHaveStyle: (css: string | Record<string, any>) => R;
+  toHaveFormValues: (expectedValues: Record<string, unknown>) => R;
+  toHaveStyle: (css: string | Record<string, unknown>) => R;
   toHaveValue: (value?: string | string[] | number) => R;
 }
 
 declare module 'vitest' {
-  interface Assertion<T = any> extends CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends CustomMatchers {}
+  interface Assertion<T = unknown> extends CustomMatchers<T> {
+    toBeDefined(): T;
+  }
+  interface AsymmetricMatchersContaining extends CustomMatchers {
+    toBeDefined(): unknown;
+  }
 }
