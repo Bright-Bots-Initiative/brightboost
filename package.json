@@ -15,7 +15,7 @@
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run",
+    "test": "vitest run --mode=ci",
     "test:watch": "vitest"
   },
   "dependencies": {

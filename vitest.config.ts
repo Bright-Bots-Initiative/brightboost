@@ -13,5 +13,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    environmentMatchGlobs: process.env.CI ? [] : [['**/*.browser.test.{ts,tsx}', 'browser']],
   },
 });
