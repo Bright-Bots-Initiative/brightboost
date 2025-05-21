@@ -62,7 +62,20 @@ This project is built with .
 
 ## How can I deploy this project?
 
+### Using Lovable
+
 Simply open [Lovable](https://lovable.dev/projects/f303f677-9491-4ea6-843e-bc69a8fc78d2) and click on Share -> Publish.
+
+### Using Azure (CI/CD Pipeline)
+
+The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pipeline. For details on the deployment process, refer to the [Deployment Pipeline](./docs/deployment/pipeline.md) documentation.
+
+For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
+
+The deployment pipeline automatically:
+1. Builds and tests the application
+2. Creates a Docker image and pushes it to GitHub Container Registry
+3. Deploys the application to Azure App Service and Azure Functions
 
 ## I want to use a custom domain - is that possible?
 
