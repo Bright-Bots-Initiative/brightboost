@@ -15,8 +15,16 @@ The BrightBoost CI/CD pipeline automates the build, test, and deployment process
 The GitHub Actions workflow is defined in `.github/workflows/ci-cd.yml` and consists of three main jobs:
 
 1. **build-and-test**: Builds and tests the application
+   - Runs on: Pull requests to main, pushes to main, and manual workflow dispatch
+   - Includes: Dependency installation, linting, testing, and building the application
+
 2. **build-docker-image**: Creates a Docker image and pushes it to GitHub Container Registry
+   - Runs on: Only pushes to main branch and manual workflow dispatch
+   - Includes: Building and pushing Docker images with lowercase repository names
+
 3. **deploy-to-azure**: Deploys the application to Azure App Service and Azure Functions
+   - Runs on: Only pushes to main branch and manual workflow dispatch
+   - Includes: Deploying to Azure App Service and Azure Functions
 
 ## Environment Variables and Secrets
 
@@ -88,6 +96,30 @@ To get the publish profile for the Azure Function App:
 2. Navigate to your Function App
 3. Click on "Get publish profile"
 4. Save the downloaded file content as the `AZURE_FUNCTION_PUBLISH_PROFILE` secret in GitHub
+
+## CI/CD Best Practices
+
+The BrightBoost CI/CD pipeline follows these best practices:
+
+1. **Separation of Concerns**:
+   - Build and test jobs run on all PRs and pushes to ensure code quality
+   - Docker build and deployment jobs only run on main branch pushes or manual triggers
+
+2. **Docker Image Naming**:
+   - All Docker image references use lowercase repository names to avoid GitHub Container Registry errors
+   - Example: `ghcr.io/${{ github.repository | lowercase }}/brightboost-web:latest`
+
+3. **Artifact Handling**:
+   - Build artifacts are uploaded and downloaded between jobs to ensure consistency
+   - This prevents rebuilding the application in subsequent jobs
+
+4. **Security**:
+   - Secrets are stored in GitHub repository settings and never exposed in logs
+   - Service principal follows least privilege principle with contributor role scoped to the resource group
+
+5. **Caching**:
+   - Node modules are cached to speed up builds
+   - Docker layer caching is used to optimize image builds
 
 ## Monitoring Deployments
 
