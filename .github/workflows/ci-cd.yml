@@ -96,7 +96,7 @@ jobs:
       - name: Deploy Web App Container
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'brightboost-web'
+          app-name: 'bb-dev-web'
           images: 'ghcr.io/${{ env.REPO_LC }}/brightboost-web:${{ github.sha }}'
       
       - name: Deploy Azure Function App
