@@ -66,12 +66,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Set lowercase repository name
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}/brightboost-web:latest,ghcr.io/${{ github.repository }}/brightboost-web:${{ github.sha }}
+          tags: ghcr.io/${{ env.REPO_LC }}/brightboost-web:latest,ghcr.io/${{ env.REPO_LC }}/brightboost-web:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -85,11 +89,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
+      - name: Set lowercase repository name
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+      
       - name: Deploy Web App Container
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'brightboost-web'
-          images: 'ghcr.io/${{ github.repository }}/brightboost-web:${{ github.sha }}'
+          images: 'ghcr.io/${{ env.REPO_LC }}/brightboost-web:${{ github.sha }}'
       
       - name: Deploy Azure Function App
         uses: azure/functions-action@v1
