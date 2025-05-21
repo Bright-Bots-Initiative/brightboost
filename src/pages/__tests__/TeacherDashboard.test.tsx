@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import TeacherDashboard from '../TeacherDashboard';
-import { AuthProvider } from '../../contexts/AuthContext';
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({

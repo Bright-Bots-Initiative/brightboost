@@ -8,34 +8,34 @@ import Sidebar from '../components/TeacherDashboard/Sidebar';
 import MainContent from '../components/TeacherDashboard/MainContent';
 import { Lesson } from '../components/TeacherDashboard/types';
 
-interface Class {
-  id: string;
-  name: string;
-  students: number;
-  schedule: string;
-}
+// interface Class {
+//   id: string;
+//   name: string;
+//   students: number;
+//   schedule: string;
+// }
 
-interface Assignment {
-  id: string;
-  title: string;
-  dueDate: string;
-  submissions: number;
-}
+// interface Assignment {
+//   id: string;
+//   title: string;
+//   dueDate: string;
+//   submissions: number;
+// }
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<string>('Lessons');
   // Using useState but ignoring setters for now - will be used in future features
-  const [isLoading] = React.useState(false);
-  const [classes] = React.useState<Class[]>([
-    { id: '1', name: 'Math 101', students: 25, schedule: 'MWF 10:00 AM' },
-    { id: '2', name: 'Science 202', students: 30, schedule: 'TTh 2:00 PM' }
-  ]);
-  const [assignments] = React.useState<Assignment[]>([
-    { id: '1', title: 'Algebra Quiz', dueDate: '2025-04-10', submissions: 15 },
-    { id: '2', title: 'Science Project', dueDate: '2025-04-20', submissions: 8 }
-  ]);
+  // const [isLoading] = React.useState(false);
+  // const [classes] = React.useState<Class[]>([
+  //   { id: '1', name: 'Math 101', students: 25, schedule: 'MWF 10:00 AM' },
+  //   { id: '2', name: 'Science 202', students: 30, schedule: 'TTh 2:00 PM' }
+  // ]);
+  // const [assignments] = React.useState<Assignment[]>([
+  //   { id: '1', title: 'Algebra Quiz', dueDate: '2025-04-10', submissions: 15 },
+  //   { id: '2', title: 'Science Project', dueDate: '2025-04-20', submissions: 8 }
+  // ]);
   const [lessonsData, setLessonsData] = useState<Lesson[]>([
     { id: '1', title: 'Introduction to Algebra', category: 'Math', date: '2025-05-01', status: 'Published' },
     { id: '2', title: 'Advanced Geometry', category: 'Math', date: '2025-05-10', status: 'Draft' },
