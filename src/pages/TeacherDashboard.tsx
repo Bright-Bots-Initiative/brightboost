@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../services/api'; // Import useApi
@@ -19,7 +19,7 @@ const TeacherDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -39,7 +39,7 @@ const TeacherDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [api, setIsLoading, setError, setLessonsData]);
 
   useEffect(() => {
     fetchLessons();
