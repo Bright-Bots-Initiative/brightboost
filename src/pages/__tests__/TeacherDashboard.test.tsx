@@ -61,12 +61,16 @@ describe('TeacherDashboard', () => {
   afterEach(() => {
     console.error = originalConsoleError;
     vi.clearAllMocks();
-    vi.clearAllTimers(); // Add this line to fix "window is not defined" error
+    vi.clearAllTimers();
+    vi.resetModules();
     document.body.innerHTML = '';
+    vi.restoreAllMocks();
+    
+    global.gc && global.gc();
   });
   
   it('renders the dashboard components', () => {
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <TeacherDashboard />
       </BrowserRouter>
@@ -83,5 +87,7 @@ describe('TeacherDashboard', () => {
     expect(
       loadingElement !== null || mainContentElement !== null
     ).toBe(true);
+    
+    unmount();
   });
 });
