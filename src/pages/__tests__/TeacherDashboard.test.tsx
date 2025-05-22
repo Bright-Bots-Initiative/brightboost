@@ -61,6 +61,7 @@ describe('TeacherDashboard', () => {
   afterEach(() => {
     console.error = originalConsoleError;
     vi.clearAllMocks();
+    vi.clearAllTimers(); // Add this line to fix "window is not defined" error
     document.body.innerHTML = '';
   });
   
