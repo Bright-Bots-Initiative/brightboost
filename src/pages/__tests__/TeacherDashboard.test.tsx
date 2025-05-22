@@ -66,7 +66,9 @@ describe('TeacherDashboard', () => {
     document.body.innerHTML = '';
     vi.restoreAllMocks();
     
-    global.gc && global.gc();
+    if (typeof global.gc === 'function') {
+      global.gc();
+    }
   });
   
   it('renders the dashboard components', () => {
