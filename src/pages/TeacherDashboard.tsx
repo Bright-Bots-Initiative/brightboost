@@ -45,7 +45,7 @@ const TeacherDashboard: React.FC = () => {
     fetchLessons();
   }, [api, fetchLessons]); // api and fetchLessons as dependencies
 
-  const handleAddLesson = async (newLesson: Omit<Lesson, 'id'>) => {
+  const handleAddLesson = async (newLesson: Pick<Lesson, 'title' | 'content' | 'category'>) => {
     setIsLoading(true);
     try {
       const createdLesson = await api.post('/api/lessons', newLesson);
@@ -59,13 +59,13 @@ const TeacherDashboard: React.FC = () => {
     }
   };
 
-  const handleEditLesson = async (lessonId: string | number, updatedLessonData: Partial<Lesson>) => {
+  const handleEditLesson = async (lesson: Lesson) => {
     setIsLoading(true);
     try {
-      const updatedLesson = await api.put(`/api/lessons/${lessonId}`, updatedLessonData);
+      const updatedLesson = await api.put(`/api/lessons/${lesson.id}`, lesson as unknown as Record<string, unknown>);
       setLessonsData(prevLessons =>
-        prevLessons.map(lesson =>
-          String(lesson.id) === String(lessonId) ? { ...lesson, ...updatedLesson, id: String(lesson.id) } : lesson
+        prevLessons.map(existingLesson =>
+          String(existingLesson.id) === String(lesson.id) ? { ...existingLesson, ...updatedLesson, id: String(existingLesson.id) } : existingLesson
         )
       );
     } catch (err) {

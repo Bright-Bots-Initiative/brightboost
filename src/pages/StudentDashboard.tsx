@@ -113,7 +113,7 @@ const StudentDashboard: React.FC = () => {
     return (
       <GameBackground>
         <div className="min-h-screen flex flex-col relative z-10 items-center justify-center p-4">
-          <BrightBoostRobot size="lg" type="sad" />
+          <BrightBoostRobot size="lg" />
           <p className="text-xl text-red-500 mt-4 text-center">Error: {error}</p>
           <Button onClick={() => navigate('/')} className="mt-4">Go Home</Button>
         </div>

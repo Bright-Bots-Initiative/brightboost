@@ -16,7 +16,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { LessonsTableProps, SortableLessonRowProps, Lesson } from './types'; // Ensure Lesson is imported if not already
+import { LessonsTableProps, SortableLessonRowProps } from './types';
 import IconButton, { EditIcon, DuplicateIcon, DeleteIcon, DragHandleIcon } from '../shared/IconButton';
 
 const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEditLesson, onDuplicateLesson, onDeleteLesson }) => {
