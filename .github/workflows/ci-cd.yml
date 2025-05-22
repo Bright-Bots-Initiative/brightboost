@@ -107,15 +107,11 @@ jobs:
           app-name: 'bb-dev-web'
           images: 'ghcr.io/${{ env.REPO_LC }}/brightboost-web:${{ github.sha }}'
       
-      - name: Set WEBSITES_PORT App Setting
+      - name: Set Azure App Service settings
         uses: Azure/appservice-settings@v1
         with:
           app-name: 'bb-dev-web'
-          resource-group: 'bb-dev-rg'
-          app-settings-json: |
-            {
-              "WEBSITES_PORT": "3000"
-            }
+          app-settings-json: '{"WEBSITES_PORT": "3000"}'
       
       - name: Deploy Azure Function App
         uses: azure/functions-action@v1
