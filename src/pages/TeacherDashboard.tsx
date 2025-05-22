@@ -43,7 +43,7 @@ const TeacherDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchLessons();
-  }, [api]); // api as a dependency
+  }, [api, fetchLessons]); // api and fetchLessons as dependencies
 
   const handleAddLesson = async (newLesson: Omit<Lesson, 'id'>) => {
     setIsLoading(true);
