@@ -15,7 +15,7 @@ describe('Core Demo Flow E2E Test', () => {
     role: 'student',
   };
 
-  let createdLessonTitle = `E2E Lesson ${Date.now()}`;
+  const createdLessonTitle = `E2E Lesson ${Date.now()}`;
   const lessonCategory = 'E2E Category';
   const lessonContent = 'This is automated E2E test content for a lesson.';
 
