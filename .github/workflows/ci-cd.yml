@@ -111,7 +111,15 @@ jobs:
         uses: Azure/appservice-settings@v1
         with:
           app-name: 'bb-dev-web'
-          app-settings-json: '{"WEBSITES_PORT": "3000"}'
+          mask-inputs: false
+          app-settings-json: |
+            [
+              {
+                "name": "WEBSITES_PORT",
+                "value": "3000",
+                "slotSetting": false
+              }
+            ]
       
       - name: Deploy Azure Function App
         uses: azure/functions-action@v1
