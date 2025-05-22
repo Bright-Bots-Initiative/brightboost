@@ -1,6 +1,26 @@
 import { http, HttpResponse } from 'msw';
+import { Lesson } from '../src/components/TeacherDashboard/types';
 
 const API_URL = 'http://localhost:3000';
+
+interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+interface LessonCreateRequest {
+  title: string;
+  category: string;
+  content?: string;
+  status?: string;
+}
 
 const mockLessons = [
   { id: '1', title: 'Introduction to Algebra', category: 'Math', date: '2025-05-01', status: 'Published', content: 'Algebra lesson content' },
@@ -16,22 +36,24 @@ export const handlers = [
   }),
   
   http.post(`${API_URL}/auth/login`, () => {
-    return HttpResponse.json({
+    const response: AuthResponse = {
       token: 'mock-jwt-token',
       user: { id: '1', name: 'Test Teacher', email: 'teacher@example.com', role: 'teacher' }
-    });
+    };
+    return HttpResponse.json(response);
   }),
   
   http.post(`${API_URL}/auth/signup`, () => {
-    return HttpResponse.json({
+    const response: AuthResponse = {
       token: 'mock-jwt-token',
       user: { id: '1', name: 'Test Teacher', email: 'teacher@example.com', role: 'teacher' }
-    });
+    };
+    return HttpResponse.json(response);
   }),
   
   http.post(`${API_URL}/api/lessons`, async ({ request }) => {
-    const requestBody = await request.json() as Record<string, any>;
-    const newLesson = {
+    const requestBody = await request.json() as LessonCreateRequest;
+    const newLesson: Lesson = {
       id: '4',
       ...requestBody,
       date: new Date().toISOString().split('T')[0],
@@ -42,7 +64,7 @@ export const handlers = [
   }),
   
   http.put(`${API_URL}/api/lessons/:id`, async ({ params, request }) => {
-    const requestBody = await request.json() as Record<string, any>;
+    const requestBody = await request.json() as Partial<Lesson>;
     return HttpResponse.json({
       id: params.id,
       ...requestBody
