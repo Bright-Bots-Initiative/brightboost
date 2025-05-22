@@ -1,7 +1,7 @@
 # Bright Boost – Back-End
 
 ## Overview
-Express.js API server with JWT authentication and a mock in-memory database for development purposes. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
+Express.js API server with JWT authentication and a file-based database using lowdb (`db.json`) for development and demo purposes. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
 
 ## Architecture
 ![Back-End Diagram](../docs/architecture/Back_End_Diagram.png)
@@ -66,12 +66,13 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ## Extending the Backend
-The backend currently uses a mock in-memory database for development. To replace this with a real database:
+The backend currently uses a file-based database (`lowdb` with `db.json`). For a more scalable or production-ready solution, consider replacing or augmenting this with a dedicated database service:
 
-1. Add a database connection using MongoDB, PostgreSQL with Prisma, or another solution
-2. Create database models to replace the mock data structures
-3. Update route handlers to use database queries instead of in-memory operations
-4. Update environment variables to include database connection details
+1. **Choose a Database Service:** Options include cloud-based NoSQL databases (like Azure Cosmos DB, MongoDB Atlas) or SQL databases (like Azure Database for PostgreSQL/MySQL, Supabase).
+2. **Implement Database Connection:** Add the necessary client libraries and connection logic to `server.cjs`.
+3. **Data Modeling:** If moving to a structured database, define appropriate schemas or models. For NoSQL, you might adapt the existing JSON structure.
+4. **Update Route Handlers:** Modify the API route handlers in `server.cjs` to interact with the chosen database service instead of `lowdb`.
+5. **Environment Variables:** Add new environment variables for database connection strings, API keys, etc.
 
 ## Deployment
 For production deployment to Azure, refer to the [AZURE_DEPLOYMENT.md](../AZURE_DEPLOYMENT.md) file. The deployment configuration includes setting up an Azure App Service with appropriate environment variables for the production environment.

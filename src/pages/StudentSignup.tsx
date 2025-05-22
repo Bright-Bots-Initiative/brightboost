@@ -29,9 +29,9 @@ const StudentSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Attempting to sign up student:', { name, email, role: 'student' });
+      // console.log('Attempting to sign up student:', { name, email, role: 'student' });
       const response = await signupUser(name, email, password, 'student');
-      console.log('Signup successful:', response);
+      // console.log('Signup successful:', response);
       
       // Auto login after successful signup
       if (response && response.token) {

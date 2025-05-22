@@ -1,46 +1,95 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useApi } from '../services/api'; // Import useApi
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 import Sidebar from '../components/TeacherDashboard/Sidebar';
 import MainContent from '../components/TeacherDashboard/MainContent';
-import { Lesson } from '../components/TeacherDashboard/types';
-
-// interface Class {
-//   id: string;
-//   name: string;
-//   students: number;
-//   schedule: string;
-// }
-
-// interface Assignment {
-//   id: string;
-//   title: string;
-//   dueDate: string;
-//   submissions: number;
-// }
+import { Lesson } from '../components/TeacherDashboard/types'; // Ensure this path is correct, might be '../TeacherDashboard/types'
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const api = useApi(); // Initialize useApi
+
   const [activeView, setActiveView] = useState<string>('Lessons');
-  // Using useState but ignoring setters for now - will be used in future features
-  // const [isLoading] = React.useState(false);
-  // const [classes] = React.useState<Class[]>([
-  //   { id: '1', name: 'Math 101', students: 25, schedule: 'MWF 10:00 AM' },
-  //   { id: '2', name: 'Science 202', students: 30, schedule: 'TTh 2:00 PM' }
-  // ]);
-  // const [assignments] = React.useState<Assignment[]>([
-  //   { id: '1', title: 'Algebra Quiz', dueDate: '2025-04-10', submissions: 15 },
-  //   { id: '2', title: 'Science Project', dueDate: '2025-04-20', submissions: 8 }
-  // ]);
-  const [lessonsData, setLessonsData] = useState<Lesson[]>([
-    { id: '1', title: 'Introduction to Algebra', category: 'Math', date: '2025-05-01', status: 'Published' },
-    { id: '2', title: 'Advanced Geometry', category: 'Math', date: '2025-05-10', status: 'Draft' },
-    { id: '3', title: 'Chemistry Basics', category: 'Science', date: '2025-05-15', status: 'Review' }
-  ]);
+  const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLessons = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/api/teacher/dashboard');
+      if (response && response.lessons) {
+        const formattedLessons = response.lessons.map((lesson: Lesson) => ({
+          ...lesson,
+          id: String(lesson.id),
+        }));
+        setLessonsData(formattedLessons);
+      } else {
+        setLessonsData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch lessons:", err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch lessons.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLessons();
+  }, [api]); // api as a dependency
+
+  const handleAddLesson = async (newLesson: Omit<Lesson, 'id'>) => {
+    setIsLoading(true);
+    try {
+      const createdLesson = await api.post('/api/lessons', newLesson);
+      // Ensure ID is a string for consistency
+      setLessonsData(prevLessons => [...prevLessons, { ...createdLesson, id: String(createdLesson.id) }]);
+    } catch (err) {
+      console.error("Failed to add lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to add lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditLesson = async (lessonId: string | number, updatedLessonData: Partial<Lesson>) => {
+    setIsLoading(true);
+    try {
+      const updatedLesson = await api.put(`/api/lessons/${lessonId}`, updatedLessonData);
+      setLessonsData(prevLessons =>
+        prevLessons.map(lesson =>
+          String(lesson.id) === String(lessonId) ? { ...lesson, ...updatedLesson, id: String(lesson.id) } : lesson
+        )
+      );
+    } catch (err) {
+      console.error("Failed to edit lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to edit lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: string | number) => {
+    setIsLoading(true);
+    try {
+      await api.delete(`/api/lessons/${lessonId}`);
+      setLessonsData(prevLessons => prevLessons.filter(lesson => String(lesson.id) !== String(lessonId)));
+    } catch (err) {
+      console.error("Failed to delete lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to delete lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Removed redundant useEffect, the one on line 38 handles the initial fetch.
 
   const handleLogout = () => {
     logout();
@@ -73,11 +122,22 @@ const TeacherDashboard: React.FC = () => {
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
         {/* Main Content Component */}
-        <MainContent 
-          activeView={activeView} 
-          lessonsData={lessonsData} 
-          setLessonsData={setLessonsData} 
-        />
+        {isLoading && (
+          <div className="flex-grow p-6 ml-64 text-center">Loading dashboard data...</div>
+        )}
+        {error && (
+          <div className="flex-grow p-6 ml-64 text-center text-red-500">Error: {error}</div>
+        )}
+        {!isLoading && !error && (
+          <MainContent
+            activeView={activeView}
+            lessonsData={lessonsData}
+            setLessonsData={setLessonsData} // Still needed for local manipulations like drag-and-drop
+            onAddLesson={handleAddLesson}
+            onEditLesson={handleEditLesson}
+            onDeleteLesson={handleDeleteLesson}
+          />
+        )}
       </div>
     </GameBackground>
   );

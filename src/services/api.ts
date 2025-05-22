@@ -30,7 +30,7 @@ export const loginUser = async (email: string, password: string) => {
 
 export const signupUser = async (name: string, email: string, password: string, role: string) => {
   try {
-    console.log(`Sending signup request to: ${API_URL}/auth/signup`);
+    // console.log(`Sending signup request to: ${API_URL}/auth/signup`);
     
     const response = await fetch(`${API_URL}/auth/signup`, {
       method: 'POST',
