@@ -1,15 +1,15 @@
 @description('The name of the Application Insights resource')
-param appInsightsName string = 'bb-dev-insights'
+param appInsightsName string = 'bg-dev-insights'
 
 @description('The name of the Log Analytics workspace')
-param logAnalyticsName string = 'bb-dev-logs'
+param logAnalyticsName string = 'bg-dev-logs'
 
 @description('Location for all resources. Default is resource group location.')
 param location string = resourceGroup().location
 
 @description('Tags to apply to all resources')
 param tags object = {
-  project: 'BrightBoost'
+  project: 'BrightGrants'
   environment: 'dev'
 }
 

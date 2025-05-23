@@ -7,9 +7,9 @@ interface RobotProps {
   animated?: boolean;
 }
 
-const BrightBoostRobot: React.FC<RobotProps> = () => {
+const BrightGrantsRobot: React.FC<RobotProps> = () => {
   // The component will be empty since we're removing the image completely
   return null;
 };
 
-export default BrightBoostRobot;
+export default BrightGrantsRobot;

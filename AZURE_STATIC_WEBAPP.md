@@ -1,21 +1,21 @@
 # Azure Static Web App Deployment
 
-This document describes the deployment of the BrightBoost frontend to Azure Static Web Apps.
+This document describes the deployment of the BrightGrants frontend to Azure Static Web Apps.
 
 ## Configuration
 
-The BrightBoost frontend is deployed to Azure Static Web Apps with the following configuration:
+The BrightGrants frontend is deployed to Azure Static Web Apps with the following configuration:
 
 - **Region**: Central US
 - **SKU**: Free
 - **Build Output Location**: dist
-- **API Location**: https://bb-dev-func.azurewebsites.net
+- **API Location**: https://bg-dev-func.azurewebsites.net
 
 ## Environment Variables
 
 The following environment variables are required for the Azure Static Web App:
 
-- `VITE_API_BASE`: The base URL for the API (https://bb-dev-func.azurewebsites.net)
+- `VITE_API_BASE`: The base URL for the API (https://bg-dev-func.azurewebsites.net)
 
 ## Routing Configuration
 

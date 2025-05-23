@@ -8,10 +8,10 @@ const LoginSelection: React.FC = () => {
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-brightboost-navy mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-brightgrants-navy mb-2">
             Choose Login Type
           </h1>
-          <p className="text-lg text-brightboost-navy">
+          <p className="text-lg text-brightgrants-navy">
             Select how you'd like to login
           </p>
         </div>
@@ -20,16 +20,18 @@ const LoginSelection: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             <Link
               to="/teacher/login"
-              className="button-shadow rounded-xl px-6 py-4 bg-brightboost-navy text-white font-bold text-center hover:bg-opacity-90 transition-all"
+              className="button-shadow rounded-xl px-6 py-4 bg-brightgrants-navy text-white font-bold text-center hover:bg-opacity-90 transition-all"
             >
-              Teacher Login
+              Organization Login
             </Link>
+            {/* Student option moved to legacy
             <Link
               to="/student/login"
-              className="button-shadow rounded-xl px-6 py-4 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 transition-all"
+              className="button-shadow rounded-xl px-6 py-4 bg-brightgrants-lightblue text-brightgrants-navy font-bold text-center hover:bg-opacity-90 transition-all"
             >
               Student Login
             </Link>
+            */}
           </div>
           
           <div className="mt-6 text-center">
