@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
 
-const TeacherLogin: React.FC = () => {
+const OrganizationLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,21 +13,20 @@ const TeacherLogin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
-
+    setError('');
+    
     try {
       const response = await loginUser(email, password);
-      // Verify this is a teacher account
-      if (response.user.role !== 'teacher') {
+      if (response.user.role !== 'organization') {
         setError('This login is only for organizations. Please use the appropriate login if you are not an organization.');
         setIsLoading(false);
         return;
       }
       login(response.token, response.user);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
-    } finally {
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Invalid email or password. Please try again.');
       setIsLoading(false);
     }
   };
@@ -111,4 +109,4 @@ const TeacherLogin: React.FC = () => {
   );
 };
 
-export default TeacherLogin;
+export default OrganizationLogin;

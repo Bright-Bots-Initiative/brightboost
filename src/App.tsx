@@ -4,10 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Import pages
-import TeacherLogin from './pages/TeacherLogin';
-import TeacherDashboard from './pages/TeacherDashboard';
+import OrganizationLogin from './pages/TeacherLogin';
+import OrganizationDashboard from './pages/TeacherDashboard';
 // import StudentDashboard from './legacy/pages/StudentDashboard';
-import TeacherSignup from './pages/TeacherSignup';
+import OrganizationSignup from './pages/TeacherSignup';
 // import StudentLogin from './legacy/pages/StudentLogin';
 // import StudentSignup from './legacy/pages/StudentSignup';
 import NotFound from './pages/NotFound';
@@ -29,8 +29,8 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginSelection />} />
             <Route path="/signup" element={<SignupSelection />} />
-            <Route path="/teacher/login" element={<TeacherLogin />} />
-            <Route path="/teacher/signup" element={<TeacherSignup />} />
+            <Route path="/organization/login" element={<OrganizationLogin />} />
+            <Route path="/organization/signup" element={<OrganizationSignup />} />
             {/* Student routes moved to legacy
             <Route path="/student/login" element={<StudentLogin />} />
             <Route path="/student/signup" element={<StudentSignup />} />
@@ -38,10 +38,10 @@ function App() {
             
             {/* Protected routes */}
             <Route 
-              path="/teacher/dashboard" 
+              path="/organization/dashboard" 
               element={
-                <ProtectedRoute requiredRole="teacher">
-                  <TeacherDashboard />
+                <ProtectedRoute requiredRole="organization">
+                  <OrganizationDashboard />
                 </ProtectedRoute>
               } 
             />

@@ -1,13 +1,11 @@
-
-// src/pages/TeacherSignup.tsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signupUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
 import BrightGrantsRobot from '../components/BrightGrantsRobot';
 
-const TeacherSignup: React.FC = () => {
+const OrganizationSignup: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,35 +13,27 @@ const TeacherSignup: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     
-    // Validate passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
     
     setIsLoading(true);
-
+    setError('');
+    
     try {
-      // console.log('Attempting to sign up user:', { name, email, role: 'teacher' });
-      const response = await signupUser(name, email, password, 'teacher');
-      // console.log('Signup successful:', response);
+      const response = await signupUser(name, email, password, 'organization');
       
-      // Auto login after successful signup
-      if (response && response.token) {
-        login(response.token, response.user);
-      } else {
-        console.error('Invalid response format:', response);
-        setError('Server returned an invalid response format');
-      }
-    } catch (err: unknown) {
+      login(response.token, response.user);
+      
+    } catch (err) {
       console.error('Signup error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to sign up. Please try again.');
-    } finally {
+      setError('Failed to create account. Please try again.');
       setIsLoading(false);
     }
   };
@@ -146,7 +136,7 @@ const TeacherSignup: React.FC = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-brightgrants-navy">
                 Already have an account?{' '}
-                <Link to="/teacher/login" className="text-brightgrants-blue font-bold hover:underline transition-colors">
+                <Link to="/organization/login" className="text-brightgrants-blue font-bold hover:underline transition-colors">
                   Log in
                 </Link>
               </p>
@@ -163,4 +153,4 @@ const TeacherSignup: React.FC = () => {
   );
 };
 
-export default TeacherSignup;
+export default OrganizationSignup;

@@ -19,7 +19,7 @@ const LoginSelection: React.FC = () => {
         <div className="game-card p-8 w-full max-w-md">
           <div className="grid grid-cols-1 gap-4">
             <Link
-              to="/teacher/login"
+              to="/organization/login"
               className="button-shadow rounded-xl px-6 py-4 bg-brightgrants-navy text-white font-bold text-center hover:bg-opacity-90 transition-all"
             >
               Organization Login
