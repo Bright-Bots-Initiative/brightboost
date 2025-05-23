@@ -52,6 +52,17 @@ We recommend setting up Husky to run linting and tests before commits:
 - [ ] Issue linked and labeled appropriately
 - [ ] Reviewers tagged (always include @Louis-Albanez + one peer)
 
+## Automated PR Review Bot 🤖
+
+To help maintain code quality and provide quick feedback, we have an automated PR Review Bot that checks your pull requests. When you open or update a PR, the bot will automatically perform the following checks:
+
+*   **Coding Style & Linting:** Ensures code adheres to the project's ESLint rules (as run by `npm run lint`).
+*   **Test Execution:** Verifies that all tests pass (`npm run test`).
+*   **Documentation:** Checks for JSDoc-style comments on new or significantly changed exported functions and classes in `.ts` and `.tsx` files.
+*   **Basic Security Scan:** Looks for common potential security issues, such as the use of `dangerouslySetInnerHTML` in React components.
+
+The bot will post its findings as a comment directly on your pull request. Please review this feedback and address any reported issues before tagging human reviewers. This helps streamline the review process and ensures your contributions meet our quality standards.
+
 ## Coding Standards
 
 - ESLint config based on TypeScript and React 18 best practices
