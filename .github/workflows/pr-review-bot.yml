@@ -1,0 +1,283 @@
+name: PR Review Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history for all branches and tags
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linters
+        id: lint
+        continue-on-error: true
+        run: |
+          (npm run lint > lint_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured lint exit code: $exit_code"
+          echo "Lint output:"
+          cat lint_output.txt
+          echo "lint_output<<EOF" >> $GITHUB_OUTPUT
+          cat lint_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "lint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "lint_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: |
+          (npm run test > test_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured test exit code: $exit_code"
+          cat test_output.txt # For logging in the Actions console
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          cat test_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "test_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "test_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check documentation
+        id: docs_check
+        continue-on-error: true
+        run: |
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+          
+          changed_files=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '*.ts' '*.tsx' | xargs)
+          
+          if [ -z "$changed_files" ]; then
+            echo "No .ts or .tsx files changed. Skipping documentation check."
+            echo "docs_output=No .ts or .tsx files changed." >> $GITHUB_OUTPUT
+            echo "docs_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "Checking documentation for files: $changed_files"
+            # Ensure the script is executable if it's not already
+            # chmod +x scripts/check-docs.mjs 
+            (node scripts/check-docs.mjs $changed_files > docs_output.txt 2>&1)
+            exit_code=$?
+            echo "Captured docs check exit code: $exit_code"
+            echo "Docs output:"
+            cat docs_output.txt # For logging
+            echo "docs_output<<EOF" >> $GITHUB_OUTPUT
+            cat docs_output.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            if [ $exit_code -eq 0 ]; then
+              echo "docs_status=success" >> $GITHUB_OUTPUT
+            else
+              echo "docs_status=failure" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Basic Security Scan
+        id: security_scan
+        continue-on-error: true
+        run: |
+          changed_files=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs)
+          
+          output_file="security_scan_output.txt"
+          status="success"
+          
+          if [ -z "$changed_files" ]; then
+            echo "No relevant files changed. Skipping security scan."
+            echo "scan_output=No relevant files changed for security scan." >> $GITHUB_OUTPUT
+            echo "scan_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "Scanning for 'dangerouslySetInnerHTML' in files: $changed_files"
+            # Grep returns 0 if found, 1 if not found. We want to "fail" if found.
+            # `grep -nHi` -n for line number, -H for filename, -i for case-insensitive
+            # Add `|| true` to prevent the script from exiting if grep doesn't find anything (exit code 1)
+            if grep -nHi 'dangerouslySetInnerHTML' $changed_files > $output_file; then
+              echo "Potential security issue found: 'dangerouslySetInnerHTML' detected."
+              status="failure" # Or "warning"
+            else
+              echo "No 'dangerouslySetInnerHTML' found in changed files."
+              # If grep finds nothing, it exits with 1.
+              # The output file will be empty in this case, so we write a message to it.
+              echo "No 'dangerouslySetInnerHTML' found in changed files." > $output_file
+            fi
+            
+            echo "scan_output<<EOF" >> $GITHUB_OUTPUT
+            cat $output_file >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "scan_status=$status" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Review Comment
+        if: always() # Ensure this step runs even if previous steps failed (due to continue-on-error)
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const lintStatus = "${{ steps.lint.outputs.lint_status }}";
+            const lintOutput = `${{ steps.lint.outputs.lint_output }}`;
+            const testStatus = "${{ steps.tests.outputs.test_status }}";
+            const testOutput = `${{ steps.tests.outputs.test_output }}`;
+            const docsStatus = "${{ steps.docs_check.outputs.docs_status }}";
+            const docsOutput = `${{ steps.docs_check.outputs.docs_output }}`;
+            const securityStatus = "${{ steps.security_scan.outputs.scan_status }}";
+            const securityOutput = `${{ steps.security_scan.outputs.scan_output }}`;
+
+            let commentBody = `## PR Review Bot Feedback 🤖
+
+`;
+
+            // Linting
+            commentBody += `### 🧹 Linting
+`;
+            if (lintStatus === 'success') {
+              commentBody += `✅ Linting passed.
+`;
+              // Show details if output is not empty and not a generic success message (adjust as needed)
+              if (lintOutput && lintOutput.trim() !== '' && lintOutput.trim() !== 'No linting issues found.' && !lintOutput.trim().startsWith('All files passed linting')) {
+                commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${lintOutput.trim()}
+\`\`\`
+
+</details>
+`;
+              }
+            } else {
+              commentBody += `❌ Linting failed.
+`;
+              commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${lintOutput.trim()}
+\`\`\`
+
+</details>
+`;
+            }
+            commentBody += '\n';
+
+            // Tests
+            commentBody += `### 🧪 Tests
+`;
+            if (testStatus === 'success') {
+              commentBody += `✅ Tests passed.
+`;
+              // Show details if output is not empty and not a generic success message from test runner
+              if (testOutput && testOutput.trim() !== '' && !testOutput.includes("Test Suites: All pass") && !testOutput.includes("no tests found") && !testOutput.trim().startsWith("PASS")) {
+                 commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${testOutput.trim()}
+\`\`\`
+
+</details>
+`;
+              }
+            } else {
+              commentBody += `❌ Tests failed.
+`;
+              commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${testOutput.trim()}
+\`\`\`
+
+</details>
+`;
+            }
+            commentBody += '\n';
+
+            // Documentation
+            commentBody += `### 📚 Documentation Check
+`;
+            if (docsStatus === 'success') {
+              commentBody += `✅ Documentation check passed.
+`;
+              // Show details if output is not empty and not one of the specific success messages
+              if (docsOutput && docsOutput.trim() !== '' && !docsOutput.startsWith("Documentation check passed") && !docsOutput.startsWith("No .ts or .tsx files changed.")) {
+                 commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${docsOutput.trim()}
+\`\`\`
+
+</details>
+`;
+              }
+            } else {
+              commentBody += `❌ Documentation check failed.
+`;
+              commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${docsOutput.trim()}
+\`\`\`
+
+</details>
+`;
+            }
+            commentBody += '\n';
+
+            // Security Scan
+            commentBody += `### 🛡️ Basic Security Scan
+`;
+            if (securityStatus === 'success') {
+              commentBody += `✅ Basic security scan passed.
+`;
+              // Show details if output is not empty and not the generic "no relevant files" message
+              if (securityOutput && securityOutput.trim() !== '' && !securityOutput.startsWith("No relevant files changed for security scan.")) {
+                commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${securityOutput.trim()}
+\`\`\`
+
+</details>
+`;
+              }
+            } else { // Assuming failure means something was found or an error occurred
+              commentBody += `⚠️ Basic security scan found potential issues or an error occurred.
+`;
+              commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${securityOutput.trim()}
+\`\`\`
+
+</details>
+`;
+            }
+            commentBody += '\n';
+            
+            commentBody += '\n\n---\n*This is an automated message from the PR Review Bot.*';
+
+            // Ensure the comment is not excessively long for GitHub API limits
+            const MAX_COMMENT_LENGTH = 65536; 
+            if (commentBody.length > MAX_COMMENT_LENGTH) {
+              commentBody = commentBody.substring(0, MAX_COMMENT_LENGTH - 100) + "\n\n... (comment truncated due to length)";
+            }
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
