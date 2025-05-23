@@ -41,11 +41,11 @@ body {
 
 /* Game UI Elements */
 .game-card {
-  @apply bg-white rounded-xl shadow-lg border-2 border-brightboost-lightblue overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02];
+  @apply bg-white rounded-xl shadow-lg border-2 border-brightgrants-lightblue overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02];
 }
 
 .game-button {
-  @apply px-6 py-3 rounded-full bg-brightboost-blue text-white font-bold transition-all duration-300 hover:bg-brightboost-navy hover:scale-105 shadow-md hover:shadow-lg;
+  @apply px-6 py-3 rounded-full bg-brightgrants-blue text-white font-bold transition-all duration-300 hover:bg-brightgrants-navy hover:scale-105 shadow-md hover:shadow-lg;
 }
 
 .badge {
@@ -53,15 +53,15 @@ body {
 }
 
 .badge-achievement {
-  @apply bg-brightboost-yellow text-brightboost-navy;
+  @apply bg-brightgrants-yellow text-brightgrants-navy;
 }
 
 .badge-level {
-  @apply bg-brightboost-navy text-white;
+  @apply bg-brightgrants-navy text-white;
 }
 
 .badge-points {
-  @apply bg-brightboost-blue text-white;
+  @apply bg-brightgrants-blue text-white;
 }
 
 /* Button shadow effect */

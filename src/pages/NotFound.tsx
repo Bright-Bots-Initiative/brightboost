@@ -9,10 +9,10 @@ const NotFound: React.FC = () => {
     <GameBackground>
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="game-card p-8 w-full max-w-md text-center">
-          <h1 className="text-6xl font-bold text-brightboost-navy mb-4">404</h1>
-          <h2 className="text-2xl font-semibold text-brightboost-navy mb-6">Page Not Found</h2>
+          <h1 className="text-6xl font-bold text-brightgrants-navy mb-4">404</h1>
+          <h2 className="text-2xl font-semibold text-brightgrants-navy mb-6">Page Not Found</h2>
           
-          <p className="text-brightboost-navy mb-8">
+          <p className="text-brightgrants-navy mb-8">
             Oops! The page you are looking for doesn't exist or has been moved.
           </p>
           

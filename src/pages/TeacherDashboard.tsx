@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../services/api'; // Import useApi
 import GameBackground from '../components/GameBackground';
-import BrightBoostRobot from '../components/BrightBoostRobot';
+import BrightGrantsRobot from '../components/BrightGrantsRobot';
 import Sidebar from '../components/TeacherDashboard/Sidebar';
 import MainContent from '../components/TeacherDashboard/MainContent';
 import { Lesson } from '../components/TeacherDashboard/types'; // Ensure this path is correct, might be '../TeacherDashboard/types'
@@ -99,18 +99,18 @@ const TeacherDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <nav className="bg-brightboost-navy text-white p-4 shadow-md">
+        <nav className="bg-brightgrants-navy text-white p-4 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <BrightBoostRobot size="sm" className="w-10 h-10" />
-              <h1 className="text-xl font-bold">Bright Boost</h1>
+              <BrightGrantsRobot size="sm" className="w-10 h-10" />
+              <h1 className="text-xl font-bold">Bright Grants</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="badge-level">Teacher</span>
               <span>Welcome, {user?.name || 'Teacher'}</span>
               <button
                 onClick={handleLogout}
-                className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
+                className="bg-brightgrants-blue px-3 py-1 rounded-lg hover:bg-brightgrants-blue/80 transition-colors"
               >
                 Logout
               </button>

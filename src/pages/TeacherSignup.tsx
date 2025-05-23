@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signupUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
-import BrightBoostRobot from '../components/BrightBoostRobot';
+import BrightGrantsRobot from '../components/BrightGrantsRobot';
 
 const TeacherSignup: React.FC = () => {
   const [name, setName] = useState('');
@@ -53,17 +53,17 @@ const TeacherSignup: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-4xl">
           <div className="text-center md:text-left flex-1">
-            <h1 className="text-3xl md:text-4xl font-bold text-brightboost-navy mb-4">
-              Join as a Teacher
+            <h1 className="text-3xl md:text-4xl font-bold text-brightgrants-navy mb-4">
+              Join as an Organization
             </h1>
-            <p className="text-lg text-brightboost-navy mb-6">
-              Share your knowledge and inspire the next generation
+            <p className="text-lg text-brightgrants-navy mb-6">
+              Empowering organizations with funding opportunities
             </p>
-            <BrightBoostRobot className="hidden md:block" />
+            <BrightGrantsRobot className="hidden md:block" />
           </div>
           
           <div className="game-card p-6 flex-1 w-full max-w-md">
-            <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
+            <BrightGrantsRobot className="md:hidden mx-auto mb-6" size="sm" />
             
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
@@ -73,7 +73,7 @@ const TeacherSignup: React.FC = () => {
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-brightgrants-navy mb-1">
                   Full Name
                 </label>
                 <input
@@ -82,13 +82,13 @@ const TeacherSignup: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                   placeholder="Enter your full name"
                 />
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-brightgrants-navy mb-1">
                   Email
                 </label>
                 <input
@@ -97,13 +97,13 @@ const TeacherSignup: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                   placeholder="Enter your email"
                 />
               </div>
               
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-brightgrants-navy mb-1">
                   Password
                 </label>
                 <input
@@ -112,13 +112,13 @@ const TeacherSignup: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                   placeholder="Create a password"
                 />
               </div>
               
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-brightgrants-navy mb-1">
                   Confirm Password
                 </label>
                 <input
@@ -127,7 +127,7 @@ const TeacherSignup: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                   placeholder="Confirm your password"
                 />
               </div>
@@ -136,7 +136,7 @@ const TeacherSignup: React.FC = () => {
                 type="submit"
                 disabled={isLoading}
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
-                  isLoading ? 'bg-brightboost-blue/70' : 'bg-brightboost-blue'
+                  isLoading ? 'bg-brightgrants-blue/70' : 'bg-brightgrants-blue'
                 } transition-colors`}
               >
                 {isLoading ? 'Signing up...' : 'Sign Up'}
@@ -144,14 +144,14 @@ const TeacherSignup: React.FC = () => {
             </form>
             
             <div className="mt-6 text-center">
-              <p className="text-sm text-brightboost-navy">
+              <p className="text-sm text-brightgrants-navy">
                 Already have an account?{' '}
-                <Link to="/teacher/login" className="text-brightboost-blue font-bold hover:underline transition-colors">
+                <Link to="/teacher/login" className="text-brightgrants-blue font-bold hover:underline transition-colors">
                   Log in
                 </Link>
               </p>
-              <p className="text-sm text-brightboost-navy mt-2">
-                <Link to="/" className="text-brightboost-blue font-bold hover:underline transition-colors">
+              <p className="text-sm text-brightgrants-navy mt-2">
+                <Link to="/" className="text-brightgrants-blue font-bold hover:underline transition-colors">
                   Back to Home
                 </Link>
               </p>
