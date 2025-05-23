@@ -49,7 +49,7 @@ initializeDatabase().catch(err => console.error('Failed to initialize database:'
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? 'https://brightboost-web.azurewebsites.net'
+    ? 'https://black-sand-053455d1e.6.azurestaticapps.net'
     : 'http://localhost:5173',
   credentials: true
 }));

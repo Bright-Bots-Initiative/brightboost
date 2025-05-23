@@ -10,6 +10,7 @@ The BrightBoost frontend is deployed to Azure Static Web Apps with the following
 - **SKU**: Free
 - **Build Output Location**: dist
 - **API Location**: https://bb-dev-func.azurewebsites.net
+- **URL**: https://black-sand-053455d1e.6.azurestaticapps.net
 
 ## Environment Variables
 
