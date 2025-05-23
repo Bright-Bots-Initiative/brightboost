@@ -30,8 +30,8 @@ jobs:
           output_location: "dist" # Built app content directory - optional
           app_build_command: "npm run build"
           api_build_command: ""
-          env_vars: |
-            VITE_API_BASE=https://bb-dev-func.azurewebsites.net
+          # Environment variables are set via the Azure Portal, not here
+          # VITE_API_BASE=https://bb-dev-func.azurewebsites.net
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

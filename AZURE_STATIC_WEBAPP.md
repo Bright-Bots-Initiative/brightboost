@@ -10,13 +10,11 @@ The BrightBoost frontend is deployed to Azure Static Web Apps with the following
 - **SKU**: Free
 - **Build Output Location**: dist
 - **API Location**: https://bb-dev-func.azurewebsites.net
-
 - **URL**: https://black-sand-053455d1e.6.azurestaticapps.net
-=======
 
 ## Environment Variables
 
-The following environment variables are required for the Azure Static Web App:
+The following environment variables are required for the Azure Static Web App and should be configured in the Azure Portal under **Settings > Configuration > Application settings**:
 
 - `VITE_API_BASE`: The base URL for the API (https://bb-dev-func.azurewebsites.net)
 
@@ -35,7 +33,6 @@ The Azure Static Web App deployment is managed by a GitHub Actions workflow that
 
 1. Builds the frontend application
 2. Deploys the built application to Azure Static Web Apps
-3. Configures the environment variables
 
 ## Local Development
 
