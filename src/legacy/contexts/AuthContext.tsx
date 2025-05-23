@@ -1,8 +1,15 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 interface AuthContextType {
-  user: any;
-  login: (userData: any) => void;
+  user: UserData | null;
+  login: (userData: UserData) => void;
   logout: () => void;
 }
 
