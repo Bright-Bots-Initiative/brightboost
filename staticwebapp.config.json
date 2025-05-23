@@ -4,7 +4,11 @@
       "route": "/api/*",
       "serve": "https://bb-dev-func.azurewebsites.net/api/*",
       "headers": {
+
         "X-Forwarded-Host": "black-sand-053455d1e.6.azurestaticapps.net"
+=======
+        "X-Forwarded-Host": "bb-dev-web.azurestaticapps.net"
+
       }
     },
     {
