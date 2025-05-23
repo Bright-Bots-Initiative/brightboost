@@ -22,7 +22,7 @@ const TeacherLogin: React.FC = () => {
       const response = await loginUser(email, password);
       // Verify this is a teacher account
       if (response.user.role !== 'teacher') {
-        setError('This login is only for teachers. Please use the student login if you are a student.');
+        setError('This login is only for organizations. Please use the appropriate login if you are not an organization.');
         setIsLoading(false);
         return;
       }
@@ -39,10 +39,10 @@ const TeacherLogin: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
         <div className="game-card p-6 w-full max-w-md">
           <div className="flex items-center gap-2 mb-4">
-            <Link to="/login" className="text-brightboost-blue hover:text-brightboost-navy">
+            <Link to="/login" className="text-brightgrants-blue hover:text-brightgrants-navy">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-2xl font-bold text-brightboost-navy">Teacher Login</h1>
+            <h1 className="text-2xl font-bold text-brightgrants-navy">Organization Login</h1>
           </div>
           
           {error && (
@@ -53,7 +53,7 @@ const TeacherLogin: React.FC = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-brightboost-navy mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-brightgrants-navy mb-1">
                 Email
               </label>
               <input
@@ -62,13 +62,13 @@ const TeacherLogin: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                 placeholder="Enter your email"
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-brightboost-navy mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-brightgrants-navy mb-1">
                 Password
               </label>
               <input
@@ -77,7 +77,7 @@ const TeacherLogin: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                className="w-full px-4 py-2 bg-white border-2 border-brightgrants-lightblue text-brightgrants-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightgrants-blue focus:border-transparent transition-all"
                 placeholder="Enter your password"
               />
             </div>
@@ -86,7 +86,7 @@ const TeacherLogin: React.FC = () => {
               type="submit"
               disabled={isLoading}
               className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
-                isLoading ? 'bg-brightboost-blue/70' : 'bg-brightboost-blue'
+                isLoading ? 'bg-brightgrants-blue/70' : 'bg-brightgrants-blue'
               } transition-colors`}
             >
               {isLoading ? 'Logging in...' : 'Login'}
@@ -94,14 +94,14 @@ const TeacherLogin: React.FC = () => {
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-sm text-brightboost-navy">
+            <p className="text-sm text-brightgrants-navy">
               Don't have an account?{' '}
-              <Link to="/teacher/signup" className="text-brightboost-blue font-bold hover:underline transition-colors">
+              <Link to="/teacher/signup" className="text-brightgrants-blue font-bold hover:underline transition-colors">
                 Sign up
               </Link>
             </p>
-            <p className="text-sm text-brightboost-navy mt-2">
-              <Link to="/" className="text-brightboost-blue font-bold hover:underline transition-colors">
+            <p className="text-sm text-brightgrants-navy mt-2">
+              <Link to="/" className="text-brightgrants-blue font-bold hover:underline transition-colors">
                 Back to Home
               </Link>
             </p>
