@@ -26,21 +26,31 @@ const db = new Low(adapter);
 // Function to initialize database if it's empty
 const initializeDatabase = async () => {
   await db.read();
-  db.data = db.data || { users: [], lessons: [], studentActivities: [] };
-  // Add default lessons if none exist
-  if (!db.data.lessons || db.data.lessons.length === 0) {
-    db.data.lessons = [
-      { id: '1', title: 'Introduction to Algebra', content: 'Learn the basics of algebraic expressions.' },
-      { id: '2', title: 'Geometry Fundamentals', content: 'Explore shapes, angles, and their properties.' }
+  db.data = db.data || { 
+    users: [], 
+    // Student-related tables moved to legacy
+    // lessons: [], 
+    // studentActivities: [],
+    grants: [],
+    proposals: [],
+    organizations: [] 
+  };
+  
+  // Default grants if none exist
+  if (!db.data.grants || db.data.grants.length === 0) {
+    db.data.grants = [
+      { id: '1', title: 'Community Development Grant', amount: 5000, deadline: '2025-06-30' },
+      { id: '2', title: 'Educational Innovation Fund', amount: 10000, deadline: '2025-07-15' }
     ];
   }
-  // Add default student activities if none exist
-  if (!db.data.studentActivities || db.data.studentActivities.length === 0) {
-    db.data.studentActivities = [
-      { id: '1', studentId: '2', lessonId: '1', completed: true, grade: 90 },
-      { id: '2', studentId: '2', lessonId: '2', completed: false, grade: null }
+  
+  // Default organizations if none exist
+  if (!db.data.organizations || db.data.organizations.length === 0) {
+    db.data.organizations = [
+      { id: '1', name: 'Community Helpers', type: 'Non-profit', status: 'Active' }
     ];
   }
+  
   await db.write();
 };
 
@@ -49,7 +59,7 @@ initializeDatabase().catch(err => console.error('Failed to initialize database:'
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? 'https://brightboost-web.azurewebsites.net'
+    ? 'https://bg-dev-web.azurestaticapps.net'
     : 'http://localhost:5173',
   credentials: true
 }));

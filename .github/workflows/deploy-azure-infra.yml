@@ -1,0 +1,58 @@
+name: Deploy Azure Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/azure/**'
+  workflow_dispatch:
+
+jobs:
+  deploy_infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "f6c45d6c-52c8-4131-9994-d774eda36815",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "f9a55b60-d978-4b8b-819e-cb0246dc92bb",
+              "tenantId": "65efe56f-ef64-44cc-b5ca-7468ea033b51"
+            }
+            
+      - name: Create Resource Group if it doesn't exist
+        run: |
+          az group create --name Bright-Grants --location centralus
+          
+      - name: Deploy Monitoring Resources
+        run: |
+          cd docs/azure
+          az deployment group create \
+            --resource-group Bright-Grants \
+            --template-file monitoring.bicep \
+            --parameters appInsightsName=bg-dev-insights logAnalyticsName=bg-dev-logs
+            
+      - name: Get Application Insights Connection String
+        id: get_app_insights
+        run: |
+          CONN_STRING=$(az resource show --resource-group Bright-Grants --name bg-dev-insights --resource-type "microsoft.insights/components" --query "properties.ConnectionString" -o tsv)
+          echo "::set-output name=connection_string::$CONN_STRING"
+          
+      - name: Create Static Web App
+        run: |
+          az staticwebapp create \
+            --name bg-dev-web \
+            --resource-group Bright-Grants \
+            --location centralus \
+            --source https://github.com/Bright-Bots-Initiative/bright-grants \
+            --branch main \
+            --app-location "/" \
+            --output-location "dist" \
+            --login-with-github

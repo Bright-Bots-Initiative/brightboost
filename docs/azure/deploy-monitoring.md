@@ -1,11 +1,11 @@
 # Deploying Azure Monitoring Resources with Bicep
 
-This document outlines how to deploy Application Insights and Log Analytics for BrightBoost using the Bicep template.
+This document outlines how to deploy Application Insights and Log Analytics for BrightGrants using the Bicep template.
 
 ## Prerequisites
 
 - Azure CLI installed and logged in
-- Access to the `bb-dev-rg` resource group
+- Access to the `Bright-Grants` resource group
 
 ## Deployment Steps
 
@@ -13,17 +13,23 @@ This document outlines how to deploy Application Insights and Log Analytics for 
 2. Run the following Azure CLI command:
 
 ```bash
+# Login with your Azure credentials
+az login
+
+# Or use service principal (credentials should be stored securely, not in this file)
+# az login --service-principal -u <CLIENT_ID> -p <CLIENT_SECRET> --tenant <TENANT_ID>
+
 az deployment group create \
-  --resource-group bb-dev-rg \
+  --resource-group Bright-Grants \
   --template-file monitoring.bicep \
-  --parameters appInsightsName=bb-dev-insights logAnalyticsName=bb-dev-logs
+  --parameters appInsightsName=bg-dev-insights logAnalyticsName=bg-dev-logs
 ```
 
 3. After deployment completes, retrieve the Application Insights connection string:
 
 ```bash
 az deployment group show \
-  --resource-group bb-dev-rg \
+  --resource-group Bright-Grants \
   --name <deployment-name> \
   --query properties.outputs.appInsightsConnectionString.value
 ```
@@ -32,7 +38,7 @@ az deployment group show \
 
 ## Connecting to Existing Resources
 
-If you're integrating with existing BrightBoost applications:
+If you're integrating with existing BrightGrants applications:
 
 1. Navigate to the Azure Portal
 2. Add the connection string as an application setting:

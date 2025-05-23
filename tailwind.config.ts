@@ -13,7 +13,7 @@ const config: Config = {
         sans: ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        brightboost: {
+        brightgrants: {
           navy: '#1C3D6C',
           blue: '#46B1E6',
           lightblue: '#8BD2ED',
