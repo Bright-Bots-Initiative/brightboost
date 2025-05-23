@@ -1,0 +1,77 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  font-family: 'Montserrat', sans-serif;
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Add animation for loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Game UI Elements */
+.game-card {
+  @apply bg-white rounded-xl shadow-lg border-2 border-brightboost-lightblue overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02];
+}
+
+.game-button {
+  @apply px-6 py-3 rounded-full bg-brightboost-blue text-white font-bold transition-all duration-300 hover:bg-brightboost-navy hover:scale-105 shadow-md hover:shadow-lg;
+}
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-achievement {
+  @apply bg-brightboost-yellow text-brightboost-navy;
+}
+
+.badge-level {
+  @apply bg-brightboost-navy text-white;
+}
+
+.badge-points {
+  @apply bg-brightboost-blue text-white;
+}
+
+/* Button shadow effect */
+.button-shadow {
+  box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.button-shadow:active {
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+  transform: translateY(4px);
+}
