@@ -30,6 +30,7 @@ jobs:
           output_location: "dist" # Built app content directory - optional
           app_build_command: "npm run build"
           api_build_command: ""
+          action: "upload"        # Explicitly set the action to upload
           # Environment variables are set via the Azure Portal, not here
           # VITE_API_BASE=https://bb-dev-func.azurewebsites.net
 
