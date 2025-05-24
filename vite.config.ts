@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => ({
       template: 'treemap'
     }),
     viteCompression({
+      deleteOriginFile: false,
       algorithm: 'brotliCompress',
       filter: /\.(js|css|html|svg)$/i,
       threshold: 10240, // Only compress files larger than 10KB
