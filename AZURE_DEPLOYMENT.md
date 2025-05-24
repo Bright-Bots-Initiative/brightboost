@@ -21,5 +21,5 @@ These settings should be configured in the Azure portal or through the Azure CLI
 BrightBoost uses Azure Application Insights and Log Analytics for monitoring and logging. For detailed instructions on setting up monitoring, see [Azure Monitoring Configuration](./docs/azure/monitoring.md).
 
 ## Frontend URL
-Current URL: https://brightboost-web.azurewebsites.net
+Current URL: https://black-sand-053455d1e.6.azurestaticapps.net
 Future URL (when DNS is updated): https://app.brightboost.org
