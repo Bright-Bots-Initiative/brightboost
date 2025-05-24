@@ -23,6 +23,50 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint Commit Messages
+        id: commitlint_check
+        continue-on-error: true
+        run: |
+          echo "Linting commit messages from ${{ github.event.pull_request.base.sha }} to ${{ github.event.pull_request.head.sha }}"
+          (npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose > commitlint_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured commitlint exit code: $exit_code"
+          echo "commitlint_output<<EOF" >> $GITHUB_OUTPUT
+          cat commitlint_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "commitlint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "commitlint_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Prettier Check # New Step
+        id: prettier_check
+        continue-on-error: true
+        run: |
+          (npx prettier --check . > prettier_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured Prettier exit code: $exit_code"
+          echo "Prettier output:"
+          cat prettier_output.txt # For logging in the Actions console
+          echo "prettier_output<<EOF" >> $GITHUB_OUTPUT
+          cat prettier_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "prettier_status=success" >> $GITHUB_OUTPUT
+          else
+            # Prettier's --check flag exits with 1 if formatting issues are found,
+            # and 2 for other errors. Both should be 'failure'.
+            echo "prettier_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for new TODOs/FIXMEs
+        id: todos_check
+        continue-on-error: true
+        run: |
+          chmod +x scripts/check-todos.sh
+          bash scripts/check-todos.sh "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+
       - name: Run linters
         id: lint
         continue-on-error: true
@@ -130,6 +174,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const commitlintStatus = "${{ steps.commitlint_check.outputs.commitlint_status }}";
+            const commitlintOutput = `${{ steps.commitlint_check.outputs.commitlint_output }}`;
+            const prettierStatus = "${{ steps.prettier_check.outputs.prettier_status }}";
+            const prettierOutput = `${{ steps.prettier_check.outputs.prettier_output }}`;
+            const todosStatus = "${{ steps.todos_check.outputs.todos_status }}";
+            const rawTodosOutput = `${{ steps.todos_check.outputs.todos_output }}`;
+            const todosOutput = rawTodosOutput.replace(/%0A/g, '\n').replace(/%0D/g, '\r');
             const lintStatus = "${{ steps.lint.outputs.lint_status }}";
             const lintOutput = `${{ steps.lint.outputs.lint_output }}`;
             const testStatus = "${{ steps.tests.outputs.test_status }}";
@@ -142,6 +193,81 @@ jobs:
             let commentBody = `## PR Review Bot Feedback 🤖
 
 `;
+
+            // Commit Message Standards
+            commentBody += `### 📝 Commit Message Standards\n`;
+            if (commitlintStatus === 'success') {
+              commentBody += `✅ All commit messages adhere to conventional commit standards.\n`;
+              // Optionally show details even on success if output is verbose and not empty
+              if (commitlintOutput && commitlintOutput.trim() !== '' && !commitlintOutput.includes('found 0 problems, 0 warnings')) {
+                commentBody += `<details><summary>Details</summary>\n\n` +
+                             `\x60\x60\x60\n` +
+                             `${commitlintOutput.trim()}\n` +
+                             `\x60\x60\x60\n\n` +
+                             `</details>\n`;
+              }
+            } else {
+              commentBody += `❌ Some commit messages do not adhere to conventional commit standards.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                           `\x60\x60\x60\n` +
+                           `${commitlintOutput.trim()}\n` +
+                           `\x60\x60\x60\n\n` +
+                           `</details>\n`;
+            }
+            commentBody += '\n';
+
+            // Prettier
+            commentBody += `### 💅 Code Formatting (Prettier)
+`;
+            if (prettierStatus === 'success') {
+              commentBody += `✅ Code formatting is consistent.
+`;
+              // Optionally show details even on success if there's relevant output
+              if (prettierOutput && prettierOutput.trim() !== '' && !prettierOutput.includes('All matched files use Prettier code style!')) {
+                commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${prettierOutput.trim()}
+\`\`\`
+
+</details>
+`;
+              }
+            } else {
+              commentBody += `❌ Code formatting issues found.
+`;
+              commentBody += `<details><summary>Details</summary>
+
+\`\`\`
+${prettierOutput.trim()}
+\`\`\`
+
+</details>
+`;
+            }
+            commentBody += '\n';
+
+            // TODO/FIXME Comments
+            commentBody += `### 🗒️ TODO/FIXME Comments\n`;
+            if (todosStatus === 'success') {
+              commentBody += `✅ No new or modified TODO/FIXME comments found.\n`;
+              if (todosOutput && todosOutput.trim() !== '' && todosOutput.trim() !== 'No new or modified TODO/FIXME comments found.') {
+                commentBody += `<details><summary>Details</summary>\n\n` +
+                             `\x60\x60\x60\n` +
+                             `${todosOutput.trim()}\n` +
+                             `\x60\x60\x60\n\n` +
+                             `</details>\n`;
+              }
+            } else { // 'failure' means TODOs were found
+              commentBody += `⚠️ New or modified TODO/FIXME comments found.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                           `\x60\x60\x60\n` +
+                           `${todosOutput.trim()}\n` +
+                           `Please address these TODOs/FIXMEs or create tracking issues.\n` +
+                           `\x60\x60\x60\n\n` +
+                           `</details>\n`;
+            }
+            commentBody += '\n';
 
             // Linting
             commentBody += `### 🧹 Linting
