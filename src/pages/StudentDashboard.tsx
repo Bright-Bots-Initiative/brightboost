@@ -69,6 +69,24 @@ const StudentDashboard: React.FC = () => {
     fetchDashboardData();
   }, [api, user?.name]);
 
+  const handleEarnXp = async (amount: number, reason: string) => {
+    try {
+      const response = await api.post('/api/gamification/award-xp', {
+        amount,
+        reason
+      });
+      
+      if (response.success) {
+        console.log(`Earned ${response.xpGained} XP! Total: ${response.xp}`);
+        if (response.leveledUp) {
+          console.log(`Level up! New level: ${response.level}`);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to award XP:", err);
+    }
+  };
+
   const handleMarkActivityComplete = async (activityId: string | number) => {
     try {
       const updatedActivity = await api.post(`/api/student/activities/${activityId}/complete`, {});
@@ -77,6 +95,8 @@ const StudentDashboard: React.FC = () => {
           activity.id === activityId ? { ...activity, ...updatedActivity } : activity
         )
       );
+      
+      handleEarnXp(25, `Completed activity ${activityId}`);
     } catch (err) {
       console.error("Failed to mark activity complete:", err);
       alert("Could not update activity status. Please try again.");
@@ -132,7 +152,7 @@ const StudentDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">Level 1</span> {/* Static for now */}
+                <span className="text-sm font-bold">Level {user?.level || 'Explorer'}</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">{studentName}</span>
               </div>
               <button
@@ -151,9 +171,9 @@ const StudentDashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-brightboost-navy">Hello, {studentName}!</h2>
               <p className="text-brightboost-navy">Let's learn and have fun!</p>
             </div>
-            <div className="flex gap-2"> {/* Static for now */}
-              <div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs">XP: 120/200</div>
-              <div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">Stars: 25</div>
+            <div className="flex gap-2">
+              <div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs">XP: {user?.xp || 0}/200</div>
+              <div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">Streak: {user?.streak || 0}</div>
             </div>
           </div>
           
@@ -201,6 +221,20 @@ const StudentDashboard: React.FC = () => {
             )}
           </section>
           
+          {/* Display user badges if they exist */}
+          {user?.badges && user.badges.length > 0 && (
+            <section className="mt-8">
+              <h3 className="text-xl font-semibold text-brightboost-navy mb-4">Your Badges</h3>
+              <div className="flex flex-wrap gap-3">
+                {user.badges.map(badge => (
+                  <div key={badge.id} className="badge bg-brightboost-navy text-white px-3 py-2 rounded-full">
+                    {badge.name}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Static WordGameCard - assuming it's a generic game not tied to dynamic data */}
           <div className="mt-8">
              <WordGameCard 

@@ -58,12 +58,138 @@ brightboost/
 | GET | /api/teacher/dashboard | Get teacher dashboard data (classes, students) | Yes (teacher) |
 | GET | /api/student/dashboard | Get student dashboard data (courses, assignments) | Yes (student) |
 | GET | /api/profile | Get user profile information | Yes |
+| GET | /api/gamification/profile | Get user gamification data (XP, level, streak, badges) | Yes |
+| POST | /api/gamification/award-xp | Award XP to the authenticated user | Yes |
+| POST | /api/gamification/award-badge | Award a badge to the authenticated user | Yes |
+| POST | /api/gamification/update-streak | Update user's streak count | Yes |
 
 ### Authentication
 The API uses JWT-based authentication. After login, include the token in requests:
 ```
 Authorization: Bearer <your_jwt_token>
 ```
+
+## Gamification System
+
+The backend includes a gamification system with the following features:
+
+### User Gamification Fields
+
+- **XP**: Experience points earned through activities (default: 0)
+- **Level**: User's progress level based on XP thresholds (default: 'Explorer')
+- **Streak**: Consecutive days of activity (default: 0)
+- **Badges**: Array of badges earned by the user (default: [])
+
+### Level Progression
+
+Level progression is based on XP thresholds:
+- 0-49 XP: Explorer
+- 50-199 XP: Beginner
+- 200-499 XP: Advanced
+- 500-999 XP: Expert
+- 1000+ XP: Master
+
+### API Endpoints
+
+#### GET /api/gamification/profile
+
+Returns the user's gamification profile.
+
+Response:
+```json
+{
+  "id": "123",
+  "name": "User Name",
+  "xp": 120,
+  "level": "Beginner",
+  "streak": 5,
+  "badges": [
+    {
+      "id": "badge1",
+      "name": "First Lesson Completed",
+      "awardedAt": "2023-05-01T12:00:00Z"
+    }
+  ]
+}
+```
+
+#### POST /api/gamification/award-xp
+
+Awards XP to the authenticated user.
+
+Request:
+```json
+{
+  "amount": 25,
+  "reason": "Completed lesson"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "xp": 145,
+  "xpGained": 25,
+  "level": "Beginner",
+  "leveledUp": false,
+  "reason": "Completed lesson"
+}
+```
+
+#### POST /api/gamification/award-badge
+
+Awards a badge to the authenticated user.
+
+Request:
+```json
+{
+  "badgeId": "badge2",
+  "badgeName": "Perfect Score"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Badge awarded successfully",
+  "badge": {
+    "id": "badge2",
+    "name": "Perfect Score",
+    "awardedAt": "2023-05-02T15:30:00Z"
+  },
+  "badges": [
+    {
+      "id": "badge1",
+      "name": "First Lesson Completed",
+      "awardedAt": "2023-05-01T12:00:00Z"
+    },
+    {
+      "id": "badge2",
+      "name": "Perfect Score",
+      "awardedAt": "2023-05-02T15:30:00Z"
+    }
+  ]
+}
+```
+
+#### POST /api/gamification/update-streak
+
+Updates the user's streak count.
+
+Response:
+```json
+{
+  "success": true,
+  "streak": 6,
+  "streakXp": 5,
+  "milestone": false,
+  "xp": 150
+}
+```
+
+For future migration to PostgreSQL/Supabase, see [MIGRATION_NOTES.md](../MIGRATION_NOTES.md).
 
 ## Extending the Backend
 The backend currently uses a file-based database (`lowdb` with `db.json`). For a more scalable or production-ready solution, consider replacing or augmenting this with a dedicated database service:

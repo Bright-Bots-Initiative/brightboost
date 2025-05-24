@@ -7,6 +7,10 @@ interface User {
   name: string;
   email: string;
   role: string;
+  xp?: number;
+  level?: string;
+  streak?: number;
+  badges?: Array<{id: string, name: string, awardedAt: string}>;
 }
 
 interface AuthContextType {

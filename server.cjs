@@ -44,7 +44,40 @@ const initializeDatabase = async () => {
   await db.write();
 };
 
-initializeDatabase().catch(err => console.error('Failed to initialize database:', err));
+// Function to ensure existing users have gamification fields
+const ensureGamificationFields = async () => {
+  await db.read();
+  if (db.data.users && db.data.users.length > 0) {
+    let needsUpdate = false;
+    db.data.users.forEach(user => {
+      if (typeof user.xp === 'undefined') {
+        user.xp = 0;
+        needsUpdate = true;
+      }
+      if (typeof user.level === 'undefined') {
+        user.level = 'Explorer';
+        needsUpdate = true;
+      }
+      if (typeof user.streak === 'undefined') {
+        user.streak = 0;
+        needsUpdate = true;
+      }
+      if (typeof user.badges === 'undefined') {
+        user.badges = [];
+        needsUpdate = true;
+      }
+    });
+    
+    if (needsUpdate) {
+      await db.write();
+      console.log('Updated existing users with gamification fields');
+    }
+  }
+};
+
+initializeDatabase()
+  .then(() => ensureGamificationFields())
+  .catch(err => console.error('Failed to initialize database:', err));
 
 // Middleware
 app.use(cors({
@@ -83,7 +116,11 @@ app.post('/auth/signup', async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role
+      role,
+      xp: 0,                 // Experience points for gamification
+      level: 'Explorer',     // Starting level as a string (can be changed to numeric if preferred)
+      streak: 0,             // Consecutive days of activity
+      badges: []             // Array of earned badge IDs
     };
 
     // Add to database
@@ -92,7 +129,7 @@ app.post('/auth/signup', async (req, res) => {
 
     // Generate token for auto-login
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
+      { id: newUser.id, email: newUser.email, role: newUser.role, xp: newUser.xp, level: newUser.level },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -101,7 +138,7 @@ app.post('/auth/signup', async (req, res) => {
     res.status(201).json({
       message: 'User registered successfully',
       token, // Send token for auto-login
-      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, xp: newUser.xp, level: newUser.level, streak: newUser.streak, badges: newUser.badges }
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -128,7 +165,7 @@ app.post('/auth/login', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role, xp: user.xp, level: user.level },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -137,7 +174,7 @@ app.post('/auth/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, xp: user.xp, level: user.level, streak: user.streak, badges: user.badges }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -344,6 +381,189 @@ app.post('/api/student/activities/:activityId/complete', authMiddleware, async (
   } catch (error) {
     console.error('Mark activity complete error:', error);
     res.status(500).json({ message: 'Error marking activity as complete' });
+  }
+});
+
+// Gamification endpoints
+
+// Get user gamification data
+app.get('/api/gamification/profile', authMiddleware, async (req, res) => {
+  try {
+    await db.read();
+    const user = db.data.users.find(u => u.id === req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Return only gamification-related data
+    const gamificationProfile = {
+      id: user.id,
+      name: user.name,
+      xp: user.xp,
+      level: user.level,
+      streak: user.streak,
+      badges: user.badges
+    };
+
+    res.json(gamificationProfile);
+  } catch (error) {
+    console.error('Gamification profile error:', error);
+    res.status(500).json({ message: 'Error fetching gamification data' });
+  }
+});
+
+// Award XP to user
+app.post('/api/gamification/award-xp', authMiddleware, async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+    
+    if (!amount || isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'Valid XP amount is required' });
+    }
+
+    await db.read();
+    const userIndex = db.data.users.findIndex(u => u.id === req.user.id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user XP
+    const user = db.data.users[userIndex];
+    const oldXp = user.xp || 0;
+    const newXp = oldXp + parseInt(amount, 10);
+    user.xp = newXp;
+
+    // Update level based on XP thresholds
+    const oldLevel = user.level;
+    let newLevel = 'Explorer';
+
+    // Level progression based on XP
+    if (newXp >= 1000) newLevel = 'Master';
+    else if (newXp >= 500) newLevel = 'Expert';
+    else if (newXp >= 200) newLevel = 'Advanced';
+    else if (newXp >= 50) newLevel = 'Beginner';
+
+    user.level = newLevel;
+    const leveledUp = oldLevel !== newLevel;
+
+    await db.write();
+
+    res.json({
+      success: true,
+      xp: newXp,
+      xpGained: parseInt(amount, 10),
+      level: newLevel,
+      leveledUp,
+      reason: reason || 'Activity completed'
+    });
+  } catch (error) {
+    console.error('Award XP error:', error);
+    res.status(500).json({ message: 'Error awarding XP' });
+  }
+});
+
+// Award badge to user
+app.post('/api/gamification/award-badge', authMiddleware, async (req, res) => {
+  try {
+    const { badgeId, badgeName } = req.body;
+    
+    if (!badgeId || !badgeName) {
+      return res.status(400).json({ error: 'Badge ID and name are required' });
+    }
+
+    await db.read();
+    const userIndex = db.data.users.findIndex(u => u.id === req.user.id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user already has this badge
+    const user = db.data.users[userIndex];
+    user.badges = user.badges || [];
+    
+    if (user.badges.some(badge => badge.id === badgeId)) {
+      return res.json({
+        success: false,
+        message: 'Badge already awarded',
+        badges: user.badges
+      });
+    }
+
+    // Add badge to user
+    const newBadge = {
+      id: badgeId,
+      name: badgeName,
+      awardedAt: new Date().toISOString()
+    };
+    
+    user.badges.push(newBadge);
+    await db.write();
+
+    res.json({
+      success: true,
+      message: 'Badge awarded successfully',
+      badge: newBadge,
+      badges: user.badges
+    });
+  } catch (error) {
+    console.error('Award badge error:', error);
+    res.status(500).json({ message: 'Error awarding badge' });
+  }
+});
+
+// Update streak
+app.post('/api/gamification/update-streak', authMiddleware, async (req, res) => {
+  try {
+    await db.read();
+    const userIndex = db.data.users.findIndex(u => u.id === req.user.id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get user and update streak
+    const user = db.data.users[userIndex];
+    const oldStreak = user.streak || 0;
+    
+    // Increment streak (in a real app, we'd check if the user has been active within the last 24 hours)
+    const newStreak = oldStreak + 1;
+    user.streak = newStreak;
+    
+    // Award XP for streak milestones
+    let streakXp = 0;
+    let milestone = false;
+    
+    if (newStreak % 30 === 0) {
+      streakXp = 100; // Monthly milestone
+      milestone = true;
+    } else if (newStreak % 7 === 0) {
+      streakXp = 50;  // Weekly milestone
+      milestone = true;
+    } else if (newStreak % 5 === 0) {
+      streakXp = 25;  // 5-day milestone
+      milestone = true;
+    } else {
+      streakXp = 5;   // Daily streak
+    }
+    
+    // Add streak XP to user
+    user.xp = (user.xp || 0) + streakXp;
+    
+    await db.write();
+
+    res.json({
+      success: true,
+      streak: newStreak,
+      streakXp,
+      milestone,
+      xp: user.xp
+    });
+  } catch (error) {
+    console.error('Update streak error:', error);
+    res.status(500).json({ message: 'Error updating streak' });
   }
 });
 
