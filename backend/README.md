@@ -189,12 +189,12 @@ Response:
 }
 ```
 
-For future migration to PostgreSQL/Supabase, see [MIGRATION_NOTES.md](../MIGRATION_NOTES.md).
+The backend is designed to be deployed on Azure.
 
 ## Extending the Backend
 The backend currently uses a file-based database (`lowdb` with `db.json`). For a more scalable or production-ready solution, consider replacing or augmenting this with a dedicated database service:
 
-1. **Choose a Database Service:** Options include cloud-based NoSQL databases (like Azure Cosmos DB, MongoDB Atlas) or SQL databases (like Azure Database for PostgreSQL/MySQL, Supabase).
+1. **Choose a Database Service:** Options include cloud-based NoSQL databases (like Azure Cosmos DB, MongoDB Atlas) or SQL databases (like Azure Database for PostgreSQL/MySQL).
 2. **Implement Database Connection:** Add the necessary client libraries and connection logic to `server.cjs`.
 3. **Data Modeling:** If moving to a structured database, define appropriate schemas or models. For NoSQL, you might adapt the existing JSON structure.
 4. **Update Route Handlers:** Modify the API route handlers in `server.cjs` to interact with the chosen database service instead of `lowdb`.
