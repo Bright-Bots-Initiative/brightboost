@@ -26,9 +26,9 @@ const Login: React.FC = () => {
       };
       
       login('dummy-token', userData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }

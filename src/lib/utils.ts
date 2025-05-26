@@ -30,7 +30,7 @@ export function isStrongPassword(password: string): boolean {
 }
 
 // Parse JWT token to get payload
-export function parseJwt(token: string): any {
+export function parseJwt(token: string): Record<string, unknown> | null {
   try {
     return JSON.parse(atob(token.split('.')[1]));
   } catch (e) {
@@ -44,5 +44,9 @@ export function isTokenExpired(token: string): boolean {
   if (!decoded) return true;
   
   const currentTime = Date.now() / 1000;
-  return decoded.exp < currentTime;
+  return typeof decoded === 'object' && 
+         decoded !== null && 
+         'exp' in decoded && 
+         typeof decoded.exp === 'number' && 
+         decoded.exp < currentTime;
 }

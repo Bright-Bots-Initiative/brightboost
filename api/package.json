@@ -1,0 +1,14 @@
+{
+  "name": "brightboost-api",
+  "version": "1.0.0",
+  "description": "Azure Functions API for BrightBoost",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.5455"
+  }
+}
