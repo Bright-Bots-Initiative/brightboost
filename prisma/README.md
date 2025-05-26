@@ -17,6 +17,30 @@ npx prisma migrate dev
 npx prisma migrate reset
 ```
 
+## Database Seeding
+
+To populate the database with demo/test data:
+
+```bash
+# Seed the database with demo data
+npx prisma db seed
+```
+
+## Local Development Setup
+
+For new developers setting up the project locally:
+
+```bash
+# Automated setup (requires Docker)
+./prisma/setup-dev-db.sh
+```
+
+This script will:
+- Start a local PostgreSQL container
+- Create the brightboost database
+- Generate .env file with local connection details
+- Run migrations and seed demo data
+
 ## Production Deployment
 
 For production deployment on Azure:
