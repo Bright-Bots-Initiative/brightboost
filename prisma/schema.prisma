@@ -14,8 +14,8 @@ model User {
   password  String
   role      String   // "teacher" or "student"
   xp        Int      @default(0)
-  level     Int      @default(1)
-  stars     Int      @default(0)
+  level     String   @default("Explorer")  // Changed to String to match server.cjs
+  streak    Int      @default(0)           // Added streak from server.cjs
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -24,6 +24,7 @@ model User {
   activities      Activity[]
   courses         Course[]
   enrollments     Enrollment[]
+  badges          Badge[]  // Added badges relation
 }
 
 model Lesson {
@@ -97,4 +98,13 @@ model Assignment {
   
   // Relations
   course   Course @relation(fields: [courseId], references: [id])
+}
+
+model Badge {
+  id        String   @id @default(cuid())
+  name      String
+  awardedAt DateTime @default(now())
+  
+  // Relations
+  users     User[]
 }
