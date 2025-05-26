@@ -33,9 +33,14 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
+          
       - name: Set up test database
         run: |
-          docker-compose -f docker-compose.test.yml up -d
+          docker compose -f docker-compose.test.yml up -d
           sleep 10
           npx prisma migrate deploy
           
@@ -47,7 +52,7 @@ jobs:
           NODE_ENV: test
           
       - name: Teardown test database
-        run: docker-compose -f docker-compose.test.yml down
+        run: docker compose -f docker-compose.test.yml down
       
       - name: Build application
         run: npm run build
