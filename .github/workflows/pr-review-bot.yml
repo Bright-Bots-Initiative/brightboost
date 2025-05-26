@@ -191,7 +191,6 @@ jobs:
             const securityOutput = `${{ steps.security_scan.outputs.scan_output }}`;
 
             let commentBody = `## PR Review Bot Feedback 🤖
-
 `;
 
             // Commit Message Standards
