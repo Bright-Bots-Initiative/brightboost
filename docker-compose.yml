@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://backend:3000
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=${POSTGRES_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./prisma:/app/prisma
+    command: sh -c "npx prisma generate && node server.cjs"
