@@ -177,7 +177,7 @@ describe('Core Demo Flow E2E Test', () => {
       // And a button: Mark as Complete
       // We need to find the activity associated with `createdLessonTitle`.
       // This requires knowing how activities are linked and displayed.
-      // The backend /api/student/dashboard returns 'activities' which are studentActivities from db.json,
+      // The backend /api/student/dashboard returns 'activities' which are studentActivities from the database,
       // and these are enriched with 'lessonTitle'.
       // The 'createdLessonTitle' is the title of a lesson.
       // An activity will have a 'lessonTitle' that matches 'createdLessonTitle'.

@@ -8,7 +8,7 @@ BrightBoost is an interactive learning platform designed to help teachers create
 *   **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
 *   **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
 *   **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-*   **Persistent Data Storage:** User and lesson data is stored persistently using a file-based database (`lowdb`).
+*   **Persistent Data Storage:** User and lesson data is stored persistently using PostgreSQL with Prisma ORM.
 *   **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
 *   **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
@@ -38,7 +38,7 @@ This project is built with a modern web technology stack:
     *   Context API (for state management, e.g., AuthContext)
 *   **Backend:**
     *   Node.js with Express.js
-    *   `lowdb` (for file-based JSON database - `db.json`)
+    *   PostgreSQL with Prisma ORM (for database operations)
     *   JSON Web Tokens (JWT) for authentication
     *   `bcryptjs` for password hashing
 *   **Testing:**
@@ -117,11 +117,12 @@ The deployment pipeline typically:
 2. Creates a Docker image and pushes it to a container registry (e.g., GitHub Container Registry or Azure Container Registry).
 3. Deploys the application to Azure App Service.
 
-**Note on `db.json` for Azure Deployment:**
-The current backend uses `lowdb` with a `db.json` file for data persistence. When deploying to Azure App Service:
-*   Ensure `db.json` is included in your deployment package if you want to deploy pre-existing data (not recommended for secrets or dynamic data).
-*   By default, Azure App Service file storage is ephemeral for scaling events or instance restarts (unless using features like "Path mappings" with Azure Storage or Web App for Containers with persistent storage).
-*   For a production-like or more robust demo environment on Azure, consider using an Azure database service (e.g., Azure Cosmos DB, Azure Database for PostgreSQL/MySQL) instead of `db.json`. However, for the current scope, `db.json` will be used and its persistence characteristics on App Service should be noted. The `AZURE_DEPLOYMENT.MD` file should contain more details or considerations for this.
+**Note on PostgreSQL for Azure Deployment:**
+The backend uses PostgreSQL with Prisma ORM for data persistence. When deploying to Azure App Service:
+*   Configure the `POSTGRES_URL` environment variable in Azure App Service settings
+*   Ensure the Azure PostgreSQL Flexible Server is properly configured and accessible
+*   For production deployment, use Azure Key Vault to securely manage database credentials
+*   The `AZURE_DEPLOYMENT.MD` file contains more details on the deployment configuration
 
 ## Project Structure (Simplified)
 
@@ -138,14 +139,14 @@ The current backend uses `lowdb` with a `db.json` file for data persistence. Whe
 │   └── main.tsx        # Entry point for the React app
 ├── cypress/            # Cypress E2E tests
 ├── server.cjs          # Backend Express server (Node.js, CommonJS)
-├── db.json             # lowdb JSON database file (gitignored by default, ensure handling for deployment)
+├── prisma/             # Prisma schema and migration files
 ├── vite.config.ts      # Vite configuration
 ├── tailwind.config.js  # Tailwind CSS configuration
 ├── postcss.config.js   # PostCSS configuration
 ├── README.md           # This file
 └── package.json        # Project dependencies and scripts
 ```
-*Note: `db.json` should ideally be in `.gitignore` if it contains sensitive or frequently changing data not meant for version control. If it's meant to be deployed with initial schema/data, ensure it's not gitignored.*
+*Note: Database migrations and seed scripts are available in the `prisma` directory for initializing the PostgreSQL database with schema and test data.*
 
 ## How can I edit this code? (Legacy Lovable Info)
 

@@ -1,7 +1,7 @@
 # Bright Boost – Back-End
 
 ## Overview
-Express.js API server with JWT authentication and a file-based database using lowdb (`db.json`) for development and demo purposes. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
+Express.js API server with JWT authentication and PostgreSQL database using Prisma ORM. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
 
 ## Architecture
 ![Back-End Diagram](../docs/architecture/Back_End_Diagram.png)
