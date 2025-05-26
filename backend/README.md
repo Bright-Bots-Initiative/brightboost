@@ -29,6 +29,7 @@ npm run start
 | JWT_SECRET | Secret key for JWT token signing | 'your-secret-key' |
 | PORT | Server port number | 3000 |
 | NODE_ENV | Environment mode (development/production) | development |
+| POSTGRES_URL | PostgreSQL connection string | 'postgresql://postgres:password@localhost:5432/brightboost' |
 
 ## Directory Structure
 ```
@@ -191,14 +192,61 @@ Response:
 
 The backend is designed to be deployed on Azure.
 
-## Extending the Backend
-The backend currently uses a file-based database (`lowdb` with `db.json`). For a more scalable or production-ready solution, consider replacing or augmenting this with a dedicated database service:
+## Database Configuration
 
-1. **Choose a Database Service:** Options include cloud-based NoSQL databases (like Azure Cosmos DB, MongoDB Atlas) or SQL databases (like Azure Database for PostgreSQL/MySQL).
-2. **Implement Database Connection:** Add the necessary client libraries and connection logic to `server.cjs`.
-3. **Data Modeling:** If moving to a structured database, define appropriate schemas or models. For NoSQL, you might adapt the existing JSON structure.
-4. **Update Route Handlers:** Modify the API route handlers in `server.cjs` to interact with the chosen database service instead of `lowdb`.
-5. **Environment Variables:** Add new environment variables for database connection strings, API keys, etc.
+The backend uses PostgreSQL with Prisma ORM for data storage and retrieval. The database connection is configured through environment variables.
+
+### Connection Configuration
+
+The database connection is established using the `POSTGRES_URL` environment variable, which should be set in the following format:
+
+```
+postgres://username:password@hostname:port/database
+```
+
+Example for Azure PostgreSQL:
+```
+postgres://admin:pw@bb-dev-pg.postgres.database.azure.com:5432/brightboost
+```
+
+### Environment-Specific Configuration
+
+| Environment | Configuration Method | Secret Storage |
+|-------------|---------------------|---------------|
+| Local Development | `.env` file | Local file (not committed) |
+| CI/CD Pipeline | GitHub Secrets | GitHub repository secrets |
+| Azure Development | App Service Configuration | Azure Key Vault |
+| Azure Production | App Service Configuration | Azure Key Vault |
+
+### Accessing Secrets in Azure
+
+To access database credentials stored in Azure Key Vault:
+
+1. Log in to the Azure Portal
+2. Navigate to the BrightBoost Key Vault
+3. Under "Secrets", you can view and manage database credentials
+4. App Service uses managed identity to access these secrets
+
+### Required Secrets
+
+The following secrets must be configured for each environment:
+
+- `POSTGRES-ADMIN-USERNAME`: Database admin username
+- `POSTGRES-ADMIN-PASSWORD`: Database admin password
+- `POSTGRES-URL`: Full connection string
+
+### Prisma Commands
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations in development
+npx prisma migrate dev
+
+# Run migrations in production
+npx prisma migrate deploy
+```
 
 ## Deployment
 For production deployment to Azure, refer to the [AZURE_DEPLOYMENT.md](../AZURE_DEPLOYMENT.md) file. The deployment configuration includes setting up an Azure App Service with appropriate environment variables for the production environment.

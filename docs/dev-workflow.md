@@ -23,7 +23,12 @@ This document outlines the development workflow for the BrightBoost project, inc
    # Edit .env with your local configuration
    ```
 
-4. Start the development server
+4. Generate Prisma client
+   ```bash
+   npx prisma generate
+   ```
+
+5. Start the development server
    ```bash
    npm run dev
    ```
@@ -38,6 +43,44 @@ npm test
 ## Deployment
 
 See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for detailed deployment instructions.
+
+## Database Configuration
+
+BrightBoost uses Azure PostgreSQL for data storage across all environments. This section provides information on configuring database connections for different environments.
+
+### Environment-Specific Database URLs
+
+| Environment | Database URL Format | Configuration Location |
+|-------------|---------------------|------------------------|
+| Local | `postgresql://postgres:password@localhost:5432/brightboost` | `.env` file |
+| Development | `postgres://admin:pw@bb-dev-pg.postgres.database.azure.com:5432/brightboost` | Azure App Service Configuration |
+| Staging | `postgres://admin:pw@bb-stage-pg.postgres.database.azure.com:5432/brightboost` | Azure App Service Configuration |
+| Production | `postgres://admin:pw@bb-prod-pg.postgres.database.azure.com:5432/brightboost` | Azure App Service Configuration |
+
+### Setting Up Local Database
+
+1. Install PostgreSQL locally or use Docker:
+   ```bash
+   docker run --name brightboost-postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+   ```
+
+2. Create a database:
+   ```bash
+   docker exec -it brightboost-postgres psql -U postgres -c "CREATE DATABASE brightboost;"
+   ```
+
+3. Run migrations:
+   ```bash
+   npx prisma migrate dev
+   ```
+
+### Secrets Management
+
+Database credentials and other sensitive information are managed securely:
+
+1. **Local Development**: Stored in `.env` file (not committed to repository)
+2. **CI/CD Pipeline**: Stored in GitHub Secrets
+3. **Azure Environments**: Stored in Azure Key Vault and referenced in App Service Configuration
 
 ## Monitoring
 
@@ -56,6 +99,8 @@ BrightBoost uses Azure Application Insights and Log Analytics for monitoring and
    - Failed Requests
    - Server Response Time
    - Server Exceptions
+   - Database Connection Status
+   - Database Query Performance
 
 ### Alert Notifications
 
