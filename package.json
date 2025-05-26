@@ -9,17 +9,17 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "server": "node server.js",
+    "server": "node server.cjs",
     "start": "npm run build && NODE_ENV=production npm run server",
-    "dev:server": "nodemon server.js",
+    "dev:server": "nodemon server.cjs",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
     "test:watch": "vitest",
-    "test:db": "docker-compose -f docker-compose.test.yml up -d && npx prisma migrate deploy && npm run test && docker-compose -f docker-compose.test.yml down",
-    "test:db:setup": "docker-compose -f docker-compose.test.yml up -d && npx prisma migrate deploy",
-    "test:db:teardown": "docker-compose -f docker-compose.test.yml down"
+    "test:db": "docker compose -f docker-compose.test.yml up -d && npx prisma migrate deploy && npm run test && docker compose -f docker-compose.test.yml down",
+    "test:db:setup": "docker compose -f docker-compose.test.yml up -d && npx prisma migrate deploy",
+    "test:db:teardown": "docker compose -f docker-compose.test.yml down"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
