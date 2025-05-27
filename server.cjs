@@ -5,6 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -31,14 +32,14 @@ const users = [
     id: '1',
     name: 'Test Teacher',
     email: 'teacher@example.com',
-    password: 'password123',
+    password: '$2a$10$XHrHYVust94ynHjqoIOMzeC7xWQT4bCuNpJlR8tiIXXTmPv8.MYLm', // hashed 'password123'
     role: 'teacher'
   },
   {
     id: '2',
     name: 'Test Student',
     email: 'student@example.com',
-    password: 'password123',
+    password: '$2a$10$XHrHYVust94ynHjqoIOMzeC7xWQT4bCuNpJlR8tiIXXTmPv8.MYLm', // hashed 'password123'
     role: 'student'
   }
 ];
@@ -46,7 +47,7 @@ const users = [
 // API Routes
 
 // Signup endpoint
-app.post('/auth/signup', (req, res) => {
+app.post('/auth/signup', async (req, res) => {
   const { email, password, name, role } = req.body;
 
   // Validation
@@ -60,27 +61,36 @@ app.post('/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'User with this email already exists' });
   }
 
-  // Create new user
-  const newUser = {
-    id: Date.now().toString(),
-    name,
-    email,
-    password, // In production, hash the password
-    role
-  };
+  try {
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Add to mock database
-  users.push(newUser);
+    // Create new user
+    const newUser = {
+      id: Date.now().toString(),
+      name,
+      email,
+      password: hashedPassword,
+      role
+    };
 
-  // Return success
-  res.status(201).json({
-    message: 'User registered successfully',
-    user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
-  });
+    // Add to mock database
+    users.push(newUser);
+
+    // Return success
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
+    });
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Login endpoint
-app.post('/auth/login', (req, res) => {
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   // Validation
@@ -90,23 +100,34 @@ app.post('/auth/login', (req, res) => {
 
   // Find user
   const user = users.find(user => user.email === email);
-  if (!user || user.password !== password) {
+  if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  // Generate token
-  const token = jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
+  try {
+    // Compare password with hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-  // Return user data and token
-  res.json({
-    message: 'Login successful',
-    token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role }
-  });
+    // Generate token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Return user data and token
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Protected routes

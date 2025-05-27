@@ -5,6 +5,7 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,20 +30,20 @@ const users = [
     id: '1',
     name: 'Test Teacher',
     email: 'teacher@example.com',
-    password: 'password123',
+    password: '$2a$10$XHrHYVust94ynHjqoIOMzeC7xWQT4bCuNpJlR8tiIXXTmPv8.MYLm', // hashed 'password123'
     role: 'teacher'
   },
   {
     id: '2',
     name: 'Test Student',
     email: 'student@example.com',
-    password: 'password123',
+    password: '$2a$10$XHrHYVust94ynHjqoIOMzeC7xWQT4bCuNpJlR8tiIXXTmPv8.MYLm', // hashed 'password123'
     role: 'student'
   }
 ];
 
 // Login endpoint
-app.post('/auth/login', (req, res) => {
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   // Validation
@@ -52,19 +53,29 @@ app.post('/auth/login', (req, res) => {
 
   // Find user
   const user = users.find(user => user.email === email);
-  if (!user || user.password !== password) {
+  if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  // Return user data (in a real app, you'd generate a JWT token here)
-  res.json({
-    message: 'Login successful',
-    user: { id: user.id, name: user.name, email: user.email, role: user.role }
-  });
+  try {
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Return user data (in a real app, you'd generate a JWT token here)
+    res.json({
+      message: 'Login successful',
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Signup endpoint
-app.post('/auth/signup', (req, res) => {
+app.post('/auth/signup', async (req, res) => {
   const { name, email, password, role } = req.body;
   
   // Validation
@@ -77,21 +88,29 @@ app.post('/auth/signup', (req, res) => {
     return res.status(400).json({ error: 'User already exists' });
   }
   
-  // Create new user
-  const newUser = {
-    id: Date.now().toString(),
-    name,
-    email,
-    password,
-    role
-  };
-  
-  users.push(newUser);
-  
-  res.status(201).json({
-    message: 'User created successfully',
-    user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
-  });
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Create new user
+    const newUser = {
+      id: Date.now().toString(),
+      name,
+      email,
+      password: hashedPassword,
+      role
+    };
+    
+    users.push(newUser);
+    
+    res.status(201).json({
+      message: 'User created successfully',
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
+    });
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Serve static files
