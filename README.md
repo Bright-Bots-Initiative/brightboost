@@ -104,22 +104,23 @@ To get a local copy up and running, follow these simple steps.
 
 ## Deployment
 
-This project is configured for deployment to Azure.
+This project is configured for deployment to Azure Static Web Apps.
 
 ### Using Azure (CI/CD Pipeline)
 
-The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pipeline. For details on the deployment process, refer to the [Deployment Pipeline](./docs/deployment/pipeline.md) documentation (Note: This file might not exist in the current repository state).
+The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pipeline defined in `.github/workflows/azure-static-web-apps-black-sand-053455d1e.yml`. This workflow automatically builds and deploys both the frontend and API functions when changes are pushed to the main branch.
 
 For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
 
-The deployment pipeline typically:
-1. Builds and tests the application.
-2. Creates a Docker image and pushes it to a container registry (e.g., GitHub Container Registry or Azure Container Registry).
-3. Deploys the application to Azure App Service.
+The deployment pipeline:
+1. Builds and tests the application
+2. Deploys the frontend to Azure Static Web Apps
+3. Deploys the API functions to Azure Static Web Apps
+4. Configures routing and environment variables
 
 **Note on PostgreSQL for Azure Deployment:**
-The backend uses PostgreSQL with Prisma ORM for data persistence. When deploying to Azure App Service:
-*   Configure the `POSTGRES_URL` environment variable in Azure App Service settings
+The backend uses PostgreSQL with Prisma ORM for data persistence. When deploying to Azure Static Web Apps:
+*   Configure the `POSTGRES_URL` environment variable in Azure Static Web Apps settings
 *   Ensure the Azure PostgreSQL Flexible Server is properly configured and accessible
 *   For production deployment, use Azure Key Vault to securely manage database credentials
 *   The `AZURE_DEPLOYMENT.MD` file contains more details on the deployment configuration

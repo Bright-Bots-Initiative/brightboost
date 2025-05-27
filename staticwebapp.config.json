@@ -2,11 +2,7 @@
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["anonymous"],
-      "serve": "https://bb-dev-func.azurewebsites.net/api/*",
-      "headers": {
-        "X-Forwarded-Host": "black-sand-053455d1e.6.azurestaticapps.net"
-      }
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/*",
