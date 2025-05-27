@@ -220,7 +220,7 @@ jobs:
             commentBody += `### 💅 Code Formatting (Prettier)
             if (prettierStatus === 'success') {
               commentBody += `✅ Code formatting is consistent.
-`;
+
               // Optionally show details even on success if there's relevant output
               if (prettierOutput && prettierOutput.trim() !== '' && !prettierOutput.includes('All matched files use Prettier code style!')) {
                 commentBody += `<details><summary>Details</summary>
