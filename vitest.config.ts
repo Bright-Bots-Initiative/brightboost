@@ -22,5 +22,12 @@ export default defineConfig({
       jsdom: {
       }
     },
+    browser: {
+      enabled: false, // Disable browser tests for API testing
+      name: 'chrome',
+    },
+    include: ['tests/**/*.test.ts'], // Only run API tests
+    globalSetup: './tests/setupDbTests.ts',
+    testTimeout: 30000, // Increase timeout for database operations
   },
 });

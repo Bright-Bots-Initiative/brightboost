@@ -1,20 +1,33 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
-let prisma;
+const globalForPrisma = globalThis;
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient({
-    errorFormat: 'minimal',
-    log: ['error', 'warn'],
-  });
-} else {
-  if (!global.__prisma) {
-    global.__prisma = new PrismaClient({
+const prismaClientSingleton = () => {
+  if (process.env.NODE_ENV === 'test') {
+    console.log('Using test database configuration');
+    return new PrismaClient({
+      datasources: {
+        db: {
+          url: 'postgresql://test_user:test_password@localhost:5433/brightboost_test'
+        }
+      },
+      log: ['query', 'error', 'warn'],
+    });
+  } else if (process.env.NODE_ENV === 'production') {
+    console.log('Using production database configuration');
+    return new PrismaClient({
+      errorFormat: 'minimal',
+      log: ['error', 'warn'],
+    });
+  } else {
+    console.log('Using development database configuration');
+    return new PrismaClient({
       log: ['query', 'info', 'warn', 'error'],
     });
   }
-  prisma = global.__prisma;
-}
+};
+
+const prisma = globalForPrisma.prisma || prismaClientSingleton();
 
 prisma.$on('error', (e) => {
   console.error('Prisma Client error:', e);
@@ -28,4 +41,6 @@ process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });
 
-module.exports = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+export default prisma;

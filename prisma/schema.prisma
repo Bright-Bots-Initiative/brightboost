@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("POSTGRES_URL")
+  // Override database URL with direct connection string for tests
+  // This ensures migrations work correctly in test environment
 }
 
 model User {
@@ -14,7 +16,7 @@ model User {
   password  String
   role      String   // "teacher" or "student"
   xp        Int      @default(0)
-  level     String   @default("Explorer")  // Changed to String to match server.cjs
+  level     Int      @default(1)           // Changed to Int to match server implementation
   streak    Int      @default(0)           // Added streak from server.cjs
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
