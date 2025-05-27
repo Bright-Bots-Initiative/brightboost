@@ -20,7 +20,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - POSTGRES_URL=${POSTGRES_URL}
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./prisma:/app/prisma

@@ -10,7 +10,7 @@ These settings should be configured in the Azure portal or through the Azure CLI
 
 | Key | Example Value | Purpose |
 |-----|--------------|---------|
-| POSTGRES_URL | postgres://admin:pw@brightboost-pg.postgres.database.azure.com:5432/brightboost | Required for database connection |
+| DATABASE_URL | postgres://admin:pw@brightboost-pg.postgres.database.azure.com:5432/brightboost | Required for database connection |
 | JWT_SECRET | your-secure-jwt-secret | JWT token signing |
 | NODE_ENV | production | Environment configuration |
 | APPLICATIONINSIGHTS_CONNECTION_STRING | InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://... | Connects application to Application Insights |

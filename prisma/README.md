@@ -45,7 +45,7 @@ This script will:
 
 For production deployment on Azure:
 
-1. Ensure the `POSTGRES_URL` environment variable is set in your Azure App Service configuration
+1. Ensure the `DATABASE_URL` environment variable is set in your Azure App Service configuration
 2. Run the production migration script:
 
 ```bash

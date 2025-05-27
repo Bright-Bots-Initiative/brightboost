@@ -120,7 +120,7 @@ The deployment pipeline:
 
 **Note on PostgreSQL for Azure Deployment:**
 The backend uses PostgreSQL with Prisma ORM for data persistence. When deploying to Azure Static Web Apps:
-*   Configure the `POSTGRES_URL` environment variable in Azure Static Web Apps settings
+*   Configure the `DATABASE_URL` environment variable in Azure Static Web Apps settings
 *   Ensure the Azure PostgreSQL Flexible Server is properly configured and accessible
 *   For production deployment, use Azure Key Vault to securely manage database credentials
 *   The `AZURE_DEPLOYMENT.MD` file contains more details on the deployment configuration

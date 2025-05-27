@@ -3,8 +3,8 @@
 # This script should be run in the production environment
 
 # Ensure environment variables are set
-if [ -z "$POSTGRES_URL" ]; then
-  echo "Error: POSTGRES_URL environment variable is not set"
+if [ -z "$DATABASE_URL" ]; then
+  echo "Error: DATABASE_URL environment variable is not set"
   exit 1
 fi
 

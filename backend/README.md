@@ -29,7 +29,7 @@ npm run start
 | JWT_SECRET | Secret key for JWT token signing | 'your-secret-key' |
 | PORT | Server port number | 3000 |
 | NODE_ENV | Environment mode (development/production) | development |
-| POSTGRES_URL | PostgreSQL connection string | 'postgresql://postgres:password@localhost:5432/brightboost' |
+| DATABASE_URL | PostgreSQL connection string | 'postgresql://postgres:password@localhost:5432/brightboost' |
 
 ## Directory Structure
 ```
@@ -198,7 +198,7 @@ The backend uses PostgreSQL with Prisma ORM for data storage and retrieval. The 
 
 ### Connection Configuration
 
-The database connection is established using the `POSTGRES_URL` environment variable, which should be set in the following format:
+The database connection is established using the `DATABASE_URL` environment variable, which should be set in the following format:
 
 ```
 postgres://username:password@hostname:port/database

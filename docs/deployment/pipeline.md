@@ -31,7 +31,7 @@ The following environment variables and secrets are required for the deployment 
 
 - `FUNCTION_APP_BASE_URL`: URL of the Azure Function App
 - `FUNCTION_APP_KEY`: Function App key for authentication
-- `POSTGRES_URL`: PostgreSQL connection string
+- `DATABASE_URL`: PostgreSQL connection string
 - `NODE_ENV`: Set to 'production'
 - `WEBSITE_NODE_DEFAULT_VERSION`: Node.js version (18 or 20)
 - `APPLICATIONINSIGHTS_CONNECTION_STRING`: Application Insights connection string

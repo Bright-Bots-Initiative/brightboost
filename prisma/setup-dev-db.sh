@@ -22,7 +22,7 @@ fi
 
 if [ ! -f .env ]; then
   echo "Creating .env file with local database connection..."
-  echo "POSTGRES_URL=postgresql://postgres:password@localhost:5432/brightboost" > .env
+  echo "DATABASE_URL=postgresql://postgres:password@localhost:5432/brightboost" > .env
   echo "JWT_SECRET=local-development-secret" >> .env
   echo "NODE_ENV=development" >> .env
   echo "PORT=3000" >> .env
