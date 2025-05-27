@@ -1,4 +1,5 @@
-const { verifyToken, users } = require('../shared/auth');
+const { verifyToken } = require('../shared/auth');
+const prisma = require('../shared/prisma');
 
 module.exports = async function (context, req) {
   context.log('Processing profile request');
@@ -15,7 +16,13 @@ module.exports = async function (context, req) {
 
     const decoded = verifyToken(authHeader);
     
-    const user = users.find(u => u.id === decoded.id);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      include: {
+        badges: true
+      }
+    });
+    
     if (!user) {
       context.res = {
         status: 404,
@@ -30,7 +37,15 @@ module.exports = async function (context, req) {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        xp: user.xp,
+        level: user.level,
+        streak: user.streak || 0,
+        badges: user.badges.map(badge => ({
+          id: badge.id,
+          name: badge.name,
+          description: badge.description
+        }))
       }
     };
   } catch (error) {

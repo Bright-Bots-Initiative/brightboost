@@ -1,23 +1,8 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const prisma = require('./prisma');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-const users = [
-  {
-    id: '1',
-    name: 'Test Teacher',
-    email: 'teacher@example.com',
-    password: 'password123',
-    role: 'teacher'
-  },
-  {
-    id: '2',
-    name: 'Test Student',
-    email: 'student@example.com',
-    password: 'password123',
-    role: 'student'
-  }
-];
 
 const verifyToken = (token) => {
   try {
@@ -36,16 +21,42 @@ const verifyToken = (token) => {
   }
 };
 
-const findUserByCredentials = (email, password) => {
-  return users.find(user => user.email === email && user.password === password);
+const findUserByCredentials = async (email, password) => {
+  const user = await prisma.user.findUnique({
+    where: { email }
+  });
+  
+  if (!user) {
+    return null;
+  }
+  
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return null;
+  }
+  
+  return user;
 };
 
-const findUserByEmail = (email) => {
-  return users.find(user => user.email === email);
+const findUserByEmail = async (email) => {
+  return await prisma.user.findUnique({
+    where: { email }
+  });
 };
 
-const addUser = (user) => {
-  users.push(user);
+const addUser = async (userData) => {
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
+  
+  const user = await prisma.user.create({
+    data: {
+      ...userData,
+      password: hashedPassword,
+      xp: userData.xp || 0,
+      level: userData.level || 1,
+      streak: userData.streak || 0
+    }
+  });
+  
   return user;
 };
 
@@ -54,5 +65,5 @@ module.exports = {
   findUserByCredentials,
   findUserByEmail,
   addUser,
-  users
+  JWT_SECRET
 };

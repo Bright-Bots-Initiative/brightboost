@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { findUserByEmail, addUser } = require('../../shared/auth');
+const { findUserByEmail, addUser, JWT_SECRET } = require('../../shared/auth');
 
 module.exports = async function (context, req) {
   context.log('Processing signup request');
@@ -15,7 +15,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const existingUser = findUserByEmail(email);
+    const existingUser = await findUserByEmail(email);
     if (existingUser) {
       context.res = {
         status: 400,
@@ -24,19 +24,27 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const newUser = {
-      id: Date.now().toString(),
+    const userData = {
       name,
       email,
-      password, // In production, hash the password
-      role
+      password,
+      role,
+      xp: 0,
+      level: 1,
+      streak: 0
     };
 
-    addUser(newUser);
+    const newUser = await addUser(userData);
 
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
+      { 
+        id: newUser.id, 
+        email: newUser.email, 
+        role: newUser.role,
+        xp: newUser.xp,
+        level: newUser.level,
+        streak: newUser.streak
+      },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -46,7 +54,16 @@ module.exports = async function (context, req) {
       body: {
         message: 'User registered successfully',
         token,
-        user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
+        user: { 
+          id: newUser.id, 
+          name: newUser.name, 
+          email: newUser.email, 
+          role: newUser.role,
+          xp: newUser.xp,
+          level: newUser.level,
+          streak: newUser.streak || 0,
+          badges: [] // Will be fetched separately in the future
+        }
       }
     };
   } catch (error) {

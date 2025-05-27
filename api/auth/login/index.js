@@ -1,5 +1,5 @@
+const { findUserByCredentials, JWT_SECRET } = require('../../shared/auth');
 const jwt = require('jsonwebtoken');
-const { findUserByCredentials } = require('../../shared/auth');
 
 module.exports = async function (context, req) {
   context.log('Processing login request');
@@ -15,7 +15,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const user = findUserByCredentials(email, password);
+    const user = await findUserByCredentials(email, password);
     if (!user) {
       context.res = {
         status: 401,
@@ -24,9 +24,15 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role,
+        xp: user.xp,
+        level: user.level,
+        streak: user.streak
+      },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -36,7 +42,16 @@ module.exports = async function (context, req) {
       body: {
         message: 'Login successful',
         token,
-        user: { id: user.id, name: user.name, email: user.email, role: user.role }
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          xp: user.xp,
+          level: user.level,
+          streak: user.streak || 0,
+          badges: [] // Will be fetched separately in the future
+        }
       }
     };
   } catch (error) {
