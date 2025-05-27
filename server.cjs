@@ -7,38 +7,8 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-// Import Prisma client
-// For CommonJS compatibility, we use a workaround to import the ES module
-// This is synchronous and works better with tests
-const { PrismaClient } = require('@prisma/client');
-
-// Initialize PrismaClient with environment-specific configuration
-let prisma;
-if (process.env.NODE_ENV === 'test') {
-  // Use test database URL from .env.test
-  const testDbUrl = process.env.POSTGRES_URL || 'postgresql://test_user:test_password@localhost:5433/brightboost_test';
-  console.log('Using test database URL:', testDbUrl);
-  
-  prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: testDbUrl
-      }
-    },
-    log: ['error', 'warn'],
-  });
-  console.log('Using test database configuration');
-} else if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient({
-    log: ['error', 'warn'],
-    errorFormat: 'minimal',
-  });
-} else {
-  prisma = new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
-    errorFormat: 'pretty',
-  });
-}
+// Import centralized Prisma client
+const prisma = require('./prisma/client.cjs');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth.cjs');
@@ -748,23 +718,39 @@ app.post('/api/gamification/award-xp', authMiddleware, async (req, res) => {
     
     const leveledUp = oldLevel !== newLevel;
 
-    // Update user with Prisma - ensure xp is set to a number
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        xp: newXp,
-        level: newLevel
+    // Update user with Prisma using transaction for atomicity
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      // Verify user exists within transaction
+      const userInTx = await tx.user.findUnique({
+        where: { id: req.user.id }
+      });
+      
+      if (!userInTx) {
+        console.error('User not found within transaction for XP award:', req.user.id);
+        throw new Error(`User not found within transaction: ${req.user.id}`);
       }
+      
+      // Update user XP and level
+      const updated = await tx.user.update({
+        where: { id: req.user.id },
+        data: {
+          xp: newXp,
+          level: newLevel
+        }
+      });
+      
+      // Verify update was successful
+      const verifiedUser = await tx.user.findUnique({
+        where: { id: req.user.id }
+      });
+      
+      if (!verifiedUser) {
+        console.error('Failed to verify XP update within transaction:', req.user.id);
+        throw new Error(`Failed to verify XP update: ${req.user.id}`);
+      }
+      
+      return updated;
     });
-
-    // Verify the update was successful by fetching the updated user
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: req.user.id }
-    });
-
-    if (!updatedUser) {
-      return res.status(500).json({ error: 'Failed to update user XP' });
-    }
 
     res.json({
       success: true,
@@ -934,17 +920,42 @@ app.post('/api/gamification/update-streak', authMiddleware, async (req, res) => 
     const newXp = (user.xp || 0) + streakXp;
     
     try {
-      // Update user with Prisma
-      const updatedUser = await prisma.user.update({
-        where: { id: req.user.id },
-        data: {
-          streak: {
-            set: newStreak
-          },
-          xp: {
-            set: newXp
-          }
+      // Update user with Prisma using transaction for atomicity
+      const updatedUser = await prisma.$transaction(async (tx) => {
+        // Verify user exists within transaction
+        const userInTx = await tx.user.findUnique({
+          where: { id: req.user.id }
+        });
+        
+        if (!userInTx) {
+          console.error('User not found within transaction:', req.user.id);
+          throw new Error(`User not found within transaction: ${req.user.id}`);
         }
+        
+        // Update user streak and XP
+        const updated = await tx.user.update({
+          where: { id: req.user.id },
+          data: {
+            streak: {
+              set: newStreak
+            },
+            xp: {
+              set: newXp
+            }
+          }
+        });
+        
+        // Verify update was successful
+        const verifiedUser = await tx.user.findUnique({
+          where: { id: req.user.id }
+        });
+        
+        if (!verifiedUser || verifiedUser.streak !== newStreak) {
+          console.error('Failed to verify streak update within transaction:', req.user.id);
+          throw new Error(`Failed to verify streak update: ${req.user.id}`);
+        }
+        
+        return updated;
       });
       
       console.log('User streak updated successfully:', updatedUser.streak);

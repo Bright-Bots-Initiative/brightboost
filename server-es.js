@@ -6,16 +6,13 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+const prismaClient = await import('./prisma/client.cjs').then(module => module.default || module);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Initialize Prisma client
-const prisma = new PrismaClient({
-  errorFormat: 'minimal',
-  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error', 'warn'],
-});
+// Use centralized Prisma client
+const prisma = prismaClient;
 
 // Initialize Express app
 const app = express();

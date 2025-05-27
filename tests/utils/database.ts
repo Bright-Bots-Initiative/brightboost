@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { UserOverrides, LessonOverrides, BadgeOverrides } from '../types';
 
-import prismaClient from '../../prisma/client.js';
+import prismaClient from '../../prisma/client.cjs';
 
 const prisma = prismaClient;
 
