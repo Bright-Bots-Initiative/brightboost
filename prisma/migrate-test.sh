@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-export POSTGRES_URL="postgresql://test_user:test_password@localhost:5433/brightboost_test"
+export TEST_DATABASE_URL="postgresql://test_user:test_password@localhost:5433/brightboost_test"
 export NODE_ENV="test"
-export DATABASE_URL="$POSTGRES_URL"  # Required for Prisma CLI compatibility
+export DATABASE_URL="$TEST_DATABASE_URL"  # Required for Prisma CLI compatibility
 
-echo "Running migrations on test database with URL: $POSTGRES_URL"
+echo "Running migrations on test database with URL: $TEST_DATABASE_URL"
 
 if ! docker ps | grep -q brightboost-test-postgres; then
   echo "Error: PostgreSQL test container is not running. Please start it with 'docker-compose -f docker-compose.test.yml up -d'"

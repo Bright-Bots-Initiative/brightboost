@@ -19,8 +19,7 @@ const createPrismaClient = () => {
     return new PrismaClient({
       datasources: { db: { url: dbUrl } },
       log: ['query', 'error', 'warn'],
-      // Shorter connection timeout for tests to fail fast if DB is unavailable
-      connectionTimeout: 5000,
+      // No connectionTimeout property as it's not supported in this Prisma version
     });
   } else if (process.env.NODE_ENV === 'production') {
     console.log('Creating production database client');

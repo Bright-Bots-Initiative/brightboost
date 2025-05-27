@@ -15,12 +15,12 @@ The BrightBoost application uses PostgreSQL for data storage and Prisma ORM for 
 Tests require the following environment variables:
 
 ```
-POSTGRES_URL=postgresql://test_user:test_password@localhost:5433/brightboost_test
+TEST_DATABASE_URL=postgresql://test_user:test_password@localhost:5433/brightboost_test
 JWT_SECRET=test-secret-key
 NODE_ENV=test
 ```
 
-These are automatically set in the `vitest.config.ts` file for local testing.
+These are automatically set in the `vitest.config.ts` file for local testing. All test runs depend on TEST_DATABASE_URL for full isolation and reproducibility.
 
 ### Test Database Setup
 
