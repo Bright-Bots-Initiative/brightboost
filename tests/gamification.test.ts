@@ -294,6 +294,20 @@ describe('Gamification Endpoints', () => {
         process.env.JWT_SECRET || 'test-secret-key'
       );
       
+      const decodedToken = jwt.verify(streakTestToken, process.env.JWT_SECRET || 'test-secret-key');
+      console.log('Decoded token:', decodedToken);
+      
+      const userBeforeRequest = await prisma.user.findUnique({
+        where: { id: verifiedUser.id }
+      });
+      
+      if (!userBeforeRequest) {
+        console.error('User not found right before streak update request:', verifiedUser.id);
+        throw new Error(`User disappeared from database before streak update: ${verifiedUser.id}`);
+      }
+      
+      console.log('Updating streak for user:', verifiedUser.id);
+      
       const response = await request(app)
         .post('/api/gamification/update-streak')
         .set('Authorization', `Bearer ${streakTestToken}`)
