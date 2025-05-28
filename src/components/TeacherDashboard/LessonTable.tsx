@@ -16,10 +16,10 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Lesson, LessonsTableProps, SortableLessonRowProps } from './types';
+import { LessonsTableProps, SortableLessonRowProps } from './types';
 import IconButton, { EditIcon, DuplicateIcon, DeleteIcon, DragHandleIcon } from '../shared/IconButton';
 
-const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEdit, onDuplicate, onDelete }) => {
+const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEditLesson, onDuplicateLesson, onDeleteLesson }) => {
   const {
     attributes,
     listeners,
@@ -44,6 +44,9 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEdit, o
         </IconButton>
       </td>
       <td className="py-4 px-4 text-sm font-medium text-gray-900 whitespace-nowrap align-middle">{lesson.title}</td>
+      <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap align-middle max-w-xs truncate" title={lesson.content}>
+        {lesson.content ? `${lesson.content.substring(0, 50)}...` : 'N/A'}
+      </td>
       <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap align-middle">{lesson.category}</td>
       <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap align-middle">{lesson.date}</td>
       <td className="py-4 px-6 text-sm whitespace-nowrap align-middle">
@@ -57,13 +60,14 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEdit, o
       </td>
       <td className="py-4 px-6 text-sm font-medium whitespace-nowrap align-middle">
         <div className="flex items-center space-x-2">
-          <IconButton onClick={() => onEdit(lesson.id)} title="Edit" className="text-blue-600 hover:text-blue-900">
+          {/* Pass the full lesson object to the handler */}
+          <IconButton onClick={() => onEditLesson(lesson)} title="Edit" className="text-blue-600 hover:text-blue-900">
             <EditIcon />
           </IconButton>
-          <IconButton onClick={() => onDuplicate(lesson.id)} title="Duplicate" className="text-green-600 hover:text-green-900">
+          <IconButton onClick={() => onDuplicateLesson(lesson.id)} title="Duplicate" className="text-green-600 hover:text-green-900">
             <DuplicateIcon />
           </IconButton>
-          <IconButton onClick={() => onDelete(lesson.id)} title="Delete" className="text-red-600 hover:text-red-900">
+          <IconButton onClick={() => onDeleteLesson(lesson.id)} title="Delete" className="text-red-600 hover:text-red-900">
             <DeleteIcon />
           </IconButton>
         </div>
@@ -72,7 +76,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({ lesson, onEdit, o
   );
 };
 
-const LessonsTable: React.FC<LessonsTableProps> = ({ lessons, setLessons, onEdit, onDuplicate, onDelete }) => {
+const LessonsTable: React.FC<LessonsTableProps> = ({ lessons, setLessons, onEditLesson, onDuplicateLesson, onDeleteLesson }) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -89,8 +93,8 @@ const LessonsTable: React.FC<LessonsTableProps> = ({ lessons, setLessons, onEdit
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrderLessons = arrayMove(lessons, oldIndex, newIndex);
         setLessons(newOrderLessons);
-        console.log("New lesson order (IDs):", newOrderLessons.map(l => l.id));
-        console.log("Full new lesson order:", newOrderLessons);
+        // console.log("New lesson order (IDs):", newOrderLessons.map(l => l.id));
+        // console.log("Full new lesson order:", newOrderLessons);
       }
     }
   }
@@ -111,6 +115,7 @@ const LessonsTable: React.FC<LessonsTableProps> = ({ lessons, setLessons, onEdit
             <tr>
               <th className="py-3 px-2 w-12 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th> {/* Drag Handle Col */}
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Content (Summary)</th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -123,9 +128,9 @@ const LessonsTable: React.FC<LessonsTableProps> = ({ lessons, setLessons, onEdit
                 <SortableLessonRow
                   key={lesson.id}
                   lesson={lesson}
-                  onEdit={onEdit}
-                  onDuplicate={onDuplicate}
-                  onDelete={onDelete}
+                  onEditLesson={onEditLesson}
+                  onDuplicateLesson={onDuplicateLesson}
+                  onDeleteLesson={onDeleteLesson}
                 />
               ))}
             </tbody>

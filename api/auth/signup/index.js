@@ -6,6 +6,8 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 module.exports = async function (context, req) {
+  context.log('Processing signup request');
+  
   if (req.method !== 'POST') {
     context.res = { status: 405, body: { error: 'Method not allowed' } };
     return;

@@ -1,10 +1,15 @@
 # Bright Boost – Back-End
 
 ## Overview
-Azure Functions (Node 18), Prisma ORM, and Azure PostgreSQL Flexible Server.
+Azure Functions (Node 18) with JWT authentication, Prisma ORM, and Azure PostgreSQL Flexible Server. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
+
+## Architecture
+![Back-End Diagram](../docs/architecture/Back_End_Diagram.png)
+
+The diagram above shows the target architecture for the BrightBoost backend, including the key components and their interactions.
 
 ## Quick Start
-```powershell
+```bash
 npm install              # installs packages
 func start               # hot-reload dev server at http://localhost:7071
 ```
@@ -29,7 +34,7 @@ bash ./scripts/migrate-azure.sh
 
 ## Deployment
 1. Deploy Azure Functions:
-```powershell
+```bash
 az functionapp deployment source config-zip -g brightboost-rg -n brightboost-api --src ./api.zip
 ```
 
