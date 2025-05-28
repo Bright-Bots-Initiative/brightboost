@@ -216,38 +216,29 @@ jobs:
             }
             commentBody += '\n';
 
-          // Prettier
-commentBody += `### 💅 Code Formatting (Prettier)\n`;
-if (prettierStatus === 'success') {
-  commentBody += `✅ Code formatting is consistent.\n`;
-  // Optionally show details even on success if there's relevant output
-  if (
-    prettierOutput &&
-    prettierOutput.trim() !== '' &&
-    !prettierOutput.includes('All matched files use Prettier code style!')
-  ) {
-    commentBody += `<details><summary>Details</summary>\n\n` +
-      '```' + '\n' +
-      `${prettierOutput.trim()}\n` +
-      '```\n\n' +
-      '</details>\n';
-  }
-} else {
-  commentBody += `❌ Code formatting issues found.\n`;
-  commentBody += `<details><summary>Details</summary>\n\n` +
-    '```' + '\n' +
-    `${prettierOutput.trim()}\n` +
-    '```\n\n' +
-    '</details>\n';
-}
-commentBody += '\n';
-
-\`\`\`
-${prettierOutput.trim()}
-\`\`\`
-
-</details>
-`;
+            // Prettier
+            commentBody += `### 💅 Code Formatting (Prettier)\n`;
+            if (prettierStatus === 'success') {
+              commentBody += `✅ Code formatting is consistent.\n`;
+              // Optionally show details even on success if there's relevant output
+              if (
+                prettierOutput &&
+                prettierOutput.trim() !== '' &&
+                !prettierOutput.includes('All matched files use Prettier code style!')
+              ) {
+                commentBody += `<details><summary>Details</summary>\n\n` +
+                  '```' + '\n' +
+                  `${prettierOutput.trim()}\n` +
+                  '```\n\n' +
+                  '</details>\n';
+              }
+            } else {
+              commentBody += `❌ Code formatting issues found.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                '```' + '\n' +
+                `${prettierOutput.trim()}\n` +
+                '```\n\n' +
+                '</details>\n';
             }
             commentBody += '\n';
 
