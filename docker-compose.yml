@@ -24,4 +24,4 @@ services:
       - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./prisma:/app/prisma
-    command: sh -c "npx prisma generate && node server.cjs"
+    command: sh -c "npx prisma generate && func start"
