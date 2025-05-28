@@ -265,126 +265,90 @@ jobs:
             commentBody += '\n';
 
             // Linting
-            commentBody += `### 🧹 Linting
-`;
+            commentBody += `### 🧹 Linting\n`;
             if (lintStatus === 'success') {
-              commentBody += `✅ Linting passed.
-`;
+              commentBody += `✅ Linting passed.\n`;
               // Show details if output is not empty and not a generic success message (adjust as needed)
               if (lintOutput && lintOutput.trim() !== '' && lintOutput.trim() !== 'No linting issues found.' && !lintOutput.trim().startsWith('All files passed linting')) {
-                commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${lintOutput.trim()}
-\`\`\`
-
-</details>
-`;
+                commentBody += `<details><summary>Details</summary>\n\n` +
+                  '```' + '\n' +
+                  `${lintOutput.trim()}\n` +
+                  '```\n\n' +
+                  `</details>\n`;
               }
             } else {
-              commentBody += `❌ Linting failed.
-`;
-              commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${lintOutput.trim()}
-\`\`\`
-
-</details>
-`;
+              commentBody += `❌ Linting failed.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                '```' + '\n' +
+                `${lintOutput.trim()}\n` +
+                '```\n\n' +
+                `</details>\n`;
             }
             commentBody += '\n';
 
             // Tests
-            commentBody += `### 🧪 Tests
-`;
+            commentBody += `### 🧪 Tests\n`;
             if (testStatus === 'success') {
-              commentBody += `✅ Tests passed.
-`;
+              commentBody += `✅ Tests passed.\n`;
               // Show details if output is not empty and not a generic success message from test runner
               if (testOutput && testOutput.trim() !== '' && !testOutput.includes("Test Suites: All pass") && !testOutput.includes("no tests found") && !testOutput.trim().startsWith("PASS")) {
-                 commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${testOutput.trim()}
-\`\`\`
-
-</details>
-`;
+                 commentBody += `<details><summary>Details</summary>\n\n` +
+                   '```' + '\n' +
+                   `${testOutput.trim()}\n` +
+                   '```\n\n' +
+                   `</details>\n`;
               }
             } else {
-              commentBody += `❌ Tests failed.
-`;
-              commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${testOutput.trim()}
-\`\`\`
-
-</details>
-`;
+              commentBody += `❌ Tests failed.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                '```' + '\n' +
+                `${testOutput.trim()}\n` +
+                '```\n\n' +
+                `</details>\n`;
             }
             commentBody += '\n';
 
             // Documentation
-            commentBody += `### 📚 Documentation Check
-`;
+            commentBody += `### 📚 Documentation Check\n`;
             if (docsStatus === 'success') {
-              commentBody += `✅ Documentation check passed.
-`;
+              commentBody += `✅ Documentation check passed.\n`;
               // Show details if output is not empty and not one of the specific success messages
               if (docsOutput && docsOutput.trim() !== '' && !docsOutput.startsWith("Documentation check passed") && !docsOutput.startsWith("No .ts or .tsx files changed.")) {
-                 commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${docsOutput.trim()}
-\`\`\`
-
-</details>
-`;
+                 commentBody += `<details><summary>Details</summary>\n\n` +
+                   '```' + '\n' +
+                   `${docsOutput.trim()}\n` +
+                   '```\n\n' +
+                   `</details>\n`;
               }
             } else {
-              commentBody += `❌ Documentation check failed.
-`;
-              commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${docsOutput.trim()}
-\`\`\`
-
-</details>
-`;
+              commentBody += `❌ Documentation check failed.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                '```' + '\n' +
+                `${docsOutput.trim()}\n` +
+                '```\n\n' +
+                `</details>\n`;
             }
             commentBody += '\n';
 
             // Security Scan
-            commentBody += `### 🛡️ Basic Security Scan
-`;
+            commentBody += `### 🛡️ Basic Security Scan\n`;
             if (securityStatus === 'success') {
-              commentBody += `✅ Basic security scan passed.
-`;
+              commentBody += `✅ Basic security scan passed.\n`;
               // Show details if output is not empty and not the generic "no relevant files" message
               if (securityOutput && securityOutput.trim() !== '' && !securityOutput.startsWith("No relevant files changed for security scan.")) {
-                commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${securityOutput.trim()}
-\`\`\`
-
-</details>
-`;
+                commentBody += `<details><summary>Details</summary>\n\n` +
+                  '```' + '\n' +
+                  `${securityOutput.trim()}\n` +
+                  '```\n\n' +
+                  `</details>\n`;
               }
             } else { // Assuming failure means something was found or an error occurred
-              commentBody += `⚠️ Basic security scan found potential issues or an error occurred.
-`;
-              commentBody += `<details><summary>Details</summary>
-
-\`\`\`
-${securityOutput.trim()}
-\`\`\`
-
-</details>
-`;
+              commentBody += `⚠️ Basic security scan found potential issues or an error occurred.\n`;
+              commentBody += `<details><summary>Details</summary>\n\n` +
+                '```' + '\n' +
+                `${securityOutput.trim()}\n` +
+                '```\n\n' +
+                `</details>\n`;
             }
             commentBody += '\n';
             
