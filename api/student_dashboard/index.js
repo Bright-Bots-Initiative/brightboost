@@ -31,45 +31,49 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Get student's enrolled lessons
-    const enrolledLessons = await prisma.enrollment.findMany({
+    // Get student's activities with lessons
+    const studentActivities = await prisma.activity.findMany({
       where: { studentId: authResult.user.id },
       include: {
-        lesson: true,
-        activities: {
-          where: { studentId: authResult.user.id }
-        }
+        lesson: true
       }
     });
     
-    // Format enrolled lessons
-    const formattedLessons = enrolledLessons.map(enrollment => {
-      const totalActivities = enrollment.activities.length;
-      const completedActivities = enrollment.activities.filter(a => a.completed).length;
+    const lessonMap = new Map();
+    studentActivities.forEach(activity => {
+      if (!lessonMap.has(activity.lessonId)) {
+        lessonMap.set(activity.lessonId, {
+          id: activity.lesson.id,
+          title: activity.lesson.title,
+          category: activity.lesson.category,
+          activities: []
+        });
+      }
+      lessonMap.get(activity.lessonId).activities.push(activity);
+    });
+    
+    // Format enrolled lessons with progress
+    const formattedLessons = Array.from(lessonMap.values()).map(lessonData => {
+      const totalActivities = lessonData.activities.length;
+      const completedActivities = lessonData.activities.filter(a => a.completed).length;
       const progress = totalActivities > 0 
         ? Math.round((completedActivities / totalActivities) * 100) 
         : 0;
       
       return {
-        id: enrollment.lesson.id,
-        title: enrollment.lesson.title,
-        category: enrollment.lesson.category,
+        id: lessonData.id,
+        title: lessonData.title,
+        category: lessonData.category,
         progress,
-        nextLesson: enrollment.lesson.nextLessonTitle || null
+        nextLesson: null // We don't have nextLesson data in our schema
       };
     });
     
-    // Get student's activities
-    const activities = await prisma.activity.findMany({
-      where: { studentId: authResult.user.id },
-      include: { lesson: true }
-    });
-    
-    // Format activities
-    const formattedActivities = activities.map(activity => ({
+    // Format activities from the same activities we already fetched
+    const formattedActivities = studentActivities.map(activity => ({
       id: activity.id,
-      title: activity.title || activity.lesson.title,
-      dueDate: activity.dueDate,
+      title: activity.lesson.title, // Use lesson title since activity doesn't have title
+      dueDate: null, // Our schema doesn't have dueDate on Activity
       completed: activity.completed,
       score: activity.grade
     }));
