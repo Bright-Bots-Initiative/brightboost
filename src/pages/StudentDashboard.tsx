@@ -49,7 +49,7 @@ const StudentDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await api.get('/api/student/dashboard');
+        const data = await api.get('/api/student_dashboard');
         // Backend returns: { studentName, enrolledLessons, activities }
         setStudentName(data.studentName || user?.name || 'Student');
         setEnrolledLessons(data.enrolledLessons || []);

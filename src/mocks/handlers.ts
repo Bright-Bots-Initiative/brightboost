@@ -29,9 +29,25 @@ const mockLessons = [
 ];
 
 export const handlers = [
-  http.get(`${API_URL}/api/teacher/dashboard`, () => {
+  http.get(`${API_URL}/api/teacher_dashboard`, () => {
     return HttpResponse.json({
-      lessons: mockLessons
+      lessons: mockLessons,
+      students: [
+        { id: '1', name: 'John Doe', email: 'john@example.com', progress: 75 },
+        { id: '2', name: 'Jane Smith', email: 'jane@example.com', progress: 92 },
+        { id: '3', name: 'Alex Johnson', email: 'alex@example.com', progress: 45 }
+      ]
+    });
+  }),
+  
+  http.get(`${API_URL}/api/student_dashboard`, () => {
+    return HttpResponse.json({
+      studentName: 'Test Student',
+      enrolledLessons: mockLessons,
+      activities: [
+        { id: '1', studentId: '1', lessonId: '1', completed: true, grade: 85, lessonTitle: 'Introduction to Algebra' },
+        { id: '2', studentId: '1', lessonId: '2', completed: false, grade: null, lessonTitle: 'Advanced Geometry' }
+      ]
     });
   }),
   

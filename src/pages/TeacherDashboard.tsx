@@ -23,7 +23,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get('/api/teacher/dashboard');
+      const response = await api.get('/api/teacher_dashboard');
       if (response && response.lessons) {
         const formattedLessons = response.lessons.map((lesson: Lesson) => ({
           ...lesson,
