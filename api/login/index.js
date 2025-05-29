@@ -77,7 +77,9 @@ module.exports = async function (context, req) {
       headers: { "Content-Type": "application/json" },
       body: { 
         success: false, 
-        error: "An unexpected error occurred during login. Please try again." 
+        error: process.env.NODE_ENV === 'production' 
+          ? "An unexpected error occurred during login. Please try again." 
+          : `Error: ${error.message}\nStack: ${error.stack}\nPOSTGRES_URL: ${process.env.POSTGRES_URL ? 'Set' : 'Not set'}\nJWT_SECRET: ${process.env.JWT_SECRET ? 'Set' : 'Not set'}`
       }
     };
   }
