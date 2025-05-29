@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const prisma = require('../../prisma/client');
+const prisma = require('../../prisma/client.cjs');
 const { generateToken } = require('../shared/auth');
 
 module.exports = async function (context, req) {
@@ -47,7 +47,6 @@ module.exports = async function (context, req) {
         password: hashedPassword,
         role,
         xp: 0,
-        level: role === 'student' ? 'Explorer' : null,
         streak: 0
       }
     });
