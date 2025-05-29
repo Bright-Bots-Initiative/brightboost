@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_BASE || '';
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +32,7 @@ export const signupUser = async (name: string, email: string, password: string, 
   try {
     // console.log(`Sending signup request to: ${API_URL}/auth/signup`);
     
-    const response = await fetch(`${API_URL}/api/auth/signup`, {
+    const response = await fetch(`${API_URL}/api/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
