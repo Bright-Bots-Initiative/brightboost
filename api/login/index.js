@@ -18,12 +18,10 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email }
     });
     
-    // Check if user exists
     if (!user) {
       context.res = {
         status: 401,
@@ -36,7 +34,6 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       context.res = {
@@ -50,10 +47,8 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Generate JWT token
     const token = generateToken(user);
     
-    // Return success response with token and user data (excluding password)
     context.res = {
       headers: { "Content-Type": "application/json" },
       body: {

@@ -18,7 +18,6 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -35,11 +34,9 @@ module.exports = async function (context, req) {
       return;
     }
     
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     
-    // Create new user
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -47,14 +44,13 @@ module.exports = async function (context, req) {
         password: hashedPassword,
         role,
         xp: 0,
+        level: role === 'student' ? 'Explorer' : null,
         streak: 0
       }
     });
     
-    // Generate JWT token
     const token = generateToken(newUser);
     
-    // Return success response with token and user data (excluding password)
     context.res = {
       headers: { "Content-Type": "application/json" },
       body: {
