@@ -3,7 +3,9 @@ const { verifyToken } = require('../shared/auth');
 
 module.exports = async function (context, req) {
   try {
+ devin/1748491643-fix-yaml-syntax
     // Verify JWT token
+> main
     const authResult = await verifyToken(context, req);
     
     if (!authResult.isAuthorized) {
@@ -18,7 +20,9 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Check if user is a teacher
+ main
     if (authResult.user.role !== 'teacher') {
       context.res = {
         status: 403,
@@ -31,12 +35,16 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Get lessons from database
+ main
     const lessons = await prisma.lesson.findMany({
       orderBy: { date: 'asc' }
     });
     
+ devin/1748491643-fix-yaml-syntax
     // Get students from database
+ main
     const students = await prisma.user.findMany({
       where: { role: 'student' },
       select: {
@@ -55,7 +63,9 @@ module.exports = async function (context, req) {
       }
     });
     
+ devin/1748491643-fix-yaml-syntax
     // Calculate progress for each student
+ main
     const studentsWithProgress = students.map(student => {
       const totalActivities = student.activities.length;
       const completedActivities = student.activities.filter(a => a.completed).length;

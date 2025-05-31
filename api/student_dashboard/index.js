@@ -3,7 +3,10 @@ const { verifyToken } = require('../shared/auth');
 
 module.exports = async function (context, req) {
   try {
+ devin/1748491643-fix-yaml-syntax
     // Verify JWT token
+
+ main
     const authResult = await verifyToken(context, req);
     
     if (!authResult.isAuthorized) {
@@ -18,7 +21,10 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Check if user is a student
+
+ main
     if (authResult.user.role !== 'student') {
       context.res = {
         status: 403,
@@ -31,6 +37,7 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Get student's activities with lessons
     const studentActivities = await prisma.activity.findMany({
       where: { studentId: authResult.user.id },
@@ -56,11 +63,27 @@ module.exports = async function (context, req) {
     const formattedLessons = Array.from(lessonMap.values()).map(lessonData => {
       const totalActivities = lessonData.activities.length;
       const completedActivities = lessonData.activities.filter(a => a.completed).length;
+
+    const enrolledLessons = await prisma.enrollment.findMany({
+      where: { studentId: authResult.user.id },
+      include: {
+        lesson: true,
+        activities: {
+          where: { studentId: authResult.user.id }
+        }
+      }
+    });
+    
+    const formattedLessons = enrolledLessons.map(enrollment => {
+      const totalActivities = enrollment.activities.length;
+      const completedActivities = enrollment.activities.filter(a => a.completed).length;
+ main
       const progress = totalActivities > 0 
         ? Math.round((completedActivities / totalActivities) * 100) 
         : 0;
       
       return {
+ devin/1748491643-fix-yaml-syntax
         id: lessonData.id,
         title: lessonData.title,
         category: lessonData.category,
@@ -74,6 +97,25 @@ module.exports = async function (context, req) {
       id: activity.id,
       title: activity.lesson.title, // Use lesson title since activity doesn't have title
       dueDate: null, // Our schema doesn't have dueDate on Activity
+
+        id: enrollment.lesson.id,
+        title: enrollment.lesson.title,
+        category: enrollment.lesson.category,
+        progress,
+        nextLesson: enrollment.lesson.nextLessonTitle || null
+      };
+    });
+    
+    const activities = await prisma.activity.findMany({
+      where: { studentId: authResult.user.id },
+      include: { lesson: true }
+    });
+    
+    const formattedActivities = activities.map(activity => ({
+      id: activity.id,
+      title: activity.title || activity.lesson.title,
+      dueDate: activity.dueDate,
+ main
       completed: activity.completed,
       score: activity.grade
     }));

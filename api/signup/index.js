@@ -18,10 +18,45 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (existingUser) {
+      context.res = {
+        status: 409, // Conflict
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "A user with this email already exists." 
+        }
+      };
+      return;
+    }
+    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        xp: 0,
+        level: role === 'student' ? 'Explorer' : null,
+        streak: 0
+      }
+    });
+    
+    const token = generateToken(newUser);
+ main
     
     if (existingUser) {
       context.res = {

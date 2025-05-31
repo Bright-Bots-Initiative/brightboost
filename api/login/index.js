@@ -18,12 +18,18 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Find user by email
+
+ main
     const user = await prisma.user.findUnique({
       where: { email }
     });
     
+ devin/1748491643-fix-yaml-syntax
     // Check if user exists
+
+ main
     if (!user) {
       context.res = {
         status: 401,
@@ -36,7 +42,10 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Verify password
+
+ main
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       context.res = {
@@ -50,10 +59,15 @@ module.exports = async function (context, req) {
       return;
     }
     
+ devin/1748491643-fix-yaml-syntax
     // Generate JWT token
     const token = generateToken(user);
     
     // Return success response with token and user data (excluding password)
+
+    const token = generateToken(user);
+    
+ main
     context.res = {
       headers: { "Content-Type": "application/json" },
       body: {
