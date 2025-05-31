@@ -1,7 +1,5 @@
 // src/components/common/Spinner.tsx
 
-import React from 'react';
-
 const Spinner = () => (
   <div className="flex items-center justify-center">
     <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24">
