@@ -1,8 +1,8 @@
 // src/components/TeacherDashboard/LessonTable.tsx
 
-import React from 'react';
+import { Lesson } from '../../types/Lesson';
 
-const LessonTable = ({ lessons }) => (
+const LessonTable: React.FC<{ lessons: Lesson[] }> = ({ lessons }) => (
   <div className="overflow-x-auto bg-white shadow rounded-lg">
     <table className="min-w-full divide-y divide-gray-200 text-left">
       <thead className="bg-blue-50">
@@ -11,7 +11,6 @@ const LessonTable = ({ lessons }) => (
           <th className="px-4 py-2">Date</th>
           <th className="px-4 py-2">Students</th>
           <th className="px-4 py-2">Status</th>
-          {/* add more columns as needed */}
         </tr>
       </thead>
       <tbody>
