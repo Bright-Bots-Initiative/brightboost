@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "description": "Azure Functions API for BrightBoost",
   "scripts": {
-    "start": "func start"
+    "start": "func start",
+    "build": "node build.js",
+    "prestart": "npm run build"
   },
   "dependencies": {
-    "jsonwebtoken": "^9.0.2",
+    "@prisma/client": "^6.8.2",
     "bcryptjs": "^2.4.3",
-    "@prisma/client": "^6.8.2"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "azure-functions-core-tools": "^4.0.5455"
+    "azure-functions-core-tools": "^4.0.5455",
+    "prisma": "^6.8.2"
   }
 }
