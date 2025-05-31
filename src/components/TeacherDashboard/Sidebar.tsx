@@ -1,7 +1,5 @@
 // src/components/TeacherDashboard/Sidebar.tsx
 
-import React from 'react';
-
 const Sidebar = () => (
   <aside className="bg-gray-900 text-white w-full md:w-64 flex-shrink-0 py-8 px-6 fixed md:static top-0 left-0 h-20 md:h-screen z-10 shadow-lg md:shadow-none">
     <div className="font-bold text-2xl mb-10 hidden md:block">Teacher Admin</div>
