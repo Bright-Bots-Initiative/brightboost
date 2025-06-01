@@ -2,7 +2,7 @@
 import { Lesson } from '../components/TeacherDashboard/types';
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE || 'https://brightboost-api.azurewebsites.net/api';
+  import.meta.env.VITE_API_BASE || 'https://bb-dev-func.azurewebsites.net/api';
 
 export async function fetchLessons(): Promise<{ lessons: Lesson[] }> {
   try {

@@ -35,7 +35,7 @@ bash ./scripts/migrate-azure.sh
 ## Deployment
 1. Deploy Azure Functions:
 ```bash
-az functionapp deployment source config-zip -g brightboost-rg -n brightboost-api --src ./api.zip
+az functionapp deployment source config-zip -g brightboost-rg -n bb-dev-func --src ./api.zip
 ```
 
 2. Configure environment variables in Azure Portal:

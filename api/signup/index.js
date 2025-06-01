@@ -38,6 +38,14 @@ module.exports = async function (context, req) {
 
     const { name, email, password, role } = req.body || {};
     
+    context.log('Signup request received:', { 
+      hasName: !!name, 
+      hasEmail: !!email, 
+      hasPassword: !!password, 
+      hasRole: !!role,
+      role: role 
+    });
+    
     if (!name || !email || !password || !role) {
       context.res = {
         status: 400,

@@ -10,7 +10,7 @@ These settings should be configured in the Azure portal or through the Azure CLI
 
 | Key | Example Value | Purpose |
 |-----|--------------|---------|
-| FUNCTION_APP_BASE_URL | https://brightboost-api.azurewebsites.net/api | Front-end hits Functions here |
+| FUNCTION_APP_BASE_URL | https://bb-dev-func.azurewebsites.net/api | Front-end hits Functions here |
 | FUNCTION_APP_KEY | <functions default host key> | Sent as x-functions-key header |
 | POSTGRES_URL | postgres://admin:pw@brightboost-pg.postgres.database.azure.com:5432/brightboost | For future API calls |
 | NODE_ENV | production | Bundler hint |
