@@ -29,6 +29,36 @@ The following environment variables must be configured in the Azure Portal under
 4. Click "New application setting" for each required variable
 5. Save and restart the Function App
 
+## Azure Portal Configuration Steps
+
+1. **Access Azure Portal**
+   - Go to https://portal.azure.com
+   - Navigate to Function Apps > bb-dev-func
+
+2. **Configure Application Settings**
+   - Go to Settings > Configuration
+   - Click "New application setting" for each required variable:
+
+3. **Required Settings**
+   - Name: `POSTGRES_URL`, Value: `postgres://username:password@hostname:5432/database`
+   - Name: `JWT_SECRET`, Value: `your-secure-jwt-secret-key` (minimum 32 characters)
+   - Name: `NODE_ENV`, Value: `production`
+
+4. **Save and Restart**
+   - Click "Save" after adding all settings
+   - Click "Continue" to confirm restart
+   - Wait for Function App to restart (may take 1-2 minutes)
+
+## Testing Environment Variables
+
+Use the `/api/envtest` endpoint to verify environment variable configuration:
+
+```bash
+curl https://bb-dev-func.azurewebsites.net/api/envtest
+```
+
+This will return the status of required environment variables without exposing their values.
+
 ## Troubleshooting
 
 If the signup function returns 500 errors, check:
@@ -36,7 +66,3 @@ If the signup function returns 500 errors, check:
 2. POSTGRES_URL is accessible from Azure Functions
 3. Database server allows connections from Azure
 4. JWT_SECRET is properly configured
-
-## Testing Environment Variables
-
-Use the `/api/envtest` endpoint to verify environment configuration (development only).
