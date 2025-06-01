@@ -1,88 +1,139 @@
-// src/pages/TeacherDashboard.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useApi } from '../services/api';
+import GameBackground from '../components/GameBackground';
+import BrightBoostRobot from '../components/BrightBoostRobot';
 import Sidebar from '../components/TeacherDashboard/Sidebar';
 import MainContent from '../components/TeacherDashboard/MainContent';
-import Spinner from '../components/common/Spinner'; // Make a simple spinner component
-import { fetchLessons } from '../api/lessons'; // Your API fetch function
+import { Lesson } from '../components/TeacherDashboard/types';
 
-const TeacherDashboard = () => {
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  // For CRUD loading: const [actionLoading, setActionLoading] = useState(false);
+const TeacherDashboard: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const api = useApi();
+
+  const [activeView, setActiveView] = useState<string>('Lessons');
+  const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLessons = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/api/teacher_dashboard');
+      if (response && response.lessons) {
+        const formattedLessons = response.lessons.map((lesson: Lesson) => ({
+          ...lesson,
+          id: String(lesson.id),
+        }));
+        setLessonsData(formattedLessons);
+      } else {
+        setLessonsData([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch lessons:", err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch lessons.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, setIsLoading, setError, setLessonsData]);
 
   useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    setError('');
-    fetchLessons()
-      .then((data) => {
-        if (isMounted) {
-          setLessons(data.lessons || []); // Defensive: ensure array
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(
-            err?.message
-              ? `Couldn't load lessons: ${err.message}`
-              : 'Could not load lessons from the server. Please try again.'
-          );
-          setLoading(false);
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    fetchLessons();
+  }, [api, fetchLessons]);
+
+  const handleAddLesson = async (newLesson: Pick<Lesson, 'title' | 'content' | 'category'>) => {
+    setIsLoading(true);
+    try {
+      const createdLesson = await api.post('/api/lessons', newLesson);
+      setLessonsData(prevLessons => [...prevLessons, { ...createdLesson, id: String(createdLesson.id) }]);
+    } catch (err) {
+      console.error("Failed to add lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to add lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditLesson = async (lesson: Lesson) => {
+    setIsLoading(true);
+    try {
+      const updatedLesson = await api.put(`/api/lessons/${lesson.id}`, lesson as unknown as Record<string, unknown>);
+      setLessonsData(prevLessons =>
+        prevLessons.map(existingLesson =>
+          String(existingLesson.id) === String(lesson.id) ? { ...existingLesson, ...updatedLesson, id: String(existingLesson.id) } : existingLesson
+        )
+      );
+    } catch (err) {
+      console.error("Failed to edit lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to edit lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId: string | number) => {
+    setIsLoading(true);
+    try {
+      await api.delete(`/api/lessons/${lessonId}`);
+      setLessonsData(prevLessons => prevLessons.filter(lesson => String(lesson.id) !== String(lessonId)));
+    } catch (err) {
+      console.error("Failed to delete lesson:", err);
+      setError(err instanceof Error ? err.message : 'Failed to delete lesson.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row bg-gradient-to-b from-blue-100 to-blue-200">
-      <Sidebar />
-      <main className="flex-1 ml-0 md:ml-64 p-4 transition-all duration-300">
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center h-96">
-            <Spinner />
-            <p className="mt-2 text-blue-600">Loading dashboard data...</p>
+    <GameBackground>
+      <div className="min-h-screen flex flex-col relative z-10">
+        <nav className="bg-brightboost-navy text-white p-4 shadow-md">
+          <div className="container mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <BrightBoostRobot size="sm" className="w-10 h-10" />
+              <h1 className="text-xl font-bold">Bright Boost</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="badge-level">Teacher</span>
+              <span>Welcome, {user?.name || 'Teacher'}</span>
+              <button
+                onClick={handleLogout}
+                className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-        )}
+        </nav>
 
-        {/* Error State */}
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center h-96">
-            <p className="text-red-600 mb-4 font-semibold">{error}</p>
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
-        )}
+        <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
-        {/* Empty State */}
-        {!loading && !error && lessons.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-96">
-            <img src="/empty-lessons.svg" alt="No lessons" className="w-40 h-40 mb-4" />
-            <p className="text-gray-500 mb-2 font-medium">No lessons yet.</p>
-            <button
-              className="px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700"
-              onClick={() => {/* trigger lesson creation modal/route */}}
-            >
-              Create your first lesson
-            </button>
-          </div>
+        {isLoading && (
+          <div className="flex-grow p-6 ml-64 text-center">Loading dashboard data...</div>
         )}
-
-        {/* Lessons Table / Main Content */}
-        {!loading && !error && lessons.length > 0 && (
-          <MainContent lessons={lessons} />
+        {error && (
+          <div className="flex-grow p-6 ml-64 text-center text-red-500">Error: {error}</div>
         )}
-      </main>
-    </div>
+        {!isLoading && !error && (
+          <MainContent
+            activeView={activeView}
+            lessonsData={lessonsData}
+            setLessonsData={setLessonsData}
+            onAddLesson={handleAddLesson}
+            onEditLesson={handleEditLesson}
+            onDeleteLesson={handleDeleteLesson}
+          />
+        )}
+      </div>
+    </GameBackground>
   );
 };
 

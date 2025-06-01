@@ -1,5 +1,5 @@
 // src/api/lessons.ts
-import { Lesson } from '../types/Lesson';
+import { Lesson } from '../components/TeacherDashboard/types';
 
 const API_BASE =
   import.meta.env.VITE_API_BASE || 'https://brightboost-api.azurewebsites.net/api';
