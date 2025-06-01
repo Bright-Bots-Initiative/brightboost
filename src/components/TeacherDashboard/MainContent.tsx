@@ -27,6 +27,7 @@ const MainContent: React.FC<MainContentProps> = ({
           </p>
           <LessonsTable
             lessons={lessonsData}
+            setLessons={() => {}}
             onEditLesson={openEditForm}
             onDuplicateLesson={handleDuplicateLesson}
             onDeleteLesson={onDeleteLesson}
