@@ -5,7 +5,7 @@ import LessonsTable from './LessonTable';
 const MainContent: React.FC<MainContentProps> = ({
   activeView,
   lessonsData,
-  onAddLesson,
+  onAddLesson: _onAddLesson,
   onEditLesson,
   onDeleteLesson,
 }) => {
