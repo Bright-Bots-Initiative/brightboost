@@ -1,13 +1,18 @@
-// dbtest/index.js
+const prisma = require('../../prisma/client.cjs');
 
-import prisma from '../../prisma/client.cjs'; // Adjust path
-
-export default async function handler(req, res) {
+module.exports = async function (context, req) {
   try {
-    // Example: Fetch all users using Prisma (not raw SQL)
     const users = await prisma.user.findMany();
-    res.status(200).json({ users });
+    context.res = {
+      headers: { "Content-Type": "application/json" },
+      body: { users }
+    };
   } catch (error) {
-    res.status(500).json({ error: 'Database test failed.' });
+    context.log.error("Error in dbtest function:", error);
+    context.res = {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+      body: { error: 'Database test failed.' }
+    };
   }
-}
+};

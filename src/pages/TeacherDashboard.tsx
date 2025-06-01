@@ -126,7 +126,7 @@ const TeacherDashboard: React.FC = () => {
           <MainContent
             activeView={activeView}
             lessonsData={lessonsData}
-            setLessonsData={setLessonsData}
+
             onAddLesson={handleAddLesson}
             onEditLesson={handleEditLesson}
             onDeleteLesson={handleDeleteLesson}
