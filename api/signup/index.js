@@ -4,6 +4,38 @@ const { generateToken } = require('../shared/auth');
 
 module.exports = async function (context, req) {
   try {
+    context.log('Environment check:', {
+      hasPostgresUrl: !!process.env.POSTGRES_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      nodeEnv: process.env.NODE_ENV
+    });
+
+    if (!process.env.POSTGRES_URL) {
+      context.log.error('POSTGRES_URL environment variable is missing');
+      context.res = {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Database configuration error. Please contact support." 
+        }
+      };
+      return;
+    }
+
+    if (!process.env.JWT_SECRET) {
+      context.log.error('JWT_SECRET environment variable is missing');
+      context.res = {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Authentication configuration error. Please contact support." 
+        }
+      };
+      return;
+    }
+
     const { name, email, password, role } = req.body || {};
     
     if (!name || !email || !password || !role) {
@@ -68,7 +100,39 @@ module.exports = async function (context, req) {
       }
     };
   } catch (error) {
-    context.log.error("Error in signup function:", error);
+    context.log.error("Error in signup function:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      code: error.code
+    });
+    
+    if (error.code === 'P1001') {
+      context.log.error('Database connection failed - check POSTGRES_URL');
+      context.res = {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Database connection error. Please contact support." 
+        }
+      };
+      return;
+    }
+    
+    if (error.code === 'P2002') {
+      context.log.error('Unique constraint violation - duplicate email');
+      context.res = {
+        status: 409,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "A user with this email already exists." 
+        }
+      };
+      return;
+    }
+    
     context.res = {
       status: 500,
       headers: { "Content-Type": "application/json" },
