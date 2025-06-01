@@ -1,3 +1,4 @@
+ BrightBoost-Tech-patch-12
 import React, { useState } from 'react';
 import { MainContentProps, Lesson } from './types';
 import LessonsTable from './LessonTable';
@@ -6,9 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import React from 'react';
+import { MainContentProps } from './types';
+import LessonsTable from './LessonTable';
+ main
+
 const MainContent: React.FC<MainContentProps> = ({
   activeView,
   lessonsData,
+ BrightBoost-Tech-patch-12
   setLessonsData,
   onAddLesson,
   onEditLesson,
@@ -132,6 +139,35 @@ const MainContent: React.FC<MainContentProps> = ({
             />
           </div>
         </>
+
+  onDeleteLesson,
+}) => {
+  const openEditForm = () => {
+    console.log('Edit lesson (not implemented)');
+  };
+
+  const handleDuplicateLesson = (id: string | number) => {
+    console.log('Duplicate lesson (not implemented):', id);
+  };
+
+  return (
+    <div className="flex-grow p-6 ml-64">
+      <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">{activeView}</h2>
+
+      {activeView === 'Lessons' && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold mb-4">Lessons Management</h3>
+          <p className="text-gray-600 mb-4">
+            You have {lessonsData.length} lessons available.
+          </p>
+          <LessonsTable
+            lessons={lessonsData}
+            onEditLesson={openEditForm}
+            onDuplicateLesson={handleDuplicateLesson}
+            onDeleteLesson={onDeleteLesson}
+          />
+        </div>
+ main
       )}
       
       {activeView === 'Students' && (
