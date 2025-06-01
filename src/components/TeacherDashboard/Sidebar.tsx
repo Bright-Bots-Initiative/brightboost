@@ -1,28 +1,31 @@
-// src/components/TeacherDashboard/Sidebar.tsx
+import React from 'react';
+import { SidebarProps } from './types';
 
-const Sidebar = () => (
-  <aside className="bg-gray-900 text-white w-full md:w-64 flex-shrink-0 py-8 px-6 fixed md:static top-0 left-0 h-20 md:h-screen z-10 shadow-lg md:shadow-none">
-    <div className="font-bold text-2xl mb-10 hidden md:block">Teacher Admin</div>
-    <nav>
-      <ul className="flex md:flex-col gap-2">
-        <li>
-          <a href="#" className="block px-4 py-2 rounded-lg bg-blue-700 text-white font-semibold">
-            Lessons
+const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
+  const navItems = ["Lessons", "Students", "Settings"];
+  return (
+    <div className="w-64 h-screen bg-gray-800 text-white p-6 space-y-4 fixed top-0 left-0 shadow-lg">
+      <h2 className="text-2xl font-semibold mb-6 text-center">Teacher Admin</h2>
+      <nav>
+        {navItems.map((item) => (
+          <a
+            key={item}
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveView(item);
+            }}
+            className={`block py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
+                        hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${activeView === item ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300'
+            }`}
+          >
+            {item}
           </a>
-        </li>
-        <li>
-          <a href="#" className="block px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-            Students
-          </a>
-        </li>
-        <li>
-          <a href="#" className="block px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
-            Settings
-          </a>
-        </li>
-      </ul>
-    </nav>
-  </aside>
-);
+        ))}
+      </nav>
+    </div>
+  );
+};
 
 export default Sidebar;
