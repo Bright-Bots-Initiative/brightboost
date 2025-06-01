@@ -1,44 +1,80 @@
-// api/login/index.js
+const bcrypt = require('bcryptjs');
+const prisma = require('../../prisma/client.cjs');
+const { generateToken } = require('../shared/auth');
 
-import prisma from '../../../prisma/client.cjs';
-import { z } from 'zod';
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+module.exports = async function (context, req) {
   try {
-    const validated = loginSchema.parse(req.body);
-
+    const { email, password } = req.body || {};
+    
+    if (!email || !password) {
+      context.res = {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Missing required fields. Please provide email and password." 
+        }
+      };
+      return;
+    }
+    
     const user = await prisma.user.findUnique({
-      where: { email: validated.email },
+      where: { email }
     });
-
+    
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      context.res = {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Invalid email or password." 
+        }
+      };
+      return;
     }
-
-    // Compare password (assume hashed, use bcrypt)
-    const bcrypt = await import('bcryptjs');
-    const valid = await bcrypt.compare(validated.password, user.password);
-
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      context.res = {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "Invalid email or password." 
+        }
+      };
+      return;
     }
-
-    // TODO: generate and return JWT/session as appropriate
-
-    // Never include sensitive data in error or success responses
-    const { password, ...userSafe } = user;
-    res.status(200).json({ user: userSafe });
+    
+    const token = generateToken(user);
+    
+    context.res = {
+      headers: { "Content-Type": "application/json" },
+      body: {
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          xp: user.xp,
+          level: user.level,
+          streak: user.streak
+        }
+      }
+    };
   } catch (error) {
-    // Only generic error message to avoid leaking details
-    res.status(500).json({ error: 'Internal server error' });
+    context.log.error("Error in login function:", error);
+    context.res = {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+      body: { 
+        success: false, 
+        error: "An unexpected error occurred during login. Please try again." 
+      }
+    };
   }
-}
+};
