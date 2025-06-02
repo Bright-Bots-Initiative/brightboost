@@ -1,5 +1,7 @@
-const prisma = require('./prisma/client.cjs');
+const { PrismaClient } = require('@prisma/client');
 const { verifyToken } = require('../shared/auth');
+
+const prisma = new PrismaClient();
 
 module.exports = async function (context, req) {
   try {
