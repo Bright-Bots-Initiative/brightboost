@@ -71,8 +71,13 @@ Update any hardcoded references to the old Function App URL:
 
 ## Implementation Priority
 1. **High Priority**: Create new Node.js Function App and configure environment variables
-2. **Medium Priority**: Update CI/CD to deploy to new app
+2. **Medium Priority**: Update CI/CD to deploy to new app ✅ **COMPLETED**
 3. **Low Priority**: Clean up old resources after validation
+
+## CI/CD Updates Applied
+- Updated `.github/workflows/ci-cd.yml` to target `bb-dev-func-node` instead of `bb-dev-func`
+- Changed publish profile secret to `AZURE_FUNCTION_PUBLISH_PROFILE_NODE`
+- Maintained same package source (`api` directory) and deployment action
 
 ## Rollback Plan
 - Keep old Function App until new one is fully validated
