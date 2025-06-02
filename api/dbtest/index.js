@@ -9,7 +9,11 @@ module.exports = async function (context, req) {
       body: { users }
     };
   } catch (error) {
-    context.log.error("Error in dbtest function:", error);
+    context.log.error("Error in dbtest function:", error?.message || error);
+    context.log.error("Error stack:", error?.stack);
+    context.log.error("Error code:", error?.code);
+    context.log.error("Error name:", error?.name);
+    context.log.error("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     context.res = {
       status: 500,
       headers: { "Content-Type": "application/json" },
