@@ -1,13 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
 module.exports = async function (context, req) {
   try {
-    // Example: Fetch all users using Prisma (not raw SQL)
-    const users = await prisma.user.findMany();
     context.res = {
       headers: { "Content-Type": "application/json" },
-      body: { users }
+      body: { 
+        message: "Database test function loaded successfully",
+        timestamp: new Date().toISOString(),
+        method: req.method
+      }
     };
   } catch (error) {
     context.log.error("Error in dbtest function:", error);
