@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = async function (context, req) {
@@ -7,14 +7,14 @@ module.exports = async function (context, req) {
     const lessonCount = await prisma.lesson.count();
     context.res = {
       headers: { "Content-Type": "application/json" },
-      body: { lessonCount }
+      body: { lessonCount },
     };
   } catch (error) {
     context.log.error("Error in debug function:", error);
     context.res = {
       status: 500,
       headers: { "Content-Type": "application/json" },
-      body: { error: 'Debug query failed.' }
+      body: { error: "Debug query failed." },
     };
   }
 };

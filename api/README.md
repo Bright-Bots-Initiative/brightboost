@@ -12,11 +12,13 @@ This folder contains the Azure Functions implementation of the BrightBoost API.
 ## Local Development
 
 1. Install dependencies:
+
 ```
 npm install
 ```
 
 2. Run locally:
+
 ```
 npm start
 ```

@@ -13,8 +13,9 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: (() => {
         const browserGlobals = { ...globals.browser };
-        delete browserGlobals['AudioWorkletGlobalScope '];
-        browserGlobals['AudioWorkletGlobalScope'] = browserGlobals['AudioWorkletGlobalScope'] || true;
+        delete browserGlobals["AudioWorkletGlobalScope "];
+        browserGlobals["AudioWorkletGlobalScope"] =
+          browserGlobals["AudioWorkletGlobalScope"] || true;
         return browserGlobals;
       })(),
     },
@@ -27,5 +28,5 @@ export default tseslint.config(
       "react-refresh/only-export-components": "off",
       "@typescript-eslint/no-unused-vars": "off",
     },
-  }
+  },
 );

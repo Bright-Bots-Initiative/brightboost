@@ -31,9 +31,9 @@ export interface SidebarProps {
 export interface SortableLessonRowProps {
   lesson: Lesson;
   // Pass the full edit handler to allow row to trigger edit mode or open modal
-  onEditLesson: (lesson: Lesson) => void; 
-  onDuplicateLesson: (id: Lesson['id']) => void;
-  onDeleteLesson: (id: Lesson['id']) => void;
+  onEditLesson: (lesson: Lesson) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
 // Props for the LessonsTable component
@@ -41,8 +41,8 @@ export interface LessonsTableProps {
   lessons: Lesson[];
   setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>; // For local manipulations like drag-and-drop
   onEditLesson: (lesson: Lesson) => void; // To initiate edit for a lesson
-  onDuplicateLesson: (id: Lesson['id']) => void; 
-  onDeleteLesson: (id: Lesson['id']) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
 // Props for the MainContent component
@@ -50,7 +50,10 @@ export interface MainContentProps {
   activeView: string;
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>; // For local manipulations
-  onAddLesson: (newLesson: Omit<Lesson, 'id' | 'status' | 'date'> & Partial<Pick<Lesson, 'status' | 'date'>>) => void;
+  onAddLesson: (
+    newLesson: Omit<Lesson, "id" | "status" | "date"> &
+      Partial<Pick<Lesson, "status" | "date">>,
+  ) => void;
   onEditLesson: (lessonToEdit: Lesson) => void; // Changed to pass the full lesson to pre-fill form
-  onDeleteLesson: (id: Lesson['id']) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }

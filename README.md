@@ -4,17 +4,18 @@ BrightBoost is an interactive learning platform designed to help teachers create
 
 ## Key Features
 
-*   **Teacher Accounts & Dashboard:** Teachers can sign up, log in, and manage their lessons through a dedicated dashboard.
-*   **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
-*   **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
-*   **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-*   **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
-*   **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
-*   **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
+- **Teacher Accounts & Dashboard:** Teachers can sign up, log in, and manage their lessons through a dedicated dashboard.
+- **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
+- **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
+- **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
+- **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
+- **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
+- **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
 ## Demo Flow Summary
 
 A typical demo showcases:
+
 1.  A **teacher** signing up or logging in.
 2.  The teacher navigating their dashboard and creating a new lesson (e.g., "Introduction to Photosynthesis", Category: "Science", Content: "Learn about how plants make food.", Status: "Published").
 3.  The teacher verifying the lesson is displayed on their dashboard.
@@ -28,37 +29,39 @@ A typical demo showcases:
 
 This project is built with a modern web technology stack:
 
-*   **Frontend:**
-    *   React
-    *   Vite
-    *   TypeScript
-    *   Tailwind CSS
-    *   shadcn-ui (for UI components)
-    *   React Router (for navigation)
-    *   Context API (for state management, e.g., AuthContext)
-*   **Backend:**
-    *   Azure Functions
-    *   Prisma ORM with Azure PostgreSQL
-    *   JSON Web Tokens (JWT) for authentication
-    *   `bcryptjs` for password hashing
-*   **Testing:**
-    *   Vitest (for unit/integration tests)
-    *   Cypress (for End-to-End tests)
-*   **Development Tools:**
-    *   ESLint (for linting)
-    *   Storybook (for UI component development and testing)
+- **Frontend:**
+  - React
+  - Vite
+  - TypeScript
+  - Tailwind CSS
+  - shadcn-ui (for UI components)
+  - React Router (for navigation)
+  - Context API (for state management, e.g., AuthContext)
+- **Backend:**
+  - Azure Functions
+  - Prisma ORM with Azure PostgreSQL
+  - JSON Web Tokens (JWT) for authentication
+  - `bcryptjs` for password hashing
+- **Testing:**
+  - Vitest (for unit/integration tests)
+  - Cypress (for End-to-End tests)
+- **Development Tools:**
+  - ESLint (for linting)
+  - Storybook (for UI component development and testing)
 
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
 
 **Prerequisites:**
-*   Node.js (v18 or later recommended)
-*   npm (comes with Node.js)
+
+- Node.js (v18 or later recommended)
+- npm (comes with Node.js)
 
 **Installation & Setup:**
 
 1.  **Clone the repository:**
+
     ```sh
     git clone <YOUR_GIT_URL> # Replace <YOUR_GIT_URL> with the actual Git URL of this project
     cd <YOUR_PROJECT_NAME>   # Replace <YOUR_PROJECT_NAME> with the directory name
@@ -66,25 +69,31 @@ To get a local copy up and running, follow these simple steps.
 
 2.  **Install dependencies:**
     This will install both frontend and backend dependencies.
+
     ```sh
     npm install
     ```
 
 3.  **Configure Environment Variables:**
     The Azure Functions backend uses a `.env` file for configuration. Create a `.env` file in the root of the project if it doesn't exist:
+
     ```env
     JWT_SECRET=your_super_secret_jwt_key_here
     POSTGRES_URL=postgres://username:password@your-server.postgres.database.azure.com:5432/brightboost
     ```
+
     Replace `your_super_secret_jwt_key_here` with a strong, unique secret and update the PostgreSQL connection string.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
+
     ```sh
     npm run dev
     ```
+
     This command starts:
-    *   Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
+
+    - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
 5.  **Running Azure Functions Locally:**
     To run Azure Functions locally:
@@ -105,15 +114,17 @@ The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pi
 For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
 
 The deployment pipeline typically:
+
 1. Builds and tests the application.
 2. Creates a Docker image and pushes it to a container registry (e.g., GitHub Container Registry or Azure Container Registry).
 3. Deploys the application to Azure App Service.
 
 **Note on Azure PostgreSQL for Deployment:**
 The backend uses Azure PostgreSQL for data persistence. When deploying to Azure:
-*   Ensure the `POSTGRES_URL` environment variable is properly configured in your Azure Function App settings.
-*   Database migrations should be run using the provided scripts in the `scripts/` directory.
-*   For more details on the deployment process, refer to the `AZURE_DEPLOYMENT.MD` file.
+
+- Ensure the `POSTGRES_URL` environment variable is properly configured in your Azure Function App settings.
+- Database migrations should be run using the provided scripts in the `scripts/` directory.
+- For more details on the deployment process, refer to the `AZURE_DEPLOYMENT.MD` file.
 
 ## Project Structure (Simplified)
 

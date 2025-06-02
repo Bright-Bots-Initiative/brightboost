@@ -10,9 +10,9 @@ module.exports = async function (context, req) {
           nodeEnv: process.env.NODE_ENV,
           postgresUrl: process.env.POSTGRES_URL ? "Set (redacted)" : "Not set",
           jwtSecret: process.env.JWT_SECRET ? "Set (redacted)" : "Not set",
-          allEnvVars: Object.keys(process.env)
-        }
-      }
+          allEnvVars: Object.keys(process.env),
+        },
+      },
     };
   } catch (error) {
     context.res = {
@@ -22,8 +22,8 @@ module.exports = async function (context, req) {
         success: false,
         message: "Environment test failed",
         error: error.message,
-        stack: error.stack
-      }
+        stack: error.stack,
+      },
     };
   }
 };
