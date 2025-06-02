@@ -1,13 +1,19 @@
-// debug/index.js
+const prisma = require('../../prisma/client.cjs');
 
-import prisma from '../../prisma/client.cjs'; // Adjust path
-
-export default async function handler(req, res) {
+module.exports = async function (context, req) {
   try {
     // Example debug: Count all lessons
     const lessonCount = await prisma.lesson.count();
-    res.status(200).json({ lessonCount });
+    context.res = {
+      headers: { "Content-Type": "application/json" },
+      body: { lessonCount }
+    };
   } catch (error) {
-    res.status(500).json({ error: 'Debug query failed.' });
+    context.log.error("Error in debug function:", error);
+    context.res = {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+      body: { error: 'Debug query failed.' }
+    };
   }
-}
+};
