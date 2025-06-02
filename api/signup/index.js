@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
-const prisma = require('../../prisma/client.cjs');
+const { PrismaClient } = require('@prisma/client');
 const { generateToken } = require('../shared/auth');
+
+const prisma = new PrismaClient();
 
 module.exports = async function (context, req) {
   try {
