@@ -94,6 +94,12 @@ To get a local copy up and running, follow these simple steps.
     ```
     This will start the Azure Functions runtime locally.
 
+## Production Deployment
+
+**Live Application:** https://black-sand-053455d1e.6.azurestaticapps.net
+
+The application is deployed using Azure Static Web Apps with an Azure Functions backend.
+
 ## Deployment
 
 This project is configured for deployment to Azure.
@@ -103,6 +109,8 @@ This project is configured for deployment to Azure.
 The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pipeline. For details on the deployment process, refer to the [Deployment Pipeline](./docs/deployment/pipeline.md) documentation (Note: This file might not exist in the current repository state).
 
 For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
+
+**Note:** The production URL is https://black-sand-053455d1e.6.azurestaticapps.net. The gray-ocean-02030a010.6.azurestaticapps.net URL is an outdated instance and should not be used.
 
 The deployment pipeline typically:
 1. Builds and tests the application.
@@ -195,8 +203,12 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/f303f677-9491-4ea6-843e-bc69a8fc78d2) and click on Share -> Publish.
+The project is automatically deployed to Azure Static Web Apps via GitHub Actions. The production deployment is available at:
+
+**Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
+
+For manual deployment or configuration changes, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
 
 ## I want to use a custom domain - is that possible?
 
-For deployments to Azure (as configured for this project), custom domains can be configured directly within Azure App Service.
+For deployments to Azure Static Web Apps (as configured for this project), custom domains can be configured directly within the Azure Portal under the Static Web App's "Custom domains" section. SSL certificates are automatically provisioned for custom domains.
