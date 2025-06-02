@@ -1,29 +1,39 @@
-# Azure Function App 503 Error Diagnosis - RESOLVED
+# Azure Function App 503 Error Diagnosis - RUNTIME STACK MISMATCH
 
 ## Root Cause Identified
-- **Primary Issue**: Missing `api_location: "api"` parameter in Azure Static Web Apps workflow
-- **CI Evidence**: Deployment logs showed "No Api directory specified. Azure Functions will not be created."
-- **Result**: Azure Functions were never deployed, causing 503 "Function host is not running" errors
+- **Critical Issue**: Azure Function App `bb-dev-func` configured with **Python runtime stack** but contains **JavaScript/Node.js code**
+- **Evidence**: All endpoints return "Function host is not running" despite successful CI deployment
+- **Azure Limitation**: Runtime stack cannot be changed after Function App creation
 
-## Fix Applied
-1. **Workflow Configuration**: Added `api_location: "api"` to `.github/workflows/azure-static-web-apps-black-sand-053455d1e.yml`
-2. **Documentation**: Updated Azure Portal configuration steps in `AZURE_FUNCTION_ENVIRONMENT.md`
+## Previous Fixes Applied
+1. ✅ **Workflow Configuration**: Added `api_location: "api"` to enable Azure Functions deployment
+2. ✅ **CI Deployment**: Build and Deploy Job passing successfully
+3. ✅ **Network Connectivity**: HTTPS connection to Function App working
+4. ❌ **Runtime Mismatch**: Python runtime cannot execute JavaScript functions
 
-## Remaining Configuration
-After deployment, the following environment variables must be configured in Azure Portal > bb-dev-func > Configuration:
-```
-POSTGRES_URL=postgres://username:password@hostname:5432/database
-JWT_SECRET=your-secure-jwt-secret-key
-NODE_ENV=production
-```
+## Required Solution: Migration to New Function App
+Since Azure does not allow changing runtime stack after creation, must create new Function App:
 
-## Expected Outcome
-- Azure Functions will be deployed through Static Web Apps workflow
-- Endpoints will return JSON responses instead of 503 errors
-- Environment variables may still need Azure Portal configuration for full functionality
+### Migration Steps Required
+1. **Create new Function App** with Node.js runtime stack (18 LTS)
+2. **Configure environment variables** in new app:
+   ```
+   POSTGRES_URL=postgres://username:password@hostname:5432/database
+   JWT_SECRET=your-secure-jwt-secret-key
+   NODE_ENV=production
+   ```
+3. **Update CI/CD configuration** to deploy to new Node.js Function App
+4. **Test all endpoints** to verify functionality
+5. **Archive old Python Function App** after successful migration
 
-## Verification Steps
-1. Monitor CI deployment for successful Azure Functions creation
-2. Test endpoints using test-api-endpoints.js script
-3. Configure environment variables in Azure Portal if needed
-4. Verify end-to-end signup and authentication flow
+## Current Status
+- ❌ All `/api/*` endpoints return 503 "Function host is not running"
+- ❌ Function App runtime fails to start (Python cannot execute JavaScript)
+- ✅ CI deployment pipeline working correctly
+- ✅ JavaScript function code is properly structured
+
+## Next Steps
+1. Create new Azure Function App with Node.js runtime
+2. Follow migration plan in `AZURE_MIGRATION_PLAN.md`
+3. Update deployment configuration
+4. Test and validate all endpoints
