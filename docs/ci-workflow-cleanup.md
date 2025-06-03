@@ -12,7 +12,8 @@
 
 **Actions Taken:**
 - Moved 3 duplicate/template workflows to `.github/workflows/archived/`
-- Added `skip_app_build: true` to canonical workflow for dry-run mode
+- Added `skip_app_build: true` for dry-run mode during PR validation
+- Enabled Azure Functions with proper Node.js runtime configuration
 - Retained all functionality while eliminating deployment conflicts
 
 **Archived Workflows:**
