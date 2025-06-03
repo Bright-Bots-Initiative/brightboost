@@ -14,7 +14,7 @@ const requireAuth = (context, req, allowedRoles = ['authenticated']) => {
     }
 
     const hasAllowedRole = allowedRoles.some(role => 
-      clientPrincipal.userRoles.includes(role)
+      clientPrincipal.userRoles.map(r => r.toLowerCase()).includes(role.toLowerCase())
     );
 
     if (!hasAllowedRole) {

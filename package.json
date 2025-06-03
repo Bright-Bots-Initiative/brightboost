@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:swa": "swa start http://localhost:5173 --api ./api --run \"npm run dev\"",
     "build": "tsc && vite build && node copy-static-config.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
