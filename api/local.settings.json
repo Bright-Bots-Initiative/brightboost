@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "POSTGRES_URL": "postgres://pgadmin:Redrose1!@bb-dev-pg.postgres.database.azure.com:5432/postgres",
+    "JWT_SECRET": "your_secret_key",
+    "NODE_ENV": "development"
+  }
+}

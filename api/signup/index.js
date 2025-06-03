@@ -1,24 +1,35 @@
 const bcrypt = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 const { generateToken } = require('../shared/auth');
+const z = require('zod');
 
 const prisma = new PrismaClient();
 
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  role: z.enum(['teacher', 'student'], 'Role must be teacher or student')
+});
+
 module.exports = async function (context, req) {
   try {
-    const { name, email, password, role } = req.body || {};
+    const validationResult = signupSchema.safeParse(req.body || {});
     
-    if (!name || !email || !password || !role) {
+    if (!validationResult.success) {
       context.res = {
         status: 400,
         headers: { "Content-Type": "application/json" },
         body: { 
           success: false, 
-          error: "Missing required fields. Please provide name, email, password, and role." 
+          error: "bad_request",
+          details: validationResult.error.errors.map(e => e.message)
         }
       };
       return;
     }
+
+    const { name, email, password, role } = validationResult.data;
     
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -26,11 +37,11 @@ module.exports = async function (context, req) {
     
     if (existingUser) {
       context.res = {
-        status: 409, // Conflict
+        status: 409,
         headers: { "Content-Type": "application/json" },
         body: { 
           success: false, 
-          error: "A user with this email already exists." 
+          error: "email_taken"
         }
       };
       return;
@@ -54,6 +65,7 @@ module.exports = async function (context, req) {
     const token = generateToken(newUser);
     
     context.res = {
+      status: 201,
       headers: { "Content-Type": "application/json" },
       body: {
         success: true,
@@ -71,6 +83,19 @@ module.exports = async function (context, req) {
     };
   } catch (error) {
     context.log.error("Error in signup function:", error);
+    
+    if (error.code === 'P2002') {
+      context.res = {
+        status: 409,
+        headers: { "Content-Type": "application/json" },
+        body: { 
+          success: false, 
+          error: "email_taken"
+        }
+      };
+      return;
+    }
+    
     context.res = {
       status: 500,
       headers: { "Content-Type": "application/json" },
