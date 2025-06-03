@@ -36,6 +36,10 @@ jobs:
       - name: Run tests
         run: npm run test
       
+      - name: Run Cypress smoke tests
+        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts"
+        if: github.event_name != 'pull_request'
+      
       - name: Build application
         run: npm run build
       
@@ -44,6 +48,47 @@ jobs:
         with:
           name: build-files
           path: dist/
+
+  db-check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: brightboost_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+      
+      - name: Run database connectivity test
+        run: npm run test:db
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
   build-docker-image:
     needs: build-and-test

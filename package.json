@@ -13,7 +13,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db": "node scripts/dbHealth.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
