@@ -57,7 +57,7 @@ module.exports = async function (context, req) {
         password: hashedPassword,
         role,
         xp: 0,
-        level: role === 'student' ? 'Explorer' : null,
+        level: 'Explorer',
         streak: 0
       }
     });
@@ -82,7 +82,18 @@ module.exports = async function (context, req) {
       }
     };
   } catch (error) {
-    context.log.error("Error in signup function:", error);
+    context.log.error("Error in signup function:", {
+      error: error.message,
+      code: error.code,
+      name: error.name,
+      stack: error.stack,
+      requestBody: req.body ? { ...req.body, password: '[REDACTED]' } : 'undefined',
+      envVars: {
+        hasPostgresUrl: !!process.env.POSTGRES_URL,
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        nodeEnv: process.env.NODE_ENV
+      }
+    });
     
     if (error.code === 'P2002') {
       context.res = {
