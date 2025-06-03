@@ -136,7 +136,8 @@ const TeacherDashboard: React.FC = () => {
             <p className="text-xl text-red-500 mt-4">Error: {error}</p>
             {error.includes('preview mode') && (
               <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-                <p className="text-sm text-yellow-800">You're viewing this in preview mode. Teacher data will be available in production.</p>
+                <p className="text-sm text-yellow-800">API not available in preview mode</p>
+                <p className="text-sm text-yellow-800">Teacher data will be shown in production</p>
               </div>
             )}
           </div>

@@ -145,6 +145,12 @@ const StudentDashboard: React.FC = () => {
         <div className="min-h-screen flex flex-col relative z-10 items-center justify-center p-4">
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-red-500 mt-4 text-center">Error: {error}</p>
+          {error.includes('preview mode') && (
+            <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
+              <p className="text-sm text-yellow-800">API not available in preview mode</p>
+              <p className="text-sm text-yellow-800">Student data will be shown in production</p>
+            </div>
+          )}
           <Button onClick={() => navigate('/')} className="mt-4">Go Home</Button>
         </div>
       </GameBackground>
