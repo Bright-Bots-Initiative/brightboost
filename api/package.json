@@ -4,8 +4,8 @@
   "description": "Azure Functions API for BrightBoost",
   "scripts": {
     "start": "func start",
-    "build": "prisma generate --schema=../prisma/schema.prisma",
-    "postinstall": "prisma generate --schema=../prisma/schema.prisma"
+    "build": "prisma generate --schema=prisma/schema.prisma",
+    "postinstall": "prisma generate --schema=prisma/schema.prisma"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
