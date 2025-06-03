@@ -36,6 +36,14 @@ jobs:
       - name: Run tests
         run: npm run test
       
+      - name: Start Vite dev server
+        run: npm run dev &
+        env:
+          NODE_ENV: development
+      
+      - name: Wait for dev server
+        run: npx wait-on http://localhost:5173
+      
       - name: Run Cypress smoke tests
         run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=false
         if: github.event_name != 'pull_request'
