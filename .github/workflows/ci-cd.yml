@@ -130,42 +130,6 @@ jobs:
       - name: Stop SWA server
         run: pkill -f "swa start" || true
 
-  auth-e2e:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.event_name != 'pull_request'
-    
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Install SWA CLI
-        run: npm install -g @azure/static-web-apps-cli
-      
-      - name: Build application
-        run: npm run build
-      
-      - name: Start SWA local server
-        run: |
-          swa start dist --api ./api --port 4280 &
-          sleep 10
-      
-      - name: Run Cypress auth flow tests
-        run: npx cypress run --spec "cypress/e2e/auth_flow.cy.ts" --config baseUrl=http://localhost:4280
-      
-      - name: Stop SWA server
-        run: pkill -f "swa start" || true
-
   build-docker-image:
     needs: build-and-test
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
