@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 async function testDatabaseConnectivity() {
   const prisma = new PrismaClient({
