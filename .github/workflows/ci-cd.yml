@@ -83,12 +83,12 @@ jobs:
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
         env:
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
       
       - name: Run database connectivity test
         run: npm run test:db
         env:
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
   build-docker-image:
     needs: build-and-test
