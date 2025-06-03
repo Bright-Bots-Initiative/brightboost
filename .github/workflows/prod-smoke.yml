@@ -35,28 +35,35 @@ jobs:
           fi
           echo "✅ Student dashboard returned HTTP 200"
       
-      - name: Test API Endpoints
+      - name: Test API Authentication
         run: |
-          echo "Testing teacher dashboard API at ${{ env.PROD_URL }}/api/teacher_dashboard"
+          echo "Testing unauthenticated API access returns 401"
           response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/teacher_dashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Teacher dashboard API returned HTTP $response"
+          if [ "$response" != "401" ]; then
+            echo "❌ Teacher dashboard API should return 401 for unauthenticated requests, got HTTP $response"
             exit 1
           fi
-          echo "✅ Teacher dashboard API returned HTTP 200"
+          echo "✅ Teacher dashboard API correctly returns HTTP 401 for unauthenticated requests"
           
-          echo "Testing student dashboard API at ${{ env.PROD_URL }}/api/student_dashboard"
           response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/student_dashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Student dashboard API returned HTTP $response"
+          if [ "$response" != "401" ]; then
+            echo "❌ Student dashboard API should return 401 for unauthenticated requests, got HTTP $response"
             exit 1
           fi
-          echo "✅ Student dashboard API returned HTTP 200"
+          echo "✅ Student dashboard API correctly returns HTTP 401 for unauthenticated requests"
+          
+          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/dbtest")
+          if [ "$response" != "200" ]; then
+            echo "❌ dbtest API should remain public, got HTTP $response"
+            exit 1
+          fi
+          echo "✅ dbtest API correctly returns HTTP 200 (remains public)"
       
       - name: Summary
         run: |
           echo "🎉 All production smoke tests passed!"
           echo "✅ Teacher dashboard: ${{ env.PROD_URL }}/teacher"
           echo "✅ Student dashboard: ${{ env.PROD_URL }}/student"
-          echo "✅ Teacher API: ${{ env.PROD_URL }}/api/teacher_dashboard"
-          echo "✅ Student API: ${{ env.PROD_URL }}/api/student_dashboard"
+          echo "✅ Teacher API authentication: HTTP 401 (protected)"
+          echo "✅ Student API authentication: HTTP 401 (protected)"
+          echo "✅ dbtest API: HTTP 200 (public)"

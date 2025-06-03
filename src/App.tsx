@@ -16,6 +16,7 @@ const StudentSignup = lazy(() => import('./pages/StudentSignup'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const LoginSelection = lazy(() => import('./pages/LoginSelection'));
 const SignupSelection = lazy(() => import('./pages/SignupSelection'));
+const LoginTest = lazy(() => import('./pages/LoginTest'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute'));
 
 // Import components
@@ -33,6 +34,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/login-test" element={<LoginTest />} />
               <Route path="/login" element={<LoginSelection />} />
               <Route path="/signup" element={<SignupSelection />} />
               <Route path="/teacher/login" element={<TeacherLogin />} />
