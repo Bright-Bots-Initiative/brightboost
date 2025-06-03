@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { loginUser } from '../services/api';
+
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 
@@ -20,16 +20,9 @@ const StudentLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await loginUser(email, password);
-      // Verify this is a student account
-      if (response.user.role !== 'student') {
-        setError('This login is only for students. Please use the teacher login if you are a teacher.');
-        setIsLoading(false);
-        return;
-      }
-      login(response.token, response.user);
+      login();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +39,9 @@ const StudentLogin: React.FC = () => {
             <p className="text-lg text-brightboost-navy mb-6">
               Ready to continue your learning adventure?
             </p>
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Authentication is now handled through GitHub OAuth. Click Login to continue with your GitHub account.</p>
+            </div>
             <BrightBoostRobot className="hidden md:block" />
           </div>
           

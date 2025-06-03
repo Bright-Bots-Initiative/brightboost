@@ -1,6 +1,6 @@
 
 // src/services/api.ts
-import { useAuth } from '../contexts/AuthContext';
+
 
 // Get API URL from environment variables
 const API_URL = import.meta.env.VITE_API_BASE || '';
@@ -66,12 +66,9 @@ export const signupUser = async (name: string, email: string, password: string, 
 
 // Hook for authenticated API calls
 export const useApi = () => {
-  const { token } = useAuth();
-  
   const authFetch = async (endpoint: string, options: RequestInit = {}) => {
     const headers = {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers,
     };
     
@@ -79,6 +76,7 @@ export const useApi = () => {
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
+        credentials: 'include',
       });
       
       if (!response.ok) {

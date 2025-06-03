@@ -39,8 +39,8 @@ This project is built with a modern web technology stack:
 *   **Backend:**
     *   Azure Functions
     *   Prisma ORM with Azure PostgreSQL
-    *   JSON Web Tokens (JWT) for authentication
-    *   `bcryptjs` for password hashing
+    *   Azure Static Web Apps built-in authentication with GitHub OAuth
+    *   Role-based access control
 *   **Testing:**
     *   Vitest (for unit/integration tests)
     *   Cypress (for End-to-End tests)
@@ -73,10 +73,13 @@ To get a local copy up and running, follow these simple steps.
 3.  **Configure Environment Variables:**
     The Azure Functions backend uses a `.env` file for configuration. Create a `.env` file in the root of the project if it doesn't exist:
     ```env
-    JWT_SECRET=your_super_secret_jwt_key_here
     POSTGRES_URL=postgres://username:password@your-server.postgres.database.azure.com:5432/brightboost
     ```
-    Replace `your_super_secret_jwt_key_here` with a strong, unique secret and update the PostgreSQL connection string.
+    Update the PostgreSQL connection string with your database credentials.
+
+## Authentication
+
+The application uses Azure Static Web Apps built-in authentication with GitHub OAuth and role-based access control. See [Azure SWA Authentication Migration Guide](docs/azure-swa-auth-migration.md) for implementation details.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:

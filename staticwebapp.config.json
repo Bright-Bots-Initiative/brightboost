@@ -2,8 +2,11 @@
   "routes": [
     {
       "route": "/api/*",
+      "allowedRoles": ["teacher", "student", "admin"]
+    },
+    {
+      "route": "/api/dbtest",
       "allowedRoles": ["anonymous"]
-      // NO "serve" or "headers" here, so this uses built-in Azure Functions
     },
     {
       "route": "/*",

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { loginUser } from '../services/api';
+
 import GameBackground from '../components/GameBackground';
 
 const TeacherLogin: React.FC = () => {
@@ -19,16 +19,9 @@ const TeacherLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await loginUser(email, password);
-      // Verify this is a teacher account
-      if (response.user.role !== 'teacher') {
-        setError('This login is only for teachers. Please use the student login if you are a student.');
-        setIsLoading(false);
-        return;
-      }
-      login(response.token, response.user);
+      login();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -43,6 +36,10 @@ const TeacherLogin: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold text-brightboost-navy">Teacher Login</h1>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+            <p className="text-sm">Authentication is now handled through GitHub OAuth. Click Login to continue with your GitHub account.</p>
           </div>
           
           {error && (
