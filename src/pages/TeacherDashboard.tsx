@@ -23,18 +23,26 @@ const TeacherDashboard: React.FC = () => {
     setError(null);
     try {
       const response = await api.get('/api/teacher_dashboard');
-      if (response && response.lessons) {
-        const formattedLessons = response.lessons.map((lesson: Lesson) => ({
-          ...lesson,
-          id: String(lesson.id),
+      if (Array.isArray(response)) {
+        const formattedLessons = response.map((teacher: { id: string; name: string; email: string; createdAt: string }) => ({
+          id: String(teacher.id),
+          title: teacher.name,
+          content: `Teacher: ${teacher.email}`,
+          category: 'Teacher',
+          date: teacher.createdAt,
+          status: 'active'
         }));
         setLessonsData(formattedLessons);
       } else {
         setLessonsData([]);
       }
     } catch (err) {
-      console.error("Failed to fetch lessons:", err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch lessons.');
+      console.error("Failed to fetch teacher data:", err);
+      if (err instanceof Error && err.message.includes('404')) {
+        setError('API not available in preview mode. Teacher data will be shown in production.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch teacher data.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -117,12 +125,30 @@ const TeacherDashboard: React.FC = () => {
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
         {isLoading && (
-          <div className="flex-grow p-6 ml-64 text-center">Loading dashboard data...</div>
+          <div className="flex-grow p-6 ml-64 text-center">
+            <BrightBoostRobot size="lg" />
+            <p className="text-xl text-brightboost-navy mt-4">Loading dashboard data...</p>
+          </div>
         )}
         {error && (
-          <div className="flex-grow p-6 ml-64 text-center text-red-500">Error: {error}</div>
+          <div className="flex-grow p-6 ml-64 text-center">
+            <BrightBoostRobot size="lg" />
+            <p className="text-xl text-red-500 mt-4">Error: {error}</p>
+            {error.includes('preview mode') && (
+              <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
+                <p className="text-sm text-yellow-800">You're viewing this in preview mode. Teacher data will be available in production.</p>
+              </div>
+            )}
+          </div>
         )}
-        {!isLoading && !error && (
+        {!isLoading && !error && lessonsData.length === 0 && (
+          <div className="flex-grow p-6 ml-64 text-center">
+            <BrightBoostRobot size="lg" />
+            <p className="text-xl text-brightboost-navy mt-4">No teacher data available yet.</p>
+            <p className="text-sm text-gray-600 mt-2">Teachers will appear here once they're registered in the system.</p>
+          </div>
+        )}
+        {!isLoading && !error && lessonsData.length > 0 && (
           <MainContent
             activeView={activeView}
             lessonsData={lessonsData}

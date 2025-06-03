@@ -40,7 +40,7 @@ const StudentDashboard: React.FC = () => {
 
   const [enrolledLessons, setEnrolledLessons] = useState<Lesson[]>([]);
   const [studentActivities, setStudentActivities] = useState<StudentActivity[]>([]);
-  const [studentName, setStudentName] = useState<string>(user?.name || 'Student');
+  const [studentName] = useState<string>(user?.name || 'Student');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,18 +50,28 @@ const StudentDashboard: React.FC = () => {
       setError(null);
       try {
         const data = await api.get('/api/student_dashboard');
-        // Backend returns: { studentName, enrolledLessons, activities }
-        setStudentName(data.studentName || user?.name || 'Student');
-        setEnrolledLessons(data.enrolledLessons || []);
-        // Enrich activities with lesson titles for better display
-        const enrichedActivities = (data.activities || []).map((activity: StudentActivity) => {
-            const lesson = (data.enrolledLessons || []).find((l: Lesson) => String(l.id) === String(activity.lessonId));
-            return { ...activity, lessonTitle: lesson ? lesson.title : 'Activity' };
-        });
-        setStudentActivities(enrichedActivities);
+        if (Array.isArray(data)) {
+          const formattedLessons = data.map((student: { id: string; name: string; email: string; xp?: number; level?: number; streak?: number }) => ({
+            id: String(student.id),
+            title: `Student: ${student.name}`,
+            content: `Level: ${student.level || 'Explorer'}, XP: ${student.xp || 0}`,
+            category: 'Student Profile',
+            completed: false,
+            grade: null
+          }));
+          setEnrolledLessons(formattedLessons);
+          setStudentActivities([]);
+        } else {
+          setEnrolledLessons([]);
+          setStudentActivities([]);
+        }
       } catch (err) {
         console.error("Failed to fetch student dashboard data:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard. Please try again.');
+        if (err instanceof Error && err.message.includes('404')) {
+          setError('API not available in preview mode. Student data will be shown in production.');
+        } else {
+          setError(err instanceof Error ? err.message : 'Failed to load dashboard. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -192,7 +202,11 @@ const StudentDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <p>No lessons enrolled yet. Ask your teacher to assign some!</p>
+              <div className="text-center py-8">
+                <BrightBoostRobot size="md" />
+                <p className="text-brightboost-navy mt-4">No student data available yet.</p>
+                <p className="text-sm text-gray-600">This could be because you're in preview mode or no students are registered.</p>
+              </div>
             )}
           </section>
 
@@ -217,7 +231,11 @@ const StudentDashboard: React.FC = () => {
                 ))}
               </div>
             ) : (
-               <p>No specific activities assigned yet, or all completed!</p>
+              <div className="text-center py-8">
+                <BrightBoostRobot size="md" />
+                <p className="text-brightboost-navy mt-4">No activities available yet.</p>
+                <p className="text-sm text-gray-600">Activities will appear here when assigned by your teacher.</p>
+              </div>
             )}
           </section>
           
