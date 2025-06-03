@@ -1,4 +1,5 @@
 
+
 describe('Azure SWA Authentication Flow', () => {
   beforeEach(() => {
     cy.visit('/');
