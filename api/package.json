@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Azure Functions API for BrightBoost",
   "scripts": {
-    "start": "func start"
+    "start": "func start",
+    "build": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
