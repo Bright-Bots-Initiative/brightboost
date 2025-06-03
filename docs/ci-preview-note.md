@@ -13,6 +13,10 @@ This change implements conditional Azure Static Web Apps deployment logic to res
 - Maintains complete functionality
 
 **Permissions Fix:**
-Added `pull-requests: write` permission to resolve "Resource not accessible by integration" error in review job.
+Added permissions blocks to both workflows:
+- `azure-static-web-apps-black-sand-053455d1e.yml`: `contents: read`, `pull-requests: write`, `id-token: write`
+- `pr-review-bot.yml`: `contents: read`, `pull-requests: write`, `issues: write`
+
+This resolves "Resource not accessible by integration" errors in both deployment and review jobs.
 
 This ensures PR validation works reliably while preserving full production deployment capabilities.
