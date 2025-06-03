@@ -36,16 +36,22 @@ jobs:
       - name: Run tests
         run: npm run test
       
+      - name: Build application
+        run: npm run build
+      
+      - name: Start preview server for Cypress
+        run: |
+          npm run preview &
+          sleep 5
+        if: github.event_name == 'pull_request'
+      
       - name: Run Cypress smoke tests
         run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=false
         if: github.event_name != 'pull_request'
       
       - name: Run Cypress smoke tests (Preview Mode)
-        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=true
+        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=true --config baseUrl=http://localhost:4173
         if: github.event_name == 'pull_request'
-      
-      - name: Build application
-        run: npm run build
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

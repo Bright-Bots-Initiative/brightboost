@@ -16,19 +16,10 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // For demo purposes, let's assume a student login with dummy data
-      // In a real app, you would authenticate with your backend
-      const userData = {
-        id: 'student-123',
-        name: 'Alex',
-        email: email,
-        role: 'student'
-      };
-      
-      login('dummy-token', userData);
+      login();
     } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -38,6 +29,10 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
+        
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded mb-4">
+          <p className="text-sm">Authentication is now handled through GitHub OAuth. Click Login to continue with your GitHub account.</p>
+        </div>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
