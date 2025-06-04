@@ -30,9 +30,9 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           deployment_environment: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
-          skip_api_build: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+          skip_api_build: false
           app_location: "/"
-          api_location: ${{ github.event_name == 'pull_request' && '' || 'api' }}
+          api_location: "api"
           output_location: "dist"
         env:
           FUNCTIONS_WORKER_RUNTIME: node
