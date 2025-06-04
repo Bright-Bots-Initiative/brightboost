@@ -1,7 +1,9 @@
 {
   "name": "api",
   "version": "1.0.0",
+  "main": "src/functions/*.js",
   "dependencies": {
+    "@azure/functions": "^4.7.2",
     "@prisma/client": "^6.8.2",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
