@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 const { PrismaClient } = require('@prisma/client');
 const { generateToken } = require('../shared/auth');
 
@@ -50,7 +50,7 @@ module.exports = async function (context, req) {
       return;
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await bcryptjs.compare(password, user.password);
 
     if (!isValidPassword) {
       context.res = {
