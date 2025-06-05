@@ -1,3 +1,5 @@
 shared/
 node_modules/
 *.md
+package.json
+package-lock.json
