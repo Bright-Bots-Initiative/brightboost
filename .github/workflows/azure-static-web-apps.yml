@@ -36,6 +36,7 @@ jobs:
           output_location: "dist"
         env:
           FUNCTIONS_WORKER_RUNTIME: node
+          APPLICATIONINSIGHTS_CONNECTION_STRING: ${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

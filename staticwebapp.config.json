@@ -1,9 +1,11 @@
 {
+  "platform": {
+    "apiRuntime": "node:18"
+  },
   "routes": [
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"]
-      // NO "serve" or "headers" here, so this uses built-in Azure Functions
     },
     {
       "route": "/*",

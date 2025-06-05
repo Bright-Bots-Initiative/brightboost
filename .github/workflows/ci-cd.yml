@@ -184,10 +184,3 @@ jobs:
                 "slotSetting": false
               }
             ]
-      
-      - name: Deploy Azure Function App
-        uses: azure/functions-action@v1
-        with:
-          app-name: 'bb-dev-func-node'
-          package: 'api'
-          publish-profile: ${{ secrets.AZURE_FUNCTION_PUBLISH_PROFILE_NODE }}
