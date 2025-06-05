@@ -6,7 +6,6 @@
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"]
-      // NO "serve" or "headers" here, so this uses built-in Azure Functions
     },
     {
       "route": "/*",
