@@ -68,6 +68,7 @@ jobs:
 
       - name: "Detect Function App SKU"
         id: detect-sku
+        shell: bash
         run: |
           APP_DETAILS=$(az functionapp show --name bb-dev-func-api --resource-group $(az functionapp list --query "[?name=='bb-dev-func-api'].resourceGroup" -o tsv) --query "{sku: sku.name, kind: kind}" -o json)
           echo "Function App Details: $APP_DETAILS"
