@@ -2,8 +2,8 @@
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["anonymous"]
-      // NO "serve" or "headers" here, so this uses built-in Azure Functions
+      "allowedRoles": ["anonymous"],
+      "serve": "https://bb-dev-func-api.azurewebsites.net/api/{*}"
     },
     {
       "route": "/*",
