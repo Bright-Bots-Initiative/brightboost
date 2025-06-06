@@ -1,4 +1,5 @@
 module.exports = async function (context, req) {
+ devin/1749186500-diagnostic-environment-check
   context.log('Hello function triggered - checking environment variables');
   
   try {
@@ -41,10 +42,31 @@ module.exports = async function (context, req) {
 
     context.log('Environment diagnostic:', JSON.stringify(envDiagnostic, null, 2));
 
+  context.log('Hello function triggered - basic diagnostic');
+  
+  try {
+    const diagnostic = {
+      message: "Hello, World! Azure Functions is working.",
+      timestamp: new Date().toISOString(),
+      nodeVersion: process.version,
+      platform: process.platform,
+      envVarsCount: Object.keys(process.env).length,
+      hasPostgresUrl: !!process.env.POSTGRES_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      nodeEnv: process.env.NODE_ENV || 'undefined'
+    };
+
+    context.log('Diagnostic info:', JSON.stringify(diagnostic, null, 2));
+ main
+
     context.res = {
       status: 200,
       headers: { "Content-Type": "application/json" },
+ devin/1749186500-diagnostic-environment-check
       body: envDiagnostic
+
+      body: diagnostic
+ main
     };
 
   } catch (error) {
