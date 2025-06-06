@@ -71,5 +71,5 @@ jobs:
         with:
           app-name: 'bb-dev-func-api'
           slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: .
           
