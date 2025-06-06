@@ -3,10 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 
-if (!process.env.POSTGRES_URL) {
-  throw new Error('POSTGRES_URL environment variable is not configured');
-}
-
 const prisma = new PrismaClient();
 
 const signupSchema = z.object({

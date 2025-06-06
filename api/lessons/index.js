@@ -2,10 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const { verifyToken } = require('../shared/auth');
 const { z } = require('zod');
 
-if (!process.env.POSTGRES_URL) {
-  throw new Error('POSTGRES_URL environment variable is not configured');
-}
-
 const prisma = new PrismaClient();
 
 const lessonSchema = z.object({
