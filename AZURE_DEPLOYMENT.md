@@ -24,4 +24,4 @@ BrightBoost uses Azure Application Insights and Log Analytics for monitoring and
 Production URL: https://black-sand-053455d1e.6.azurestaticapps.net
 Future URL (when DNS is updated): https://app.brightboost.org
 
-Note: The gray-ocean-02030a010.6.azurestaticapps.net URL is an outdated instance and should not be used for production testing.
+Note: The gray-ocean-02030a010.6.azurestaticapps.net URL is DEPRECATED and should not be used. Use only the canonical production URL above.

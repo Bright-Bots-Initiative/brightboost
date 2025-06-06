@@ -29,7 +29,7 @@
 
 **Usage:**
 ```bash
-curl -X GET https://your-app.azurestaticapps.net/api/teacher_dashboard
+curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashboard
 ```
 
 ### GET /api/student_dashboard
@@ -62,7 +62,7 @@ curl -X GET https://your-app.azurestaticapps.net/api/teacher_dashboard
 
 **Usage:**
 ```bash
-curl -X GET https://your-app.azurestaticapps.net/api/student_dashboard
+curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/student_dashboard
 ```
 
 ## Environment Variable Validation

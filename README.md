@@ -110,7 +110,7 @@ The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pi
 
 For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
 
-**Note:** The production URL is https://black-sand-053455d1e.6.azurestaticapps.net. The gray-ocean-02030a010.6.azurestaticapps.net URL is an outdated instance and should not be used.
+**Note:** The production URL is https://black-sand-053455d1e.6.azurestaticapps.net. The gray-ocean-02030a010.6.azurestaticapps.net URL is deprecated and should not be used.
 
 The deployment pipeline typically:
 1. Builds and tests the application.

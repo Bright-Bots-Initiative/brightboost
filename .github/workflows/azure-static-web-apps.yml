@@ -1,4 +1,6 @@
-name: BrightBoost – SWA (managed)
+name: BrightBoost – Production SWA (Canonical)
+# This is the single canonical production deployment workflow for BrightBoost.
+# All production deployments should use this workflow only.
 on:
   push:
     branches:

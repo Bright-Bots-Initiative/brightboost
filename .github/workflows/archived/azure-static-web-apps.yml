@@ -1,3 +1,7 @@
+# DEPRECATED: This workflow is archived and should not be used for production deployments.
+# Use the main azure-static-web-apps.yml workflow for all deployments.
+# This file is kept for reference only.
+
 name: Azure Static Web Apps CI/CD
 
 on:
