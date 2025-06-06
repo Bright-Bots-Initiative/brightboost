@@ -64,6 +64,8 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B7B30058C40B49C4B90D3C083B38E7A6 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A92E374E245D4441919032ED727312A6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F2F8796F20D94FDE8FE9CF70970F7CB7 }}
+      # Package path is '.' because artifact download extracts api folder contents to working directory
+
 
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
@@ -71,5 +73,5 @@ jobs:
         with:
           app-name: 'bb-dev-func-api'
           slot-name: 'Production'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          package: .
           
