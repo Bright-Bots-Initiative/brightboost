@@ -10,17 +10,17 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'api' # Deploy only the api folder
-  NODE_VERSION: '18.x' # Use Node 18 as specified in requirements
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "api" # Deploy only the api folder
+  NODE_VERSION: "18.x" # Use Node 18 as specified in requirements
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
       contents: read #This is required for actions/checkout
-      
+
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: "Checkout GitHub Action"
         uses: actions/checkout@v4
 
       - name: Setup Node ${{ env.NODE_VERSION }} Environment
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 'Resolve Project Dependencies Using Npm'
+      - name: "Resolve Project Dependencies Using Npm"
         shell: pwsh
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
@@ -58,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -66,18 +66,18 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A92E374E245D4441919032ED727312A6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F2F8796F20D94FDE8FE9CF70970F7CB7 }}
 
-      - name: 'Detect Function App SKU'
+      - name: "Detect Function App SKU"
         id: detect-sku
         run: |
           APP_DETAILS=$(az functionapp show --name bb-dev-func-api --resource-group $(az functionapp list --query "[?name=='bb-dev-func-api'].resourceGroup" -o tsv) --query "{sku: sku.name, kind: kind}" -o json)
           echo "Function App Details: $APP_DETAILS"
-          
+
           SKU_NAME=$(echo $APP_DETAILS | jq -r '.sku // "Unknown"')
           KIND=$(echo $APP_DETAILS | jq -r '.kind // "Unknown"')
-          
+
           echo "SKU: $SKU_NAME"
           echo "Kind: $KIND"
-          
+
           if [[ "$SKU_NAME" == "FlexConsumption" ]] || [[ "$KIND" == *"flex"* ]]; then
             echo "is-flex=true" >> $GITHUB_OUTPUT
             echo "Detected Flex Consumption Function App - will use Azure CLI deployment"
@@ -86,7 +86,7 @@ jobs:
             echo "Detected standard Function App - will use Azure Functions Action"
           fi
 
-      - name: 'Create Deployment Package for Flex'
+      - name: "Create Deployment Package for Flex"
         if: steps.detect-sku.outputs.is-flex == 'true'
         run: |
           cd ${{ github.workspace }}
@@ -94,7 +94,7 @@ jobs:
           echo "Created deployment package: function-app-package.zip"
           ls -la function-app-package.zip
 
-      - name: 'Deploy to Flex Consumption Function App'
+      - name: "Deploy to Flex Consumption Function App"
         if: steps.detect-sku.outputs.is-flex == 'true'
         run: |
           az functionapp deployment source config-zip \
@@ -102,14 +102,14 @@ jobs:
             --name bb-dev-func-api \
             --resource-group $(az functionapp list --query "[?name=='bb-dev-func-api'].resourceGroup" -o tsv) \
             --timeout 600
-          
+
           echo "Flex Consumption deployment completed"
 
-      - name: 'Deploy to Standard Function App'
+      - name: "Deploy to Standard Function App"
         if: steps.detect-sku.outputs.is-flex == 'false'
         uses: Azure/functions-action@v1
         id: fa
         with:
-          app-name: 'bb-dev-func-api'
-          slot-name: 'Production'
+          app-name: "bb-dev-func-api"
+          slot-name: "Production"
           package: .
