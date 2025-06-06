@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 
+if (!process.env.POSTGRES_URL) {
+  throw new Error('POSTGRES_URL environment variable is not configured');
+}
+
 const prisma = new PrismaClient();
 
 const signupSchema = z.object({
@@ -62,9 +66,13 @@ module.exports = async function (context, req) {
       }
     });
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not configured');
+    }
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret',
+      process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 

@@ -1,6 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const { verifyToken } = require('../shared/auth');
 
+if (!process.env.POSTGRES_URL) {
+  throw new Error('POSTGRES_URL environment variable is not configured');
+}
+
 const prisma = new PrismaClient();
 
 module.exports = async function (context, req) {

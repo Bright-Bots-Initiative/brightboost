@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const { generateToken } = require('../shared/auth');
 const { z } = require('zod');
 
+if (!process.env.POSTGRES_URL) {
+  throw new Error('POSTGRES_URL environment variable is not configured');
+}
+
 const prisma = new PrismaClient();
 
 const loginSchema = z.object({

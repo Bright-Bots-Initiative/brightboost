@@ -5,6 +5,13 @@ const prisma = new PrismaClient();
 
 const verifyToken = async (context, req) => {
   try {
+    if (!process.env.JWT_SECRET) {
+      return { 
+        isAuthorized: false, 
+        error: 'JWT_SECRET environment variable is not configured' 
+      };
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return { 
@@ -70,6 +77,10 @@ const verifyToken = async (context, req) => {
 };
 
 const generateToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not configured');
+  }
+
   const payload = {
     id: user.id,
     name: user.name,
