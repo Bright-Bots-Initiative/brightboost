@@ -65,14 +65,51 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B7B30058C40B49C4B90D3C083B38E7A6 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A92E374E245D4441919032ED727312A6 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F2F8796F20D94FDE8FE9CF70970F7CB7 }}
-      # Package path is '.' because artifact download extracts api folder contents to working directory
 
+      - name: 'Detect Function App SKU'
+        id: detect-sku
+        run: |
+          APP_DETAILS=$(az functionapp show --name bb-dev-func-api --resource-group $(az functionapp list --query "[?name=='bb-dev-func-api'].resourceGroup" -o tsv) --query "{sku: sku.name, kind: kind}" -o json)
+          echo "Function App Details: $APP_DETAILS"
+          
+          SKU_NAME=$(echo $APP_DETAILS | jq -r '.sku // "Unknown"')
+          KIND=$(echo $APP_DETAILS | jq -r '.kind // "Unknown"')
+          
+          echo "SKU: $SKU_NAME"
+          echo "Kind: $KIND"
+          
+          if [[ "$SKU_NAME" == "FlexConsumption" ]] || [[ "$KIND" == *"flex"* ]]; then
+            echo "is-flex=true" >> $GITHUB_OUTPUT
+            echo "Detected Flex Consumption Function App - will use Azure CLI deployment"
+          else
+            echo "is-flex=false" >> $GITHUB_OUTPUT
+            echo "Detected standard Function App - will use Azure Functions Action"
+          fi
 
-      - name: 'Run Azure Functions Action'
+      - name: 'Create Deployment Package for Flex'
+        if: steps.detect-sku.outputs.is-flex == 'true'
+        run: |
+          cd ${{ github.workspace }}
+          zip -r function-app-package.zip . -x "*.git*" "node_modules/*" ".github/*"
+          echo "Created deployment package: function-app-package.zip"
+          ls -la function-app-package.zip
+
+      - name: 'Deploy to Flex Consumption Function App'
+        if: steps.detect-sku.outputs.is-flex == 'true'
+        run: |
+          az functionapp deployment source config-zip \
+            --src function-app-package.zip \
+            --name bb-dev-func-api \
+            --resource-group $(az functionapp list --query "[?name=='bb-dev-func-api'].resourceGroup" -o tsv) \
+            --timeout 600
+          
+          echo "Flex Consumption deployment completed"
+
+      - name: 'Deploy to Standard Function App'
+        if: steps.detect-sku.outputs.is-flex == 'false'
         uses: Azure/functions-action@v1
         id: fa
         with:
           app-name: 'bb-dev-func-api'
           slot-name: 'Production'
           package: .
-          
