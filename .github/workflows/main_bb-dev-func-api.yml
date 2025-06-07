@@ -12,6 +12,7 @@ on:
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "api" # Deploy only the api folder
   NODE_VERSION: "18.x" # Use Node 18 as specified in requirements
+  NEW_FUNCTION_APP_NAME: "bb-dev-func-api-v2" # New Function App for testing
 
 jobs:
   build:
@@ -112,3 +113,29 @@ jobs:
           app-name: "bb-dev-func-api"
           slot-name: "Production"
           package: .
+
+      - name: "Health Check After Deployment"
+        shell: bash
+        run: |
+          echo "Running post-deployment health checks..."
+          sleep 60
+          
+          # Test homepage
+          echo "Testing Function App homepage..."
+          HOMEPAGE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://bb-dev-func-api.azurewebsites.net" || echo "000")
+          echo "Homepage status: $HOMEPAGE_STATUS"
+          
+          # Test hello endpoint
+          echo "Testing hello endpoint..."
+          HELLO_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://bb-dev-func-api.azurewebsites.net/api/hello" || echo "000")
+          echo "Hello endpoint status: $HELLO_STATUS"
+          
+          # Test signup endpoint
+          echo "Testing signup endpoint..."
+          SIGNUP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://bb-dev-func-api.azurewebsites.net/api/signup" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"Test","email":"test@example.com","password":"test","role":"teacher"}' || echo "000")
+          echo "Signup endpoint status: $SIGNUP_STATUS"
+          
+          echo "Health check complete"
+          echo "Homepage: $HOMEPAGE_STATUS, Hello: $HELLO_STATUS, Signup: $SIGNUP_STATUS"
