@@ -13,9 +13,16 @@ const signupSchema = z.object({
 });
 
 module.exports = async function (context, req) {
-  context.log('Signup function triggered');
+  context.log('Signup function triggered - comprehensive diagnostic');
   
   try {
+    context.log('Environment check:', {
+      hasPostgresUrl: !!process.env.POSTGRES_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      nodeVersion: process.version,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     if (req.method !== 'POST') {
       context.res = {
         status: 405,
@@ -25,8 +32,11 @@ module.exports = async function (context, req) {
       return;
     }
 
+    context.log('Request body received:', req.body);
+
     const validation = signupSchema.safeParse(req.body);
     if (!validation.success) {
+      context.log('Validation failed:', validation.error.errors);
       context.res = {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -36,10 +46,13 @@ module.exports = async function (context, req) {
     }
 
     const { name, email, password, role } = validation.data;
+    context.log('Validation passed for user:', { name, email, role });
 
+    context.log('Attempting database connection...');
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
+    context.log('Database query completed, existing user:', !!existingUser);
 
     if (existingUser) {
       context.res = {
@@ -50,8 +63,15 @@ module.exports = async function (context, req) {
       return;
     }
 
+    context.log('Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 10);
+    context.log('Password hashed successfully');
 
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not configured');
+    }
+
+    context.log('Creating user in database...');
     const user = await prisma.user.create({
       data: {
         name,
@@ -61,16 +81,15 @@ module.exports = async function (context, req) {
         level: 'Explorer'
       }
     });
+    context.log('User created successfully with ID:', user.id);
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET environment variable is not configured');
-    }
-
+    context.log('Generating JWT token...');
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+    context.log('JWT token generated successfully');
 
     context.res = {
       status: 201,
@@ -89,18 +108,28 @@ module.exports = async function (context, req) {
     };
 
   } catch (error) {
-    context.log.error('Signup error:', error);
+    context.log.error('Signup error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     
     context.res = {
       status: 500,
       headers: { "Content-Type": "application/json" },
       body: { 
         error: "Internal server error",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        message: error.message,
+        details: error.stack,
+        timestamp: new Date().toISOString()
       }
     };
   } finally {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+      context.log('Prisma disconnected successfully');
+    } catch (disconnectError) {
+      context.log.error('Prisma disconnect error:', disconnectError);
+    }
   }
 };
