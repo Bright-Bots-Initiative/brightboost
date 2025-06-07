@@ -3,7 +3,7 @@
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"],
-      "serve": "https://bb-dev-func-api.azurewebsites.net/api/{*}"
+      "serve": "https://brightboost-backend-temp.azurewebsites.net/api/{*}"
     },
     {
       "route": "/*",
