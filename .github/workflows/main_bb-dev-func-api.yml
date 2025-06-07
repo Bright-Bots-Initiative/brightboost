@@ -32,9 +32,7 @@ jobs:
         shell: pwsh
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          npx playwright install --with-deps chromium
-
-          npm install --omit=dev
+          npm install
           npx prisma generate
           npm run build --if-present
           npm run test --if-present
@@ -91,7 +89,7 @@ jobs:
         if: steps.detect-sku.outputs.is-flex == 'true'
         run: |
           cd ${{ github.workspace }}
-          zip -r function-app-package.zip . -x "*.git*" "node_modules/*" ".github/*"
+          zip -r function-app-package.zip . -x "*.git*" ".github/*"
           echo "Created deployment package: function-app-package.zip"
           ls -la function-app-package.zip
 
