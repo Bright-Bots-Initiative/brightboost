@@ -33,6 +33,9 @@ jobs:
         npm ci
         cd src/lambda && npm ci
 
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
     - name: Run tests
       run: npm test
 
