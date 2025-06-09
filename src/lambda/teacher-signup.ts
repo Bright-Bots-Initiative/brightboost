@@ -25,17 +25,20 @@ const secretsManager = new SecretsManager();
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
+    console.log('Creating new database connection pool...');
     const secretArn = process.env.DATABASE_SECRET_ARN;
     if (!secretArn) {
       throw new Error('DATABASE_SECRET_ARN environment variable not set');
     }
 
+    console.log('Fetching database secret from Secrets Manager...');
     const secretResult = await secretsManager.getSecretValue({ SecretId: secretArn }).promise();
     if (!secretResult.SecretString) {
       throw new Error('Failed to retrieve database secret');
     }
 
     const secret: DatabaseSecret = JSON.parse(secretResult.SecretString);
+    console.log(`Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`);
     
     dbPool = new Pool({
       host: secret.host,
@@ -50,6 +53,16 @@ async function getDbConnection(): Promise<Pool> {
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
     });
+    
+    console.log('Database pool created, testing connection...');
+    try {
+      const testClient = await dbPool.connect();
+      console.log('Database connection test successful');
+      testClient.release();
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      throw error;
+    }
   }
 
   return dbPool;
