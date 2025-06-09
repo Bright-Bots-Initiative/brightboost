@@ -48,7 +48,7 @@ async function getDbConnection(): Promise<Pool> {
       },
       max: 5,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      connectionTimeoutMillis: 25000,
     });
   }
 
@@ -62,6 +62,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     'Access-Control-Allow-Headers': 'Content-Type,Authorization',
     'Access-Control-Allow-Methods': 'POST,OPTIONS'
   };
+
+  console.log('Lambda function started, event:', JSON.stringify(event, null, 2));
 
   try {
     if (event.httpMethod === 'OPTIONS') {
@@ -108,7 +110,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
+    console.log('Attempting database connection...');
     const db = await getDbConnection();
+    console.log('Database connection established successfully');
 
     const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
     const existingUserResult = await db.query(existingUserQuery, [email]);
