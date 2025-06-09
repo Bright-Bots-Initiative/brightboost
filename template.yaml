@@ -39,7 +39,7 @@ Resources:
     Properties:
       FunctionName: !Sub "${AWS::StackName}-fn"
       CodeUri: src/lambda/
-      Handler: teacher-signup.handler
+      Handler: dist/teacher-signup.handler
       VpcConfig:
         SecurityGroupIds:
           - !Ref SecurityGroupId
