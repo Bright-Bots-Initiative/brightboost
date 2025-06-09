@@ -1,0 +1,204 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { SecretsManager } from 'aws-sdk';
+import { Pool } from 'pg';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
+
+interface DatabaseSecret {
+  host: string;
+  port: number;
+  dbname: string;
+  username: string;
+  password: string;
+}
+
+interface TeacherSignupRequest {
+  name: string;
+  email: string;
+  password: string;
+  school?: string;
+  subject?: string;
+}
+
+let dbPool: Pool | null = null;
+const secretsManager = new SecretsManager();
+
+async function getDbConnection(): Promise<Pool> {
+  if (!dbPool) {
+    const secretArn = process.env.DATABASE_SECRET_ARN;
+    if (!secretArn) {
+      throw new Error('DATABASE_SECRET_ARN environment variable not set');
+    }
+
+    const secretResult = await secretsManager.getSecretValue({ SecretId: secretArn }).promise();
+    if (!secretResult.SecretString) {
+      throw new Error('Failed to retrieve database secret');
+    }
+
+    const secret: DatabaseSecret = JSON.parse(secretResult.SecretString);
+    
+    dbPool = new Pool({
+      host: secret.host,
+      port: secret.port,
+      database: secret.dbname,
+      user: secret.username,
+      password: secret.password,
+      ssl: {
+        rejectUnauthorized: false
+      },
+      max: 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+  }
+
+  return dbPool;
+}
+
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+  };
+
+  try {
+    if (event.httpMethod === 'OPTIONS') {
+      return {
+        statusCode: 200,
+        headers,
+        body: ''
+      };
+    }
+
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Request body is required' })
+      };
+    }
+
+    const requestBody: TeacherSignupRequest = JSON.parse(event.body);
+    const { name, email, password, school, subject } = requestBody;
+
+    if (!name || !email || !password) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Name, email, and password are required' })
+      };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid email format' })
+      };
+    }
+
+    if (password.length < 8) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Password must be at least 8 characters long' })
+      };
+    }
+
+    const db = await getDbConnection();
+
+    const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
+    const existingUserResult = await db.query(existingUserQuery, [email]);
+
+    if (existingUserResult.rows.length > 0) {
+      return {
+        statusCode: 409,
+        headers,
+        body: JSON.stringify({ error: 'User with this email already exists' })
+      };
+    }
+
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const insertUserQuery = `
+      INSERT INTO users (name, email, password, role, school, subject, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      RETURNING id, name, email, role, school, subject, created_at
+    `;
+    
+    const insertResult = await db.query(insertUserQuery, [
+      name,
+      email,
+      hashedPassword,
+      'TEACHER',
+      school || null,
+      subject || null
+    ]);
+
+    const newUser = insertResult.rows[0];
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+    const token = jwt.sign(
+      {
+        id: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+        name: newUser.name
+      },
+      jwtSecret,
+      { expiresIn: '24h' }
+    );
+
+    return {
+      statusCode: 201,
+      headers,
+      body: JSON.stringify({
+        message: 'Teacher account created successfully',
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+          school: newUser.school,
+          subject: newUser.subject,
+          createdAt: newUser.created_at
+        },
+        token
+      })
+    };
+
+  } catch (error) {
+    console.error('Teacher signup error:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('duplicate key')) {
+        return {
+          statusCode: 409,
+          headers,
+          body: JSON.stringify({ error: 'User with this email already exists' })
+        };
+      }
+      
+      if (error.message.includes('connection')) {
+        return {
+          statusCode: 503,
+          headers,
+          body: JSON.stringify({ error: 'Database connection error' })
+        };
+      }
+    }
+
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      })
+    };
+  }
+};
