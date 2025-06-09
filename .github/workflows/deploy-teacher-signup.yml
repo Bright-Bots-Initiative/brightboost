@@ -71,6 +71,7 @@ jobs:
           --stack-name ${{ env.STACK_NAME }}-${{ github.ref_name }} \
           --capabilities CAPABILITY_IAM \
           --region ${{ env.AWS_REGION }} \
+          --resolve-s3 \
           --parameter-overrides \
             Environment=${{ github.ref_name == 'main' && 'prod' || 'dev' }} \
             DatabaseSecretArn=${{ secrets.DATABASE_SECRET_ARN }} \
