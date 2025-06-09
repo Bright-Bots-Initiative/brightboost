@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { SecretsManager } from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
@@ -21,7 +21,7 @@ interface TeacherSignupRequest {
 }
 
 let dbPool: Pool | null = null;
-const secretsManager = new SecretsManager();
+const secretsManager = new SecretsManagerClient({ region: 'us-east-1' });
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
@@ -32,7 +32,8 @@ async function getDbConnection(): Promise<Pool> {
     }
 
     console.log('Fetching database secret from Secrets Manager...');
-    const secretResult = await secretsManager.getSecretValue({ SecretId: secretArn }).promise();
+    const command = new GetSecretValueCommand({ SecretId: secretArn });
+    const secretResult = await secretsManager.send(command);
     if (!secretResult.SecretString) {
       throw new Error('Failed to retrieve database secret');
     }
