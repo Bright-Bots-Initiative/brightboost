@@ -37,7 +37,7 @@ Resources:
   TeacherSignupFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-teacherSignupFn"
+      FunctionName: !Sub "${AWS::StackName}-fn"
       CodeUri: src/lambda/
       Handler: teacher-signup.handler
       VpcConfig:
