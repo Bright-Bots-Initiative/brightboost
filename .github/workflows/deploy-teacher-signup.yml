@@ -67,8 +67,9 @@ jobs:
 
     - name: Deploy to AWS
       run: |
+        SANITIZED_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
         sam deploy \
-          --stack-name ${{ env.STACK_NAME }}-${{ github.ref_name }} \
+          --stack-name ${{ env.STACK_NAME }}-${SANITIZED_BRANCH} \
           --capabilities CAPABILITY_IAM \
           --region ${{ env.AWS_REGION }} \
           --resolve-s3 \
@@ -84,8 +85,9 @@ jobs:
     - name: Get API endpoint
       id: get-endpoint
       run: |
+        SANITIZED_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
         ENDPOINT=$(aws cloudformation describe-stacks \
-          --stack-name ${{ env.STACK_NAME }}-${{ github.ref_name }} \
+          --stack-name ${{ env.STACK_NAME }}-${SANITIZED_BRANCH} \
           --query 'Stacks[0].Outputs[?OutputKey==`TeacherSignupApiUrl`].OutputValue' \
           --output text)
         echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
@@ -117,5 +119,5 @@ jobs:
               -d '{"name":"Test Teacher","email":"test@example.com","password":"testpassword123"}'
             \`\`\`
             
-            **Stack:** ${{ env.STACK_NAME }}-${{ github.ref_name }}`
+            **Stack:** ${{ env.STACK_NAME }}-$(echo "${{ github.ref_name }}" | sed 's/\//-/g')`
           })
