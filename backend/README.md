@@ -1,7 +1,7 @@
 # Bright Boost – Back-End
 
 ## Overview
-Azure Functions (Node 18) with JWT authentication, Prisma ORM, and Azure PostgreSQL Flexible Server. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
+AWS Lambda (Node 18) with JWT authentication, Prisma ORM, and AWS Aurora PostgreSQL. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
 
 ## Architecture
 ![Back-End Diagram](../docs/architecture/Back_End_Diagram.png)
@@ -14,12 +14,8 @@ npm install              # installs packages
 func start               # hot-reload dev server at http://localhost:7071
 ```
 
-## Azure PostgreSQL Connection
-The backend uses Azure PostgreSQL Flexible Server for data storage. Connection is configured via the `POSTGRES_URL` environment variable:
-
-```
-POSTGRES_URL=postgres://username:password@your-server.postgres.database.azure.com:5432/brightboost
-```
+## AWS Aurora PostgreSQL Connection
+The backend uses AWS Aurora PostgreSQL for data storage. Connection is configured via AWS Secrets Manager with the `DATABASE_SECRET_ARN` environment variable.
 
 ## Database Migrations
 Prisma is used for database schema management and migrations:
@@ -33,15 +29,14 @@ bash ./scripts/migrate-azure.sh
 ```
 
 ## Deployment
-1. Deploy Azure Functions:
+1. Deploy AWS Lambda:
 ```bash
-az functionapp deployment source config-zip -g brightboost-rg -n brightboost-api --src ./api.zip
+sam deploy --guided
 ```
 
-2. Configure environment variables in Azure Portal:
-   - POSTGRES_URL
+2. Configure environment variables in AWS Lambda:
+   - DATABASE_SECRET_ARN
    - JWT_SECRET
-   - NODE_ENV=production
 
 ## Database Models
 The Prisma schema defines the following models:

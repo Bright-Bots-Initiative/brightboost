@@ -7,34 +7,39 @@ This document outlines the CI/CD pipeline for the BrightBoost application.
 The BrightBoost CI/CD pipeline automates the build, test, and deployment processes for both the frontend and backend components of the application. It uses GitHub Actions to:
 
 1. Build and test the application
-2. Create and push Docker images to GitHub Container Registry
-3. Deploy the application to Azure App Service and Azure Functions
+2. Deploy the frontend to Azure Static Web Apps
+3. Deploy the backend to AWS Lambda + API Gateway
 
-## GitHub Actions Workflow
+## GitHub Actions Workflows
 
-The GitHub Actions workflow is defined in `.github/workflows/ci-cd.yml` and consists of three main jobs:
+The project uses two separate deployment workflows:
 
-1. **build-and-test**: Builds and tests the application
-2. **build-docker-image**: Creates a Docker image and pushes it to GitHub Container Registry
-3. **deploy-to-azure**: Deploys the application to Azure App Service and Azure Functions
+1. **azure-static-web-apps.yml**: Deploys the React frontend to Azure Static Web Apps
+2. **aws-lambda-deploy.yml**: Deploys the backend Lambda functions to AWS with API Gateway
 
 ## Environment Variables and Secrets
 
 The following environment variables and secrets are required for the deployment pipeline:
 
-### Secrets (to be added in GitHub repository settings)
+### GitHub Secrets (to be added in GitHub repository settings)
 
-- `AZURE_CREDENTIALS`: JSON object containing Azure service principal credentials
-- `AZURE_FUNCTION_PUBLISH_PROFILE`: Publish profile for the Azure Function App
+#### Azure Static Web Apps
+- `AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_BAY_0BFACC110`: Deployment token for Azure SWA
 
-### Environment Variables (set in Azure App Service)
+#### AWS Lambda Deployment
+- `AWS_ROLE_ARN`: IAM role ARN for OIDC authentication
+- `DATABASE_SECRET_ARN`: AWS Secrets Manager ARN for Aurora credentials
+- `VPC_ID`: VPC ID where Aurora cluster is deployed
+- `SUBNET_IDS`: Comma-separated subnet IDs (same as Aurora)
+- `SECURITY_GROUP_ID`: Security group allowing Aurora access
 
-- `FUNCTION_APP_BASE_URL`: URL of the Azure Function App
-- `FUNCTION_APP_KEY`: Function App key for authentication
-- `POSTGRES_URL`: PostgreSQL connection string
-- `NODE_ENV`: Set to 'production'
-- `WEBSITE_NODE_DEFAULT_VERSION`: Node.js version (18 or 20)
-- `APPLICATIONINSIGHTS_CONNECTION_STRING`: Application Insights connection string
+### Environment Variables
+
+#### Frontend (Azure SWA)
+- `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
+
+#### Backend (AWS Lambda)
+- `DATABASE_SECRET_ARN`: AWS Secrets Manager ARN for Aurora credentials
 - `JWT_SECRET`: Secret key for JWT token signing
 
 ## Deployment Process

@@ -3,7 +3,7 @@
 import { useAuth } from '../contexts/AuthContext';
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_BASE || '';
+const API_URL = import.meta.env.VITE_AWS_API_URL || '';
 
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {

@@ -9,7 +9,7 @@ digraph BrightBoostBackend {
   node [fillcolor="#E6F3FF", color="#0078D4"] teacher_dashboard;
   node [fillcolor="#E6F3FF", color="#0078D4"] student_dashboard;
   node [fillcolor="#F5F5F5", color="#555555"] api_gateway;
-  node [fillcolor="#F5F5F5", color="#555555"] azure_functions;
+  node [fillcolor="#F5F5F5", color="#555555"] aws_lambda;
   node [fillcolor="#F5F5F5", color="#555555"] prisma_orm;
   node [fillcolor="#F5F5F5", color="#555555"] postgres;
   node [fillcolor="#F5F5F5", color="#555555"] configcat;
@@ -19,10 +19,10 @@ digraph BrightBoostBackend {
   teacher_dashboard [label="Teacher Dashboard\n(Browser)"];
   student_dashboard [label="Student Dashboard\n(Browser)"];
   frontend [label="Azure Static Web App\n(Front-End)"];
-  api_gateway [label="Azure API Management\n(Edge Gateway)", style="rounded,filled,filled", fillcolor="#E0E0E0", color="#999999"];
-  azure_functions [label="Azure Functions\n(Node 18)\nREST API Server"];
+  api_gateway [label="AWS API Gateway\n(Edge Gateway)", style="rounded,filled,filled", fillcolor="#E0E0E0", color="#999999"];
+  aws_lambda [label="AWS Lambda\n(Node 18)\nREST API Server"];
   prisma_orm [label="Prisma ORM", shape=component];
-  postgres [label="Azure PostgreSQL\nFlexible Server\n(Main DB)", shape=cylinder];
+  postgres [label="AWS Aurora PostgreSQL\n(Main DB)", shape=cylinder];
   configcat [label="ConfigCat\n(Feature Flags)", shape=component];
   azure_storage [label="Azure Storage / Blob\n(User Uploads)\n[Coming Soon]", shape=cylinder];
   
@@ -30,16 +30,16 @@ digraph BrightBoostBackend {
   teacher_dashboard -> frontend [label="HTTPS"];
   student_dashboard -> frontend [label="HTTPS"];
   frontend -> api_gateway [label="API Calls"];
-  api_gateway -> azure_functions [label="Routes Requests"];
-  azure_functions -> prisma_orm [label="Data Access"];
+  api_gateway -> aws_lambda [label="Routes Requests"];
+  aws_lambda -> prisma_orm [label="Data Access"];
   prisma_orm -> postgres [label="SQL Queries"];
-  azure_functions -> configcat [label="Feature Flags"];
-  azure_functions -> azure_storage [label="File Storage", style=dashed];
+  aws_lambda -> configcat [label="Feature Flags"];
+  aws_lambda -> azure_storage [label="File Storage", style=dashed];
   
   // Add specific API endpoints
   edge [fontcolor="#0078D4", fontsize=9];
-  frontend -> azure_functions [label="/lessons", constraint=false];
-  frontend -> azure_functions [label="/progress", constraint=false];
+  frontend -> aws_lambda [label="/lessons", constraint=false];
+  frontend -> aws_lambda [label="/progress", constraint=false];
   
   // Add legend
   subgraph cluster_legend {

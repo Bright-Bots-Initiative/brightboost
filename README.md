@@ -37,7 +37,7 @@ This project is built with a modern web technology stack:
     *   React Router (for navigation)
     *   Context API (for state management, e.g., AuthContext)
 *   **Backend:**
-    *   AWS Lambda (migrated from Azure Functions)
+    *   AWS Lambda with API Gateway
     *   Aurora PostgreSQL (AWS RDS)
     *   JSON Web Tokens (JWT) for authentication
     *   `bcryptjs` for password hashing
@@ -97,7 +97,7 @@ To get a local copy up and running, follow these simple steps.
 
 **Live Application:** https://black-sand-053455d1e.6.azurestaticapps.net
 
-The application is deployed using Azure Static Web Apps with an Azure Functions backend.
+The application is deployed using Azure Static Web Apps for the frontend with an AWS Lambda backend.
 
 ## Deployment
 
@@ -205,7 +205,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-- Azure Functions (backend)
+- AWS Lambda (backend)
 - Prisma ORM
 - Azure PostgreSQL
 

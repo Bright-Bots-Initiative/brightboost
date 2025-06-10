@@ -15,7 +15,7 @@ The old Azure App Service (bb-dev-web) should be scaled down to B1 or lower tier
 
 After scaling down, verify that:
 1. The canonical production Static Web App (https://black-sand-053455d1e.6.azurestaticapps.net) is functioning correctly
-2. API calls from the Static Web App to the Function App are working properly
+2. API calls from the Static Web App to the AWS Lambda backend are working properly
 3. The old App Service plan billing reflects the reduced tier
 
 ## Future Considerations:

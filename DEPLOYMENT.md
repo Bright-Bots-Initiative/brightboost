@@ -21,12 +21,12 @@ BrightBoost uses a hybrid cloud deployment strategy:
 
 ## Deprecated Workflows
 
-The following workflows have been **DISABLED** as the backend migrated from Azure Functions to AWS Lambda:
+The following workflows have been **DISABLED** as the backend migrated to AWS Lambda:
 
-### ❌ Disabled Azure Function Workflows
-- `main_bb-dev-func-api.yml` - Azure Function App deployment
-- `deploy-new-function-app.yml` - New Azure Function App deployment
-- `ci-cd.yml` - Azure Function deployment steps removed
+### ❌ Disabled Legacy Workflows
+- `main_bb-dev-func-api.yml` - Legacy backend deployment
+- `deploy-new-function-app.yml` - Legacy backend deployment
+- `ci-cd.yml` - Legacy deployment steps removed
 
 These workflows are commented out but preserved for reference.
 
@@ -93,7 +93,7 @@ Visit: https://black-sand-053455d1e.6.azurestaticapps.net
 
 ## Security Notes
 
-- All Azure Function App secrets have been removed from repository
+- All legacy backend secrets have been removed from repository
 - AWS credentials use OIDC for secure authentication
 - Database credentials stored in AWS Secrets Manager
 - No hardcoded secrets in codebase
