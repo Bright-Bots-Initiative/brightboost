@@ -26,5 +26,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "src/test", "setupTests.ts", "vitest.d.ts"]
+  "exclude": ["node_modules", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "src/test", "setupTests.ts", "vitest.d.ts", "src/lambda"]
 }
