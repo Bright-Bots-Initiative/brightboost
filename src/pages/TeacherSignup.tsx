@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { signupUser } from '../services/api';
+import { signupTeacher } from '../services/api';
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 
@@ -29,8 +29,8 @@ const TeacherSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Attempting to sign up user:', { name, email, role: 'teacher' });
-      const response = await signupUser(name, email, password, 'teacher');
+      console.log('Attempting to sign up teacher:', { name, email });
+      const response = await signupTeacher(name, email, password);
       console.log('Signup successful:', response);
       
       // Auto login after successful signup

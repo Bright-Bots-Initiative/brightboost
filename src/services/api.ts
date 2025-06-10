@@ -64,6 +64,41 @@ export const signupUser = async (name: string, email: string, password: string, 
   }
 };
 
+export const signupTeacher = async (name: string, email: string, password: string, school?: string, subject?: string) => {
+  try {
+    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
+    console.log(`Sending teacher signup request to: ${AWS_API_URL}/api/signup/teacher`);
+    
+    const response = await fetch(`${AWS_API_URL}/api/signup/teacher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password, school, subject }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Teacher signup error response:', errorText);
+      
+      let errorMessage = 'Teacher signup failed';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `Teacher signup failed: ${response.status} ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Teacher signup error:', error);
+    throw error;
+  }
+};
+
 // Hook for authenticated API calls
 export const useApi = () => {
   const { token } = useAuth();
