@@ -50,7 +50,7 @@ Resources:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
-              Resource: !Ref DatabaseSecretArn
+              Resource: !Sub "${DatabaseSecretArn}*"
             - Effect: Allow
               Action:
                 - rds-db:connect
@@ -85,7 +85,7 @@ Resources:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
-              Resource: !Ref DatabaseSecretArn
+              Resource: !Sub "${DatabaseSecretArn}*"
             - Effect: Allow
               Action:
                 - rds-db:connect

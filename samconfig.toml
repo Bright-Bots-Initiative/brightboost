@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "brightboost-auth"
+s3_bucket = ""
+s3_prefix = "brightboost-auth"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev DatabaseSecretArn=arn:aws:secretsmanager:us-east-1:012876801822:secret:/brightbots/prod/db-0bBmfq VpcId=vpc-073101147d08101dc SubnetIds=subnet-0ab90b9b198fe907e,subnet-0f5507f587d01dbf5 SecurityGroupId=sg-0efbf45076d66b488"
+confirm_changeset = true
