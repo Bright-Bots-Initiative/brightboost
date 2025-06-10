@@ -185,6 +185,6 @@ jobs:
               }
             ]
       
-      # DEPRECATED: Azure Function App deployment removed - backend migrated to AWS Lambda
-      # Legacy Azure Functions have been replaced with AWS Lambda architecture
+      # DEPRECATED: Azure backend deployment removed - backend migrated to AWS Lambda
+      # Legacy Azure services have been replaced with AWS Lambda architecture
       # See aws-lambda-deploy.yml for current backend deployment

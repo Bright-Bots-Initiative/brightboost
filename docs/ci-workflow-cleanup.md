@@ -14,7 +14,7 @@
 - Moved 3 duplicate/template workflows to `.github/workflows/archived/`
 - Added `skip_app_build: true` for dry-run mode during PR validation
 - Configured `deployment_environment: "preview"` for proper PR preview deployments
-- Updated backend integration to use AWS Lambda instead of legacy Azure Function Apps
+- Updated backend integration to use AWS Lambda instead of legacy Azure services
 - Retained all functionality while eliminating deployment conflicts
 
 **Archived Workflows:**

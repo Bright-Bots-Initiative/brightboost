@@ -42,4 +42,4 @@ Add the following key-value pair:
 - Key: `APPLICATIONINSIGHTS_CONNECTION_STRING`
 - Value: [Connection String from deployment output]
 
-Note: This monitoring setup is for Azure Static Web Apps frontend only. Backend monitoring is handled through AWS CloudWatch for Lambda functions.
+Note: This monitoring setup is for Azure Static Web Apps frontend only. Backend monitoring is handled through AWS CloudWatch for Lambda services.
