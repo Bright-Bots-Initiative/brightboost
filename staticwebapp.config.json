@@ -28,6 +28,7 @@
     ".js": "text/javascript",
     ".css": "text/css",
     ".html": "text/html",
-    ".svg": "image/svg+xml"
+    ".svg": "image/svg+xml",
+    ".png": "image/png"
   }
 }
