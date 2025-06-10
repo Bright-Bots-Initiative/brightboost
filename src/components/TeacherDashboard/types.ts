@@ -4,6 +4,7 @@ export interface Lesson {
   category: string;
   date: string;
   status: "Published" | "Draft" | "Review" | string; // Allow other string statuses
+  content?: string; // Add content property
 }
 
 export interface SidebarProps {
@@ -13,21 +14,23 @@ export interface SidebarProps {
 
 export interface SortableLessonRowProps {
   lesson: Lesson;
-  onEdit: (id: Lesson['id']) => void;
-  onDuplicate: (id: Lesson['id']) => void;
-  onDelete: (id: Lesson['id']) => void;
+  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
+  onDuplicateLesson: (id: Lesson['id']) => void; // Changed from onDuplicate
+  onDeleteLesson: (id: Lesson['id']) => void; // Changed from onDelete
 }
 
 export interface LessonsTableProps {
   lessons: Lesson[];
-  setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onEdit: (id: Lesson['id']) => void;
-  onDuplicate: (id: Lesson['id']) => void;
-  onDelete: (id: Lesson['id']) => void;
+  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
+  onDuplicateLesson: (id: Lesson['id']) => void; // Changed from onDuplicate
+  onDeleteLesson: (id: Lesson['id']) => void; // Changed from onDelete
 }
 
 export interface MainContentProps {
   activeView: string;
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
+  onAddLesson: (lesson: Pick<Lesson, 'title' | 'content' | 'category'>) => void; // Add this prop
+  onEditLesson: (lesson: Lesson) => void; // Add this prop
+  onDeleteLesson: (id: Lesson['id']) => void; // Add this prop
 }

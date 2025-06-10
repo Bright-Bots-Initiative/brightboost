@@ -3,13 +3,31 @@
     {
       "route": "/api/signup/teacher",
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
     }
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif}", "/css/*"]
+    "exclude": [
+      "/images/*.{png,jpg,gif}",
+      "/css/*",
+      "/js/*",
+      "/*.ico",
+      "/*.json"
+    ]
+  },
+  "globalHeaders": {
+    "Cache-Control": "public, max-age=31536000, immutable"
   },
   "mimeTypes": {
-    ".json": "text/json"
+    ".json": "application/json",
+    ".js": "text/javascript",
+    ".css": "text/css",
+    ".html": "text/html",
+    ".svg": "image/svg+xml"
   }
 }
