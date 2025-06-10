@@ -74,6 +74,7 @@ export const useApi = () => {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers,
     };
+    console.log('Fetching:', `${API_URL}${endpoint}`);
     
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -86,7 +87,8 @@ export const useApi = () => {
         throw new Error(errorData.error || 'API request failed');
       }
       
-      return await response.json();
+      const text = await response.text();
+      return text ? JSON.parse(text) : {};
     } catch (error) {
       console.error('API error:', error);
       throw error;

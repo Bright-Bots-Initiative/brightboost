@@ -6,5 +6,9 @@
     "POSTGRES_URL": "postgres://pgadmin:Redrose1!@bb-dev-pg.postgres.database.azure.com:5432/postgres",
     "JWT_SECRET": "your_secret_key",
     "NODE_ENV": "development"
+  },
+  "Host": {
+    "CORS": "http://localhost",
+    "CORSCredentials": true
   }
 }

@@ -34,7 +34,7 @@ interface StudentActivity {
 }
 
 const StudentDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
 
@@ -44,12 +44,22 @@ const StudentDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('Rendering StudentDashboard');
+
   useEffect(() => {
+    if (!token){
+        console.log('No token yet, not fetching dashboard');
+        return;
+    }
+    let hasFetched = false;
+    
     const fetchDashboardData = async () => {
+      console.log("Fetching student dashboard data...");
       setIsLoading(true);
       setError(null);
       try {
         const data = await api.get('/api/student_dashboard');
+        console.log("API Response:", data);
         if (Array.isArray(data)) {
           const formattedLessons = data.map((student: { id: string; name: string; email: string; xp?: number; level?: number; streak?: number }) => ({
             id: String(student.id),
@@ -77,7 +87,7 @@ const StudentDashboard: React.FC = () => {
       }
     };
     fetchDashboardData();
-  }, [api, user?.name]);
+  }, [token]);
 
   const handleEarnXp = async (amount: number, reason: string) => {
     try {

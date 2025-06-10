@@ -16,12 +16,29 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    platform: linux/amd64
     ports:
-      - "3000:3000"
+      - "7071:7071"
     environment:
       - NODE_ENV=production
+      - FUNCTIONS_WORKER_RUNTIME=node
       - POSTGRES_URL=${POSTGRES_URL}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./prisma:/app/prisma
-    command: sh -c "npx prisma generate && func start"
+    command: func start
+    
+  db:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: brightboost
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
