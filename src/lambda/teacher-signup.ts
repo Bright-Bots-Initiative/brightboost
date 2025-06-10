@@ -59,6 +59,36 @@ async function getDbConnection(): Promise<Pool> {
     try {
       const testClient = await dbPool.connect();
       console.log('Database connection test successful');
+      
+      console.log('Checking if users table exists...');
+      const tableCheckResult = await testClient.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'users'
+        );
+      `);
+      
+      if (!tableCheckResult.rows[0].exists) {
+        console.log('Users table does not exist, creating it...');
+        await testClient.query(`
+          CREATE TABLE users (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL DEFAULT 'TEACHER',
+            school VARCHAR(255),
+            subject VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+        console.log('Users table created successfully');
+      } else {
+        console.log('Users table already exists');
+      }
+      
       testClient.release();
     } catch (error) {
       console.error('Database connection test failed:', error);
