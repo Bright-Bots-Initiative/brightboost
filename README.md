@@ -8,7 +8,7 @@ BrightBoost is an interactive learning platform designed to help teachers create
 *   **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
 *   **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
 *   **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-*   **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
+*   **Persistent Data Storage:** User and lesson data is stored persistently using AWS Aurora PostgreSQL database.
 *   **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
 *   **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
@@ -86,12 +86,12 @@ To get a local copy up and running, follow these simple steps.
     This command starts:
     *   Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
-5.  **Running the Backend Locally:**
-    The backend now runs on AWS Lambda. For local development, you can use the mock server:
-    ```sh
-    npm run server
+5.  **Backend Architecture:**
+    The backend runs on AWS Lambda with Aurora PostgreSQL. The production API is available at:
     ```
-    This will start a local Express server for development.
+    https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev
+    ```
+    For local development, the frontend connects directly to the AWS Lambda endpoints.
 
 ## Production Deployment
 
@@ -146,11 +146,11 @@ The deployment pipeline:
 │   └── main.tsx        # Entry point for the React app
 ├── src/lambda/         # AWS Lambda backend functions
 │   ├── teacher-signup.ts # Teacher signup Lambda function
+│   ├── login.ts        # Login Lambda function
 │   ├── package.json    # Lambda dependencies
 │   └── tsconfig.json   # TypeScript configuration
-├── prisma/             # Prisma ORM schema and migrations
-│   ├── schema.prisma   # Database schema definition
-│   └── migrations/     # Database migrations
+├── template.yaml       # AWS SAM template for Lambda deployment
+├── samconfig.toml      # SAM deployment configuration
 ├── scripts/            # Deployment and utility scripts
 ├── cypress/            # Cypress E2E tests
 ├── vite.config.ts      # Vite configuration
@@ -217,7 +217,7 @@ The project uses a hybrid deployment strategy:
 - **Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
 
 **Backend**: Automatically deployed to AWS Lambda via GitHub Actions
-- **API Endpoint:** https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+- **API Endpoint:** https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev
 
 For deployment configuration details, refer to the [Deployment Guide](./DEPLOYMENT.md) document.
 

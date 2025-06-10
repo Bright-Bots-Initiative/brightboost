@@ -1,5 +1,5 @@
 #!/bin/bash
-# Production migration script for Azure PostgreSQL
+# Production migration script for AWS Aurora PostgreSQL
 # This script should be run in the production environment
 
 # Ensure environment variables are set

@@ -36,9 +36,10 @@ If you're integrating with existing BrightBoost applications:
 
 1. Navigate to the Azure Portal
 2. Add the connection string as an application setting:
-   - For App Service: Configuration > Application settings
-   - For Function App: Configuration > Application settings
+   - For Azure Static Web Apps: Configuration > Application settings
 
 Add the following key-value pair:
 - Key: `APPLICATIONINSIGHTS_CONNECTION_STRING`
 - Value: [Connection String from deployment output]
+
+Note: This monitoring setup is for Azure Static Web Apps frontend only. Backend monitoring is handled through AWS CloudWatch for Lambda functions.

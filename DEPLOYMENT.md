@@ -24,8 +24,8 @@ BrightBoost uses a hybrid cloud deployment strategy:
 The following workflows have been **DISABLED** as the backend migrated to AWS Lambda:
 
 ### ❌ Disabled Legacy Workflows
-- `main_bb-dev-func-api.yml` - Legacy backend deployment
-- `deploy-new-function-app.yml` - Legacy backend deployment
+- `main_bb-dev-func-api.yml` - Legacy Azure Function App deployment
+- `deploy-new-function-app.yml` - Legacy Azure Function App deployment
 - `ci-cd.yml` - Legacy deployment steps removed
 
 These workflows are commented out but preserved for reference.

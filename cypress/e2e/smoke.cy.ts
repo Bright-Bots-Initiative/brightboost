@@ -1,10 +1,12 @@
 describe('Authentication Flow Tests', () => {
+  const AWS_API_URL = 'https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev';
+  
   beforeEach(() => {
     cy.visit('/');
   });
 
   it('should complete teacher signup and redirect to dashboard', () => {
-    cy.intercept('POST', 'https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher').as('teacherSignup');
+    cy.intercept('POST', `${AWS_API_URL}/api/signup/teacher`).as('teacherSignup');
     
     cy.visit('/teacher/signup');
     
@@ -27,7 +29,8 @@ describe('Authentication Flow Tests', () => {
   });
 
   it('should handle teacher login and redirect to dashboard', () => {
-    cy.intercept('POST', 'https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev/api/login').as('teacherLogin');
+    cy.intercept('POST', `${AWS_API_URL}/api/signup/teacher`).as('teacherSignup');
+    cy.intercept('POST', `${AWS_API_URL}/api/login`).as('teacherLogin');
     
     const timestamp = Date.now();
     const email = `test-teacher-login-${timestamp}@example.com`;
@@ -40,6 +43,7 @@ describe('Authentication Flow Tests', () => {
     cy.get('#confirmPassword').type(password);
     cy.get('button[type="submit"]').click();
     
+    cy.wait('@teacherSignup');
     cy.url().should('include', '/teacher/dashboard', { timeout: 10000 });
     
     cy.window().then((win) => {
@@ -73,7 +77,7 @@ describe('Authentication Flow Tests', () => {
       }));
     });
 
-    cy.intercept('GET', 'https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev/api/teacher_dashboard').as('teacherDashboard');
+    cy.intercept('GET', `${AWS_API_URL}/api/teacher_dashboard`).as('teacherDashboard');
     
     cy.visit('/teacher/dashboard');
     
@@ -109,7 +113,7 @@ describe('Authentication Flow Tests', () => {
       }));
     });
 
-    cy.intercept('GET', 'https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev/api/student_dashboard').as('studentDashboard');
+    cy.intercept('GET', `${AWS_API_URL}/api/student_dashboard`).as('studentDashboard');
     
     cy.visit('/student/dashboard');
     

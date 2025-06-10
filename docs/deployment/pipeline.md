@@ -87,7 +87,7 @@ The output of this command should be saved as the `AZURE_CREDENTIALS` secret in 
 
 ## AWS Lambda Deployment Configuration
 
-The backend is now deployed to AWS Lambda instead of Azure Functions. AWS deployment uses OIDC authentication with GitHub Actions:
+The backend is deployed to AWS Lambda with Aurora PostgreSQL. AWS deployment uses OIDC authentication with GitHub Actions:
 
 1. Configure the AWS IAM role with the required permissions
 2. Set up the GitHub repository secrets for AWS authentication

@@ -60,7 +60,7 @@ Added preload links for critical assets in index.html:
 ```html
 <link rel="preload" href="/assets/index-urbm42Zj.js" as="script">
 <link rel="preload" href="/assets/index-dsmuLRBu.css" as="style">
-<link rel="preconnect" href="https://bb-dev-func.azurewebsites.net">
+<link rel="preconnect" href="https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com">
 ```
 
 ### 3. Font Display Optimization

@@ -20,12 +20,16 @@ const TeacherLogin: React.FC = () => {
 
     try {
       const response = await loginUser(email, password);
-      // Verify this is a teacher account
-      if (response.user.role !== 'teacher') {
+      console.log('TeacherLogin: Login response received:', response);
+      
+      // Verify this is a teacher account (handle both lowercase and uppercase)
+      if (response.user.role.toLowerCase() !== 'teacher') {
         setError('This login is only for teachers. Please use the student login if you are a student.');
         setIsLoading(false);
         return;
       }
+
+      console.log('TeacherLogin: Calling AuthContext login with:', { token: response.token ? 'present' : 'missing', user: response.user });
       login(response.token, response.user);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');

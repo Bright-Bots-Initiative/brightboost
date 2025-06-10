@@ -24,8 +24,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
   
-  // Check role if required
-  if (requiredRole && user?.role !== requiredRole) {
+  // Check role if required (case-insensitive)
+  if (requiredRole && user?.role?.toLowerCase() !== requiredRole.toLowerCase()) {
     return <Navigate to="/" replace />;
   }
   

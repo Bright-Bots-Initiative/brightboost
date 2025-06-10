@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { signupTeacher } from '../services/api';
+import { signupTeacher, loginUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 
@@ -31,17 +31,17 @@ const TeacherSignup: React.FC = () => {
     try {
       console.log('Attempting to sign up teacher:', { name, email });
       const response = await signupTeacher(name, email, password);
-      console.log('Signup successful:', response);
+      console.log('TeacherSignup: Signup successful, response:', response);
       
-      console.log('Signup successful, attempting login...');
-      // Auto login after successful signup
-      if (response && response.token) {
-        console.log('Login token received, calling login context...');
+      if (response.token && response.user) {
+        console.log('TeacherSignup: Using signup response token and user directly');
         login(response.token, response.user);
-        console.log('Login context called successfully');
       } else {
-        console.error('Invalid response format:', response);
-        setError('Server returned an invalid response format');
+        console.log('TeacherSignup: No token in signup response, attempting login...');
+        // Fallback: Automatically log in the user after successful signup
+        const loginResponse = await loginUser(email, password);
+        console.log('TeacherSignup: Login response:', loginResponse);
+        login(loginResponse.token, loginResponse.user);
       }
     } catch (err: unknown) {
       console.error('Signup error:', err);

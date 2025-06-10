@@ -19,9 +19,9 @@ npx prisma migrate reset
 
 ## Production Deployment
 
-For production deployment on Azure:
+For production deployment with AWS Aurora PostgreSQL:
 
-1. Ensure the `POSTGRES_URL` environment variable is set in your Azure App Service configuration
+1. Database credentials are managed through AWS Secrets Manager
 2. Run the production migration script:
 
 ```bash

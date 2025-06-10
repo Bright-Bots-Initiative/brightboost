@@ -8,6 +8,7 @@ on:
 
 env:
   PROD_URL: https://black-sand-053455d1e.6.azurestaticapps.net
+  AWS_API_URL: https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev
 
 jobs:
   smoke:
