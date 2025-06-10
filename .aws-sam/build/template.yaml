@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BrightBoost Authentication API
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+    - dev
+    - staging
+    - prod
+  DatabaseSecretArn:
+    Type: String
+    Description: ARN of the secret containing Aurora database credentials
+  VpcId:
+    Type: String
+    Description: VPC ID where Aurora cluster is deployed
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnet IDs for Lambda function (same as Aurora)
+  SecurityGroupId:
+    Type: String
+    Description: Security group ID that allows access to Aurora
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        NODE_ENV:
+          Ref: Environment
+        DATABASE_SECRET_ARN:
+          Ref: DatabaseSecretArn
+Resources:
+  TeacherSignupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-signup-fn
+      CodeUri: TeacherSignupFunction
+      Handler: dist/teacher-signup.handler
+      VpcConfig:
+        SecurityGroupIds:
+        - Ref: SecurityGroupId
+        SubnetIds:
+          Ref: SubnetIds
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource:
+            Fn::Sub: ${DatabaseSecretArn}*
+        - Effect: Allow
+          Action:
+          - rds-db:connect
+          Resource:
+            Fn::Sub: arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres
+        - Effect: Allow
+          Action:
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          Resource: '*'
+      Events:
+        TeacherSignupApi:
+          Type: Api
+          Properties:
+            Path: /api/signup/teacher
+            Method: post
+            RestApiId:
+              Ref: BrightBoostApi
+    Metadata:
+      SamResourceId: TeacherSignupFunction
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-login-fn
+      CodeUri: LoginFunction
+      Handler: dist/login.handler
+      VpcConfig:
+        SecurityGroupIds:
+        - Ref: SecurityGroupId
+        SubnetIds:
+          Ref: SubnetIds
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - secretsmanager:GetSecretValue
+          Resource:
+            Fn::Sub: ${DatabaseSecretArn}*
+        - Effect: Allow
+          Action:
+          - rds-db:connect
+          Resource:
+            Fn::Sub: arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres
+        - Effect: Allow
+          Action:
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          Resource: '*'
+      Events:
+        LoginApi:
+          Type: Api
+          Properties:
+            Path: /api/login
+            Method: post
+            RestApiId:
+              Ref: BrightBoostApi
+    Metadata:
+      SamResourceId: LoginFunction
+  BrightBoostApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: Environment
+      Cors:
+        AllowMethods: '''POST,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization'''
+        AllowOrigin: '''*'''
+Outputs:
+  BrightBoostApiUrl:
+    Description: API Gateway endpoint URL for BrightBoost functions
+    Value:
+      Fn::Sub: https://${BrightBoostApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+  TeacherSignupFunctionArn:
+    Description: Teacher Signup Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - TeacherSignupFunction
+      - Arn
+  LoginFunctionArn:
+    Description: Login Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - LoginFunction
+      - Arn
