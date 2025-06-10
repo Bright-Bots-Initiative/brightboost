@@ -20,6 +20,7 @@ describe('Dashboard API Smoke Tests', () => {
     
     cy.url().should('include', '/teacher/dashboard');
     cy.contains('Bright Boost').should('be.visible');
+    cy.get('body').should('contain.text', 'Welcome, Test Teacher');
     
     cy.wait('@teacherDashboard').then((interception) => {
       expect([200, 403, 404, 500]).to.include(interception.response.statusCode);
@@ -55,7 +56,11 @@ describe('Dashboard API Smoke Tests', () => {
     cy.visit('/student/dashboard');
     
     cy.url().should('include', '/student/dashboard');
-    cy.contains('Bright Boost').should('be.visible');
+    
+    cy.get('nav', { timeout: 10000 }).should('be.visible');
+    cy.get('nav').should('contain.text', 'Bright Boost');
+    
+    cy.get('main').should('be.visible');
     
     cy.wait('@studentDashboard').then((interception) => {
       expect([200, 403, 404, 500]).to.include(interception.response.statusCode);
