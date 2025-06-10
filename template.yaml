@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: BrightBoost Teacher Signup API
+Description: BrightBoost Complete API
 
 Parameters:
   Environment:
@@ -32,57 +32,172 @@ Globals:
       Variables:
         NODE_ENV: !Ref Environment
         DATABASE_SECRET_ARN: !Ref DatabaseSecretArn
+        JWT_SECRET: !Sub "${AWS::StackName}-jwt-secret"
+    VpcConfig:
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      SubnetIds: !Ref SubnetIds
+    Policies:
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref DatabaseSecretArn
+          - Effect: Allow
+            Action:
+              - rds-db:connect
+            Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+          - Effect: Allow
+            Action:
+              - ec2:CreateNetworkInterface
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DeleteNetworkInterface
+            Resource: "*"
 
 Resources:
+  BrightBoostApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-login-fn"
+      CodeUri: src/lambda/
+      Handler: dist/login.handler
+      Events:
+        LoginApi:
+          Type: Api
+          Properties:
+            Path: /api/login
+            Method: post
+            RestApiId: !Ref BrightBoostApi
+
   TeacherSignupFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-fn"
+      FunctionName: !Sub "${AWS::StackName}-teacher-signup-fn"
       CodeUri: src/lambda/
       Handler: dist/teacher-signup.handler
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref SecurityGroupId
-        SubnetIds: !Ref SubnetIds
-      Policies:
-        - Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-                - secretsmanager:GetSecretValue
-              Resource: !Ref DatabaseSecretArn
-            - Effect: Allow
-              Action:
-                - rds-db:connect
-              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
-            - Effect: Allow
-              Action:
-                - ec2:CreateNetworkInterface
-                - ec2:DescribeNetworkInterfaces
-                - ec2:DeleteNetworkInterface
-              Resource: "*"
       Events:
         TeacherSignupApi:
           Type: Api
           Properties:
             Path: /api/signup/teacher
             Method: post
-            RestApiId: !Ref TeacherSignupApi
+            RestApiId: !Ref BrightBoostApi
 
-  TeacherSignupApi:
-    Type: AWS::Serverless::Api
+  TeacherDashboardFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      StageName: !Ref Environment
-      Cors:
-        AllowMethods: "'POST,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization'"
-        AllowOrigin: "'*'"
+      FunctionName: !Sub "${AWS::StackName}-teacher-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/teacher-dashboard.handler
+      Events:
+        TeacherDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/teacher_dashboard
+            Method: get
+            RestApiId: !Ref BrightBoostApi
+
+  StudentDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/student-dashboard.handler
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/student_dashboard
+            Method: get
+            RestApiId: !Ref BrightBoostApi
+
+  LessonsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-lessons-fn"
+      CodeUri: src/lambda/
+      Handler: dist/lessons.handler
+      Events:
+        LessonsGetApi:
+          Type: Api
+          Properties:
+            Path: /api/lessons
+            Method: get
+            RestApiId: !Ref BrightBoostApi
+        LessonsPostApi:
+          Type: Api
+          Properties:
+            Path: /api/lessons
+            Method: post
+            RestApiId: !Ref BrightBoostApi
+        LessonsPutApi:
+          Type: Api
+          Properties:
+            Path: /api/lessons/{id}
+            Method: put
+            RestApiId: !Ref BrightBoostApi
+        LessonsDeleteApi:
+          Type: Api
+          Properties:
+            Path: /api/lessons/{id}
+            Method: delete
+            RestApiId: !Ref BrightBoostApi
+
+  GamificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-gamification-fn"
+      CodeUri: src/lambda/
+      Handler: dist/gamification.handler
+      Events:
+        AwardXpApi:
+          Type: Api
+          Properties:
+            Path: /api/gamification/award-xp
+            Method: post
+            RestApiId: !Ref BrightBoostApi
+        CompleteActivityApi:
+          Type: Api
+          Properties:
+            Path: /api/student/activities/{id}/complete
+            Method: post
+            RestApiId: !Ref BrightBoostApi
 
 Outputs:
-  TeacherSignupApiUrl:
-    Description: "API Gateway endpoint URL for Teacher Signup function"
-    Value: !Sub "https://${TeacherSignupApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/signup/teacher"
+  BrightBoostApiUrl:
+    Description: "API Gateway endpoint URL for BrightBoost API"
+    Value: !Sub "https://${BrightBoostApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
   
+  LoginFunctionArn:
+    Description: "Login Lambda Function ARN"
+    Value: !GetAtt LoginFunction.Arn
+    
   TeacherSignupFunctionArn:
     Description: "Teacher Signup Lambda Function ARN"
     Value: !GetAtt TeacherSignupFunction.Arn
+    
+  TeacherDashboardFunctionArn:
+    Description: "Teacher Dashboard Lambda Function ARN"
+    Value: !GetAtt TeacherDashboardFunction.Arn
+    
+  StudentDashboardFunctionArn:
+    Description: "Student Dashboard Lambda Function ARN"
+    Value: !GetAtt StudentDashboardFunction.Arn
+    
+  LessonsFunctionArn:
+    Description: "Lessons Lambda Function ARN"
+    Value: !GetAtt LessonsFunction.Arn
+    
+  GamificationFunctionArn:
+    Description: "Gamification Lambda Function ARN"
+    Value: !GetAtt GamificationFunction.Arn
