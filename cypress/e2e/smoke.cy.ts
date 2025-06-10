@@ -26,6 +26,42 @@ describe('Authentication Flow Tests', () => {
     cy.contains('Bright Boost', { timeout: 10000 }).should('be.visible');
   });
 
+  it('should handle teacher login and redirect to dashboard', () => {
+    cy.intercept('POST', 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/login').as('teacherLogin');
+    
+    const timestamp = Date.now();
+    const email = `test-teacher-login-${timestamp}@example.com`;
+    const password = 'TestPassword123';
+    
+    cy.visit('/teacher/signup');
+    cy.get('#name').type('Test Teacher Login');
+    cy.get('#email').type(email);
+    cy.get('#password').type(password);
+    cy.get('#confirmPassword').type(password);
+    cy.get('button[type="submit"]').click();
+    
+    cy.url().should('include', '/teacher/dashboard', { timeout: 10000 });
+    
+    cy.window().then((win) => {
+      win.localStorage.clear();
+    });
+    
+    cy.visit('/teacher/login');
+    
+    cy.get('#email').type(email);
+    cy.get('#password').type(password);
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait('@teacherLogin').then((interception) => {
+      expect(interception.response.statusCode).to.equal(200);
+      expect(interception.response.body).to.have.property('token');
+      expect(interception.response.body).to.have.property('user');
+    });
+    
+    cy.url().should('include', '/teacher/dashboard');
+    cy.contains('Bright Boost', { timeout: 10000 }).should('be.visible');
+  });
+
   it('should handle teacher dashboard correctly', () => {
     cy.window().then((win) => {
       win.localStorage.setItem('token', 'test-jwt-token');

@@ -56,22 +56,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     // Redirect based on user role.
     // The setTimeout is a pragmatic approach to allow React state and localStorage updates to settle before navigation.
     // This helps prevent race conditions where navigation might occur before the app fully recognizes the new auth state.
-    // TODO: Investigate if this setTimeout can be replaced with a useEffect hook listening to `isAuthenticated` 
-    // or `user` state for a more robust navigation trigger post-login. This would require careful handling
-    // to ensure navigation occurs only once and to the correct role-based dashboard.
     console.log('AuthContext login: redirecting user with role:', userData.role);
-    if (userData.role === 'teacher') {
-      console.log('AuthContext login: navigating to teacher dashboard in 500ms');
-      setTimeout(() => {
-        console.log('AuthContext login: executing navigation to /teacher/dashboard');
-        navigate('/teacher/dashboard');
-      }, 500);
-    } else if (userData.role === 'student') {
-      console.log('AuthContext login: navigating to student dashboard in 500ms');
-      setTimeout(() => {
-        console.log('AuthContext login: executing navigation to /student/dashboard');
-        navigate('/student/dashboard');
-      }, 500);
+    if (userData.role === 'teacher' || userData.role === 'TEACHER') {
+      console.log('AuthContext login: navigating to teacher dashboard immediately');
+      navigate('/teacher/dashboard');
+    } else if (userData.role === 'student' || userData.role === 'STUDENT') {
+      console.log('AuthContext login: navigating to student dashboard immediately');
+      navigate('/student/dashboard');
     }
   };
 
