@@ -6,7 +6,7 @@
 
 **Rationale:**
 - Referenced as canonical production URL in README (https://black-sand-053455d1e.6.azurestaticapps.net)
-- Has proper API location configuration for backend integration
+- Has proper API location configuration for AWS Lambda backend integration
 - Uses correct output_location="dist" matching build process
 - Most recently updated with working configuration
 

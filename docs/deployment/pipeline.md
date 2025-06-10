@@ -85,14 +85,14 @@ az ad sp create-for-rbac --name "BrightBoostGitHubActions" --role contributor \
 
 The output of this command should be saved as the `AZURE_CREDENTIALS` secret in GitHub.
 
-## Getting the Azure Function Publish Profile
+## AWS Lambda Deployment Configuration
 
-To get the publish profile for the Azure Function App:
+The backend is now deployed to AWS Lambda instead of Azure Functions. AWS deployment uses OIDC authentication with GitHub Actions:
 
-1. Go to the Azure Portal
-2. Navigate to your Function App
-3. Click on "Get publish profile"
-4. Save the downloaded file content as the `AZURE_FUNCTION_PUBLISH_PROFILE` secret in GitHub
+1. Configure the AWS IAM role with the required permissions
+2. Set up the GitHub repository secrets for AWS authentication
+3. The deployment uses AWS SAM for infrastructure as code
+4. Lambda functions are automatically deployed via the GitHub Actions workflow
 
 ## Monitoring Deployments
 

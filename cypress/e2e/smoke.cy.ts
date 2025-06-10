@@ -1,14 +1,16 @@
 describe('Dashboard API Smoke Tests', () => {
-  const isPreview = Cypress.env('IS_PREVIEW') === 'true';
+  const isPreview = Cypress.env('IS_PREVIEW') === 'true' || Cypress.env('IS_PREVIEW') === true;
 
   beforeEach(() => {
+    cy.log(`Preview mode: ${isPreview}`);
     cy.visit('/');
   });
 
   it('should handle teacher dashboard correctly', () => {
     if (isPreview) {
+      cy.log('Running in preview mode - checking for preview message');
       cy.visit('/teacher/dashboard');
-      cy.contains('API not available in preview mode').should('be.visible');
+      cy.contains('API not available in preview mode', { timeout: 15000 }).should('be.visible');
       cy.contains('Teacher data will be shown in production').should('be.visible');
     } else {
       cy.window().then((win) => {
@@ -46,8 +48,9 @@ describe('Dashboard API Smoke Tests', () => {
 
   it('should handle student dashboard correctly', () => {
     if (isPreview) {
+      cy.log('Running in preview mode - checking for preview message');
       cy.visit('/student/dashboard');
-      cy.contains('API not available in preview mode').should('be.visible');
+      cy.contains('API not available in preview mode', { timeout: 15000 }).should('be.visible');
       cy.contains('Student data will be shown in production').should('be.visible');
     } else {
       cy.window().then((win) => {

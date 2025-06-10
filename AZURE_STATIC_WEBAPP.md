@@ -9,20 +9,20 @@ The BrightBoost frontend is deployed to Azure Static Web Apps with the following
 - **Region**: Central US
 - **SKU**: Free
 - **Build Output Location**: dist
-- **API Location**: https://bb-dev-func.azurewebsites.net
+- **API Location**: AWS Lambda (https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev)
 - **URL**: https://black-sand-053455d1e.6.azurestaticapps.net (Canonical Production)
 
 ## Environment Variables
 
 The following environment variables are required for the Azure Static Web App and should be configured in the Azure Portal under **Settings > Configuration > Application settings**:
 
-- `VITE_API_BASE`: The base URL for the API (https://bb-dev-func.azurewebsites.net)
+- `VITE_AWS_API_URL`: The base URL for the AWS Lambda API (https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev)
 
 ## Routing Configuration
 
 The routing configuration is defined in `staticwebapp.config.json` and includes:
 
-- API routes (`/api/*`) are redirected to the Function App API endpoint
+- API routes (`/api/*`) are handled by AWS Lambda backend
 - SPA routing (all routes fallback to index.html)
 - Cache-Control headers for static assets
 - Brotli compression for static assets
@@ -36,7 +36,7 @@ The Azure Static Web App deployment is managed by a GitHub Actions workflow that
 
 ## Local Development
 
-For local development, the API URL is set to `http://localhost:3000` if the `VITE_API_BASE` environment variable is not defined.
+For local development, the API URL is set to the AWS Lambda endpoint if the `VITE_AWS_API_URL` environment variable is not defined.
 
 ## Performance
 

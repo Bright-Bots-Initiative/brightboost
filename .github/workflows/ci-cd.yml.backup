@@ -185,7 +185,7 @@ jobs:
               }
             ]
       
-      # DEPRECATED: Azure Function App deployment removed - backend migrated to AWS Lambda
+      # DEPRECATED: AWS Lambda deployment removed - backend migrated to AWS Lambda
       # - name: Deploy Azure Function App
       #   uses: azure/functions-action@v1
       #   with:

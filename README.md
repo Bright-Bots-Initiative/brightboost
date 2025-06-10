@@ -68,15 +68,15 @@ To get a local copy up and running, follow these simple steps.
     This will install both frontend and backend dependencies.
     ```sh
     npm install
+    cd src/lambda && npm install && cd ../..
     ```
 
 3.  **Configure Environment Variables:**
-    The backend uses environment variables for configuration. Create a `.env` file in the root of the project if it doesn't exist:
+    Create a `.env` file in the root of the project:
     ```env
-    JWT_SECRET=your_super_secret_jwt_key_here
-    VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev
+    VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
     ```
-    Replace `your_super_secret_jwt_key_here` with a strong, unique secret and update the AWS API Gateway URL.
+    Replace with your actual AWS API Gateway URL. Backend environment variables are managed through AWS Secrets Manager.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
@@ -207,16 +207,40 @@ This project is built with:
 - Tailwind CSS
 - AWS Lambda (backend)
 - Prisma ORM
-- Azure PostgreSQL
+- AWS Aurora PostgreSQL
 
 ## How can I deploy this project?
 
-The project is automatically deployed to Azure Static Web Apps via GitHub Actions. The production deployment is available at:
+The project uses a hybrid deployment strategy:
 
-**Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
+**Frontend**: Automatically deployed to Azure Static Web Apps via GitHub Actions
+- **Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
 
-For manual deployment or configuration changes, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
+**Backend**: Automatically deployed to AWS Lambda via GitHub Actions
+- **API Endpoint:** https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
 
-## I want to use a custom domain - is that possible?
+For deployment configuration details, refer to the [Deployment Guide](./DEPLOYMENT.md) document.
 
-For deployments to Azure Static Web Apps (as configured for this project), custom domains can be configured directly within the Azure Portal under the Static Web App's "Custom domains" section. SSL certificates are automatically provisioned for custom domains.
+## Testing
+
+BrightBoost includes comprehensive testing:
+
+- **Unit Tests**: Component and utility testing with Vitest
+- **E2E Tests**: End-to-end workflows with Cypress  
+- **Linting**: Code quality checks with ESLint
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test types
+npm run test:unit
+npm run test:e2e
+npm run lint
+```
+
+For detailed testing information, see the [Testing Guide](./docs/TESTING.md).
+
+## Custom Domains
+
+For deployments to Azure Static Web Apps, custom domains can be configured directly within the Azure Portal under the Static Web App's "Custom domains" section. SSL certificates are automatically provisioned for custom domains.

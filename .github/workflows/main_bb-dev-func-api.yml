@@ -85,7 +85,7 @@ jobs:
             echo "Detected Flex Consumption Function App - will use Azure CLI deployment"
           else
             echo "is-flex=false" >> $GITHUB_OUTPUT
-            echo "Detected standard Function App - will use Azure Functions Action"
+            echo "Detected standard Function App - will use Azure Lambda Action"
           fi
 
       - name: "Create Deployment Package for Flex"

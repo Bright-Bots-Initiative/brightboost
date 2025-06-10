@@ -52,7 +52,7 @@ The frontend has been successfully integrated with the AWS Lambda `/api/signup/t
 ### 📋 Next Steps for Production
 
 1. **Azure Static Web App Configuration**:
-   - Set `VITE_API_BASE=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev` in Azure portal
+   - Set `VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev` in Azure portal
    - Deploy updated frontend code to Azure Static Web App
    - Remove any existing `/api/*` proxy rules in Azure configuration
 
