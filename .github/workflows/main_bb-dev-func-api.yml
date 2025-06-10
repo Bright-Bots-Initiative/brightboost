@@ -4,6 +4,13 @@
 
 # This file is kept for reference only - all legacy backend deployment is disabled
 
+name: DEPRECATED - Azure Function App (Disabled)
+
+# Completely disable this workflow - no triggers
+# on:
+#   push:
+#     branches: [ never-trigger ]
+
 # jobs:
 #   build:
 #     runs-on: windows-latest

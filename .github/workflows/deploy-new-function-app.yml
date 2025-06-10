@@ -2,6 +2,9 @@
 # This workflow is disabled as the backend now uses AWS Lambda instead of Azure Functions
 # See aws-lambda-deploy.yml for current backend deployment
 
+name: DEPRECATED - Azure Function App v2 (Disabled)
+
+# Completely disable this workflow - no triggers
 # DISABLED - Azure Function App deployment no longer used
 # on:
 #   workflow_dispatch:
@@ -76,73 +79,76 @@
 #           package: .
 # 
 #       - name: "Comprehensive Health Check"
-        shell: bash
-        run: |
-          echo "Starting comprehensive health check for ${{ github.event.inputs.deploy_target }}..."
-          sleep 90
-          
-          FUNCTION_APP_URL="https://${{ github.event.inputs.deploy_target }}.azurewebsites.net"
-          KUDU_URL="https://${{ github.event.inputs.deploy_target }}.scm.azurewebsites.net"
-          
-          echo "Function App URL: $FUNCTION_APP_URL"
-          echo "Kudu URL: $KUDU_URL"
-          
-          echo "=== Testing Function App Homepage ==="
-          HOMEPAGE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_APP_URL" || echo "000")
-          echo "Homepage HTTP Status: $HOMEPAGE_STATUS"
-          
-          if [ "$HOMEPAGE_STATUS" = "200" ]; then
-            echo "✅ Homepage test PASSED"
-          else
-            echo "❌ Homepage test FAILED"
-          fi
-          
-          echo "=== Testing Kudu/SCM Accessibility ==="
-          KUDU_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$KUDU_URL" || echo "000")
-          echo "Kudu HTTP Status: $KUDU_STATUS"
-          
-          if [ "$KUDU_STATUS" = "200" ] || [ "$KUDU_STATUS" = "401" ]; then
-            echo "✅ Kudu accessibility test PASSED"
-          else
-            echo "❌ Kudu accessibility test FAILED"
-          fi
-          
-          echo "=== Testing Hello Endpoint ==="
-          HELLO_RESPONSE=$(curl -s "$FUNCTION_APP_URL/api/hello" || echo "ERROR")
-          HELLO_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_APP_URL/api/hello" || echo "000")
-          echo "Hello HTTP Status: $HELLO_STATUS"
-          echo "Hello Response: $HELLO_RESPONSE"
-          
-          if [ "$HELLO_STATUS" = "200" ]; then
-            echo "✅ Hello endpoint test PASSED"
-          else
-            echo "❌ Hello endpoint test FAILED"
-          fi
-          
-          echo "=== Testing Signup Endpoint Basic Connectivity ==="
-          SIGNUP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$FUNCTION_APP_URL/api/signup" \
-            -H "Content-Type: application/json" \
-            -d '{"name":"Test User","email":"test@example.com","password":"testpass","role":"teacher"}' || echo "000")
-          echo "Signup HTTP Status: $SIGNUP_STATUS"
-          
-          if [ "$SIGNUP_STATUS" = "200" ] || [ "$SIGNUP_STATUS" = "201" ] || [ "$SIGNUP_STATUS" = "400" ]; then
-            echo "✅ Signup endpoint connectivity test PASSED (function executing)"
-          else
-            echo "❌ Signup endpoint connectivity test FAILED (function not executing)"
-          fi
-          
-          echo "=== Health Check Summary ==="
-          echo "Homepage: $HOMEPAGE_STATUS"
-          echo "Kudu: $KUDU_STATUS" 
-          echo "Hello API: $HELLO_STATUS"
-          echo "Signup API: $SIGNUP_STATUS"
-          
-          if [ "$HOMEPAGE_STATUS" = "200" ] && [ "$HELLO_STATUS" = "200" ]; then
-            echo "🎉 OVERALL HEALTH CHECK: PASSED"
-            echo "New Function App is ready for use!"
-            exit 0
-          else
-            echo "💥 OVERALL HEALTH CHECK: FAILED"
-            echo "New Function App has issues - do not migrate production traffic"
-            exit 1
-          fi
+#         shell: bash
+#         run: |
+#           echo "Starting comprehensive health check for ${{ github.event.inputs.deploy_target }}..."
+#           sleep 90
+#           
+#           FUNCTION_APP_URL="https://${{ github.event.inputs.deploy_target }}.azurewebsites.net"
+#           KUDU_URL="https://${{ github.event.inputs.deploy_target }}.scm.azurewebsites.net"
+#           
+#           echo "Function App URL: $FUNCTION_APP_URL"
+#           echo "Kudu URL: $KUDU_URL"
+#           
+#           echo "=== Testing Function App Homepage ==="
+#           HOMEPAGE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_APP_URL" || echo "000")
+#           echo "Homepage HTTP Status: $HOMEPAGE_STATUS"
+#           
+#           if [ "$HOMEPAGE_STATUS" = "200" ]; then
+#             echo "✅ Homepage test PASSED"
+#           else
+#             echo "❌ Homepage test FAILED"
+#           fi
+#           
+#           echo "=== Testing Kudu/SCM Accessibility ==="
+#           KUDU_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$KUDU_URL" || echo "000")
+#           echo "Kudu HTTP Status: $KUDU_STATUS"
+#           
+#           if [ "$KUDU_STATUS" = "200" ] || [ "$KUDU_STATUS" = "401" ]; then
+#             echo "✅ Kudu accessibility test PASSED"
+#           else
+#             echo "❌ Kudu accessibility test FAILED"
+#           fi
+#           
+#           echo "=== Testing Hello Endpoint ==="
+#           HELLO_RESPONSE=$(curl -s "$FUNCTION_APP_URL/api/hello" || echo "ERROR")
+#           HELLO_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FUNCTION_APP_URL/api/hello" || echo "000")
+#           echo "Hello HTTP Status: $HELLO_STATUS"
+#           echo "Hello Response: $HELLO_RESPONSE"
+#           
+#           if [ "$HELLO_STATUS" = "200" ]; then
+#             echo "✅ Hello endpoint test PASSED"
+#           else
+#             echo "❌ Hello endpoint test FAILED"
+#           fi
+#           
+#           echo "=== Testing Signup Endpoint Basic Connectivity ==="
+#           SIGNUP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$FUNCTION_APP_URL/api/signup" \
+#             -H "Content-Type: application/json" \
+#             -d '{"name":"Test User","email":"test@example.com","password":"testpass","role":"teacher"}' || echo "000")
+#           echo "Signup HTTP Status: $SIGNUP_STATUS"
+#           
+#           if [ "$SIGNUP_STATUS" = "200" ] || [ "$SIGNUP_STATUS" = "201" ] || [ "$SIGNUP_STATUS" = "400" ]; then
+#             echo "✅ Signup endpoint connectivity test PASSED (function executing)"
+#           else
+#             echo "❌ Signup endpoint connectivity test FAILED (function not executing)"
+#           fi
+#           
+#           echo "=== Health Check Summary ==="
+#           echo "Homepage: $HOMEPAGE_STATUS"
+#           echo "Kudu: $KUDU_STATUS" 
+#           echo "Hello API: $HELLO_STATUS"
+#           echo "Signup API: $SIGNUP_STATUS"
+#           
+#           if [ "$HOMEPAGE_STATUS" = "200" ] && [ "$HELLO_STATUS" = "200" ]; then
+#             echo "🎉 OVERALL HEALTH CHECK: PASSED"
+#             echo "New Function App is ready for use!"
+#             exit 0
+#           else
+#             echo "💥 OVERALL HEALTH CHECK: FAILED"
+#             echo "New Function App has issues - do not migrate production traffic"
+#             exit 1
+#           fi
+#
+# All legacy backend deployment steps have been removed
+# Backend now uses AWS Lambda - see aws-lambda-deploy.yml workflow
