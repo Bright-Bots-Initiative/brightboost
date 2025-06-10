@@ -37,8 +37,8 @@ This project is built with a modern web technology stack:
     *   React Router (for navigation)
     *   Context API (for state management, e.g., AuthContext)
 *   **Backend:**
-    *   Azure Functions
-    *   Prisma ORM with Azure PostgreSQL
+    *   AWS Lambda (migrated from Azure Functions)
+    *   Aurora PostgreSQL (AWS RDS)
     *   JSON Web Tokens (JWT) for authentication
     *   `bcryptjs` for password hashing
 *   **Testing:**
@@ -71,12 +71,12 @@ To get a local copy up and running, follow these simple steps.
     ```
 
 3.  **Configure Environment Variables:**
-    The Azure Functions backend uses a `.env` file for configuration. Create a `.env` file in the root of the project if it doesn't exist:
+    The backend uses environment variables for configuration. Create a `.env` file in the root of the project if it doesn't exist:
     ```env
     JWT_SECRET=your_super_secret_jwt_key_here
-    POSTGRES_URL=postgres://username:password@your-server.postgres.database.azure.com:5432/brightboost
+    VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev
     ```
-    Replace `your_super_secret_jwt_key_here` with a strong, unique secret and update the PostgreSQL connection string.
+    Replace `your_super_secret_jwt_key_here` with a strong, unique secret and update the AWS API Gateway URL.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
@@ -86,13 +86,12 @@ To get a local copy up and running, follow these simple steps.
     This command starts:
     *   Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
-5.  **Running Azure Functions Locally:**
-    To run Azure Functions locally:
+5.  **Running the Backend Locally:**
+    The backend now runs on AWS Lambda. For local development, you can use the mock server:
     ```sh
-    cd api
-    func start
+    npm run server
     ```
-    This will start the Azure Functions runtime locally.
+    This will start a local Express server for development.
 
 ## Production Deployment
 
@@ -102,26 +101,35 @@ The application is deployed using Azure Static Web Apps with an Azure Functions 
 
 ## Deployment
 
-This project is configured for deployment to Azure.
+This project uses a hybrid deployment approach:
 
-### Using Azure (CI/CD Pipeline)
+### Backend Deployment (AWS Lambda)
 
-The BrightBoost application is deployed to Azure using a GitHub Actions CI/CD pipeline. For details on the deployment process, refer to the [Deployment Pipeline](./docs/deployment/pipeline.md) documentation (Note: This file might not exist in the current repository state).
+The backend is deployed to AWS Lambda using GitHub Actions CI/CD pipeline. The deployment workflow is defined in `.github/workflows/aws-lambda-deploy.yml`.
 
-For information on setting up Azure resources, refer to the [Azure Deployment Configuration](./AZURE_DEPLOYMENT.md) document.
+**Backend Infrastructure:**
+- **AWS Lambda** for serverless backend functions
+- **Aurora PostgreSQL** (AWS RDS) for data persistence
+- **API Gateway** for HTTP API endpoints
+- **AWS Secrets Manager** for secure credential storage
 
-**Note:** The production URL is https://black-sand-053455d1e.6.azurestaticapps.net. The gray-ocean-02030a010.6.azurestaticapps.net URL is deprecated and should not be used.
+### Frontend Deployment (Azure Static Web Apps)
 
-The deployment pipeline typically:
-1. Builds and tests the application.
-2. Creates a Docker image and pushes it to a container registry (e.g., GitHub Container Registry or Azure Container Registry).
-3. Deploys the application to Azure App Service.
+The frontend continues to be deployed to Azure Static Web Apps for optimal performance and global distribution.
 
-**Note on Azure PostgreSQL for Deployment:**
-The backend uses Azure PostgreSQL for data persistence. When deploying to Azure:
-*   Ensure the `POSTGRES_URL` environment variable is properly configured in your Azure Function App settings.
-*   Database migrations should be run using the provided scripts in the `scripts/` directory.
-*   For more details on the deployment process, refer to the `AZURE_DEPLOYMENT.MD` file.
+**Frontend URL:** https://black-sand-053455d1e.6.azurestaticapps.net
+
+### Deployment Pipeline
+
+The deployment pipeline:
+1. **Frontend**: Builds and deploys React application to Azure Static Web Apps
+2. **Backend**: Builds TypeScript Lambda functions and deploys to AWS using SAM
+3. **Database**: Uses Aurora PostgreSQL cluster in AWS
+4. **API Integration**: Frontend calls AWS API Gateway endpoints directly
+
+**Environment Variables:**
+- `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
+- Backend credentials stored in AWS Secrets Manager
 
 ## Project Structure (Simplified)
 
@@ -136,10 +144,10 @@ The backend uses Azure PostgreSQL for data persistence. When deploying to Azure:
 │   ├── services/       # API service integration
 │   ├── App.tsx         # Main application component
 │   └── main.tsx        # Entry point for the React app
-├── api/                # Azure Functions backend
-│   ├── auth/           # Authentication functions (login, signup)
-│   ├── shared/         # Shared utilities and middleware
-│   └── README.md       # Azure Functions documentation
+├── src/lambda/         # AWS Lambda backend functions
+│   ├── teacher-signup.ts # Teacher signup Lambda function
+│   ├── package.json    # Lambda dependencies
+│   └── tsconfig.json   # TypeScript configuration
 ├── prisma/             # Prisma ORM schema and migrations
 │   ├── schema.prisma   # Database schema definition
 │   └── migrations/     # Database migrations

@@ -1,15 +1,20 @@
-name: Deploy to New Function App - bb-dev-func-api-v2
+# DEPRECATED: Azure Function App deployment - backend migrated to AWS Lambda
+# This workflow is disabled as the backend now uses AWS Lambda instead of Azure Functions
+# See aws-lambda-deploy.yml for current backend deployment
 
-on:
-  workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: 'Deploy to new Function App'
-        required: true
-        default: 'bb-dev-func-api-v2'
-        type: choice
-        options:
-          - bb-dev-func-api-v2
+# name: Deploy to New Function App - bb-dev-func-api-v2
+
+# DISABLED - Azure Function App deployment no longer used
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       deploy_target:
+#         description: 'Deploy to new Function App'
+#         required: true
+#         default: 'bb-dev-func-api-v2'
+#         type: choice
+#         options:
+#           - bb-dev-func-api-v2
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "api"

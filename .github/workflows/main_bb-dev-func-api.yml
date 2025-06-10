@@ -1,13 +1,15 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# DEPRECATED: Azure Function App deployment - backend migrated to AWS Lambda
+# This workflow is disabled as the backend now uses AWS Lambda instead of Azure Functions
+# See aws-lambda-deploy.yml for current backend deployment
 
-name: Build and deploy Node.js project to Azure Function App - bb-dev-func-api
+# name: Build and deploy Node.js project to Azure Function App - bb-dev-func-api
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+# DISABLED - Azure Function App deployment no longer used
+# on:
+#   push:
+#     branches:
+#       - main
+#   workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: "api" # Deploy only the api folder

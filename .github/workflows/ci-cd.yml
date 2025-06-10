@@ -185,9 +185,10 @@ jobs:
               }
             ]
       
-      - name: Deploy Azure Function App
-        uses: azure/functions-action@v1
-        with:
-          app-name: 'bb-dev-func-node'
-          package: 'api'
-          publish-profile: ${{ secrets.AZURE_FUNCTION_PUBLISH_PROFILE_NODE }}
+      # DEPRECATED: Azure Function App deployment removed - backend migrated to AWS Lambda
+      # - name: Deploy Azure Function App
+      #   uses: azure/functions-action@v1
+      #   with:
+      #     app-name: 'bb-dev-func-node'
+      #     package: 'api'
+      #     publish-profile: ${{ secrets.AZURE_FUNCTION_PUBLISH_PROFILE_NODE }}
