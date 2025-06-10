@@ -1,8 +1,8 @@
 # DEPRECATED: This workflow has been replaced by AWS Lambda deployment
-# Backend now uses AWS Lambda instead of Azure Functions
+# Backend now uses AWS Lambda instead of Azure Static Web Apps + AWS Lambda hybrid architecture
 # See .github/workflows/aws-lambda-deploy.yml for current backend deployment
 
-# This file is kept for reference only - all Azure Function App deployment is disabled
+# This file is kept for reference only - all legacy backend deployment is disabled
 
 # jobs:
 #   build:
@@ -73,7 +73,7 @@
 #             echo "Detected Flex Consumption Function App - will use Azure CLI deployment"
 #           else
 #             echo "is-flex=false" >> $GITHUB_OUTPUT
-#             echo "Detected standard Function App - will use AWS Lambda backend"
+#             echo "Detected standard deployment - now uses AWS Lambda backend"
 #           fi
 # 
 #       - name: "Create Deployment Package for Flex"
@@ -104,5 +104,5 @@
 #           slot-name: "Production"
 #           package: .
 # 
-# All Azure Function App deployment steps have been removed
+# All legacy backend deployment steps have been removed
 # Backend now uses AWS Lambda - see aws-lambda-deploy.yml workflow

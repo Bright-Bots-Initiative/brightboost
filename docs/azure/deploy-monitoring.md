@@ -1,6 +1,6 @@
 # Deploying Azure Monitoring Resources with Bicep
 
-This document outlines how to deploy Application Insights and Log Analytics for BrightBoost using the Bicep template.
+This document outlines how to deploy Application Insights and Log Analytics for BrightBoost frontend monitoring using the Bicep template.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ az deployment group show \
   --query properties.outputs.appInsightsConnectionString.value
 ```
 
-4. Use this connection string to configure your frontend and backend applications.
+4. Use this connection string to configure your Azure Static Web Apps frontend.
 
 ## Connecting to Existing Resources
 

@@ -1,6 +1,6 @@
 # Scaling Down the Old Azure App Service
 
-The old Azure App Service (bb-dev-web) should be scaled down to B1 or lower tier to reduce costs now that the application has been migrated to Azure Static Web Apps.
+The old Azure App Service (bb-dev-web) should be scaled down to B1 or lower tier to reduce costs now that the application has been migrated to Azure Static Web Apps with AWS Lambda backend.
 
 ## Steps to Scale Down:
 
