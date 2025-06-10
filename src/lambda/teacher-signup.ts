@@ -62,7 +62,41 @@ async function getDbConnection(): Promise<Pool> {
       testClient.release();
     } catch (error) {
       console.error('Database connection test failed:', error);
-      throw error;
+      
+      if (error instanceof Error && error.message.includes('database "brightboost" does not exist')) {
+        console.log('Database "brightboost" does not exist, attempting to create it...');
+        try {
+          const adminPool = new Pool({
+            host: secret.host,
+            port: secret.port,
+            database: 'postgres',
+            user: secret.username,
+            password: secret.password,
+            ssl: {
+              rejectUnauthorized: false
+            },
+            max: 1,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 25000,
+          });
+          
+          const adminClient = await adminPool.connect();
+          console.log('Connected to postgres database, creating brightboost database...');
+          await adminClient.query('CREATE DATABASE brightboost;');
+          console.log('Database "brightboost" created successfully');
+          adminClient.release();
+          await adminPool.end();
+          
+          const testClient = await dbPool.connect();
+          console.log('Connection to new brightboost database successful');
+          testClient.release();
+        } catch (createError) {
+          console.error('Failed to create brightboost database:', createError);
+          throw createError;
+        }
+      } else {
+        throw error;
+      }
     }
   }
 
