@@ -48,12 +48,7 @@ jobs:
         run: npx wait-on --timeout=60000 http://localhost:5173 || (cat vite.log && exit 1)
       
       - name: Run Cypress smoke tests
-        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=false
-        if: github.event_name != 'pull_request'
-      
-      - name: Run Cypress smoke tests (Preview Mode)
-        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts" --env IS_PREVIEW=true
-        if: github.event_name == 'pull_request'
+        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts"
       
       - name: Build application
         run: npm run build
