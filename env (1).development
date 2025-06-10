@@ -1,11 +1,8 @@
 # .env.development
 # Development environment variables
 
-# API URL for frontend to connect to backend
-VITE_API_URL=http://localhost:3000
-
-# Server configuration
-PORT=3000
+# AWS Lambda API Gateway URL
+VITE_AWS_API_URL=https://yt4cd41rx3.execute-api.us-east-1.amazonaws.com/dev
 NODE_ENV=development
 
 # JWT configuration
