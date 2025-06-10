@@ -59,10 +59,19 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     // TODO: Investigate if this setTimeout can be replaced with a useEffect hook listening to `isAuthenticated` 
     // or `user` state for a more robust navigation trigger post-login. This would require careful handling
     // to ensure navigation occurs only once and to the correct role-based dashboard.
+    console.log('AuthContext login: redirecting user with role:', userData.role);
     if (userData.role === 'teacher') {
-      setTimeout(() => navigate('/teacher/dashboard'), 100);
+      console.log('AuthContext login: navigating to teacher dashboard in 500ms');
+      setTimeout(() => {
+        console.log('AuthContext login: executing navigation to /teacher/dashboard');
+        navigate('/teacher/dashboard');
+      }, 500);
     } else if (userData.role === 'student') {
-      setTimeout(() => navigate('/student/dashboard'), 100);
+      console.log('AuthContext login: navigating to student dashboard in 500ms');
+      setTimeout(() => {
+        console.log('AuthContext login: executing navigation to /student/dashboard');
+        navigate('/student/dashboard');
+      }, 500);
     }
   };
 

@@ -33,9 +33,12 @@ const TeacherSignup: React.FC = () => {
       const response = await signupTeacher(name, email, password);
       console.log('Signup successful:', response);
       
+      console.log('Signup successful, attempting login...');
       // Auto login after successful signup
       if (response && response.token) {
+        console.log('Login token received, calling login context...');
         login(response.token, response.user);
+        console.log('Login context called successfully');
       } else {
         console.error('Invalid response format:', response);
         setError('Server returned an invalid response format');

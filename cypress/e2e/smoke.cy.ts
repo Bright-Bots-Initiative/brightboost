@@ -1,6 +1,29 @@
-describe('Dashboard API Smoke Tests', () => {
+describe('Authentication Flow Tests', () => {
   beforeEach(() => {
     cy.visit('/');
+  });
+
+  it('should complete teacher signup and redirect to dashboard', () => {
+    cy.intercept('POST', 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher').as('teacherSignup');
+    
+    cy.visit('/teacher/signup');
+    
+    const timestamp = Date.now();
+    cy.get('#name').type('Test Teacher');
+    cy.get('#email').type(`test-teacher-${timestamp}@example.com`);
+    cy.get('#password').type('TestPassword123');
+    cy.get('#confirmPassword').type('TestPassword123');
+    
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait('@teacherSignup').then((interception) => {
+      expect(interception.response.statusCode).to.equal(201);
+      expect(interception.response.body).to.have.property('token');
+      expect(interception.response.body).to.have.property('user');
+    });
+    
+    cy.url().should('include', '/teacher/dashboard');
+    cy.contains('Bright Boost', { timeout: 10000 }).should('be.visible');
   });
 
   it('should handle teacher dashboard correctly', () => {
