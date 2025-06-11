@@ -14,7 +14,8 @@ describe('Dashboard API Smoke Tests', () => {
       }));
     });
 
-    cy.intercept('GET', 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/teacher_dashboard').as('teacherDashboard');
+    const apiUrl = Cypress.env('VITE_AWS_API_URL');
+    cy.intercept('GET', `${apiUrl}/api/teacher_dashboard`).as('teacherDashboard');
     
     cy.visit('/teacher/dashboard');
     
@@ -50,7 +51,8 @@ describe('Dashboard API Smoke Tests', () => {
       }));
     });
 
-    cy.intercept('GET', 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/student_dashboard').as('studentDashboard');
+    const apiUrl = Cypress.env('VITE_AWS_API_URL');
+    cy.intercept('GET', `${apiUrl}/api/student_dashboard`).as('studentDashboard');
     
     cy.visit('/student/dashboard');
     

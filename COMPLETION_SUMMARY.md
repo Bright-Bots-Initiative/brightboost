@@ -9,11 +9,11 @@
 - **CI/CD Pipeline**: All deployments passing (1 pass, 0 fail)
 
 ### Test Results
-**API Endpoint**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher`
+**API Endpoint**: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher`
 
 **Successful Test**:
 ```bash
-curl -X POST "https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher" \
+curl -X POST "https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher" \
   -H "Content-Type: application/json" \
   -d '{"name":"New Teacher","email":"newteacher@example.com","password":"testpassword123"}'
 ```

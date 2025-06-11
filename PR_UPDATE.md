@@ -38,6 +38,6 @@ The Lambda function is deployed in VPC subnets that lack proper routing to AWS s
 - Recommend infrastructure changes to resolve connectivity
 
 ### API Endpoint
-- **URL**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher`
+- **URL**: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher`
 - **Status**: Deployed but non-functional due to VPC connectivity
 - **Stack**: `brightboost-teacher-signup-feat-teacher-signup-mvp`

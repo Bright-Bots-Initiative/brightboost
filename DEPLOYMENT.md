@@ -12,7 +12,7 @@ BrightBoost uses a hybrid cloud deployment strategy:
 - **Purpose**: Deploy backend API functions to AWS Lambda
 - **Triggers**: Push to `main` branch, pull requests, manual dispatch
 - **Infrastructure**: AWS Lambda, API Gateway, Aurora PostgreSQL
-- **Endpoint**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev`
+- **Endpoint**: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage`
 
 ### 2. Azure Static Web Apps (`azure-static-web-apps.yml`)
 - **Purpose**: Deploy React frontend to Azure Static Web Apps
@@ -34,7 +34,7 @@ These workflows are commented out but preserved for reference.
 
 ### Frontend Environment Variables
 ```env
-VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
 ```
 
 ### AWS Lambda Environment Variables
@@ -66,7 +66,7 @@ VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
 
 ### Backend API Test
 ```bash
-curl -X POST https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher \
+curl -X POST https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Teacher","email":"test@example.com","password":"testpassword123"}'
 ```
