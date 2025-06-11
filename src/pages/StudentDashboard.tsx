@@ -50,12 +50,15 @@ const StudentDashboard: React.FC = () => {
       setError(null);
       
       const timeoutId = setTimeout(() => {
+        console.log('StudentDashboard: Timeout triggered after 5 seconds');
         setError('Request timeout. API may not be available in test environment.');
         setIsLoading(false);
       }, 5000); // 5 second timeout for faster test execution
       
       try {
+        console.log('StudentDashboard: Starting API call to /api/student_dashboard');
         const data = await api.get('/api/student_dashboard');
+        console.log('StudentDashboard: API call successful, data:', data);
         clearTimeout(timeoutId); // Clear timeout if request succeeds
         
         if (Array.isArray(data)) {
@@ -75,13 +78,14 @@ const StudentDashboard: React.FC = () => {
         }
       } catch (err) {
         clearTimeout(timeoutId); // Clear timeout if request fails
-        console.error("Failed to fetch student dashboard data:", err);
+        console.error("StudentDashboard: Failed to fetch student dashboard data:", err);
         if (err instanceof Error && err.message.includes('404')) {
           setError('API not available in preview mode. Student data will be shown in production.');
         } else {
           setError(err instanceof Error ? err.message : 'Failed to load dashboard. Please try again.');
         }
       } finally {
+        console.log('StudentDashboard: Setting isLoading to false');
         setIsLoading(false);
       }
     };
