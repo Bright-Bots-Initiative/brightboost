@@ -1,38 +1,53 @@
 
 // src/pages/StudentLogin.tsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 
+const studentLoginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password needs to be at least 6 characters'),
+});
+
+type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
+
 const StudentLogin: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<StudentLoginFormData>({
+    resolver: zodResolver(studentLoginSchema),
+    mode: 'onChange'
+  });
 
+  const onSubmit = async (data: StudentLoginFormData) => {
     try {
-      const response = await loginUser(email, password);
+      console.log('Form data:', data);
+      console.log('Validation errors:', errors);
+      const response = await loginUser(studentLoginSchema.parse(data).email, studentLoginSchema.parse(data).password);
+
       // Verify this is a student account
       if (response.user.role !== 'student') {
-        setError('This login is only for students. Please use the teacher login if you are a teacher.');
-        setIsLoading(false);
+        alert('This login is only for students. Please use the teacher login if you are a teacher.');
         return;
       }
+      localStorage.setItem('jwt', response.token);
       login(response.token, response.user);
+      navigate('/student/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to login. Please check your credentials.');
-    } finally {
-      setIsLoading(false);
-    }
+      console.error('Login error:', err);
+      alert('Failed to login. Please check your credentials.');
+      } 
   };
 
   return (
@@ -52,13 +67,7 @@ const StudentLogin: React.FC = () => {
           <div className="game-card p-6 flex-1 w-full max-w-md">
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
             
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-                {error}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-brightboost-navy mb-1">
                   Email
@@ -66,12 +75,13 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  {...register('email')}
+                  className={`w-full px-4 py-2 bg-white border-2 ${
+                    errors.email ? 'border-red-500' : 'border-brightboost-lightblue'
+                  } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
                   placeholder="Enter your email"
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
               
               <div>
@@ -81,22 +91,23 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
+                  {...register('password')}
+                  className={`w-full px-4 py-2 bg-white border-2 ${
+                    errors.password ? 'border-red-500' : 'border-brightboost-lightblue'
+                  } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
                   placeholder="Enter your password"
                 />
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
               </div>
               
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
-                  isLoading ? 'bg-brightboost-lightblue/70' : 'bg-brightboost-lightblue'
+                  isSubmitting ? 'bg-brightboost-lightblue/70' : 'bg-brightboost-lightblue'
                 } transition-colors`}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isSubmitting ? 'Logging in...' : 'Login'}
               </button>
             </form>
             
