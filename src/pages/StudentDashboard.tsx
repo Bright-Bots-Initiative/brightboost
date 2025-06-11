@@ -181,10 +181,11 @@ const StudentDashboard: React.FC = () => {
           </div>
         </nav>
 
-        <main className="container mx-auto p-4 flex-grow">
+        <main className="container mx-auto p-4 flex-grow" data-testid="student-dashboard">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-brightboost-navy">Hello, {studentName}!</h2>
+              <h2 className="text-2xl font-bold text-brightboost-navy">Student Dashboard</h2>
+              <h3 className="text-xl text-brightboost-navy">Hello, {studentName}!</h3>
               <p className="text-brightboost-navy">Let's learn and have fun!</p>
             </div>
             <div className="flex gap-2">

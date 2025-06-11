@@ -49,6 +49,8 @@ jobs:
       
       - name: Run Cypress smoke tests
         run: npx cypress run --spec "cypress/e2e/smoke.cy.ts"
+        env:
+          VITE_AWS_API_URL: https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
       
       - name: Build application
         run: npm run build
