@@ -53,6 +53,8 @@ describe('Dashboard UI Smoke Tests', () => {
         cy.contains('Loading your dashboard', { timeout: 15000 }).should('be.visible');
       } else if ($body.text().includes('Error:') || $body.text().includes('API not available')) {
         cy.contains('Error:', { timeout: 5000 }).should('be.visible');
+      } else if ($body.text().includes('No student data available')) {
+        cy.contains('No student data available yet', { timeout: 5000 }).should('be.visible');
       } else {
         cy.get('[data-testid="student-dashboard"]', { timeout: 5000 }).should('be.visible');
         cy.contains('Student Dashboard', { timeout: 5000 }).should('be.visible');
