@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -7,6 +8,18 @@ import BrightBoostRobot from "../components/BrightBoostRobot";
 import Sidebar from "../components/TeacherDashboard/Sidebar";
 import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
+=======
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useApi } from '../services/api';
+import GameBackground from '../components/GameBackground';
+import BrightBoostRobot from '../components/BrightBoostRobot';
+import Sidebar from '../components/TeacherDashboard/Sidebar';
+import MainContent from '../components/TeacherDashboard/MainContent';
+import { Lesson } from '../components/TeacherDashboard/types';
+import TeacherNavbar from '../components/TeacherDashboard/TeacherNavbar';
+>>>>>>> 23bf09a (feat(teacher): add teacher nav bar component)
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -124,6 +137,7 @@ const TeacherDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
+<<<<<<< HEAD
         <nav className="bg-brightboost-navy text-white p-4 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -142,6 +156,9 @@ const TeacherDashboard: React.FC = () => {
             </div>
           </div>
         </nav>
+=======
+        <TeacherNavbar userName={user?.name || 'Teacher'} onLogout={handleLogout} />
+>>>>>>> 23bf09a (feat(teacher): add teacher nav bar component)
 
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
