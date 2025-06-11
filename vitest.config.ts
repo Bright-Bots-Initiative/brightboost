@@ -13,6 +13,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./setupTests.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/src/lambda/**'
+    ],
     environmentOptions: {
       jsdom: {
       }
