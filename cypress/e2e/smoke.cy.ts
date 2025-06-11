@@ -33,7 +33,7 @@ describe('Dashboard UI Smoke Tests', () => {
   });
 
   it('should display student dashboard correctly', () => {
-    cy.intercept('GET', '**/api/student_dashboard', {
+    cy.intercept('GET', '**/api/student_dashboard*', {
       statusCode: 200,
       body: [
         {
@@ -73,7 +73,7 @@ describe('Dashboard UI Smoke Tests', () => {
   });
 
   it('should handle student dashboard API errors gracefully', () => {
-    cy.intercept('GET', '**/api/student_dashboard', {
+    cy.intercept('GET', '**/api/student_dashboard*', {
       statusCode: 500,
       body: { error: 'Internal server error' }
     }).as('studentDashboardError');
@@ -97,7 +97,9 @@ describe('Dashboard UI Smoke Tests', () => {
     cy.get('body').should(($body) => {
       const hasError = $body.find('[data-testid="dashboard-error"]').length > 0;
       const hasLoading = $body.find('[data-testid="loading-spinner"]').length > 0;
-      expect(hasError || !hasLoading).to.be.true;
+      if (!hasError && hasLoading) {
+        throw new Error('Component should be in error state or not loading');
+      }
     });
     
     cy.get('[data-testid="dashboard-error"]').should('be.visible');
