@@ -8,7 +8,7 @@ The frontend has been successfully integrated with the AWS Lambda `/api/signup/t
 
 **Local Testing**:
 - ✅ Teacher signup form loads correctly
-- ✅ API calls route to AWS Lambda endpoint: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher`
+- ✅ API calls route to AWS Lambda endpoint: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher`
 - ✅ Successful HTTP 201 response with user data and JWT token
 - ✅ No CORS errors in browser console
 - ✅ User authentication and token storage working
@@ -16,7 +16,7 @@ The frontend has been successfully integrated with the AWS Lambda `/api/signup/t
 
 **Browser Console Logs**:
 ```
-[log] Sending teacher signup request to: https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher
+[log] Sending teacher signup request to: https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher
 [log] Signup successful: {message: Teacher account created successfully, user: Object, token: eyJ...}
 [log] Login successful, user role: TEACHER
 ```
@@ -45,14 +45,14 @@ The frontend has been successfully integrated with the AWS Lambda `/api/signup/t
 
 ### 🔗 Key URLs
 
-- **AWS API Gateway**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev`
+- **AWS API Gateway**: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage`
 - **Teacher Signup Endpoint**: `/api/signup/teacher`
 - **PR**: https://github.com/Bright-Bots-Initiative/brightboost/pull/127
 
 ### 📋 Next Steps for Production
 
 1. **Azure Static Web App Configuration**:
-   - Set `VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev` in Azure portal
+   - Set `VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage` in Azure portal
    - Deploy updated frontend code to Azure Static Web App
    - Remove any existing `/api/*` proxy rules in Azure configuration
 

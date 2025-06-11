@@ -63,7 +63,7 @@ aws ec2 create-route \
 4. Document successful deployment in PR #127
 
 ## API Details
-- **Endpoint**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher`
+- **Endpoint**: `https://your-api-gateway-url.execute-api.region.amazonaws.com/stage/api/signup/teacher`
 - **Stack**: `brightboost-teacher-signup-feat-teacher-signup-mvp`
 - **Lambda Role**: `brightboost-teacher-signu-TeacherSignupFunctionRole-NX81foP6ZBFk`
 - **Secret ARN**: `arn:aws:secretsmanager:us-east-1:012876801822:secret:brightboost/aurora/prod-A7vWnk*`

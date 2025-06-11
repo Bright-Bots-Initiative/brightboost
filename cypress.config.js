@@ -10,6 +10,8 @@ export default defineConfig({
     viewportWidth: 1280,
     viewportHeight: 720,
     setupNodeEvents(on, config) {
+      config.env.VITE_AWS_API_URL = process.env.VITE_AWS_API_URL || 'https://your-api-gateway-url.execute-api.region.amazonaws.com/stage';
+      return config;
     },
   },
 })

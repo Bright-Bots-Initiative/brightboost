@@ -150,14 +150,16 @@ const TeacherDashboard: React.FC = () => {
           </div>
         )}
         {!isLoading && !error && lessonsData.length > 0 && (
-          <MainContent
-            activeView={activeView}
-            lessonsData={lessonsData}
-            setLessonsData={setLessonsData}
-            onAddLesson={handleAddLesson}
-            onEditLesson={handleEditLesson}
-            onDeleteLesson={handleDeleteLesson}
-          />
+          <div data-testid="teacher-dashboard">
+            <MainContent
+              activeView={activeView}
+              lessonsData={lessonsData}
+              setLessonsData={setLessonsData}
+              onAddLesson={handleAddLesson}
+              onEditLesson={handleEditLesson}
+              onDeleteLesson={handleDeleteLesson}
+            />
+          </div>
         )}
       </div>
     </GameBackground>

@@ -34,7 +34,7 @@ jobs:
           app_build_command: "npm run build"
           action: "upload"        # Explicitly set the action to upload
           # Environment variables are set via the Azure Portal, not here
-          # VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+          # VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

@@ -66,10 +66,9 @@ export const signupUser = async (name: string, email: string, password: string, 
 
 export const signupTeacher = async (name: string, email: string, password: string, school?: string, subject?: string) => {
   try {
-    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
-    console.log(`Sending teacher signup request to: ${AWS_API_URL}/api/signup/teacher`);
+    console.log(`Sending teacher signup request to: ${API_URL}/api/signup/teacher`);
     
-    const response = await fetch(`${AWS_API_URL}/api/signup/teacher`, {
+    const response = await fetch(`${API_URL}/api/signup/teacher`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
