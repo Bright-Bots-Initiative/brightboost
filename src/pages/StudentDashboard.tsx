@@ -131,7 +131,7 @@ const StudentDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <GameBackground>
-        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center">
+        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center" data-testid="loading-spinner">
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-brightboost-navy mt-4">Loading your dashboard...</p>
         </div>
@@ -142,7 +142,7 @@ const StudentDashboard: React.FC = () => {
   if (error) {
     return (
       <GameBackground>
-        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center p-4">
+        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center p-4" data-testid="dashboard-error">
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-red-500 mt-4 text-center">Error: {error}</p>
           {error.includes('preview mode') && (
