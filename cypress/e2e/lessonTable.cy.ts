@@ -1,3 +1,4 @@
+
 describe('LessonTable Component', () => {
   beforeEach(() => {
     cy.visit('/teacher-dashboard');
