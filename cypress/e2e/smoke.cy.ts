@@ -47,18 +47,12 @@ describe('Dashboard UI Smoke Tests', () => {
     
     cy.url().should('include', '/student/dashboard');
     
-    cy.get('[data-testid="loading-spinner"]', { timeout: 15000 }).should('not.exist');
+    cy.get('[data-testid="loading-spinner"]', { timeout: 10000 }).should('not.exist');
     
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-testid="dashboard-error"]').length > 0) {
-        cy.get('[data-testid="dashboard-error"]').should('be.visible');
-        cy.contains('Error:').should('be.visible');
-      } else {
-        cy.get('[data-testid="dashboard-error"]').should('not.exist');
-        cy.contains('Bright Boost').should('be.visible');
-        cy.get('[data-testid="student-dashboard"]').should('be.visible');
-        cy.contains('Student Dashboard').should('be.visible');
-      }
-    });
+    cy.get('[data-testid="dashboard-error"]').should('not.exist');
+    
+    cy.contains('Bright Boost').should('be.visible');
+    cy.get('[data-testid="student-dashboard"]').should('be.visible');
+    cy.contains('Student Dashboard').should('be.visible');
   });
 });

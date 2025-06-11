@@ -48,8 +48,16 @@ const StudentDashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setError(null);
+      
+      const timeoutId = setTimeout(() => {
+        setError('Request timeout. API may not be available in test environment.');
+        setIsLoading(false);
+      }, 5000); // 5 second timeout for faster test execution
+      
       try {
         const data = await api.get('/api/student_dashboard');
+        clearTimeout(timeoutId); // Clear timeout if request succeeds
+        
         if (Array.isArray(data)) {
           const formattedLessons = data.map((student: { id: string; name: string; email: string; xp?: number; level?: number; streak?: number }) => ({
             id: String(student.id),
@@ -66,6 +74,7 @@ const StudentDashboard: React.FC = () => {
           setStudentActivities([]);
         }
       } catch (err) {
+        clearTimeout(timeoutId); // Clear timeout if request fails
         console.error("Failed to fetch student dashboard data:", err);
         if (err instanceof Error && err.message.includes('404')) {
           setError('API not available in preview mode. Student data will be shown in production.');
