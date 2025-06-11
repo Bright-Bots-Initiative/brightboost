@@ -52,7 +52,7 @@ describe('Dashboard UI Smoke Tests', () => {
     
     cy.url().should('include', '/student/dashboard');
     
-    // cy.wait('@studentDashboard');
+    cy.wait('@studentDashboard');
     
     cy.get('[data-testid="loading-spinner"]', { timeout: 10000 }).should('not.exist');
     
@@ -66,7 +66,7 @@ describe('Dashboard UI Smoke Tests', () => {
   it('should handle student dashboard API errors gracefully', () => {
     cy.intercept('GET', '**/api/student_dashboard', {
       statusCode: 500,
-      body: {}
+      body: { error: 'Internal Server Error', message: 'Failed to load dashboard. Please try again.' }
     }).as('studentDashboardError');
 
     cy.window().then((win) => {
@@ -83,7 +83,7 @@ describe('Dashboard UI Smoke Tests', () => {
     
     cy.url().should('include', '/student/dashboard');
     
-    // cy.wait('@studentDashboardError');
+    cy.wait('@studentDashboardError');
     
     cy.get('[data-testid="loading-spinner"]', { timeout: 10000 }).should('not.exist');
     
