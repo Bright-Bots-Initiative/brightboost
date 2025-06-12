@@ -8,6 +8,7 @@ import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/', // Force absolute asset paths for nested routes
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
