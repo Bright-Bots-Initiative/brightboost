@@ -3,12 +3,12 @@
 import { useAuth } from '../contexts/AuthContext';
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_AWS_API_URL || '';
 
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,9 +30,9 @@ export const loginUser = async (email: string, password: string) => {
 
 export const signupUser = async (name: string, email: string, password: string, role: string) => {
   try {
-    console.log(`Sending signup request to: ${API_URL}/auth/signup`);
+    // console.log(`Sending signup request to: ${API_URL}/auth/signup`);
     
-    const response = await fetch(`${API_URL}/auth/signup`, {
+    const response = await fetch(`${API_URL}/api/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,6 +60,41 @@ export const signupUser = async (name: string, email: string, password: string, 
     return await response.json();
   } catch (error) {
     console.error('Signup error:', error);
+    throw error;
+  }
+};
+
+export const signupTeacher = async (name: string, email: string, password: string, school?: string, subject?: string) => {
+  try {
+    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
+    console.log(`Sending teacher signup request to: ${AWS_API_URL}/api/signup/teacher`);
+    
+    const response = await fetch(`${AWS_API_URL}/api/signup/teacher`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password, school, subject }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Teacher signup error response:', errorText);
+      
+      let errorMessage = 'Teacher signup failed';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `Teacher signup failed: ${response.status} ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Teacher signup error:', error);
     throw error;
   }
 };
@@ -95,11 +130,11 @@ export const useApi = () => {
   
   return {
     get: (endpoint: string) => authFetch(endpoint),
-    post: (endpoint: string, data: any) => authFetch(endpoint, {
+    post: (endpoint: string, data: Record<string, unknown>) => authFetch(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    put: (endpoint: string, data: any) => authFetch(endpoint, {
+    put: (endpoint: string, data: Record<string, unknown>) => authFetch(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),

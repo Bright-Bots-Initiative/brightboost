@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BrightBoost Teacher Signup API
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  
+  DatabaseSecretArn:
+    Type: String
+    Description: ARN of the secret containing Aurora database credentials
+  
+  VpcId:
+    Type: String
+    Description: VPC ID where Aurora cluster is deployed
+  
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnet IDs for Lambda function (same as Aurora)
+  
+  SecurityGroupId:
+    Type: String
+    Description: Security group ID that allows access to Aurora
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Environment
+        DATABASE_SECRET_ARN: !Ref DatabaseSecretArn
+
+Resources:
+  TeacherSignupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-fn"
+      CodeUri: src/lambda/
+      Handler: dist/teacher-signup.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        TeacherSignupApi:
+          Type: Api
+          Properties:
+            Path: /api/signup/teacher
+            Method: post
+            RestApiId: !Ref TeacherSignupApi
+
+  TeacherSignupApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  TeacherSignupApiUrl:
+    Description: "API Gateway endpoint URL for Teacher Signup function"
+    Value: !Sub "https://${TeacherSignupApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/signup/teacher"
+  
+  TeacherSignupFunctionArn:
+    Description: "Teacher Signup Lambda Function ARN"
+    Value: !GetAtt TeacherSignupFunction.Arn

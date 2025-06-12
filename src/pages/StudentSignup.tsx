@@ -29,9 +29,9 @@ const StudentSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Attempting to sign up student:', { name, email, role: 'student' });
+      // console.log('Attempting to sign up student:', { name, email, role: 'student' });
       const response = await signupUser(name, email, password, 'student');
-      console.log('Signup successful:', response);
+      // console.log('Signup successful:', response);
       
       // Auto login after successful signup
       if (response && response.token) {
@@ -40,9 +40,9 @@ const StudentSignup: React.FC = () => {
         console.error('Invalid response format:', response);
         setError('Server returned an invalid response format');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err);
-      setError(err.message || 'Failed to sign up. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to sign up. Please try again.');
     } finally {
       setIsLoading(false);
     }
