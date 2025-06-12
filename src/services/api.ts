@@ -5,13 +5,26 @@ import { useAuth } from '../contexts/AuthContext';
 // Get API URL from environment variables
 const API_URL = import.meta.env.VITE_AWS_API_URL || '';
 
+// Rate limiting for API calls
+const API_CALL_DELAY = 334; // ~3 calls per second
+let lastApiCall = 0;
+
+const rateLimitedFetch = async (url: string, options: RequestInit) => {
+  const now = Date.now();
+  const timeSinceLastCall = now - lastApiCall;
+  if (timeSinceLastCall < API_CALL_DELAY) {
+    await new Promise(resolve => setTimeout(resolve, API_CALL_DELAY - timeSinceLastCall));
+  }
+  lastApiCall = Date.now();
+  return fetch(url, options);
+};
+
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
   try {
-    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
-    console.log(`Sending login request to: ${AWS_API_URL}/api/login`);
+    console.log(`Sending login request to: ${API_URL}/api/login`);
     
-    const response = await fetch(`${AWS_API_URL}/api/login`, {
+    const response = await rateLimitedFetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,11 +37,19 @@ export const loginUser = async (email: string, password: string) => {
       console.error('Login error response:', errorText);
       
       let errorMessage = 'Login failed';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        errorMessage = `Login failed: ${response.status} ${response.statusText}`;
+      if (response.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (response.status === 409) {
+        errorMessage = 'Email already in use';
+      } else if (response.status >= 500) {
+        errorMessage = 'Service unavailable. Please try again later.';
+      } else {
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Login failed: ${response.status} ${response.statusText}`;
+        }
       }
       
       throw new Error(errorMessage);
@@ -43,9 +64,9 @@ export const loginUser = async (email: string, password: string) => {
 
 export const signupUser = async (name: string, email: string, password: string, role: string) => {
   try {
-    // console.log(`Sending signup request to: ${API_URL}/auth/signup`);
+    console.log(`Sending signup request to: ${API_URL}/api/signup`);
     
-    const response = await fetch(`${API_URL}/api/signup`, {
+    const response = await rateLimitedFetch(`${API_URL}/api/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,13 +79,19 @@ export const signupUser = async (name: string, email: string, password: string, 
       console.error('Signup error response:', errorText);
       
       let errorMessage = 'Signup failed';
-      try {
-        // Try to parse as JSON if possible
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        // If not JSON, use status text
-        errorMessage = `Signup failed: ${response.status} ${response.statusText}`;
+      if (response.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (response.status === 409) {
+        errorMessage = 'Email already in use';
+      } else if (response.status >= 500) {
+        errorMessage = 'Service unavailable. Please try again later.';
+      } else {
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Signup failed: ${response.status} ${response.statusText}`;
+        }
       }
       
       throw new Error(errorMessage);
@@ -79,10 +106,9 @@ export const signupUser = async (name: string, email: string, password: string, 
 
 export const signupTeacher = async (name: string, email: string, password: string, school?: string, subject?: string) => {
   try {
-    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
-    console.log(`Sending teacher signup request to: ${AWS_API_URL}/api/signup/teacher`);
+    console.log(`Sending teacher signup request to: ${API_URL}/api/signup/teacher`);
     
-    const response = await fetch(`${AWS_API_URL}/api/signup/teacher`, {
+    const response = await rateLimitedFetch(`${API_URL}/api/signup/teacher`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,11 +121,19 @@ export const signupTeacher = async (name: string, email: string, password: strin
       console.error('Teacher signup error response:', errorText);
       
       let errorMessage = 'Teacher signup failed';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        errorMessage = `Teacher signup failed: ${response.status} ${response.statusText}`;
+      if (response.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (response.status === 409) {
+        errorMessage = 'Email already in use';
+      } else if (response.status >= 500) {
+        errorMessage = 'Service unavailable. Please try again later.';
+      } else {
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Teacher signup failed: ${response.status} ${response.statusText}`;
+        }
       }
       
       throw new Error(errorMessage);
@@ -114,10 +148,9 @@ export const signupTeacher = async (name: string, email: string, password: strin
 
 export const signupStudent = async (name: string, email: string, password: string) => {
   try {
-    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
-    console.log(`Sending student signup request to: ${AWS_API_URL}/api/signup/student`);
+    console.log(`Sending student signup request to: ${API_URL}/api/signup/student`);
     
-    const response = await fetch(`${AWS_API_URL}/api/signup/student`, {
+    const response = await rateLimitedFetch(`${API_URL}/api/signup/student`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -130,11 +163,19 @@ export const signupStudent = async (name: string, email: string, password: strin
       console.error('Student signup error response:', errorText);
       
       let errorMessage = 'Student signup failed';
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        errorMessage = `Student signup failed: ${response.status} ${response.statusText}`;
+      if (response.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (response.status === 409) {
+        errorMessage = 'Email already in use';
+      } else if (response.status >= 500) {
+        errorMessage = 'Service unavailable. Please try again later.';
+      } else {
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Student signup failed: ${response.status} ${response.statusText}`;
+        }
       }
       
       throw new Error(errorMessage);
@@ -159,7 +200,7 @@ export const useApi = () => {
     };
     
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
       });

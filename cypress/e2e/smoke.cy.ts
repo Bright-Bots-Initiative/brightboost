@@ -5,7 +5,7 @@ describe('Dashboard API Smoke Tests', () => {
 
   it('should handle teacher dashboard correctly', () => {
     cy.window().then((win) => {
-      win.localStorage.setItem('token', 'test-jwt-token');
+      win.localStorage.setItem('brightboost_token', 'test-jwt-token');
       win.localStorage.setItem('user', JSON.stringify({
         id: '1',
         name: 'Test Teacher',
@@ -41,7 +41,7 @@ describe('Dashboard API Smoke Tests', () => {
 
   it('should handle student dashboard correctly', () => {
     cy.window().then((win) => {
-      win.localStorage.setItem('token', 'test-jwt-token');
+      win.localStorage.setItem('brightboost_token', 'test-jwt-token');
       win.localStorage.setItem('user', JSON.stringify({
         id: '2',
         name: 'Test Student',

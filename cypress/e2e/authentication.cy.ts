@@ -147,7 +147,7 @@ describe('Authentication Flows', () => {
       const teacherUser = { id: 1, name: 'Teacher', email: 'teacher@example.com', role: 'TEACHER' };
       
       cy.window().then((win) => {
-        win.localStorage.setItem('token', teacherToken);
+        win.localStorage.setItem('brightboost_token', teacherToken);
         win.localStorage.setItem('user', JSON.stringify(teacherUser));
       });
       

@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   // Check if token exists in localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('brightboost_token');
     
     if (storedToken) {
       // Get user data from localStorage
@@ -46,29 +46,27 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   const login = (token: string, userData: User) => {
     // Store token and user data in localStorage
-    localStorage.setItem('token', token);
+    localStorage.setItem('brightboost_token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     
     // Update state
     setToken(token);
     setUser(userData);
-    
-    // Redirect based on user role.
-    // The setTimeout is a pragmatic approach to allow React state and localStorage updates to settle before navigation.
-    // This helps prevent race conditions where navigation might occur before the app fully recognizes the new auth state.
-    // TODO: Investigate if this setTimeout can be replaced with a useEffect hook listening to `isAuthenticated` 
-    // or `user` state for a more robust navigation trigger post-login. This would require careful handling
-    // to ensure navigation occurs only once and to the correct role-based dashboard.
-    if (userData.role === 'teacher') {
-      setTimeout(() => navigate('/teacher/dashboard'), 100);
-    } else if (userData.role === 'student') {
-      setTimeout(() => navigate('/student/dashboard'), 100);
-    }
   };
+
+  useEffect(() => {
+    if (user && token && !isLoading) {
+      if (user.role === 'TEACHER' || user.role === 'teacher') {
+        navigate('/teacher/dashboard');
+      } else if (user.role === 'STUDENT' || user.role === 'student') {
+        navigate('/student/dashboard');
+      }
+    }
+  }, [user, token, navigate, isLoading]);
 
   const logout = () => {
     // Remove token and user data from localStorage
-    localStorage.removeItem('token');
+    localStorage.removeItem('brightboost_token');
     localStorage.removeItem('user');
     
     // Update state

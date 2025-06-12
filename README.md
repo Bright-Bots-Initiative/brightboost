@@ -131,6 +131,30 @@ The deployment pipeline:
 - `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
 - Backend credentials stored in AWS Secrets Manager
 
+## Troubleshooting Auth Redirects
+
+### Common Issues
+
+**"Failed to fetch" errors during login/signup:**
+- Ensure `VITE_AWS_API_URL` is set correctly in your `.env` file
+- Check that the AWS Lambda endpoints are deployed and accessible
+- Verify network connectivity to AWS API Gateway
+
+**Redirects not working after login/signup:**
+- Check browser localStorage for `brightboost_token` key (not `token`)
+- Ensure user object contains valid `role` field ('teacher' or 'student')
+- Check browser console for navigation errors
+
+**Token not persisting across page reloads:**
+- Verify `brightboost_token` is stored in localStorage
+- Check that AuthContext is properly wrapping your app
+- Ensure token hasn't expired (24-hour expiration)
+
+**API calls failing with authentication errors:**
+- Verify `Authorization: Bearer <token>` header is attached to requests
+- Check that token is valid and not expired
+- Ensure API endpoints are configured to accept JWT tokens
+
 ## Project Structure (Simplified)
 
 ```
