@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [shouldRedirect, setShouldRedirect] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Check if token exists in localStorage
@@ -52,17 +53,19 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     // Update state
     setToken(token);
     setUser(userData);
+    setShouldRedirect(true);
   };
 
   useEffect(() => {
-    if (user && token && !isLoading) {
+    if (user && token && !isLoading && shouldRedirect) {
       if (user.role === 'TEACHER' || user.role === 'teacher') {
         navigate('/teacher/dashboard');
       } else if (user.role === 'STUDENT' || user.role === 'student') {
         navigate('/student/dashboard');
       }
+      setShouldRedirect(false);
     }
-  }, [user, token, navigate, isLoading]);
+  }, [user, token, navigate, isLoading, shouldRedirect]);
 
   const logout = () => {
     // Remove token and user data from localStorage
