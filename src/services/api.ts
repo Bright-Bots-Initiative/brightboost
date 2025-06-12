@@ -8,7 +8,10 @@ const API_URL = import.meta.env.VITE_AWS_API_URL || '';
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/api/login`, {
+    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
+    console.log(`Sending login request to: ${AWS_API_URL}/api/login`);
+    
+    const response = await fetch(`${AWS_API_URL}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -17,8 +20,18 @@ export const loginUser = async (email: string, password: string) => {
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Login failed');
+      const errorText = await response.text();
+      console.error('Login error response:', errorText);
+      
+      let errorMessage = 'Login failed';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `Login failed: ${response.status} ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
     }
     
     return await response.json();
@@ -95,6 +108,41 @@ export const signupTeacher = async (name: string, email: string, password: strin
     return await response.json();
   } catch (error) {
     console.error('Teacher signup error:', error);
+    throw error;
+  }
+};
+
+export const signupStudent = async (name: string, email: string, password: string) => {
+  try {
+    const AWS_API_URL = 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
+    console.log(`Sending student signup request to: ${AWS_API_URL}/api/signup/student`);
+    
+    const response = await fetch(`${AWS_API_URL}/api/signup/student`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Student signup error response:', errorText);
+      
+      let errorMessage = 'Student signup failed';
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        errorMessage = `Student signup failed: ${response.status} ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Student signup error:', error);
     throw error;
   }
 };
