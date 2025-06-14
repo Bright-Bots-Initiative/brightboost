@@ -1,26 +1,22 @@
-{
-  "message": "Student dashboard data",
-  "courses": [
-    { "id": "1", "name": "Math 101", "grade": "B+", "teacher": "Dr. Smith" },
-    {
-      "id": "2",
-      "name": "Science 202",
-      "grade": "A-",
-      "teacher": "Prof. Johnson"
-    }
-  ],
-  "assignments": [
-    {
-      "id": "1",
-      "title": "Math Homework",
-      "dueDate": "2025-04-05",
-      "status": "pending"
-    },
-    {
-      "id": "2",
-      "title": "Science Project",
-      "dueDate": "2025-04-15",
-      "status": "completed"
-    }
-  ]
-}
+[
+  {
+    "id": "1",
+    "name": "Test Student 1",
+    "email": "student1@example.com",
+    "xp": 150,
+    "level": "Beginner",
+    "streak": 3,
+    "created_at": "2024-01-15T10:00:00Z",
+    "updated_at": "2024-01-20T15:30:00Z"
+  },
+  {
+    "id": "2", 
+    "name": "Test Student 2",
+    "email": "student2@example.com",
+    "xp": 250,
+    "level": "Intermediate", 
+    "streak": 7,
+    "created_at": "2024-01-10T09:00:00Z",
+    "updated_at": "2024-01-22T14:45:00Z"
+  }
+]

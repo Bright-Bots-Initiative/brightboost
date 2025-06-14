@@ -139,12 +139,82 @@ Resources:
             Method: post
             RestApiId: !Ref AuthApi
 
+  TeacherDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-teacher-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/teacher-dashboard.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        TeacherDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/teacher_dashboard
+            Method: get
+            RestApiId: !Ref AuthApi
+
+  StudentDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/student-dashboard.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/student_dashboard
+            Method: get
+            RestApiId: !Ref AuthApi
+
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Environment
       Cors:
-        AllowMethods: "'POST,OPTIONS'"
+        AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
 
@@ -172,3 +242,19 @@ Outputs:
   LoginFunctionArn:
     Description: "Login Lambda Function ARN"
     Value: !GetAtt LoginFunction.Arn
+
+  TeacherDashboardApiUrl:
+    Description: "API Gateway endpoint URL for Teacher Dashboard function"
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/teacher_dashboard"
+
+  StudentDashboardApiUrl:
+    Description: "API Gateway endpoint URL for Student Dashboard function"
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/student_dashboard"
+
+  TeacherDashboardFunctionArn:
+    Description: "Teacher Dashboard Lambda Function ARN"
+    Value: !GetAtt TeacherDashboardFunction.Arn
+
+  StudentDashboardFunctionArn:
+    Description: "Student Dashboard Lambda Function ARN"
+    Value: !GetAtt StudentDashboardFunction.Arn
