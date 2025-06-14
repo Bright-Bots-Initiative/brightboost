@@ -61,6 +61,16 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          <footer style={{ 
+            textAlign: "center", 
+            fontSize: "0.8rem", 
+            margin: "1rem 0", 
+            padding: "0.5rem",
+            color: "#666",
+            borderTop: "1px solid #eee"
+          }}>
+            BrightBoost v1.3.0 – Build: {new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC
+          </footer>
         </div>
       </AuthProvider>
     </Router>
