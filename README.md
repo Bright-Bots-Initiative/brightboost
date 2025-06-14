@@ -84,6 +84,28 @@ To get a local copy up and running, follow these simple steps.
 
     Replace with your actual AWS API Gateway URL. Backend environment variables are managed through AWS Secrets Manager.
 
+## API Configuration
+
+The application uses `VITE_AWS_API_URL` to configure the backend API endpoint:
+
+- **Development**: Uses environment variable or defaults to production endpoint
+- **Production**: Set via Azure Static Web App configuration in Azure Portal
+- **Testing**: All authentication flows (login/signup for both teachers and students) use this single endpoint
+
+### Cypress Production Testing
+
+To run Cypress tests against production or staging environments:
+
+```bash
+# Test against production
+CYPRESS_BASE_URL=https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net npx cypress run
+
+# Test against staging
+CYPRESS_BASE_URL=https://your-staging-url.azurestaticapps.net npx cypress run
+```
+
+The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development.
+
 4.  **Running the Application:**
     To run the frontend Vite development server:
 
