@@ -1,14 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useApi } from '../services/api'; // Import useApi
+import { useApi } from '../services/api';
+import XPProgressBar from '../components/ui/XPProgressBar';
+import BadgeSlot from '../components/ui/BadgeSlot';
 import GameBackground from '../components/GameBackground';
 import RobotCharacter from '../components/RobotCharacter';
-// import StemModuleCard, { ActivityProps as StemActivityDisplayProps } from '../components/StemModuleCard'; // Not used for activities currently
-import WordGameCard from '../components/WordGameCard'; // Assuming this is a static or separate feature
+import WordGameCard from '../components/WordGameCard';
 import BrightBoostRobot from '../components/BrightBoostRobot';
-import { Button } from '@/components/ui/button'; // For "Mark Complete"
+import { Button } from '@/components/ui/button';
 
 // Define types for fetched data (mirroring backend structure)
 interface Lesson {
@@ -79,6 +79,17 @@ const StudentDashboard: React.FC = () => {
     fetchDashboardData();
   }, [api, user?.name]);
 
+  const [currentXp, setCurrentXp] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [xpToNextLevel, setXpToNextLevel] = useState(200);
+  useEffect(() => {
+    if (user) {
+      setCurrentXp(user.xp ?? 0);
+      setLevel(Number(user.level ?? 1));
+      setXpToNextLevel(200);
+    }
+  }, [user]);
+
   const handleEarnXp = async (amount: number, reason: string) => {
     try {
       const response = await api.post('/api/gamification/award-xp', {
@@ -131,9 +142,11 @@ const StudentDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <GameBackground>
-        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center">
-          <BrightBoostRobot size="lg" />
-          <p className="text-xl text-brightboost-navy mt-4">Loading your dashboard...</p>
+        <div className="min-h-screen flex items-center justify-center">
+          <div data-testid="loading-spinner" className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
+            <p className="text-brightboost-navy">Loading your dashboard...</p>
+          </div>
         </div>
       </GameBackground>
     );
@@ -142,16 +155,22 @@ const StudentDashboard: React.FC = () => {
   if (error) {
     return (
       <GameBackground>
-        <div className="min-h-screen flex flex-col relative z-10 items-center justify-center p-4">
-          <BrightBoostRobot size="lg" />
-          <p className="text-xl text-red-500 mt-4 text-center">Error: {error}</p>
-          {error.includes('preview mode') && (
-            <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-              <p className="text-sm text-yellow-800">API not available in preview mode</p>
-              <p className="text-sm text-yellow-800">Student data will be shown in production</p>
-            </div>
-          )}
-          <Button onClick={() => navigate('/')} className="mt-4">Go Home</Button>
+        <div className="min-h-screen flex items-center justify-center">
+          <div data-testid="dashboard-error" className="text-center">
+            <p className="text-red-600 mb-4">Oops! {error}</p>
+            {error.includes('preview mode') && (
+              <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
+                <p className="text-sm text-yellow-800">API not available in preview mode</p>
+                <p className="text-sm text-yellow-800">Student data will be shown in production</p>
+              </div>
+            )}
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </GameBackground>
     );
@@ -160,7 +179,7 @@ const StudentDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <nav className="bg-brightboost-lightblue text-brightboost-navy p-4 shadow-md">
+        <nav data-testid="student-dashboard-nav" className="bg-brightboost-lightblue text-brightboost-navy p-4 shadow-md">
           <div className="container mx-auto flex justify-between items-center">
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold">Bright Boost</h1>
@@ -182,16 +201,25 @@ const StudentDashboard: React.FC = () => {
         </nav>
 
         <main className="container mx-auto p-4 flex-grow">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-brightboost-navy">Hello, {studentName}!</h2>
+              <h2 className="text-2xl font-bold text-brightboost-navy">Hello, {user?.name}!</h2>
               <p className="text-brightboost-navy">Let's learn and have fun!</p>
             </div>
             <div className="flex gap-2">
-              <div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs">XP: {user?.xp || 0}/200</div>
-              <div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">Streak: {user?.streak || 0}</div>
+                <div className="flex flex-col items-center w-100 ">
+                    {/*<div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs w-full text-center">
+                        XP: {user?.xp || 0}/200
+                        </div>*/}
+                    <XPProgressBar level={level} currentXp={currentXp} xpToNextLevel={xpToNextLevel} />
+                    <button
+                        onClick={() => handleEarnXp(50, "Test XP")}
+                        className="mt-4 px-4 py-2 bg-brightboost-blue text-white rounded">
+                        Earn 50 XP</button>
+                </div>
+              {/*<div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">Streak: {user?.streak || 0}</div>*/}
             </div>
-          </div>
+        </div>
           
           {/* Display Enrolled Lessons */}
           <section className="mb-8">
@@ -228,7 +256,7 @@ const StudentDashboard: React.FC = () => {
                     {activity.completed ? (
                       <p className="text-green-600 font-semibold">Completed!</p>
                     ) : (
-                      <Button className="mt-2 w-full" size="sm" onClick={() => handleMarkActivityComplete(activity.id)}>
+                      <Button className="mt-2 w-full text-sm" onClick={() => handleMarkActivityComplete(activity.id)}>
                         Mark as Complete
                       </Button>
                     )}
@@ -251,13 +279,16 @@ const StudentDashboard: React.FC = () => {
               <h3 className="text-xl font-semibold text-brightboost-navy mb-4">Your Badges</h3>
               <div className="flex flex-wrap gap-3">
                 {user.badges.map(badge => (
-                  <div key={badge.id} className="badge bg-brightboost-navy text-white px-3 py-2 rounded-full">
-                    {badge.name}
+                  <div key={badge.id} className="flex flex-col items-center text-center text-xs text-gray-600">
+                  <BadgeSlot badge={badge} />
+                  <span className="mt-5">
+                    {badge.awardedAt ? `Unlocked: ${badge.awardedAt}` : 'Locked'}
+                  </span>
                   </div>
                 ))}
               </div>
             </section>
-          )}
+            )}
 
           {/* Static WordGameCard - assuming it's a generic game not tied to dynamic data */}
           <div className="mt-8">
