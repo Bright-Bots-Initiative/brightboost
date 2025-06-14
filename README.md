@@ -241,7 +241,7 @@ The project uses a hybrid deployment strategy:
 - **Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
 
 **Backend**: Automatically deployed to AWS Lambda via GitHub Actions
-- **API Endpoint:** https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+- **API Endpoint:** https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 
 For deployment configuration details, refer to the [Deployment Guide](./DEPLOYMENT.md) document.
 
