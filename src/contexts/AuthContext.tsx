@@ -48,6 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = (token: string, userData: User) => {
+    console.log("AuthContext.login called:", { token: token?.substring(0, 20) + "...", userData, route: window.location.pathname });
+    
     // Store token and user data in localStorage
     localStorage.setItem("brightboost_token", token);
     localStorage.setItem("user", JSON.stringify(userData));
@@ -56,16 +58,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setToken(token);
     setUser(userData);
     setShouldRedirect(true);
+    
+    console.log("AuthContext.login completed - state updated, shouldRedirect:", true);
   };
 
   useEffect(() => {
     if (user && token && !isLoading && shouldRedirect) {
+      console.log("AuthContext navigation triggered:", { userRole: user.role, currentPath: window.location.pathname });
+      
       if (user.role === "TEACHER" || user.role === "teacher") {
+        console.log("Navigating to /teacher/dashboard");
         navigate("/teacher/dashboard");
       } else if (user.role === "STUDENT" || user.role === "student") {
+        console.log("Navigating to /student/dashboard");
         navigate("/student/dashboard");
       }
       setShouldRedirect(false);
+      
+      console.log("AuthContext navigation completed, shouldRedirect set to false");
     }
   }, [user, token, navigate, isLoading, shouldRedirect]);
 

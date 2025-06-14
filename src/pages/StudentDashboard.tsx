@@ -32,6 +32,8 @@ interface StudentActivity {
 }
 
 const StudentDashboard: React.FC = () => {
+  console.log("StudentDashboard mounted");
+  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
