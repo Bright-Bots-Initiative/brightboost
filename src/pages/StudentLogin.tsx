@@ -21,7 +21,7 @@ const StudentLogin: React.FC = () => {
     try {
       const response = await loginUser(email, password);
       // Verify this is a student account
-      if (response.user.role !== "student") {
+      if (response.user.role !== "STUDENT") {
         setError(
           "This login is only for students. Please use the teacher login if you are a teacher.",
         );

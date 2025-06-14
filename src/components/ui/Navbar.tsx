@@ -18,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
   return (
     <nav
-      className={`bg-${user?.role === "teacher" ? "blue" : "purple"}-600 text-white p-4 ${className}`}
+      className={`bg-${user?.role === "TEACHER" ? "blue" : "purple"}-600 text-white p-4 ${className}`}
     >
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">
@@ -31,7 +31,7 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
               <span>Welcome, {user?.name}</span>
               <button
                 onClick={handleLogout}
-                className={`bg-${user?.role === "teacher" ? "blue" : "purple"}-700 px-3 py-1 rounded hover:bg-${user?.role === "teacher" ? "blue" : "purple"}-800 transition-colors`}
+                className={`bg-${user?.role === "TEACHER" ? "blue" : "purple"}-700 px-3 py-1 rounded hover:bg-${user?.role === "TEACHER" ? "blue" : "purple"}-800 transition-colors`}
               >
                 Logout
               </button>
