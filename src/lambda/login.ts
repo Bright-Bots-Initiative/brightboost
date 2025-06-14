@@ -1,8 +1,11 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { Pool } from 'pg';
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import { Pool } from "pg";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
 
 interface DatabaseSecret {
   host: string;
@@ -18,26 +21,28 @@ interface LoginRequest {
 }
 
 let dbPool: Pool | null = null;
-const secretsManager = new SecretsManagerClient({ region: 'us-east-1' });
+const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
-    console.log('Creating new database connection pool...');
+    console.log("Creating new database connection pool...");
     const secretArn = process.env.DATABASE_SECRET_ARN;
     if (!secretArn) {
-      throw new Error('DATABASE_SECRET_ARN environment variable not set');
+      throw new Error("DATABASE_SECRET_ARN environment variable not set");
     }
 
-    console.log('Fetching database secret from Secrets Manager...');
+    console.log("Fetching database secret from Secrets Manager...");
     const command = new GetSecretValueCommand({ SecretId: secretArn });
     const secretResult = await secretsManager.send(command);
     if (!secretResult.SecretString) {
-      throw new Error('Failed to retrieve database secret');
+      throw new Error("Failed to retrieve database secret");
     }
 
     const secret: DatabaseSecret = JSON.parse(secretResult.SecretString);
-    console.log(`Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`);
-    
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
+
     dbPool = new Pool({
       host: secret.host,
       port: secret.port,
@@ -45,38 +50,43 @@ async function getDbConnection(): Promise<Pool> {
       user: secret.username,
       password: secret.password,
       ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
       },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
     });
-    
-    console.log('Database pool created, testing connection...');
+
+    console.log("Database pool created, testing connection...");
     const testClient = await dbPool.connect();
-    console.log('Database connection test successful');
+    console.log("Database connection test successful");
     testClient.release();
   }
 
   return dbPool;
 }
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
   };
 
-  console.log('Login Lambda function started, event:', JSON.stringify(event, null, 2));
+  console.log(
+    "Login Lambda function started, event:",
+    JSON.stringify(event, null, 2),
+  );
 
   try {
-    if (event.httpMethod === 'OPTIONS') {
+    if (event.httpMethod === "OPTIONS") {
       return {
         statusCode: 200,
         headers,
-        body: ''
+        body: "",
       };
     }
 
@@ -84,7 +94,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Request body is required' })
+        body: JSON.stringify({ error: "Request body is required" }),
       };
     }
 
@@ -95,7 +105,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Email and password are required' })
+        body: JSON.stringify({ error: "Email and password are required" }),
       };
     }
 
@@ -104,22 +114,23 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Invalid email format' })
+        body: JSON.stringify({ error: "Invalid email format" }),
       };
     }
 
-    console.log('Attempting database connection...');
+    console.log("Attempting database connection...");
     const db = await getDbConnection();
-    console.log('Database connection established successfully');
+    console.log("Database connection established successfully");
 
-    const userQuery = 'SELECT id, name, email, password, role, school, subject, created_at FROM users WHERE email = $1';
+    const userQuery =
+      "SELECT id, name, email, password, role, school, subject, created_at FROM users WHERE email = $1";
     const userResult = await db.query(userQuery, [email]);
 
     if (userResult.rows.length === 0) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: 'Invalid email or password' })
+        body: JSON.stringify({ error: "Invalid email or password" }),
       };
     }
 
@@ -130,27 +141,27 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: 'Invalid email or password' })
+        body: JSON.stringify({ error: "Invalid email or password" }),
       };
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         role: user.role,
-        name: user.name
+        name: user.name,
       },
       jwtSecret,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        message: 'Login successful',
+        message: "Login successful",
         user: {
           id: user.id,
           name: user.name,
@@ -158,21 +169,20 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           role: user.role,
           school: user.school,
           subject: user.subject,
-          createdAt: user.created_at
+          createdAt: user.created_at,
         },
-        token
-      })
+        token,
+      }),
     };
-
   } catch (error) {
-    console.error('Login error:', error);
-    
+    console.error("Login error:", error);
+
     if (error instanceof Error) {
-      if (error.message.includes('connection')) {
+      if (error.message.includes("connection")) {
         return {
           statusCode: 503,
           headers,
-          body: JSON.stringify({ error: 'Database connection error' })
+          body: JSON.stringify({ error: "Database connection error" }),
         };
       }
     }
@@ -180,10 +190,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
-      })
+      body: JSON.stringify({
+        error: "Internal server error",
+        message:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
+      }),
     };
   }
 };

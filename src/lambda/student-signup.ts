@@ -1,8 +1,11 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { Pool } from 'pg';
-import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import { Pool } from "pg";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
 
 interface DatabaseSecret {
   host: string;
@@ -19,26 +22,28 @@ interface StudentSignupRequest {
 }
 
 let dbPool: Pool | null = null;
-const secretsManager = new SecretsManagerClient({ region: 'us-east-1' });
+const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
-    console.log('Creating new database connection pool...');
+    console.log("Creating new database connection pool...");
     const secretArn = process.env.DATABASE_SECRET_ARN;
     if (!secretArn) {
-      throw new Error('DATABASE_SECRET_ARN environment variable not set');
+      throw new Error("DATABASE_SECRET_ARN environment variable not set");
     }
 
-    console.log('Fetching database secret from Secrets Manager...');
+    console.log("Fetching database secret from Secrets Manager...");
     const command = new GetSecretValueCommand({ SecretId: secretArn });
     const secretResult = await secretsManager.send(command);
     if (!secretResult.SecretString) {
-      throw new Error('Failed to retrieve database secret');
+      throw new Error("Failed to retrieve database secret");
     }
 
     const secret: DatabaseSecret = JSON.parse(secretResult.SecretString);
-    console.log(`Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`);
-    
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
+
     dbPool = new Pool({
       host: secret.host,
       port: secret.port,
@@ -46,19 +51,19 @@ async function getDbConnection(): Promise<Pool> {
       user: secret.username,
       password: secret.password,
       ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
       },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
     });
-    
-    console.log('Database pool created, testing connection...');
+
+    console.log("Database pool created, testing connection...");
     try {
       const testClient = await dbPool.connect();
-      console.log('Database connection test successful');
-      
-      console.log('Checking if users table exists...');
+      console.log("Database connection test successful");
+
+      console.log("Checking if users table exists...");
       const tableCheckResult = await testClient.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
@@ -66,9 +71,9 @@ async function getDbConnection(): Promise<Pool> {
           AND table_name = 'users'
         );
       `);
-      
+
       if (!tableCheckResult.rows[0].exists) {
-        console.log('Users table does not exist, creating it...');
+        console.log("Users table does not exist, creating it...");
         await testClient.query(`
           CREATE TABLE users (
             id SERIAL PRIMARY KEY,
@@ -82,41 +87,48 @@ async function getDbConnection(): Promise<Pool> {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
         `);
-        console.log('Users table created successfully');
+        console.log("Users table created successfully");
       } else {
-        console.log('Users table already exists');
+        console.log("Users table already exists");
       }
-      
+
       testClient.release();
     } catch (error) {
-      console.error('Database connection test failed:', error);
-      
-      if (error instanceof Error && error.message.includes('database "brightboost" does not exist')) {
-        console.log('Database "brightboost" does not exist, attempting to create it...');
+      console.error("Database connection test failed:", error);
+
+      if (
+        error instanceof Error &&
+        error.message.includes('database "brightboost" does not exist')
+      ) {
+        console.log(
+          'Database "brightboost" does not exist, attempting to create it...',
+        );
         try {
           const adminPool = new Pool({
             host: secret.host,
             port: secret.port,
-            database: 'postgres',
+            database: "postgres",
             user: secret.username,
             password: secret.password,
             ssl: {
-              rejectUnauthorized: false
+              rejectUnauthorized: false,
             },
             max: 1,
             idleTimeoutMillis: 30000,
             connectionTimeoutMillis: 25000,
           });
-          
+
           const adminClient = await adminPool.connect();
-          console.log('Connected to postgres database, creating brightboost database...');
-          await adminClient.query('CREATE DATABASE brightboost;');
+          console.log(
+            "Connected to postgres database, creating brightboost database...",
+          );
+          await adminClient.query("CREATE DATABASE brightboost;");
           console.log('Database "brightboost" created successfully');
           adminClient.release();
           await adminPool.end();
-          
+
           const newDbClient = await dbPool.connect();
-          console.log('Creating users table in brightboost database...');
+          console.log("Creating users table in brightboost database...");
           await newDbClient.query(`
             CREATE TABLE IF NOT EXISTS users (
               id SERIAL PRIMARY KEY,
@@ -130,14 +142,14 @@ async function getDbConnection(): Promise<Pool> {
               updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
           `);
-          console.log('Users table created successfully');
+          console.log("Users table created successfully");
           newDbClient.release();
-          
+
           const testClient = await dbPool.connect();
-          console.log('Connection to new brightboost database successful');
+          console.log("Connection to new brightboost database successful");
           testClient.release();
         } catch (createError) {
-          console.error('Failed to create brightboost database:', createError);
+          console.error("Failed to create brightboost database:", createError);
           throw createError;
         }
       } else {
@@ -149,22 +161,27 @@ async function getDbConnection(): Promise<Pool> {
   return dbPool;
 }
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
   };
 
-  console.log('Student signup Lambda function started, event:', JSON.stringify(event, null, 2));
+  console.log(
+    "Student signup Lambda function started, event:",
+    JSON.stringify(event, null, 2),
+  );
 
   try {
-    if (event.httpMethod === 'OPTIONS') {
+    if (event.httpMethod === "OPTIONS") {
       return {
         statusCode: 200,
         headers,
-        body: ''
+        body: "",
       };
     }
 
@@ -172,7 +189,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Request body is required' })
+        body: JSON.stringify({ error: "Request body is required" }),
       };
     }
 
@@ -183,7 +200,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Name, email, and password are required' })
+        body: JSON.stringify({
+          error: "Name, email, and password are required",
+        }),
       };
     }
 
@@ -192,7 +211,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Invalid email format' })
+        body: JSON.stringify({ error: "Invalid email format" }),
       };
     }
 
@@ -200,22 +219,24 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Password must be at least 8 characters long' })
+        body: JSON.stringify({
+          error: "Password must be at least 8 characters long",
+        }),
       };
     }
 
-    console.log('Attempting database connection...');
+    console.log("Attempting database connection...");
     const db = await getDbConnection();
-    console.log('Database connection established successfully');
+    console.log("Database connection established successfully");
 
-    const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
+    const existingUserQuery = "SELECT id FROM users WHERE email = $1";
     const existingUserResult = await db.query(existingUserQuery, [email]);
 
     if (existingUserResult.rows.length > 0) {
       return {
         statusCode: 409,
         headers,
-        body: JSON.stringify({ error: 'User with this email already exists' })
+        body: JSON.stringify({ error: "User with this email already exists" }),
       };
     }
 
@@ -227,61 +248,62 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       VALUES ($1, $2, $3, $4, NOW(), NOW())
       RETURNING id, name, email, role, created_at
     `;
-    
+
     const insertResult = await db.query(insertUserQuery, [
       name,
       email,
       hashedPassword,
-      'STUDENT'
+      "STUDENT",
     ]);
 
     const newUser = insertResult.rows[0];
 
-    const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
     const token = jwt.sign(
       {
         id: newUser.id,
         email: newUser.email,
         role: newUser.role,
-        name: newUser.name
+        name: newUser.name,
       },
       jwtSecret,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     return {
       statusCode: 201,
       headers,
       body: JSON.stringify({
-        message: 'Student account created successfully',
+        message: "Student account created successfully",
         user: {
           id: newUser.id,
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
-          createdAt: newUser.created_at
+          createdAt: newUser.created_at,
         },
-        token
-      })
+        token,
+      }),
     };
-
   } catch (error) {
-    console.error('Student signup error:', error);
-    
+    console.error("Student signup error:", error);
+
     if (error instanceof Error) {
-      if (error.message.includes('duplicate key')) {
+      if (error.message.includes("duplicate key")) {
         return {
           statusCode: 409,
           headers,
-          body: JSON.stringify({ error: 'User with this email already exists' })
+          body: JSON.stringify({
+            error: "User with this email already exists",
+          }),
         };
       }
-      
-      if (error.message.includes('connection')) {
+
+      if (error.message.includes("connection")) {
         return {
           statusCode: 503,
           headers,
-          body: JSON.stringify({ error: 'Database connection error' })
+          body: JSON.stringify({ error: "Database connection error" }),
         };
       }
     }
@@ -289,10 +311,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        message: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
-      })
+      body: JSON.stringify({
+        error: "Internal server error",
+        message:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
+      }),
     };
   }
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * LoadingSpinner component that displays while lazy-loaded components are being loaded

@@ -1,9 +1,8 @@
-
-import React from 'react';
+import React from "react";
 
 interface RobotProps {
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   animated?: boolean;
 }
 

@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useApi } from '../services/api';
-import GameBackground from '../components/GameBackground';
-import BrightBoostRobot from '../components/BrightBoostRobot';
-import Sidebar from '../components/TeacherDashboard/Sidebar';
-import MainContent from '../components/TeacherDashboard/MainContent';
-import { Lesson } from '../components/TeacherDashboard/types';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useApi } from "../services/api";
+import GameBackground from "../components/GameBackground";
+import BrightBoostRobot from "../components/BrightBoostRobot";
+import Sidebar from "../components/TeacherDashboard/Sidebar";
+import MainContent from "../components/TeacherDashboard/MainContent";
+import { Lesson } from "../components/TeacherDashboard/types";
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
 
-  const [activeView, setActiveView] = useState<string>('Lessons');
+  const [activeView, setActiveView] = useState<string>("Lessons");
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,26 +22,37 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get('/api/teacher_dashboard');
+      const response = await api.get("/api/teacher_dashboard");
       if (Array.isArray(response)) {
-        const formattedLessons = response.map((teacher: { id: string; name: string; email: string; createdAt: string }) => ({
-          id: String(teacher.id),
-          title: teacher.name,
-          content: `Teacher: ${teacher.email}`,
-          category: 'Teacher',
-          date: teacher.createdAt,
-          status: 'active'
-        }));
+        const formattedLessons = response.map(
+          (teacher: {
+            id: string;
+            name: string;
+            email: string;
+            createdAt: string;
+          }) => ({
+            id: String(teacher.id),
+            title: teacher.name,
+            content: `Teacher: ${teacher.email}`,
+            category: "Teacher",
+            date: teacher.createdAt,
+            status: "active",
+          }),
+        );
         setLessonsData(formattedLessons);
       } else {
         setLessonsData([]);
       }
     } catch (err) {
       console.error("Failed to fetch teacher data:", err);
-      if (err instanceof Error && err.message.includes('404')) {
-        setError('API not available in preview mode. Teacher data will be shown in production.');
+      if (err instanceof Error && err.message.includes("404")) {
+        setError(
+          "API not available in preview mode. Teacher data will be shown in production.",
+        );
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to fetch teacher data.');
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch teacher data.",
+        );
       }
     } finally {
       setIsLoading(false);
@@ -52,14 +63,19 @@ const TeacherDashboard: React.FC = () => {
     fetchLessons();
   }, [api, fetchLessons]);
 
-  const handleAddLesson = async (newLesson: Pick<Lesson, 'title' | 'content' | 'category'>) => {
+  const handleAddLesson = async (
+    newLesson: Pick<Lesson, "title" | "content" | "category">,
+  ) => {
     setIsLoading(true);
     try {
-      const createdLesson = await api.post('/api/lessons', newLesson);
-      setLessonsData(prevLessons => [...prevLessons, { ...createdLesson, id: String(createdLesson.id) }]);
+      const createdLesson = await api.post("/api/lessons", newLesson);
+      setLessonsData((prevLessons) => [
+        ...prevLessons,
+        { ...createdLesson, id: String(createdLesson.id) },
+      ]);
     } catch (err) {
       console.error("Failed to add lesson:", err);
-      setError(err instanceof Error ? err.message : 'Failed to add lesson.');
+      setError(err instanceof Error ? err.message : "Failed to add lesson.");
     } finally {
       setIsLoading(false);
     }
@@ -68,15 +84,24 @@ const TeacherDashboard: React.FC = () => {
   const handleEditLesson = async (lesson: Lesson) => {
     setIsLoading(true);
     try {
-      const updatedLesson = await api.put(`/api/lessons/${lesson.id}`, lesson as unknown as Record<string, unknown>);
-      setLessonsData(prevLessons =>
-        prevLessons.map(existingLesson =>
-          String(existingLesson.id) === String(lesson.id) ? { ...existingLesson, ...updatedLesson, id: String(existingLesson.id) } : existingLesson
-        )
+      const updatedLesson = await api.put(
+        `/api/lessons/${lesson.id}`,
+        lesson as unknown as Record<string, unknown>,
+      );
+      setLessonsData((prevLessons) =>
+        prevLessons.map((existingLesson) =>
+          String(existingLesson.id) === String(lesson.id)
+            ? {
+                ...existingLesson,
+                ...updatedLesson,
+                id: String(existingLesson.id),
+              }
+            : existingLesson,
+        ),
       );
     } catch (err) {
       console.error("Failed to edit lesson:", err);
-      setError(err instanceof Error ? err.message : 'Failed to edit lesson.');
+      setError(err instanceof Error ? err.message : "Failed to edit lesson.");
     } finally {
       setIsLoading(false);
     }
@@ -86,10 +111,12 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       await api.delete(`/api/lessons/${lessonId}`);
-      setLessonsData(prevLessons => prevLessons.filter(lesson => String(lesson.id) !== String(lessonId)));
+      setLessonsData((prevLessons) =>
+        prevLessons.filter((lesson) => String(lesson.id) !== String(lessonId)),
+      );
     } catch (err) {
       console.error("Failed to delete lesson:", err);
-      setError(err instanceof Error ? err.message : 'Failed to delete lesson.');
+      setError(err instanceof Error ? err.message : "Failed to delete lesson.");
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +124,7 @@ const TeacherDashboard: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -111,7 +138,7 @@ const TeacherDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="badge-level">Teacher</span>
-              <span>Welcome, {user?.name || 'Teacher'}</span>
+              <span>Welcome, {user?.name || "Teacher"}</span>
               <button
                 onClick={handleLogout}
                 className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
@@ -127,17 +154,23 @@ const TeacherDashboard: React.FC = () => {
         {isLoading && (
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
-            <p className="text-xl text-brightboost-navy mt-4">Loading dashboard data...</p>
+            <p className="text-xl text-brightboost-navy mt-4">
+              Loading dashboard data...
+            </p>
           </div>
         )}
         {error && (
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
             <p className="text-xl text-red-500 mt-4">Error: {error}</p>
-            {error.includes('preview mode') && (
+            {error.includes("preview mode") && (
               <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-                <p className="text-sm text-yellow-800">API not available in preview mode</p>
-                <p className="text-sm text-yellow-800">Teacher data will be shown in production</p>
+                <p className="text-sm text-yellow-800">
+                  API not available in preview mode
+                </p>
+                <p className="text-sm text-yellow-800">
+                  Teacher data will be shown in production
+                </p>
               </div>
             )}
           </div>
@@ -145,8 +178,12 @@ const TeacherDashboard: React.FC = () => {
         {!isLoading && !error && lessonsData.length === 0 && (
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
-            <p className="text-xl text-brightboost-navy mt-4">No teacher data available yet.</p>
-            <p className="text-sm text-gray-600 mt-2">Teachers will appear here once they're registered in the system.</p>
+            <p className="text-xl text-brightboost-navy mt-4">
+              No teacher data available yet.
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Teachers will appear here once they're registered in the system.
+            </p>
           </div>
         )}
         {!isLoading && !error && lessonsData.length > 0 && (

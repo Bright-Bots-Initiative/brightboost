@@ -19,6 +19,7 @@ Implement Azure Front Door or Azure CDN for global caching and edge delivery:
 - **Azure CDN**: Caches static assets at edge locations worldwide
 
 Implementation steps:
+
 1. Create an Azure Front Door/CDN profile in the Azure Portal
 2. Add the Static Web App as an origin
 3. Configure caching rules for static assets
@@ -30,16 +31,16 @@ Implement route-based code splitting using React.lazy() and Suspense:
 
 ```jsx
 // In App.tsx:
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from "react";
 
 // Lazy load components
-const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
-const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 
 // Use with Suspense
 <Suspense fallback={<div>Loading...</div>}>
   <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-</Suspense>
+</Suspense>;
 ```
 
 ### 3. Image Optimization

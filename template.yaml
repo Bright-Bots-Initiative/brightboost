@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: BrightBoost Authentication API
 
@@ -7,19 +7,19 @@ Parameters:
     Type: String
     Default: dev
     AllowedValues: [dev, staging, prod]
-  
+
   DatabaseSecretArn:
     Type: String
     Description: ARN of the secret containing Aurora database credentials
-  
+
   VpcId:
     Type: String
     Description: VPC ID where Aurora cluster is deployed
-  
+
   SubnetIds:
     Type: CommaDelimitedList
     Description: Subnet IDs for Lambda function (same as Aurora)
-  
+
   SecurityGroupId:
     Type: String
     Description: Security group ID that allows access to Aurora
@@ -45,7 +45,7 @@ Resources:
           - !Ref SecurityGroupId
         SubnetIds: !Ref SubnetIds
       Policies:
-        - Version: '2012-10-17'
+        - Version: "2012-10-17"
           Statement:
             - Effect: Allow
               Action:
@@ -80,7 +80,7 @@ Resources:
           - !Ref SecurityGroupId
         SubnetIds: !Ref SubnetIds
       Policies:
-        - Version: '2012-10-17'
+        - Version: "2012-10-17"
           Statement:
             - Effect: Allow
               Action:
@@ -115,7 +115,7 @@ Resources:
           - !Ref SecurityGroupId
         SubnetIds: !Ref SubnetIds
       Policies:
-        - Version: '2012-10-17'
+        - Version: "2012-10-17"
           Statement:
             - Effect: Allow
               Action:
@@ -152,23 +152,23 @@ Outputs:
   TeacherSignupApiUrl:
     Description: "API Gateway endpoint URL for Teacher Signup function"
     Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/signup/teacher"
-  
+
   StudentSignupApiUrl:
     Description: "API Gateway endpoint URL for Student Signup function"
     Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/signup/student"
-  
+
   LoginApiUrl:
     Description: "API Gateway endpoint URL for Login function"
     Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/login"
-  
+
   TeacherSignupFunctionArn:
     Description: "Teacher Signup Lambda Function ARN"
     Value: !GetAtt TeacherSignupFunction.Arn
-    
+
   StudentSignupFunctionArn:
     Description: "Student Signup Lambda Function ARN"
     Value: !GetAtt StudentSignupFunction.Arn
-    
+
   LoginFunctionArn:
     Description: "Login Lambda Function ARN"
     Value: !GetAtt LoginFunction.Arn

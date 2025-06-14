@@ -7,14 +7,17 @@
 **Description:** Teacher dashboard endpoint that validates environment variables and returns an array of teachers from the database.
 
 **Environment Variables Required:**
+
 - `POSTGRES_URL` - Database connection string
 - `JWT_SECRET` - JWT token signing secret
 
 **Response:**
+
 - **200 OK**: Array of teacher objects with `id`, `name`, `email`, `createdAt`, `updatedAt`
 - **500 Internal Server Error**: `{ "success": false, "error": "..." }`
 
 **Example Response:**
+
 ```json
 [
   {
@@ -28,6 +31,7 @@
 ```
 
 **Usage:**
+
 ```bash
 curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashboard
 ```
@@ -37,14 +41,17 @@ curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashb
 **Description:** Student dashboard endpoint that validates environment variables and returns an array of students from the database.
 
 **Environment Variables Required:**
+
 - `POSTGRES_URL` - Database connection string
 - `JWT_SECRET` - JWT token signing secret
 
 **Response:**
+
 - **200 OK**: Array of student objects with `id`, `name`, `email`, `xp`, `level`, `streak`, `createdAt`, `updatedAt`
 - **500 Internal Server Error**: `{ "success": false, "error": "..." }`
 
 **Example Response:**
+
 ```json
 [
   {
@@ -61,6 +68,7 @@ curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashb
 ```
 
 **Usage:**
+
 ```bash
 curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/student_dashboard
 ```

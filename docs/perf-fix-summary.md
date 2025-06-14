@@ -19,30 +19,30 @@ The most effective fix implemented was **route-based code splitting with React.l
 ### Implementation Details
 
 1. Modified `App.tsx` to use React.lazy for route-based components:
+
    ```jsx
-   import React, { Suspense, lazy } from 'react';
-   
+   import React, { Suspense, lazy } from "react";
+
    // Lazy load route components
-   const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
-   const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
-   const TeacherLogin = lazy(() => import('./pages/TeacherLogin'));
-   const StudentLogin = lazy(() => import('./pages/StudentLogin'));
-   const TeacherSignup = lazy(() => import('./pages/TeacherSignup'));
-   const StudentSignup = lazy(() => import('./pages/StudentSignup'));
-   const NotFound = lazy(() => import('./pages/NotFound'));
-   const LoginSelection = lazy(() => import('./pages/LoginSelection'));
-   const SignupSelection = lazy(() => import('./pages/SignupSelection'));
-   
+   const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+   const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+   const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
+   const StudentLogin = lazy(() => import("./pages/StudentLogin"));
+   const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
+   const StudentSignup = lazy(() => import("./pages/StudentSignup"));
+   const NotFound = lazy(() => import("./pages/NotFound"));
+   const LoginSelection = lazy(() => import("./pages/LoginSelection"));
+   const SignupSelection = lazy(() => import("./pages/SignupSelection"));
+
    // Keep Index component eagerly loaded for fast initial render
-   import Index from './pages/Index';
+   import Index from "./pages/Index";
    ```
 
 2. Added Suspense fallback for lazy-loaded components:
+
    ```jsx
    <Suspense fallback={<div className="loading-spinner">Loading...</div>}>
-     <Routes>
-       {/* Routes configuration */}
-     </Routes>
+     <Routes>{/* Routes configuration */}</Routes>
    </Suspense>
    ```
 
@@ -57,6 +57,7 @@ The most effective fix implemented was **route-based code splitting with React.l
 ## Results
 
 The implemented optimizations resulted in:
+
 - Reduced initial JavaScript bundle size from 350.02 KB to 120.15 KB (65.7% reduction)
 - Improved home page load time from >2s to <1s on a cold start
 - Better user experience with loading indicators for route transitions
