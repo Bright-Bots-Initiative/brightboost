@@ -4,17 +4,18 @@ BrightBoost is an interactive learning platform designed to help teachers create
 
 ## Key Features
 
-*   **Teacher Accounts & Dashboard:** Teachers can sign up, log in, and manage their lessons through a dedicated dashboard.
-*   **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
-*   **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
-*   **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-*   **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
-*   **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
-*   **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
+- **Teacher Accounts & Dashboard:** Teachers can sign up, log in, and manage their lessons through a dedicated dashboard.
+- **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
+- **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
+- **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
+- **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
+- **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
+- **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
 ## Demo Flow Summary
 
 A typical demo showcases:
+
 1.  A **teacher** signing up or logging in.
 2.  The teacher navigating their dashboard and creating a new lesson (e.g., "Introduction to Photosynthesis", Category: "Science", Content: "Learn about how plants make food.", Status: "Published").
 3.  The teacher verifying the lesson is displayed on their dashboard.
@@ -28,37 +29,39 @@ A typical demo showcases:
 
 This project is built with a modern web technology stack:
 
-*   **Frontend:**
-    *   React
-    *   Vite
-    *   TypeScript
-    *   Tailwind CSS
-    *   shadcn-ui (for UI components)
-    *   React Router (for navigation)
-    *   Context API (for state management, e.g., AuthContext)
-*   **Backend:**
-    *   AWS Lambda with API Gateway
-    *   Aurora PostgreSQL (AWS RDS)
-    *   JSON Web Tokens (JWT) for authentication
-    *   `bcryptjs` for password hashing
-*   **Testing:**
-    *   Vitest (for unit/integration tests)
-    *   Cypress (for End-to-End tests)
-*   **Development Tools:**
-    *   ESLint (for linting)
-    *   Storybook (for UI component development and testing)
+- **Frontend:**
+  - React
+  - Vite
+  - TypeScript
+  - Tailwind CSS
+  - shadcn-ui (for UI components)
+  - React Router (for navigation)
+  - Context API (for state management, e.g., AuthContext)
+- **Backend:**
+  - AWS Lambda with API Gateway
+  - Aurora PostgreSQL (AWS RDS)
+  - JSON Web Tokens (JWT) for authentication
+  - `bcryptjs` for password hashing
+- **Testing:**
+  - Vitest (for unit/integration tests)
+  - Cypress (for End-to-End tests)
+- **Development Tools:**
+  - ESLint (for linting)
+  - Storybook (for UI component development and testing)
 
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
 
 **Prerequisites:**
-*   Node.js (v18 or later recommended)
-*   npm (comes with Node.js)
+
+- Node.js (v18 or later recommended)
+- npm (comes with Node.js)
 
 **Installation & Setup:**
 
 1.  **Clone the repository:**
+
     ```sh
     git clone <YOUR_GIT_URL> # Replace <YOUR_GIT_URL> with the actual Git URL of this project
     cd <YOUR_PROJECT_NAME>   # Replace <YOUR_PROJECT_NAME> with the directory name
@@ -66,6 +69,7 @@ To get a local copy up and running, follow these simple steps.
 
 2.  **Install dependencies:**
     This will install both frontend and backend dependencies.
+
     ```sh
     npm install
     cd src/lambda && npm install && cd ../..
@@ -73,18 +77,23 @@ To get a local copy up and running, follow these simple steps.
 
 3.  **Configure Environment Variables:**
     Create a `.env` file in the root of the project:
+
     ```env
     VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
     ```
+
     Replace with your actual AWS API Gateway URL. Backend environment variables are managed through AWS Secrets Manager.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
+
     ```sh
     npm run dev
     ```
+
     This command starts:
-    *   Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
+
+    - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
 5.  **Running the Backend Locally:**
     The backend now runs on AWS Lambda. For local development, you can use the mock server:
@@ -108,6 +117,7 @@ This project uses a hybrid deployment approach:
 The backend is deployed to AWS Lambda using GitHub Actions CI/CD pipeline. The deployment workflow is defined in `.github/workflows/aws-lambda-deploy.yml`.
 
 **Backend Infrastructure:**
+
 - **AWS Lambda** for serverless backend functions
 - **Aurora PostgreSQL** (AWS RDS) for data persistence
 - **API Gateway** for HTTP API endpoints
@@ -122,12 +132,14 @@ The frontend continues to be deployed to Azure Static Web Apps for optimal perfo
 ### Deployment Pipeline
 
 The deployment pipeline:
+
 1. **Frontend**: Builds and deploys React application to Azure Static Web Apps
 2. **Backend**: Builds TypeScript Lambda functions and deploys to AWS using SAM
 3. **Database**: Uses Aurora PostgreSQL cluster in AWS
 4. **API Integration**: Frontend calls AWS API Gateway endpoints directly
 
 **Environment Variables:**
+
 - `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
 - Backend credentials stored in AWS Secrets Manager
 
@@ -136,21 +148,25 @@ The deployment pipeline:
 ### Common Issues
 
 **"Failed to fetch" errors during login/signup:**
+
 - Ensure `VITE_AWS_API_URL` is set correctly in your `.env` file
 - Check that the AWS Lambda endpoints are deployed and accessible
 - Verify network connectivity to AWS API Gateway
 
 **Redirects not working after login/signup:**
+
 - Check browser localStorage for `brightboost_token` key (not `token`)
 - Ensure user object contains valid `role` field ('teacher' or 'student')
 - Check browser console for navigation errors
 
 **Token not persisting across page reloads:**
+
 - Verify `brightboost_token` is stored in localStorage
 - Check that AuthContext is properly wrapping your app
 - Ensure token hasn't expired (24-hour expiration)
 
 **API calls failing with authentication errors:**
+
 - Verify `Authorization: Bearer <token>` header is attached to requests
 - Check that token is valid and not expired
 - Ensure API endpoints are configured to accept JWT tokens
@@ -238,9 +254,11 @@ This project is built with:
 The project uses a hybrid deployment strategy:
 
 **Frontend**: Automatically deployed to Azure Static Web Apps via GitHub Actions
+
 - **Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
 
 **Backend**: Automatically deployed to AWS Lambda via GitHub Actions
+
 - **API Endpoint:** https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 
 For deployment configuration details, refer to the [Deployment Guide](./DEPLOYMENT.md) document.
@@ -250,7 +268,7 @@ For deployment configuration details, refer to the [Deployment Guide](./DEPLOYME
 BrightBoost includes comprehensive testing:
 
 - **Unit Tests**: Component and utility testing with Vitest
-- **E2E Tests**: End-to-end workflows with Cypress  
+- **E2E Tests**: End-to-end workflows with Cypress
 - **Linting**: Code quality checks with ESLint
 
 ```bash
