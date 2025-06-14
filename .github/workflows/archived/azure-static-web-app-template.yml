@@ -29,12 +29,12 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          app_location: "/"       # App source code path
+          app_location: "/" # App source code path
           output_location: "dist" # Built app content directory - optional
           app_build_command: "npm run build"
-          action: "upload"        # Explicitly set the action to upload
+          action: "upload" # Explicitly set the action to upload
           # Environment variables are set via the Azure Portal, not here
-          # VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+          # VITE_AWS_API_URL=https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

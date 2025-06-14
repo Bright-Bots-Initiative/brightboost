@@ -3,18 +3,21 @@
 ## Overview
 
 BrightBoost uses a hybrid cloud deployment strategy:
+
 - **Frontend**: Azure Static Web Apps
 - **Backend**: AWS Lambda with Aurora PostgreSQL
 
 ## Active Deployment Workflows
 
 ### 1. AWS Lambda Backend (`aws-lambda-deploy.yml`)
+
 - **Purpose**: Deploy backend API functions to AWS Lambda
 - **Triggers**: Push to `main` branch, pull requests, manual dispatch
 - **Infrastructure**: AWS Lambda, API Gateway, Aurora PostgreSQL
-- **Endpoint**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev`
+- **Endpoint**: `https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod`
 
 ### 2. Azure Static Web Apps (`azure-static-web-apps.yml`)
+
 - **Purpose**: Deploy React frontend to Azure Static Web Apps
 - **Triggers**: Push to `main` branch, pull requests
 - **URL**: `https://black-sand-053455d1e.6.azurestaticapps.net`
@@ -24,6 +27,7 @@ BrightBoost uses a hybrid cloud deployment strategy:
 The following workflows have been **DISABLED** as the backend migrated to AWS Lambda:
 
 ### ❌ Disabled Legacy Workflows
+
 - `main_bb-dev-func-api.yml` - Legacy backend deployment
 - `deploy-new-function-app.yml` - Legacy backend deployment
 - `ci-cd.yml` - Legacy deployment steps removed
@@ -33,11 +37,13 @@ These workflows are commented out but preserved for reference.
 ## Environment Configuration
 
 ### Frontend Environment Variables
+
 ```env
-VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
+VITE_AWS_API_URL=https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 ```
 
 ### AWS Lambda Environment Variables
+
 - Stored in AWS Secrets Manager
 - Configured via GitHub repository secrets:
   - `AWS_ROLE_ARN`
@@ -49,6 +55,7 @@ VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
 ## Deployment Process
 
 ### Backend Deployment
+
 1. Code pushed to `main` branch
 2. GitHub Actions triggers `aws-lambda-deploy.yml`
 3. TypeScript compiled and Lambda functions built
@@ -56,6 +63,7 @@ VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
 5. API Gateway endpoint updated
 
 ### Frontend Deployment
+
 1. Code pushed to `main` branch
 2. GitHub Actions triggers `azure-static-web-apps.yml`
 3. React application built with Vite
@@ -65,13 +73,15 @@ VITE_AWS_API_URL=https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev
 ## Testing Deployments
 
 ### Backend API Test
+
 ```bash
-curl -X POST https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher \
+curl -X POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/teacher \
   -H "Content-Type: application/json" \
   -d '{"name":"Test Teacher","email":"test@example.com","password":"testpassword123"}'
 ```
 
 ### Frontend Test
+
 Visit: https://black-sand-053455d1e.6.azurestaticapps.net
 
 ## Monitoring
@@ -83,11 +93,13 @@ Visit: https://black-sand-053455d1e.6.azurestaticapps.net
 ## Rollback Procedures
 
 ### Backend Rollback
+
 1. Identify previous working deployment in AWS CloudFormation
 2. Use SAM CLI to deploy previous version
 3. Update API Gateway if needed
 
 ### Frontend Rollback
+
 1. Use Azure Portal to rollback to previous deployment
 2. Or redeploy from previous Git commit
 
