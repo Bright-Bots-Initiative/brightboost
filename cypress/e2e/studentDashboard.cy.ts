@@ -1,5 +1,9 @@
 describe("Student Dashboard", () => {
   beforeEach(() => {
+    cy.intercept("GET", "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student_dashboard", {
+      fixture: "student_dashboard.json",
+    }).as("studentDashboard");
+
     const mockUser = {
       id: "test-student-id",
       name: "Test Student",
@@ -16,10 +20,6 @@ describe("Student Dashboard", () => {
       win.localStorage.setItem("brightboost_token", mockToken);
       win.localStorage.setItem("user", JSON.stringify(mockUser));
     });
-
-    cy.intercept("GET", "**/api/student_dashboard*", {
-      fixture: "student_dashboard.json",
-    }).as("studentDashboard");
   });
 
   it("displays loading spinner initially and then loads dashboard content", () => {
@@ -37,7 +37,7 @@ describe("Student Dashboard", () => {
   });
 
   it("handles API errors gracefully", () => {
-    cy.intercept("GET", "**/api/student_dashboard*", {
+    cy.intercept("GET", "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student_dashboard", {
       statusCode: 500,
       body: { error: "Server error" },
     }).as("studentDashboardError");
@@ -56,7 +56,7 @@ describe("Student Dashboard", () => {
   });
 
   it("allows retry after error", () => {
-    cy.intercept("GET", "**/api/student_dashboard*", {
+    cy.intercept("GET", "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student_dashboard", {
       statusCode: 500,
       body: { error: "Server error" },
     }).as("studentDashboardError");
@@ -66,7 +66,7 @@ describe("Student Dashboard", () => {
 
     cy.get('[data-testid="dashboard-error"]').should("be.visible");
 
-    cy.intercept("GET", "**/api/student_dashboard*", {
+    cy.intercept("GET", "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student_dashboard", {
       fixture: "student_dashboard.json",
     }).as("studentDashboardRetry");
 
