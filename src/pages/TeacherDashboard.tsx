@@ -9,8 +9,6 @@ import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
 
 const TeacherDashboard: React.FC = () => {
-  console.log("TeacherDashboard mounted");
-  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
