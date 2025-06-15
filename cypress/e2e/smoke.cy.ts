@@ -31,7 +31,7 @@ describe("Dashboard API Smoke Tests", () => {
     
     cy.window().its("localStorage").invoke("getItem", "brightboost_token").should("exist");
     
-    cy.contains("Loading dashboard data").should("be.visible");
+    cy.contains("Loading dashboard data...").should("be.visible");
     
     cy.wait("@studentDashboard", { timeout: 10000 }).then((interception) => {
       expect(interception.request.url).to.include("/api/student_dashboard");
