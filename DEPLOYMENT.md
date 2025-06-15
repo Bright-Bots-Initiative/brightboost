@@ -30,7 +30,7 @@ The following workflows have been **REMOVED** as part of post-production cleanup
 
 - `ci-cd.yml.backup` - Legacy CI/CD pipeline backup
 - `archived/azure-static-web-apps-gray-ocean-02030a010.yml` - Deprecated Azure SWA workflow
-- `archived/azure-static-web-apps.yml` - Deprecated Azure SWA workflow  
+- `archived/azure-static-web-apps.yml` - Deprecated Azure SWA workflow
 - `archived/azure-static-web-app-template.yml` - Deprecated Azure SWA template
 
 All legacy workflows have been cleaned up after successful production deployment.
