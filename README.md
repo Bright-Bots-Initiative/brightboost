@@ -97,14 +97,17 @@ The application uses `VITE_AWS_API_URL` to configure the backend API endpoint:
 To run Cypress tests against production or staging environments:
 
 ```bash
-# Test against production
+# Test smoke tests against production
+CYPRESS_BASE_URL=https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net npx cypress run --spec "cypress/e2e/smoke.cy.ts"
+
+# Test all tests against production
 CYPRESS_BASE_URL=https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net npx cypress run
 
 # Test against staging
 CYPRESS_BASE_URL=https://your-staging-url.azurestaticapps.net npx cypress run
 ```
 
-The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development.
+The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development. The smoke tests will automatically handle authentication by seeding tokens in localStorage.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
