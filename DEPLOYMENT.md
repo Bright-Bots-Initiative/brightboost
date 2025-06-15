@@ -24,15 +24,16 @@ BrightBoost uses a hybrid cloud deployment strategy:
 
 ## Deprecated Workflows
 
-The following workflows have been **DISABLED** as the backend migrated to AWS Lambda:
+The following workflows have been **REMOVED** as part of post-production cleanup:
 
-### ❌ Disabled Legacy Workflows
+### ❌ Removed Legacy Workflows
 
-- `main_bb-dev-func-api.yml` - Legacy backend deployment
-- `deploy-new-function-app.yml` - Legacy backend deployment
-- `ci-cd.yml` - Legacy deployment steps removed
+- `ci-cd.yml.backup` - Legacy CI/CD pipeline backup
+- `archived/azure-static-web-apps-gray-ocean-02030a010.yml` - Deprecated Azure SWA workflow
+- `archived/azure-static-web-apps.yml` - Deprecated Azure SWA workflow  
+- `archived/azure-static-web-app-template.yml` - Deprecated Azure SWA template
 
-These workflows are commented out but preserved for reference.
+All legacy workflows have been cleaned up after successful production deployment.
 
 ## Environment Configuration
 
@@ -105,7 +106,7 @@ Visit: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 ## Security Notes
 
-- All legacy backend secrets have been removed from repository
+- All legacy backend secrets and configuration files have been removed from repository
 - AWS credentials use OIDC for secure authentication
 - Database credentials stored in AWS Secrets Manager
 - No hardcoded secrets in codebase

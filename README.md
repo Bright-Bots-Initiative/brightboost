@@ -225,41 +225,19 @@ The deployment pipeline:
 └── package.json        # Project dependencies and scripts
 ```
 
-## How can I edit this code? (Legacy Lovable Info)
+## How can I edit this code?
 
-This project was initially scaffolded or managed by Lovable. While direct local development (as described in "Getting Started") is the primary recommended method, you might find references to Lovable.
+This project uses standard web development practices and can be edited using any modern code editor or IDE.
 
-**Use your preferred IDE (Recommended)**
+**Local Development**
+Follow the "Getting Started" section above to set up the project locally for development.
 
-Clone this repo and push changes. Pushed changes will also be reflected in Lovable if the project is still linked.
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**GitHub Codespaces**
+You can also use GitHub Codespaces for cloud-based development directly in your browser.
 
-**Use Lovable (If Applicable)**
+## Custom Domain Setup
 
-If the project is actively managed via Lovable:
-Visit the [Lovable Project](https://lovable.dev/projects/f303f677-9491-4ea6-843e-bc69a8fc78d2) and start prompting.
-Changes made via Lovable will be committed automatically to this repo.
-
-**Edit a file directly in GitHub / Use GitHub Codespaces**
-Standard GitHub workflows are always available.
-
-## I want to use a custom domain - is that possible? (Legacy Lovable Info)
-
-Lovable's specific advice was: "We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)"
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+For custom domain configuration, you can use Azure Static Web Apps custom domain features or deploy to other platforms like Netlify or Vercel that support custom domains.
 
 ## What technologies are used for this project?
 
