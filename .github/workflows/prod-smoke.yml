@@ -1,0 +1,62 @@
+name: Production Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["Azure Static Web Apps CI/CD"]
+    types: [completed]
+    branches: [main]
+
+env:
+  PROD_URL: https://black-sand-053455d1e.6.azurestaticapps.net
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Test Teacher Dashboard URL
+        run: |
+          echo "Testing teacher dashboard at ${{ env.PROD_URL }}/teacher"
+          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/teacher")
+          if [ "$response" != "200" ]; then
+            echo "❌ Teacher dashboard returned HTTP $response"
+            exit 1
+          fi
+          echo "✅ Teacher dashboard returned HTTP 200"
+
+      - name: Test Student Dashboard URL
+        run: |
+          echo "Testing student dashboard at ${{ env.PROD_URL }}/student"
+          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/student")
+          if [ "$response" != "200" ]; then
+            echo "❌ Student dashboard returned HTTP $response"
+            exit 1
+          fi
+          echo "✅ Student dashboard returned HTTP 200"
+
+      - name: Test API Endpoints
+        run: |
+          echo "Testing teacher dashboard API at ${{ env.PROD_URL }}/api/teacher_dashboard"
+          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/teacher_dashboard")
+          if [ "$response" != "200" ]; then
+            echo "❌ Teacher dashboard API returned HTTP $response"
+            exit 1
+          fi
+          echo "✅ Teacher dashboard API returned HTTP 200"
+
+          echo "Testing student dashboard API at ${{ env.PROD_URL }}/api/student_dashboard"
+          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/student_dashboard")
+          if [ "$response" != "200" ]; then
+            echo "❌ Student dashboard API returned HTTP $response"
+            exit 1
+          fi
+          echo "✅ Student dashboard API returned HTTP 200"
+
+      - name: Summary
+        run: |
+          echo "🎉 All production smoke tests passed!"
+          echo "✅ Teacher dashboard: ${{ env.PROD_URL }}/teacher"
+          echo "✅ Student dashboard: ${{ env.PROD_URL }}/student"
+          echo "✅ Teacher API: ${{ env.PROD_URL }}/api/teacher_dashboard"
+          echo "✅ Student API: ${{ env.PROD_URL }}/api/student_dashboard"

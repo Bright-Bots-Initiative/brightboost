@@ -1,0 +1,178 @@
+name: PR Review Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint Commit Messages
+        id: commitlint_check
+        continue-on-error: true
+        run: |
+          echo "Linting commit messages from ${{ github.event.pull_request.base.sha }} to ${{ github.event.pull_request.head.sha }}"
+          (npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose > commitlint_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured commitlint exit code: $exit_code"
+          echo "commitlint_output<<EOF" >> $GITHUB_OUTPUT
+          cat commitlint_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "commitlint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "commitlint_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Prettier Check
+        id: prettier_check
+        continue-on-error: true
+        run: |
+          (npx prettier --check . > prettier_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured Prettier exit code: $exit_code"
+          echo "Prettier output:"
+          cat prettier_output.txt
+          echo "prettier_output<<EOF" >> $GITHUB_OUTPUT
+          cat prettier_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "prettier_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "prettier_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run linters
+        id: lint
+        continue-on-error: true
+        run: |
+          (npm run lint > lint_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured lint exit code: $exit_code"
+          echo "Lint output:"
+          cat lint_output.txt
+          echo "lint_output<<EOF" >> $GITHUB_OUTPUT
+          cat lint_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "lint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "lint_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: |
+          (npm run test > test_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured test exit code: $exit_code"
+          cat test_output.txt
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          cat test_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "test_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "test_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Basic Security Scan
+        id: security_scan
+        continue-on-error: true
+        run: |
+          changed_files=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '*.ts' '*.tsx' '*.js' '*.jsx' | xargs)
+          output_file="security_scan_output.txt"
+          status="success"
+          if [ -z "$changed_files" ]; then
+            echo "No relevant files changed. Skipping security scan."
+            echo "scan_output=No relevant files changed for security scan." >> $GITHUB_OUTPUT
+            echo "scan_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "Scanning for 'dangerouslySetInnerHTML' in files: $changed_files"
+            if grep -nHi 'dangerouslySetInnerHTML' $changed_files > $output_file; then
+              echo "Potential security issue found: 'dangerouslySetInnerHTML' detected."
+              status="failure"
+            else
+              echo "No 'dangerouslySetInnerHTML' found in changed files."
+              echo "No 'dangerouslySetInnerHTML' found in changed files." > $output_file
+            fi
+            echo "scan_output<<EOF" >> $GITHUB_OUTPUT
+            cat $output_file >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "scan_status=$status" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Review Comment
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const getSection = (title, status, output, emojiSuccess, emojiFail, successMsg, failMsg) => {
+              let result = `### ${title}\n`;
+              if (status === 'success') {
+                result += `${emojiSuccess} ${successMsg}\n`;
+                if (output && output.trim() !== '' && !output.includes(successMsg)) {
+                  result += `<details><summary>Details</summary>\n\n\`\`\`\n${output.trim()}\n\`\`\`\n</details>\n`;
+                }
+              } else {
+                result += `${emojiFail} ${failMsg}\n`;
+                result += `<details><summary>Details</summary>\n\n\`\`\`\n${output.trim()}\n\`\`\`\n</details>\n`;
+              }
+              return result + '\n';
+            };
+
+            const commitlintStatus = "${{ steps.commitlint_check.outputs.commitlint_status }}";
+            const commitlintOutput = `${{ steps.commitlint_check.outputs.commitlint_output }}`;
+            const prettierStatus = "${{ steps.prettier_check.outputs.prettier_status }}";
+            const prettierOutput = `${{ steps.prettier_check.outputs.prettier_output }}`;
+            const lintStatus = "${{ steps.lint.outputs.lint_status }}";
+            const lintOutput = `${{ steps.lint.outputs.lint_output }}`;
+            const testStatus = "${{ steps.tests.outputs.test_status }}";
+            const testOutput = `${{ steps.tests.outputs.test_output }}`;
+            const securityStatus = "${{ steps.security_scan.outputs.scan_status }}";
+            const securityOutput = `${{ steps.security_scan.outputs.scan_output }}`;
+
+            let commentBody = "## PR Review Bot Feedback 🤖\n\n";
+            commentBody += getSection("📝 Commit Message Standards", commitlintStatus, commitlintOutput, "✅", "❌", "All commit messages adhere to conventional commit standards.", "Some commit messages do not adhere to conventional commit standards.");
+            commentBody += getSection("💅 Code Formatting (Prettier)", prettierStatus, prettierOutput, "✅", "❌", "Code formatting is consistent.", "Code formatting issues found.");
+            commentBody += getSection("🧹 Linting", lintStatus, lintOutput, "✅", "❌", "Linting passed.", "Linting failed.");
+            commentBody += getSection("🧪 Tests", testStatus, testOutput, "✅", "❌", "Tests passed.", "Tests failed.");
+            commentBody += getSection("🛡️ Basic Security Scan", securityStatus, securityOutput, "✅", "⚠️", "Basic security scan passed.", "Basic security scan found potential issues or an error occurred.");
+
+            commentBody += '\n---\n*This is an automated message from the PR Review Bot.*';
+
+            // Truncate if too long for GitHub API
+            const MAX_COMMENT_LENGTH = 65536;
+            if (commentBody.length > MAX_COMMENT_LENGTH) {
+              commentBody = commentBody.substring(0, MAX_COMMENT_LENGTH - 100) + "\n\n... (comment truncated due to length)";
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
