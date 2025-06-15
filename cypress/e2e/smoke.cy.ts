@@ -8,6 +8,9 @@ describe("Dashboard API Smoke Tests", () => {
     cy.get('button[type="submit"]').click();
     
     cy.url({ timeout: 10000 }).should("include", "/teacher/dashboard");
+    
+    cy.window().its("localStorage").invoke("getItem", "brightboost_token").should("exist");
+    
     cy.wait("@teacherDashboard").its("response.statusCode").should("eq", 200);
     cy.contains("Welcome, Test Teacher").should("be.visible");
   });
@@ -21,6 +24,9 @@ describe("Dashboard API Smoke Tests", () => {
     cy.get('button[type="submit"]').click();
     
     cy.url({ timeout: 10000 }).should("include", "/student/dashboard");
+    
+    cy.window().its("localStorage").invoke("getItem", "brightboost_token").should("exist");
+    
     cy.wait("@studentDashboard").its("response.statusCode").should("eq", 200);
     cy.contains("Loading your dashboard").should("not.exist");
   });
