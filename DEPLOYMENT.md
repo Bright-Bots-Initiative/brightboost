@@ -20,7 +20,7 @@ BrightBoost uses a hybrid cloud deployment strategy:
 
 - **Purpose**: Deploy React frontend to Azure Static Web Apps
 - **Triggers**: Push to `main` branch, pull requests
-- **URL**: `https://black-sand-053455d1e.6.azurestaticapps.net`
+- **URL**: `https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net`
 
 ## Deprecated Workflows
 
@@ -82,7 +82,7 @@ curl -X POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/sig
 
 ### Frontend Test
 
-Visit: https://black-sand-053455d1e.6.azurestaticapps.net
+Visit: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 ## Monitoring
 

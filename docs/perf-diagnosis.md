@@ -2,7 +2,7 @@
 
 ## Current Performance Issues
 
-The BrightBoost home page (https://black-sand-053455d1e.6.azurestaticapps.net) is experiencing slow initial load times. After analyzing the application code and build output, the following performance bottlenecks have been identified:
+The BrightBoost home page (https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net) is experiencing slow initial load times. After analyzing the application code and build output, the following performance bottlenecks have been identified:
 
 ### Primary Bottleneck: Large JavaScript Bundle Size
 

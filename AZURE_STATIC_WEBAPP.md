@@ -10,7 +10,7 @@ The BrightBoost frontend is deployed to Azure Static Web Apps with the following
 - **SKU**: Free
 - **Build Output Location**: dist
 - **API Location**: AWS Lambda (https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod)
-- **URL**: https://black-sand-053455d1e.6.azurestaticapps.net (Canonical Production)
+- **URL**: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net (Canonical Production)
 
 ## Environment Variables
 

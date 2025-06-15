@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  PROD_URL: https://black-sand-053455d1e.6.azurestaticapps.net
+  PROD_URL: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 jobs:
   smoke:

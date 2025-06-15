@@ -33,7 +33,7 @@
 **Usage:**
 
 ```bash
-curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashboard
+curl -X GET https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net/api/teacher_dashboard
 ```
 
 ### GET /api/student_dashboard
@@ -70,7 +70,7 @@ curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/teacher_dashb
 **Usage:**
 
 ```bash
-curl -X GET https://black-sand-053455d1e.6.azurestaticapps.net/api/student_dashboard
+curl -X GET https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net/api/student_dashboard
 ```
 
 ## Environment Variable Validation

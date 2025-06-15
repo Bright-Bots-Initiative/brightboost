@@ -126,7 +126,7 @@ The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment vari
 
 ## Production Deployment
 
-**Live Application:** https://black-sand-053455d1e.6.azurestaticapps.net
+**Live Application:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 The application is deployed using Azure Static Web Apps for the frontend with an AWS Lambda backend.
 
@@ -149,7 +149,7 @@ The backend is deployed to AWS Lambda using GitHub Actions CI/CD pipeline. The d
 
 The frontend continues to be deployed to Azure Static Web Apps for optimal performance and global distribution.
 
-**Frontend URL:** https://black-sand-053455d1e.6.azurestaticapps.net
+**Frontend URL:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 ### Deployment Pipeline
 
@@ -277,7 +277,7 @@ The project uses a hybrid deployment strategy:
 
 **Frontend**: Automatically deployed to Azure Static Web Apps via GitHub Actions
 
-- **Production URL:** https://black-sand-053455d1e.6.azurestaticapps.net
+- **Production URL:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
 
 **Backend**: Automatically deployed to AWS Lambda via GitHub Actions
 

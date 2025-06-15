@@ -6,7 +6,7 @@
 
 **Rationale:**
 
-- Referenced as canonical production URL in README (https://black-sand-053455d1e.6.azurestaticapps.net)
+- Referenced as canonical production URL in README (https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net)
 - Has proper API location configuration for AWS Lambda backend integration
 - Uses correct output_location="dist" matching build process
 - Most recently updated with working configuration
@@ -27,4 +27,4 @@
 
 This consolidation resolves the multiple SWA deployment conflicts identified in the repository analysis while preserving the most complete and production-ready workflow configuration.
 
-**Note:** This document reflects the historical cleanup. The current canonical production SWA is https://black-sand-053455d1e.6.azurestaticapps.net deployed via the main `azure-static-web-apps.yml` workflow.
+**Note:** This document reflects the historical cleanup. The current canonical production SWA is https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net deployed via the main `azure-static-web-apps.yml` workflow.
