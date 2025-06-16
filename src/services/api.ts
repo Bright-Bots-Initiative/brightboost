@@ -212,7 +212,7 @@ export const signupStudent = async (
 export const useApi = () => {
   const { token } = useAuth();
 
-  const authFetch = async (endpoint: string, options: RequestInit = {}) => {
+  const authFetch = async (endpoint: string, options: RequestInit = {}, retries = 2) => {
     const headers = {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -233,25 +233,32 @@ export const useApi = () => {
       return await response.json();
     } catch (error) {
       console.error("API error:", error);
+      
+      if (retries > 0 && error instanceof Error && !error.message.includes('Authentication')) {
+        console.log(`Retrying request... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return authFetch(endpoint, options, retries - 1);
+      }
+      
       throw error;
     }
   };
 
   return {
-    get: (endpoint: string) => authFetch(endpoint),
+    get: (endpoint: string) => authFetch(endpoint, {}, 2),
     post: (endpoint: string, data: Record<string, unknown>) =>
       authFetch(endpoint, {
         method: "POST",
         body: JSON.stringify(data),
-      }),
+      }, 2),
     put: (endpoint: string, data: Record<string, unknown>) =>
       authFetch(endpoint, {
         method: "PUT",
         body: JSON.stringify(data),
-      }),
+      }, 2),
     delete: (endpoint: string) =>
       authFetch(endpoint, {
         method: "DELETE",
-      }),
+      }, 2),
   };
 };

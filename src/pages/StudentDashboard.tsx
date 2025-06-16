@@ -49,8 +49,14 @@ const StudentDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await api.get("/api/student_dashboard");
-        if (Array.isArray(data)) {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout')), 5000)
+        );
+        
+        const dataPromise = api.get("/api/student_dashboard");
+        const data = await Promise.race([dataPromise, timeoutPromise]);
+        
+        if (Array.isArray(data) && data.length > 0) {
           const formattedLessons = data.map(
             (student: {
               id: string;
@@ -77,7 +83,9 @@ const StudentDashboard: React.FC = () => {
       } catch (err) {
         console.error("Failed to fetch student dashboard data:", err);
         setError(
-          err instanceof Error
+          err instanceof Error && err.message === 'Request timeout'
+            ? "Dashboard is taking too long to load. Please try again."
+            : err instanceof Error
             ? err.message
             : "Failed to load dashboard. Please try again.",
         );
@@ -255,12 +263,18 @@ const StudentDashboard: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <BrightBoostRobot size="md" />
-                <p className="text-brightboost-navy mt-4">
-                  No student data available yet.
+                <p className="text-brightboost-navy mt-4 text-xl font-semibold">
+                  Let's start your first quest!
                 </p>
-                <p className="text-sm text-gray-600">
-                  Check back later or contact your teacher for more information.
+                <p className="text-sm text-gray-600 mt-2">
+                  Your learning adventure begins here. Complete activities to earn XP and unlock new challenges!
                 </p>
+                <button 
+                  className="mt-4 bg-brightboost-blue text-white px-6 py-2 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
+                  onClick={() => navigate('/student/modules')}
+                >
+                  Explore Activities
+                </button>
               </div>
             )}
           </section>
@@ -301,12 +315,18 @@ const StudentDashboard: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <BrightBoostRobot size="md" />
-                <p className="text-brightboost-navy mt-4">
-                  No activities available yet.
+                <p className="text-brightboost-navy mt-4 text-xl font-semibold">
+                  Let's start your first quest!
                 </p>
-                <p className="text-sm text-gray-600">
-                  Activities will appear here when assigned by your teacher.
+                <p className="text-sm text-gray-600 mt-2">
+                  Activities will appear here when assigned by your teacher. Start exploring to begin your learning journey!
                 </p>
+                <button 
+                  className="mt-4 bg-brightboost-blue text-white px-6 py-2 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
+                  onClick={() => navigate('/student/modules')}
+                >
+                  Explore Activities
+                </button>
               </div>
             )}
           </section>

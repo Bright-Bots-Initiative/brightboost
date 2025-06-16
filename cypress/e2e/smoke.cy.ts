@@ -47,4 +47,21 @@ describe("Dashboard API Smoke Tests", () => {
       expect(interception.request.url).to.include("/api/student_dashboard");
     });
   });
+
+  it('shows "Let\'s start your first quest!" for new students with no data', () => {
+    cy.intercept("GET", "**/prod/api/student_dashboard*", []).as("getEmptyDashboard");
+    
+    cy.visit("/student/login");
+    cy.get('input[type="email"]').type("test-student@example.com");
+    cy.get('input[type="password"]').type("Pa$$w0rd!");
+    cy.get('button[type="submit"]').click();
+    
+    cy.wait("@getEmptyDashboard");
+    
+    cy.contains("Let's start your first quest!").should("be.visible");
+    cy.contains("Your learning adventure begins here").should("be.visible");
+    cy.get("button").contains("Explore Activities").should("be.visible");
+    
+    cy.get('[data-testid="loading-spinner"]').should("not.exist");
+  });
 });
