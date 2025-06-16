@@ -7,11 +7,13 @@
     },
     {
       "route": "/api/signup/student",
+      "methods": ["POST", "OPTIONS"],
       "allowedRoles": ["anonymous"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/student"
     },
     {
       "route": "/api/login",
+      "methods": ["POST", "OPTIONS"],
       "allowedRoles": ["anonymous"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login"
     },

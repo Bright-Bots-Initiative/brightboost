@@ -52,7 +52,8 @@ describe("Dashboard API Smoke Tests", () => {
     cy.intercept('POST', '**/api/signup/student').as('studentSignup');
     
     const timestamp = Date.now();
-    const uniqueEmail = `cypress_test_${timestamp}@brightboost.io`;
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const uniqueEmail = `cypress_test_${timestamp}_${randomId}@brightboost.io`;
     
     cy.visit('/student/signup');
     cy.get('#name').type('Test Student');
