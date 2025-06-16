@@ -2,7 +2,7 @@
 import { useAuth } from "../contexts/AuthContext";
 
 // Get API URL from environment variables
-const API_URL = import.meta.env.VITE_AWS_API_URL || "";
+const API_URL = import.meta.env.VITE_AWS_API_URL || "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod";
 
 // Rate limiting for API calls
 const API_CALL_DELAY = 334; // ~3 calls per second
