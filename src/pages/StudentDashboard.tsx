@@ -76,17 +76,11 @@ const StudentDashboard: React.FC = () => {
         }
       } catch (err) {
         console.error("Failed to fetch student dashboard data:", err);
-        if (err instanceof Error && err.message.includes("404")) {
-          setError(
-            "API not available in preview mode. Student data will be shown in production.",
-          );
-        } else {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Failed to load dashboard. Please try again.",
-          );
-        }
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load dashboard. Please try again.",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -166,16 +160,6 @@ const StudentDashboard: React.FC = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div data-testid="dashboard-error" className="text-center">
             <p className="text-red-600 mb-4">Oops! {error}</p>
-            {error.includes("preview mode") && (
-              <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  API not available in preview mode
-                </p>
-                <p className="text-sm text-yellow-800">
-                  Student data will be shown in production
-                </p>
-              </div>
-            )}
             <button
               onClick={() => window.location.reload()}
               className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
@@ -275,8 +259,7 @@ const StudentDashboard: React.FC = () => {
                   No student data available yet.
                 </p>
                 <p className="text-sm text-gray-600">
-                  This could be because you're in preview mode or no students
-                  are registered.
+                  Check back later or contact your teacher for more information.
                 </p>
               </div>
             )}

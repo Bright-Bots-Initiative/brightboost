@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { Lesson } from "../components/TeacherDashboard/types";
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://localhost:5173";
 
 interface AuthUser {
   id: string;

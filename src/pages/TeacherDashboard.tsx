@@ -45,15 +45,9 @@ const TeacherDashboard: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to fetch teacher data:", err);
-      if (err instanceof Error && err.message.includes("404")) {
-        setError(
-          "API not available in preview mode. Teacher data will be shown in production.",
-        );
-      } else {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch teacher data.",
-        );
-      }
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch teacher data.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -163,16 +157,7 @@ const TeacherDashboard: React.FC = () => {
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
             <p className="text-xl text-red-500 mt-4">Error: {error}</p>
-            {error.includes("preview mode") && (
-              <div className="mt-4 p-4 bg-yellow-100 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  API not available in preview mode
-                </p>
-                <p className="text-sm text-yellow-800">
-                  Teacher data will be shown in production
-                </p>
-              </div>
-            )}
+
           </div>
         )}
         {!isLoading && !error && lessonsData.length === 0 && (

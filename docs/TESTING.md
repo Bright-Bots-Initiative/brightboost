@@ -38,18 +38,9 @@ npm run lint
 
 ### Cypress Environment Variables
 
-For E2E tests, Cypress uses environment variables to determine test behavior:
+For E2E tests, Cypress uses environment variables to configure test behavior:
 
-- `IS_PREVIEW=true`: Runs tests in preview mode, expecting "API not available" messages
-- `IS_PREVIEW=false`: Runs tests against live API endpoints
-
-### Preview Mode Testing
-
-When `IS_PREVIEW=true`, tests verify that:
-
-- Dashboard components show appropriate preview messages
-- No actual API calls are made to non-existent endpoints
-- Error handling displays user-friendly messages
+- `CYPRESS_BASE_URL`: Override the base URL for testing against different environments
 
 ## Test Structure
 
@@ -106,8 +97,8 @@ npx cypress open
 ### Cypress Timeout Errors
 
 - Increase timeout values for slow-loading elements
-- Verify that preview mode detection is working correctly
 - Check that API intercepts are properly configured
+- Verify network connectivity to test endpoints
 
 ### Environment Variable Issues
 

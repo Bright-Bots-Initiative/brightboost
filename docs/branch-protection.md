@@ -46,6 +46,6 @@ Consider adding the following analytics integrations:
 
 ## Notes
 
-- Preview builds (pull requests) skip API deployment by design
+- Pull request builds use the same deployment configuration as production
 - Database connectivity tests use isolated test database in CI
 - Cypress smoke tests verify end-to-end API functionality

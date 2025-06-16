@@ -11,7 +11,7 @@ Thank you for helping us build joyful K-8 STEM tools! This guide shows you how t
 ## Local Dev Commands
 
 - `npm install` – install dependencies
-- `npm run dev` – start Vite dev server (`http://localhost:3000`)
+- `npm run dev` – start Vite dev server (`http://localhost:5173`)
 - `npm run lint` – check code for style and potential issues
 - `npm run test` – run tests
 - `npm run test:watch` – run tests in watch mode
