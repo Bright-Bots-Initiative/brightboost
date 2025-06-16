@@ -52,10 +52,11 @@ describe("Dashboard API Smoke Tests", () => {
     cy.intercept('POST', '**/api/signup/student').as('studentSignup');
     
     cy.visit('/student/signup');
-    cy.get('[data-testid="name-input"]').type('Test Student');
-    cy.get('[data-testid="email-input"]').type('cypress_test@brightboost.io');
-    cy.get('[data-testid="password-input"]').type('Pa$$w0rd!');
-    cy.get('[data-testid="signup-button"]').click();
+    cy.get('#name').type('Test Student');
+    cy.get('#email').type('cypress_test@brightboost.io');
+    cy.get('#password').type('Pa$$w0rd!');
+    cy.get('#confirmPassword').type('Pa$$w0rd!');
+    cy.get('button[type="submit"]').click();
     
     cy.wait('@studentSignup').then((interception) => {
       if (interception.response) {
@@ -72,9 +73,11 @@ describe("Dashboard API Smoke Tests", () => {
     cy.intercept('POST', '**/api/signup/student').as('duplicateSignup');
     
     cy.visit('/student/signup');
-    cy.get('[data-testid="email-input"]').type('cypress_test@brightboost.io');
-    cy.get('[data-testid="password-input"]').type('Pa$$w0rd!');
-    cy.get('[data-testid="signup-button"]').click();
+    cy.get('#name').type('Duplicate Test');
+    cy.get('#email').type('cypress_test@brightboost.io');
+    cy.get('#password').type('Pa$$w0rd!');
+    cy.get('#confirmPassword').type('Pa$$w0rd!');
+    cy.get('button[type="submit"]').click();
     
     cy.wait('@duplicateSignup').then((interception) => {
       if (interception.response) {
@@ -87,9 +90,9 @@ describe("Dashboard API Smoke Tests", () => {
     cy.intercept('POST', '**/api/login').as('badLogin');
     
     cy.visit('/student/login');
-    cy.get('[data-testid="email-input"]').type('cypress_test@brightboost.io');
-    cy.get('[data-testid="password-input"]').type('WrongPassword!');
-    cy.get('[data-testid="login-button"]').click();
+    cy.get('#email').type('cypress_test@brightboost.io');
+    cy.get('#password').type('WrongPassword!');
+    cy.get('button[type="submit"]').click();
     
     cy.wait('@badLogin').then((interception) => {
       if (interception.response) {
