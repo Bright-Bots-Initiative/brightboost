@@ -51,9 +51,12 @@ describe("Dashboard API Smoke Tests", () => {
   it('allows new students to create accounts', () => {
     cy.intercept('POST', '**/api/signup/student').as('studentSignup');
     
+    const timestamp = Date.now();
+    const uniqueEmail = `cypress_test_${timestamp}@brightboost.io`;
+    
     cy.visit('/student/signup');
     cy.get('#name').type('Test Student');
-    cy.get('#email').type('cypress_test@brightboost.io');
+    cy.get('#email').type(uniqueEmail);
     cy.get('#password').type('Pa$$w0rd!');
     cy.get('#confirmPassword').type('Pa$$w0rd!');
     cy.get('button[type="submit"]').click();
