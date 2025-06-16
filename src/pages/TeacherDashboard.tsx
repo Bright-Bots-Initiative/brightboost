@@ -157,7 +157,6 @@ const TeacherDashboard: React.FC = () => {
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
             <p className="text-xl text-red-500 mt-4">Error: {error}</p>
-
           </div>
         )}
         {!isLoading && !error && lessonsData.length === 0 && (
