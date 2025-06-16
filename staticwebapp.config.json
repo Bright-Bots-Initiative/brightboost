@@ -5,6 +5,34 @@
       "allowedRoles": ["anonymous"]
     },
     {
+      "route": "/api/signup/student",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/login",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/student_dashboard",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/teacher_dashboard",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/lessons*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/gamification/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/api/student/*",
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/*",
       "serve": "/index.html",
       "statusCode": 200
