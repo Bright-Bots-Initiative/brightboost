@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "../services/api";
@@ -38,11 +38,7 @@ const StudentDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
   
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-  
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -67,7 +63,12 @@ const StudentDashboard = () => {
       setIsLoading(false);
       setShowStillLoading(false);
     }
-  };
+  }, [api, logout, navigate]);
+  
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
 
   const stemActivities = [
     {
