@@ -1,8 +1,12 @@
 // src/services/api.ts
 import { useAuth } from "../contexts/AuthContext";
 
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_AWS_API_URL || "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod";
+// Get API URL from environment variables - prioritize AWS API Gateway
+const API_URL = import.meta.env.VITE_AWS_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+if (import.meta.env.PROD && !import.meta.env.VITE_AWS_API_URL) {
+  throw new Error('VITE_AWS_API_URL is required in production environment');
+}
 
 // Rate limiting for API calls
 const API_CALL_DELAY = 334; // ~3 calls per second
@@ -226,6 +230,12 @@ export const useApi = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired');
+        }
+        if (response.status === 403) {
+          throw new Error('Dashboard unavailable, please retry.');
+        }
         const errorData = await response.json();
         throw new Error(errorData.error || "API request failed");
       }

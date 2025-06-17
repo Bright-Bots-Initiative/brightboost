@@ -25,7 +25,7 @@ describe("Dashboard API Smoke Tests", () => {
   });
 
   it("should handle student dashboard correctly", () => {
-    cy.intercept("GET", "**/prod/api/student_dashboard*").as(
+    cy.intercept("GET", "**/prod/api/student/dashboard*").as(
       "studentDashboard",
     );
 
@@ -41,10 +41,25 @@ describe("Dashboard API Smoke Tests", () => {
       .invoke("getItem", "brightboost_token")
       .should("exist");
 
-    cy.contains("Loading your dashboard...").should("be.visible");
+    cy.get('.animate-spin').should('be.visible');
+    
+    cy.contains('Hello,', { timeout: 10000 }).should('be.visible');
+    cy.contains('STEM 1').should('be.visible');
+    cy.contains('Letter Game').should('be.visible');
+    cy.contains('Leaderboard').should('be.visible');
+    
+    cy.get('body').then(($body) => {
+      if ($body.text().includes('Your Courses & Assignments')) {
+        cy.contains('Your Courses & Assignments').should('be.visible');
+        cy.contains('Enrolled Courses').should('be.visible');
+        cy.contains('Recent Assignments').should('be.visible');
+      } else {
+        cy.contains("Let's start your first quest!", { timeout: 5000 }).should('be.visible');
+      }
+    });
 
     cy.wait("@studentDashboard", { timeout: 10000 }).then((interception) => {
-      expect(interception.request.url).to.include("/api/student_dashboard");
+      expect(interception.request.url).to.include("/api/student/dashboard");
     });
   });
 
