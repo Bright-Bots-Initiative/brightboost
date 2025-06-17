@@ -45,6 +45,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  test: {
+    environment: 'jsdom',
+  },
   build: {
     outDir: "dist",
     sourcemap: true,
