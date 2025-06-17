@@ -69,8 +69,6 @@ const StudentDashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-
-
   const stemActivities = [
     {
       title: 'STEM 1',
@@ -136,7 +134,6 @@ const StudentDashboard = () => {
       </GameBackground>
     );
   }
-  
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
