@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:dev": "vite build --mode development",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "server": "node server.js",
     "start": "npm run build && NODE_ENV=production npm run server",
@@ -30,10 +30,12 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "lovable-tagger": "^1.1.7",
+    "lucide-react": "^0.516.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.0",
-    "tailwind-merge": "^2.0.0"
+    "tailwind-merge": "^2.0.0",
+    "typescript-eslint": "^8.34.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.6",

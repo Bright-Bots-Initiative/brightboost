@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 
 // Import middleware
-const authMiddleware = require('./middleware/auth');
+const authMiddleware = require('./middleware/auth').default;
 
 // Initialize Express app
 const app = express();
@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://brightboost-web.azurewebsites.net'
-    : 'http://localhost:5173',
+    : ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081'],
   credentials: true
 }));
 app.use(bodyParser.json());
