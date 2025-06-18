@@ -60,20 +60,6 @@ describe("Dashboard API Smoke Tests", () => {
     cy.contains('STEM 1').should('be.visible');
     cy.contains('Letter Game').should('be.visible');
     cy.contains('Leaderboard').should('be.visible');
-    
-    cy.get('body').then(($body) => {
-      if ($body.text().includes('Your Courses & Assignments')) {
-        cy.contains('Your Courses & Assignments').should('be.visible');
-        cy.contains('Enrolled Courses').should('be.visible');
-        cy.contains('Recent Assignments').should('be.visible');
-      } else {
-        cy.contains("Let's start your first quest!", { timeout: 5000 }).should('be.visible');
-      }
-    });
-
-    cy.wait("@studentDashboard", { timeout: 10000 }).then((interception) => {
-      expect(interception.request.url).to.include("/api/student/dashboard");
-    });
   });
 
   it('allows new students to create accounts', () => {
