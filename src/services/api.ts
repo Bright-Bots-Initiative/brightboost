@@ -1,8 +1,8 @@
 // src/services/api.ts
 import { useAuth } from "../contexts/AuthContext";
 
-// Get API URL from environment variables - prioritize AWS API Gateway
-const API_URL = import.meta.env.VITE_AWS_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Get API URL from environment variables - use relative URLs in development for proxy
+const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_AWS_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 if (import.meta.env.PROD && !import.meta.env.VITE_AWS_API_URL) {
   throw new Error('VITE_AWS_API_URL is required in production environment');
