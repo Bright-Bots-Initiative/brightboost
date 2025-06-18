@@ -1,0 +1,70 @@
+name: Lambda Diagnostics - Tail Login Handler Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Duration to tail logs (in minutes)'
+        required: false
+        default: '5'
+        type: string
+
+jobs:
+  diagnose-lambda:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Verify AWS connection
+        run: |
+          echo "Testing AWS CLI connection..."
+          aws sts get-caller-identity
+          echo "Listing available log groups..."
+          aws logs describe-log-groups --log-group-name-prefix "/aws/lambda" | grep loginHandler || echo "No loginHandler log group found"
+
+      - name: Tail Lambda logs for login handler
+        run: |
+          echo "Starting to tail Lambda logs for loginHandler..."
+          echo "Duration: ${{ github.event.inputs.duration }} minutes"
+          
+          # Start tailing logs in background
+          timeout ${{ github.event.inputs.duration }}m aws logs tail '/aws/lambda/loginHandler' --since 10m --follow > lambda_logs.txt 2>&1 &
+          TAIL_PID=$!
+          
+          echo "Log tailing started (PID: $TAIL_PID)"
+          echo "Waiting for ${{ github.event.inputs.duration }} minutes to capture logs..."
+          echo "During this time, trigger a login attempt at: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net/student/login"
+          
+          # Wait for the specified duration
+          sleep $((${{ github.event.inputs.duration }} * 60))
+          
+          echo "Stopping log capture..."
+          kill $TAIL_PID 2>/dev/null || true
+          
+          echo "=== CAPTURED LAMBDA LOGS ==="
+          cat lambda_logs.txt || echo "No logs captured"
+          
+          echo "=== RECENT ERROR LOGS ==="
+          aws logs filter-log-events \
+            --log-group-name '/aws/lambda/loginHandler' \
+            --start-time $(date -d '10 minutes ago' +%s)000 \
+            --filter-pattern 'ERROR' \
+            --query 'events[*].[timestamp,message]' \
+            --output text || echo "No recent error logs found"
+
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lambda-logs-${{ github.run_number }}
+          path: lambda_logs.txt
+          retention-days: 7
