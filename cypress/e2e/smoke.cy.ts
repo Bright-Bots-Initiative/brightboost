@@ -1,6 +1,6 @@
 describe("Dashboard API Smoke Tests", () => {
   it("should handle teacher dashboard correctly", () => {
-    cy.intercept("GET", "**/prod/api/teacher_dashboard*").as(
+    cy.intercept("GET", "**/api/teacher_dashboard*").as(
       "teacherDashboard",
     );
 
@@ -25,7 +25,7 @@ describe("Dashboard API Smoke Tests", () => {
   });
 
   it("should handle student dashboard correctly", () => {
-    cy.intercept("GET", "**/prod/api/student/dashboard*").as(
+    cy.intercept("GET", "**/api/student/dashboard*").as(
       "studentDashboard",
     );
 
