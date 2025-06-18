@@ -9,7 +9,7 @@ on:
 
 env:
   NODE_VERSION: "18"
-  CYPRESS_BASE_URL: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+  CYPRESS_BASE_URL: http://localhost:5173
 
 jobs:
   build-and-test:
@@ -46,6 +46,12 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Start development server
+        run: pnpm dev &
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5173 --timeout 60000
 
       - name: Run Cypress smoke tests
         run: pnpm cypress run --spec "cypress/e2e/smoke.cy.ts"
