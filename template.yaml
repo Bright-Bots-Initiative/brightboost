@@ -139,14 +139,49 @@ Resources:
             Method: post
             RestApiId: !Ref AuthApi
 
+  StudentDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/student-dashboard.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/student/dashboard
+            Method: get
+            RestApiId: !Ref AuthApi
+
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Environment
       Cors:
-        AllowMethods: "'POST,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization'"
-        AllowOrigin: "'*'"
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,x-api-key'"
+        AllowOrigin: "'http://localhost:5173,https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net'"
 
 Outputs:
   TeacherSignupApiUrl:
@@ -172,3 +207,11 @@ Outputs:
   LoginFunctionArn:
     Description: "Login Lambda Function ARN"
     Value: !GetAtt LoginFunction.Arn
+
+  StudentDashboardApiUrl:
+    Description: "API Gateway endpoint URL for Student Dashboard function"
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/student/dashboard"
+
+  StudentDashboardFunctionArn:
+    Description: "Student Dashboard Lambda Function ARN"
+    Value: !GetAtt StudentDashboardFunction.Arn
