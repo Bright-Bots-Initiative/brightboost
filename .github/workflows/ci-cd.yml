@@ -111,6 +111,11 @@ jobs:
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+
       - name: Run database connectivity test
         run: pnpm test:db
         env:
