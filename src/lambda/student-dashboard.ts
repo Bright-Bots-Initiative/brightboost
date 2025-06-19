@@ -70,7 +70,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "http://localhost:5173,https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
