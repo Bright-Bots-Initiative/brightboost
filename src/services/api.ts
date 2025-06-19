@@ -1,4 +1,5 @@
 // src/services/api.ts
+import { useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
@@ -254,7 +255,7 @@ export const useApi = () => {
     }
   };
 
-  return {
+  const apiMethods = useMemo(() => ({
     get: (endpoint: string) => authFetch(endpoint, {}, 2),
     post: (endpoint: string, data: Record<string, unknown>) =>
       authFetch(endpoint, {
@@ -270,5 +271,7 @@ export const useApi = () => {
       authFetch(endpoint, {
         method: "DELETE",
       }, 2),
-  };
+  }), []);
+
+  return apiMethods;
 };
