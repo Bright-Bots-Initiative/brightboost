@@ -1,6 +1,7 @@
 // src/services/api.ts
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast.ts";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
 const API_URL = import.meta.env.DEV
@@ -260,6 +261,26 @@ export const useApi = () => {
           return authFetch(endpoint, options, retries - 1);
         }
 
+        if (
+          retries > 0 &&
+          error instanceof Error &&
+          !error.message.includes("Authentication")
+        ) {
+          console.log(`Retrying request... (${retries} attempts left)`);
+          toast({
+            title: "Network issue",
+            description: `Retrying request... (${retries} attempt${retries > 1 ? "s" : ""} left)`,
+          });
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return authFetch(endpoint, options, retries - 1);
+        }
+
+        toast({
+          title: "Network Error",
+          description: "We couldn't connect to the server. Please try again.",
+          variant: "destructive",
+        });
+        
         throw error;
       }
     },
