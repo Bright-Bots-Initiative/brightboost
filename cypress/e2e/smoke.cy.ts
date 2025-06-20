@@ -1,6 +1,6 @@
 describe("Dashboard API Smoke Tests", () => {
   it("should handle teacher dashboard correctly", () => {
-    cy.intercept("GET", "**/api/teacher_dashboard*").as(
+    cy.intercept("GET", "**/api/teacher/dashboard*").as(
       "teacherDashboard",
     );
 
@@ -20,7 +20,8 @@ describe("Dashboard API Smoke Tests", () => {
     cy.contains("Teacher Admin").should("be.visible");
 
     cy.wait("@teacherDashboard", { timeout: 10000 }).then((interception) => {
-      expect(interception.request.url).to.include("/api/teacher_dashboard");
+      expect(interception.request.url).to.include("/api/teacher/dashboard");
+      expect(interception.response?.statusCode).to.equal(200);
     });
   });
 
@@ -73,6 +74,7 @@ describe("Dashboard API Smoke Tests", () => {
 
     cy.wait("@studentDashboard", { timeout: 10000 }).then((interception) => {
       expect(interception.request.url).to.include("/api/student/dashboard");
+      expect(interception.response?.statusCode).to.equal(200);
     });
   });
 

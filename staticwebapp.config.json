@@ -43,6 +43,11 @@
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student/{path}"
     },
     {
+      "route": "/api/teacher/*",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/teacher/{path}"
+    },
+    {
       "route": "/*",
       "serve": "/index.html",
       "statusCode": 200
