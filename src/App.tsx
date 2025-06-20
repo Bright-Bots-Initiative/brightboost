@@ -39,6 +39,7 @@ function App() {
               <Route path="/teacher/signup" element={<TeacherSignup />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
+              <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
               
               {/* Protected routes */}
               <Route 

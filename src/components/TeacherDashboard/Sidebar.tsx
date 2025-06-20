@@ -2,7 +2,7 @@ import React from 'react';
 import { SidebarProps } from './types';
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
-  const navItems = ["Lessons", "Students", "Settings"];
+  const navItems = ["Dashboard", "Roster", "Settings"];
   return (
     <div className="w-64 h-screen bg-gray-800 text-white p-6 space-y-4 fixed top-0 left-0 shadow-lg">
       <h2 className="text-2xl font-semibold mb-6 text-center">Teacher Admin</h2>

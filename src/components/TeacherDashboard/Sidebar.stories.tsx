@@ -15,14 +15,14 @@ type Story = StoryObj<typeof Sidebar>;
 
 export const Default: Story = {
   args: {
-    activeView: 'Lessons',
+    activeView: 'Dashboard',
     setActiveView: (view: string) => console.log(`Active view changed to: ${view}`),
   },
 };
 
 export const StudentsActive: Story = {
   args: {
-    activeView: 'Students',
+    activeView: 'Roster',
     setActiveView: (view: string) => console.log(`Active view changed to: ${view}`),
   },
 };

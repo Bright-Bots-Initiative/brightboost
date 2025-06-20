@@ -8,9 +8,12 @@ import Sidebar from '../components/TeacherDashboard/Sidebar';
 import MainContent from '../components/TeacherDashboard/MainContent';
 import { Lesson } from '../components/TeacherDashboard/types';
 import TeacherNavbar from '../components/TeacherDashboard/TeacherNavbar';
+import StudentRoster from '../components/TeacherDashboard/StudentRoster';
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const defaultUser = { name: "Default Teacher", email: "default@brightboost.ai" };
+  const effectiveUser = user ?? defaultUser;
   const navigate = useNavigate();
   const api = useApi();
 
@@ -104,7 +107,7 @@ const TeacherDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <TeacherNavbar userName={user?.name || 'Teacher'} onLogout={handleLogout} />
+        <TeacherNavbar userName={effectiveUser?.name || 'Teacher'} onLogout={handleLogout} />
 
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
@@ -133,15 +136,22 @@ const TeacherDashboard: React.FC = () => {
             <p className="text-sm text-gray-600 mt-2">Teachers will appear here once they're registered in the system.</p>
           </div>
         )}
-        {!isLoading && !error && lessonsData.length > 0 && (
-          <MainContent
-            activeView={activeView}
-            lessonsData={lessonsData}
-            setLessonsData={setLessonsData}
-            onAddLesson={handleAddLesson}
-            onEditLesson={handleEditLesson}
-            onDeleteLesson={handleDeleteLesson}
-          />
+        {!isLoading && !error && (
+          <div className="flex-grow p-6 ml-64">
+            {activeView === 'Dashboard' && lessonsData.length > 0 && (
+            <MainContent
+              activeView={activeView}
+              lessonsData={lessonsData}
+              setLessonsData={setLessonsData}
+              onAddLesson={handleAddLesson}
+              onEditLesson={handleEditLesson}
+              onDeleteLesson={handleDeleteLesson}
+            />
+            )}
+            {activeView === 'Roster' && (
+              <StudentRoster />
+            )}
+          </div>
         )}
       </div>
     </GameBackground>
