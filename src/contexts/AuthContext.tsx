@@ -1,5 +1,5 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface User {
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, token, navigate, isLoading, shouldRedirect]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     // Remove token and user data from localStorage
     localStorage.removeItem("brightboost_token");
     localStorage.removeItem("user");
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Redirect to home page
     navigate("/");
-  };
+  }, [navigate]);
 
   return (
     <AuthContext.Provider
