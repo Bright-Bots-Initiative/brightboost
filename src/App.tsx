@@ -2,6 +2,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Suspense, lazy } from "react";
+import { Toaster } from "@/components/ui/toaster";
+
 
 // Import home page eagerly for fast initial render
 import Index from "./pages/Index";
@@ -61,6 +63,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          <Toaster />
           <footer
             style={{
               textAlign: "center",
