@@ -257,16 +257,6 @@ export const useApi = () => {
           !error.message.includes("Authentication")
         ) {
           console.log(`Retrying request... (${retries} attempts left)`);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          return authFetch(endpoint, options, retries - 1);
-        }
-
-        if (
-          retries > 0 &&
-          error instanceof Error &&
-          !error.message.includes("Authentication")
-        ) {
-          console.log(`Retrying request... (${retries} attempts left)`);
           toast({
             title: "Network issue",
             description: `Retrying request... (${retries} attempt${retries > 1 ? "s" : ""} left)`,
