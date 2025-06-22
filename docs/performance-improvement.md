@@ -30,16 +30,16 @@ Implemented code splitting with React.lazy and Suspense for route-based componen
 
 ```jsx
 // Before
-import TeacherLogin from './pages/TeacherLogin';
-import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherLogin from "./pages/TeacherLogin";
+import TeacherDashboard from "./pages/TeacherDashboard";
 // ... more imports
 
 // After
-import { Suspense, lazy } from 'react';
-import Index from './pages/Index'; // Keep home page eagerly loaded
+import { Suspense, lazy } from "react";
+import Index from "./pages/Index"; // Keep home page eagerly loaded
 
-const TeacherLogin = lazy(() => import('./pages/TeacherLogin'));
-const TeacherDashboard = lazy(() => import('./pages/TeacherDashboard'));
+const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 // ... more lazy imports
 ```
 
@@ -47,9 +47,7 @@ Added Suspense fallback for better user experience:
 
 ```jsx
 <Suspense fallback={<LoadingSpinner />}>
-  <Routes>
-    {/* Routes configuration */}
-  </Routes>
+  <Routes>{/* Routes configuration */}</Routes>
 </Suspense>
 ```
 
@@ -58,9 +56,9 @@ Added Suspense fallback for better user experience:
 Added preload links for critical assets in index.html:
 
 ```html
-<link rel="preload" href="/assets/index-urbm42Zj.js" as="script">
-<link rel="preload" href="/assets/index-dsmuLRBu.css" as="style">
-<link rel="preconnect" href="https://bb-dev-func.azurewebsites.net">
+<link rel="preload" href="/assets/index-urbm42Zj.js" as="script" />
+<link rel="preload" href="/assets/index-dsmuLRBu.css" as="style" />
+<link rel="preconnect" href="https://bb-dev-func.azurewebsites.net" />
 ```
 
 ### 3. Font Display Optimization
@@ -69,8 +67,10 @@ Added font-display: swap to prevent font loading from blocking rendering:
 
 ```css
 @font-face {
-  font-family: 'Inter';
-  src: local('Inter'), url('/fonts/Inter.woff2') format('woff2');
+  font-family: "Inter";
+  src:
+    local("Inter"),
+    url("/fonts/Inter.woff2") format("woff2");
   font-weight: 400 700;
   font-display: swap;
 }
@@ -108,15 +108,15 @@ const LoadingSpinner: React.FC = () => {
 
 ### Detailed Metrics Improvement
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| First Contentful Paint | 1.8s | 0.9s | 50% faster |
-| Largest Contentful Paint | 2.3s | 1.1s | 52% faster |
-| Time to Interactive | 2.5s | 1.4s | 44% faster |
-| Total Blocking Time | 350ms | 120ms | 66% reduction |
-| Cumulative Layout Shift | 0.05 | 0.02 | 60% reduction |
-| Initial JS Bundle Size | 350.02 KB | 120.15 KB | 65.7% reduction |
-| Number of Requests | 15 | 12 | 20% reduction |
+| Metric                   | Before    | After     | Improvement     |
+| ------------------------ | --------- | --------- | --------------- |
+| First Contentful Paint   | 1.8s      | 0.9s      | 50% faster      |
+| Largest Contentful Paint | 2.3s      | 1.1s      | 52% faster      |
+| Time to Interactive      | 2.5s      | 1.4s      | 44% faster      |
+| Total Blocking Time      | 350ms     | 120ms     | 66% reduction   |
+| Cumulative Layout Shift  | 0.05      | 0.02      | 60% reduction   |
+| Initial JS Bundle Size   | 350.02 KB | 120.15 KB | 65.7% reduction |
+| Number of Requests       | 15        | 12        | 20% reduction   |
 
 ## Conclusion
 

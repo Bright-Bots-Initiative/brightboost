@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 interface CustomMatchers<R = unknown> {
   toBeInTheDocument: () => R;
@@ -22,7 +22,7 @@ interface CustomMatchers<R = unknown> {
   toHaveValue: (value?: string | string[] | number) => R;
 }
 
-declare module 'vitest' {
+declare module "vitest" {
   interface Assertion<T = unknown> extends CustomMatchers<T> {
     toBeDefined(): T;
   }

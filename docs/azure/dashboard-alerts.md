@@ -14,31 +14,35 @@ This document outlines how to set up and manage Azure Dashboard and Alerts for m
 ### Required Metrics to Pin
 
 1. **Server Requests**
+
    - Select the `bb-dev-insights` resource
    - Choose metric: `Server requests (requests/count)`
    - Time range: Last 24 hours
    - Chart type: Line chart
 
 2. **Failed Requests**
+
    - Select the `bb-dev-insights` resource
    - Choose metric: `Failed requests (requests/failed)`
    - Time range: Last 24 hours
    - Chart type: Line chart
 
 3. **Server Response Time**
+
    - Select the `bb-dev-insights` resource
    - Choose metric: `Server response time (requests/duration)`
    - Time range: Last 24 hours
    - Chart type: Line chart
 
 4. **Exceptions**
+
    - Select the `bb-dev-insights` resource
    - Choose metric: `Server exceptions (exceptions/server)`
    - Time range: Last 24 hours
    - Chart type: Line chart
 
-7. Arrange the tiles as desired
-8. Click **Save** to save the dashboard
+5. Arrange the tiles as desired
+6. Click **Save** to save the dashboard
 
 ## Sharing the Dashboard
 

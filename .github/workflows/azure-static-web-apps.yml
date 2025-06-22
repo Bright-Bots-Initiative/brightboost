@@ -1,6 +1,7 @@
 name: BrightBoost – Production SWA (Canonical)
 # This is the single canonical production deployment workflow for BrightBoost.
 # All production deployments should use this workflow only.
+# Updated to fix Azure SWA placeholder page issue
 on:
   push:
     branches:
@@ -31,12 +32,11 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_BAY_0BFACC110 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          deployment_environment: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+          deployment_environment: "production"
           skip_api_build: true
           app_location: "/"
           api_location: ""
           output_location: "dist"
-
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
