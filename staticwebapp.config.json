@@ -60,7 +60,8 @@
       "/css/*",
       "/js/*",
       "/*.ico",
-      "/*.json"
+      "/*.json",
+      "/assets/*"
     ]
   },
   "globalHeaders": {
