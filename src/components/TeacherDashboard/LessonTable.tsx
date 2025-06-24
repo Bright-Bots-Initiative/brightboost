@@ -9,6 +9,7 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
+  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -121,6 +122,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
 
 const LessonsTable: React.FC<LessonsTableProps> = ({
   lessons,
+  setLessons,
   onEditLesson,
   onDuplicateLesson,
   onDeleteLesson,
@@ -135,9 +137,15 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      console.log(
-        "Drag and drop reordering not implemented - would need setLessons prop",
-      );
+      const oldIndex = lessons.findIndex((lesson) => lesson.id === active.id);
+      const newIndex = lessons.findIndex((lesson) => lesson.id === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOrderLessons = arrayMove(lessons, oldIndex, newIndex);
+        setLessons(newOrderLessons);
+        console.log("New lesson order (IDs):", newOrderLessons.map(l => l.id));
+        console.log("Full new lesson order:", newOrderLessons);
+      }
     }
   }
 

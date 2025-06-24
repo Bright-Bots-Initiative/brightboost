@@ -21,6 +21,7 @@ export interface SortableLessonRowProps {
 
 export interface LessonsTableProps {
   lessons: Lesson[];
+  setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
   onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
   onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
