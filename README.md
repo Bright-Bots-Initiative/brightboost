@@ -8,7 +8,7 @@ BrightBoost is an interactive learning platform designed to help teachers create
 - **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
 - **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
 - **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-- **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
+- **Persistent Data Storage:** User and lesson data is stored persistently using Aurora PostgreSQL (AWS RDS).
 - **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
 - **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
@@ -42,6 +42,8 @@ This project is built with a modern web technology stack:
   - Aurora PostgreSQL (AWS RDS)
   - JSON Web Tokens (JWT) for authentication
   - `bcryptjs` for password hashing
+
+**Architecture:** Frontend: Azure Static Web Apps | Backend: AWS Lambda + API Gateway | Database: Aurora PostgreSQL (RDS)
 - **Testing:**
   - Vitest (for unit/integration tests)
   - Cypress (for End-to-End tests)

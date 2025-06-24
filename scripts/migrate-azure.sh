@@ -7,7 +7,7 @@ if [ -z "$POSTGRES_URL" ]; then
   exit 1
 fi
 
-echo "Running Prisma migrations on Azure PostgreSQL..."
+echo "Running Prisma migrations on Aurora PostgreSQL (AWS RDS)..."
 npx prisma migrate deploy
 
 if [ $? -eq 0 ]; then
