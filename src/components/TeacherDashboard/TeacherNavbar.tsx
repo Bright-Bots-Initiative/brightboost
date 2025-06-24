@@ -1,13 +1,16 @@
 // components/TeacherDashboard/TeacherNavbar.tsx
-import React from 'react';
-import BrightBoostRobot from '../BrightBoostRobot';
+import React from "react";
+import BrightBoostRobot from "../BrightBoostRobot";
 
 interface TeacherNavbarProps {
   userName: string;
   onLogout: () => void;
 }
 
-const TeacherNavbar: React.FC<TeacherNavbarProps> = ({ userName, onLogout }) => (
+const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
+  userName,
+  onLogout,
+}) => (
   <nav className="bg-brightboost-navy text-white p-4 shadow-md">
     <div className="container mx-auto flex justify-between items-center">
       <div className="flex items-center gap-3">

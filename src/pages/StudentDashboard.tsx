@@ -19,7 +19,7 @@ interface Assignment {
   id: string;
   title: string;
   dueDate: string;
-  status: 'pending' | 'completed';
+  status: "pending" | "completed";
 }
 
 interface StudentDashboardData {
@@ -32,68 +32,69 @@ const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
-  
-  const [dashboardData, setDashboardData] = useState<StudentDashboardData | null>(null);
+
+  const [dashboardData, setDashboardData] =
+    useState<StudentDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
-  
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       setShowStillLoading(false);
-      
+
       const timeoutId = setTimeout(() => {
         setShowStillLoading(true);
       }, 10000);
-      
-      const data = await api.get('/api/student/dashboard');
+
+      const data = await api.get("/api/student/dashboard");
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
-      if (err.message === 'Session expired') {
+      if (err.message === "Session expired") {
         logout();
-        navigate('/student/login');
+        navigate("/student/login");
         return;
       }
-      setError(err.message || 'Failed to load dashboard data');
-      console.error('Dashboard data fetch error:', err);
+      setError(err.message || "Failed to load dashboard data");
+      console.error("Dashboard data fetch error:", err);
     } finally {
       setIsLoading(false);
       setShowStillLoading(false);
     }
   }, [api, logout, navigate]);
-  
+
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
   const stemActivities = [
     {
-      title: 'STEM 1',
-      icon: '/icons/math.png',
-      color: 'bg-blue-100 hover:bg-blue-200',
-      path: '/activities/math'
+      title: "STEM 1",
+      icon: "/icons/math.png",
+      color: "bg-blue-100 hover:bg-blue-200",
+      path: "/activities/math",
     },
     {
-      title: 'Science Lab',
-      icon: '/icons/science.png',
-      color: 'bg-green-100 hover:bg-green-200',
-      path: '/activities/science'
+      title: "Science Lab",
+      icon: "/icons/science.png",
+      color: "bg-green-100 hover:bg-green-200",
+      path: "/activities/science",
     },
     {
-      title: 'Coding Fun',
-      icon: '/icons/coding.png',
-      color: 'bg-purple-100 hover:bg-purple-200',
-      path: '/activities/coding'
-    }
+      title: "Coding Fun",
+      icon: "/icons/coding.png",
+      color: "bg-purple-100 hover:bg-purple-200",
+      path: "/activities/coding",
+    },
   ];
 
   const leaderboardEntries = [
-    { rank: 1, name: 'Alex', points: 1250, avatar: '/avatars/alex.png' },
-    { rank: 2, name: 'Sarah', points: 1180, avatar: '/avatars/sarah.png' },
-    { rank: 3, name: 'Mike', points: 1050, avatar: '/avatars/mike.png' },
+    { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
+    { rank: 2, name: "Sarah", points: 1180, avatar: "/avatars/sarah.png" },
+    { rank: 3, name: "Mike", points: 1050, avatar: "/avatars/mike.png" },
   ];
 
   const handleLogout = () => {
@@ -143,17 +144,17 @@ const StudentDashboard = () => {
               <BrightBoostRobot className="w-16 h-16" />
               <div>
                 <h1 className="text-3xl font-bold text-brightboost-navy">
-                  Hello, {user?.name || 'Student'}!
+                  Hello, {user?.name || "Student"}!
                 </h1>
-                <p className="text-brightboost-blue">Ready to learn something new today?</p>
+                <p className="text-brightboost-blue">
+                  Ready to learn something new today?
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">
-                  Level Explorer
-                </span>
+                <span className="text-sm font-bold">Level Explorer</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                   {user?.name || "Student"}
                 </span>
@@ -166,64 +167,89 @@ const StudentDashboard = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <StemModuleCard 
-              title="STEM 1" 
-              subtitle="Let's play with us!" 
+            <StemModuleCard
+              title="STEM 1"
+              subtitle="Let's play with us!"
               activities={stemActivities}
             />
-            
-            <WordGameCard 
-              title="Letter Game" 
-              letters={['A', 'B', 'E', 'L', 'T']} 
+
+            <WordGameCard
+              title="Letter Game"
+              letters={["A", "B", "E", "L", "T"]}
               word="TABLE"
             />
-            
-            <LeaderboardCard
-              title="Leaderboard"
-              entries={leaderboardEntries}
-            />
+
+            <LeaderboardCard title="Leaderboard" entries={leaderboardEntries} />
           </div>
-          
-          {dashboardData && (dashboardData.courses?.length || dashboardData.assignments?.length) && (
-            <div className="mt-8">
-              <h3 className="text-xl font-bold text-brightboost-navy mb-4">Your Courses & Assignments</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-md">
-                  <h4 className="font-bold text-brightboost-navy mb-3">Enrolled Courses</h4>
-                  {dashboardData.courses && dashboardData.courses.map((course) => (
-                    <div key={course.id} className="mb-2 p-2 bg-brightboost-lightblue/20 rounded" data-cy="course-item">
-                      <div className="font-medium">{course.name}</div>
-                      <div className="text-sm text-gray-600">Grade: {course.grade} | Teacher: {course.teacher}</div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="bg-white rounded-lg p-4 shadow-md">
-                  <h4 className="font-bold text-brightboost-navy mb-3">Recent Assignments</h4>
-                  {dashboardData.assignments && dashboardData.assignments.map((assignment) => (
-                    <div key={assignment.id} className="mb-2 p-2 bg-brightboost-lightblue/20 rounded" data-cy="assignment-item">
-                      <div className="font-medium">{assignment.title}</div>
-                      <div className="text-sm text-gray-600">
-                        Due: {assignment.dueDate} | 
-                        <span className={`ml-1 ${assignment.status === 'completed' ? 'text-green-600' : 'text-orange-600'}`}>
-                          {assignment.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+
+          {dashboardData &&
+            (dashboardData.courses?.length ||
+              dashboardData.assignments?.length) && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-brightboost-navy mb-4">
+                  Your Courses & Assignments
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg p-4 shadow-md">
+                    <h4 className="font-bold text-brightboost-navy mb-3">
+                      Enrolled Courses
+                    </h4>
+                    {dashboardData.courses &&
+                      dashboardData.courses.map((course) => (
+                        <div
+                          key={course.id}
+                          className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
+                          data-cy="course-item"
+                        >
+                          <div className="font-medium">{course.name}</div>
+                          <div className="text-sm text-gray-600">
+                            Grade: {course.grade} | Teacher: {course.teacher}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 shadow-md">
+                    <h4 className="font-bold text-brightboost-navy mb-3">
+                      Recent Assignments
+                    </h4>
+                    {dashboardData.assignments &&
+                      dashboardData.assignments.map((assignment) => (
+                        <div
+                          key={assignment.id}
+                          className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
+                          data-cy="assignment-item"
+                        >
+                          <div className="font-medium">{assignment.title}</div>
+                          <div className="text-sm text-gray-600">
+                            Due: {assignment.dueDate} |
+                            <span
+                              className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
+                            >
+                              {assignment.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          
-          {(!dashboardData || (!dashboardData.courses?.length && !dashboardData.assignments?.length)) && !isLoading && !error && (
-            <div className="mt-8 text-center">
-              <p className="text-brightboost-navy">Let's start your first quest!</p>
-            </div>
-          )}
-          
+            )}
+
+          {(!dashboardData ||
+            (!dashboardData.courses?.length &&
+              !dashboardData.assignments?.length)) &&
+            !isLoading &&
+            !error && (
+              <div className="mt-8 text-center">
+                <p className="text-brightboost-navy">
+                  Let's start your first quest!
+                </p>
+              </div>
+            )}
+
           <div className="mt-8 flex justify-center">
             <div className="flex space-x-4">
               <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">

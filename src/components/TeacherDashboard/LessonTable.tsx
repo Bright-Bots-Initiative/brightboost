@@ -139,11 +139,14 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
     if (over && active.id !== over.id) {
       const oldIndex = lessons.findIndex((lesson) => lesson.id === active.id);
       const newIndex = lessons.findIndex((lesson) => lesson.id === over.id);
-      
+
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrderLessons = arrayMove(lessons, oldIndex, newIndex);
         setLessons(newOrderLessons);
-        console.log("New lesson order (IDs):", newOrderLessons.map(l => l.id));
+        console.log(
+          "New lesson order (IDs):",
+          newOrderLessons.map((l) => l.id),
+        );
         console.log("Full new lesson order:", newOrderLessons);
       }
     }

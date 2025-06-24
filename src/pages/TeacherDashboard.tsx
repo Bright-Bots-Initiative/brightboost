@@ -50,7 +50,7 @@ const TeacherDashboard: React.FC = () => {
             category: string;
             date: string;
             status: string;
-          }) => lesson
+          }) => lesson,
         );
         setLessonsData(formattedLessons);
       } else {
@@ -137,7 +137,10 @@ const TeacherDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <TeacherNavbar userName={user?.name || "Teacher"} onLogout={handleLogout} />
+        <TeacherNavbar
+          userName={user?.name || "Teacher"}
+          onLogout={handleLogout}
+        />
 
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
