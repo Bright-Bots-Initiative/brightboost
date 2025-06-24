@@ -22,7 +22,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get("/api/teacher_dashboard");
+      const response = await api.get("/api/teacher/dashboard");
       if (Array.isArray(response)) {
         const formattedLessons = response.map(
           (teacher: {
@@ -38,6 +38,18 @@ const TeacherDashboard: React.FC = () => {
             date: teacher.createdAt,
             status: "active",
           }),
+        );
+        setLessonsData(formattedLessons);
+      } else if (response.lessons) {
+        const formattedLessons = response.lessons.map(
+          (lesson: {
+            id: string;
+            title: string;
+            content: string;
+            category: string;
+            date: string;
+            status: string;
+          }) => lesson
         );
         setLessonsData(formattedLessons);
       } else {

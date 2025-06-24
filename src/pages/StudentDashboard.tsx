@@ -1,153 +1,105 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "../services/api";
 import GameBackground from "../components/GameBackground";
-import RobotCharacter from "../components/RobotCharacter";
+import StemModuleCard from "../components/StemModuleCard";
+import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { Button } from "@/components/ui/button";
 
-// Define types for fetched data (mirroring backend structure)
-interface Lesson {
-  id: string | number;
+interface Course {
+  id: string;
+  name: string;
+  grade: string;
+  teacher: string;
+}
+
+interface Assignment {
+  id: string;
   title: string;
-  content?: string;
-  category?: string;
-  date?: string;
-  status?: string;
-  // Student-specific progress
-  completed?: boolean;
-  grade?: number | null;
+  dueDate: string;
+  status: 'pending' | 'completed';
 }
 
-interface StudentActivity {
-  id: string | number;
-  studentId: string | number;
-  lessonId: string | number;
-  completed: boolean;
-  grade: number | null;
-  // Potentially enrich with lesson title for display
-  lessonTitle?: string;
+interface StudentDashboardData {
+  message: string;
+  courses: Course[];
+  assignments: Assignment[];
 }
 
-const StudentDashboard: React.FC = () => {
+const StudentDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
-
-  const [enrolledLessons, setEnrolledLessons] = useState<Lesson[]>([]);
-  const [studentActivities, setStudentActivities] = useState<StudentActivity[]>(
-    [],
-  );
-  const [studentName] = useState<string>(user?.name || "Student");
+  
+  const [dashboardData, setDashboardData] = useState<StudentDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+  const [showStillLoading, setShowStillLoading] = useState(false);
+  
+  const fetchDashboardData = useCallback(async () => {
+    try {
       setIsLoading(true);
       setError(null);
-      try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), 5000)
-        );
-        
-        const dataPromise = api.get("/api/student_dashboard");
-        const data = await Promise.race([dataPromise, timeoutPromise]);
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const formattedLessons = data.map(
-            (student: {
-              id: string;
-              name: string;
-              email: string;
-              xp?: number;
-              level?: number;
-              streak?: number;
-            }) => ({
-              id: String(student.id),
-              title: `Student: ${student.name}`,
-              content: `Level: ${student.level || "Explorer"}, XP: ${student.xp || 0}`,
-              category: "Student Profile",
-              completed: false,
-              grade: null,
-            }),
-          );
-          setEnrolledLessons(formattedLessons);
-          setStudentActivities([]);
-        } else {
-          setEnrolledLessons([]);
-          setStudentActivities([]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch student dashboard data:", err);
-        setError(
-          err instanceof Error && err.message === 'Request timeout'
-            ? "Dashboard is taking too long to load. Please try again."
-            : err instanceof Error
-            ? err.message
-            : "Failed to load dashboard. Please try again.",
-        );
-      } finally {
-        setIsLoading(false);
+      setShowStillLoading(false);
+      
+      const timeoutId = setTimeout(() => {
+        setShowStillLoading(true);
+      }, 10000);
+      
+      const data = await api.get('/api/student/dashboard');
+      clearTimeout(timeoutId);
+      setDashboardData(data);
+    } catch (err: any) {
+      if (err.message === 'Session expired') {
+        logout();
+        navigate('/student/login');
+        return;
       }
-    };
+      setError(err.message || 'Failed to load dashboard data');
+      console.error('Dashboard data fetch error:', err);
+    } finally {
+      setIsLoading(false);
+      setShowStillLoading(false);
+    }
+  }, [api, logout, navigate]);
+  
+  useEffect(() => {
     fetchDashboardData();
-  }, [api, user?.name]);
+  }, [fetchDashboardData]);
 
-  const handleEarnXp = async (amount: number, reason: string) => {
-    try {
-      const response = await api.post("/api/gamification/award-xp", {
-        amount,
-        reason,
-      });
-
-      if (response.success) {
-        console.log(`Earned ${response.xpGained} XP! Total: ${response.xp}`);
-        if (response.leveledUp) {
-          console.log(`Level up! New level: ${response.level}`);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to award XP:", err);
+  const stemActivities = [
+    {
+      title: 'STEM 1',
+      icon: '/icons/math.png',
+      color: 'bg-blue-100 hover:bg-blue-200',
+      path: '/activities/math'
+    },
+    {
+      title: 'Science Lab',
+      icon: '/icons/science.png',
+      color: 'bg-green-100 hover:bg-green-200',
+      path: '/activities/science'
+    },
+    {
+      title: 'Coding Fun',
+      icon: '/icons/coding.png',
+      color: 'bg-purple-100 hover:bg-purple-200',
+      path: '/activities/coding'
     }
-  };
+  ];
 
-  const handleMarkActivityComplete = async (activityId: string | number) => {
-    try {
-      const updatedActivity = await api.post(
-        `/api/student/activities/${activityId}/complete`,
-        {},
-      );
-      setStudentActivities((prevActivities) =>
-        prevActivities.map((activity) =>
-          activity.id === activityId
-            ? { ...activity, ...updatedActivity }
-            : activity,
-        ),
-      );
-
-      handleEarnXp(25, `Completed activity ${activityId}`);
-    } catch (err) {
-      console.error("Failed to mark activity complete:", err);
-      alert("Could not update activity status. Please try again.");
-    }
-  };
+  const leaderboardEntries = [
+    { rank: 1, name: 'Alex', points: 1250, avatar: '/avatars/alex.png' },
+    { rank: 2, name: 'Sarah', points: 1180, avatar: '/avatars/sarah.png' },
+    { rank: 3, name: 'Mike', points: 1050, avatar: '/avatars/mike.png' },
+  ];
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
-
-  // const transformedActivitiesForStemCard: StemActivityDisplayProps[] = studentActivities.map(activity => ({
-  //   title: activity.lessonTitle || `Activity ${activity.id}`,
-  //   icon: "/placeholder.svg",
-  //   color: activity.completed ? "bg-green-200" : "bg-blue-100",
-  //   path: `/lessons/${activity.lessonId}`,
-  //   id: String(activity.id),
-  //   completed: activity.completed,
-  // }));
 
   if (isLoading) {
     return (
@@ -156,6 +108,9 @@ const StudentDashboard: React.FC = () => {
           <div data-testid="loading-spinner" className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
             <p className="text-brightboost-navy">Loading your dashboard...</p>
+            {showStillLoading && (
+              <p className="text-brightboost-navy/70 mt-2">Still loading...</p>
+            )}
           </div>
         </div>
       </GameBackground>
@@ -169,7 +124,7 @@ const StudentDashboard: React.FC = () => {
           <div data-testid="dashboard-error" className="text-center">
             <p className="text-red-600 mb-4">Oops! {error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={fetchDashboardData}
               className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
             >
               Try Again
@@ -179,194 +134,107 @@ const StudentDashboard: React.FC = () => {
       </GameBackground>
     );
   }
-
   return (
     <GameBackground>
-      <div className="min-h-screen flex flex-col relative z-10">
-        <nav
-          data-testid="student-dashboard-nav"
-          className="bg-brightboost-lightblue text-brightboost-navy p-4 shadow-md"
-        >
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold">Bright Boost</h1>
-              <BrightBoostRobot size="sm" />
+      <div className="min-h-screen p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center space-x-4">
+              <BrightBoostRobot className="w-16 h-16" />
+              <div>
+                <h1 className="text-3xl font-bold text-brightboost-navy">
+                  Hello, {user?.name || 'Student'}!
+                </h1>
+                <p className="text-brightboost-blue">Ready to learn something new today?</p>
+              </div>
             </div>
+            
             <div className="flex items-center space-x-4">
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
                 <span className="text-sm font-bold">
-                  Level {user?.level || "Explorer"}
+                  Level Explorer
                 </span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                  {studentName}
+                  {user?.name || "Student"}
                 </span>
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors text-white"
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 Logout
               </button>
             </div>
           </div>
-        </nav>
-
-        <main className="container mx-auto p-4 flex-grow">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-brightboost-navy">
-                Hello, {studentName}!
-              </h2>
-              <p className="text-brightboost-navy">Let's learn and have fun!</p>
-              {enrolledLessons.length > 0 && (
-                <p className="text-sm text-brightboost-navy mt-2">
-                  You have {enrolledLessons.length} lesson
-                  {enrolledLessons.length !== 1 ? "s" : ""} available
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs">
-                XP: {user?.xp || 0}/200
-              </div>
-              <div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">
-                Streak: {user?.streak || 0}
-              </div>
-            </div>
-          </div>
-
-          {/* Display Enrolled Lessons */}
-          <section className="mb-8">
-            <h3 className="text-xl font-semibold text-brightboost-navy mb-4">
-              Your Lessons
-            </h3>
-            {enrolledLessons.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {enrolledLessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    className={`p-4 rounded-lg shadow ${lesson.completed ? "bg-green-100" : "bg-white"}`}
-                  >
-                    <h4 className="font-bold text-lg">{lesson.title}</h4>
-                    <p className="text-sm text-gray-600">{lesson.category}</p>
-                    <p className="mt-2 text-xs">
-                      {lesson.content?.substring(0, 100)}...
-                    </p>
-                    {lesson.completed && (
-                      <span className="text-green-600 font-semibold block mt-2">
-                        Completed! Grade: {lesson.grade || "N/A"}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <BrightBoostRobot size="md" />
-                <p className="text-brightboost-navy mt-4 text-xl font-semibold">
-                  Let's start your first quest!
-                </p>
-                <p className="text-sm text-gray-600 mt-2">
-                  Your learning adventure begins here. Complete activities to earn XP and unlock new challenges!
-                </p>
-                <button 
-                  className="mt-4 bg-brightboost-blue text-white px-6 py-2 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
-                  onClick={() => navigate('/student/modules')}
-                >
-                  Explore Activities
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* Display Student Activities (mapped for StemModuleCard or custom display) */}
-          <section>
-            <h3 className="text-xl font-semibold text-brightboost-navy mb-4">
-              Your Activities
-            </h3>
-            {studentActivities.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Using a simplified card for activities for now */}
-                {studentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className={`p-4 rounded-lg shadow ${activity.completed ? "bg-green-100" : "bg-white"}`}
-                  >
-                    <h4 className="font-bold text-lg">
-                      {activity.lessonTitle ||
-                        `Activity for Lesson ${activity.lessonId}`}
-                    </h4>
-                    {activity.completed ? (
-                      <p className="text-green-600 font-semibold">Completed!</p>
-                    ) : (
-                      <Button
-                        className="mt-2 w-full text-sm"
-                        onClick={() => handleMarkActivityComplete(activity.id)}
-                      >
-                        Mark as Complete
-                      </Button>
-                    )}
-                    {activity.grade && (
-                      <p className="text-sm">Grade: {activity.grade}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <BrightBoostRobot size="md" />
-                <p className="text-brightboost-navy mt-4 text-xl font-semibold">
-                  Let's start your first quest!
-                </p>
-                <p className="text-sm text-gray-600 mt-2">
-                  Activities will appear here when assigned by your teacher. Start exploring to begin your learning journey!
-                </p>
-                <button 
-                  className="mt-4 bg-brightboost-blue text-white px-6 py-2 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
-                  onClick={() => navigate('/student/modules')}
-                >
-                  Explore Activities
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* Display user badges if they exist */}
-          {user?.badges && user.badges.length > 0 && (
-            <section className="mt-8">
-              <h3 className="text-xl font-semibold text-brightboost-navy mb-4">
-                Your Badges
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {user.badges.map((badge) => (
-                  <div
-                    key={badge.id}
-                    className="badge bg-brightboost-navy text-white px-3 py-2 rounded-full"
-                  >
-                    {badge.name}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Static WordGameCard - assuming it's a generic game not tied to dynamic data */}
-          <div className="mt-8">
-            <WordGameCard
-              title="Letter Game"
-              letters={["A", "B", "E", "L", "T"]}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StemModuleCard 
+              title="STEM 1" 
+              subtitle="Let's play with us!" 
+              activities={stemActivities}
+            />
+            
+            <WordGameCard 
+              title="Letter Game" 
+              letters={['A', 'B', 'E', 'L', 'T']} 
               word="TABLE"
             />
+            
+            <LeaderboardCard
+              title="Leaderboard"
+              entries={leaderboardEntries}
+            />
           </div>
-
+          
+          {dashboardData && (dashboardData.courses?.length || dashboardData.assignments?.length) && (
+            <div className="mt-8">
+              <h3 className="text-xl font-bold text-brightboost-navy mb-4">Your Courses & Assignments</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg p-4 shadow-md">
+                  <h4 className="font-bold text-brightboost-navy mb-3">Enrolled Courses</h4>
+                  {dashboardData.courses && dashboardData.courses.map((course) => (
+                    <div key={course.id} className="mb-2 p-2 bg-brightboost-lightblue/20 rounded" data-cy="course-item">
+                      <div className="font-medium">{course.name}</div>
+                      <div className="text-sm text-gray-600">Grade: {course.grade} | Teacher: {course.teacher}</div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="bg-white rounded-lg p-4 shadow-md">
+                  <h4 className="font-bold text-brightboost-navy mb-3">Recent Assignments</h4>
+                  {dashboardData.assignments && dashboardData.assignments.map((assignment) => (
+                    <div key={assignment.id} className="mb-2 p-2 bg-brightboost-lightblue/20 rounded" data-cy="assignment-item">
+                      <div className="font-medium">{assignment.title}</div>
+                      <div className="text-sm text-gray-600">
+                        Due: {assignment.dueDate} | 
+                        <span className={`ml-1 ${assignment.status === 'completed' ? 'text-green-600' : 'text-orange-600'}`}>
+                          {assignment.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {(!dashboardData || (!dashboardData.courses?.length && !dashboardData.assignments?.length)) && !isLoading && !error && (
+            <div className="mt-8 text-center">
+              <p className="text-brightboost-navy">Let's start your first quest!</p>
+            </div>
+          )}
+          
           <div className="mt-8 flex justify-center">
             <div className="flex space-x-4">
-              <RobotCharacter type="helper" size="lg" />
-              <RobotCharacter type="friend" size="lg" />
-              <RobotCharacter type="teacher" size="lg" />
+              <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                Start Learning
+              </button>
+              <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                View Progress
+              </button>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </GameBackground>
   );

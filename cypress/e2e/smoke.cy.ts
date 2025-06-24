@@ -1,6 +1,6 @@
 describe("Dashboard API Smoke Tests", () => {
   it("should handle teacher dashboard correctly", () => {
-    cy.intercept("GET", "**/prod/api/teacher_dashboard*").as(
+    cy.intercept("GET", "**/api/teacher/dashboard*").as(
       "teacherDashboard",
     );
 
@@ -20,14 +20,26 @@ describe("Dashboard API Smoke Tests", () => {
     cy.contains("Teacher Admin").should("be.visible");
 
     cy.wait("@teacherDashboard", { timeout: 10000 }).then((interception) => {
-      expect(interception.request.url).to.include("/api/teacher_dashboard");
+      expect(interception.request.url).to.include("/api/teacher/dashboard");
+      expect(interception.response?.statusCode).to.equal(200);
     });
   });
 
   it("should handle student dashboard correctly", () => {
-    cy.intercept("GET", "**/prod/api/student_dashboard*").as(
-      "studentDashboard",
-    );
+    cy.intercept("GET", "**/api/student/dashboard*", {
+      statusCode: 200,
+      body: {
+        message: "Welcome to your dashboard!",
+        courses: [
+          { id: "1", name: "Math 101", grade: "A", teacher: "Ms. Johnson" },
+          { id: "2", name: "Science 202", grade: "B+", teacher: "Mr. Smith" }
+        ],
+        assignments: [
+          { id: "1", title: "Math Homework", dueDate: "2024-01-15", status: "pending" },
+          { id: "2", title: "Science Project", dueDate: "2024-01-10", status: "completed" }
+        ]
+      }
+    }).as("studentDashboard");
 
     cy.visit("/student/login");
     cy.get('input[type="email"]').type("student@example.com");
@@ -41,10 +53,28 @@ describe("Dashboard API Smoke Tests", () => {
       .invoke("getItem", "brightboost_token")
       .should("exist");
 
-    cy.contains("Loading your dashboard...").should("be.visible");
+    cy.get('.animate-spin', { timeout: 5000 }).should('be.visible');
+    
+    cy.wait("@studentDashboard", { timeout: 15000 });
+    
+    cy.contains('Hello,', { timeout: 10000 }).should('be.visible');
+    cy.contains('STEM 1').should('be.visible');
+    cy.contains('Letter Game').should('be.visible');
+    cy.contains('Leaderboard').should('be.visible');
+    
+    cy.get('body').then(($body) => {
+      if ($body.text().includes('Your Courses & Assignments')) {
+        cy.contains('Your Courses & Assignments').should('be.visible');
+        cy.contains('Enrolled Courses').should('be.visible');
+        cy.contains('Recent Assignments').should('be.visible');
+      } else {
+        cy.contains("Let's start your first quest!", { timeout: 5000 }).should('be.visible');
+      }
+    });
 
     cy.wait("@studentDashboard", { timeout: 10000 }).then((interception) => {
-      expect(interception.request.url).to.include("/api/student_dashboard");
+      expect(interception.request.url).to.include("/api/student/dashboard");
+      expect(interception.response?.statusCode).to.equal(200);
     });
   });
 
@@ -69,7 +99,7 @@ describe("Dashboard API Smoke Tests", () => {
         expect(interception.response.body.user).to.have.property('role', 'STUDENT');
       }
     });
-    
+
     cy.url().should('include', '/student');
   });
 

@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
 
 async function testDatabaseConnectivity() {
   const prisma = new PrismaClient({
