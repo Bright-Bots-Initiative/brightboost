@@ -4,7 +4,7 @@ import { useApi } from "../services/api";
 
 const App = () => {
   const [data, setData] = useState(null);
-  const [error, setError] = useState<string | null>(null);  
+  const [error] = useState<string | null>(null);  
   const api = useApi();
   const fetchdata = useCallback(async () => {
     try {
