@@ -128,6 +128,15 @@ export const handler = async (
 
     const dashboardData = {
       message: `Welcome back, ${decoded.name}!`,
+      xp: 150,
+      level: 2,
+      nextLevelXp: 200,
+      currentModule: {
+        title: "Hello World!",
+        status: "In Progress",
+        dueDate: "07-01-2025",
+        lessonId: "lesson_1"
+      },
       courses: [
         {
           id: "course-1",

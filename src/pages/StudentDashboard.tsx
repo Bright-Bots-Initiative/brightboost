@@ -7,7 +7,6 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { studentDashboardMock } from "../mocks/studentDashboardMock";
 import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
 
@@ -60,9 +59,7 @@ const StudentDashboard = () => {
       const timeoutId = setTimeout(() => {
         setShowStillLoading(true);
       }, 10000);
-      //TEMPORARY: USE MOCK WHILE API IS DOWN
-      const data = studentDashboardMock;
-      //const data = await api.get('/api/student/dashboard');
+      const data = await api.get('/api/student/dashboard');
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
