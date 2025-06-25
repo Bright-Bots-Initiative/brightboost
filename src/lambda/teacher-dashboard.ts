@@ -77,7 +77,7 @@ export const handler = async (
   };
 
   console.log(
-    "Student dashboard Lambda function started, event:",
+    "Teacher dashboard Lambda function started, event:",
     JSON.stringify(event, null, 2),
   );
 
@@ -114,7 +114,7 @@ export const handler = async (
       };
     }
 
-    if (decoded.role !== "STUDENT") {
+    if (decoded.role !== "TEACHER") {
       return {
         statusCode: 403,
         headers,
@@ -127,33 +127,51 @@ export const handler = async (
     console.log("Database connection established successfully");
 
     const dashboardData = {
+      ok: true,
       message: `Welcome back, ${decoded.name}!`,
+      teacher: {
+        id: "stub-id",
+        name: "Stub Teacher",
+      },
       courses: [
         {
           id: "course-1",
           name: "Math 101",
           grade: "A",
-          teacher: "Ms. Johnson",
+          teacher: "Stub Teacher",
         },
         {
           id: "course-2",
           name: "Science 202",
           grade: "B+",
-          teacher: "Mr. Smith",
+          teacher: "Stub Teacher",
         },
       ],
-      assignments: [
+      notifications: [],
+      lessons: [
         {
-          id: "assignment-1",
-          title: "Math Homework",
-          dueDate: "2024-01-15",
-          status: "pending",
+          id: "1",
+          title: "Introduction to Algebra",
+          category: "Math",
+          date: "2025-05-01",
+          status: "Published",
+          content: "Algebra lesson content",
         },
         {
-          id: "assignment-2",
-          title: "Science Project",
-          dueDate: "2024-01-10",
-          status: "completed",
+          id: "2",
+          title: "Advanced Geometry",
+          category: "Math",
+          date: "2025-05-10",
+          status: "Draft",
+          content: "Geometry lesson content",
+        },
+        {
+          id: "3",
+          title: "Chemistry Basics",
+          category: "Science",
+          date: "2025-05-15",
+          status: "Review",
+          content: "Chemistry lesson content",
         },
       ],
     };
@@ -164,7 +182,7 @@ export const handler = async (
       body: JSON.stringify(dashboardData),
     };
   } catch (error) {
-    console.error("Student dashboard error:", error);
+    console.error("Teacher dashboard error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {

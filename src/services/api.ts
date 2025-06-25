@@ -1,11 +1,16 @@
 // src/services/api.ts
+import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
-const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_AWS_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const API_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_AWS_API_URL ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:3000";
 
 if (import.meta.env.PROD && !import.meta.env.VITE_AWS_API_URL) {
-  throw new Error('VITE_AWS_API_URL is required in production environment');
+  throw new Error("VITE_AWS_API_URL is required in production environment");
 }
 
 // Rate limiting for API calls
@@ -216,59 +221,83 @@ export const signupStudent = async (
 export const useApi = () => {
   const { token } = useAuth();
 
-  const authFetch = async (endpoint: string, options: RequestInit = {}, retries = 2) => {
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
+  const authFetch = useCallback(
+    async (endpoint: string, options: RequestInit = {}, retries = 2) => {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      };
 
-    try {
-      const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
+      try {
+        const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers,
+        });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Session expired');
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Session expired");
+          }
+          if (response.status === 403) {
+            throw new Error("Dashboard unavailable, please retry.");
+          }
+          const errorData = await response.json();
+          throw new Error(errorData.error || "API request failed");
         }
-        if (response.status === 403) {
-          throw new Error('Dashboard unavailable, please retry.');
+
+        return await response.json();
+      } catch (error) {
+        console.error("API error:", error);
+
+        if (
+          retries > 0 &&
+          error instanceof Error &&
+          !error.message.includes("Authentication")
+        ) {
+          console.log(`Retrying request... (${retries} attempts left)`);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return authFetch(endpoint, options, retries - 1);
         }
-        const errorData = await response.json();
-        throw new Error(errorData.error || "API request failed");
-      }
 
-      return await response.json();
-    } catch (error) {
-      console.error("API error:", error);
-      
-      if (retries > 0 && error instanceof Error && !error.message.includes('Authentication')) {
-        console.log(`Retrying request... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return authFetch(endpoint, options, retries - 1);
+        throw error;
       }
-      
-      throw error;
-    }
-  };
+    },
+    [token],
+  );
 
-  return {
-    get: (endpoint: string) => authFetch(endpoint, {}, 2),
-    post: (endpoint: string, data: Record<string, unknown>) =>
-      authFetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify(data),
-      }, 2),
-    put: (endpoint: string, data: Record<string, unknown>) =>
-      authFetch(endpoint, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }, 2),
-    delete: (endpoint: string) =>
-      authFetch(endpoint, {
-        method: "DELETE",
-      }, 2),
-  };
+  const apiMethods = useMemo(
+    () => ({
+      get: (endpoint: string) => authFetch(endpoint, {}, 2),
+      post: (endpoint: string, data: Record<string, unknown>) =>
+        authFetch(
+          endpoint,
+          {
+            method: "POST",
+            body: JSON.stringify(data),
+          },
+          2,
+        ),
+      put: (endpoint: string, data: Record<string, unknown>) =>
+        authFetch(
+          endpoint,
+          {
+            method: "PUT",
+            body: JSON.stringify(data),
+          },
+          2,
+        ),
+      delete: (endpoint: string) =>
+        authFetch(
+          endpoint,
+          {
+            method: "DELETE",
+          },
+          2,
+        ),
+    }),
+    [authFetch],
+  );
+
+  return apiMethods;
 };

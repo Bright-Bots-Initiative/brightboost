@@ -12,6 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 RUN pnpm run build
 
 # Production image, copy all the files and run the app

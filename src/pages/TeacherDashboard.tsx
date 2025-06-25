@@ -7,6 +7,7 @@ import BrightBoostRobot from "../components/BrightBoostRobot";
 import Sidebar from "../components/TeacherDashboard/Sidebar";
 import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
+import TeacherNavbar from "../components/TeacherDashboard/TeacherNavbar";
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -22,7 +23,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get("/api/teacher_dashboard");
+      const response = await api.get("/api/teacher/dashboard");
       if (Array.isArray(response)) {
         const formattedLessons = response.map(
           (teacher: {
@@ -38,6 +39,18 @@ const TeacherDashboard: React.FC = () => {
             date: teacher.createdAt,
             status: "active",
           }),
+        );
+        setLessonsData(formattedLessons);
+      } else if (response.lessons) {
+        const formattedLessons = response.lessons.map(
+          (lesson: {
+            id: string;
+            title: string;
+            content: string;
+            category: string;
+            date: string;
+            status: string;
+          }) => lesson,
         );
         setLessonsData(formattedLessons);
       } else {
@@ -124,24 +137,10 @@ const TeacherDashboard: React.FC = () => {
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <nav className="bg-brightboost-navy text-white p-4 shadow-md">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <BrightBoostRobot size="sm" className="w-10 h-10" />
-              <h1 className="text-xl font-bold">Bright Boost</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="badge-level">Teacher</span>
-              <span>Welcome, {user?.name || "Teacher"}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </nav>
+        <TeacherNavbar
+          userName={user?.name || "Teacher"}
+          onLogout={handleLogout}
+        />
 
         <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
