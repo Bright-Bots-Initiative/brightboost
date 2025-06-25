@@ -37,10 +37,8 @@ function App() {
               <Route path="/signup" element={<SignupSelection />} />
               <Route path="/teacher/login" element={<TeacherLogin />} />
               <Route path="/teacher/signup" element={<TeacherSignup />} />
-              <Route path="/teacher/profile" element={<Profile />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
-              <Route path="/student/profile" element={<Profile />} />
 
               {/* Protected routes */}
               <Route
@@ -56,6 +54,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="STUDENT">
                     <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/teacher/profile"
+                element={
+                  <ProtectedRoute requiredRole="TEACHER">
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/profile"
+                element={
+                  <ProtectedRoute requiredRole="STUDENT">
+                    <Profile />
                   </ProtectedRoute>
                 }
               />
