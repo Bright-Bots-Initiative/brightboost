@@ -24,9 +24,11 @@ The following environment variables and secrets are required for the deployment 
 ### GitHub Secrets (to be added in GitHub repository settings)
 
 #### Azure Static Web Apps
+
 - `AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_BAY_0BFACC110`: Deployment token for Azure SWA
 
 #### AWS Lambda Deployment
+
 - `AWS_ROLE_ARN`: IAM role ARN for OIDC authentication
 - `DATABASE_SECRET_ARN`: AWS Secrets Manager ARN for Aurora credentials
 - `VPC_ID`: VPC ID where Aurora cluster is deployed
@@ -36,9 +38,11 @@ The following environment variables and secrets are required for the deployment 
 ### Environment Variables
 
 #### Frontend (Azure SWA)
+
 - `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
 
 #### Backend (AWS Lambda)
+
 - `DATABASE_SECRET_ARN`: AWS Secrets Manager ARN for Aurora credentials
 - `JWT_SECRET`: Secret key for JWT token signing
 

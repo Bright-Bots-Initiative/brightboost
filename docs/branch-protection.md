@@ -5,6 +5,7 @@
 The main branch should be protected with the following required status checks:
 
 ### GitHub Actions Jobs
+
 - `build-and-test` - Ensures code builds, lints, and tests pass
 - `db-check` - Verifies database connectivity and migrations
 - `review` - Automated PR review bot checks
@@ -18,7 +19,7 @@ To enable branch protection rules for the main branch:
 3. Enable "Require status checks to pass before merging"
 4. Select the following required status checks:
    - `build-and-test`
-   - `db-check` 
+   - `db-check`
    - `review`
 5. Enable "Require branches to be up to date before merging"
 6. Enable "Restrict pushes that create files larger than 100 MB"
@@ -39,12 +40,12 @@ gh api repos/:owner/:repo/branches/main/protection \
 Consider adding the following analytics integrations:
 
 - **Deployment tracking**: Monitor successful deployments to Azure
-- **Test coverage**: Track test coverage trends over time  
+- **Test coverage**: Track test coverage trends over time
 - **Performance monitoring**: Monitor API response times and error rates
 - **Security scanning**: Automated dependency vulnerability scanning
 
 ## Notes
 
-- Preview builds (pull requests) skip API deployment by design
+- Pull request builds use the same deployment configuration as production
 - Database connectivity tests use isolated test database in CI
 - Cypress smoke tests verify end-to-end API functionality

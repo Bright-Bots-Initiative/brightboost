@@ -13,8 +13,9 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: (() => {
         const browserGlobals = { ...globals.browser };
-        delete browserGlobals['AudioWorkletGlobalScope '];
-        browserGlobals['AudioWorkletGlobalScope'] = browserGlobals['AudioWorkletGlobalScope'] || true;
+        delete browserGlobals["AudioWorkletGlobalScope "];
+        browserGlobals["AudioWorkletGlobalScope"] =
+          browserGlobals["AudioWorkletGlobalScope"] || true;
         return browserGlobals;
       })(),
     },
@@ -30,5 +31,5 @@ export default tseslint.config(
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/no-empty-object-type": "off",
     },
-  }
+  },
 );

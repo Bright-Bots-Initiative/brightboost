@@ -1,8 +1,9 @@
 // src/api/lessons.ts
-import { Lesson } from '../components/TeacherDashboard/types';
+import { Lesson } from "../components/TeacherDashboard/types";
 
 const API_BASE =
-  import.meta.env.VITE_AWS_API_URL || 'https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev';
+  import.meta.env.VITE_AWS_API_URL ||
+  "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod";
 
 export async function fetchLessons(): Promise<{ lessons: Lesson[] }> {
   try {

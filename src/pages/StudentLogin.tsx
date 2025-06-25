@@ -1,10 +1,9 @@
-
 // src/pages/StudentLogin.tsx
-import React from 'react';
+import React, { useState } from "react";
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
@@ -18,8 +17,8 @@ const studentLoginSchema = z.object({
 type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
 
 const StudentLogin: React.FC = () => {
+  const [error, setError] = useState("");
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   const {
     register,
@@ -32,22 +31,24 @@ const StudentLogin: React.FC = () => {
 
   const onSubmit = async (data: StudentLoginFormData) => {
     try {
-      console.log('Form data:', data);
-      console.log('Validation errors:', errors);
       const response = await loginUser(studentLoginSchema.parse(data).email, studentLoginSchema.parse(data).password);
 
       // Verify this is a student account
-      if (response.user.role !== 'student') {
-        alert('This login is only for students. Please use the teacher login if you are a teacher.');
+      if (response.user.role !== "STUDENT") {
+        setError(
+          "This login is only for students. Please use the teacher login if you are a teacher.",
+        );
         return;
       }
       localStorage.setItem('jwt', response.token);
       login(response.token, response.user);
-      navigate('/student/dashboard');
     } catch (err: unknown) {
-      console.error('Login error:', err);
-      alert('Failed to login. Please check your credentials.');
-      } 
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to login. Please check your credentials.",
+      );
+    }
   };
 
   return (
@@ -63,13 +64,22 @@ const StudentLogin: React.FC = () => {
             </p>
             <BrightBoostRobot className="hidden md:block" />
           </div>
-          
+
           <div className="game-card p-6 flex-1 w-full max-w-md">
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
+
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+                {error}
+              </div>
+            )}
             
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Email
                 </label>
                 <input
@@ -83,9 +93,12 @@ const StudentLogin: React.FC = () => {
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
-              
+
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Password
                 </label>
                 <input
@@ -99,7 +112,7 @@ const StudentLogin: React.FC = () => {
                 />
                 {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -110,16 +123,22 @@ const StudentLogin: React.FC = () => {
                 {isSubmitting ? 'Logging in...' : 'Login'}
               </button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-brightboost-navy">
-                Don't have an account?{' '}
-                <Link to="/student/signup" className="text-brightboost-blue font-bold hover:underline transition-colors">
+                Don't have an account?{" "}
+                <Link
+                  to="/student/signup"
+                  className="text-brightboost-blue font-bold hover:underline transition-colors"
+                >
                   Sign up
                 </Link>
               </p>
               <p className="text-sm text-brightboost-navy mt-2">
-                <Link to="/" className="text-brightboost-blue font-bold hover:underline transition-colors">
+                <Link
+                  to="/"
+                  className="text-brightboost-blue font-bold hover:underline transition-colors"
+                >
                   Back to Home
                 </Link>
               </p>

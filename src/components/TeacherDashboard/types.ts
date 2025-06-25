@@ -15,22 +15,23 @@ export interface SidebarProps {
 export interface SortableLessonRowProps {
   lesson: Lesson;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson['id']) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson['id']) => void; // Changed from onDelete
+  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
+  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
 }
 
 export interface LessonsTableProps {
   lessons: Lesson[];
+  setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson['id']) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson['id']) => void; // Changed from onDelete
+  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
+  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
 }
 
 export interface MainContentProps {
   activeView: string;
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onAddLesson: (lesson: Pick<Lesson, 'title' | 'content' | 'category'>) => void; // Add this prop
+  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void; // Add this prop
   onEditLesson: (lesson: Lesson) => void; // Add this prop
-  onDeleteLesson: (id: Lesson['id']) => void; // Add this prop
+  onDeleteLesson: (id: Lesson["id"]) => void; // Add this prop
 }

@@ -1,6 +1,7 @@
 ## ✅ Task Completion Summary
 
 ### Successfully Completed
+
 - **Aurora Database**: "brightboost" database automatically created by Lambda function
 - **Users Table**: Created with proper schema (id, name, email, password, role, school, subject, timestamps)
 - **API Endpoint**: `/api/signup/teacher` returns HTTP 201 on valid teacher signup requests
@@ -9,22 +10,25 @@
 - **CI/CD Pipeline**: All deployments passing (1 pass, 0 fail)
 
 ### Test Results
-**API Endpoint**: `https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher`
+
+**API Endpoint**: `https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/teacher`
 
 **Successful Test**:
+
 ```bash
-curl -X POST "https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/signup/teacher" \
+curl -X POST "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/teacher" \
   -H "Content-Type: application/json" \
   -d '{"name":"New Teacher","email":"newteacher@example.com","password":"testpassword123"}'
 ```
 
 **Response**: HTTP 201
+
 ```json
 {
   "message": "Teacher account created successfully",
   "user": {
     "id": 2,
-    "name": "New Teacher", 
+    "name": "New Teacher",
     "email": "newteacher@example.com",
     "role": "TEACHER",
     "school": null,
@@ -38,6 +42,7 @@ curl -X POST "https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/sig
 **Duplicate Email Test**: HTTP 409 "User with this email already exists" (proper validation)
 
 ### Infrastructure Details
+
 - **Stack**: `brightboost-teacher-signup-feat-teacher-signup-mvp`
 - **Lambda Function**: Automatically creates database and users table if they don't exist
 - **Aurora Cluster**: `database-1.cluster-cmp8e4yimcpw.us-east-1.rds.amazonaws.com`
@@ -45,6 +50,7 @@ curl -X POST "https://h5ztvjxo03.execute-api.us-east-1.amazonaws.com/dev/api/sig
 - **Security**: Least-privilege IAM permissions, no public database access
 
 ### Features Implemented
+
 - Input validation (email format, password length, required fields)
 - Duplicate email detection
 - Password hashing with bcrypt (12 rounds)

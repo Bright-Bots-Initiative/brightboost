@@ -2,12 +2,58 @@
   "routes": [
     {
       "route": "/api/signup/teacher",
-      "allowedRoles": ["anonymous"]
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/teacher"
+    },
+    {
+      "route": "/api/signup/student",
+      "methods": ["POST", "OPTIONS"],
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/signup/student"
+    },
+    {
+      "route": "/api/login",
+      "methods": ["POST", "OPTIONS"],
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login"
+    },
+    {
+      "route": "/api/student_dashboard",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student_dashboard"
+    },
+    {
+      "route": "/api/teacher_dashboard",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/teacher_dashboard"
+    },
+    {
+      "route": "/api/lessons*",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/lessons"
+    },
+    {
+      "route": "/api/gamification/*",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/gamification/{path}"
+    },
+    {
+      "route": "/api/student/*",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/student/{path}"
+    },
+    {
+      "route": "/api/teacher/*",
+      "allowedRoles": ["anonymous"],
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/teacher/{path}"
     },
     {
       "route": "/*",
       "serve": "/index.html",
-      "statusCode": 200
+      "statusCode": 200,
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
     }
   ],
   "navigationFallback": {
@@ -17,7 +63,8 @@
       "/css/*",
       "/js/*",
       "/*.ico",
-      "/*.json"
+      "/*.json",
+      "/assets/*"
     ]
   },
   "globalHeaders": {

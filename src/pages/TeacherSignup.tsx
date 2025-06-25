@@ -1,48 +1,51 @@
-
 // src/pages/TeacherSignup.tsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { signupTeacher } from '../services/api';
-import GameBackground from '../components/GameBackground';
-import BrightBoostRobot from '../components/BrightBoostRobot';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { signupTeacher } from "../services/api";
+import GameBackground from "../components/GameBackground";
+import BrightBoostRobot from "../components/BrightBoostRobot";
 
 const TeacherSignup: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
-      console.log('Attempting to sign up teacher:', { name, email });
+      console.log("Attempting to sign up teacher:", { name, email });
       const response = await signupTeacher(name, email, password);
-      console.log('Signup successful:', response);
-      
+      console.log("Signup successful:", response);
+
       // Auto login after successful signup
       if (response && response.token) {
         login(response.token, response.user);
       } else {
-        console.error('Invalid response format:', response);
-        setError('Server returned an invalid response format');
+        console.error("Invalid response format:", response);
+        setError("Server returned an invalid response format");
       }
     } catch (err: unknown) {
-      console.error('Signup error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to sign up. Please try again.');
+      console.error("Signup error:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to sign up. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -61,19 +64,22 @@ const TeacherSignup: React.FC = () => {
             </p>
             <BrightBoostRobot className="hidden md:block" />
           </div>
-          
+
           <div className="game-card p-6 flex-1 w-full max-w-md">
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
-            
+
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
                 {error}
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Full Name
                 </label>
                 <input
@@ -86,9 +92,12 @@ const TeacherSignup: React.FC = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Email
                 </label>
                 <input
@@ -101,9 +110,12 @@ const TeacherSignup: React.FC = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Password
                 </label>
                 <input
@@ -116,9 +128,12 @@ const TeacherSignup: React.FC = () => {
                   placeholder="Create a password"
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-brightboost-navy mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-brightboost-navy mb-1"
+                >
                   Confirm Password
                 </label>
                 <input
@@ -131,27 +146,33 @@ const TeacherSignup: React.FC = () => {
                   placeholder="Confirm your password"
                 />
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isLoading}
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
-                  isLoading ? 'bg-brightboost-blue/70' : 'bg-brightboost-blue'
+                  isLoading ? "bg-brightboost-blue/70" : "bg-brightboost-blue"
                 } transition-colors`}
               >
-                {isLoading ? 'Signing up...' : 'Sign Up'}
+                {isLoading ? "Signing up..." : "Sign Up"}
               </button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-brightboost-navy">
-                Already have an account?{' '}
-                <Link to="/teacher/login" className="text-brightboost-blue font-bold hover:underline transition-colors">
+                Already have an account?{" "}
+                <Link
+                  to="/teacher/login"
+                  className="text-brightboost-blue font-bold hover:underline transition-colors"
+                >
                   Log in
                 </Link>
               </p>
               <p className="text-sm text-brightboost-navy mt-2">
-                <Link to="/" className="text-brightboost-blue font-bold hover:underline transition-colors">
+                <Link
+                  to="/"
+                  className="text-brightboost-blue font-bold hover:underline transition-colors"
+                >
                   Back to Home
                 </Link>
               </p>

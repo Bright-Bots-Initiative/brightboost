@@ -1,5 +1,5 @@
-import React from 'react';
-import { SidebarProps } from './types';
+import React from "react";
+import { SidebarProps } from "./types";
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   const navItems = ["Lessons", "Students", "Settings"];
@@ -17,8 +17,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
             }}
             className={`block py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
                         hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500
-                        ${activeView === item ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300'
-            }`}
+                        ${
+                          activeView === item
+                            ? "bg-blue-600 text-white shadow-md"
+                            : "text-gray-300"
+                        }`}
           >
             {item}
           </a>

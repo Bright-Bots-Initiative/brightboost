@@ -19,14 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.15.1
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: |
+            pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --no-frozen-lockfile
 
       - name: Lint Commit Messages
         id: commitlint_check
@@ -67,7 +74,7 @@ jobs:
         id: lint
         continue-on-error: true
         run: |
-          (npm run lint > lint_output.txt 2>&1)
+          (pnpm lint > lint_output.txt 2>&1)
           exit_code=$?
           echo "Captured lint exit code: $exit_code"
           echo "Lint output:"
@@ -85,7 +92,7 @@ jobs:
         id: tests
         continue-on-error: true
         run: |
-          (npm run test > test_output.txt 2>&1)
+          (pnpm test > test_output.txt 2>&1)
           exit_code=$?
           echo "Captured test exit code: $exit_code"
           cat test_output.txt

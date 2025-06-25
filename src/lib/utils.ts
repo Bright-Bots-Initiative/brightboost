@@ -1,6 +1,6 @@
 // src/lib/utils.ts
-import { ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 // Helper function to merge Tailwind CSS classes
 export function cn(...inputs: ClassValue[]) {
@@ -9,10 +9,10 @@ export function cn(...inputs: ClassValue[]) {
 
 // Format date to readable string
 export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 }
 
@@ -32,7 +32,7 @@ export function isStrongPassword(password: string): boolean {
 // Parse JWT token to get payload
 export function parseJwt(token: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(atob(token.split('.')[1]));
+    return JSON.parse(atob(token.split(".")[1]));
   } catch (e) {
     return null;
   }
@@ -42,11 +42,13 @@ export function parseJwt(token: string): Record<string, unknown> | null {
 export function isTokenExpired(token: string): boolean {
   const decoded = parseJwt(token);
   if (!decoded) return true;
-  
+
   const currentTime = Date.now() / 1000;
-  return typeof decoded === 'object' && 
-         decoded !== null && 
-         'exp' in decoded && 
-         typeof decoded.exp === 'number' && 
-         decoded.exp < currentTime;
+  return (
+    typeof decoded === "object" &&
+    decoded !== null &&
+    "exp" in decoded &&
+    typeof decoded.exp === "number" &&
+    decoded.exp < currentTime
+  );
 }
