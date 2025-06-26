@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       "/api": {
         target:
-          process.env.AWS_API_URL ||
+          loadEnv(mode, process.cwd()).VITE_AWS_API_URL ||
           "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod",
         changeOrigin: true,
         secure: true,

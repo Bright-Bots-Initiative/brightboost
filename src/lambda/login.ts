@@ -24,7 +24,6 @@ let dbPool: Pool | null = null;
 const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
-  console.log('env', process.env);
   if (!dbPool) {
     console.log("Creating new database connection pool...");
     let secret: DatabaseSecret;
@@ -50,10 +49,10 @@ async function getDbConnection(): Promise<Pool> {
       }
 
       secret = JSON.parse(secretResult.SecretString);
-      console.log(
-        `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
-      );
     }
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
 
     dbPool = new Pool({
       host: secret.host,
