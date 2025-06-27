@@ -7,10 +7,11 @@ export interface Lesson {
   content?: string; // Add content property
 }
 
+/* old SidebarProps, deprecated and no longer needed
 export interface SidebarProps {
   activeView: string;
   setActiveView: (view: string) => void;
-}
+}*/
 
 export interface SortableLessonRowProps {
   lesson: Lesson;
@@ -35,3 +36,15 @@ export interface MainContentProps {
   onEditLesson: (lesson: Lesson) => void; // Add this prop
   onDeleteLesson: (id: Lesson["id"]) => void; // Add this prop
 }
+
+export type Student = {
+  id: string;
+  name: string;
+  email?: string;
+};
+
+export type Class = {
+  id: string;
+  name: string;
+  students: Student[];
+};
