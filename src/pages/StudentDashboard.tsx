@@ -9,7 +9,6 @@ import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { useTranslation } from "react-i18next";
 import  LanguageToggle  from "../components/LanguageToggle";
-import.meta.env.VITE_ENABLE_I18N === "true" && <LanguageToggle />
 
 
 interface Course {
