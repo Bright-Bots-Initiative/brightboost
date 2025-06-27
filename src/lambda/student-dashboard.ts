@@ -82,7 +82,6 @@ export const handler = async (
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
 
-
   console.log(
     "Student dashboard Lambda function started, event:",
     JSON.stringify(event, null, 2),
