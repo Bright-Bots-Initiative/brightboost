@@ -6,9 +6,8 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "./lib/i18n";
 import { Toaster } from "@/components/ui/toaster";
 
-// Import home page eagerly for fast initial render
+// Import pages and components
 import Index from "./pages/Index";
-
 const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
@@ -23,7 +22,6 @@ const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
-
 import "./App.css";
 
 function App() {
@@ -62,7 +60,7 @@ function App() {
     </Suspense>
   );
 
-  // Conditional rendering based on I18N setting
+  // Conditional rendering based on i18n setting (ENABLE_I18N)
   const appContent = ENABLE_I18N ? (
     <I18nextProvider i18n={i18n}>{renderApp}</I18nextProvider>
   ) : (
@@ -77,6 +75,10 @@ function App() {
         </AuthProvider>
       </Router>
 
+      {/* Toaster will always appear */}
+      <Toaster />
+
+      {/* Footer with build timestamp */}
       <footer
         style={{
           textAlign: "center",
