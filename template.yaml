@@ -173,7 +173,7 @@ Resources:
             Path: /api/student/dashboard
             Method: get
             RestApiId: !Ref AuthApi
-  
+
   TeacherDashboardFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -250,7 +250,7 @@ Outputs:
   StudentDashboardFunctionArn:
     Description: "Student Dashboard Lambda Function ARN"
     Value: !GetAtt StudentDashboardFunction.Arn
-  
+
   TeacherDashboardApiUrl:
     Description: "API Gateway endpoint URL for Teacher Dashboard function"
     Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/teacher/dashboard"

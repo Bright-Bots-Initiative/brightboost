@@ -61,9 +61,12 @@ async function getDbConnection(): Promise<Pool> {
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: process.env.NODE_ENV === "local" ? false : {
-        rejectUnauthorized: false,
-      },
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : {
+              rejectUnauthorized: false,
+            },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,

@@ -54,9 +54,12 @@ async function getDbConnection(): Promise<Pool> {
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: process.env.NODE_ENV === "local" ? false : {
-        rejectUnauthorized: false,
-      },
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : {
+              rejectUnauthorized: false,
+            },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
@@ -81,7 +84,8 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin":
+      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
@@ -100,8 +104,9 @@ export const handler = async (
       };
     }
 
-    const authHeader = event.headers.Authorization || event.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader =
+      event.headers.Authorization || event.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return {
         statusCode: 401,
         headers,
@@ -111,7 +116,7 @@ export const handler = async (
 
     const token = authHeader.substring(7);
     const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
-    
+
     let decoded;
     try {
       decoded = jwt.verify(token, jwtSecret) as any;
@@ -123,7 +128,7 @@ export const handler = async (
       };
     }
 
-    if (decoded.role !== 'TEACHER') {
+    if (decoded.role !== "TEACHER") {
       return {
         statusCode: 403,
         headers,
@@ -147,14 +152,14 @@ export const handler = async (
           id: "course-1",
           name: "Math 101",
           grade: "A",
-          teacher: "Stub Teacher"
+          teacher: "Stub Teacher",
         },
         {
-          id: "course-2", 
+          id: "course-2",
           name: "Science 202",
           grade: "B+",
-          teacher: "Stub Teacher"
-        }
+          teacher: "Stub Teacher",
+        },
       ],
       notifications: [],
       lessons: [
