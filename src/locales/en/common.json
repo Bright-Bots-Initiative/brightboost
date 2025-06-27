@@ -1,0 +1,46 @@
+{
+    "student": "Student",
+    "dashboard": {
+      "loading": "Loading your dashboard...",
+      "stillLoading": "Still loading...",
+      "errorPrefix": "Oops",
+      "tryAgain": "Try Again",
+      "greeting": "Hello, {{name}}!",
+      "readyPrompt": "Ready to learn something new today?",
+      "role": "Level Explorer",
+      "logout": "Logout",
+      "stemCard": {
+        "title": "STEM 1",
+        "subtitle": "Let's play with us!"
+      },
+      "stem": {
+        "math": "STEM 1",
+        "science": "Science Lab",
+        "coding": "Coding Fun"
+      },
+      "wordGame": {
+        "title": "Letter Game"
+      },
+      "leaderboard": {
+        "title": "Leaderboard"
+      },
+      "coursesAndAssignments": "Your Courses & Assignments",
+      "enrolledCourses": "Enrolled Courses",
+      "recentAssignments": "Recent Assignments",
+      "grade": "Grade",
+      "teacher": "Teacher",
+      "due": "Due",
+      "status": {
+        "pending": "Pending",
+        "completed": "Completed"
+      },
+      "noData": "Let's start your first quest!",
+      "startLearning": "Start Learning",
+      "viewProgress": "View Progress"
+    },
+
+    "language": {
+    "switchToSpanish": "Switch to Spanish",
+    "switchToEnglish": "Switch to English"
+  }
+  }
