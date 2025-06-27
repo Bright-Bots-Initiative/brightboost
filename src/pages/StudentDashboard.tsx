@@ -7,8 +7,8 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
-import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
+import XPProgressWidget from "../components/StudentDashboard/XPProgress";
+import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
 
 interface Course {
   id: string;
@@ -59,7 +59,7 @@ const StudentDashboard = () => {
       const timeoutId = setTimeout(() => {
         setShowStillLoading(true);
       }, 10000);
-      const data = await api.get('/api/student/dashboard');
+      const data = await api.get("/api/student/dashboard");
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
@@ -162,24 +162,24 @@ const StudentDashboard = () => {
               </div>
             </div>
             {dashboardData && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <CurrentModuleCard module={dashboardData.currentModule} />
-                </div>
-                )}
-            
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <CurrentModuleCard module={dashboardData.currentModule} />
+              </div>
+            )}
+
             <div className="flex items-center space-x-4">
               <div className="flex flex-col items-end space-y-2">
-              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">Level Explorer</span>
-                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                  {user?.name || "Student"}
-                </span>
-              </div>
-               <XPProgressWidget 
-                currentXp={dashboardData?.xp ?? 0}
-                nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                level={dashboardData?.level ?? 1}
-              />
+                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold">Level Explorer</span>
+                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                    {user?.name || "Student"}
+                  </span>
+                </div>
+                <XPProgressWidget
+                  currentXp={dashboardData?.xp ?? 0}
+                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+                  level={dashboardData?.level ?? 1}
+                />
               </div>
               <button
                 onClick={handleLogout}

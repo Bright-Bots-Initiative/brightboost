@@ -6,7 +6,11 @@ interface XPProgressWidgetProps {
   level: number;
 }
 
-const XPProgressWidget = ({ currentXp, nextLevelXp, level }: XPProgressWidgetProps) => {
+const XPProgressWidget = ({
+  currentXp,
+  nextLevelXp,
+  level,
+}: XPProgressWidgetProps) => {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
@@ -16,7 +20,7 @@ const XPProgressWidget = ({ currentXp, nextLevelXp, level }: XPProgressWidgetPro
       return () => clearTimeout(timeout);
     }
   }, [currentXp, nextLevelXp]);
-  
+
   const hasLeveledUp = currentXp >= nextLevelXp;
   const xp = hasLeveledUp ? currentXp - nextLevelXp : currentXp;
   const xpToNext = hasLeveledUp ? nextLevelXp * 1.5 : nextLevelXp; // Optional logic: scale difficulty
@@ -34,8 +38,12 @@ const XPProgressWidget = ({ currentXp, nextLevelXp, level }: XPProgressWidgetPro
       <div className="bg-brightboost-yellow px-4 py-1 rounded-full flex items-center gap-3 shadow text-sm font-medium">
         {/* Level */}
         <div className="flex items-center gap-1">
-          <span className="text-base font-bold text-brightboost-navy">XP: Level</span>
-          <span className="text-base font-bold text-brightboost-navy">{hasLeveledUp ? level + 1 : level}</span>
+          <span className="text-base font-bold text-brightboost-navy">
+            XP: Level
+          </span>
+          <span className="text-base font-bold text-brightboost-navy">
+            {hasLeveledUp ? level + 1 : level}
+          </span>
         </div>
 
         {/* XP bar */}
@@ -47,7 +55,9 @@ const XPProgressWidget = ({ currentXp, nextLevelXp, level }: XPProgressWidgetPro
         </div>
 
         {/* XP count */}
-        <span className="text-xs text-brightboost-navy">{xp}/{xpToNext}</span>
+        <span className="text-xs text-brightboost-navy">
+          {xp}/{xpToNext}
+        </span>
       </div>
     </div>
   );

@@ -135,7 +135,7 @@ export const handler = async (
         title: "Hello World!",
         status: "In Progress",
         dueDate: "07-01-2025",
-        lessonId: "lesson_1"
+        lessonId: "lesson_1",
       },
       courses: [
         {
