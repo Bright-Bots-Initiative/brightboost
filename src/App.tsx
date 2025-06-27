@@ -4,6 +4,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Suspense, lazy } from "react";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./lib/i18n";
+import { Toaster } from "@/components/ui/toaster";
+
 
 // Import home page eagerly for fast initial render
 import Index from "./pages/Index";
@@ -64,37 +66,41 @@ function App() {
     </Suspense>
   );
 
-  return (
-    <>
-      {ENABLE_I18N ? (
-        <I18nextProvider i18n={i18n}>
-          <Router>
-            <AuthProvider>
-              <div className="app">{renderApp}</div>
-            </AuthProvider>
-          </Router>
-        </I18nextProvider>
-      ) : (
+return (
+  <>
+    {ENABLE_I18N ? (
+      <I18nextProvider i18n={i18n}>
         <Router>
           <AuthProvider>
             <div className="app">{renderApp}</div>
           </AuthProvider>
         </Router>
-      )}
-      <footer
-        style={{
-          textAlign: "center",
-          fontSize: "0.8rem",
-          margin: "1rem 0",
-          padding: "0.5rem",
-          color: "#666",
-          borderTop: "1px solid #eee",
-        }}
-      >
-        BrightBoost v1.3.0 – Build:{" "}
-        {new Date().toISOString().replace("T", " ").slice(0, 19)} UTC
-      </footer>
-    </>
+      </I18nextProvider>
+    ) : (
+      <Router>
+        <AuthProvider>
+          <div className="app">{renderApp}</div>
+        </AuthProvider>
+      </Router>
+    )}
+    <footer
+      style={{
+        textAlign: "center",
+        fontSize: "0.8rem",
+        margin: "1rem 0",
+        padding: "0.5rem",
+        color: "#666",
+        borderTop: "1px solid #eee",
+      }}
+    >
+      BrightBoost v1.3.0 – Build:{" "}
+      {new Date().toISOString().replace("T", " ").slice(0, 19)} UTC
+    </footer>
+    {/* Catch-all route */}
+    <Route path="*" element={<NotFound />} />
+    <Toaster />
+  </>
+);
   );
 }
 

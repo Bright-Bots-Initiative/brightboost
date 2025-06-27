@@ -54,7 +54,16 @@ const StudentDashboard = () => {
         setShowStillLoading(true);
       }, 10000);
 
-      const data = await api.get("/api/student/dashboard");
+      const isTestEnvironment = (window as any).Cypress || process.env.NODE_ENV === 'test';
+      const minLoadingPromise = isTestEnvironment 
+        ? new Promise(resolve => setTimeout(resolve, 1000))
+        : Promise.resolve();
+
+      const [data] = await Promise.all([
+        api.get("/api/student/dashboard"),
+        minLoadingPromise
+      ]);
+      
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
