@@ -39,26 +39,49 @@ const ClassesPage: React.FC = () => {
           <p className="text-sm text-gray-600">Add a class to get started.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-4">Your Classes</h3>
-          <table className="w-full text-left table-auto">
-            <thead>
-              <tr className="text-sm text-gray-600">
-                <th className="pb-2">Class ID</th>
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Students</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classes.map((cls) => (
-                <tr key={cls.id} className="border-t text-sm">
-                  <td className="py-2">{cls.id}</td>
-                  <td className="py-2">{cls.name}</td>
-                  <td className="py-2">{cls.students.length}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-8">
+          {classes.map((cls) => (
+            <div
+              key={cls.id}
+              className="bg-white rounded-lg shadow-md p-6 border border-gray-100"
+            >
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-brightboost-navy">
+                  {cls.name}
+                </h3>
+                <p className="text-sm text-gray-500">Class ID: {cls.id}</p>
+              </div>
+              {cls.students.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">
+                  No students enrolled.
+                </p>
+              ) : (
+                <table className="w-full text-left table-auto mt-2">
+                  <thead>
+                    <tr className="text-sm text-gray-600 border-b">
+                      <th className="py-2">Student ID</th>
+                      <th className="py-2">Name</th>
+                      <th className="py-2">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cls.students.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="border-b text-sm text-gray-800"
+                      >
+                        <td className="py-2">{student.id}</td>
+                        <td className="py-2">{student.name}</td>
+                        <td className="py-2">
+                          {student.email ?? <span className="text-gray-400 italic">N/A</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
