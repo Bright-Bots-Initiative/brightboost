@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const TeacherClasses = lazy(() => import("./pages/TeacherClasses"));
+const TeacherLayout = lazy(() => import("./components/TeacherDashboard/TeacherLayout"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 const StudentLogin = lazy(() => import("./pages/StudentLogin"));
@@ -49,6 +51,20 @@ function App() {
                     <TeacherDashboard />
                   </ProtectedRoute>
                 }
+              />
+              {/* <Route
+                path="/teacher/classes"
+                element={
+                  <ProtectedRoute requiredRole="TEACHER">
+                    <TeacherClasses />
+                  </ProtectedRoute>
+                }
+              /> */}
+              <Route 
+                path="/teacher/classes" 
+                element={<TeacherLayout><TeacherClasses /></TeacherLayout>
+
+                } 
               />
               <Route
                 path="/student/dashboard"

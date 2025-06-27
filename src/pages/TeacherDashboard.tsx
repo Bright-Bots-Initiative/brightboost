@@ -142,7 +142,7 @@ const TeacherDashboard: React.FC = () => {
           onLogout={handleLogout}
         />
 
-        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <Sidebar />
 
         {isLoading && (
           <div className="flex-grow p-6 ml-64 text-center">
