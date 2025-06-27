@@ -2,17 +2,22 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useApi } from "../services/api";
 
-const App = () => {
+const Profile = () => {
   const [data, setData] = useState(null);
-  const [error] = useState<string | null>(null);  
+  const [error, setError] = useState<string | null>(null);  
   const api = useApi();
   const fetchdata = useCallback(async () => {
     try {
-      const response = await api.get('https://ue3b2jb6robht6kl62ekulzh7y0dcdrw.lambda-url.us-east-1.on.aws/'); // Example GET URL
+      const response = await api.get('/profile');
       console.log(response);
-      setData(response.data);
+      if (response) {
+        setData(response);
+      } else {
+        setError('Failed to fetch profile data');
+      }
     } catch (err: any) {
       console.log("get request failed");
+      setError('Failed to fetch profile data');
       return;
     }
   }, [api]);
@@ -32,4 +37,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Profile;
