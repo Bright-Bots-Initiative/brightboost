@@ -60,11 +60,13 @@ function App() {
                   </ProtectedRoute>
                 }
               /> */}
-              <Route 
-                path="/teacher/classes" 
-                element={<TeacherLayout><TeacherClasses /></TeacherLayout>
-
-                } 
+              <Route
+                path="/teacher/classes"
+                element={
+                  <TeacherLayout>
+                    <TeacherClasses />
+                  </TeacherLayout>
+                }
               />
               <Route
                 path="/student/dashboard"
