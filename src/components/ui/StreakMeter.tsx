@@ -7,13 +7,15 @@ interface StreakMeterProps {
   longestStreak: number;
   onNewRecord?: (bonus: number) => void;
   currentStreakDays?: boolean[];
+  barColor?: string;
 }
 
-const StreakMeter2: React.FC<StreakMeterProps> = ({
+const StreakMeter: React.FC<StreakMeterProps> = ({
   currentStreak,
   longestStreak,
   onNewRecord,
   currentStreakDays = [false, false, false, false, false, false, false],
+  barColor,
 }) => {
   const [hasBrokenRecord, setHasBrokenRecord] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -45,7 +47,6 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
 
   const progress = longestStreak > 0 ? Math.min(currentStreak / longestStreak, 1) : 0;
 
-  // Define min and max left positions in px so flame doesn't go out of bounds
   const minLeftPx = 4; // distance from left edge
   const maxLeftPx = containerWidth - 8; // distance from right edge
 
@@ -57,14 +58,14 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
 
   return (
     <>
-      {/* Hoverable streak bar wrapper */}
+      {/* Hoverable streak bar */}
       <div
         ref={containerRef}
         className="relative w-full max-w-md cursor-pointer"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
       >
-        {/* Flame slider icon positioned above the progress, clamped */}
+        {/* Flame slider icon */}
         <div
           className="absolute z-10"
           style={{
@@ -76,18 +77,18 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
           <Flame className="w-9 h-9 text-red-500 fill-orange-300 drop-shadow-md" />
         </div>
 
-        {/* Progress bar with border and transparent gap */}
+        {/* Streak bar body*/}
         <div
           className="relative h-[24px] rounded-full"
           style={{
-            background: 'linear-gradient(to right, #FF8C00, #FF8C00)',
+            background: barColor || '#FF8C00',
             padding: '3px',
           }}
         >
           <div
             className="w-full h-full rounded-full"
             style={{
-              backgroundColor: '#8BD2ED', // use your light/dark bg
+              backgroundColor: '#8BD2ED',
               padding: '2px',
             }}
           >
@@ -95,7 +96,7 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
               className="h-full rounded-full transition-all duration-300 ease-in-out"
               style={{
                 width: `${progress * 100}%`,
-                background: 'linear-gradient(to right, #FF8C00 , #FF8C00)',
+                background: barColor || '#FF8C00',
               }}
             />
           </div>
@@ -103,44 +104,48 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
 
         {/* Hover window */}
         {hovering && (
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white dark:bg-zinc-700 text-sm text-gray-800 dark:text-white rounded-xl shadow-lg z-20 w-60">
-            {/* 🔝 Message Section */}
-            <div className="text-center mb-2 font-medium">
-            {currentStreak === 0 ? (
-                <span className="text-gray-600 dark:text-gray-300">No streak yet - start today!</span>
-            ) : (
-                <span className="text-orange-600 dark:text-orange-200">
-                Keep it up, your current streak is <strong>{currentStreak}</strong>!
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white text-sm text-gray-800 rounded-xl shadow-lg z-20 w-60">
+            {/* Message */}
+            <div className="text-center font-medium mb-2">
+              {currentStreak === 0 ? (
+                <span>No streak yet - start today!</span>
+              ) : (
+                <span>
+                  Keep it up, your current streak is <strong>{currentStreak}</strong>!
                 </span>
-            )}
+              )}
             </div>
 
             {/* Weekly Streak */}
             <div className="text-center font-medium mb-2">Weekly Streak</div>
             <div className="grid grid-cols-7 gap-3 ml-[-6px]">
-            {dayLabels.map((day, index) => {
+              {dayLabels.map((day, index) => {
                 const isToday = index === todayIndex;
                 const isActive = currentStreakDays[index];
+
+                const style: React.CSSProperties = {};
+                if (isActive) style.backgroundColor = barColor || '#FF8C00';
+                if (isToday) style.borderColor = barColor || '#FF8C00';
+
                 return (
-                <div
+                  <div
                     key={index}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${isToday ? 'border-2 border-orange-400' : ''}
-                    ${isActive
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-200 dark:bg-zinc-600 text-gray-700 dark:text-gray-200'}`}
-                >
+                      ${isToday ? 'border-2' : ''}
+                      ${isActive ? 'text-white' : 'bg-gray-200 text-gray-700'}`}
+                    style={style}
+                  >
                     {day}
-                </div>
+                  </div>
                 );
-            })}
+              })}
             </div>
 
-            {/* 📈 Record Info */}
-            <div className="mt-3 text-center text-xs text-gray-500 dark:text-gray-300">
-            Record: {longestStreak} day{longestStreak !== 1 ? 's' : ''}
+            {/* Record Info */}
+            <div className="mt-3 text-center text-xs text-gray-500">
+              Record: {longestStreak} day{longestStreak !== 1 ? 's' : ''}
             </div>
-        </div>
+          </div>
         )}
       </div>
 
@@ -154,15 +159,15 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white dark:bg-zinc-800 text-center p-6 rounded-xl shadow-lg"
+              className="bg-white text-center p-6 rounded-xl shadow-lg"
               initial={{ scale: 0.8, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 30 }}
               transition={{ type: 'spring', stiffness: 300, damping: 22 }}
             >
               <PartyPopper className="w-10 h-10 mx-auto text-yellow-500" />
-              <h2 className="text-xl font-bold mt-2 text-brightboost-navy dark:text-white">New Streak Record!</h2>
-              <p className="text-sm mt-1 text-gray-600 dark:text-gray-300">+50 XP</p>
+              <h2 className="text-xl font-bold mt-2 text-brightboost-navy">New Streak Record!</h2>
+              <p className="text-sm mt-1 text-gray-600">+50 XP</p>
               <button
                 onClick={() => setShowCelebration(false)}
                 className="mt-4 px-4 py-2 rounded bg-brightboost-blue text-white hover:bg-brightboost-blue/90"
@@ -177,4 +182,4 @@ const StreakMeter2: React.FC<StreakMeterProps> = ({
   );
 };
 
-export default StreakMeter2;
+export default StreakMeter;
