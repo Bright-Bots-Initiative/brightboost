@@ -1,0 +1,15 @@
+name: Lambda Diagnose
+on: workflow_dispatch
+jobs:
+  tail-logs:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION:            ${{ secrets.AWS_REGION }}
+    steps:
+      - run: |
+          echo "loginHandler:"
+          aws logs tail '/aws/lambda/loginHandler' --since 10m --max-items 50 || true
+          echo "signupStudentHandler:"
+          aws logs tail '/aws/lambda/signupStudentHandler' --since 10m --max-items 50 || true

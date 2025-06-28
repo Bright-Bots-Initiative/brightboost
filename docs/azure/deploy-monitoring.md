@@ -40,5 +40,6 @@ If you're integrating with existing BrightBoost applications:
    - For Function App: Configuration > Application settings
 
 Add the following key-value pair:
+
 - Key: `APPLICATIONINSIGHTS_CONNECTION_STRING`
 - Value: [Connection String from deployment output]

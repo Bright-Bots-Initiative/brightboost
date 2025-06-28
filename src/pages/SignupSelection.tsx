@@ -1,7 +1,6 @@
-
-import React from 'react';
-import { Link } from 'react-router-dom';
-import GameBackground from '../components/GameBackground';
+import React from "react";
+import { Link } from "react-router-dom";
+import GameBackground from "../components/GameBackground";
 
 const SignupSelection: React.FC = () => {
   return (
@@ -15,7 +14,7 @@ const SignupSelection: React.FC = () => {
             Select your account type
           </p>
         </div>
-        
+
         <div className="game-card p-8 w-full max-w-md">
           <div className="grid grid-cols-1 gap-4">
             <Link
@@ -31,9 +30,12 @@ const SignupSelection: React.FC = () => {
               Student Signup
             </Link>
           </div>
-          
+
           <div className="mt-6 text-center">
-            <Link to="/" className="text-brightboost-blue font-bold hover:underline transition-colors">
+            <Link
+              to="/"
+              className="text-brightboost-blue font-bold hover:underline transition-colors"
+            >
               Back to Home
             </Link>
           </div>
