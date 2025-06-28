@@ -18,6 +18,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Roster = lazy(() => import("./pages/Roster"));
 
 // Import components
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -55,6 +56,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="STUDENT">
                     <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/roster"
+                element={
+                  <ProtectedRoute requiredRole="TEACHER">
+                    <Roster />
                   </ProtectedRoute>
                 }
               />
