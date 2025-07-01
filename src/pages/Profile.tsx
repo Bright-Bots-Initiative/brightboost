@@ -8,7 +8,7 @@ const Profile = () => {
   const api = useApi();
   const fetchdata = useCallback(async () => {
     try {
-      const response = await api.get("/profile");
+      const response = await api.get("/api/profile");
       console.log(response);
       if (response) {
         setData(response);
