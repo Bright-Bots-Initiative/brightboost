@@ -46,5 +46,37 @@ export type Student = {
 export type Class = {
   id: string;
   name: string;
+  grade?: Grade;
   students: Student[];
 };
+
+export type Grade =
+  | "Kindergarten"
+  | "1st"
+  | "2nd"
+  | "3rd"
+  | "4th"
+  | "5th"
+  | "6th"
+  | "7th"
+  | "8th"
+  | "9th"
+  | "10th"
+  | "11th"
+  | "12th";
+
+export const gradeOptions: Grade[] = [
+  "Kindergarten",
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
+  "5th",
+  "6th",
+  "7th",
+  "8th",
+  "9th",
+  "10th",
+  "11th",
+  "12th",
+];

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Class } from "../components/TeacherDashboard/types";
 import { fetchMockClasses } from "../services/mockClassService";
 import BrightBoostRobot from "../components/BrightBoostRobot";
+import { Link } from "react-router-dom";
 
 const ClassesPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -46,9 +47,12 @@ const ClassesPage: React.FC = () => {
               className="bg-white rounded-lg shadow-md p-6 border border-gray-100"
             >
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-brightboost-navy">
-                  {cls.name}
-                </h3>
+                <div className="py-2">
+                <Link to={`/teacher/classes/${cls.id}`} className="text-lg font-semibold text-brightboost-navy underline">
+                    {cls.name}
+                </Link>
+                </div>
+                <p className="text-sm text-gray-500">Grade: {cls.grade ?? "N/A"}</p>
                 <p className="text-sm text-gray-500">Class ID: {cls.id}</p>
               </div>
               {cls.students.length === 0 ? (
