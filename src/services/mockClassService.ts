@@ -1,7 +1,7 @@
 import { Class } from "../components/TeacherDashboard/types";
 
 // Source of truth for all mock class data
-let mockClasses: Class[] = [
+const mockClasses: Class[] = [
   {
     id: "class-001",
     name: "Quantum Basics",
