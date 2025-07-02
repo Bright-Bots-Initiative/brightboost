@@ -9,16 +9,22 @@ const TeacherClassDetail: React.FC = () => {
   const [editingName, setEditingName] = useState("");
   const [editingGrade, setEditingGrade] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
-      fetchMockClassById(id).then((cls) => {
-        setClassData(cls);
-        setEditingName(cls.name);
-        setEditingGrade(cls.grade ?? "");
+      fetchMockClassById(id)
+        .then((cls) => {
+          setClassData(cls);
+          setEditingName(cls.name);
+          setEditingGrade(cls.grade ?? "");
+      })
+        .catch(() => {
+          setClassData(null);
+          setError("Class not found");
       });
-    }
-  }, [id]);
+  }
+}, [id]);
 
   const handleSave = async () => {
     if (!classData) return;
@@ -30,6 +36,20 @@ const TeacherClassDetail: React.FC = () => {
     });
     setIsSaving(false);
   };
+
+  // Filler error handling
+  if (error) {
+    return (
+      <div className="flex justify-center items-start w-full p-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600">404: Class Not Found</h2>
+          <p className="text-gray-600 mt-2">
+            The class you're looking for doesn't exist or was removed.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!classData) {
     return <p className="ml-64 p-6 text-gray-500">Loading class details...</p>;
