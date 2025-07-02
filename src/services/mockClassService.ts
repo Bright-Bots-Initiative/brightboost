@@ -19,7 +19,7 @@ const mockClasses: Class[] = [
   },
 ];
 
-// Return entire list (used by TeacherClasses.tsx)
+// Outputs entire list (used by TeacherClasses.tsx)
 export const fetchMockClasses = async (): Promise<Class[]> => {
   await new Promise((res) => setTimeout(res, 500));
   return mockClasses.map((cls) => ({
@@ -28,7 +28,7 @@ export const fetchMockClasses = async (): Promise<Class[]> => {
 }));
 };
 
-// Return one class by ID (used by TeacherClassDetail.tsx)
+// Outputs one class by ID (used by TeacherClassDetail.tsx)
 export const fetchMockClassById = async (id: string): Promise<Class> => {
   await new Promise((res) => setTimeout(res, 300));
   const cls = mockClasses.find((c) => c.id === id);
