@@ -54,14 +54,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* <Route
-                path="/teacher/classes"
-                element={
-                  <ProtectedRoute requiredRole="TEACHER">
-                    <TeacherClasses />
-                  </ProtectedRoute>
-                }
-              /> */}
               <Route
                 path="/teacher/classes"
                 element={
