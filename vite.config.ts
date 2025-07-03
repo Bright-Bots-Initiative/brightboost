@@ -28,11 +28,18 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: mode === 'development',
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ['**/__tests__/**', '**/test/**']
+      external: ['**/__tests__/**', '**/test/**', '**/stories/**'],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@dnd-kit/core', '@dnd-kit/sortable']
+        }
+      }
     }
   }
 }));

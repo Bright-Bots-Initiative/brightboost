@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+// import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
 import GameBackground from '../components/GameBackground';
@@ -40,7 +40,7 @@ const TeacherLogin: React.FC = () => {
         <div className="game-card p-6 w-full max-w-md">
           <div className="flex items-center gap-2 mb-4">
             <Link to="/login" className="text-brightboost-blue hover:text-brightboost-navy">
-              <ArrowLeft className="h-5 w-5" />
+              <span className="text-lg">←</span>
             </Link>
             <h1 className="text-2xl font-bold text-brightboost-navy">Teacher Login</h1>
           </div>
