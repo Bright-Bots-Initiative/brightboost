@@ -1,0 +1,13 @@
+{
+  "message": "Teacher account created successfully",
+  "user": {
+    "id": 1,
+    "name": "John Teacher",
+    "email": "john.teacher@example.com",
+    "role": "TEACHER",
+    "school": null,
+    "subject": null,
+    "createdAt": "2025-06-12T01:00:00.000Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG4gVGVhY2hlciIsImVtYWlsIjoiam9obi50ZWFjaGVyQGV4YW1wbGUuY29tIiwicm9sZSI6IlRFQUNIRVIiLCJpYXQiOjE2MjM0NTY3ODksImV4cCI6MTYyMzU0MzE4OX0.mock-signature"
+}

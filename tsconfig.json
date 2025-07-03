@@ -26,5 +26,16 @@
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "src/components/ui/**", "src/stories/**"]
+  "exclude": [
+    "node_modules",
+    "src/components/ui/**",
+    "src/stories/**",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/test",
+    "setupTests.ts",
+    "vitest.d.ts",
+    "src/lambda"
+  ]
 }
