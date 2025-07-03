@@ -1,5 +1,5 @@
-// src/pages/Profile.tsx
-import { useEffect, useState, useCallback } from "react";
+// src/pages/edit-profile.tsx
+import { useCallback } from "react";
 import { useApi } from "../services/api";
 
 const Edit = () => {
@@ -16,8 +16,7 @@ const Edit = () => {
         school: school,
         subject: subject
     };
-    const payload = JSON.stringify(data);
-    const response = await api.post("/edit-profile", payload);
+    const response = await api.post("/edit-profile", data);
     console.log(response);
   }, [api]);
   return (
