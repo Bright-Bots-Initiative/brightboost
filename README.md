@@ -276,6 +276,13 @@ BrightBoost includes comprehensive testing:
 - **E2E Tests**: End-to-end workflows with Cypress
 - **Linting**: Code quality checks with ESLint
 
+## STEM-1-MVP Environment
+
+For the stem-1-mvp delivery lane, add the following secret to GitHub repository settings:
+- `STEM1_MVP_SWA_TOKEN`: Azure Static Web App deployment token for brightboost-stem1-mvp
+
+The staging environment will be available at: `https://brightboost-stem1-mvp.azurestaticapps.net`
+
 ```bash
 # Run all tests
 npm test
