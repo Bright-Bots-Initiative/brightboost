@@ -19,24 +19,21 @@ const MainContent: React.FC<MainContentProps> = ({
 
   return (
     <div className="flex-grow p-6 ml-64">
-      <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">
-        Lessons
-      </h2>
+      <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Lessons</h2>
 
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-4">Lessons Management</h3>
-          <p className="text-gray-600 mb-4">
-            You have {lessonsData.length} lessons available.
-          </p>
-          <LessonsTable
-            lessons={lessonsData}
-            setLessons={setLessonsData}
-            onEditLesson={openEditForm}
-            onDuplicateLesson={handleDuplicateLesson}
-            onDeleteLesson={onDeleteLesson}
-          />
-        </div>
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-xl font-semibold mb-4">Lessons Management</h3>
+        <p className="text-gray-600 mb-4">
+          You have {lessonsData.length} lessons available.
+        </p>
+        <LessonsTable
+          lessons={lessonsData}
+          setLessons={setLessonsData}
+          onEditLesson={openEditForm}
+          onDuplicateLesson={handleDuplicateLesson}
+          onDeleteLesson={onDeleteLesson}
+        />
+      </div>
     </div>
   );
 };

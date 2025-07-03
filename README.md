@@ -44,6 +44,7 @@ This project is built with a modern web technology stack:
   - `bcryptjs` for password hashing
 
 **Architecture:** Frontend: Azure Static Web Apps | Backend: AWS Lambda + API Gateway | Database: Aurora PostgreSQL (RDS)
+
 - **Testing:**
   - Vitest (for unit/integration tests)
   - Cypress (for End-to-End tests)

@@ -14,7 +14,9 @@ This guide will help you run BrightBoost locally with a temporary database.
 ## AWS Installations:
 
 - Globally: install AWS SAM CLI
+
   - For MacOS:
+
   ```
   brew tap aws/tap
   brew install aws-sam-cli
@@ -23,6 +25,7 @@ This guide will help you run BrightBoost locally with a temporary database.
   - For Linux: `chmod +x sam-install.sh && ./sam-install.sh`
   - For Windows: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
     For issues, check docs: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
+
 - Navigate to `src/lambda`:
   - Run `npm install aws-lambda @aws-sdk/client-secrets-manager pg bcryptjs jsonwebtoken`
 

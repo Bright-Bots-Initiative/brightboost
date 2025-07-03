@@ -4,7 +4,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 
-
 // Import home page eagerly for fast initial render
 import Index from "./pages/Index";
 
@@ -12,7 +11,9 @@ const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
 const TeacherClasses = lazy(() => import("./pages/TeacherClasses"));
 const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
-const TeacherLayout = lazy(() => import("./components/TeacherDashboard/TeacherLayout"));
+const TeacherLayout = lazy(
+  () => import("./components/TeacherDashboard/TeacherLayout"),
+);
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 const StudentLogin = lazy(() => import("./pages/StudentLogin"));
@@ -65,9 +66,9 @@ function App() {
                 path="/teacher/classes"
                 element={
                   <ProtectedRoute requiredRole="TEACHER">
-                  <TeacherLayout>
-                    <TeacherClasses />
-                  </TeacherLayout>
+                    <TeacherLayout>
+                      <TeacherClasses />
+                    </TeacherLayout>
                   </ProtectedRoute>
                 }
               />
@@ -75,9 +76,9 @@ function App() {
                 path="/teacher/classes/:id"
                 element={
                   <ProtectedRoute requiredRole="TEACHER">
-                  <TeacherLayout>
-                    <TeacherClassDetail />
-                  </TeacherLayout>
+                    <TeacherLayout>
+                      <TeacherClassDetail />
+                    </TeacherLayout>
                   </ProtectedRoute>
                 }
               />

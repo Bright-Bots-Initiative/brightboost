@@ -23,9 +23,9 @@ const mockClasses: Class[] = [
 export const fetchMockClasses = async (): Promise<Class[]> => {
   await new Promise((res) => setTimeout(res, 500));
   return mockClasses.map((cls) => ({
-  ...cls,
-  students: [...cls.students],
-}));
+    ...cls,
+    students: [...cls.students],
+  }));
 };
 
 // Outputs one class by ID (used by TeacherClassDetail.tsx)

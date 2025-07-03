@@ -6,7 +6,9 @@ import GameBackground from "../GameBackground";
 import Sidebar from "./Sidebar";
 import TeacherNavbar from "./TeacherNavbar";
 
-const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -18,7 +20,10 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <TeacherNavbar userName={user?.name || "Teacher"} onLogout={handleLogout} />
+        <TeacherNavbar
+          userName={user?.name || "Teacher"}
+          onLogout={handleLogout}
+        />
         <Sidebar />
         <main className="flex-grow ml-64 p-6">{children}</main>
       </div>

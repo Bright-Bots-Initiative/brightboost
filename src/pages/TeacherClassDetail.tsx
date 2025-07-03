@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Class, gradeOptions } from "../components/TeacherDashboard/types";
-import { fetchMockClassById, patchMockClass } from "../services/mockClassService";
+import {
+  fetchMockClassById,
+  patchMockClass,
+} from "../services/mockClassService";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams();
@@ -18,18 +21,22 @@ const TeacherClassDetail: React.FC = () => {
           setClassData(cls);
           setEditingName(cls.name);
           setEditingGrade(cls.grade ?? "");
-      })
+        })
         .catch(() => {
           setClassData(null);
           setError("Class not found");
-      });
-  }
-}, [id]);
+        });
+    }
+  }, [id]);
 
   const handleSave = async () => {
     if (!classData) return;
     setIsSaving(true);
-    setClassData({ ...classData, name: editingName, grade: editingGrade as Class["grade"]});
+    setClassData({
+      ...classData,
+      name: editingName,
+      grade: editingGrade as Class["grade"],
+    });
     await patchMockClass(classData.id, {
       name: editingName,
       grade: editingGrade as Class["grade"],
@@ -42,7 +49,9 @@ const TeacherClassDetail: React.FC = () => {
     return (
       <div className="flex justify-center items-start w-full p-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">404: Class Not Found</h2>
+          <h2 className="text-2xl font-bold text-red-600">
+            404: Class Not Found
+          </h2>
           <p className="text-gray-600 mt-2">
             The class you're looking for doesn't exist or was removed.
           </p>
@@ -78,7 +87,7 @@ const TeacherClassDetail: React.FC = () => {
               onChange={(e) => setEditingGrade(e.target.value)}
               className="mt-1 p-2 border rounded w-full"
             >
-            <option value="">Select grade</option>
+              <option value="">Select grade</option>
               {gradeOptions.map((grade) => (
                 <option key={grade} value={grade}>
                   {grade}
@@ -117,7 +126,9 @@ const TeacherClassDetail: React.FC = () => {
                   <td className="py-2">{student.id}</td>
                   <td className="py-2">{student.name}</td>
                   <td className="py-2">
-                    {student.email ?? <span className="text-gray-400 italic">N/A</span>}
+                    {student.email ?? (
+                      <span className="text-gray-400 italic">N/A</span>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -57,15 +57,11 @@ vi.mock("../../components/BrightBoostRobot", () => ({
 }));
 
 vi.mock("../../components/TeacherDashboard/Sidebar", () => ({
-  default: () => (
-    <div data-testid="sidebar">Sidebar</div>
-  ),
+  default: () => <div data-testid="sidebar">Sidebar</div>,
 }));
 
 vi.mock("../../components/TeacherDashboard/MainContent", () => ({
-  default: () => (
-    <div data-testid="main-content">MainContent</div>
-  ),
+  default: () => <div data-testid="main-content">MainContent</div>,
 }));
 
 describe("TeacherDashboard", () => {
