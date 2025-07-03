@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ['**/__tests__/**', '**/test/**', '**/stories/**'],
+      external: ['**/__tests__/**', '**/test/**', '**/stories/**', '**/components/ui/**'],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
