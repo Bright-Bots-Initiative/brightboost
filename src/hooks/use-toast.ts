@@ -1,7 +1,7 @@
 export function useToast() {
   return {
     toasts: [],
-    toast: () => ({
+    toast: (_props?: any) => ({
       id: '',
       dismiss: () => {},
       update: () => {},
@@ -10,7 +10,7 @@ export function useToast() {
   }
 }
 
-export function toast() {
+export function toast(_props?: any) {
   return {
     id: '',
     dismiss: () => {},
