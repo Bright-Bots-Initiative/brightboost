@@ -209,6 +209,76 @@ Resources:
             Method: get
             RestApiId: !Ref AuthApi
 
+    ProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/profile.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        ProfileApi:
+          Type: Api
+          Properties:
+            Path: /api/profile
+            Method: get
+            RestApiId: !Ref AuthApi
+    
+    EditProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/edit-profile.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        ProfileApi:
+          Type: Api
+          Properties:
+            Path: /api/edit-profile
+            Method: get
+            RestApiId: !Ref AuthApi
+
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -258,3 +328,11 @@ Outputs:
   TeacherDashboardFunctionArn:
     Description: "Teacher Dashboard Lambda Function ARN"
     Value: !GetAtt TeacherDashboardFunction.Arn
+
+  ProfileDashboardFunctionArn:
+    Description: "Profile Lambda Function ARN"
+    Value: !GetAtt ProfileFunction.Arn
+
+  EditProfileFunctionArn:
+    Description: "Edit Profile Lambda Function ARN"
+    Value: !GetAtt EditProfileFunction.Arn
