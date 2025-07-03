@@ -276,7 +276,7 @@ Resources:
           Type: Api
           Properties:
             Path: /api/edit-profile
-            Method: get
+            Method: post
             RestApiId: !Ref AuthApi
 
   AuthApi:
