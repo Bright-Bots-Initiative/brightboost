@@ -14,7 +14,6 @@ const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
   const api = useApi();
 
-  const [activeView, setActiveView] = useState<string>("Lessons");
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +170,6 @@ const TeacherDashboard: React.FC = () => {
         )}
         {!isLoading && !error && lessonsData.length > 0 && (
           <MainContent
-            activeView={activeView}
             lessonsData={lessonsData}
             setLessonsData={setLessonsData}
             onAddLesson={handleAddLesson}

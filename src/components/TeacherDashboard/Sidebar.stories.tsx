@@ -11,28 +11,3 @@ const meta: Meta<typeof Sidebar> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Sidebar>;
-
-export const Default: Story = {
-  args: {
-    activeView: "Lessons",
-    setActiveView: (view: string) =>
-      console.log(`Active view changed to: ${view}`),
-  },
-};
-
-export const StudentsActive: Story = {
-  args: {
-    activeView: "Students",
-    setActiveView: (view: string) =>
-      console.log(`Active view changed to: ${view}`),
-  },
-};
-
-export const SettingsActive: Story = {
-  args: {
-    activeView: "Settings",
-    setActiveView: (view: string) =>
-      console.log(`Active view changed to: ${view}`),
-  },
-};

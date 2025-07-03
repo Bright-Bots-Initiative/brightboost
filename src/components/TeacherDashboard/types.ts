@@ -7,12 +7,6 @@ export interface Lesson {
   content?: string; // Add content property
 }
 
-/* old SidebarProps, deprecated and no longer needed
-export interface SidebarProps {
-  activeView: string;
-  setActiveView: (view: string) => void;
-}*/
-
 export interface SortableLessonRowProps {
   lesson: Lesson;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
@@ -29,12 +23,11 @@ export interface LessonsTableProps {
 }
 
 export interface MainContentProps {
-  activeView: string;
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void; // Add this prop
-  onEditLesson: (lesson: Lesson) => void; // Add this prop
-  onDeleteLesson: (id: Lesson["id"]) => void; // Add this prop
+  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void;
+  onEditLesson: (lesson: Lesson) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
 export type Student = {

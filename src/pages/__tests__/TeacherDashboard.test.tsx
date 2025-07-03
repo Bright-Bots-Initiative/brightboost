@@ -57,18 +57,14 @@ vi.mock("../../components/BrightBoostRobot", () => ({
 }));
 
 vi.mock("../../components/TeacherDashboard/Sidebar", () => ({
-  default: ({ activeView }) => (
-    <div data-testid="sidebar">
-      <div data-testid="active-view">{activeView}</div>
-    </div>
+  default: () => (
+    <div data-testid="sidebar">Sidebar</div>
   ),
 }));
 
 vi.mock("../../components/TeacherDashboard/MainContent", () => ({
-  default: ({ activeView }) => (
-    <div data-testid="main-content">
-      <div data-testid="content-view">{activeView}</div>
-    </div>
+  default: () => (
+    <div data-testid="main-content">MainContent</div>
   ),
 }));
 
@@ -102,8 +98,6 @@ describe("TeacherDashboard", () => {
 
     expect(screen.getByTestId("game-background")).toBeDefined();
     expect(screen.getByTestId("sidebar")).toBeDefined();
-
-    expect(screen.getByTestId("active-view").textContent).toBe("Lessons");
 
     const loadingElement = screen.queryByText("Loading dashboard data...");
     const mainContentElement = screen.queryByTestId("main-content");
