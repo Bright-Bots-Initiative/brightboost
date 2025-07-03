@@ -20,6 +20,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
@@ -36,6 +37,7 @@ function App() {
         <Route path="/teacher/signup" element={<TeacherSignup />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
+        <Route path="/quest/:id" element={<QuestRouter />} />
 
         {/* Protected routes */}
         <Route
