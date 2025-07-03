@@ -94,6 +94,22 @@ app.post('/auth/signup', (req, res) => {
   });
 });
 
+app.get('/api/gamification/streak', (req, res) => {
+  const mockData = {
+    "xp": 150,
+    "badges": ["First Steps", "Quick Learner"],
+    "streakDays": 7
+  };
+  
+  res.json(mockData);
+});
+
+app.all('/api/gamification/streak', (req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+});
+
 // Serve static files
 app.use(express.static(join(__dirname, 'dist')));
 
