@@ -6,7 +6,7 @@ Parameters:
   Environment:
     Type: String
     Default: dev
-    AllowedValues: [dev, staging, prod]
+    AllowedValues: [dev, staging, prod, local]
 
   DatabaseSecretArn:
     Type: String
@@ -174,6 +174,41 @@ Resources:
             Method: get
             RestApiId: !Ref AuthApi
 
+  TeacherDashboardFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-teacher-dashboard-fn"
+      CodeUri: src/lambda/
+      Handler: dist/teacher-dashboard.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        TeacherDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/teacher/dashboard
+            Method: get
+            RestApiId: !Ref AuthApi
+
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -181,7 +216,7 @@ Resources:
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,x-api-key'"
-        AllowOrigin: "'http://localhost:5173,https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net'"
+        AllowOrigin: "'https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net'"
 
 Outputs:
   TeacherSignupApiUrl:
@@ -215,3 +250,11 @@ Outputs:
   StudentDashboardFunctionArn:
     Description: "Student Dashboard Lambda Function ARN"
     Value: !GetAtt StudentDashboardFunction.Arn
+
+  TeacherDashboardApiUrl:
+    Description: "API Gateway endpoint URL for Teacher Dashboard function"
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/api/teacher/dashboard"
+
+  TeacherDashboardFunctionArn:
+    Description: "Teacher Dashboard Lambda Function ARN"
+    Value: !GetAtt TeacherDashboardFunction.Arn

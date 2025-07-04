@@ -1,5 +1,11 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
 interface User {
