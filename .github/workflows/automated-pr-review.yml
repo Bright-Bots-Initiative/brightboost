@@ -2,13 +2,13 @@ name: Automated PR Review and Merge
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Run in dry-run mode (no actual merges or reviews)'
+        description: "Run in dry-run mode (no actual merges or reviews)"
         required: false
-        default: 'true'
+        default: "true"
         type: boolean
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
             let apiCalls = 0;
             const actionablePRs = [];
             const skippedPRs = [];
-            
+
             try {
               // Get all open PRs
               const { data: prs } = await github.rest.pulls.list({
@@ -184,13 +184,13 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ matrix.pr.number }}
             });
-            
+
             if (pr.head.sha !== '${{ matrix.pr.sha }}') {
               console.log(`SHA mismatch detected. Expected: ${{ matrix.pr.sha }}, Current: ${pr.head.sha}`);
               core.setOutput('sha-changed', 'true');
               return;
             }
-            
+
             core.setOutput('sha-changed', 'false');
             core.setOutput('current-sha', pr.head.sha);
 
@@ -407,7 +407,7 @@ jobs:
         run: |
           timestamp=$(date -u +%Y-%m-%d-%H%M)
           report_file="bot-run-${timestamp}.json"
-          
+
           # Initialize report structure
           cat > $report_file << EOF
           {
@@ -420,14 +420,14 @@ jobs:
             "handled_prs": []
           }
           EOF
-          
+
           # Add processed PR results if they exist
           if [ -d "/tmp/pr-results" ] && [ "$(ls -A /tmp/pr-results 2>/dev/null)" ]; then
             echo "Adding processed PR results..."
             jq '.handled_prs = [inputs]' $report_file /tmp/pr-results/*.json > temp_report.json
             mv temp_report.json $report_file
           fi
-          
+
           echo "Generated report: $report_file"
           cat $report_file | jq .
 
@@ -438,25 +438,40 @@ jobs:
           path: bot-run-*.json
 
       - name: Create workflow summary
+        shell: bash
         run: |
-          echo "## Automated PR Review Run Summary" >> $GITHUB_STEP_SUMMARY
-          echo "**Run Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
-          echo "**Dry Run:** ${{ github.event.inputs.dry_run || 'true' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Total Open PRs:** ${{ needs.enumerate-prs.outputs.total-prs || 0 }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Actionable PRs:** $(echo '${{ needs.enumerate-prs.outputs.actionable-prs }}' | jq length)" >> $GITHUB_STEP_SUMMARY
-          echo "**API Calls Used:** ${{ needs.enumerate-prs.outputs.api-calls || 0 }}/${{ env.MAX_API_CALLS }}" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ github.event.inputs.dry_run }}" != "true" ] && [ "${{ needs.enumerate-prs.outputs.actionable-prs }}" != "[]" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Processing Results:" >> $GITHUB_STEP_SUMMARY
-            if [ -d "/tmp/pr-results" ] && [ "$(ls -A /tmp/pr-results 2>/dev/null)" ]; then
-              for result_file in /tmp/pr-results/*.json; do
-                if [ -f "$result_file" ]; then
-                  pr_num=$(jq -r '.number' "$result_file")
-                  action=$(jq -r '.action' "$result_file")
-                  title=$(jq -r '.title' "$result_file")
-                  echo "- PR #${pr_num}: ${action} - ${title}" >> $GITHUB_STEP_SUMMARY
-                fi
-              done
+          {
+            echo "## Automated PR Review Run Summary"
+            echo
+            echo "**Run Time:** $(date -u)"
+            echo "**Dry Run:** ${{ github.event.inputs.dry_run || 'true' }}"
+            echo "**Total Open PRs:** ${{ needs.enumerate-prs.outputs.total-prs || 0 }}"
+            
+            # Calculate actionable PRs count safely
+            actionable_prs='${{ needs.enumerate-prs.outputs.actionable-prs }}'
+            if [[ -n "$actionable_prs" && "$actionable_prs" != "null" ]]; then
+              actionable_count=$(echo "$actionable_prs" | jq length 2>/dev/null || echo "0")
+            else
+              actionable_count="0"
             fi
-          fi
+            echo "**Actionable PRs:** $actionable_count"
+            
+            echo "**API Calls Used:** ${{ needs.enumerate-prs.outputs.api-calls || 0 }}/${{ env.MAX_API_CALLS }}"
+            
+            # Only show processing results if not in dry-run mode and there are actionable PRs
+            dry_run_mode="${{ github.event.inputs.dry_run || 'true' }}"
+            if [[ "$dry_run_mode" != "true" && "$actionable_prs" != "[]" && -n "$actionable_prs" ]]; then
+              echo
+              echo "### Processing Results:"
+              if [[ -d "/tmp/pr-results" && -n "$(ls -A /tmp/pr-results 2>/dev/null)" ]]; then
+                for result_file in /tmp/pr-results/*.json; do
+                  if [[ -f "$result_file" ]]; then
+                    pr_num=$(jq -r '.number' "$result_file" 2>/dev/null || echo "unknown")
+                    action=$(jq -r '.action' "$result_file" 2>/dev/null || echo "unknown")
+                    title=$(jq -r '.title' "$result_file" 2>/dev/null || echo "unknown")
+                    echo "- PR #${pr_num}: ${action} - ${title}"
+                  fi
+                done
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

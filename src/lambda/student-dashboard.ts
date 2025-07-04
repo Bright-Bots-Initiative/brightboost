@@ -86,12 +86,14 @@ export const handler = async (
     "http://localhost:5173",
     "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
   ];
-  
+
   const origin = event.headers.origin || event.headers.Origin || "";
-  
+
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[1],
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[1],
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };

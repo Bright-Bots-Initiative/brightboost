@@ -57,6 +57,7 @@ Based on repository analysis, the following components contribute to the oversiz
 ### Phase 1: Critical Size Reduction (Estimated savings: 440-460 MB)
 
 #### 1. Fix Deployment Artifact Selection
+
 - **Action**: Configure deployment to only include `dist/` directory contents
 - **Implementation**: Add proper Azure Static Web Apps configuration
 - **Estimated savings**: 451 MB (node_modules exclusion)
@@ -64,6 +65,7 @@ Based on repository analysis, the following components contribute to the oversiz
 - **Files to modify**: Create `staticwebapp.config.json`, update deployment scripts
 
 #### 2. Disable Production Source Maps
+
 - **Action**: Set `sourcemap: false` for production builds in `vite.config.ts`
 - **Implementation**: Modify build configuration to conditionally disable source maps
 - **Estimated savings**: 15-25 MB
@@ -71,6 +73,7 @@ Based on repository analysis, the following components contribute to the oversiz
 - **Files to modify**: `vite.config.ts`
 
 #### 3. Exclude Storybook from Production Build
+
 - **Action**: Configure Vite to exclude `src/stories/` from production builds
 - **Implementation**: Add exclude patterns to `vite.config.ts` rollupOptions
 - **Estimated savings**: 10-15 MB
@@ -80,6 +83,7 @@ Based on repository analysis, the following components contribute to the oversiz
 ### Phase 2: Optimization and Code Splitting (Estimated savings: 5-15 MB)
 
 #### 4. Implement Route-Based Code Splitting
+
 - **Action**: Split main application routes into separate chunks
 - **Implementation**: Use React.lazy() for page components
 - **Estimated savings**: 3-8 MB (through better caching and loading)
@@ -87,6 +91,7 @@ Based on repository analysis, the following components contribute to the oversiz
 - **Files to modify**: `src/App.tsx`, route components
 
 #### 5. Tree Shake UI Component Library
+
 - **Action**: Configure Vite to tree-shake unused UI components
 - **Implementation**: Optimize imports and add tree-shaking configuration
 - **Estimated savings**: 2-7 MB
@@ -94,6 +99,7 @@ Based on repository analysis, the following components contribute to the oversiz
 - **Files to modify**: Component imports throughout codebase
 
 #### 6. Optimize Asset Loading
+
 - **Action**: Implement lazy loading for images and large assets
 - **Implementation**: Add dynamic imports for non-critical assets
 - **Estimated savings**: 1-3 MB
@@ -103,6 +109,7 @@ Based on repository analysis, the following components contribute to the oversiz
 ### Phase 3: Build Process Hardening (Estimated savings: 0 MB, prevention focused)
 
 #### 7. Add Bundle Size CI Guard
+
 - **Action**: Implement automated bundle size checking in CI/CD
 - **Implementation**: Add script to fail builds if `dist/` exceeds 400 MB
 - **Estimated savings**: 0 MB (prevention only)
@@ -110,6 +117,7 @@ Based on repository analysis, the following components contribute to the oversiz
 - **Files to create**: `.github/workflows/bundle-size-check.yml`
 
 #### 8. Bundle Analysis Integration
+
 - **Action**: Add bundle analyzer to build process
 - **Implementation**: Configure Vite bundle analyzer for ongoing monitoring
 - **Estimated savings**: 0 MB (monitoring only)
@@ -121,6 +129,7 @@ Based on repository analysis, the following components contribute to the oversiz
 ### Step 1: Azure Static Web Apps Configuration
 
 Create `staticwebapp.config.json`:
+
 ```json
 {
   "routes": [
@@ -146,38 +155,39 @@ Create `staticwebapp.config.json`:
 ### Step 2: Vite Configuration Updates
 
 Modify `vite.config.ts`:
+
 ```typescript
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    mode === 'development' && componentTagger(),
-  ].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean,
+  ),
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
-    outDir: 'dist',
-    sourcemap: mode === 'development', // Disable in production
+    outDir: "dist",
+    sourcemap: mode === "development", // Disable in production
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ['**/__tests__/**', '**/test/**', '**/stories/**'],
+      external: ["**/__tests__/**", "**/test/**", "**/stories/**"],
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@dnd-kit/core', '@dnd-kit/sortable']
-        }
-      }
-    }
-  }
+          vendor: ["react", "react-dom"],
+          router: ["react-router-dom"],
+          ui: ["@dnd-kit/core", "@dnd-kit/sortable"],
+        },
+      },
+    },
+  },
 }));
 ```
 
 ### Step 3: CI Bundle Size Guard
 
 Create `.github/workflows/bundle-size-check.yml`:
+
 ```yaml
 name: Bundle Size Check
 on: [push, pull_request]
@@ -188,7 +198,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm ci
       - run: npm run build
       - name: Check bundle size
@@ -206,13 +216,13 @@ jobs:
 
 ### Size Reduction Summary
 
-| Phase | Action | Current Size | Projected Size | Savings |
-|-------|--------|-------------|----------------|---------|
-| Baseline | Current state | ~500 MB | ~500 MB | 0 MB |
-| Phase 1.1 | Exclude node_modules | ~500 MB | ~49 MB | 451 MB |
-| Phase 1.2 | Disable source maps | ~49 MB | ~24-34 MB | 15-25 MB |
-| Phase 1.3 | Exclude Storybook | ~24-34 MB | ~14-19 MB | 10-15 MB |
-| Phase 2 | Code splitting & optimization | ~14-19 MB | ~8-11 MB | 6-8 MB |
+| Phase     | Action                        | Current Size | Projected Size | Savings  |
+| --------- | ----------------------------- | ------------ | -------------- | -------- |
+| Baseline  | Current state                 | ~500 MB      | ~500 MB        | 0 MB     |
+| Phase 1.1 | Exclude node_modules          | ~500 MB      | ~49 MB         | 451 MB   |
+| Phase 1.2 | Disable source maps           | ~49 MB       | ~24-34 MB      | 15-25 MB |
+| Phase 1.3 | Exclude Storybook             | ~24-34 MB    | ~14-19 MB      | 10-15 MB |
+| Phase 2   | Code splitting & optimization | ~14-19 MB    | ~8-11 MB       | 6-8 MB   |
 
 **Final projected bundle size: 8-11 MB**
 
@@ -221,15 +231,18 @@ This represents a **98% reduction** from the current 500 MB, well under the 300 
 ## Risk Assessment
 
 ### Low Risk
+
 - Source map disabling (no impact on production functionality)
 - Storybook exclusion (dev-only content)
 - Bundle size CI guard (prevention only)
 
 ### Medium Risk
+
 - Code splitting implementation (requires testing of lazy loading)
 - Tree shaking optimization (potential for over-aggressive removal)
 
 ### Mitigation Strategies
+
 - Implement changes incrementally with testing at each phase
 - Maintain comprehensive test coverage during optimization
 - Use feature flags for gradual rollout of code splitting
@@ -237,6 +250,7 @@ This represents a **98% reduction** from the current 500 MB, well under the 300 
 ## Compliance with Azure Static Web Apps Standard Tier
 
 All proposed changes are compatible with Azure Static Web Apps Standard tier:
+
 - No tier upgrade required
 - No additional services needed
 - Standard build process optimization only
@@ -245,12 +259,14 @@ All proposed changes are compatible with Azure Static Web Apps Standard tier:
 ## Monitoring and Prevention
 
 ### Ongoing Bundle Size Monitoring
+
 1. **CI/CD Integration**: Automated size checks on every build
 2. **Bundle Analyzer**: Regular analysis reports for size trends
 3. **Alert Thresholds**: Warnings at 200 MB, failures at 400 MB
 4. **Documentation**: Clear guidelines for developers on bundle impact
 
 ### Developer Guidelines
+
 - Always check bundle impact of new dependencies
 - Use dynamic imports for large, optional features
 - Regularly audit and remove unused dependencies

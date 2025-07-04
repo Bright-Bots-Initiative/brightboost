@@ -1,46 +1,46 @@
 {
-    "student": "Estudiante",
-    "dashboard": {
-      "loading": "Cargando tu panel...",
-      "stillLoading": "Todavía cargando...",
-      "errorPrefix": "¡Vaya!",
-      "tryAgain": "Inténtalo de nuevo",
-      "greeting": "¡Hola, {{name}}!",
-      "readyPrompt": "¿Listo para aprender algo nuevo hoy?",
-      "role": "Explorador de Nivel",
-      "logout": "Cerrar sesión",
-      "stemCard": {
-        "title": "STEM 1",
-        "subtitle": "¡Juguemos juntos!"
-      },
-      "stem": {
-        "math": "STEM 1",
-        "science": "Laboratorio de Ciencias",
-        "coding": "Diversión con Código"
-      },
-      "wordGame": {
-        "title": "Juego de Letras"
-      },
-      "leaderboard": {
-        "title": "Tabla de Clasificación"
-      },
-      "coursesAndAssignments": "Tus Cursos y Tareas",
-      "enrolledCourses": "Cursos Inscritos",
-      "recentAssignments": "Tareas Recientes",
-      "grade": "Grado",
-      "teacher": "Profesor",
-      "due": "Fecha de Entrega",
-      "status": {
-        "pending": "Pendiente",
-        "completed": "Completado"
-      },
-      "noData": "¡Comienza tu primera misión!",
-      "startLearning": "Comenzar Aprendizaje",
-      "viewProgress": "Ver Progreso",
+  "student": "Estudiante",
+  "dashboard": {
+    "loading": "Cargando tu panel...",
+    "stillLoading": "Todavía cargando...",
+    "errorPrefix": "¡Vaya!",
+    "tryAgain": "Inténtalo de nuevo",
+    "greeting": "¡Hola, {{name}}!",
+    "readyPrompt": "¿Listo para aprender algo nuevo hoy?",
+    "role": "Explorador de Nivel",
+    "logout": "Cerrar sesión",
+    "stemCard": {
+      "title": "STEM 1",
+      "subtitle": "¡Juguemos juntos!"
+    },
+    "stem": {
+      "math": "STEM 1",
+      "science": "Laboratorio de Ciencias",
+      "coding": "Diversión con Código"
+    },
+    "wordGame": {
+      "title": "Juego de Letras"
+    },
+    "leaderboard": {
+      "title": "Tabla de Clasificación"
+    },
+    "coursesAndAssignments": "Tus Cursos y Tareas",
+    "enrolledCourses": "Cursos Inscritos",
+    "recentAssignments": "Tareas Recientes",
+    "grade": "Grado",
+    "teacher": "Profesor",
+    "due": "Fecha de Entrega",
+    "status": {
+      "pending": "Pendiente",
+      "completed": "Completado"
+    },
+    "noData": "¡Comienza tu primera misión!",
+    "startLearning": "Comenzar Aprendizaje",
+    "viewProgress": "Ver Progreso",
 
     "language": {
-    "switchToSpanish": "Cambiar a español",
-    "switchToEnglish": "Cambiar a inglés"
+      "switchToSpanish": "Cambiar a español",
+      "switchToEnglish": "Cambiar a inglés"
     }
-    }
+  }
 }
