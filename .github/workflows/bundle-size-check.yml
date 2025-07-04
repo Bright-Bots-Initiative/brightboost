@@ -9,6 +9,8 @@ jobs:
         with:
           node-version: '18'
       - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
       - run: npm run build
       - name: Check bundle size
         run: |
