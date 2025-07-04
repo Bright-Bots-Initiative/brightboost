@@ -36,7 +36,7 @@ const ClassesPage: React.FC = () => {
       <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Classes</h2>
       <button
           onClick={() => setIsImportModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors mb-4"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import from CSV
