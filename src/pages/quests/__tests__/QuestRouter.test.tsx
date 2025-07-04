@@ -34,4 +34,16 @@ describe('QuestRouter', () => {
     );
     expect(screen.getByTestId('quest-placeholder')).toHaveTextContent('QuestPlaceholder 0');
   });
+
+  it('redirects unknown high quest IDs to quest/0', () => {
+    render(
+      <MemoryRouter initialEntries={['/quest/999']}>
+        <Routes>
+          <Route path="/quest/:id" element={<QuestRouter />} />
+          <Route path="/quest/0" element={<div data-testid="quest-placeholder">QuestPlaceholder 0</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('quest-placeholder')).toHaveTextContent('QuestPlaceholder 0');
+  });
 });

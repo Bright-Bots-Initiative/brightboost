@@ -6,7 +6,7 @@ const QuestRouter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   
   const questId = id ? parseInt(id, 10) : NaN;
-  if (isNaN(questId) || questId < 0) {
+  if (isNaN(questId) || questId < 0 || questId > 10) {
     return <Navigate to="/quest/0" replace />;
   }
 
