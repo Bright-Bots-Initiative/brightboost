@@ -7,11 +7,6 @@ export interface Lesson {
   content?: string; // Add content property
 }
 
-export interface SidebarProps {
-  activeView: string;
-  setActiveView: (view: string) => void;
-}
-
 export interface SortableLessonRowProps {
   lesson: Lesson;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
@@ -28,10 +23,53 @@ export interface LessonsTableProps {
 }
 
 export interface MainContentProps {
-  activeView: string;
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void; // Add this prop
-  onEditLesson: (lesson: Lesson) => void; // Add this prop
-  onDeleteLesson: (id: Lesson["id"]) => void; // Add this prop
+  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void;
+  onEditLesson: (lesson: Lesson) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
+
+export type Student = {
+  id: string;
+  name: string;
+  email?: string;
+};
+
+export type Class = {
+  id: string;
+  name: string;
+  grade?: Grade;
+  students: Student[];
+};
+
+export type Grade =
+  | "Kindergarten"
+  | "1st"
+  | "2nd"
+  | "3rd"
+  | "4th"
+  | "5th"
+  | "6th"
+  | "7th"
+  | "8th"
+  | "9th"
+  | "10th"
+  | "11th"
+  | "12th";
+
+export const gradeOptions: Grade[] = [
+  "Kindergarten",
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
+  "5th",
+  "6th",
+  "7th",
+  "8th",
+  "9th",
+  "10th",
+  "11th",
+  "12th",
+];

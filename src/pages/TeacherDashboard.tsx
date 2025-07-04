@@ -14,7 +14,6 @@ const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
   const api = useApi();
 
-  const [activeView, setActiveView] = useState<string>("Lessons");
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +141,7 @@ const TeacherDashboard: React.FC = () => {
           onLogout={handleLogout}
         />
 
-        <Sidebar activeView={activeView} setActiveView={setActiveView} />
+        <Sidebar />
 
         {isLoading && (
           <div className="flex-grow p-6 ml-64 text-center">
@@ -171,7 +170,6 @@ const TeacherDashboard: React.FC = () => {
         )}
         {!isLoading && !error && lessonsData.length > 0 && (
           <MainContent
-            activeView={activeView}
             lessonsData={lessonsData}
             setLessonsData={setLessonsData}
             onAddLesson={handleAddLesson}
