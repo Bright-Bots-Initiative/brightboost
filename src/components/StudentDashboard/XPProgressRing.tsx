@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const XPProgressRing = () => {
   const [xp, setXp] = useState<number | null>(null);
-  const [percent, setPercent] = useState(0);
+  // const [percent, setPercent] = useState(0);
   const [levelUp, setLevelUp] = useState(false);
 
   const radius = 40;
