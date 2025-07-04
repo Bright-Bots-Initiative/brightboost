@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Flame, PartyPopper } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState, useRef } from "react";
+import { Flame, PartyPopper } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StreakMeterProps {
   currentStreak: number;
@@ -41,11 +41,12 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
         setContainerWidth(containerRef.current.offsetWidth);
       }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const progress = longestStreak > 0 ? Math.min(currentStreak / longestStreak, 1) : 0;
+  const progress =
+    longestStreak > 0 ? Math.min(currentStreak / longestStreak, 1) : 0;
 
   const minLeftPx = 4; // distance from left edge
   const maxLeftPx = containerWidth - 8; // distance from right edge
@@ -53,7 +54,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
   const desiredLeftPx = progress * containerWidth;
   const clampedLeftPx = Math.min(Math.max(desiredLeftPx, minLeftPx), maxLeftPx);
 
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
   const todayIndex = new Date().getDay();
 
   return (
@@ -70,8 +71,8 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
           className="absolute z-10"
           style={{
             left: clampedLeftPx,
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
+            top: "50%",
+            transform: "translate(-50%, -50%)",
           }}
         >
           <Flame className="w-9 h-9 text-red-500 fill-orange-300 drop-shadow-md" />
@@ -81,22 +82,22 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
         <div
           className="relative h-[24px] rounded-full"
           style={{
-            background: barColor || '#FF8C00',
-            padding: '3px',
+            background: barColor || "#FF8C00",
+            padding: "3px",
           }}
         >
           <div
             className="w-full h-full rounded-full"
             style={{
-              backgroundColor: '#8BD2ED',
-              padding: '2px',
+              backgroundColor: "#8BD2ED",
+              padding: "2px",
             }}
           >
             <div
               className="h-full rounded-full transition-all duration-300 ease-in-out"
               style={{
                 width: `${progress * 100}%`,
-                background: barColor || '#FF8C00',
+                background: barColor || "#FF8C00",
               }}
             />
           </div>
@@ -111,7 +112,8 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
                 <span>No streak yet - start today!</span>
               ) : (
                 <span>
-                  Keep it up, your current streak is <strong>{currentStreak}</strong>!
+                  Keep it up, your current streak is{" "}
+                  <strong>{currentStreak}</strong>!
                 </span>
               )}
             </div>
@@ -124,15 +126,15 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
                 const isActive = currentStreakDays[index];
 
                 const style: React.CSSProperties = {};
-                if (isActive) style.backgroundColor = barColor || '#FF8C00';
-                if (isToday) style.borderColor = barColor || '#FF8C00';
+                if (isActive) style.backgroundColor = barColor || "#FF8C00";
+                if (isToday) style.borderColor = barColor || "#FF8C00";
 
                 return (
                   <div
                     key={index}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                      ${isToday ? 'border-2' : ''}
-                      ${isActive ? 'text-white' : 'bg-gray-200 text-gray-700'}`}
+                      ${isToday ? "border-2" : ""}
+                      ${isActive ? "text-white" : "bg-gray-200 text-gray-700"}`}
                     style={style}
                   >
                     {day}
@@ -143,7 +145,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
 
             {/* Record Info */}
             <div className="mt-3 text-center text-xs text-gray-500">
-              Record: {longestStreak} day{longestStreak !== 1 ? 's' : ''}
+              Record: {longestStreak} day{longestStreak !== 1 ? "s" : ""}
             </div>
           </div>
         )}
@@ -163,10 +165,12 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
               initial={{ scale: 0.8, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 30 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+              transition={{ type: "spring", stiffness: 300, damping: 22 }}
             >
               <PartyPopper className="w-10 h-10 mx-auto text-yellow-500" />
-              <h2 className="text-xl font-bold mt-2 text-brightboost-navy">New Streak Record!</h2>
+              <h2 className="text-xl font-bold mt-2 text-brightboost-navy">
+                New Streak Record!
+              </h2>
               <p className="text-sm mt-1 text-gray-600">+50 XP</p>
               <button
                 onClick={() => setShowCelebration(false)}
