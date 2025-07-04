@@ -8,6 +8,7 @@
     "local": "vite --mode local-be",
     "build": "tsc && vite build && node copy-static-config.js",
     "build:dev": "vite build --mode development",
+    "build:prod": "vite build --mode production",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -17,7 +18,8 @@
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
     "test:watch": "vitest",
-    "test:db": "node scripts/dbHealth.js"
+    "test:db": "node scripts/dbHealth.js",
+    "check-bundle-size": "du -sm dist | cut -f1"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
