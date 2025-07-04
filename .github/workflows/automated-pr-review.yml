@@ -1,0 +1,462 @@
+name: Automated PR Review and Merge
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no actual merges or reviews)'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  MAX_API_CALLS: 300
+  NODE_VERSION: "18"
+
+jobs:
+  enumerate-prs:
+    runs-on: ubuntu-latest
+    outputs:
+      actionable-prs: ${{ steps.filter-prs.outputs.prs }}
+      api-calls-used: ${{ steps.filter-prs.outputs.api-calls }}
+      total-prs: ${{ steps.filter-prs.outputs.total-prs }}
+      skipped-prs: ${{ steps.filter-prs.outputs.skipped-prs }}
+    steps:
+      - name: Mask GitHub token
+        run: echo "::add-mask::${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Get open PRs and filter by review state
+        id: filter-prs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let apiCalls = 0;
+            const actionablePRs = [];
+            const skippedPRs = [];
+            
+            try {
+              // Get all open PRs
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100
+              });
+              apiCalls++;
+              
+              console.log(`Found ${prs.length} open PRs`);
+              
+              for (const pr of prs) {
+                // Skip draft PRs
+                if (pr.draft) {
+                  skippedPRs.push({
+                    number: pr.number,
+                    reason: 'draft',
+                    title: pr.title
+                  });
+                  continue;
+                }
+                
+                // Check for pending status checks
+                const { data: checks } = await github.rest.checks.listForRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: pr.head.sha
+                });
+                apiCalls++;
+                
+                const hasPendingChecks = checks.check_runs.some(check => 
+                  check.status === 'in_progress' || check.status === 'queued'
+                );
+                
+                if (hasPendingChecks) {
+                  skippedPRs.push({
+                    number: pr.number,
+                    reason: 'pending-checks',
+                    title: pr.title
+                  });
+                  continue;
+                }
+                
+                // Get reviews for this PR
+                const { data: reviews } = await github.rest.pulls.listReviews({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                apiCalls++;
+                
+                // Check if latest review requests changes
+                const latestReview = reviews
+                  .filter(review => review.state !== 'COMMENTED')
+                  .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))[0];
+                
+                if (latestReview && latestReview.state === 'CHANGES_REQUESTED') {
+                  skippedPRs.push({
+                    number: pr.number,
+                    reason: 'changes-requested',
+                    title: pr.title,
+                    reviewer: latestReview.user.login
+                  });
+                  continue;
+                }
+                
+                // This PR is actionable
+                actionablePRs.push({
+                  number: pr.number,
+                  sha: pr.head.sha,
+                  title: pr.title,
+                  author: pr.user.login,
+                  branch: pr.head.ref,
+                  base: pr.base.ref
+                });
+                
+                // Stop if we're approaching API limit
+                if (apiCalls >= ${{ env.MAX_API_CALLS }} - 50) {
+                  console.log('Approaching API limit, stopping enumeration');
+                  break;
+                }
+              }
+              
+              console.log(`Actionable PRs: ${actionablePRs.length}`);
+              console.log(`Skipped PRs: ${skippedPRs.length}`);
+              console.log(`API calls used: ${apiCalls}`);
+              
+              core.setOutput('prs', JSON.stringify(actionablePRs));
+              core.setOutput('api-calls', apiCalls.toString());
+              core.setOutput('total-prs', prs.length.toString());
+              core.setOutput('skipped-prs', JSON.stringify(skippedPRs));
+              
+            } catch (error) {
+              console.error('Error enumerating PRs:', error);
+              core.setFailed(`Failed to enumerate PRs: ${error.message}`);
+            }
+
+      - name: Create dry-run summary
+        if: github.event.inputs.dry_run == 'true' || github.event_name == 'schedule'
+        run: |
+          echo "## Dry Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Total open PRs:** ${{ steps.filter-prs.outputs.total-prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Actionable PRs:** $(echo '${{ steps.filter-prs.outputs.actionable-prs }}' | jq length)" >> $GITHUB_STEP_SUMMARY
+          echo "**Skipped PRs:** $(echo '${{ steps.filter-prs.outputs.skipped-prs }}' | jq length)" >> $GITHUB_STEP_SUMMARY
+          echo "**API calls used:** ${{ steps.filter-prs.outputs.api-calls }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Actionable PRs (would be processed):" >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.filter-prs.outputs.actionable-prs }}' | jq -r '.[] | "- PR #\(.number): \(.title) by @\(.author)"' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Skipped PRs:" >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.filter-prs.outputs.skipped-prs }}' | jq -r '.[] | "- PR #\(.number): \(.title) (reason: \(.reason))"' >> $GITHUB_STEP_SUMMARY
+
+  process-pr:
+    needs: enumerate-prs
+    if: needs.enumerate-prs.outputs.actionable-prs != '[]' && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pr: ${{ fromJson(needs.enumerate-prs.outputs.actionable-prs) }}
+      fail-fast: false
+    steps:
+      - name: Mask GitHub token
+        run: echo "::add-mask::${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ matrix.pr.sha }}
+
+      - name: Verify SHA hasn't changed
+        id: verify-sha
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ matrix.pr.number }}
+            });
+            
+            if (pr.head.sha !== '${{ matrix.pr.sha }}') {
+              console.log(`SHA mismatch detected. Expected: ${{ matrix.pr.sha }}, Current: ${pr.head.sha}`);
+              core.setOutput('sha-changed', 'true');
+              return;
+            }
+            
+            core.setOutput('sha-changed', 'false');
+            core.setOutput('current-sha', pr.head.sha);
+
+      - name: Skip if SHA changed
+        if: steps.verify-sha.outputs.sha-changed == 'true'
+        run: |
+          echo "PR #${{ matrix.pr.number }} SHA changed during processing, skipping"
+          exit 0
+
+      - name: Install pnpm
+        if: steps.verify-sha.outputs.sha-changed == 'false'
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.15.1
+
+      - name: Set up Node.js
+        if: steps.verify-sha.outputs.sha-changed == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+          cache-dependency-path: |
+            pnpm-lock.yaml
+
+      - name: Install dependencies
+        if: steps.verify-sha.outputs.sha-changed == 'false'
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run linters
+        if: steps.verify-sha.outputs.sha-changed == 'false'
+        id: lint
+        continue-on-error: true
+        run: |
+          (pnpm lint > lint_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured lint exit code: $exit_code"
+          echo "Lint output:"
+          cat lint_output.txt
+          echo "lint_output<<EOF" >> $GITHUB_OUTPUT
+          cat lint_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "lint_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "lint_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests
+        if: steps.verify-sha.outputs.sha-changed == 'false'
+        id: tests
+        continue-on-error: true
+        run: |
+          (pnpm test > test_output.txt 2>&1)
+          exit_code=$?
+          echo "Captured test exit code: $exit_code"
+          cat test_output.txt
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          cat test_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $exit_code -eq 0 ]; then
+            echo "test_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "test_status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge successful PR
+        if: steps.verify-sha.outputs.sha-changed == 'false' && steps.tests.outputs.test_status == 'success' && steps.lint.outputs.lint_status == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              // Get repository info to determine default merge method
+              const { data: repo } = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              
+              let mergeMethod = 'merge';
+              if (repo.allow_squash_merge && !repo.allow_merge_commit) {
+                mergeMethod = 'squash';
+              } else if (repo.allow_rebase_merge && !repo.allow_merge_commit && !repo.allow_squash_merge) {
+                mergeMethod = 'rebase';
+              }
+              
+              console.log(`Using merge method: ${mergeMethod}`);
+              
+              // Post success comment
+              await github.rest.issues.createComment({
+                issue_number: ${{ matrix.pr.number }},
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '✅ All checks passed – merging.\n\n*This is an automated action by the PR Review Bot.*'
+              });
+              
+              // Merge the PR
+              const mergeResult = await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: ${{ matrix.pr.number }},
+                merge_method: mergeMethod,
+                commit_title: `${{ matrix.pr.title }} (#${{ matrix.pr.number }})`,
+                commit_message: 'Automatically merged by PR Review Bot after successful tests and lint checks.'
+              });
+              
+              console.log(`Successfully merged PR #${{ matrix.pr.number }}`);
+              core.setOutput('action-taken', 'merged');
+              
+            } catch (error) {
+              console.error('Error merging PR:', error);
+              core.setFailed(`Failed to merge PR: ${error.message}`);
+            }
+
+      - name: Post review for failed PR
+        if: steps.verify-sha.outputs.sha-changed == 'false' && (steps.tests.outputs.test_status == 'failure' || steps.lint.outputs.lint_status == 'failure')
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              const lintStatus = "${{ steps.lint.outputs.lint_status }}";
+              const lintOutput = `${{ steps.lint.outputs.lint_output }}`;
+              const testStatus = "${{ steps.tests.outputs.test_status }}";
+              const testOutput = `${{ steps.tests.outputs.test_output }}`;
+              
+              let reviewBody = "## Automated Review - Changes Requested ❌\n\n";
+              
+              if (lintStatus === 'failure') {
+                reviewBody += "### 🧹 Linting Failed\n";
+                reviewBody += "The following linting issues need to be resolved:\n\n";
+                reviewBody += "```\n" + lintOutput.trim() + "\n```\n\n";
+              }
+              
+              if (testStatus === 'failure') {
+                reviewBody += "### 🧪 Tests Failed\n";
+                reviewBody += "The following tests are failing:\n\n";
+                reviewBody += "```\n" + testOutput.trim() + "\n```\n\n";
+              }
+              
+              reviewBody += "Please fix these issues and push your changes. The PR will be automatically reviewed again.\n\n";
+              reviewBody += "*This is an automated review by the PR Review Bot.*";
+              
+              // Truncate if too long for GitHub API
+              const MAX_COMMENT_LENGTH = 65536;
+              if (reviewBody.length > MAX_COMMENT_LENGTH) {
+                reviewBody = reviewBody.substring(0, MAX_COMMENT_LENGTH - 100) + "\n\n... (review truncated due to length)";
+              }
+              
+              // Create review with CHANGES_REQUESTED
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: ${{ matrix.pr.number }},
+                body: reviewBody,
+                event: 'REQUEST_CHANGES'
+              });
+              
+              // Assign the PR author
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ matrix.pr.number }},
+                assignees: ['${{ matrix.pr.author }}']
+              });
+              
+              console.log(`Posted review requesting changes for PR #${{ matrix.pr.number }}`);
+              core.setOutput('action-taken', 'reviewed');
+              
+            } catch (error) {
+              console.error('Error posting review:', error);
+              core.setFailed(`Failed to post review: ${error.message}`);
+            }
+
+      - name: Record processing result
+        if: always() && steps.verify-sha.outputs.sha-changed == 'false'
+        run: |
+          mkdir -p /tmp/pr-results
+          cat > /tmp/pr-results/pr-${{ matrix.pr.number }}.json << EOF
+          {
+            "number": ${{ matrix.pr.number }},
+            "sha": "${{ matrix.pr.sha }}",
+            "title": "${{ matrix.pr.title }}",
+            "author": "${{ matrix.pr.author }}",
+            "action": "${{ steps.merge-successful-pr.outputs.action-taken || steps.post-review-for-failed-pr.outputs.action-taken || 'error' }}",
+            "ci_summary": {
+              "tests": "${{ steps.tests.outputs.test_status || 'not-run' }}",
+              "lint": "${{ steps.lint.outputs.lint_status || 'not-run' }}"
+            },
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Upload PR result
+        if: always() && steps.verify-sha.outputs.sha-changed == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-result-${{ matrix.pr.number }}
+          path: /tmp/pr-results/pr-${{ matrix.pr.number }}.json
+
+  generate-report:
+    needs: [enumerate-prs, process-pr]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all PR results
+        if: needs.enumerate-prs.outputs.actionable-prs != '[]' && github.event.inputs.dry_run != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pr-result-*
+          path: /tmp/pr-results
+          merge-multiple: true
+
+      - name: Generate run report
+        run: |
+          timestamp=$(date -u +%Y-%m-%d-%H%M)
+          report_file="bot-run-${timestamp}.json"
+          
+          # Initialize report structure
+          cat > $report_file << EOF
+          {
+            "run_timestamp": "${timestamp}",
+            "dry_run": ${{ github.event.inputs.dry_run || 'true' }},
+            "total_open_prs": ${{ needs.enumerate-prs.outputs.total-prs || 0 }},
+            "actionable_prs_count": $(echo '${{ needs.enumerate-prs.outputs.actionable-prs }}' | jq length),
+            "skipped_prs": ${{ needs.enumerate-prs.outputs.skipped-prs || '[]' }},
+            "api_calls_used": ${{ needs.enumerate-prs.outputs.api-calls || 0 }},
+            "handled_prs": []
+          }
+          EOF
+          
+          # Add processed PR results if they exist
+          if [ -d "/tmp/pr-results" ] && [ "$(ls -A /tmp/pr-results 2>/dev/null)" ]; then
+            echo "Adding processed PR results..."
+            jq '.handled_prs = [inputs]' $report_file /tmp/pr-results/*.json > temp_report.json
+            mv temp_report.json $report_file
+          fi
+          
+          echo "Generated report: $report_file"
+          cat $report_file | jq .
+
+      - name: Upload run report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-run-report
+          path: bot-run-*.json
+
+      - name: Create workflow summary
+        run: |
+          echo "## Automated PR Review Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "**Dry Run:** ${{ github.event.inputs.dry_run || 'true' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Open PRs:** ${{ needs.enumerate-prs.outputs.total-prs || 0 }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Actionable PRs:** $(echo '${{ needs.enumerate-prs.outputs.actionable-prs }}' | jq length)" >> $GITHUB_STEP_SUMMARY
+          echo "**API Calls Used:** ${{ needs.enumerate-prs.outputs.api-calls || 0 }}/${{ env.MAX_API_CALLS }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ github.event.inputs.dry_run }}" != "true" ] && [ "${{ needs.enumerate-prs.outputs.actionable-prs }}" != "[]" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Processing Results:" >> $GITHUB_STEP_SUMMARY
+            if [ -d "/tmp/pr-results" ] && [ "$(ls -A /tmp/pr-results 2>/dev/null)" ]; then
+              for result_file in /tmp/pr-results/*.json; do
+                if [ -f "$result_file" ]; then
+                  pr_num=$(jq -r '.number' "$result_file")
+                  action=$(jq -r '.action' "$result_file")
+                  title=$(jq -r '.title' "$result_file")
+                  echo "- PR #${pr_num}: ${action} - ${title}" >> $GITHUB_STEP_SUMMARY
+                fi
+              done
+            fi
+          fi
