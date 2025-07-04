@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Import pages and components
 import Index from "./pages/Index";
-const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
+const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
@@ -45,42 +45,42 @@ function App() {
         <Route path="/quest/:id" element={<QuestRouter />} />
 
         {/* Protected routes */}
-          <Route
-            path="/teacher/dashboard"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/classes"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherLayout>
-                  <TeacherClasses />
-                </TeacherLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/classes/:id"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherLayout>
-                  <TeacherClassDetail />
-                </TeacherLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/dashboard"
-            element={
-              <ProtectedRoute requiredRole="STUDENT">
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClasses />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClassDetail />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -101,7 +101,7 @@ function App() {
           <div className="app">{appContent}</div>
         </AuthProvider>
       </Router>
-      
+
       {/* Toaster will always appear */}
       <Toaster />
 

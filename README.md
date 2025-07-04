@@ -120,7 +120,6 @@ The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment vari
     ```
 
     This command starts:
-
     - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
 5.  **Running the Backend Locally:**
@@ -280,6 +279,7 @@ BrightBoost includes comprehensive testing:
 ## STEM-1-MVP Environment
 
 For the stem-1-mvp delivery lane, add the following secret to GitHub repository settings:
+
 - `STEM1_MVP_SWA_TOKEN`: Azure Static Web App deployment token for brightboost-stem1-mvp
 
 The staging environment will be available at: `https://brightboost-stem1-mvp.azurestaticapps.net`

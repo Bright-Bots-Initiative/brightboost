@@ -9,16 +9,16 @@ const mockHasResourceBundle = vi.fn().mockReturnValue(true);
 const mockAddResourceBundle = vi.fn();
 
 vi.mock("react-i18next", async () => {
-  const actual = await vi.importActual("react-i18next"); 
+  const actual = await vi.importActual("react-i18next");
   return {
     ...actual,
     useTranslation: () => ({
-      t: (key: string) => key, 
+      t: (key: string) => key,
       i18n: {
-        changeLanguage: mockChangeLanguage, 
-        hasResourceBundle: mockHasResourceBundle, 
-        addResourceBundle: mockAddResourceBundle, 
-        language: "en", 
+        changeLanguage: mockChangeLanguage,
+        hasResourceBundle: mockHasResourceBundle,
+        addResourceBundle: mockAddResourceBundle,
+        language: "en",
       },
     }),
   };
@@ -40,7 +40,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>
+      </I18nextProvider>,
     );
 
     const button = screen.getByText("Español");
@@ -58,7 +58,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>
+      </I18nextProvider>,
     );
 
     const button = screen.getByText("Español");
@@ -81,13 +81,12 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>
+      </I18nextProvider>,
     );
 
     const button = screen.getByText("Español");
     expect(button).toBeDefined();
   });
-
 
   it("uses browser language if no stored language in localStorage", () => {
     vi.spyOn(global.localStorage, "getItem").mockReturnValue(null);
@@ -102,15 +101,15 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>
+      </I18nextProvider>,
     );
 
-    const button = screen.getByText(/Español|English/i); 
+    const button = screen.getByText(/Español|English/i);
     expect(button).toBeDefined();
   });
 
   it("falls back to English if no resource bundle available", () => {
-    mockHasResourceBundle.mockReturnValue(false); 
+    mockHasResourceBundle.mockReturnValue(false);
 
     render(
       <I18nextProvider
@@ -122,7 +121,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>
+      </I18nextProvider>,
     );
 
     const button = screen.getByText("Español");
