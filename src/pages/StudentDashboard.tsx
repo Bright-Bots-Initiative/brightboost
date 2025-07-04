@@ -9,7 +9,9 @@ import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
+import NextModuleCard from "../components/StudentDashboard/NextModuleCard"
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+import studentDashboardMock from "../mocks/studentDashboardMock"
 
 interface Course {
   id: string;
@@ -149,54 +151,80 @@ const StudentDashboard = () => {
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <BrightBoostRobot className="w-16 h-16" />
-              <div>
-                <h1 className="text-3xl font-bold text-brightboost-navy">
-                  Hello, {user?.name || "Student"}!
-                </h1>
-                <p className="text-brightboost-blue">
-                  Ready to learn something new today?
-                </p>
-              </div>
+        <div className="max-w-7xl mx-auto px-6">
+          
+        {/*top row*/}
+        <div className="w-full mb-6 mt-8">
+          <div className = "flex items-center min-w-0">
+        {/*align greeting w left edge of grid */}
+        <div className="flex items-center flex-shrink-0 mr-4">
+                <BrightBoostRobot className="w-16 h-16" />
+                <div className = "truncate">
+                    <h1 className="text-3xl font-bold text-brightboost-navy truncate">
+                      Hello, {user?.name || "Student"}!
+                    </h1>
+                    <p className="text-brightboost-blue truncate">
+                    Ready to learn something new today?
+                    </p>
+                  </div>
+                </div>
+            
+        {/* align widgets w right edge */}
+        <div className="flex-grow flex items-center space-x-2 min-w-0">
+            <XPProgressWidget 
+                currentXp={dashboardData?.xp ?? 0}
+                nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+                level={dashboardData?.level ?? 1}
+                className="w-full"
+              />
+              <button
+                onClick={handleLogout}
+                className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Logout
+              </button> 
             </div>
-            {dashboardData && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <CurrentModuleCard module={dashboardData.currentModule} />
-              </div>
-            )}
+            </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="flex flex-col items-end space-y-2">
-              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+          <div className = "flex justify-end items-center space-x-2 mt-2">
+             <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
                 <span className="text-sm font-bold">Level Explorer</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                   {user?.name || "Student"}
                 </span>
               </div>
-               <XPProgressWidget 
-                currentXp={dashboardData?.xp ?? 0}
-                nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                level={dashboardData?.level ?? 1}
-              />
-              <XPProgressRing />
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
+            <XPProgressRing />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* card grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className = "flex flex-col space-y-2">
+            
+            {/* use the following block for pulling from the API call */}
+            {/*
+            {dashboardData && (
+            <CurrentModuleCard module={dashboardData.currentModule} />
+             )}
+            */}
+
+            {/* USING MOCK DATA FOR THIS */}
+            <CurrentModuleCard
+                module = {studentDashboardMock.currentModule}
+            /> 
+
             <StemModuleCard
               title="STEM 1"
               subtitle="Let's play with us!"
               activities={stemActivities}
+            />
+            </div>
+
+            <div className = "flex flex-col space-y-2">
+            
+            {/* USING MOCK DATA FOR THIS */}
+            <NextModuleCard
+                module = {studentDashboardMock.nextModule}
             />
 
             <WordGameCard
@@ -204,9 +232,12 @@ const StudentDashboard = () => {
               letters={["A", "B", "E", "L", "T"]}
               word="TABLE"
             />
+            </div>
 
             <LeaderboardCard title="Leaderboard" entries={leaderboardEntries} />
           </div>
+        
+          
 
           {dashboardData &&
             (dashboardData.courses?.length ||
@@ -234,7 +265,7 @@ const StudentDashboard = () => {
                         </div>
                       ))}
                   </div>
-
+                
                   <div className="bg-white rounded-lg p-4 shadow-md">
                     <h4 className="font-bold text-brightboost-navy mb-3">
                       Recent Assignments
@@ -285,7 +316,7 @@ const StudentDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+        </div>
     </GameBackground>
   );
 };

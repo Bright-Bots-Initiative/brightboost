@@ -9,6 +9,12 @@ export const studentDashboardMock = {
     dueDate: "07-01-2025",
     lessonId: "lesson_1",
   },
+  nextModule: {
+    title: "Intro to Python",
+    status: "Not Started",
+    dueDate: "07-01-2025",
+    lessonId: "lesson_1",
+  },
   courses: [
     { id: "c1", name: "Math 101", grade: "5", teacher: "Mr. Newton" },
     { id: "c2", name: "Science 202", grade: "5", teacher: "Ms. Curie" },
@@ -28,3 +34,5 @@ export const studentDashboardMock = {
     },
   ],
 };
+
+export default studentDashboardMock;
