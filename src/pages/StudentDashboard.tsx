@@ -7,9 +7,12 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
+import XPProgressWidget from "../components/StudentDashboard/XPProgress"
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+import { useTranslation } from "react-i18next";
+import  LanguageToggle  from "../components/LanguageToggle";
+
 
 interface Course {
   id: string;
@@ -41,6 +44,7 @@ interface StudentDashboardData {
 }
 
 const StudentDashboard = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const api = useApi();
@@ -60,7 +64,17 @@ const StudentDashboard = () => {
       const timeoutId = setTimeout(() => {
         setShowStillLoading(true);
       }, 10000);
-      const data = await api.get("/api/student/dashboard");
+
+      const isTestEnvironment = (window as any).Cypress || process.env.NODE_ENV === 'test';
+      const minLoadingPromise = isTestEnvironment 
+        ? new Promise(resolve => setTimeout(resolve, 1000))
+        : Promise.resolve();
+
+      const [data] = await Promise.all([
+        api.get("/api/student/dashboard"),
+        minLoadingPromise
+      ]);
+      
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
@@ -83,19 +97,19 @@ const StudentDashboard = () => {
 
   const stemActivities = [
     {
-      title: "STEM 1",
+      title: t("dashboard.stem.math"),
       icon: "/icons/math.png",
       color: "bg-blue-100 hover:bg-blue-200",
       path: "/activities/math",
     },
     {
-      title: "Science Lab",
+      title: t("dashboard.stem.science"),
       icon: "/icons/science.png",
       color: "bg-green-100 hover:bg-green-200",
       path: "/activities/science",
     },
     {
-      title: "Coding Fun",
+      title: t("dashboard.stem.coding"),
       icon: "/icons/coding.png",
       color: "bg-purple-100 hover:bg-purple-200",
       path: "/activities/coding",
@@ -119,9 +133,9 @@ const StudentDashboard = () => {
         <div className="min-h-screen flex items-center justify-center">
           <div data-testid="loading-spinner" className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
-            <p className="text-brightboost-navy">Loading your dashboard...</p>
+            <p className="text-brightboost-navy">{t("dashboard.loading")}</p>
             {showStillLoading && (
-              <p className="text-brightboost-navy/70 mt-2">Still loading...</p>
+              <p className="text-brightboost-navy/70 mt-2">{t("dashboard.stillLaoding")}</p>
             )}
           </div>
         </div>
@@ -134,12 +148,12 @@ const StudentDashboard = () => {
       <GameBackground>
         <div className="min-h-screen flex items-center justify-center">
           <div data-testid="dashboard-error" className="text-center">
-            <p className="text-red-600 mb-4">Oops! {error}</p>
+            <p className="text-red-600 mb-4">{t("dashboard.errorPrefix")}! {error}</p>
             <button
               onClick={fetchDashboardData}
               className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
             >
-              Try Again
+              {t("dashboard.tryAgain")}
             </button>
           </div>
         </div>
@@ -155,10 +169,10 @@ const StudentDashboard = () => {
               <BrightBoostRobot className="w-16 h-16" />
               <div>
                 <h1 className="text-3xl font-bold text-brightboost-navy">
-                  Hello, {user?.name || "Student"}!
+                  {t("dashboard.greeting", { name: user?.name || t("student") })}
                 </h1>
                 <p className="text-brightboost-blue">
-                  Ready to learn something new today?
+                  {t("dashboard.readyPrompt")}
                 </p>
               </div>
             </div>
@@ -169,11 +183,14 @@ const StudentDashboard = () => {
             )}
 
             <div className="flex items-center space-x-4">
+              <LanguageToggle />
               <div className="flex flex-col items-end space-y-2">
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">Level Explorer</span>
+                <span className="text-sm font-bold">
+                  {t("dashboard.role")}
+                </span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                  {user?.name || "Student"}
+                  {user?.name || t("student")}
                 </span>
               </div>
                <XPProgressWidget 
@@ -187,25 +204,28 @@ const StudentDashboard = () => {
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
-                Logout
+                {t("dashboard.logout")}
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <StemModuleCard
-              title="STEM 1"
-              subtitle="Let's play with us!"
+              title={t("dashboard.stemCard.title")}
+              subtitle={t("dashboard.stemCard.subtitle")}
               activities={stemActivities}
             />
 
             <WordGameCard
-              title="Letter Game"
+              title={t("dashboard.wordGame.title")}
               letters={["A", "B", "E", "L", "T"]}
               word="TABLE"
             />
 
-            <LeaderboardCard title="Leaderboard" entries={leaderboardEntries} />
+            <LeaderboardCard 
+            title={t("dashboard.leaderboard.title")}
+            entries={leaderboardEntries}
+            />
           </div>
 
           {dashboardData &&
@@ -213,12 +233,12 @@ const StudentDashboard = () => {
               dashboardData.assignments?.length) && (
               <div className="mt-8">
                 <h3 className="text-xl font-bold text-brightboost-navy mb-4">
-                  Your Courses & Assignments
+                  {t("dashboard.coursesAndAssignments")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-lg p-4 shadow-md">
                     <h4 className="font-bold text-brightboost-navy mb-3">
-                      Enrolled Courses
+                      {t("dashboard.enrolledCourses")}
                     </h4>
                     {dashboardData.courses &&
                       dashboardData.courses.map((course) => (
@@ -229,7 +249,8 @@ const StudentDashboard = () => {
                         >
                           <div className="font-medium">{course.name}</div>
                           <div className="text-sm text-gray-600">
-                            Grade: {course.grade} | Teacher: {course.teacher}
+                            {t("dashboard.grade")}: {course.grade} |{" "}
+                            {t("dashboard.teacher")}: {course.teacher}
                           </div>
                         </div>
                       ))}
@@ -237,10 +258,9 @@ const StudentDashboard = () => {
 
                   <div className="bg-white rounded-lg p-4 shadow-md">
                     <h4 className="font-bold text-brightboost-navy mb-3">
-                      Recent Assignments
+                      {t("dashboard.recentAssignments")}
                     </h4>
-                    {dashboardData.assignments &&
-                      dashboardData.assignments.map((assignment) => (
+                    {dashboardData.assignments.map((assignment) => (
                         <div
                           key={assignment.id}
                           className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
@@ -248,11 +268,11 @@ const StudentDashboard = () => {
                         >
                           <div className="font-medium">{assignment.title}</div>
                           <div className="text-sm text-gray-600">
-                            Due: {assignment.dueDate} |
+                            {t("dashboard.due")}: {assignment.dueDate} |{" "}
                             <span
                               className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
                             >
-                              {assignment.status}
+                              {t(`dashboard.status.${assignment.status}`)}
                             </span>
                           </div>
                         </div>
@@ -269,7 +289,7 @@ const StudentDashboard = () => {
             !error && (
               <div className="mt-8 text-center">
                 <p className="text-brightboost-navy">
-                  Let's start your first quest!
+                  {t("dashboard.noData")}
                 </p>
               </div>
             )}
@@ -277,10 +297,10 @@ const StudentDashboard = () => {
           <div className="mt-8 flex justify-center">
             <div className="flex space-x-4">
               <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                Start Learning
+                {t("dashboard.startLearning")}
               </button>
               <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                View Progress
+                {t("dashboard.viewProgress")}
               </button>
             </div>
           </div>

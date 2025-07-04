@@ -8,7 +8,7 @@ BrightBoost is an interactive learning platform designed to help teachers create
 - **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
 - **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
 - **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-- **Persistent Data Storage:** User and lesson data is stored persistently using Azure PostgreSQL database.
+- **Persistent Data Storage:** User and lesson data is stored persistently using Aurora PostgreSQL (AWS RDS).
 - **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
 - **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
@@ -42,6 +42,8 @@ This project is built with a modern web technology stack:
   - Aurora PostgreSQL (AWS RDS)
   - JSON Web Tokens (JWT) for authentication
   - `bcryptjs` for password hashing
+
+**Architecture:** Frontend: Azure Static Web Apps | Backend: AWS Lambda + API Gateway | Database: Aurora PostgreSQL (RDS)
 - **Testing:**
   - Vitest (for unit/integration tests)
   - Cypress (for End-to-End tests)
@@ -273,6 +275,23 @@ BrightBoost includes comprehensive testing:
 - **Unit Tests**: Component and utility testing with Vitest
 - **E2E Tests**: End-to-end workflows with Cypress
 - **Linting**: Code quality checks with ESLint
+
+## STEM-1-MVP Environment
+
+For the stem-1-mvp delivery lane, add the following secret to GitHub repository settings:
+- `STEM1_MVP_SWA_TOKEN`: Azure Static Web App deployment token for brightboost-stem1-mvp
+
+The staging environment will be available at: `https://brightboost-stem1-mvp.azurestaticapps.net`
+
+## Provisioning STEM-1-MVP Environment
+
+To provision the Azure Static Web App for the stem-1-mvp delivery lane:
+
+1. Ensure you have Azure CLI installed and are logged in: `az login`
+2. Ensure you have GitHub CLI installed and are authenticated: `gh auth login`
+3. Run the provisioning script: `bash scripts/provision-stem1-swa.sh`
+
+This will create the `brightboost-stem1-mvp` Static Web App and automatically add the `STEM1_MVP_SWA_TOKEN` secret to the repository.
 
 ```bash
 # Run all tests

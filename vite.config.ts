@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       "/api": {
         target:
-          process.env.VITE_AWS_API_URL ||
+          loadEnv(mode, process.cwd()).VITE_AWS_API_URL ||
           "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod",
         changeOrigin: true,
         secure: true,
@@ -50,13 +50,20 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: mode === 'development',
     target: "es2021",
     cssCodeSplit: true,
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: ["**/__tests__/**", "**/test/**"],
+      external: ['**/__tests__/**', '**/test/**', '**/stories/**', '**/components/ui/**'],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@dnd-kit/core', '@dnd-kit/sortable']
+        }
+      }
     },
   },
 }));

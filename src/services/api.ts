@@ -1,6 +1,7 @@
 // src/services/api.ts
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast.ts";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
 const API_URL = import.meta.env.DEV
@@ -30,7 +31,11 @@ const rateLimitedFetch = async (url: string, options: RequestInit) => {
 };
 
 // Non-authenticated API calls
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (
+  email: string, 
+  password: string,
+  retries = 2
+): Promise<any> => {
   try {
     console.log(`Sending login request to: ${API_URL}/api/login`);
 
@@ -68,6 +73,23 @@ export const loginUser = async (email: string, password: string) => {
     return await response.json();
   } catch (error) {
     console.error("Login error:", error);
+    if (retries > 0 && error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Retrying...",
+        description: `Retrying login request (${retries} left)...`,
+        variant: "default", 
+      });
+      console.log(`Retrying login... (${retries} left)`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return loginUser(email, password, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Login Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -77,7 +99,8 @@ export const signupUser = async (
   email: string,
   password: string,
   role: string,
-) => {
+  retries = 2
+): Promise<any> => {
   try {
     console.log(`Sending signup request to: ${API_URL}/api/signup`);
 
@@ -115,6 +138,22 @@ export const signupUser = async (
     return await response.json();
   } catch (error) {
     console.error("Signup error:", error);
+    if (retries > 0 && error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return signupUser(name, email, password, role, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+  }
     throw error;
   }
 };
@@ -125,7 +164,8 @@ export const signupTeacher = async (
   password: string,
   school?: string,
   subject?: string,
-) => {
+  retries = 2
+): Promise<any> => {
   try {
     console.log(
       `Sending teacher signup request to: ${API_URL}/api/signup/teacher`,
@@ -165,6 +205,22 @@ export const signupTeacher = async (
     return await response.json();
   } catch (error) {
     console.error("Teacher signup error:", error);
+    if (retries > 0 && error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return signupTeacher(name, email, password, school, subject, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+  }
     throw error;
   }
 };
@@ -173,7 +229,8 @@ export const signupStudent = async (
   name: string,
   email: string,
   password: string,
-) => {
+  retries = 2
+): Promise<any> => {
   try {
     console.log(
       `Sending student signup request to: ${API_URL}/api/signup/student`,
@@ -213,6 +270,22 @@ export const signupStudent = async (
     return await response.json();
   } catch (error) {
     console.error("Student signup error:", error);
+    if (retries > 0 && error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return signupStudent(name, email, password, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -256,10 +329,20 @@ export const useApi = () => {
           !error.message.includes("Authentication")
         ) {
           console.log(`Retrying request... (${retries} attempts left)`);
+          toast({
+            title: "Network issue",
+            description: `Retrying request... (${retries} attempt${retries > 1 ? "s" : ""} left)`,
+          });
           await new Promise((resolve) => setTimeout(resolve, 1000));
           return authFetch(endpoint, options, retries - 1);
         }
 
+        toast({
+          title: "Network Error",
+          description: "We couldn't connect to the server. Please try again.",
+          variant: "destructive",
+        });
+        
         throw error;
       }
     },
