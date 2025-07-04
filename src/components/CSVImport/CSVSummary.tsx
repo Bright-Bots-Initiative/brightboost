@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, BookOpen, GraduationCap } from 'lucide-react';
 import { Student } from '../TeacherDashboard/types';
-import ClassTable from '../TeacherDashboard/ClassTable';
 
 interface CSVSummaryProps {
   data: {
@@ -55,7 +54,31 @@ const CSVSummary: React.FC<CSVSummaryProps> = ({ data }) => {
 
       <div>
         <h4 className="text-lg font-medium text-brightboost-navy mb-4">Class Preview</h4>
-        <ClassTable classes={[mockClass]} showActions={false} />
+        <table className="w-full text-left table-auto mt-2">
+          <thead>
+            <tr className="text-sm text-gray-600 border-b">
+              <th className="py-2">Student ID</th>
+              <th className="py-2">Name</th>
+              <th className="py-2">Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mockClass.students.map((student) => (
+              <tr
+                key={student.id}
+                className="border-b text-sm text-gray-800"
+              >
+                <td className="py-2">{student.id}</td>
+                <td className="py-2">{student.name}</td>
+                <td className="py-2">
+                  {student.email ?? (
+                    <span className="text-gray-400 italic">N/A</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
