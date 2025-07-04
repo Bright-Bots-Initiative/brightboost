@@ -292,7 +292,6 @@ To provision the Azure Static Web App for the stem-1-mvp delivery lane:
 3. Run the provisioning script: `bash scripts/provision-stem1-swa.sh`
 
 This will create the `brightboost-stem1-mvp` Static Web App and automatically add the `STEM1_MVP_SWA_TOKEN` secret to the repository.
-
 ```bash
 # Run all tests
 npm test

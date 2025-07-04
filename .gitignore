@@ -26,3 +26,6 @@ dist-ssr
 *storybook.log
 .env
 .aws-sam
+
+# Legacy workflow files (stem-1-mvp branch only)
+.github/workflows/deploy-stem1.yml
