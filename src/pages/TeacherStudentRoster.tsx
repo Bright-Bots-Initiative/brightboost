@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import StudentRoster from "../components/TeacherDashboard/StudentRoster"
+import StudentRoster from "../components/TeacherDashboard/StudentRoster";
 
 export default function Page() {
-  return <StudentRoster />
+  return <StudentRoster />;
 }

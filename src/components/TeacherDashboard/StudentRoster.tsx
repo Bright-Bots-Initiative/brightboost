@@ -1,11 +1,25 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight, Download, ArrowUpDown, Search, X } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ArrowUpDown,
+  Search,
+  X,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const initialStudents = [
   { id: 1, name: "Ashley", level: 4, xp: 1200 },
@@ -14,19 +28,22 @@ const initialStudents = [
   { id: 4, name: "Lucas", level: 2, xp: 400 },
   { id: 5, name: "Sophia", level: 5, xp: 1800 },
   { id: 6, name: "Jacob", level: 4, xp: 1500 },
-]
+];
 
-type Student = { id: number; name: string; level: number; xp: number }
-type SortKey = keyof Pick<Student, "name" | "level" | "xp">
-type SortConfig = { key: SortKey | null; direction: "asc" | "desc" }
-const sortableKeys: SortKey[] = ["name", "level", "xp"]
+type Student = { id: number; name: string; level: number; xp: number };
+type SortKey = keyof Pick<Student, "name" | "level" | "xp">;
+type SortConfig = { key: SortKey | null; direction: "asc" | "desc" };
+const sortableKeys: SortKey[] = ["name", "level", "xp"];
 
 export default function StudentRoster() {
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: null, direction: "asc" })
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const studentsPerPage = 4
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: null,
+    direction: "asc",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const studentsPerPage = 4;
 
   // Derived state for search and sorting
   const filtered = searchQuery.trim()
@@ -34,57 +51,66 @@ export default function StudentRoster() {
         (s) =>
           s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           s.level.toString().includes(searchQuery) ||
-          s.xp.toString().includes(searchQuery)
+          s.xp.toString().includes(searchQuery),
       )
-    : initialStudents
+    : initialStudents;
 
   const sorted = sortConfig.key
     ? [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig
-        if (!key) return 0
-        const aVal = a[key]
-        const bVal = b[key]
+        const { key, direction } = sortConfig;
+        if (!key) return 0;
+        const aVal = a[key];
+        const bVal = b[key];
         if (typeof aVal === "string" && typeof bVal === "string") {
           return direction === "asc"
             ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal)
+            : bVal.localeCompare(aVal);
         }
         return direction === "asc"
           ? (aVal as number) - (bVal as number)
-          : (bVal as number) - (aVal as number)
+          : (bVal as number) - (aVal as number);
       })
-    : filtered
+    : filtered;
 
-  const totalPages = Math.ceil(sorted.length / studentsPerPage)
-  const indexOfLastStudent = currentPage * studentsPerPage
-  const currentStudents = sorted.slice(indexOfLastStudent - studentsPerPage, indexOfLastStudent)
-  const paginate = (page: number) => page >= 1 && page <= totalPages && setCurrentPage(page)
+  const totalPages = Math.ceil(sorted.length / studentsPerPage);
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const currentStudents = sorted.slice(
+    indexOfLastStudent - studentsPerPage,
+    indexOfLastStudent,
+  );
+  const paginate = (page: number) =>
+    page >= 1 && page <= totalPages && setCurrentPage(page);
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    setCurrentPage(1)
-  }
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
   const clearSearch = () => {
-    setSearchQuery("")
-    setIsSearchOpen(false)
-    setCurrentPage(1)
-  }
+    setSearchQuery("");
+    setIsSearchOpen(false);
+    setCurrentPage(1);
+  };
   const requestSort = (key: SortKey) => {
-    const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc"
-    setSortConfig({ key, direction })
-  }
-  const handleViewStudent = (id: number) => console.log(`View student with ID: ${id}`)
+    const direction =
+      sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
+    setSortConfig({ key, direction });
+  };
+  const handleViewStudent = (id: number) =>
+    console.log(`View student with ID: ${id}`);
   const handleExportCSV = () => {
-    const csv = ["Name,Level,XP", ...sorted.map((s) => `${s.name},${s.level},${s.xp}`)].join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = "student_roster.csv"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+    const csv = [
+      "Name,Level,XP",
+      ...sorted.map((s) => `${s.name},${s.level},${s.xp}`),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "student_roster.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Card className="w-full">
@@ -139,8 +165,14 @@ export default function StudentRoster() {
       <CardContent>
         {searchQuery && (
           <div className="mb-4 text-sm text-muted-foreground">
-            Found {sorted.length} student{sorted.length !== 1 ? "s" : ""} matching "{searchQuery}"
-            <Button variant="ghost" size="sm" onClick={clearSearch} className="ml-2 h-auto p-0 text-blue-600 hover:bg-transparent">
+            Found {sorted.length} student{sorted.length !== 1 ? "s" : ""}{" "}
+            matching "{searchQuery}"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSearch}
+              className="ml-2 h-auto p-0 text-blue-600 hover:bg-transparent"
+            >
               Clear search
             </Button>
           </div>
@@ -161,7 +193,9 @@ export default function StudentRoster() {
                       <ArrowUpDown className="h-4 w-4" />
                       {sortConfig.key === key && (
                         <span className="sr-only">
-                          {sortConfig.direction === "asc" ? "sorted ascending" : "sorted descending"}
+                          {sortConfig.direction === "asc"
+                            ? "sorted ascending"
+                            : "sorted descending"}
                         </span>
                       )}
                     </Button>
@@ -174,7 +208,9 @@ export default function StudentRoster() {
               {currentStudents.length > 0 ? (
                 currentStudents.map((student) => (
                   <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {student.name}
+                    </TableCell>
                     <TableCell>{student.level}</TableCell>
                     <TableCell>{student.xp}</TableCell>
                     <TableCell>
@@ -192,7 +228,9 @@ export default function StudentRoster() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center h-24">
-                    {searchQuery ? "No students found matching your search" : "No students available"}
+                    {searchQuery
+                      ? "No students found matching your search"
+                      : "No students available"}
                   </TableCell>
                 </TableRow>
               )}
@@ -227,10 +265,11 @@ export default function StudentRoster() {
             </Button>
           </div>
           <div className="text-sm text-muted-foreground">
-            Showing {currentStudents.length} of {sorted.length} student{sorted.length !== 1 ? "s" : ""}
+            Showing {currentStudents.length} of {sorted.length} student
+            {sorted.length !== 1 ? "s" : ""}
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
