@@ -7,9 +7,9 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import XPProgressWidget from "../components/StudentDashboard/XPProgress"
-import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
-import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+import XPProgressWidget from "../components/StudentDashboard/XPProgress";
+import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
+import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
 
@@ -191,18 +191,20 @@ const StudentDashboard = () => {
             <div className="flex items-center space-x-4">
               <LanguageToggle />
               <div className="flex flex-col items-end space-y-2">
-              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">{t("dashboard.role")}</span>
-                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                  {user?.name || t("student")}
-                </span>
-              </div>
-               <XPProgressWidget 
-                currentXp={dashboardData?.xp ?? 0}
-                nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                level={dashboardData?.level ?? 1}
-              />
-              <XPProgressRing />
+                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold">
+                    {t("dashboard.role")}
+                  </span>
+                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                    {user?.name || t("student")}
+                  </span>
+                </div>
+                <XPProgressWidget
+                  currentXp={dashboardData?.xp ?? 0}
+                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+                  level={dashboardData?.level ?? 1}
+                />
+                <XPProgressRing />
               </div>
               <button
                 onClick={handleLogout}
