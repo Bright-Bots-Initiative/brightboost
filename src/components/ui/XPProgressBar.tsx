@@ -19,7 +19,7 @@ const electricShockVariants: Variants = {
       "drop-shadow(0 0 12px #00FFFF)",
       "drop-shadow(0 0 0 transparent)",
     ],
-    transition: { duration: 0.7, ease: "easeInOut" },
+    transition: { duration: 0.8, ease: "easeInOut" },
   },
 };
 
@@ -30,7 +30,7 @@ interface LightningBoltProps {
 const LightningBolt: React.FC<LightningBoltProps> = ({ filled }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    fill={filled ? "#1C3D6C" : "none"}   // Filled or hollow
+    fill={filled ? "#1C3D6C" : "none"}
     stroke="#001F3F"
     strokeWidth="1"
     viewBox="0 0 24 24"
@@ -48,7 +48,7 @@ const LightningBolt: React.FC<LightningBoltProps> = ({ filled }) => (
 const LightningParticles = ({
   trigger,
   batteryWidth = 200,
-  boltCount = 6,
+  boltCount = 12,
 }: {
   trigger: boolean;
   batteryWidth?: number;
@@ -62,10 +62,10 @@ const LightningParticles = ({
     if (trigger) {
       const newBolts = Array.from({ length: boltCount }, (_, i) => {
         const segmentWidth = batteryWidth / boltCount;
-        const x = segmentWidth * (i + 0.5); // Start inside container
-        const angle = Math.random() * Math.PI - Math.PI / 2; // mostly upward scatter
+        const x = segmentWidth * (i + 0.5);
+        const angle = Math.random() * Math.PI - Math.PI / 2;
         const distance = 60 + Math.random() * 30;
-      
+
         return {
           id: i,
           x,
@@ -94,7 +94,7 @@ const LightningParticles = ({
           style={{ left: x }}
           initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
           animate={{ opacity: 0, x: dx, y: dy, scale: 0.8 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <LightningBolt filled={filled} />
         </motion.div>
@@ -102,13 +102,6 @@ const LightningParticles = ({
     </div>
   );
 };
-
-
-interface XPProgressBarProps {
-  currentXp: number;
-  xpToNextLevel?: number;
-  level: number;
-}
 
 const XPProgressBar: React.FC<XPProgressBarProps> = ({
   currentXp,
@@ -122,48 +115,82 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   const prevLevelRef = useRef(level);
   const [isShocking, setIsShocking] = useState(false);
   const [shockId, setShockId] = useState(0);
+  const [showLevelUpSlide, setShowLevelUpSlide] = useState(false);
 
   useEffect(() => {
     if (level > prevLevelRef.current) {
       setIsShocking(true);
       setShockId((id) => id + 1);
+      setShowLevelUpSlide(true);
 
-      const timer = setTimeout(() => {
-        setIsShocking(false);
-      }, 700);
+      const shockTimer = setTimeout(() => setIsShocking(false), 1200);
+      const slideTimer = setTimeout(() => setShowLevelUpSlide(false), 1700);
 
       prevLevelRef.current = level;
-      return () => clearTimeout(timer);
+
+      return () => {
+        clearTimeout(shockTimer);
+        clearTimeout(slideTimer);
+      };
     } else {
       prevLevelRef.current = level;
     }
   }, [level]);
 
   return (
-    <div className="relative flex flex-col items-center gap-1 select-none">
+    <div className="relative flex flex-col items-center select-none">
+      {/* Level and XP label */}
       <div className="flex items-center gap-2 text-sm text-brightboost-navy font-semibold mb-1">
-      <span>Level {level}</span>
-      <span className="mx-6" />
-      <span className="w-[100px] inline-block text-right">
-      {currentXp}/{xpToNextLevel} XP
-      </span>
-    </div>
+        <span>Level {level}</span>
+        <span className="mx-6" />
+        <span className="w-[100px] inline-block text-right">
+          {currentXp}/{xpToNextLevel} XP
+        </span>
+      </div>
+
       <motion.div
         className="relative flex items-center gap-0"
         variants={electricShockVariants}
         animate={isShocking ? "shock" : "normal"}
       >
-        {/* Lightning bolts animation*/}
+        {/* Lightning bolts */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
           <LightningParticles
             key={shockId}
             trigger={isShocking}
-            batteryWidth={180}
+            batteryWidth={236}
             boltCount={6}
           />
         </div>
 
-        {/* XP bar segments animation*/}
+        {/* Level up popup */}
+        {showLevelUpSlide && (
+          <div
+            className="absolute rounded-l-md pointer-events-none z-20"
+            style={{
+              top: 2,
+              left: 2,
+              width: 204,
+              height: 36,
+              overflow: "hidden",
+            }}
+          >
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: "0%" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              className="h-full bg-white flex items-center justify-center rounded-l-md"
+              style={{ borderRadius: "0.375rem 0 0 0.375rem" }}
+            >
+              <span className="text-brightboost-navy font-bold text-sm">
+                Level Up!
+              </span>
+            </motion.div>
+         </div>
+       )}
+
+        {/* XP bar segments */}
         <div className="flex h-10 gap-1 border-2 border-brightboost-blue rounded-l-md bg-white px-1 py-0.5 relative z-10">
           {[...Array(segments)].map((_, i) => {
             const isFilled = i < filledSegments;

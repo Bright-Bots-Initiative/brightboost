@@ -1,0 +1,23 @@
+name: Bundle Size Check
+on: [push, pull_request]
+jobs:
+  check-bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - run: npm run build
+      - name: Check bundle size
+        run: |
+          BUNDLE_SIZE=$(du -sm dist | cut -f1)
+          echo "Bundle size: ${BUNDLE_SIZE}MB"
+          if [ $BUNDLE_SIZE -gt 400 ]; then
+            echo "❌ Bundle size ${BUNDLE_SIZE}MB exceeds 400MB limit"
+            exit 1
+          fi
+          echo "✅ Bundle size ${BUNDLE_SIZE}MB is within limits"

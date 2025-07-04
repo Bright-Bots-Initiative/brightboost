@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lightbulb, Lock, Power, Hammer, Network } from 'lucide-react';
+import {
+  ShieldCheck,
+  Lightbulb,
+  Lock,
+  Power,
+  Hammer,
+  Network,
+  Rocket,
+} from 'lucide-react';
 
 interface Badge {
   id: string;
@@ -17,14 +25,21 @@ const badgeIconMap: Record<string, JSX.Element> = {
   3: <Power className="w-6 h-6 text-green-500" />,
   4: <Hammer className="w-6 h-6 text-red-500" />,
   5: <Network className="w-6 h-6 text-indigo-500" />,
+  6: <Rocket className="w-6 h-6 text-pink-500" />,
 };
 
 const getBadgeIcon = (id: string): JSX.Element => {
   return badgeIconMap[id] ?? <Lock className="text-gray-400 w-6 h-6" />;
 };
 
+const isValidDate = (dateString: string): boolean => {
+  const date = new Date(dateString);
+  return !isNaN(date.getTime());
+};
+
 const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
   const [flipped, setFlipped] = useState(false);
+  const isUnlocked = badge && isValidDate(badge.awardedAt);
 
   const octagonClipPath =
     'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)';
@@ -66,7 +81,7 @@ const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
               backgroundSize: '40px 40px',
             }}
           >
-            {badge ? getBadgeIcon(badge.id) : <Lock className="text-gray-400 w-6 h-6" />}
+            {isUnlocked ? getBadgeIcon(badge.id) : <Lock className="text-gray-400 w-6 h-6" />}
           </div>
 
           {/* Back face */}
@@ -80,7 +95,7 @@ const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
               color: '#001F54',
             }}
           >
-            {badge ? badge.awardedAt : 'Unlock by completing tasks!'}
+            {isUnlocked ? badge.awardedAt : 'Unlock by completing tasks!'}
           </div>
         </div>
       </div>
