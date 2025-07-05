@@ -86,12 +86,14 @@ export const handler = async (
     "http://localhost:5173",
     "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
   ];
-  
+
   const origin = event.headers.origin || event.headers.Origin || "";
-  
+
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[1],
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[1],
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
@@ -148,6 +150,15 @@ export const handler = async (
 
     const dashboardData = {
       message: `Welcome back, ${decoded.name}!`,
+      xp: 150,
+      level: 2,
+      nextLevelXp: 200,
+      currentModule: {
+        title: "Hello World!",
+        status: "In Progress",
+        dueDate: "07-01-2025",
+        lessonId: "lesson_1",
+      },
       courses: [
         {
           id: "course-1",

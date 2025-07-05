@@ -66,7 +66,6 @@ BrightBoost uses Azure Application Insights and Log Analytics for monitoring and
 BrightBoost has configured alerts for critical application issues:
 
 1. **Server Exceptions Alert**
-
    - Trigger: More than 5 server exceptions in a 15-minute period
    - Notification: Email/Slack (configured through the BrightBoost-AlertGroup)
 

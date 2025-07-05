@@ -8,10 +8,15 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Import pages and components
 import Index from "./pages/Index";
-const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
+const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const TeacherClasses = lazy(() => import("./pages/TeacherClasses"));
+const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
+const TeacherLayout = lazy(
+  () => import("./components/TeacherDashboard/TeacherLayout"),
+);
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 const StudentLogin = lazy(() => import("./pages/StudentLogin"));
@@ -20,6 +25,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
+const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
@@ -36,6 +43,7 @@ function App() {
         <Route path="/teacher/signup" element={<TeacherSignup />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
+        <Route path="/quest/:id" element={<QuestRouter />} />
 
         {/* Protected routes */}
         <Route
@@ -43,6 +51,34 @@ function App() {
           element={
             <ProtectedRoute requiredRole="TEACHER">
               <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClasses />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClassDetail />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/roster"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherStudentRoster />
             </ProtectedRoute>
           }
         />
