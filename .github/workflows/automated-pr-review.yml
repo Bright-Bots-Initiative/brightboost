@@ -2,7 +2,9 @@ name: Automated PR Review and Merge
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "0 */6 * * *"
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -10,6 +12,10 @@ on:
         required: false
         default: "true"
         type: boolean
+
+concurrency:
+  group: pr-check
+  cancel-in-progress: true
 
 permissions:
   contents: write
