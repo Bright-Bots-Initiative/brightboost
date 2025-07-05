@@ -1,12 +1,17 @@
 // src/services/api.ts
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "@/components/ui/use-toast.ts";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
-const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_AWS_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const API_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_AWS_API_URL ||
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:3000";
 
 if (import.meta.env.PROD && !import.meta.env.VITE_AWS_API_URL) {
-  throw new Error('VITE_AWS_API_URL is required in production environment');
+  throw new Error("VITE_AWS_API_URL is required in production environment");
 }
 
 // Rate limiting for API calls
@@ -26,7 +31,11 @@ const rateLimitedFetch = async (url: string, options: RequestInit) => {
 };
 
 // Non-authenticated API calls
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (
+  email: string,
+  password: string,
+  retries = 2,
+): Promise<any> => {
   try {
     console.log(`Sending login request to: ${API_URL}/api/login`);
 
@@ -64,6 +73,27 @@ export const loginUser = async (email: string, password: string) => {
     return await response.json();
   } catch (error) {
     console.error("Login error:", error);
+    if (
+      retries > 0 &&
+      error instanceof TypeError &&
+      error.message === "Failed to fetch"
+    ) {
+      toast({
+        title: "Retrying...",
+        description: `Retrying login request (${retries} left)...`,
+        variant: "default",
+      });
+      console.log(`Retrying login... (${retries} left)`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return loginUser(email, password, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Login Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -73,7 +103,8 @@ export const signupUser = async (
   email: string,
   password: string,
   role: string,
-) => {
+  retries = 2,
+): Promise<any> => {
   try {
     console.log(`Sending signup request to: ${API_URL}/api/signup`);
 
@@ -111,6 +142,26 @@ export const signupUser = async (
     return await response.json();
   } catch (error) {
     console.error("Signup error:", error);
+    if (
+      retries > 0 &&
+      error instanceof TypeError &&
+      error.message === "Failed to fetch"
+    ) {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return signupUser(name, email, password, role, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -121,7 +172,8 @@ export const signupTeacher = async (
   password: string,
   school?: string,
   subject?: string,
-) => {
+  retries = 2,
+): Promise<any> => {
   try {
     console.log(
       `Sending teacher signup request to: ${API_URL}/api/signup/teacher`,
@@ -161,6 +213,26 @@ export const signupTeacher = async (
     return await response.json();
   } catch (error) {
     console.error("Teacher signup error:", error);
+    if (
+      retries > 0 &&
+      error instanceof TypeError &&
+      error.message === "Failed to fetch"
+    ) {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return signupTeacher(name, email, password, school, subject, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -169,7 +241,8 @@ export const signupStudent = async (
   name: string,
   email: string,
   password: string,
-) => {
+  retries = 2,
+): Promise<any> => {
   try {
     console.log(
       `Sending student signup request to: ${API_URL}/api/signup/student`,
@@ -209,6 +282,26 @@ export const signupStudent = async (
     return await response.json();
   } catch (error) {
     console.error("Student signup error:", error);
+    if (
+      retries > 0 &&
+      error instanceof TypeError &&
+      error.message === "Failed to fetch"
+    ) {
+      toast({
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
+        variant: "default",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return signupStudent(name, email, password, retries - 1);
+    }
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      toast({
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive",
+      });
+    }
     throw error;
   }
 };
@@ -217,61 +310,93 @@ export const signupStudent = async (
 export const useApi = () => {
   const { token } = useAuth();
 
-  const authFetch = useCallback(async (endpoint: string, options: RequestInit = {}, retries = 2) => {
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
+  const authFetch = useCallback(
+    async (endpoint: string, options: RequestInit = {}, retries = 2) => {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      };
 
-    try {
-      const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
+      try {
+        const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers,
+        });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Session expired');
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Session expired");
+          }
+          if (response.status === 403) {
+            throw new Error("Dashboard unavailable, please retry.");
+          }
+          const errorData = await response.json();
+          throw new Error(errorData.error || "API request failed");
         }
-        if (response.status === 403) {
-          throw new Error('Dashboard unavailable, please retry.');
+
+        return await response.json();
+      } catch (error) {
+        console.error("API error:", error);
+
+        if (
+          retries > 0 &&
+          error instanceof Error &&
+          !error.message.includes("Authentication")
+        ) {
+          console.log(`Retrying request... (${retries} attempts left)`);
+          toast({
+            title: "Network issue",
+            description: `Retrying request... (${retries} attempt${retries > 1 ? "s" : ""} left)`,
+          });
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return authFetch(endpoint, options, retries - 1);
         }
-        const errorData = await response.json();
-        throw new Error(errorData.error || "API request failed");
-      }
 
-      return await response.json();
-    } catch (error) {
-      console.error("API error:", error);
-      
-      if (retries > 0 && error instanceof Error && !error.message.includes('Authentication')) {
-        console.log(`Retrying request... (${retries} attempts left)`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return authFetch(endpoint, options, retries - 1);
-      }
-      
-      throw error;
-    }
-  }, [token]);
+        toast({
+          title: "Network Error",
+          description: "We couldn't connect to the server. Please try again.",
+          variant: "destructive",
+        });
 
-  const apiMethods = useMemo(() => ({
-    get: (endpoint: string) => authFetch(endpoint, {}, 2),
-    post: (endpoint: string, data: Record<string, unknown>) =>
-      authFetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify(data),
-      }, 2),
-    put: (endpoint: string, data: Record<string, unknown>) =>
-      authFetch(endpoint, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }, 2),
-    delete: (endpoint: string) =>
-      authFetch(endpoint, {
-        method: "DELETE",
-      }, 2),
-  }), [authFetch]);
+        throw error;
+      }
+    },
+    [token],
+  );
+
+  const apiMethods = useMemo(
+    () => ({
+      get: (endpoint: string) => authFetch(endpoint, {}, 2),
+      post: (endpoint: string, data: Record<string, unknown>) =>
+        authFetch(
+          endpoint,
+          {
+            method: "POST",
+            body: JSON.stringify(data),
+          },
+          2,
+        ),
+      put: (endpoint: string, data: Record<string, unknown>) =>
+        authFetch(
+          endpoint,
+          {
+            method: "PUT",
+            body: JSON.stringify(data),
+          },
+          2,
+        ),
+      delete: (endpoint: string) =>
+        authFetch(
+          endpoint,
+          {
+            method: "DELETE",
+          },
+          2,
+        ),
+    }),
+    [authFetch],
+  );
 
   return apiMethods;
 };
