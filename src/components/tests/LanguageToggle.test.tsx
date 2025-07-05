@@ -255,7 +255,7 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
   
-    let button = await screen.findByText("English");
+    const button = await screen.findByText("English");
   
     expect(button).toBeInTheDocument();
 
@@ -274,8 +274,8 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
   
-    let newbutton = await screen.findByText("English");
+    const newButton = await screen.findByText("English");
 
-    expect(newbutton).toBeInTheDocument();
+    expect(newButton).toBeInTheDocument();
   });
 });
