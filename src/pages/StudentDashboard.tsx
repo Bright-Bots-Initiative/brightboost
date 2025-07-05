@@ -8,8 +8,7 @@ import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { useTranslation } from "react-i18next";
-import  LanguageToggle  from "../components/LanguageToggle";
-
+import LanguageToggle from "../components/LanguageToggle";
 
 interface Course {
   id: string;
@@ -53,16 +52,17 @@ const StudentDashboard = () => {
         setShowStillLoading(true);
       }, 10000);
 
-      const isTestEnvironment = (window as any).Cypress || process.env.NODE_ENV === 'test';
-      const minLoadingPromise = isTestEnvironment 
-        ? new Promise(resolve => setTimeout(resolve, 1000))
+      const isTestEnvironment =
+        (window as any).Cypress || process.env.NODE_ENV === "test";
+      const minLoadingPromise = isTestEnvironment
+        ? new Promise((resolve) => setTimeout(resolve, 1000))
         : Promise.resolve();
 
       const [data] = await Promise.all([
         api.get("/api/student/dashboard"),
-        minLoadingPromise
+        minLoadingPromise,
       ]);
-      
+
       clearTimeout(timeoutId);
       setDashboardData(data);
     } catch (err: any) {
@@ -123,7 +123,9 @@ const StudentDashboard = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
             <p className="text-brightboost-navy">{t("dashboard.loading")}</p>
             {showStillLoading && (
-              <p className="text-brightboost-navy/70 mt-2">{t("dashboard.stillLaoding")}</p>
+              <p className="text-brightboost-navy/70 mt-2">
+                {t("dashboard.stillLaoding")}
+              </p>
             )}
           </div>
         </div>
@@ -136,7 +138,9 @@ const StudentDashboard = () => {
       <GameBackground>
         <div className="min-h-screen flex items-center justify-center">
           <div data-testid="dashboard-error" className="text-center">
-            <p className="text-red-600 mb-4">{t("dashboard.errorPrefix")}! {error}</p>
+            <p className="text-red-600 mb-4">
+              {t("dashboard.errorPrefix")}! {error}
+            </p>
             <button
               onClick={fetchDashboardData}
               className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
@@ -157,7 +161,9 @@ const StudentDashboard = () => {
               <BrightBoostRobot className="w-16 h-16" />
               <div>
                 <h1 className="text-3xl font-bold text-brightboost-navy">
-                  {t("dashboard.greeting", { name: user?.name || t("student") })}
+                  {t("dashboard.greeting", {
+                    name: user?.name || t("student"),
+                  })}
                 </h1>
                 <p className="text-brightboost-blue">
                   {t("dashboard.readyPrompt")}
@@ -168,9 +174,7 @@ const StudentDashboard = () => {
             <div className="flex items-center space-x-4">
               <LanguageToggle />
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">
-                  {t("dashboard.role")}
-                </span>
+                <span className="text-sm font-bold">{t("dashboard.role")}</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                   {user?.name || t("student")}
                 </span>
@@ -197,9 +201,9 @@ const StudentDashboard = () => {
               word="TABLE"
             />
 
-            <LeaderboardCard 
-            title={t("dashboard.leaderboard.title")}
-            entries={leaderboardEntries}
+            <LeaderboardCard
+              title={t("dashboard.leaderboard.title")}
+              entries={leaderboardEntries}
             />
           </div>
 
@@ -236,22 +240,22 @@ const StudentDashboard = () => {
                       {t("dashboard.recentAssignments")}
                     </h4>
                     {dashboardData.assignments.map((assignment) => (
-                        <div
-                          key={assignment.id}
-                          className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
-                          data-cy="assignment-item"
-                        >
-                          <div className="font-medium">{assignment.title}</div>
-                          <div className="text-sm text-gray-600">
-                            {t("dashboard.due")}: {assignment.dueDate} |{" "}
-                            <span
-                              className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
-                            >
-                              {t(`dashboard.status.${assignment.status}`)}
-                            </span>
-                          </div>
+                      <div
+                        key={assignment.id}
+                        className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
+                        data-cy="assignment-item"
+                      >
+                        <div className="font-medium">{assignment.title}</div>
+                        <div className="text-sm text-gray-600">
+                          {t("dashboard.due")}: {assignment.dueDate} |{" "}
+                          <span
+                            className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
+                          >
+                            {t(`dashboard.status.${assignment.status}`)}
+                          </span>
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -263,9 +267,7 @@ const StudentDashboard = () => {
             !isLoading &&
             !error && (
               <div className="mt-8 text-center">
-                <p className="text-brightboost-navy">
-                  {t("dashboard.noData")}
-                </p>
+                <p className="text-brightboost-navy">{t("dashboard.noData")}</p>
               </div>
             )}
 

@@ -44,6 +44,7 @@ This project is built with a modern web technology stack:
   - `bcryptjs` for password hashing
 
 **Architecture:** Frontend: Azure Static Web Apps | Backend: AWS Lambda + API Gateway | Database: Aurora PostgreSQL (RDS)
+
 - **Testing:**
   - Vitest (for unit/integration tests)
   - Cypress (for End-to-End tests)
@@ -119,7 +120,6 @@ The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment vari
     ```
 
     This command starts:
-
     - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
 5.  **Running the Backend Locally:**

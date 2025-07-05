@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Import pages and components
 import Index from "./pages/Index";
-const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
+const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
