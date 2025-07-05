@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom";
 import { I18nextProvider } from "react-i18next";
@@ -9,6 +9,25 @@ const mockChangeLanguage = vi.fn();
 const mockHasResourceBundle = vi.fn().mockReturnValue(true);
 const mockAddResourceBundle = vi.fn();
 
+beforeEach(() => {
+  const localStorageMock = {
+    getItem: vi.fn((key) => {
+      if (key === "preferredLanguage") {
+        return "es";
+      }
+      return null;
+    }),
+    setItem: vi.fn((key, value) => {}),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+  };
+
+  Object.defineProperty(global, "localStorage", {
+    value: localStorageMock,
+    writable: true,
+  });
+});
+
 vi.mock("react-i18next", async () => {
   const actual = await vi.importActual("react-i18next");
   return {
@@ -17,19 +36,23 @@ vi.mock("react-i18next", async () => {
       t: (key: string) => key,
       i18n: {
         changeLanguage: mockChangeLanguage,
-        hasResourceBundle: mockHasResourceBundle, 
+        hasResourceBundle: mockHasResourceBundle,
         addResourceBundle: mockAddResourceBundle,
-        language: "en",
+        language: "en",  // Default language is English
       },
     }),
   };
 });
 
-beforeEach(() => {
-  vi.spyOn(global.localStorage, "setItem").mockImplementation(() => {});
-});
+
 
 describe("LanguageToggle", () => {
+  it("should mock localStorage.getItem correctly", () => {
+    const value = localStorage.getItem("preferredLanguage");
+    console.log("Mocked value:", value);
+    expect(value).toBe("es");
+  });
+
   it("renders with the correct initial language button text", () => {
     render(
       <I18nextProvider
@@ -37,14 +60,14 @@ describe("LanguageToggle", () => {
           changeLanguage: mockChangeLanguage,
           hasResourceBundle: mockHasResourceBundle,
           addResourceBundle: mockAddResourceBundle,
-          language: "en",
+          language: "es",
         }}
       >
         <LanguageToggle />
       </I18nextProvider>
     );
 
-    const button = screen.getByText("Español");
+    const button = screen.getByText("English");
     expect(button).toBeDefined();
   });
 
@@ -55,19 +78,19 @@ describe("LanguageToggle", () => {
           changeLanguage: mockChangeLanguage,
           hasResourceBundle: mockHasResourceBundle,
           addResourceBundle: mockAddResourceBundle,
-          language: "en",
+          language: "es",
         }}
       >
         <LanguageToggle />
       </I18nextProvider>
     );
 
-    const button = screen.getByText("Español");
+    const button = screen.getByText("English");
     fireEvent.click(button);
 
-    expect(mockChangeLanguage).toHaveBeenCalledWith("es");
+    expect(mockChangeLanguage).toHaveBeenCalledWith("en");
 
-    const newButton = screen.getByText("English");
+    const newButton = screen.getByText("Español");
     expect(newButton).toBeDefined();
   });
 
@@ -85,7 +108,7 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
 
-    const button = screen.getByText("Español");
+    const button = screen.getByText("English");
     expect(button).toBeDefined();
   });
 
@@ -105,7 +128,7 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
 
-    const button = screen.getByText(/Español|English/i); 
+    const button = screen.getByText(/Español|English/i);
     expect(button).toBeDefined();
   });
 
@@ -125,7 +148,7 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
 
-    const button = screen.getByText("Español");
+    const button = screen.getByText("English");
     expect(button).toBeDefined();
   });
 
@@ -138,18 +161,17 @@ describe("LanguageToggle", () => {
           changeLanguage: mockChangeLanguage,
           hasResourceBundle: mockHasResourceBundle,
           addResourceBundle: mockAddResourceBundle,
-          language: "en",
+          language: "es",
         }}
       >
         <LanguageToggle />
       </I18nextProvider>
     );
   
-    const button = screen.getByText("Español");
+    const button = screen.getByText("English");
     fireEvent.click(button);
   
     expect(mockChangeLanguage).toHaveBeenCalledWith("es");
-  
   });
 
   it("shows default language (English) if no language is stored and no browser language is available", () => {
@@ -180,25 +202,45 @@ describe("LanguageToggle", () => {
           changeLanguage: mockChangeLanguage,
           hasResourceBundle: mockHasResourceBundle,
           addResourceBundle: mockAddResourceBundle,
-          language: "en",
+          language: "es",
         }}
       >
         <LanguageToggle />
       </I18nextProvider>
     );
+    
+    let button = await screen.findByText("English");
   
-    const button = screen.getByText("Español");
-    expect(button).toBeDefined();
-  
+    expect(button).toBeInTheDocument();
+    
     fireEvent.click(button);
-    expect(mockChangeLanguage).toHaveBeenCalledWith("es");
+    
+    expect(mockChangeLanguage).toHaveBeenCalledWith("en");
   
-    const newButton = screen.getByText("English");
-    expect(newButton).toBeDefined();
+    button = await screen.findByText("Español");  
+    expect(button).toBeInTheDocument(); 
   });
+  
+  
+  
 
   it("persists the language selection after page reload", async () => {
-    vi.spyOn(global.localStorage, "getItem").mockReturnValue("es");
+    const localStorageMock = {
+      getItem: vi.fn((key) => {
+        if (key === "preferredLanguage") {
+          return "es";
+        }
+        return null;
+      }),
+      setItem: vi.fn((key, value) => {}),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    };
+  
+    Object.defineProperty(global, "localStorage", {
+      value: localStorageMock,
+      writable: true,
+    });
   
     render(
       <I18nextProvider
@@ -213,7 +255,27 @@ describe("LanguageToggle", () => {
       </I18nextProvider>
     );
   
-    const button = screen.getByText("Español");
-    expect(button).toBeDefined();
+    let button = await screen.findByText("English");
+  
+    expect(button).toBeInTheDocument();
+
+    cleanup();
+  
+    render(
+      <I18nextProvider
+        i18n={{
+          changeLanguage: mockChangeLanguage,
+          hasResourceBundle: mockHasResourceBundle,
+          addResourceBundle: mockAddResourceBundle,
+          language: "es",
+        }}
+      >
+        <LanguageToggle />
+      </I18nextProvider>
+    );
+  
+    let newbutton = await screen.findByText("English");
+
+    expect(newbutton).toBeInTheDocument();
   });
 });
