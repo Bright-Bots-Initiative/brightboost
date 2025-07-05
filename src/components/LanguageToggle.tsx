@@ -1,31 +1,23 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const LANGUAGE_KEY = "preferredLanguage";
 
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
-  const [language, setLanguage] = useState(
-    localStorage.getItem(LANGUAGE_KEY) || "en",
-  );
-  const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
+  const [language, setLanguage] = useState(localStorage.getItem(LANGUAGE_KEY) || 'en');
+  const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
 
   const toggleLanguage = async () => {
-    const newLanguage = language === "en" ? "es" : "en";
+    const newLanguage = language === 'en' ? 'es' : 'en';
     setLanguage(newLanguage);
 
     if (!ENABLE_I18N) return;
 
     try {
-      const translations = await import(
-        `../locales/${newLanguage}/common.json`
-      );
-      if (!i18n.hasResourceBundle(newLanguage, "translation")) {
-        i18n.addResourceBundle(
-          newLanguage,
-          "translation",
-          translations.default,
-        );
+      const translations = await import(`../locales/${newLanguage}/common.json`);
+      if (!i18n.hasResourceBundle(newLanguage, 'translation')) {
+        i18n.addResourceBundle(newLanguage, 'translation', translations.default);
       }
       await i18n.changeLanguage(newLanguage);
       localStorage.setItem(LANGUAGE_KEY, newLanguage);
@@ -45,7 +37,7 @@ const LanguageToggle = () => {
       onClick={toggleLanguage}
       className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded"
     >
-      {language === "en" ? "Español" : "English"}
+      {language === 'en' ? 'Español' : 'English'}
     </button>
   );
 };

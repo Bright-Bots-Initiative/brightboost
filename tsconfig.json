@@ -28,8 +28,6 @@
   "include": ["src"],
   "exclude": [
     "node_modules",
-    "src/components/ui/**",
-    "src/stories/**",
     "**/__tests__/**",
     "**/*.test.ts",
     "**/*.test.tsx",

@@ -1,17 +1,17 @@
 // src/pages/StudentLogin.tsx
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { loginUser } from "../services/api";
-import GameBackground from "../components/GameBackground";
-import BrightBoostRobot from "../components/BrightBoostRobot";
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { loginUser } from '../services/api';
+import GameBackground from '../components/GameBackground';
+import BrightBoostRobot from '../components/BrightBoostRobot';
 
 const studentLoginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password needs to be at least 6 characters"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password needs to be at least 6 characters'),
 });
 
 type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
@@ -26,15 +26,12 @@ const StudentLogin: React.FC = () => {
     formState: { errors, isSubmitting },
   } = useForm<StudentLoginFormData>({
     resolver: zodResolver(studentLoginSchema),
-    mode: "onChange",
+    mode: 'onChange'
   });
 
   const onSubmit = async (data: StudentLoginFormData) => {
     try {
-      const response = await loginUser(
-        studentLoginSchema.parse(data).email,
-        studentLoginSchema.parse(data).password,
-      );
+      const response = await loginUser(studentLoginSchema.parse(data).email, studentLoginSchema.parse(data).password);
 
       // Verify this is a student account
       if (response.user.role !== "STUDENT") {
@@ -43,7 +40,7 @@ const StudentLogin: React.FC = () => {
         );
         return;
       }
-      localStorage.setItem("jwt", response.token);
+      localStorage.setItem('jwt', response.token);
       login(response.token, response.user);
     } catch (err: unknown) {
       setError(
@@ -76,7 +73,7 @@ const StudentLogin: React.FC = () => {
                 {error}
               </div>
             )}
-
+            
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label
@@ -88,19 +85,13 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                  {...register("email")}
+                  {...register('email')}
                   className={`w-full px-4 py-2 bg-white border-2 ${
-                    errors.email
-                      ? "border-red-500"
-                      : "border-brightboost-lightblue"
+                    errors.email ? 'border-red-500' : 'border-brightboost-lightblue'
                   } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
                   placeholder="Enter your email"
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
               </div>
 
               <div>
@@ -113,31 +104,23 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="password"
                   type="password"
-                  {...register("password")}
+                  {...register('password')}
                   className={`w-full px-4 py-2 bg-white border-2 ${
-                    errors.password
-                      ? "border-red-500"
-                      : "border-brightboost-lightblue"
+                    errors.password ? 'border-red-500' : 'border-brightboost-lightblue'
                   } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
                   placeholder="Enter your password"
                 />
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password.message}
-                  </p>
-                )}
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
-                  isSubmitting
-                    ? "bg-brightboost-lightblue/70"
-                    : "bg-brightboost-lightblue"
+                  isSubmitting ? 'bg-brightboost-lightblue/70' : 'bg-brightboost-lightblue'
                 } transition-colors`}
               >
-                {isSubmitting ? "Logging in..." : "Login"}
+                {isSubmitting ? 'Logging in...' : 'Login'}
               </button>
             </form>
 

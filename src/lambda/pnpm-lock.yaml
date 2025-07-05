@@ -26,7 +26,7 @@ importers:
       "@types/bcryptjs":
         specifier: ^2.4.6
         version: 2.4.6
-      "@types/jsonwebtoken":
+      '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
       "@types/node":

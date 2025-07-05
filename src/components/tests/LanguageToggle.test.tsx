@@ -64,7 +64,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>,
+      </I18nextProvider>
     );
 
     const button = screen.getByText("English");
@@ -82,7 +82,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>,
+      </I18nextProvider>
     );
 
     const button = screen.getByText("English");
@@ -105,7 +105,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>,
+      </I18nextProvider>
     );
 
     const button = screen.getByText("English");
@@ -125,7 +125,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>,
+      </I18nextProvider>
     );
 
     const button = screen.getByText(/Español|English/i);
@@ -133,7 +133,7 @@ describe("LanguageToggle", () => {
   });
 
   it("falls back to English if no resource bundle available", () => {
-    mockHasResourceBundle.mockReturnValue(false);
+    mockHasResourceBundle.mockReturnValue(false); 
 
     render(
       <I18nextProvider
@@ -145,7 +145,7 @@ describe("LanguageToggle", () => {
         }}
       >
         <LanguageToggle />
-      </I18nextProvider>,
+      </I18nextProvider>
     );
 
     const button = screen.getByText("English");
@@ -194,7 +194,7 @@ describe("LanguageToggle", () => {
     const button = screen.getByText("Español");
     expect(button).toBeDefined();
   });
-  
+
   it("updates button text correctly when language is toggled", async () => {
     render(
       <I18nextProvider
@@ -279,4 +279,3 @@ describe("LanguageToggle", () => {
     expect(newbutton).toBeInTheDocument();
   });
 });
-
