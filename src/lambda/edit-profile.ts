@@ -127,6 +127,14 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
+    if (typeof event.body !== 'string') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ message: "Missing body" }),
+     };
+    }
+    
     const info = JSON.parse(event.body);
     const { name, school, subject } = info;
 
