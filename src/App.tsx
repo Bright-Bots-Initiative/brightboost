@@ -109,6 +109,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
