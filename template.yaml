@@ -212,7 +212,7 @@ Resources:
     ProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      FunctionName: !Sub "${AWS::StackName}-profile-fn"
       CodeUri: src/lambda/
       Handler: dist/profile.handler
       VpcConfig:
@@ -247,7 +247,7 @@ Resources:
     EditProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub "${AWS::StackName}-student-dashboard-fn"
+      FunctionName: !Sub "${AWS::StackName}-edit-profile-fn"
       CodeUri: src/lambda/
       Handler: dist/edit-profile.handler
       VpcConfig:
@@ -329,7 +329,7 @@ Outputs:
     Description: "Teacher Dashboard Lambda Function ARN"
     Value: !GetAtt TeacherDashboardFunction.Arn
 
-  ProfileDashboardFunctionArn:
+  ProfileFunctionArn:
     Description: "Profile Lambda Function ARN"
     Value: !GetAtt ProfileFunction.Arn
 
