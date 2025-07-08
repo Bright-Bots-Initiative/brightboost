@@ -26,7 +26,7 @@ const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 const Profile = lazy(() => import("./pages/Profile"));
-const EditProfile = lazy(() => import("./pages/EditProfile"));
+const EditProfile = lazy(() => import("./pages/edit-profile"));
 const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
 const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
 
