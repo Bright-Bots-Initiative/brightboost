@@ -1,4 +1,3 @@
-src/lambda/add-badges.ts
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
   SecretsManagerClient,
