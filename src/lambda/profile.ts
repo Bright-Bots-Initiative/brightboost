@@ -127,7 +127,7 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const data = await db.query("SELECT id, name, email, role, school, subject, created_at FROM users WHERE email = " + decoded.email)
+    const data = await db.query("SELECT id, name, email, role, school, subject, created_at FROM users WHERE email = $1", [decoded.email])
 
     return {
       statusCode: 200,
