@@ -36,33 +36,11 @@
     },
     "noData": "¡Comienza tu primera misión!",
     "startLearning": "Comenzar Aprendizaje",
-    "viewProgress": "Ver Progreso"
-  },
+    "viewProgress": "Ver Progreso",
 
-  "language": {
-    "switchToSpanish": "Cambiar a español",
-    "switchToEnglish": "Cambiar a inglés"
-  },
-
-  "api": {
-    "sessionExpired": "Sesión expirada",
-    "dashboardUnavailable": "Panel de control no disponible, por favor intente nuevamente.",
-    "apiRequestFailed": "Error en la solicitud de la API",
-    "loginFailed": "Inicio de sesión fallido",
-    "signupFailed": "Registro fallido",
-    "teacherSignupFailed": "Registro de profesor fallido",
-    "studentSignupFailed": "Registro de estudiante fallido",
-    "invalidEmailOrPassword": "Correo electrónico o contraseña inválidos",
-    "emailAlreadyInUse": "El correo electrónico ya está en uso",
-    "serviceUnavailable": "Servicio no disponible. Por favor, inténtelo de nuevo más tarde.",
-    "retrying": "Reintentando...",
-    "retryingLoginRequest": "Reintentando solicitud de inicio de sesión",
-    "retriesLeft": "reintentos restantes",
-    "checkInternetConnection": "Por favor, revise su conexión a Internet e inténtelo de nuevo.",
-    "networkIssue": "Error de red",
-    "networkFailed": "No pudimos conectar con el servidor. Por favor, inténtelo de nuevo."
-  },
-  "notFound.pageNotFound": "Página No Encontrada",
-  "notFound.pageDescription": "¡Vaya! La página que buscas no existe o ha sido movida.",
-  "notFound.backToHome": "Volver al inicio"
+    "language": {
+      "switchToSpanish": "Cambiar a español",
+      "switchToEnglish": "Cambiar a inglés"
+    }
+  }
 }

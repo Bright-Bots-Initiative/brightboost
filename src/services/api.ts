@@ -2,7 +2,6 @@
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast.ts";
-import { t } from "i18next";
 
 // Get API URL from environment variables - use relative URLs in development for proxy
 const API_URL = import.meta.env.DEV
@@ -52,19 +51,19 @@ export const loginUser = async (
       const errorText = await response.text();
       console.error("Login error response:", errorText);
 
-      let errorMessage = t("api.loginFailed");
+      let errorMessage = "Login failed";
       if (response.status === 401) {
-        errorMessage = t("api.invalidEmailOrPassword");
+        errorMessage = "Invalid email or password";
       } else if (response.status === 409) {
-        errorMessage = t("api.emailAlreadyInUse");
+        errorMessage = "Email already in use";
       } else if (response.status >= 500) {
-        errorMessage = t("api.serviceUnavailable");
+        errorMessage = "Service unavailable. Please try again later.";
       } else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = `${t("api.loginFailed")}: ${response.status} ${response.statusText}`;
+          errorMessage = `Login failed: ${response.status} ${response.statusText}`;
         }
       }
 
@@ -80,8 +79,8 @@ export const loginUser = async (
       error.message === "Failed to fetch"
     ) {
       toast({
-        title: t("api.retrying"),
-        description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
+        title: "Retrying...",
+        description: `Retrying login request (${retries} left)...`,
         variant: "default",
       });
       console.log(`Retrying login... (${retries} left)`);
@@ -90,8 +89,8 @@ export const loginUser = async (
     }
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast({
-        title: t("api.loginFailed"),
-        description: t("api.checkInternetConnection"),
+        title: "Login Failed",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
     }
@@ -121,19 +120,19 @@ export const signupUser = async (
       const errorText = await response.text();
       console.error("Signup error response:", errorText);
 
-      let errorMessage = t("api.signupFailed");
+      let errorMessage = "Signup failed";
       if (response.status === 401) {
-        errorMessage = t("api.invalidEmailOrPassword");
+        errorMessage = "Invalid email or password";
       } else if (response.status === 409) {
-        errorMessage = t("api.emailAlreadyInUse");
+        errorMessage = "Email already in use";
       } else if (response.status >= 500) {
-        errorMessage = t("api.serviceUnavailable");
+        errorMessage = "Service unavailable. Please try again later.";
       } else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = `${t("api.signupFailed")}: ${response.status} ${response.statusText}`;
+          errorMessage = `Signup failed: ${response.status} ${response.statusText}`;
         }
       }
 
@@ -149,8 +148,8 @@ export const signupUser = async (
       error.message === "Failed to fetch"
     ) {
       toast({
-        title: t("api.retrying"),
-        description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
         variant: "default",
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -158,8 +157,8 @@ export const signupUser = async (
     }
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast({
-        title: t("api.signupFailed"),
-        description: t("api.checkInternetConnection"),
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
     }
@@ -192,19 +191,19 @@ export const signupTeacher = async (
       const errorText = await response.text();
       console.error("Teacher signup error response:", errorText);
 
-      let errorMessage = t("api.teacherSignupFailed");
+      let errorMessage = "Teacher signup failed";
       if (response.status === 401) {
-        errorMessage = t("api.invalidEmailOrPassword");
+        errorMessage = "Invalid email or password";
       } else if (response.status === 409) {
-        errorMessage = t("api.emailAlreadyInUse");
+        errorMessage = "Email already in use";
       } else if (response.status >= 500) {
-        errorMessage = t("api.serviceUnavailable");
+        errorMessage = "Service unavailable. Please try again later.";
       } else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = `${t("api.teacherSignupFailed")}: ${response.status} ${response.statusText}`;
+          errorMessage = `Teacher signup failed: ${response.status} ${response.statusText}`;
         }
       }
 
@@ -220,8 +219,8 @@ export const signupTeacher = async (
       error.message === "Failed to fetch"
     ) {
       toast({
-        title: t("api.retrying"),
-        description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
         variant: "default",
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -229,8 +228,8 @@ export const signupTeacher = async (
     }
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast({
-        title: t("api.signupFailed"),
-        description: t("api.checkInternetConnection"),
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
     }
@@ -261,19 +260,19 @@ export const signupStudent = async (
       const errorText = await response.text();
       console.error("Student signup error response:", errorText);
 
-      let errorMessage = t("api.studentSignupFailed");
+      let errorMessage = "Student signup failed";
       if (response.status === 401) {
-        errorMessage = t("api.invalidEmailOrPassword");
+        errorMessage = "Invalid email or password";
       } else if (response.status === 409) {
-        errorMessage = t("api.emailAlreadyInUse");
+        errorMessage = "Email already in use";
       } else if (response.status >= 500) {
-        errorMessage = t("api.serviceUnavailable");
+        errorMessage = "Service unavailable. Please try again later.";
       } else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch (e) {
-          errorMessage = `${t("api.studentSignupFailed")}: ${response.status} ${response.statusText}`;
+          errorMessage = `Student signup failed: ${response.status} ${response.statusText}`;
         }
       }
 
@@ -289,8 +288,8 @@ export const signupStudent = async (
       error.message === "Failed to fetch"
     ) {
       toast({
-        title: t("api.retrying"),
-        description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
+        title: "Retrying...",
+        description: `Retrying signup request (${retries} left)...`,
         variant: "default",
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -298,8 +297,8 @@ export const signupStudent = async (
     }
     if (error instanceof TypeError && error.message === "Failed to fetch") {
       toast({
-        title: t("api.signupFailed"),
-        description: t("api.checkInternetConnection"),
+        title: "Signup Failed",
+        description: "Please check your internet connection and try again.",
         variant: "destructive",
       });
     }
@@ -327,13 +326,13 @@ export const useApi = () => {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error(t("api.sessionExpired"));
+            throw new Error("Session expired");
           }
           if (response.status === 403) {
-            throw new Error(t("api.dashboardUnavailable"));
+            throw new Error("Dashboard unavailable, please retry.");
           }
           const errorData = await response.json();
-          throw new Error(errorData.error || t("api.apiRequestFailed"));
+          throw new Error(errorData.error || "API request failed");
         }
 
         return await response.json();
@@ -347,16 +346,16 @@ export const useApi = () => {
         ) {
           console.log(`Retrying request... (${retries} attempts left)`);
           toast({
-            title: t("api.networkIssue"),
-            description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
+            title: "Network issue",
+            description: `Retrying request... (${retries} attempt${retries > 1 ? "s" : ""} left)`,
           });
           await new Promise((resolve) => setTimeout(resolve, 1000));
           return authFetch(endpoint, options, retries - 1);
         }
 
         toast({
-          title: t("api.networkIssue"),
-          description: t("api.networkFailed"),
+          title: "Network Error",
+          description: "We couldn't connect to the server. Please try again.",
           variant: "destructive",
         });
 

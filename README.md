@@ -276,6 +276,24 @@ BrightBoost includes comprehensive testing:
 - **E2E Tests**: End-to-end workflows with Cypress
 - **Linting**: Code quality checks with ESLint
 
+## STEM-1-MVP Environment
+
+For the stem-1-mvp delivery lane, add the following secret to GitHub repository settings:
+
+- `STEM1_MVP_SWA_TOKEN`: Azure Static Web App deployment token for brightboost-stem1-mvp
+
+The staging environment will be available at: `https://brightboost-stem1-mvp.azurestaticapps.net`
+
+## Provisioning STEM-1-MVP Environment
+
+To provision the Azure Static Web App for the stem-1-mvp delivery lane:
+
+1. Ensure you have Azure CLI installed and are logged in: `az login`
+2. Ensure you have GitHub CLI installed and are authenticated: `gh auth login`
+3. Run the provisioning script: `bash scripts/provision-stem1-swa.sh`
+
+This will create the `brightboost-stem1-mvp` Static Web App and automatically add the `STEM1_MVP_SWA_TOKEN` secret to the repository.
+
 ```bash
 # Run all tests
 npm test

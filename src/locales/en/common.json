@@ -42,27 +42,5 @@
   "language": {
     "switchToSpanish": "Switch to Spanish",
     "switchToEnglish": "Switch to English"
-  },
-
-  "api": {
-    "sessionExpired": "Session expired",
-    "dashboardUnavailable": "Dashboard unavailable, please retry.",
-    "apiRequestFailed": "API request failed",
-    "loginFailed": "Login failed",
-    "signupFailed": "Signup failed",
-    "teacherSignupFailed": "Teacher signup failed",
-    "studentSignupFailed": "Student signup failed",
-    "invalidEmailOrPassword": "Invalid email or password",
-    "emailAlreadyInUse": "Email already in use",
-    "serviceUnavailable": "Service unavailable. Please try again later.",
-    "retrying": "Retrying...",
-    "retryingLoginRequest": "Retrying login request",
-    "retriesLeft": "retries left",
-    "checkInternetConnection": "Please check your internet connection and try again.",
-    "networkIssue": "Network Error",
-    "networkFailed": "We couldn't connect to the server. Please try again."
-  },
-  "notFound.pageNotFound": "Page Not Found",
-  "notFound.pageDescription": "Oops! The page you are looking for doesn't exist or has been moved.",
-  "notFound.backToHome": "Back to Home"
+  }
 }
