@@ -161,8 +161,3 @@ export const handler = async (
     };
   }
 };
-Footer
-© 2025 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
