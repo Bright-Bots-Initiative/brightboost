@@ -11,11 +11,19 @@ import TeacherNavbar from "../components/TeacherDashboard/TeacherNavbar";
 
 const TeacherDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+
   const navigate = useNavigate();
+
   const api = useApi();
 
+
+
+
+
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [error, setError] = useState<string | null>(null);
 
   const fetchLessons = useCallback(async () => {
@@ -138,12 +146,21 @@ const TeacherDashboard: React.FC = () => {
       <div className="min-h-screen flex flex-col relative z-10">
         <TeacherNavbar
           userName={user?.name || "Teacher"}
+
           onLogout={handleLogout}
+
         />
+
+
+
 
         <Sidebar />
 
+
+
+
         {isLoading && (
+
           <div className="flex-grow p-6 ml-64 text-center">
             <BrightBoostRobot size="lg" />
             <p className="text-xl text-brightboost-navy mt-4">
@@ -167,11 +184,18 @@ const TeacherDashboard: React.FC = () => {
               Teachers will appear here once they're registered in the system.
             </p>
           </div>
+
         )}
+
         {!isLoading && !error && lessonsData.length > 0 && (
+
           <MainContent
+
+
             lessonsData={lessonsData}
+
             setLessonsData={setLessonsData}
+
             onAddLesson={handleAddLesson}
             onEditLesson={handleEditLesson}
             onDeleteLesson={handleDeleteLesson}
@@ -180,6 +204,7 @@ const TeacherDashboard: React.FC = () => {
       </div>
     </GameBackground>
   );
+
 };
 
 export default TeacherDashboard;
