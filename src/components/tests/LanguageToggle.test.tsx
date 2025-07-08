@@ -1,7 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import "@testing-library/jest-dom";
 import { I18nextProvider } from "react-i18next";
 import LanguageToggle from "../LanguageToggle";
 
