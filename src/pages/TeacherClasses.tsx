@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Class } from "../components/TeacherDashboard/types";
 import { fetchMockClasses } from "../services/mockClassService";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-//import ClassTable from "../components/TeacherDashboard/ClassTable";
-import CSVImportModal from "../components/CSVImport/CSVImportModal";
+import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
 import { Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -21,22 +20,12 @@ const ClassesPage: React.FC = () => {
     };
     loadClasses();
   }, []);
-
-  const handleImportSuccess = () => {
-    // Refresh classes list after successful import
-    const loadClasses = async () => {
-      const result = await fetchMockClasses();
-      setClasses(result);
-    };
-    loadClasses();
-  };
-
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Classes</h2>
       <button
           onClick={() => setIsImportModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors mb-4"
+          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import from CSV
