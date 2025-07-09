@@ -2,7 +2,7 @@ import { Student, ParsedClassData, CSVRow, ParseError } from '../components/Teac
 
 export const parseCSVData = (csvContent: string): ParsedClassData => {
   const lines = csvContent.trim().split('\n');
-
+  
   if (lines.length < 2) {
     throw new Error('CSV file must contain at least a header row and one data row. Please ensure your file has the correct format with headers like: className,grade,studentName,studentEmail,studentId');
   }
@@ -51,7 +51,7 @@ export const parseCSVData = (csvContent: string): ParsedClassData => {
   dataRows.forEach((row, index) => {
     const rowNumber = index + 2; // +2 because index starts at 0 and we skip header
     const columns = row.split(',').map(col => col.trim().replace(/"/g, ''));
-
+    
     if (columns.length < headers.length) {
       parseErrors.push({
         line: rowNumber,
@@ -66,7 +66,7 @@ export const parseCSVData = (csvContent: string): ParsedClassData => {
       if (gradeIndex !== -1) {
         grade = columns[gradeIndex];
       }
-
+      
       if (!className || className.trim() === '') {
         parseErrors.push({
           line: rowNumber,
@@ -134,14 +134,20 @@ export const validateCSVData = (data: ParsedClassData): string[] => {
   const duplicateNames = studentNames.filter((name, index) => studentNames.indexOf(name) !== index);
   if (duplicateNames.length > 0) {
     const uniqueDuplicates = [...new Set(duplicateNames)];
-    errors.push(`Duplicate student names found: ${uniqueDuplicates.join(', ')}. Each student must have a unique name. Please review your CSV and ensure all student names are distinct.`);
+    // Filter out class name from duplicate check
+    const actualDuplicates = uniqueDuplicates.filter(name => 
+      name !== data.className.toLowerCase().trim()
+    );
+    if (actualDuplicates.length > 0) {
+      errors.push(`Duplicate student names found: ${actualDuplicates.join(', ')}. Each student must have a unique name. Please review your CSV and ensure all student names are distinct.`);
+    }
   }
 
   // Check for duplicate student emails (only for non-empty emails)
   const studentEmails = data.students
     .filter(s => s.email && s.email.trim() !== '')
     .map(s => s.email!.toLowerCase().trim());
-
+  
   if (studentEmails.length > 0) {
     const duplicateEmails = studentEmails.filter((email, index) => studentEmails.indexOf(email) !== index);
     if (duplicateEmails.length > 0) {
@@ -158,7 +164,7 @@ export const validateCSVData = (data: ParsedClassData): string[] => {
       return !emailRegex.test(s.email!);
     })
     .map(s => s.email);
-
+    
   if (invalidEmails.length > 0) {
     errors.push(`Invalid email formats found: ${invalidEmails.join(', ')}. Please use valid email addresses (e.g., student@example.com).`);
   }
