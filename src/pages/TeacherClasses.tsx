@@ -20,15 +20,16 @@ const ClassesPage: React.FC = () => {
     };
     loadClasses();
   }, []);
+
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Classes</h2>
       <button
-          onClick={() => setIsImportModalOpen(true)}
-          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Import from CSV
+        onClick={() => setIsImportModalOpen(true)}
+        className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+      >
+        <Upload className="w-4 h-4 mr-2" />
+        Import from CSV
       </button>
 
       {isLoading ? (
@@ -103,15 +104,15 @@ const ClassesPage: React.FC = () => {
                   </tbody>
                 </table>
               )}
-
-              <CSVImportModal
-                isOpen={isImportModalOpen}
-                onClose={() => setIsImportModalOpen(false)}
-              />
             </div>
           ))}
         </div>
       )}
+
+      <CSVImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </div>
   );
 };
