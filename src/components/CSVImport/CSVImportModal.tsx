@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Class, Student } from '../TeacherDashboard/types';
+import { Class, ParsedClassData } from './types';
 import CSVDropzone from './CSVDropzone';
 import CSVSummary from './CSVSummary';
 import { parseCSVData, validateCSVData } from '../../utils/csvParser';
@@ -14,25 +14,21 @@ interface CSVImportModalProps {
 
 type ImportStep = 'upload' | 'summary' | 'success' | 'error';
 
-interface ParsedClassData {
-  className: string;
-  grade?: string;
-  students: Student[];
-}
-
 const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<ImportStep>('upload');
   const [parsedData, setParsedData] = useState<ParsedClassData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importedClassId, setImportedClassId] = useState<string | null>(null);
 
   const handleFileUpload = (csvContent: string) => {
+    setUploadError(null); // Clear previous errors
     try {
       const parsed = parseCSVData(csvContent);
       const errors = validateCSVData(parsed);
-      
+
       if (errors.length > 0) {
         setValidationErrors(errors);
         setCurrentStep('error');
@@ -42,8 +38,9 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
       setParsedData(parsed);
       setCurrentStep('summary');
     } catch (error) {
-      setValidationErrors(['Failed to parse CSV file. Please check the format.']);
-      setCurrentStep('error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setUploadError(`Upload failed: ${errorMessage}`);
+      setCurrentStep('upload'); // Stay on upload step to show error
     }
   };
 
@@ -81,6 +78,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
     setCurrentStep('upload');
     setParsedData(null);
     setValidationErrors([]);
+    setUploadError(null);
     setIsImporting(false);
     setImportedClassId(null);
   };
@@ -125,6 +123,14 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
               <CSVDropzone onFileUpload={handleFileUpload} />
+              {uploadError && (
+                <div className="p-3 mt-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+                  <div className="flex items-start">
+                    <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+                    <span>⚠️ {uploadError}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
