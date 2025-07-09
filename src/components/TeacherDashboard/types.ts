@@ -30,19 +30,6 @@ export interface MainContentProps {
   onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
-export type Student = {
-  id: string;
-  name: string;
-  email?: string;
-};
-
-export type Class = {
-  id: string;
-  name: string;
-  grade?: Grade;
-  students: Student[];
-};
-
 export type Grade =
   | "Kindergarten"
   | "1st"
@@ -73,3 +60,35 @@ export const gradeOptions: Grade[] = [
   "11th",
   "12th",
 ];
+
+export interface Student {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface Class {
+  id: string;
+  name: string;
+  grade?: Grade;
+  students: Student[];
+}
+
+export type CSVRow = Record<string, string> & {
+  className: string;
+  studentName: string;
+  studentEmail: string;
+  studentId?: string;
+  grade?: string;
+};
+
+export interface ParseError {
+  line: number;
+  message: string;
+}
+
+export interface ParsedClassData {
+  className: string;
+  grade?: string;
+  students: Student[];
+}

@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Class, gradeOptions } from "../components/TeacherDashboard/types";
-import {
-  fetchMockClassById,
-  patchMockClass,
-} from "../services/mockClassService";
+import { fetchMockClassById, patchMockClass } from "../services/mockClassService";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams();
@@ -31,16 +28,18 @@ const TeacherClassDetail: React.FC = () => {
 
   const handleSave = async () => {
     if (!classData) return;
+
     setIsSaving(true);
     setClassData({
       ...classData,
       name: editingName,
-      grade: editingGrade as Class["grade"],
-    });
+      grade: editingGrade as Class["grade"]});
+
     await patchMockClass(classData.id, {
       name: editingName,
       grade: editingGrade as Class["grade"],
     });
+
     setIsSaving(false);
   };
 
@@ -49,9 +48,7 @@ const TeacherClassDetail: React.FC = () => {
     return (
       <div className="flex justify-center items-start w-full p-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">
-            404: Class Not Found
-          </h2>
+          <h2 className="text-2xl font-bold text-red-600">404: Class Not Found</h2>
           <p className="text-gray-600 mt-2">
             The class you're looking for doesn't exist or was removed.
           </p>
@@ -80,6 +77,7 @@ const TeacherClassDetail: React.FC = () => {
               className="mt-1 p-2 border rounded w-full"
             />
           </label>
+
           <label className="text-sm font-semibold text-gray-700">
             Grade:
             <select
@@ -95,6 +93,7 @@ const TeacherClassDetail: React.FC = () => {
               ))}
             </select>
           </label>
+
           <button
             onClick={handleSave}
             disabled={isSaving}
@@ -126,9 +125,7 @@ const TeacherClassDetail: React.FC = () => {
                   <td className="py-2">{student.id}</td>
                   <td className="py-2">{student.name}</td>
                   <td className="py-2">
-                    {student.email ?? (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
+                    {student.email ?? <span className="text-gray-400 italic">N/A</span>}
                   </td>
                 </tr>
               ))}

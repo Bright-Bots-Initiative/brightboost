@@ -39,11 +39,26 @@ export const fetchMockClassById = async (id: string): Promise<Class> => {
 // Update class name and/or grade (used by TeacherClassDetail.tsx)
 export const patchMockClass = async (
   id: string,
-  updates: Partial<Pick<Class, "name" | "grade">>,
+  updates: Partial<Pick<Class, "name" | "grade">>
 ): Promise<Class> => {
   await new Promise((res) => setTimeout(res, 300));
   const index = mockClasses.findIndex((c) => c.id === id);
   if (index === -1) throw new Error("Class not found");
   mockClasses[index] = { ...mockClasses[index], ...updates };
   return { ...mockClasses[index] };
+};
+
+// Bulk import class from CSV (new function for CSV import)
+export const bulkImportClass = async (
+  classData: Omit<Class, 'id'>
+): Promise<Class> => {
+  await new Promise((res) => setTimeout(res, 1000)); // Simulate API delay
+  
+  const newClass: Class = {
+    id: `class-${Date.now()}`,
+    ...classData
+  };
+  
+  mockClasses.push(newClass);
+  return { ...newClass };
 };

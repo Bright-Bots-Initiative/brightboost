@@ -2,11 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Class } from "../components/TeacherDashboard/types";
 import { fetchMockClasses } from "../services/mockClassService";
 import BrightBoostRobot from "../components/BrightBoostRobot";
+import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
+import { Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const ClassesPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -21,6 +24,13 @@ const ClassesPage: React.FC = () => {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Classes</h2>
+      <button
+          onClick={() => setIsImportModalOpen(true)}
+          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Import from CSV
+      </button>
 
       {isLoading ? (
         <div className="bg-white p-6 rounded shadow-md">
@@ -94,6 +104,11 @@ const ClassesPage: React.FC = () => {
                   </tbody>
                 </table>
               )}
+
+              <CSVImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+              />
             </div>
           ))}
         </div>
