@@ -139,15 +139,15 @@ export const handler = async (
     const { name, school, subject } = info;
 
     if (typeof name === "string" && name.trim() !== "") {
-        await db.query("UPDATE users SET name = " + name + " WHERE email = $1", [decoded.email])
+        await db.query("UPDATE users SET name = $1 WHERE email = $2", [name, decoded.email])
     }
 
     if (typeof school === "string" && school.trim() !== "") {
-        await db.query("UPDATE users SET school = " + school + " WHERE email = $1", [decoded.email])
+        await db.query("UPDATE users SET school = $1 WHERE email = $2", [school, decoded.email])
     }
 
     if (typeof subject === "string" && subject.trim() !== "") {
-        await db.query("UPDATE users SET subject = " + subject + " WHERE email = $1", [decoded.email])
+        await db.query("UPDATE users SET subject = $1 WHERE email = $2", [subject, decoded.email])
     }
 
     return {

@@ -17,7 +17,7 @@ const Edit = () => {
         school: school,
         subject: subject,
       };
-      const response = await api.post("/edit-profile", data);
+      const response = await api.post("/api/edit-profile", data);
       console.log(response);
     },
     [api],
