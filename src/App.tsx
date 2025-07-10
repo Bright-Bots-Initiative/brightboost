@@ -2,6 +2,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Suspense, lazy } from "react";
+import { ToastContainer } from "react-toastify"; 
+import "react-toastify/dist/ReactToastify.css";  
 
 // Import home page eagerly for fast initial render
 import Index from "./pages/Index";
@@ -17,10 +19,7 @@ const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 
-// Import components
 import LoadingSpinner from "./components/LoadingSpinner";
-
-// Import styles
 import "./App.css";
 
 function App() {
@@ -60,7 +59,11 @@ function App() {
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+
+            {/* Toast notifications available app-wide */}
+            <ToastContainer />
           </Suspense>
+
           <footer
             style={{
               textAlign: "center",
