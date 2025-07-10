@@ -19,6 +19,7 @@ model User {
   xp        Int      @default(0)
   level     String   @default("Explorer")  // Changed to String to match server.cjs
   streak    Int      @default(0)           // Added streak from server.cjs
+  avatarUrl String?  @default("https://api.dicebear.com/7.x/identicon/svg?seed=default")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
