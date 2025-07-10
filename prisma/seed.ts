@@ -1,4 +1,3 @@
-console.log("✅ Seed script is starting...");
 import { PrismaClient } from '@prisma/client';
 
 
