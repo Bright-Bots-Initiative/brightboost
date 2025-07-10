@@ -9,6 +9,9 @@
     "readyPrompt": "¿Listo para aprender algo nuevo hoy?",
     "role": "Explorador de Nivel",
     "logout": "Cerrar sesión",
+    "currentModule": "Módulo actual",
+    "modulestatus": "Estado",
+    "noCurrentModule": "No se ha asignado ningún módulo actual.",
     "stemCard": {
       "title": "STEM 1",
       "subtitle": "¡Juguemos juntos!"

@@ -8,6 +8,9 @@
     "greeting": "Hello, {{name}}!",
     "readyPrompt": "Ready to learn something new today?",
     "role": "Level Explorer",
+    "currentModule": "Current Module",
+    "modulestatus": "Status",
+    "noCurrentModule": "No current module assigned.",
     "logout": "Logout",
     "stemCard": {
       "title": "STEM 1",
