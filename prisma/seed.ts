@@ -1,10 +1,14 @@
+console.log("✅ Seed script is starting...");
 import { PrismaClient } from '@prisma/client';
 
+
 const prisma = new PrismaClient();
+
 
 async function main() {
     try {
         await prisma.user.deleteMany({ where: { role: 'student' } });
+
 
         const students = [
             {
@@ -15,6 +19,7 @@ async function main() {
                 xp: 1000,
                 level: 'Explorer',
                 streak: 5,
+                avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=student_1'
             },
             {
                 name: 'Glenn Hoffman',
@@ -24,6 +29,7 @@ async function main() {
                 xp: 100,
                 level: 'Explorer',
                 streak: 1,
+                avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=student_2'
             },
             {
                 name: 'Justine Weiss',
@@ -33,6 +39,7 @@ async function main() {
                 xp: 500,
                 level: 'Explorer',
                 streak: 3,
+                avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=student_3'
             },
             {
                 name: 'Alfonso Randall',
@@ -42,6 +49,7 @@ async function main() {
                 xp: 3000,
                 level: 'Explorer',
                 streak: 10,
+                avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=student_4'
             },
             {
                 name: 'Elba Zamora',
@@ -51,8 +59,10 @@ async function main() {
                 xp: 200,
                 level: 'Explorer',
                 streak: 2,
-            }, 
+                avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=student_5'
+            },
         ];
+
 
         await prisma.user.createMany({ data: students });
         console.log('Seeded 5 sample students successfully');
@@ -66,3 +76,5 @@ async function main() {
 }
 
 main();
+
+
