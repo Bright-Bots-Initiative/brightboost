@@ -16,7 +16,6 @@ export interface SortableLessonRowProps {
 
 export interface LessonsTableProps {
   lessons: Lesson[];
-  setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
   onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
   onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
@@ -24,24 +23,10 @@ export interface LessonsTableProps {
 
 export interface MainContentProps {
   lessonsData: Lesson[];
-  setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: Lesson["id"]) => void;
 }
-
-export type Student = {
-  id: string;
-  name: string;
-  email?: string;
-};
-
-export type Class = {
-  id: string;
-  name: string;
-  grade?: Grade;
-  students: Student[];
-};
 
 export type Grade =
   | "Kindergarten"
@@ -73,3 +58,35 @@ export const gradeOptions: Grade[] = [
   "11th",
   "12th",
 ];
+
+export interface Student {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface Class {
+  id: string;
+  name: string;
+  grade?: Grade;
+  students: Student[];
+}
+
+export type CSVRow = Record<string, string> & {
+  className: string;
+  studentName: string;
+  studentEmail: string;
+  studentId?: string;
+  grade?: string;
+};
+
+export interface ParseError {
+  line: number;
+  message: string;
+}
+
+export interface ParsedClassData {
+  className: string;
+  grade?: string;
+  students: Student[];
+}
