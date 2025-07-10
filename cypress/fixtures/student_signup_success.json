@@ -1,0 +1,11 @@
+{
+  "message": "Student account created successfully",
+  "user": {
+    "id": 2,
+    "name": "Jane Student",
+    "email": "jane.student@example.com",
+    "role": "STUDENT",
+    "createdAt": "2025-06-12T01:00:00.000Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwibmFtZSI6IkphbmUgU3R1ZGVudCIsImVtYWlsIjoiamFuZS5zdHVkZW50QGV4YW1wbGUuY29tIiwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE2MjM0NTY3ODksImV4cCI6MTYyMzU0MzE4OX0.mock-signature"
+}
