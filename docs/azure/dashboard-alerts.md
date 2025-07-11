@@ -37,8 +37,8 @@ This document outlines how to set up and manage Azure Dashboard and Alerts for m
    - Time range: Last 24 hours
    - Chart type: Line chart
 
-7. Arrange the tiles as desired
-8. Click **Save** to save the dashboard
+5. Arrange the tiles as desired
+6. Click **Save** to save the dashboard
 
 ## Sharing the Dashboard
 

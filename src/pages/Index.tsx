@@ -1,8 +1,7 @@
-
 // src/pages/Index.tsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import GameBackground from '../components/GameBackground';
+import React from "react";
+import { Link } from "react-router-dom";
+import GameBackground from "../components/GameBackground";
 
 const Index: React.FC = () => {
   return (
@@ -16,7 +15,7 @@ const Index: React.FC = () => {
             Empowering young minds with technology skills
           </p>
         </div>
-        
+
         <div className="space-y-4 flex flex-col items-center">
           <Link
             to="/login"

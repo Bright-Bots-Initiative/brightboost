@@ -7,17 +7,20 @@ This document outlines the development workflow for the BrightBoost project, inc
 ### Setup
 
 1. Clone the repository
+
    ```bash
    git clone https://github.com/Bright-Bots-Initiative/brightboost.git
    cd brightboost
    ```
 
 2. Install dependencies
+
    ```bash
    npm install
    ```
 
 3. Set up environment variables
+
    ```bash
    cp .env.example .env
    # Edit .env with your local configuration
@@ -31,6 +34,7 @@ This document outlines the development workflow for the BrightBoost project, inc
 ## Testing
 
 Run tests with:
+
 ```bash
 npm test
 ```

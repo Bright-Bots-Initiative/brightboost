@@ -11,21 +11,25 @@ BrightBoost uses a comprehensive testing strategy with multiple testing framewor
 ## Running Tests
 
 ### All Tests
+
 ```bash
 npm test
 ```
 
 ### Unit Tests Only
+
 ```bash
 npm run test:unit
 ```
 
 ### E2E Tests
+
 ```bash
 npm run test:e2e
 ```
 
 ### Linting
+
 ```bash
 npm run lint
 ```
@@ -34,27 +38,21 @@ npm run lint
 
 ### Cypress Environment Variables
 
-For E2E tests, Cypress uses environment variables to determine test behavior:
+For E2E tests, Cypress uses environment variables to configure test behavior:
 
-- `IS_PREVIEW=true`: Runs tests in preview mode, expecting "API not available" messages
-- `IS_PREVIEW=false`: Runs tests against live API endpoints
-
-### Preview Mode Testing
-
-When `IS_PREVIEW=true`, tests verify that:
-- Dashboard components show appropriate preview messages
-- No actual API calls are made to non-existent endpoints
-- Error handling displays user-friendly messages
+- `CYPRESS_BASE_URL`: Override the base URL for testing against different environments
 
 ## Test Structure
 
 ### Unit Tests (`src/**/*.test.ts`)
+
 - Component rendering and behavior
 - Custom hook functionality
 - Utility function validation
 - Mock API responses
 
 ### E2E Tests (`cypress/e2e/`)
+
 - Complete user workflows
 - Authentication flows
 - Dashboard interactions
@@ -63,6 +61,7 @@ When `IS_PREVIEW=true`, tests verify that:
 ## Debugging Tests
 
 ### Local Test Debugging
+
 ```bash
 # Run specific test file
 npm run test:unit -- src/components/TeacherDashboard.test.tsx
@@ -75,6 +74,7 @@ npx cypress open
 ```
 
 ### CI Test Debugging
+
 - Check GitHub Actions logs for detailed error messages
 - Verify environment variables are set correctly
 - Ensure all dependencies are installed properly
@@ -90,15 +90,18 @@ npx cypress open
 ## Common Issues
 
 ### "document is not defined" Errors
+
 - Ensure `environment: 'jsdom'` is set in `vitest.config.ts`
 - Check that React component tests use proper test environment
 
 ### Cypress Timeout Errors
+
 - Increase timeout values for slow-loading elements
-- Verify that preview mode detection is working correctly
 - Check that API intercepts are properly configured
+- Verify network connectivity to test endpoints
 
 ### Environment Variable Issues
+
 - Verify `.env` file is properly configured
 - Check that environment variables are available in test environment
 - Ensure Cypress environment variables are passed correctly
