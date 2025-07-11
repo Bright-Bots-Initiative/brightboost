@@ -1,11 +1,10 @@
-name: BrightBoost – Production SWA (Canonical)
-# This is the single canonical production deployment workflow for BrightBoost.
-# All production deployments should use this workflow only.
-# Updated to fix Azure SWA placeholder page issue
+name: BrightBoost – Staging SWA (swa-staging.yml)
+
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: read
   pull-requests: write
@@ -25,10 +24,10 @@ jobs:
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_BAY_0BFACC110 }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_PLANT_045EAB10 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          deployment_environment: "production"
+          deployment_environment: "staging"
           skip_api_build: true
           app_location: "/"
           api_location: ""

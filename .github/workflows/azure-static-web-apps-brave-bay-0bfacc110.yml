@@ -1,11 +1,10 @@
-name: BrightBoost – Production SWA (Canonical)
-# This is the single canonical production deployment workflow for BrightBoost.
-# All production deployments should use this workflow only.
-# Updated to fix Azure SWA placeholder page issue
+name: Azure Static Web Apps CI/CD (Production)
+
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: read
   pull-requests: write
