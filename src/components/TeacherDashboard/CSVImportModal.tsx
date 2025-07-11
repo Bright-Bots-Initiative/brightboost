@@ -28,7 +28,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
     try {
       const parsed = parseCSVData(csvContent);
       const errors = validateCSVData(parsed);
-      
+
       if (errors.length > 0) {
         setValidationErrors(errors);
         setCurrentStep('error');
@@ -38,7 +38,8 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
       setParsedData(parsed);
       setCurrentStep('summary');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error('CSV parsing error:', errorMessage);
       setUploadError(`Upload failed: ${errorMessage}`);
       setCurrentStep('upload'); // Stay on upload step to show error
@@ -53,7 +54,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
       const newClass: Omit<Class, 'id'> = {
         name: parsedData.className,
         grade: parsedData.grade as Class['grade'],
-        students: parsedData.students
+        students: parsedData.students,
       };
 
       const importedClass = await bulkImportClass(newClass);
@@ -113,13 +114,19 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-2">Upload CSV File</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Upload a CSV file with your class roster. The file should include columns for student name, email, and optionally student ID.
+                  Upload a CSV file with your class roster. The file should
+                  include columns for student name, email, and optionally
+                  student ID.
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Expected CSV Format:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Expected CSV Format:
+                  </h4>
                   <div className="text-sm text-blue-800 font-mono">
-                    className,grade,studentName,studentEmail,studentId<br/>
-                    "Math 101","5th","John Doe","john@example.com","STU001"<br/>
+                    className,grade,studentName,studentEmail,studentId
+                    <br />
+                    "Math 101","5th","John Doe","john@example.com","STU001"
+                    <br />
                     "Math 101","5th","Jane Smith","jane@example.com","STU002"
                   </div>
                 </div>
@@ -171,7 +178,8 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Import Successful!</h3>
               <p className="text-gray-600 mb-6">
-                Your class has been successfully imported. You'll be redirected to the class detail page.
+                Your class has been successfully imported. You'll be redirected
+                to the class detail page.
               </p>
               <button
                 onClick={handleSuccess}
