@@ -1,3 +1,4 @@
+// src/components/TeacherDashboard/LessonTable.tsx
 import React from "react";
 import {
   DndContext,
@@ -143,11 +144,6 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
       if (oldIndex !== -1 && newIndex !== -1) {
         const newOrderLessons = arrayMove(lessons, oldIndex, newIndex);
         setLessons(newOrderLessons);
-        console.log(
-          "New lesson order (IDs):",
-          newOrderLessons.map((l) => l.id),
-        );
-        console.log("Full new lesson order:", newOrderLessons);
       }
     }
   }

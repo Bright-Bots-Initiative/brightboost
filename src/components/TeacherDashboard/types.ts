@@ -1,25 +1,26 @@
+// src/components/TeacherDashboard/types.ts
 export interface Lesson {
-  id: number | string; // Allow string for dnd-kit compatibility if IDs are not numbers
+  id: number | string;
   title: string;
+  content: string;
   category: string;
   date: string;
-  status: "Published" | "Draft" | "Review" | string; // Allow other string statuses
-  content?: string; // Add content property
+  status: "Published" | "Draft" | "Review" | string;
 }
 
 export interface SortableLessonRowProps {
   lesson: Lesson;
-  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
+  onEditLesson: (lesson: Lesson) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
 export interface LessonsTableProps {
   lessons: Lesson[];
   setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
+  onEditLesson: (lesson: Lesson) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
 
 export interface MainContentProps {
@@ -73,3 +74,22 @@ export const gradeOptions: Grade[] = [
   "11th",
   "12th",
 ];
+
+export type CSVRow = Record<string, string> & {
+  className: string;
+  studentName: string;
+  studentEmail: string;
+  studentId?: string;
+  grade?: string;
+};
+
+export interface ParseError {
+  line: number;
+  message: string;
+}
+
+export interface ParsedClassData {
+  className: string;
+  grade?: string;
+  students: Student[];
+}
