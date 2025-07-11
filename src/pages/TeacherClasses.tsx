@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Class } from "../components/TeacherDashboard/types";
 import { fetchMockClasses } from "../services/mockClassService";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
+import CSVImportModal from "../components/CSVImport/CSVImportModal";
 import { Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 

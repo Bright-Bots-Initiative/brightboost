@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Class, ParsedClassData } from './types';
+import { Class, ParsedClassData } from '../TeacherDashboard/types';
 import CSVDropzone from './CSVDropzone';
 import CSVSummary from './CSVSummary';
 import { parseCSVData, validateCSVData } from '../../utils/csvParser';

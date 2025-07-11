@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, BookOpen, GraduationCap } from 'lucide-react';
-import { ParsedClassData } from './types';
+import { ParsedClassData } from '../TeacherDashboard/types';
 
 interface CSVSummaryProps {
   data: ParsedClassData;
