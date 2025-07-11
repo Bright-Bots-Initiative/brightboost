@@ -1,7 +1,6 @@
 import {
   Student,
   ParsedClassData,
-  CSVRow,
   ParseError,
 } from "../components/TeacherDashboard/types";
 
