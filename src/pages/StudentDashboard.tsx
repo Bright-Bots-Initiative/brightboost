@@ -157,13 +157,13 @@ const StudentDashboard = () => {
         <div className="w-full mb-6 mt-8">
           <div className = "flex items-center min-w-0">
         {/*align greeting w left edge of grid */}
-        <div className="flex items-center flex-shrink-0 mr-4">
+        <div className="flex items-center flex-shrink-0 mr-4 relative">
                 <BrightBoostRobot className="w-16 h-16" />
-                <div className = "truncate">
-                    <h1 className="text-3xl font-bold text-brightboost-navy truncate">
+                <div className = "ml-3 relative">
+                    <h1 className="text-3xl font-bold text-brightboost-navy">
                       Hello, {user?.name || "Student"}!
                     </h1>
-                    <p className="text-brightboost-blue truncate">
+                    <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
                     Ready to learn something new today?
                     </p>
                   </div>
