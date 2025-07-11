@@ -82,26 +82,13 @@ async function getDbConnection(): Promise<Pool> {
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const allowedOrigins = [
-    "http://localhost:5173",
-    "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
-  ];
-
-  const origin = event.headers.origin || event.headers.Origin || "";
-
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins[1],
+    "Access-Control-Allow-Origin":
+      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
-
-  console.log(
-    "Student dashboard Lambda function started, event:",
-    JSON.stringify(event, null, 2),
-  );
 
   try {
     if (event.httpMethod === "OPTIONS") {
@@ -136,66 +123,20 @@ export const handler = async (
       };
     }
 
-    if (decoded.role !== "STUDENT") {
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ error: "Dashboard unavailable, please retry." }),
-      };
-    }
-
     console.log("Attempting database connection...");
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const dashboardData = {
-      message: `Welcome back, ${decoded.name}!`,
-      xp: 150,
-      level: 2,
-      nextLevelXp: 200,
-      currentModule: {
-        title: "Hello World!",
-        status: "In Progress",
-        dueDate: "07-01-2025",
-        lessonId: "lesson_1",
-      },
-      courses: [
-        {
-          id: "course-1",
-          name: "Math 101",
-          grade: "A",
-          teacher: "Ms. Johnson",
-        },
-        {
-          id: "course-2",
-          name: "Science 202",
-          grade: "B+",
-          teacher: "Mr. Smith",
-        },
-      ],
-      assignments: [
-        {
-          id: "assignment-1",
-          title: "Math Homework",
-          dueDate: "2024-01-15",
-          status: "pending",
-        },
-        {
-          id: "assignment-2",
-          title: "Science Project",
-          dueDate: "2024-01-10",
-          status: "completed",
-        },
-      ],
-    };
+    const data = await db.query("SELECT id, name, email, role, school, subject, created_at FROM users WHERE email = $1", [decoded.email])
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(dashboardData),
+      body: JSON.stringify(data),
     };
+
   } catch (error) {
-    console.error("Student dashboard error:", error);
+    console.error("Profile error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {

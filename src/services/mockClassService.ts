@@ -39,7 +39,7 @@ export const fetchMockClassById = async (id: string): Promise<Class> => {
 // Update class name and/or grade (used by TeacherClassDetail.tsx)
 export const patchMockClass = async (
   id: string,
-  updates: Partial<Pick<Class, "name" | "grade">>
+  updates: Partial<Pick<Class, "name" | "grade">>,
 ): Promise<Class> => {
   await new Promise((res) => setTimeout(res, 300));
   const index = mockClasses.findIndex((c) => c.id === id);

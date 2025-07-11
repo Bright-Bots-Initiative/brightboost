@@ -6,6 +6,7 @@ export interface Lesson {
   status: "Published" | "Draft" | "Review" | string; // Allow other string statuses
   content?: string; // Add content property
 }
+
 export interface SortableLessonRowProps {
   lesson: Lesson;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
@@ -61,14 +62,14 @@ export interface Student {
   id: string;
   name: string;
   email?: string;
-}
+};
 
 export interface Class {
   id: string;
   name: string;
   grade?: Grade;
   students: Student[];
-}
+};
 
 export type CSVRow = Record<string, string> & {
   className: string;
@@ -81,10 +82,10 @@ export type CSVRow = Record<string, string> & {
 export interface ParseError {
   line: number;
   message: string;
-}
+};
 
 export interface ParsedClassData {
   className: string;
   grade?: string;
   students: Student[];
-}
+};

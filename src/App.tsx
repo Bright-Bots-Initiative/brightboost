@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 // Import pages and components
 import Index from "./pages/Index";
-const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === 'true';
+const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
 
 const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
@@ -25,6 +25,10 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Profile = lazy(() => import("./pages/Profile"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
+const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
@@ -41,44 +45,78 @@ function App() {
         <Route path="/teacher/signup" element={<TeacherSignup />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/quest/:id" element={<QuestRouter />} />
 
         {/* Protected routes */}
-          <Route
-            path="/teacher/dashboard"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/classes"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherLayout>
-                  <TeacherClasses />
-                </TeacherLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/teacher/classes/:id"
-            element={
-              <ProtectedRoute requiredRole="TEACHER">
-                <TeacherLayout>
-                  <TeacherClassDetail />
-                </TeacherLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/student/dashboard"
-            element={
-              <ProtectedRoute requiredRole="STUDENT">
-                <StudentDashboard />
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/teacher/dashboard"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClasses />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <TeacherClassDetail />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/roster"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherStudentRoster />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/profile"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/profile"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
