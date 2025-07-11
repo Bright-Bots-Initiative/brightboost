@@ -11,6 +11,8 @@ import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
 import NextModuleCard from "../components/StudentDashboard/NextModuleCard"
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
+import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
 import studentDashboardMock from "../mocks/studentDashboardMock"
 
 interface Course {
@@ -103,6 +105,7 @@ const StudentDashboard = () => {
       path: "/activities/coding",
     },
   ];
+
 
   const leaderboardEntries = [
     { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
