@@ -17,7 +17,7 @@ const CurrentModuleCard = ({ module }: CurrentModuleCardProps) => {
     return (
       <div className="bg-white rounded-2xl shadow-md p-4">
         <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
-          {t("dashboard.currentModule")} 
+          {t("dashboard.currentModule")}
         </h2>
         <p className="text-sm text-gray-500">
           {t("dashboard.noCurrentModule")}

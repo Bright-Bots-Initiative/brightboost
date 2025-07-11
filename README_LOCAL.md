@@ -14,7 +14,6 @@ This guide will help you run BrightBoost locally with a temporary database.
 ## AWS Installations:
 
 - Globally: install AWS SAM CLI
-
   - For MacOS:
 
   ```

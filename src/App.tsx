@@ -137,7 +137,7 @@ function App() {
           <div className="app">{appContent}</div>
         </AuthProvider>
       </Router>
-      
+
       {/* Toaster will always appear */}
       <Toaster />
 

@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Class, ParsedClassData } from '../TeacherDashboard/types';
-import CSVDropzone from './CSVDropzone';
-import CSVSummary from './CSVSummary';
-import { parseCSVData, validateCSVData } from '../../utils/csvParser';
-import { bulkImportClass } from '../../services/mockClassService';
+import React, { useState } from "react";
+import { X, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Class, ParsedClassData } from "../TeacherDashboard/types";
+import CSVDropzone from "./CSVDropzone";
+import CSVSummary from "./CSVSummary";
+import { parseCSVData, validateCSVData } from "../../utils/csvParser";
+import { bulkImportClass } from "../../services/mockClassService";
 
 interface CSVImportModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type ImportStep = 'upload' | 'summary' | 'success' | 'error';
+type ImportStep = "upload" | "summary" | "success" | "error";
 
 const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<ImportStep>('upload');
+  const [currentStep, setCurrentStep] = useState<ImportStep>("upload");
   const [parsedData, setParsedData] = useState<ParsedClassData | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -31,16 +31,17 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
 
       if (errors.length > 0) {
         setValidationErrors(errors);
-        setCurrentStep('error');
+        setCurrentStep("error");
         return;
       }
 
       setParsedData(parsed);
-      setCurrentStep('summary');
+      setCurrentStep("summary");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       setUploadError(`Upload failed: ${errorMessage}`);
-      setCurrentStep('upload'); // Stay on upload step to show error
+      setCurrentStep("upload"); // Stay on upload step to show error
     }
   };
 
@@ -49,18 +50,18 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
 
     setIsImporting(true);
     try {
-      const newClass: Omit<Class, 'id'> = {
+      const newClass: Omit<Class, "id"> = {
         name: parsedData.className,
-        grade: parsedData.grade as Class['grade'],
-        students: parsedData.students
+        grade: parsedData.grade as Class["grade"],
+        students: parsedData.students,
       };
 
       const importedClass = await bulkImportClass(newClass);
       setImportedClassId(importedClass.id);
-      setCurrentStep('success');
+      setCurrentStep("success");
     } catch (error) {
-      setValidationErrors(['Failed to import class. Please try again.']);
-      setCurrentStep('error');
+      setValidationErrors(["Failed to import class. Please try again."]);
+      setCurrentStep("error");
     } finally {
       setIsImporting(false);
     }
@@ -75,7 +76,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
   };
 
   const resetModal = () => {
-    setCurrentStep('upload');
+    setCurrentStep("upload");
     setParsedData(null);
     setValidationErrors([]);
     setUploadError(null);
@@ -106,18 +107,24 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="p-6">
-          {currentStep === 'upload' && (
+          {currentStep === "upload" && (
             <div>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-2">Upload CSV File</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Upload a CSV file with your class roster. The file should include columns for student name, email, and optionally student ID.
+                  Upload a CSV file with your class roster. The file should
+                  include columns for student name, email, and optionally
+                  student ID.
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Expected CSV Format:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    Expected CSV Format:
+                  </h4>
                   <div className="text-sm text-blue-800 font-mono">
-                    className,grade,studentName,studentEmail,studentId<br/>
-                    "Math 101","5th","John Doe","john@example.com","STU001"<br/>
+                    className,grade,studentName,studentEmail,studentId
+                    <br />
+                    "Math 101","5th","John Doe","john@example.com","STU001"
+                    <br />
                     "Math 101","5th","Jane Smith","jane@example.com","STU002"
                   </div>
                 </div>
@@ -134,7 +141,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {currentStep === 'summary' && parsedData && (
+          {currentStep === "summary" && parsedData && (
             <div>
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-2 flex items-center">
@@ -148,7 +155,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
               <CSVSummary data={parsedData} />
               <div className="flex justify-end space-x-3 mt-6">
                 <button
-                  onClick={() => setCurrentStep('upload')}
+                  onClick={() => setCurrentStep("upload")}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Back
@@ -158,18 +165,19 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
                   disabled={isImporting}
                   className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors disabled:opacity-50"
                 >
-                  {isImporting ? 'Importing...' : 'Confirm Import'}
+                  {isImporting ? "Importing..." : "Confirm Import"}
                 </button>
               </div>
             </div>
           )}
 
-          {currentStep === 'success' && (
+          {currentStep === "success" && (
             <div className="text-center">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Import Successful!</h3>
               <p className="text-gray-600 mb-6">
-                Your class has been successfully imported. You'll be redirected to the class detail page.
+                Your class has been successfully imported. You'll be redirected
+                to the class detail page.
               </p>
               <button
                 onClick={handleSuccess}
@@ -180,7 +188,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
             </div>
           )}
 
-          {currentStep === 'error' && (
+          {currentStep === "error" && (
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Import Failed</h3>
@@ -194,7 +202,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
               </div>
               <div className="flex justify-center space-x-3">
                 <button
-                  onClick={() => setCurrentStep('upload')}
+                  onClick={() => setCurrentStep("upload")}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Try Again

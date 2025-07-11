@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import GameBackground from "../components/GameBackground";
 import { useTranslation } from "react-i18next";
 
-
 const NotFound: React.FC = () => {
   const { t } = useTranslation();
   return (

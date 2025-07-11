@@ -127,35 +127,43 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    if (typeof event.body !== 'string') {
+    if (typeof event.body !== "string") {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ message: "Missing body" }),
-     };
+      };
     }
-    
+
     const info = JSON.parse(event.body);
     const { name, school, subject } = info;
 
     if (typeof name === "string" && name.trim() !== "") {
-        await db.query("UPDATE users SET name = $1 WHERE email = $2", [name, decoded.email])
+      await db.query("UPDATE users SET name = $1 WHERE email = $2", [
+        name,
+        decoded.email,
+      ]);
     }
 
     if (typeof school === "string" && school.trim() !== "") {
-        await db.query("UPDATE users SET school = $1 WHERE email = $2", [school, decoded.email])
+      await db.query("UPDATE users SET school = $1 WHERE email = $2", [
+        school,
+        decoded.email,
+      ]);
     }
 
     if (typeof subject === "string" && subject.trim() !== "") {
-        await db.query("UPDATE users SET subject = $1 WHERE email = $2", [subject, decoded.email])
+      await db.query("UPDATE users SET subject = $1 WHERE email = $2", [
+        subject,
+        decoded.email,
+      ]);
     }
 
     return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ message: "Profile updated" }),
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: "Profile updated" }),
     };
-
   } catch (error) {
     console.error("Profile error:", error);
 
