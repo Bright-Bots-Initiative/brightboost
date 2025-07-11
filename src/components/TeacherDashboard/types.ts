@@ -89,3 +89,16 @@ export interface ParsedClassData {
   grade?: string;
   students: Student[];
 }
+
+export enum AssignmentStatus {
+  Open = "Open",
+  Closed = "Closed",
+  Draft = "Draft",
+}
+
+export type Assignment = {
+  id: string;
+  title: string;
+  dueDate: string; // ISO 8601 string
+  status: AssignmentStatus;
+};

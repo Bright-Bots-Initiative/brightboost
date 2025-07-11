@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Class, gradeOptions } from "../components/TeacherDashboard/types";
 import {
   fetchMockClassById,
   patchMockClass,
 } from "../services/mockClassService";
+import AssignmentTable from "@/components/TeacherDashboard/Assignments/AssignmentsTable";
+import { getAssignments } from "@/services/assignmentService";
+import { Assignment } from "@/components/TeacherDashboard/types";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [classData, setClassData] = useState<Class | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
   const [editingName, setEditingName] = useState("");
   const [editingGrade, setEditingGrade] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -29,6 +35,14 @@ const TeacherClassDetail: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    setLoadingAssignments(true);
+    getAssignments(id)
+      .then(setAssignments)
+      .finally(() => setLoadingAssignments(false));
+  }, [id]);
+
   const handleSave = async () => {
     if (!classData) return;
     setIsSaving(true);
@@ -42,6 +56,10 @@ const TeacherClassDetail: React.FC = () => {
       grade: editingGrade as Class["grade"],
     });
     setIsSaving(false);
+  };
+
+  const navigateToAssignmentDetail = (assignmentId: string) => {
+    navigate(`/dashboard/classes/${id}/assignments/${assignmentId}`);
   };
 
   // Filler error handling
@@ -65,12 +83,13 @@ const TeacherClassDetail: React.FC = () => {
   }
 
   return (
-    <div className="w-full">
-      <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">
+    <div className="w-full space-y-6">
+      <h2 className="text-2xl font-bold mb-4 text-brightboost-navy">
         Class Details
       </h2>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      {/* Editable class info card */}
+      <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col gap-4 max-w-lg">
           <label className="text-sm font-semibold text-gray-700">
             Class Name:
@@ -105,6 +124,7 @@ const TeacherClassDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Class roster card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold mb-4 text-brightboost-navy">
           Class Roster
@@ -122,7 +142,10 @@ const TeacherClassDetail: React.FC = () => {
             </thead>
             <tbody>
               {classData.students.map((student) => (
-                <tr key={student.id} className="border-b text-sm text-gray-800">
+                <tr
+                  key={student.id}
+                  className="border-b text-sm text-gray-800"
+                >
                   <td className="py-2">{student.id}</td>
                   <td className="py-2">{student.name}</td>
                   <td className="py-2">
@@ -134,6 +157,23 @@ const TeacherClassDetail: React.FC = () => {
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Assignments table card */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold mb-4 text-brightboost-navy">
+          Assignments
+        </h3>
+        {loadingAssignments ? (
+          <p className="text-gray-500 italic">Loading assignments…</p>
+        ) : assignments.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No assignments yet.</p>
+        ) : (
+          <AssignmentTable
+            assignments={assignments}
+            onRowClick={navigateToAssignmentDetail}
+          />
         )}
       </div>
     </div>
