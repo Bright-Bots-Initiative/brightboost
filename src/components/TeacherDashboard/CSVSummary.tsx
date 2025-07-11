@@ -15,7 +15,9 @@ const CSVSummary: React.FC<CSVSummaryProps> = ({ data }) => {
             <BookOpen className="w-8 h-8 text-brightboost-blue mr-3" />
             <div>
               <p className="text-sm text-gray-600">Class Name</p>
-              <p className="font-semibold text-brightboost-navy">{data.className}</p>
+              <p className="font-semibold text-brightboost-navy">
+                {data.className}
+              </p>
             </div>
           </div>
         </div>
@@ -25,7 +27,9 @@ const CSVSummary: React.FC<CSVSummaryProps> = ({ data }) => {
             <GraduationCap className="w-8 h-8 text-brightboost-green mr-3" />
             <div>
               <p className="text-sm text-gray-600">Grade</p>
-              <p className="font-semibold text-brightboost-navy">{data.grade || 'Not specified'}</p>
+              <p className="font-semibold text-brightboost-navy">
+                {data.grade || 'Not specified'}
+              </p>
             </div>
           </div>
         </div>
@@ -35,14 +39,18 @@ const CSVSummary: React.FC<CSVSummaryProps> = ({ data }) => {
             <Users className="w-8 h-8 text-brightboost-yellow mr-3" />
             <div>
               <p className="text-sm text-gray-600">Students</p>
-              <p className="font-semibold text-brightboost-navy">{data.students.length}</p>
+              <p className="font-semibold text-brightboost-navy">
+                {data.students.length}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       <div>
-        <h4 className="text-lg font-medium text-brightboost-navy mb-4">Class Preview</h4>
+        <h4 className="text-lg font-medium text-brightboost-navy mb-4">
+          Class Preview
+        </h4>
         <table className="w-full text-left table-auto mt-2">
           <thead>
             <tr className="text-sm text-gray-600 border-b">
@@ -52,15 +60,14 @@ const CSVSummary: React.FC<CSVSummaryProps> = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {data.students.map((student) => (
-              <tr
-                key={student.id}
-                className="border-b text-sm text-gray-800"
-              >
+            {data.students.map(student => (
+              <tr key={student.id} className="border-b text-sm text-gray-800">
                 <td className="py-2">{student.id}</td>
                 <td className="py-2">{student.name}</td>
                 <td className="py-2">
-                  {student.email ? student.email : (
+                  {student.email ? (
+                    student.email
+                  ) : (
                     <span className="text-gray-400 italic">N/A</span>
                   )}
                 </td>
