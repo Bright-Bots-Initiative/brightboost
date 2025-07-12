@@ -145,4 +145,8 @@ export const handlers = [
   http.delete(`${API_URL}/api/lessons/:id`, () => {
     return HttpResponse.json({ success: true });
   }),
+
+  http.put("https://stub-bucket.s3.amazonaws.com/avatar", () => {
+    return HttpResponse.text("", { status: 200 });
+  }),
 ];
