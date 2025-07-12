@@ -6,12 +6,14 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { BrowserRouter } from "react-router-dom";
 import TeacherDashboard from "../TeacherDashboard";
+
 vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({
     user: { name: "Test Teacher" },
     logout: vi.fn(),
   }),
 }));
+
 vi.mock("../../services/api", () => ({
   useApi: () => ({
     get: vi.fn().mockImplementation(() =>
@@ -43,11 +45,13 @@ vi.mock("../../services/api", () => ({
     ),
   }),
 }));
+
 vi.mock("../../components/GameBackground", () => ({
   default: ({ children }) => (
     <div data-testid="game-background">{children}</div>
   ),
 }));
+
 vi.mock("../../components/BrightBoostRobot", () => ({
   default: () => <div data-testid="robot-icon">Robot</div>,
 }));
@@ -63,9 +67,11 @@ vi.mock("../../components/TeacherDashboard/MainContent", () => ({
 describe("TeacherDashboard", () => {
   vi.setConfig({ testTimeout: 10000 });
   const originalConsoleError = console.error;
+
   beforeEach(() => {
     console.error = vi.fn();
   });
+
   afterEach(() => {
     console.error = originalConsoleError;
     vi.clearAllMocks();
@@ -77,12 +83,14 @@ describe("TeacherDashboard", () => {
       global.gc();
     }
   });
+
   it("renders the dashboard components", () => {
     const { unmount } = render(
       <BrowserRouter>
         <TeacherDashboard />
       </BrowserRouter>,
     );
+
     expect(screen.getByTestId("game-background")).toBeDefined();
     expect(screen.getByTestId("sidebar")).toBeDefined();
 
