@@ -127,14 +127,16 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const data = await db.query("UPDATE users SET streak = $1 WHERE email = $2", [0, decoded.email])
+    const data = await db.query(
+      "UPDATE users SET streak = $1 WHERE email = $2",
+      [0, decoded.email],
+    );
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({message: "streak broken"}),
+      body: JSON.stringify({ message: "streak broken" }),
     };
-
   } catch (error) {
     console.error("streak break error:", error);
 

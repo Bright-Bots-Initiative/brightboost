@@ -127,14 +127,15 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const data = await db.query("SELECT badges, streak FROM users WHERE email = " + decoded.email)
+    const data = await db.query(
+      "SELECT badges, streak FROM users WHERE email = " + decoded.email,
+    );
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify(data),
     };
-
   } catch (error) {
     console.error("progress info error:", error);
 

@@ -127,14 +127,16 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const data = await db.query("UPDATE users SET streak = streak + 1 WHERE email = $1", [decoded.email])
+    const data = await db.query(
+      "UPDATE users SET streak = streak + 1 WHERE email = $1",
+      [decoded.email],
+    );
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({message: "streak incremented"}),
+      body: JSON.stringify({ message: "streak incremented" }),
     };
-
   } catch (error) {
     console.error("streak increment error:", error);
 
