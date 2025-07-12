@@ -1,27 +1,30 @@
-import React, { useState } from 'react';
-import { Download, CheckCircle, Zap } from 'lucide-react';
-import { Class } from './types';
-import { exportSTEM1GradesToCSV, getSTEM1Summary } from '../../services/stem1GradeService';
+import React, { useState } from "react";
+import { Download, CheckCircle, Zap } from "lucide-react";
+import { Class } from "./types";
+import {
+  exportSTEM1GradesToCSV,
+  getSTEM1Summary,
+} from "../../services/stem1GradeService";
 
 interface ExportGradesButtonProps {
   classData: Class;
   teacherName?: string;
-  variant?: 'primary' | 'secondary';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary";
+  size?: "sm" | "md" | "lg";
 }
 
 const ExportGradesButton: React.FC<ExportGradesButtonProps> = ({
   classData,
-  teacherName = 'Teacher',
-  variant = 'primary',
-  size = 'md'
+  teacherName = "Teacher",
+  variant = "primary",
+  size = "md",
 }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
   const handleExport = async () => {
     if (classData.students.length === 0) {
-      alert('No students in this class to export STEM-1 progress for.');
+      alert("No students in this class to export STEM-1 progress for.");
       return;
     }
 
@@ -31,8 +34,8 @@ const ExportGradesButton: React.FC<ExportGradesButtonProps> = ({
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 3000);
     } catch (error) {
-      console.error('STEM-1 export failed:', error);
-      alert('Failed to export STEM-1 progress. Please try again.');
+      console.error("STEM-1 export failed:", error);
+      alert("Failed to export STEM-1 progress. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -40,23 +43,26 @@ const ExportGradesButton: React.FC<ExportGradesButtonProps> = ({
 
   const stem1Summary = getSTEM1Summary(classData);
 
-  const baseClasses = "flex items-center transition-all duration-200 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2";
-  
+  const baseClasses =
+    "flex items-center transition-all duration-200 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2";
+
   const variantClasses = {
-    primary: "bg-brightboost-green text-white hover:bg-green-600 focus:ring-brightboost-green shadow-md hover:shadow-lg",
-    secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 border border-gray-300 hover:border-gray-400"
+    primary:
+      "bg-brightboost-green text-white hover:bg-green-600 focus:ring-brightboost-green shadow-md hover:shadow-lg",
+    secondary:
+      "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 border border-gray-300 hover:border-gray-400",
   };
 
   const sizeClasses = {
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
+    lg: "px-6 py-3 text-base",
   };
 
   const iconSizes = {
     sm: "w-3 h-3",
     md: "w-4 h-4",
-    lg: "w-5 h-5"
+    lg: "w-5 h-5",
   };
 
   if (exportSuccess) {
@@ -77,15 +83,21 @@ const ExportGradesButton: React.FC<ExportGradesButtonProps> = ({
         onClick={handleExport}
         disabled={isExporting || classData.students.length === 0}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${
-          isExporting || classData.students.length === 0 
-            ? 'opacity-50 cursor-not-allowed' 
-            : 'hover:shadow-md transform hover:scale-105'
+          isExporting || classData.students.length === 0
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:shadow-md transform hover:scale-105"
         }`}
-        title={classData.students.length === 0 ? 'No students to export' : 'Export STEM-1 progress to CSV'}
+        title={
+          classData.students.length === 0
+            ? "No students to export"
+            : "Export STEM-1 progress to CSV"
+        }
       >
         {isExporting ? (
           <>
-            <div className={`${iconSizes[size]} mr-2 animate-spin rounded-full border-2 border-current border-t-transparent`}></div>
+            <div
+              className={`${iconSizes[size]} mr-2 animate-spin rounded-full border-2 border-current border-t-transparent`}
+            ></div>
             Exporting STEM-1...
           </>
         ) : (
@@ -100,14 +112,18 @@ const ExportGradesButton: React.FC<ExportGradesButtonProps> = ({
       {/* Enhanced tooltip with STEM-1 specific summary */}
       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-xl">
         <div className="text-center">
-          <div className="font-semibold text-brightboost-light mb-1">{classData.name} - STEM-1 Progress</div>
+          <div className="font-semibold text-brightboost-light mb-1">
+            {classData.name} - STEM-1 Progress
+          </div>
           <div className="grid grid-cols-2 gap-2 text-left">
             <div>Students: {stem1Summary.totalStudents}</div>
             <div>Passed: {stem1Summary.studentsPassedSTEM1}</div>
             <div>Avg XP: {stem1Summary.averageXP}/500</div>
             <div>Completion: {stem1Summary.averageCompletion}%</div>
           </div>
-          <div className="mt-1 text-xs text-gray-300">Updated: {stem1Summary.lastUpdated}</div>
+          <div className="mt-1 text-xs text-gray-300">
+            Updated: {stem1Summary.lastUpdated}
+          </div>
         </div>
         <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
       </div>
