@@ -13,16 +13,16 @@ export interface SortableLessonRowProps {
   onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
   onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
 }
+
 export interface LessonsTableProps {
   lessons: Lesson[];
-  setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
   onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
   onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
 }
+
 export interface MainContentProps {
   lessonsData: Lesson[];
-  setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
   onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: Lesson["id"]) => void;
@@ -42,6 +42,7 @@ export type Grade =
   | "10th"
   | "11th"
   | "12th";
+
 export const gradeOptions: Grade[] = [
   "Kindergarten",
   "1st",
