@@ -13,7 +13,23 @@ async function getPresignedUrlStub(): Promise<string> {
 }
 
 async function patchUserAvatarStub(url: string): Promise<void> {
-  console.log("PATCH user avatar to:", url);
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
+  const response = await fetch('/api/user/avatar', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ avatarUrl: url }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update avatar');
+  }
 }
 
 async function invalidateAvatarCache(url: string): Promise<void> {

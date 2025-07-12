@@ -149,4 +149,8 @@ export const handlers = [
   http.put("https://stub-bucket.s3.amazonaws.com/avatar", () => {
     return HttpResponse.text("", { status: 200 });
   }),
+  
+  http.patch("/api/user/avatar", () => {
+    return HttpResponse.json({ success: true, avatarUrl: "https://stub-bucket.s3.amazonaws.com/avatar" });
+  }),
 ];

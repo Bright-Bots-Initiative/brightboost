@@ -61,6 +61,21 @@ describe("AvatarPicker", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    const mockLocalStorage = {
+      getItem: vi.fn((key) => {
+        if (key === 'authToken') return 'mock-auth-token';
+        return null;
+      }),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    };
+    Object.defineProperty(window, 'localStorage', {
+      value: mockLocalStorage,
+      writable: true,
+    });
+    
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true }),
