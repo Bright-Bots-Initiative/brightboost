@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Upload, FileText } from 'lucide-react';
+import React, { useCallback, useState } from "react";
+import { Upload, FileText } from "lucide-react";
 
 interface CSVDropzoneProps {
   onFileUpload: (csvContent: string) => void;
@@ -9,35 +9,41 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFile = useCallback((file: File) => {
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-      alert('Please upload a CSV file');
-      return;
-    }
+  const handleFile = useCallback(
+    (file: File) => {
+      if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+        alert("Please upload a CSV file");
+        return;
+      }
 
-    setIsProcessing(true);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const csvContent = e.target?.result as string;
-      onFileUpload(csvContent);
-      setIsProcessing(false);
-    };
-    reader.onerror = () => {
-      alert('Error reading file');
-      setIsProcessing(false);
-    };
-    reader.readAsText(file);
-  }, [onFileUpload]);
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvContent = e.target?.result as string;
+        onFileUpload(csvContent);
+        setIsProcessing(false);
+      };
+      reader.onerror = () => {
+        alert("Error reading file");
+        setIsProcessing(false);
+      };
+      reader.readAsText(file);
+    },
+    [onFileUpload]
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFile(files[0]);
-    }
-  }, [handleFile]);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    },
+    [handleFile]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -49,20 +55,23 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
     setIsDragOver(false);
   }, []);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFile(files[0]);
-    }
-  }, [handleFile]);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        handleFile(files[0]);
+      }
+    },
+    [handleFile]
+  );
 
   return (
     <div
       className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
         isDragOver
-          ? 'border-brightboost-blue bg-blue-50'
-          : 'border-gray-300 hover:border-brightboost-blue hover:bg-gray-50'
-      } ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
+          ? "border-brightboost-blue bg-blue-50"
+          : "border-gray-300 hover:border-brightboost-blue hover:bg-gray-50"
+      } ${isProcessing ? "opacity-50 pointer-events-none" : ""}`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -78,9 +87,7 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
           <p className="text-lg font-medium text-gray-700 mb-2">
             Drop your CSV file here
           </p>
-          <p className="text-sm text-gray-500 mb-4">
-            or click to browse files
-          </p>
+          <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
           <label className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors cursor-pointer">
             <FileText className="w-4 h-4 mr-2" />
             Choose File
