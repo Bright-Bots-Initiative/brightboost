@@ -14,10 +14,7 @@ interface CSVImportModalProps {
 
 type ImportStep = "upload" | "summary" | "success" | "error";
 
-const CSVImportModal: React.FC<CSVImportModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<ImportStep>("upload");
   const [parsedData, setParsedData] = useState<ParsedClassData | null>(null);
@@ -198,9 +195,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Import Failed</h3>
               <div className="text-left bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <h4 className="font-medium text-red-900 mb-2">
-                  Errors found:
-                </h4>
+                <h4 className="font-medium text-red-900 mb-2">Errors found:</h4>
                 <ul className="text-sm text-red-800 space-y-1">
                   {validationErrors.map((error, index) => (
                     <li key={index}>• {error}</li>

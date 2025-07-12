@@ -24,7 +24,7 @@ export const parseCSVData = (csvContent: string): ParsedClassData => {
       h.toLowerCase().includes("class"),
   );
   const gradeIndex = headers.findIndex((h) =>
-    h.toLowerCase().includes("grade")
+    h.toLowerCase().includes("grade"),
   );
   const studentNameIndex = headers.findIndex(
     (h) =>

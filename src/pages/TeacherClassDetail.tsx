@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Class, gradeOptions } from "../components/TeacherDashboard/types";
-import { fetchMockClassById, patchMockClass } from "../services/mockClassService";
+import {
+  fetchMockClassById,
+  patchMockClass,
+} from "../services/mockClassService";
 import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
 import { Users, GraduationCap, Zap, Trophy, Target, Clock } from "lucide-react";
 import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
@@ -67,9 +70,7 @@ const TeacherClassDetail: React.FC = () => {
   }
 
   if (!classData) {
-    return (
-      <p className="ml-64 p-6 text-gray-500">Loading class details...</p>
-    );
+    return <p className="ml-64 p-6 text-gray-500">Loading class details...</p>;
   }
 
   const stem1Summary = getSTEM1Summary(classData);
@@ -286,9 +287,7 @@ const TeacherClassDetail: React.FC = () => {
                           <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                             <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                mockPassed
-                                  ? "bg-green-500"
-                                  : "bg-yellow-500"
+                                mockPassed ? "bg-green-500" : "bg-yellow-500"
                               }`}
                               style={{ width: `${mockCompletion}%` }}
                             ></div>

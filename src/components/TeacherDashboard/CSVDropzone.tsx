@@ -29,7 +29,7 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
       };
       reader.readAsText(file);
     },
-    [onFileUpload]
+    [onFileUpload],
   );
 
   const handleDrop = useCallback(
@@ -42,7 +42,7 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
         handleFile(files[0]);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -62,7 +62,7 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
         handleFile(files[0]);
       }
     },
-    [handleFile]
+    [handleFile],
   );
 
   return (

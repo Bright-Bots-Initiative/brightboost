@@ -127,26 +127,28 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    if (typeof event.body !== 'string') {
+    if (typeof event.body !== "string") {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ message: "Missing body" }),
-     };
+      };
     }
-    
+
     const new_badge = event.body;
 
     if (typeof new_badge === "string" && new_badge.trim() !== "") {
-        await db.query("UPDATE users SET badges = array_append(badges, $1) WHERE email = $2", [new_badge, decoded.email])
+      await db.query(
+        "UPDATE users SET badges = array_append(badges, $1) WHERE email = $2",
+        [new_badge, decoded.email],
+      );
     }
 
     return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ message: "Badge added" }),
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ message: "Badge added" }),
     };
-
   } catch (error) {
     console.error("Badge update error:", error);
 

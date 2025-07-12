@@ -89,7 +89,7 @@ export const STEM1_QUESTS: STEM1Quest[] = [
 
 // Mock data generator for STEM-1 progress
 const generateMockSTEM1Progress = (
-  students: Student[]
+  students: Student[],
 ): STEM1StudentProgress[] => {
   return students.map((student) => {
     const matterScore = Math.floor(Math.random() * 3) + 3; // 3-5 out of 5
@@ -102,12 +102,11 @@ const generateMockSTEM1Progress = (
     const forceXP =
       forceScore >= 70 ? 125 : Math.floor((forceScore / 100) * 125);
     const codeXP = codeBlocks <= 4 ? 125 : Math.floor(125 * 0.8); // Penalty for using too many blocks
-    const showTellXP =
-      reflectionDuration >= 15 ? 125 : Math.floor(125 * 0.6);
+    const showTellXP = reflectionDuration >= 15 ? 125 : Math.floor(125 * 0.6);
 
     const totalXP = matterXP + forceXP + codeXP + showTellXP;
     const badgesEarned = [matterXP, forceXP, codeXP, showTellXP].filter(
-      (xp) => xp >= 87.5
+      (xp) => xp >= 87.5,
     ).length; // 70% of 125
     const overallCompletion = (totalXP / 500) * 100;
     const passedSTEM1 = overallCompletion >= 70 && reflectionDuration >= 15;
@@ -123,9 +122,7 @@ const generateMockSTEM1Progress = (
         xpEarned: matterXP,
         completedDate:
           matterScore >= 4
-            ? new Date(
-                Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-              )
+            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -137,9 +134,7 @@ const generateMockSTEM1Progress = (
         xpEarned: forceXP,
         completedDate:
           forceScore >= 70
-            ? new Date(
-                Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-              )
+            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -152,9 +147,7 @@ const generateMockSTEM1Progress = (
         xpEarned: codeXP,
         completedDate:
           codeBlocks <= 4
-            ? new Date(
-                Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-              )
+            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -167,9 +160,7 @@ const generateMockSTEM1Progress = (
         xpEarned: showTellXP,
         completedDate:
           reflectionDuration >= 15
-            ? new Date(
-                Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-              )
+            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -181,7 +172,7 @@ const generateMockSTEM1Progress = (
       overallCompletion: Math.round(overallCompletion),
       passedSTEM1,
       lastActivity: new Date(
-        Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000
+        Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000,
       )
         .toISOString()
         .split("T")[0],
@@ -207,7 +198,7 @@ export interface STEM1ExportData {
 
 export const exportSTEM1GradesToCSV = async (
   classData: Class,
-  teacherName: string = "Teacher"
+  teacherName: string = "Teacher",
 ): Promise<void> => {
   const studentProgress = generateMockSTEM1Progress(classData.students);
 
@@ -220,11 +211,11 @@ export const exportSTEM1GradesToCSV = async (
     studentsPassedSTEM1: studentProgress.filter((s) => s.passedSTEM1).length,
     averageXP: Math.round(
       studentProgress.reduce((sum, s) => sum + s.totalXP, 0) /
-        studentProgress.length
+        studentProgress.length,
     ),
     averageCompletion: Math.round(
       studentProgress.reduce((sum, s) => sum + s.overallCompletion, 0) /
-        studentProgress.length
+        studentProgress.length,
     ),
     students: studentProgress,
   };
@@ -311,7 +302,7 @@ export const exportSTEM1GradesToCSV = async (
 
         `"${student.lastActivity}"`,
         `"${student.notes || ""}"`,
-      ].join(",")
+      ].join(","),
     ),
   ];
 
@@ -326,7 +317,7 @@ export const exportSTEM1GradesToCSV = async (
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `STEM1_${classData.name}_Progress_${exportData.exportDate}.csv`
+      `STEM1_${classData.name}_Progress_${exportData.exportDate}.csv`,
     );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
@@ -337,7 +328,7 @@ export const exportSTEM1GradesToCSV = async (
 };
 
 export const getSTEM1Summary = (
-  classData: Class
+  classData: Class,
 ): {
   totalStudents: number;
   studentsPassedSTEM1: number;
@@ -354,14 +345,14 @@ export const getSTEM1Summary = (
       mockProgress.length > 0
         ? Math.round(
             mockProgress.reduce((sum, s) => sum + s.totalXP, 0) /
-              mockProgress.length
+              mockProgress.length,
           )
         : 0,
     averageCompletion:
       mockProgress.length > 0
         ? Math.round(
             mockProgress.reduce((sum, s) => sum + s.overallCompletion, 0) /
-              mockProgress.length
+              mockProgress.length,
           )
         : 0,
     lastUpdated: new Date().toISOString().split("T")[0],

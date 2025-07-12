@@ -41,7 +41,7 @@ const generateMockGrades = (students: Student[]): StudentGrade[] => {
 
 export const exportGradesToCSV = async (
   classData: Class,
-  teacherName: string = "Teacher"
+  teacherName: string = "Teacher",
 ): Promise<void> => {
   // Generate mock grades for demonstration
   const studentGrades = generateMockGrades(classData.students);
@@ -82,7 +82,7 @@ export const exportGradesToCSV = async (
         `"${student.overallGrade || "N/A"}"`,
         `"${student.lastUpdated}"`,
         `"${student.notes || ""}"`,
-      ].join(",")
+      ].join(","),
     ),
   ];
 
@@ -97,7 +97,7 @@ export const exportGradesToCSV = async (
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `${classData.name}_grades_${exportData.exportDate}.csv`
+      `${classData.name}_grades_${exportData.exportDate}.csv`,
     );
     link.style.visibility = "hidden";
     document.body.appendChild(link);
@@ -108,7 +108,7 @@ export const exportGradesToCSV = async (
 };
 
 export const getGradesSummary = (
-  classData: Class
+  classData: Class,
 ): {
   totalStudents: number;
   averageGrade: string;
@@ -121,11 +121,13 @@ export const getGradesSummary = (
         (g.mathScore || 0) +
         (g.scienceScore || 0) +
         (g.readingScore || 0) +
-        (g.writingScore || 0)
+        (g.writingScore || 0),
     )
     .filter((s) => s > 0);
   const averageScore =
-    scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length / 4 : 0;
+    scores.length > 0
+      ? scores.reduce((a, b) => a + b, 0) / scores.length / 4
+      : 0;
 
   let averageGrade = "N/A";
   if (averageScore >= 90) averageGrade = "A";
