@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginSelection from './pages/LoginSelection';
 import SignupSelection from './pages/SignupSelection';
 import Index from './pages/Index';
+import QuantumDemo from './pages/QuantumDemo';
 
 // Import styles
 import './App.css';
@@ -51,6 +52,9 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Quantum Demo route */}
+            <Route path="/quantum-demo" element={<QuantumDemo />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
