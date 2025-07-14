@@ -1,0 +1,66 @@
+{
+  "student": "Estudiante",
+  "dashboard": {
+    "loading": "Cargando tu panel...",
+    "stillLoading": "Todavía cargando...",
+    "errorPrefix": "¡Vaya!",
+    "tryAgain": "Inténtalo de nuevo",
+    "greeting": "¡Hola, {{name}}!",
+    "readyPrompt": "¿Listo para aprender algo nuevo hoy?",
+    "role": "Explorador de Nivel",
+    "logout": "Cerrar sesión",
+    "currentModule": "Módulo actual",
+    "modulestatus": "Estado",
+    "noCurrentModule": "No se ha asignado ningún módulo actual.",
+    "stemCard": {
+      "title": "STEM 1",
+      "subtitle": "¡Juguemos juntos!"
+    },
+    "stem": {
+      "math": "STEM 1",
+      "science": "Laboratorio de Ciencias",
+      "coding": "Diversión con Código"
+    },
+    "wordGame": {
+      "title": "Juego de Letras"
+    },
+    "leaderboard": {
+      "title": "Tabla de Clasificación"
+    },
+    "coursesAndAssignments": "Tus Cursos y Tareas",
+    "enrolledCourses": "Cursos Inscritos",
+    "recentAssignments": "Tareas Recientes",
+    "grade": "Grado",
+    "teacher": "Profesor",
+    "due": "Fecha de Entrega",
+    "status": {
+      "pending": "Pendiente",
+      "completed": "Completado"
+    },
+    "noData": "¡Comienza tu primera misión!",
+    "startLearning": "Comenzar Aprendizaje",
+    "viewProgress": "Ver Progreso"
+  },
+
+  "api": {
+    "sessionExpired": "Sesión expirada",
+    "dashboardUnavailable": "Panel de control no disponible, por favor intente nuevamente.",
+    "apiRequestFailed": "Error en la solicitud de la API",
+    "loginFailed": "Inicio de sesión fallido",
+    "signupFailed": "Registro fallido",
+    "teacherSignupFailed": "Registro de profesor fallido",
+    "studentSignupFailed": "Registro de estudiante fallido",
+    "invalidEmailOrPassword": "Correo electrónico o contraseña inválidos",
+    "emailAlreadyInUse": "El correo electrónico ya está en uso",
+    "serviceUnavailable": "Servicio no disponible. Por favor, inténtelo de nuevo más tarde.",
+    "retrying": "Reintentando...",
+    "retryingLoginRequest": "Reintentando solicitud de inicio de sesión",
+    "retriesLeft": "reintentos restantes",
+    "checkInternetConnection": "Por favor, revise su conexión a Internet e inténtelo de nuevo.",
+    "networkIssue": "Error de red",
+    "networkFailed": "No pudimos conectar con el servidor. Por favor, inténtelo de nuevo."
+  },
+  "notFound.pageNotFound": "Página No Encontrada",
+  "notFound.pageDescription": "¡Vaya! La página que buscas no existe o ha sido movida.",
+  "notFound.backToHome": "Volver al inicio"
+}

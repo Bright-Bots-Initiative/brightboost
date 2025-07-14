@@ -1,7 +1,6 @@
-
-import React from 'react';
-import { Link } from 'react-router-dom';
-import GameBackground from '../components/GameBackground';
+import React from "react";
+import { Link } from "react-router-dom";
+import GameBackground from "../components/GameBackground";
 
 const Home: React.FC = () => {
   return (
@@ -14,16 +13,16 @@ const Home: React.FC = () => {
           <p className="text-lg text-brightboost-navy mb-8">
             An interactive learning platform for students and teachers.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="game-button bg-brightboost-blue hover:bg-brightboost-navy px-8 py-3 rounded-xl text-white font-bold text-lg shadow-lg transition-all"
             >
               Login
             </Link>
-            <Link 
-              to="/signup" 
+            <Link
+              to="/signup"
               className="game-button bg-brightboost-lightblue hover:bg-brightboost-blue px-6 py-2.5 rounded-xl text-white font-bold text-base shadow-md transition-all"
             >
               Signup

@@ -1,0 +1,16 @@
+# Exclude AWS Lambda backend code from Azure Static Web Apps deployment
+src/lambda/
+*.lambda.js
+*.lambda.ts
+template.yaml
+samconfig.toml
+
+# Exclude backend dependencies and build artifacts
+src/lambda/node_modules/
+src/lambda/dist/
+src/lambda/package-lock.json
+
+# Exclude AWS and backend configuration files
+.aws/
+.env.lambda
+serverless.yml
