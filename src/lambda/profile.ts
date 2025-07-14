@@ -84,8 +84,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin":
-      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
@@ -128,14 +127,32 @@ export const handler = async (
     console.log("Database connection established successfully");
 
     const data = await db.query(
-      "SELECT id, name, email, role, school, subject, created_at FROM users WHERE email = $1",
+      'SELECT id, name, email, role, school, subject, "avatarUrl", created_at FROM "User" WHERE email = $1',
       [decoded.email],
     );
 
+    if (data.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: "User not found" }),
+      };
+    }
+
+    const user = data.rows[0];
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        avatar: user.avatarUrl,
+        name: user.name,
+        email: user.email,
+        school: user.school,
+        subject: user.subject,
+        role: user.role,
+        id: user.id,
+        created_at: user.created_at
+      }),
     };
   } catch (error) {
     console.error("Profile error:", error);

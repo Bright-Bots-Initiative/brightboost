@@ -1,0 +1,18 @@
+# Build artifacts and generated files
+coverage/
+storybook-static/
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore all generated files
+**/*.generated.*

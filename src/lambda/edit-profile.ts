@@ -84,10 +84,9 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin":
-      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
-    "Access-Control-Allow-Methods": "GET,OPTIONS",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
   };
 
   try {
@@ -123,49 +122,59 @@ export const handler = async (
       };
     }
 
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: "Request body is required" }),
+      };
+    }
+
+    const { name, school, subject } = JSON.parse(event.body);
+
+    if (!name || typeof name !== 'string') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: "Name is required and must be a string" }),
+      };
+    }
+
     console.log("Attempting database connection...");
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    if (typeof event.body !== "string") {
+    const result = await db.query(
+      'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
+      [name, school || null, subject || null, decoded.email]
+    );
+
+    if (result.rows.length === 0) {
       return {
-        statusCode: 400,
+        statusCode: 404,
         headers,
-        body: JSON.stringify({ message: "Missing body" }),
+        body: JSON.stringify({ error: "User not found" }),
       };
     }
 
-    const info = JSON.parse(event.body);
-    const { name, school, subject } = info;
-
-    if (typeof name === "string" && name.trim() !== "") {
-      await db.query("UPDATE users SET name = $1 WHERE email = $2", [
-        name,
-        decoded.email,
-      ]);
-    }
-
-    if (typeof school === "string" && school.trim() !== "") {
-      await db.query("UPDATE users SET school = $1 WHERE email = $2", [
-        school,
-        decoded.email,
-      ]);
-    }
-
-    if (typeof subject === "string" && subject.trim() !== "") {
-      await db.query("UPDATE users SET subject = $1 WHERE email = $2", [
-        subject,
-        decoded.email,
-      ]);
-    }
-
+    const user = result.rows[0];
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ message: "Profile updated" }),
+      body: JSON.stringify({ 
+        success: true, 
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+          school: user.school,
+          subject: user.subject
+        }
+      }),
     };
   } catch (error) {
-    console.error("Profile error:", error);
+    console.error("Edit profile error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {
