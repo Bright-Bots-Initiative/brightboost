@@ -47,3 +47,18 @@ export const patchMockClass = async (
   mockClasses[index] = { ...mockClasses[index], ...updates };
   return { ...mockClasses[index] };
 };
+
+// Bulk import class from CSV (new function for CSV import)
+export const bulkImportClass = async (
+  classData: Omit<Class, "id">,
+): Promise<Class> => {
+  await new Promise((res) => setTimeout(res, 1000)); // Simulate API delay
+
+  const newClass: Class = {
+    id: `class-${Date.now()}`,
+    ...classData,
+  };
+
+  mockClasses.push(newClass);
+  return { ...newClass };
+};

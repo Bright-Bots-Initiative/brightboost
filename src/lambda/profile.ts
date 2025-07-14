@@ -6,106 +6,132 @@ import {
 import { Pool } from "pg";
 import * as jwt from "jsonwebtoken";
 
-const secretsClient = new SecretsManagerClient({ region: "us-east-1" });
+interface DatabaseSecret {
+  host: string;
+  port: number;
+  dbname: string;
+  username: string;
+  password: string;
+}
 
-let pool: Pool | null = null;
+let dbPool: Pool | null = null;
+const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
-  if (pool) {
-    return pool;
-  }
+  if (!dbPool) {
+    console.log("Creating new database connection pool...");
+    let secret: DatabaseSecret;
+    if (process.env.NODE_ENV === "local") {
+      secret = {
+        host: "host.docker.internal",
+        port: 5435,
+        dbname: "brightboost",
+        username: "postgres",
+        password: "brightboostpass",
+      };
+    } else {
+      const secretArn = process.env.DATABASE_SECRET_ARN;
+      if (!secretArn) {
+        throw new Error("DATABASE_SECRET_ARN environment variable not set");
+      }
 
-  try {
-    const secretValue = await secretsClient.send(
-      new GetSecretValueCommand({
-        SecretId: "brightboost-db-credentials",
-      })
+      console.log("Fetching database secret from Secrets Manager...");
+      const command = new GetSecretValueCommand({ SecretId: secretArn });
+      const secretResult = await secretsManager.send(command);
+      if (!secretResult.SecretString) {
+        throw new Error("Failed to retrieve database secret");
+      }
+
+      secret = JSON.parse(secretResult.SecretString);
+    }
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
     );
 
-    if (!secretValue.SecretString) {
-      throw new Error("No secret string found");
-    }
-
-    const secret = JSON.parse(secretValue.SecretString);
-
-    pool = new Pool({
+    dbPool = new Pool({
       host: secret.host,
       port: secret.port,
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: {
-        rejectUnauthorized: false,
-      },
-      max: 20,
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : {
+              rejectUnauthorized: false,
+            },
+      max: 5,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 25000,
     });
 
-    return pool;
-  } catch (error) {
-    console.error("Error connecting to database:", error);
-    throw error;
+    console.log("Database pool created, testing connection...");
+    try {
+      const testClient = await dbPool.connect();
+      console.log("Database connection test successful");
+      testClient.release();
+    } catch (error) {
+      console.error("Database connection test failed:", error);
+      throw error;
+    }
   }
+
+  return dbPool;
 }
 
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type,Authorization",
-    "Access-Control-Allow-Methods": "GET,OPTIONS",
     "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
 
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers,
-      body: "",
-    };
-  }
-
   try {
-    const authHeader = event.headers.Authorization || event.headers.authorization;
+    if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers,
+        body: "",
+      };
+    }
+
+    const authHeader =
+      event.headers.Authorization || event.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: "Missing or invalid authorization header" }),
+        body: JSON.stringify({ error: "Missing Authentication Token" }),
       };
     }
 
     const token = authHeader.substring(7);
-    let decoded: any;
+    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
 
+    let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
-    } catch (jwtError) {
-      console.error("JWT verification failed:", jwtError);
+      decoded = jwt.verify(token, jwtSecret) as any;
+    } catch (err) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: "Invalid token" }),
+        body: JSON.stringify({ error: "Session expired" }),
       };
     }
 
-    if (!decoded.userId) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: "Invalid token payload" }),
-      };
-    }
-
+    console.log("Attempting database connection...");
     const db = await getDbConnection();
-    const result = await db.query(
-      'SELECT id, name, email, "avatarUrl", school, subject FROM "User" WHERE id = $1',
-      [decoded.userId]
+    console.log("Database connection established successfully");
+
+    const data = await db.query(
+      'SELECT id, name, email, role, school, subject, "avatarUrl", created_at FROM "User" WHERE email = $1',
+      [decoded.email],
     );
 
-    if (result.rows.length === 0) {
+    if (data.rows.length === 0) {
       return {
         statusCode: 404,
         headers,
@@ -113,7 +139,7 @@ export const handler = async (
       };
     }
 
-    const user = result.rows[0];
+    const user = data.rows[0];
     return {
       statusCode: 200,
       headers,
@@ -122,15 +148,35 @@ export const handler = async (
         name: user.name,
         email: user.email,
         school: user.school,
-        subject: user.subject
+        subject: user.subject,
+        role: user.role,
+        id: user.id,
+        created_at: user.created_at
       }),
     };
   } catch (error) {
-    console.error("Error in profile handler:", error);
+    console.error("Profile error:", error);
+
+    if (error instanceof Error) {
+      if (error.message.includes("connection")) {
+        return {
+          statusCode: 503,
+          headers,
+          body: JSON.stringify({ error: "Database connection error" }),
+        };
+      }
+    }
+
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: "Internal server error" }),
+      body: JSON.stringify({
+        error: "Internal server error",
+        message:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
+      }),
     };
   }
 };

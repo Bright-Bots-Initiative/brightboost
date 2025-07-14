@@ -25,9 +25,10 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Profile = lazy(() => import("./pages/Profile"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
 const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
 const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
-const EditProfile = lazy(() => import("./pages/edit-profile"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
@@ -88,6 +89,22 @@ function App() {
           element={
             <ProtectedRoute requiredRole="STUDENT">
               <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/profile"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/profile"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <Profile />
             </ProtectedRoute>
           }
         />
