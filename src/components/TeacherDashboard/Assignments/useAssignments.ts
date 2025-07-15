@@ -15,5 +15,5 @@ export function useAssignments(classId?: string) {
       .finally(() => setIsLoading(false));
   }, [classId]);
 
-  return { assignments, isLoading };
+  return { assignments, isLoading, setAssignments };
 }

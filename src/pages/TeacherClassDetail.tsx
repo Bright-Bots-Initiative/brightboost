@@ -11,6 +11,7 @@ import { Assignment } from "@/components/TeacherDashboard/types";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams();
+  const { id: classId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [classData, setClassData] = useState<Class | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -59,7 +60,7 @@ const TeacherClassDetail: React.FC = () => {
   };
 
   const navigateToAssignmentDetail = (assignmentId: string) => {
-    navigate(`/dashboard/classes/${id}/assignments/${assignmentId}`);
+      navigate(`/teacher/classes/${classId}/assignments/${assignmentId}`);
   };
 
   // Filler error handling
@@ -142,10 +143,7 @@ const TeacherClassDetail: React.FC = () => {
             </thead>
             <tbody>
               {classData.students.map((student) => (
-                <tr
-                  key={student.id}
-                  className="border-b text-sm text-gray-800"
-                >
+                <tr key={student.id} className="border-b text-sm text-gray-800">
                   <td className="py-2">{student.id}</td>
                   <td className="py-2">{student.name}</td>
                   <td className="py-2">
@@ -162,9 +160,20 @@ const TeacherClassDetail: React.FC = () => {
 
       {/* Assignments table card */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold mb-4 text-brightboost-navy">
-          Assignments
-        </h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-brightboost-navy">
+            Assignments
+          </h3>
+          <button
+            onClick={() =>
+              navigate(`/teacher/classes/${classData.id}/assignments`)
+            }
+            className="bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition text-sm"
+          >
+            View All
+          </button>
+        </div>
+
         {loadingAssignments ? (
           <p className="text-gray-500 italic">Loading assignments…</p>
         ) : assignments.length === 0 ? (

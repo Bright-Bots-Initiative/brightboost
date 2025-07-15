@@ -99,6 +99,7 @@ export enum AssignmentStatus {
 export type Assignment = {
   id: string;
   title: string;
+  description?: string;
   dueDate: string; // ISO 8601 string
   status: AssignmentStatus;
 };
