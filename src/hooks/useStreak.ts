@@ -15,28 +15,28 @@ export function useStreak() {
   const [loading, setLoading] = useState(true);
   const api = useApi();
 
-  function formatUTCDateString(date: Date): string {
+  const formatUTCDateString = useCallback((date: Date): string => {
     return date.toISOString().split('T')[0];
-  }
+  }, []);
 
-  function isoToUTCDateString(iso: string | null): string | null {
+  const isoToUTCDateString = useCallback((iso: string | null): string | null => {
     if (!iso) return null;
     return formatUTCDateString(new Date(iso));
-  }
+  }, [formatUTCDateString]);
 
-  function parseUTCDate(dateStr: string): Date {
+  const parseUTCDate = useCallback((dateStr: string): Date => {
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(Date.UTC(y, m - 1, d));
-  }
+  }, []);
 
-  function getUTCMidnightDates() {
+  const getUTCMidnightDates = useCallback(() => {
     const now = new Date();
     const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const dayOfWeekUTC = todayUTC.getUTCDay();
     const lastSundayUTC = new Date(todayUTC);
     lastSundayUTC.setUTCDate(todayUTC.getUTCDate() - dayOfWeekUTC);
     return { todayUTC, lastSundayUTC };
-  }
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -70,9 +70,9 @@ export function useStreak() {
       }
     }
     load();
-  }, [api]);
+  }, [api, getUTCMidnightDates, parseUTCDate]);
 
-  function applyEventLocally(event: StreakEvent, current: any) {
+  const applyEventLocally = useCallback((event: StreakEvent, current: any) => {
     const eventDay = isoToUTCDateString(event.completedAt);
     const lastCompletedDay = isoToUTCDateString(current.lastCompletedAt || null);
     if (!eventDay || eventDay === lastCompletedDay) return current;
@@ -101,7 +101,7 @@ export function useStreak() {
       serverDateUTC: new Date().toISOString(),
       streakDays: updatedStreakDays,
     };
-  }
+  }, [isoToUTCDateString, parseUTCDate]);
 
   const completeModule = useCallback(async (moduleId: string) => {
     const completedAt = new Date().toISOString();
@@ -111,44 +111,43 @@ export function useStreak() {
     setStreak(newStreak);
     await setCachedStreak(newStreak);
     await addPendingEvent(event);
-  }, [streak]);
+  }, [streak, applyEventLocally]);
 
   const processQueue = useCallback(async () => {
-  const pending = await getPendingEvents();
-  if (pending.length === 0) return;
+    const pending = await getPendingEvents();
+    if (pending.length === 0) return;
 
-  try {
-    const server = await api.get("/api/gamification/streak");
+    try {
+      const server = await api.get("/api/gamification/streak");
 
-    const seen = new Set<string>();
-    const deduped: StreakEvent[] = [];
+      const seen = new Set<string>();
+      const deduped: StreakEvent[] = [];
 
-    pending
-      .sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
-      .forEach((event) => {
-        const day = isoToUTCDateString(event.completedAt);
-        if (day && !seen.has(day)) {
-          seen.add(day);
-          deduped.push(event);
-        }
-      });
+      pending
+        .sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
+        .forEach((event) => {
+          const day = isoToUTCDateString(event.completedAt);
+          if (day && !seen.has(day)) {
+            seen.add(day);
+            deduped.push(event);
+          }
+        });
 
-    for (const event of deduped) {
-      await api.post("/api/gamification/streak", {
-        completedAt: event.completedAt,
-        moduleId: event.moduleId,
-        // Add any other required fields like studentId here if needed
-      });
+      for (const event of deduped) {
+        await api.post("/api/gamification/streak", {
+          completedAt: event.completedAt,
+          moduleId: event.moduleId,
+        });
+      }
+
+      const updated = await api.get("/api/gamification/streak");
+      setStreak(updated);
+      await setCachedStreak(updated);
+      await clearPendingEvents();
+    } catch (err) {
+      console.error("Failed to sync streak:", err);
     }
-
-    const updated = await api.get("/api/gamification/streak");
-    setStreak(updated);
-    await setCachedStreak(updated);
-    await clearPendingEvents();
-  } catch (err) {
-    console.error("Failed to sync streak:", err);
-  }
-}, [api]);
+  }, [api, isoToUTCDateString]);
 
   useEffect(() => {
     if (!streak?.lastCompletedAt) return;
