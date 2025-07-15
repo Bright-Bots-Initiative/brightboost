@@ -1,4 +1,7 @@
-import { Assignment, AssignmentStatus } from "../components/TeacherDashboard/types";
+import {
+  Assignment,
+  AssignmentStatus,
+} from "../components/TeacherDashboard/types";
 
 const mockAssignments: Assignment[] = [
   {
@@ -18,20 +21,20 @@ const mockAssignments: Assignment[] = [
 export async function getAssignments(classId: string): Promise<Assignment[]> {
   console.log(`Fetching assignments for class ${classId}`);
   return new Promise((resolve) =>
-    setTimeout(() => resolve(mockAssignments), 500)
+    setTimeout(() => resolve(mockAssignments), 500),
   );
 }
 
 export async function createMockAssignment(
   classId: string,
-  data: Omit<Assignment, "id">
+  data: Omit<Assignment, "id">,
 ): Promise<Assignment> {
   const newAssignment: Assignment = {
     ...data,
     id: `a${Date.now()}`,
   };
   return new Promise((resolve) =>
-    setTimeout(() => resolve(newAssignment), 500)
+    setTimeout(() => resolve(newAssignment), 500),
   );
 }
 
@@ -44,7 +47,7 @@ type MockAssignmentDetail = {
 
 export async function getMockAssignmentDetail(
   classId: string,
-  assignmentId: string
+  assignmentId: string,
 ): Promise<MockAssignmentDetail> {
   return new Promise((resolve) =>
     setTimeout(() => {
@@ -60,16 +63,15 @@ export async function getMockAssignmentDetail(
           "stu-002": "B",
         },
       });
-    }, 500)
+    }, 500),
   );
 }
 
 export async function patchMockGrades(
   classId: string,
   assignmentId: string,
-  grades: Record<string, string> // e.g., { "stu-001": "A", ... }
+  grades: Record<string, string>, // e.g., { "stu-001": "A", ... }
 ): Promise<void> {
   console.log("PATCH /api/classes", { classId, assignmentId, grades });
   return new Promise((resolve) => setTimeout(resolve, 300));
 }
-

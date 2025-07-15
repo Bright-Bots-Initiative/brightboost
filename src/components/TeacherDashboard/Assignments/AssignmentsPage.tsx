@@ -27,23 +27,25 @@ export default function AssignmentsPage() {
 
   return (
     <div className="container p-6">
-        <button
+      <button
         onClick={() => navigate(`/teacher/classes/${classId}`)}
         className="flex items-center bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium px-3 py-1.5 rounded-full transition"
-        >
+      >
         <span className="mr-1">←</span> Back to Class
-        </button>
-        <header className="flex justify-between items-center mb-6">
+      </button>
+      <header className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-brightboost-navy">Assignments</h1>
+          <h1 className="text-2xl font-bold text-brightboost-navy">
+            Assignments
+          </h1>
         </div>
         <button
-            onClick={openNewAssignmentDrawer}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          onClick={openNewAssignmentDrawer}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
-            + New Assignment
+          + New Assignment
         </button>
-        </header>
+      </header>
 
       {isLoading ? (
         <div className="text-gray-500">Loading assignments…</div>

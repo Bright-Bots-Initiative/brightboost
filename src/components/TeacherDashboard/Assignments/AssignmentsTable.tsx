@@ -15,13 +15,22 @@ export default function AssignmentTable({ assignments, onRowClick }: Props) {
       <table className="min-w-full text-sm text-gray-700">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            <th scope="col" className="px-6 py-3 text-left font-semibold tracking-wide">
+            <th
+              scope="col"
+              className="px-6 py-3 text-left font-semibold tracking-wide"
+            >
               Title
             </th>
-            <th scope="col" className="px-6 py-3 text-left font-semibold tracking-wide">
+            <th
+              scope="col"
+              className="px-6 py-3 text-left font-semibold tracking-wide"
+            >
               Due Date
             </th>
-            <th scope="col" className="px-6 py-3 text-left font-semibold tracking-wide">
+            <th
+              scope="col"
+              className="px-6 py-3 text-left font-semibold tracking-wide"
+            >
               Status
             </th>
           </tr>
@@ -33,7 +42,7 @@ export default function AssignmentTable({ assignments, onRowClick }: Props) {
               className={clsx(
                 "border-b border-gray-100 transition-colors",
                 "hover:bg-blue-50 hover:cursor-pointer",
-                idx % 2 === 0 ? "bg-white" : "bg-gray-50" // zebra striping
+                idx % 2 === 0 ? "bg-white" : "bg-gray-50", // zebra striping
               )}
               onClick={() => onRowClick(assignment.id)}
             >
@@ -67,7 +76,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
     <span
       className={clsx(
         "inline-block rounded-full px-3 py-1 text-xs font-semibold",
-        statusStyles[status]
+        statusStyles[status],
       )}
     >
       {status}

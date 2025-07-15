@@ -61,7 +61,7 @@ export default function NewAssignmentDrawer({
     <div
       className={clsx(
         "fixed inset-0 z-40 transition-transform duration-300 ease-in-out",
-        isOpen ? "translate-x-0" : "translate-x-full"
+        isOpen ? "translate-x-0" : "translate-x-full",
       )}
     >
       {/* Overlay */}
@@ -76,7 +76,10 @@ export default function NewAssignmentDrawer({
           New Assignment
         </h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-4 flex-1">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col space-y-4 flex-1"
+        >
           {/* Title */}
           <label className="text-sm font-semibold text-gray-700">
             Title
@@ -114,9 +117,7 @@ export default function NewAssignmentDrawer({
             />
           </label>
 
-          {error && (
-            <p className="text-red-600 text-sm font-medium">{error}</p>
-          )}
+          {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
 
           <div className="flex justify-end gap-2 mt-auto">
             <button
@@ -133,7 +134,7 @@ export default function NewAssignmentDrawer({
                 "px-4 py-2 rounded text-white",
                 isSaving
                   ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+                  : "bg-blue-600 hover:bg-blue-700",
               )}
             >
               {isSaving ? "Saving..." : "Create"}

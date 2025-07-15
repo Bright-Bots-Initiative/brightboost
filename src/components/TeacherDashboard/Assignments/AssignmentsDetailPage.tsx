@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { patchMockGrades, getMockAssignmentDetail } from "@/services/assignmentService";
-import { Class, Student, AssignmentStatus } from "@/components/TeacherDashboard/types";
+import {
+  patchMockGrades,
+  getMockAssignmentDetail,
+} from "@/services/assignmentService";
+import {
+  Class,
+  Student,
+  AssignmentStatus,
+} from "@/components/TeacherDashboard/types";
 
 type GradeEntry = {
   studentId: string;
@@ -11,7 +18,10 @@ type GradeEntry = {
 const gradeOptions = ["A", "B", "C", "D", "F", "Incomplete"];
 
 const AssignmentDetailPage: React.FC = () => {
-  const { id: classId, assignmentId } = useParams<{ id: string; assignmentId: string }>();
+  const { id: classId, assignmentId } = useParams<{
+    id: string;
+    assignmentId: string;
+  }>();
   const navigate = useNavigate();
   const [assignmentTitle, setAssignmentTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -65,7 +75,9 @@ const AssignmentDetailPage: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-brightboost-navy">{assignmentTitle}</h1>
+          <h1 className="text-2xl font-bold text-brightboost-navy">
+            {assignmentTitle}
+          </h1>
           <p className="text-gray-600">Due: {dueDate}</p>
         </div>
         <button
