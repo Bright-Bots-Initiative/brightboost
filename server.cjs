@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 
 // Import middleware
-const authMiddleware = require('./middleware/auth');
+const authMiddleware = require('./middleware/auth.cjs');
 
 // Initialize Express app
 const app = express();
@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? 'https://brightboost-web.azurewebsites.net'
-    : 'http://localhost:5173',
+    : ['http://localhost:5173', 'http://localhost:8080'],
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -57,7 +57,7 @@ app.post('/auth/signup', (req, res) => {
   // Check if user already exists
   const existingUser = users.find(user => user.email === email);
   if (existingUser) {
-    return res.status(400).json({ error: 'User with this email already exists' });
+    return res.status(409).json({ error: 'Account already exists' });
   }
 
   // Create new user
@@ -72,9 +72,17 @@ app.post('/auth/signup', (req, res) => {
   // Add to mock database
   users.push(newUser);
 
-  // Return success
+  // Generate token (same as login)
+  const token = jwt.sign(
+    { id: newUser.id, email: newUser.email, role: newUser.role },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+
+  // Return success with token
   res.status(201).json({
     message: 'User registered successfully',
+    token,
     user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role }
   });
 });
