@@ -12,6 +12,7 @@ import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
+import AvatarPicker from '../components/AvatarPicker';
 
 interface Course {
   id: string;
@@ -171,6 +172,21 @@ const StudentDashboard = () => {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-4">
               <BrightBoostRobot className="w-16 h-16" />
+              <AvatarPicker 
+                currentAvatarUrl={undefined}
+                userInitials={
+                    user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                    : "ST"
+                }
+                onAvatarChange={(newUrl) => {
+                    console.log("Avatar changed to:", newUrl);
+                }}
+              />
               <div>
                 <h1 className="text-3xl font-bold text-brightboost-navy">
                   {t("dashboard.greeting", {

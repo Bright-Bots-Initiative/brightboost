@@ -84,9 +84,10 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin":
+      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
 
   try {
@@ -122,59 +123,22 @@ export const handler = async (
       };
     }
 
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Request body is required" }),
-      };
-    }
-
-    const { name, school, subject } = JSON.parse(event.body);
-
-    if (!name || typeof name !== 'string') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Name is required and must be a string" }),
-      };
-    }
-
     console.log("Attempting database connection...");
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const result = await db.query(
-      'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, decoded.email]
+    const data = await db.query(
+      "UPDATE users SET streak = streak + 1 WHERE email = $1",
+      [decoded.email],
     );
 
-    if (result.rows.length === 0) {
-      return {
-        statusCode: 404,
-        headers,
-        body: JSON.stringify({ error: "User not found" }),
-      };
-    }
-
-    const user = result.rows[0];
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          avatarUrl: user.avatarUrl,
-          school: user.school,
-          subject: user.subject
-        }
-      }),
+      body: JSON.stringify({ message: "streak incremented" }),
     };
   } catch (error) {
-    console.error("Edit profile error:", error);
+    console.error("streak increment error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {

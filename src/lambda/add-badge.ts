@@ -84,9 +84,10 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin":
+      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
-    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
 
   try {
@@ -122,59 +123,34 @@ export const handler = async (
       };
     }
 
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Request body is required" }),
-      };
-    }
-
-    const { name, school, subject } = JSON.parse(event.body);
-
-    if (!name || typeof name !== 'string') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: "Name is required and must be a string" }),
-      };
-    }
-
     console.log("Attempting database connection...");
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const result = await db.query(
-      'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, decoded.email]
-    );
-
-    if (result.rows.length === 0) {
+    if (typeof event.body !== "string") {
       return {
-        statusCode: 404,
+        statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "User not found" }),
+        body: JSON.stringify({ message: "Missing body" }),
       };
     }
 
-    const user = result.rows[0];
+    const new_badge = event.body;
+
+    if (typeof new_badge === "string" && new_badge.trim() !== "") {
+      await db.query(
+        "UPDATE users SET badges = array_append(badges, $1) WHERE email = $2",
+        [new_badge, decoded.email],
+      );
+    }
+
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          avatarUrl: user.avatarUrl,
-          school: user.school,
-          subject: user.subject
-        }
-      }),
+      body: JSON.stringify({ message: "Badge added" }),
     };
   } catch (error) {
-    console.error("Edit profile error:", error);
+    console.error("Badge update error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {

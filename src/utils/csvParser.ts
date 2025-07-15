@@ -74,7 +74,7 @@ export const parseCSVData = (csvContent: string): ParsedClassData => {
       return; // Skip this row but continue processing others
     }
 
-    // Get class info from first row
+    // Get class info from first row (but don't overwrite with subsequent rows)
     if (index === 0) {
       className = columns[classNameIndex];
       if (gradeIndex !== -1) {
@@ -85,6 +85,15 @@ export const parseCSVData = (csvContent: string): ParsedClassData => {
         parseErrors.push({
           line: rowNumber,
           message: `Class name is empty in row ${rowNumber}. Please provide a valid class name.`,
+        });
+      }
+    } else {
+      // For subsequent rows, verify class name consistency but don't overwrite
+      const currentRowClassName = columns[classNameIndex];
+      if (currentRowClassName && currentRowClassName !== className) {
+        parseErrors.push({
+          line: rowNumber,
+          message: `Class name "${currentRowClassName}" in row ${rowNumber} doesn't match the class name "${className}" from the first row. All students should belong to the same class.`,
         });
       }
     }

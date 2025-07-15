@@ -1,25 +1,27 @@
 export interface Lesson {
-  id: number | string; // Allow string for dnd-kit compatibility if IDs are not numbers
+  id: number | string;
   title: string;
   category: string;
   date: string;
-  status: "Published" | "Draft" | "Review" | string; // Allow other string statuses
-  content?: string; // Add content property
+  status: "Published" | "Draft" | "Review" | string;
+  content?: string;
 }
 
 export interface SortableLessonRowProps {
   lesson: Lesson;
-  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
+  onEditLesson: (lesson: Lesson) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
+
 export interface LessonsTableProps {
   lessons: Lesson[];
   setLessons: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onEditLesson: (lesson: Lesson) => void; // Changed from onEdit and updated signature
-  onDuplicateLesson: (id: Lesson["id"]) => void; // Changed from onDuplicate
-  onDeleteLesson: (id: Lesson["id"]) => void; // Changed from onDelete
+  onEditLesson: (lesson: Lesson) => void;
+  onDuplicateLesson: (id: Lesson["id"]) => void;
+  onDeleteLesson: (id: Lesson["id"]) => void;
 }
+
 export interface MainContentProps {
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
@@ -42,6 +44,7 @@ export type Grade =
   | "10th"
   | "11th"
   | "12th";
+
 export const gradeOptions: Grade[] = [
   "Kindergarten",
   "1st",
