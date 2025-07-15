@@ -26,7 +26,7 @@ export async function getAssignments(classId: string): Promise<Assignment[]> {
 }
 
 export async function createMockAssignment(
-  classId: string,
+  _classId: string,
   data: Omit<Assignment, "id">,
 ): Promise<Assignment> {
   const newAssignment: Assignment = {
@@ -46,8 +46,8 @@ type MockAssignmentDetail = {
 };
 
 export async function getMockAssignmentDetail(
-  classId: string,
-  assignmentId: string,
+  _classId: string,
+  _assignmentId: string,
 ): Promise<MockAssignmentDetail> {
   return new Promise((resolve) =>
     setTimeout(() => {

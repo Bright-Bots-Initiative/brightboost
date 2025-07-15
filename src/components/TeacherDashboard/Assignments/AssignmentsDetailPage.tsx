@@ -5,15 +5,8 @@ import {
   getMockAssignmentDetail,
 } from "@/services/assignmentService";
 import {
-  Class,
   Student,
-  AssignmentStatus,
 } from "@/components/TeacherDashboard/types";
-
-type GradeEntry = {
-  studentId: string;
-  grade: string;
-};
 
 const gradeOptions = ["A", "B", "C", "D", "F", "Incomplete"];
 
