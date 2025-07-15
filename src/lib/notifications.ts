@@ -1,5 +1,4 @@
-import { toast, ToastOptions } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "@/components/ui/use-toast";
 
 interface NotifyOptions {
   title: string;
@@ -8,14 +7,9 @@ interface NotifyOptions {
 }
 
 export function notify({ title, body, type = "info" }: NotifyOptions) {
-  const options: ToastOptions = {
-    type,
-    position: "top-right",
-    autoClose: 5000,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-  };
-
-  toast(`${title}\n${body}`, options);
+  toast({
+    title,
+    description: body,
+    variant: type === "error" ? "destructive" : "default",
+  });
 }

@@ -13,6 +13,9 @@ import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
 import AvatarPicker from '../components/AvatarPicker';
+import StreakMeter from "../components/ui/StreakMeter";
+import { useStreak } from "../hooks/useStreak";
+import { clearCachedStreak } from "../lib/streakDB";
 
 interface Course {
   id: string;
@@ -51,7 +54,7 @@ function formatLocalDate(date: Date): string {
 }
 
 function getLastSunday(today: Date): Date {
-  const dayOfWeek = today.getDay(); // 0 = Sunday
+  const dayOfWeek = today.getDay();
   const lastSunday = new Date(today);
   lastSunday.setHours(0, 0, 0, 0);
   lastSunday.setDate(today.getDate() - dayOfWeek);
@@ -181,6 +184,11 @@ const StudentDashboard = () => {
     alert("Streak data has been reset for testing.");
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   if (streakLoading || isLoading) {
     return (
       <GameBackground>
@@ -225,23 +233,6 @@ const StudentDashboard = () => {
   const currentStreakSafe = Number(streak?.currentStreak) || 0;
   const longestStreakSafe = Number(streak?.longestStreak) || 0;
 
-  const stemActivities = [
-    { title: "STEM 1", icon: "/icons/math.png", color: "bg-blue-100 hover:bg-blue-200", path: "/activities/math" },
-    { title: "Science Lab", icon: "/icons/science.png", color: "bg-green-100 hover:bg-green-200", path: "/activities/science" },
-    { title: "Coding Fun", icon: "/icons/coding.png", color: "bg-purple-100 hover:bg-purple-200", path: "/activities/coding" },
-  ];
-
-  const leaderboardEntries = [
-    { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
-    { rank: 2, name: "Sarah", points: 1180, avatar: "/avatars/sarah.png" },
-    { rank: 3, name: "Mike", points: 1050, avatar: "/avatars/mike.png" },
-  ];
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
@@ -252,7 +243,7 @@ const StudentDashboard = () => {
               <AvatarPicker 
                 currentAvatarUrl={undefined}
                 userInitials={
-                    user?.name
+                  user?.name
                     ? user.name
                         .split(" ")
                         .map((n) => n[0])
@@ -261,7 +252,7 @@ const StudentDashboard = () => {
                     : "ST"
                 }
                 onAvatarChange={(newUrl) => {
-                    console.log("Avatar changed to:", newUrl);
+                  console.log("Avatar changed to:", newUrl);
                 }}
               />
               <div>
@@ -280,7 +271,6 @@ const StudentDashboard = () => {
                 <CurrentModuleCard module={dashboardData.currentModule} />
               </div>
             )}
-
             <div className="flex items-center space-x-4">
               <LanguageToggle />
               <div className="flex flex-col items-end space-y-2">
@@ -314,13 +304,11 @@ const StudentDashboard = () => {
               subtitle={t("dashboard.stemCard.subtitle")}
               activities={stemActivities}
             />
-
             <WordGameCard
               title={t("dashboard.wordGame.title")}
               letters={["A", "B", "E", "L", "T"]}
               word="TABLE"
             />
-
             <LeaderboardCard
               title={t("dashboard.leaderboard.title")}
               entries={leaderboardEntries}
@@ -339,20 +327,19 @@ const StudentDashboard = () => {
                     <h4 className="font-bold text-brightboost-navy mb-3">
                       {t("dashboard.enrolledCourses")}
                     </h4>
-                    {dashboardData.courses &&
-                      dashboardData.courses.map((course) => (
-                        <div
-                          key={course.id}
-                          className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
-                          data-cy="course-item"
-                        >
-                          <div className="font-medium">{course.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {t("dashboard.grade")}: {course.grade} |{" "}
-                            {t("dashboard.teacher")}: {course.teacher}
-                          </div>
+                    {dashboardData.courses.map((course) => (
+                      <div
+                        key={course.id}
+                        className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
+                        data-cy="course-item"
+                      >
+                        <div className="font-medium">{course.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {t("dashboard.grade")}: {course.grade} |{" "}
+                          {t("dashboard.teacher")}: {course.teacher}
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
 
                   <div className="bg-white rounded-lg p-4 shadow-md">
@@ -369,7 +356,11 @@ const StudentDashboard = () => {
                         <div className="text-sm text-gray-600">
                           {t("dashboard.due")}: {assignment.dueDate} |{" "}
                           <span
-                            className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
+                            className={`ml-1 ${
+                              assignment.status === "completed"
+                                ? "text-green-600"
+                                : "text-orange-600"
+                            }`}
                           >
                             {t(`dashboard.status.${assignment.status}`)}
                           </span>
@@ -391,25 +382,14 @@ const StudentDashboard = () => {
               </div>
             )}
 
-          <div className="mt-8 flex justify-center">
-            <div className="flex space-x-4">
-              <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                {t("dashboard.startLearning")}
-              </button>
-              <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                {t("dashboard.viewProgress")}
-              </button>
-            </div>
+          <div className="mt-8 flex justify-center space-x-4">
+            <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold">
+              {t("dashboard.startLearning")}
+            </button>
+            <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold">
+              {t("dashboard.viewProgress")}
+            </button>
           </div>
-        )}
-
-        <div className="mt-8 flex justify-center space-x-4">
-          <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold">
-            Start Learning
-          </button>
-          <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold">
-            View Progress
-          </button>
         </div>
       </div>
     </GameBackground>
@@ -417,4 +397,5 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+
 

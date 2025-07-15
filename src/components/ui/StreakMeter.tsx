@@ -104,7 +104,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
         </div>
 
         {/* Hover window */}
-        {showTooltip && (
+        {hovering && (
           <div
             className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white text-sm text-gray-800 rounded-xl shadow-lg z-20 w-60"
             data-cy="streak-tooltip"
