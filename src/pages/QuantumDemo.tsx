@@ -50,7 +50,7 @@ const QuantumDemo: React.FC = () => {
       clearTimeout(cspTimeout);
       window.removeEventListener('message', handleMessage);
     };
-  }, []);
+  }, [isLoading, useFallback]);
 
   const handleIframeLoad = async () => {
     setIsLoading(false);
@@ -73,6 +73,7 @@ const QuantumDemo: React.FC = () => {
 
   const handleIframeError = () => {
     console.log('Iframe failed to load, switching to fallback');
+    console.log('Setting hasError=true, useFallback=true, isLoading=false');
     setHasError(true);
     setUseFallback(true);
     setIsLoading(false);
