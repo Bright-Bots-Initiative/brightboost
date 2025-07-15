@@ -29,6 +29,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const EditProfile = lazy(() => import("./pages/EditProfile"));
 const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
 const QuestRouter = lazy(() => import("./pages/quests/QuestRouter"));
+const QuantumDemo = lazy(() => import("./pages/QuantumDemo"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
@@ -46,6 +47,9 @@ function App() {
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
         <Route path="/quest/:id" element={<QuestRouter />} />
+        
+        {/* Quantum Demo route */}
+        <Route path="/quantum-demo" element={<QuantumDemo />} />
 
         {/* Protected routes */}
         <Route
