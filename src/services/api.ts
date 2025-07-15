@@ -2,8 +2,23 @@
 // src/services/api.ts
 import { useAuth } from '../contexts/AuthContext';
 
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Get API URL from environment variables with better fallback
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) return envUrl;
+  
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location;
+    if (hostname.includes('azurestaticapps.net') || hostname.includes('azure.com')) {
+      return '/api';
+    }
+    return 'http://localhost:3000';
+  }
+  
+  return 'http://localhost:3000';
+};
+
+const API_URL = getApiBaseUrl();
 
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
@@ -24,6 +39,11 @@ export const loginUser = async (email: string, password: string) => {
     return await response.json();
   } catch (error) {
     console.error('Login error:', error);
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Service temporarily unavailable—please try again later');
+    }
+    
     throw error;
   }
 };
@@ -60,6 +80,11 @@ export const signupUser = async (name: string, email: string, password: string, 
     return await response.json();
   } catch (error) {
     console.error('Signup error:', error);
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Service temporarily unavailable—please try again later');
+    }
+    
     throw error;
   }
 };
@@ -89,6 +114,11 @@ export const useApi = () => {
       return await response.json();
     } catch (error) {
       console.error('API error:', error);
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Service temporarily unavailable—please try again later');
+      }
+      
       throw error;
     }
   };

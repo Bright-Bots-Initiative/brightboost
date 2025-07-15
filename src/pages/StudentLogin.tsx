@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { loginUser } from '../services/api';
+import { useToast } from '../hooks/use-toast';
 import GameBackground from '../components/GameBackground';
 import BrightBoostRobot from '../components/BrightBoostRobot';
 
@@ -13,6 +14,7 @@ const StudentLogin: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,16 @@ const StudentLogin: React.FC = () => {
       }
       login(response.token, response.user);
     } catch (err: any) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      const errorMessage = err.message || 'Failed to login. Please check your credentials.';
+      setError(errorMessage);
+      
+      if (errorMessage.includes('Service temporarily unavailable')) {
+        toast({
+          title: "Connection Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +80,7 @@ const StudentLogin: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  data-testid="email"
                   className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
                   placeholder="Enter your email"
                 />
@@ -84,6 +96,7 @@ const StudentLogin: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  data-testid="password"
                   className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
                   placeholder="Enter your password"
                 />
@@ -92,6 +105,7 @@ const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
+                data-testid="login-button"
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
                   isLoading ? 'bg-brightboost-lightblue/70' : 'bg-brightboost-lightblue'
                 } transition-colors`}
