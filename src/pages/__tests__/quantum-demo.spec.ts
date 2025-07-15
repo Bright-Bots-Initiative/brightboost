@@ -10,21 +10,20 @@ vi.mock('../../lib/xp', () => ({
   clearSessionXpGrants: vi.fn(),
 }));
 
+let mockOnError: (() => void) | null = null;
+
 vi.mock('@iframe-resizer/react', () => ({
   default: ({ src, title, onLoad, onError, ...props }: any) => {
-    const iframe = React.createElement('iframe', {
+    mockOnError = onError;
+    return React.createElement('iframe', {
       src,
       title,
       'data-testid': 'quantum-iframe',
       onLoad: () => {
         if (onLoad) onLoad();
       },
-      onError: () => {
-        if (onError) onError();
-      },
       ...props
     });
-    return iframe;
   },
 }));
 
@@ -104,11 +103,13 @@ describe('Quantum Demo', () => {
     
     const iframe = screen.getByTestId('quantum-iframe');
     
-    fireEvent.error(iframe);
+    if (mockOnError) {
+      mockOnError();
+    }
     
     await waitFor(() => {
-      expect(screen.getByText(/Running local version/)).toBeInTheDocument();
-    });
+      expect(screen.getByText(/Running local version of the Qubit Game due to network restrictions/)).toBeInTheDocument();
+    }, { timeout: 3000 });
   });
 
   it('should be accessible to screen readers', () => {
