@@ -162,7 +162,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade || null, decoded.email])
 =======
       result = await db.query(
-        'UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *',
+        'UPDATE "User" SET name = $1, grade = $2, "updatedAt" = NOW() WHERE email = $3 RETURNING *',
         [name, grade || null, decoded.email],
       );
 >>>>>>> 47cbf88 (profile-be: run format)
@@ -173,8 +173,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school || null, subject || null, bio, decoded.email])
 =======
       result = await db.query(
-        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *',
-        [name, school || null, subject || null, bio, decoded.email],
+        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING *',
+        [name, school || null, subject || null, bio || null, decoded.email],
       );
 >>>>>>> 47cbf88 (profile-be: run format)
     } else {
@@ -188,7 +188,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     };
 =======
       result = await db.query(
-        'UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *',
+        'UPDATE "User" SET name = $1, "updatedAt" = NOW() WHERE email = $2 RETURNING *',
         [name, decoded.email],
       );
     }
