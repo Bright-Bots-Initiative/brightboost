@@ -4,9 +4,9 @@ import { useApi } from "../services/api";
 
 const Edit = () => {
   const api = useApi();
-  
+
   const [profileUrl, setProfileUrl] = useState("DEFAULT PROFILE URL");
-  
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -20,7 +20,7 @@ const Edit = () => {
 
     fetchProfile();
   }, [api]);
-  
+
   const edit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -40,16 +40,13 @@ const Edit = () => {
   );
   return (
     <>
-    <img 
-      src = {profileUrl}
-      alt="profile picture"
-      />
-    <form onSubmit={edit}>
-      <input name="name" />
-      <input name="school" />
-      <input name="subject" />
-      <button type="submit">Save</button>
-    </form>
+      <img src={profileUrl} alt="profile picture" />
+      <form onSubmit={edit}>
+        <input name="name" />
+        <input name="school" />
+        <input name="subject" />
+        <button type="submit">Save</button>
+      </form>
     </>
   );
 };

@@ -2,11 +2,23 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Class, gradeOptions } from "../components/TeacherDashboard/types";
-import { fetchMockClassById, patchMockClass } from "../services/mockClassService";
+import {
+  fetchMockClassById,
+  patchMockClass,
+} from "../services/mockClassService";
 import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
 import ProfileModal from "../components/TeacherDashboard/ProfileModal";
 import EditProfileModal from "../components/TeacherDashboard/EditProfileModal";
-import { Users, GraduationCap, Zap, Trophy, Target, Clock, User, Edit } from "lucide-react";
+import {
+  Users,
+  GraduationCap,
+  Zap,
+  Trophy,
+  Target,
+  Clock,
+  User,
+  Edit,
+} from "lucide-react";
 import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
 import { UserProfile } from "../services/profileService";
 
@@ -20,7 +32,9 @@ const TeacherClassDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (id) {
@@ -44,7 +58,8 @@ const TeacherClassDetail: React.FC = () => {
     setClassData({
       ...classData,
       name: editingName,
-      grade: editingGrade as Class["grade"]});
+      grade: editingGrade as Class["grade"],
+    });
 
     await patchMockClass(classData.id, {
       name: editingName,
@@ -60,14 +75,16 @@ const TeacherClassDetail: React.FC = () => {
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    console.log('Profile updated:', profile);
+    console.log("Profile updated:", profile);
   };
 
   if (error) {
     return (
       <div className="flex justify-center items-start w-full p-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">404: Class Not Found</h2>
+          <h2 className="text-2xl font-bold text-red-600">
+            404: Class Not Found
+          </h2>
           <p className="text-gray-600 mt-2">
             The class you're looking for doesn't exist or was removed.
           </p>
@@ -91,7 +108,8 @@ const TeacherClassDetail: React.FC = () => {
             STEM-1 Class Details
           </h2>
           <p className="text-gray-600 mt-1">
-            Manage class information and track student progress through core quests
+            Manage class information and track student progress through core
+            quests
           </p>
         </div>
         <div className="flex space-x-3">
@@ -109,12 +127,12 @@ const TeacherClassDetail: React.FC = () => {
             <Edit className="w-4 h-4 mr-1" />
             Edit
           </button>
-        <ExportGradesButton 
-          classData={classData}
-          teacherName={user?.name}
-          variant="primary"
-          size="md"
-        />
+          <ExportGradesButton
+            classData={classData}
+            teacherName={user?.name}
+            variant="primary"
+            size="md"
+          />
         </div>
       </div>
 
@@ -135,7 +153,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Completion Rate</p>
-              <p className="text-2xl font-bold">{stem1Summary.averageCompletion}%</p>
+              <p className="text-2xl font-bold">
+                {stem1Summary.averageCompletion}%
+              </p>
               <p className="text-green-100 text-xs">class average</p>
             </div>
             <Target className="w-8 h-8 text-green-200" />
@@ -146,8 +166,12 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm">Students Passed</p>
-              <p className="text-2xl font-bold">{stem1Summary.studentsPassedSTEM1}</p>
-              <p className="text-yellow-100 text-xs">of {stem1Summary.totalStudents} students</p>
+              <p className="text-2xl font-bold">
+                {stem1Summary.studentsPassedSTEM1}
+              </p>
+              <p className="text-yellow-100 text-xs">
+                of {stem1Summary.totalStudents} students
+              </p>
             </div>
             <Trophy className="w-8 h-8 text-yellow-200" />
           </div>
@@ -206,7 +230,7 @@ const TeacherClassDetail: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
             <Zap className="w-5 h-5 mr-2" />
@@ -214,21 +238,29 @@ const TeacherClassDetail: React.FC = () => {
           </h3>
           <div className="space-y-3">
             {STEM1_QUESTS.map((quest) => (
-              <div key={quest.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div
+                key={quest.id}
+                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800">{quest.name}</span>
-                  <span className="text-xs font-bold text-brightboost-blue">{quest.maxXP} XP</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {quest.name}
+                  </span>
+                  <span className="text-xs font-bold text-brightboost-blue">
+                    {quest.maxXP} XP
+                  </span>
                 </div>
                 <p className="text-xs text-gray-600">{quest.description}</p>
                 <div className="mt-2 flex items-center">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-brightboost-green h-2 rounded-full transition-all duration-300" 
+                    <div
+                      className="bg-brightboost-green h-2 rounded-full transition-all duration-300"
                       style={{ width: `${Math.random() * 100}%` }}
                     ></div>
                   </div>
                   <span className="ml-2 text-xs text-gray-500">
-                    {Math.floor(Math.random() * classData.students.length)}/{classData.students.length}
+                    {Math.floor(Math.random() * classData.students.length)}/
+                    {classData.students.length}
                   </span>
                 </div>
               </div>
@@ -243,7 +275,7 @@ const TeacherClassDetail: React.FC = () => {
             <Users className="w-5 h-5 mr-2" />
             Class Roster ({classData.students.length} students)
           </h3>
-          <ExportGradesButton 
+          <ExportGradesButton
             classData={classData}
             teacherName={user?.name}
             variant="secondary"
@@ -254,7 +286,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="text-center py-8">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-lg text-gray-500 mb-2">No students enrolled</p>
-            <p className="text-sm text-gray-400">Import students using the CSV importer on the Classes page</p>
+            <p className="text-sm text-gray-400">
+              Import students using the CSV importer on the Classes page
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -275,10 +309,15 @@ const TeacherClassDetail: React.FC = () => {
                   const mockXP = Math.floor(Math.random() * 200) + 300;
                   const mockCompletion = Math.floor((mockXP / 500) * 100);
                   const mockPassed = mockCompletion >= 70;
-                  
+
                   return (
-                    <tr key={student.id} className="border-b text-sm text-gray-800 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-mono text-xs">{student.id}</td>
+                    <tr
+                      key={student.id}
+                      className="border-b text-sm text-gray-800 hover:bg-gray-50"
+                    >
+                      <td className="py-3 px-4 font-mono text-xs">
+                        {student.id}
+                      </td>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
@@ -289,32 +328,38 @@ const TeacherClassDetail: React.FC = () => {
                           >
                             <User className="w-4 h-4" />
                           </button>
-                        {student.email ?? <span className="text-gray-400 italic">N/A</span>}
+                          {student.email ?? (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
                           <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                mockPassed ? 'bg-green-500' : 'bg-yellow-500'
+                                mockPassed ? "bg-green-500" : "bg-yellow-500"
                               }`}
                               style={{ width: `${mockCompletion}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs font-medium">{mockCompletion}%</span>
+                          <span className="text-xs font-medium">
+                            {mockCompletion}%
+                          </span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <span className="font-mono text-sm">{mockXP}/500</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          mockPassed 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {mockPassed ? 'STEM-1 Complete' : 'In Progress'}
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            mockPassed
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {mockPassed ? "STEM-1 Complete" : "In Progress"}
                         </span>
                       </td>
                     </tr>
@@ -325,7 +370,7 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => {
@@ -335,7 +380,7 @@ const TeacherClassDetail: React.FC = () => {
         studentId={selectedStudentId || undefined}
         isTeacherProfile={!selectedStudentId}
       />
-      
+
       <EditProfileModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}

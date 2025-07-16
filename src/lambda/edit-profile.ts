@@ -132,11 +132,13 @@ export const handler = async (
 
     const { name, school, subject } = JSON.parse(event.body);
 
-    if (!name || typeof name !== 'string') {
+    if (!name || typeof name !== "string") {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Name is required and must be a string" }),
+        body: JSON.stringify({
+          error: "Name is required and must be a string",
+        }),
       };
     }
 
@@ -146,7 +148,7 @@ export const handler = async (
 
     const result = await db.query(
       'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, decoded.email]
+      [name, school || null, subject || null, decoded.email],
     );
 
     if (result.rows.length === 0) {
@@ -161,16 +163,16 @@ export const handler = async (
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
+      body: JSON.stringify({
+        success: true,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
           avatarUrl: user.avatarUrl,
           school: user.school,
-          subject: user.subject
-        }
+          subject: user.subject,
+        },
       }),
     };
   } catch (error) {

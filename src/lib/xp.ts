@@ -1,4 +1,3 @@
-
 interface XPGrantResult {
   success: boolean;
   message: string;
@@ -19,26 +18,26 @@ export const grantXp = async (action: string): Promise<boolean> => {
         resolve({
           success: true,
           message: `XP awarded for ${action}`,
-          xpAwarded: 10
+          xpAwarded: 10,
         });
       }, 100);
     });
 
     const result = await mockApiCall;
-    
+
     if (result.success) {
       sessionXPGrants.add(action);
-      
+
       const sessionKey = `xp_granted_${action}_${Date.now()}`;
-      localStorage.setItem(sessionKey, 'true');
-      
+      localStorage.setItem(sessionKey, "true");
+
       console.log(`XP granted successfully for action: ${action}`, result);
       return true;
     }
-    
+
     return false;
   } catch (error) {
-    console.error('Error granting XP:', error);
+    console.error("Error granting XP:", error);
     return false;
   }
 };

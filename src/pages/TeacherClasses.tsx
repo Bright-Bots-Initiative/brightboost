@@ -19,7 +19,9 @@ const ClassesPage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -37,7 +39,7 @@ const ClassesPage: React.FC = () => {
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    console.log('Profile updated:', profile);
+    console.log("Profile updated:", profile);
   };
 
   return (
@@ -49,7 +51,8 @@ const ClassesPage: React.FC = () => {
             STEM-1 Classes
           </h2>
           <p className="text-gray-600 mt-1">
-            Manage your K-2 STEM classes and track student progress through core quests
+            Manage your K-2 STEM classes and track student progress through core
+            quests
           </p>
         </div>
         <div className="flex space-x-3">
@@ -95,7 +98,9 @@ const ClassesPage: React.FC = () => {
           <p className="text-xl text-brightboost-navy mt-4">
             No STEM-1 classes found.
           </p>
-          <p className="text-sm text-gray-600 mb-4">Import your first class to start tracking student progress</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Import your first class to start tracking student progress
+          </p>
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
@@ -133,7 +138,8 @@ const ClassesPage: React.FC = () => {
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <TrendingUp className="w-4 h-4 mr-1" />
-                        {stem1Summary.studentsPassedSTEM1}/{stem1Summary.totalStudents} passed STEM-1
+                        {stem1Summary.studentsPassedSTEM1}/
+                        {stem1Summary.totalStudents} passed STEM-1
                       </div>
                       <p className="text-sm text-gray-400 font-mono">
                         ID: {cls.id}
@@ -141,7 +147,7 @@ const ClassesPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <ExportGradesButton 
+                    <ExportGradesButton
                       classData={cls}
                       teacherName={user?.name}
                       variant="secondary"
@@ -159,19 +165,27 @@ const ClassesPage: React.FC = () => {
                 {/* STEM-1 Progress Summary */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-blue">{stem1Summary.averageXP}</div>
+                    <div className="text-2xl font-bold text-brightboost-blue">
+                      {stem1Summary.averageXP}
+                    </div>
                     <div className="text-xs text-gray-600">Avg XP / 500</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-green">{stem1Summary.averageCompletion}%</div>
+                    <div className="text-2xl font-bold text-brightboost-green">
+                      {stem1Summary.averageCompletion}%
+                    </div>
                     <div className="text-xs text-gray-600">Avg Completion</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-yellow">{stem1Summary.studentsPassedSTEM1}</div>
+                    <div className="text-2xl font-bold text-brightboost-yellow">
+                      {stem1Summary.studentsPassedSTEM1}
+                    </div>
                     <div className="text-xs text-gray-600">Students Passed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">{cls.students.length}</div>
+                    <div className="text-2xl font-bold text-gray-600">
+                      {cls.students.length}
+                    </div>
                     <div className="text-xs text-gray-600">Total Students</div>
                   </div>
                 </div>
@@ -183,7 +197,8 @@ const ClassesPage: React.FC = () => {
                       No students enrolled yet
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Use the CSV importer to add students and start tracking STEM-1 progress
+                      Use the CSV importer to add students and start tracking
+                      STEM-1 progress
                     </p>
                   </div>
                 ) : (
@@ -194,7 +209,9 @@ const ClassesPage: React.FC = () => {
                           <th className="py-2 px-3 font-medium">Student ID</th>
                           <th className="py-2 px-3 font-medium">Name</th>
                           <th className="py-2 px-3 font-medium">Email</th>
-                          <th className="py-2 px-3 font-medium">STEM-1 Status</th>
+                          <th className="py-2 px-3 font-medium">
+                            STEM-1 Status
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -206,27 +223,39 @@ const ClassesPage: React.FC = () => {
                               key={student.id}
                               className="border-b text-sm text-gray-800 hover:bg-gray-50"
                             >
-                              <td className="py-2 px-3 font-mono text-xs">{student.id}</td>
-                              <td className="py-2 px-3 font-medium">{student.name}</td>
+                              <td className="py-2 px-3 font-mono text-xs">
+                                {student.id}
+                              </td>
+                              <td className="py-2 px-3 font-medium">
+                                {student.name}
+                              </td>
                               <td className="py-2 px-3">
                                 <button
-                                  onClick={() => handleViewStudentProfile(student.id)}
+                                  onClick={() =>
+                                    handleViewStudentProfile(student.id)
+                                  }
                                   className="text-brightboost-blue hover:text-brightboost-navy mr-2"
                                   title="View student profile"
                                 >
                                   <User className="w-4 h-4" />
                                 </button>
                                 {student.email ?? (
-                                  <span className="text-gray-400 italic">N/A</span>
+                                  <span className="text-gray-400 italic">
+                                    N/A
+                                  </span>
                                 )}
                               </td>
                               <td className="py-2 px-3">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  mockPassed 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {mockPassed ? 'STEM-1 Complete' : 'In Progress'}
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    mockPassed
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}
+                                >
+                                  {mockPassed
+                                    ? "STEM-1 Complete"
+                                    : "In Progress"}
                                 </span>
                               </td>
                             </tr>
@@ -246,7 +275,7 @@ const ClassesPage: React.FC = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
       />
-      
+
       <ProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => {
@@ -256,7 +285,7 @@ const ClassesPage: React.FC = () => {
         studentId={selectedStudentId || undefined}
         isTeacherProfile={!selectedStudentId}
       />
-      
+
       <EditProfileModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}
