@@ -130,7 +130,7 @@ export const handler = async (
       };
     }
 
-    const { name, school, subject } = JSON.parse(event.body);
+    const { name, school, subject, bio } = JSON.parse(event.body);
 
     if (!name || typeof name !== 'string') {
       return {
@@ -145,8 +145,8 @@ export const handler = async (
     console.log("Database connection established successfully");
 
     const result = await db.query(
-      'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, decoded.email]
+      'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING id, name, email, "avatarUrl", school, subject',
+      [name, school || null, subject || null, bio || null, decoded.email]
     );
 
     if (result.rows.length === 0) {
