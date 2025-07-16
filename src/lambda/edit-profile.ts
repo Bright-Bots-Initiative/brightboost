@@ -130,7 +130,7 @@ export const handler = async (
       };
     }
 
-    const { name, school, subject } = JSON.parse(event.body);
+    const { role, name, school, subject, bio, grade } = JSON.parse(event.body);
 
     if (!name || typeof name !== "string") {
       return {
@@ -146,10 +146,25 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const result = await db.query(
-      'UPDATE "User" SET name = $1, school = $2, subject = $3, "updatedAt" = NOW() WHERE email = $4 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, decoded.email],
-    );
+    const roleLower = String(role || "").toLowerCase();
+    let result;
+
+    if (roleLower === "student") {
+      result = await db.query(
+        'UPDATE "User" SET name = $1, grade = $2, "updatedAt" = NOW() WHERE email = $3 RETURNING id, name, email, "avatarUrl", school, subject',
+        [name, grade || null, decoded.email],
+      );
+    } else if (roleLower === "teacher") {
+      result = await db.query(
+        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING id, name, email, "avatarUrl", school, subject',
+        [name, school || null, subject || null, bio || null, decoded.email],
+      );
+    } else {
+      result = await db.query(
+        'UPDATE "User" SET name = $1, "updatedAt" = NOW() WHERE email = $2 RETURNING id, name, email, "avatarUrl", school, subject',
+        [name, decoded.email],
+      );
+    }
 
     if (result.rows.length === 0) {
       return {
