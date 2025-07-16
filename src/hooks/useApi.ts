@@ -1,10 +1,3 @@
-import { useCallback } from 'react';
-
-interface ApiResponse<T = any> {
-  data?: T;
-  error?: string;
-}
-
 export const useApi = () => {
   const get = async <T = any>(url: string): Promise<{ data: T }> => {
     // Mock API responses that match Aaron's lambda structure
@@ -48,7 +41,7 @@ export const useApi = () => {
     return { data: {} as T };
   };
 
-  const post = async <T = any>(url: string, data: any): Promise<{ data: T }> => {
+  const post = async <T = any>(_url: string, _data: any): Promise<{ data: T }> => {
     await new Promise(resolve => setTimeout(resolve, 500));
     return { data: { success: true } as T };
   };
@@ -57,7 +50,6 @@ export const useApi = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     if (url === '/api/profile') {
-      // Validate required fields
       if (!data.name || typeof data.name !== 'string') {
         throw new Error('Name is required and must be a string');
       }
@@ -84,7 +76,7 @@ export const useApi = () => {
     return { data: { success: true } as T };
   };
 
-  const delete_ = async <T = any>(url: string): Promise<{ data: T }> => {
+  const delete_ = async <T = any>(_url: string): Promise<{ data: T }> => {
     await new Promise(resolve => setTimeout(resolve, 500));
     return { data: { success: true } as T };
   };
