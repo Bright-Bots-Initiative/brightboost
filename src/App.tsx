@@ -120,6 +120,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/testingsb"
+          element={
+            <ProtectedRoute>
+              <TestingSB />
+            </ProtectedRoute>
+          }
+        />
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
