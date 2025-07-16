@@ -1,4 +1,4 @@
-import { openDB } from 'idb';
+import { openDB, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'brightboost';
 const STORE_NAME = 'streak';
@@ -10,7 +10,7 @@ export interface StreakEvent {
 }
 
 const dbPromise = openDB(DB_NAME, 1, {
-  upgrade(db) {
+  upgrade(db: IDBPDatabase) {
     if (!db.objectStoreNames.contains(STORE_NAME)) {
       db.createObjectStore(STORE_NAME);
     }
