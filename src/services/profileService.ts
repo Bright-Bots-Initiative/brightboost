@@ -24,14 +24,9 @@ interface ApiResponse<T> {
 
 class ProfileService {
   private baseUrl: string;
-  private token: string | null = null;
 
   constructor() {
     this.baseUrl = import.meta.env.VITE_REACT_APP_API_BASE_URL || 'https://api.brightboost.com';
-  }
-
-  private setAuthToken(token: string) {
-    this.token = token;
   }
 
   private getAuthHeaders(): Record<string, string> {
@@ -39,8 +34,10 @@ class ProfileService {
       'Content-Type': 'application/json',
     };
     
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    // Get token from localStorage directly
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
     
     return headers;
