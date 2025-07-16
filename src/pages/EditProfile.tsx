@@ -28,9 +28,10 @@ const Edit = () => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const name = formData.get("name");
-      const school = formData.get("school");
-      const subject = formData.get("subject");
+      const school = role === "teacher" ? formData.get("school") : "blank";
+      const subject = role === "teacher" ? formData.get("subject") : "blank";
       const bio = role === "teacher" ? formData.get("bio") : "blank";
+      const grade = role === "student" ? formData.get("grade") : "blank";
       const data = {
         role: role,
         name: name,
@@ -52,10 +53,13 @@ const Edit = () => {
       />
     <form onSubmit={edit}>
       <input name="name" placeholder="Name" />
-      <input name="school" placeholder="School" />
-      <input name="subject" placeholder="Subject" />
       {role === "teacher" && (
+        <input name="school" placeholder="School" />
+        <input name="subject" placeholder="Subject" />
         <input name="bio" placeholder="Bio" />
+      )}
+      {role === "student" && (
+        <input name="grade" placeholder="Grade" />
       )}
       <button type="submit">Save</button>
     </form>
