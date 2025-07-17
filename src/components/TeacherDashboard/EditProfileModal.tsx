@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, User, School, BookOpen, Save, Loader2 } from 'lucide-react';
-import { profileService, UserProfile, UpdateProfileData } from '../../services/profileService';
+import React, { useState, useEffect } from "react";
+import { X, User, School, BookOpen, Save, Loader2 } from "lucide-react";
+import {
+  profileService,
+  UserProfile,
+  UpdateProfileData,
+} from "../../services/profileService";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -8,16 +12,16 @@ interface EditProfileModalProps {
   onProfileUpdated?: (profile: UserProfile) => void;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onProfileUpdated 
+const EditProfileModal: React.FC<EditProfileModalProps> = ({
+  isOpen,
+  onClose,
+  onProfileUpdated,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState<UpdateProfileData>({
-    name: '',
-    school: '',
-    subject: ''
+    name: "",
+    school: "",
+    subject: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -33,34 +37,34 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const loadProfile = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Use mock data for now - in production, this would call the real API
       const profileData = await profileService.getMockProfile();
       setProfile(profileData);
       setFormData({
         name: profileData.name,
-        school: profileData.school || '',
-        subject: profileData.subject || ''
+        school: profileData.school || "",
+        subject: profileData.subject || "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profile');
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleInputChange = (field: keyof UpdateProfileData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     setSaveSuccess(false);
   };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setError('Name is required');
+      setError("Name is required");
       return;
     }
 
@@ -71,7 +75,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       const updatedProfile = await profileService.updateMockProfile(formData);
       setProfile(updatedProfile);
       setSaveSuccess(true);
-      
+
       if (onProfileUpdated) {
         onProfileUpdated(updatedProfile);
       }
@@ -81,7 +85,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         onClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -124,8 +128,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <div className="text-center">
                   <div className="w-20 h-20 bg-brightboost-light rounded-full flex items-center justify-center mx-auto mb-4">
                     {profile.avatar ? (
-                      <img 
-                        src={profile.avatar} 
+                      <img
+                        src={profile.avatar}
                         alt={profile.name}
                         className="w-20 h-20 rounded-full object-cover"
                       />
@@ -147,7 +151,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your full name"
                     required
@@ -162,7 +166,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.school}
-                    onChange={(e) => handleInputChange('school', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("school", e.target.value)
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your school name"
                   />
@@ -176,7 +182,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.subject}
-                    onChange={(e) => handleInputChange('subject', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("subject", e.target.value)
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your subject area"
                   />
@@ -193,7 +201,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               {/* Success Message */}
               {saveSuccess && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-sm text-green-700">Profile updated successfully!</p>
+                  <p className="text-sm text-green-700">
+                    Profile updated successfully!
+                  </p>
                 </div>
               )}
 

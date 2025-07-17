@@ -1,6 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { X, User, School, BookOpen, Mail, Calendar, Loader2 } from 'lucide-react';
-import { profileService, UserProfile } from '../../services/profileService';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  User,
+  School,
+  BookOpen,
+  Mail,
+  Calendar,
+  Loader2,
+} from "lucide-react";
+import { profileService, UserProfile } from "../../services/profileService";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -9,11 +17,11 @@ interface ProfileModalProps {
   isTeacherProfile?: boolean;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const ProfileModal: React.FC<ProfileModalProps> = ({
+  isOpen,
+  onClose,
   studentId,
-  isTeacherProfile = false 
+  isTeacherProfile = false,
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,23 +36,23 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const loadProfile = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Use mock data for now - in production, this would call the real API
       const profileData = await profileService.getMockProfile();
       setProfile(profileData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profile');
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -56,7 +64,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-brightboost-navy flex items-center">
             <User className="w-5 h-5 mr-2" />
-            {isTeacherProfile ? 'Teacher Profile' : 'Student Profile'}
+            {isTeacherProfile ? "Teacher Profile" : "Student Profile"}
           </h2>
           <button
             onClick={onClose}
@@ -92,8 +100,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               <div className="text-center">
                 <div className="w-20 h-20 bg-brightboost-light rounded-full flex items-center justify-center mx-auto mb-4">
                   {profile.avatar ? (
-                    <img 
-                      src={profile.avatar} 
+                    <img
+                      src={profile.avatar}
                       alt={profile.name}
                       className="w-20 h-20 rounded-full object-cover"
                     />
@@ -101,8 +109,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                     <User className="w-10 h-10 text-brightboost-blue" />
                   )}
                 </div>
-                <h3 className="text-xl font-semibold text-brightboost-navy">{profile.name}</h3>
-                <p className="text-sm text-gray-600 capitalize">{profile.role}</p>
+                <h3 className="text-xl font-semibold text-brightboost-navy">
+                  {profile.name}
+                </h3>
+                <p className="text-sm text-gray-600 capitalize">
+                  {profile.role}
+                </p>
               </div>
 
               {/* Profile Details */}
@@ -119,7 +131,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                     <School className="w-5 h-5 text-brightboost-green mr-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">School</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        School
+                      </p>
                       <p className="text-sm text-gray-600">{profile.school}</p>
                     </div>
                   </div>
@@ -129,7 +143,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                     <BookOpen className="w-5 h-5 text-brightboost-yellow mr-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Subject</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Subject
+                      </p>
                       <p className="text-sm text-gray-600">{profile.subject}</p>
                     </div>
                   </div>
@@ -138,8 +154,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-gray-500 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Member Since</p>
-                    <p className="text-sm text-gray-600">{formatDate(profile.created_at)}</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Member Since
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(profile.created_at)}
+                    </p>
                   </div>
                 </div>
               </div>
