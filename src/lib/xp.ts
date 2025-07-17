@@ -7,7 +7,10 @@ interface XPGrantResult {
 
 const sessionXPGrants = new Set<string>();
 
-export const grantXp = async (action: string): Promise<boolean> => {
+export const grantXp = async (
+  action: string,
+  amount: number = 10
+): Promise<boolean> => {
   try {
     if (sessionXPGrants.has(action)) {
       console.log(`XP already granted for action: ${action} in this session`);
@@ -19,23 +22,22 @@ export const grantXp = async (action: string): Promise<boolean> => {
         resolve({
           success: true,
           message: `XP awarded for ${action}`,
-          xpAwarded: 10
+          xpAwarded: amount
         });
       }, 100);
     });
 
     const result = await mockApiCall;
-    
+
     if (result.success) {
       sessionXPGrants.add(action);
-      
       const sessionKey = `xp_granted_${action}_${Date.now()}`;
       localStorage.setItem(sessionKey, 'true');
-      
+
       console.log(`XP granted successfully for action: ${action}`, result);
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error('Error granting XP:', error);

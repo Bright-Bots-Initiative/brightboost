@@ -1,3 +1,4 @@
+import { toast } from "@/components/ui/use-toast";
 import { useEffect, useState, useCallback } from 'react';
 import {
   getCachedStreak,
@@ -7,8 +8,8 @@ import {
   clearPendingEvents,
   StreakEvent,
 } from '../lib/streakDB';
-import { notify } from '../lib/notifications';
 import { useApi } from '../services/api';
+import { grantXp } from "../lib/xp";
 
 export function useStreak() {
   const [streak, setStreak] = useState<any>(null);
@@ -145,6 +146,20 @@ export function useStreak() {
       setStreak(updated);
       await setCachedStreak(updated);
       await clearPendingEvents();
+
+      if (updated.currentStreak === 5) {
+        const progress = await api.get("/api/get-progress");
+        const hasBadge = (progress.badges || []).includes("Daily-Challenge");
+
+        if (!hasBadge) {
+          await grantXp("stem1_streak_bonus", 30);
+          await api.post("/api/add-badge", { badge: "Daily-Challenge" });
+          toast({
+            title: "Daily Challenge Unlocked!",
+            description: "You've earned 30 XP for your 5-day streak!",
+          });
+        }
+      }
     } catch (err) {
       console.error("Failed to sync streak:", err);
     }
@@ -159,10 +174,10 @@ export function useStreak() {
     const diffHours = diffMs / (1000 * 60 * 60);
 
     if (diffHours > 12 && diffHours <= 24) {
-      notify({
-        title: 'Keep your streak!',
-        body: 'Log in today to keep the fire going',
-        type: 'info',
+      toast({
+        title: "Keep your streak!",
+        description: "Log in today to keep the fire going",
+        variant: "default",
       });
     }
   }, [streak?.lastCompletedAt]);
@@ -183,4 +198,5 @@ export function useStreak() {
 
   return { streak, loading, completeModule, processQueue };
 }
+
 

@@ -394,15 +394,6 @@ const StudentDashboard = () => {
               </button>
             </div>
           </div>
-
-        <div className="mt-8 flex justify-center space-x-4">
-          <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold">
-            Start Learning
-          </button>
-          <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold">
-            View Progress
-          </button>
-        </div>
         </div>
       </div>
     </GameBackground>
