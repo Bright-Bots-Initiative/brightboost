@@ -1,35 +1,55 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { Class, gradeOptions } from "../components/TeacherDashboard/types";
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Class, gradeOptions } from '../components/TeacherDashboard/types';
 import {
   fetchMockClassById,
   patchMockClass,
-} from "../services/mockClassService";
-import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
-import { Users, GraduationCap, Zap, Trophy, Target, Clock } from "lucide-react";
-import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
+} from '../services/mockClassService';
+import ExportGradesButton from '../components/TeacherDashboard/ExportGradesButton';
+import ProfileModal from '../components/TeacherDashboard/ProfileModal';
+import EditProfileModal from '../components/TeacherDashboard/EditProfileModal';
+import {
+  Users,
+  GraduationCap,
+  Zap,
+  Trophy,
+  Target,
+  Clock,
+  User,
+  Edit,
+} from 'lucide-react';
+import { getSTEM1Summary, STEM1_QUESTS } from '../services/stem1GradeService';
+import { UserProfile } from '../services/profileService';
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [classData, setClassData] = useState<Class | null>(null);
-  const [editingName, setEditingName] = useState("");
-  const [editingGrade, setEditingGrade] = useState("");
+  const [editingName, setEditingName] = useState('');
+  const [editingGrade, setEditingGrade] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  );
+  const [teacherProfile, setTeacherProfile] = useState<UserProfile | null>(
+    null
+  );
 
   useEffect(() => {
     if (id) {
       fetchMockClassById(id)
-        .then((cls) => {
+        .then(cls => {
           setClassData(cls);
           setEditingName(cls.name);
-          setEditingGrade(cls.grade ?? "");
+          setEditingGrade(cls.grade ?? '');
         })
         .catch(() => {
           setClassData(null);
-          setError("Class not found");
+          setError('Class not found');
         });
     }
   }, [id]);
@@ -38,20 +58,28 @@ const TeacherClassDetail: React.FC = () => {
     if (!classData) return;
 
     setIsSaving(true);
-    try {
-      await patchMockClass(classData.id, {
-        name: editingName,
-        grade: editingGrade as Class["grade"],
-      });
+    setClassData({
+      ...classData,
+      name: editingName,
+      grade: editingGrade as Class['grade'],
+    });
 
-      setClassData({
-        ...classData,
-        name: editingName,
-        grade: editingGrade as Class["grade"],
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    await patchMockClass(classData.id, {
+      name: editingName,
+      grade: editingGrade as Class['grade'],
+    });
+
+    setIsSaving(false);
+  };
+
+  const handleViewStudentProfile = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileUpdated = (profile: UserProfile) => {
+    setTeacherProfile(profile);
+    console.log('Profile updated:', profile);
   };
 
   if (error) {
@@ -88,14 +116,31 @@ const TeacherClassDetail: React.FC = () => {
             quests
           </p>
         </div>
-        <ExportGradesButton
-          classData={classData}
-          teacherName={user?.name}
-          variant="primary"
-          size="md"
-        />
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors"
+          >
+            <User className="w-4 h-4 mr-1" />
+            Profile
+          </button>
+          <button
+            onClick={() => setIsEditProfileModalOpen(true)}
+            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </button>
+          <ExportGradesButton
+            classData={classData}
+            teacherName={user?.name}
+            variant="primary"
+            size="md"
+          />
+        </div>
       </div>
 
+      {/* STEM-1 Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
@@ -159,7 +204,7 @@ const TeacherClassDetail: React.FC = () => {
               Class Name:
               <input
                 value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
+                onChange={e => setEditingName(e.target.value)}
                 className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
               />
             </label>
@@ -168,11 +213,11 @@ const TeacherClassDetail: React.FC = () => {
               Grade:
               <select
                 value={editingGrade}
-                onChange={(e) => setEditingGrade(e.target.value)}
+                onChange={e => setEditingGrade(e.target.value)}
                 className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
               >
                 <option value="">Select grade</option>
-                {gradeOptions.map((grade) => (
+                {gradeOptions.map(grade => (
                   <option key={grade} value={grade}>
                     {grade}
                   </option>
@@ -185,7 +230,7 @@ const TeacherClassDetail: React.FC = () => {
               disabled={isSaving}
               className="bg-brightboost-blue text-white px-4 py-2 rounded hover:bg-brightboost-navy transition-colors disabled:opacity-50"
             >
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -196,7 +241,7 @@ const TeacherClassDetail: React.FC = () => {
             STEM-1 Core Quests
           </h3>
           <div className="space-y-3">
-            {STEM1_QUESTS.map((quest) => (
+            {STEM1_QUESTS.map((quest, index) => (
               <div
                 key={quest.id}
                 className="p-3 bg-gray-50 rounded-lg border border-gray-200"
@@ -263,7 +308,8 @@ const TeacherClassDetail: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {classData.students.map((student) => {
+                {classData.students.map(student => {
+                  // Mock progress data for display
                   const mockXP = Math.floor(Math.random() * 200) + 300;
                   const mockCompletion = Math.floor((mockXP / 500) * 100);
                   const mockPassed = mockCompletion >= 70;
@@ -278,16 +324,25 @@ const TeacherClassDetail: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4">
-                        {student.email ?? (
-                          <span className="text-gray-400 italic">N/A</span>
-                        )}
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handleViewStudentProfile(student.id)}
+                            className="text-brightboost-blue hover:text-brightboost-navy mr-2"
+                            title="View student profile"
+                          >
+                            <User className="w-4 h-4" />
+                          </button>
+                          {student.email ?? (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
                           <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                             <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                mockPassed ? "bg-green-500" : "bg-yellow-500"
+                                mockPassed ? 'bg-green-500' : 'bg-yellow-500'
                               }`}
                               style={{ width: `${mockCompletion}%` }}
                             ></div>
@@ -304,11 +359,11 @@ const TeacherClassDetail: React.FC = () => {
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             mockPassed
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
                           }`}
                         >
-                          {mockPassed ? "STEM-1 Complete" : "In Progress"}
+                          {mockPassed ? 'STEM-1 Complete' : 'In Progress'}
                         </span>
                       </td>
                     </tr>
@@ -319,6 +374,22 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+        studentId={selectedStudentId || undefined}
+        isTeacherProfile={!selectedStudentId}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </div>
   );
 };
