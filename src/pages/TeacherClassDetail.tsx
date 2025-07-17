@@ -35,9 +35,6 @@ const TeacherClassDetail: React.FC = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   );
-  const [teacherProfile, setTeacherProfile] = useState<UserProfile | null>(
-    null
-  );
 
   useEffect(() => {
     if (id) {
@@ -78,7 +75,6 @@ const TeacherClassDetail: React.FC = () => {
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    setTeacherProfile(profile);
     console.log('Profile updated:', profile);
   };
 
@@ -241,7 +237,7 @@ const TeacherClassDetail: React.FC = () => {
             STEM-1 Core Quests
           </h3>
           <div className="space-y-3">
-            {STEM1_QUESTS.map((quest, index) => (
+            {STEM1_QUESTS.map(quest => (
               <div
                 key={quest.id}
                 className="p-3 bg-gray-50 rounded-lg border border-gray-200"
