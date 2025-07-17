@@ -1,19 +1,30 @@
-import React, { useEffect, useState } from "react";
-import { Class } from "../components/TeacherDashboard/types";
-import { fetchMockClasses } from "../services/mockClassService";
-import BrightBoostRobot from "../components/BrightBoostRobot";
-import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
-import { Upload, Plus, Zap, Users, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
-import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
-import { useAuth } from "../contexts/AuthContext";
-import { getSTEM1Summary } from "../services/stem1GradeService";
+import React, { useEffect, useState } from 'react';
+import { Class } from '../components/TeacherDashboard/types';
+import { fetchMockClasses } from '../services/mockClassService';
+import BrightBoostRobot from '../components/BrightBoostRobot';
+import CSVImportModal from '../components/TeacherDashboard/CSVImportModal';
+import ProfileModal from '../components/TeacherDashboard/ProfileModal';
+import EditProfileModal from '../components/TeacherDashboard/EditProfileModal';
+import { Upload, Plus, Zap, Users, TrendingUp, User, Edit } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ExportGradesButton from '../components/TeacherDashboard/ExportGradesButton';
+import { useAuth } from '../contexts/AuthContext';
+import { getSTEM1Summary } from '../services/stem1GradeService';
+import { UserProfile } from '../services/profileService';
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  );
+  const [teacherProfile, setTeacherProfile] = useState<UserProfile | null>(
+    null
+  );
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -24,6 +35,16 @@ const ClassesPage: React.FC = () => {
     };
     loadClasses();
   }, []);
+
+  const handleViewStudentProfile = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileUpdated = (profile: UserProfile) => {
+    setTeacherProfile(profile);
+    console.log('Profile updated:', profile);
+  };
 
   return (
     <div className="w-full">
@@ -39,6 +60,20 @@ const ClassesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center px-4 py-2 bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
+          >
+            <User className="w-4 h-4 mr-2" />
+            View Profile
+          </button>
+          <button
+            onClick={() => setIsEditProfileModalOpen(true)}
+            className="flex items-center px-4 py-2 bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Profile
+          </button>
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
@@ -80,7 +115,7 @@ const ClassesPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {classes.map((cls) => {
+          {classes.map(cls => {
             const stem1Summary = getSTEM1Summary(cls);
             return (
               <div
@@ -99,7 +134,7 @@ const ClassesPage: React.FC = () => {
                     <div className="flex items-center space-x-6 mt-2">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
-                        Grade: {cls.grade ?? "N/A"}
+                        Grade: {cls.grade ?? 'N/A'}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
@@ -184,7 +219,7 @@ const ClassesPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {cls.students.map((student) => {
+                        {cls.students.map(student => {
                           // Mock STEM-1 status for display
                           const mockPassed = Math.random() > 0.3;
                           return (
@@ -199,6 +234,15 @@ const ClassesPage: React.FC = () => {
                                 {student.name}
                               </td>
                               <td className="py-2 px-3">
+                                <button
+                                  onClick={() =>
+                                    handleViewStudentProfile(student.id)
+                                  }
+                                  className="text-brightboost-blue hover:text-brightboost-navy mr-2"
+                                  title="View student profile"
+                                >
+                                  <User className="w-4 h-4" />
+                                </button>
                                 {student.email ?? (
                                   <span className="text-gray-400 italic">
                                     N/A
@@ -209,13 +253,13 @@ const ClassesPage: React.FC = () => {
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                     mockPassed
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-yellow-100 text-yellow-800"
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-yellow-100 text-yellow-800'
                                   }`}
                                 >
                                   {mockPassed
-                                    ? "STEM-1 Complete"
-                                    : "In Progress"}
+                                    ? 'STEM-1 Complete'
+                                    : 'In Progress'}
                                 </span>
                               </td>
                             </tr>
@@ -234,6 +278,22 @@ const ClassesPage: React.FC = () => {
       <CSVImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+        studentId={selectedStudentId || undefined}
+        isTeacherProfile={!selectedStudentId}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
       />
     </div>
   );
