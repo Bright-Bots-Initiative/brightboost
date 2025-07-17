@@ -25,6 +25,7 @@ const Edit = () => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const name = formData.get("name");
+<<<<<<< HEAD
       const roleLower = String(role || "").toLowerCase();
       const school = roleLower === "teacher" ? formData.get("school") : "blank";
       const subject = roleLower === "teacher" ? formData.get("subject") : "blank";
@@ -32,6 +33,36 @@ const Edit = () => {
       const grade = roleLower === "student" ? formData.get("grade") : "blank";
       const data = { role, name, school, subject, bio, grade };
       await api.post("/api/edit-profile", data);
+||||||| parent of 77dba5d (Update EditProfile.tsx)
+      const school = role === "teacher" ? formData.get("school") : "blank";
+      const subject = role === "teacher" ? formData.get("subject") : "blank";
+      const bio = role === "teacher" ? formData.get("bio") : "blank";
+      const grade = role === "student" ? formData.get("grade") : "blank";
+      const data = {
+        role: role,
+        name: name,
+        school: school,
+        subject: subject,
+        bio: bio
+      };
+      const response = await api.post("/api/edit-profile", data);
+      console.log(response);
+=======
+      const school = role === "teacher" ? formData.get("school") : "blank";
+      const subject = role === "teacher" ? formData.get("subject") : "blank";
+      const bio = role === "teacher" ? formData.get("bio") : "blank";
+      const grade = role === "student" ? formData.get("grade") : "blank";
+      const data = {
+        role: role,
+        name: name,
+        school: school,
+        subject: subject,
+        bio: bio,
+        grade: grade
+      };
+      const response = await api.post("/api/edit-profile", data);
+      console.log(response);
+>>>>>>> 77dba5d (Update EditProfile.tsx)
     },
     [api, role],
   );
