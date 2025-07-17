@@ -1,3 +1,4 @@
+// src/services/profileService.ts
 interface UserProfile {
   id: string;
   name: string;
@@ -30,7 +31,8 @@ class ProfileService {
     this.baseUrl = import.meta.env.VITE_REACT_APP_API_BASE_URL || 'https://api.brightboost.com';
   }
 
-  private setAuthToken(token: string) {
+  // Changed to public to allow external access
+  public setAuthToken(token: string) {
     this.token = token;
   }
 
