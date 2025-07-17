@@ -130,7 +130,7 @@ export const handler = async (
       };
     }
 
-    const { name, school, subject, bio } = JSON.parse(event.body);
+    const { role, name, school, subject, bio, grade } = JSON.parse(event.body);
 
     if (!name || typeof name !== 'string') {
       return {
@@ -144,10 +144,13 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const result = await db.query(
-      'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING id, name, email, "avatarUrl", school, subject',
-      [name, school || null, subject || null, bio || null, decoded.email]
-    );
+    if (role === "student") {
+      const result = await db.query('UPDATE "User" SET name = $1, grade = $2, WHERE email = $3', [name, grade, decoded.email])
+    };
+
+    if (role === "teacher") {
+      const result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5', [name, school, subject, bio, decoded.email])
+    };
 
     if (result.rows.length === 0) {
       return {
