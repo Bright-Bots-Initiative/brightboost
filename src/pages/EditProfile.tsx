@@ -37,7 +37,8 @@ const Edit = () => {
         name: name,
         school: school,
         subject: subject,
-        bio: bio
+        bio: bio,
+        grade: grade
       };
       const response = await api.post("/api/edit-profile", data);
       console.log(response);
