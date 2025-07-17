@@ -20,7 +20,6 @@ const ClassesPage: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [teacherProfile, setTeacherProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -38,7 +37,6 @@ const ClassesPage: React.FC = () => {
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    setTeacherProfile(profile);
     console.log('Profile updated:', profile);
   };
 
