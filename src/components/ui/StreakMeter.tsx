@@ -103,6 +103,14 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
           </div>
         </div>
 
+        {/* Hidden numeric streak for tests */}
+        <span
+          data-cy="current-streak"
+          style={{ display: 'none' }}
+        >
+          {currentStreak}
+        </span>
+
         {/* Hover window */}
         {hovering && (
           <div
@@ -119,14 +127,6 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
                   <strong>{currentStreak}</strong>!
                 </span>
               )}
-
-              {/* Hidden numeric streak for tests */}
-              <span
-                data-cy="current-streak"
-                style={{ display: 'none' }}
-              >
-                {currentStreak}
-              </span>
             </div>
 
             {/* Weekly Streak */}

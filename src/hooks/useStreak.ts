@@ -183,6 +183,7 @@ export function useStreak() {
   }, [streak?.lastCompletedAt]);
 
   useEffect(() => {
+    processQueue();
     window.addEventListener('online', processQueue);
     return () => window.removeEventListener('online', processQueue);
   }, [processQueue]);

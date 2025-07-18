@@ -44,6 +44,7 @@ describe('StudentDashboard Streak Offline and Sync', () => {
       // Step 5: Simulate going back online by removing forceNetworkError
       cy.log("Simulating reconnect");
       cy.intercept("POST", "/api/gamification/streak").as("postStreakSuccess");
+      cy.intercept("GET", "/api/gamification/streak", { statusCode: 200, body: { currentStreak: 1 } });
 
       // Trigger reconnect logic
       cy.reload();
