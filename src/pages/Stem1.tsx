@@ -6,24 +6,24 @@ const stem1Quests: QuestProgress[] = [
   {
     title: "Module 1",
     status: "Complete",
-    dueDate: "July 15",
+    dueDate: "July 15, 2025",
   },
   {
     title: "Module 2",
     status: "In Progress",
-    dueDate: "July 18",
+    dueDate: "July 16, 2025",
   },
   {
     title: "Module 3",
     status: "Not Started",
-    dueDate: "July 22",
+    dueDate: "July 22, 2025",
   },
 ] as const as QuestProgress[];
 
 const renderQuestButton = (status: string) => {
   if (status === "Complete") {
     return (
-      <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
+      <button className="mt-3 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg w-full">
         Review Quest
       </button>
     );
@@ -35,11 +35,18 @@ const renderQuestButton = (status: string) => {
     );
   } else {
     return (
-      <button className="mt-3 bg-brightboost-yellow hover:bg-brightboost-yellow/80 text-white px-4 py-2 rounded-lg w-full">
+      <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
         Start Quest
       </button>
     );
   }
+};
+
+const isPastDue = (status: string, dueDate: string) => {
+    if (status === "Complete" || !dueDate) return false;
+    const year = new Date().getFullYear();
+    const parsed = new Date(`${dueDate}, ${year} 23:59:59`);
+    return parsed < new Date();
 };
 
 
@@ -69,7 +76,13 @@ const Stem1Page = () => {
   <div className="col-span-3 grid grid-cols-2 gap-6">
     {/* Card 1 */}
     <div className="row-start-1 col-start-1">
-      <div className="bg-white rounded-xl shadow-md p-4">
+      <div className={`bg-white rounded-xl shadow-md p-4 ${
+            isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") ? "border border-red-400" : "" 
+            }`}
+        >
+            {isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") && (
+            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
+            )}
         <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
           {stem1Quests[0].title}
         </h2>
@@ -81,7 +94,13 @@ const Stem1Page = () => {
 
     {/* Card 2 */}
     <div className="row-start-1 col-start-2">
-      <div className="bg-white rounded-xl shadow-md p-4">
+      <div className={`bg-white rounded-xl shadow-md p-4 ${
+            isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") ? "border border-red-400" : "" 
+            }`}
+        >
+            {isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") && (
+            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
+            )}
         <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
           {stem1Quests[1].title}
         </h2>
@@ -94,7 +113,13 @@ const Stem1Page = () => {
     {/* Card 3 (staggered below) */}
     <div className="col-span-2 flex justify-center row-start-2">
         <div className = "w-1/2">
-      <div className="bg-white rounded-xl shadow-md p-4">
+      <div className={`bg-white rounded-xl shadow-md p-4 ${
+            isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") ? "border border-red-400" : "" 
+            }`}
+        >
+            {isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") && (
+            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
+            )}
         <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
           {stem1Quests[2].title}
         </h2>

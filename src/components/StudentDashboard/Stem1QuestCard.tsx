@@ -1,3 +1,4 @@
+import { Check, Play } from "lucide-react";
 interface Stem1Quest {
   title: string;
   status: "Not Started" | "In Progress" | "Complete";
@@ -17,14 +18,17 @@ const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest}) => {
         <div className="flex-grow w-px bg-gray-300" />
 
         <div
-          className={`w-4 h-4 rounded-full z-10 border-2 my-1 ${
+          className={`w-5 h-5 flex items-center justify-center rounded-full z-10 border-2 text-xs font-bold my-1 ${
             quest.status === "Complete"
-              ? "bg-green-400 border-green-600 animate-pulse"
+              ? "bg-green-400 border-green-600 text-slate animate-pulse"
               : quest.status === "In Progress"
-              ? "bg-yellow-300 border-yellow-500 animate-pulse"
-              : "bg-white border-gray-400"
+              ? "bg-yellow-300 border-yellow-500 text-yellow-900 animate-pulse"
+              : "bg-white border-gray-400 text-gray-400"
           }`}
-        />
+        >
+            {quest.status === "Complete" && "✓"}
+            {quest.status === "In Progress" && <Play className="w-3 h-3 fill-current text-slate" />}
+        </div>
         <div className = "flex-grow w-px bg-gray-300" />
         </div>
       {/* Card */}
