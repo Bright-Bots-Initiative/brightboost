@@ -1,4 +1,4 @@
-export const studentDashboardMock = {
+const studentDashboardMock = {
   message: "Welcome back!",
   xp: 150,
   level: 2,
@@ -6,6 +6,12 @@ export const studentDashboardMock = {
   currentModule: {
     title: "Hello World!",
     status: "In Progress",
+    dueDate: "07-01-2025",
+    lessonId: "lesson_1",
+  },
+  nextModule: {
+    title: "Intro to Python",
+    status: "Not Started",
     dueDate: "07-01-2025",
     lessonId: "lesson_1",
   },
@@ -28,3 +34,5 @@ export const studentDashboardMock = {
     },
   ],
 };
+
+export default studentDashboardMock;

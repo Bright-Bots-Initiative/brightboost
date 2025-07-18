@@ -7,9 +7,13 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import XPProgressWidget from "../components/StudentDashboard/XPProgress";
-import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
-import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
+import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
+import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
+import NextModuleCard from "../components/StudentDashboard/NextModuleCard"
+import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+// import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
+// import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
+import studentDashboardMock from "../mocks/studentDashboardMock"
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
 import AvatarPicker from '../components/AvatarPicker';
@@ -171,6 +175,7 @@ const StudentDashboard = () => {
     },
   ];
 
+
   const leaderboardEntries = [
     { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
     { rank: 2, name: "Sarah", points: 1180, avatar: "/avatars/sarah.png" },
@@ -229,83 +234,113 @@ const StudentDashboard = () => {
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <BrightBoostRobot className="w-16 h-16" />
-              <AvatarPicker 
-                currentAvatarUrl={undefined}
-                userInitials={
-                    user?.name
-                    ? user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "ST"
-                }
-                onAvatarChange={(newUrl) => {
-                    console.log("Avatar changed to:", newUrl);
-                }}
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-brightboost-navy">
-                  {t("dashboard.greeting", {
-                    name: user?.name || t("student"),
-                  })}
-                </h1>
-                <p className="text-brightboost-blue">
-                  {t("dashboard.readyPrompt")}
-                </p>
-              </div>
+        <div className="max-w-7xl mx-auto px-6">
+          
+        {/*top row*/}
+        <div className="w-full mb-6 mt-8">
+          <div className = "flex items-center min-w-0">
+        {/*align greeting w left edge of grid */}
+        <div className="flex items-center flex-shrink-0 mr-4 relative">
+                <BrightBoostRobot className="w-16 h-16" />
+                <AvatarPicker 
+                  currentAvatarUrl={undefined}
+                  userInitials={
+                      user?.name
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "ST"
+                  }
+                  onAvatarChange={(newUrl) => {
+                      console.log("Avatar changed to:", newUrl);
+                  }}
+                />
+                <div className = "ml-3 relative">
+                    <h1 className="text-3xl font-bold text-brightboost-navy">
+                      {t("dashboard.greeting", {
+                        name: user?.name || t("student"),
+                      })}
+                    </h1>
+                    <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
+                      {t("dashboard.readyPrompt")}
+                    </p>
+                  </div>
+                </div>
+            
+        {/* align widgets w right edge */}
+        <div className="flex-grow flex items-center space-x-2 min-w-0">
+            <XPProgressWidget 
+              currentXp={dashboardData?.xp ?? 0}
+              nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+              level={dashboardData?.level ?? 1}
+            />
+            <LanguageToggle />
+            <button
+              onClick={handleLogout}
+              className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              {t("dashboard.logout")}
+            </button> 
+          </div>
             </div>
-            {dashboardData && (
+            {/* {dashboardData && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <CurrentModuleCard module={dashboardData.currentModule} />
               </div>
-            )}
+            )} */}
 
-            <div className="flex items-center space-x-4">
-              <LanguageToggle />
-              <div className="flex flex-col items-end space-y-2">
-                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                  <span className="text-sm font-bold">
-                    {t("dashboard.role")}
-                  </span>
-                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                    {user?.name || t("student")}
-                  </span>
-                </div>
-                <XPProgressWidget
-                  currentXp={dashboardData?.xp ?? 0}
-                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                  level={dashboardData?.level ?? 1}
-                />
-                <XPProgressRing />
-                <StreakMeter
-                  currentStreak={currentStreakSafe}
-                  longestStreak={longestStreakSafe}
-                  currentStreakDays={currentStreakDays}
-                  barColor="#FF8C00"
-                  onNewRecord={(bonus) => {
-                    console.log(`New record! Bonus XP: ${bonus}`);
-                  }}
-                />
+            <div className="flex justify-end items-center space-x-2 mt-2">
+              <StreakMeter
+                currentStreak={currentStreakSafe}
+                longestStreak={longestStreakSafe}
+                currentStreakDays={currentStreakDays}
+                barColor="#FF8C00"
+                onNewRecord={(bonus) => {
+                  console.log(`New record! Bonus XP: ${bonus}`);
+                }}
+              />
+              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                <span className="text-sm font-bold">
+                  {t("dashboard.role")}
+                </span>
+                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                  {user?.name || t("student")}
+                </span>
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                {t("dashboard.logout")}
-              </button>
+              <XPProgressRing />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* card grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className = "flex flex-col space-y-2">
+            
+            {/* use the following block for pulling from the API call */}
+            {/*
+            {dashboardData && (
+            <CurrentModuleCard module={dashboardData.currentModule} />
+             )}
+            */}
+
+            {/* USING MOCK DATA FOR THIS */}
+            <CurrentModuleCard
+                module = {studentDashboardMock.currentModule}
+            /> 
+
             <StemModuleCard
               title={t("dashboard.stemCard.title")}
               subtitle={t("dashboard.stemCard.subtitle")}
               activities={stemActivities}
+            />
+            </div>
+
+            <div className = "flex flex-col space-y-2">
+            
+            {/* USING MOCK DATA FOR THIS */}
+            <NextModuleCard
+                module = {studentDashboardMock.nextModule}
             />
 
             <WordGameCard
@@ -313,12 +348,15 @@ const StudentDashboard = () => {
               letters={["A", "B", "E", "L", "T"]}
               word="TABLE"
             />
+            </div>
 
             <LeaderboardCard
               title={t("dashboard.leaderboard.title")}
               entries={leaderboardEntries}
             />
           </div>
+        
+          
 
           {dashboardData &&
             (dashboardData.courses?.length ||
@@ -347,7 +385,7 @@ const StudentDashboard = () => {
                         </div>
                       ))}
                   </div>
-
+                
                   <div className="bg-white rounded-lg p-4 shadow-md">
                     <h4 className="font-bold text-brightboost-navy mb-3">
                       {t("dashboard.recentAssignments")}
@@ -395,7 +433,7 @@ const StudentDashboard = () => {
             </div>
           </div>
         </div>
-      </div>
+        </div>
     </GameBackground>
   );
 };
