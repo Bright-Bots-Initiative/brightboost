@@ -1,4 +1,4 @@
-export const studentDashboardMock = {
+const studentDashboardMock = {
   message: "Welcome back!",
   xp: 150,
   level: 2,
@@ -34,3 +34,5 @@ export const studentDashboardMock = {
     },
   ],
 };
+
+export default studentDashboardMock;

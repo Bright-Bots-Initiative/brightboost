@@ -281,48 +281,19 @@ const StudentDashboard = () => {
                 onClick={handleLogout}
                 className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
-                Logout
+                {t("dashboard.logout")}
               </button> 
             </div>
-        {/* <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <BrightBoostRobot className="w-16 h-16" />
-              <AvatarPicker 
-                currentAvatarUrl={undefined}
-                userInitials={
-                    user?.name
-                    ? user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "ST"
-                }
-                onAvatarChange={(newUrl) => {
-                    console.log("Avatar changed to:", newUrl);
-                }}
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-brightboost-navy">
-                  {t("dashboard.greeting", {
-                    name: user?.name || t("student"),
-                  })}
-                </h1>
-                <p className="text-brightboost-blue">
-                  {t("dashboard.readyPrompt")}
-                </p>
-              </div> */}
             </div>
-            {dashboardData && (
+            {/* {dashboardData && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <CurrentModuleCard module={dashboardData.currentModule} />
               </div>
-            )}
+            )} */}
 
             <div className="flex items-center space-x-4">
               <LanguageToggle />
-              <div className="flex flex-col items-end space-y-2">
+              <div className="flex justify-end items-center space-x-2 mt-2">
                 <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
                   <span className="text-sm font-bold">
                     {t("dashboard.role")}
@@ -331,12 +302,13 @@ const StudentDashboard = () => {
                     {user?.name || t("student")}
                   </span>
                 </div>
+                <XPProgressRing />
                 {/* <XPProgressWidget
                   currentXp={dashboardData?.xp ?? 0}
                   nextLevelXp={dashboardData?.nextLevelXp ?? 100}
                   level={dashboardData?.level ?? 1}
                 /> */}
-                <XPProgressRing />
+                {/* <XPProgressRing /> */}
                 <StreakMeter
                   currentStreak={currentStreakSafe}
                   longestStreak={longestStreakSafe}
@@ -347,12 +319,6 @@ const StudentDashboard = () => {
                   }}
                 />
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                {t("dashboard.logout")}
-              </button>
             </div>
           </div>
 
