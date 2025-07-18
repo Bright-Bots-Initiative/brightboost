@@ -11,8 +11,8 @@ import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
 import NextModuleCard from "../components/StudentDashboard/NextModuleCard"
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
-import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
-import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
+// import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
+// import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
 import studentDashboardMock from "../mocks/studentDashboardMock"
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
@@ -275,7 +275,6 @@ const StudentDashboard = () => {
               currentXp={dashboardData?.xp ?? 0}
               nextLevelXp={dashboardData?.nextLevelXp ?? 100}
               level={dashboardData?.level ?? 1}
-              className="w-full"
             />
             <LanguageToggle />
             <button

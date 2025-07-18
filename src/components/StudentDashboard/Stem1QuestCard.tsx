@@ -1,4 +1,5 @@
-import { Check, Play } from "lucide-react";
+// import { Check, Play } from "lucide-react";
+import { Play } from "lucide-react";
 interface Stem1Quest {
   title: string;
   status: "Not Started" | "In Progress" | "Complete";
