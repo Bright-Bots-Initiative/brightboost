@@ -4,17 +4,17 @@ import { QuestProgress } from "../components/StudentDashboard/ModuleLadder";
 
 const stem1Quests: QuestProgress[] = [
   {
-    title: "Module 1",
+    title: "Quest 1",
     status: "Complete",
     dueDate: "July 15, 2025",
   },
   {
-    title: "Module 2",
+    title: "Quest 2",
     status: "In Progress",
     dueDate: "July 16, 2025",
   },
   {
-    title: "Module 3",
+    title: "Quest 3",
     status: "Not Started",
     dueDate: "July 22, 2025",
   },
