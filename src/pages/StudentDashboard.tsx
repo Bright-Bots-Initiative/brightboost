@@ -13,6 +13,8 @@ import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
 import AvatarPicker from '../components/AvatarPicker';
+import StreakMeter from "../components/ui/StreakMeter";
+import { useStreak } from "../hooks/useStreak";
 
 interface Course {
   id: string;
@@ -43,6 +45,41 @@ interface StudentDashboardData {
   assignments: Assignment[];
 }
 
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getLastSunday(today: Date): Date {
+  const dayOfWeek = today.getDay(); // 0 = Sunday
+  const lastSunday = new Date(today);
+  lastSunday.setHours(0, 0, 0, 0);
+  lastSunday.setDate(today.getDate() - dayOfWeek);
+  return lastSunday;
+}
+
+function generateCurrentStreakDaysFromArray(streakDays: string[], serverDateUTC: string): boolean[] {
+  const days = Array(7).fill(false);
+  if (!streakDays?.length) return days;
+
+  const today = new Date(serverDateUTC);
+  today.setHours(0, 0, 0, 0);
+  const lastSunday = getLastSunday(today);
+  const streakDaySet = new Set(streakDays);
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(lastSunday);
+    day.setDate(lastSunday.getDate() + i);
+    if (day > today) break;
+    const dayStr = formatLocalDate(day);
+    days[i] = streakDaySet.has(dayStr);
+  }
+
+  return days;
+}
+
 const StudentDashboard = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
@@ -54,6 +91,8 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
+    
+  const { streak, loading: streakLoading, completeModule } = useStreak();
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -93,6 +132,21 @@ const StudentDashboard = () => {
   }, [api, logout, navigate]);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Cypress && completeModule) {
+      (window as any).completeModule = completeModule;
+    }
+  }, [completeModule]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Cypress && streak) {
+      (window as any).currentStreak = streak.currentStreak;
+      (window as any).longestStreak = streak.longestStreak;
+      (window as any).streakDays = streak.streakDays;
+      (window as any).serverDateUTC = streak.serverDateUTC;
+    }
+  }, [streak]);
+
+  useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
@@ -123,16 +177,11 @@ const StudentDashboard = () => {
     { rank: 3, name: "Mike", points: 1050, avatar: "/avatars/mike.png" },
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-  if (isLoading) {
+  if (streakLoading || isLoading) {
     return (
       <GameBackground>
         <div className="min-h-screen flex items-center justify-center">
-          <div data-testid="loading-spinner" className="text-center">
+          <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
             <p className="text-brightboost-navy">{t("dashboard.loading")}</p>
             {showStillLoading && (
@@ -165,6 +214,18 @@ const StudentDashboard = () => {
       </GameBackground>
     );
   }
+
+  const streakDays = streak?.streakDays ?? [];
+  const serverDateUTC = streak?.serverDateUTC ?? new Date().toISOString();
+  const currentStreakDays = generateCurrentStreakDaysFromArray(streakDays, serverDateUTC);
+  const currentStreakSafe = Number(streak?.currentStreak) || 0;
+  const longestStreakSafe = Number(streak?.longestStreak) || 0;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
@@ -221,6 +282,15 @@ const StudentDashboard = () => {
                   level={dashboardData?.level ?? 1}
                 />
                 <XPProgressRing />
+                <StreakMeter
+                  currentStreak={currentStreakSafe}
+                  longestStreak={longestStreakSafe}
+                  currentStreakDays={currentStreakDays}
+                  barColor="#FF8C00"
+                  onNewRecord={(bonus) => {
+                    console.log(`New record! Bonus XP: ${bonus}`);
+                  }}
+                />
               </div>
               <button
                 onClick={handleLogout}
@@ -331,3 +401,4 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+

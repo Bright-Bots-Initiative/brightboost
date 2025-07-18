@@ -103,11 +103,22 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
           </div>
         </div>
 
+        {/* Hidden numeric streak for tests */}
+        <span
+          data-cy="current-streak"
+          style={{ display: 'none' }}
+        >
+          {currentStreak}
+        </span>
+
         {/* Hover window */}
         {hovering && (
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white text-sm text-gray-800 rounded-xl shadow-lg z-20 w-60">
+          <div
+            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white text-sm text-gray-800 rounded-xl shadow-lg z-20 w-60"
+            data-cy="streak-tooltip"
+          >
             {/* Message */}
-            <div className="text-center font-medium mb-2">
+            <div className="text-center font-medium mb-2" data-cy="streak-status">
               {currentStreak === 0 ? (
                 <span>No streak yet - start today!</span>
               ) : (
@@ -126,9 +137,9 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
                 const isActive = currentStreakDays[index];
 
                 const style: React.CSSProperties = {};
+
                 if (isActive) style.backgroundColor = barColor || "#FF8C00";
                 if (isToday) style.borderColor = barColor || "#FF8C00";
-
                 return (
                   <div
                     key={index}
