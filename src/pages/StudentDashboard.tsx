@@ -272,18 +272,19 @@ const StudentDashboard = () => {
         {/* align widgets w right edge */}
         <div className="flex-grow flex items-center space-x-2 min-w-0">
             <XPProgressWidget 
-                currentXp={dashboardData?.xp ?? 0}
-                nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                level={dashboardData?.level ?? 1}
-                className="w-full"
-              />
-              <button
-                onClick={handleLogout}
-                className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                {t("dashboard.logout")}
-              </button> 
-            </div>
+              currentXp={dashboardData?.xp ?? 0}
+              nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+              level={dashboardData?.level ?? 1}
+              className="w-full"
+            />
+            <LanguageToggle />
+            <button
+              onClick={handleLogout}
+              className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              {t("dashboard.logout")}
+            </button> 
+          </div>
             </div>
             {/* {dashboardData && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -291,34 +292,25 @@ const StudentDashboard = () => {
               </div>
             )} */}
 
-            <div className="flex items-center space-x-4">
-              <LanguageToggle />
-              <div className="flex justify-end items-center space-x-2 mt-2">
-                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                  <span className="text-sm font-bold">
-                    {t("dashboard.role")}
-                  </span>
-                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                    {user?.name || t("student")}
-                  </span>
-                </div>
-                <XPProgressRing />
-                {/* <XPProgressWidget
-                  currentXp={dashboardData?.xp ?? 0}
-                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-                  level={dashboardData?.level ?? 1}
-                /> */}
-                {/* <XPProgressRing /> */}
-                <StreakMeter
-                  currentStreak={currentStreakSafe}
-                  longestStreak={longestStreakSafe}
-                  currentStreakDays={currentStreakDays}
-                  barColor="#FF8C00"
-                  onNewRecord={(bonus) => {
-                    console.log(`New record! Bonus XP: ${bonus}`);
-                  }}
-                />
+            <div className="flex justify-end items-center space-x-2 mt-2">
+              <StreakMeter
+                currentStreak={currentStreakSafe}
+                longestStreak={longestStreakSafe}
+                currentStreakDays={currentStreakDays}
+                barColor="#FF8C00"
+                onNewRecord={(bonus) => {
+                  console.log(`New record! Bonus XP: ${bonus}`);
+                }}
+              />
+              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                <span className="text-sm font-bold">
+                  {t("dashboard.role")}
+                </span>
+                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                  {user?.name || t("student")}
+                </span>
               </div>
+              <XPProgressRing />
             </div>
           </div>
 
