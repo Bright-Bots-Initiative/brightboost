@@ -20,19 +20,30 @@ const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
     console.log("Creating new database connection pool...");
-    const secretArn = process.env.DATABASE_SECRET_ARN;
-    if (!secretArn) {
-      throw new Error("DATABASE_SECRET_ARN environment variable not set");
-    }
+    let secret: DatabaseSecret;
+    if (process.env.NODE_ENV === "local") {
+      secret = {
+        host: "host.docker.internal",
+        port: 5435,
+        dbname: "brightboost",
+        username: "postgres",
+        password: "brightboostpass",
+      };
+    } else {
+      const secretArn = process.env.DATABASE_SECRET_ARN;
+      if (!secretArn) {
+        throw new Error("DATABASE_SECRET_ARN environment variable not set");
+      }
 
-    console.log("Fetching database secret from Secrets Manager...");
-    const command = new GetSecretValueCommand({ SecretId: secretArn });
-    const secretResult = await secretsManager.send(command);
-    if (!secretResult.SecretString) {
-      throw new Error("Failed to retrieve database secret");
-    }
+      console.log("Fetching database secret from Secrets Manager...");
+      const command = new GetSecretValueCommand({ SecretId: secretArn });
+      const secretResult = await secretsManager.send(command);
+      if (!secretResult.SecretString) {
+        throw new Error("Failed to retrieve database secret");
+      }
 
-    const secret: DatabaseSecret = JSON.parse(secretResult.SecretString);
+      secret = JSON.parse(secretResult.SecretString);
+    }
     console.log(
       `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
     );
@@ -43,9 +54,12 @@ async function getDbConnection(): Promise<Pool> {
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : {
+              rejectUnauthorized: false,
+            },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
@@ -68,10 +82,18 @@ async function getDbConnection(): Promise<Pool> {
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+  ];
+
+  const origin = event.headers.origin || event.headers.Origin || "";
+
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin":
-      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins[1],
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };

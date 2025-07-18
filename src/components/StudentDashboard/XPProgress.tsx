@@ -4,7 +4,6 @@ interface XPProgressWidgetProps {
   currentXp: number;
   nextLevelXp: number;
   level: number;
-  className?: string;
 }
 
 const XPProgressWidget = ({
