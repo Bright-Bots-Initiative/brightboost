@@ -17,6 +17,13 @@ const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
 const TeacherLayout = lazy(
   () => import("./components/TeacherDashboard/TeacherLayout"),
 );
+const AssignmentsPage = lazy(
+  () => import("./components/TeacherDashboard/Assignments/AssignmentsPage"),
+);
+const AssignmentsDetailPage = lazy(
+  () =>
+    import("./components/TeacherDashboard/Assignments/AssignmentsDetailPage"),
+);
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 const StudentLogin = lazy(() => import("./pages/StudentLogin"));
@@ -25,6 +32,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Stem1 = lazy(() => import("./pages/Stem1"));
+// Import components
 const Profile = lazy(() => import("./pages/Profile"));
 const EditProfile = lazy(() => import("./pages/EditProfile"));
 const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
@@ -46,8 +55,9 @@ function App() {
         <Route path="/teacher/signup" element={<TeacherSignup />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
+        <Route path="/student/stem1" element={<Stem1 />} />
         <Route path="/quest/:id" element={<QuestRouter />} />
-        
+
         {/* Quantum Demo route */}
         <Route path="/quantum-demo" element={<QuantumDemo />} />
 
@@ -85,6 +95,26 @@ function App() {
           element={
             <ProtectedRoute requiredRole="TEACHER">
               <TeacherStudentRoster />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id/assignments"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <AssignmentsPage />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id/assignments/:assignmentId"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <AssignmentsDetailPage />
+              </TeacherLayout>
             </ProtectedRoute>
           }
         />

@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import { Class, gradeOptions } from '../components/TeacherDashboard/types';
+import {
+  Class,
+  gradeOptions,
+  Assignment,
+} from "../components/TeacherDashboard/types";
 import {
   fetchMockClassById,
   patchMockClass,
@@ -21,13 +25,18 @@ import {
 } from 'lucide-react';
 import { getSTEM1Summary, STEM1_QUESTS } from '../services/stem1GradeService';
 import { UserProfile } from '../services/profileService';
+import AssignmentTable from "@/components/TeacherDashboard/Assignments/AssignmentsTable";
+import { getAssignments } from "@/services/assignmentService";
 
 const TeacherClassDetail: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [classData, setClassData] = useState<Class | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [editingGrade, setEditingGrade] = useState('');
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [editingName, setEditingName] = useState("");
+  const [editingGrade, setEditingGrade] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -51,9 +60,16 @@ const TeacherClassDetail: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    setLoadingAssignments(true);
+    getAssignments(id)
+      .then(setAssignments)
+      .finally(() => setLoadingAssignments(false));
+  }, [id]);
+
   const handleSave = async () => {
     if (!classData) return;
-
     setIsSaving(true);
     setClassData({
       ...classData,
@@ -78,6 +94,10 @@ const TeacherClassDetail: React.FC = () => {
     console.log('Profile updated:', profile);
   };
 
+  const navigateToAssignmentDetail = (assignmentId: string) => {
+    navigate(`/teacher/classes/${id}/assignments/${assignmentId}`);
+  };
+
   if (error) {
     return (
       <div className="flex justify-center items-start w-full p-6">
@@ -100,7 +120,7 @@ const TeacherClassDetail: React.FC = () => {
   const stem1Summary = getSTEM1Summary(classData);
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-2xl font-bold text-brightboost-navy flex items-center">
@@ -136,7 +156,7 @@ const TeacherClassDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* STEM-1 Overview Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
@@ -148,7 +168,6 @@ const TeacherClassDetail: React.FC = () => {
             <Zap className="w-8 h-8 text-blue-200" />
           </div>
         </div>
-
         <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -161,7 +180,6 @@ const TeacherClassDetail: React.FC = () => {
             <Target className="w-8 h-8 text-green-200" />
           </div>
         </div>
-
         <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -176,7 +194,6 @@ const TeacherClassDetail: React.FC = () => {
             <Trophy className="w-8 h-8 text-yellow-200" />
           </div>
         </div>
-
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -189,6 +206,7 @@ const TeacherClassDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Class Info + Quests */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
@@ -204,7 +222,6 @@ const TeacherClassDetail: React.FC = () => {
                 className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
               />
             </label>
-
             <label className="text-sm font-semibold text-gray-700">
               Grade:
               <select
@@ -220,7 +237,6 @@ const TeacherClassDetail: React.FC = () => {
                 ))}
               </select>
             </label>
-
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -251,24 +267,13 @@ const TeacherClassDetail: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-xs text-gray-600">{quest.description}</p>
-                <div className="mt-2 flex items-center">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-brightboost-green h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.random() * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="ml-2 text-xs text-gray-500">
-                    {Math.floor(Math.random() * classData.students.length)}/
-                    {classData.students.length}
-                  </span>
-                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
+      {/* Class Roster */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-brightboost-navy flex items-center">
@@ -286,9 +291,6 @@ const TeacherClassDetail: React.FC = () => {
           <div className="text-center py-8">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-lg text-gray-500 mb-2">No students enrolled</p>
-            <p className="text-sm text-gray-400">
-              Import students using the CSV importer on the Classes page
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -337,8 +339,8 @@ const TeacherClassDetail: React.FC = () => {
                         <div className="flex items-center">
                           <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                             <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                mockPassed ? 'bg-green-500' : 'bg-yellow-500'
+                              className={`h-2 rounded-full ${
+                                mockPassed ? "bg-green-500" : "bg-yellow-500"
                               }`}
                               style={{ width: `${mockCompletion}%` }}
                             ></div>
@@ -386,6 +388,32 @@ const TeacherClassDetail: React.FC = () => {
         onClose={() => setIsEditProfileModalOpen(false)}
         onProfileUpdated={handleProfileUpdated}
       />
+      {/* Assignments */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-brightboost-navy">
+            Assignments
+          </h3>
+          <button
+            onClick={() =>
+              navigate(`/teacher/classes/${classData.id}/assignments`)
+            }
+            className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm px-3 py-1.5 rounded transition"
+          >
+            View All
+          </button>
+        </div>
+        {loadingAssignments ? (
+          <p className="text-gray-500 italic">Loading assignments…</p>
+        ) : assignments.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">No assignments yet.</p>
+        ) : (
+          <AssignmentTable
+            assignments={assignments}
+            onRowClick={navigateToAssignmentDetail}
+          />
+        )}
+      </div>
     </div>
   );
 };

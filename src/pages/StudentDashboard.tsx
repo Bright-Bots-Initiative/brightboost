@@ -9,10 +9,16 @@ import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import XPProgressWidget from "../components/StudentDashboard/XPProgress";
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
+import NextModuleCard from "../components/StudentDashboard/NextModuleCard";
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
+// import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
+// import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
+import studentDashboardMock from "../mocks/studentDashboardMock";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
-import AvatarPicker from '../components/AvatarPicker';
+import AvatarPicker from "../components/AvatarPicker";
+import StreakMeter from "../components/ui/StreakMeter";
+import { useStreak } from "../hooks/useStreak";
 
 interface Course {
   id: string;
@@ -43,6 +49,44 @@ interface StudentDashboardData {
   assignments: Assignment[];
 }
 
+function formatLocalDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getLastSunday(today: Date): Date {
+  const dayOfWeek = today.getDay(); // 0 = Sunday
+  const lastSunday = new Date(today);
+  lastSunday.setHours(0, 0, 0, 0);
+  lastSunday.setDate(today.getDate() - dayOfWeek);
+  return lastSunday;
+}
+
+function generateCurrentStreakDaysFromArray(
+  streakDays: string[],
+  serverDateUTC: string,
+): boolean[] {
+  const days = Array(7).fill(false);
+  if (!streakDays?.length) return days;
+
+  const today = new Date(serverDateUTC);
+  today.setHours(0, 0, 0, 0);
+  const lastSunday = getLastSunday(today);
+  const streakDaySet = new Set(streakDays);
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(lastSunday);
+    day.setDate(lastSunday.getDate() + i);
+    if (day > today) break;
+    const dayStr = formatLocalDate(day);
+    days[i] = streakDaySet.has(dayStr);
+  }
+
+  return days;
+}
+
 const StudentDashboard = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
@@ -54,6 +98,8 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
+
+  const { streak, loading: streakLoading, completeModule } = useStreak();
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -93,6 +139,25 @@ const StudentDashboard = () => {
   }, [api, logout, navigate]);
 
   useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      (window as any).Cypress &&
+      completeModule
+    ) {
+      (window as any).completeModule = completeModule;
+    }
+  }, [completeModule]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Cypress && streak) {
+      (window as any).currentStreak = streak.currentStreak;
+      (window as any).longestStreak = streak.longestStreak;
+      (window as any).streakDays = streak.streakDays;
+      (window as any).serverDateUTC = streak.serverDateUTC;
+    }
+  }, [streak]);
+
+  useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
@@ -123,16 +188,11 @@ const StudentDashboard = () => {
     { rank: 3, name: "Mike", points: 1050, avatar: "/avatars/mike.png" },
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
-  if (isLoading) {
+  if (streakLoading || isLoading) {
     return (
       <GameBackground>
         <div className="min-h-screen flex items-center justify-center">
-          <div data-testid="loading-spinner" className="text-center">
+          <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
             <p className="text-brightboost-navy">{t("dashboard.loading")}</p>
             {showStillLoading && (
@@ -165,84 +225,130 @@ const StudentDashboard = () => {
       </GameBackground>
     );
   }
+
+  const streakDays = streak?.streakDays ?? [];
+  const serverDateUTC = streak?.serverDateUTC ?? new Date().toISOString();
+  const currentStreakDays = generateCurrentStreakDaysFromArray(
+    streakDays,
+    serverDateUTC,
+  );
+  const currentStreakSafe = Number(streak?.currentStreak) || 0;
+  const longestStreakSafe = Number(streak?.longestStreak) || 0;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <GameBackground>
       <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center space-x-4">
-              <BrightBoostRobot className="w-16 h-16" />
-              <AvatarPicker 
-                currentAvatarUrl={undefined}
-                userInitials={
+        <div className="max-w-7xl mx-auto px-6">
+          {/*top row*/}
+          <div className="w-full mb-6 mt-8">
+            <div className="flex items-center min-w-0">
+              {/*align greeting w left edge of grid */}
+              <div className="flex items-center flex-shrink-0 mr-4 relative">
+                <BrightBoostRobot className="w-16 h-16" />
+                <AvatarPicker
+                  currentAvatarUrl={undefined}
+                  userInitials={
                     user?.name
-                    ? user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "ST"
-                }
-                onAvatarChange={(newUrl) => {
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "ST"
+                  }
+                  onAvatarChange={(newUrl) => {
                     console.log("Avatar changed to:", newUrl);
-                }}
-              />
-              <div>
-                <h1 className="text-3xl font-bold text-brightboost-navy">
-                  {t("dashboard.greeting", {
-                    name: user?.name || t("student"),
-                  })}
-                </h1>
-                <p className="text-brightboost-blue">
-                  {t("dashboard.readyPrompt")}
-                </p>
-              </div>
-            </div>
-            {dashboardData && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <CurrentModuleCard module={dashboardData.currentModule} />
-              </div>
-            )}
-
-            <div className="flex items-center space-x-4">
-              <LanguageToggle />
-              <div className="flex flex-col items-end space-y-2">
-                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                  <span className="text-sm font-bold">
-                    {t("dashboard.role")}
-                  </span>
-                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                    {user?.name || t("student")}
-                  </span>
+                  }}
+                />
+                <div className="ml-3 relative">
+                  <h1 className="text-3xl font-bold text-brightboost-navy">
+                    {t("dashboard.greeting", {
+                      name: user?.name || t("student"),
+                    })}
+                  </h1>
+                  <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
+                    {t("dashboard.readyPrompt")}
+                  </p>
                 </div>
+              </div>
+
+              {/* align widgets w right edge */}
+              <div className="flex-grow flex items-center space-x-2 min-w-0">
                 <XPProgressWidget
                   currentXp={dashboardData?.xp ?? 0}
                   nextLevelXp={dashboardData?.nextLevelXp ?? 100}
                   level={dashboardData?.level ?? 1}
                 />
-                <XPProgressRing />
+                <LanguageToggle />
+                <button
+                  onClick={handleLogout}
+                  className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  {t("dashboard.logout")}
+                </button>
               </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                {t("dashboard.logout")}
-              </button>
+            </div>
+            {/* {dashboardData && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <CurrentModuleCard module={dashboardData.currentModule} />
+              </div>
+            )} */}
+
+            <div className="flex justify-end items-center space-x-2 mt-2">
+              <StreakMeter
+                currentStreak={currentStreakSafe}
+                longestStreak={longestStreakSafe}
+                currentStreakDays={currentStreakDays}
+                barColor="#FF8C00"
+                onNewRecord={(bonus) => {
+                  console.log(`New record! Bonus XP: ${bonus}`);
+                }}
+              />
+              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                <span className="text-sm font-bold">{t("dashboard.role")}</span>
+                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                  {user?.name || t("student")}
+                </span>
+              </div>
+              <XPProgressRing />
             </div>
           </div>
 
+          {/* card grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <StemModuleCard
-              title={t("dashboard.stemCard.title")}
-              subtitle={t("dashboard.stemCard.subtitle")}
-              activities={stemActivities}
-            />
+            <div className="flex flex-col space-y-2">
+              {/* use the following block for pulling from the API call */}
+              {/*
+            {dashboardData && (
+            <CurrentModuleCard module={dashboardData.currentModule} />
+             )}
+            */}
 
-            <WordGameCard
-              title={t("dashboard.wordGame.title")}
-              letters={["A", "B", "E", "L", "T"]}
-              word="TABLE"
-            />
+              {/* USING MOCK DATA FOR THIS */}
+              <CurrentModuleCard module={studentDashboardMock.currentModule} />
+
+              <StemModuleCard
+                title={t("dashboard.stemCard.title")}
+                subtitle={t("dashboard.stemCard.subtitle")}
+                activities={stemActivities}
+              />
+            </div>
+
+            <div className="flex flex-col space-y-2">
+              {/* USING MOCK DATA FOR THIS */}
+              <NextModuleCard module={studentDashboardMock.nextModule} />
+
+              <WordGameCard
+                title={t("dashboard.wordGame.title")}
+                letters={["A", "B", "E", "L", "T"]}
+                word="TABLE"
+              />
+            </div>
 
             <LeaderboardCard
               title={t("dashboard.leaderboard.title")}
