@@ -4,9 +4,7 @@ import {
   patchMockGrades,
   getMockAssignmentDetail,
 } from "@/services/assignmentService";
-import {
-  Student,
-} from "@/components/TeacherDashboard/types";
+import { Student } from "@/components/TeacherDashboard/types";
 
 const gradeOptions = ["A", "B", "C", "D", "F", "Incomplete"];
 

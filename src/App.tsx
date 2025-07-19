@@ -18,10 +18,11 @@ const TeacherLayout = lazy(
   () => import("./components/TeacherDashboard/TeacherLayout"),
 );
 const AssignmentsPage = lazy(
-  () => import("./components/TeacherDashboard/Assignments/AssignmentsPage")
+  () => import("./components/TeacherDashboard/Assignments/AssignmentsPage"),
 );
 const AssignmentsDetailPage = lazy(
-  () => import("./components/TeacherDashboard/Assignments/AssignmentsDetailPage")
+  () =>
+    import("./components/TeacherDashboard/Assignments/AssignmentsDetailPage"),
 );
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
@@ -108,14 +109,14 @@ function App() {
           }
         />
         <Route
-        path="/teacher/classes/:id/assignments/:assignmentId"
-        element={
+          path="/teacher/classes/:id/assignments/:assignmentId"
+          element={
             <ProtectedRoute requiredRole="TEACHER">
-            <TeacherLayout>
+              <TeacherLayout>
                 <AssignmentsDetailPage />
-            </TeacherLayout>
+              </TeacherLayout>
             </ProtectedRoute>
-        }
+          }
         />
         <Route
           path="/student/dashboard"

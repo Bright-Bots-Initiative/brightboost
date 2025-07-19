@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Class, gradeOptions, Assignment } from "../components/TeacherDashboard/types";
+import {
+  Class,
+  gradeOptions,
+  Assignment,
+} from "../components/TeacherDashboard/types";
 import {
   fetchMockClassById,
   patchMockClass,
@@ -128,7 +132,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Completion Rate</p>
-              <p className="text-2xl font-bold">{stem1Summary.averageCompletion}%</p>
+              <p className="text-2xl font-bold">
+                {stem1Summary.averageCompletion}%
+              </p>
               <p className="text-green-100 text-xs">class average</p>
             </div>
             <Target className="w-8 h-8 text-green-200" />
@@ -138,7 +144,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm">Students Passed</p>
-              <p className="text-2xl font-bold">{stem1Summary.studentsPassedSTEM1}</p>
+              <p className="text-2xl font-bold">
+                {stem1Summary.studentsPassedSTEM1}
+              </p>
               <p className="text-yellow-100 text-xs">
                 of {stem1Summary.totalStudents} students
               </p>
