@@ -17,6 +17,13 @@ const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
 const TeacherLayout = lazy(
   () => import("./components/TeacherDashboard/TeacherLayout"),
 );
+const AssignmentsPage = lazy(
+  () => import("./components/TeacherDashboard/Assignments/AssignmentsPage"),
+);
+const AssignmentsDetailPage = lazy(
+  () =>
+    import("./components/TeacherDashboard/Assignments/AssignmentsDetailPage"),
+);
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 const StudentLogin = lazy(() => import("./pages/StudentLogin"));
@@ -88,6 +95,26 @@ function App() {
           element={
             <ProtectedRoute requiredRole="TEACHER">
               <TeacherStudentRoster />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id/assignments"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <AssignmentsPage />
+              </TeacherLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id/assignments/:assignmentId"
+          element={
+            <ProtectedRoute requiredRole="TEACHER">
+              <TeacherLayout>
+                <AssignmentsDetailPage />
+              </TeacherLayout>
             </ProtectedRoute>
           }
         />
