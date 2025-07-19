@@ -31,6 +31,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const LoginSelection = lazy(() => import("./pages/LoginSelection"));
 const SignupSelection = lazy(() => import("./pages/SignupSelection"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const Stem1 = lazy(() => import("./pages/Stem1"));
+// Import components
 const Profile = lazy(() => import("./pages/Profile"));
 const EditProfile = lazy(() => import("./pages/EditProfile"));
 const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
@@ -52,8 +54,9 @@ function App() {
         <Route path="/teacher/signup" element={<TeacherSignup />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/student/signup" element={<StudentSignup />} />
+        <Route path="/student/stem1" element={<Stem1 />} />
         <Route path="/quest/:id" element={<QuestRouter />} />
-        
+
         {/* Quantum Demo route */}
         <Route path="/quantum-demo" element={<QuantumDemo />} />
 
