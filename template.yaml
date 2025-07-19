@@ -279,6 +279,146 @@ Resources:
             Method: post
             RestApiId: !Ref AuthApi
 
+  GetProgressFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-get-progress-fn"
+      CodeUri: src/lambda/
+      Handler: dist/get-progress.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/get-progress
+            Method: get
+            RestApiId: !Ref AuthApi
+
+  AddBadgeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-add-badge-fn"
+      CodeUri: src/lambda/
+      Handler: dist/add-badge.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/add-badge
+            Method: post
+            RestApiId: !Ref AuthApi
+
+  BreakStreakFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-break-streak-fn"
+      CodeUri: src/lambda/
+      Handler: dist/break-streak.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/break-streak
+            Method: get
+            RestApiId: !Ref AuthApi
+
+  StudentIncrementStreakFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-increment-streak-fn"
+      CodeUri: src/lambda/
+      Handler: dist/increment-streak.handler
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroupId
+        SubnetIds: !Ref SubnetIds
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref DatabaseSecretArn
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:*/postgres"
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: "*"
+      Events:
+        StudentDashboardApi:
+          Type: Api
+          Properties:
+            Path: /api/increment-streak
+            Method: get
+            RestApiId: !Ref AuthApi
+  
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -336,3 +476,19 @@ Outputs:
   EditProfileFunctionArn:
     Description: "Edit Profile Lambda Function ARN"
     Value: !GetAtt EditProfileFunction.Arn
+
+  GetProgressFunctionArn:
+    Description: "Get Progress Lambda Function ARN"
+    Value: !GetAtt GetProgressFunction.Arn
+
+  AddBadgeFunctionArn:
+    Description: "Add Badge Lambda Function ARN"
+    Value: !GetAtt AddBadgeFunction.Arn
+
+  BreakStreakFunctionArn:
+    Description: "Break Streak Lambda Function ARN"
+    Value: !GetAtt BreakStreakFunction.Arn
+
+  IncrementStreakFunctionArn:
+    Description: "Increment Streak Lambda Function ARN"
+    Value: !GetAtt IncrementStreakFunction.Arn
