@@ -104,10 +104,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
         </div>
 
         {/* Hidden numeric streak for tests */}
-        <span
-          data-cy="current-streak"
-          style={{ display: 'none' }}
-        >
+        <span data-cy="current-streak" style={{ display: "none" }}>
           {currentStreak}
         </span>
 
@@ -118,7 +115,10 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
             data-cy="streak-tooltip"
           >
             {/* Message */}
-            <div className="text-center font-medium mb-2" data-cy="streak-status">
+            <div
+              className="text-center font-medium mb-2"
+              data-cy="streak-status"
+            >
               {currentStreak === 0 ? (
                 <span>No streak yet - start today!</span>
               ) : (
