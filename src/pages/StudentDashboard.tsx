@@ -7,16 +7,16 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import  XPProgressWidget from "../components/StudentDashboard/XPProgress"
-import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard"
-import NextModuleCard from "../components/StudentDashboard/NextModuleCard"
-import XPProgressRing from "../components/StudentDashboard/XPProgressRing"
+import XPProgressWidget from "../components/StudentDashboard/XPProgress";
+import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
+import NextModuleCard from "../components/StudentDashboard/NextModuleCard";
+import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
 // import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
 // import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
-import studentDashboardMock from "../mocks/studentDashboardMock"
+import studentDashboardMock from "../mocks/studentDashboardMock";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
-import AvatarPicker from '../components/AvatarPicker';
+import AvatarPicker from "../components/AvatarPicker";
 import StreakMeter from "../components/ui/StreakMeter";
 import { useStreak } from "../hooks/useStreak";
 
@@ -64,7 +64,10 @@ function getLastSunday(today: Date): Date {
   return lastSunday;
 }
 
-function generateCurrentStreakDaysFromArray(streakDays: string[], serverDateUTC: string): boolean[] {
+function generateCurrentStreakDaysFromArray(
+  streakDays: string[],
+  serverDateUTC: string,
+): boolean[] {
   const days = Array(7).fill(false);
   if (!streakDays?.length) return days;
 
@@ -95,7 +98,7 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
-    
+
   const { streak, loading: streakLoading, completeModule } = useStreak();
 
   const fetchDashboardData = useCallback(async () => {
@@ -136,7 +139,11 @@ const StudentDashboard = () => {
   }, [api, logout, navigate]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Cypress && completeModule) {
+    if (
+      typeof window !== "undefined" &&
+      (window as any).Cypress &&
+      completeModule
+    ) {
       (window as any).completeModule = completeModule;
     }
   }, [completeModule]);
@@ -174,7 +181,6 @@ const StudentDashboard = () => {
       path: "/activities/coding",
     },
   ];
-
 
   const leaderboardEntries = [
     { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
@@ -222,7 +228,10 @@ const StudentDashboard = () => {
 
   const streakDays = streak?.streakDays ?? [];
   const serverDateUTC = streak?.serverDateUTC ?? new Date().toISOString();
-  const currentStreakDays = generateCurrentStreakDaysFromArray(streakDays, serverDateUTC);
+  const currentStreakDays = generateCurrentStreakDaysFromArray(
+    streakDays,
+    serverDateUTC,
+  );
   const currentStreakSafe = Number(streak?.currentStreak) || 0;
   const longestStreakSafe = Number(streak?.longestStreak) || 0;
 
@@ -235,17 +244,16 @@ const StudentDashboard = () => {
     <GameBackground>
       <div className="min-h-screen p-4">
         <div className="max-w-7xl mx-auto px-6">
-          
-        {/*top row*/}
-        <div className="w-full mb-6 mt-8">
-          <div className = "flex items-center min-w-0">
-        {/*align greeting w left edge of grid */}
-        <div className="flex items-center flex-shrink-0 mr-4 relative">
+          {/*top row*/}
+          <div className="w-full mb-6 mt-8">
+            <div className="flex items-center min-w-0">
+              {/*align greeting w left edge of grid */}
+              <div className="flex items-center flex-shrink-0 mr-4 relative">
                 <BrightBoostRobot className="w-16 h-16" />
-                <AvatarPicker 
+                <AvatarPicker
                   currentAvatarUrl={undefined}
                   userInitials={
-                      user?.name
+                    user?.name
                       ? user.name
                           .split(" ")
                           .map((n) => n[0])
@@ -254,36 +262,36 @@ const StudentDashboard = () => {
                       : "ST"
                   }
                   onAvatarChange={(newUrl) => {
-                      console.log("Avatar changed to:", newUrl);
+                    console.log("Avatar changed to:", newUrl);
                   }}
                 />
-                <div className = "ml-3 relative">
-                    <h1 className="text-3xl font-bold text-brightboost-navy">
-                      {t("dashboard.greeting", {
-                        name: user?.name || t("student"),
-                      })}
-                    </h1>
-                    <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
-                      {t("dashboard.readyPrompt")}
-                    </p>
-                  </div>
+                <div className="ml-3 relative">
+                  <h1 className="text-3xl font-bold text-brightboost-navy">
+                    {t("dashboard.greeting", {
+                      name: user?.name || t("student"),
+                    })}
+                  </h1>
+                  <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
+                    {t("dashboard.readyPrompt")}
+                  </p>
                 </div>
-            
-        {/* align widgets w right edge */}
-        <div className="flex-grow flex items-center space-x-2 min-w-0">
-            <XPProgressWidget 
-              currentXp={dashboardData?.xp ?? 0}
-              nextLevelXp={dashboardData?.nextLevelXp ?? 100}
-              level={dashboardData?.level ?? 1}
-            />
-            <LanguageToggle />
-            <button
-              onClick={handleLogout}
-              className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              {t("dashboard.logout")}
-            </button> 
-          </div>
+              </div>
+
+              {/* align widgets w right edge */}
+              <div className="flex-grow flex items-center space-x-2 min-w-0">
+                <XPProgressWidget
+                  currentXp={dashboardData?.xp ?? 0}
+                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+                  level={dashboardData?.level ?? 1}
+                />
+                <LanguageToggle />
+                <button
+                  onClick={handleLogout}
+                  className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  {t("dashboard.logout")}
+                </button>
+              </div>
             </div>
             {/* {dashboardData && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -302,9 +310,7 @@ const StudentDashboard = () => {
                 }}
               />
               <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">
-                  {t("dashboard.role")}
-                </span>
+                <span className="text-sm font-bold">{t("dashboard.role")}</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                   {user?.name || t("student")}
                 </span>
@@ -313,41 +319,35 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-        {/* card grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className = "flex flex-col space-y-2">
-            
-            {/* use the following block for pulling from the API call */}
-            {/*
+          {/* card grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col space-y-2">
+              {/* use the following block for pulling from the API call */}
+              {/*
             {dashboardData && (
             <CurrentModuleCard module={dashboardData.currentModule} />
              )}
             */}
 
-            {/* USING MOCK DATA FOR THIS */}
-            <CurrentModuleCard
-                module = {studentDashboardMock.currentModule}
-            /> 
+              {/* USING MOCK DATA FOR THIS */}
+              <CurrentModuleCard module={studentDashboardMock.currentModule} />
 
-            <StemModuleCard
-              title={t("dashboard.stemCard.title")}
-              subtitle={t("dashboard.stemCard.subtitle")}
-              activities={stemActivities}
-            />
+              <StemModuleCard
+                title={t("dashboard.stemCard.title")}
+                subtitle={t("dashboard.stemCard.subtitle")}
+                activities={stemActivities}
+              />
             </div>
 
-            <div className = "flex flex-col space-y-2">
-            
-            {/* USING MOCK DATA FOR THIS */}
-            <NextModuleCard
-                module = {studentDashboardMock.nextModule}
-            />
+            <div className="flex flex-col space-y-2">
+              {/* USING MOCK DATA FOR THIS */}
+              <NextModuleCard module={studentDashboardMock.nextModule} />
 
-            <WordGameCard
-              title={t("dashboard.wordGame.title")}
-              letters={["A", "B", "E", "L", "T"]}
-              word="TABLE"
-            />
+              <WordGameCard
+                title={t("dashboard.wordGame.title")}
+                letters={["A", "B", "E", "L", "T"]}
+                word="TABLE"
+              />
             </div>
 
             <LeaderboardCard
@@ -355,8 +355,6 @@ const StudentDashboard = () => {
               entries={leaderboardEntries}
             />
           </div>
-        
-          
 
           {dashboardData &&
             (dashboardData.courses?.length ||
@@ -385,7 +383,7 @@ const StudentDashboard = () => {
                         </div>
                       ))}
                   </div>
-                
+
                   <div className="bg-white rounded-lg p-4 shadow-md">
                     <h4 className="font-bold text-brightboost-navy mb-3">
                       {t("dashboard.recentAssignments")}
@@ -433,10 +431,9 @@ const StudentDashboard = () => {
             </div>
           </div>
         </div>
-        </div>
+      </div>
     </GameBackground>
   );
 };
 
 export default StudentDashboard;
-

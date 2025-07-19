@@ -50,7 +50,7 @@ function App() {
         <Route path="/student/signup" element={<StudentSignup />} />
         <Route path="/student/stem1" element={<Stem1 />} />
         <Route path="/quest/:id" element={<QuestRouter />} />
-        
+
         {/* Quantum Demo route */}
         <Route path="/quantum-demo" element={<QuantumDemo />} />
 

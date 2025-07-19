@@ -5,28 +5,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 9.15.1
-          
+
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
           cache: "pnpm"
           cache-dependency-path: |
             pnpm-lock.yaml
-            
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-        
+
       - name: Build application
         run: pnpm build
-        
+
       - name: Check bundle size
         run: |
           BUNDLE_SIZE=$(du -sm dist | cut -f1)

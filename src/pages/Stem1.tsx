@@ -43,12 +43,11 @@ const renderQuestButton = (status: string) => {
 };
 
 const isPastDue = (status: string, dueDate: string) => {
-    if (status === "Complete" || !dueDate) return false;
-    const year = new Date().getFullYear();
-    const parsed = new Date(`${dueDate}, ${year} 23:59:59`);
-    return parsed < new Date();
+  if (status === "Complete" || !dueDate) return false;
+  const year = new Date().getFullYear();
+  const parsed = new Date(`${dueDate}, ${year} 23:59:59`);
+  return parsed < new Date();
 };
-
 
 const Stem1Page = () => {
   const navigate = useNavigate();
@@ -69,80 +68,114 @@ const Stem1Page = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-4 gap-6 items-start">
         {/* Module Ladder column */}
         <div className="col-span-1 space-y-8">
-                <ModuleLadder quests={stem1Quests} />
+          <ModuleLadder quests={stem1Quests} />
+        </div>
+
+        {/* Quest cards, staggered */}
+        <div className="col-span-3 grid grid-cols-2 gap-6">
+          {/* Card 1 */}
+          <div className="row-start-1 col-start-1">
+            <div
+              className={`bg-white rounded-xl shadow-md p-4 ${
+                isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "")
+                  ? "border border-red-400"
+                  : ""
+              }`}
+            >
+              {isPastDue(
+                stem1Quests[0].status,
+                stem1Quests[0].dueDate ?? "",
+              ) && (
+                <p className="text-xs text-red-500 font-semibold mt-1">
+                  Past Due
+                </p>
+              )}
+              <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
+                {stem1Quests[0].title}
+              </h2>
+              <p className="text-sm text-gray-600 mb-1">
+                Status: {stem1Quests[0].status}
+              </p>
+              <p className="text-sm text-gray-600">
+                Due: {stem1Quests[0].dueDate}
+              </p>
+              {renderQuestButton(stem1Quests[0].status)}
             </div>
+          </div>
 
-      {/* Quest cards, staggered */}
-  <div className="col-span-3 grid grid-cols-2 gap-6">
-    {/* Card 1 */}
-    <div className="row-start-1 col-start-1">
-      <div className={`bg-white rounded-xl shadow-md p-4 ${
-            isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") ? "border border-red-400" : "" 
-            }`}
+          {/* Card 2 */}
+          <div className="row-start-1 col-start-2">
+            <div
+              className={`bg-white rounded-xl shadow-md p-4 ${
+                isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "")
+                  ? "border border-red-400"
+                  : ""
+              }`}
+            >
+              {isPastDue(
+                stem1Quests[1].status,
+                stem1Quests[1].dueDate ?? "",
+              ) && (
+                <p className="text-xs text-red-500 font-semibold mt-1">
+                  Past Due
+                </p>
+              )}
+              <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
+                {stem1Quests[1].title}
+              </h2>
+              <p className="text-sm text-gray-600 mb-1">
+                Status: {stem1Quests[1].status}
+              </p>
+              <p className="text-sm text-gray-600">
+                Due: {stem1Quests[1].dueDate}
+              </p>
+              {renderQuestButton(stem1Quests[1].status)}
+            </div>
+          </div>
+
+          {/* Card 3 (staggered below) */}
+          <div className="col-span-2 flex justify-center row-start-2">
+            <div className="w-1/2">
+              <div
+                className={`bg-white rounded-xl shadow-md p-4 ${
+                  isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "")
+                    ? "border border-red-400"
+                    : ""
+                }`}
+              >
+                {isPastDue(
+                  stem1Quests[2].status,
+                  stem1Quests[2].dueDate ?? "",
+                ) && (
+                  <p className="text-xs text-red-500 font-semibold mt-1">
+                    Past Due
+                  </p>
+                )}
+                <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
+                  {stem1Quests[2].title}
+                </h2>
+                <p className="text-sm text-gray-600 mb-1">
+                  Status: {stem1Quests[2].status}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Due: {stem1Quests[2].dueDate}
+                </p>
+                {renderQuestButton(stem1Quests[2].status)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-12 flex justify-center">
+        <button
+          onClick={() => navigate("/student/dashboard")}
+          className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
         >
-            {isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") && (
-            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
-            )}
-        <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
-          {stem1Quests[0].title}
-        </h2>
-        <p className="text-sm text-gray-600 mb-1">Status: {stem1Quests[0].status}</p>
-        <p className="text-sm text-gray-600">Due: {stem1Quests[0].dueDate}</p>
-        {renderQuestButton(stem1Quests[0].status)}
+          ⬅ Back to Dashboard
+        </button>
       </div>
     </div>
-
-    {/* Card 2 */}
-    <div className="row-start-1 col-start-2">
-      <div className={`bg-white rounded-xl shadow-md p-4 ${
-            isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") ? "border border-red-400" : "" 
-            }`}
-        >
-            {isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") && (
-            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
-            )}
-        <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
-          {stem1Quests[1].title}
-        </h2>
-        <p className="text-sm text-gray-600 mb-1">Status: {stem1Quests[1].status}</p>
-        <p className="text-sm text-gray-600">Due: {stem1Quests[1].dueDate}</p>
-        {renderQuestButton(stem1Quests[1].status)}
-      </div>
-    </div>
-
-    {/* Card 3 (staggered below) */}
-    <div className="col-span-2 flex justify-center row-start-2">
-        <div className = "w-1/2">
-      <div className={`bg-white rounded-xl shadow-md p-4 ${
-            isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") ? "border border-red-400" : "" 
-            }`}
-        >
-            {isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") && (
-            <p className="text-xs text-red-500 font-semibold mt-1">Past Due</p>
-            )}
-        <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
-          {stem1Quests[2].title}
-        </h2>
-        <p className="text-sm text-gray-600 mb-1">Status: {stem1Quests[2].status}</p>
-        <p className="text-sm text-gray-600">Due: {stem1Quests[2].dueDate}</p>
-        {renderQuestButton(stem1Quests[2].status)}
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-<div className="mt-12 flex justify-center">
-  <button
-    onClick={() => navigate("/student/dashboard")}
-    className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-  >
-    ⬅ Back to Dashboard
-  </button>
-</div>
-</div>
-
-
-  )
+  );
 };
 
 export default Stem1Page;

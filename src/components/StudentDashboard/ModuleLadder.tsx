@@ -4,7 +4,7 @@ export type QuestProgress = {
   title: string;
   status: "Not Started" | "In Progress" | "Complete";
   dueDate?: string;
-}
+};
 
 interface ModuleLadderProps {
   quests: QuestProgress[];
