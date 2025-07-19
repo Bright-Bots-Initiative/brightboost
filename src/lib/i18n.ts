@@ -11,70 +11,56 @@ const getInitialLanguage = (): string => {
 };
 
 const selectedLang = getInitialLanguage();
+
 console.log("Detected initial language:", selectedLang);
+
 if (import.meta.env.VITE_ENABLE_I18N === "true") {
+  const initWithTranslations = (
+    lang: string,
+    translations: Record<string, any>
+  ) => {
+    if (!i18n.isInitialized) {
+      i18n
+        .use(initReactI18next)
+        .init({
+          lng: lang,
+          fallbackLng,
+          debug: import.meta.env.DEV,
+          interpolation: { escapeValue: false },
+          load: "languageOnly",
+          resources: {
+            [lang]: {
+              translation: translations.default,
+            },
+          },
+        })
+        .then(() => {
+          console.log(`i18next initialized with ${lang}`);
+        })
+        .catch((err) => {
+          console.error(`Error initializing i18n for ${lang}:`, err);
+        });
+    }
+  };
+
   import(`../locales/${selectedLang}/common.json`)
     .then((translations) => {
-      if (!i18n.isInitialized) {
-        i18n
-          .use(initReactI18next)
-          .init({
-            lng: selectedLang,
-            fallbackLng,
-            debug: import.meta.env.DEV,
-            interpolation: { escapeValue: false },
-            load: "languageOnly",
-            resources: {
-              [selectedLang]: {
-                translation: translations.default,
-              },
-            },
-          })
-          .then(() => {
-            console.log(`i18next initialized with ${selectedLang}`);
-          })
-          .catch((err) => {
-            console.error("Error initializing i18n:", err);
-          });
-      }
+      initWithTranslations(selectedLang, translations);
     })
     .catch((err) => {
       console.warn(
         `Could not load locale "${selectedLang}", falling back to "${fallbackLng}"`,
-        err,
+        err
       );
       import(`../locales/${fallbackLng}/common.json`)
-        .then((translations) => {
-          i18n
-            .use(initReactI18next)
-            .init({
-              lng: fallbackLng,
-              fallbackLng,
-              debug: import.meta.env.DEV,
-              interpolation: { escapeValue: false },
-              load: "languageOnly",
-              resources: {
-                [fallbackLng]: {
-                  translation: translations.default,
-                },
-              },
-            })
-            .then(() => {
-              console.log(
-                `i18next initialized with fallback language: ${fallbackLng}`,
-              );
-            })
-            .catch((err) => {
-              console.error(
-                "Error initializing i18n with fallback language:",
-                err,
-              );
-            });
+        .then((fallbackTranslations) => {
+          initWithTranslations(fallbackLng, fallbackTranslations);
         })
-        .catch((err) => {
-          console.error("Error loading fallback language:", err);
+        .catch((fallbackErr) => {
+          console.error("Error loading fallback language:", fallbackErr);
         });
     });
 }
 
 export default i18n;
+

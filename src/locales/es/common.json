@@ -62,5 +62,18 @@
   },
   "notFound.pageNotFound": "Página No Encontrada",
   "notFound.pageDescription": "¡Vaya! La página que buscas no existe o ha sido movida.",
-  "notFound.backToHome": "Volver al inicio"
+  "notFound.backToHome": "Volver al inicio",
+  "stem1": {
+    "title": "¡Bienvenido a STEM 1!",
+    "subtitle": "¿Listo para ser un explorador STEM?",
+    "startQuest": "Comenzar misión",
+    "continueQuest": "Continuar misión",
+    "reviewQuest": "Revisar misión",
+    "status": "Estado",
+    "pastDue": "Vencido",
+    "due": "Vence",
+    "back": "⬅ Volver al panel",
+    "nextModule": "Próximo módulo",
+  "noNextModule": "No hay módulo siguiente asignado."
+  }
 }
