@@ -1,5 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
 import {
   getCachedStreak,
   setCachedStreak,
@@ -7,8 +7,8 @@ import {
   addPendingEvent,
   clearPendingEvents,
   StreakEvent,
-} from '../lib/streakDB';
-import { useApi } from '../services/api';
+} from "../lib/streakDB";
+import { useApi } from "../services/api";
 import { grantXp } from "../lib/xp";
 
 export function useStreak() {
@@ -17,22 +17,27 @@ export function useStreak() {
   const api = useApi();
 
   const formatUTCDateString = useCallback((date: Date): string => {
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   }, []);
 
-  const isoToUTCDateString = useCallback((iso: string | null): string | null => {
-    if (!iso) return null;
-    return formatUTCDateString(new Date(iso));
-  }, [formatUTCDateString]);
+  const isoToUTCDateString = useCallback(
+    (iso: string | null): string | null => {
+      if (!iso) return null;
+      return formatUTCDateString(new Date(iso));
+    },
+    [formatUTCDateString],
+  );
 
   const parseUTCDate = useCallback((dateStr: string): Date => {
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const [y, m, d] = dateStr.split("-").map(Number);
     return new Date(Date.UTC(y, m - 1, d));
   }, []);
 
   const getUTCMidnightDates = useCallback(() => {
     const now = new Date();
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const todayUTC = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
     const dayOfWeekUTC = todayUTC.getUTCDay();
     const lastSundayUTC = new Date(todayUTC);
     lastSundayUTC.setUTCDate(todayUTC.getUTCDate() - dayOfWeekUTC);
@@ -73,46 +78,57 @@ export function useStreak() {
     load();
   }, [api, getUTCMidnightDates, parseUTCDate]);
 
-  const applyEventLocally = useCallback((event: StreakEvent, current: any) => {
-    const eventDay = isoToUTCDateString(event.completedAt);
-    const lastCompletedDay = isoToUTCDateString(current.lastCompletedAt || null);
-    if (!eventDay || eventDay === lastCompletedDay) return current;
+  const applyEventLocally = useCallback(
+    (event: StreakEvent, current: any) => {
+      const eventDay = isoToUTCDateString(event.completedAt);
+      const lastCompletedDay = isoToUTCDateString(
+        current.lastCompletedAt || null,
+      );
+      if (!eventDay || eventDay === lastCompletedDay) return current;
 
-    const updatedStreakDaysSet = new Set(current.streakDays || []);
-    updatedStreakDaysSet.add(eventDay);
-    const updatedStreakDays = Array.from(updatedStreakDaysSet).sort();
+      const updatedStreakDaysSet = new Set(current.streakDays || []);
+      updatedStreakDaysSet.add(eventDay);
+      const updatedStreakDays = Array.from(updatedStreakDaysSet).sort();
 
-    const today = parseUTCDate(eventDay);
-    const yesterday = new Date(today);
-    yesterday.setUTCDate(today.getUTCDate() - 1);
+      const today = parseUTCDate(eventDay);
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(today.getUTCDate() - 1);
 
-    let newCurrentStreak = 1;
-    if (lastCompletedDay) {
-      const lastDate = parseUTCDate(lastCompletedDay);
-      if (lastDate.getTime() === yesterday.getTime()) {
-        newCurrentStreak = (current.currentStreak || 0) + 1;
+      let newCurrentStreak = 1;
+      if (lastCompletedDay) {
+        const lastDate = parseUTCDate(lastCompletedDay);
+        if (lastDate.getTime() === yesterday.getTime()) {
+          newCurrentStreak = (current.currentStreak || 0) + 1;
+        }
       }
-    }
 
-    const newLongestStreak = Math.max(current.longestStreak || 0, newCurrentStreak);
-    return {
-      currentStreak: Math.min(newCurrentStreak, 30),
-      longestStreak: newLongestStreak,
-      lastCompletedAt: event.completedAt,
-      serverDateUTC: new Date().toISOString(),
-      streakDays: updatedStreakDays,
-    };
-  }, [isoToUTCDateString, parseUTCDate]);
+      const newLongestStreak = Math.max(
+        current.longestStreak || 0,
+        newCurrentStreak,
+      );
+      return {
+        currentStreak: Math.min(newCurrentStreak, 30),
+        longestStreak: newLongestStreak,
+        lastCompletedAt: event.completedAt,
+        serverDateUTC: new Date().toISOString(),
+        streakDays: updatedStreakDays,
+      };
+    },
+    [isoToUTCDateString, parseUTCDate],
+  );
 
-  const completeModule = useCallback(async (moduleId: string) => {
-    const completedAt = new Date().toISOString();
-    const event: StreakEvent = { completedAt, moduleId };
+  const completeModule = useCallback(
+    async (moduleId: string) => {
+      const completedAt = new Date().toISOString();
+      const event: StreakEvent = { completedAt, moduleId };
 
-    const newStreak = applyEventLocally(event, streak || {});
-    setStreak(newStreak);
-    await setCachedStreak(newStreak);
-    await addPendingEvent(event);
-  }, [streak, applyEventLocally]);
+      const newStreak = applyEventLocally(event, streak || {});
+      setStreak(newStreak);
+      await setCachedStreak(newStreak);
+      await addPendingEvent(event);
+    },
+    [streak, applyEventLocally],
+  );
 
   const processQueue = useCallback(async () => {
     const pending = await getPendingEvents();
@@ -126,7 +142,11 @@ export function useStreak() {
       const deduped: StreakEvent[] = [];
 
       pending
-        .sort((a, b) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
+        .sort(
+          (a, b) =>
+            new Date(a.completedAt).getTime() -
+            new Date(b.completedAt).getTime(),
+        )
         .forEach((event) => {
           const day = isoToUTCDateString(event.completedAt);
           if (day && !seen.has(day)) {
@@ -184,20 +204,25 @@ export function useStreak() {
 
   useEffect(() => {
     processQueue();
-    window.addEventListener('online', processQueue);
-    return () => window.removeEventListener('online', processQueue);
+    window.addEventListener("online", processQueue);
+    return () => window.removeEventListener("online", processQueue);
   }, [processQueue]);
 
   useEffect(() => {
     function handleSimulateCompleteModule(e: any) {
       const { moduleId } = e.detail || {};
-      completeModule(moduleId || 'test-module');
+      completeModule(moduleId || "test-module");
     }
-    window.addEventListener('simulateCompleteModule', handleSimulateCompleteModule);
-    return () => window.removeEventListener('simulateCompleteModule', handleSimulateCompleteModule);
+    window.addEventListener(
+      "simulateCompleteModule",
+      handleSimulateCompleteModule,
+    );
+    return () =>
+      window.removeEventListener(
+        "simulateCompleteModule",
+        handleSimulateCompleteModule,
+      );
   }, [completeModule]);
 
   return { streak, loading, completeModule, processQueue };
 }
-
-

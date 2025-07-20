@@ -1,4 +1,3 @@
-
 interface XPGrantResult {
   success: boolean;
   message: string;
@@ -9,7 +8,7 @@ const sessionXPGrants = new Set<string>();
 
 export const grantXp = async (
   action: string,
-  amount: number = 10
+  amount: number = 10,
 ): Promise<boolean> => {
   try {
     if (sessionXPGrants.has(action)) {
@@ -22,7 +21,7 @@ export const grantXp = async (
         resolve({
           success: true,
           message: `XP awarded for ${action}`,
-          xpAwarded: amount
+          xpAwarded: amount,
         });
       }, 100);
     });
@@ -32,7 +31,7 @@ export const grantXp = async (
     if (result.success) {
       sessionXPGrants.add(action);
       const sessionKey = `xp_granted_${action}_${Date.now()}`;
-      localStorage.setItem(sessionKey, 'true');
+      localStorage.setItem(sessionKey, "true");
 
       console.log(`XP granted successfully for action: ${action}`, result);
       return true;
@@ -40,7 +39,7 @@ export const grantXp = async (
 
     return false;
   } catch (error) {
-    console.error('Error granting XP:', error);
+    console.error("Error granting XP:", error);
     return false;
   }
 };

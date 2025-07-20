@@ -148,7 +148,6 @@ const Stem1Page = () => {
           </div>
         </div>
       </div>
-
       <div className="mt-12 flex justify-center">
         <button
           onClick={() => navigate("/student/dashboard")}

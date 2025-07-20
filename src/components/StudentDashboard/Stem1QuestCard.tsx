@@ -26,8 +26,8 @@ const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest }) => {
             quest.status === "Complete"
               ? "bg-green-400 border-green-600 text-slate animate-pulse"
               : quest.status === "In Progress"
-              ? "bg-yellow-300 border-yellow-500 text-yellow-900 animate-pulse"
-              : "bg-white border-gray-400 text-gray-400"
+                ? "bg-yellow-300 border-yellow-500 text-yellow-900 animate-pulse"
+                : "bg-white border-gray-400 text-gray-400"
           }`}
         >
           {quest.status === "Complete" && "✓"}

@@ -1,11 +1,11 @@
-import { openDB, IDBPDatabase } from 'idb';
+import { openDB, IDBPDatabase } from "idb";
 
-const DB_NAME = 'brightboost';
-const STORE_NAME = 'streak';
-const QUEUE_KEY = 'pendingEvents';
+const DB_NAME = "brightboost";
+const STORE_NAME = "streak";
+const QUEUE_KEY = "pendingEvents";
 
 export interface StreakEvent {
-  completedAt: string;  // ISO-8601 timestamp
+  completedAt: string; // ISO-8601 timestamp
   moduleId: string;
 }
 
@@ -20,17 +20,17 @@ const dbPromise = openDB(DB_NAME, 1, {
 // Cached streak data
 export async function getCachedStreak() {
   const db = await dbPromise;
-  return db.get(STORE_NAME, 'streak');
+  return db.get(STORE_NAME, "streak");
 }
 
 export async function setCachedStreak(streakData: any) {
   const db = await dbPromise;
-  return db.put(STORE_NAME, streakData, 'streak');
+  return db.put(STORE_NAME, streakData, "streak");
 }
 
 export async function clearCachedStreak() {
   const db = await dbPromise;
-  return db.delete(STORE_NAME, 'streak');
+  return db.delete(STORE_NAME, "streak");
 }
 
 // Offline event queue
