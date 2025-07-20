@@ -384,7 +384,7 @@ Resources:
             Method: get
             RestApiId: !Ref AuthApi
 
-  StudentIncrementStreakFunction:
+  IncrementStreakFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-increment-streak-fn"
