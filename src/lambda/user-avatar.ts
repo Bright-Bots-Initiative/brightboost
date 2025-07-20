@@ -19,7 +19,7 @@ async function getDbConnection(): Promise<Pool> {
     const secretValue = await secretsClient.send(
       new GetSecretValueCommand({
         SecretId: "brightboost-db-credentials",
-      })
+      }),
     );
 
     if (!secretValue.SecretString) {
@@ -68,12 +68,15 @@ export const handler = async (
   }
 
   try {
-    const authHeader = event.headers.Authorization || event.headers.authorization;
+    const authHeader =
+      event.headers.Authorization || event.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: "Missing or invalid authorization header" }),
+        body: JSON.stringify({
+          error: "Missing or invalid authorization header",
+        }),
       };
     }
 
@@ -109,18 +112,20 @@ export const handler = async (
 
     const { avatarUrl } = JSON.parse(event.body);
 
-    if (!avatarUrl || typeof avatarUrl !== 'string') {
+    if (!avatarUrl || typeof avatarUrl !== "string") {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "avatarUrl is required and must be a string" }),
+        body: JSON.stringify({
+          error: "avatarUrl is required and must be a string",
+        }),
       };
     }
 
     const db = await getDbConnection();
     const result = await db.query(
       'UPDATE "User" SET "avatarUrl" = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING id, "avatarUrl"',
-      [avatarUrl, decoded.userId]
+      [avatarUrl, decoded.userId],
     );
 
     if (result.rows.length === 0) {
@@ -135,9 +140,9 @@ export const handler = async (
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
-        avatarUrl: user.avatarUrl
+      body: JSON.stringify({
+        success: true,
+        avatarUrl: user.avatarUrl,
       }),
     };
   } catch (error) {

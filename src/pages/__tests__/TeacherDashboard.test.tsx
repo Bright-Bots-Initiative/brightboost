@@ -46,18 +46,8 @@ vi.mock("../../services/api", () => ({
   }),
 }));
 
-vi.mock("../../components/GameBackground", () => ({
-  default: ({ children }) => (
-    <div data-testid="game-background">{children}</div>
-  ),
-}));
-
 vi.mock("../../components/BrightBoostRobot", () => ({
   default: () => <div data-testid="robot-icon">Robot</div>,
-}));
-
-vi.mock("../../components/TeacherDashboard/Sidebar", () => ({
-  default: () => <div data-testid="sidebar">Sidebar</div>,
 }));
 
 vi.mock("../../components/TeacherDashboard/MainContent", () => ({
@@ -91,9 +81,6 @@ describe("TeacherDashboard", () => {
         <TeacherDashboard />
       </BrowserRouter>,
     );
-
-    expect(screen.getByTestId("game-background")).toBeDefined();
-    expect(screen.getByTestId("sidebar")).toBeDefined();
 
     const loadingElement = screen.queryByText("Loading dashboard data...");
     const mainContentElement = screen.queryByTestId("main-content");

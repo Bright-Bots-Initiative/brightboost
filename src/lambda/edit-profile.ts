@@ -132,11 +132,13 @@ export const handler = async (
 
     const { role, name, school, subject, bio, grade } = JSON.parse(event.body);
 
-    if (!name || typeof name !== 'string') {
+    if (!name || typeof name !== "string") {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Name is required and must be a string" }),
+        body: JSON.stringify({
+          error: "Name is required and must be a string",
+        }),
       };
     }
 
@@ -146,9 +148,9 @@ export const handler = async (
 
     let result: QueryResult;
     if (role === "student") {
-      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade, decoded.email])
+      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade || null, decoded.email])
     } else if (role === "teacher") {
-      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school, subject, bio, decoded.email])
+      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school || null, subject || null, bio, decoded.email])
     } else {
       console.warn("Could not identify user's role");
       result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
@@ -166,16 +168,16 @@ export const handler = async (
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
-        success: true, 
+      body: JSON.stringify({
+        success: true,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
           avatarUrl: user.avatarUrl,
           school: user.school,
-          subject: user.subject
-        }
+          subject: user.subject,
+        },
       }),
     };
   } catch (error) {

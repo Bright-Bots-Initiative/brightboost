@@ -18,7 +18,7 @@ const MainContent: React.FC<MainContentProps> = ({
   };
 
   return (
-    <div className="flex-grow p-6 ml-64">
+    <div className="flex-grow p-6">
       <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Lessons</h2>
 
       <div className="bg-white rounded-lg shadow-md p-6">

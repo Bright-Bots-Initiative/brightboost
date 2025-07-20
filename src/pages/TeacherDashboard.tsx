@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 import { useApi } from "../services/api";
-import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import Sidebar from "../components/TeacherDashboard/Sidebar";
 import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
-import TeacherNavbar from "../components/TeacherDashboard/TeacherNavbar";
 
 const TeacherDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const api = useApi();
 
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
@@ -128,57 +121,43 @@ const TeacherDashboard: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   return (
-    <GameBackground>
-      <div className="min-h-screen flex flex-col relative z-10">
-        <TeacherNavbar
-          userName={user?.name || "Teacher"}
-          onLogout={handleLogout}
+    <>
+      {isLoading && (
+        <div className="flex-grow p-6 text-center">
+          <BrightBoostRobot size="lg" />
+          <p className="text-xl text-brightboost-navy mt-4">
+            Loading dashboard data...
+          </p>
+        </div>
+      )}
+      {error && (
+        <div className="flex-grow p-6 text-center">
+          <BrightBoostRobot size="lg" />
+          <p className="text-xl text-red-500 mt-4">Error: {error}</p>
+        </div>
+      )}
+      {!isLoading && !error && lessonsData.length === 0 && (
+        <div className="flex-grow p-6 text-center">
+          <BrightBoostRobot size="lg" />
+          <p className="text-xl text-brightboost-navy mt-4">
+            No teacher data available yet.
+          </p>
+          <p className="text-sm text-gray-600 mt-2">
+            Teachers will appear here once they're registered in the system.
+          </p>
+        </div>
+      )}
+      {!isLoading && !error && lessonsData.length > 0 && (
+        <MainContent
+          lessonsData={lessonsData}
+          setLessonsData={setLessonsData}
+          onAddLesson={handleAddLesson}
+          onEditLesson={handleEditLesson}
+          onDeleteLesson={handleDeleteLesson}
         />
-
-        <Sidebar />
-
-        {isLoading && (
-          <div className="flex-grow p-6 ml-64 text-center">
-            <BrightBoostRobot size="lg" />
-            <p className="text-xl text-brightboost-navy mt-4">
-              Loading dashboard data...
-            </p>
-          </div>
-        )}
-        {error && (
-          <div className="flex-grow p-6 ml-64 text-center">
-            <BrightBoostRobot size="lg" />
-            <p className="text-xl text-red-500 mt-4">Error: {error}</p>
-          </div>
-        )}
-        {!isLoading && !error && lessonsData.length === 0 && (
-          <div className="flex-grow p-6 ml-64 text-center">
-            <BrightBoostRobot size="lg" />
-            <p className="text-xl text-brightboost-navy mt-4">
-              No teacher data available yet.
-            </p>
-            <p className="text-sm text-gray-600 mt-2">
-              Teachers will appear here once they're registered in the system.
-            </p>
-          </div>
-        )}
-        {!isLoading && !error && lessonsData.length > 0 && (
-          <MainContent
-            lessonsData={lessonsData}
-            setLessonsData={setLessonsData}
-            onAddLesson={handleAddLesson}
-            onEditLesson={handleEditLesson}
-            onDeleteLesson={handleDeleteLesson}
-          />
-        )}
-      </div>
-    </GameBackground>
+      )}
+    </>
   );
 };
 

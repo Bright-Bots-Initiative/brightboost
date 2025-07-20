@@ -13,22 +13,22 @@ async function getPresignedUrlStub(): Promise<string> {
 }
 
 async function patchUserAvatarStub(url: string): Promise<void> {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem("authToken");
   if (!token) {
-    throw new Error('No authentication token found');
+    throw new Error("No authentication token found");
   }
 
-  const response = await fetch('/api/user/avatar', {
-    method: 'PATCH',
+  const response = await fetch("/api/user/avatar", {
+    method: "PATCH",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ avatarUrl: url }),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to update avatar');
+    throw new Error("Failed to update avatar");
   }
 }
 
@@ -36,14 +36,15 @@ async function invalidateAvatarCache(url: string): Promise<void> {
   console.log("Invalidate avatar cache for:", url);
 }
 
-
 const AvatarPicker: React.FC<AvatarProps> = ({
   currentAvatarUrl = "https://api.dicebear.com/7.x/identicon/svg?seed=default",
   userInitials,
   onAvatarChange,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(currentAvatarUrl);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
+    currentAvatarUrl,
+  );
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
 
@@ -82,10 +83,10 @@ const AvatarPicker: React.FC<AvatarProps> = ({
       setAvatarUrl(undefined);
       setPreviewUrl(undefined);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
-  
+
   const cropToSquare = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -102,14 +103,14 @@ const AvatarPicker: React.FC<AvatarProps> = ({
         const y = (img.height - size) / 2;
         ctx.drawImage(img, x, y, size, size, 0, 0, size, size);
         canvas.toBlob(
-            (blob) => (blob ? resolve(blob) : reject("Crop failed")),
-            "image/webp"
+          (blob) => (blob ? resolve(blob) : reject("Crop failed")),
+          "image/webp",
         );
       };
       img.onerror = reject;
     });
   };
-  
+
   const compressToWebP = (blob: Blob): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -123,9 +124,9 @@ const AvatarPicker: React.FC<AvatarProps> = ({
 
         ctx.drawImage(img, 0, 0);
         canvas.toBlob(
-          b => (b ? resolve(b) : reject("Compression failed")),
+          (b) => (b ? resolve(b) : reject("Compression failed")),
           "image/webp",
-          0.8
+          0.8,
         );
       };
       img.onerror = reject;

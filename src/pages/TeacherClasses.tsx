@@ -3,17 +3,25 @@ import { Class } from "../components/TeacherDashboard/types";
 import { fetchMockClasses } from "../services/mockClassService";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
-import { Upload, Plus, Zap, Users, TrendingUp } from "lucide-react";
+import ProfileModal from "../components/TeacherDashboard/ProfileModal";
+import EditProfileModal from "../components/TeacherDashboard/EditProfileModal";
+import { Upload, Plus, Zap, Users, TrendingUp, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
 import { useAuth } from "../contexts/AuthContext";
 import { getSTEM1Summary } from "../services/stem1GradeService";
+import { UserProfile } from "../services/profileService";
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadClasses = async () => {
@@ -24,6 +32,15 @@ const ClassesPage: React.FC = () => {
     };
     loadClasses();
   }, []);
+
+  const handleViewStudentProfile = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileUpdated = (profile: UserProfile) => {
+    console.log("Profile updated:", profile);
+  };
 
   return (
     <div className="w-full">
@@ -199,6 +216,15 @@ const ClassesPage: React.FC = () => {
                                 {student.name}
                               </td>
                               <td className="py-2 px-3">
+                                <button
+                                  onClick={() =>
+                                    handleViewStudentProfile(student.id)
+                                  }
+                                  className="text-brightboost-blue hover:text-brightboost-navy mr-2"
+                                  title="View student profile"
+                                >
+                                  <User className="w-4 h-4" />
+                                </button>
                                 {student.email ?? (
                                   <span className="text-gray-400 italic">
                                     N/A
@@ -234,6 +260,22 @@ const ClassesPage: React.FC = () => {
       <CSVImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+        studentId={selectedStudentId || undefined}
+        isTeacherProfile={!selectedStudentId}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
       />
     </div>
   );

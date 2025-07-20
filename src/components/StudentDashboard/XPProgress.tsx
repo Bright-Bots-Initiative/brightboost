@@ -27,7 +27,7 @@ const XPProgressWidget = ({
   const percentage = Math.min(100, (xp / xpToNext) * 100);
 
   return (
-    <div className="flex items-center justify-end w-full">
+    <div className="flex items-center w-full">
       {/* Popup */}
       {showPopup && (
         <div className="absolute top-0 right-0 bg-brightboost-green text-white px-4 py-2 rounded-xl shadow-lg z-50">
@@ -35,7 +35,7 @@ const XPProgressWidget = ({
         </div>
       )}
 
-      <div className="bg-brightboost-yellow px-4 py-1 rounded-full flex items-center gap-3 shadow text-sm font-medium">
+      <div className="bg-brightboost-yellow px-4 py-1 rounded-full flex items-center gap-3 shadow text-sm font-medium flex-grow min-w-0">
         {/* Level */}
         <div className="flex items-center gap-1">
           <span className="text-base font-bold text-brightboost-navy">
@@ -47,7 +47,7 @@ const XPProgressWidget = ({
         </div>
 
         {/* XP bar */}
-        <div className="relative w-32 h-3 bg-white rounded-full overflow-hidden">
+        <div className="relative h-3 bg-white rounded-full overflow-hidden flex-grow min-w-0">
           <div
             className="absolute top-0 left-0 h-full bg-brightboost-blue transition-all duration-500 ease-out"
             style={{ width: `${percentage}%` }}

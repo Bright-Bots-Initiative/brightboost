@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import IframeResizer from '@iframe-resizer/react';
-import GameBackground from '../components/GameBackground';
-import { grantXp, wasXpGrantedInSession } from '../lib/xp';
+import React, { useState, useEffect, useRef } from "react";
+import IframeResizer from "@iframe-resizer/react";
+import GameBackground from "../components/GameBackground";
+import { grantXp, wasXpGrantedInSession } from "../lib/xp";
 
 const QuantumDemo: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,22 +11,24 @@ const QuantumDemo: React.FC = () => {
   const [xpGranted, setXpGranted] = useState(false);
   const loadingTimerRef = useRef<NodeJS.Timeout>();
 
-  const REMOTE_URL = 'https://quantumai.google/education/thequbitgame';
-  const FALLBACK_URL = 'https://cl-quantum-game.appspot.com/';
+  const REMOTE_URL = "https://quantumai.google/education/thequbitgame";
+  const FALLBACK_URL = "https://cl-quantum-game.appspot.com/";
 
   useEffect(() => {
     loadingTimerRef.current = setInterval(() => {
-      setLoadingTime(prev => prev + 1);
+      setLoadingTime((prev) => prev + 1);
     }, 1000);
 
-    if (wasXpGrantedInSession('quantum_demo_visit')) {
+    if (wasXpGrantedInSession("quantum_demo_visit")) {
       setXpGranted(true);
     }
 
     const handleMessage = (event: MessageEvent) => {
-      if (event.data === 'x-frame-option-block' || 
-          (typeof event.data === 'string' && event.data.includes('frame'))) {
-        console.log('X-Frame-Options blocking detected, switching to fallback');
+      if (
+        event.data === "x-frame-option-block" ||
+        (typeof event.data === "string" && event.data.includes("frame"))
+      ) {
+        console.log("X-Frame-Options blocking detected, switching to fallback");
         setUseFallback(true);
         setHasError(false);
       }
@@ -34,21 +36,23 @@ const QuantumDemo: React.FC = () => {
 
     const cspTimeout = setTimeout(() => {
       if (isLoading && !useFallback) {
-        console.log('CSP blocking suspected due to loading timeout, switching to fallback');
+        console.log(
+          "CSP blocking suspected due to loading timeout, switching to fallback",
+        );
         setUseFallback(true);
         setHasError(false);
         setIsLoading(false);
       }
     }, 15000); // 15 second timeout for CSP detection
 
-    window.addEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
 
     return () => {
       if (loadingTimerRef.current) {
         clearInterval(loadingTimerRef.current);
       }
       clearTimeout(cspTimeout);
-      window.removeEventListener('message', handleMessage);
+      window.removeEventListener("message", handleMessage);
     };
   }, [isLoading, useFallback]);
 
@@ -58,22 +62,22 @@ const QuantumDemo: React.FC = () => {
       clearInterval(loadingTimerRef.current);
     }
 
-    if (!xpGranted && !wasXpGrantedInSession('quantum_demo_visit')) {
+    if (!xpGranted && !wasXpGrantedInSession("quantum_demo_visit")) {
       try {
-        const success = await grantXp('quantum_demo_visit');
+        const success = await grantXp("quantum_demo_visit");
         if (success) {
           setXpGranted(true);
-          console.log('XP granted for quantum demo visit');
+          console.log("XP granted for quantum demo visit");
         }
       } catch (error) {
-        console.error('Failed to grant XP:', error);
+        console.error("Failed to grant XP:", error);
       }
     }
   };
 
   const handleIframeError = () => {
-    console.log('Iframe failed to load, switching to fallback');
-    console.log('Setting hasError=true, useFallback=true, isLoading=false');
+    console.log("Iframe failed to load, switching to fallback");
+    console.log("Setting hasError=true, useFallback=true, isLoading=false");
     setHasError(true);
     setUseFallback(true);
     setIsLoading(false);
@@ -116,9 +120,15 @@ const QuantumDemo: React.FC = () => {
           <div className="relative bg-white rounded-lg shadow-lg overflow-hidden">
             {isLoading && (
               <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center z-10">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mb-4" role="status" aria-label="Loading"></div>
+                <div
+                  className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mb-4"
+                  role="status"
+                  aria-label="Loading"
+                ></div>
                 <p className="text-brightboost-navy">
-                  {loadingTime > 10 ? 'Loading Quantum Demo... This may take a moment' : 'Loading Quantum Demo...'}
+                  {loadingTime > 10
+                    ? "Loading Quantum Demo... This may take a moment"
+                    : "Loading Quantum Demo..."}
                 </p>
                 {loadingTime > 5 && (
                   <p className="text-sm text-gray-600 mt-2">
@@ -147,14 +157,14 @@ const QuantumDemo: React.FC = () => {
               </div>
             )}
 
-            <div className="w-full" style={{ minHeight: '480px' }}>
+            <div className="w-full" style={{ minHeight: "480px" }}>
               <IframeResizer
                 src={currentUrl}
                 title="Quantum computing mini-game"
                 style={{
-                  width: '100%',
-                  minHeight: '480px',
-                  border: 'none'
+                  width: "100%",
+                  minHeight: "480px",
+                  border: "none",
                 }}
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
@@ -166,7 +176,8 @@ const QuantumDemo: React.FC = () => {
           {useFallback && (
             <div className="mt-4 p-3 bg-brightboost-yellow bg-opacity-20 rounded-lg">
               <p className="text-sm text-brightboost-navy">
-                <strong>Note:</strong> Running local version of the Qubit Game due to network restrictions.
+                <strong>Note:</strong> Running local version of the Qubit Game
+                due to network restrictions.
               </p>
             </div>
           )}

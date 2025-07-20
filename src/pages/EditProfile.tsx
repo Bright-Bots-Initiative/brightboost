@@ -21,7 +21,7 @@ const Edit = () => {
 
     fetchProfile();
   }, [api]);
-  
+
   const edit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -47,7 +47,7 @@ const Edit = () => {
     
   return (
     <>
-    <img 
+    <img
       src = {profileUrl}
       alt="profile picture"
       />
