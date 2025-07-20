@@ -10,11 +10,23 @@ import {
   fetchMockClassById,
   patchMockClass,
 } from "../services/mockClassService";
+import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
+import ProfileModal from "../components/TeacherDashboard/ProfileModal";
+import EditProfileModal from "../components/TeacherDashboard/EditProfileModal";
+import {
+  Users,
+  GraduationCap,
+  Zap,
+  Trophy,
+  Target,
+  Clock,
+  User,
+  Edit,
+} from "lucide-react";
+import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
+import { UserProfile } from "../services/profileService";
 import AssignmentTable from "@/components/TeacherDashboard/Assignments/AssignmentsTable";
 import { getAssignments } from "@/services/assignmentService";
-import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
-import { Users, GraduationCap, Zap, Trophy, Target, Clock } from "lucide-react";
-import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +39,11 @@ const TeacherClassDetail: React.FC = () => {
   const [editingGrade, setEditingGrade] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (id) {
@@ -54,20 +71,27 @@ const TeacherClassDetail: React.FC = () => {
   const handleSave = async () => {
     if (!classData) return;
     setIsSaving(true);
-    try {
-      await patchMockClass(classData.id, {
-        name: editingName,
-        grade: editingGrade as Class["grade"],
-      });
+    setClassData({
+      ...classData,
+      name: editingName,
+      grade: editingGrade as Class["grade"],
+    });
 
-      setClassData({
-        ...classData,
-        name: editingName,
-        grade: editingGrade as Class["grade"],
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    await patchMockClass(classData.id, {
+      name: editingName,
+      grade: editingGrade as Class["grade"],
+    });
+
+    setIsSaving(false);
+  };
+
+  const handleViewStudentProfile = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileUpdated = (profile: UserProfile) => {
+    console.log("Profile updated:", profile);
   };
 
   const navigateToAssignmentDetail = (assignmentId: string) => {
@@ -108,12 +132,28 @@ const TeacherClassDetail: React.FC = () => {
             quests
           </p>
         </div>
-        <ExportGradesButton
-          classData={classData}
-          teacherName={user?.name}
-          variant="primary"
-          size="md"
-        />
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors"
+          >
+            <User className="w-4 h-4 mr-1" />
+            Profile
+          </button>
+          <button
+            onClick={() => setIsEditProfileModalOpen(true)}
+            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors"
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </button>
+          <ExportGradesButton
+            classData={classData}
+            teacherName={user?.name}
+            variant="primary"
+            size="md"
+          />
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -267,6 +307,7 @@ const TeacherClassDetail: React.FC = () => {
               </thead>
               <tbody>
                 {classData.students.map((student) => {
+                  // Mock progress data for display
                   const mockXP = Math.floor(Math.random() * 200) + 300;
                   const mockCompletion = Math.floor((mockXP / 500) * 100);
                   const mockPassed = mockCompletion >= 70;
@@ -281,9 +322,18 @@ const TeacherClassDetail: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4">
-                        {student.email ?? (
-                          <span className="text-gray-400 italic">N/A</span>
-                        )}
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handleViewStudentProfile(student.id)}
+                            className="text-brightboost-blue hover:text-brightboost-navy mr-2"
+                            title="View student profile"
+                          >
+                            <User className="w-4 h-4" />
+                          </button>
+                          {student.email ?? (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
@@ -323,6 +373,21 @@ const TeacherClassDetail: React.FC = () => {
         )}
       </div>
 
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+        studentId={selectedStudentId || undefined}
+        isTeacherProfile={!selectedStudentId}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onProfileUpdated={handleProfileUpdated}
+      />
       {/* Assignments */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-4">

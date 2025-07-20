@@ -66,7 +66,9 @@ function App() {
           path="/teacher/dashboard"
           element={
             <ProtectedRoute requiredRole="TEACHER">
-              <TeacherDashboard />
+              <TeacherLayout>
+                <TeacherDashboard />
+              </TeacherLayout>
             </ProtectedRoute>
           }
         />
