@@ -61,5 +61,18 @@
   },
   "notFound.pageNotFound": "Page Not Found",
   "notFound.pageDescription": "Oops! The page you are looking for doesn't exist or has been moved.",
-  "notFound.backToHome": "Back to Home"
+  "notFound.backToHome": "Back to Home",
+  "stem1": {
+    "title": "Welcome to STEM 1!",
+    "subtitle": "Ready to be a STEM Explorer?",
+    "startQuest": "Start Quest",
+    "continueQuest": "Continue Quest",
+    "reviewQuest": "Review Quest",
+    "status": "Status",
+    "pastDue": "Past Due",
+    "due": "Due",
+    "back": "⬅ Back to Dashboard",
+    "nextModule": "Next Module",
+    "noNextModule": "No next module assigned."
+  }
 }

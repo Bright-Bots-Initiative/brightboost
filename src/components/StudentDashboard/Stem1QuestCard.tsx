@@ -1,5 +1,6 @@
-// import { Check, Play } from "lucide-react";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
 interface Stem1Quest {
   title: string;
   status: "Not Started" | "In Progress" | "Complete";
@@ -12,6 +13,8 @@ interface Stem1QuestCardProps {
 }
 
 const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="relative flex items-stretch space-x-4">
       {/* Left ladder line + dot */}
@@ -32,16 +35,22 @@ const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest }) => {
             <Play className="w-3 h-3 fill-current text-slate" />
           )}
         </div>
+
         <div className="flex-grow w-px bg-gray-300" />
       </div>
+
       {/* Card */}
       <div className="bg-white rounded-2xl shadow-md p-4 flex-1">
         <h2 className="text-base font-semibold text-brightboost-navy mb-1">
           {quest.title}
         </h2>
-        <p className="text-sm text-gray-600">Status: {quest.status}</p>
+        <p className="text-sm text-gray-600">
+          {t("stem1.status")}: {quest.status}
+        </p>
         {quest.dueDate && (
-          <p className="text-sm text-gray-600">Due: {quest.dueDate}</p>
+          <p className="text-sm text-gray-600">
+            {t("stem1.due")}: {quest.dueDate}
+          </p>
         )}
       </div>
     </div>

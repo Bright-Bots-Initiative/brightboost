@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import ModuleLadder from "../components/StudentDashboard/ModuleLadder";
 import { QuestProgress } from "../components/StudentDashboard/ModuleLadder";
+import { useTranslation } from "react-i18next";
+import LanguageToggle from "../components/LanguageToggle";
 
 const stem1Quests: QuestProgress[] = [
   {
@@ -20,23 +22,23 @@ const stem1Quests: QuestProgress[] = [
   },
 ] as const as QuestProgress[];
 
-const renderQuestButton = (status: string) => {
+const renderQuestButton = (status: string, t: (key: string) => string) => {
   if (status === "Complete") {
     return (
       <button className="mt-3 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg w-full">
-        Review Quest
+        {t("stem1.reviewQuest")}
       </button>
     );
   } else if (status === "In Progress") {
     return (
       <button className="mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg w-full">
-        Continue Quest
+        {t("stem1.continueQuest")}
       </button>
     );
   } else {
     return (
       <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
-        Start Quest
+        {t("stem1.startQuest")}
       </button>
     );
   }
@@ -51,17 +53,21 @@ const isPastDue = (status: string, dueDate: string) => {
 
 const Stem1Page = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-b from-white to-brightboost-lightblue">
+      {/* Language toggle */}
+      <div className="flex justify-end mb-4 max-w-4xl mx-auto">
+        <LanguageToggle />
+      </div>
+
       {/* Hero */}
       <div className="max-w-4xl mx-auto text-center mb-8">
         <h1 className="text-4xl font-bold text-brightboost-navy mb-2">
-          Welcome to STEM 1!
+          {t("stem1.title")}
         </h1>
-        <p className="text-lg text-brightboost-blue">
-          Ready to be a STEM Explorer?
-        </p>
+        <p className="text-lg text-brightboost-blue">{t("stem1.subtitle")}</p>
       </div>
 
       {/* Module Ladder */}
@@ -87,19 +93,19 @@ const Stem1Page = () => {
                 stem1Quests[0].dueDate ?? "",
               ) && (
                 <p className="text-xs text-red-500 font-semibold mt-1">
-                  Past Due
+                  {t("stem1.pastDue")}
                 </p>
               )}
               <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                 {stem1Quests[0].title}
               </h2>
               <p className="text-sm text-gray-600 mb-1">
-                Status: {stem1Quests[0].status}
+                {t("stem1.status")}: {stem1Quests[0].status}
               </p>
               <p className="text-sm text-gray-600">
-                Due: {stem1Quests[0].dueDate}
+                {t("stem1.due")}: {stem1Quests[0].dueDate}
               </p>
-              {renderQuestButton(stem1Quests[0].status)}
+              {renderQuestButton(stem1Quests[0].status, t)}
             </div>
           </div>
 
@@ -117,19 +123,19 @@ const Stem1Page = () => {
                 stem1Quests[1].dueDate ?? "",
               ) && (
                 <p className="text-xs text-red-500 font-semibold mt-1">
-                  Past Due
+                  {t("stem1.pastDue")}
                 </p>
               )}
               <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                 {stem1Quests[1].title}
               </h2>
               <p className="text-sm text-gray-600 mb-1">
-                Status: {stem1Quests[1].status}
+                {t("stem1.status")}: {stem1Quests[1].status}
               </p>
               <p className="text-sm text-gray-600">
-                Due: {stem1Quests[1].dueDate}
+                {t("stem1.due")}: {stem1Quests[1].dueDate}
               </p>
-              {renderQuestButton(stem1Quests[1].status)}
+              {renderQuestButton(stem1Quests[1].status, t)}
             </div>
           </div>
 
@@ -148,19 +154,19 @@ const Stem1Page = () => {
                   stem1Quests[2].dueDate ?? "",
                 ) && (
                   <p className="text-xs text-red-500 font-semibold mt-1">
-                    Past Due
+                    {t("stem1.pastDue")}
                   </p>
                 )}
                 <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                   {stem1Quests[2].title}
                 </h2>
                 <p className="text-sm text-gray-600 mb-1">
-                  Status: {stem1Quests[2].status}
+                  {t("stem1.status")}: {stem1Quests[2].status}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Due: {stem1Quests[2].dueDate}
+                  {t("stem1.due")}: {stem1Quests[2].dueDate}
                 </p>
-                {renderQuestButton(stem1Quests[2].status)}
+                {renderQuestButton(stem1Quests[2].status, t)}
               </div>
             </div>
           </div>
@@ -171,7 +177,7 @@ const Stem1Page = () => {
           onClick={() => navigate("/student/dashboard")}
           className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
         >
-          ⬅ Back to Dashboard
+          {t("stem1.back")}
         </button>
       </div>
     </div>
