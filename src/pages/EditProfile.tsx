@@ -10,11 +10,26 @@ const Edit = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+<<<<<<< HEAD
         const user = await api.get("/api/profile");
         setProfileUrl(user.avatar);
         setRole(user.role);
       } catch {
         void 0;
+||||||| parent of febce0a (fix profile and edit profile route errors)
+        const user_data = await api.get("/api/profile");
+        const parsed = JSON.parse(user_data);
+        setProfileUrl(parsed.avatar);
+        setRole(parsed.role)
+      } catch (err: any) {
+        console.log("Failed to get image/role");
+=======
+        const user_data = await api.get("/api/profile");
+        setProfileUrl(user_data.avatar);
+        setRole(user_data.role)
+      } catch (err: any) {
+        console.log("Failed to get image/role", err);
+>>>>>>> febce0a (fix profile and edit profile route errors)
       }
     };
     fetchProfile();
@@ -69,6 +84,7 @@ const Edit = () => {
 
   return (
     <>
+<<<<<<< HEAD
       <img src={profileUrl} alt="profile picture" />
       <form onSubmit={edit}>
         <input name="name" placeholder="Name" />
@@ -82,6 +98,43 @@ const Edit = () => {
         {String(role || "").toLowerCase() === "student" && <input name="grade" placeholder="Grade" />}
         <button type="submit">Save</button>
       </form>
+||||||| parent of febce0a (fix profile and edit profile route errors)
+    <img 
+      src = {profileUrl}
+      alt="profile picture"
+      />
+    <form onSubmit={edit}>
+      <input name="name" placeholder="Name" />
+      {role === "teacher" && (
+        <input name="school" placeholder="School" />
+        <input name="subject" placeholder="Subject" />
+        <input name="bio" placeholder="Bio" />
+      )}
+      {role === "student" && (
+        <input name="grade" placeholder="Grade" />
+      )}
+      <button type="submit">Save</button>
+    </form>
+=======
+    <img 
+      src = {profileUrl}
+      alt="profile picture"
+      />
+    <form onSubmit={edit}>
+      <input name="name" placeholder="Name" />
+      {role.toLowerCase() === "teacher" && (
+        <>
+          <input name="school" placeholder="School" />
+          <input name="subject" placeholder="Subject" />
+          <input name="bio" placeholder="Bio" />
+        </>
+      )}
+      {role.toLowerCase() === "student" && (
+        <input name="grade" placeholder="Grade" />
+      )}
+      <button type="submit">Save</button>
+    </form>
+>>>>>>> febce0a (fix profile and edit profile route errors)
     </>
   );
 };

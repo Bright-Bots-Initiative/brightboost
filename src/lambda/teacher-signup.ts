@@ -259,6 +259,17 @@ export const handler = async (
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    try {
+      const insertUserNewSchemaQuery = `
+        INSERT INTO "User" (id, name, email, password, role, "updatedAt")
+        VALUES ($1, $2, $3, $4, 'teacher', NOW())
+      `;
+      const tempId = `${email}-${Math.floor(Math.random() * 1000)}`;
+      await db.query(insertUserNewSchemaQuery, [tempId, name, email, hashedPassword]);
+    } catch (e) {
+      console.error("Error inserting new user schema entry", e);
+    }
+
     const insertUserQuery = `
       INSERT INTO users (name, email, password, role, school, subject, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())

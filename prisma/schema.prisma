@@ -19,7 +19,7 @@ model User {
   school    String?
   subject   String?
   bio       String   @default("No bio added")
-  grade     Int
+  grade     Int?
   xp        Int      @default(0)
   level     String   @default("Explorer")  // Changed to String to match server.cjs
   streak    Int      @default(0)           // Added streak from server.cjs

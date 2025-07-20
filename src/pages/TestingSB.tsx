@@ -3,7 +3,7 @@ import React from "react";
 import { useApi } from "../services/api";
 import { Button } from "@/components/ui/button"; // or wherever your Button is defined
 
-const App = () => {
+const TestingSB = () => {
   const api = useApi();
 
   const handleIncrement = () => {
@@ -21,7 +21,7 @@ const App = () => {
 
   const handleAddBadge = () => {
     const badge = "ABC";
-    api.post("api/add-badge", badge);
+    api.post("api/add-badge", { badge });
   };
 
   return (
@@ -34,4 +34,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default TestingSB;
