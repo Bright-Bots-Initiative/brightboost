@@ -3,7 +3,7 @@ import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
-import { Pool } from "pg";
+import { Pool, QueryResult } from "pg";
 import * as jwt from "jsonwebtoken";
 
 interface DatabaseSecret {
@@ -144,12 +144,14 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
+    let result: QueryResult;
     if (role === "student") {
-      const result = await db.query('UPDATE "User" SET name = $1, grade = $2, WHERE email = $3', [name, grade, decoded.email])
-    };
-
-    if (role === "teacher") {
-      const result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5', [name, school, subject, bio, decoded.email])
+      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade, decoded.email])
+    } else if (role === "teacher") {
+      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school, subject, bio, decoded.email])
+    } else {
+      console.warn("Could not identify user's role");
+      result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
     };
 
     if (result.rows.length === 0) {

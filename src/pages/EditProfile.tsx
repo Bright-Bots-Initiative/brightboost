@@ -12,11 +12,10 @@ const Edit = () => {
     const fetchProfile = async () => {
       try {
         const user_data = await api.get("/api/profile");
-        const parsed = JSON.parse(user_data);
-        setProfileUrl(parsed.avatar);
-        setRole(parsed.role)
+        setProfileUrl(user_data.avatar);
+        setRole(user_data.role)
       } catch (err: any) {
-        console.log("Failed to get image/role");
+        console.log("Failed to get image/role", err);
       }
     };
 
@@ -54,12 +53,14 @@ const Edit = () => {
       />
     <form onSubmit={edit}>
       <input name="name" placeholder="Name" />
-      {role === "teacher" && (
-        <input name="school" placeholder="School" />
-        <input name="subject" placeholder="Subject" />
-        <input name="bio" placeholder="Bio" />
+      {role.toLowerCase() === "teacher" && (
+        <>
+          <input name="school" placeholder="School" />
+          <input name="subject" placeholder="Subject" />
+          <input name="bio" placeholder="Bio" />
+        </>
       )}
-      {role === "student" && (
+      {role.toLowerCase() === "student" && (
         <input name="grade" placeholder="Grade" />
       )}
       <button type="submit">Save</button>

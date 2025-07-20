@@ -33,6 +33,7 @@ const QuantumDemo = lazy(() => import("./pages/QuantumDemo"));
 
 import LoadingSpinner from "./components/LoadingSpinner";
 import "./App.css";
+import TestingSB from "./pages/TestingSB";
 
 function App() {
   const renderApp = (
