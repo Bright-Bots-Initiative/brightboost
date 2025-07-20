@@ -4,16 +4,18 @@ import { useApi } from "../services/api";
 
 const Edit = () => {
   const api = useApi();
-  
-  const [profileUrl, setProfileUrl] = useState("https://api.dicebear.com/7.x/identicon/svg?seed=default");
+
+  const [profileUrl, setProfileUrl] = useState(
+    "https://api.dicebear.com/7.x/identicon/svg?seed=default",
+  );
   const [role, setRole] = useState("blank");
-  
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const user_data = await api.get("/api/profile");
         setProfileUrl(user_data.avatar);
-        setRole(user_data.role)
+        setRole(user_data.role);
       } catch (err: any) {
         console.log("Failed to get image/role", err);
       }
@@ -37,34 +39,31 @@ const Edit = () => {
         school: school,
         subject: subject,
         bio: bio,
-        grade: grade
+        grade: grade,
       };
       const response = await api.post("/api/edit-profile", data);
       console.log(response);
     },
     [api, role],
   );
-    
+
   return (
     <>
-    <img
-      src = {profileUrl}
-      alt="profile picture"
-      />
-    <form onSubmit={edit}>
-      <input name="name" placeholder="Name" />
-      {role.toLowerCase() === "teacher" && (
-        <>
-          <input name="school" placeholder="School" />
-          <input name="subject" placeholder="Subject" />
-          <input name="bio" placeholder="Bio" />
-        </>
-      )}
-      {role.toLowerCase() === "student" && (
-        <input name="grade" placeholder="Grade" />
-      )}
-      <button type="submit">Save</button>
-    </form>
+      <img src={profileUrl} alt="profile picture" />
+      <form onSubmit={edit}>
+        <input name="name" placeholder="Name" />
+        {role.toLowerCase() === "teacher" && (
+          <>
+            <input name="school" placeholder="School" />
+            <input name="subject" placeholder="Subject" />
+            <input name="bio" placeholder="Bio" />
+          </>
+        )}
+        {role.toLowerCase() === "student" && (
+          <input name="grade" placeholder="Grade" />
+        )}
+        <button type="submit">Save</button>
+      </form>
     </>
   );
 };

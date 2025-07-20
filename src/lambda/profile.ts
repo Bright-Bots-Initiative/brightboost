@@ -151,7 +151,7 @@ export const handler = async (
         subject: user.subject,
         role: user.role,
         id: user.id,
-        created_at: user.createdAt
+        created_at: user.createdAt,
       }),
     };
   } catch (error) {

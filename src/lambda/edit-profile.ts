@@ -148,13 +148,22 @@ export const handler = async (
 
     let result: QueryResult;
     if (role === "student") {
-      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade || null, decoded.email])
+      result = await db.query(
+        'UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *',
+        [name, grade || null, decoded.email],
+      );
     } else if (role === "teacher") {
-      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school || null, subject || null, bio, decoded.email])
+      result = await db.query(
+        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *',
+        [name, school || null, subject || null, bio, decoded.email],
+      );
     } else {
       console.warn("Could not identify user's role");
-      result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
-    };
+      result = await db.query(
+        'UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *',
+        [name, decoded.email],
+      );
+    }
 
     if (result.rows.length === 0) {
       return {
