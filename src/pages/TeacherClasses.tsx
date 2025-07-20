@@ -5,7 +5,7 @@ import BrightBoostRobot from '../components/BrightBoostRobot';
 import CSVImportModal from '../components/TeacherDashboard/CSVImportModal';
 import ProfileModal from '../components/TeacherDashboard/ProfileModal';
 import EditProfileModal from '../components/TeacherDashboard/EditProfileModal';
-import { Upload, Plus, Zap, Users, TrendingUp, User, Edit } from 'lucide-react';
+import { Upload, Plus, Zap, Users, TrendingUp, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ExportGradesButton from '../components/TeacherDashboard/ExportGradesButton';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,20 +56,6 @@ const ClassesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button
-            onClick={() => setIsProfileModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
-          >
-            <User className="w-4 h-4 mr-2" />
-            View Profile
-          </button>
-          <button
-            onClick={() => setIsEditProfileModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Profile
-          </button>
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
