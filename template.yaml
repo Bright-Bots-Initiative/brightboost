@@ -418,7 +418,7 @@ Resources:
             Path: /api/increment-streak
             Method: get
             RestApiId: !Ref AuthApi
-  
+
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:

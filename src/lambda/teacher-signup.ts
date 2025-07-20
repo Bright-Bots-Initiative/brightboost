@@ -265,7 +265,12 @@ export const handler = async (
         VALUES ($1, $2, $3, $4, 'teacher', NOW())
       `;
       const tempId = `${email}-${Math.floor(Math.random() * 1000)}`;
-      await db.query(insertUserNewSchemaQuery, [tempId, name, email, hashedPassword]);
+      await db.query(insertUserNewSchemaQuery, [
+        tempId,
+        name,
+        email,
+        hashedPassword,
+      ]);
     } catch (e) {
       console.error("Error inserting new user schema entry", e);
     }

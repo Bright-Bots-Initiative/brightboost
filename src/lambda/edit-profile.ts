@@ -156,14 +156,43 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 =======
     let result: QueryResult;
     if (role === "student") {
+<<<<<<< HEAD
       result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade, decoded.email])
+||||||| parent of 47cbf88 (profile-be: run format)
+      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade || null, decoded.email])
+=======
+      result = await db.query(
+        'UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *',
+        [name, grade || null, decoded.email],
+      );
+>>>>>>> 47cbf88 (profile-be: run format)
     } else if (role === "teacher") {
+<<<<<<< HEAD
       result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school, subject, bio, decoded.email])
+||||||| parent of 47cbf88 (profile-be: run format)
+      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school || null, subject || null, bio, decoded.email])
+=======
+      result = await db.query(
+        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *',
+        [name, school || null, subject || null, bio, decoded.email],
+      );
+>>>>>>> 47cbf88 (profile-be: run format)
     } else {
       console.warn("Could not identify user's role");
+<<<<<<< HEAD
       result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
     };
 >>>>>>> febce0a (fix profile and edit profile route errors)
+||||||| parent of 47cbf88 (profile-be: run format)
+      result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
+    };
+=======
+      result = await db.query(
+        'UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *',
+        [name, decoded.email],
+      );
+    }
+>>>>>>> 47cbf88 (profile-be: run format)
 
     if (result.rows.length === 0) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: "User not found" }) };

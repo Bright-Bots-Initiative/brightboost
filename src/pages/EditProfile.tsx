@@ -10,26 +10,11 @@ const Edit = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-<<<<<<< HEAD
         const user = await api.get("/api/profile");
         setProfileUrl(user.avatar);
         setRole(user.role);
       } catch {
         void 0;
-||||||| parent of febce0a (fix profile and edit profile route errors)
-        const user_data = await api.get("/api/profile");
-        const parsed = JSON.parse(user_data);
-        setProfileUrl(parsed.avatar);
-        setRole(parsed.role)
-      } catch (err: any) {
-        console.log("Failed to get image/role");
-=======
-        const user_data = await api.get("/api/profile");
-        setProfileUrl(user_data.avatar);
-        setRole(user_data.role)
-      } catch (err: any) {
-        console.log("Failed to get image/role", err);
->>>>>>> febce0a (fix profile and edit profile route errors)
       }
     };
     fetchProfile();
@@ -40,7 +25,6 @@ const Edit = () => {
       e.preventDefault();
       const formData = new FormData(e.currentTarget);
       const name = formData.get("name");
-<<<<<<< HEAD
       const roleLower = String(role || "").toLowerCase();
       const school = roleLower === "teacher" ? formData.get("school") : "blank";
       const subject = roleLower === "teacher" ? formData.get("subject") : "blank";
@@ -48,43 +32,12 @@ const Edit = () => {
       const grade = roleLower === "student" ? formData.get("grade") : "blank";
       const data = { role, name, school, subject, bio, grade };
       await api.post("/api/edit-profile", data);
-||||||| parent of 77dba5d (Update EditProfile.tsx)
-      const school = role === "teacher" ? formData.get("school") : "blank";
-      const subject = role === "teacher" ? formData.get("subject") : "blank";
-      const bio = role === "teacher" ? formData.get("bio") : "blank";
-      const grade = role === "student" ? formData.get("grade") : "blank";
-      const data = {
-        role: role,
-        name: name,
-        school: school,
-        subject: subject,
-        bio: bio
-      };
-      const response = await api.post("/api/edit-profile", data);
-      console.log(response);
-=======
-      const school = role === "teacher" ? formData.get("school") : "blank";
-      const subject = role === "teacher" ? formData.get("subject") : "blank";
-      const bio = role === "teacher" ? formData.get("bio") : "blank";
-      const grade = role === "student" ? formData.get("grade") : "blank";
-      const data = {
-        role: role,
-        name: name,
-        school: school,
-        subject: subject,
-        bio: bio,
-        grade: grade
-      };
-      const response = await api.post("/api/edit-profile", data);
-      console.log(response);
->>>>>>> 77dba5d (Update EditProfile.tsx)
     },
     [api, role],
   );
 
   return (
     <>
-<<<<<<< HEAD
       <img src={profileUrl} alt="profile picture" />
       <form onSubmit={edit}>
         <input name="name" placeholder="Name" />
@@ -98,43 +51,6 @@ const Edit = () => {
         {String(role || "").toLowerCase() === "student" && <input name="grade" placeholder="Grade" />}
         <button type="submit">Save</button>
       </form>
-||||||| parent of febce0a (fix profile and edit profile route errors)
-    <img 
-      src = {profileUrl}
-      alt="profile picture"
-      />
-    <form onSubmit={edit}>
-      <input name="name" placeholder="Name" />
-      {role === "teacher" && (
-        <input name="school" placeholder="School" />
-        <input name="subject" placeholder="Subject" />
-        <input name="bio" placeholder="Bio" />
-      )}
-      {role === "student" && (
-        <input name="grade" placeholder="Grade" />
-      )}
-      <button type="submit">Save</button>
-    </form>
-=======
-    <img 
-      src = {profileUrl}
-      alt="profile picture"
-      />
-    <form onSubmit={edit}>
-      <input name="name" placeholder="Name" />
-      {role.toLowerCase() === "teacher" && (
-        <>
-          <input name="school" placeholder="School" />
-          <input name="subject" placeholder="Subject" />
-          <input name="bio" placeholder="Bio" />
-        </>
-      )}
-      {role.toLowerCase() === "student" && (
-        <input name="grade" placeholder="Grade" />
-      )}
-      <button type="submit">Save</button>
-    </form>
->>>>>>> febce0a (fix profile and edit profile route errors)
     </>
   );
 };
