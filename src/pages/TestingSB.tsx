@@ -3,7 +3,7 @@ import React from "react";
 import { useApi } from "../services/api";
 import { Button } from "@/components/ui/button"; // or wherever your Button is defined
 
-const TestingSB = () => {
+const TestingSB: React.FC = () => {
   const api = useApi();
 
   const handleIncrement = () => {
