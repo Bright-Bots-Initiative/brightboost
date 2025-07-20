@@ -1,9 +1,9 @@
-// src/pages/edit-profile.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "../services/api";
 
 const Edit = () => {
   const api = useApi();
+
   const [profileUrl, setProfileUrl] = useState("https://api.dicebear.com/7.x/identicon/svg?seed=default");
   const [role, setRole] = useState("blank");
 
@@ -17,6 +17,7 @@ const Edit = () => {
         void 0;
       }
     };
+
     fetchProfile();
   }, [api]);
 
@@ -48,7 +49,9 @@ const Edit = () => {
             <input name="bio" placeholder="Bio" />
           </>
         )}
-        {String(role || "").toLowerCase() === "student" && <input name="grade" placeholder="Grade" />}
+        {String(role || "").toLowerCase() === "student" && (
+          <input name="grade" placeholder="Grade" />
+        )}
         <button type="submit">Save</button>
       </form>
     </>

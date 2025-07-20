@@ -1,20 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-<<<<<<< HEAD
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
-import { Pool } from "pg";
-||||||| parent of febce0a (fix profile and edit profile route errors)
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from "@aws-sdk/client-secrets-manager";
-import { Pool } from "pg";
-=======
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
 } from "@aws-sdk/client-secrets-manager";
 import { Pool, QueryResult } from "pg";
->>>>>>> febce0a (fix profile and edit profile route errors)
 import * as jwt from "jsonwebtoken";
 
 interface DatabaseSecret {
@@ -55,7 +44,9 @@ async function getDbConnection(): Promise<Pool> {
 
       secret = JSON.parse(secretResult.SecretString);
     }
-    console.log(`Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`);
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
 
     dbPool = new Pool({
       host: secret.host,
@@ -63,7 +54,12 @@ async function getDbConnection(): Promise<Pool> {
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: process.env.NODE_ENV === "local" ? false : { rejectUnauthorized: false },
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : {
+              rejectUnauthorized: false,
+            },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
@@ -83,7 +79,9 @@ async function getDbConnection(): Promise<Pool> {
   return dbPool;
 }
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
@@ -93,12 +91,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     if (event.httpMethod === "OPTIONS") {
-      return { statusCode: 200, headers, body: "" };
+      return {
+        statusCode: 200,
+        headers,
+        body: "",
+      };
     }
 
-    const authHeader = event.headers.Authorization || event.headers.authorization;
+    const authHeader =
+      event.headers.Authorization || event.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: "Missing Authentication Token" }) };
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: "Missing Authentication Token" }),
+      };
     }
 
     const token = authHeader.substring(7);
@@ -107,95 +114,64 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     let decoded;
     try {
       decoded = jwt.verify(token, jwtSecret) as any;
-    } catch {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: "Session expired" }) };
+    } catch (err) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: "Session expired" }),
+      };
     }
 
     if (!event.body) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Request body is required" }) };
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: "Request body is required" }),
+      };
     }
 
     const { role, name, school, subject, bio, grade } = JSON.parse(event.body);
 
     if (!name || typeof name !== "string") {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Name is required and must be a string" }) };
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "Name is required and must be a string",
+        }),
+      };
     }
 
     console.log("Attempting database connection...");
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-<<<<<<< HEAD
     const roleLower = String(role || "").toLowerCase();
-    let result;
-
-    if (roleLower === "student") {
-      result = await db.query(
-        'UPDATE "User" SET name = $1, grade = $2, "updatedAt" = NOW() WHERE email = $3 RETURNING id, name, email, "avatarUrl", school, subject',
-        [name, grade || null, decoded.email],
-      );
-    } else if (roleLower === "teacher") {
-      result = await db.query(
-        'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING id, name, email, "avatarUrl", school, subject',
-        [name, school || null, subject || null, bio || null, decoded.email],
-      );
-    } else {
-      result = await db.query(
-        'UPDATE "User" SET name = $1, "updatedAt" = NOW() WHERE email = $2 RETURNING id, name, email, "avatarUrl", school, subject',
-        [name, decoded.email],
-      );
-    }
-||||||| parent of febce0a (fix profile and edit profile route errors)
-    if (role === "student") {
-      const result = await db.query('UPDATE "User" SET name = $1, grade = $2, WHERE email = $3', [name, grade, decoded.email])
-    };
-
-    if (role === "teacher") {
-      const result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5', [name, school, subject, bio, decoded.email])
-    };
-=======
     let result: QueryResult;
-    if (role === "student") {
-<<<<<<< HEAD
-      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade, decoded.email])
-||||||| parent of 47cbf88 (profile-be: run format)
-      result = await db.query('UPDATE "User" SET name = $1, grade = $2 WHERE email = $3 RETURNING *', [name, grade || null, decoded.email])
-=======
+    if (roleLower === "student") {
       result = await db.query(
         'UPDATE "User" SET name = $1, grade = $2, "updatedAt" = NOW() WHERE email = $3 RETURNING *',
         [name, grade || null, decoded.email],
       );
->>>>>>> 47cbf88 (profile-be: run format)
-    } else if (role === "teacher") {
-<<<<<<< HEAD
-      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school, subject, bio, decoded.email])
-||||||| parent of 47cbf88 (profile-be: run format)
-      result = await db.query('UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4 WHERE email = $5 RETURNING *', [name, school || null, subject || null, bio, decoded.email])
-=======
+    } else if (roleLower === "teacher") {
       result = await db.query(
         'UPDATE "User" SET name = $1, school = $2, subject = $3, bio = $4, "updatedAt" = NOW() WHERE email = $5 RETURNING *',
         [name, school || null, subject || null, bio || null, decoded.email],
       );
->>>>>>> 47cbf88 (profile-be: run format)
     } else {
       console.warn("Could not identify user's role");
-<<<<<<< HEAD
-      result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
-    };
->>>>>>> febce0a (fix profile and edit profile route errors)
-||||||| parent of 47cbf88 (profile-be: run format)
-      result = await db.query('UPDATE "User" SET name = $1 WHERE email = $2 RETURNING *', [name, decoded.email]);
-    };
-=======
       result = await db.query(
         'UPDATE "User" SET name = $1, "updatedAt" = NOW() WHERE email = $2 RETURNING *',
         [name, decoded.email],
       );
     }
->>>>>>> 47cbf88 (profile-be: run format)
 
     if (result.rows.length === 0) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: "User not found" }) };
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: "User not found" }),
+      };
     }
 
     const user = result.rows[0];
@@ -217,8 +193,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   } catch (error) {
     console.error("Edit profile error:", error);
 
-    if (error instanceof Error && error.message.includes("connection")) {
-      return { statusCode: 503, headers, body: JSON.stringify({ error: "Database connection error" }) };
+    if (error instanceof Error) {
+      if (error.message.includes("connection")) {
+        return {
+          statusCode: 503,
+          headers,
+          body: JSON.stringify({ error: "Database connection error" }),
+        };
+      }
     }
 
     return {
@@ -226,7 +208,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       headers,
       body: JSON.stringify({
         error: "Internal server error",
-        message: process.env.NODE_ENV === "development" ? (error as Error).message : undefined,
+        message:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
       }),
     };
   }
