@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, User, School, BookOpen, Save, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { X, User, School, BookOpen, Save, Loader2 } from "lucide-react";
 import {
   profileService,
   UserProfile,
   UpdateProfileData,
-} from '../../services/profileService';
+} from "../../services/profileService";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -19,9 +19,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState<UpdateProfileData>({
-    name: '',
-    school: '',
-    subject: '',
+    name: "",
+    school: "",
+    subject: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,18 +44,18 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setProfile(profileData);
       setFormData({
         name: profileData.name,
-        school: profileData.school || '',
-        subject: profileData.subject || '',
+        school: profileData.school || "",
+        subject: profileData.subject || "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profile');
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleInputChange = (field: keyof UpdateProfileData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -64,7 +64,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setError('Name is required');
+      setError("Name is required");
       return;
     }
 
@@ -85,7 +85,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         onClose();
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -151,7 +151,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={e => handleInputChange('name', e.target.value)}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your full name"
                     required
@@ -166,7 +166,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.school}
-                    onChange={e => handleInputChange('school', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("school", e.target.value)
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your school name"
                   />
@@ -180,7 +182,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   <input
                     type="text"
                     value={formData.subject}
-                    onChange={e => handleInputChange('subject', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("subject", e.target.value)
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
                     placeholder="Enter your subject area"
                   />

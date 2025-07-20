@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Class } from '../components/TeacherDashboard/types';
-import { fetchMockClasses } from '../services/mockClassService';
-import BrightBoostRobot from '../components/BrightBoostRobot';
-import CSVImportModal from '../components/TeacherDashboard/CSVImportModal';
-import ProfileModal from '../components/TeacherDashboard/ProfileModal';
-import EditProfileModal from '../components/TeacherDashboard/EditProfileModal';
-import { Upload, Plus, Zap, Users, TrendingUp, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ExportGradesButton from '../components/TeacherDashboard/ExportGradesButton';
-import { useAuth } from '../contexts/AuthContext';
-import { getSTEM1Summary } from '../services/stem1GradeService';
-import { UserProfile } from '../services/profileService';
+import React, { useEffect, useState } from "react";
+import { Class } from "../components/TeacherDashboard/types";
+import { fetchMockClasses } from "../services/mockClassService";
+import BrightBoostRobot from "../components/BrightBoostRobot";
+import CSVImportModal from "../components/TeacherDashboard/CSVImportModal";
+import ProfileModal from "../components/TeacherDashboard/ProfileModal";
+import EditProfileModal from "../components/TeacherDashboard/EditProfileModal";
+import { Upload, Plus, Zap, Users, TrendingUp, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
+import { useAuth } from "../contexts/AuthContext";
+import { getSTEM1Summary } from "../services/stem1GradeService";
+import { UserProfile } from "../services/profileService";
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
@@ -20,7 +20,7 @@ const ClassesPage: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const ClassesPage: React.FC = () => {
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    console.log('Profile updated:', profile);
+    console.log("Profile updated:", profile);
   };
 
   return (
@@ -97,7 +97,7 @@ const ClassesPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {classes.map(cls => {
+          {classes.map((cls) => {
             const stem1Summary = getSTEM1Summary(cls);
             return (
               <div
@@ -116,7 +116,7 @@ const ClassesPage: React.FC = () => {
                     <div className="flex items-center space-x-6 mt-2">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
-                        Grade: {cls.grade ?? 'N/A'}
+                        Grade: {cls.grade ?? "N/A"}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
@@ -201,7 +201,7 @@ const ClassesPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {cls.students.map(student => {
+                        {cls.students.map((student) => {
                           // Mock STEM-1 status for display
                           const mockPassed = Math.random() > 0.3;
                           return (
@@ -235,13 +235,13 @@ const ClassesPage: React.FC = () => {
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                     mockPassed
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-yellow-100 text-yellow-800'
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
                                   }`}
                                 >
                                   {mockPassed
-                                    ? 'STEM-1 Complete'
-                                    : 'In Progress'}
+                                    ? "STEM-1 Complete"
+                                    : "In Progress"}
                                 </span>
                               </td>
                             </tr>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   X,
   User,
@@ -7,8 +7,8 @@ import {
   Mail,
   Calendar,
   Loader2,
-} from 'lucide-react';
-import { profileService, UserProfile } from '../../services/profileService';
+} from "lucide-react";
+import { profileService, UserProfile } from "../../services/profileService";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -42,17 +42,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       const profileData = await profileService.getMockProfile();
       setProfile(profileData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profile');
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -64,7 +64,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-brightboost-navy flex items-center">
             <User className="w-5 h-5 mr-2" />
-            {isTeacherProfile ? 'Teacher Profile' : 'Student Profile'}
+            {isTeacherProfile ? "Teacher Profile" : "Student Profile"}
           </h2>
           <button
             onClick={onClose}

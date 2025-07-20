@@ -33,7 +33,7 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const handleProfileUpdated = (profile: UserProfile) => {
-    console.log('Profile updated:', profile);
+    console.log("Profile updated:", profile);
   };
 
   return (
@@ -43,7 +43,7 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
           userName={user?.name || "Teacher"}
           onLogout={handleLogout}
           onProfileClick={handleProfileClick}
-          onEditProfileClick={(handleEditProfileClick)}
+          onEditProfileClick={handleEditProfileClick}
         />
         <Sidebar />
         <main className="flex-grow ml-64 p-6">{children}</main>
