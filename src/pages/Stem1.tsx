@@ -4,7 +4,6 @@ import { QuestProgress } from "../components/StudentDashboard/ModuleLadder";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "../components/LanguageToggle";
 
-
 const stem1Quests: QuestProgress[] = [
   {
     title: "Quest 1",
@@ -68,9 +67,7 @@ const Stem1Page = () => {
         <h1 className="text-4xl font-bold text-brightboost-navy mb-2">
           {t("stem1.title")}
         </h1>
-        <p className="text-lg text-brightboost-blue">
-          {t("stem1.subtitle")}
-        </p>
+        <p className="text-lg text-brightboost-blue">{t("stem1.subtitle")}</p>
       </div>
 
       {/* Module Ladder */}
@@ -84,11 +81,20 @@ const Stem1Page = () => {
         <div className="col-span-3 grid grid-cols-2 gap-6">
           {/* Card 1 */}
           <div className="row-start-1 col-start-1">
-            <div className={`bg-white rounded-xl shadow-md p-4 ${
-              isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") ? "border border-red-400" : ""
-            }`}>
-              {isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "") && (
-                <p className="text-xs text-red-500 font-semibold mt-1">{t("stem1.pastDue")}</p>
+            <div
+              className={`bg-white rounded-xl shadow-md p-4 ${
+                isPastDue(stem1Quests[0].status, stem1Quests[0].dueDate ?? "")
+                  ? "border border-red-400"
+                  : ""
+              }`}
+            >
+              {isPastDue(
+                stem1Quests[0].status,
+                stem1Quests[0].dueDate ?? "",
+              ) && (
+                <p className="text-xs text-red-500 font-semibold mt-1">
+                  {t("stem1.pastDue")}
+                </p>
               )}
               <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                 {stem1Quests[0].title}
@@ -105,11 +111,20 @@ const Stem1Page = () => {
 
           {/* Card 2 */}
           <div className="row-start-1 col-start-2">
-            <div className={`bg-white rounded-xl shadow-md p-4 ${
-              isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") ? "border border-red-400" : ""
-            }`}>
-              {isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "") && (
-                <p className="text-xs text-red-500 font-semibold mt-1">{t("stem1.pastDue")}</p>
+            <div
+              className={`bg-white rounded-xl shadow-md p-4 ${
+                isPastDue(stem1Quests[1].status, stem1Quests[1].dueDate ?? "")
+                  ? "border border-red-400"
+                  : ""
+              }`}
+            >
+              {isPastDue(
+                stem1Quests[1].status,
+                stem1Quests[1].dueDate ?? "",
+              ) && (
+                <p className="text-xs text-red-500 font-semibold mt-1">
+                  {t("stem1.pastDue")}
+                </p>
               )}
               <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                 {stem1Quests[1].title}
@@ -127,11 +142,20 @@ const Stem1Page = () => {
           {/* Card 3 (staggered below) */}
           <div className="col-span-2 flex justify-center row-start-2">
             <div className="w-1/2">
-              <div className={`bg-white rounded-xl shadow-md p-4 ${
-                isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") ? "border border-red-400" : ""
-              }`}>
-                {isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "") && (
-                  <p className="text-xs text-red-500 font-semibold mt-1">{t("stem1.pastDue")}</p>
+              <div
+                className={`bg-white rounded-xl shadow-md p-4 ${
+                  isPastDue(stem1Quests[2].status, stem1Quests[2].dueDate ?? "")
+                    ? "border border-red-400"
+                    : ""
+                }`}
+              >
+                {isPastDue(
+                  stem1Quests[2].status,
+                  stem1Quests[2].dueDate ?? "",
+                ) && (
+                  <p className="text-xs text-red-500 font-semibold mt-1">
+                    {t("stem1.pastDue")}
+                  </p>
                 )}
                 <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
                   {stem1Quests[2].title}

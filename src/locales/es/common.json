@@ -74,6 +74,6 @@
     "due": "Vence",
     "back": "⬅ Volver al panel",
     "nextModule": "Próximo módulo",
-  "noNextModule": "No hay módulo siguiente asignado."
+    "noNextModule": "No hay módulo siguiente asignado."
   }
 }

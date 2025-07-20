@@ -17,7 +17,7 @@ console.log("Detected initial language:", selectedLang);
 if (import.meta.env.VITE_ENABLE_I18N === "true") {
   const initWithTranslations = (
     lang: string,
-    translations: Record<string, any>
+    translations: Record<string, any>,
   ) => {
     if (!i18n.isInitialized) {
       i18n
@@ -50,7 +50,7 @@ if (import.meta.env.VITE_ENABLE_I18N === "true") {
     .catch((err) => {
       console.warn(
         `Could not load locale "${selectedLang}", falling back to "${fallbackLng}"`,
-        err
+        err,
       );
       import(`../locales/${fallbackLng}/common.json`)
         .then((fallbackTranslations) => {
@@ -63,4 +63,3 @@ if (import.meta.env.VITE_ENABLE_I18N === "true") {
 }
 
 export default i18n;
-

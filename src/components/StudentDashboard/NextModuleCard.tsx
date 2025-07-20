@@ -20,9 +20,7 @@ const NextModuleCard = ({ module }: NextModuleCardProps) => {
         <h2 className="text-lg font-semibold text-brightboost-navy mb-2">
           {t("stem1.nextModule")}
         </h2>
-        <p className="text-sm text-gray-500">
-          {t("stem1.noNextModule")}
-        </p>
+        <p className="text-sm text-gray-500">{t("stem1.noNextModule")}</p>
       </div>
     );
   }
