@@ -70,7 +70,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
         }
       }
     }
-  }, [handleClose]);
+  }, []);
 
   const handleFileUpload = (csvContent: string) => {
     setUploadError(null);
