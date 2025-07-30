@@ -59,15 +59,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-modal-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-brightboost-navy flex items-center">
+          <h2 id="profile-modal-title" className="text-xl font-semibold text-brightboost-navy flex items-center">
             <User className="w-5 h-5 mr-2" />
             {isTeacherProfile ? "Teacher Profile" : "Student Profile"}
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close profile modal"
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="w-6 h-6" />
@@ -76,12 +82,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
         <div className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-8" aria-live="polite" aria-busy="true">
               <Loader2 className="w-8 h-8 animate-spin text-brightboost-blue" />
               <span className="ml-2 text-gray-600">Loading profile...</span>
             </div>
           ) : error ? (
-            <div className="text-center py-8">
+            <div className="text-center py-8" role="alert" aria-live="polite">
               <div className="text-red-500 mb-4">
                 <User className="w-12 h-12 mx-auto mb-2" />
                 <p className="font-medium">Failed to load profile</p>
@@ -89,7 +95,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
               <button
                 onClick={loadProfile}
-                className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+                className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
               >
                 Try Again
               </button>
@@ -97,7 +103,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           ) : profile ? (
             <div className="space-y-6">
               {/* Avatar and Basic Info */}
-              <div className="text-center">
+              <header className="text-center">
                 <div className="w-20 h-20 bg-brightboost-light rounded-full flex items-center justify-center mx-auto mb-4">
                   {profile.avatar ? (
                     <img
@@ -115,15 +121,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <p className="text-sm text-gray-600 capitalize">
                   {profile.role}
                 </p>
-              </div>
+              </header>
 
               {/* Profile Details */}
-              <div className="space-y-4">
+              <dl className="space-y-4">
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                   <Mail className="w-5 h-5 text-brightboost-blue mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Email</p>
-                    <p className="text-sm text-gray-600">{profile.email}</p>
+                    <dt className="text-sm font-medium text-gray-700">Email</dt>
+                    <dd className="text-sm text-gray-600">{profile.email}</dd>
                   </div>
                 </div>
 
@@ -131,10 +137,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                     <School className="w-5 h-5 text-brightboost-green mr-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">
+                      <dt className="text-sm font-medium text-gray-700">
                         School
-                      </p>
-                      <p className="text-sm text-gray-600">{profile.school}</p>
+                      </dt>
+                      <dd className="text-sm text-gray-600">{profile.school}</dd>
                     </div>
                   </div>
                 )}
@@ -143,10 +149,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                     <BookOpen className="w-5 h-5 text-brightboost-yellow mr-3" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">
+                      <dt className="text-sm font-medium text-gray-700">
                         Subject
-                      </p>
-                      <p className="text-sm text-gray-600">{profile.subject}</p>
+                      </dt>
+                      <dd className="text-sm text-gray-600">{profile.subject}</dd>
                     </div>
                   </div>
                 )}
@@ -154,15 +160,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                   <Calendar className="w-5 h-5 text-gray-500 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">
+                    <dt className="text-sm font-medium text-gray-700">
                       Member Since
-                    </p>
-                    <p className="text-sm text-gray-600">
+                    </dt>
+                    <dd className="text-sm text-gray-600">
                       {formatDate(profile.created_at)}
-                    </p>
+                    </dd>
                   </div>
                 </div>
-              </div>
+              </dl>
             </div>
           ) : null}
         </div>

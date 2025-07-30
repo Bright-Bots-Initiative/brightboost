@@ -75,29 +75,47 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
+      role="button"
+      tabIndex={0}
+      aria-label="CSV file upload area. Drag and drop a CSV file here or click to browse files"
+      aria-describedby="dropzone-instructions"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const fileInput = document.getElementById('csv-file-input') as HTMLInputElement;
+          fileInput?.click();
+        }
+      }}
     >
       {isProcessing ? (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" aria-live="polite" aria-busy="true">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mb-4"></div>
           <p className="text-gray-600">Processing file...</p>
         </div>
       ) : (
         <div className="flex flex-col items-center">
           <Upload className="w-12 h-12 text-gray-400 mb-4" />
-          <p className="text-lg font-medium text-gray-700 mb-2">
+          <p id="dropzone-instructions" className="text-lg font-medium text-gray-700 mb-2">
             Drop your CSV file here
           </p>
           <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
-          <label className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors cursor-pointer">
+          <label className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-brightboost-blue focus-within:ring-offset-2">
             <FileText className="w-4 h-4 mr-2" />
             Choose File
             <input
+              id="csv-file-input"
               type="file"
               accept=".csv"
               onChange={handleFileInput}
               className="hidden"
+              aria-label="Choose CSV file to upload"
             />
           </label>
+          {isDragOver && (
+            <div className="sr-only" aria-live="polite">
+              File ready to drop
+            </div>
+          )}
         </div>
       )}
     </div>

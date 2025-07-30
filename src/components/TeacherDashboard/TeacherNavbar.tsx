@@ -1,7 +1,8 @@
 // components/TeacherDashboard/TeacherNavbar.tsx
 import React from "react";
 import BrightBoostRobot from "../BrightBoostRobot";
-import { Edit, User } from "lucide-react";
+import { LogOut, User, ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface TeacherNavbarProps {
   userName: string;
@@ -15,39 +16,83 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   onLogout,
   onProfileClick,
   onEditProfileClick,
-}) => (
-  <nav className="bg-brightboost-navy text-white p-4 shadow-md">
-    <div className="container mx-auto flex justify-between items-center">
-      <div className="flex items-center gap-3">
-        <BrightBoostRobot size="sm" className="w-10 h-10" />
-        <h1 className="text-xl font-bold">Bright Boost</h1>
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  return (
+    <nav className="bg-brightboost-navy text-white shadow-lg ml-64" role="navigation" aria-label="Main navigation">
+      <div className="px-6 py-4">
+        <div className="flex justify-between items-center">
+          {/* Left side - Logo */}
+          <div className="flex items-center gap-3">
+            <BrightBoostRobot size="sm" className="w-10 h-10" />
+            <h1 className="text-xl font-bold tracking-wide">Bright Boost</h1>
+          </div>
+
+          {/* Right side - User menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-brightboost-blue/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-light"
+              aria-expanded={isDropdownOpen}
+              aria-haspopup="true"
+              aria-label="User menu"
+            >
+              <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-brightboost-navy" />
+              </div>
+              <span className="font-medium">{userName}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown menu */}
+            {isDropdownOpen && (
+              <div 
+                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
+                role="menu"
+                aria-labelledby="user-menu-button"
+              >
+                <button
+                  onClick={() => {
+                    onProfileClick();
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                  role="menuitem"
+                >
+                  <User className="w-4 h-4" />
+                  View Profile
+                </button>
+                <button
+                  onClick={() => {
+                    onEditProfileClick();
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                  role="menuitem"
+                >
+                  <User className="w-4 h-4" />
+                  Edit Profile
+                </button>
+                <hr className="my-2 border-gray-200" role="separator" />
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setIsDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-red-50"
+                  role="menuitem"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex items-center space-x-4">
-        <span className="badge-level">Teacher</span>
-        <span>Welcome, {userName}</span>
-        <button
-          onClick={onProfileClick}
-          className="flex items-center px-4 py-2 bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
-        >
-          <User className="w-4 h-4 mr-2" />
-          View Profile
-        </button>
-        <button
-          onClick={onEditProfileClick}
-          className="flex items-center px-4 py-2 bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Edit Profile
-        </button>
-        <button
-          onClick={onLogout}
-          className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 export default TeacherNavbar;

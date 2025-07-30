@@ -18,11 +18,13 @@ const MainContent: React.FC<MainContentProps> = ({
   };
 
   return (
-    <div className="flex-grow p-6">
-      <h2 className="text-2xl font-bold mb-6 text-brightboost-navy">Lessons</h2>
+    <main className="flex-grow p-6" role="main">
+      <header>
+        <h1 className="text-2xl font-bold mb-6 text-brightboost-navy">Lessons</h1>
+      </header>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold mb-4">Lessons Management</h3>
+      <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="lessons-management-heading">
+        <h2 id="lessons-management-heading" className="text-xl font-semibold mb-4">Lessons Management</h2>
         <p className="text-gray-600 mb-4">
           You have {lessonsData.length} lessons available.
         </p>
@@ -33,8 +35,8 @@ const MainContent: React.FC<MainContentProps> = ({
           onDuplicateLesson={handleDuplicateLesson}
           onDeleteLesson={onDeleteLesson}
         />
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
