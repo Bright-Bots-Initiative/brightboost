@@ -11,6 +11,9 @@ import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButto
 import { useAuth } from "../contexts/AuthContext";
 import { getSTEM1Summary } from "../services/stem1GradeService";
 import { UserProfile } from "../services/profileService";
+import { classService } from "../services/classService";
+import { toast } from "sonner";
+
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
@@ -24,14 +27,54 @@ const ClassesPage: React.FC = () => {
   );
 
   useEffect(() => {
-    const loadClasses = async () => {
-      setIsLoading(true);
-      const result = await fetchMockClasses();
-      setClasses(result);
+  const loadClasses = async () => {
+    setIsLoading(true);
+
+    if (!user || !user.id) {
+      toast.error("No user ID found – are you logged in?");
       setIsLoading(false);
-    };
-    loadClasses();
-  }, []);
+      return;
+    }
+
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      toast.error("Missing access token. Unable to fetch classes.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/v1/teachers/${user.id}/classes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const errorMsg = `Failed to load classes: ${res.status} ${res.statusText}`;
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      const data = await res.json();
+      console.log("Fetched classes:", data);
+
+      if (Array.isArray(data) && data.length === 0) {
+        toast.info("Fetched 0 classes from the server.");
+      }
+
+      setClasses(data);
+    } catch (err) {
+      toast.error("Something went wrong fetching classes.");
+      console.error("API error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  loadClasses();
+  }, [user]);
 
   const handleViewStudentProfile = (studentId: string) => {
     setSelectedStudentId(studentId);

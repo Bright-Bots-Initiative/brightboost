@@ -16,8 +16,8 @@ const Sidebar: React.FC = () => {
         {navItems.map(({ name, path }) =>
           ["Students", "Settings"].includes(name) ? (
             <p
-              className="block py-3 px-4 rounded-lg text-sm font-medium
-              text-gray-500"
+              key={name}
+              className="block py-3 px-4 rounded-lg text-sm font-medium text-gray-500"
             >
               {name}
             </p>
@@ -27,14 +27,14 @@ const Sidebar: React.FC = () => {
               to={path}
               className={({ isActive }) =>
                 `block py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
-              hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isActive ? "bg-blue-600 text-white shadow-md" : "text-gray-300"
-              }`
+                hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isActive ? "bg-blue-600 text-white shadow-md" : "text-gray-300"
+                }`
               }
             >
               {name}
             </NavLink>
-          ),
+          )
         )}
       </nav>
     </div>
