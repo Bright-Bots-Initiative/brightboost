@@ -11,9 +11,6 @@ import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButto
 import { useAuth } from "../contexts/AuthContext";
 import { getSTEM1Summary } from "../services/stem1GradeService";
 import { UserProfile } from "../services/profileService";
-import { classService } from "../services/classService";
-import { toast } from "sonner";
-
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
@@ -27,54 +24,14 @@ const ClassesPage: React.FC = () => {
   );
 
   useEffect(() => {
-  const loadClasses = async () => {
-    setIsLoading(true);
-
-    if (!user || !user.id) {
-      toast.error("No user ID found – are you logged in?");
+    const loadClasses = async () => {
+      setIsLoading(true);
+      const result = await fetchMockClasses();
+      setClasses(result);
       setIsLoading(false);
-      return;
-    }
-
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      toast.error("Missing access token. Unable to fetch classes.");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/v1/teachers/${user.id}/classes`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        const errorMsg = `Failed to load classes: ${res.status} ${res.statusText}`;
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-
-      const data = await res.json();
-      console.log("Fetched classes:", data);
-
-      if (Array.isArray(data) && data.length === 0) {
-        toast.info("Fetched 0 classes from the server.");
-      }
-
-      setClasses(data);
-    } catch (err) {
-      toast.error("Something went wrong fetching classes.");
-      console.error("API error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  loadClasses();
-  }, [user]);
+    };
+    loadClasses();
+  }, []);
 
   const handleViewStudentProfile = (studentId: string) => {
     setSelectedStudentId(studentId);
@@ -259,20 +216,16 @@ const ClassesPage: React.FC = () => {
                                 {student.name}
                               </td>
                               <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    handleViewStudentProfile(student.id)
-                                  }
-                                  className="text-brightboost-blue hover:text-brightboost-navy mr-2"
-                                  title="View student profile"
-                                >
-                                  <User className="w-4 h-4" />
-                                </button>
-                                {student.email ?? (
-                                  <span className="text-gray-400 italic">
-                                    N/A
-                                  </span>
-                                )}
+                                <div className="flex items-center space-x-2">
+                                    <button
+                                    onClick={() => handleViewStudentProfile(student.id)}
+                                    className="flex items-center justify-center px-2 py-1 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
+                                    title="View student profile"
+                                    >
+                                    <User className="w-4 h-4" />
+                                    </button>
+                                    <span>{student.email ?? <span className="text-gray-400 italic">N/A</span>}</span>
+                                </div>
                               </td>
                               <td className="py-2 px-3">
                                 <span
