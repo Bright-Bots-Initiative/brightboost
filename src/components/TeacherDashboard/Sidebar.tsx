@@ -28,13 +28,15 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 `block py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
                 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isActive ? "bg-blue-600 text-white shadow-md" : "text-gray-300"
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-300"
                 }`
               }
             >
               {name}
             </NavLink>
-          )
+          ),
         )}
       </nav>
     </div>
