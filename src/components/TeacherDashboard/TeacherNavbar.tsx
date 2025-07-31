@@ -1,8 +1,7 @@
-// components/TeacherDashboard/TeacherNavbar.tsx
-import React from "react";
+// src/components/TeacherDashboard/TeacherNavbar.tsx
+import React, { useState } from "react";
 import BrightBoostRobot from "../BrightBoostRobot";
 import { LogOut, User, ChevronDown } from "lucide-react";
-import { useState } from "react";
 
 interface TeacherNavbarProps {
   userName: string;
@@ -20,7 +19,11 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <nav className="bg-brightboost-navy text-white shadow-lg ml-64" role="navigation" aria-label="Main navigation">
+    <nav 
+      className="bg-brightboost-navy text-white shadow-lg ml-64" 
+      role="navigation" 
+      aria-label="Main navigation"
+    >
       <div className="px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Left side - Logo */}
@@ -36,12 +39,12 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-brightboost-blue/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-light"
               aria-expanded={isDropdownOpen}
               aria-haspopup="true"
-              aria-label="User menu"
+              aria-label={`User menu for ${userName}`} // Added aria-label
             >
               <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-brightboost-navy" />
               </div>
-              <span className="font-medium">{userName}</span>
+              <span className="font-medium">Welcome, {userName}</span> {/* Added "Welcome, " */}
               <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
