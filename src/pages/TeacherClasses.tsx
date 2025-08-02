@@ -216,20 +216,24 @@ const ClassesPage: React.FC = () => {
                                 {student.name}
                               </td>
                               <td className="py-2 px-3">
-                                <button
-                                  onClick={() =>
-                                    handleViewStudentProfile(student.id)
-                                  }
-                                  className="text-brightboost-blue hover:text-brightboost-navy mr-2"
-                                  title="View student profile"
-                                >
-                                  <User className="w-4 h-4" />
-                                </button>
-                                {student.email ?? (
-                                  <span className="text-gray-400 italic">
-                                    N/A
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() =>
+                                      handleViewStudentProfile(student.id)
+                                    }
+                                    className="flex items-center justify-center px-2 py-1 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
+                                    title="View student profile"
+                                  >
+                                    <User className="w-4 h-4" />
+                                  </button>
+                                  <span>
+                                    {student.email ?? (
+                                      <span className="text-gray-400 italic">
+                                        N/A
+                                      </span>
+                                    )}
                                   </span>
-                                )}
+                                </div>
                               </td>
                               <td className="py-2 px-3">
                                 <span

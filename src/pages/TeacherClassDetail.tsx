@@ -398,7 +398,7 @@ const TeacherClassDetail: React.FC = () => {
             onClick={() =>
               navigate(`/teacher/classes/${classData.id}/assignments`)
             }
-            className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm px-3 py-1.5 rounded transition"
+            className="flex items-center justify-center px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
           >
             View All
           </button>
