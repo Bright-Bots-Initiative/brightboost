@@ -43,13 +43,13 @@ const ClassesPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
+    <main className="w-full">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-brightboost-navy flex items-center">
+          <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
             STEM-1 Classes
-          </h2>
+          </h1>
           <p className="text-gray-600 mt-1">
             Manage your K-2 STEM classes and track student progress through core
             quests
@@ -58,7 +58,8 @@ const ClassesPage: React.FC = () => {
         <div className="flex space-x-3">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors shadow-sm hover:shadow-md transform hover:scale-105"
+            className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors shadow-sm hover:shadow-md transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:scale-100"
+            aria-label="Import class data from CSV file"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import from CSV
@@ -67,7 +68,11 @@ const ClassesPage: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div
+          className="bg-white p-6 rounded-lg shadow-md"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div className="h-6 bg-gray-300 animate-pulse w-1/3 mb-4 rounded"></div>
           <div className="space-y-2">
             {[1, 2, 3].map((_, idx) => (
@@ -79,53 +84,81 @@ const ClassesPage: React.FC = () => {
           </div>
         </div>
       ) : classes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+        <section
+          className="bg-white rounded-lg shadow-md p-8 text-center"
+          aria-labelledby="empty-state-heading"
+        >
           <BrightBoostRobot size="lg" />
-          <p className="text-xl text-brightboost-navy mt-4">
+          <h2
+            id="empty-state-heading"
+            className="text-xl text-brightboost-navy mt-4"
+          >
             No STEM-1 classes found.
-          </p>
+          </h2>
           <p className="text-sm text-gray-600 mb-4">
             Import your first class to start tracking student progress
           </p>
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+            aria-label="Import your first class from CSV"
           >
             <Upload className="w-4 h-4 mr-2" />
             Import Class from CSV
           </button>
-        </div>
+        </section>
       ) : (
-        <div className="space-y-6">
+        <section className="space-y-6" aria-labelledby="classes-list-heading">
+          <h2 id="classes-list-heading" className="sr-only">
+            List of STEM-1 Classes
+          </h2>
           {classes.map((cls) => {
             const stem1Summary = getSTEM1Summary(cls);
             return (
-              <div
+              <article
                 key={cls.id}
                 className="bg-white rounded-lg shadow-md p-6 border border-gray-100 hover:shadow-lg transition-all duration-200 hover:border-brightboost-light"
+                aria-labelledby={`class-${cls.id}-title`}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <Link
                       to={`/teacher/classes/${cls.id}`}
-                      className="text-lg font-semibold text-brightboost-navy hover:text-brightboost-blue transition-colors flex items-center"
+                      id={`class-${cls.id}-title`}
+                      className="text-lg font-semibold text-brightboost-navy hover:text-brightboost-blue transition-colors flex items-center focus:outline-none focus:ring-2 focus:ring-brightboost-blue rounded"
+                      aria-describedby={`class-${cls.id}-summary`}
                     >
                       <Zap className="w-5 h-5 mr-2 text-brightboost-blue" />
                       {cls.name}
                     </Link>
-                    <div className="flex items-center space-x-6 mt-2">
+                    <div
+                      id={`class-${cls.id}-summary`}
+                      className="flex items-center space-x-6 mt-2"
+                    >
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
-                        Grade: {cls.grade ?? "N/A"}
+                        <span
+                          aria-label={`Grade level: ${cls.grade ?? "Not specified"}`}
+                        >
+                          Grade: {cls.grade ?? "N/A"}
+                        </span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="w-4 h-4 mr-1" />
-                        {cls.students.length} students
+                        <span
+                          aria-label={`${cls.students.length} students enrolled`}
+                        >
+                          {cls.students.length} students
+                        </span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <TrendingUp className="w-4 h-4 mr-1" />
-                        {stem1Summary.studentsPassedSTEM1}/
-                        {stem1Summary.totalStudents} passed STEM-1
+                        <span
+                          aria-label={`${stem1Summary.studentsPassedSTEM1} out of ${stem1Summary.totalStudents} students passed STEM-1`}
+                        >
+                          {stem1Summary.studentsPassedSTEM1}/
+                          {stem1Summary.totalStudents} passed STEM-1
+                        </span>
                       </div>
                       <p className="text-sm text-gray-400 font-mono">
                         ID: {cls.id}
@@ -141,7 +174,8 @@ const ClassesPage: React.FC = () => {
                     />
                     <Link
                       to={`/teacher/classes/${cls.id}`}
-                      className="flex items-center px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
+                      className="flex items-center px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+                      aria-label={`View details for ${cls.name}`}
                     >
                       View Details
                     </Link>
@@ -149,27 +183,43 @@ const ClassesPage: React.FC = () => {
                 </div>
 
                 {/* STEM-1 Progress Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
+                <div
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100"
+                  role="region"
+                  aria-label="STEM-1 Progress Summary"
+                >
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-blue">
+                    <div
+                      className="text-2xl font-bold text-brightboost-blue"
+                      aria-label={`Average XP: ${stem1Summary.averageXP} out of 500`}
+                    >
                       {stem1Summary.averageXP}
                     </div>
                     <div className="text-xs text-gray-600">Avg XP / 500</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-green">
+                    <div
+                      className="text-2xl font-bold text-brightboost-green"
+                      aria-label={`Average completion: ${stem1Summary.averageCompletion} percent`}
+                    >
                       {stem1Summary.averageCompletion}%
                     </div>
                     <div className="text-xs text-gray-600">Avg Completion</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-brightboost-yellow">
+                    <div
+                      className="text-2xl font-bold text-brightboost-yellow"
+                      aria-label={`${stem1Summary.studentsPassedSTEM1} students passed`}
+                    >
                       {stem1Summary.studentsPassedSTEM1}
                     </div>
                     <div className="text-xs text-gray-600">Students Passed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-600">
+                    <div
+                      className="text-2xl font-bold text-gray-600"
+                      aria-label={`${cls.students.length} total students`}
+                    >
                       {cls.students.length}
                     </div>
                     <div className="text-xs text-gray-600">Total Students</div>
@@ -177,7 +227,11 @@ const ClassesPage: React.FC = () => {
                 </div>
 
                 {cls.students.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <div
+                    className="text-center py-6 bg-gray-50 rounded-lg"
+                    role="status"
+                    aria-label="No students enrolled"
+                  >
                     <Plus className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm text-gray-500 italic">
                       No students enrolled yet
@@ -189,13 +243,23 @@ const ClassesPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left table-auto">
+                    <table
+                      className="w-full text-left table-auto"
+                      role="table"
+                      aria-label={`Student roster for ${cls.name}`}
+                    >
                       <thead>
                         <tr className="text-xs text-gray-500 border-b bg-gray-50">
-                          <th className="py-2 px-3 font-medium">Student ID</th>
-                          <th className="py-2 px-3 font-medium">Name</th>
-                          <th className="py-2 px-3 font-medium">Email</th>
-                          <th className="py-2 px-3 font-medium">
+                          <th scope="col" className="py-2 px-3 font-medium">
+                            Student ID
+                          </th>
+                          <th scope="col" className="py-2 px-3 font-medium">
+                            Name
+                          </th>
+                          <th scope="col" className="py-2 px-3 font-medium">
+                            Email
+                          </th>
+                          <th scope="col" className="py-2 px-3 font-medium">
                             STEM-1 Status
                           </th>
                         </tr>
@@ -209,9 +273,12 @@ const ClassesPage: React.FC = () => {
                               key={student.id}
                               className="border-b text-sm text-gray-800 hover:bg-gray-50"
                             >
-                              <td className="py-2 px-3 font-mono text-xs">
+                              <th
+                                scope="row"
+                                className="py-2 px-3 font-mono text-xs"
+                              >
                                 {student.id}
-                              </td>
+                              </th>
                               <td className="py-2 px-3 font-medium">
                                 {student.name}
                               </td>
@@ -221,6 +288,7 @@ const ClassesPage: React.FC = () => {
                                     onClick={() =>
                                       handleViewStudentProfile(student.id)
                                     }
+                                    aria-label={`View profile for ${student.name}`}
                                     className="flex items-center justify-center px-2 py-1 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
                                     title="View student profile"
                                   >
@@ -242,6 +310,7 @@ const ClassesPage: React.FC = () => {
                                       ? "bg-green-100 text-green-800"
                                       : "bg-yellow-100 text-yellow-800"
                                   }`}
+                                  aria-label={`STEM-1 status: ${mockPassed ? "Complete" : "In Progress"}`}
                                 >
                                   {mockPassed
                                     ? "STEM-1 Complete"
@@ -255,10 +324,10 @@ const ClassesPage: React.FC = () => {
                     </table>
                   </div>
                 )}
-              </div>
+              </article>
             );
           })}
-        </div>
+        </section>
       )}
 
       <CSVImportModal
@@ -281,7 +350,7 @@ const ClassesPage: React.FC = () => {
         onClose={() => setIsEditProfileModalOpen(false)}
         onProfileUpdated={handleProfileUpdated}
       />
-    </div>
+    </main>
   );
 };
 

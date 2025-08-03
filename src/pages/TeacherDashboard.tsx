@@ -124,7 +124,11 @@ const TeacherDashboard: React.FC = () => {
   return (
     <>
       {isLoading && (
-        <div className="flex-grow p-6 text-center">
+        <div
+          className="flex-grow p-6 text-center"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-brightboost-navy mt-4">
             Loading dashboard data...
@@ -132,17 +136,21 @@ const TeacherDashboard: React.FC = () => {
         </div>
       )}
       {error && (
-        <div className="flex-grow p-6 text-center">
+        <div
+          className="flex-grow p-6 text-center"
+          role="alert"
+          aria-live="polite"
+        >
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-red-500 mt-4">Error: {error}</p>
         </div>
       )}
       {!isLoading && !error && lessonsData.length === 0 && (
-        <div className="flex-grow p-6 text-center">
+        <div className="flex-grow p-6 text-center" role="status">
           <BrightBoostRobot size="lg" />
-          <p className="text-xl text-brightboost-navy mt-4">
+          <h2 className="text-xl text-brightboost-navy mt-4">
             No teacher data available yet.
-          </p>
+          </h2>
           <p className="text-sm text-gray-600 mt-2">
             Teachers will appear here once they're registered in the system.
           </p>

@@ -120,13 +120,13 @@ const TeacherClassDetail: React.FC = () => {
   const stem1Summary = getSTEM1Summary(classData);
 
   return (
-    <div className="w-full space-y-6">
+    <main className="w-full space-y-6">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-brightboost-navy flex items-center">
+          <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
             STEM-1 Class Details
-          </h2>
+          </h1>
           <p className="text-gray-600 mt-1">
             Manage class information and track student progress through core
             quests
@@ -135,6 +135,7 @@ const TeacherClassDetail: React.FC = () => {
         <div className="flex space-x-3">
           <button
             onClick={() => setIsProfileModalOpen(true)}
+            aria-label="View teacher profile"
             className="flex items-center px-3 py-1.5 text-sm bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors"
           >
             <User className="w-4 h-4 mr-1" />
@@ -142,6 +143,7 @@ const TeacherClassDetail: React.FC = () => {
           </button>
           <button
             onClick={() => setIsEditProfileModalOpen(true)}
+            aria-label="Edit teacher profile"
             className="flex items-center px-3 py-1.5 text-sm bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors"
           >
             <Edit className="w-4 h-4 mr-1" />
@@ -157,12 +159,23 @@ const TeacherClassDetail: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section
+        aria-labelledby="summary-heading"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+      >
+        <h2 id="summary-heading" className="sr-only">
+          Class Performance Summary
+        </h2>
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Average XP</p>
-              <p className="text-2xl font-bold">{stem1Summary.averageXP}</p>
+              <p
+                className="text-2xl font-bold"
+                aria-label={`Average XP: ${stem1Summary.averageXP} out of 500`}
+              >
+                {stem1Summary.averageXP}
+              </p>
               <p className="text-blue-100 text-xs">out of 500</p>
             </div>
             <Zap className="w-8 h-8 text-blue-200" />
@@ -172,7 +185,10 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Completion Rate</p>
-              <p className="text-2xl font-bold">
+              <p
+                className="text-2xl font-bold"
+                aria-label={`Completion rate: ${stem1Summary.averageCompletion} percent`}
+              >
                 {stem1Summary.averageCompletion}%
               </p>
               <p className="text-green-100 text-xs">class average</p>
@@ -184,7 +200,10 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm">Students Passed</p>
-              <p className="text-2xl font-bold">
+              <p
+                className="text-2xl font-bold"
+                aria-label={`${stem1Summary.studentsPassedSTEM1} students passed out of ${stem1Summary.totalStudents} total students`}
+              >
                 {stem1Summary.studentsPassedSTEM1}
               </p>
               <p className="text-yellow-100 text-xs">
@@ -204,30 +223,47 @@ const TeacherClassDetail: React.FC = () => {
             <Clock className="w-8 h-8 text-purple-200" />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Class Info + Quests */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+        <section
+          className="lg:col-span-2 bg-white rounded-lg shadow-md p-6"
+          aria-labelledby="class-info-heading"
+        >
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
             <GraduationCap className="w-5 h-5 mr-2" />
             Class Information
           </h3>
-          <div className="flex flex-col gap-4 max-w-lg">
-            <label className="text-sm font-semibold text-gray-700">
+          <fieldset className="flex flex-col gap-4 max-w-lg">
+            <legend className="sr-only">Edit class information</legend>
+            <label
+              htmlFor="class-name-input"
+              className="text-sm font-semibold text-gray-700"
+            >
               Class Name:
               <input
+                id="class-name-input"
                 value={editingName}
                 onChange={(e) => setEditingName(e.target.value)}
-                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
+                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue focus:outline-none"
+                aria-describedby="class-name-help"
               />
             </label>
-            <label className="text-sm font-semibold text-gray-700">
+            <div id="class-name-help" className="sr-only">
+              Enter the name for this class
+            </div>
+            <label
+              htmlFor="grade-select"
+              className="text-sm font-semibold text-gray-700"
+            >
               Grade:
               <select
+                id="grade-select"
                 value={editingGrade}
                 onChange={(e) => setEditingGrade(e.target.value)}
-                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
+                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue focus:outline-none"
+                aria-describedby="grade-help"
               >
                 <option value="">Select grade</option>
                 {gradeOptions.map((grade) => (
@@ -237,17 +273,29 @@ const TeacherClassDetail: React.FC = () => {
                 ))}
               </select>
             </label>
+            <div id="grade-help" className="sr-only">
+              Select the grade level for this class
+            </div>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-brightboost-blue text-white px-4 py-2 rounded hover:bg-brightboost-navy transition-colors disabled:opacity-50"
+              className="bg-brightboost-blue text-white px-4 py-2 rounded hover:bg-brightboost-navy transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+              aria-describedby={isSaving ? "save-status" : undefined}
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
-          </div>
-        </div>
+            {isSaving && (
+              <div id="save-status" className="sr-only" aria-live="polite">
+                Saving changes, please wait
+              </div>
+            )}
+          </fieldset>
+        </section>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <aside
+          className="bg-white rounded-lg shadow-md p-6"
+          aria-labelledby="quests-heading"
+        >
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
             <Zap className="w-5 h-5 mr-2" />
             STEM-1 Core Quests
@@ -270,16 +318,22 @@ const TeacherClassDetail: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
+        </aside>
       </div>
 
       {/* Class Roster */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <section
+        className="bg-white rounded-lg shadow-md p-6"
+        aria-labelledby="roster-heading"
+      >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-brightboost-navy flex items-center">
+          <h2
+            id="roster-heading"
+            className="text-lg font-semibold text-brightboost-navy flex items-center"
+          >
             <Users className="w-5 h-5 mr-2" />
             Class Roster ({classData.students.length} students)
-          </h3>
+          </h2>
           <ExportGradesButton
             classData={classData}
             teacherName={user?.name}
@@ -294,15 +348,31 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto">
+            <table
+              className="w-full text-left table-auto"
+              role="table"
+              aria-labelledby="roster-heading"
+            >
               <thead>
                 <tr className="text-sm text-gray-600 border-b bg-gray-50">
-                  <th className="py-3 px-4 font-medium">Student ID</th>
-                  <th className="py-3 px-4 font-medium">Name</th>
-                  <th className="py-3 px-4 font-medium">Email</th>
-                  <th className="py-3 px-4 font-medium">STEM-1 Progress</th>
-                  <th className="py-3 px-4 font-medium">XP Earned</th>
-                  <th className="py-3 px-4 font-medium">Status</th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Student ID
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Name
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Email
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    STEM-1 Progress
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    XP Earned
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -317,14 +387,15 @@ const TeacherClassDetail: React.FC = () => {
                       key={student.id}
                       className="border-b text-sm text-gray-800 hover:bg-gray-50"
                     >
-                      <td className="py-3 px-4 font-mono text-xs">
+                      <th scope="row" className="py-3 px-4 font-mono text-xs">
                         {student.id}
-                      </td>
+                      </th>
                       <td className="py-3 px-4 font-medium">{student.name}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center">
                           <button
                             onClick={() => handleViewStudentProfile(student.id)}
+                            aria-label={`View profile for ${student.name}`}
                             className="text-brightboost-blue hover:text-brightboost-navy mr-2"
                             title="View student profile"
                           >
@@ -343,6 +414,11 @@ const TeacherClassDetail: React.FC = () => {
                                 mockPassed ? "bg-green-500" : "bg-yellow-500"
                               }`}
                               style={{ width: `${mockCompletion}%` }}
+                              role="progressbar"
+                              aria-valuenow={mockCompletion}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`Progress: ${mockCompletion} percent complete`}
                             ></div>
                           </div>
                           <span className="text-xs font-medium">
@@ -360,6 +436,7 @@ const TeacherClassDetail: React.FC = () => {
                               ? "bg-green-100 text-green-800"
                               : "bg-yellow-100 text-yellow-800"
                           }`}
+                          aria-label={`Status: ${mockPassed ? "STEM-1 Complete" : "In Progress"}`}
                         >
                           {mockPassed ? "STEM-1 Complete" : "In Progress"}
                         </span>
@@ -371,7 +448,7 @@ const TeacherClassDetail: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       <ProfileModal
         isOpen={isProfileModalOpen}
@@ -389,16 +466,23 @@ const TeacherClassDetail: React.FC = () => {
         onProfileUpdated={handleProfileUpdated}
       />
       {/* Assignments */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <section
+        className="bg-white rounded-lg shadow-md p-6"
+        aria-labelledby="assignments-heading"
+      >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-brightboost-navy">
+          <h2
+            id="assignments-heading"
+            className="text-lg font-semibold text-brightboost-navy"
+          >
             Assignments
-          </h3>
+          </h2>
           <button
             onClick={() =>
               navigate(`/teacher/classes/${classData.id}/assignments`)
             }
-            className="flex items-center justify-center px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors hover:shadow-md"
+            className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm px-3 py-1.5 rounded transition focus:outline-none focus:ring-2 focus:ring-blue-600"
+            aria-label="View all assignments for this class"
           >
             View All
           </button>
@@ -413,8 +497,8 @@ const TeacherClassDetail: React.FC = () => {
             onRowClick={navigateToAssignmentDetail}
           />
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
