@@ -1,7 +1,7 @@
 // src/components/TeacherDashboard/TeacherNavbar.tsx
 import React, { useState } from "react";
 import BrightBoostRobot from "../BrightBoostRobot";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, Edit, ChevronDown } from "lucide-react";
 
 interface TeacherNavbarProps {
   userName: string;
@@ -60,7 +60,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     onProfileClick();
                     setIsDropdownOpen(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                  className="w-full text-left px-4 py-2 bg-brightboost-green text-white hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
                   role="menuitem"
                 >
                   <User className="w-4 h-4" />
@@ -71,10 +71,10 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     onEditProfileClick();
                     setIsDropdownOpen(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                  className="w-full text-left px-4 py-2 bg-brightboost-yellow text-white hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
                   role="menuitem"
                 >
-                  <User className="w-4 h-4" />
+                  <Edit className="w-4 h-4" />
                   Edit Profile
                 </button>
                 <hr className="my-2 border-gray-200" role="separator" />
