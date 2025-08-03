@@ -21,14 +21,17 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         // This will be handled by the navbar component now
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -52,7 +55,10 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col relative z-10">
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-brightboost-blue text-white px-4 py-2 rounded-md z-50">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-brightboost-blue text-white px-4 py-2 rounded-md z-50"
+        >
           Skip to main content
         </a>
         <TeacherNavbar
@@ -62,7 +68,11 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
           onEditProfileClick={handleEditProfileClick}
         />
         <Sidebar />
-        <main id="main-content" className="flex-grow ml-64 pt-6 px-6 pb-6" role="main">
+        <main
+          id="main-content"
+          className="flex-grow ml-64 pt-6 px-6 pb-6"
+          role="main"
+        >
           {children}
         </main>
       </div>

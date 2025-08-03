@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { X, User, School, BookOpen, Save, Loader2, AlertCircle } from "lucide-react";
+import {
+  X,
+  User,
+  School,
+  BookOpen,
+  Save,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import {
   profileService,
   UserProfile,
@@ -31,7 +39,9 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   // Focus management
   useEffect(() => {
     if (isOpen) {
-      const firstInput = document.querySelector('#edit-profile-name') as HTMLInputElement;
+      const firstInput = document.querySelector(
+        "#edit-profile-name",
+      ) as HTMLInputElement;
       if (firstInput) {
         setTimeout(() => firstInput.focus(), 100);
       }
@@ -110,7 +120,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       role="dialog"
       aria-modal="true"
@@ -118,7 +128,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 id="edit-profile-title" className="text-xl font-semibold text-brightboost-navy flex items-center">
+          <h2
+            id="edit-profile-title"
+            className="text-xl font-semibold text-brightboost-navy flex items-center"
+          >
             <User className="w-5 h-5 mr-2" />
             Edit Profile
           </h2>
@@ -133,7 +146,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
         <div className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8" aria-live="polite">
+            <div
+              className="flex items-center justify-center py-8"
+              aria-live="polite"
+            >
               <Loader2 className="w-8 h-8 animate-spin text-brightboost-blue" />
               <span className="ml-2 text-gray-600">Loading profile...</span>
             </div>
@@ -160,7 +176,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               {/* Form Fields */}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="edit-profile-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="edit-profile-name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     <User className="w-4 h-4 inline mr-1" />
                     Full Name *
                   </label>
@@ -171,12 +190,19 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue focus:outline-none"
                     placeholder="Enter your full name"
-                    aria-describedby={error && !formData.name.trim() ? "name-error" : undefined}
-                    aria-invalid={error && !formData.name.trim() ? "true" : "false"}
+                    aria-describedby={
+                      error && !formData.name.trim() ? "name-error" : undefined
+                    }
+                    aria-invalid={
+                      error && !formData.name.trim() ? "true" : "false"
+                    }
                     required
                   />
                   {error && !formData.name.trim() && (
-                    <p id="name-error" className="mt-1 text-sm text-red-600 flex items-center">
+                    <p
+                      id="name-error"
+                      className="mt-1 text-sm text-red-600 flex items-center"
+                    >
                       <AlertCircle className="w-4 h-4 mr-1" />
                       Name is required
                     </p>
@@ -184,7 +210,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="edit-profile-school" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="edit-profile-school"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     <School className="w-4 h-4 inline mr-1" />
                     School
                   </label>
@@ -201,7 +230,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="edit-profile-subject" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="edit-profile-subject"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     <BookOpen className="w-4 h-4 inline mr-1" />
                     Subject
                   </label>
@@ -220,14 +252,22 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
               {/* Error Message */}
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
+                <div
+                  className="p-3 bg-red-50 border border-red-200 rounded-md"
+                  role="alert"
+                  aria-live="polite"
+                >
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
 
               {/* Success Message */}
               {saveSuccess && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md" role="alert" aria-live="polite">
+                <div
+                  className="p-3 bg-green-50 border border-green-200 rounded-md"
+                  role="alert"
+                  aria-live="polite"
+                >
                   <p className="text-sm text-green-700">
                     Profile updated successfully!
                   </p>

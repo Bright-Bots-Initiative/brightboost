@@ -80,22 +80,31 @@ const CSVDropzone: React.FC<CSVDropzoneProps> = ({ onFileUpload }) => {
       aria-label="CSV file upload area. Drag and drop a CSV file here or click to browse files"
       aria-describedby="dropzone-instructions"
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          const fileInput = document.getElementById('csv-file-input') as HTMLInputElement;
+          const fileInput = document.getElementById(
+            "csv-file-input",
+          ) as HTMLInputElement;
           fileInput?.click();
         }
       }}
     >
       {isProcessing ? (
-        <div className="flex flex-col items-center" aria-live="polite" aria-busy="true">
+        <div
+          className="flex flex-col items-center"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mb-4"></div>
           <p className="text-gray-600">Processing file...</p>
         </div>
       ) : (
         <div className="flex flex-col items-center">
           <Upload className="w-12 h-12 text-gray-400 mb-4" />
-          <p id="dropzone-instructions" className="text-lg font-medium text-gray-700 mb-2">
+          <p
+            id="dropzone-instructions"
+            className="text-lg font-medium text-gray-700 mb-2"
+          >
             Drop your CSV file here
           </p>
           <p className="text-sm text-gray-500 mb-4">or click to browse files</p>

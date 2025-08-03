@@ -1,5 +1,5 @@
 Accessibility Improvements Overview  
-This document outlines accessibility enhancements made across key components and pages in the Teacher Dashboard section of the app. 
+This document outlines accessibility enhancements made across key components and pages in the Teacher Dashboard section of the app.
 
 Component Updates  
 **ProfileModal.tsx**  
@@ -23,16 +23,24 @@ Focus is automatically set when the modal opens:
 ```jsx
 useEffect(() => {
   if (isOpen) {
-    setTimeout(() => document.querySelector('#edit-profile-name')?.focus(), 100);
+    setTimeout(
+      () => document.querySelector("#edit-profile-name")?.focus(),
+      100,
+    );
   }
-}, [isOpen])
+}, [isOpen]);
 ```
 
 **CSVImportModal.tsx**  
 Progress bar includes ARIA attributes like:
 
 ```jsx
-<div role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={3} />
+<div
+  role="progressbar"
+  aria-valuenow={step}
+  aria-valuemin={1}
+  aria-valuemax={3}
+/>
 ```
 
 Status updates are provided through live regions:
@@ -52,14 +60,19 @@ Drop area is enhanced with keyboard support:
 
 ```jsx
 <div role="button" tabIndex={0} aria-label="CSV file upload area">
-  onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
+  onKeyDown=
+  {(e) => {
+    if (e.key === "Enter") handleClick();
+  }}
 </div>
 ```
 
 Loading state is marked with:
 
 ```jsx
-<div aria-live="polite" aria-busy="true">Uploading...</div>
+<div aria-live="polite" aria-busy="true">
+  Uploading...
+</div>
 ```
 
 **ExportGradesButton.tsx**  
@@ -108,13 +121,19 @@ Main content is defined for assistive navigation:
 Dropdown interactions now use ARIA roles:
 
 ```jsx
-<button aria-haspopup="true" aria-expanded={{isOpen}} aria-label="User menu" />
+<button
+  aria-haspopup="true"
+  aria-expanded={{ isOpen }}
+  aria-label="User menu"
+/>
 ```
 
 Menu items are keyboard-accessible:
 
 ```jsx
-<div role="menu"><button role="menuitem">View Profile</button></div>
+<div role="menu">
+  <button role="menuitem">View Profile</button>
+</div>
 ```
 
 **MainContent.tsx**  

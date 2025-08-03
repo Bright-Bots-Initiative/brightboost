@@ -159,13 +159,23 @@ const TeacherClassDetail: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <section aria-labelledby="summary-heading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <h2 id="summary-heading" className="sr-only">Class Performance Summary</h2>
+      <section
+        aria-labelledby="summary-heading"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+      >
+        <h2 id="summary-heading" className="sr-only">
+          Class Performance Summary
+        </h2>
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Average XP</p>
-              <p className="text-2xl font-bold" aria-label={`Average XP: ${stem1Summary.averageXP} out of 500`}>{stem1Summary.averageXP}</p>
+              <p
+                className="text-2xl font-bold"
+                aria-label={`Average XP: ${stem1Summary.averageXP} out of 500`}
+              >
+                {stem1Summary.averageXP}
+              </p>
               <p className="text-blue-100 text-xs">out of 500</p>
             </div>
             <Zap className="w-8 h-8 text-blue-200" />
@@ -175,7 +185,10 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm">Completion Rate</p>
-              <p className="text-2xl font-bold" aria-label={`Completion rate: ${stem1Summary.averageCompletion} percent`}>
+              <p
+                className="text-2xl font-bold"
+                aria-label={`Completion rate: ${stem1Summary.averageCompletion} percent`}
+              >
                 {stem1Summary.averageCompletion}%
               </p>
               <p className="text-green-100 text-xs">class average</p>
@@ -187,7 +200,10 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm">Students Passed</p>
-              <p className="text-2xl font-bold" aria-label={`${stem1Summary.studentsPassedSTEM1} students passed out of ${stem1Summary.totalStudents} total students`}>
+              <p
+                className="text-2xl font-bold"
+                aria-label={`${stem1Summary.studentsPassedSTEM1} students passed out of ${stem1Summary.totalStudents} total students`}
+              >
                 {stem1Summary.studentsPassedSTEM1}
               </p>
               <p className="text-yellow-100 text-xs">
@@ -211,14 +227,20 @@ const TeacherClassDetail: React.FC = () => {
 
       {/* Class Info + Quests */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <section className="lg:col-span-2 bg-white rounded-lg shadow-md p-6" aria-labelledby="class-info-heading">
+        <section
+          className="lg:col-span-2 bg-white rounded-lg shadow-md p-6"
+          aria-labelledby="class-info-heading"
+        >
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
             <GraduationCap className="w-5 h-5 mr-2" />
             Class Information
           </h3>
           <fieldset className="flex flex-col gap-4 max-w-lg">
             <legend className="sr-only">Edit class information</legend>
-            <label htmlFor="class-name-input" className="text-sm font-semibold text-gray-700">
+            <label
+              htmlFor="class-name-input"
+              className="text-sm font-semibold text-gray-700"
+            >
               Class Name:
               <input
                 id="class-name-input"
@@ -228,8 +250,13 @@ const TeacherClassDetail: React.FC = () => {
                 aria-describedby="class-name-help"
               />
             </label>
-            <div id="class-name-help" className="sr-only">Enter the name for this class</div>
-            <label htmlFor="grade-select" className="text-sm font-semibold text-gray-700">
+            <div id="class-name-help" className="sr-only">
+              Enter the name for this class
+            </div>
+            <label
+              htmlFor="grade-select"
+              className="text-sm font-semibold text-gray-700"
+            >
               Grade:
               <select
                 id="grade-select"
@@ -246,7 +273,9 @@ const TeacherClassDetail: React.FC = () => {
                 ))}
               </select>
             </label>
-            <div id="grade-help" className="sr-only">Select the grade level for this class</div>
+            <div id="grade-help" className="sr-only">
+              Select the grade level for this class
+            </div>
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -263,7 +292,10 @@ const TeacherClassDetail: React.FC = () => {
           </fieldset>
         </section>
 
-        <aside className="bg-white rounded-lg shadow-md p-6" aria-labelledby="quests-heading">
+        <aside
+          className="bg-white rounded-lg shadow-md p-6"
+          aria-labelledby="quests-heading"
+        >
           <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
             <Zap className="w-5 h-5 mr-2" />
             STEM-1 Core Quests
@@ -290,9 +322,15 @@ const TeacherClassDetail: React.FC = () => {
       </div>
 
       {/* Class Roster */}
-      <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="roster-heading">
+      <section
+        className="bg-white rounded-lg shadow-md p-6"
+        aria-labelledby="roster-heading"
+      >
         <div className="flex justify-between items-center mb-4">
-          <h2 id="roster-heading" className="text-lg font-semibold text-brightboost-navy flex items-center">
+          <h2
+            id="roster-heading"
+            className="text-lg font-semibold text-brightboost-navy flex items-center"
+          >
             <Users className="w-5 h-5 mr-2" />
             Class Roster ({classData.students.length} students)
           </h2>
@@ -310,15 +348,31 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto" role="table" aria-labelledby="roster-heading">
+            <table
+              className="w-full text-left table-auto"
+              role="table"
+              aria-labelledby="roster-heading"
+            >
               <thead>
                 <tr className="text-sm text-gray-600 border-b bg-gray-50">
-                  <th scope="col" className="py-3 px-4 font-medium">Student ID</th>
-                  <th scope="col" className="py-3 px-4 font-medium">Name</th>
-                  <th scope="col" className="py-3 px-4 font-medium">Email</th>
-                  <th scope="col" className="py-3 px-4 font-medium">STEM-1 Progress</th>
-                  <th scope="col" className="py-3 px-4 font-medium">XP Earned</th>
-                  <th scope="col" className="py-3 px-4 font-medium">Status</th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Student ID
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Name
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Email
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    STEM-1 Progress
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    XP Earned
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-medium">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -412,9 +466,15 @@ const TeacherClassDetail: React.FC = () => {
         onProfileUpdated={handleProfileUpdated}
       />
       {/* Assignments */}
-      <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="assignments-heading">
+      <section
+        className="bg-white rounded-lg shadow-md p-6"
+        aria-labelledby="assignments-heading"
+      >
         <div className="flex justify-between items-center mb-4">
-          <h2 id="assignments-heading" className="text-lg font-semibold text-brightboost-navy">
+          <h2
+            id="assignments-heading"
+            className="text-lg font-semibold text-brightboost-navy"
+          >
             Assignments
           </h2>
           <button

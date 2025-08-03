@@ -19,9 +19,9 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <nav 
-      className="bg-brightboost-navy text-white shadow-lg ml-64" 
-      role="navigation" 
+    <nav
+      className="bg-brightboost-navy text-white shadow-lg ml-64"
+      role="navigation"
       aria-label="Main navigation"
     >
       <div className="px-6 py-4">
@@ -44,13 +44,16 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-brightboost-navy" />
               </div>
-              <span className="font-medium">Welcome, {userName}</span> {/* Added "Welcome, " */}
-              <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              <span className="font-medium">Welcome, {userName}</span>{" "}
+              {/* Added "Welcome, " */}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+              />
             </button>
 
             {/* Dropdown menu */}
             {isDropdownOpen && (
-              <div 
+              <div
                 className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
                 role="menu"
                 aria-labelledby="user-menu-button"

@@ -94,7 +94,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       role="dialog"
       aria-modal="true"
@@ -102,7 +102,10 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
     >
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 id="csv-import-title" className="text-xl font-semibold text-brightboost-navy">
+          <h2
+            id="csv-import-title"
+            className="text-xl font-semibold text-brightboost-navy"
+          >
             Import Class from CSV
           </h2>
           <button
@@ -116,29 +119,63 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-6" role="main">
           {/* Progress indicator */}
-          <div className="mb-6" role="progressbar" aria-valuenow={
-            currentStep === "upload" ? 1 : 
-            currentStep === "summary" ? 2 : 
-            currentStep === "success" ? 3 : 1
-          } aria-valuemin={1} aria-valuemax={3} aria-label="Import progress">
+          <div
+            className="mb-6"
+            role="progressbar"
+            aria-valuenow={
+              currentStep === "upload"
+                ? 1
+                : currentStep === "summary"
+                  ? 2
+                  : currentStep === "success"
+                    ? 3
+                    : 1
+            }
+            aria-valuemin={1}
+            aria-valuemax={3}
+            aria-label="Import progress"
+          >
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              <span className={currentStep === "upload" ? "font-medium text-brightboost-blue" : ""}>
+              <span
+                className={
+                  currentStep === "upload"
+                    ? "font-medium text-brightboost-blue"
+                    : ""
+                }
+              >
                 1. Upload
               </span>
-              <span className={currentStep === "summary" ? "font-medium text-brightboost-blue" : ""}>
+              <span
+                className={
+                  currentStep === "summary"
+                    ? "font-medium text-brightboost-blue"
+                    : ""
+                }
+              >
                 2. Review
               </span>
-              <span className={currentStep === "success" ? "font-medium text-brightboost-blue" : ""}>
+              <span
+                className={
+                  currentStep === "success"
+                    ? "font-medium text-brightboost-blue"
+                    : ""
+                }
+              >
                 3. Complete
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-brightboost-blue h-2 rounded-full transition-all duration-300"
-                style={{ 
-                  width: currentStep === "upload" ? "33%" : 
-                         currentStep === "summary" ? "66%" : 
-                         currentStep === "success" ? "100%" : "33%" 
+                style={{
+                  width:
+                    currentStep === "upload"
+                      ? "33%"
+                      : currentStep === "summary"
+                        ? "66%"
+                        : currentStep === "success"
+                          ? "100%"
+                          : "33%",
                 }}
               ></div>
             </div>
@@ -147,7 +184,9 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
           {currentStep === "upload" && (
             <section aria-labelledby="upload-section">
               <div className="mb-6">
-                <h3 id="upload-section" className="text-lg font-medium mb-2">Upload CSV File</h3>
+                <h3 id="upload-section" className="text-lg font-medium mb-2">
+                  Upload CSV File
+                </h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Upload a CSV file with your class roster. The file should
                   include columns for student name, email, and optionally
@@ -168,7 +207,11 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
               </div>
               <CSVDropzone onFileUpload={handleFileUpload} />
               {uploadError && (
-                <div className="p-3 mt-4 bg-red-50 text-red-700 rounded-md border border-red-200" role="alert" aria-live="polite">
+                <div
+                  className="p-3 mt-4 bg-red-50 text-red-700 rounded-md border border-red-200"
+                  role="alert"
+                  aria-live="polite"
+                >
                   <div className="flex items-start">
                     <AlertCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
                     <span>⚠️ {uploadError}</span>
@@ -181,7 +224,10 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
           {currentStep === "summary" && parsedData && (
             <section aria-labelledby="summary-section">
               <div className="mb-6">
-                <h3 id="summary-section" className="text-lg font-medium mb-2 flex items-center">
+                <h3
+                  id="summary-section"
+                  className="text-lg font-medium mb-2 flex items-center"
+                >
                   <FileText className="w-5 h-5 mr-2 text-brightboost-blue" />
                   Import Summary
                 </h3>
@@ -201,12 +247,18 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
                   onClick={handleConfirmImport}
                   disabled={isImporting}
                   className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
-                  aria-describedby={isImporting ? "importing-status" : undefined}
+                  aria-describedby={
+                    isImporting ? "importing-status" : undefined
+                  }
                 >
                   {isImporting ? "Importing..." : "Confirm Import"}
                 </button>
                 {isImporting && (
-                  <span id="importing-status" className="sr-only" aria-live="polite">
+                  <span
+                    id="importing-status"
+                    className="sr-only"
+                    aria-live="polite"
+                  >
                     Import in progress, please wait
                   </span>
                 )}
@@ -215,9 +267,16 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {currentStep === "success" && (
-            <section className="text-center" aria-labelledby="success-section" role="alert" aria-live="polite">
+            <section
+              className="text-center"
+              aria-labelledby="success-section"
+              role="alert"
+              aria-live="polite"
+            >
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 id="success-section" className="text-lg font-medium mb-2">Import Successful!</h3>
+              <h3 id="success-section" className="text-lg font-medium mb-2">
+                Import Successful!
+              </h3>
               <p className="text-gray-600 mb-6">
                 Your class has been successfully imported. You'll be redirected
                 to the class detail page.
@@ -232,9 +291,16 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {currentStep === "error" && (
-            <section className="text-center" aria-labelledby="error-section" role="alert" aria-live="polite">
+            <section
+              className="text-center"
+              aria-labelledby="error-section"
+              role="alert"
+              aria-live="polite"
+            >
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h3 id="error-section" className="text-lg font-medium mb-2">Import Failed</h3>
+              <h3 id="error-section" className="text-lg font-medium mb-2">
+                Import Failed
+              </h3>
               <div className="text-left bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <h4 className="font-medium text-red-900 mb-2">Errors found:</h4>
                 <ul className="text-sm text-red-800 space-y-1">

@@ -124,7 +124,11 @@ const TeacherDashboard: React.FC = () => {
   return (
     <>
       {isLoading && (
-        <div className="flex-grow p-6 text-center" aria-live="polite" aria-busy="true">
+        <div
+          className="flex-grow p-6 text-center"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-brightboost-navy mt-4">
             Loading dashboard data...
@@ -132,7 +136,11 @@ const TeacherDashboard: React.FC = () => {
         </div>
       )}
       {error && (
-        <div className="flex-grow p-6 text-center" role="alert" aria-live="polite">
+        <div
+          className="flex-grow p-6 text-center"
+          role="alert"
+          aria-live="polite"
+        >
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-red-500 mt-4">Error: {error}</p>
         </div>

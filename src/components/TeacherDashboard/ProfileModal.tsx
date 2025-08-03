@@ -59,7 +59,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       role="dialog"
       aria-modal="true"
@@ -67,7 +67,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 id="profile-modal-title" className="text-xl font-semibold text-brightboost-navy flex items-center">
+          <h2
+            id="profile-modal-title"
+            className="text-xl font-semibold text-brightboost-navy flex items-center"
+          >
             <User className="w-5 h-5 mr-2" />
             {isTeacherProfile ? "Teacher Profile" : "Student Profile"}
           </h2>
@@ -82,7 +85,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
         <div className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8" aria-live="polite" aria-busy="true">
+            <div
+              className="flex items-center justify-center py-8"
+              aria-live="polite"
+              aria-busy="true"
+            >
               <Loader2 className="w-8 h-8 animate-spin text-brightboost-blue" />
               <span className="ml-2 text-gray-600">Loading profile...</span>
             </div>
@@ -140,7 +147,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       <dt className="text-sm font-medium text-gray-700">
                         School
                       </dt>
-                      <dd className="text-sm text-gray-600">{profile.school}</dd>
+                      <dd className="text-sm text-gray-600">
+                        {profile.school}
+                      </dd>
                     </div>
                   </div>
                 )}
@@ -152,7 +161,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       <dt className="text-sm font-medium text-gray-700">
                         Subject
                       </dt>
-                      <dd className="text-sm text-gray-600">{profile.subject}</dd>
+                      <dd className="text-sm text-gray-600">
+                        {profile.subject}
+                      </dd>
                     </div>
                   </div>
                 )}
