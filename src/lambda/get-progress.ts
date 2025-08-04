@@ -128,7 +128,7 @@ export const handler = async (
     console.log("Database connection established successfully");
 
     const data = await db.query(
-      "SELECT badges, streak FROM users WHERE email = " + decoded.email,
+      "SELECT badges, streak, xp FROM users WHERE email = $1", [decoded.email]),
     );
 
     return {
