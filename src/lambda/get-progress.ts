@@ -145,7 +145,7 @@ export const handler = async (
 
     const data = await db.query(
       "SELECT badges, streak, xp FROM users WHERE email = $1",
-      [decoded.email as string],
+      [decoded.email as string]
     );
 
     return {
