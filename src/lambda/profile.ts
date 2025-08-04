@@ -127,7 +127,7 @@ export const handler = async (
     console.log("Database connection established successfully");
 
     const data = await db.query(
-      'SELECT id, name, email, role, school, subject, "avatarUrl", created_at FROM "User" WHERE email = $1',
+      'SELECT id, name, email, role, school, subject, "avatarUrl", "createdAt" FROM "User" WHERE email = $1',
       [decoded.email],
     );
 
@@ -151,7 +151,7 @@ export const handler = async (
         subject: user.subject,
         role: user.role,
         id: user.id,
-        created_at: user.created_at,
+        created_at: user.createdAt,
       }),
     };
   } catch (error) {
