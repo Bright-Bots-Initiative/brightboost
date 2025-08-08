@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "test:db": "node scripts/dbHealth.js",
     "typecheck": "tsc --noEmit",
-    "check-bundle-size": "npm run build && node scripts/check-bundle-size.js"
+    "check-bundle-size": "npm run build && node scripts/check-bundle-size.js",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run --browser chrome"
   },
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seed.ts"
