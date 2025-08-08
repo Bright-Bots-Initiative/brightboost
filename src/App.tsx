@@ -51,6 +51,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/student" 
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <StudentDashboard />
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
