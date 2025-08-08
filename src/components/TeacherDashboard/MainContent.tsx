@@ -3,7 +3,6 @@ import { MainContentProps, Lesson } from "./types";
 import LessonsTable from "./LessonTable";
 
 const MainContent: React.FC<MainContentProps> = ({
-  activeView = "Lessons",
   lessonsData,
   setLessonsData,
   onEditLesson,
@@ -21,33 +20,31 @@ const MainContent: React.FC<MainContentProps> = ({
     <main className="flex-grow p-6" role="main">
       <header>
         <h1 className="text-2xl font-bold mb-6 text-brightboost-navy">
-          {activeView}
+          Lessons
         </h1>
       </header>
 
-      {activeView === "Lessons" && (
-        <section
-          className="bg-white rounded-lg shadow-md p-6"
-          aria-labelledby="lessons-management-heading"
+      <section
+        className="bg-white rounded-lg shadow-md p-6"
+        aria-labelledby="lessons-management-heading"
+      >
+        <h2
+          id="lessons-management-heading"
+          className="text-xl font-semibold mb-4"
         >
-          <h2
-            id="lessons-management-heading"
-            className="text-xl font-semibold mb-4"
-          >
-            Lessons Management
-          </h2>
-          <p className="text-gray-600 mb-4">
-            You have {lessonsData.length} lessons available.
-          </p>
-          <LessonsTable
-            lessons={lessonsData}
-            setLessons={setLessonsData}
-            onEditLesson={openEditForm}
-            onDuplicateLesson={handleDuplicateLesson}
-            onDeleteLesson={onDeleteLesson}
-          />
-        </section>
-      )}
+          Lessons Management
+        </h2>
+        <p className="text-gray-600 mb-4">
+          You have {lessonsData.length} lessons available.
+        </p>
+        <LessonsTable
+          lessons={lessonsData}
+          setLessons={setLessonsData}
+          onEditLesson={openEditForm}
+          onDuplicateLesson={handleDuplicateLesson}
+          onDeleteLesson={onDeleteLesson}
+        />
+      </section>
     </main>
   );
 };
