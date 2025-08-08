@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 
 export type UserRole = 'teacher' | 'student' | 'admin';
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: string; role: UserRole } | null;
-    }
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: { id: string; role: import('./auth').UserRole } | null;
   }
 }
 
