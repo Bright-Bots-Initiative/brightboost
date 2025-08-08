@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "local": "vite --mode local-be",
-    "build": "tsc && vite build && node copy-static-config.js",
+    "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
