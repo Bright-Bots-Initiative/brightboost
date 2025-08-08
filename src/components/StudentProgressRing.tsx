@@ -1,5 +1,3 @@
-import React from 'react';
-
 type Props = { percent: number; size?: number; stroke?: number; label?: string };
 export default function StudentProgressRing({ percent, size = 120, stroke = 10, label }: Props) {
   const r = (size - stroke) / 2;
