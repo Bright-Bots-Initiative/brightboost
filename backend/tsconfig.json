@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
-    "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
+    "target": "ES2019",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2019"],
     "outDir": "dist",
-    "types": ["node"]
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"]
 }
