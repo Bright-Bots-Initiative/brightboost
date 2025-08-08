@@ -2,7 +2,6 @@
   "name": "brightboost-backend",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -12,9 +11,9 @@
     "@prisma/client": "^5.16.1"
   },
   "devDependencies": {
+    "@types/node": "^20.19.9",
     "prisma": "^5.16.1",
     "ts-node": "^10.9.2",
-    "@types/node": "^20.11.30",
     "typescript": "^5.4.5"
   }
 }
