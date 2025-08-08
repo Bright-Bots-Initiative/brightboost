@@ -21,7 +21,7 @@ provider:
 
 functions:
   api:
-    handler: backend/dist/src/handler.handler
+    handler: dist/src/handler.handler
     events:
       - httpApi:
           method: ANY
@@ -30,8 +30,6 @@ functions:
 package:
   patterns:
     - '!**/*'
-    - 'backend/dist/**'
-    - 'backend/node_modules/**'
+    - 'dist/**'
     - 'node_modules/**'
     - 'package.json'
-    - 'backend/package.json'
