@@ -2,13 +2,12 @@
 // src/services/api.ts
 import { useAuth } from '../contexts/AuthContext';
 
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
   try {
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -30,9 +29,9 @@ export const loginUser = async (email: string, password: string) => {
 
 export const signupUser = async (name: string, email: string, password: string, role: string) => {
   try {
-    console.log(`Sending signup request to: ${API_URL}/auth/signup`);
+    console.log(`Sending signup request to: ${API_BASE}/auth/signup`);
     
-    const response = await fetch(`${API_URL}/auth/signup`, {
+    const response = await fetch(`${API_BASE}/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -76,7 +75,7 @@ export const useApi = () => {
     };
     
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers,
       });

@@ -1,0 +1,30 @@
+name: cypress-staging
+
+on:
+  pull_request:
+    types: [labeled]
+    branches: [ main ]
+
+jobs:
+  run-cypress-staging:
+    if: contains(github.event.pull_request.labels.*.name, 'pilot-smoke')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm ci
+      - name: Cypress run (staging)
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          headless: true
+          spec: cypress/e2e/pilot-smoke.cy.ts
+        env:
+          CYPRESS_API_BASE: ${{ secrets.STAGING_API_BASE }}
+          CYPRESS_STUDENT_ID: ${{ secrets.CYPRESS_STUDENT_ID }}
+          CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
