@@ -1,0 +1,26 @@
+{
+  "message": "Student dashboard data",
+  "courses": [
+    { "id": "1", "name": "Math 101", "grade": "B+", "teacher": "Dr. Smith" },
+    {
+      "id": "2",
+      "name": "Science 202",
+      "grade": "A-",
+      "teacher": "Prof. Johnson"
+    }
+  ],
+  "assignments": [
+    {
+      "id": "1",
+      "title": "Math Homework",
+      "dueDate": "2025-04-05",
+      "status": "pending"
+    },
+    {
+      "id": "2",
+      "title": "Science Project",
+      "dueDate": "2025-04-15",
+      "status": "completed"
+    }
+  ]
+}
