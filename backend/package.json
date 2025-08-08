@@ -2,11 +2,10 @@
   "name": "brightboost-backend",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "main": "dist/src/server.js",
   "scripts": {
     "build": "tsc -p .",
-    "dev": "ts-node-esm src/server.ts",
+    "dev": "ts-node src/server.ts",
     "deploy:staging": "serverless deploy --stage staging",
     "remove:staging": "serverless remove --stage staging"
   },
@@ -16,6 +15,8 @@
     "serverless-http": "^3.2.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "serverless": "^3.39.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
