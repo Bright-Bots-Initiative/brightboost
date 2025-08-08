@@ -1,57 +1,20 @@
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
+import en from '../i18n/en.json';
+import es from '../i18n/es.json';
 
-const LANGUAGE_KEY = "preferredLanguage";
-const fallbackLng = "en";
+type Dict = Record<string, any>;
+const dicts: Record<string, Dict> = { en, es };
+let current = 'en';
 
-const getInitialLanguage = (): string => {
-  const storedLang = localStorage.getItem(LANGUAGE_KEY);
-  const browserLang = navigator.languages?.[0]?.split("-")[0];
-  return storedLang || browserLang || fallbackLng;
-};
-
-const selectedLang = getInitialLanguage();
-
-if (import.meta.env.VITE_ENABLE_I18N === "true") {
-  const initWithTranslations = (
-    lang: string,
-    translations: Record<string, any>,
-  ) => {
-    if (!i18n.isInitialized) {
-      i18n
-        .use(initReactI18next)
-        .init({
-          lng: lang,
-          fallbackLng,
-          debug: import.meta.env.DEV,
-          interpolation: { escapeValue: false },
-          load: "languageOnly",
-          resources: {
-            [lang]: {
-              translation: translations.default,
-            },
-          },
-        })
-        .then(() => {})
-        .catch((err) => {
-          console.error(`Error initializing i18n for ${lang}:`, err);
-        });
-    }
-  };
-
-  import(`../locales/${selectedLang}/common.json`)
-    .then((translations) => {
-      initWithTranslations(selectedLang, translations);
-    })
-    .catch(() => {
-      import(`../locales/${fallbackLng}/common.json`)
-        .then((fallbackTranslations) => {
-          initWithTranslations(fallbackLng, fallbackTranslations);
-        })
-        .catch((fallbackErr) => {
-          console.error("Error loading fallback language:", fallbackErr);
-        });
-    });
+export function setLocale(locale: 'en' | 'es') {
+  current = locale in dicts ? locale : 'en';
 }
 
-export default i18n;
+export function t(path: string): string {
+  const parts = path.split('.');
+  let node: any = dicts[current];
+  for (const p of parts) {
+    if (node && typeof node === 'object' && p in node) node = node[p];
+    else return path;
+  }
+  return typeof node === 'string' ? node : path;
+}

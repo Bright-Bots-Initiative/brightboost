@@ -1,471 +1,137 @@
-import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useApi } from "../services/api";
-import GameBackground from "../components/GameBackground";
-import StemModuleCard from "../components/StemModuleCard";
-import LeaderboardCard from "../components/LeaderboardCard";
-import WordGameCard from "../components/WordGameCard";
-import BrightBoostRobot from "../components/BrightBoostRobot";
-import XPProgressWidget from "../components/ui/XPProgressBar";
-import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
-import NextModuleCard from "../components/StudentDashboard/NextModuleCard";
-import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
-// import ModuleLadder from "../components/StudentDashboard/ModuleLadder"
-// import { QuestProgress } from "../components/StudentDashboard/ModuleLadder"
-import studentDashboardMock from "../mocks/studentDashboardMock";
-import { useTranslation } from "react-i18next";
-import LanguageToggle from "../components/LanguageToggle";
-import AvatarPicker from "../components/AvatarPicker";
-import StreakMeter from "../components/ui/StreakMeter";
-import { useStreak } from "../hooks/useStreak";
-//import BadgeSlot from "../components/ui/BadgeSlot";
 
-interface Course {
-  id: string;
-  name: string;
-  grade: string;
-  teacher: string;
-}
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useModule } from '../hooks/useModule';
+import { useStudentProgress } from '../hooks/useStudentProgress';
+import { submitCheckpoint } from '../hooks/useCheckpoint';
+import StudentProgressRing from '../components/StudentProgressRing';
+import ContinueModuleCard from '../components/ContinueModuleCard';
+import BadgeModal from '../components/BadgeModal';
+import { t } from '../lib/i18n';
 
-interface Assignment {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: "pending" | "completed";
-}
+const CURRENT_STUDENT_ID = 'demo-student-1';
 
-interface StudentDashboardData {
-  message: string;
-  xp: number;
-  level: number;
-  nextLevelXp: number;
-  currentModule: {
-    title: string;
-    status: string;
-    dueDate: string;
-    lessonId: string;
-  } | null;
-  courses: Course[];
-  assignments: Assignment[];
-}
-
-type StudentProgress = {
-  xp: number;
-  level: number;
-  nextLevelXp: number;
-};
-
-function formatLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function getLastSunday(today: Date): Date {
-  const dayOfWeek = today.getDay(); // 0 = Sunday
-  const lastSunday = new Date(today);
-  lastSunday.setHours(0, 0, 0, 0);
-  lastSunday.setDate(today.getDate() - dayOfWeek);
-  return lastSunday;
-}
-
-function generateCurrentStreakDaysFromArray(
-  streakDays: string[],
-  serverDateUTC: string,
-): boolean[] {
-  const days = Array(7).fill(false);
-  if (!streakDays?.length) return days;
-
-  const today = new Date(serverDateUTC);
-  today.setHours(0, 0, 0, 0);
-  const lastSunday = getLastSunday(today);
-  const streakDaySet = new Set(streakDays);
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(lastSunday);
-    day.setDate(lastSunday.getDate() + i);
-    if (day > today) break;
-    const dayStr = formatLocalDate(day);
-    days[i] = streakDaySet.has(dayStr);
-  }
-
-  return days;
-}
-
-const StudentDashboard = () => {
-  const { t } = useTranslation();
-  const { user, logout } = useAuth();
+export default function StudentDashboard() {
   const navigate = useNavigate();
-  const api = useApi();
+  const { data: mod } = useModule('stem-1');
+  const { data: progress, refetch } = useStudentProgress(CURRENT_STUDENT_ID, 'stem-1');
+  const [showBadge, setShowBadge] = useState(false);
+  const [lockTooltip, setLockTooltip] = useState<string | null>(null);
 
-  const [dashboardData, setDashboardData] =
-    useState<StudentDashboardData | null>(null);
+  const percent = progress?.percentComplete ?? 0;
+  const moduleTitle = mod?.title ?? 'STEM-1';
 
-  const [progress, setProgress] = useState<StudentProgress | null>(null);
-  const [badges, setBadges] = useState<string[]>([]);
+  const lessons = useMemo(() => {
+    const all = mod?.units?.flatMap(u => u.lessons) ?? [];
+    return all.sort((a, b) => a.index - b.index);
+  }, [mod]);
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showStillLoading, setShowStillLoading] = useState(false);
+  const nextLessonId = useMemo(() => {
+    if (!lessons.length) return null;
+    if (!progress?.lastLessonId) return lessons[0].id;
+    const idx = lessons.findIndex(l => l.id === progress.lastLessonId);
+    return lessons[idx + 1]?.id ?? lessons[idx]?.id ?? null;
+  }, [lessons, progress?.lastLessonId]);
 
-  const { streak, loading: streakLoading, completeModule } = useStreak();
+  function handleContinue() {
+    if (!nextLessonId) return;
+    navigate(`/lesson/${nextLessonId}`);
+  }
 
-  const fetchDashboardData = useCallback(async () => {
+  function handleLessonClick(lessonId: string, index: number) {
+    const unlocked = index === 0 || lessons[index - 1]?.id === progress?.lastLessonId;
+    if (!unlocked) {
+      setLockTooltip(t('student.lockedLesson'));
+      setTimeout(() => setLockTooltip(null), 2500);
+      return;
+    }
+    navigate(`/lesson/${lessonId}`);
+  }
+
+  async function simulateCheckpoint() {
+    if (!nextLessonId) return;
     try {
-      setIsLoading(true);
-      setError(null);
-      setShowStillLoading(false);
-
-      const timeoutId = setTimeout(() => {
-        setShowStillLoading(true);
-      }, 10000);
-
-      const isTestEnvironment =
-        (window as any).Cypress || process.env.NODE_ENV === "test";
-      const minLoadingPromise = isTestEnvironment
-        ? new Promise((resolve) => setTimeout(resolve, 1000))
-        : Promise.resolve();
-
-      const [data] = await Promise.all([
-        api.get("/api/student/dashboard"),
-        minLoadingPromise,
-      ]);
-
-      clearTimeout(timeoutId);
-      setDashboardData(data);
-    } catch (err: any) {
-      if (err.message === "Session expired") {
-        logout();
-        navigate("/student/login");
-        return;
-      }
-      setError(err.message || "Failed to load dashboard data");
-      console.error("Dashboard data fetch error:", err);
-    } finally {
-      setIsLoading(false);
-      setShowStillLoading(false);
+      await submitCheckpoint({
+        studentId: CURRENT_STUDENT_ID,
+        moduleSlug: 'stem-1',
+        lessonId: nextLessonId,
+        status: 'COMPLETED',
+        timeDeltaS: 0,
+      });
+    } catch (e) {
     }
-  }, [api, logout, navigate]);
-
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      (window as any).Cypress &&
-      completeModule
-    ) {
-      (window as any).completeModule = completeModule;
-    }
-  }, [completeModule]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Cypress && streak) {
-      (window as any).currentStreak = streak.currentStreak;
-      (window as any).longestStreak = streak.longestStreak;
-      (window as any).streakDays = streak.streakDays;
-      (window as any).serverDateUTC = streak.serverDateUTC;
-    }
-  }, [streak]);
-
-  useEffect(() => {
-    fetchDashboardData();
-
-    if (user?.id) {
-      api
-        .get(`/api/v1/students/${user.id}/progress`)
-        .then((p) => {
-          if (p && typeof p === "object") setProgress(p as StudentProgress);
-        })
-        .catch((e) => console.warn("Progress fetch failed:", e));
-
-      api
-        .get(`/api/v1/students/${user.id}/badges`)
-        .then((list) => {
-          if (Array.isArray(list)) setBadges(list);
-        })
-        .catch((e) => console.warn("Badges fetch failed:", e));
-    }
-  }, [fetchDashboardData, api, user?.id]);
-
-  const stemActivities = [
-    {
-      title: t("dashboard.stem.math"),
-      icon: "/icons/math.png",
-      color: "bg-blue-100 hover:bg-blue-200",
-      path: "/activities/math",
-    },
-    {
-      title: t("dashboard.stem.science"),
-      icon: "/icons/science.png",
-      color: "bg-green-100 hover:bg-green-200",
-      path: "/activities/science",
-    },
-    {
-      title: t("dashboard.stem.coding"),
-      icon: "/icons/coding.png",
-      color: "bg-purple-100 hover:bg-purple-200",
-      path: "/activities/coding",
-    },
-  ];
-
-  const leaderboardEntries = [
-    { rank: 1, name: "Alex", points: 1250, avatar: "/avatars/alex.png" },
-    { rank: 2, name: "Sarah", points: 1180, avatar: "/avatars/sarah.png" },
-    { rank: 3, name: "Mike", points: 1050, avatar: "/avatars/mike.png" },
-  ];
-
-  if (streakLoading || isLoading) {
-    return (
-      <GameBackground>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brightboost-blue mx-auto mb-4"></div>
-            <p className="text-brightboost-navy">{t("dashboard.loading")}</p>
-            {showStillLoading && (
-              <p className="text-brightboost-navy/70 mt-2">
-                {t("dashboard.stillLaoding")}
-              </p>
-            )}
-          </div>
-        </div>
-      </GameBackground>
-    );
+    refetch();
   }
-
-  if (error) {
-    return (
-      <GameBackground>
-        <div className="min-h-screen flex items-center justify-center">
-          <div data-testid="dashboard-error" className="text-center">
-            <p className="text-red-600 mb-4">
-              {t("dashboard.errorPrefix")}! {error}
-            </p>
-            <button
-              onClick={fetchDashboardData}
-              className="bg-brightboost-blue text-white px-4 py-2 rounded-lg hover:bg-brightboost-blue/80"
-            >
-              {t("dashboard.tryAgain")}
-            </button>
-          </div>
-        </div>
-      </GameBackground>
-    );
-  }
-
-  const streakDays = streak?.streakDays ?? [];
-  const serverDateUTC = streak?.serverDateUTC ?? new Date().toISOString();
-  const currentStreakDays = generateCurrentStreakDaysFromArray(
-    streakDays,
-    serverDateUTC,
-  );
-  const currentStreakSafe = Number(streak?.currentStreak) || 0;
-  const longestStreakSafe = Number(streak?.longestStreak) || 0;
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   return (
-    <GameBackground>
-      <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto px-6">
-          {/*top row*/}
-          <div className="w-full mb-6 mt-8">
-            <div className="flex items-center min-w-0">
-              {/*align greeting w left edge of grid */}
-              <div className="flex items-center flex-shrink-0 mr-4 relative">
-                <BrightBoostRobot className="w-16 h-16" />
-                <AvatarPicker
-                  currentAvatarUrl={undefined}
-                  userInitials={
-                    user?.name
-                      ? user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                      : "ST"
-                  }
-                  onAvatarChange={() => {}}
-                />
-                <div className="ml-3 relative">
-                  <h1 className="text-3xl font-bold text-brightboost-navy">
-                    {t("dashboard.greeting", {
-                      name: user?.name || t("student"),
-                    })}
-                  </h1>
-                  <p className="absolute left-0 top-full mt-1 text-brightboost-blue text-sm">
-                    {t("dashboard.readyPrompt")}
-                  </p>
-                </div>
-              </div>
-
-              {/* align widgets w right edge */}
-              <div className="flex justify-end items-center space-x-2 min-w-0 ml-auto">
-                <XPProgressWidget
-                  currentXp={progress?.xp ?? dashboardData?.xp ?? 0}
-                  xpToNextLevel={progress?.nextLevelXp ?? dashboardData?.nextLevelXp ?? 100}
-                  level={progress?.level ?? dashboardData?.level ?? 1}
-                  className="self-center -translate-y-3"
-                />
-                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                  <span className="text-sm font-bold">
-                    {t("dashboard.role")}
-                  </span>
-                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                    {user?.name || t("student")}
-                  </span>
-                </div>
-                <LanguageToggle />
-                <button
-                  onClick={handleLogout}
-                  className="flex-shrink-0 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  {t("dashboard.logout")}
-                </button>
-              </div>
-            </div>
-
-            {Array.isArray(badges) && badges.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {badges.map((badge, index) => (
-                  <span
-                    key={index}
-                    className="bg-yellow-200 text-yellow-900 px-3 py-1 rounded-full text-xs font-semibold shadow"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex justify-end items-center space-x-2 mt-2">
-              <StreakMeter
-                currentStreak={currentStreakSafe}
-                longestStreak={longestStreakSafe}
-                currentStreakDays={currentStreakDays}
-                barColor="#FF8C00"
-                onNewRecord={() => {}}
-              />
-              {/*<div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">{t("dashboard.role")}</span>
-                <span className="text-xs bg-white px-2 py-0.5 rounded-full">
-                  {user?.name || t("student")}
-                </span>
-              </div>*/}
-              <XPProgressRing />
-            </div>
-          </div>
-
-          {/* card grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex flex-col space-y-2">
-              {/* USING MOCK DATA FOR THIS */}
-              <CurrentModuleCard module={studentDashboardMock.currentModule} />
-
-              <StemModuleCard
-                title={t("dashboard.stemCard.title")}
-                subtitle={t("dashboard.stemCard.subtitle")}
-                activities={stemActivities}
-              />
-            </div>
-
-            <div className="flex flex-col space-y-2">
-              <NextModuleCard module={studentDashboardMock.nextModule} />
-
-              <WordGameCard
-                title={t("dashboard.wordGame.title")}
-                letters={["A", "B", "E", "L", "T"]}
-                word="TABLE"
-              />
-            </div>
-
-            <LeaderboardCard
-              title={t("dashboard.leaderboard.title")}
-              entries={leaderboardEntries}
-            />
-          </div>
-
-          {dashboardData &&
-            (dashboardData.courses?.length ||
-              dashboardData.assignments?.length) && (
-              <div className="mt-8">
-                <h3 className="text-xl font-bold text-brightboost-navy mb-4">
-                  {t("dashboard.coursesAndAssignments")}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-lg p-4 shadow-md">
-                    <h4 className="font-bold text-brightboost-navy mb-3">
-                      {t("dashboard.enrolledCourses")}
-                    </h4>
-                    {dashboardData.courses &&
-                      dashboardData.courses.map((course) => (
-                        <div
-                          key={course.id}
-                          className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
-                          data-cy="course-item"
-                        >
-                          <div className="font-medium">{course.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {t("dashboard.grade")}: {course.grade} |{" "}
-                            {t("dashboard.teacher")}: {course.teacher}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-
-                  <div className="bg-white rounded-lg p-4 shadow-md">
-                    <h4 className="font-bold text-brightboost-navy mb-3">
-                      {t("dashboard.recentAssignments")}
-                    </h4>
-                    {dashboardData.assignments.map((assignment) => (
-                      <div
-                        key={assignment.id}
-                        className="mb-2 p-2 bg-brightboost-lightblue/20 rounded"
-                        data-cy="assignment-item"
-                      >
-                        <div className="font-medium">{assignment.title}</div>
-                        <div className="text-sm text-gray-600">
-                          {t("dashboard.due")}: {assignment.dueDate} |{" "}
-                          <span
-                            className={`ml-1 ${assignment.status === "completed" ? "text-green-600" : "text-orange-600"}`}
-                          >
-                            {t(`dashboard.status.${assignment.status}`)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {(!dashboardData ||
-            (!dashboardData.courses?.length &&
-              !dashboardData.assignments?.length)) &&
-            !isLoading &&
-            !error && (
-              <div className="mt-8 text-center">
-                <p className="text-brightboost-navy">{t("dashboard.noData")}</p>
-              </div>
-            )}
-
-          <div className="mt-8 flex justify-center">
-            <div className="flex space-x-4">
-              <button className="bg-brightboost-blue hover:bg-brightboost-blue/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                {t("dashboard.startLearning")}
-              </button>
-              <button className="bg-brightboost-green hover:bg-brightboost-green/80 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                {t("dashboard.viewProgress")}
-              </button>
-            </div>
+    <div className="max-w-3xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">{t('student.dashboardTitle')}</h1>
+      <div className="flex items-center gap-6">
+        <StudentProgressRing percent={percent} label={t('student.progressLabel')} />
+        <div className="flex-1">
+          <ContinueModuleCard
+            moduleTitle={moduleTitle}
+            percent={percent}
+            onContinue={handleContinue}
+          />
+          <div className="mt-3 text-sm opacity-70">
+            {t('student.xpHelp')}
           </div>
         </div>
       </div>
-    </GameBackground>
-  );
-};
 
-export default StudentDashboard;
+      <div className="rounded-2xl border p-4">
+        <div className="font-semibold mb-2">{t('student.lessons')}</div>
+        <div className="flex flex-col gap-2">
+          {lessons.map((l, i) => {
+            const unlocked = i === 0 || lessons[i - 1]?.id === progress?.lastLessonId;
+            return (
+              <div key={l.id} className="flex items-center justify-between border rounded-xl p-3">
+                <div>
+                  <div className="font-medium">{l.title}</div>
+                  <div className="text-xs opacity-70">#{l.index + 1}</div>
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => handleLessonClick(l.id, i)}
+                    className={`px-3 py-1 rounded-lg ${unlocked ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 cursor-not-allowed'}`}
+                    aria-disabled={!unlocked}
+                  >
+                    {unlocked ? t('student.open') : t('student.locked')}
+                  </button>
+                  {!unlocked && lockTooltip && (
+                    <div className="absolute right-0 mt-2 text-xs bg-black text-white rounded px-2 py-1" role="tooltip" data-testid="lock-tooltip">
+                      {lockTooltip}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border p-4">
+        <div className="font-semibold mb-2">{t('student.badges')}</div>
+        <div className="flex gap-2">
+          {(mod?.badges ?? []).map((b) => (
+            <button key={b.slug} className="px-3 py-2 rounded-lg border" onClick={() => setShowBadge(true)}>
+              {b.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button className="px-3 py-2 rounded-lg border" onClick={() => setShowBadge(true)}>
+          {t('student.openBadgeModal')}
+        </button>
+        <button className="px-3 py-2 rounded-lg border" onClick={simulateCheckpoint}>
+          {t('student.simulateCheckpoint')}
+        </button>
+      </div>
+
+      <BadgeModal open={showBadge} onClose={() => setShowBadge(false)} badgeName="Observer" title={t('student.badgeUnlocked')} />
+    </div>
+  );
+}
