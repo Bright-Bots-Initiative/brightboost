@@ -1,6 +1,5 @@
 /// <reference types="cypress" />
 
-
 const apiBase = (Cypress.env('VITE_API_BASE') || (window as any).VITE_API_BASE) as string;
 
 describe('Pilot smoke', () => {
@@ -15,14 +14,11 @@ describe('Pilot smoke', () => {
   });
 
   it('App: /student renders', () => {
-    return cy.visit('/student').then(() =>
-      cy.contains(/student/i, { matchCase: false }).should('exist')
-    );
+    return cy.visit('/student').contains(/student/i).should('exist');
   });
 
   it('OPTIONAL: checkpoint POST (dev headers) if allowed', () => {
-    const allow =
-      Cypress.env('ALLOW_DEV_HEADERS') === 1 || Cypress.env('ALLOW_DEV_HEADERS') === '1';
+    const allow = String(Cypress.env('ALLOW_DEV_HEADERS')) === '1';
     if (!allow) {
       cy.log('Dev headers disabled; skipping checkpoint POST');
       return;
@@ -35,7 +31,7 @@ describe('Pilot smoke', () => {
       .its('body')
       .then((body: any) => {
         const lessonId = body?.units?.[0]?.lessons?.[0]?.id as string;
-        expect(lessonId, 'lessonId').to.be.a('string').and.not.be.empty;
+        cy.wrap(lessonId).should('be.a', 'string').and('not.be.empty');
 
         return cy.request({
           method: 'POST',
