@@ -10,6 +10,7 @@ provider:
     cors:
       allowedOrigins:
         - https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+        - https://brave-bay-0bfacc110-252.centralus.6.azurestaticapps.net
       allowedMethods:
         - GET
         - POST
