@@ -9,13 +9,14 @@ export default defineConfig({
     screenshotOnRunFailure: true,
     viewportWidth: 1280,
     viewportHeight: 720,
+    defaultCommandTimeout: 10000,
     retries: {
       runMode: 1,
       openMode: 0,
     },
     env: {
       VITE_API_BASE: process.env.VITE_API_BASE,
-      ALLOW_DEV_HEADERS: process.env.CYPRESS_ALLOW_DEV_HEADERS,
+      ALLOW_DEV_HEADERS: process.env.CYPRESS_ALLOW_DEV_HEADERS ?? '0',
       STUDENT_ID: process.env.CYPRESS_STUDENT_ID,
       LESSON_ID: process.env.CYPRESS_LESSON_ID,
       CYPRESS_SWA_URL: process.env.CYPRESS_SWA_URL

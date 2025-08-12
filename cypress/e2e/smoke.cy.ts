@@ -25,7 +25,7 @@ describe('Staging smoke', () => {
       Cypress.env('ALLOW_DEV_HEADERS') === 1 || Cypress.env('ALLOW_DEV_HEADERS') === '1';
     if (!allow) {
       cy.log('Dev headers disabled; skipping checkpoint POST');
-      return;
+      return cy.wrap(null);
     }
 
     const studentId = (Cypress.env('STUDENT_ID') as string) || 'smoke-student';
@@ -35,23 +35,23 @@ describe('Staging smoke', () => {
       .its('body')
       .then((body: any) => {
         const lessonId = body?.units?.[0]?.lessons?.[0]?.id as string;
-        expect(lessonId, 'lessonId').to.be.a('string').and.not.be.empty;
-
-        return cy.request({
-          method: 'POST',
-          url: `${apiBase}/api/progress/checkpoint`,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Role': 'student',
-            'X-User-Id': studentId
-          },
-          body: {
-            studentId,
-            moduleSlug: 'stem-1',
-            lessonId,
-            status: 'IN_PROGRESS',
-            timeDeltaS: 10
-          }
+        return cy.wrap(lessonId).should('be.a', 'string').and('not.be.empty').then(() => {
+          return cy.request({
+            method: 'POST',
+            url: `${apiBase}/api/progress/checkpoint`,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Role': 'student',
+              'X-User-Id': studentId
+            },
+            body: {
+              studentId,
+              moduleSlug: 'stem-1',
+              lessonId,
+              status: 'IN_PROGRESS',
+              timeDeltaS: 10
+            }
+          });
         });
       })
       .its('status')

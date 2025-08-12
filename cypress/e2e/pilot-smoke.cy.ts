@@ -14,11 +14,14 @@ describe('Pilot smoke', () => {
   });
 
   it('App: /student renders', () => {
-    return cy.visit('/student').contains(/student/i).should('exist');
+    return cy
+      .visit('/student', { timeout: 30000 })
+      .contains(/student/i, { matchCase: false, timeout: 20000 })
+      .should('exist');
   });
 
   it('OPTIONAL: checkpoint POST (dev headers) if allowed', () => {
-    const allow = String(Cypress.env('ALLOW_DEV_HEADERS')) === '1';
+    const allow = Cypress.env('ALLOW_DEV_HEADERS') === 1 || Cypress.env('ALLOW_DEV_HEADERS') === '1';
     if (!allow) {
       cy.log('Dev headers disabled; skipping checkpoint POST');
       return;

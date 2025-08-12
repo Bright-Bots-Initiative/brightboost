@@ -40,6 +40,7 @@ jobs:
           CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
 
       - name: Upload Cypress artifacts (screenshots)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
@@ -48,6 +49,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Cypress artifacts (videos)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
@@ -56,6 +58,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Cypress artifacts (results)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-results
