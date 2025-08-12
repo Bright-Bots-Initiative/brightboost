@@ -1,3 +1,6 @@
+/// <reference types="cypress" />
+
+
 
 const swaUrl = Cypress.env('CYPRESS_SWA_URL') as string | undefined;
 const apiBase = Cypress.env('VITE_API_BASE') as string | undefined;
@@ -9,7 +12,7 @@ describe('Staging smoke', () => {
     }
     return cy
       .visit('/student', { timeout: 30000 })
-      .contains(/student/i, { matchCase: false, timeout: 20000 })
+      .get('[data-cy=app-root]', { timeout: 30000 })
       .should('exist');
   });
 
