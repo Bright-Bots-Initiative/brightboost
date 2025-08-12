@@ -45,6 +45,26 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setHovering(false);
+      }
+    }
+    if (hovering) {
+      document.addEventListener("click", handleOutsideClick);
+    } else {
+      document.removeEventListener("click", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, [hovering]);
+
   const progress =
     longestStreak > 0 ? Math.min(currentStreak / longestStreak, 1) : 0;
 
@@ -59,12 +79,13 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
 
   return (
     <>
-      {/* Hoverable streak bar */}
+      {/* Hoverable and tappable streak bar */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-md cursor-pointer"
+        className="relative w-[308px] cursor-pointer"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
+        onClick={() => setHovering((h) => !h)} // toggle tooltip on tap/click
       >
         {/* Flame slider icon */}
         <div
@@ -108,7 +129,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
           {currentStreak}
         </span>
 
-        {/* Hover window */}
+        {/* Hover or tap tooltip */}
         {hovering && (
           <div
             className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white text-sm text-gray-800 rounded-xl shadow-lg z-20 w-60"

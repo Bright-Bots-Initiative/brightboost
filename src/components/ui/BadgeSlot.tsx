@@ -45,7 +45,7 @@ const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
     "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)";
 
   return (
-    <div className="relative flex flex-col items-center w-32">
+    <div className="relative flex flex-col items-center w-38">
       {/* Flip container */}
       <div
         className="w-24 h-24 relative cursor-pointer"
@@ -108,7 +108,7 @@ const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
       <div className="absolute bottom-[-8px] z-20 flex items-center">
         {/* Left trapezoid */}
         <div
-          className="w-4 h-6 z-10 -mr-2.5"
+          className="w-5 h-6 z-10 -mr-4"
           style={{
             backgroundColor: "#FF9C81",
             clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 25% 100%)",
@@ -127,7 +127,7 @@ const BadgeSlot: React.FC<BadgeSlotProps> = ({ badge }) => {
         </div>
         {/* Right trapezoid */}
         <div
-          className="w-4 h-6 z-10 -ml-2.5"
+          className="w-5 h-6 z-10 -ml-4"
           style={{
             backgroundColor: "#FF9C81",
             clipPath: "polygon(0% 0%, 100% 0%, 75% 100%, 0% 100%)",
