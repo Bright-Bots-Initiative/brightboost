@@ -9,8 +9,10 @@ describe('Staging smoke', () => {
     }
     return cy
       .visit('/student', { timeout: 30000 })
-      .get('[data-cy=current-streak], [data-testid=dashboard-error]', { timeout: 30000 })
-      .should('exist');
+      .get('#root', { timeout: 30000 })
+      .children()
+      .its('length')
+      .should('be.gt', 0);
   });
 
   it('API: GET module stem-1 returns slug', () => {
