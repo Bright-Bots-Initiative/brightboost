@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Module {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  subtitle     String?
+  gradeMin     Int
+  gradeMax     Int
+  totalXp      Int      @default(0)
+  estMinutes   Int      @default(0)
+  languageTags String[] @default([])
+  units        Unit[]
+  badges       Badge[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Unit {
+  id        String  @id @default(cuid())
+  moduleId  String
+  index     Int
+  title     String
+  objective String
+  lessons   Lesson[]
+  Module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, index])
+}
+
+model Lesson {
+  id         String      @id @default(cuid())
+  unitId     String
+  index      Int
+  title      String
+  objective  String
+  minutes    Int         @default(10)
+  activities Activity[]
+  assessment Assessment?
+  Unit       Unit        @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, index])
+}
+
+model Activity {
+  id       String       @id @default(cuid())
+  lessonId String
+  index    Int
+  kind     ActivityKind
+  title    String
+  promptEn String
+  promptEs String
+  xp       Int          @default(50)
+  data     Json?
+  Lesson   Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, index])
+}
+
+enum ActivityKind {
+  INFO
+  INTERACT
+  REFLECT
+}
+
+model Assessment {
+  id       String  @id @default(cuid())
+  lessonId String  @unique
+  items    Json
+  maxScore Int     @default(100)
+  Lesson   Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id       String @id @default(cuid())
+  moduleId String
+  slug     String @unique
+  name     String
+  criteria String
+  iconKey  String
+  xpBonus  Int    @default(0)
+  Module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+}
+
+model Class {
+  id         String      @id @default(cuid())
+  teacherId  String
+  name       String
+  inviteCode String      @unique
+  isArchived Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  Enrollments Enrollment[]
+}
+
+model Enrollment {
+  id        String @id @default(cuid())
+  classId   String
+  studentId String
+  Class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+}
+
+model Progress {
+  id         String         @id @default(cuid())
+  studentId  String
+  moduleSlug String
+  lessonId   String
+  activityId String?
+  status     ProgressStatus @default(IN_PROGRESS)
+  score      Int?
+  timeSpentS Int            @default(0)
+  updatedAt  DateTime       @updatedAt
+
+  @@index([studentId, moduleSlug])
+  @@index([studentId, lessonId])
+}
+
+enum ProgressStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

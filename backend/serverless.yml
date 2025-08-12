@@ -1,0 +1,35 @@
+service: brightboost-staging
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_DEFAULT_REGION, 'us-east-1'}
+  stage: ${env:STAGE, 'staging'}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+      allowedMethods:
+        - GET
+        - POST
+        - OPTIONS
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+      allowCredentials: false
+
+functions:
+  api:
+    handler: dist/src/handler.handler
+    events:
+      - httpApi:
+          method: ANY
+          path: /api/{proxy+}
+
+package:
+  patterns:
+    - '!**/*'
+    - 'dist/**'
+    - 'node_modules/**'
+    - 'package.json'

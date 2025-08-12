@@ -1,0 +1,11 @@
+name: brightboost-pg
+
+services:
+  db:
+    image: postgres
+    ports:
+      - "127.0.0.1:5435:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=brightboostpass
+      - POSTGRES_DB=brightboost
