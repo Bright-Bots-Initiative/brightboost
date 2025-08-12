@@ -6,6 +6,9 @@ export default defineConfig({
     specPattern: 'cypress/e2e/**/*.cy.{ts,js}',
     supportFile: false,
     video: false,
+    screenshotOnRunFailure: false,
+    viewportWidth: 1280,
+    viewportHeight: 720,
     retries: {
       runMode: 0,
       openMode: 0,
