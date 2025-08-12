@@ -30,7 +30,7 @@ jobs:
           VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
 
       - name: Run Cypress smoke
-        run: npm run cy:run
+        run: npx cypress run --config-file cypress.config.ts --spec "cypress/e2e/smoke.cy.ts"
         env:
           CYPRESS_RECORD: false
           CYPRESS_SWA_URL: ${{ secrets.CYPRESS_SWA_URL }}
