@@ -19,7 +19,9 @@ const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
-    console.log("Creating new database connection pool...");
+    if (process.env.NODE_ENV !== "test") {
+      console.log("Creating new database connection pool...");
+    }
     let secret: DatabaseSecret;
     if (process.env.NODE_ENV === "local") {
       secret = {
@@ -35,7 +37,9 @@ async function getDbConnection(): Promise<Pool> {
         throw new Error("DATABASE_SECRET_ARN environment variable not set");
       }
 
-      console.log("Fetching database secret from Secrets Manager...");
+      if (process.env.NODE_ENV !== "test") {
+        console.log("Fetching database secret from Secrets Manager...");
+      }
       const command = new GetSecretValueCommand({ SecretId: secretArn });
       const secretResult = await secretsManager.send(command);
       if (!secretResult.SecretString) {
@@ -44,9 +48,11 @@ async function getDbConnection(): Promise<Pool> {
 
       secret = JSON.parse(secretResult.SecretString);
     }
-    console.log(
-      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
-    );
+    if (process.env.NODE_ENV !== "test") {
+      console.log(
+        `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+      );
+    }
 
     dbPool = new Pool({
       host: secret.host,
@@ -65,13 +71,19 @@ async function getDbConnection(): Promise<Pool> {
       connectionTimeoutMillis: 25000,
     });
 
-    console.log("Database pool created, testing connection...");
+    if (process.env.NODE_ENV !== "test") {
+      console.log("Database pool created, testing connection...");
+    }
     try {
       const testClient = await dbPool.connect();
-      console.log("Database connection test successful");
+      if (process.env.NODE_ENV !== "test") {
+        console.log("Database connection test successful");
+      }
       testClient.release();
     } catch (error) {
-      console.error("Database connection test failed:", error);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Database connection test failed:", error);
+      }
       throw error;
     }
   }
@@ -112,9 +124,9 @@ export const handler = async (
     const token = authHeader.substring(7);
     const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
 
-    let decoded;
+    let decoded: jwt.JwtPayload;
     try {
-      decoded = jwt.verify(token, jwtSecret) as any;
+      decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
     } catch (err) {
       return {
         statusCode: 401,
@@ -123,12 +135,17 @@ export const handler = async (
       };
     }
 
-    console.log("Attempting database connection...");
+    if (process.env.NODE_ENV !== "test") {
+      console.log("Attempting database connection...");
+    }
     const db = await getDbConnection();
-    console.log("Database connection established successfully");
+    if (process.env.NODE_ENV !== "test") {
+      console.log("Database connection established successfully");
+    }
 
     const data = await db.query(
-      "SELECT badges, streak, xp FROM users WHERE email = $1", [decoded.email]),
+      "SELECT badges, streak, xp FROM users WHERE email = $1",
+      [decoded.email as string],
     );
 
     return {
@@ -137,7 +154,9 @@ export const handler = async (
       body: JSON.stringify(data),
     };
   } catch (error) {
-    console.error("progress info error:", error);
+    if (process.env.NODE_ENV !== "test") {
+      console.error("progress info error:", error);
+    }
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {
