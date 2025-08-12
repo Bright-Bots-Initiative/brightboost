@@ -84,8 +84,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin":
-      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
@@ -127,9 +126,30 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const data = await db.query(
-      "SELECT badges, streak, xp FROM users WHERE email = $1", [decoded.email]),
+    const id = await db.query(
+      'SELECT id FROM "User" WHERE email = $1',
+      [decoded.email],
     );
+    let data;
+    try {
+      data = await db.query(
+        'SELECT id, name FROM "Course" WHERE teacherId = $1',
+        [id.rows[0].id],);
+    } catch (err) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({error: "No matching courses found"}),
+      };
+    }
+    
+    if (data.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: "Courses not found" }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -137,7 +157,7 @@ export const handler = async (
       body: JSON.stringify(data),
     };
   } catch (error) {
-    console.error("progress info error:", error);
+    console.error("Class fetch error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {
