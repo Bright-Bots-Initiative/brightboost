@@ -18,6 +18,8 @@ provider:
       allowedHeaders:
         - Content-Type
         - Authorization
+        - X-Requested-With
+      maxAge: 86400
       allowCredentials: false
 
 functions:
