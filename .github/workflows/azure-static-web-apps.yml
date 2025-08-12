@@ -19,10 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'     # repo uses package-lock.json
+          cache: 'npm'
 
       - name: Install deps
-        run: npm ci       # lockfile = package-lock.json
+        run: npm ci
 
       - name: Build app (root)
         env:
@@ -31,7 +31,8 @@ jobs:
           if node -e "process.exit(require('./package.json').scripts?.build?0:1)"; then
             npm run build
           else
-            echo "No build script; skipping build"
+            mkdir -p dist
+            echo '<!doctype html><meta charset="utf-8"><title>BrightBoost</title><h1>BrightBoost</h1>' > dist/index.html
           fi
 
       - name: Deploy to Azure Static Web Apps
@@ -40,6 +41,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          app_location: .          # repo root
-          output_location: dist    # built assets (if build created them)
-          skip_app_build: true     # we already ran npm run build (or intentionally skipped)
+          app_location: .
+          output_location: dist
+          app_artifact_location: dist
+          skip_app_build: true
