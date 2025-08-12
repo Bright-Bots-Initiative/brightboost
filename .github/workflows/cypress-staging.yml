@@ -1,4 +1,7 @@
 name: Cypress Staging Smoke
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   workflow_dispatch: {}
