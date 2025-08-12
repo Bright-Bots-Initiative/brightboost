@@ -15,7 +15,9 @@ describe('Pilot smoke', () => {
   });
 
   it('App: /student renders', () => {
-    return cy.visit('/student').contains(/student/i, { matchCase: false }).should('exist');
+    return cy.visit('/student').then(() =>
+      cy.contains(/student/i, { matchCase: false }).should('exist')
+    );
   });
 
   it('OPTIONAL: checkpoint POST (dev headers) if allowed', () => {
