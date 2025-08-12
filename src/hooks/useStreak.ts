@@ -197,7 +197,7 @@ export function useStreak() {
 
   const breakStreak = useCallback(async () => {
     try {
-      await api.post("/api/break-streak");
+      await api.post("/api/break-streak", {});
       const resetStreak = {
         currentStreak: 0,
         longestStreak: streak?.longestStreak || 0,
@@ -220,7 +220,7 @@ export function useStreak() {
   // New: Increment streak remotely and update local state
   const incrementStreak = useCallback(async () => {
     try {
-      const updatedStreak = await api.post("/api/increment-streak");
+      const updatedStreak = await api.post("/api/increment-streak", {});
       setStreak(updatedStreak);
       await setCachedStreak(updatedStreak);
     } catch (error) {
