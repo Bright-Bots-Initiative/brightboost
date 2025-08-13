@@ -11,6 +11,7 @@ export function useModule(slug = 'stem-1') {
   const [error, setError] = useState<string | null>(null);
 
   const API_BASE = import.meta.env.VITE_API_BASE || '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -33,7 +34,7 @@ export function useModule(slug = 'stem-1') {
     return () => {
       cancelled = true;
     };
-  }, [slug, API_BASE]);
+  }, [slug]);
 
   return { data, loading, error };
 }
