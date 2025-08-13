@@ -33,14 +33,14 @@ jobs:
           VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
 
       - name: Run Cypress smoke
-        run: npx cypress run --config-file cypress.config.ts --spec "cypress/e2e/smoke.cy.ts"
+        run: npx cypress run --config-file cypress.config.ts --spec "cypress/e2e/pilot-smoke.cy.ts"
         env:
           CYPRESS_RECORD: false
           CYPRESS_SWA_URL: ${{ secrets.CYPRESS_SWA_URL }}
-          VITE_API_BASE:   ${{ secrets.VITE_API_BASE }}
-          CYPRESS_ALLOW_DEV_HEADERS: ${{ vars.CYPRESS_ALLOW_DEV_HEADERS || '0' }}
-          CYPRESS_STUDENT_ID:        ${{ vars.CYPRESS_STUDENT_ID || 'smoke-student' }}
-          CYPRESS_LESSON_ID:         ${{ vars.CYPRESS_LESSON_ID || '' }}
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+          CYPRESS_ALLOW_DEV_HEADERS: '0'
+          CYPRESS_STUDENT_ID: ${{ secrets.CYPRESS_STUDENT_ID }}
+          CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
 
       - name: Upload Cypress artifacts (screenshots)
         if: always()

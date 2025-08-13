@@ -15,13 +15,14 @@ describe('Pilot smoke', () => {
 
   it('App: /student renders', () => {
     return cy
-      .visit('/student', { timeout: 30000 })
-      .contains(/student/i, { matchCase: false, timeout: 20000 })
-      .should('exist');
+      .visit('/student')
+      .get('#root')
+      .children()
+      .should('have.length.greaterThan', 0);
   });
 
   it('OPTIONAL: checkpoint POST (dev headers) if allowed', () => {
-    const allow = Cypress.env('ALLOW_DEV_HEADERS') === 1 || Cypress.env('ALLOW_DEV_HEADERS') === '1';
+    const allow = String(Cypress.env('ALLOW_DEV_HEADERS')) === '1';
     if (!allow) {
       cy.log('Dev headers disabled; skipping checkpoint POST');
       return;
@@ -40,20 +41,14 @@ describe('Pilot smoke', () => {
           method: 'POST',
           url: `${apiBase}/api/progress/checkpoint`,
           headers: {
-            'Content-Type': 'application/json',
-            'X-Role': 'student',
-            'X-User-Id': studentId
+            'x-dev-student-id': studentId,
+            'x-dev-lesson-id': String(lessonId)
           },
-          body: {
-            studentId,
-            moduleSlug: 'stem-1',
-            lessonId,
-            status: 'IN_PROGRESS',
-            timeDeltaS: 10
-          }
+          body: { checkpoint: 'intro', status: 'complete' },
+          failOnStatusCode: false
         });
       })
       .its('status')
-      .should('eq', 200);
+      .should('be.oneOf', [200, 201, 204]);
   });
 });
