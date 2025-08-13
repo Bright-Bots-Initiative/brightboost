@@ -7,7 +7,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
     branches: [main]
-  workflow_dispatch: {}
 
 jobs:
   swa:
