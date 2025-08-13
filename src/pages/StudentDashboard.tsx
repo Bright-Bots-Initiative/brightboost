@@ -50,6 +50,12 @@ interface StudentDashboardData {
   assignments: Assignment[];
 }
 
+type StudentProgress = {
+  xp: number;
+  level: number;
+  nextLevelXp: number;
+};
+
 function formatLocalDate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -96,6 +102,10 @@ const StudentDashboard = () => {
 
   const [dashboardData, setDashboardData] =
     useState<StudentDashboardData | null>(null);
+
+  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [badges, setBadges] = useState<string[]>([]);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showStillLoading, setShowStillLoading] = useState(false);
@@ -160,7 +170,23 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+
+    if (user?.id) {
+      api
+        .get(`/api/v1/students/${user.id}/progress`)
+        .then((p) => {
+          if (p && typeof p === "object") setProgress(p as StudentProgress);
+        })
+        .catch((e) => console.warn("Progress fetch failed:", e));
+
+      api
+        .get(`/api/v1/students/${user.id}/badges`)
+        .then((list) => {
+          if (Array.isArray(list)) setBadges(list);
+        })
+        .catch((e) => console.warn("Badges fetch failed:", e));
+    }
+  }, [fetchDashboardData, api, user?.id]);
 
   const stemActivities = [
     {
@@ -279,9 +305,9 @@ const StudentDashboard = () => {
               {/* align widgets w right edge */}
               <div className="flex justify-end items-center space-x-2 min-w-0 ml-auto">
                 <XPProgressWidget
-                  currentXp={dashboardData?.xp ?? 0}
-                  xpToNextLevel={dashboardData?.nextLevelXp ?? 100}
-                  level={dashboardData?.level ?? 1}
+                  currentXp={progress?.xp ?? dashboardData?.xp ?? 0}
+                  xpToNextLevel={progress?.nextLevelXp ?? dashboardData?.nextLevelXp ?? 100}
+                  level={progress?.level ?? dashboardData?.level ?? 1}
                   className="self-center -translate-y-3"
                 />
                 <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
@@ -301,11 +327,19 @@ const StudentDashboard = () => {
                 </button>
               </div>
             </div>
-            {/* {dashboardData && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                <CurrentModuleCard module={dashboardData.currentModule} />
+
+            {Array.isArray(badges) && badges.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {badges.map((badge, index) => (
+                  <span
+                    key={index}
+                    className="bg-yellow-200 text-yellow-900 px-3 py-1 rounded-full text-xs font-semibold shadow"
+                  >
+                    {badge}
+                  </span>
+                ))}
               </div>
-            )} */}
+            )}
 
             <div className="flex justify-end items-center space-x-2 mt-2">
               <StreakMeter
@@ -328,13 +362,6 @@ const StudentDashboard = () => {
           {/* card grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex flex-col space-y-2">
-              {/* use the following block for pulling from the API call */}
-              {/*
-            {dashboardData && (
-            <CurrentModuleCard module={dashboardData.currentModule} />
-             )}
-            */}
-
               {/* USING MOCK DATA FOR THIS */}
               <CurrentModuleCard module={studentDashboardMock.currentModule} />
 
@@ -346,7 +373,6 @@ const StudentDashboard = () => {
             </div>
 
             <div className="flex flex-col space-y-2">
-              {/* USING MOCK DATA FOR THIS */}
               <NextModuleCard module={studentDashboardMock.nextModule} />
 
               <WordGameCard
