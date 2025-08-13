@@ -2,26 +2,15 @@
   "name": "brightboost-backend",
   "private": true,
   "version": "0.1.0",
-<<<<<<< HEAD
-||||||| parent of eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
-  "type": "module",
   "main": "dist/src/server.js",
-=======
-  "main": "dist/src/server.js",
->>>>>>> eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
     "build": "tsc -p .",
-<<<<<<< HEAD
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
-||||||| parent of eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
-    "dev": "ts-node-esm src/server.ts",
-=======
     "dev": "ts-node src/server.ts",
->>>>>>> eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
     "deploy:staging": "serverless deploy --stage staging",
     "remove:staging": "serverless remove --stage staging"
   },
@@ -33,16 +22,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.19.9",
-    "prisma": "^5.16.1",
-||||||| parent of eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
-=======
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
->>>>>>> eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
+    "@types/node": "^20.19.9",
+    "prisma": "^5.16.1",
     "serverless": "^3.39.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
