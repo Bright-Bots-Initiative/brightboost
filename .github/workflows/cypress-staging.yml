@@ -39,11 +39,12 @@ jobs:
           CYPRESS_STUDENT_ID: ${{ secrets.CYPRESS_STUDENT_ID }}
           CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
 
-      - name: Upload Cypress artifacts (on fail)
-        if: failure()
+      - name: Upload Cypress artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-artifacts
           path: |
             cypress/screenshots
             cypress/videos
+            cypress/results

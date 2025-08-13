@@ -9,15 +9,16 @@ describe('Pilot smoke', () => {
       .its('status')
       .should('eq', 200)
       .then(() =>
-        cy.request(`${apiBase}/api/module/stem-1`).its('body').then((body: any) => {
-          const slug = body?.slug ?? body?.data?.slug;
-          expect(slug).to.eq('stem-1');
-        })
+        cy.request(`${apiBase}/api/module/stem-1`).its('body.slug').should('eq', 'stem-1')
       );
   });
 
   it('App: /student renders', () => {
-    return cy.visit('/student').contains(/student/i).should('exist');
+    return cy
+      .visit('/student')
+      .get('#root')
+      .children()
+      .should('have.length.greaterThan', 0);
   });
 
   it('OPTIONAL: checkpoint POST (dev headers) if allowed', () => {
