@@ -5,6 +5,7 @@ interface XPProgressBarProps {
   currentXp: number;
   xpToNextLevel?: number;
   level: number;
+  className?: string;
 }
 
 const electricShockVariants: Variants = {
@@ -107,8 +108,9 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   currentXp,
   xpToNextLevel = 200,
   level,
+  className,
 }) => {
-  const segments = 10;
+  const segments = 15;
   const segmentValue = xpToNextLevel / segments;
   const filledSegments = Math.floor(currentXp / segmentValue);
 
@@ -138,14 +140,11 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   }, [level]);
 
   return (
-    <div className="relative flex flex-col items-center select-none">
+    <div className={`relative flex flex-col items-center select-none ${className || ""}`}>
       {/* Level and XP label */}
-      <div className="flex items-center gap-2 text-sm text-brightboost-navy font-semibold mb-1">
+      <div className="flex justify-between items-center text-sm text-brightboost-navy font-semibold mb-1 w-full">
         <span>Level {level}</span>
-        <span className="mx-6" />
-        <span className="w-[100px] inline-block text-right">
-          {currentXp}/{xpToNextLevel} XP
-        </span>
+        <span>{currentXp}/{xpToNextLevel} XP</span>
       </div>
 
       <motion.div
@@ -209,7 +208,7 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
         </div>
 
         {/* Battery cap */}
-        <div className="w-2 h-[70%] border-2 border-l-0 border-brightboost-blue bg-white rounded-r-sm relative z-10" />
+        <div className="w-2 h-6 border-2 border-l-0 border-brightboost-blue bg-white rounded-r-sm relative z-10" />
       </motion.div>
     </div>
   );

@@ -185,6 +185,49 @@ export function useStreak() {
     }
   }, [api, isoToUTCDateString]);
 
+  const getProgress = useCallback(async () => {
+    try {
+      const progress = await api.get("/api/get-progress");
+      return progress;
+    } catch (error) {
+      console.error("Failed to fetch progress:", error);
+      return null;
+    }
+  }, [api]);
+
+  const breakStreak = useCallback(async () => {
+    try {
+      await api.post("/api/break-streak", {});
+      const resetStreak = {
+        currentStreak: 0,
+        longestStreak: streak?.longestStreak || 0,
+        lastCompletedAt: null,
+        serverDateUTC: new Date().toISOString(),
+        streakDays: [],
+      };
+      setStreak(resetStreak);
+      await setCachedStreak(resetStreak);
+      toast({
+        title: "Streak Broken",
+        description: "Your streak has been reset.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Failed to break streak:", error);
+    }
+  }, [api, streak]);
+
+  // New: Increment streak remotely and update local state
+  const incrementStreak = useCallback(async () => {
+    try {
+      const updatedStreak = await api.post("/api/increment-streak", {});
+      setStreak(updatedStreak);
+      await setCachedStreak(updatedStreak);
+    } catch (error) {
+      console.error("Failed to increment streak:", error);
+    }
+  }, [api]);
+
   useEffect(() => {
     if (!streak?.lastCompletedAt) return;
 
@@ -224,5 +267,13 @@ export function useStreak() {
       );
   }, [completeModule]);
 
-  return { streak, loading, completeModule, processQueue };
+  return {
+    streak,
+    loading,
+    completeModule,
+    processQueue,
+    getProgress,
+    breakStreak,
+    incrementStreak,
+  };
 }

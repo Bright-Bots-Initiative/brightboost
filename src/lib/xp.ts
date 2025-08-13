@@ -12,7 +12,6 @@ export const grantXp = async (
 ): Promise<boolean> => {
   try {
     if (sessionXPGrants.has(action)) {
-      console.log(`XP already granted for action: ${action} in this session`);
       return false;
     }
 
@@ -33,7 +32,6 @@ export const grantXp = async (
       const sessionKey = `xp_granted_${action}_${Date.now()}`;
       localStorage.setItem(sessionKey, "true");
 
-      console.log(`XP granted successfully for action: ${action}`, result);
       return true;
     }
 

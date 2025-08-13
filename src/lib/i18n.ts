@@ -12,8 +12,6 @@ const getInitialLanguage = (): string => {
 
 const selectedLang = getInitialLanguage();
 
-console.log("Detected initial language:", selectedLang);
-
 if (import.meta.env.VITE_ENABLE_I18N === "true") {
   const initWithTranslations = (
     lang: string,
@@ -34,9 +32,7 @@ if (import.meta.env.VITE_ENABLE_I18N === "true") {
             },
           },
         })
-        .then(() => {
-          console.log(`i18next initialized with ${lang}`);
-        })
+        .then(() => {})
         .catch((err) => {
           console.error(`Error initializing i18n for ${lang}:`, err);
         });
@@ -47,11 +43,7 @@ if (import.meta.env.VITE_ENABLE_I18N === "true") {
     .then((translations) => {
       initWithTranslations(selectedLang, translations);
     })
-    .catch((err) => {
-      console.warn(
-        `Could not load locale "${selectedLang}", falling back to "${fallbackLng}"`,
-        err,
-      );
+    .catch(() => {
       import(`../locales/${fallbackLng}/common.json`)
         .then((fallbackTranslations) => {
           initWithTranslations(fallbackLng, fallbackTranslations);

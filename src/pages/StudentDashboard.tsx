@@ -7,7 +7,7 @@ import StemModuleCard from "../components/StemModuleCard";
 import LeaderboardCard from "../components/LeaderboardCard";
 import WordGameCard from "../components/WordGameCard";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import XPProgressWidget from "../components/StudentDashboard/XPProgress";
+import XPProgressWidget from "../components/ui/XPProgressBar";
 import CurrentModuleCard from "../components/StudentDashboard/CurrentModuleCard";
 import NextModuleCard from "../components/StudentDashboard/NextModuleCard";
 import XPProgressRing from "../components/StudentDashboard/XPProgressRing";
@@ -19,6 +19,7 @@ import LanguageToggle from "../components/LanguageToggle";
 import AvatarPicker from "../components/AvatarPicker";
 import StreakMeter from "../components/ui/StreakMeter";
 import { useStreak } from "../hooks/useStreak";
+//import BadgeSlot from "../components/ui/BadgeSlot";
 
 interface Course {
   id: string;
@@ -261,9 +262,7 @@ const StudentDashboard = () => {
                           .toUpperCase()
                       : "ST"
                   }
-                  onAvatarChange={(newUrl) => {
-                    console.log("Avatar changed to:", newUrl);
-                  }}
+                  onAvatarChange={() => {}}
                 />
                 <div className="ml-3 relative">
                   <h1 className="text-3xl font-bold text-brightboost-navy">
@@ -278,12 +277,21 @@ const StudentDashboard = () => {
               </div>
 
               {/* align widgets w right edge */}
-              <div className="flex-grow flex items-center space-x-2 min-w-0">
+              <div className="flex justify-end items-center space-x-2 min-w-0 ml-auto">
                 <XPProgressWidget
                   currentXp={dashboardData?.xp ?? 0}
-                  nextLevelXp={dashboardData?.nextLevelXp ?? 100}
+                  xpToNextLevel={dashboardData?.nextLevelXp ?? 100}
                   level={dashboardData?.level ?? 1}
+                  className="self-center -translate-y-3"
                 />
+                <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+                  <span className="text-sm font-bold">
+                    {t("dashboard.role")}
+                  </span>
+                  <span className="text-xs bg-white px-2 py-0.5 rounded-full">
+                    {user?.name || t("student")}
+                  </span>
+                </div>
                 <LanguageToggle />
                 <button
                   onClick={handleLogout}
@@ -305,16 +313,14 @@ const StudentDashboard = () => {
                 longestStreak={longestStreakSafe}
                 currentStreakDays={currentStreakDays}
                 barColor="#FF8C00"
-                onNewRecord={(bonus) => {
-                  console.log(`New record! Bonus XP: ${bonus}`);
-                }}
+                onNewRecord={() => {}}
               />
-              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
+              {/*<div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
                 <span className="text-sm font-bold">{t("dashboard.role")}</span>
                 <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                   {user?.name || t("student")}
                 </span>
-              </div>
+              </div>*/}
               <XPProgressRing />
             </div>
           </div>
