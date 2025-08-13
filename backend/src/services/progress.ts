@@ -1,4 +1,4 @@
-import { PrismaClient, ProgressStatus } from '@prisma/client';
+import { PrismaClient, ProgressStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,7 +7,7 @@ export async function upsertCheckpoint(input: {
   moduleSlug: string;
   lessonId: string;
   activityId?: string;
-  status: 'IN_PROGRESS' | 'COMPLETED';
+  status: "IN_PROGRESS" | "COMPLETED";
   timeDeltaS: number;
 }) {
   const timeDelta = Math.max(0, Math.min(3600, input.timeDeltaS || 0));
@@ -40,23 +40,26 @@ export async function upsertCheckpoint(input: {
   });
 }
 
-export async function getAggregatedProgress(studentId: string, moduleSlug: string) {
+export async function getAggregatedProgress(
+  studentId: string,
+  moduleSlug: string,
+) {
   const module = await prisma.module.findUnique({
     where: { slug: moduleSlug },
     include: {
       units: {
-        orderBy: { index: 'asc' },
+        orderBy: { index: "asc" },
         include: {
           lessons: {
-            orderBy: { index: 'asc' },
-            include: { activities: { orderBy: { index: 'asc' } } },
+            orderBy: { index: "asc" },
+            include: { activities: { orderBy: { index: "asc" } } },
           },
         },
       },
       badges: true,
     },
   });
-  if (!module) throw new Error('Module not found');
+  if (!module) throw new Error("Module not found");
 
   const progressRows = await prisma.progress.findMany({
     where: { studentId, moduleSlug },
@@ -83,7 +86,7 @@ export async function getAggregatedProgress(studentId: string, moduleSlug: strin
 
   for (const row of progressRows) {
     timeSpentS += row.timeSpentS;
-    if (row.status === 'COMPLETED') {
+    if (row.status === "COMPLETED") {
       if (row.activityId && activityXpMap.has(row.activityId)) {
         earnedXp += activityXpMap.get(row.activityId)!;
         completedActivities += 1;
@@ -93,7 +96,9 @@ export async function getAggregatedProgress(studentId: string, moduleSlug: strin
   }
 
   const percentComplete =
-    totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
+    totalActivities > 0
+      ? Math.round((completedActivities / totalActivities) * 100)
+      : 0;
 
   return {
     studentId,

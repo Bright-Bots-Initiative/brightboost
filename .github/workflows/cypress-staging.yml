@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}
   pull_request:
     types: [labeled]
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   smoke:
@@ -38,7 +38,7 @@ jobs:
           CYPRESS_RECORD: false
           CYPRESS_SWA_URL: ${{ secrets.CYPRESS_SWA_URL }}
           VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
-          CYPRESS_ALLOW_DEV_HEADERS: '0'
+          CYPRESS_ALLOW_DEV_HEADERS: "0"
           CYPRESS_STUDENT_ID: ${{ secrets.CYPRESS_STUDENT_ID }}
           CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
 

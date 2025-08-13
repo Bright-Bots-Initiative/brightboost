@@ -1,4 +1,4 @@
-import { PrismaClient, ActivityKind, Prisma } from '@prisma/client';
+import { PrismaClient, ActivityKind, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -49,80 +49,90 @@ type ModuleSeed = {
 };
 
 const stem1: ModuleSeed = {
-  slug: 'stem-1',
-  title: 'STEM-1',
-  subtitle: 'Foundations of Thinking Like a Scientist',
+  slug: "stem-1",
+  title: "STEM-1",
+  subtitle: "Foundations of Thinking Like a Scientist",
   gradeMin: 4,
   gradeMax: 6,
   totalXp: 300,
   estMinutes: 180,
-  languageTags: ['en', 'es'],
+  languageTags: ["en", "es"],
   units: [
     {
       index: 1,
-      title: 'Observe & Measure',
-      objective: 'Build observation skills and measure accurately.',
+      title: "Observe & Measure",
+      objective: "Build observation skills and measure accurately.",
       lessons: [
         {
           index: 1,
-          title: 'What Makes a Good Observation?',
-          objective: 'Distinguish observations from inferences.',
+          title: "What Makes a Good Observation?",
+          objective: "Distinguish observations from inferences.",
           activities: [
             {
               index: 1,
               kind: ActivityKind.INFO,
-              title: 'Observations vs. Inferences',
-              promptEn: 'Read examples of observations and inferences.',
-              promptEs: 'Lee ejemplos de observaciones e inferencias.',
+              title: "Observations vs. Inferences",
+              promptEn: "Read examples of observations and inferences.",
+              promptEs: "Lee ejemplos de observaciones e inferencias.",
               xp: 30,
             },
             {
               index: 2,
               kind: ActivityKind.INTERACT,
-              title: 'Measure It!',
-              promptEn: 'Use the virtual ruler to measure objects.',
-              promptEs: 'Usa la regla virtual para medir objetos.',
+              title: "Measure It!",
+              promptEn: "Use the virtual ruler to measure objects.",
+              promptEs: "Usa la regla virtual para medir objetos.",
               xp: 50,
-              data: { tool: 'ruler', unit: 'cm' },
+              data: { tool: "ruler", unit: "cm" },
             },
             {
               index: 3,
               kind: ActivityKind.REFLECT,
-              title: 'Reflection',
-              promptEn: 'Write about why precise measurement matters.',
-              promptEs: 'Escribe por qué importa la medición precisa.',
+              title: "Reflection",
+              promptEn: "Write about why precise measurement matters.",
+              promptEs: "Escribe por qué importa la medición precisa.",
               xp: 20,
             },
           ],
         },
         {
           index: 2,
-          title: 'Precision and Accuracy',
-          objective: 'Compare precision and accuracy in measurements.',
+          title: "Precision and Accuracy",
+          objective: "Compare precision and accuracy in measurements.",
           activities: [
             {
               index: 1,
               kind: ActivityKind.INFO,
-              title: 'Targets and Darts',
-              promptEn: 'Learn precision vs accuracy with diagrams.',
-              promptEs: 'Aprende precisión vs. exactitud con diagramas.',
+              title: "Targets and Darts",
+              promptEn: "Learn precision vs accuracy with diagrams.",
+              promptEs: "Aprende precisión vs. exactitud con diagramas.",
               xp: 30,
             },
             {
               index: 2,
               kind: ActivityKind.INTERACT,
-              title: 'Reading Scales',
-              promptEn: 'Estimate values between tick marks.',
-              promptEs: 'Estima valores entre marcas.',
+              title: "Reading Scales",
+              promptEn: "Estimate values between tick marks.",
+              promptEs: "Estima valores entre marcas.",
               xp: 50,
-              data: { tool: 'scale', difficulty: 'medium' },
+              data: { tool: "scale", difficulty: "medium" },
             },
           ],
           assessmentItems: {
-            type: 'quiz',
+            type: "quiz",
             questions: [
-              { id: 'q1', prompt: 'Define precision.', choices: ['A', 'B', 'C'], answer: 1 },
-              { id: 'q2', prompt: 'Define accuracy.', choices: ['A', 'B', 'C'], answer: 2 },
+              {
+                id: "q1",
+                prompt: "Define precision.",
+                choices: ["A", "B", "C"],
+                answer: 1,
+              },
+              {
+                id: "q2",
+                prompt: "Define accuracy.",
+                choices: ["A", "B", "C"],
+                answer: 2,
+              },
             ],
           },
           maxScore: 100,
@@ -131,62 +141,62 @@ const stem1: ModuleSeed = {
     },
     {
       index: 2,
-      title: 'Cause & Effect',
-      objective: 'Understand causal relationships in experiments.',
+      title: "Cause & Effect",
+      objective: "Understand causal relationships in experiments.",
       lessons: [
         {
           index: 1,
-          title: 'Variables',
-          objective: 'Identify independent and dependent variables.',
+          title: "Variables",
+          objective: "Identify independent and dependent variables.",
           activities: [
             {
               index: 1,
               kind: ActivityKind.INFO,
-              title: 'Types of Variables',
-              promptEn: 'Independent vs dependent vs controlled.',
-              promptEs: 'Independiente vs dependiente vs controladas.',
+              title: "Types of Variables",
+              promptEn: "Independent vs dependent vs controlled.",
+              promptEs: "Independiente vs dependiente vs controladas.",
               xp: 30,
             },
             {
               index: 2,
               kind: ActivityKind.INTERACT,
-              title: 'Match the Variable',
-              promptEn: 'Match each example to the variable type.',
-              promptEs: 'Empareja cada ejemplo con el tipo de variable.',
+              title: "Match the Variable",
+              promptEn: "Match each example to the variable type.",
+              promptEs: "Empareja cada ejemplo con el tipo de variable.",
               xp: 50,
-              data: { tool: 'matching' },
+              data: { tool: "matching" },
             },
             {
               index: 3,
               kind: ActivityKind.REFLECT,
-              title: 'Plan a Test',
-              promptEn: 'Describe how you would test a simple claim.',
-              promptEs: 'Describe cómo probarías una afirmación simple.',
+              title: "Plan a Test",
+              promptEn: "Describe how you would test a simple claim.",
+              promptEs: "Describe cómo probarías una afirmación simple.",
               xp: 20,
             },
           ],
         },
         {
           index: 2,
-          title: 'Fair Tests',
-          objective: 'Plan experiments with controlled variables.',
+          title: "Fair Tests",
+          objective: "Plan experiments with controlled variables.",
           activities: [
             {
               index: 1,
               kind: ActivityKind.INFO,
-              title: 'Control the Controls',
-              promptEn: 'What makes a fair test?',
-              promptEs: '¿Qué hace una prueba justa?',
+              title: "Control the Controls",
+              promptEn: "What makes a fair test?",
+              promptEs: "¿Qué hace una prueba justa?",
               xp: 30,
             },
             {
               index: 2,
               kind: ActivityKind.INTERACT,
-              title: 'Fix the Experiment',
-              promptEn: 'Identify and fix flawed setups.',
-              promptEs: 'Identifica y arregla montajes defectuosos.',
+              title: "Fix the Experiment",
+              promptEn: "Identify and fix flawed setups.",
+              promptEs: "Identifica y arregla montajes defectuosos.",
               xp: 50,
-              data: { tool: 'spot-the-error' },
+              data: { tool: "spot-the-error" },
             },
           ],
         },
@@ -194,45 +204,55 @@ const stem1: ModuleSeed = {
     },
     {
       index: 3,
-      title: 'Data & Decisions',
-      objective: 'Use data to make and defend decisions.',
+      title: "Data & Decisions",
+      objective: "Use data to make and defend decisions.",
       lessons: [
         {
           index: 1,
-          title: 'Reading Graphs',
-          objective: 'Interpret bar and line graphs.',
+          title: "Reading Graphs",
+          objective: "Interpret bar and line graphs.",
           activities: [
             {
               index: 1,
               kind: ActivityKind.INFO,
-              title: 'Graph Basics',
-              promptEn: 'Axes, labels, and trends.',
-              promptEs: 'Ejes, etiquetas y tendencias.',
+              title: "Graph Basics",
+              promptEn: "Axes, labels, and trends.",
+              promptEs: "Ejes, etiquetas y tendencias.",
               xp: 30,
             },
             {
               index: 2,
               kind: ActivityKind.INTERACT,
-              title: 'Trends Explorer',
-              promptEn: 'Drag points to see trend changes.',
-              promptEs: 'Arrastra puntos para ver cambios de tendencia.',
+              title: "Trends Explorer",
+              promptEn: "Drag points to see trend changes.",
+              promptEs: "Arrastra puntos para ver cambios de tendencia.",
               xp: 50,
-              data: { tool: 'graph', mode: 'line' },
+              data: { tool: "graph", mode: "line" },
             },
             {
               index: 3,
               kind: ActivityKind.REFLECT,
-              title: 'Make a Claim',
-              promptEn: 'Use data to support a decision.',
-              promptEs: 'Usa datos para apoyar una decisión.',
+              title: "Make a Claim",
+              promptEn: "Use data to support a decision.",
+              promptEs: "Usa datos para apoyar una decisión.",
               xp: 20,
             },
           ],
           assessmentItems: {
-            type: 'quiz',
+            type: "quiz",
             questions: [
-              { id: 'q1', prompt: 'Identify the trend.', choices: ['Up', 'Down', 'Flat'], answer: 0 },
-              { id: 'q2', prompt: 'Best graph for categories?', choices: ['Bar', 'Line', 'Pie'], answer: 0 },
+              {
+                id: "q1",
+                prompt: "Identify the trend.",
+                choices: ["Up", "Down", "Flat"],
+                answer: 0,
+              },
+              {
+                id: "q2",
+                prompt: "Best graph for categories?",
+                choices: ["Bar", "Line", "Pie"],
+                answer: 0,
+              },
             ],
           },
           maxScore: 100,
@@ -241,9 +261,27 @@ const stem1: ModuleSeed = {
     },
   ],
   badges: [
-    { slug: 'observer', name: 'Observer', criteria: 'Complete Unit 1 activities', iconKey: 'badge-observer', xpBonus: 25 },
-    { slug: 'tester', name: 'Tester', criteria: 'Complete an assessment', iconKey: 'badge-tester', xpBonus: 25 },
-    { slug: 'data-sleuth', name: 'Data Sleuth', criteria: 'Analyze data to make decisions', iconKey: 'badge-data', xpBonus: 25 },
+    {
+      slug: "observer",
+      name: "Observer",
+      criteria: "Complete Unit 1 activities",
+      iconKey: "badge-observer",
+      xpBonus: 25,
+    },
+    {
+      slug: "tester",
+      name: "Tester",
+      criteria: "Complete an assessment",
+      iconKey: "badge-tester",
+      xpBonus: 25,
+    },
+    {
+      slug: "data-sleuth",
+      name: "Data Sleuth",
+      criteria: "Analyze data to make decisions",
+      iconKey: "badge-data",
+      xpBonus: 25,
+    },
   ],
 };
 
@@ -336,7 +374,11 @@ async function upsertActivity(lessonId: string, a: ActivitySeed) {
   return activity;
 }
 
-async function upsertAssessment(lessonId: string, items: Prisma.InputJsonValue, maxScore = 100) {
+async function upsertAssessment(
+  lessonId: string,
+  items: Prisma.InputJsonValue,
+  maxScore = 100,
+) {
   const assessment = await prisma.assessment.upsert({
     where: { lessonId },
     create: {
@@ -352,7 +394,7 @@ async function upsertAssessment(lessonId: string, items: Prisma.InputJsonValue, 
   return assessment;
 }
 
-async function upsertBadge(moduleId: string, b: ModuleSeed['badges'][number]) {
+async function upsertBadge(moduleId: string, b: ModuleSeed["badges"][number]) {
   const badge = await prisma.badge.upsert({
     where: { slug: b.slug },
     create: {
@@ -388,7 +430,11 @@ async function seedModule(m: ModuleSeed) {
       }
 
       if (lessonSeed.assessmentItems) {
-        await upsertAssessment(lesson.id, lessonSeed.assessmentItems, lessonSeed.maxScore ?? 100);
+        await upsertAssessment(
+          lesson.id,
+          lessonSeed.assessmentItems,
+          lessonSeed.maxScore ?? 100,
+        );
       }
     }
   }

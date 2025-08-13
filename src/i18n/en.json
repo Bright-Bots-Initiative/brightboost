@@ -1,0 +1,19 @@
+{
+  "student": {
+    "dashboardTitle": "Student Dashboard",
+    "start": "Start",
+    "continue": "Continue",
+    "progressLabel": "STEM-1 Progress",
+    "badges": "Badges",
+    "badgeUnlocked": "Badge Unlocked!",
+    "xpHelp": "Earn XP by completing activities. Unlock badges as you progress.",
+    "lockedLesson": "Complete the prior lesson to unlock this one",
+    "open": "Open",
+    "locked": "Locked",
+    "lessons": "Lessons",
+    "openBadgeModal": "Open Badge Modal",
+    "simulateCheckpoint": "Simulate Checkpoint",
+    "completeSuffix": "% complete",
+    "youEarned": "You earned:"
+  }
+}

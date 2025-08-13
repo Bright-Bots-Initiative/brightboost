@@ -4,19 +4,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
-// Get API URL from environment variables - use relative URLs in development for proxy
-const API_URL = import.meta.env.DEV
-  ? ""
-  : import.meta.env.VITE_AWS_API_URL ||
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
-if (import.meta.env.PROD && !import.meta.env.VITE_AWS_API_URL) {
-  throw new Error("VITE_AWS_API_URL is required in production environment");
-}
-
-// Rate limiting for API calls
-const API_CALL_DELAY = 334; // ~3 calls per second
+// Rate limiting for API calls (~3 calls/sec)
+const API_CALL_DELAY = 334;
 let lastApiCall = 0;
 
 const rateLimitedFetch = async (url: string, options: RequestInit) => {
@@ -38,42 +29,34 @@ export const loginUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    console.log(`Sending login request to: ${API_URL}/api/login`);
-
-    const response = await rateLimitedFetch(`${API_URL}/api/login`, {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Login error response:", errorText);
-
       let errorMessage = t("api.loginFailed");
-      if (response.status === 401) {
+      if (response.status === 401)
         errorMessage = t("api.invalidEmailOrPassword");
-      } else if (response.status === 409) {
+      else if (response.status === 409)
         errorMessage = t("api.emailAlreadyInUse");
-      } else if (response.status >= 500) {
+      else if (response.status >= 500)
         errorMessage = t("api.serviceUnavailable");
-      } else {
+      else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `${t("api.loginFailed")}: ${response.status} ${response.statusText}`;
         }
       }
-
       throw new Error(errorMessage);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Login error:", error);
     if (
       retries > 0 &&
       error instanceof TypeError &&
@@ -84,7 +67,6 @@ export const loginUser = async (
         description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
         variant: "default",
       });
-      console.log(`Retrying login... (${retries} left)`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       return loginUser(email, password, retries - 1);
     }
@@ -107,42 +89,34 @@ export const signupUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    console.log(`Sending signup request to: ${API_URL}/api/signup`);
-
-    const response = await rateLimitedFetch(`${API_URL}/api/signup`, {
+    const response = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, role }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Signup error response:", errorText);
-
       let errorMessage = t("api.signupFailed");
-      if (response.status === 401) {
+      if (response.status === 401)
         errorMessage = t("api.invalidEmailOrPassword");
-      } else if (response.status === 409) {
+      else if (response.status === 409)
         errorMessage = t("api.emailAlreadyInUse");
-      } else if (response.status >= 500) {
+      else if (response.status >= 500)
         errorMessage = t("api.serviceUnavailable");
-      } else {
+      else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `${t("api.signupFailed")}: ${response.status} ${response.statusText}`;
         }
       }
-
       throw new Error(errorMessage);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Signup error:", error);
     if (
       retries > 0 &&
       error instanceof TypeError &&
@@ -176,44 +150,34 @@ export const signupTeacher = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    console.log(
-      `Sending teacher signup request to: ${API_URL}/api/signup/teacher`,
-    );
-
-    const response = await rateLimitedFetch(`${API_URL}/api/signup/teacher`, {
+    const response = await fetch(`${API_BASE}/auth/signup/teacher`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, school, subject }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Teacher signup error response:", errorText);
-
       let errorMessage = t("api.teacherSignupFailed");
-      if (response.status === 401) {
+      if (response.status === 401)
         errorMessage = t("api.invalidEmailOrPassword");
-      } else if (response.status === 409) {
+      else if (response.status === 409)
         errorMessage = t("api.emailAlreadyInUse");
-      } else if (response.status >= 500) {
+      else if (response.status >= 500)
         errorMessage = t("api.serviceUnavailable");
-      } else {
+      else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `${t("api.teacherSignupFailed")}: ${response.status} ${response.statusText}`;
         }
       }
-
       throw new Error(errorMessage);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Teacher signup error:", error);
     if (
       retries > 0 &&
       error instanceof TypeError &&
@@ -245,44 +209,34 @@ export const signupStudent = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    console.log(
-      `Sending student signup request to: ${API_URL}/api/signup/student`,
-    );
-
-    const response = await rateLimitedFetch(`${API_URL}/api/signup/student`, {
+    const response = await fetch(`${API_BASE}/auth/signup/student`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Student signup error response:", errorText);
-
       let errorMessage = t("api.studentSignupFailed");
-      if (response.status === 401) {
+      if (response.status === 401)
         errorMessage = t("api.invalidEmailOrPassword");
-      } else if (response.status === 409) {
+      else if (response.status === 409)
         errorMessage = t("api.emailAlreadyInUse");
-      } else if (response.status >= 500) {
+      else if (response.status >= 500)
         errorMessage = t("api.serviceUnavailable");
-      } else {
+      else {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
+        } catch {
           errorMessage = `${t("api.studentSignupFailed")}: ${response.status} ${response.statusText}`;
         }
       }
-
       throw new Error(errorMessage);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Student signup error:", error);
     if (
       retries > 0 &&
       error instanceof TypeError &&
@@ -320,32 +274,26 @@ export const useApi = () => {
       };
 
       try {
-        const response = await rateLimitedFetch(`${API_URL}${endpoint}`, {
+        const response = await rateLimitedFetch(`${API_BASE}${endpoint}`, {
           ...options,
           headers,
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error(t("api.sessionExpired"));
-          }
-          if (response.status === 403) {
+          if (response.status === 401) throw new Error(t("api.sessionExpired"));
+          if (response.status === 403)
             throw new Error(t("api.dashboardUnavailable"));
-          }
           const errorData = await response.json();
           throw new Error(errorData.error || t("api.apiRequestFailed"));
         }
 
         return await response.json();
       } catch (error) {
-        console.error("API error:", error);
-
         if (
           retries > 0 &&
           error instanceof Error &&
           !error.message.includes("Authentication")
         ) {
-          console.log(`Retrying request... (${retries} attempts left)`);
           toast({
             title: t("api.networkIssue"),
             description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,

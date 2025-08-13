@@ -1,0 +1,19 @@
+{
+  "student": {
+    "dashboardTitle": "Panel del Estudiante",
+    "start": "Comenzar",
+    "continue": "Continuar",
+    "progressLabel": "Progreso de STEM-1",
+    "badges": "Insignias",
+    "badgeUnlocked": "¡Insignia desbloqueada!",
+    "xpHelp": "Gana XP completando actividades. Desbloquea insignias a medida que avanzas.",
+    "lockedLesson": "Completa la lección anterior para desbloquear esta",
+    "open": "Abrir",
+    "locked": "Bloqueado",
+    "lessons": "Lecciones",
+    "openBadgeModal": "Abrir Modal de Insignia",
+    "simulateCheckpoint": "Simular Punto de Control",
+    "completeSuffix": "% completado",
+    "youEarned": "Has ganado:"
+  }
+}

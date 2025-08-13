@@ -5,7 +5,6 @@ import LessonsTable from "./LessonTable";
 const MainContent: React.FC<MainContentProps> = ({
   lessonsData,
   setLessonsData,
-  onAddLesson: _onAddLesson,
   onEditLesson,
   onDeleteLesson,
 }) => {
