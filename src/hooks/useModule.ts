@@ -33,7 +33,7 @@ export function useModule(slug = 'stem-1') {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, API_BASE]);
 
   return { data, loading, error };
 }

@@ -38,7 +38,7 @@ export function useStudentProgress(studentId: string, moduleSlug = 'stem-1') {
     return () => {
       cancelled = true;
     };
-  }, [studentId, moduleSlug, tick]);
+  }, [studentId, moduleSlug, tick, API_BASE]);
 
   return { data, loading, error, refetch: () => setTick((v) => v + 1) };
 }

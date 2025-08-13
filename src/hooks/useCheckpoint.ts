@@ -17,7 +17,7 @@ export async function submitCheckpoint(input: {
     }),
   });
   if (!res.ok) {
-    try { console.error(await res.json()); } catch {}
+    try { console.error(await res.json()); } catch (_e) { void 0; }
     throw new Error(`checkpoint_failed_${res.status}`);
   }
   return res.json();
