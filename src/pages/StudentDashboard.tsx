@@ -124,7 +124,6 @@ const StudentDashboard = () => {
       ]);
 
       clearTimeout(timeoutId);
-      console.log("Fetched dashboard data:", data);
       setDashboardData(data);
     } catch (err: any) {
       if (err.message === "Session expired") {
@@ -263,9 +262,7 @@ const StudentDashboard = () => {
                           .toUpperCase()
                       : "ST"
                   }
-                  onAvatarChange={(newUrl) => {
-                    console.log("Avatar changed to:", newUrl);
-                  }}
+                  onAvatarChange={() => {}}
                 />
                 <div className="ml-3 relative">
                   <h1 className="text-3xl font-bold text-brightboost-navy">
@@ -288,7 +285,9 @@ const StudentDashboard = () => {
                   className="self-center -translate-y-3"
                 />
                 <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                  <span className="text-sm font-bold">{t("dashboard.role")}</span>
+                  <span className="text-sm font-bold">
+                    {t("dashboard.role")}
+                  </span>
                   <span className="text-xs bg-white px-2 py-0.5 rounded-full">
                     {user?.name || t("student")}
                   </span>
@@ -314,9 +313,7 @@ const StudentDashboard = () => {
                 longestStreak={longestStreakSafe}
                 currentStreakDays={currentStreakDays}
                 barColor="#FF8C00"
-                onNewRecord={(bonus) => {
-                  console.log(`New record! Bonus XP: ${bonus}`);
-                }}
+                onNewRecord={() => {}}
               />
               {/*<div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
                 <span className="text-sm font-bold">{t("dashboard.role")}</span>
