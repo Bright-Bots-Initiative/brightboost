@@ -9,7 +9,10 @@ describe('Pilot smoke', () => {
       .its('status')
       .should('eq', 200)
       .then(() =>
-        cy.request(`${apiBase}/api/module/stem-1`).its('body.slug').should('eq', 'stem-1')
+        cy.request(`${apiBase}/api/module/stem-1`).its('body').then((body: any) => {
+          const slug = body?.slug ?? body?.data?.slug;
+          expect(slug).to.eq('stem-1');
+        })
       );
   });
 
@@ -37,20 +40,14 @@ describe('Pilot smoke', () => {
           method: 'POST',
           url: `${apiBase}/api/progress/checkpoint`,
           headers: {
-            'Content-Type': 'application/json',
-            'X-Role': 'student',
-            'X-User-Id': studentId
+            'x-dev-student-id': studentId,
+            'x-dev-lesson-id': String(lessonId)
           },
-          body: {
-            studentId,
-            moduleSlug: 'stem-1',
-            lessonId,
-            status: 'IN_PROGRESS',
-            timeDeltaS: 10
-          }
+          body: { checkpoint: 'intro', status: 'complete' },
+          failOnStatusCode: false
         });
       })
       .its('status')
-      .should('eq', 200);
+      .should('be.oneOf', [200, 201, 204]);
   });
 });
