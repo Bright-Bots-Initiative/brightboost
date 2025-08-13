@@ -17,7 +17,6 @@ import Index from "./pages/Index";
 
 // Import styles
 import "./App.css";
-import TestingSB from "./pages/TestingSB";
 
 function App() {
   return (
