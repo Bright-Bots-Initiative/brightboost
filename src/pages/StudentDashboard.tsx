@@ -7,7 +7,7 @@ import { submitCheckpoint } from '../hooks/useCheckpoint';
 import StudentProgressRing from '../components/StudentProgressRing';
 import ContinueModuleCard from '../components/ContinueModuleCard';
 import BadgeModal from '../components/BadgeModal';
-import t from '../lib/i18n';
+import { t } from '../lib/i18n';
 
 const CURRENT_STUDENT_ID = 'demo-student-1';
 
