@@ -1,4 +1,7 @@
 name: Cypress Staging Smoke
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   workflow_dispatch: {}
@@ -39,12 +42,29 @@ jobs:
           CYPRESS_STUDENT_ID: ${{ secrets.CYPRESS_STUDENT_ID }}
           CYPRESS_LESSON_ID: ${{ secrets.CYPRESS_LESSON_ID }}
 
-      - name: Upload Cypress artifacts
+      - name: Upload Cypress artifacts (screenshots)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-artifacts
-          path: |
-            cypress/screenshots
-            cypress/videos
-            cypress/results
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Cypress artifacts (videos)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Cypress artifacts (results)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-results
+          path: cypress/results
+          if-no-files-found: warn
+          retention-days: 7

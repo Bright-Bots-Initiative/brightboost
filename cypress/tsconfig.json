@@ -1,10 +1,15 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["es5", "dom"],
-    "sourceMap": true,
-    "types": ["cypress", "node"]
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "types": ["cypress", "node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "sourceMap": true
   },
-  "include": ["**/*.ts", "**/*.js"]
+  "include": ["./e2e/**/*.ts", "./support/**/*.ts", "./support/**/*.d.ts"],
+  "exclude": ["../node_modules", "../src", "../dist"]
 }

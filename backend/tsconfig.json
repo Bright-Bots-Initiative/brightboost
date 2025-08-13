@@ -1,9 +1,25 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2019",
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["ES2019"],
+||||||| parent of eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2020"
+    ],
+=======
+    "target": "ES2019",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": [
+      "ES2019"
+    ],
+>>>>>>> eff570a (chore(backend): switch to CommonJS build (remove type module) to fix Lambda runtime)
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,

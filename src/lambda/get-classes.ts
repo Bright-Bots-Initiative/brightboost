@@ -19,9 +19,7 @@ const secretsManager = new SecretsManagerClient({ region: "us-east-1" });
 
 async function getDbConnection(): Promise<Pool> {
   if (!dbPool) {
-    if (process.env.NODE_ENV !== "test") {
-      console.log("Creating new database connection pool...");
-    }
+    console.log("Creating new database connection pool...");
     let secret: DatabaseSecret;
     if (process.env.NODE_ENV === "local") {
       secret = {
@@ -37,9 +35,7 @@ async function getDbConnection(): Promise<Pool> {
         throw new Error("DATABASE_SECRET_ARN environment variable not set");
       }
 
-      if (process.env.NODE_ENV !== "test") {
-        console.log("Fetching database secret from Secrets Manager...");
-      }
+      console.log("Fetching database secret from Secrets Manager...");
       const command = new GetSecretValueCommand({ SecretId: secretArn });
       const secretResult = await secretsManager.send(command);
       if (!secretResult.SecretString) {
@@ -48,11 +44,9 @@ async function getDbConnection(): Promise<Pool> {
 
       secret = JSON.parse(secretResult.SecretString);
     }
-    if (process.env.NODE_ENV !== "test") {
-      console.log(
-        `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
-      );
-    }
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
 
     dbPool = new Pool({
       host: secret.host,
@@ -71,19 +65,13 @@ async function getDbConnection(): Promise<Pool> {
       connectionTimeoutMillis: 25000,
     });
 
-    if (process.env.NODE_ENV !== "test") {
-      console.log("Database pool created, testing connection...");
-    }
+    console.log("Database pool created, testing connection...");
     try {
       const testClient = await dbPool.connect();
-      if (process.env.NODE_ENV !== "test") {
-        console.log("Database connection test successful");
-      }
+      console.log("Database connection test successful");
       testClient.release();
     } catch (error) {
-      if (process.env.NODE_ENV !== "test") {
-        console.error("Database connection test failed:", error);
-      }
+      console.error("Database connection test failed:", error);
       throw error;
     }
   }
@@ -96,8 +84,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin":
-      "https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type,Authorization,x-api-key",
     "Access-Control-Allow-Methods": "GET,OPTIONS",
   };
@@ -124,9 +111,9 @@ export const handler = async (
     const token = authHeader.substring(7);
     const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
 
-    let decoded: jwt.JwtPayload;
+    let decoded;
     try {
-      decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
+      decoded = jwt.verify(token, jwtSecret) as any;
     } catch (err) {
       return {
         statusCode: 401,
@@ -135,18 +122,34 @@ export const handler = async (
       };
     }
 
-    if (process.env.NODE_ENV !== "test") {
-      console.log("Attempting database connection...");
-    }
+    console.log("Attempting database connection...");
     const db = await getDbConnection();
-    if (process.env.NODE_ENV !== "test") {
-      console.log("Database connection established successfully");
-    }
+    console.log("Database connection established successfully");
 
-    const data = await db.query(
-      "SELECT badges, streak, xp FROM users WHERE email = $1",
-      [decoded.email as string],
+    const id = await db.query(
+      'SELECT id FROM "User" WHERE email = $1',
+      [decoded.email],
     );
+    let data;
+    try {
+      data = await db.query(
+        'SELECT id, name FROM "Course" WHERE teacherId = $1',
+        [id.rows[0].id],);
+    } catch (err) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({error: "No matching courses found"}),
+      };
+    }
+    
+    if (data.rows.length === 0) {
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: "Courses not found" }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -154,9 +157,7 @@ export const handler = async (
       body: JSON.stringify(data),
     };
   } catch (error) {
-    if (process.env.NODE_ENV !== "test") {
-      console.error("progress info error:", error);
-    }
+    console.error("Class fetch error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {
