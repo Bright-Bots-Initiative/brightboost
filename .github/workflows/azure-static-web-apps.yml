@@ -29,8 +29,9 @@ jobs:
         env:
           VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
         run: |
+          VITE_APP_VERSION="$(node -p "require('./package.json').version")-$(git rev-parse --short HEAD)"
           if node -e "process.exit(require('./package.json').scripts?.build?0:1)"; then
-            npm run build
+            VITE_APP_VERSION="$VITE_APP_VERSION" VITE_API_BASE="$VITE_API_BASE" npm run build
           else
             mkdir -p dist
             echo '<!doctype html><meta charset="utf-8"><title>BrightBoost</title><h1>BrightBoost</h1>' > dist/index.html
