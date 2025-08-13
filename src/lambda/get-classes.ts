@@ -126,23 +126,23 @@ export const handler = async (
     const db = await getDbConnection();
     console.log("Database connection established successfully");
 
-    const id = await db.query(
-      'SELECT id FROM "User" WHERE email = $1',
-      [decoded.email],
-    );
+    const id = await db.query('SELECT id FROM "User" WHERE email = $1', [
+      decoded.email,
+    ]);
     let data;
     try {
       data = await db.query(
         'SELECT id, name FROM "Course" WHERE teacherId = $1',
-        [id.rows[0].id],);
+        [id.rows[0].id],
+      );
     } catch (err) {
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({error: "No matching courses found"}),
+        body: JSON.stringify({ error: "No matching courses found" }),
       };
     }
-    
+
     if (data.rows.length === 0) {
       return {
         statusCode: 404,

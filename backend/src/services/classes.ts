@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 function makeInviteCode() {
   const n = Math.floor(Math.random() * 36 ** 6);
-  return n.toString(36).padStart(6, '0').toUpperCase();
+  return n.toString(36).padStart(6, "0").toUpperCase();
 }
 
 export async function createClass(teacherId: string, name: string) {
@@ -17,12 +17,12 @@ export async function createClass(teacherId: string, name: string) {
 export async function listClasses(teacherId: string) {
   const classes = await prisma.class.findMany({
     where: { teacherId, isArchived: false },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
   const ids = classes.map((c) => c.id);
   if (ids.length === 0) return [];
   const counts = await prisma.enrollment.groupBy({
-    by: ['classId'],
+    by: ["classId"],
     where: { classId: { in: ids } },
     _count: { classId: true },
   });
@@ -35,7 +35,7 @@ export async function listClasses(teacherId: string) {
 
 export async function joinClass(inviteCode: string, studentId: string) {
   const cls = await prisma.class.findUnique({ where: { inviteCode } });
-  if (!cls || cls.isArchived) throw new Error('Invalid invite code');
+  if (!cls || cls.isArchived) throw new Error("Invalid invite code");
 
   const existing = await prisma.enrollment.findFirst({
     where: { classId: cls.id, studentId },

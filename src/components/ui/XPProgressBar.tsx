@@ -140,11 +140,15 @@ const XPProgressBar: React.FC<XPProgressBarProps> = ({
   }, [level]);
 
   return (
-    <div className={`relative flex flex-col items-center select-none ${className || ""}`}>
+    <div
+      className={`relative flex flex-col items-center select-none ${className || ""}`}
+    >
       {/* Level and XP label */}
       <div className="flex justify-between items-center text-sm text-brightboost-navy font-semibold mb-1 w-full">
         <span>Level {level}</span>
-        <span>{currentXp}/{xpToNextLevel} XP</span>
+        <span>
+          {currentXp}/{xpToNextLevel} XP
+        </span>
       </div>
 
       <motion.div

@@ -38,9 +38,12 @@ export const loginUser = async (
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = t("api.loginFailed");
-      if (response.status === 401) errorMessage = t("api.invalidEmailOrPassword");
-      else if (response.status === 409) errorMessage = t("api.emailAlreadyInUse");
-      else if (response.status >= 500) errorMessage = t("api.serviceUnavailable");
+      if (response.status === 401)
+        errorMessage = t("api.invalidEmailOrPassword");
+      else if (response.status === 409)
+        errorMessage = t("api.emailAlreadyInUse");
+      else if (response.status >= 500)
+        errorMessage = t("api.serviceUnavailable");
       else {
         try {
           const errorData = JSON.parse(errorText);
@@ -95,9 +98,12 @@ export const signupUser = async (
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = t("api.signupFailed");
-      if (response.status === 401) errorMessage = t("api.invalidEmailOrPassword");
-      else if (response.status === 409) errorMessage = t("api.emailAlreadyInUse");
-      else if (response.status >= 500) errorMessage = t("api.serviceUnavailable");
+      if (response.status === 401)
+        errorMessage = t("api.invalidEmailOrPassword");
+      else if (response.status === 409)
+        errorMessage = t("api.emailAlreadyInUse");
+      else if (response.status >= 500)
+        errorMessage = t("api.serviceUnavailable");
       else {
         try {
           const errorData = JSON.parse(errorText);
@@ -153,9 +159,12 @@ export const signupTeacher = async (
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = t("api.teacherSignupFailed");
-      if (response.status === 401) errorMessage = t("api.invalidEmailOrPassword");
-      else if (response.status === 409) errorMessage = t("api.emailAlreadyInUse");
-      else if (response.status >= 500) errorMessage = t("api.serviceUnavailable");
+      if (response.status === 401)
+        errorMessage = t("api.invalidEmailOrPassword");
+      else if (response.status === 409)
+        errorMessage = t("api.emailAlreadyInUse");
+      else if (response.status >= 500)
+        errorMessage = t("api.serviceUnavailable");
       else {
         try {
           const errorData = JSON.parse(errorText);
@@ -209,9 +218,12 @@ export const signupStudent = async (
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = t("api.studentSignupFailed");
-      if (response.status === 401) errorMessage = t("api.invalidEmailOrPassword");
-      else if (response.status === 409) errorMessage = t("api.emailAlreadyInUse");
-      else if (response.status >= 500) errorMessage = t("api.serviceUnavailable");
+      if (response.status === 401)
+        errorMessage = t("api.invalidEmailOrPassword");
+      else if (response.status === 409)
+        errorMessage = t("api.emailAlreadyInUse");
+      else if (response.status >= 500)
+        errorMessage = t("api.serviceUnavailable");
       else {
         try {
           const errorData = JSON.parse(errorText);
@@ -269,7 +281,8 @@ export const useApi = () => {
 
         if (!response.ok) {
           if (response.status === 401) throw new Error(t("api.sessionExpired"));
-          if (response.status === 403) throw new Error(t("api.dashboardUnavailable"));
+          if (response.status === 403)
+            throw new Error(t("api.dashboardUnavailable"));
           const errorData = await response.json();
           throw new Error(errorData.error || t("api.apiRequestFailed"));
         }
