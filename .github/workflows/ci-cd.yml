@@ -19,24 +19,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.15.1
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: |
-            pnpm-lock.yaml
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Lint code
-        run: pnpm lint
+        run: npm run lint
 
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
@@ -48,19 +41,19 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
-        run: pnpm test
+        run: npm test -- --watch=false
 
       - name: Start development server
-        run: pnpm dev &
+        run: npm run dev &
 
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:5173 --timeout 60000
 
       - name: Run Cypress smoke tests
-        run: pnpm cypress run --spec "cypress/e2e/smoke.cy.ts"
+        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts"
 
       - name: Build application
-        run: pnpm build
+        run: npm run build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -90,21 +83,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.15.1
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: |
-            pnpm-lock.yaml
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
@@ -117,7 +103,7 @@ jobs:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
       - name: Run database connectivity test
-        run: pnpm test:db
+        run: npm run test:db
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
@@ -130,10 +116,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.15.1
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
