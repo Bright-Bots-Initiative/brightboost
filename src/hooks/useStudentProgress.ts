@@ -16,7 +16,6 @@ export function useStudentProgress(studentId: string, moduleSlug = 'stem-1') {
   const [tick, setTick] = useState(0);
 
   const API_BASE = import.meta.env.VITE_API_BASE || '';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let cancelled = false;
     async function run() {
@@ -39,6 +38,7 @@ export function useStudentProgress(studentId: string, moduleSlug = 'stem-1') {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, moduleSlug, tick]);
 
   return { data, loading, error, refetch: () => setTick((v) => v + 1) };
