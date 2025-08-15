@@ -1,128 +1,165 @@
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useModule } from "../hooks/useModule";
+import { useStudentProgress } from "../hooks/useStudentProgress";
+import { submitCheckpoint } from "../hooks/useCheckpoint";
+import StudentProgressRing from "../components/StudentProgressRing";
+import ContinueModuleCard from "../components/ContinueModuleCard";
+import BadgeModal from "../components/BadgeModal";
+import { t } from "../lib/i18n";
 
-import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import GameBackground from '../components/GameBackground';
-import RobotCharacter from '../components/RobotCharacter';
-import StemModuleCard from '../components/StemModuleCard';
-import LeaderboardCard from '../components/LeaderboardCard';
-import WordGameCard from '../components/WordGameCard';
-import BrightBoostRobot from '../components/BrightBoostRobot';
+const CURRENT_STUDENT_ID = "demo-student-1";
 
-const StudentDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+export default function StudentDashboard() {
   const navigate = useNavigate();
+  const { data: mod } = useModule("stem-1");
+  const { data: progress, refetch } = useStudentProgress(
+    CURRENT_STUDENT_ID,
+    "stem-1",
+  );
+  const [showBadge, setShowBadge] = useState(false);
+  const [lockTooltip, setLockTooltip] = useState<string | null>(null);
 
-  const stemActivities = [
-    {
-      title: "Counting with Boni",
-      icon: "/placeholder.svg",
-      color: "bg-blue-100",
-      path: "/student/modules/counting"
-    },
-    {
-      title: "Breaking Words",
-      icon: "/placeholder.svg",
-      color: "bg-green-100",
-      path: "/student/modules/words"
-    },
-    {
-      title: "Reading with Boni",
-      icon: "/placeholder.svg",
-      color: "bg-purple-100",
-      path: "/student/modules/reading"
-    },
-    {
-      title: "Color Names",
-      icon: "/placeholder.svg",
-      color: "bg-yellow-100",
-      path: "/student/modules/colors"
+  const percent = progress?.percentComplete ?? 0;
+  const moduleTitle = mod?.title ?? "STEM-1";
+
+  const lessons = useMemo(() => {
+    const all = mod?.units?.flatMap((u) => u.lessons) ?? [];
+    return all.sort((a, b) => a.index - b.index);
+  }, [mod]);
+
+  const nextLessonId = useMemo(() => {
+    if (!lessons.length) return null;
+    if (!progress?.lastLessonId) return lessons[0].id;
+    const idx = lessons.findIndex((l) => l.id === progress.lastLessonId);
+    return lessons[idx + 1]?.id ?? lessons[idx]?.id ?? null;
+  }, [lessons, progress?.lastLessonId]);
+
+  function handleContinue() {
+    if (!nextLessonId) return;
+    navigate(`/lesson/${nextLessonId}`);
+  }
+
+  function handleLessonClick(lessonId: string, index: number) {
+    const unlocked =
+      index === 0 || lessons[index - 1]?.id === progress?.lastLessonId;
+    if (!unlocked) {
+      setLockTooltip(t("student.lockedLesson"));
+      setTimeout(() => setLockTooltip(null), 2500);
+      return;
     }
-  ];
+    navigate(`/lesson/${lessonId}`);
+  }
 
-  const leaderboardEntries = [
-    { rank: 1, name: "Kiki", points: 150, avatar: "/placeholder.svg" },
-    { rank: 2, name: "Grace", points: 99, avatar: "/placeholder.svg" },
-    { rank: 3, name: "Nico", points: 98, avatar: "/placeholder.svg" },
-    { rank: 4, name: "John", points: 97 },
-    { rank: 5, name: "Quincy", points: 96 },
-    { rank: 6, name: "Adam", points: 95 }
-  ];
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  async function simulateCheckpoint() {
+    if (!nextLessonId) return;
+    try {
+      await submitCheckpoint({
+        studentId: CURRENT_STUDENT_ID,
+        moduleSlug: "stem-1",
+        lessonId: nextLessonId,
+        status: "COMPLETED",
+        timeDeltaS: 0,
+      });
+    } catch (e) {
+      void 0;
+    }
+    refetch();
+  }
 
   return (
-    <GameBackground>
-      <div className="min-h-screen flex flex-col relative z-10">
-        <nav className="bg-brightboost-lightblue text-brightboost-navy p-4 shadow-md">
-          <div className="container mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold">Bright Boost</h1>
-              <BrightBoostRobot size="sm" />
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center gap-2 bg-brightboost-yellow px-3 py-1 rounded-full">
-                <span className="text-sm font-bold">Level 1</span>
-                <span className="text-xs bg-white px-2 py-0.5 rounded-full">{user?.name || 'Student'}</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-brightboost-blue px-3 py-1 rounded-lg hover:bg-brightboost-blue/80 transition-colors text-white"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        <main className="container mx-auto p-4 flex-grow">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-brightboost-navy">Hello, {user?.name || 'Friend'}!</h2>
-              <p className="text-brightboost-navy">Let's learn and have fun!</p>
-            </div>
-            <div className="flex gap-2">
-              <div className="badge bg-brightboost-blue text-white px-2 py-1 rounded-full text-xs">XP: 120/200</div>
-              <div className="badge bg-brightboost-yellow text-brightboost-navy px-2 py-1 rounded-full text-xs">Stars: 25</div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* STEM 1 Module Card */}
-            <StemModuleCard 
-              title="STEM 1" 
-              subtitle="Let's play with us!" 
-              activities={stemActivities}
-            />
-            
-            {/* Word Game Card */}
-            <WordGameCard 
-              title="Letter Game" 
-              letters={['A', 'B', 'E', 'L', 'T']} 
-              word="TABLE"
-            />
-            
-            {/* Leaderboard Card */}
-            <LeaderboardCard
-              title="Leaderboard"
-              entries={leaderboardEntries}
-            />
-          </div>
-          
-          <div className="mt-8 flex justify-center">
-            <div className="flex space-x-4">
-              <RobotCharacter type="helper" size="lg" />
-              <RobotCharacter type="friend" size="lg" />
-              <RobotCharacter type="teacher" size="lg" />
-            </div>
-          </div>
-        </main>
+    <div className="max-w-3xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">{t("student.dashboardTitle")}</h1>
+      <div className="flex items-center gap-6">
+        <StudentProgressRing
+          percent={percent}
+          label={t("student.progressLabel")}
+        />
+        <div className="flex-1">
+          <ContinueModuleCard
+            moduleTitle={moduleTitle}
+            percent={percent}
+            onContinue={handleContinue}
+          />
+          <div className="mt-3 text-sm opacity-70">{t("student.xpHelp")}</div>
+        </div>
       </div>
-    </GameBackground>
-  );
-};
 
-export default StudentDashboard;
+      <div className="rounded-2xl border p-4">
+        <div className="font-semibold mb-2">{t("student.lessons")}</div>
+        <div className="flex flex-col gap-2">
+          {lessons.map((l, i) => {
+            const unlocked =
+              i === 0 || lessons[i - 1]?.id === progress?.lastLessonId;
+            return (
+              <div
+                key={l.id}
+                className="flex items-center justify-between border rounded-xl p-3"
+              >
+                <div>
+                  <div className="font-medium">{l.title}</div>
+                  <div className="text-xs opacity-70">#{l.index + 1}</div>
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => handleLessonClick(l.id, i)}
+                    className={`px-3 py-1 rounded-lg ${unlocked ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600 cursor-not-allowed"}`}
+                    aria-disabled={!unlocked}
+                  >
+                    {unlocked ? t("student.open") : t("student.locked")}
+                  </button>
+                  {!unlocked && lockTooltip && (
+                    <div
+                      className="absolute right-0 mt-2 text-xs bg-black text-white rounded px-2 py-1"
+                      role="tooltip"
+                      data-testid="lock-tooltip"
+                    >
+                      {lockTooltip}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border p-4">
+        <div className="font-semibold mb-2">{t("student.badges")}</div>
+        <div className="flex gap-2">
+          {(mod?.badges ?? []).map((b) => (
+            <button
+              key={b.slug}
+              className="px-3 py-2 rounded-lg border"
+              onClick={() => setShowBadge(true)}
+            >
+              {b.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          className="px-3 py-2 rounded-lg border"
+          onClick={() => setShowBadge(true)}
+        >
+          {t("student.openBadgeModal")}
+        </button>
+        <button
+          className="px-3 py-2 rounded-lg border"
+          onClick={simulateCheckpoint}
+        >
+          {t("student.simulateCheckpoint")}
+        </button>
+      </div>
+
+      <BadgeModal
+        open={showBadge}
+        onClose={() => setShowBadge(false)}
+        badgeName="Observer"
+        title={t("student.badgeUnlocked")}
+      />
+    </div>
+  );
+}

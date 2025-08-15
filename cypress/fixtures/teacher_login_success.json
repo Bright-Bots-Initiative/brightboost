@@ -1,0 +1,13 @@
+{
+  "message": "Login successful",
+  "user": {
+    "id": 1,
+    "name": "Teacher User",
+    "email": "teacher@example.com",
+    "role": "TEACHER",
+    "school": "Example School",
+    "subject": "Mathematics",
+    "createdAt": "2025-06-12T01:00:00.000Z"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IlRlYWNoZXIgVXNlciIsImVtYWlsIjoidGVhY2hlckBleGFtcGxlLmNvbSIsInJvbGUiOiJURUFDSEVSIiwiaWF0IjoxNjIzNDU2Nzg5LCJleHAiOjE2MjM1NDMxODl9.mock-signature"
+}

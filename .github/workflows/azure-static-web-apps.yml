@@ -1,0 +1,48 @@
+name: Azure Static Web Apps CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches: [main]
+
+jobs:
+  swa:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build app (root)
+        env:
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+        run: |
+          VITE_APP_VERSION="$(node -p "require('./package.json').version")-$(git rev-parse --short HEAD)"
+          if node -e "process.exit(require('./package.json').scripts?.build?0:1)"; then
+            VITE_APP_VERSION="$VITE_APP_VERSION" VITE_API_BASE="$VITE_API_BASE" npm run build
+          else
+            mkdir -p dist
+            echo '<!doctype html><meta charset="utf-8"><title>BrightBoost</title><h1>BrightBoost</h1>' > dist/index.html
+          fi
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: dist
+          output_location: ""
+          skip_app_build: true
