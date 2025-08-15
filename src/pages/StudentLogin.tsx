@@ -37,7 +37,7 @@ const StudentLogin: React.FC = () => {
       );
 
       // Verify this is a student account
-      if (response.user.role !== "STUDENT") {
+      if (response.user.role !== "STUDENT" && response.user.role !== "student") {
         setError(
           "This login is only for students. Please use the teacher login if you are a teacher.",
         );
