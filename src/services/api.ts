@@ -4,9 +4,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "";
+const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "";
 
-// Rate limiting for API calls (~3 calls/sec)
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
 
@@ -14,9 +13,7 @@ const rateLimitedFetch = async (url: string, options: RequestInit) => {
   const now = Date.now();
   const timeSinceLastCall = now - lastApiCall;
   if (timeSinceLastCall < API_CALL_DELAY) {
-    await new Promise((resolve) =>
-      setTimeout(resolve, API_CALL_DELAY - timeSinceLastCall),
-    );
+    await new Promise((resolve) => setTimeout(resolve, API_CALL_DELAY - timeSinceLastCall));
   }
   lastApiCall = Date.now();
   return fetch(url, options);
