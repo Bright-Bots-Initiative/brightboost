@@ -2,8 +2,8 @@
 // src/services/api.ts
 import { useAuth } from '../contexts/AuthContext';
 
-// Get API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Get API URL from environment variables (prefer production VITE_API_BASE, fallback to VITE_API_URL, then relative path)
+const API_URL = (import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || '');
 
 // Non-authenticated API calls
 export const loginUser = async (email: string, password: string) => {
