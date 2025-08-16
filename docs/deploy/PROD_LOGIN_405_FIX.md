@@ -37,14 +37,14 @@ Verification
 Browser:
 1) Open SWA prod, navigate to Student Login, attempt login.
 2) In DevTools Network:
-   - OPTIONS https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/login → 200/204
+   - OPTIONS https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/204
      - Access-Control-Allow-Origin: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
      - Access-Control-Allow-Methods includes POST
      - Access-Control-Allow-Headers includes Content-Type
-   - POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/login → 200/302 (as designed)
+   - POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/302 (as designed)
 
 CLI preflight (expected 200/204 with CORS headers):
-curl -i -X OPTIONS "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/login" \
+curl -i -X OPTIONS "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login" \
   -H "Origin: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: content-type,authorization"
