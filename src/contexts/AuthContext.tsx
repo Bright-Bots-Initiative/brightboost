@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [nextPath, setNextPath] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("brightboost_token");
+    const storedToken = localStorage.getItem("bb_access_token");
     if (storedToken) {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(userData);
@@ -56,8 +56,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     fetch(`${API_BASE}/api/get-progress`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}),
+      },
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -76,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = (token: string, userData: User, next?: string) => {
-    if (token) localStorage.setItem("brightboost_token", token);
+    if (token) localStorage.setItem("bb_access_token", token);
     localStorage.setItem("user", JSON.stringify(userData));
 
     setToken(token || null);
@@ -102,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = useCallback(() => {
     // Remove token and user data from localStorage
-    localStorage.removeItem("brightboost_token");
+    localStorage.removeItem("bb_access_token");
     localStorage.removeItem("user");
 
     // Update state
