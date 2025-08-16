@@ -34,6 +34,15 @@ Backend (API Gateway + Lambda) CORS:
 
 Verification
 
+Results (verified):
+- Preflight OPTIONS to https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login returned 200 with:
+  - Access-Control-Allow-Origin: https://brave-bay-0bfacc110.z01.azurestaticapps.net
+  - Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+  - Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
+  - Access-Control-Allow-Credentials: true
+- POST to https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login returned 401 {"error":"Invalid email or password"} using dummy credentials, confirming application-level auth handling (no longer 403/405).
+
+
 Browser:
 1) Open SWA prod, navigate to Student Login, attempt login.
 2) In DevTools Network:
