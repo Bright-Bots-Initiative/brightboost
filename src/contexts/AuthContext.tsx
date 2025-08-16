@@ -6,7 +6,12 @@ import React, {
   useContext,
   useCallback,
 } from "react";
-import { useNavigate } from "react-router-dom";
+const API_BASE =
+  import.meta.env.VITE_AWS_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface User {
   id: string;
@@ -22,7 +27,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string, userData: User) => void;
+  login: (token: string, userData: User, next?: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -38,42 +43,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [shouldRedirect, setShouldRedirect] = useState<boolean>(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [nextPath, setNextPath] = useState<string | undefined>(undefined);
 
-  // Check if token exists in localStorage
   useEffect(() => {
     const storedToken = localStorage.getItem("brightboost_token");
-
     if (storedToken) {
-      // Get user data from localStorage
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(userData);
       setToken(storedToken);
     }
 
-    setIsLoading(false);
+    fetch(`${API_BASE}/api/get-progress`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          setUser(null);
+          localStorage.removeItem("user");
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (token: string, userData: User) => {
-    // Store token and user data in localStorage
-    localStorage.setItem("brightboost_token", token);
+  const login = (token: string, userData: User, next?: string) => {
+    if (token) localStorage.setItem("brightboost_token", token);
     localStorage.setItem("user", JSON.stringify(userData));
 
-    // Update state
-    setToken(token);
+    setToken(token || null);
     setUser(userData);
+    setNextPath(next);
     setShouldRedirect(true);
   };
 
   useEffect(() => {
-    if (user && token && !isLoading && shouldRedirect) {
-      if (user.role === "TEACHER" || user.role === "teacher") {
-        navigate("/teacher/dashboard");
-      } else if (user.role === "STUDENT" || user.role === "student") {
-        navigate("/student/dashboard");
-      }
+    if (user && !isLoading && shouldRedirect) {
+      const byRole =
+        user.role === "TEACHER" || user.role === "teacher"
+          ? "/teacher/dashboard"
+          : "/student/dashboard";
+      const params = new URLSearchParams(location.search);
+      const nextParam = params.get("next") || undefined;
+      const target = nextPath ?? nextParam ?? byRole ?? "/";
+      navigate(target);
       setShouldRedirect(false);
+      setNextPath(undefined);
     }
-  }, [user, token, navigate, isLoading, shouldRedirect]);
+  }, [user, isLoading, shouldRedirect, nextPath, location.search, navigate]);
 
   const logout = useCallback(() => {
     // Remove token and user data from localStorage
@@ -95,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         token,
         login,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
         isLoading,
       }}
     >

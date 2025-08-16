@@ -33,6 +33,7 @@ export const loginUser = async (
     const response = await fetch(`${API_BASE}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
@@ -278,6 +279,7 @@ export const useApi = () => {
         const response = await rateLimitedFetch(`${API_BASE}${endpoint}`, {
           ...options,
           headers,
+          credentials: "include",
         });
 
         if (!response.ok) {
