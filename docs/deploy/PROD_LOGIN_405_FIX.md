@@ -8,7 +8,7 @@ Summary:
 - Fix: Align frontend to use VITE_AWS_API_URL for prod API base (including stage), add SWA workflow for correct build paths, configure API Gateway CORS to allow SWA origin and OPTIONS handling, purge SWA cache, and verify.
 
 Production URLs:
-- SWA (student app): https://brave-bay-0bfacc110.z01.azurestaticapps.net
+- SWA (student app): https://app.brightbotsint.org
 - API (AWS API Gateway, stage /prod): https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 
 Frontend changes:
@@ -26,7 +26,7 @@ SWA environment variables (Production):
 - VITE_AWS_API_URL=https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
 
 Backend (API Gateway + Lambda) CORS:
-- Allowed origin: https://brave-bay-0bfacc110.z01.azurestaticapps.net
+- Allowed origin: https://app.brightbotsint.org
 - Allowed methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
 - Allowed headers: Content-Type, Authorization, X-Requested-With
 - Allow-Credentials: true (if cookies used)
@@ -47,14 +47,14 @@ Browser:
 1) Open SWA prod, navigate to Student Login, attempt login.
 2) In DevTools Network:
    - OPTIONS https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/204
-     - Access-Control-Allow-Origin: https://brave-bay-0bfacc110.z01.azurestaticapps.net
+     - Access-Control-Allow-Origin: https://app.brightbotsint.org
      - Access-Control-Allow-Methods includes POST
      - Access-Control-Allow-Headers includes Content-Type
    - POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/302 (as designed)
 
 CLI preflight (expected 200/204 with CORS headers):
 curl -i -X OPTIONS "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login" \
-  -H "Origin: https://brave-bay-0bfacc110.z01.azurestaticapps.net" \
+  -H "Origin: https://app.brightbotsint.org" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: content-type,authorization"
 
