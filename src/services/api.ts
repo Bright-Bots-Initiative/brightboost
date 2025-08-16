@@ -4,7 +4,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
-const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || "";
+const API_BASE =
+  import.meta.env.VITE_AWS_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "";
 
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
@@ -26,7 +30,7 @@ export const loginUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE}/auth/login`, {
+    const response = await fetch(`${API_BASE}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
