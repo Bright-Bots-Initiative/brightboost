@@ -74,6 +74,6 @@ Rollback:
 - In API Gateway, remove CORS entries added in this change if it causes side effects.
 
 Links:
-- PR: (to be added)
-- CI run: (to be added)
+- PR: https://github.com/Bright-Bots-Initiative/brightboost/pull/268
+- CI run: See PR checks panel for latest status (Build and Deploy + smoke check running)
 - Devin run: https://app.devin.ai/sessions/15c4317efd684d12a5cd21d13998837f
