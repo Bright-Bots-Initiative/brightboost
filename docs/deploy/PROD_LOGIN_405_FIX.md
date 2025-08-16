@@ -34,29 +34,33 @@ Backend (API Gateway + Lambda) CORS:
 
 Verification
 
-Results (verified):
+Results (verified via curl on 2025-08-16 UTC):
 - Preflight OPTIONS to https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login returned 200 with:
-  - Access-Control-Allow-Origin: https://brave-bay-0bfacc110.z01.azurestaticapps.net
+  - Access-Control-Allow-Origin: https://app.brightbotsint.org
   - Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
   - Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With
   - Access-Control-Allow-Credentials: true
-- POST to https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login returned 401 {"error":"Invalid email or password"} using dummy credentials, confirming application-level auth handling (no longer 403/405).
-
+- POST to https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login returned 401 {"error":"Invalid email or password"} using dummy credentials (no 403/405), confirming route and CORS are correct.
 
 Browser:
-1) Open SWA prod, navigate to Student Login, attempt login.
+1) Open https://app.brightbotsint.org (Incognito), navigate to Student Login, attempt login.
 2) In DevTools Network:
    - OPTIONS https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/204
      - Access-Control-Allow-Origin: https://app.brightbotsint.org
      - Access-Control-Allow-Methods includes POST
      - Access-Control-Allow-Headers includes Content-Type
-   - POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/302 (as designed)
+   - POST https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login → 200/302 (with valid creds) or 401 with invalid creds.
 
-CLI preflight (expected 200/204 with CORS headers):
+CLI verification commands:
 curl -i -X OPTIONS "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login" \
   -H "Origin: https://app.brightbotsint.org" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: content-type,authorization"
+
+curl -i -X POST "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/api/login" \
+  -H "Origin: https://app.brightbotsint.org" \
+  -H "Content-Type: application/json" \
+  --data '{"email":"test@example.com","password":"invalid"}'
 
 CI Hardening:
 - SWA workflow added. A follow-up can add a smoke step to assert the built bundle contains the API base:
