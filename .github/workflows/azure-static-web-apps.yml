@@ -1,4 +1,4 @@
-<name: Azure Static Web Apps CI/CD
+name: Azure Static Web Apps CI/CD
 
 on:
   push:
@@ -26,6 +26,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_AWS_API_URL: ${{ secrets.VITE_AWS_API_URL }}
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
         run: npm run build
 
       - name: Smoke check: built bundle references prod API
