@@ -14,22 +14,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Show loading state
   if (isLoading) {
     return <div className="loading">Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role if required
-  if (requiredRole && user?.role !== requiredRole) {
+  const normalizedUserRole = (user?.role || "").toLowerCase();
+  const normalizedRequiredRole = (requiredRole || "").toLowerCase();
+
+  if (normalizedRequiredRole && normalizedUserRole !== normalizedRequiredRole) {
     return <Navigate to="/" replace />;
   }
 
-  // Render the protected component
   return <>{children}</>;
 };
 
