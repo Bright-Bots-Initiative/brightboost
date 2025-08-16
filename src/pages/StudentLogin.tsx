@@ -44,7 +44,7 @@ const StudentLogin: React.FC = () => {
         return;
       }
       localStorage.setItem("jwt", response.token);
-      login(response.token, response.user);
+      login(response.token, response.user, "/student/dashboard");
     } catch (err: unknown) {
       setError(
         err instanceof Error

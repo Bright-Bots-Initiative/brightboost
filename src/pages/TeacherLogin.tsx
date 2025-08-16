@@ -20,14 +20,14 @@ const TeacherLogin: React.FC = () => {
     try {
       const response = await loginUser(email, password);
       // Verify this is a teacher account
-      if (response.user.role !== "TEACHER") {
+      if (response.user.role !== "TEACHER" && response.user.role !== "teacher") {
         setError(
           "This login is only for teachers. Please use the student login if you are a student.",
         );
         setIsLoading(false);
         return;
       }
-      login(response.token, response.user);
+      login(response.token, response.user, "/teacher/dashboard");
     } catch (err: unknown) {
       setError(
         err instanceof Error
