@@ -5,7 +5,6 @@ import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
 const API_BASE =
-  import.meta.env.VITE_AWS_API_URL ||
   import.meta.env.VITE_API_BASE ||
   import.meta.env.VITE_API_URL ||
   "";
