@@ -1,18 +1,33 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+const API_BASE =
+  import.meta.env.VITE_AWS_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: string;
+  xp?: number;
+  level?: string;
+  streak?: number;
+  badges?: Array<{ id: string; name: string; awardedAt: string }>;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string, userData: User) => void;
+  login: (token: string, userData: User, next?: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -20,69 +35,97 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [shouldRedirect, setShouldRedirect] = useState<boolean>(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [nextPath, setNextPath] = useState<string | undefined>(undefined);
 
-  // Check if token exists in localStorage
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    
+    const storedToken = localStorage.getItem("bb_access_token");
     if (storedToken) {
-      // Get user data from localStorage
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(userData);
       setToken(storedToken);
     }
-    
-    setIsLoading(false);
+
+    fetch(`${API_BASE}/api/get-progress`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}),
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          setUser(null);
+          localStorage.removeItem("user");
+          return;
+        }
+        const data = await res.json().catch(() => null);
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (token: string, userData: User) => {
-    // Store token and user data in localStorage
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // Update state
-    setToken(token);
+  const login = (token: string, userData: User, next?: string) => {
+    if (token) localStorage.setItem("bb_access_token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    setToken(token || null);
     setUser(userData);
-    
-    console.log('Login successful, user role:', userData.role);
-    
-    // Redirect based on user role with a small delay to ensure state is updated
-    if (userData.role === 'teacher') {
-      console.log('Redirecting to teacher dashboard');
-      setTimeout(() => navigate('/teacher/dashboard'), 100);
-    } else if (userData.role === 'student') {
-      console.log('Redirecting to student dashboard');
-      setTimeout(() => navigate('/student/dashboard'), 100);
-    }
+    setNextPath(next);
+    setShouldRedirect(true);
   };
 
-  const logout = () => {
+  useEffect(() => {
+    if (user && !isLoading && shouldRedirect) {
+      const byRole =
+        user.role === "TEACHER" || user.role === "teacher"
+          ? "/teacher/dashboard"
+          : "/student/dashboard";
+      const params = new URLSearchParams(location.search);
+      const nextParam = params.get("next") || undefined;
+      const target = nextPath ?? nextParam ?? byRole ?? "/";
+      navigate(target);
+      setShouldRedirect(false);
+      setNextPath(undefined);
+    }
+  }, [user, isLoading, shouldRedirect, nextPath, location.search, navigate]);
+
+  const logout = useCallback(() => {
     // Remove token and user data from localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
+    localStorage.removeItem("bb_access_token");
+    localStorage.removeItem("user");
+
     // Update state
     setToken(null);
     setUser(null);
-    
+
     // Redirect to home page
-    navigate('/');
-  };
+    navigate("/");
+  }, [navigate]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      token,
-      login,
-      logout,
-      isAuthenticated: !!token,
-      isLoading
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -91,7 +134,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
