@@ -2,8 +2,9 @@
 import { Lesson } from "../components/TeacherDashboard/types";
 
 const API_BASE =
-  import.meta.env.VITE_AWS_API_URL ||
-  "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod";
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "/api";
 
 export async function fetchLessons(): Promise<{ lessons: Lesson[] }> {
   try {
