@@ -29,6 +29,9 @@ jobs:
           app_location: "/" # package.json is at repo root
           api_location: "" # must be blank (no Azure Functions)
           output_location: "dist" # build output folder
+        env:
+          VITE_API_BASE: /api
+          VITE_AWS_API_URL: ""
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
