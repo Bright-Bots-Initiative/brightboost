@@ -49,10 +49,12 @@ describe("EditProfile role-based rendering and submission", () => {
       target: { value: "Veteran teacher" },
     });
 
-    fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Save" }).closest("form")!,
+    );
 
     await waitFor(() =>
-      expect(postSpy).toHaveBeenCalledWith("/api/edit-profile", {
+      expect(postSpy).toHaveBeenCalledWith("/edit-profile", {
         role: "teacher",
         name: "Alice",
         school: "High School",
@@ -85,10 +87,12 @@ describe("EditProfile role-based rendering and submission", () => {
       target: { value: "8" },
     });
 
-    fireEvent.submit(screen.getByRole("button", { name: "Save" }).closest("form")!);
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Save" }).closest("form")!,
+    );
 
     await waitFor(() =>
-      expect(postSpy).toHaveBeenCalledWith("/api/edit-profile", {
+      expect(postSpy).toHaveBeenCalledWith("/edit-profile", {
         role: "student",
         name: "Bob",
         school: "blank",
