@@ -50,12 +50,12 @@ function setupApiMock(options?: {
 
   let getCall = 0;
   getMock.mockImplementation(async (endpoint: string) => {
-    if (endpoint === "/api/gamification/streak") {
+    if (endpoint === "/gamification/streak") {
       getCall++;
       if (getCall === 1) return options?.initialServer ?? null;
       return options?.afterSync ?? null;
     }
-    if (endpoint === "/api/get-progress") {
+    if (endpoint === "/get-progress") {
       return progressMock;
     }
     return null;
@@ -145,7 +145,7 @@ describe("useStreak deterministic behavior", () => {
       await result.current.processQueue();
     });
 
-    expect(postMock).toHaveBeenCalledWith("/api/add-badge", {
+    expect(postMock).toHaveBeenCalledWith("/add-badge", {
       badge: "Daily-Challenge",
     });
   });
