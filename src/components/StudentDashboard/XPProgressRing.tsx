@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { join } from "../../services/api";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 const XPProgressRing = () => {
   const [xp, setXp] = useState<number | null>(null);
@@ -23,7 +26,7 @@ const XPProgressRing = () => {
         // to test out different xp values, use the following two rows and change the value in setXp
         //await new Promise(resolve => setTimeout(resolve, 200)); // simulate delay
         //setXp(50);
-        const res = await fetch("/api/user/xp");
+        const res = await fetch(join(API_BASE, "/user/xp"));
         if (!res.ok) throw new Error("Fetch failed");
         const data = await res.json();
         setXp(data.currentXp);

@@ -10,7 +10,7 @@ const Edit = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const user = await api.get("/api/profile");
+        const user = await api.get("/profile");
         setProfileUrl(user.avatar);
         setRole(user.role);
       } catch {
@@ -32,7 +32,7 @@ const Edit = () => {
       const bio = roleLower === "teacher" ? formData.get("bio") : "blank";
       const grade = roleLower === "student" ? formData.get("grade") : "blank";
       const data = { role, name, school, subject, bio, grade };
-      await api.post("/api/edit-profile", data);
+      await api.post("/edit-profile", data);
     },
     [api, role],
   );

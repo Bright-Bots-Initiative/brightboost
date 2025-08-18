@@ -49,7 +49,7 @@ export function useStreak() {
       try {
         const [cached, server] = await Promise.all([
           getCachedStreak(),
-          api.get("/api/gamification/streak").catch(() => null),
+          api.get("/gamification/streak").catch(() => null),
         ]);
 
         const fallback = {
@@ -135,7 +135,7 @@ export function useStreak() {
     if (pending.length === 0) return;
 
     try {
-      const server = await api.get("/api/gamification/streak");
+      const server = await api.get("/gamification/streak");
       console.log(server);
 
       const seen = new Set<string>();
@@ -156,24 +156,24 @@ export function useStreak() {
         });
 
       for (const event of deduped) {
-        await api.post("/api/gamification/streak", {
+        await api.post("/gamification/streak", {
           completedAt: event.completedAt,
           moduleId: event.moduleId,
         });
       }
 
-      const updated = await api.get("/api/gamification/streak");
+      const updated = await api.get("/gamification/streak");
       setStreak(updated);
       await setCachedStreak(updated);
       await clearPendingEvents();
 
       if (updated.currentStreak === 5) {
-        const progress = await api.get("/api/get-progress");
+        const progress = await api.get("/get-progress");
         const hasBadge = (progress.badges || []).includes("Daily-Challenge");
 
         if (!hasBadge) {
           await grantXp("stem1_streak_bonus", 30);
-          await api.post("/api/add-badge", { badge: "Daily-Challenge" });
+          await api.post("/add-badge", { badge: "Daily-Challenge" });
           toast({
             title: "Daily Challenge Unlocked!",
             description: "You've earned 30 XP for your 5-day streak!",
@@ -187,7 +187,7 @@ export function useStreak() {
 
   const getProgress = useCallback(async () => {
     try {
-      const progress = await api.get("/api/get-progress");
+      const progress = await api.get("/get-progress");
       return progress;
     } catch (error) {
       console.error("Failed to fetch progress:", error);
@@ -197,7 +197,7 @@ export function useStreak() {
 
   const breakStreak = useCallback(async () => {
     try {
-      await api.post("/api/break-streak", {});
+      await api.post("/break-streak", {});
       const resetStreak = {
         currentStreak: 0,
         longestStreak: streak?.longestStreak || 0,
@@ -220,7 +220,7 @@ export function useStreak() {
   // New: Increment streak remotely and update local state
   const incrementStreak = useCallback(async () => {
     try {
-      const updatedStreak = await api.post("/api/increment-streak", {});
+      const updatedStreak = await api.post("/increment-streak", {});
       setStreak(updatedStreak);
       await setCachedStreak(updatedStreak);
     } catch (error) {
