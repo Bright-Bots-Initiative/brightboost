@@ -1,5 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
 import { Pool } from "pg";
 import * as jwt from "jsonwebtoken";
 
@@ -41,7 +44,9 @@ async function getDbConnection(): Promise<Pool> {
 
       secret = JSON.parse(secretResult.SecretString);
     }
-    console.log(`Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`);
+    console.log(
+      `Database config: host=${secret.host}, port=${secret.port}, dbname=${secret.dbname}`,
+    );
 
     dbPool = new Pool({
       host: secret.host,
@@ -49,7 +54,10 @@ async function getDbConnection(): Promise<Pool> {
       database: secret.dbname,
       user: secret.username,
       password: secret.password,
-      ssl: process.env.NODE_ENV === "local" ? false : { rejectUnauthorized: false },
+      ssl:
+        process.env.NODE_ENV === "local"
+          ? false
+          : { rejectUnauthorized: false },
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 25000,
@@ -69,7 +77,9 @@ async function getDbConnection(): Promise<Pool> {
   return dbPool;
 }
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   const headers = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
@@ -82,9 +92,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return { statusCode: 200, headers, body: "" };
     }
 
-    const authHeader = event.headers.Authorization || event.headers.authorization;
+    const authHeader =
+      event.headers.Authorization || event.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: "Missing Authentication Token" }) };
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: "Missing Authentication Token" }),
+      };
     }
 
     const token = authHeader.substring(7);
@@ -94,7 +109,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     try {
       decoded = jwt.verify(token, jwtSecret) as any;
     } catch (err) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: "Session expired" }) };
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: "Session expired" }),
+      };
     }
 
     console.log("Attempting database connection...");
@@ -107,7 +126,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     );
 
     if (data.rows.length === 0) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: "User not found" }) };
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify({ error: "User not found" }),
+      };
     }
 
     const user = data.rows[0];
@@ -130,7 +153,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     if (error instanceof Error) {
       if (error.message.includes("connection")) {
-        return { statusCode: 503, headers, body: JSON.stringify({ error: "Database connection error" }) };
+        return {
+          statusCode: 503,
+          headers,
+          body: JSON.stringify({ error: "Database connection error" }),
+        };
       }
     }
 
@@ -139,7 +166,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       headers,
       body: JSON.stringify({
         error: "Internal server error",
-        message: process.env.NODE_ENV === "development" ? (error as Error).message : undefined,
+        message:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
       }),
     };
   }

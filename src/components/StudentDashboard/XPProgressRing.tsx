@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { join } from "../../services/api";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 const XPProgressRing = () => {
   const [xp, setXp] = useState<number | null>(null);

@@ -8,8 +8,8 @@ export async function submitCheckpoint(input: {
   status: "IN_PROGRESS" | "COMPLETED";
   timeDeltaS?: number;
 }) {
-  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
-  const res = await fetch(join(API_BASE, '/progress/checkpoint'), {
+  const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+  const res = await fetch(join(API_BASE, "/progress/checkpoint"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

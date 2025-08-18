@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { join } from "../services/api";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 interface AvatarProps {
   currentAvatarUrl?: string;

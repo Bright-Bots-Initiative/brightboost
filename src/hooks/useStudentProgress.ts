@@ -16,7 +16,7 @@ export function useStudentProgress(studentId: string, moduleSlug = "stem-1") {
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+  const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
   useEffect(() => {
     let cancelled = false;
     async function run() {

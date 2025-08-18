@@ -34,7 +34,7 @@ export function useModule(slug = "stem-1") {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+  const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
   useEffect(() => {
     let cancelled = false;
     async function run() {

@@ -128,7 +128,13 @@ describe("useStreak deterministic behavior", () => {
     };
 
     const { postMock } = setupApiMock({
-      initialServer: { currentStreak: 0, longestStreak: 0, lastCompletedAt: null, serverDateUTC: new Date().toISOString(), streakDays: [] },
+      initialServer: {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastCompletedAt: null,
+        serverDateUTC: new Date().toISOString(),
+        streakDays: [],
+      },
       afterSync,
       enableBadge: true,
     });
@@ -139,6 +145,8 @@ describe("useStreak deterministic behavior", () => {
       await result.current.processQueue();
     });
 
-    expect(postMock).toHaveBeenCalledWith("/api/add-badge", { badge: "Daily-Challenge" });
+    expect(postMock).toHaveBeenCalledWith("/api/add-badge", {
+      badge: "Daily-Challenge",
+    });
   });
 });

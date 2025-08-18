@@ -5,9 +5,9 @@ import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
 export const join = (base: string, path: string): string =>
-  `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+  `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
@@ -16,7 +16,9 @@ const rateLimitedFetch = async (url: string, options: RequestInit) => {
   const now = Date.now();
   const timeSinceLastCall = now - lastApiCall;
   if (timeSinceLastCall < API_CALL_DELAY) {
-    await new Promise((resolve) => setTimeout(resolve, API_CALL_DELAY - timeSinceLastCall));
+    await new Promise((resolve) =>
+      setTimeout(resolve, API_CALL_DELAY - timeSinceLastCall),
+    );
   }
   lastApiCall = Date.now();
   return fetch(url, options);
@@ -29,7 +31,7 @@ export const loginUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(join(API_BASE, '/login'), {
+    const response = await fetch(join(API_BASE, "/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -89,7 +91,7 @@ export const signupUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(join(API_BASE, '/signup'), {
+    const response = await fetch(join(API_BASE, "/signup"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, role }),
@@ -150,7 +152,7 @@ export const signupTeacher = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(join(API_BASE, '/signup/teacher'), {
+    const response = await fetch(join(API_BASE, "/signup/teacher"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, school, subject }),
@@ -209,7 +211,7 @@ export const signupStudent = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(join(API_BASE, '/signup/student'), {
+    const response = await fetch(join(API_BASE, "/signup/student"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
