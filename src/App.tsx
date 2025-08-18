@@ -63,11 +63,18 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
           {import.meta.env.VITE_APP_VERSION ? (
-            <div style={{ position: "fixed", right: 8, bottom: 8, opacity: 0.6, fontSize: 12 }}>
+            <div
+              style={{
+                position: "fixed",
+                right: 8,
+                bottom: 8,
+                opacity: 0.6,
+                fontSize: 12,
+              }}
+            >
               v{import.meta.env.VITE_APP_VERSION}
             </div>
           ) : null}
-
         </div>
       </AuthProvider>
     </Router>

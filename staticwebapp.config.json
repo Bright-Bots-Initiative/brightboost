@@ -1,51 +1,14 @@
 {
   "routes": [
     {
-      "route": "/api/signup/teacher",
+      "route": "/api",
       "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/signup/teacher"
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod"
     },
     {
-      "route": "/api/signup/student",
-      "methods": ["POST", "OPTIONS"],
+      "route": "/api/*",
       "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/signup/student"
-    },
-    {
-      "route": "/api/login",
-      "methods": ["POST", "OPTIONS"],
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/login"
-    },
-    {
-      "route": "/api/student_dashboard",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/student_dashboard"
-    },
-    {
-      "route": "/api/teacher_dashboard",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/teacher_dashboard"
-    },
-    {
-      "route": "/api/lessons*",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/lessons"
-    },
-    {
-      "route": "/api/gamification/*",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/gamification/{path}"
-    },
-    {
-      "route": "/api/student/*",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/student/{path}"
-    },
-    {
-      "route": "/api/teacher/*",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/teacher/{path}"
+      "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/{*path}"
     },
     {
       "route": "/*",

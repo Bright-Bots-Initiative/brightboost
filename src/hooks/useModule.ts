@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { join } from "../services/api";
 
 export type Activity = {
   id: string;
@@ -33,13 +34,13 @@ export function useModule(slug = "stem-1") {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "";
+  const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
   useEffect(() => {
     let cancelled = false;
     async function run() {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/module/${slug}`);
+        const res = await fetch(join(API_BASE, `/module/${slug}`));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as Module;
         if (!cancelled) {

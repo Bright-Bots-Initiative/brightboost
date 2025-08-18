@@ -1,5 +1,8 @@
 import React, { useRef, useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { join } from "../services/api";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 interface AvatarProps {
   currentAvatarUrl?: string;
@@ -18,7 +21,7 @@ async function patchUserAvatarStub(url: string): Promise<void> {
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch("/api/user/avatar", {
+  const response = await fetch(join(API_BASE, "/user/avatar"), {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

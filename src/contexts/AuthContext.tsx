@@ -6,11 +6,10 @@ import React, {
   useContext,
   useCallback,
 } from "react";
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  import.meta.env.VITE_API_URL ||
-  "/api";
 import { useNavigate, useLocation } from "react-router-dom";
+import { join } from "../services/api";
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
 interface User {
   id: string;
@@ -53,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setToken(storedToken);
     }
 
-    fetch(`${API_BASE}/api/get-progress`, {
+    fetch(join(API_BASE, "/get-progress"), {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

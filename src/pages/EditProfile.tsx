@@ -4,13 +4,15 @@ import { useApi } from "../services/api";
 const Edit = () => {
   const api = useApi();
 
-  const [profileUrl, setProfileUrl] = useState("https://api.dicebear.com/7.x/identicon/svg?seed=default");
+  const [profileUrl, setProfileUrl] = useState(
+    "https://api.dicebear.com/7.x/identicon/svg?seed=default",
+  );
   const [role, setRole] = useState("blank");
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const user = await api.get("/api/profile");
+        const user = await api.get("/profile");
         setProfileUrl(user.avatar);
         setRole(user.role);
       } catch {
@@ -28,11 +30,12 @@ const Edit = () => {
       const name = formData.get("name");
       const roleLower = String(role || "").toLowerCase();
       const school = roleLower === "teacher" ? formData.get("school") : "blank";
-      const subject = roleLower === "teacher" ? formData.get("subject") : "blank";
+      const subject =
+        roleLower === "teacher" ? formData.get("subject") : "blank";
       const bio = roleLower === "teacher" ? formData.get("bio") : "blank";
       const grade = roleLower === "student" ? formData.get("grade") : "blank";
       const data = { role, name, school, subject, bio, grade };
-      await api.post("/api/edit-profile", data);
+      await api.post("/edit-profile", data);
     },
     [api, role],
   );

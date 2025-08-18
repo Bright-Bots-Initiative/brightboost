@@ -15,7 +15,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get("/api/teacher/dashboard");
+      const response = await api.get("/teacher/dashboard");
       if (Array.isArray(response)) {
         const formattedLessons = response.map(
           (teacher: {
@@ -67,7 +67,7 @@ const TeacherDashboard: React.FC = () => {
   ) => {
     setIsLoading(true);
     try {
-      const createdLesson = await api.post("/api/lessons", newLesson);
+      const createdLesson = await api.post("/lessons", newLesson);
       setLessonsData((prevLessons) => [
         ...prevLessons,
         { ...createdLesson, id: String(createdLesson.id) },
