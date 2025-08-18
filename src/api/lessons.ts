@@ -1,14 +1,12 @@
 // src/api/lessons.ts
 import { Lesson } from "../components/TeacherDashboard/types";
+import { join } from "../services/api";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  import.meta.env.VITE_API_URL ||
-  "/api";
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 export async function fetchLessons(): Promise<{ lessons: Lesson[] }> {
   try {
-    const response = await fetch(`${API_BASE}/lessons`);
+    const response = await fetch(join(API_BASE, '/lessons'));
     if (!response.ok) {
       throw new Error(`Failed to fetch lessons: ${response.statusText}`);
     }

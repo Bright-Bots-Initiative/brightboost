@@ -4,10 +4,10 @@ import { useAuth } from "../contexts/AuthContext";
 import { toast } from "@/components/ui/use-toast.ts";
 import { t } from "i18next";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  import.meta.env.VITE_API_URL ||
-  "";
+export const join = (base: string, path: string): string =>
+  `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api';
 
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
@@ -29,7 +29,7 @@ export const loginUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE}/api/login`, {
+    const response = await fetch(join(API_BASE, '/login'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -89,7 +89,7 @@ export const signupUser = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE}/auth/signup`, {
+    const response = await fetch(join(API_BASE, '/signup'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, role }),
@@ -150,7 +150,7 @@ export const signupTeacher = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE}/auth/signup/teacher`, {
+    const response = await fetch(join(API_BASE, '/signup/teacher'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password, school, subject }),
@@ -209,7 +209,7 @@ export const signupStudent = async (
   retries = 2,
 ): Promise<any> => {
   try {
-    const response = await fetch(`${API_BASE}/auth/signup/student`, {
+    const response = await fetch(join(API_BASE, '/signup/student'), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),
@@ -274,7 +274,7 @@ export const useApi = () => {
       };
 
       try {
-        const response = await rateLimitedFetch(`${API_BASE}${endpoint}`, {
+        const response = await rateLimitedFetch(join(API_BASE, endpoint), {
           ...options,
           headers,
         });
