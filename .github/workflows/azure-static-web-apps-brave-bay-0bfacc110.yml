@@ -32,6 +32,7 @@ jobs:
           npm run build
           cp public/staticwebapp.config.json dist/
           ls -la dist/staticwebapp.config.json
+          echo "Build completed with VITE_API_BASE=/gw"
         env:
           VITE_API_BASE: /gw
           VITE_AWS_API_URL: ""
