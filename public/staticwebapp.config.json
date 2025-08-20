@@ -1,12 +1,12 @@
 {
   "routes": [
     {
-      "route": "/api",
+      "route": "/gw",
       "allowedRoles": ["anonymous"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod"
     },
     {
-      "route": "/api/*",
+      "route": "/gw/*",
       "allowedRoles": ["anonymous"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/{*path}"
     },

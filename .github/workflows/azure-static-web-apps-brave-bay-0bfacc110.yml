@@ -33,7 +33,7 @@ jobs:
           cp staticwebapp.config.json dist/
           ls -la dist/staticwebapp.config.json
         env:
-          VITE_API_BASE: /api
+          VITE_API_BASE: /gw
           VITE_AWS_API_URL: ""
       
       - name: Build And Deploy
