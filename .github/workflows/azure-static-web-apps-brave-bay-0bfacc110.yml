@@ -46,7 +46,7 @@ jobs:
           action: "upload"
           app_location: "dist" # pre-built dist directory
           api_location: "" # must be blank (no Azure Functions)
-          output_location: "" # already built
+          output_location: "dist" # already built
           skip_app_build: true
 
   close_pull_request_job:
