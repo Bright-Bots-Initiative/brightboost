@@ -41,7 +41,7 @@ router.post(
     try {
       const result = await joinClass(
         parsed.data.inviteCode,
-        parsed.data.studentId,
+        req.user!.id,
       );
       res.json({ ok: true, ...result });
     } catch (e: any) {

@@ -34,5 +34,5 @@ export const createClassSchema = z.object({
 
 export const joinClassSchema = z.object({
   inviteCode: z.string().min(4),
-  studentId: z.string().min(1),
+  studentId: z.string().min(1).optional(), // Legacy, ignored by server
 });
