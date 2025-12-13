@@ -15,22 +15,25 @@ export async function createClass(teacherId: string, name: string) {
 }
 
 export async function listClasses(teacherId: string) {
+  // Optimization: Fetch enrollment counts in the same query using _count
+  // This reduces the number of database round-trips from 2 to 1
   const classes = await prisma.class.findMany({
     where: { teacherId, isArchived: false },
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: { Enrollments: true },
+      },
+    },
   });
-  const ids = classes.map((c) => c.id);
-  if (ids.length === 0) return [];
-  const counts = await prisma.enrollment.groupBy({
-    by: ["classId"],
-    where: { classId: { in: ids } },
-    _count: { classId: true },
+
+  return classes.map((c) => {
+    const { _count, ...rest } = c;
+    return {
+      ...rest,
+      enrollmentCount: _count.Enrollments,
+    };
   });
-  const countMap = new Map(counts.map((c) => [c.classId, c._count.classId]));
-  return classes.map((c) => ({
-    ...c,
-    enrollmentCount: countMap.get(c.id) ?? 0,
-  }));
 }
 
 export async function joinClass(inviteCode: string, studentId: string) {
