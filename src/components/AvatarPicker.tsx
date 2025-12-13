@@ -138,27 +138,38 @@ const AvatarPicker: React.FC<AvatarProps> = ({
 
   return (
     <div className="flex items-center justify-center">
-      <div
-        className="relative w-24 h-24 cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden"
+      <button
+        type="button"
+        aria-label="Change avatar"
+        className="relative w-24 h-24 cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none"
         onClick={() => fileInputRef.current?.click()}
       >
         <Avatar className="w-full h-full">
           {loading ? (
-            <div className="w-full h-full animate-pulse bg-muted rounded-md" />
+            <div
+              className="w-full h-full animate-pulse bg-muted rounded-md"
+              role="status"
+              aria-label="Uploading avatar"
+            />
           ) : (
             <>
-              <AvatarImage src={previewUrl ?? avatarUrl} alt="avatar" />
-              <AvatarFallback>{userInitials}</AvatarFallback>
+              <AvatarImage
+                src={previewUrl ?? avatarUrl}
+                alt="Current avatar"
+              />
+              <AvatarFallback aria-hidden="true">{userInitials}</AvatarFallback>
             </>
           )}
         </Avatar>
-      </div>
+      </button>
       <input
         type="file"
         accept="image/*"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
       />
     </div>
   );
