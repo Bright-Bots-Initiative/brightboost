@@ -6,4 +6,9 @@
 ## 2024-05-23 - Missing Auth on Progress Endpoints
 **Vulnerability:** `backend/src/routes/progress.ts` endpoints lack authentication middleware (`requireAuth`).
 **Learning:** It's easy to miss adding middleware to new routers or endpoints.
-**Prevention:** Use a default-deny policy where all routes require authentication by default, or use a linter/scanner to ensure sensitive routes have auth middleware. (Not fixed in this session, but identified).
+**Prevention:** Use a default-deny policy where all routes require authentication by default, or use a linter/scanner to ensure sensitive routes have auth middleware. (Fixed in this session).
+
+## 2024-05-24 - Broken Access Control on Progress Routes
+**Vulnerability:** Public access to student progress data and checkpoint submission.
+**Learning:** Endpoints were completely public and trusted `studentId` from params/body.
+**Prevention:** Enforced `requireAuth` and added checks to ensure `req.user.id` matches the target `studentId` (for students).
