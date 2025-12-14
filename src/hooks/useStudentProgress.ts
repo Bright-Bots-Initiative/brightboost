@@ -22,8 +22,15 @@ export function useStudentProgress(studentId: string, moduleSlug = "stem-1") {
     async function run() {
       setLoading(true);
       try {
+        const token = localStorage.getItem("bb_access_token");
+        const headers: HeadersInit = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const res = await fetch(
           join(API_BASE, `/progress/${studentId}?module=${moduleSlug}`),
+          { headers }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as AggregatedProgress;
