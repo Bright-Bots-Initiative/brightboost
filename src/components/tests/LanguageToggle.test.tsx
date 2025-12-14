@@ -66,6 +66,7 @@ describe("LanguageToggle", () => {
 
     const button = screen.getByText("English");
     expect(button).toBeDefined();
+    expect(button).toHaveAttribute("aria-label", "Switch to English");
   });
 
   it("toggles language between English and Spanish when clicked", async () => {
@@ -83,12 +84,14 @@ describe("LanguageToggle", () => {
     );
 
     const button = screen.getByText("English");
+    expect(button).toHaveAttribute("aria-label", "Switch to English");
     fireEvent.click(button);
 
     expect(mockChangeLanguage).toHaveBeenCalledWith("en");
 
     const newButton = screen.getByText("Español");
     expect(newButton).toBeDefined();
+    expect(newButton).toHaveAttribute("aria-label", "Switch to Spanish");
   });
 
   it("renders correctly when initial language is Spanish", () => {
@@ -107,6 +110,7 @@ describe("LanguageToggle", () => {
 
     const button = screen.getByText("English");
     expect(button).toBeDefined();
+    expect(button).toHaveAttribute("aria-label", "Switch to English");
   });
 
   it("uses browser language if no stored language in localStorage", () => {
@@ -147,6 +151,7 @@ describe("LanguageToggle", () => {
 
     const button = screen.getByText("English");
     expect(button).toBeDefined();
+    expect(button).toHaveAttribute("aria-label", "Switch to English");
   });
 
   it("handles error if language change fails", async () => {
@@ -192,6 +197,7 @@ describe("LanguageToggle", () => {
 
     const button = screen.getByText("Español");
     expect(button).toBeDefined();
+    expect(button).toHaveAttribute("aria-label", "Switch to Spanish");
   });
 
   it("updates button text correctly when language is toggled", async () => {
