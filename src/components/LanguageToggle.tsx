@@ -43,7 +43,8 @@ const LanguageToggle = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded"
+      className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
+      aria-label={language === "en" ? "Switch to Spanish" : "Switch to English"}
     >
       {language === "en" ? "Español" : "English"}
     </button>
