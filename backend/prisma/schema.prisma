@@ -88,6 +88,9 @@ model Badge {
   iconKey  String
   xpBonus  Int    @default(0)
   Module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  // Optimization: Index for faster filtering by module
+  @@index([moduleId])
 }
 
 model Class {
@@ -99,6 +102,9 @@ model Class {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   Enrollments Enrollment[]
+
+  // Optimization: Index for faster filtering by teacher
+  @@index([teacherId])
 }
 
 model Enrollment {
