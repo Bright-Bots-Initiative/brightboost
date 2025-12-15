@@ -46,23 +46,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const storedToken = localStorage.getItem("bb_access_token");
+
     if (storedToken) {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       setUser(userData);
       setToken(storedToken);
-    }
 
-    fetch(join(API_BASE, "/get-progress"), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}),
-      },
-    })
+      fetch(join(API_BASE, "/get-progress"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${storedToken}`,
+        },
+      })
       .then(async (res) => {
         if (!res.ok) {
           setUser(null);
           localStorage.removeItem("user");
+          localStorage.removeItem("bb_access_token");
           return;
         }
         const data = await res.json().catch(() => null);
@@ -73,6 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
+    } else {
+        setIsLoading(false);
+    }
   }, []);
 
   const login = (token: string, userData: User, next?: string) => {
@@ -101,15 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user, isLoading, shouldRedirect, nextPath, location.search, navigate]);
 
   const logout = useCallback(() => {
-    // Remove token and user data from localStorage
     localStorage.removeItem("bb_access_token");
     localStorage.removeItem("user");
-
-    // Update state
     setToken(null);
     setUser(null);
-
-    // Redirect to home page
     navigate("/");
   }, [navigate]);
 
