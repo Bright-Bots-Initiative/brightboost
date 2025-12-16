@@ -1,9 +1,10 @@
 import { PrismaClient } from "@prisma/client";
+import { randomInt } from "crypto";
 
 const prisma = new PrismaClient();
 
 function makeInviteCode() {
-  const n = Math.floor(Math.random() * 36 ** 6);
+  const n = randomInt(0, 36 ** 6);
   return n.toString(36).padStart(6, "0").toUpperCase();
 }
 
