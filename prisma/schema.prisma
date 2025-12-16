@@ -49,6 +49,8 @@ model Lesson {
   teacherId   String
   teacher     User     @relation(fields: [teacherId], references: [id])
   activities  Activity[]
+
+  @@index([teacherId])
 }
 
 model Activity {
@@ -66,6 +68,7 @@ model Activity {
   lesson      Lesson   @relation(fields: [lessonId], references: [id])
   
   @@unique([studentId, lessonId])
+  @@index([lessonId])
 }
 
 model Course {
@@ -79,6 +82,8 @@ model Course {
   teacher     User         @relation(fields: [teacherId], references: [id])
   enrollments Enrollment[]
   assignments Assignment[]
+
+  @@index([teacherId])
 }
 
 model Enrollment {
@@ -93,6 +98,7 @@ model Enrollment {
   course   Course @relation(fields: [courseId], references: [id])
   
   @@unique([studentId, courseId])
+  @@index([courseId])
 }
 
 model Assignment {
@@ -106,6 +112,8 @@ model Assignment {
   
   // Relations
   course   Course @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
 }
 
 model Badge {
