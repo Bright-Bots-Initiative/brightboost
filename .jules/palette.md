@@ -1,3 +1,1 @@
-## 2024-05-23 - Broken i18n Initialization
-**Learning:** The project uses `VITE_ENABLE_I18N=true` but `i18n` is not initialized in `src/main.tsx` or similar, causing runtime errors when `useTranslation` hook is used. This prevents manual verification of components relying on i18n.
-**Action:** When working on i18n-related components, rely on unit tests with mocked `react-i18next` until the infrastructure is fixed.
+## 2024-05-24 - Login Experience Accessibility\n**Learning:** Simple enhancements like accessible error messages (aria-describedby) and password visibility toggles significantly improve the login experience without requiring major refactors.\n**Action:** Audit all form inputs for proper ARIA attributes and helpful interaction patterns like visibility toggles.
