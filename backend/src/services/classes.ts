@@ -1,10 +1,15 @@
 import { PrismaClient } from "@prisma/client";
+import { randomInt } from "node:crypto";
 
 const prisma = new PrismaClient();
 
 function makeInviteCode() {
-  const n = Math.floor(Math.random() * 36 ** 6);
-  return n.toString(36).padStart(6, "0").toUpperCase();
+  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(randomInt(chars.length));
+  }
+  return result;
 }
 
 export async function createClass(teacherId: string, name: string) {
