@@ -269,11 +269,17 @@ export const useApi = () => {
 
   const authFetch = useCallback(
     async (endpoint: string, options: RequestInit = {}, retries = 2) => {
-      const headers = {
+      // Use logic similar to getHeaders() for MVP dev shim
+      const headers: any = {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       };
+
+      if (token === 'mock-token-for-mvp') {
+          headers['Authorization'] = `Bearer ${token}`;
+      } else if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+      }
 
       try {
         const response = await rateLimitedFetch(join(API_BASE, endpoint), {
@@ -350,4 +356,61 @@ export const useApi = () => {
   );
 
   return apiMethods;
+};
+
+// --- MVP API SHIM ---
+// This standalone object handles direct API calls outside of hooks (if needed).
+// Ideally, refactor Avatar.tsx to use useApi() hook instead of direct `api.getAvatar`.
+const getHeaders = () => {
+    const token = localStorage.getItem("bb_access_token");
+    const headers: any = { "Content-Type": "application/json" };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+};
+
+export const api = {
+  getModules: async () => {
+    const res = await fetch(join(API_BASE, "/modules"), { headers: getHeaders() });
+    return res.json();
+  },
+
+  completeActivity: async (data: { moduleSlug: string, lessonId: string, activityId: string, timeSpentS: number }) => {
+    const res = await fetch(join(API_BASE, "/progress/complete-activity"), {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+
+  getAvatar: async () => {
+    const res = await fetch(join(API_BASE, "/avatar/me"), { headers: getHeaders() });
+    return res.json();
+  },
+
+  queueMatch: async (band: string) => {
+    const res = await fetch(join(API_BASE, "/match/queue"), {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ band })
+    });
+    return res.json();
+  },
+
+  submitTurn: async (matchId: string, abilityId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/act`), {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ abilityId })
+    });
+    return res.json();
+  },
+
+  getMatch: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}`), { headers: getHeaders() });
+    return res.json();
+  }
 };
