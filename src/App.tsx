@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Import pages
@@ -14,9 +14,21 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginSelection from "./pages/LoginSelection";
 import SignupSelection from "./pages/SignupSelection";
 import Index from "./pages/Index";
+import Modules from "./pages/Modules";
+import ModuleDetail from "./pages/ModuleDetail";
+import Avatar from "./pages/Avatar";
+import Arena from "./pages/Arena";
+import StudentLayout from "./layouts/StudentLayout";
 
 // Import styles
 import "./App.css";
+
+// Layout Wrapper
+const StudentRoot = () => (
+  <StudentLayout>
+    <Outlet />
+  </StudentLayout>
+);
 
 function App() {
   return (
@@ -33,7 +45,7 @@ function App() {
             <Route path="/student/login" element={<StudentLogin />} />
             <Route path="/student/signup" element={<StudentSignup />} />
 
-            {/* Protected routes */}
+            {/* Protected Teacher routes */}
             <Route
               path="/teacher/dashboard"
               element={
@@ -42,36 +54,35 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/student/dashboard"
-              element={
-                <ProtectedRoute requiredRole="student">
-                  <StudentDashboard />
-                </ProtectedRoute>
-              }
-            />
+
+            {/* Protected Student Routes (Nested) */}
             <Route
               path="/student"
               element={
                 <ProtectedRoute requiredRole="student">
-                  <StudentDashboard />
+                  <StudentRoot />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<StudentDashboard />} />
+              <Route path="modules" element={<Modules />} />
+              <Route path="modules/:slug" element={<ModuleDetail />} />
+              <Route path="avatar" element={<Avatar />} />
+              <Route path="arena" element={<Arena />} />
+            </Route>
+
+            {/* Legacy Redirects for Flat Routes (if any external links exist) */}
+            <Route path="/modules" element={<Navigate to="/student/modules" />} />
+            <Route path="/avatar" element={<Navigate to="/student/avatar" />} />
+            <Route path="/arena" element={<Navigate to="/student/arena" />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+
           {import.meta.env.VITE_APP_VERSION ? (
-            <div
-              style={{
-                position: "fixed",
-                right: 8,
-                bottom: 8,
-                opacity: 0.6,
-                fontSize: 12,
-              }}
-            >
+            <div className="fixed right-2 bottom-2 opacity-60 text-xs pointer-events-none">
               v{import.meta.env.VITE_APP_VERSION}
             </div>
           ) : null}
