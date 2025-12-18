@@ -2,21 +2,30 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
 const router = Router();
 
-router.get("/module/stem-1", async (_req, res) => {
+// List all modules
+router.get("/modules", async (_req, res) => {
+  const modules = await prisma.module.findMany({
+    where: { published: true },
+    orderBy: { level: 'asc' }
+  });
+  res.json(modules);
+});
+
+// Get specific module (by slug)
+router.get("/module/:slug", async (req, res) => {
+  const { slug } = req.params;
   const mod = await prisma.module.findUnique({
-    where: { slug: "stem-1" },
+    where: { slug },
     include: {
       units: {
-        orderBy: { index: "asc" },
+        orderBy: { order: "asc" },
         include: {
           lessons: {
-            orderBy: { index: "asc" },
+            orderBy: { order: "asc" },
             include: {
-              activities: { orderBy: { index: "asc" } },
-              assessment: true,
+              activities: { orderBy: { order: "asc" } }
             },
           },
         },
