@@ -9,9 +9,15 @@ export async function submitCheckpoint(input: {
   timeDeltaS?: number;
 }) {
   const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+  const token = localStorage.getItem("bb_access_token");
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(join(API_BASE, "/progress/checkpoint"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       moduleSlug: "stem-1",
       timeDeltaS: 0,

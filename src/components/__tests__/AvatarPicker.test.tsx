@@ -391,7 +391,7 @@ describe("AvatarPicker", () => {
     expect(clickSpy).not.toHaveBeenCalled();
   });
 
-  it("has basic file input attributes", () => {
+  it("has basic file input attributes and accessibility roles", () => {
     render(<AvatarPicker {...defaultProps} />);
 
     const fileInput = document.querySelector(
@@ -399,11 +399,14 @@ describe("AvatarPicker", () => {
     ) as HTMLInputElement;
     expect(fileInput.getAttribute("accept")).toBe("image/*");
     expect(fileInput.className).toContain("hidden");
+    expect(fileInput.getAttribute("aria-hidden")).toBe("true");
 
-    const avatarContainer = document.querySelector(".cursor-pointer");
-    expect(avatarContainer).toBeDefined();
-    expect(avatarContainer?.getAttribute("role")).toBeNull();
-    expect(avatarContainer?.getAttribute("aria-label")).toBeNull();
+    const avatarButton = document.querySelector(".cursor-pointer");
+    expect(avatarButton).toBeDefined();
+    // It should now be a button (implicit role="button") or have role="button"
+    // Since we changed it to <button>, it has implicit role
+    expect(avatarButton?.tagName).toBe("BUTTON");
+    expect(avatarButton?.getAttribute("aria-label")).toBe("Change avatar");
   });
 
   it("cleans up object URLs on unmount", async () => {
