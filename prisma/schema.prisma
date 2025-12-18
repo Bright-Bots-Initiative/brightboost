@@ -67,6 +67,8 @@ model Unit {
   lessons  Lesson[]
   
   Module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
 }
 
 model Lesson {
@@ -77,6 +79,8 @@ model Lesson {
   activities Activity[]
 
   Unit     Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId])
 }
 
 enum ActivityKind {
@@ -96,6 +100,7 @@ model Activity {
   Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([lessonId, order]) // renamed from index to order for clarity
+  @@index([lessonId])
 }
 
 // -----------------------------------------------------------------------------
@@ -194,6 +199,9 @@ model Match {
   Player2   Avatar?     @relation("Player2", fields: [player2Id], references: [id])
 
   turns     MatchTurn[]
+
+  @@index([player1Id])
+  @@index([player2Id])
 }
 
 model MatchTurn {
@@ -205,6 +213,8 @@ model MatchTurn {
   createdAt DateTime @default(now())
 
   Match     Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
 }
 
 // -----------------------------------------------------------------------------
