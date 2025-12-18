@@ -66,23 +66,13 @@ model Unit {
   order    Int
   lessons  Lesson[]
   
-  Module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-}
+  // Relations
+  teacherId   String
+  teacher     User     @relation(fields: [teacherId], references: [id])
+  activities  Activity[]
 
-model Lesson {
-  id       String     @id @default(cuid())
-  unitId   String
-  title    String
-  order    Int
-  activities Activity[]
-
-  Unit     Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-}
-
-enum ActivityKind {
-  INFO
-  INTERACT
-  REFLECT
+  // Index for filtering lessons by teacher
+  @@index([teacherId])
 }
 
 model Activity {
@@ -229,7 +219,9 @@ model UserBadge {
   badgeId   String
   awardedAt DateTime @default(now())
   
-  User      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([studentId, lessonId])
+  // Index for filtering activities by lesson
+  @@index([lessonId])
 }
 
 model Course {
@@ -242,6 +234,9 @@ model Course {
   teacher     User         @relation(fields: [teacherId], references: [id])
   enrollments Enrollment[]
   assignments Assignment[]
+
+  // Index for filtering courses by teacher
+  @@index([teacherId])
 }
 
 model Enrollment {
@@ -255,6 +250,8 @@ model Enrollment {
   course   Course @relation(fields: [courseId], references: [id])
   
   @@unique([studentId, courseId])
+  // Index for filtering enrollments by course
+  @@index([courseId])
 }
 
 model Assignment {
@@ -267,6 +264,9 @@ model Assignment {
   updatedAt DateTime @updatedAt
   
   course   Course @relation(fields: [courseId], references: [id])
+
+  // Index for filtering assignments by course
+  @@index([courseId])
 }
 
 model AuditLog {
