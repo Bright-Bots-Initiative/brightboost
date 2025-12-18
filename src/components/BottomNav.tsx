@@ -25,6 +25,7 @@ export default function BottomNav() {
               isActive ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:bg-gray-50"
             }`}
             aria-label={item.label}
+            aria-current={isActive ? "page" : undefined}
           >
             <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
             <span className="text-xs font-bold mt-1">{item.label}</span>

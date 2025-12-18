@@ -41,7 +41,6 @@ export default function Arena() {
           const res = await api.submitTurn(match.id, abilityId);
 
           // Determine simplified feedback
-          let feedback = "Action Taken!";
           // We'd ideally analyze the diff, but for MVP simple is okay.
           // Let's assume generic "Big Hit" for now if HP dropped significantly.
           setTurnResult("Big Hit!");
