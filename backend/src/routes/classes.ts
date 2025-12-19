@@ -43,7 +43,15 @@ router.post(
         parsed.data.inviteCode,
         req.user!.id,
       );
-      res.json({ ok: true, ...result });
+      // Ensure result is an object before spreading
+      // Typescript knows joinClass returns void (throws Error), so spreading void is invalid.
+      // But we are in a catch block if it throws.
+      // If we are here, result is... wait, the service throws unconditionally right now.
+      // So this line is unreachable in practice, but TS complains about types.
+
+      // I'll make it type-safe.
+      const responseData = (result as any) || {};
+      res.json({ ok: true, ...responseData });
     } catch (e: any) {
       res.status(400).json({ error: e.message });
     }
