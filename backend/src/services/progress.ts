@@ -1,3 +1,4 @@
+// backend/src/services/progress.ts
 import { PrismaClient, ProgressStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -6,17 +7,19 @@ export async function upsertCheckpoint(input: {
   studentId: string;
   moduleSlug: string;
   lessonId: string;
-  activityId?: string;
+  activityId: string;
   status: "IN_PROGRESS" | "COMPLETED";
   timeDeltaS: number;
 }) {
   const timeDelta = Math.max(0, Math.min(3600, input.timeDeltaS || 0));
   const where = {
-    studentId: input.studentId,
-    lessonId: input.lessonId,
-    activityId: input.activityId ?? null,
+    studentId_activityId: {
+      studentId: input.studentId,
+      activityId: input.activityId,
+    },
   };
-  const existing = await prisma.progress.findFirst({ where });
+
+  const existing = await prisma.progress.findUnique({ where });
 
   if (existing) {
     return prisma.progress.update({
@@ -25,6 +28,7 @@ export async function upsertCheckpoint(input: {
         status: input.status as ProgressStatus,
         timeSpentS: existing.timeSpentS + timeDelta,
         moduleSlug: input.moduleSlug,
+        lessonId: input.lessonId, // Ensure lessonId is updated/set
       },
     });
   }
@@ -33,7 +37,7 @@ export async function upsertCheckpoint(input: {
       studentId: input.studentId,
       moduleSlug: input.moduleSlug,
       lessonId: input.lessonId,
-      activityId: input.activityId ?? null,
+      activityId: input.activityId,
       status: input.status as ProgressStatus,
       timeSpentS: timeDelta,
     },
@@ -48,11 +52,11 @@ export async function getAggregatedProgress(
     where: { slug: moduleSlug },
     include: {
       units: {
-        orderBy: { index: "asc" },
+        orderBy: { order: "asc" },
         include: {
           lessons: {
-            orderBy: { index: "asc" },
-            include: { activities: { orderBy: { index: "asc" } } },
+            orderBy: { order: "asc" },
+            include: { activities: { orderBy: { order: "asc" } } },
           },
         },
       },
@@ -69,12 +73,15 @@ export async function getAggregatedProgress(
   let totalActivities = 0;
   let totalXp = 0;
 
+  // Mock XP per activity since schema doesn't have it yet
+  const DEFAULT_XP = 10;
+
   for (const u of module.units) {
     for (const l of u.lessons) {
       for (const a of l.activities) {
-        activityXpMap.set(a.id, a.xp);
+        activityXpMap.set(a.id, DEFAULT_XP);
         totalActivities += 1;
-        totalXp += a.xp;
+        totalXp += DEFAULT_XP;
       }
     }
   }

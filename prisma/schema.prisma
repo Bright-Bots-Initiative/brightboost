@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
@@ -66,13 +66,24 @@ model Unit {
   order    Int
   lessons  Lesson[]
   
-  // Relations
-  teacherId   String
-  teacher     User     @relation(fields: [teacherId], references: [id])
-  activities  Activity[]
+  module   Module   @relation(fields: [moduleId], references: [id])
+}
 
-  // Index for filtering lessons by teacher
-  @@index([teacherId])
+model Lesson {
+  id        String   @id @default(cuid())
+  unitId    String
+  title     String
+  order     Int
+  activities Activity[]
+
+  unit     Unit     @relation(fields: [unitId], references: [id])
+}
+
+enum ActivityKind {
+  VIDEO
+  QUIZ
+  GAME
+  READING
 }
 
 model Activity {
@@ -85,7 +96,7 @@ model Activity {
 
   Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@unique([lessonId, order]) // renamed from index to order for clarity
+  @@unique([lessonId, order])
 }
 
 // -----------------------------------------------------------------------------
@@ -211,6 +222,7 @@ model Badge {
   xpBonus   Int      @default(0)
 
   Module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  userBadges UserBadge[]
 }
 
 model UserBadge {
@@ -218,10 +230,11 @@ model UserBadge {
   userId    String
   badgeId   String
   awardedAt DateTime @default(now())
+
+  User      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Badge     Badge  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
   
-  @@unique([studentId, lessonId])
-  // Index for filtering activities by lesson
-  @@index([lessonId])
+  @@unique([userId, badgeId])
 }
 
 model Course {

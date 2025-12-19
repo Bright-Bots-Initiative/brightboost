@@ -1,25 +1,23 @@
 // backend/src/routes/progress.ts
 import { Router } from "express";
-<<<<<<< HEAD
 import { PrismaClient, ProgressStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
-=======
-import { requireAuth } from "../utils/auth";
 import {
   checkpointSchema,
-  assessmentSubmitSchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
-import { submitAssessment } from "../services/assessment";
->>>>>>> origin/main
 
 const router = Router();
 const prisma = new PrismaClient();
 
-<<<<<<< HEAD
-// Get progress for a student
-router.get("/progress", requireAuth, async (req, res) => {
+// Apply authentication middleware to all routes
+router.use(requireAuth);
+
+// --- MVP Endpoints (HEAD) ---
+
+// Get progress for a student (HEAD version - simpler)
+router.get("/progress", async (req, res) => {
   const studentId = req.user!.id;
   const progress = await prisma.progress.findMany({
     where: { studentId },
@@ -28,7 +26,7 @@ router.get("/progress", requireAuth, async (req, res) => {
 });
 
 // Legacy endpoint for AuthContext (supports existing frontend)
-router.get("/get-progress", requireAuth, async (req, res) => {
+router.get("/get-progress", async (req, res) => {
     // Return format expected by AuthContext
     const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
     const progress = await prisma.progress.findMany({ where: { studentId: req.user!.id } });
@@ -36,7 +34,7 @@ router.get("/get-progress", requireAuth, async (req, res) => {
 });
 
 // Complete an activity
-router.post("/progress/complete-activity", requireAuth, async (req, res) => {
+router.post("/progress/complete-activity", async (req, res) => {
   const studentId = req.user!.id;
   const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
 
@@ -47,9 +45,39 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
       return res.json({ message: "Already completed", progress: existing });
-=======
-// Apply authentication middleware to all routes
-router.use(requireAuth);
+  }
+
+  let finalProgress;
+  if (existing) {
+       finalProgress = await prisma.progress.update({
+           where: { id: existing.id },
+           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
+       });
+  } else {
+       finalProgress = await prisma.progress.create({
+           data: {
+              studentId,
+              moduleSlug,
+              lessonId,
+              activityId,
+              status: ProgressStatus.COMPLETED,
+              timeSpentS: timeSpentS || 0
+           }
+       });
+
+       // Grant XP and check unlocks
+       await prisma.avatar.update({
+           where: { studentId },
+           data: { xp: { increment: 50 } }
+       });
+
+       await checkUnlocks(studentId);
+  }
+
+  res.json(finalProgress);
+});
+
+// --- Legacy/Main Endpoints (MAIN) ---
 
 router.get("/progress/:studentId", async (req, res) => {
   const studentId = req.params.studentId;
@@ -89,53 +117,6 @@ router.post("/progress/checkpoint", async (req, res) => {
   } catch (e: any) {
     res.status(400).json({ error: e.message });
   }
-});
-
-router.post("/assessment/submit", async (req, res) => {
-  const parse = assessmentSubmitSchema.safeParse(req.body);
-  if (!parse.success)
-    return res.status(400).json({ error: parse.error.flatten() });
-
-  // Authorization check
-  if (req.user!.id !== parse.data.studentId && req.user!.role === "student") {
-    return res.status(403).json({ error: "forbidden" });
-  }
-
-  try {
-    const result = await submitAssessment(parse.data);
-    res.json(result);
-  } catch (e: any) {
-    res.status(400).json({ error: e.message });
->>>>>>> origin/main
-  }
-
-  let finalProgress;
-  if (existing) {
-       finalProgress = await prisma.progress.update({
-           where: { id: existing.id },
-           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
-       });
-  } else {
-       finalProgress = await prisma.progress.create({
-           data: {
-              studentId,
-              moduleSlug,
-              lessonId,
-              activityId,
-              status: ProgressStatus.COMPLETED,
-              timeSpentS: timeSpentS || 0
-           }
-       });
-
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
-
-       await checkUnlocks(studentId);
-  }
-
-  res.json(finalProgress);
 });
 
 export default router;
