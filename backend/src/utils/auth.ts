@@ -9,18 +9,23 @@ declare module "express-serve-static-core" {
 }
 
 export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
-  const authHeader = req.header("Authorization");
+  // 🛡️ Sentinel: Restrict development backdoors to non-production environments
+  const isDevOrTest = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
-  if (authHeader === "Bearer mock-token-for-mvp") {
+  if (isDevOrTest) {
+    const authHeader = req.header("Authorization");
+    if (authHeader === "Bearer mock-token-for-mvp") {
       req.user = { id: "student-123", role: "student" };
       return next();
+    }
+
+    if (process.env.ALLOW_DEV_ROLE_HEADER === "1" && !req.user) {
+      const role = req.header("x-role") as UserRole | undefined;
+      const id = req.header("x-user-id") || undefined;
+      if (role && id) req.user = { id, role };
+    }
   }
 
-  if (process.env.ALLOW_DEV_ROLE_HEADER === "1" && !req.user) {
-    const role = req.header("x-role") as UserRole | undefined;
-    const id = req.header("x-user-id") || undefined;
-    if (role && id) req.user = { id, role };
-  }
   next();
 }
 

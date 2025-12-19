@@ -12,3 +12,8 @@
 **Vulnerability:** Public access to student progress data and checkpoint submission.
 **Learning:** Endpoints were completely public and trusted `studentId` from params/body.
 **Prevention:** Enforced `requireAuth` and added checks to ensure `req.user.id` matches the target `studentId` (for students).
+
+## 2024-05-24 - Production Backdoor in Auth Shim
+**Vulnerability:** Hardcoded "mock-token-for-mvp" in `devRoleShim` allowed full auth bypass in any environment.
+**Learning:** Developer conveniences often become security holes if not strictly guarded by environment checks.
+**Prevention:** Guard all test/dev backdoors with explicit `process.env.NODE_ENV` checks and ensure they fail-safe (closed) by default.
