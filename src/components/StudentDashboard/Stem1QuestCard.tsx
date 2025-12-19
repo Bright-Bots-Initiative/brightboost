@@ -1,5 +1,6 @@
 import { Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { memo } from "react";
 
 interface Stem1Quest {
   title: string;
@@ -12,7 +13,7 @@ interface Stem1QuestCardProps {
   showConnector: boolean;
 }
 
-const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest }) => {
+const Stem1QuestCard: React.FC<Stem1QuestCardProps> = memo(({ quest }) => {
   const { t } = useTranslation();
 
   return (
@@ -55,6 +56,6 @@ const Stem1QuestCard: React.FC<Stem1QuestCardProps> = ({ quest }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Stem1QuestCard;
