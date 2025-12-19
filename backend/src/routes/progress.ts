@@ -1,25 +1,24 @@
-// backend/src/routes/progress.ts
 import { Router } from "express";
-<<<<<<< HEAD
 import { PrismaClient, ProgressStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
-=======
-import { requireAuth } from "../utils/auth";
 import {
   checkpointSchema,
   assessmentSubmitSchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 import { submitAssessment } from "../services/assessment";
->>>>>>> origin/main
 
 const router = Router();
 const prisma = new PrismaClient();
 
-<<<<<<< HEAD
-// Get progress for a student
-router.get("/progress", requireAuth, async (req, res) => {
+// Apply authentication middleware to all routes
+router.use(requireAuth);
+
+// --- HEAD Routes (Game/MVP) ---
+
+// Get progress for current student (Simplified)
+router.get("/progress", async (req, res) => {
   const studentId = req.user!.id;
   const progress = await prisma.progress.findMany({
     where: { studentId },
@@ -28,17 +27,22 @@ router.get("/progress", requireAuth, async (req, res) => {
 });
 
 // Legacy endpoint for AuthContext (supports existing frontend)
-router.get("/get-progress", requireAuth, async (req, res) => {
+router.get("/get-progress", async (req, res) => {
     // Return format expected by AuthContext
     const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
     const progress = await prisma.progress.findMany({ where: { studentId: req.user!.id } });
     res.json({ user, progress });
 });
 
-// Complete an activity
-router.post("/progress/complete-activity", requireAuth, async (req, res) => {
+// Complete an activity (Game version with XP/Unlocks)
+router.post("/progress/complete-activity", async (req, res) => {
   const studentId = req.user!.id;
+  // Basic validation manually
   const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
+
+  if (!moduleSlug || !lessonId || !activityId) {
+      return res.status(400).json({ error: "Missing required fields" });
+  }
 
   // 1. Upsert progress
   const existing = await prisma.progress.findFirst({
@@ -47,9 +51,39 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
       return res.json({ message: "Already completed", progress: existing });
-=======
-// Apply authentication middleware to all routes
-router.use(requireAuth);
+  }
+
+  let finalProgress;
+  if (existing) {
+       finalProgress = await prisma.progress.update({
+           where: { id: existing.id },
+           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
+       });
+  } else {
+       finalProgress = await prisma.progress.create({
+           data: {
+              studentId,
+              moduleSlug,
+              lessonId,
+              activityId,
+              status: ProgressStatus.COMPLETED,
+              timeSpentS: timeSpentS || 0
+           }
+       });
+
+       // XP Logic
+       await prisma.avatar.updateMany({
+           where: { studentId },
+           data: { xp: { increment: 50 } }
+       });
+
+       await checkUnlocks(studentId);
+  }
+
+  res.json(finalProgress);
+});
+
+// --- Origin/Main Routes (Structured/Admin-compatible) ---
 
 router.get("/progress/:studentId", async (req, res) => {
   const studentId = req.params.studentId;
@@ -106,36 +140,7 @@ router.post("/assessment/submit", async (req, res) => {
     res.json(result);
   } catch (e: any) {
     res.status(400).json({ error: e.message });
->>>>>>> origin/main
   }
-
-  let finalProgress;
-  if (existing) {
-       finalProgress = await prisma.progress.update({
-           where: { id: existing.id },
-           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
-       });
-  } else {
-       finalProgress = await prisma.progress.create({
-           data: {
-              studentId,
-              moduleSlug,
-              lessonId,
-              activityId,
-              status: ProgressStatus.COMPLETED,
-              timeSpentS: timeSpentS || 0
-           }
-       });
-
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
-
-       await checkUnlocks(studentId);
-  }
-
-  res.json(finalProgress);
 });
 
 export default router;

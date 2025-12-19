@@ -64,15 +64,30 @@ model Unit {
   moduleId String
   title    String
   order    Int
+
+  Module   Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   lessons  Lesson[]
   
-  // Relations
-  teacherId   String
-  teacher     User     @relation(fields: [teacherId], references: [id])
-  activities  Activity[]
+  @@index([moduleId])
+}
 
-  // Index for filtering lessons by teacher
-  @@index([teacherId])
+model Lesson {
+  id       String   @id @default(cuid())
+  unitId   String
+  title    String
+  order    Int
+
+  Unit     Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  activities Activity[]
+
+  @@index([unitId])
+}
+
+enum ActivityKind {
+  VIDEO
+  TEXT
+  QUIZ
+  GAME
 }
 
 model Activity {
@@ -85,7 +100,7 @@ model Activity {
 
   Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@unique([lessonId, order]) // renamed from index to order for clarity
+  @@unique([lessonId, order])
 }
 
 // -----------------------------------------------------------------------------
@@ -219,9 +234,9 @@ model UserBadge {
   badgeId   String
   awardedAt DateTime @default(now())
   
-  @@unique([studentId, lessonId])
-  // Index for filtering activities by lesson
-  @@index([lessonId])
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Removed invalid index/unique constraints that referred to non-existent fields
+  @@unique([userId, badgeId])
 }
 
 model Course {
