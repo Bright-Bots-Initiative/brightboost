@@ -74,7 +74,11 @@ const StudentLogin: React.FC = () => {
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <div
+                role="alert"
+                aria-live="polite"
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4"
+              >
                 {error}
               </div>
             )}
@@ -90,6 +94,8 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="email"
                   type="email"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                   {...register("email")}
                   className={`w-full px-4 py-2 bg-white border-2 ${
                     errors.email
@@ -99,7 +105,7 @@ const StudentLogin: React.FC = () => {
                   placeholder="Enter your email"
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p id="email-error" className="text-red-500 text-sm mt-1">
                     {errors.email.message}
                   </p>
                 )}
@@ -115,6 +121,10 @@ const StudentLogin: React.FC = () => {
                 <input
                   id="password"
                   type="password"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
                   {...register("password")}
                   className={`w-full px-4 py-2 bg-white border-2 ${
                     errors.password
@@ -124,7 +134,7 @@ const StudentLogin: React.FC = () => {
                   placeholder="Enter your password"
                 />
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p id="password-error" className="text-red-500 text-sm mt-1">
                     {errors.password.message}
                   </p>
                 )}
@@ -133,6 +143,7 @@ const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
+                aria-disabled={isSubmitting}
                 className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
                   isSubmitting
                     ? "bg-brightboost-lightblue/70"

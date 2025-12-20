@@ -4,3 +4,9 @@
 ## 2024-05-23 - Accessibility in Navigation
 **Learning:** Screen readers require explicit indicators for the currently active page in navigation menus. The `aria-current="page"` attribute is the standard way to achieve this.
 **Action:** Always add `aria-current="page"` to the active item in any navigation component.
+## 2024-05-23 - Accessible Form Validation Patterns
+**Learning:** Standard form validation in this codebase (Student Login) was missing programmatic associations between inputs and errors.
+**Action:** For all forms, ensure:
+1.  Global error containers have `role="alert"` and `aria-live="polite"`.
+2.  Input fields use `aria-invalid={!!error}`.
+3.  Input fields link to error message IDs using `aria-describedby="error-id"`.
