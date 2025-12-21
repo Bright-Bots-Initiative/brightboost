@@ -42,6 +42,8 @@ model User {
   // MVP Relations
   progress        Progress[]
   avatar          Avatar?
+  weeklySnapshots WeeklySnapshot[]
+  units           Unit[] // Added for relation with Unit
 }
 
 // -----------------------------------------------------------------------------
@@ -70,9 +72,30 @@ model Unit {
   teacherId   String
   teacher     User     @relation(fields: [teacherId], references: [id])
   activities  Activity[]
+  Module      Module   @relation(fields: [moduleId], references: [id]) // Added relation to Module
 
   // Index for filtering lessons by teacher
   @@index([teacherId])
+  @@index([moduleId])
+}
+
+model Lesson {
+  id        String     @id @default(cuid())
+  unitId    String
+  title     String
+  order     Int
+  Unit      Unit       @relation(fields: [unitId], references: [id])
+  activities Activity[]
+  userBadges UserBadge[]
+
+  @@index([unitId])
+}
+
+enum ActivityKind {
+  VIDEO
+  TEXT
+  QUIZ
+  GAME
 }
 
 model Activity {
@@ -82,10 +105,13 @@ model Activity {
   kind     ActivityKind
   order    Int
   content  String?      // JSON or HTML string
+  xp       Int          @default(10)
 
   Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  Unit     Unit? @relation(fields: [unitId], references: [id]) // Inferred from Unit having activities
+  unitId   String?
 
-  @@unique([lessonId, order]) // renamed from index to order for clarity
+  @@unique([lessonId, order])
 }
 
 // -----------------------------------------------------------------------------
@@ -110,6 +136,24 @@ model Progress {
   User       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, activityId])
+}
+
+model WeeklySnapshot {
+  id              String   @id @default(cuid())
+  weekId          String   // e.g. "2023-40"
+  studentId       String
+  dominantRegime  String?  @default("UNKNOWN")
+  userMetrics     Json     @default("{}")
+  systemMetrics   Json     @default("{}")
+  synthesis       String?
+  isPlaceholder   Boolean  @default(false)
+  generatedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  User            User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, weekId])
 }
 
 // -----------------------------------------------------------------------------
@@ -161,6 +205,7 @@ model UnlockedAbility {
   Ability   Ability @relation(fields: [abilityId], references: [id], onDelete: Cascade)
 
   @@unique([avatarId, abilityId])
+  @@index([abilityId]) // Added index for performance
 }
 
 enum MatchStatus {
@@ -184,6 +229,9 @@ model Match {
   Player2   Avatar?     @relation("Player2", fields: [player2Id], references: [id])
 
   turns     MatchTurn[]
+
+  @@index([player1Id])
+  @@index([player2Id])
 }
 
 model MatchTurn {
@@ -195,6 +243,8 @@ model MatchTurn {
   createdAt DateTime @default(now())
 
   Match     Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
 }
 
 // -----------------------------------------------------------------------------
@@ -211,15 +261,21 @@ model Badge {
   xpBonus   Int      @default(0)
 
   Module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  userBadges UserBadge[]
 }
 
 model UserBadge {
   id        String   @id @default(cuid())
   userId    String
   badgeId   String
+  lessonId  String?
   awardedAt DateTime @default(now())
   
-  @@unique([studentId, lessonId])
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  Lesson    Lesson?  @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, badgeId])
   // Index for filtering activities by lesson
   @@index([lessonId])
 }

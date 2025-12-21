@@ -1,6 +1,11 @@
-import { PrismaClient, ProgressStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+enum ProgressStatus {
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED"
+}
 
 export async function upsertCheckpoint(input: {
   studentId: string;
@@ -86,12 +91,14 @@ export async function getAggregatedProgress(
 
   for (const row of progressRows) {
     timeSpentS += row.timeSpentS;
-    if (row.status === "COMPLETED") {
-      if (row.activityId && activityXpMap.has(row.activityId)) {
-        earnedXp += activityXpMap.get(row.activityId)!;
-        completedActivities += 1;
+    if (row.status === "COMPLETED" || row.status === "IN_PROGRESS") {
+      if (row.status === "COMPLETED") {
+        if (row.activityId && activityXpMap.has(row.activityId)) {
+          earnedXp += activityXpMap.get(row.activityId)!;
+          completedActivities += 1;
+        }
+        lastLessonId = row.lessonId;
       }
-      lastLessonId = row.lessonId;
     }
   }
 

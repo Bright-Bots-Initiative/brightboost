@@ -1,7 +1,14 @@
 // backend/src/services/game.ts
-import { PrismaClient, MatchStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+enum MatchStatus {
+  QUEUED = "QUEUED",
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  FORFEIT = "FORFEIT"
+}
 
 // Rock-Paper-Scissors modifiers
 // Using string literals to avoid runtime Enum issues

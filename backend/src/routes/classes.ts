@@ -43,7 +43,7 @@ router.post(
         parsed.data.inviteCode,
         req.user!.id,
       );
-      res.json({ ok: true, ...result });
+      res.json({ ok: true, result });
     } catch (e: any) {
       res.status(400).json({ error: e.message });
     }
