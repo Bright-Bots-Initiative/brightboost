@@ -1,23 +1,16 @@
 // backend/src/routes/progress.ts
 import { Router } from "express";
-<<<<<<< HEAD
 import { PrismaClient, ProgressStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
-=======
-import { requireAuth } from "../utils/auth";
 import {
   checkpointSchema,
-  assessmentSubmitSchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
-import { submitAssessment } from "../services/assessment";
->>>>>>> origin/main
 
 const router = Router();
 const prisma = new PrismaClient();
 
-<<<<<<< HEAD
 // Get progress for a student
 router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
@@ -35,23 +28,7 @@ router.get("/get-progress", requireAuth, async (req, res) => {
     res.json({ user, progress });
 });
 
-// Complete an activity
-router.post("/progress/complete-activity", requireAuth, async (req, res) => {
-  const studentId = req.user!.id;
-  const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
-
-  // 1. Upsert progress
-  const existing = await prisma.progress.findFirst({
-      where: { studentId, activityId }
-  });
-
-  if (existing && existing.status === ProgressStatus.COMPLETED) {
-      return res.json({ message: "Already completed", progress: existing });
-=======
-// Apply authentication middleware to all routes
-router.use(requireAuth);
-
-router.get("/progress/:studentId", async (req, res) => {
+router.get("/progress/:studentId", requireAuth, async (req, res) => {
   const studentId = req.params.studentId;
 
   // Authorization check: User can only access their own progress, unless they are admin/teacher
@@ -68,7 +45,7 @@ router.get("/progress/:studentId", async (req, res) => {
   }
 });
 
-router.post("/progress/checkpoint", async (req, res) => {
+router.post("/progress/checkpoint", requireAuth, async (req, res) => {
   const parse = checkpointSchema.safeParse(req.body);
   if (!parse.success)
     return res.status(400).json({ error: parse.error.flatten() });
@@ -91,22 +68,18 @@ router.post("/progress/checkpoint", async (req, res) => {
   }
 });
 
-router.post("/assessment/submit", async (req, res) => {
-  const parse = assessmentSubmitSchema.safeParse(req.body);
-  if (!parse.success)
-    return res.status(400).json({ error: parse.error.flatten() });
+// Complete an activity
+router.post("/progress/complete-activity", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+  const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
 
-  // Authorization check
-  if (req.user!.id !== parse.data.studentId && req.user!.role === "student") {
-    return res.status(403).json({ error: "forbidden" });
-  }
+  // 1. Upsert progress
+  const existing = await prisma.progress.findFirst({
+      where: { studentId, activityId }
+  });
 
-  try {
-    const result = await submitAssessment(parse.data);
-    res.json(result);
-  } catch (e: any) {
-    res.status(400).json({ error: e.message });
->>>>>>> origin/main
+  if (existing && existing.status === ProgressStatus.COMPLETED) {
+      return res.json({ message: "Already completed", progress: existing });
   }
 
   let finalProgress;
@@ -127,10 +100,15 @@ router.post("/assessment/submit", async (req, res) => {
            }
        });
 
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
+       try {
+        await prisma.avatar.update({
+            where: { studentId },
+            data: { xp: { increment: 50 } }
+        });
+       } catch (e) {
+         // Avatar might not exist
+         console.warn("Could not give XP to avatar", e);
+       }
 
        await checkUnlocks(studentId);
   }

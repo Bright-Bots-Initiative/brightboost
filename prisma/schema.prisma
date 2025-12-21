@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
@@ -38,6 +38,7 @@ model User {
   enrollments     Enrollment[]
   courses         Course[]      // Teacher's courses
   userBadges      UserBadge[]
+  units           Unit[]        // Teacher's units
 
   // MVP Relations
   progress        Progress[]
@@ -66,6 +67,8 @@ model Unit {
   order    Int
   lessons  Lesson[]
   
+  Module      Module   @relation(fields: [moduleId], references: [id])
+
   // Relations
   teacherId   String
   teacher     User     @relation(fields: [teacherId], references: [id])
@@ -73,6 +76,16 @@ model Unit {
 
   // Index for filtering lessons by teacher
   @@index([teacherId])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  unitId    String
+  title     String
+  order     Int
+
+  Unit      Unit       @relation(fields: [unitId], references: [id])
+  activities Activity[]
 }
 
 model Activity {
@@ -85,12 +98,21 @@ model Activity {
 
   Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
+  // Explicit relation to Unit to satisfy Unit.activities[]
+  unitId   String?
+  Unit     Unit? @relation(fields: [unitId], references: [id])
+
   @@unique([lessonId, order]) // renamed from index to order for clarity
 }
 
 // -----------------------------------------------------------------------------
 // MVP: Progress & Rewards
 // -----------------------------------------------------------------------------
+
+enum ActivityKind {
+  INFO
+  INTERACT
+}
 
 enum ProgressStatus {
   IN_PROGRESS
@@ -211,6 +233,7 @@ model Badge {
   xpBonus   Int      @default(0)
 
   Module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  UserBadge UserBadge[]
 }
 
 model UserBadge {
@@ -219,9 +242,10 @@ model UserBadge {
   badgeId   String
   awardedAt DateTime @default(now())
   
-  @@unique([studentId, lessonId])
-  // Index for filtering activities by lesson
-  @@index([lessonId])
+  User      User     @relation(fields: [userId], references: [id])
+  Badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
 }
 
 model Course {
