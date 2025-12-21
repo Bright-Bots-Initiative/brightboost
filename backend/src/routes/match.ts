@@ -57,6 +57,15 @@ router.get("/match/:id", requireAuth, async (req, res) => {
     }
   });
   if (!match) return res.status(404).json({ error: "Match not found" });
+
+  const studentId = req.user!.id;
+  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+
+  // Access control: User must be a participant
+  if (!myAvatar || (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)) {
+    return res.status(403).json({ error: "Not authorized to view this match" });
+  }
+
   res.json(match);
 });
 
