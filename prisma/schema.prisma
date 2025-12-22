@@ -81,6 +81,7 @@ model Unit {
 
   // Index for filtering lessons by teacher
   @@index([teacherId])
+  @@index([moduleId])
 }
 
 model Lesson {
@@ -91,6 +92,8 @@ model Lesson {
 
   Unit      Unit       @relation(fields: [unitId], references: [id])
   activities Activity[]
+
+  @@index([unitId])
 }
 
 model Activity {
@@ -211,6 +214,9 @@ model Match {
   Player2   Avatar?     @relation("Player2", fields: [player2Id], references: [id])
 
   turns     MatchTurn[]
+
+  @@index([player1Id])
+  @@index([player2Id])
 }
 
 model MatchTurn {
@@ -222,6 +228,8 @@ model MatchTurn {
   createdAt DateTime @default(now())
 
   Match     Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
 }
 
 // -----------------------------------------------------------------------------
