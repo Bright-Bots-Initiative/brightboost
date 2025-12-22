@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
+import { Loader2 } from "lucide-react";
 
 const studentLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -74,7 +75,11 @@ const StudentLogin: React.FC = () => {
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4"
+                role="alert"
+                aria-live="polite"
+              >
                 {error}
               </div>
             )}
@@ -91,6 +96,8 @@ const StudentLogin: React.FC = () => {
                   id="email"
                   type="email"
                   {...register("email")}
+                  aria-invalid={errors.email ? "true" : "false"}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                   className={`w-full px-4 py-2 bg-white border-2 ${
                     errors.email
                       ? "border-red-500"
@@ -99,7 +106,11 @@ const StudentLogin: React.FC = () => {
                   placeholder="Enter your email"
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p
+                    id="email-error"
+                    role="alert"
+                    className="text-red-500 text-sm mt-1"
+                  >
                     {errors.email.message}
                   </p>
                 )}
@@ -116,6 +127,10 @@ const StudentLogin: React.FC = () => {
                   id="password"
                   type="password"
                   {...register("password")}
+                  aria-invalid={errors.password ? "true" : "false"}
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
                   className={`w-full px-4 py-2 bg-white border-2 ${
                     errors.password
                       ? "border-red-500"
@@ -124,7 +139,11 @@ const StudentLogin: React.FC = () => {
                   placeholder="Enter your password"
                 />
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p
+                    id="password-error"
+                    role="alert"
+                    className="text-red-500 text-sm mt-1"
+                  >
                     {errors.password.message}
                   </p>
                 )}
@@ -133,13 +152,20 @@ const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
+                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ${
                   isSubmitting
                     ? "bg-brightboost-lightblue/70"
                     : "bg-brightboost-lightblue"
                 } transition-colors`}
               >
-                {isSubmitting ? "Logging in..." : "Login"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Logging in...</span>
+                  </>
+                ) : (
+                  "Login"
+                )}
               </button>
             </form>
 
