@@ -17,7 +17,7 @@ router.post("/match/queue", requireAuth, async (req, res) => {
   // Look for open match
   const openMatch = await prisma.match.findFirst({
     where: {
-      status: MatchStatus.QUEUED,
+      status: MatchStatus.PENDING,
       band: band || "K2",
       NOT: { player1Id: avatar.id } // Don't match with self
     }
@@ -39,10 +39,10 @@ router.post("/match/queue", requireAuth, async (req, res) => {
       data: {
         player1Id: avatar.id,
         band: band || "K2",
-        status: MatchStatus.QUEUED
+        status: MatchStatus.PENDING
       }
     });
-    return res.json({ matchId: match.id, status: "QUEUED" });
+    return res.json({ matchId: match.id, status: "PENDING" });
   }
 });
 

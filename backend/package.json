@@ -6,7 +6,7 @@
   "scripts": {
     "db:generate": "prisma generate --schema=../prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema=../prisma/schema.prisma",
-    "build": "tsc -p .",
+    "build": "npm run db:generate && tsc -p .",
     "start": "node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
