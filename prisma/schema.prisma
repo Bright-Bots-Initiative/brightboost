@@ -191,7 +191,7 @@ model UnlockedAbility {
 }
 
 enum MatchStatus {
-  QUEUED
+  PENDING
   ACTIVE
   COMPLETED
   FORFEIT
@@ -201,7 +201,7 @@ model Match {
   id        String      @id @default(cuid())
   player1Id String
   player2Id String?
-  status    MatchStatus @default(QUEUED)
+  status    MatchStatus @default(PENDING)
   winnerId  String?
   band      String      // "K2", "G35"
   createdAt DateTime    @default(now())
