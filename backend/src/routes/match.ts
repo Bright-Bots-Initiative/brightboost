@@ -48,6 +48,8 @@ router.post("/match/queue", requireAuth, async (req, res) => {
 
 // Get match state
 router.get("/match/:id", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+
   const match = await prisma.match.findUnique({
     where: { id: req.params.id },
     include: {
@@ -57,6 +59,13 @@ router.get("/match/:id", requireAuth, async (req, res) => {
     }
   });
   if (!match) return res.status(404).json({ error: "Match not found" });
+
+  // 🛡️ Sentinel: Verify user is a participant (IDOR protection)
+  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+  if (!myAvatar || (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)) {
+    return res.status(403).json({ error: "Forbidden: You are not a participant in this match" });
+  }
+
   res.json(match);
 });
 
