@@ -4,3 +4,6 @@
 ## 2024-05-23 - Accessibility in Navigation
 **Learning:** Screen readers require explicit indicators for the currently active page in navigation menus. The `aria-current="page"` attribute is the standard way to achieve this.
 **Action:** Always add `aria-current="page"` to the active item in any navigation component.
+## 2025-05-21 - Input Error Accessibility
+**Learning:** Standard inputs often lack programmatic association between the input field and its error message. This makes it impossible for screen reader users to know why a field is invalid.
+**Action:** Use `aria-describedby` pointing to the error message ID and `aria-invalid="true"` on the input. Use `React.useId()` to generate stable, unique IDs for these associations.
