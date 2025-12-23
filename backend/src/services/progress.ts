@@ -44,7 +44,7 @@ export async function upsertCheckpoint(data: CheckpointData) {
 
 export async function getAggregatedProgress(
   studentId: string,
-  moduleSlug: string
+  moduleSlug: string,
 ) {
   // Aggregate by Unit -> Lesson -> Activity
   // This mimics the structure needed for the "map" view
@@ -61,26 +61,26 @@ export async function getAggregatedProgress(
 
   // Actually, let's fetch the module structure from DB if it exists
   const module = await prisma.module.findUnique({
-      where: { slug: moduleSlug },
-      include: {
-          units: {
-              orderBy: { order: 'asc' },
-              include: {
-                  lessons: {
-                      orderBy: { order: 'asc' },
-                      include: {
-                          activities: {
-                              orderBy: { order: 'asc' }
-                          }
-                      }
-                  }
-              }
-          }
-      }
+    where: { slug: moduleSlug },
+    include: {
+      units: {
+        orderBy: { order: "asc" },
+        include: {
+          lessons: {
+            orderBy: { order: "asc" },
+            include: {
+              activities: {
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!module) {
-      throw new Error(`Module ${moduleSlug} not found`);
+    throw new Error(`Module ${moduleSlug} not found`);
   }
 
   // 3. Merge
@@ -90,25 +90,25 @@ export async function getAggregatedProgress(
 
   const progressMap: Record<string, any> = {};
   progressItems.forEach((p: Progress) => {
-      progressMap[p.activityId] = {
-          status: p.status,
-          timeSpentS: p.timeSpentS
-      };
+    progressMap[p.activityId] = {
+      status: p.status,
+      timeSpentS: p.timeSpentS,
+    };
   });
 
   return {
-      module: {
-          title: module.title,
-          units: module.units.map((u: any) => ({
-              ...u,
-              lessons: u.lessons.map((l: any) => ({
-                  ...l,
-                  activities: l.activities.map((a: any) => ({
-                      ...a,
-                      userProgress: progressMap[a.id] || null
-                  }))
-              }))
-          }))
-      }
+    module: {
+      title: module.title,
+      units: module.units.map((u: any) => ({
+        ...u,
+        lessons: u.lessons.map((l: any) => ({
+          ...l,
+          activities: l.activities.map((a: any) => ({
+            ...a,
+            userProgress: progressMap[a.id] || null,
+          })),
+        })),
+      })),
+    },
   };
 }

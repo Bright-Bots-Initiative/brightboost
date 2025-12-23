@@ -8,7 +8,7 @@ const router = Router();
 router.get("/modules", async (_req, res) => {
   const modules = await prisma.module.findMany({
     where: { published: true },
-    orderBy: { level: 'asc' }
+    orderBy: { level: "asc" },
   });
   res.json(modules);
 });
@@ -25,7 +25,7 @@ router.get("/module/:slug", async (req, res) => {
           lessons: {
             orderBy: { order: "asc" },
             include: {
-              activities: { orderBy: { order: "asc" } }
+              activities: { orderBy: { order: "asc" } },
             },
           },
         },

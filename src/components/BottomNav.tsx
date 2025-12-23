@@ -7,9 +7,24 @@ export default function BottomNav() {
   const location = useLocation();
 
   const navItems = [
-    { label: "Learn", icon: BookOpen, path: "/student/modules", testId: "nav-learn" },
-    { label: "My Bot", icon: Bot, path: "/student/avatar", testId: "nav-avatar" },
-    { label: "Play", icon: Swords, path: "/student/arena", testId: "nav-arena" },
+    {
+      label: "Learn",
+      icon: BookOpen,
+      path: "/student/modules",
+      testId: "nav-learn",
+    },
+    {
+      label: "My Bot",
+      icon: Bot,
+      path: "/student/avatar",
+      testId: "nav-avatar",
+    },
+    {
+      label: "Play",
+      icon: Swords,
+      path: "/student/arena",
+      testId: "nav-arena",
+    },
   ];
 
   return (
@@ -22,7 +37,9 @@ export default function BottomNav() {
             data-testid={item.testId}
             onClick={() => navigate(item.path)}
             className={`flex flex-col items-center p-2 rounded-lg w-full ${
-              isActive ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:bg-gray-50"
+              isActive
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-500 hover:bg-gray-50"
             }`}
             aria-label={item.label}
             aria-current={isActive ? "page" : undefined}

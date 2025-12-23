@@ -7,7 +7,7 @@ BrightBoost uses a hybrid cloud deployment strategy:
 - **Frontend**: Azure Static Web Apps
 - **Backend**: AWS Lambda with Aurora PostgreSQL (migrating to Railway?)
 
-*Note: The project seems to be transitioning to Railway/Supabase. The documentation below might be partially outdated regarding AWS.*
+_Note: The project seems to be transitioning to Railway/Supabase. The documentation below might be partially outdated regarding AWS._
 
 ## Active Deployment Workflows
 

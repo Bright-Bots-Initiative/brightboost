@@ -23,8 +23,12 @@ export default function Modules() {
               <CardTitle>{m.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-500 mb-4">{m.subtitle || "No subtitle"}</p>
-              <Button onClick={() => navigate(`/modules/${m.slug}`)}>Start Learning</Button>
+              <p className="text-sm text-gray-500 mb-4">
+                {m.subtitle || "No subtitle"}
+              </p>
+              <Button onClick={() => navigate(`/modules/${m.slug}`)}>
+                Start Learning
+              </Button>
             </CardContent>
           </Card>
         ))}
