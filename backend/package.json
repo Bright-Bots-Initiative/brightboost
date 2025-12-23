@@ -11,7 +11,8 @@
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
     "deploy:staging": "serverless deploy --stage staging",
-    "remove:staging": "serverless remove --stage staging"
+    "remove:staging": "serverless remove --stage staging",
+    "predeploy": "sh scripts/predeploy.sh"
   },
   "dependencies": {
     "@prisma/client": "6.19.1",
