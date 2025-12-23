@@ -1,12 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+set -e
 
-echo "Running predeploy: Prisma generate..."
+echo "predeploy: prisma generate"
 npx prisma generate --schema prisma/schema.prisma
 
-echo "Running predeploy: Prisma push..."
+echo "predeploy: prisma db push"
 npx prisma db push --schema prisma/schema.prisma
 
-echo "Running predeploy: Seed..."
+echo "predeploy: seed"
 node prisma/seed.cjs
 
-echo "Predeploy complete!"
+echo "predeploy: done"
