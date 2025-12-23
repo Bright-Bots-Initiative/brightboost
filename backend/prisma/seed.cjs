@@ -4,6 +4,13 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
+    // Idempotency check: If abilities exist, assume DB is seeded
+    const existing = await prisma.ability.count();
+    if (existing > 0) {
+      console.log("seed: already seeded, skipping");
+      process.exit(0);
+    }
+
     // Cleanup
     try { await prisma.unlockedAbility.deleteMany(); } catch (e) {}
     try { await prisma.ability.deleteMany(); } catch (e) {}
@@ -16,6 +23,7 @@ async function main() {
     try { await prisma.unit.deleteMany(); } catch (e) {}
     try { await prisma.module.deleteMany(); } catch (e) {}
     try { await prisma.user.deleteMany({ where: { email: "student@test.com" } }); } catch (e) {}
+    try { await prisma.user.deleteMany({ where: { email: "teacher@test.com" } }); } catch (e) {}
     try { await prisma.user.deleteMany({ where: { id: "student-123" } }); } catch (e) {}
 
     console.log("Cleaned up database.");
@@ -41,6 +49,17 @@ async function main() {
     }
     console.log("Seeded abilities.");
 
+    // Seed Teacher
+    const teacher = await prisma.user.create({
+      data: {
+        id: "teacher-123",
+        name: "Teacher One",
+        email: "teacher@test.com",
+        password: "password",
+        role: "teacher",
+      }
+    });
+
     // Seed Content (STEM-1)
     const module = await prisma.module.create({
       data: {
@@ -55,6 +74,7 @@ async function main() {
     const unit = await prisma.unit.create({
       data: {
         moduleId: module.id,
+        teacherId: teacher.id,
         title: "Unit 1: The Basics",
         order: 1
       }
