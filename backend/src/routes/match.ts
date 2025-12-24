@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PrismaClient, MatchStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
+import { isValidBand } from "../utils/validation";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -11,14 +12,31 @@ router.post("/match/queue", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const { band } = req.body; // e.g. "K2"
 
+  if (band && !isValidBand(band)) {
+    return res.status(400).json({ error: "Invalid band" });
+  }
+  const selectedBand = band || "K2";
+
   const avatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!avatar) return res.status(400).json({ error: "No avatar found" });
+
+  // Check if user is already in a pending match
+  const existingPending = await prisma.match.findFirst({
+    where: {
+      player1Id: avatar.id,
+      status: MatchStatus.PENDING
+    }
+  });
+
+  if (existingPending) {
+    return res.json({ matchId: existingPending.id, status: "PENDING" });
+  }
 
   // Look for open match
   const openMatch = await prisma.match.findFirst({
     where: {
       status: MatchStatus.PENDING,
-      band: band || "K2",
+      band: selectedBand,
       NOT: { player1Id: avatar.id } // Don't match with self
     }
   });
@@ -38,7 +56,7 @@ router.post("/match/queue", requireAuth, async (req, res) => {
     const match = await prisma.match.create({
       data: {
         player1Id: avatar.id,
-        band: band || "K2",
+        band: selectedBand,
         status: MatchStatus.PENDING
       }
     });
