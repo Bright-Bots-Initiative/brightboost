@@ -17,11 +17,15 @@ app.use("/api", progressRouter);
 app.use("/api", avatarRouter);
 app.use("/api", matchRouter);
 
-app.get("/health", (_req: Request, res: Response) => res.json({ ok: true }));
+app.get("/health", (_req: Request, res: Response) =>
+  res.status(200).json({ status: "ok" })
+);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 if (process.env.NODE_ENV !== "test") {
-  app.listen(port);
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
 }
 
 export default app;
