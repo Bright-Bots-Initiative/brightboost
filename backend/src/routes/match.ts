@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PrismaClient, MatchStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
+import { matchQueueSchema } from "../validation/schemas";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -9,7 +10,13 @@ const prisma = new PrismaClient();
 // Queue for a match
 router.post("/match/queue", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
-  const { band } = req.body; // e.g. "K2"
+
+  // 🛡️ Sentinel: Validate input band to prevent invalid data or misuse
+  const parseResult = matchQueueSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ error: "Invalid band provided" });
+  }
+  const { band } = parseResult.data; // e.g. "K2" or undefined
 
   const avatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!avatar) return res.status(400).json({ error: "No avatar found" });
