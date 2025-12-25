@@ -7,3 +7,6 @@
 ## 2025-05-21 - Input Error Accessibility
 **Learning:** Standard inputs often lack programmatic association between the input field and its error message. This makes it impossible for screen reader users to know why a field is invalid.
 **Action:** Use `aria-describedby` pointing to the error message ID and `aria-invalid="true"` on the input. Use `React.useId()` to generate stable, unique IDs for these associations.
+## 2025-12-25 - Dynamic Alert Accessibility
+**Learning:** Dynamically rendered error containers (like login failures) are not announced by screen readers unless they have `role="alert"` and `aria-live` attributes.
+**Action:** Always add `role="alert"` and `aria-live="polite"` to conditional error message containers.
