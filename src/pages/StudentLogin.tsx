@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const studentLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,6 +19,7 @@ type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
 
 const StudentLogin: React.FC = () => {
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const {
@@ -123,21 +124,37 @@ const StudentLogin: React.FC = () => {
                 >
                   Password
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  aria-invalid={errors.password ? "true" : "false"}
-                  aria-describedby={
-                    errors.password ? "password-error" : undefined
-                  }
-                  className={`w-full px-4 py-2 bg-white border-2 ${
-                    errors.password
-                      ? "border-red-500"
-                      : "border-brightboost-lightblue"
-                  } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    aria-invalid={errors.password ? "true" : "false"}
+                    aria-describedby={
+                      errors.password ? "password-error" : undefined
+                    }
+                    className={`w-full px-4 py-2 bg-white border-2 ${
+                      errors.password
+                        ? "border-red-500"
+                        : "border-brightboost-lightblue"
+                    } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all pr-10`}
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-brightboost-navy/60 hover:text-brightboost-navy bg-transparent focus:outline-none focus:ring-2 focus:ring-brightboost-blue rounded-full p-1"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p
                     id="password-error"
