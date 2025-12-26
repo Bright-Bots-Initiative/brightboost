@@ -5,11 +5,16 @@ import modulesRouter from "./routes/modules";
 import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
 import matchRouter from "./routes/match";
+import authRouter from "./routes/auth";
 import { devRoleShim } from "./utils/auth";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Public routes (Auth) - Mount before devRoleShim to ensure access
+app.use("/api", authRouter);
+
 app.use(devRoleShim);
 
 app.use("/api", modulesRouter);
