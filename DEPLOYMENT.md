@@ -5,7 +5,9 @@
 BrightBoost uses a hybrid cloud deployment strategy:
 
 - **Frontend**: Azure Static Web Apps
-- **Backend**: AWS Lambda with Aurora PostgreSQL
+- **Backend**: AWS Lambda with Aurora PostgreSQL (migrating to Railway?)
+
+*Note: The project seems to be transitioning to Railway/Supabase. The documentation below might be partially outdated regarding AWS.*
 
 ## Active Deployment Workflows
 
@@ -36,6 +38,12 @@ The following workflows have been **REMOVED** as part of post-production cleanup
 All legacy workflows have been cleaned up after successful production deployment.
 
 ## Environment Configuration
+
+### Railway / Backend Prisma Schema
+
+**Important:** The backend deployment on Railway uses a local copy of the Prisma schema located at `backend/prisma/schema.prisma`.
+This is because the Railway build context is set to `backend/`, making the root `prisma/schema.prisma` inaccessible during the build.
+The root schema (`prisma/schema.prisma`) remains the canonical source for development.
 
 ### Frontend Environment Variables
 

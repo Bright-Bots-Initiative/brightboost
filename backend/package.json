@@ -4,32 +4,37 @@
   "version": "0.1.0",
   "main": "dist/src/server.js",
   "scripts": {
-    "db:generate": "prisma generate --schema=../prisma/schema.prisma",
-    "db:migrate": "prisma migrate deploy --schema=../prisma/schema.prisma",
+    "db:generate": "prisma generate --schema=prisma/schema.prisma",
+    "db:migrate": "prisma migrate deploy --schema=prisma/schema.prisma",
     "build": "npm run db:generate && tsc -p .",
-    "start": "node dist/src/server.js",
+    "start": "npm run predeploy && node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
     "deploy:staging": "serverless deploy --stage staging",
-    "remove:staging": "serverless remove --stage staging"
+    "remove:staging": "serverless remove --stage staging",
+    "predeploy": "sh scripts/predeploy.sh"
   },
   "dependencies": {
-    "@prisma/client": "^6.8.2",
+    "@prisma/client": "6.19.1",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "serverless-http": "^3.2.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.9",
     "@types/supertest": "^6.0.3",
-    "prisma": "^6.8.2",
+    "prisma": "6.19.1",
     "serverless": "^3.39.0",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   }
 }
