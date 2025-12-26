@@ -7,7 +7,13 @@ import { t } from "i18next";
 export const join = (base: string, path: string): string =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const API_BASE = import.meta.env.VITE_AWS_API_URL
+  ? join(import.meta.env.VITE_AWS_API_URL, "/api")
+  : import.meta.env.VITE_API_BASE ?? "/api";
+
+if (import.meta.env.DEV) {
+  console.log("API_BASE:", API_BASE);
+}
 
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
