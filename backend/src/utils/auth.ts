@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
 export type UserRole = "teacher" | "student" | "admin";
+
+const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -8,11 +11,36 @@ declare module "express-serve-static-core" {
   }
 }
 
+export function authenticateToken(req: Request, res: Response, next: NextFunction) {
+  // If user is already authenticated (e.g. by dev shim), skip
+  if (req.user) return next();
+
+  const authHeader = req.header("Authorization");
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+
+  if (!token) return next(); // No token, proceed as guest (requireAuth will catch if needed)
+
+  jwt.verify(token, SESSION_SECRET, (err: any, user: any) => {
+    if (err) {
+      // If the token is invalid, we return 403 Forbidden
+      return res.status(403).json({ error: "forbidden_invalid_token" });
+    }
+
+    req.user = user as { id: string; role: UserRole };
+    next();
+  });
+}
+
 export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
   // 🛡️ Sentinel: Restrict development backdoors to non-production environments
   const isDevOrTest = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
   if (isDevOrTest) {
+    // If authenticateToken already verified a user, skip the shim logic?
+    // Actually, dev shim might be used to override for testing.
+    // But if we have a valid user from JWT, we probably want to keep it.
+    if (req.user) return next();
+
     const authHeader = req.header("Authorization");
     if (authHeader === "Bearer mock-token-for-mvp") {
       req.user = { id: "student-123", role: "student" };

@@ -6,16 +6,20 @@ import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
 import matchRouter from "./routes/match";
 import authRouter from "./routes/auth";
-import { devRoleShim } from "./utils/auth";
+import { devRoleShim, authenticateToken } from "./utils/auth";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Public routes (Auth) - Mount before devRoleShim to ensure access
+// Public routes (Auth) - Mount before auth middleware to ensure access
 app.use("/api", authRouter);
 
+// 🛡️ Sentinel: Mount dev shim BEFORE auth token middleware.
+// This allows the "mock-token-for-mvp" to be handled by the shim
+// without triggering a "jwt malformed" error in authenticateToken.
 app.use(devRoleShim);
+app.use(authenticateToken);
 
 app.use("/api", modulesRouter);
 app.use("/api", progressRouter);
