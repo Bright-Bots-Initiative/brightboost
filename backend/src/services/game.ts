@@ -45,10 +45,15 @@ export async function resolveTurn(matchId: string, actorId: string, abilityId: s
     heal = config.value || 10;
   }
 
-  await prisma.matchTurn.create({
+  // Optimization: Fetch turns first to get round count AND history for HP calc.
+  // Saves 1 count query + 1 redundant findMany.
+  const turns = await prisma.matchTurn.findMany({ where: { matchId } });
+  const nextRound = turns.length + 1;
+
+  const newTurn = await prisma.matchTurn.create({
     data: {
       matchId,
-      round: (await prisma.matchTurn.count({ where: { matchId } })) + 1,
+      round: nextRound,
       actorId,
       action: {
         abilityId,
@@ -58,7 +63,7 @@ export async function resolveTurn(matchId: string, actorId: string, abilityId: s
     }
   });
 
-  const turns = await prisma.matchTurn.findMany({ where: { matchId } });
+  turns.push(newTurn);
 
   let p1DamageTaken = 0;
   let p2DamageTaken = 0;
