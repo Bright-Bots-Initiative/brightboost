@@ -10,7 +10,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const avatar = await prisma.avatar.findUnique({
     where: { studentId },
-    include: { unlockedAbilities: { include: { Ability: true } } }
+    include: { unlockedAbilities: { include: { Ability: true } } },
   });
 
   if (!avatar) {
@@ -45,18 +45,18 @@ router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
       level: 1,
       xp: 0,
       hp: 100,
-      energy: 100
-    }
+      energy: 100,
+    },
   });
 
   // Unlock default abilities
   const defaults = await prisma.ability.findMany({
-    where: { archetype: archetype as any, reqLevel: 1 }
+    where: { archetype: archetype as any, reqLevel: 1 },
   });
 
   for (const ab of defaults) {
     await prisma.unlockedAbility.create({
-      data: { avatarId: avatar.id, abilityId: ab.id }
+      data: { avatarId: avatar.id, abilityId: ab.id },
     });
   }
 

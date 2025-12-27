@@ -38,7 +38,8 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
 
 export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
   // 🛡️ Sentinel: Restrict development backdoors to non-production environments
-  const isDevOrTest = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  const isDevOrTest =
+    process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
   if (isDevOrTest) {
     // If authenticateToken already verified a user, skip the shim logic?
@@ -64,7 +65,7 @@ export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
-      return res.status(401).json({ error: "unauthorized" });
+    return res.status(401).json({ error: "unauthorized" });
   }
   next();
 }

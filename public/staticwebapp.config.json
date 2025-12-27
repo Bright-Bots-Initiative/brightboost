@@ -3,13 +3,13 @@
     {
       "route": "/gw",
       "allowedRoles": ["anonymous"],
-      "methods": ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod"
     },
     {
       "route": "/gw/*",
       "allowedRoles": ["anonymous"],
-      "methods": ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       "rewrite": "https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod/{*path}"
     },
     {
