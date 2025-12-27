@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
@@ -59,7 +59,11 @@ const TeacherLogin: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4"
+              role="alert"
+              aria-live="polite"
+            >
               {error}
             </div>
           )}
@@ -104,11 +108,19 @@ const TeacherLogin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
+              aria-busy={isLoading}
               className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
                 isLoading ? "bg-brightboost-blue/70" : "bg-brightboost-blue"
-              } transition-colors`}
+              } transition-colors flex items-center justify-center`}
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
             </button>
           </form>
 
