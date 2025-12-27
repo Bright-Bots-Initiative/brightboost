@@ -54,10 +54,15 @@ export async function resolveTurn(
     heal = config.value || 10;
   }
 
-  await prisma.matchTurn.create({
+  // Optimization: Fetch turns first to get round count AND history for HP calc.
+  // Saves 1 count query + 1 redundant findMany.
+  const turns = await prisma.matchTurn.findMany({ where: { matchId } });
+  const nextRound = turns.length + 1;
+
+  const newTurn = await prisma.matchTurn.create({
     data: {
       matchId,
-      round: (await prisma.matchTurn.count({ where: { matchId } })) + 1,
+      round: nextRound,
       actorId,
       action: {
         abilityId,
@@ -67,7 +72,7 @@ export async function resolveTurn(
     },
   });
 
-  const turns = await prisma.matchTurn.findMany({ where: { matchId } });
+  turns.push(newTurn);
 
   let p1DamageTaken = 0;
   let p2DamageTaken = 0;
@@ -120,19 +125,33 @@ export async function checkUnlocks(studentId: string) {
       data: { level: newLevel, xp: { increment: 100 } },
     });
 
-    const abilities = await prisma.ability.findMany({
-      where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
-    });
-
-    for (const ab of abilities) {
-      const existing = await prisma.unlockedAbility.findFirst({
-        where: { avatarId: avatar.id, abilityId: ab.id },
-      });
-      if (!existing) {
-        await prisma.unlockedAbility.create({
-          data: { avatarId: avatar.id, abilityId: ab.id },
+        // ⚡ Bolt Optimization: Batch fetch & create to avoid N+1 query
+        const eligibleAbilities = await prisma.ability.findMany({
+            where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } }
         });
-      }
+
+        if (eligibleAbilities.length === 0) return;
+
+        const existingUnlocks = await prisma.unlockedAbility.findMany({
+            where: {
+                avatarId: avatar.id,
+                abilityId: { in: eligibleAbilities.map(a => a.id) }
+            },
+            select: { abilityId: true }
+        });
+
+        const existingAbilityIds = new Set(existingUnlocks.map(u => u.abilityId));
+        const newUnlocks = eligibleAbilities.filter(ab => !existingAbilityIds.has(ab.id));
+
+        if (newUnlocks.length > 0) {
+            await prisma.unlockedAbility.createMany({
+                data: newUnlocks.map(ab => ({
+                    avatarId: avatar.id,
+                    abilityId: ab.id,
+                    equipped: false
+                }))
+            });
+        }
     }
   }
 }

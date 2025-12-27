@@ -77,6 +77,8 @@ model Unit {
 
   // Index for filtering lessons by teacher
   @@index([teacherId])
+  // Index for filtering units by module
+  @@index([moduleId])
 }
 
 model Lesson {
@@ -87,6 +89,9 @@ model Lesson {
 
   Unit      Unit       @relation(fields: [unitId], references: [id])
   activities Activity[]
+
+  // Index for filtering lessons by unit
+  @@index([unitId])
 }
 
 model Activity {
@@ -104,6 +109,8 @@ model Activity {
   Unit     Unit? @relation(fields: [unitId], references: [id])
 
   @@unique([lessonId, order]) // renamed from index to order for clarity
+  // Index for filtering activities by unit
+  @@index([unitId])
 }
 
 // -----------------------------------------------------------------------------
@@ -184,6 +191,8 @@ model UnlockedAbility {
   Ability   Ability @relation(fields: [abilityId], references: [id], onDelete: Cascade)
 
   @@unique([avatarId, abilityId])
+  // Index for finding which users have a specific ability
+  @@index([abilityId])
 }
 
 enum MatchStatus {
@@ -207,6 +216,10 @@ model Match {
   Player2   Avatar?     @relation("Player2", fields: [player2Id], references: [id])
 
   turns     MatchTurn[]
+
+  // Index for frequent lookups of matches by player
+  @@index([player1Id])
+  @@index([player2Id])
 }
 
 model MatchTurn {
@@ -218,6 +231,9 @@ model MatchTurn {
   createdAt DateTime @default(now())
 
   Match     Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  // Index for fetching turns of a match (hot path)
+  @@index([matchId])
 }
 
 // -----------------------------------------------------------------------------
@@ -247,6 +263,8 @@ model UserBadge {
   Badge     Badge    @relation(fields: [badgeId], references: [id])
 
   @@unique([userId, badgeId])
+  // Index for finding which users have a specific badge
+  @@index([badgeId])
 }
 
 model Course {

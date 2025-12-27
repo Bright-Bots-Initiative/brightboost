@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PrismaClient, MatchStatus } from "@prisma/client";
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
+import { isValidBand } from "../utils/validation";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -11,8 +12,25 @@ router.post("/match/queue", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const { band } = req.body; // e.g. "K2"
 
+  if (band && !isValidBand(band)) {
+    return res.status(400).json({ error: "Invalid band" });
+  }
+  const selectedBand = band || "K2";
+
   const avatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!avatar) return res.status(400).json({ error: "No avatar found" });
+
+  // Check if user is already in a pending match
+  const existingPending = await prisma.match.findFirst({
+    where: {
+      player1Id: avatar.id,
+      status: MatchStatus.PENDING
+    }
+  });
+
+  if (existingPending) {
+    return res.json({ matchId: existingPending.id, status: "PENDING" });
+  }
 
   // Look for open match
   const openMatch = await prisma.match.findFirst({
@@ -48,6 +66,8 @@ router.post("/match/queue", requireAuth, async (req, res) => {
 
 // Get match state
 router.get("/match/:id", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+
   const match = await prisma.match.findUnique({
     where: { id: req.params.id },
     include: {
@@ -62,7 +82,7 @@ router.get("/match/:id", requireAuth, async (req, res) => {
   });
   if (!match) return res.status(404).json({ error: "Match not found" });
 
-  const studentId = req.user!.id;
+  // 🛡️ Sentinel: Verify user is a participant (IDOR protection)
   const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
 
   // Access control: User must be a participant
