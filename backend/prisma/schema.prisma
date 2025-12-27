@@ -220,6 +220,8 @@ model Match {
   // Index for frequent lookups of matches by player
   @@index([player1Id])
   @@index([player2Id])
+  // Index for matchmaking queue (finding pending matches in specific band)
+  @@index([status, band])
 }
 
 model MatchTurn {
