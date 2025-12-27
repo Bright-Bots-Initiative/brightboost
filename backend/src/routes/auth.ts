@@ -151,8 +151,10 @@ router.post("/login", async (req: Request, res: Response) => {
     // Security: Only attempt plaintext comparison if the stored password is NOT a bcrypt hash
     // (Bcrypt hashes start with $2a$, $2b$, or $2y$ and are 60 chars long)
     const isBcryptHash = user.password.startsWith("$2") && user.password.length === 60;
+    const isDevOrTest = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
-    if (!isValid && !isBcryptHash && user.password === data.password) {
+    // 🛡️ Sentinel: Only allow plaintext fallback in dev/test to prevent production credential downgrade attacks
+    if (!isValid && !isBcryptHash && isDevOrTest && user.password === data.password) {
         isValid = true;
     }
 

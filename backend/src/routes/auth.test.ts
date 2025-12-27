@@ -116,6 +116,34 @@ describe("Auth Routes", () => {
       expect(response.body).toHaveProperty("token");
     });
 
+    it("should reject plaintext credentials in production", async () => {
+      // Mock NODE_ENV to production
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = "production";
+
+      try {
+        // @ts-ignore
+        prismaMock.user.findUnique.mockResolvedValue({
+          id: "user-123",
+          email: "user@test.com",
+          password: "password123", // Stored as plaintext
+          role: "student",
+        });
+
+        const response = await request(app)
+          .post("/api/login")
+          .send({
+            email: "user@test.com",
+            password: "password123",
+          });
+
+        expect(response.status).toBe(401);
+      } finally {
+        // Reset NODE_ENV
+        process.env.NODE_ENV = originalEnv;
+      }
+    });
+
     it("should return 401 for invalid password", async () => {
       const hashedPassword = await bcrypt.hash("correctpassword", 10);
 
