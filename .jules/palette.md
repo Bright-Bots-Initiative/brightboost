@@ -10,3 +10,6 @@
 ## 2025-12-25 - Dynamic Alert Accessibility
 **Learning:** Dynamically rendered error containers (like login failures) are not announced by screen readers unless they have `role="alert"` and `aria-live` attributes.
 **Action:** Always add `role="alert"` and `aria-live="polite"` to conditional error message containers.
+## 2025-01-20 - Password Visibility Patterns
+**Learning:** Password fields without a visibility toggle are a significant usability hurdle and accessibility issue. Implementing them with `lucide-react` icons (Eye/EyeOff) is straightforward but requires checking icon availability in the project dependencies first.
+**Action:** When adding password inputs, always include a visibility toggle using the relative container pattern found in `StudentLogin` and `TeacherLogin`.
