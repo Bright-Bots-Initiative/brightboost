@@ -1,6 +1,8 @@
 import express from "express";
 import type { Request, Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import modulesRouter from "./routes/modules";
 import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
@@ -9,6 +11,25 @@ import authRouter from "./routes/auth";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 
 const app = express();
+
+// Trust proxy is required for rate limiting behind a reverse proxy (like Railway/Vercel)
+app.set("trust proxy", 1);
+
+// Security headers
+app.use(helmet());
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+
+// Apply rate limiting to all API routes - BEFORE body parsing
+app.use("/api", apiLimiter);
+
 app.use(cors());
 app.use(express.json());
 
