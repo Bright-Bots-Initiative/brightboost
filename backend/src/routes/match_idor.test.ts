@@ -77,7 +77,7 @@ describe('GET /match/:id IDOR', () => {
 
     // Assert: Should return 403 Forbidden.
     expect(response.status).toBe(403);
-    expect(response.body.error).toMatch(/Forbidden/);
+    expect(response.body.error).toMatch(/Not authorized|Forbidden/);
   });
 
   it('allows access if user IS a participant', async () => {

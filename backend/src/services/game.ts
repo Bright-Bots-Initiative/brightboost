@@ -153,5 +153,4 @@ export async function checkUnlocks(studentId: string) {
             });
         }
     }
-  }
 }
