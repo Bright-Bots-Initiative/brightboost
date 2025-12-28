@@ -1,7 +1,6 @@
 // backend/src/services/game.ts
-import { PrismaClient, MatchStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { MatchStatus } from "@prisma/client";
+import prisma from "../utils/prisma";
 
 // Rock-Paper-Scissors modifiers
 // Using string literals to avoid runtime Enum issues

@@ -1,10 +1,9 @@
-import { PrismaClient, ProgressStatus, Progress } from "@prisma/client";
+import { ProgressStatus, Progress } from "@prisma/client";
+import prisma from "../utils/prisma";
 import { checkpointSchema } from "../validation/schemas";
 import { z } from "zod";
 
 type CheckpointData = z.infer<typeof checkpointSchema>;
-
-const prisma = new PrismaClient();
 
 export async function upsertCheckpoint(data: CheckpointData) {
   // 1. Find existing progress

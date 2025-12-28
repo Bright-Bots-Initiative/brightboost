@@ -1,9 +1,8 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Get current user's avatar
 router.get("/avatar/me", requireAuth, async (req, res) => {

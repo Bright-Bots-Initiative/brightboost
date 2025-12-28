@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { PrismaClient, MatchStatus } from "@prisma/client";
+import { MatchStatus } from "@prisma/client";
+import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
 import { isValidBand } from "../utils/validation";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Queue for a match
 router.post("/match/queue", requireAuth, async (req, res) => {

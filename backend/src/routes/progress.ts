@@ -1,13 +1,13 @@
 // backend/src/routes/progress.ts
 import { Router } from "express";
-import { PrismaClient, ProgressStatus } from "@prisma/client";
+import { ProgressStatus } from "@prisma/client";
+import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
 import { checkpointSchema } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Get progress for a student
 router.get("/progress", requireAuth, async (req, res) => {
