@@ -1,11 +1,10 @@
 import { Router, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import prisma from "../utils/prisma";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
