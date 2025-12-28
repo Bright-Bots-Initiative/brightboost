@@ -6,6 +6,7 @@ import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
 import { checkpointSchema } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
+import { getWeeklyProgress } from "../services/progress_weekly";
 
 const router = Router();
 
@@ -26,6 +27,17 @@ router.get("/get-progress", requireAuth, async (req, res) => {
     where: { studentId: req.user!.id },
   });
   res.json({ user, progress });
+});
+
+// Weekly progress endpoint (Auto-creates snapshot if missing)
+router.get("/progress/weekly", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+  try {
+    const snapshot = await getWeeklyProgress(studentId);
+    res.json(snapshot);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 router.get("/progress/:studentId", requireAuth, async (req, res) => {

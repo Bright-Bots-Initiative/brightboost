@@ -13,7 +13,7 @@
     "predeploy": "sh scripts/predeploy.sh"
   },
   "dependencies": {
-    "@prisma/client": "6.19.1",
+    "@prisma/client": "^6.19.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",
@@ -30,7 +30,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.9",
     "@types/supertest": "^6.0.3",
-    "prisma": "6.19.1",
+    "prisma": "^6.19.1",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
