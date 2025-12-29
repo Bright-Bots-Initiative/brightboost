@@ -8,6 +8,7 @@
     "db:migrate": "prisma migrate deploy --schema=prisma/schema.prisma",
     "build:web": "cd .. && bun install && bun run build",
     "build": "bun run build:web && bun run db:generate && tsc -p .",
+    "build:railway": "npm run db:generate && tsc -p .",
     "start": "bun run predeploy && node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
