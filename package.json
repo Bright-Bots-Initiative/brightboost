@@ -161,6 +161,10 @@
     "react",
     "typescript"
   ],
+  "engines": {
+    "node": "20.x",
+    "bun": ">=1.1.0"
+  },
   "author": "Bright Bots Initiative",
   "license": "ISC",
   "eslintConfig": {
