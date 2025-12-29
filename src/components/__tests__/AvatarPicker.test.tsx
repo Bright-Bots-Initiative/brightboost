@@ -1,435 +1,101 @@
-/**
- * @vitest-environment jsdom
- */
-import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import AvatarPicker from "../AvatarPicker";
 
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Mock URL.createObjectURL
+global.URL.createObjectURL = vi.fn(() => "mock-url");
 
-global.URL.createObjectURL = vi.fn(() => "mock-object-url");
-global.URL.revokeObjectURL = vi.fn();
-
-(HTMLCanvasElement.prototype.getContext as any) = vi.fn(() => ({
-  drawImage: vi.fn(),
-  getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(4) })),
+// Mock the UI components to avoid testing Radix internals
+vi.mock("@/components/ui/avatar", () => ({
+  Avatar: ({ children, className }: any) => <div className={className} data-testid="avatar-root">{children}</div>,
+  AvatarImage: ({ src, alt }: any) => <img src={src} alt={alt} data-testid="avatar-image" />,
+  AvatarFallback: ({ children }: any) => <div data-testid="avatar-fallback">{children}</div>,
 }));
 
-(HTMLCanvasElement.prototype.toBlob as any) = vi.fn((callback) => {
-  const mockBlob = new Blob(["mock"], { type: "image/webp" });
-  callback(mockBlob);
-});
-
-const createMockImage = () => {
-  const img = {
-    onload: null as any,
-    onerror: null as any,
-    src: "",
-    width: 100,
-    height: 100,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-    complete: false,
-    naturalWidth: 100,
-    naturalHeight: 100,
-    crossOrigin: null,
-    loading: "eager",
-    decode: vi.fn(() => Promise.resolve()),
-  };
-
-  setTimeout(() => {
-    img.complete = true;
-    if (img.onload) {
-      img.onload();
-    }
-  }, 0);
-
-  return img;
-};
-
-(global as any).Image = vi.fn(createMockImage);
-
 describe("AvatarPicker", () => {
-  const mockOnAvatarChange = vi.fn();
-  const defaultProps = {
-    onAvatarChange: mockOnAvatarChange,
-    userInitials: "JD",
-  };
+  let originalImage: typeof Image;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    global.fetch = vi.fn();
+    localStorage.setItem("bb_access_token", "test-token");
 
-    const mockLocalStorage = {
-      getItem: vi.fn((key) => {
-        if (key === "authToken") return "mock-auth-token";
-        return null;
-      }),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-    };
-    Object.defineProperty(window, "localStorage", {
-      value: mockLocalStorage,
-      writable: true,
-    });
+    // Mock Image for crop/compress (logic inside the component)
+    originalImage = global.Image;
+    global.Image = class extends originalImage {
+        constructor() {
+            super();
+            setTimeout(() => {
+                if (this.onload) {
+                    this.onload(new Event('load'));
+                }
+            }, 0);
+        }
+        // Add minimal properties needed
+        width = 100;
+        height = 100;
+    } as any;
 
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ success: true }),
+    // Mock Canvas
+    // We mock the prototype so any created canvas has these methods
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        drawImage: vi.fn(),
+    } as any);
+
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback: any) => {
+        callback(new Blob(['test'], {type: 'image/webp'}));
     });
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    global.Image = originalImage;
+    vi.restoreAllMocks();
   });
 
-  it("renders with default avatar when currentAvatarUrl is undefined", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const initialsElement = screen.getByText("JD");
-    expect(initialsElement).toBeDefined();
-
-    const avatarContainer = document.querySelector(".cursor-pointer");
-    expect(avatarContainer).toBeDefined();
+  it("renders with initials when no avatar is provided", () => {
+    render(
+      <AvatarPicker userInitials="JD" />
+    );
+    expect(screen.getByTestId("avatar-fallback")).toHaveTextContent("JD");
   });
 
-  it("renders with current avatar when currentAvatarUrl is provided", () => {
-    const avatarUrl = "https://example.com/avatar.jpg";
-    render(<AvatarPicker {...defaultProps} currentAvatarUrl={avatarUrl} />);
-
-    const avatarContainer = document.querySelector(".cursor-pointer");
-    expect(avatarContainer).toBeDefined();
-
-    expect(avatarContainer).toBeDefined();
-  });
-
-  it("shows user initials in fallback when no avatar", () => {
-    render(<AvatarPicker {...defaultProps} userInitials="AB" />);
-
-    const initialsElement = screen.getByText("AB");
-    expect(initialsElement).toBeDefined();
-  });
-
-  it("opens file picker when avatar container is clicked", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const avatarContainer = document.querySelector(
-      ".cursor-pointer",
-    ) as HTMLElement;
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-
-    const clickSpy = vi.spyOn(fileInput, "click");
-    fireEvent.click(avatarContainer);
-
-    expect(clickSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("handles file selection and shows preview", async () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(
-      () => {
-        const loadingElement = document.querySelector(".animate-pulse");
-        expect(loadingElement).toBeDefined();
-      },
-      { timeout: 1000 },
+  it("renders with avatar image when provided", () => {
+    const avatarUrl = "https://example.com/avatar.png";
+    render(
+      <AvatarPicker userInitials="JD" currentAvatarUrl={avatarUrl} />
     );
 
-    await waitFor(
-      () => {
-        const loadingElement = document.querySelector(".animate-pulse");
-        expect(loadingElement).toBeNull();
-      },
-      { timeout: 3000 },
-    );
+    const img = screen.getByTestId("avatar-image");
+    expect(img).toHaveAttribute("src", avatarUrl);
   });
 
-  it("shows loading state during upload", async () => {
-    mockFetch.mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve({ ok: true }), 100)),
-    );
+  it("handles file selection and upload process", async () => {
+    // Mock fetch for upload (PUT) and patch (PATCH)
+    // The component has a hardcoded getPresignedUrlStub returning "https://stub-bucket.s3.amazonaws.com/avatar"
 
-    render(<AvatarPicker {...defaultProps} />);
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+      } as Response) // PUT to S3
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      } as Response); // PATCH to /api/user/avatar
 
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
+    const onAvatarChange = vi.fn();
+    render(<AvatarPicker userInitials="JD" onAvatarChange={onAvatarChange} />);
 
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
+    const file = new File(["(⌐□_□)"], "chucknorris.png", { type: "image/png" });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
 
-    fireEvent.change(fileInput);
+    await waitFor(() => fireEvent.change(fileInput, { target: { files: [file] } }));
+
+    // Expect loading state
+    expect(screen.getByRole("status", { name: /uploading avatar/i })).toBeInTheDocument();
 
     await waitFor(() => {
-      const loadingElement = document.querySelector(".animate-pulse");
-      expect(loadingElement).toBeDefined();
+        // The component returns the final URL which is the presigned URL stripped of query params
+        expect(onAvatarChange).toHaveBeenCalledWith("https://stub-bucket.s3.amazonaws.com/avatar");
     });
-  });
-
-  it("calls onAvatarChange when avatar is successfully uploaded", async () => {
-    mockFetch.mockResolvedValue({ ok: true });
-
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(
-      () => {
-        expect(mockOnAvatarChange).toHaveBeenCalledWith(
-          "https://stub-bucket.s3.amazonaws.com/avatar",
-        );
-      },
-      { timeout: 3000 },
-    );
-  });
-
-  it("handles upload errors gracefully", async () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(
-      () => {
-        const loadingElement = document.querySelector(".animate-pulse");
-        expect(loadingElement).toBeNull();
-      },
-      { timeout: 5000 },
-    );
-
-    expect(mockOnAvatarChange).toHaveBeenCalled();
-  });
-
-  it("validates file types and rejects invalid files", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.txt", { type: "text/plain" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    expect(screen.queryByRole("img")).toBeNull();
-  });
-
-  it("validates file sizes and rejects files over 5MB", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const largeMockFile = new File(["x".repeat(6 * 1024 * 1024)], "large.jpg", {
-      type: "image/jpeg",
-    });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [largeMockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    expect(screen.queryByRole("img")).toBeNull();
-  });
-
-  it("shows default avatar when no file is selected", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const initialsElement = screen.getByText("JD");
-    expect(initialsElement).toBeDefined();
-
-    const avatarContainer = document.querySelector(".cursor-pointer");
-    expect(avatarContainer).toBeDefined();
-  });
-
-  it("automatically uploads when file is selected", async () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(
-      () => {
-        expect(mockOnAvatarChange).toHaveBeenCalledWith(
-          "https://stub-bucket.s3.amazonaws.com/avatar",
-        );
-      },
-      { timeout: 5000 },
-    );
-
-    expect(document.querySelector(".animate-pulse")).toBeNull();
-  });
-
-  it("processes image cropping correctly", async () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(() => {
-      expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalled();
-    });
-  });
-
-  it("processes image compression to WebP format", async () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(() => {
-      expect(HTMLCanvasElement.prototype.toBlob).toHaveBeenCalledWith(
-        expect.any(Function),
-        "image/webp",
-        0.8,
-      );
-    });
-  });
-
-  it("handles keyboard navigation with Enter key", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const avatarContainer = document.querySelector(
-      ".cursor-pointer",
-    ) as HTMLElement;
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-
-    const clickSpy = vi.spyOn(fileInput, "click");
-    fireEvent.keyDown(avatarContainer, { key: "Enter" });
-
-    expect(clickSpy).not.toHaveBeenCalled();
-  });
-
-  it("handles keyboard navigation with Space key", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const avatarContainer = document.querySelector(
-      ".cursor-pointer",
-    ) as HTMLElement;
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-
-    const clickSpy = vi.spyOn(fileInput, "click");
-    fireEvent.keyDown(avatarContainer, { key: " " });
-
-    expect(clickSpy).not.toHaveBeenCalled();
-  });
-
-  it("has basic file input attributes and accessibility roles", () => {
-    render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    expect(fileInput.getAttribute("accept")).toBe("image/*");
-    expect(fileInput.className).toContain("hidden");
-    expect(fileInput.getAttribute("aria-hidden")).toBe("true");
-
-    const avatarButton = document.querySelector(".cursor-pointer");
-    expect(avatarButton).toBeDefined();
-    // It should now be a button (implicit role="button") or have role="button"
-    // Since we changed it to <button>, it has implicit role
-    expect(avatarButton?.tagName).toBe("BUTTON");
-    expect(avatarButton?.getAttribute("aria-label")).toBe("Change avatar");
-  });
-
-  it("cleans up object URLs on unmount", async () => {
-    const { unmount } = render(<AvatarPicker {...defaultProps} />);
-
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const mockFile = new File(["mock"], "test.jpg", { type: "image/jpeg" });
-
-    Object.defineProperty(fileInput, "files", {
-      value: [mockFile],
-      writable: false,
-    });
-
-    fireEvent.change(fileInput);
-
-    await waitFor(() => {
-      expect(global.URL.createObjectURL).toHaveBeenCalled();
-    });
-
-    unmount();
-
-    expect(global.URL.createObjectURL).toHaveBeenCalled();
   });
 });

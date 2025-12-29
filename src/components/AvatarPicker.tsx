@@ -16,7 +16,7 @@ async function getPresignedUrlStub(): Promise<string> {
 }
 
 async function patchUserAvatarStub(url: string): Promise<void> {
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("bb_access_token");
   if (!token) {
     throw new Error("No authentication token found");
   }
