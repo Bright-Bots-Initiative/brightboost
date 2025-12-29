@@ -142,16 +142,22 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
       },
     });
   } else {
-    finalProgress = await prisma.progress.create({
-      data: {
-        studentId,
-        moduleSlug,
-        lessonId,
-        activityId,
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: timeSpentS || 0,
-      },
-    });
+       finalProgress = await prisma.progress.create({
+           data: {
+              studentId,
+              moduleSlug,
+              lessonId,
+              activityId,
+              status: ProgressStatus.COMPLETED,
+              timeSpentS: timeSpentS || 0
+           }
+       });
+
+       // Award XP
+       await prisma.avatar.update({
+           where: { studentId },
+           data: { xp: { increment: 50 } }
+       });
 
     try {
       await prisma.avatar.update({
