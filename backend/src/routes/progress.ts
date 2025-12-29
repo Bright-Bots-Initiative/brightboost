@@ -6,7 +6,6 @@ import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
 import { checkpointSchema } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
-import { getWeeklyProgress } from "../services/progress_weekly";
 
 const router = Router();
 
@@ -61,10 +60,15 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
            }
        });
 
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
+       try {
+        // Award XP
+        await prisma.avatar.update({
+            where: { studentId },
+            data: { xp: { increment: 50 } }
+        });
+       } catch (e) {
+           console.warn("Could not give XP to avatar", e);
+       }
 
        await checkUnlocks(studentId);
   }
