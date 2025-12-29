@@ -6,7 +6,6 @@ import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
 import { checkpointSchema } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
-import { getWeeklyProgress } from "../services/progress_weekly";
 
 const router = Router();
 
@@ -61,10 +60,15 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
            }
        });
 
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
+       try {
+        // Award XP
+        await prisma.avatar.update({
+            where: { studentId },
+            data: { xp: { increment: 50 } }
+        });
+       } catch (e) {
+           console.warn("Could not give XP to avatar", e);
+       }
 
        await checkUnlocks(studentId);
   }
@@ -111,65 +115,6 @@ router.post("/progress/checkpoint", requireAuth, async (req, res) => {
     });
   } catch (e: any) {
     res.status(400).json({ error: e.message });
-  }
-});
-
-router.post("/assessment/submit", requireAuth, async (req, res) => {
-  const parse = assessmentSubmitSchema.safeParse(req.body);
-  if (!parse.success)
-    return res.status(400).json({ error: parse.error.flatten() });
-// Complete an activity
-router.post("/progress/complete-activity", requireAuth, async (req, res) => {
-  const studentId = req.user!.id;
-  const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
-
-  // 1. Upsert progress
-  const existing = await prisma.progress.findFirst({
-    where: { studentId, activityId },
-  });
-
-  if (existing && existing.status === ProgressStatus.COMPLETED) {
-    return res.json({ message: "Already completed", progress: existing });
-  }
-
-  let finalProgress;
-  if (existing) {
-    finalProgress = await prisma.progress.update({
-      where: { id: existing.id },
-      data: {
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: { increment: timeSpentS || 0 },
-      },
-    });
-  } else {
-       finalProgress = await prisma.progress.create({
-           data: {
-              studentId,
-              moduleSlug,
-              lessonId,
-              activityId,
-              status: ProgressStatus.COMPLETED,
-              timeSpentS: timeSpentS || 0
-           }
-       });
-
-       // Award XP
-       await prisma.avatar.update({
-           where: { studentId },
-           data: { xp: { increment: 50 } }
-       });
-
-    try {
-      await prisma.avatar.update({
-        where: { studentId },
-        data: { xp: { increment: 50 } },
-      });
-    } catch (e) {
-      // Avatar might not exist
-      console.warn("Could not give XP to avatar", e);
-    }
-
-    await checkUnlocks(studentId);
   }
 });
 

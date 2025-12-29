@@ -17,7 +17,7 @@ vi.mock('@prisma/client', () => {
     },
   };
   return {
-    PrismaClient: vi.fn(() => mPrisma),
+    PrismaClient: class { constructor() { return mPrisma; } },
     MatchStatus: {
       PENDING: 'PENDING',
       ACTIVE: 'ACTIVE',
