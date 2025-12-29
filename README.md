@@ -8,7 +8,7 @@ BrightBoost is an interactive learning platform designed to help teachers create
 - **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
 - **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
 - **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-- **Persistent Data Storage:** User and lesson data is stored persistently using Aurora PostgreSQL (AWS RDS).
+- **Persistent Data Storage:** User and lesson data is stored persistently using Supabase PostgreSQL.
 - **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
 - **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
 
@@ -38,12 +38,13 @@ This project is built with a modern web technology stack:
   - React Router (for navigation)
   - Context API (for state management, e.g., AuthContext)
 - **Backend:**
-  - AWS Lambda with API Gateway
-  - Aurora PostgreSQL (AWS RDS)
+  - Node.js / Express
+  - Prisma ORM
+  - Supabase PostgreSQL
   - JSON Web Tokens (JWT) for authentication
   - `bcryptjs` for password hashing
 
-**Architecture:** Frontend: Azure Static Web Apps | Backend: AWS Lambda + API Gateway | Database: Aurora PostgreSQL (RDS)
+**Architecture:** Frontend: Replit | Backend: Replit | Database: Supabase PostgreSQL
 
 - **Testing:**
   - Vitest (for unit/integration tests)
@@ -60,6 +61,7 @@ To get a local copy up and running, follow these simple steps.
 
 - Node.js (v18 or later recommended)
 - npm (comes with Node.js)
+- pnpm (recommended for package management)
 
 **Installation & Setup:**
 
@@ -74,26 +76,19 @@ To get a local copy up and running, follow these simple steps.
     This will install both frontend and backend dependencies.
 
     ```sh
-    npm install
-    cd src/lambda && npm install && cd ../..
+    pnpm install
     ```
 
 3.  **Configure Environment Variables:**
-    Create a `.env` file in the root of the project:
+    Create a `.env` file in the root of the project. See `.env.example` for required variables.
 
     ```env
-    VITE_AWS_API_URL=https://your-api-gateway-url.execute-api.region.amazonaws.com/stage
+    VITE_API_BASE=http://localhost:3000/api
     ```
-
-    Replace with your actual AWS API Gateway URL. Backend environment variables are managed through AWS Secrets Manager.
 
 ## API Configuration
 
-The application uses `VITE_AWS_API_URL` to configure the backend API endpoint:
-
-- **Development**: Uses environment variable or defaults to production endpoint
-- **Production**: Set via Azure Static Web App configuration in Azure Portal
-- **Testing**: All authentication flows (login/signup for both teachers and students) use this single endpoint
+The application uses `VITE_API_BASE` to configure the backend API endpoint.
 
 ### Cypress Production Testing
 
@@ -101,16 +96,13 @@ To run Cypress tests against production or staging environments:
 
 ```bash
 # Test smoke tests against production
-CYPRESS_BASE_URL=https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net npx cypress run --spec "cypress/e2e/smoke.cy.ts"
+CYPRESS_BASE_URL=https://your-replit-app.replit.app npx cypress run --spec "cypress/e2e/smoke.cy.ts"
 
 # Test all tests against production
-CYPRESS_BASE_URL=https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net npx cypress run
-
-# Test against staging
-CYPRESS_BASE_URL=https://your-staging-url.azurestaticapps.net npx cypress run
+CYPRESS_BASE_URL=https://your-replit-app.replit.app npx cypress run
 ```
 
-The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development. The smoke tests will automatically handle authentication by seeding tokens in localStorage.
+The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development.
 
 4.  **Running the Application:**
     To run the frontend Vite development server:
@@ -123,52 +115,45 @@ The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment vari
     - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
 
 5.  **Running the Backend Locally:**
-    The backend now runs on AWS Lambda. For local development, you can use the mock server:
     ```sh
-    npm run server
+    cd backend
+    npm run dev
     ```
     This will start a local Express server for development.
 
 ## Production Deployment
 
-**Live Application:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
-
-The application is deployed using Azure Static Web Apps for the frontend with an AWS Lambda backend.
+The application is deployed using Replit for the application and Supabase for the database.
 
 ## Deployment
 
-This project uses a hybrid deployment approach:
+This project uses a modern deployment approach:
 
-### Backend Deployment (AWS Lambda)
+### Backend Deployment (Replit)
 
-The backend is deployed to AWS Lambda using GitHub Actions CI/CD pipeline. The deployment workflow is defined in `.github/workflows/aws-lambda-deploy.yml`.
+The backend is deployed to Replit.
 
 **Backend Infrastructure:**
 
-- **AWS Lambda** for serverless backend functions
-- **Aurora PostgreSQL** (AWS RDS) for data persistence
-- **API Gateway** for HTTP API endpoints
-- **AWS Secrets Manager** for secure credential storage
+- **Node.js** for backend server
+- **Supabase PostgreSQL** for data persistence
+- **Prisma ORM** for database access
 
-### Frontend Deployment (Azure Static Web Apps)
+### Frontend Deployment (Replit)
 
-The frontend continues to be deployed to Azure Static Web Apps for optimal performance and global distribution.
-
-**Frontend URL:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+The frontend is deployed to Replit.
 
 ### Deployment Pipeline
 
 The deployment pipeline:
 
-1. **Frontend**: Builds and deploys React application to Azure Static Web Apps
-2. **Backend**: Builds TypeScript Lambda functions and deploys to AWS using SAM
-3. **Database**: Uses Aurora PostgreSQL cluster in AWS
-4. **API Integration**: Frontend calls AWS API Gateway endpoints directly
+1. **Frontend**: Builds and deploys React application to Replit
+2. **Backend**: Builds TypeScript Express app and deploys to Replit
+3. **Database**: Uses Supabase PostgreSQL
 
 **Environment Variables:**
 
-- `VITE_AWS_API_URL`: AWS API Gateway endpoint URL
-- Backend credentials stored in AWS Secrets Manager
+- `VITE_API_BASE`: Backend API URL
 
 ## Troubleshooting Auth Redirects
 
@@ -176,27 +161,21 @@ The deployment pipeline:
 
 **"Failed to fetch" errors during login/signup:**
 
-- Ensure `VITE_AWS_API_URL` is set correctly in your `.env` file
-- Check that the AWS Lambda endpoints are deployed and accessible
-- Verify network connectivity to AWS API Gateway
+- Ensure `VITE_API_BASE` is set correctly in your `.env` file
+- Check that the backend server is running
+- Verify network connectivity
 
 **Redirects not working after login/signup:**
 
-- Check browser localStorage for `brightboost_token` key (not `token`)
+- Check browser localStorage for `bb_access_token` key
 - Ensure user object contains valid `role` field ('teacher' or 'student')
 - Check browser console for navigation errors
 
 **Token not persisting across page reloads:**
 
-- Verify `brightboost_token` is stored in localStorage
+- Verify `bb_access_token` is stored in localStorage
 - Check that AuthContext is properly wrapping your app
-- Ensure token hasn't expired (24-hour expiration)
-
-**API calls failing with authentication errors:**
-
-- Verify `Authorization: Bearer <token>` header is attached to requests
-- Check that token is valid and not expired
-- Ensure API endpoints are configured to accept JWT tokens
+- Ensure token hasn't expired
 
 ## Project Structure (Simplified)
 
@@ -211,14 +190,10 @@ The deployment pipeline:
 │   ├── services/       # API service integration
 │   ├── App.tsx         # Main application component
 │   └── main.tsx        # Entry point for the React app
-├── src/lambda/         # AWS Lambda backend functions
-│   ├── teacher-signup.ts # Teacher signup Lambda function
-│   ├── package.json    # Lambda dependencies
-│   └── tsconfig.json   # TypeScript configuration
-├── prisma/             # Prisma ORM schema and migrations
-│   ├── schema.prisma   # Database schema definition
-│   └── migrations/     # Database migrations
-├── scripts/            # Deployment and utility scripts
+├── backend/            # Express backend
+│   ├── src/            # Backend source code
+│   ├── prisma/         # Prisma ORM schema and migrations
+│   └── package.json    # Backend dependencies
 ├── cypress/            # Cypress E2E tests
 ├── vite.config.ts      # Vite configuration
 ├── tailwind.config.js  # Tailwind CSS configuration
@@ -234,12 +209,9 @@ This project uses standard web development practices and can be edited using any
 **Local Development**
 Follow the "Getting Started" section above to set up the project locally for development.
 
-**GitHub Codespaces**
-You can also use GitHub Codespaces for cloud-based development directly in your browser.
-
 ## Custom Domain Setup
 
-For custom domain configuration, you can use Azure Static Web Apps custom domain features or deploy to other platforms like Netlify or Vercel that support custom domains.
+For custom domain configuration, you can use Replit's custom domain features.
 
 ## What technologies are used for this project?
 
@@ -250,23 +222,9 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
-- AWS Lambda (backend)
+- Node.js / Express (backend)
 - Prisma ORM
-- AWS Aurora PostgreSQL
-
-## How can I deploy this project?
-
-The project uses a hybrid deployment strategy:
-
-**Frontend**: Automatically deployed to Azure Static Web Apps via GitHub Actions
-
-- **Production URL:** https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
-
-**Backend**: Automatically deployed to AWS Lambda via GitHub Actions
-
-- **API Endpoint:** https://t6gymccrfg.execute-api.us-east-1.amazonaws.com/prod
-
-For deployment configuration details, refer to the [Deployment Guide](./DEPLOYMENT.md) document.
+- Supabase PostgreSQL
 
 ## Testing
 
@@ -275,37 +233,3 @@ BrightBoost includes comprehensive testing:
 - **Unit Tests**: Component and utility testing with Vitest
 - **E2E Tests**: End-to-end workflows with Cypress
 - **Linting**: Code quality checks with ESLint
-
-## STEM-1-MVP Environment
-
-For the stem-1-mvp delivery lane, add the following secret to GitHub repository settings:
-
-- `STEM1_MVP_SWA_TOKEN`: Azure Static Web App deployment token for brightboost-stem1-mvp
-
-The staging environment will be available at: `https://brightboost-stem1-mvp.azurestaticapps.net`
-
-## Provisioning STEM-1-MVP Environment
-
-To provision the Azure Static Web App for the stem-1-mvp delivery lane:
-
-1. Ensure you have Azure CLI installed and are logged in: `az login`
-2. Ensure you have GitHub CLI installed and are authenticated: `gh auth login`
-3. Run the provisioning script: `bash scripts/provision-stem1-swa.sh`
-
-This will create the `brightboost-stem1-mvp` Static Web App and automatically add the `STEM1_MVP_SWA_TOKEN` secret to the repository.
-
-```bash
-# Run all tests
-npm test
-
-# Run specific test types
-npm run test:unit
-npm run test:e2e
-npm run lint
-```
-
-For detailed testing information, see the [Testing Guide](./docs/TESTING.md).
-
-## Custom Domains
-
-For deployments to Azure Static Web Apps, custom domains can be configured directly within the Azure Portal under the Static Web App's "Custom domains" section. SSL certificates are automatically provisioned for custom domains.

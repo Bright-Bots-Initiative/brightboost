@@ -153,10 +153,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
             />
           ) : (
             <>
-              <AvatarImage
-                src={previewUrl ?? avatarUrl}
-                alt="Current avatar"
-              />
+              <AvatarImage src={previewUrl ?? avatarUrl} alt="Current avatar" />
               <AvatarFallback aria-hidden="true">{userInitials}</AvatarFallback>
             </>
           )}

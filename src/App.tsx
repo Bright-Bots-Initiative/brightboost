@@ -1,5 +1,11 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Import pages
@@ -73,7 +79,10 @@ function App() {
             </Route>
 
             {/* Legacy Redirects for Flat Routes (if any external links exist) */}
-            <Route path="/modules" element={<Navigate to="/student/modules" />} />
+            <Route
+              path="/modules"
+              element={<Navigate to="/student/modules" />}
+            />
             <Route path="/avatar" element={<Navigate to="/student/avatar" />} />
             <Route path="/arena" element={<Navigate to="/student/arena" />} />
 

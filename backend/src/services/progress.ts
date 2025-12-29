@@ -1,41 +1,42 @@
-import { PrismaClient, ProgressStatus } from "@prisma/client";
+import { ProgressStatus, Progress } from "@prisma/client";
+import prisma from "../utils/prisma";
+import { checkpointSchema } from "../validation/schemas";
+import { z } from "zod";
 
-const prisma = new PrismaClient();
+type CheckpointData = z.infer<typeof checkpointSchema>;
 
-export async function upsertCheckpoint(input: {
-  studentId: string;
-  moduleSlug: string;
-  lessonId: string;
-  activityId?: string;
-  status: "IN_PROGRESS" | "COMPLETED";
-  timeDeltaS: number;
-}) {
-  const timeDelta = Math.max(0, Math.min(3600, input.timeDeltaS || 0));
-  const where = {
-    studentId: input.studentId,
-    lessonId: input.lessonId,
-    activityId: input.activityId ?? null,
-  };
-  const existing = await prisma.progress.findFirst({ where });
+export async function upsertCheckpoint(data: CheckpointData) {
+  // 1. Find existing progress
+  const existing = await prisma.progress.findFirst({
+    where: {
+      studentId: data.studentId,
+      lessonId: data.lessonId,
+      activityId: data.activityId,
+    },
+  });
 
   if (existing) {
     return prisma.progress.update({
       where: { id: existing.id },
       data: {
-        status: input.status as ProgressStatus,
-        timeSpentS: existing.timeSpentS + timeDelta,
-        moduleSlug: input.moduleSlug,
+        timeSpentS: { increment: data.timeSpentS },
+        // Only update status if completing
+        status: data.completed ? ProgressStatus.COMPLETED : existing.status,
       },
     });
   }
+
+  // 2. Create new
   return prisma.progress.create({
     data: {
-      studentId: input.studentId,
-      moduleSlug: input.moduleSlug,
-      lessonId: input.lessonId,
-      activityId: input.activityId ?? null,
-      status: input.status as ProgressStatus,
-      timeSpentS: timeDelta,
+      studentId: data.studentId,
+      moduleSlug: data.moduleSlug,
+      lessonId: data.lessonId,
+      activityId: data.activityId,
+      status: data.completed
+        ? ProgressStatus.COMPLETED
+        : ProgressStatus.IN_PROGRESS,
+      timeSpentS: data.timeSpentS,
     },
   });
 }
@@ -44,68 +45,69 @@ export async function getAggregatedProgress(
   studentId: string,
   moduleSlug: string,
 ) {
+  // Aggregate by Unit -> Lesson -> Activity
+  // This mimics the structure needed for the "map" view
+  // Prisma doesn't do deep nested aggregation easily, so we might fetch raw or fetch all progress.
+
+  // 1. Get all progress for this user + module
+  const progressItems = await prisma.progress.findMany({
+    where: { studentId, moduleSlug },
+  });
+
+  // 2. Get module structure (units, lessons, activities)
+  // FIXME: We need to seed/fetch the actual content structure to merge with progress.
+  // For MVP, we'll return the progress items and let the frontend map them to the static content config.
+
+  // Actually, let's fetch the module structure from DB if it exists
   const module = await prisma.module.findUnique({
     where: { slug: moduleSlug },
     include: {
       units: {
-        orderBy: { index: "asc" },
+        orderBy: { order: "asc" },
         include: {
           lessons: {
-            orderBy: { index: "asc" },
-            include: { activities: { orderBy: { index: "asc" } } },
+            orderBy: { order: "asc" },
+            include: {
+              activities: {
+                orderBy: { order: "asc" },
+              },
+            },
           },
         },
       },
-      badges: true,
     },
   });
-  if (!module) throw new Error("Module not found");
 
-  const progressRows = await prisma.progress.findMany({
-    where: { studentId, moduleSlug },
+  if (!module) {
+    throw new Error(`Module ${moduleSlug} not found`);
+  }
+
+  // 3. Merge
+  // We want to return the Module object but with an added "status" field on each node?
+  // Or just return the list of completed activity IDs?
+  // The frontend likely wants { activityId: 'completed', ... }
+
+  const progressMap: Record<string, any> = {};
+  progressItems.forEach((p: Progress) => {
+    progressMap[p.activityId] = {
+      status: p.status,
+      timeSpentS: p.timeSpentS,
+    };
   });
 
-  const activityXpMap = new Map<string, number>();
-  let totalActivities = 0;
-  let totalXp = 0;
-
-  for (const u of module.units) {
-    for (const l of u.lessons) {
-      for (const a of l.activities) {
-        activityXpMap.set(a.id, a.xp);
-        totalActivities += 1;
-        totalXp += a.xp;
-      }
-    }
-  }
-
-  let earnedXp = 0;
-  let completedActivities = 0;
-  let lastLessonId: string | null = null;
-  let timeSpentS = 0;
-
-  for (const row of progressRows) {
-    timeSpentS += row.timeSpentS;
-    if (row.status === "COMPLETED") {
-      if (row.activityId && activityXpMap.has(row.activityId)) {
-        earnedXp += activityXpMap.get(row.activityId)!;
-        completedActivities += 1;
-      }
-      lastLessonId = row.lessonId;
-    }
-  }
-
-  const percentComplete =
-    totalActivities > 0
-      ? Math.round((completedActivities / totalActivities) * 100)
-      : 0;
-
   return {
-    studentId,
-    moduleSlug,
-    percentComplete,
-    lastLessonId,
-    earnedXp,
-    totals: { totalActivities, totalXp, timeSpentS },
+    module: {
+      title: module.title,
+      units: module.units.map((u: any) => ({
+        ...u,
+        lessons: u.lessons.map((l: any) => ({
+          ...l,
+          activities: l.activities.map((a: any) => ({
+            ...a,
+            userProgress: progressMap[a.id] || null,
+          })),
+        })),
+      })),
+    },
   };
 }

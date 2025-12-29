@@ -1,26 +1,44 @@
 import { Router } from "express";
-import { PrismaClient, MatchStatus } from "@prisma/client";
+import { MatchStatus } from "@prisma/client";
+import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
+import { isValidBand } from "../utils/validation";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Queue for a match
 router.post("/match/queue", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const { band } = req.body; // e.g. "K2"
 
+  if (band && !isValidBand(band)) {
+    return res.status(400).json({ error: "Invalid band" });
+  }
+  const selectedBand = band || "K2";
+
   const avatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!avatar) return res.status(400).json({ error: "No avatar found" });
+
+  // Check if user is already in a pending match
+  const existingPending = await prisma.match.findFirst({
+    where: {
+      player1Id: avatar.id,
+      status: MatchStatus.PENDING
+    }
+  });
+
+  if (existingPending) {
+    return res.json({ matchId: existingPending.id, status: "PENDING" });
+  }
 
   // Look for open match
   const openMatch = await prisma.match.findFirst({
     where: {
-      status: MatchStatus.QUEUED,
+      status: MatchStatus.PENDING,
       band: band || "K2",
-      NOT: { player1Id: avatar.id } // Don't match with self
-    }
+      NOT: { player1Id: avatar.id }, // Don't match with self
+    },
   });
 
   if (openMatch) {
@@ -29,8 +47,8 @@ router.post("/match/queue", requireAuth, async (req, res) => {
       where: { id: openMatch.id },
       data: {
         player2Id: avatar.id,
-        status: MatchStatus.ACTIVE
-      }
+        status: MatchStatus.ACTIVE,
+      },
     });
     return res.json({ matchId: match.id, status: "MATCHED" });
   } else {
@@ -39,24 +57,42 @@ router.post("/match/queue", requireAuth, async (req, res) => {
       data: {
         player1Id: avatar.id,
         band: band || "K2",
-        status: MatchStatus.QUEUED
-      }
+        status: MatchStatus.PENDING,
+      },
     });
-    return res.json({ matchId: match.id, status: "QUEUED" });
+    return res.json({ matchId: match.id, status: "PENDING" });
   }
 });
 
 // Get match state
 router.get("/match/:id", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+
   const match = await prisma.match.findUnique({
     where: { id: req.params.id },
     include: {
-      Player1: { include: { unlockedAbilities: { include: { Ability: true } } } },
-      Player2: { include: { unlockedAbilities: { include: { Ability: true } } } },
-      turns: true
-    }
+      Player1: {
+        include: { unlockedAbilities: { include: { Ability: true } } },
+      },
+      Player2: {
+        include: { unlockedAbilities: { include: { Ability: true } } },
+      },
+      turns: true,
+    },
   });
   if (!match) return res.status(404).json({ error: "Match not found" });
+
+  // 🛡️ Sentinel: Verify user is a participant (IDOR protection)
+  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+
+  // Access control: User must be a participant
+  if (
+    !myAvatar ||
+    (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
+  ) {
+    return res.status(403).json({ error: "Not authorized to view this match" });
+  }
+
   res.json(match);
 });
 
@@ -71,15 +107,18 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
 
   // Verify user is in match
   const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
-  if (!myAvatar || (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)) {
-     return res.status(403).json({ error: "Not in this match" });
+  if (
+    !myAvatar ||
+    (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
+  ) {
+    return res.status(403).json({ error: "Not in this match" });
   }
 
   try {
-      const result = await resolveTurn(matchId, myAvatar.id, abilityId);
-      res.json(result);
+    const result = await resolveTurn(matchId, myAvatar.id, abilityId);
+    res.json(result);
   } catch (e: any) {
-      res.status(400).json({ error: e.message });
+    res.status(400).json({ error: e.message });
   }
 });
 

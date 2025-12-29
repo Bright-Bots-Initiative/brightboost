@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -46,31 +46,35 @@ export default function StudentRoster() {
   const studentsPerPage = 4;
 
   // Derived state for search and sorting
-  const filtered = searchQuery.trim()
-    ? initialStudents.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.level.toString().includes(searchQuery) ||
-          s.xp.toString().includes(searchQuery),
-      )
-    : initialStudents;
+  const filtered = useMemo(() => {
+    return searchQuery.trim()
+      ? initialStudents.filter(
+          (s) =>
+            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.level.toString().includes(searchQuery) ||
+            s.xp.toString().includes(searchQuery),
+        )
+      : initialStudents;
+  }, [searchQuery]);
 
-  const sorted = sortConfig.key
-    ? [...filtered].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        if (!key) return 0;
-        const aVal = a[key];
-        const bVal = b[key];
-        if (typeof aVal === "string" && typeof bVal === "string") {
+  const sorted = useMemo(() => {
+    return sortConfig.key
+      ? [...filtered].sort((a, b) => {
+          const { key, direction } = sortConfig;
+          if (!key) return 0;
+          const aVal = a[key];
+          const bVal = b[key];
+          if (typeof aVal === "string" && typeof bVal === "string") {
+            return direction === "asc"
+              ? aVal.localeCompare(bVal)
+              : bVal.localeCompare(aVal);
+          }
           return direction === "asc"
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
-        }
-        return direction === "asc"
-          ? (aVal as number) - (bVal as number)
-          : (bVal as number) - (aVal as number);
-      })
-    : filtered;
+            ? (aVal as number) - (bVal as number)
+            : (bVal as number) - (aVal as number);
+        })
+      : filtered;
+  }, [filtered, sortConfig]);
 
   const totalPages = Math.ceil(sorted.length / studentsPerPage);
   const indexOfLastStudent = currentPage * studentsPerPage;

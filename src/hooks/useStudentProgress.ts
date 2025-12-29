@@ -30,7 +30,7 @@ export function useStudentProgress(studentId: string, moduleSlug = "stem-1") {
 
         const res = await fetch(
           join(API_BASE, `/progress/${studentId}?module=${moduleSlug}`),
-          { headers }
+          { headers },
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as AggregatedProgress;
