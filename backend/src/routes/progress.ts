@@ -10,7 +10,7 @@ import { getWeeklyProgress } from "../services/progress_weekly";
 
 const router = Router();
 
-// Get progress for a student
+// Get progress for a student (MVP)
 router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const progress = await prisma.progress.findMany({
@@ -29,16 +29,50 @@ router.get("/get-progress", requireAuth, async (req, res) => {
   res.json({ user, progress });
 });
 
-// Weekly progress endpoint (Auto-creates snapshot if missing)
-router.get("/progress/weekly", requireAuth, async (req, res) => {
+// Complete an activity (MVP)
+router.post("/progress/complete-activity", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
-  try {
-    const snapshot = await getWeeklyProgress(studentId);
-    res.json(snapshot);
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+  const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
+
+  // 1. Upsert progress
+  const existing = await prisma.progress.findFirst({
+      where: { studentId, activityId }
+  });
+
+  if (existing && existing.status === ProgressStatus.COMPLETED) {
+      return res.json({ message: "Already completed", progress: existing });
   }
+
+  let finalProgress;
+  if (existing) {
+       finalProgress = await prisma.progress.update({
+           where: { id: existing.id },
+           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
+       });
+  } else {
+       finalProgress = await prisma.progress.create({
+           data: {
+              studentId,
+              moduleSlug,
+              lessonId,
+              activityId,
+              status: ProgressStatus.COMPLETED,
+              timeSpentS: timeSpentS || 0
+           }
+       });
+
+       await prisma.avatar.update({
+           where: { studentId },
+           data: { xp: { increment: 50 } }
+       });
+
+       await checkUnlocks(studentId);
+  }
+
+  res.json(finalProgress);
 });
+
+// Legacy / Comprehensive Routes (with validation)
 
 router.get("/progress/:studentId", requireAuth, async (req, res) => {
   const studentId = req.params.studentId;
@@ -80,6 +114,10 @@ router.post("/progress/checkpoint", requireAuth, async (req, res) => {
   }
 });
 
+router.post("/assessment/submit", requireAuth, async (req, res) => {
+  const parse = assessmentSubmitSchema.safeParse(req.body);
+  if (!parse.success)
+    return res.status(400).json({ error: parse.error.flatten() });
 // Complete an activity
 router.post("/progress/complete-activity", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
@@ -127,8 +165,6 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
     await checkUnlocks(studentId);
   }
-
-  res.json(finalProgress);
 });
 
 export default router;
