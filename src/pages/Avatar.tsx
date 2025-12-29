@@ -4,9 +4,12 @@ import { api } from "../services/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import AvatarPicker from "@/components/AvatarPicker";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Avatar() {
   const [avatar, setAvatar] = useState<any>(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,10 +18,32 @@ export default function Avatar() {
 
   if (!avatar) return <div>Loading Avatar...</div>;
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="p-4 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">My Avatar</h1>
+      </div>
+
+      <div className="mb-6 flex justify-center">
+        <AvatarPicker
+          userInitials={getInitials(user?.name || "??")}
+          currentAvatarUrl={user?.avatarUrl} // Assuming user object has avatarUrl, or we use a fallback if not present in AuthContext user type.
+          // Note: AuthContext user might not be updated immediately after upload unless we refresh it.
+          // For now, we rely on the component's internal state for immediate feedback.
+          onAvatarChange={(url) => {
+             console.log("Avatar updated:", url);
+             // Optionally trigger a user profile refresh here
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
