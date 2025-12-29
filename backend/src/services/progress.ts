@@ -6,29 +6,27 @@ import { z } from "zod";
 type CheckpointData = z.infer<typeof checkpointSchema>;
 
 export async function upsertCheckpoint(data: CheckpointData) {
-  // 1. Find existing progress
-  const existing = await prisma.progress.findFirst({
-    where: {
-      studentId: data.studentId,
-      lessonId: data.lessonId,
-      activityId: data.activityId,
-    },
-  });
+  // OPTIMIZED: Use prisma.upsert to handle create/update in a single atomic operation
+  // This reduces DB round trips from 2 to 1 and prevents race conditions.
 
-  if (existing) {
-    return prisma.progress.update({
-      where: { id: existing.id },
-      data: {
-        timeSpentS: { increment: data.timeSpentS },
-        // Only update status if completing
-        status: data.completed ? ProgressStatus.COMPLETED : existing.status,
-      },
-    });
+  const updateData: any = {
+    timeSpentS: { increment: data.timeSpentS },
+  };
+
+  // Only update status to COMPLETED if it's currently completed in the request.
+  // If data.completed is false, we keep the existing status (by not including it in updateData).
+  if (data.completed) {
+    updateData.status = ProgressStatus.COMPLETED;
   }
 
-  // 2. Create new
-  return prisma.progress.create({
-    data: {
+  return prisma.progress.upsert({
+    where: {
+      studentId_activityId: {
+        studentId: data.studentId,
+        activityId: data.activityId,
+      },
+    },
+    create: {
       studentId: data.studentId,
       moduleSlug: data.moduleSlug,
       lessonId: data.lessonId,
@@ -38,6 +36,7 @@ export async function upsertCheckpoint(data: CheckpointData) {
         : ProgressStatus.IN_PROGRESS,
       timeSpentS: data.timeSpentS,
     },
+    update: updateData,
   });
 }
 
