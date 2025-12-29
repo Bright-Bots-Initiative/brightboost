@@ -59,23 +59,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           Authorization: `Bearer ${storedToken}`,
         },
       })
-      .then(async (res) => {
-        if (!res.ok) {
-          setUser(null);
-          localStorage.removeItem("user");
-          localStorage.removeItem("bb_access_token");
-          return;
-        }
-        const data = await res.json().catch(() => null);
-        if (data?.user) {
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+        .then(async (res) => {
+          if (!res.ok) {
+            setUser(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("bb_access_token");
+            return;
+          }
+          const data = await res.json().catch(() => null);
+          if (data?.user) {
+            setUser(data.user);
+            localStorage.setItem("user", JSON.stringify(data.user));
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
     } else {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, []);
 

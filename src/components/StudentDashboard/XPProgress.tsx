@@ -30,14 +30,18 @@ const XPProgressWidget = ({
     <div className="flex items-center w-full">
       {/* Popup */}
       {showPopup && (
-        <div className="absolute top-0 right-0 bg-brightboost-green text-white px-4 py-2 rounded-xl shadow-lg z-50">
+        <div
+          className="absolute top-0 right-0 bg-brightboost-green text-white px-4 py-2 rounded-xl shadow-lg z-50"
+          role="status"
+          aria-live="polite"
+        >
           🎉 Leveled Up!
         </div>
       )}
 
       <div className="bg-brightboost-yellow px-4 py-1 rounded-full flex items-center gap-3 shadow text-sm font-medium flex-grow min-w-0">
         {/* Level */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" aria-hidden="true">
           <span className="text-base font-bold text-brightboost-navy">
             XP: Level
           </span>
@@ -47,7 +51,14 @@ const XPProgressWidget = ({
         </div>
 
         {/* XP bar */}
-        <div className="relative h-3 bg-white rounded-full overflow-hidden flex-grow min-w-0">
+        <div
+          className="relative h-3 bg-white rounded-full overflow-hidden flex-grow min-w-0"
+          role="progressbar"
+          aria-valuenow={Math.round(xp)}
+          aria-valuemin={0}
+          aria-valuemax={Math.round(xpToNext)}
+          aria-label="XP Progress"
+        >
           <div
             className="absolute top-0 left-0 h-full bg-brightboost-blue transition-all duration-500 ease-out"
             style={{ width: `${percentage}%` }}
@@ -55,7 +66,7 @@ const XPProgressWidget = ({
         </div>
 
         {/* XP count */}
-        <span className="text-xs text-brightboost-navy">
+        <span className="text-xs text-brightboost-navy" aria-hidden="true">
           {xp}/{xpToNext}
         </span>
       </div>
