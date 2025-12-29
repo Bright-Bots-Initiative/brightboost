@@ -1,5 +1,5 @@
 [build]
-command = "npm ci && npm ci --prefix backend && npm run build && npm --prefix backend run build"
+command = "bun install && bun run build && bun --cwd backend run build"
 
 [deploy]
 startCommand = "node backend/dist/src/server.js"
