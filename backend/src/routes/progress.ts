@@ -118,4 +118,9 @@ router.post("/progress/checkpoint", requireAuth, async (req, res) => {
   }
 });
 
+// Note: Assessment schema is missing, disabling this route for now or removing if unused
+// router.post("/assessment/submit", requireAuth, async (req, res) => {
+//   // ...
+// });
+
 export default router;
