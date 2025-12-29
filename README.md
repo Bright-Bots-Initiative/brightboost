@@ -123,7 +123,15 @@ The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment vari
 
 ## Production Deployment
 
-The application is deployed using Replit for the application and Supabase for the database.
+### Railway Deployment
+
+The application is deployed to Railway using a `railway.toml` configuration file that specifies a Node.js runtime.
+
+-   **Deployment Config:** `railway.toml`
+-   **Runtime:** Node.js (via `npm start` which runs the backend server)
+-   **Static Files:** The backend serves the built frontend from `dist/`
+
+**Note:** The `docs/Dockerfile.nginx` file is preserved for reference or alternative static hosting but is **not** used by the active Railway deployment pipeline.
 
 ## Deployment
 
