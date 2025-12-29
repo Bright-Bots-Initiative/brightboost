@@ -10,6 +10,7 @@ import avatarRouter from "./routes/avatar";
 import matchRouter from "./routes/match";
 import authRouter from "./routes/auth";
 import { devRoleShim, authenticateToken } from "./utils/auth";
+import { preventHpp } from "./utils/security";
 
 const app = express();
 
@@ -18,6 +19,10 @@ app.set("trust proxy", 1);
 
 // Security headers
 app.use(helmet());
+
+// 🛡️ Sentinel: Prevent HTTP Parameter Pollution (HPP)
+// Flattens repeated query parameters to the last value to prevent logic bypass
+app.use(preventHpp);
 
 // Rate limiting
 const apiLimiter = rateLimit({
