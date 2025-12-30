@@ -32,6 +32,13 @@ ENV NODE_ENV=production
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/backend /app/backend
 
+# Install pnpm in runtime
+RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
+
+# Install backend deps (needs prisma CLI available) and generate Prisma client
+RUN pnpm --prefix backend install --frozen-lockfile \
+ && pnpm --prefix backend run db:generate
+
 # Railway provides PORT; app must bind to it.
 EXPOSE 8080
 
