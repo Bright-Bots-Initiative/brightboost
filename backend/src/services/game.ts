@@ -1,5 +1,5 @@
 // backend/src/services/game.ts
-import { MatchStatus } from "@prisma/client";
+import { MatchStatus, Ability } from "@prisma/client";
 import prisma from "../utils/prisma";
 
 // Rock-Paper-Scissors modifiers
@@ -134,17 +134,17 @@ export async function checkUnlocks(studentId: string) {
         const existingUnlocks = await prisma.unlockedAbility.findMany({
             where: {
                 avatarId: avatar.id,
-                abilityId: { in: eligibleAbilities.map(a => a.id) }
+                abilityId: { in: eligibleAbilities.map((a: Ability) => a.id) }
             },
             select: { abilityId: true }
         });
 
-        const existingAbilityIds = new Set(existingUnlocks.map(u => u.abilityId));
-        const newUnlocks = eligibleAbilities.filter(ab => !existingAbilityIds.has(ab.id));
+        const existingAbilityIds = new Set(existingUnlocks.map((u: { abilityId: string }) => u.abilityId));
+        const newUnlocks = eligibleAbilities.filter((ab: Ability) => !existingAbilityIds.has(ab.id));
 
         if (newUnlocks.length > 0) {
             await prisma.unlockedAbility.createMany({
-                data: newUnlocks.map(ab => ({
+                data: newUnlocks.map((ab: Ability) => ({
                     avatarId: avatar.id,
                     abilityId: ab.id,
                     equipped: false
