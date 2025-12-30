@@ -1,6 +1,15 @@
 // backend/src/services/game.ts
-import { MatchStatus, Ability } from "@prisma/client";
 import prisma from "../utils/prisma";
+
+const MatchStatus = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  FORFEIT: "FORFEIT",
+} as const;
+type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
+
+type AbilityRow = { id: string };
 
 // Rock-Paper-Scissors modifiers
 // Using string literals to avoid runtime Enum issues
@@ -134,17 +143,17 @@ export async function checkUnlocks(studentId: string) {
         const existingUnlocks = await prisma.unlockedAbility.findMany({
             where: {
                 avatarId: avatar.id,
-                abilityId: { in: eligibleAbilities.map((a: Ability) => a.id) }
+                abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) }
             },
             select: { abilityId: true }
         });
 
         const existingAbilityIds = new Set(existingUnlocks.map((u: { abilityId: string }) => u.abilityId));
-        const newUnlocks = eligibleAbilities.filter((ab: Ability) => !existingAbilityIds.has(ab.id));
+        const newUnlocks = eligibleAbilities.filter((ab: AbilityRow) => !existingAbilityIds.has(ab.id));
 
         if (newUnlocks.length > 0) {
             await prisma.unlockedAbility.createMany({
-                data: newUnlocks.map((ab: Ability) => ({
+                data: newUnlocks.map((ab: AbilityRow) => ({
                     avatarId: avatar.id,
                     abilityId: ab.id,
                     equipped: false

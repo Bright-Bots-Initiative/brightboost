@@ -1,5 +1,10 @@
-import { ProgressStatus, Progress } from "@prisma/client";
 import prisma from "../utils/prisma";
+
+const ProgressStatus = {
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+} as const;
+type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { checkpointSchema } from "../validation/schemas";
 import { z } from "zod";
 
@@ -87,7 +92,7 @@ export async function getAggregatedProgress(
   // The frontend likely wants { activityId: 'completed', ... }
 
   const progressMap: Record<string, any> = {};
-  progressItems.forEach((p: Progress) => {
+  progressItems.forEach((p: any) => {
     progressMap[p.activityId] = {
       status: p.status,
       timeSpentS: p.timeSpentS,

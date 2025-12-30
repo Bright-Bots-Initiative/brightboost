@@ -1,6 +1,13 @@
 import { Router } from "express";
-import { MatchStatus } from "@prisma/client";
 import prisma from "../utils/prisma";
+
+const MatchStatus = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  FORFEIT: "FORFEIT",
+} as const;
+type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 import { requireAuth } from "../utils/auth";
 import { resolveTurn } from "../services/game";
 import { isValidBand } from "../utils/validation";

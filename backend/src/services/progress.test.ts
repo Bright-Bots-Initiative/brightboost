@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { upsertCheckpoint } from "./progress";
 import prisma from "../utils/prisma";
-import { ProgressStatus } from "@prisma/client";
+
+const ProgressStatus = {
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+} as const;
+type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 
 // Mock Prisma
 vi.mock("../utils/prisma", () => ({

@@ -1,7 +1,12 @@
 // backend/src/routes/progress.ts
 import { Router } from "express";
-import { ProgressStatus } from "@prisma/client";
 import prisma from "../utils/prisma";
+
+const ProgressStatus = {
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+} as const;
+type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
 import { checkpointSchema } from "../validation/schemas";
