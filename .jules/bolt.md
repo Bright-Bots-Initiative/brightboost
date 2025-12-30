@@ -1,5 +1,3 @@
-# Bolt's Journal - Critical Learnings
-
 ## 2024-05-23 - Missing Indexes on Foreign Keys
 
 **Learning:** Prisma does not automatically create indexes on foreign keys that are part of a relation but not part of a unique constraint. This can lead to silent performance degradation on filtering by foreign keys (e.g., finding all classes for a teacher).
@@ -12,3 +10,7 @@
 ## 2024-06-25 - Match Queue Scaling
 **Learning:** Queues that query by "PENDING" status in a table that accumulates historical data (like `Match`) will suffer from O(N) performance degradation over time as the "completed" set grows.
 **Action:** Always add a composite index (e.g., `@@index([status, band])`) for queries that filter by status in append-only logs or historical tables.
+
+## 2024-05-30 - Parallelizing Independent DB Queries
+**Learning:** Sequential await calls (e.g., `await query1; await query2`) for independent data increase total latency. For example, fetching user progress and module structure separately doubled the time for the module detail view.
+**Action:** Use `Promise.all([query1, query2])` to execute independent queries concurrently.
