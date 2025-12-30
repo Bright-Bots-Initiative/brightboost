@@ -10,11 +10,6 @@ if (process.env.NODE_ENV === "production" && SESSION_SECRET === "default_dev_sec
   throw new Error("🚨 CRITICAL SECURITY ERROR: SESSION_SECRET is missing or default in production!");
 }
 
-declare module "express-serve-static-core" {
-  interface Request {
-    user?: { id: string; role: import("./auth").UserRole } | null;
-  }
-}
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
   // If user is already authenticated (e.g. by dev shim), skip
