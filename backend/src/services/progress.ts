@@ -53,34 +53,33 @@ export async function getAggregatedProgress(
   // This mimics the structure needed for the "map" view
   // Prisma doesn't do deep nested aggregation easily, so we might fetch raw or fetch all progress.
 
-  // 1. Get all progress for this user + module
-  const progressItems = await prisma.progress.findMany({
-    where: { studentId, moduleSlug },
-  });
+  // OPTIMIZED: Fetch progress and module structure in parallel
+  const [progressItems, module] = await Promise.all([
+    // 1. Get all progress for this user + module
+    prisma.progress.findMany({
+      where: { studentId, moduleSlug },
+    }),
 
-  // 2. Get module structure (units, lessons, activities)
-  // FIXME: We need to seed/fetch the actual content structure to merge with progress.
-  // For MVP, we'll return the progress items and let the frontend map them to the static content config.
-
-  // Actually, let's fetch the module structure from DB if it exists
-  const module = await prisma.module.findUnique({
-    where: { slug: moduleSlug },
-    include: {
-      units: {
-        orderBy: { order: "asc" },
-        include: {
-          lessons: {
-            orderBy: { order: "asc" },
-            include: {
-              activities: {
-                orderBy: { order: "asc" },
+    // 2. Get module structure (units, lessons, activities)
+    prisma.module.findUnique({
+      where: { slug: moduleSlug },
+      include: {
+        units: {
+          orderBy: { order: "asc" },
+          include: {
+            lessons: {
+              orderBy: { order: "asc" },
+              include: {
+                activities: {
+                  orderBy: { order: "asc" },
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   if (!module) {
     throw new Error(`Module ${moduleSlug} not found`);
