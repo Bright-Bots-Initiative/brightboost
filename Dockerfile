@@ -6,10 +6,10 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 
 # Copy lockfiles + manifests first for better caching
-COPY package.json pnpm-lock.yaml ./
-COPY backend/package.json backend/pnpm-lock.yaml backend/tsconfig.json ./backend/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json backend/tsconfig.json ./backend/
 
-# Install root deps (frontend)
+# Install root deps (frontend + backend via workspace)
 RUN pnpm install --frozen-lockfile
 
 # Copy rest of repo
@@ -19,8 +19,9 @@ COPY . .
 RUN pnpm run build
 
 # Build backend (outputs /app/backend/dist)
-RUN pnpm --prefix backend install --frozen-lockfile \
- && pnpm --prefix backend run db:generate \
+# We use root pnpm install, but scripts must be run inside backend or via prefix
+# Since pnpm install was run at root with workspace, backend deps are installed.
+RUN pnpm --prefix backend run db:generate \
  && pnpm --prefix backend exec tsc -p tsconfig.json
 
 # ---- runtime stage ----
@@ -31,12 +32,15 @@ ENV NODE_ENV=production
 # Copy built frontend + backend output
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/backend /app/backend
+# Copy root package.json and lockfile for runtime install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install pnpm in runtime
 RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 
 # Install backend deps (needs prisma CLI available) and generate Prisma client
-RUN pnpm --prefix backend install --frozen-lockfile \
+# Using root install with workspace ensures backend deps are installed
+RUN pnpm install --frozen-lockfile \
  && pnpm --prefix backend run db:generate
 
 # Railway provides PORT; app must bind to it.
