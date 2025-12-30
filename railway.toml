@@ -1,5 +1,5 @@
 [build]
-command = "npm install && npm install --prefix backend && npm run build && npm --prefix backend run build:railway"
+command = "bun install && bun run build && cd backend && bun install && bunx prisma generate --schema=prisma/schema.prisma && bunx tsc -p . && echo '--- backend dist ---' && ls -R dist"
 
 [deploy]
 startCommand = "node backend/dist/src/server.js"
