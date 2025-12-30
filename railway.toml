@@ -2,4 +2,4 @@
 command = "bun install && bun run build && cd backend && bun install && bunx prisma generate --schema=prisma/schema.prisma && bunx tsc -p . && echo '--- backend dist ---' && ls -R dist"
 
 [deploy]
-startCommand = "sh -lc 'cd backend && npm install && npm run build:railway && cd .. && node backend/dist/src/server.js'"
+startCommand = "sh -lc 'cd backend && bun install && bunx prisma generate && bunx tsc -p . && cd .. && node backend/dist/src/server.js'"
