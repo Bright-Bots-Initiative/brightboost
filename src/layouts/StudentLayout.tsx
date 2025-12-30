@@ -19,7 +19,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         >
           BrightBoost
         </div>
-        <Button variant="ghost" size="icon" onClick={logout}>
+        <Button variant="ghost" size="icon" onClick={logout} aria-label="Log out">
           <LogOut className="h-5 w-5" />
         </Button>
       </header>
