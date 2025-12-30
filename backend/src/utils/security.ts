@@ -1,4 +1,18 @@
 import { Request, Response, NextFunction } from "express";
+import { rateLimit } from "express-rate-limit";
+
+/**
+ * 🛡️ Sentinel: Strict rate limiter for authentication endpoints.
+ * Prevents brute-force attacks and credential stuffing.
+ * Limit: 20 requests per 15 minutes per IP.
+ */
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 20, // Strict limit for login/signup
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login/signup attempts, please try again later." },
+});
 
 /**
  * 🛡️ Sentinel: Middleware to prevent HTTP Parameter Pollution (HPP).

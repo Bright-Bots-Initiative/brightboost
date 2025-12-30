@@ -3,6 +3,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
+import { authLimiter } from "../utils/security";
 
 const router = Router();
 
@@ -38,7 +39,7 @@ const generateToken = (user: { id: string; role: string }) => {
 // Routes
 
 // POST /signup/student
-router.post("/signup/student", async (req: Request, res: Response) => {
+router.post("/signup/student", authLimiter, async (req: Request, res: Response) => {
   try {
     const data = studentSignupSchema.parse(req.body);
 
@@ -81,7 +82,7 @@ router.post("/signup/student", async (req: Request, res: Response) => {
 });
 
 // POST /signup/teacher
-router.post("/signup/teacher", async (req: Request, res: Response) => {
+router.post("/signup/teacher", authLimiter, async (req: Request, res: Response) => {
   try {
     const data = teacherSignupSchema.parse(req.body);
 
@@ -124,7 +125,7 @@ router.post("/signup/teacher", async (req: Request, res: Response) => {
 });
 
 // POST /login
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", authLimiter, async (req: Request, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
 
