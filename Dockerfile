@@ -41,7 +41,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 # Install backend deps (needs prisma CLI available) and generate Prisma client
 # Using root install with workspace ensures backend deps are installed
 RUN pnpm install --frozen-lockfile \
- && pnpm exec prisma generate --schema=backend/prisma/schema.prisma
+ && pnpm --prefix backend run db:generate
 
 # Railway provides PORT; app must bind to it.
 EXPOSE 8080
