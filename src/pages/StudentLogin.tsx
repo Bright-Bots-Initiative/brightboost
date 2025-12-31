@@ -72,7 +72,7 @@ const StudentLogin: React.FC = () => {
             <BrightBoostRobot className="hidden md:block" />
           </div>
 
-          <div className="game-card p-6 flex-1 w-full max-w-md">
+          <div className="game-card p-6 flex-1 w-full max-w-md ui-sheen ui-highlight">
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
 
             {error && (
@@ -169,7 +169,7 @@ const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ${
+                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ui-lift ${
                   isSubmitting
                     ? "bg-brightboost-lightblue/70"
                     : "bg-brightboost-lightblue"
