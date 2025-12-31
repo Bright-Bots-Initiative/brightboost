@@ -46,4 +46,5 @@ RUN pnpm install --frozen-lockfile \
 # Railway provides PORT; app must bind to it.
 EXPOSE 8080
 
-CMD ["sh", "-lc", "pnpm exec prisma generate --schema=backend/prisma/schema.prisma && node backend/dist/src/server.js"]
+CMD ["sh", "-lc", "pnpm --prefix backend run db:generate && node backend/dist/src/server.js"]
+
