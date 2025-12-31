@@ -145,3 +145,22 @@ select {
   color-scheme: light;
   color: #213547;
 }
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-150%);
+  }
+  to {
+    transform: translateX(100vw);
+  }
+}
+
+.animate-cloud-drift {
+  animation: cloud-drift linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cloud-drift {
+    animation: none;
+  }
+}
