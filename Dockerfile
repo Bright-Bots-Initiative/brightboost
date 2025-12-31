@@ -32,8 +32,10 @@ ENV NODE_ENV=production
 # Copy built frontend + backend output
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/backend /app/backend
+COPY --from=build /app/prisma /app/prisma
 # Copy root package.json and lockfile for runtime install
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
 
 # Install pnpm in runtime
 RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
@@ -47,4 +49,5 @@ RUN pnpm install --frozen-lockfile \
 EXPOSE 8080
 
 CMD ["sh", "-lc", "pnpm --prefix backend run db:generate && node backend/dist/src/server.js"]
+
 
