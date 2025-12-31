@@ -1,7 +1,33 @@
 import { http, HttpResponse } from "msw";
 import { Lesson } from "../components/TeacherDashboard/types";
 
-const API_URL = "http://localhost:5173";
+const resolveApiBase = (): string => {
+  const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
+
+  if (VITE_API_BASE) {
+    const base = VITE_API_BASE.trim().replace(/\/+$/, "");
+    if (!base.startsWith("http") && !base.startsWith("/")) {
+      return `/${base}`;
+    }
+    return base;
+  }
+
+  if (VITE_AWS_API_URL) {
+    return `${VITE_AWS_API_URL.trim().replace(/\/+$/, "")}/api`;
+  }
+
+  if (VITE_API_URL) {
+    const base = VITE_API_URL.trim().replace(/\/+$/, "");
+    if (!base.startsWith("http") && !base.startsWith("/")) {
+      return `/${base}`;
+    }
+    return base;
+  }
+
+  return "/api";
+};
+
+const API_BASE = resolveApiBase();
 
 interface AuthUser {
   id: string;
@@ -49,8 +75,34 @@ const mockLessons = [
   },
 ];
 
+const loginHandler = () => {
+  const response: AuthResponse = {
+    token: "mock-jwt-token",
+    user: {
+      id: "1",
+      name: "Test Teacher",
+      email: "teacher@example.com",
+      role: "teacher",
+    },
+  };
+  return HttpResponse.json(response);
+};
+
+const signupHandler = () => {
+  const response: AuthResponse = {
+    token: "mock-jwt-token",
+    user: {
+      id: "1",
+      name: "Test Teacher",
+      email: "teacher@example.com",
+      role: "teacher",
+    },
+  };
+  return HttpResponse.json(response);
+};
+
 export const handlers = [
-  http.get(`${API_URL}/api/teacher_dashboard`, () => {
+  http.get(`${API_BASE}/teacher_dashboard`, () => {
     return HttpResponse.json({
       lessons: mockLessons,
       students: [
@@ -71,7 +123,7 @@ export const handlers = [
     });
   }),
 
-  http.get(`${API_URL}/api/student_dashboard`, () => {
+  http.get(`${API_BASE}/student_dashboard`, () => {
     return HttpResponse.json({
       studentName: "Test Student",
       enrolledLessons: mockLessons,
@@ -96,33 +148,15 @@ export const handlers = [
     });
   }),
 
-  http.post(`${API_URL}/auth/login`, () => {
-    const response: AuthResponse = {
-      token: "mock-jwt-token",
-      user: {
-        id: "1",
-        name: "Test Teacher",
-        email: "teacher@example.com",
-        role: "teacher",
-      },
-    };
-    return HttpResponse.json(response);
-  }),
+  // Align with app logic (API_BASE usually includes /api)
+  http.post(`${API_BASE}/login`, loginHandler),
+  http.post(`${API_BASE}/signup`, signupHandler),
 
-  http.post(`${API_URL}/auth/signup`, () => {
-    const response: AuthResponse = {
-      token: "mock-jwt-token",
-      user: {
-        id: "1",
-        name: "Test Teacher",
-        email: "teacher@example.com",
-        role: "teacher",
-      },
-    };
-    return HttpResponse.json(response);
-  }),
+  // Legacy fallback for /auth paths to prevent regression if used
+  http.post(`/auth/login`, loginHandler),
+  http.post(`/auth/signup`, signupHandler),
 
-  http.post(`${API_URL}/api/lessons`, async ({ request }) => {
+  http.post(`${API_BASE}/lessons`, async ({ request }) => {
     const requestBody = (await request.json()) as LessonCreateRequest;
     const newLesson: Lesson = {
       id: "4",
@@ -134,7 +168,7 @@ export const handlers = [
     return HttpResponse.json(newLesson, { status: 201 });
   }),
 
-  http.put(`${API_URL}/api/lessons/:id`, async ({ params, request }) => {
+  http.put(`${API_BASE}/lessons/:id`, async ({ params, request }) => {
     const requestBody = (await request.json()) as Partial<Lesson>;
     return HttpResponse.json({
       id: params.id,
@@ -142,7 +176,7 @@ export const handlers = [
     });
   }),
 
-  http.delete(`${API_URL}/api/lessons/:id`, () => {
+  http.delete(`${API_BASE}/lessons/:id`, () => {
     return HttpResponse.json({ success: true });
   }),
 
