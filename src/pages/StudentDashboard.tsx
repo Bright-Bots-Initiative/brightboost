@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
 import { Lock, Unlock, Bot } from "lucide-react";
+import { format } from "date-fns";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -11,6 +12,28 @@ export default function StudentDashboard() {
 
   const currentLevel = user?.level ? Number(user.level) : 1;
   const badgeLevels = [1, 2, 3, 4, 5, 6];
+
+  // Helper to find date for a level if available
+  const getBadgeDate = (level: number) => {
+    // console.log(`Checking level ${level} against user badges:`, user?.badges);
+    if (!user?.badges) return null;
+
+    // Look for badges named like "Level 1", "Level 2" etc.
+    const badge = user.badges.find(
+      (b) => b.name.toLowerCase() === `level ${level}`
+    );
+
+    // if (badge) console.log(`Found badge for level ${level}:`, badge);
+
+    if (!badge?.awardedAt) return null;
+
+    try {
+      return format(new Date(badge.awardedAt), "MMM d, yyyy");
+    } catch (e) {
+      console.error("Date parse error", e);
+      return null;
+    }
+  };
 
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
@@ -102,6 +125,8 @@ export default function StudentDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           {badgeLevels.map((level) => {
             const isUnlocked = level <= currentLevel;
+            const unlockedDate = isUnlocked ? getBadgeDate(level) : null;
+
             return (
               <div
                 key={level}
@@ -126,14 +151,21 @@ export default function StudentDashboard() {
                     <Lock className="w-6 h-6" />
                   )}
                 </div>
-                <span
-                  className={`
-                  font-bold text-sm
-                  ${isUnlocked ? "text-yellow-800" : "text-slate-500"}
-                `}
-                >
-                  Level {level}
-                </span>
+                <div className="text-center">
+                  <span
+                    className={`
+                    block font-bold text-sm
+                    ${isUnlocked ? "text-yellow-800" : "text-slate-500"}
+                  `}
+                  >
+                    Level {level}
+                  </span>
+                  {unlockedDate && (
+                    <span className="block text-xs text-yellow-600/80 mt-1 font-medium">
+                      {unlockedDate}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}
