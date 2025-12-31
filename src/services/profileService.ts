@@ -1,4 +1,3 @@
-// src/services/profileService.ts
 interface UserProfile {
   id: string;
   name: string;
@@ -25,21 +24,22 @@ interface ApiResponse<T> {
 
 class ProfileService {
   private baseUrl: string;
-  private token: string | null = null;
 
   constructor() {
     this.baseUrl =
-      import.meta.env.VITE_REACT_APP_API_BASE_URL ||
-      "https://api.brightboost.com";
+      import.meta.env.VITE_AWS_API_URL
+        ? `${import.meta.env.VITE_AWS_API_URL.replace(/\/+$/, "")}/api`
+        : import.meta.env.VITE_API_BASE ?? "/api";
   }
 
   private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem("bb_access_token");
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     return headers;
@@ -74,8 +74,8 @@ class ProfileService {
 
   async updateProfile(profileData: UpdateProfileData): Promise<UserProfile> {
     try {
-      const response = await fetch(`${this.baseUrl}/edit-profile`, {
-        method: "POST",
+      const response = await fetch(`${this.baseUrl}/profile`, {
+        method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(profileData),
       });
@@ -86,7 +86,11 @@ class ProfileService {
         }
         if (response.status === 400) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Invalid profile data");
+          const errorMessage =
+            Array.isArray(errorData.error)
+              ? errorData.error.map((e: any) => e.message).join(", ")
+              : errorData.error || "Invalid profile data";
+          throw new Error(errorMessage);
         }
         throw new Error(`Failed to update profile: ${response.statusText}`);
       }
@@ -103,39 +107,6 @@ class ProfileService {
         ? error
         : new Error("Failed to update profile");
     }
-  }
-
-  // Mock implementation for development
-  async getMockProfile(): Promise<UserProfile> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return {
-      id: "user-123",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@brightboost.com",
-      school: "Lincoln Elementary School",
-      subject: "STEM Education",
-      role: "teacher",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-      created_at: "2024-01-15T08:00:00Z",
-    };
-  }
-
-  async updateMockProfile(
-    profileData: UpdateProfileData,
-  ): Promise<UserProfile> {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return {
-      id: "user-123",
-      name: profileData.name,
-      email: "sarah.johnson@brightboost.com",
-      school: profileData.school,
-      subject: profileData.subject,
-      role: "teacher",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-      created_at: "2024-01-15T08:00:00Z",
-    };
   }
 }
 

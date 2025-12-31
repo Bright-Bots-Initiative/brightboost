@@ -39,7 +39,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
     try {
       // Use mock data for now - in production, this would call the real API
-      const profileData = await profileService.getMockProfile();
+      const profileData = await profileService.getProfile();
       setProfile(profileData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load profile");
