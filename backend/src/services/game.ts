@@ -45,8 +45,21 @@ export async function resolveTurn(
 
   if (!actor || !opponent) throw new Error("Missing players");
 
-  const ability = await prisma.ability.findUnique({ where: { id: abilityId } });
-  if (!ability) throw new Error("Ability not found");
+  // OPTIMIZED: Use already fetched unlockedAbilities to find ability config
+  // Prevents extra DB call + enforces security (user must own ability)
+
+  // Explicitly type the search to avoid 'any'
+  // The 'match' query above includes unlockedAbilities -> Ability
+  const unlocked = actor.unlockedAbilities.find(
+    (u) => u.abilityId === abilityId
+  );
+
+  // Note: unlocked.Ability is guaranteed by the 'include' in the Prisma query
+  if (!unlocked || !unlocked.Ability) {
+     throw new Error("Ability not found or not unlocked");
+  }
+
+  const ability = unlocked.Ability;
 
   let damage = 0;
   let heal = 0;
