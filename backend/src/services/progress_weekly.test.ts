@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getWeeklyProgress, getStartOfWeek, getStartOfLastCompletedWeek } from "./progress_weekly";
+import {
+  getWeeklyProgress,
+  getStartOfWeek,
+  getStartOfLastCompletedWeek,
+} from "./progress_weekly";
 import prisma from "../utils/prisma";
 
 // Mock Prisma
@@ -30,7 +34,10 @@ describe("Weekly Progress Service", () => {
     // Mock Create responses
     (prisma.weeklySnapshot.create as any)
       .mockResolvedValueOnce({ id: "last-week", weekStart: lastWeekStart })
-      .mockResolvedValueOnce({ id: "current-week", weekStart: currentWeekStart });
+      .mockResolvedValueOnce({
+        id: "current-week",
+        weekStart: currentWeekStart,
+      });
 
     const result = await getWeeklyProgress(studentId);
 
@@ -38,14 +45,22 @@ describe("Weekly Progress Service", () => {
     expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledTimes(2);
 
     // Check first call (last week)
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(1, expect.objectContaining({
-        where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } }
-    }));
+    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } },
+      }),
+    );
 
     // Check second call (current week)
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(2, expect.objectContaining({
-        where: { studentId_weekStart: { studentId, weekStart: currentWeekStart } }
-    }));
+    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: {
+          studentId_weekStart: { studentId, weekStart: currentWeekStart },
+        },
+      }),
+    );
 
     // Verify creations
     expect(prisma.weeklySnapshot.create).toHaveBeenCalledTimes(2);
@@ -56,8 +71,8 @@ describe("Weekly Progress Service", () => {
 
   it("should not create snapshots if they already exist", async () => {
     (prisma.weeklySnapshot.findUnique as any)
-        .mockResolvedValueOnce({ id: "last-exist" })
-        .mockResolvedValueOnce({ id: "current-exist" });
+      .mockResolvedValueOnce({ id: "last-exist" })
+      .mockResolvedValueOnce({ id: "current-exist" });
 
     const result = await getWeeklyProgress(studentId);
 
@@ -71,15 +86,21 @@ describe("Weekly Progress Service", () => {
     const error: any = new Error("Unique constraint failed");
     error.code = "P2002";
     (prisma.weeklySnapshot.create as any).mockRejectedValueOnce(error);
-    (prisma.weeklySnapshot.findUniqueOrThrow as any).mockResolvedValueOnce({ id: "last-race" });
+    (prisma.weeklySnapshot.findUniqueOrThrow as any).mockResolvedValueOnce({
+      id: "last-race",
+    });
 
     // Second call (current week) exists
-    (prisma.weeklySnapshot.findUnique as any).mockResolvedValueOnce({ id: "current-exist" });
+    (prisma.weeklySnapshot.findUnique as any).mockResolvedValueOnce({
+      id: "current-exist",
+    });
 
     await getWeeklyProgress(studentId);
 
-    expect(prisma.weeklySnapshot.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({
-        where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } }
-    }));
+    expect(prisma.weeklySnapshot.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } },
+      }),
+    );
   });
 });

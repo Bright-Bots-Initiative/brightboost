@@ -131,11 +131,7 @@ export default function NewAssignmentDrawer({
           )}
 
           <div className="flex justify-end gap-2 mt-auto">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-            >
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
             <Button

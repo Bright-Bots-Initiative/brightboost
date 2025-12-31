@@ -36,7 +36,11 @@ describe("upsertCheckpoint", () => {
 
   it("OPTIMIZED: should use upsert instead of findFirst+create/update", async () => {
     // Mock upsert
-    vi.mocked(prisma.progress.upsert).mockResolvedValue({ id: "upserted-id", ...mockData, status: ProgressStatus.COMPLETED } as any);
+    vi.mocked(prisma.progress.upsert).mockResolvedValue({
+      id: "upserted-id",
+      ...mockData,
+      status: ProgressStatus.COMPLETED,
+    } as any);
 
     await upsertCheckpoint(mockData);
 
@@ -71,15 +75,21 @@ describe("upsertCheckpoint", () => {
   it("OPTIMIZED: should not update status if not completed in request", async () => {
     const incompleteData = { ...mockData, completed: false };
 
-    vi.mocked(prisma.progress.upsert).mockResolvedValue({ id: "upserted-id", ...incompleteData, status: ProgressStatus.IN_PROGRESS } as any);
+    vi.mocked(prisma.progress.upsert).mockResolvedValue({
+      id: "upserted-id",
+      ...incompleteData,
+      status: ProgressStatus.IN_PROGRESS,
+    } as any);
 
     await upsertCheckpoint(incompleteData);
 
-    expect(prisma.progress.upsert).toHaveBeenCalledWith(expect.objectContaining({
-      update: {
-        timeSpentS: { increment: incompleteData.timeSpentS },
-        // status should NOT be present here
-      }
-    }));
+    expect(prisma.progress.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: {
+          timeSpentS: { increment: incompleteData.timeSpentS },
+          // status should NOT be present here
+        },
+      }),
+    );
   });
 });

@@ -111,62 +111,62 @@ router.post("/edit-profile", async (req: Request, res: Response) => {
 
 // GET /users/:id - Get specific user's profile (for teachers to view students)
 router.get("/users/:id", async (req: Request, res: Response) => {
-    try {
-      const requesterId = (req as any).user?.id;
-      const targetUserId = req.params.id;
+  try {
+    const requesterId = (req as any).user?.id;
+    const targetUserId = req.params.id;
 
-      if (!requesterId) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      // Check permissions:
-      // 1. User viewing their own profile
-      // 2. Teacher viewing a student (simplified check: requester is teacher)
-      // Ideally check if student is in teacher's class, but for MVP/Mock replacement:
-
-      const requester = await prisma.user.findUnique({
-        where: { id: requesterId },
-        select: { role: true }
-      });
-
-      if (requesterId !== targetUserId && requester?.role !== 'teacher') {
-         return res.status(403).json({ error: "Forbidden" });
-      }
-
-      const user = await prisma.user.findUnique({
-        where: { id: targetUserId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          school: true,
-          subject: true,
-          avatarUrl: true,
-          createdAt: true,
-        },
-      });
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const profile = {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        school: user.school,
-        subject: user.subject,
-        avatar: user.avatarUrl,
-        created_at: user.createdAt.toISOString(),
-      };
-
-      res.json(profile);
-    } catch (error) {
-      console.error("Get user profile error:", error);
-      res.status(500).json({ error: "Internal server error" });
+    if (!requesterId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
-  });
+
+    // Check permissions:
+    // 1. User viewing their own profile
+    // 2. Teacher viewing a student (simplified check: requester is teacher)
+    // Ideally check if student is in teacher's class, but for MVP/Mock replacement:
+
+    const requester = await prisma.user.findUnique({
+      where: { id: requesterId },
+      select: { role: true },
+    });
+
+    if (requesterId !== targetUserId && requester?.role !== "teacher") {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        school: true,
+        subject: true,
+        avatarUrl: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const profile = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      school: user.school,
+      subject: user.subject,
+      avatar: user.avatarUrl,
+      created_at: user.createdAt.toISOString(),
+    };
+
+    res.json(profile);
+  } catch (error) {
+    console.error("Get user profile error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default router;
