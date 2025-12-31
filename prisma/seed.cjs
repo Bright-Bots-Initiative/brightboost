@@ -14,13 +14,16 @@ async function main() {
   } catch (e) {
     // If table doesn't exist or connection fails, we might want to proceed or fail.
     // But usually count() works if DB is reachable.
-    console.warn("Could not check ability count, proceeding with caution:", e.message);
+    console.warn(
+      "Could not check ability count, proceeding with caution:",
+      e.message,
+    );
   }
 
   // 2. Cleanup (Production Safe)
-  const isProduction = process.env.NODE_ENV === 'production';
-  const forceReset = process.env.SEED_RESET === 'true';
-  const forceNoReset = process.env.SEED_RESET === 'false';
+  const isProduction = process.env.NODE_ENV === "production";
+  const forceReset = process.env.SEED_RESET === "true";
+  const forceNoReset = process.env.SEED_RESET === "false";
 
   // Wipe only if NOT production, unless forced.
   const shouldWipe = forceReset || (!isProduction && !forceNoReset);
@@ -29,23 +32,30 @@ async function main() {
     console.log("Cleaning up database...");
     // Delete in reverse order of dependencies
     try {
-        await prisma.matchTurn.deleteMany();
-        await prisma.match.deleteMany();
-        await prisma.unlockedAbility.deleteMany();
-        await prisma.ability.deleteMany();
-        await prisma.progress.deleteMany();
-        await prisma.avatar.deleteMany();
-        await prisma.activity.deleteMany();
-        await prisma.lesson.deleteMany();
-        await prisma.unit.deleteMany();
-        // userBadge and badge might be present in some schemas
-        try { await prisma.userBadge.deleteMany(); } catch {}
-        try { await prisma.badge.deleteMany(); } catch {}
+      await prisma.matchTurn.deleteMany();
+      await prisma.match.deleteMany();
+      await prisma.unlockedAbility.deleteMany();
+      await prisma.ability.deleteMany();
+      await prisma.progress.deleteMany();
+      await prisma.avatar.deleteMany();
+      await prisma.activity.deleteMany();
+      await prisma.lesson.deleteMany();
+      await prisma.unit.deleteMany();
+      // userBadge and badge might be present in some schemas
+      try {
+        await prisma.userBadge.deleteMany();
+      } catch {}
+      try {
+        await prisma.badge.deleteMany();
+      } catch {}
 
-        await prisma.module.deleteMany();
-        await prisma.user.deleteMany();
+      await prisma.module.deleteMany();
+      await prisma.user.deleteMany();
     } catch (e) {
-        console.warn("Cleanup warning (some tables might be empty or missing):", e.message);
+      console.warn(
+        "Cleanup warning (some tables might be empty or missing):",
+        e.message,
+      );
     }
     console.log("Database cleaned.");
   } else {
@@ -59,12 +69,42 @@ async function main() {
   const BIOTECH = Archetype ? Archetype.BIOTECH : "BIOTECH";
 
   const abilities = [
-    { name: "Laser Strike", archetype: AI, reqLevel: 1, config: { type: "attack", value: 15 } },
-    { name: "Overclock", archetype: AI, reqLevel: 2, config: { type: "heal", value: 10 } },
-    { name: "Phase Shift", archetype: QUANTUM, reqLevel: 1, config: { type: "attack", value: 15 } },
-    { name: "Entropy Bolt", archetype: QUANTUM, reqLevel: 2, config: { type: "attack", value: 20 } },
-    { name: "Nano Heal", archetype: BIOTECH, reqLevel: 1, config: { type: "heal", value: 15 } },
-    { name: "Regen Field", archetype: BIOTECH, reqLevel: 2, config: { type: "heal", value: 20 } },
+    {
+      name: "Laser Strike",
+      archetype: AI,
+      reqLevel: 1,
+      config: { type: "attack", value: 15 },
+    },
+    {
+      name: "Overclock",
+      archetype: AI,
+      reqLevel: 2,
+      config: { type: "heal", value: 10 },
+    },
+    {
+      name: "Phase Shift",
+      archetype: QUANTUM,
+      reqLevel: 1,
+      config: { type: "attack", value: 15 },
+    },
+    {
+      name: "Entropy Bolt",
+      archetype: QUANTUM,
+      reqLevel: 2,
+      config: { type: "attack", value: 20 },
+    },
+    {
+      name: "Nano Heal",
+      archetype: BIOTECH,
+      reqLevel: 1,
+      config: { type: "heal", value: 15 },
+    },
+    {
+      name: "Regen Field",
+      archetype: BIOTECH,
+      reqLevel: 2,
+      config: { type: "heal", value: 20 },
+    },
   ];
 
   for (const ab of abilities) {
@@ -82,7 +122,7 @@ async function main() {
       email: "teacher@school.com",
       password: "password123",
       role: "teacher",
-    }
+    },
   });
   console.log("Seeded teacher:", teacher.email);
 
@@ -96,7 +136,7 @@ async function main() {
       role: "student",
       xp: 0,
       level: "Novice",
-    }
+    },
   });
   console.log("Seeded student:", student.email);
 
@@ -110,7 +150,7 @@ async function main() {
       description: "K-2 Intro to AI, Quantum, and Bio",
       level: "K-2",
       published: true,
-    }
+    },
   });
   console.log("Created module:", module.slug);
 
@@ -119,7 +159,8 @@ async function main() {
     data: {
       slug: "k2-stem-sequencing",
       title: "Boost’s Lost Steps",
-      description: "Put steps in order and fix mistakes (sequencing + debugging).",
+      description:
+        "Put steps in order and fix mistakes (sequencing + debugging).",
       level: "K-2",
       published: true,
     },
@@ -158,17 +199,47 @@ async function main() {
         slides: [
           { id: "s1", text: "Boost is baking Galaxy Cookies for the class." },
           { id: "s2", text: "But the recipe steps got mixed up!" },
-          { id: "s3", text: "Boost tries: Frost → Bake… splat! The frosting melts." },
+          {
+            id: "s3",
+            text: "Boost tries: Frost → Bake… splat! The frosting melts.",
+          },
           { id: "s4", text: "A helper drone says: 'Put the steps in order.'" },
           { id: "s5", text: "Boost smiles: 'We debugged it! Now it works.'" },
         ],
         questions: [
-          { id: "q1", prompt: "Why did the frosting melt?", choices: ["Because it was baked too late", "Because it went in before baking", "Because it was too cold"], answerIndex: 1 },
-          { id: "q2", prompt: "What does 'debug' mean?", choices: ["Make a bigger mess", "Fix a mistake", "Add sprinkles"], answerIndex: 1 },
-          { id: "q3", prompt: "What step should happen before baking?", choices: ["Pour/mix the batter", "Eat the cookies", "Frost first"], answerIndex: 0 },
-          { id: "q4", prompt: "How did Boost feel after fixing it?", choices: ["Proud", "Angry", "Sleepy"], answerIndex: 0 },
+          {
+            id: "q1",
+            prompt: "Why did the frosting melt?",
+            choices: [
+              "Because it was baked too late",
+              "Because it went in before baking",
+              "Because it was too cold",
+            ],
+            answerIndex: 1,
+          },
+          {
+            id: "q2",
+            prompt: "What does 'debug' mean?",
+            choices: ["Make a bigger mess", "Fix a mistake", "Add sprinkles"],
+            answerIndex: 1,
+          },
+          {
+            id: "q3",
+            prompt: "What step should happen before baking?",
+            choices: ["Pour/mix the batter", "Eat the cookies", "Frost first"],
+            answerIndex: 0,
+          },
+          {
+            id: "q4",
+            prompt: "How did Boost feel after fixing it?",
+            choices: ["Proud", "Angry", "Sleepy"],
+            answerIndex: 0,
+          },
         ],
-        review: { keyIdea: "An algorithm is steps in order. Debug means fix mistakes.", vocab: ["step", "order", "debug"] },
+        review: {
+          keyIdea: "An algorithm is steps in order. Debug means fix mistakes.",
+          vocab: ["step", "order", "debug"],
+        },
       }),
       Lesson: { connect: { id: k2SeqLesson.id } },
     },
@@ -183,9 +254,21 @@ async function main() {
         type: "minigame",
         gameKey: "sequence_drag_drop",
         levels: [
-          { id: "k", cards: ["Pour", "Bake", "Eat", "Frost"], answer: ["Pour", "Bake", "Frost", "Eat"] },
-          { id: "g1", cards: ["Wash", "Soap", "Rinse", "Dry", "Turn water on"], answer: ["Turn water on", "Wash", "Soap", "Rinse", "Dry"] },
-          { id: "g2", cards: ["Plan", "Code", "Test", "Fix", "Share"], answer: ["Plan", "Code", "Test", "Fix", "Share"] },
+          {
+            id: "k",
+            cards: ["Pour", "Bake", "Eat", "Frost"],
+            answer: ["Pour", "Bake", "Frost", "Eat"],
+          },
+          {
+            id: "g1",
+            cards: ["Wash", "Soap", "Rinse", "Dry", "Turn water on"],
+            answer: ["Turn water on", "Wash", "Soap", "Rinse", "Dry"],
+          },
+          {
+            id: "g2",
+            cards: ["Plan", "Code", "Test", "Fix", "Share"],
+            answer: ["Plan", "Code", "Test", "Fix", "Share"],
+          },
         ],
       }),
       Lesson: { connect: { id: k2SeqLesson.id } },
@@ -199,12 +282,12 @@ async function main() {
       title: "Unit 1: The Basics",
       order: 1,
       Module: {
-          connect: { id: module.id }
+        connect: { id: module.id },
       },
       teacher: {
-          connect: { id: teacher.id }
-      }
-    }
+        connect: { id: teacher.id },
+      },
+    },
   });
   console.log("Created unit:", unit.title);
 
@@ -214,9 +297,9 @@ async function main() {
       title: "Lesson 1: What is a Robot?",
       order: 1,
       Unit: {
-          connect: { id: unit.id }
-      }
-    }
+        connect: { id: unit.id },
+      },
+    },
   });
   console.log("Created lesson:", lesson.title);
 
@@ -229,9 +312,9 @@ async function main() {
       order: 1,
       content: "Robots have sensors and motors.",
       Lesson: {
-          connect: { id: lesson.id }
-      }
-    }
+        connect: { id: lesson.id },
+      },
+    },
   });
 
   await prisma.activity.create({
@@ -241,9 +324,9 @@ async function main() {
       order: 2,
       content: "Drag the parts to build a robot.",
       Lesson: {
-          connect: { id: lesson.id }
-      }
-    }
+        connect: { id: lesson.id },
+      },
+    },
   });
   console.log("Seeded activities.");
 }

@@ -45,16 +45,16 @@ describe("Auth Rate Limiting", () => {
 
     // Make 20 allowed requests
     for (let i = 0; i < 20; i++) {
-        const res = await request(app)
-          .post("/api/signup/student")
-          .set("X-Forwarded-For", ip)
-          .send({
-            name: "Test",
-            email: "student@example.com",
-            password: "password123",
-          });
+      const res = await request(app)
+        .post("/api/signup/student")
+        .set("X-Forwarded-For", ip)
+        .send({
+          name: "Test",
+          email: "student@example.com",
+          password: "password123",
+        });
 
-        expect(res.status).not.toBe(429);
+      expect(res.status).not.toBe(429);
     }
 
     // 21st request

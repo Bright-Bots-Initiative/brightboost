@@ -56,7 +56,7 @@ app.use("/api", matchRouter);
 app.use("/api", profileRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
-  res.status(200).json({ status: "ok" })
+  res.status(200).json({ status: "ok" }),
 );
 
 // Serve static frontend files
@@ -64,7 +64,7 @@ app.get("/health", (_req: Request, res: Response) =>
 // In development (src/server.ts), the frontend build is in ../../dist
 const distPath = path.resolve(
   __dirname,
-  process.env.NODE_ENV === "production" ? "../../../dist" : "../../dist"
+  process.env.NODE_ENV === "production" ? "../../../dist" : "../../dist",
 );
 app.use(express.static(distPath));
 

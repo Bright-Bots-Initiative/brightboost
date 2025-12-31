@@ -14,7 +14,11 @@ vi.mock("../../services/api", () => ({
 
 // Mock components that use other contexts or are complex
 vi.mock("@/components/ui/card", () => ({
-  Card: ({ children, className }: any) => <div className={className} data-testid="card">{children}</div>,
+  Card: ({ children, className }: any) => (
+    <div className={className} data-testid="card">
+      {children}
+    </div>
+  ),
   CardHeader: ({ children }: any) => <div>{children}</div>,
   CardTitle: ({ children }: any) => <h2>{children}</h2>,
   CardContent: ({ children }: any) => <div>{children}</div>,
@@ -22,7 +26,9 @@ vi.mock("@/components/ui/card", () => ({
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, onClick, "aria-label": ariaLabel }: any) => (
-    <button onClick={onClick} aria-label={ariaLabel}>{children}</button>
+    <button onClick={onClick} aria-label={ariaLabel}>
+      {children}
+    </button>
   ),
 }));
 
@@ -40,7 +46,7 @@ describe("Modules Page", () => {
     render(
       <BrowserRouter>
         <Modules />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
     expect(screen.getByTestId("modules-skeleton")).toBeDefined();
   });
@@ -55,7 +61,7 @@ describe("Modules Page", () => {
     render(
       <BrowserRouter>
         <Modules />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
@@ -73,7 +79,7 @@ describe("Modules Page", () => {
     render(
       <BrowserRouter>
         <Modules />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
@@ -81,7 +87,9 @@ describe("Modules Page", () => {
     });
 
     expect(screen.getByText("No Modules Found")).toBeDefined();
-    expect(screen.getByText(/We couldn't find any learning modules/)).toBeDefined();
+    expect(
+      screen.getByText(/We couldn't find any learning modules/),
+    ).toBeDefined();
   });
 
   it("shows error message when API fails", async () => {
@@ -90,7 +98,7 @@ describe("Modules Page", () => {
     render(
       <BrowserRouter>
         <Modules />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
 
     await waitFor(() => {
@@ -98,6 +106,8 @@ describe("Modules Page", () => {
     });
 
     expect(screen.getByText("Error")).toBeDefined();
-    expect(screen.getByText("Failed to load modules. Please try again later.")).toBeDefined();
+    expect(
+      screen.getByText("Failed to load modules. Please try again later."),
+    ).toBeDefined();
   });
 });

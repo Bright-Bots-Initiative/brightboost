@@ -40,8 +40,8 @@ export default function Avatar() {
           // Note: AuthContext user might not be updated immediately after upload unless we refresh it.
           // For now, we rely on the component's internal state for immediate feedback.
           onAvatarChange={(url) => {
-             console.log("Avatar updated:", url);
-             // Optionally trigger a user profile refresh here
+            console.log("Avatar updated:", url);
+            // Optionally trigger a user profile refresh here
           }}
         />
       </div>

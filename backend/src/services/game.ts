@@ -133,32 +133,36 @@ export async function checkUnlocks(studentId: string) {
       data: { level: newLevel, xp: { increment: 100 } },
     });
 
-        // ⚡ Bolt Optimization: Batch fetch & create to avoid N+1 query
-        const eligibleAbilities = await prisma.ability.findMany({
-            where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } }
-        });
+    // ⚡ Bolt Optimization: Batch fetch & create to avoid N+1 query
+    const eligibleAbilities = await prisma.ability.findMany({
+      where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
+    });
 
-        if (eligibleAbilities.length === 0) return;
+    if (eligibleAbilities.length === 0) return;
 
-        const existingUnlocks = await prisma.unlockedAbility.findMany({
-            where: {
-                avatarId: avatar.id,
-                abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) }
-            },
-            select: { abilityId: true }
-        });
+    const existingUnlocks = await prisma.unlockedAbility.findMany({
+      where: {
+        avatarId: avatar.id,
+        abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
+      },
+      select: { abilityId: true },
+    });
 
-        const existingAbilityIds = new Set(existingUnlocks.map((u: { abilityId: string }) => u.abilityId));
-        const newUnlocks = eligibleAbilities.filter((ab: AbilityRow) => !existingAbilityIds.has(ab.id));
+    const existingAbilityIds = new Set(
+      existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
+    );
+    const newUnlocks = eligibleAbilities.filter(
+      (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
+    );
 
-        if (newUnlocks.length > 0) {
-            await prisma.unlockedAbility.createMany({
-                data: newUnlocks.map((ab: AbilityRow) => ({
-                    avatarId: avatar.id,
-                    abilityId: ab.id,
-                    equipped: false
-                }))
-            });
-        }
+    if (newUnlocks.length > 0) {
+      await prisma.unlockedAbility.createMany({
+        data: newUnlocks.map((ab: AbilityRow) => ({
+          avatarId: avatar.id,
+          abilityId: ab.id,
+          equipped: false,
+        })),
+      });
     }
+  }
 }

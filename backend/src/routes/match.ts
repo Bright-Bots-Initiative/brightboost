@@ -31,8 +31,8 @@ router.post("/match/queue", requireAuth, async (req, res) => {
   const existingPending = await prisma.match.findFirst({
     where: {
       player1Id: avatar.id,
-      status: MatchStatus.PENDING
-    }
+      status: MatchStatus.PENDING,
+    },
   });
 
   if (existingPending) {

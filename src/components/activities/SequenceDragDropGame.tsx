@@ -86,7 +86,11 @@ export default function SequenceDragDropGame({
     if (!isComplete) return;
     const correct = slots.every((s, i) => s === level.answer[i]);
     if (!correct) {
-      toast({ title: "Try again!", description: "That order isn’t quite right.", variant: "destructive" });
+      toast({
+        title: "Try again!",
+        description: "That order isn’t quite right.",
+        variant: "destructive",
+      });
       resetLevel();
       return;
     }
@@ -112,7 +116,9 @@ export default function SequenceDragDropGame({
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="font-semibold">Tap cards to place them into slots.</div>
+          <div className="font-semibold">
+            Tap cards to place them into slots.
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {slots.map((s, i) => (
@@ -123,7 +129,11 @@ export default function SequenceDragDropGame({
                 onClick={() => removeFromSlot(i)}
                 aria-label={`Slot ${i + 1}${s ? ` contains ${s}` : ""}`}
               >
-                {s ? <span className="font-semibold">{s}</span> : <span className="opacity-40">Slot {i + 1}</span>}
+                {s ? (
+                  <span className="font-semibold">{s}</span>
+                ) : (
+                  <span className="opacity-40">Slot {i + 1}</span>
+                )}
               </Button>
             ))}
           </div>

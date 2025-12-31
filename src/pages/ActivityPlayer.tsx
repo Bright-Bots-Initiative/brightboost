@@ -59,7 +59,9 @@ export default function ActivityPlayer() {
         m?.units?.forEach((u: any) => {
           u?.lessons?.forEach((l: any) => {
             if (String(l.id) !== targetLessonId) return;
-            const a = l?.activities?.find((x: any) => String(x.id) === targetActivityId);
+            const a = l?.activities?.find(
+              (x: any) => String(x.id) === targetActivityId,
+            );
             if (a) found = a;
           });
         });
@@ -102,7 +104,11 @@ export default function ActivityPlayer() {
       toast({ title: "Activity Completed!", description: "+50 XP" });
       navigate(`/student/modules/${slug}`);
     } catch {
-      toast({ title: "Error", description: "Failed to save progress.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -116,7 +122,11 @@ export default function ActivityPlayer() {
         <Card>
           <CardContent className="p-6 space-y-4">
             <div className="text-lg font-semibold">Activity not found</div>
-            <Button onClick={() => navigate(slug ? `/student/modules/${slug}` : "/student/modules")}>
+            <Button
+              onClick={() =>
+                navigate(slug ? `/student/modules/${slug}` : "/student/modules")
+              }
+            >
               Back to Module
             </Button>
           </CardContent>
@@ -127,8 +137,12 @@ export default function ActivityPlayer() {
 
   // INFO: story + quiz
   if (activity.kind === "INFO") {
-    const slides: StorySlide[] = Array.isArray(content?.slides) ? content.slides : [];
-    const questions: StoryQuestion[] = Array.isArray(content?.questions) ? content.questions : [];
+    const slides: StorySlide[] = Array.isArray(content?.slides)
+      ? content.slides
+      : [];
+    const questions: StoryQuestion[] = Array.isArray(content?.questions)
+      ? content.questions
+      : [];
 
     if (content?.type !== "story_quiz" || slides.length === 0) {
       // fallback display
@@ -137,9 +151,14 @@ export default function ActivityPlayer() {
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="text-xl font-bold">{activity.title}</div>
-              <div className="text-gray-700 whitespace-pre-wrap">{content?.text ?? activity.content}</div>
+              <div className="text-gray-700 whitespace-pre-wrap">
+                {content?.text ?? activity.content}
+              </div>
               <div className="flex gap-2">
-                <Button onClick={() => navigate(`/student/modules/${slug}`)} variant="outline">
+                <Button
+                  onClick={() => navigate(`/student/modules/${slug}`)}
+                  variant="outline"
+                >
                   Back
                 </Button>
                 <Button onClick={completeAndExit}>Mark Complete</Button>
@@ -151,13 +170,18 @@ export default function ActivityPlayer() {
     }
 
     const current = slides[slideIndex];
-    const allAnswered = questions.every((q) => typeof answers[q.id] === "number");
+    const allAnswered = questions.every(
+      (q) => typeof answers[q.id] === "number",
+    );
 
     if (mode === "story") {
       return (
         <div className="p-6 max-w-3xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => navigate(`/student/modules/${slug}`)}>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/student/modules/${slug}`)}
+            >
               Back
             </Button>
             <div className="text-sm text-gray-500">
@@ -180,7 +204,11 @@ export default function ActivityPlayer() {
               Back
             </Button>
             {slideIndex < slides.length - 1 ? (
-              <Button onClick={() => setSlideIndex((i) => Math.min(slides.length - 1, i + 1))}>
+              <Button
+                onClick={() =>
+                  setSlideIndex((i) => Math.min(slides.length - 1, i + 1))
+                }
+              >
                 Next
               </Button>
             ) : (
@@ -216,7 +244,9 @@ export default function ActivityPlayer() {
                         key={idx}
                         variant={selected ? "default" : "outline"}
                         className="justify-start"
-                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: idx }))}
+                        onClick={() =>
+                          setAnswers((prev) => ({ ...prev, [q.id]: idx }))
+                        }
                       >
                         {c}
                       </Button>
@@ -233,7 +263,9 @@ export default function ActivityPlayer() {
               <Button
                 disabled={!allAnswered}
                 onClick={() => {
-                  const incorrect = questions.filter((q) => answers[q.id] !== q.answerIndex);
+                  const incorrect = questions.filter(
+                    (q) => answers[q.id] !== q.answerIndex,
+                  );
                   if (incorrect.length === 0) {
                     completeAndExit();
                     return;
@@ -271,9 +303,13 @@ export default function ActivityPlayer() {
           <CardContent className="p-6 space-y-4">
             <div className="text-xl font-bold">{activity.title}</div>
             <div className="text-gray-700">
-              This game type isn’t supported yet: <span className="font-mono">{String(key)}</span>
+              This game type isn’t supported yet:{" "}
+              <span className="font-mono">{String(key)}</span>
             </div>
-            <Button onClick={() => navigate(`/student/modules/${slug}`)} variant="outline">
+            <Button
+              onClick={() => navigate(`/student/modules/${slug}`)}
+              variant="outline"
+            >
               Back to Module
             </Button>
           </CardContent>
@@ -287,7 +323,10 @@ export default function ActivityPlayer() {
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="text-xl font-bold">Unsupported activity type</div>
-          <Button onClick={() => navigate(`/student/modules/${slug}`)} variant="outline">
+          <Button
+            onClick={() => navigate(`/student/modules/${slug}`)}
+            variant="outline"
+          >
             Back to Module
           </Button>
         </CardContent>

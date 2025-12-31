@@ -40,42 +40,45 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   // 1. Upsert progress
   const existing = await prisma.progress.findFirst({
-      where: { studentId, activityId }
+    where: { studentId, activityId },
   });
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
-      return res.json({ message: "Already completed", progress: existing });
+    return res.json({ message: "Already completed", progress: existing });
   }
 
   let finalProgress;
   if (existing) {
-       finalProgress = await prisma.progress.update({
-           where: { id: existing.id },
-           data: { status: ProgressStatus.COMPLETED, timeSpentS: { increment: timeSpentS || 0 } }
-       });
+    finalProgress = await prisma.progress.update({
+      where: { id: existing.id },
+      data: {
+        status: ProgressStatus.COMPLETED,
+        timeSpentS: { increment: timeSpentS || 0 },
+      },
+    });
   } else {
-       finalProgress = await prisma.progress.create({
-           data: {
-              studentId,
-              moduleSlug,
-              lessonId,
-              activityId,
-              status: ProgressStatus.COMPLETED,
-              timeSpentS: timeSpentS || 0
-           }
-       });
+    finalProgress = await prisma.progress.create({
+      data: {
+        studentId,
+        moduleSlug,
+        lessonId,
+        activityId,
+        status: ProgressStatus.COMPLETED,
+        timeSpentS: timeSpentS || 0,
+      },
+    });
 
-       try {
-        // Award XP
-        await prisma.avatar.update({
-            where: { studentId },
-            data: { xp: { increment: 50 } }
-        });
-       } catch (e) {
-           console.warn("Could not give XP to avatar", e);
-       }
+    try {
+      // Award XP
+      await prisma.avatar.update({
+        where: { studentId },
+        data: { xp: { increment: 50 } },
+      });
+    } catch (e) {
+      console.warn("Could not give XP to avatar", e);
+    }
 
-       await checkUnlocks(studentId);
+    await checkUnlocks(studentId);
   }
 
   res.json(finalProgress);
