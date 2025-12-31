@@ -25,12 +25,9 @@ interface ApiResponse<T> {
 
 class ProfileService {
   private baseUrl: string;
-  private token: string | null = null;
 
   constructor() {
-    this.baseUrl =
-      import.meta.env.VITE_REACT_APP_API_BASE_URL ||
-      "https://api.brightboost.com";
+    this.baseUrl = import.meta.env.VITE_API_BASE ?? "/api";
   }
 
   private getAuthHeaders(): Record<string, string> {
@@ -38,8 +35,11 @@ class ProfileService {
       "Content-Type": "application/json",
     };
 
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    // Get token from localStorage as used in AuthContext
+    const token = localStorage.getItem("bb_access_token");
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     return headers;
@@ -105,37 +105,15 @@ class ProfileService {
     }
   }
 
-  // Mock implementation for development
+  // Mock methods are removed or deprecated
   async getMockProfile(): Promise<UserProfile> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return {
-      id: "user-123",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@brightboost.com",
-      school: "Lincoln Elementary School",
-      subject: "STEM Education",
-      role: "teacher",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-      created_at: "2024-01-15T08:00:00Z",
-    };
+    return this.getProfile();
   }
 
   async updateMockProfile(
     profileData: UpdateProfileData,
   ): Promise<UserProfile> {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return {
-      id: "user-123",
-      name: profileData.name,
-      email: "sarah.johnson@brightboost.com",
-      school: profileData.school,
-      subject: profileData.subject,
-      role: "teacher",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-      created_at: "2024-01-15T08:00:00Z",
-    };
+    return this.updateProfile(profileData);
   }
 }
 
