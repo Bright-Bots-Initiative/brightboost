@@ -13,33 +13,25 @@ export default function ModuleDetail() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Ideally fetch specific module, but getModules returns all for now.
-    api.getModules().then((mods) => {
-      const m = mods.find((x: any) => x.slug === slug);
-      setModule(m);
-    });
-  }, [slug]);
-
-  const handleComplete = async (lessonId: string, activityId: string) => {
-    try {
-      await api.completeActivity({
-        moduleSlug: slug!,
-        lessonId,
-        activityId,
-        timeSpentS: 60,
+    if (!slug) return;
+    api
+      .getModule(slug)
+      .then((m) => setModule(m))
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to load module.",
+          variant: "destructive",
+        });
       });
-      toast({ title: "Activity Completed!", description: "+50 XP" });
-      // Check for upgrades?
-    } catch (e) {
-      toast({ title: "Error", variant: "destructive" });
-    }
-  };
+  }, [slug, toast]);
 
   if (!module) return <div>Loading...</div>;
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{module.title}</h1>
+      <p className="text-sm text-gray-600 mb-4">{module.description}</p>
       <div className="space-y-4">
         {module.units?.map((u: any) => (
           <div key={u.id} className="border p-4 rounded">
@@ -47,15 +39,23 @@ export default function ModuleDetail() {
             {u.lessons?.map((l: any) => (
               <div key={l.id} className="ml-4 mt-2">
                 <p>{l.title}</p>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {l.activities?.map((a: any) => (
-                    <Button
-                      key={a.id}
-                      size="sm"
-                      onClick={() => handleComplete(l.id, a.id)}
-                    >
-                      Complete: {a.title}
-                    </Button>
+                    <Card key={a.id} className="p-0 border-0 shadow-none">
+                      <CardContent className="p-0">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            navigate(
+                              `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
+                            )
+                          }
+                        >
+                          {a.kind === "INFO" ? "📖" : "🎮"} Play: {a.title}
+                        </Button>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
