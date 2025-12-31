@@ -6,7 +6,7 @@ Summary:
 
 - Symptom: Student login on prod returned HTTP 405.
 - Root cause: Frontend built with incorrect API base and/or API Gateway CORS/preflight not allowing POST/OPTIONS from SWA origin.
-- Fix: Align frontend to use VITE_AWS_API_URL for prod API base (including stage), add SWA workflow for correct build paths, configure API Gateway CORS to allow SWA origin and OPTIONS handling, purge SWA cache, and verify.
+- Fix: Align frontend to use VITE_API_BASE for prod API base (including stage), add SWA workflow for correct build paths, configure API Gateway CORS to allow SWA origin and OPTIONS handling, purge SWA cache, and verify.
 
 Production URLs:
 
@@ -16,10 +16,10 @@ Production URLs:
 Frontend changes:
 
 - src/services/api.ts now prioritizes:
-  - VITE_AWS_API_URL
-  - VITE_API_URL
-  - VITE_API_BASE
-  - default http://localhost:3000
+  - VITE_API_BASE (Canonical)
+  - VITE_AWS_API_URL (Legacy, appends /api)
+  - VITE_API_URL (Legacy)
+  - default /api
 - SWA workflow checked in at .github/workflows/azure-static-web-apps.yml with:
   - app_location: /
   - api_location: ""

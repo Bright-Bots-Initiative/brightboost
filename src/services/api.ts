@@ -7,9 +7,33 @@ import { t } from "i18next";
 export const join = (base: string, path: string): string =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-const API_BASE = import.meta.env.VITE_AWS_API_URL
-  ? join(import.meta.env.VITE_AWS_API_URL, "/api")
-  : import.meta.env.VITE_API_BASE ?? "/api";
+const resolveApiBase = (): string => {
+  const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
+
+  if (VITE_API_BASE) {
+    let base = VITE_API_BASE.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    if (!base.startsWith("http") && !base.startsWith("/")) base = `/${base}`;
+    return base;
+  }
+
+  if (VITE_AWS_API_URL) {
+    let base = VITE_AWS_API_URL.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    return `${base}/api`;
+  }
+
+  if (VITE_API_URL) {
+    let base = VITE_API_URL.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    if (!base.startsWith("http") && !base.startsWith("/")) base = `/${base}`;
+    return base;
+  }
+
+  return "/api";
+};
+
+const API_BASE = resolveApiBase();
 
 if (import.meta.env.DEV) {
   console.log("API_BASE:", API_BASE);
