@@ -46,7 +46,7 @@ const TeacherLogin: React.FC = () => {
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
-        <div className="game-card p-6 w-full max-w-md">
+        <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link
               to="/login"
@@ -125,7 +125,7 @@ const TeacherLogin: React.FC = () => {
               type="submit"
               disabled={isLoading}
               aria-busy={isLoading}
-              className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
+              className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ui-lift ${
                 isLoading ? "bg-brightboost-blue/70" : "bg-brightboost-blue"
               } transition-colors flex items-center justify-center`}
             >

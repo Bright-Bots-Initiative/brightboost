@@ -146,6 +146,9 @@ select {
   color: #213547;
 }
 
+/* --- Sky Background Animations --- */
+
+/* Legacy drift for backward compatibility */
 @keyframes cloud-drift {
   from {
     transform: translateX(-150%);
@@ -159,8 +162,139 @@ select {
   animation: cloud-drift linear infinite;
 }
 
+/* New multi-directional drift (slowed down) */
+@keyframes cloud-drift-ltr {
+  from {
+    transform: translateX(-150%);
+  }
+  to {
+    transform: translateX(100vw);
+  }
+}
+
+@keyframes cloud-drift-rtl {
+  from {
+    transform: translateX(100vw);
+  }
+  to {
+    transform: translateX(-150%);
+  }
+}
+
+@keyframes cloud-bob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.cloud-layer-1 {
+  animation: cloud-drift-ltr 180s linear infinite;
+}
+
+.cloud-layer-2 {
+  animation: cloud-drift-rtl 200s linear infinite;
+}
+
+.cloud-layer-3 {
+  animation: cloud-drift-ltr 240s linear infinite;
+}
+
+.cloud-bob-effect {
+  animation: cloud-bob 14s ease-in-out infinite;
+}
+
+/* Apply multiple animations by nesting or combined definition if needed.
+   For simplicity, we will apply drift to the parent and bob to the child (image) or vice-versa.
+*/
+
+/* --- Sun & Glow Accent --- */
+.sun-glow {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: clamp(80px, 12vw, 180px);
+  aspect-ratio: 1/1;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 223, 100, 0.9) 20%, rgba(255, 200, 50, 0.4) 50%, rgba(255, 255, 255, 0) 70%);
+  box-shadow: 0 0 40px 10px rgba(255, 220, 100, 0.3);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Optional faint rays can be added via pseudo-element if desired, but sticking to simple CSS per prompt */
+
+/* --- UI Highlights (Sheen / Lift) --- */
+
+.ui-highlight {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Lift effect for cards/buttons */
+.ui-lift {
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.ui-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15), 0 6px 8px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Sheen effect for cards */
+.ui-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.ui-sheen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  pointer-events: none;
+  /* Static sheen, not animating across to minimize distraction, or very slow?
+     Prompt: "optional faint “shine” overlay via ::before gradient at low opacity"
+     "If shine overlays animate at all, disable them too."
+     I'll make it static decorative sheen or very subtle opacity.
+  */
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.ui-sheen:hover::before {
+  opacity: 1;
+  left: 150%;
+  transition: left 0.7s ease-in-out;
+}
+
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-  .animate-cloud-drift {
-    animation: none;
+  .animate-cloud-drift,
+  .cloud-layer-1,
+  .cloud-layer-2,
+  .cloud-layer-3,
+  .cloud-bob-effect {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .ui-lift:hover {
+    transform: none;
+  }
+
+  .ui-sheen::before {
+    display: none;
   }
 }

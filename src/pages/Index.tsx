@@ -19,13 +19,13 @@ const Index: React.FC = () => {
         <div className="space-y-4 flex flex-col items-center">
           <Link
             to="/login"
-            className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center hover:bg-opacity-90 transition-all w-64"
+            className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center hover:bg-opacity-90 transition-all w-64 ui-lift"
           >
             Login
           </Link>
           <Link
             to="/signup"
-            className="button-shadow rounded-xl px-6 py-3 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 transition-all w-56"
+            className="button-shadow rounded-xl px-6 py-3 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 transition-all w-56 ui-lift"
           >
             Signup
           </Link>
