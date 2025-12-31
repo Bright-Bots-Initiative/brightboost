@@ -21,7 +21,7 @@ RUN pnpm run build
 # Build backend (outputs /app/backend/dist)
 # We use root pnpm install, but scripts must be run inside backend or via prefix
 # Since pnpm install was run at root with workspace, backend deps are installed.
-RUN pnpm --prefix backend run db:generate \
+RUN pnpm exec prisma generate --schema=backend/prisma/schema.prisma \
  && pnpm --prefix backend exec tsc -p tsconfig.json
 
 # ---- runtime stage ----
@@ -41,9 +41,9 @@ RUN corepack enable && corepack prepare pnpm@9.15.1 --activate
 # Install backend deps (needs prisma CLI available) and generate Prisma client
 # Using root install with workspace ensures backend deps are installed
 RUN pnpm install --frozen-lockfile \
- && pnpm --prefix backend run db:generate
+ && pnpm exec prisma generate --schema=backend/prisma/schema.prisma
 
 # Railway provides PORT; app must bind to it.
 EXPOSE 8080
 
-CMD ["sh", "-lc", "cd backend && pnpm run db:generate && cd .. && node backend/dist/src/server.js"]
+CMD ["sh", "-lc", "pnpm exec prisma generate --schema=backend/prisma/schema.prisma && node backend/dist/src/server.js"]
