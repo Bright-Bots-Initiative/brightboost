@@ -1,5 +1,4 @@
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Use vi.hoisted to ensure prismaMock is initialized before mocks are applied
 const prismaMock = vi.hoisted(() => ({
@@ -17,56 +16,70 @@ const prismaMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@prisma/client', () => ({
-  PrismaClient: class { constructor() { return prismaMock; } },
+vi.mock("@prisma/client", () => ({
+  PrismaClient: class {
+    constructor() {
+      return prismaMock;
+    }
+  },
   MatchStatus: {
-    ACTIVE: 'ACTIVE',
-    COMPLETED: 'COMPLETED',
-  }
+    ACTIVE: "ACTIVE",
+    COMPLETED: "COMPLETED",
+  },
 }));
 
-import { resolveTurn } from '../../src/services/game';
+import { resolveTurn } from "../../src/services/game";
 
-describe('resolveTurn Performance Optimization', () => {
+describe("resolveTurn Performance Optimization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should correctly calculate round and HP (Optimized)', async () => {
-    const matchId = 'match-123';
-    const actorId = 'player-1';
-    const abilityId = 'ability-1';
+  it("should correctly calculate round and HP (Optimized)", async () => {
+    const matchId = "match-123";
+    const actorId = "player-1";
+    const abilityId = "ability-1";
 
     // Mock match data
     prismaMock.match.findUnique.mockResolvedValue({
       id: matchId,
-      status: 'ACTIVE',
-      player1Id: 'player-1',
-      player2Id: 'player-2',
-      Player1: { id: 'player-1', hp: 100, archetype: 'AI', unlockedAbilities: [] },
-      Player2: { id: 'player-2', hp: 100, archetype: 'BIOTECH', unlockedAbilities: [] },
+      status: "ACTIVE",
+      player1Id: "player-1",
+      player2Id: "player-2",
+      Player1: {
+        id: "player-1",
+        hp: 100,
+        archetype: "AI",
+        unlockedAbilities: [],
+      },
+      Player2: {
+        id: "player-2",
+        hp: 100,
+        archetype: "BIOTECH",
+        unlockedAbilities: [],
+      },
     });
 
     // Mock ability
     prismaMock.ability.findUnique.mockResolvedValue({
       id: abilityId,
-      config: { type: 'attack', value: 10 }
+      config: { type: "attack", value: 10 },
     });
 
     // Mock create
     prismaMock.matchTurn.create.mockResolvedValue({
-      id: 'turn-3',
+      id: "turn-3",
       matchId,
       round: 3,
       actorId,
-      action: { abilityId, damageDealt: 10 }
+      action: { abilityId, damageDealt: 10 },
     });
 
     // Mock findMany (ONLY previous turns)
     // The optimization relies on fetching history first, then appending the new turn in memory.
     const previousTurns = [
-      { matchId, round: 1, actorId: 'player-1', action: { damageDealt: 10 } },
-      { matchId, round: 2, actorId: 'player-2', action: { damageDealt: 10 } }
+      { matchId, round: 1, actorId: "player-1", action: { damageDealt: 10 } },
+      { matchId, round: 2, actorId: "player-2", action: { damageDealt: 10 } },
     ];
     prismaMock.matchTurn.findMany.mockResolvedValue([...previousTurns]); // Return a copy so we don't mutate the mock setup if reused
 
@@ -82,13 +95,17 @@ describe('resolveTurn Performance Optimization', () => {
     // Verify Optimizations
     expect(prismaMock.matchTurn.count).not.toHaveBeenCalled(); // We removed the count query
     expect(prismaMock.matchTurn.findMany).toHaveBeenCalledTimes(1); // Only called once
-    expect(prismaMock.matchTurn.findMany).toHaveBeenCalledWith({ where: { matchId } });
+    expect(prismaMock.matchTurn.findMany).toHaveBeenCalledWith({
+      where: { matchId },
+    });
 
     // Ensure create was called with correct round
-    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith(
+      expect.objectContaining({
         data: expect.objectContaining({
-            round: 3 // length (2) + 1
-        })
-    }));
+          round: 3, // length (2) + 1
+        }),
+      }),
+    );
   });
 });

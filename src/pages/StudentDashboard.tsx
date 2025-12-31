@@ -87,9 +87,7 @@ export default function StudentDashboard() {
       {/* Your Badges Section */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-slate-800">
-            Your Badges
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-800">Your Badges</h2>
           <Button
             variant="ghost"
             size="sm"
@@ -109,22 +107,31 @@ export default function StudentDashboard() {
                 key={level}
                 className={`
                   relative aspect-square rounded-xl flex flex-col items-center justify-center p-4 transition-all duration-300
-                  ${isUnlocked
-                    ? "bg-gradient-to-br from-yellow-100 to-amber-50 border-2 border-yellow-200 shadow-sm"
-                    : "bg-slate-100 border-2 border-slate-200 opacity-70 grayscale"
+                  ${
+                    isUnlocked
+                      ? "bg-gradient-to-br from-yellow-100 to-amber-50 border-2 border-yellow-200 shadow-sm"
+                      : "bg-slate-100 border-2 border-slate-200 opacity-70 grayscale"
                   }
                 `}
               >
-                <div className={`
+                <div
+                  className={`
                   mb-2 p-3 rounded-full
                   ${isUnlocked ? "bg-yellow-200 text-yellow-700" : "bg-slate-200 text-slate-500"}
-                `}>
-                  {isUnlocked ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                `}
+                >
+                  {isUnlocked ? (
+                    <Unlock className="w-6 h-6" />
+                  ) : (
+                    <Lock className="w-6 h-6" />
+                  )}
                 </div>
-                <span className={`
+                <span
+                  className={`
                   font-bold text-sm
                   ${isUnlocked ? "text-yellow-800" : "text-slate-500"}
-                `}>
+                `}
+                >
                   Level {level}
                 </span>
               </div>

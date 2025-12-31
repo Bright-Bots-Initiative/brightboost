@@ -3,11 +3,11 @@ import Stem1QuestCard from "../Stem1QuestCard";
 import { describe, it, expect } from "vitest";
 
 // Mock i18next
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import React from "react";
+import { useTranslation } from "react-i18next";
 
 // Correctly mock the module
-vi.mock('react-i18next', () => ({
+vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),

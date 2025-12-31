@@ -12,7 +12,11 @@ const prismaMock = vi.hoisted(() => ({
 
 vi.mock("@prisma/client", () => {
   return {
-    PrismaClient: class { constructor() { return prismaMock; } },
+    PrismaClient: class {
+      constructor() {
+        return prismaMock;
+      }
+    },
   };
 });
 
@@ -81,7 +85,7 @@ describe("Profile Routes", () => {
 
   describe("POST /api/edit-profile", () => {
     it("should update user profile", async () => {
-        // @ts-ignore
+      // @ts-ignore
       prismaMock.user.update.mockResolvedValue({
         ...mockUser,
         name: "Updated Name",
@@ -105,13 +109,15 @@ describe("Profile Routes", () => {
       expect(response.body.user.school).toBe("Updated School");
 
       // @ts-ignore
-      expect(prismaMock.user.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: "user-123" },
-        data: expect.objectContaining({
-          name: "Updated Name",
-          school: "Updated School",
+      expect(prismaMock.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "user-123" },
+          data: expect.objectContaining({
+            name: "Updated Name",
+            school: "Updated School",
+          }),
         }),
-      }));
+      );
     });
 
     it("should return 400 for invalid data", async () => {

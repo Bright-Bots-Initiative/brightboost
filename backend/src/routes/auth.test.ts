@@ -13,7 +13,11 @@ const prismaMock = vi.hoisted(() => ({
 
 vi.mock("@prisma/client", () => {
   return {
-    PrismaClient: class { constructor() { return prismaMock; } },
+    PrismaClient: class {
+      constructor() {
+        return prismaMock;
+      }
+    },
   };
 });
 
@@ -37,36 +41,34 @@ describe("Auth Routes", () => {
         password: "hashedpassword",
       });
 
-      const response = await request(app)
-        .post("/api/signup/student")
-        .send({
-          name: "Test Student",
-          email: "student@test.com",
-          password: "password123",
-        });
+      const response = await request(app).post("/api/signup/student").send({
+        name: "Test Student",
+        email: "student@test.com",
+        password: "password123",
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("token");
       expect(response.body.user).toHaveProperty("email", "student@test.com");
       // @ts-ignore
-      expect(prismaMock.user.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          role: "student",
-        })
-      }));
+      expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: "student",
+          }),
+        }),
+      );
     });
 
     it("should return 409 if email exists", async () => {
       // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue({ id: "existing" });
 
-      const response = await request(app)
-        .post("/api/signup/student")
-        .send({
-          name: "Test Student",
-          email: "existing@test.com",
-          password: "password123",
-        });
+      const response = await request(app).post("/api/signup/student").send({
+        name: "Test Student",
+        email: "existing@test.com",
+        password: "password123",
+      });
 
       expect(response.status).toBe(409);
     });
@@ -85,12 +87,10 @@ describe("Auth Routes", () => {
         role: "student",
       });
 
-      const response = await request(app)
-        .post("/api/login")
-        .send({
-          email: "user@test.com",
-          password: "password123",
-        });
+      const response = await request(app).post("/api/login").send({
+        email: "user@test.com",
+        password: "password123",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("token");
@@ -105,12 +105,10 @@ describe("Auth Routes", () => {
         role: "student",
       });
 
-      const response = await request(app)
-        .post("/api/login")
-        .send({
-          email: "user@test.com",
-          password: "password123",
-        });
+      const response = await request(app).post("/api/login").send({
+        email: "user@test.com",
+        password: "password123",
+      });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("token");
@@ -130,12 +128,10 @@ describe("Auth Routes", () => {
           role: "student",
         });
 
-        const response = await request(app)
-          .post("/api/login")
-          .send({
-            email: "user@test.com",
-            password: "password123",
-          });
+        const response = await request(app).post("/api/login").send({
+          email: "user@test.com",
+          password: "password123",
+        });
 
         expect(response.status).toBe(401);
       } finally {
@@ -155,12 +151,10 @@ describe("Auth Routes", () => {
         role: "student",
       });
 
-      const response = await request(app)
-        .post("/api/login")
-        .send({
-          email: "user@test.com",
-          password: "wrongpassword",
-        });
+      const response = await request(app).post("/api/login").send({
+        email: "user@test.com",
+        password: "wrongpassword",
+      });
 
       expect(response.status).toBe(401);
     });

@@ -30,16 +30,16 @@ class ProfileService {
     this.baseUrl =
       import.meta.env.VITE_REACT_APP_API_BASE_URL ||
       (import.meta.env.VITE_API_BASE ?? "/api");
-      // Use existing pattern from api.ts or default to /api if env vars are missing/different
-      if (this.baseUrl.startsWith("http")) {
-         // If it's a full URL, keep it. If it's relative, it will use current origin.
-      } else {
-        // Ensure leading slash if relative
-         if (!this.baseUrl.startsWith("/")) this.baseUrl = "/" + this.baseUrl;
-      }
+    // Use existing pattern from api.ts or default to /api if env vars are missing/different
+    if (this.baseUrl.startsWith("http")) {
+      // If it's a full URL, keep it. If it's relative, it will use current origin.
+    } else {
+      // Ensure leading slash if relative
+      if (!this.baseUrl.startsWith("/")) this.baseUrl = "/" + this.baseUrl;
+    }
 
-      // Alignment with api.ts which constructs API_BASE more dynamically
-      // But for now, simple relative path /api usually works if proxy is set up or same origin.
+    // Alignment with api.ts which constructs API_BASE more dynamically
+    // But for now, simple relative path /api usually works if proxy is set up or same origin.
   }
 
   private getAuthHeaders(): Record<string, string> {
@@ -109,7 +109,7 @@ class ProfileService {
           // Zod error format or simple error
           const msg = Array.isArray(errorData.error)
             ? errorData.error.map((e: any) => e.message).join(", ")
-            : (errorData.error || "Invalid profile data");
+            : errorData.error || "Invalid profile data";
           throw new Error(msg);
         }
         throw new Error(`Failed to update profile: ${response.statusText}`);

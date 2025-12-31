@@ -49,7 +49,7 @@ async function ensureSnapshot(studentId: string, weekStart: Date) {
     });
   } catch (e: any) {
     // If race condition caused unique constraint violation, just fetch it
-    if (e.code === 'P2002') {
+    if (e.code === "P2002") {
       return prisma.weeklySnapshot.findUniqueOrThrow({
         where: {
           studentId_weekStart: {

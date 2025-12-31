@@ -45,8 +45,21 @@ export async function resolveTurn(
 
   if (!actor || !opponent) throw new Error("Missing players");
 
-  const ability = await prisma.ability.findUnique({ where: { id: abilityId } });
-  if (!ability) throw new Error("Ability not found");
+  // OPTIMIZED: Use already fetched unlockedAbilities to find ability config
+  // Prevents extra DB call + enforces security (user must own ability)
+
+  // Explicitly type the search to avoid 'any'
+  // The 'match' query above includes unlockedAbilities -> Ability
+  const unlocked = actor.unlockedAbilities.find(
+    (u) => u.abilityId === abilityId
+  );
+
+  // Note: unlocked.Ability is guaranteed by the 'include' in the Prisma query
+  if (!unlocked || !unlocked.Ability) {
+     throw new Error("Ability not found or not unlocked");
+  }
+
+  const ability = unlocked.Ability;
 
   let damage = 0;
   let heal = 0;
@@ -133,32 +146,36 @@ export async function checkUnlocks(studentId: string) {
       data: { level: newLevel, xp: { increment: 100 } },
     });
 
-        // ⚡ Bolt Optimization: Batch fetch & create to avoid N+1 query
-        const eligibleAbilities = await prisma.ability.findMany({
-            where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } }
-        });
+    // ⚡ Bolt Optimization: Batch fetch & create to avoid N+1 query
+    const eligibleAbilities = await prisma.ability.findMany({
+      where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
+    });
 
-        if (eligibleAbilities.length === 0) return;
+    if (eligibleAbilities.length === 0) return;
 
-        const existingUnlocks = await prisma.unlockedAbility.findMany({
-            where: {
-                avatarId: avatar.id,
-                abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) }
-            },
-            select: { abilityId: true }
-        });
+    const existingUnlocks = await prisma.unlockedAbility.findMany({
+      where: {
+        avatarId: avatar.id,
+        abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
+      },
+      select: { abilityId: true },
+    });
 
-        const existingAbilityIds = new Set(existingUnlocks.map((u: { abilityId: string }) => u.abilityId));
-        const newUnlocks = eligibleAbilities.filter((ab: AbilityRow) => !existingAbilityIds.has(ab.id));
+    const existingAbilityIds = new Set(
+      existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
+    );
+    const newUnlocks = eligibleAbilities.filter(
+      (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
+    );
 
-        if (newUnlocks.length > 0) {
-            await prisma.unlockedAbility.createMany({
-                data: newUnlocks.map((ab: AbilityRow) => ({
-                    avatarId: avatar.id,
-                    abilityId: ab.id,
-                    equipped: false
-                }))
-            });
-        }
+    if (newUnlocks.length > 0) {
+      await prisma.unlockedAbility.createMany({
+        data: newUnlocks.map((ab: AbilityRow) => ({
+          avatarId: avatar.id,
+          abilityId: ab.id,
+          equipped: false,
+        })),
+      });
     }
+  }
 }
