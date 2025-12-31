@@ -9,6 +9,11 @@ const router = Router();
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
+// 🛡️ Sentinel: Pre-calculated hash for timing-safe user lookups.
+// This ensures that valid/invalid user lookups take roughly the same amount of time.
+// Generated with bcrypt cost 10.
+const DUMMY_HASH = "$2b$10$JIuf8WbA.Ni58wGtmscGveaFfGo.9Jf.uSS7PNgdHJd3w3/Aun8Na";
+
 // Schemas
 const studentSignupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -134,6 +139,10 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     });
 
     if (!user) {
+      // 🛡️ Sentinel: Prevent Timing Attack
+      // Even if user is not found, we perform a hash comparison to consume time.
+      // This prevents attackers from guessing valid emails based on response time.
+      await bcrypt.compare(data.password, DUMMY_HASH);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
