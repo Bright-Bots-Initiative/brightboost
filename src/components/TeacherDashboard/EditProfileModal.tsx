@@ -59,8 +59,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setError(null);
 
     try {
-      // Use mock data for now - in production, this would call the real API
-      const profileData = await profileService.getMockProfile();
+      const profileData = await profileService.getProfile();
       setProfile(profileData);
       setFormData({
         name: profileData.name,
@@ -92,7 +91,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setError(null);
 
     try {
-      const updatedProfile = await profileService.updateMockProfile(formData);
+      const updatedProfile = await profileService.updateProfile(formData);
       setProfile(updatedProfile);
       setSaveSuccess(true);
 

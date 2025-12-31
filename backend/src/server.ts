@@ -9,7 +9,7 @@ import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
 import matchRouter from "./routes/match";
 import authRouter from "./routes/auth";
-import userRouter from "./routes/user";
+import profileRouter from "./routes/profile";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp } from "./utils/security";
 
@@ -53,7 +53,7 @@ app.use("/api", modulesRouter);
 app.use("/api", progressRouter);
 app.use("/api", avatarRouter);
 app.use("/api", matchRouter);
-app.use("/api", userRouter);
+app.use("/api", profileRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" })

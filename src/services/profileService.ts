@@ -134,18 +134,13 @@ class ProfileService {
 
   // Mock implementation for development - kept for fallback or reference, but unused in main flow now
   async getMockProfile(): Promise<UserProfile> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return {
-      id: "user-123",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@brightboost.com",
-      school: "Lincoln Elementary School",
-      subject: "STEM Education",
-      role: "teacher",
-      avatar:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150",
-      created_at: "2024-01-15T08:00:00Z",
-    };
+    return this.getProfile();
+  }
+
+  async updateMockProfile(
+    profileData: UpdateProfileData,
+  ): Promise<UserProfile> {
+    return this.updateProfile(profileData);
   }
 }
 
