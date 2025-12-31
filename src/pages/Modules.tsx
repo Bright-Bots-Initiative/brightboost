@@ -54,7 +54,7 @@ export default function Modules() {
               <CardContent className="flex-1 flex flex-col justify-between">
                 <p className="text-sm text-gray-500 mb-6">{m.subtitle || "No subtitle"}</p>
                 <Button
-                  onClick={() => navigate(`/modules/${m.slug}`)}
+                  onClick={() => navigate(`/student/modules/${m.slug}`)}
                   className="w-full sm:w-auto"
                   aria-label={`Start learning ${m.title}`}
                 >

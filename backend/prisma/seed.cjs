@@ -114,6 +114,85 @@ async function main() {
   });
   console.log("Created module:", module.slug);
 
+  // --- STEM-1 (K–2) Game #1: Boost’s Lost Steps ---
+  const k2SeqModule = await prisma.module.create({
+    data: {
+      slug: "k2-stem-sequencing",
+      title: "Boost’s Lost Steps",
+      description: "Put steps in order and fix mistakes (sequencing + debugging).",
+      level: "K-2",
+      published: true,
+    },
+  });
+  console.log("Created module:", k2SeqModule.slug);
+
+  const k2SeqUnit = await prisma.unit.create({
+    data: {
+      title: "Unit 1: Step Power",
+      order: 1,
+      Module: { connect: { id: k2SeqModule.id } },
+      teacher: { connect: { id: teacher.id } },
+    },
+  });
+  console.log("Created unit:", k2SeqUnit.title);
+
+  const k2SeqLesson = await prisma.lesson.create({
+    data: {
+      title: "Lost Steps",
+      order: 1,
+      Unit: { connect: { id: k2SeqUnit.id } },
+    },
+  });
+  console.log("Created lesson:", k2SeqLesson.title);
+
+  const INFO = ActivityKind ? ActivityKind.INFO : "INFO";
+  const INTERACT = ActivityKind ? ActivityKind.INTERACT : "INTERACT";
+
+  await prisma.activity.create({
+    data: {
+      title: "Story: Lost Steps",
+      kind: INFO,
+      order: 1,
+      content: JSON.stringify({
+        type: "story_quiz",
+        slides: [
+          { id: "s1", text: "Boost is baking Galaxy Cookies for the class." },
+          { id: "s2", text: "But the recipe steps got mixed up!" },
+          { id: "s3", text: "Boost tries: Frost → Bake… splat! The frosting melts." },
+          { id: "s4", text: "A helper drone says: 'Put the steps in order.'" },
+          { id: "s5", text: "Boost smiles: 'We debugged it! Now it works.'" },
+        ],
+        questions: [
+          { id: "q1", prompt: "Why did the frosting melt?", choices: ["Because it was baked too late", "Because it went in before baking", "Because it was too cold"], answerIndex: 1 },
+          { id: "q2", prompt: "What does 'debug' mean?", choices: ["Make a bigger mess", "Fix a mistake", "Add sprinkles"], answerIndex: 1 },
+          { id: "q3", prompt: "What step should happen before baking?", choices: ["Pour/mix the batter", "Eat the cookies", "Frost first"], answerIndex: 0 },
+          { id: "q4", prompt: "How did Boost feel after fixing it?", choices: ["Proud", "Angry", "Sleepy"], answerIndex: 0 },
+        ],
+        review: { keyIdea: "An algorithm is steps in order. Debug means fix mistakes.", vocab: ["step", "order", "debug"] },
+      }),
+      Lesson: { connect: { id: k2SeqLesson.id } },
+    },
+  });
+
+  await prisma.activity.create({
+    data: {
+      title: "Game: Fix the Recipe",
+      kind: INTERACT,
+      order: 2,
+      content: JSON.stringify({
+        type: "minigame",
+        gameKey: "sequence_drag_drop",
+        levels: [
+          { id: "k", cards: ["Pour", "Bake", "Eat", "Frost"], answer: ["Pour", "Bake", "Frost", "Eat"] },
+          { id: "g1", cards: ["Wash", "Soap", "Rinse", "Dry", "Turn water on"], answer: ["Turn water on", "Wash", "Soap", "Rinse", "Dry"] },
+          { id: "g2", cards: ["Plan", "Code", "Test", "Fix", "Share"], answer: ["Plan", "Code", "Test", "Fix", "Share"] },
+        ],
+      }),
+      Lesson: { connect: { id: k2SeqLesson.id } },
+    },
+  });
+  console.log("Seeded module: k2-stem-sequencing");
+
   console.log("Seeding units...");
   const unit = await prisma.unit.create({
     data: {
@@ -142,8 +221,6 @@ async function main() {
   console.log("Created lesson:", lesson.title);
 
   console.log("Seeding activities...");
-  const INFO = ActivityKind ? ActivityKind.INFO : "INFO";
-  const INTERACT = ActivityKind ? ActivityKind.INTERACT : "INTERACT";
 
   await prisma.activity.create({
     data: {

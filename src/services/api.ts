@@ -409,6 +409,13 @@ export const api = {
     return res.json();
   },
 
+  getModule: async (slug: string) => {
+    const res = await fetch(join(API_BASE, `/module/${slug}`), {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
   completeActivity: async (data: {
     moduleSlug: string;
     lessonId: string;

@@ -24,6 +24,7 @@ import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
 import Arena from "./pages/Arena";
+import ActivityPlayer from "./pages/ActivityPlayer";
 import StudentLayout from "./layouts/StudentLayout";
 
 // Import styles
@@ -74,6 +75,10 @@ function App() {
               <Route path="dashboard" element={<StudentDashboard />} />
               <Route path="modules" element={<Modules />} />
               <Route path="modules/:slug" element={<ModuleDetail />} />
+              <Route
+                path="modules/:slug/lessons/:lessonId/activities/:activityId"
+                element={<ActivityPlayer />}
+              />
               <Route path="avatar" element={<Avatar />} />
               <Route path="arena" element={<Arena />} />
             </Route>

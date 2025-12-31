@@ -27,13 +27,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadProfile();
-    }
-  }, [isOpen, studentId]);
-
-  const loadProfile = async () => {
+  const loadProfile = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -49,7 +43,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadProfile();
+    }
+  }, [isOpen, loadProfile]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
