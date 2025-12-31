@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
@@ -64,6 +65,36 @@ export default function StudentDashboard() {
                   Record: {streak?.longestStreak || 0}
                 </span>
               </div>
+            </div>
+          </Card>
+
+          {/* My Avatar */}
+          <Card
+            className="flex items-center gap-3 px-4 py-2 border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => navigate("/avatar")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/avatar");
+              }
+            }}
+          >
+            <Avatar className="w-10 h-10 border-2 border-slate-200">
+              <AvatarImage
+                src={(user as any)?.avatarUrl}
+                alt={user?.name || "User"}
+              />
+              <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                {(user?.name || "ME").substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                My Avatar
+              </p>
+              <p className="text-sm font-bold text-slate-700">Customize</p>
             </div>
           </Card>
         </div>
