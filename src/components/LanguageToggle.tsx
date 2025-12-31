@@ -40,6 +40,10 @@ const LanguageToggle = () => {
     }
   }, [language, i18n, ENABLE_I18N]);
 
+  if (!ENABLE_I18N) {
+    return null;
+  }
+
   return (
     <button
       onClick={toggleLanguage}
