@@ -21,7 +21,7 @@ RUN pnpm run build
 # Build backend (outputs /app/backend/dist)
 # We use root pnpm install, but scripts must be run inside backend or via prefix
 # Since pnpm install was run at root with workspace, backend deps are installed.
-RUN pnpm exec prisma generate --schema=backend/prisma/schema.prisma \
+RUN pnpm --prefix backend run db:generate \
  && pnpm --prefix backend exec tsc -p tsconfig.json
 
 # ---- runtime stage ----
