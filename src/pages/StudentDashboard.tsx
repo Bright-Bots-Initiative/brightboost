@@ -2,11 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Lock, Unlock, Bot } from "lucide-react";
+import { Lock, Unlock, Bot, Flame } from "lucide-react";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const { streak } = useStreak();
   const navigate = useNavigate();
 
   const currentLevel = user?.level ? Number(user.level) : 1;
@@ -35,13 +37,35 @@ export default function StudentDashboard() {
           </Button>
         </div>
 
-        {/* XP Progress Widget */}
-        <div className="pt-2">
-          <XPProgressWidget
-            currentXp={user?.xp || 0}
-            nextLevelXp={1000 * currentLevel}
-            level={currentLevel}
-          />
+        {/* Hero Widgets */}
+        <div className="pt-2 flex flex-col md:flex-row gap-4 items-stretch">
+          <div className="flex-1">
+            <XPProgressWidget
+              currentXp={user?.xp || 0}
+              nextLevelXp={1000 * currentLevel}
+              level={currentLevel}
+            />
+          </div>
+
+          {/* Streak Meter */}
+          <Card className="flex items-center gap-3 px-4 py-2 border-slate-200 shadow-sm min-w-[200px]">
+            <div className="p-2 bg-orange-100 rounded-full">
+              <Flame className="w-5 h-5 text-orange-600 fill-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Streak
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-bold text-slate-900">
+                  {streak?.currentStreak || 0}
+                </span>
+                <span className="text-xs font-medium text-slate-400">
+                  Record: {streak?.longestStreak || 0}
+                </span>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
 
