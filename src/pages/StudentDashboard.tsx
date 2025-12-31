@@ -1,9 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Lock, Unlock, Bot } from "lucide-react";
+import { Lock, Unlock, Bot, Pencil } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -11,6 +12,15 @@ export default function StudentDashboard() {
 
   const currentLevel = user?.level ? Number(user.level) : 1;
   const badgeLevels = [1, 2, 3, 4, 5, 6];
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
@@ -45,32 +55,72 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Your Lessons Section */}
-      <section>
-        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-          Your Lessons
-        </h2>
-        <Card
-          className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
-          onClick={() => navigate("/modules")}
-        >
-          <div className="bg-gradient-to-r from-blue-50 to-white p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                  Continue Learning
-                </h3>
-                <p className="text-slate-600">
-                  Unit 1: Introduction to Robots • Next Lesson
-                </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Your Lessons Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            Your Lessons
+          </h2>
+          <Card
+            className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden h-full"
+            onClick={() => navigate("/modules")}
+          >
+            <div className="bg-gradient-to-r from-blue-50 to-white p-6 h-full flex flex-col justify-center">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                    Continue Learning
+                  </h3>
+                  <p className="text-slate-600">
+                    Unit 1: Introduction to Robots • Next Lesson
+                  </p>
+                </div>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md w-fit">
+                  Start Lesson
+                </Button>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md">
-                Start Lesson
+            </div>
+          </Card>
+        </section>
+
+        {/* My Avatar Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            My Avatar
+          </h2>
+          <Card
+            className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-purple-500 overflow-hidden h-full"
+            onClick={() => navigate("/avatar")}
+          >
+            <div className="bg-gradient-to-r from-purple-50 to-white p-6 h-full flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16 border-4 border-white shadow-sm bg-white">
+                  <AvatarImage
+                    src={(user as any)?.avatarUrl}
+                    alt="Your Avatar"
+                  />
+                  <AvatarFallback className="bg-purple-100 text-purple-700 font-bold text-xl">
+                    {getInitials(user?.name || "??")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800 group-hover:text-purple-600 transition-colors">
+                    Customize Bot
+                  </h3>
+                  <p className="text-slate-600">Update your look</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 group-hover:text-purple-600"
+              >
+                <Pencil className="w-5 h-5" />
               </Button>
             </div>
-          </div>
-        </Card>
-      </section>
+          </Card>
+        </section>
+      </div>
 
       {/* Your Activities Section */}
       <section>
