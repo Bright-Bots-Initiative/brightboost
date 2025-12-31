@@ -46,4 +46,4 @@ RUN pnpm install --frozen-lockfile \
 # Railway provides PORT; app must bind to it.
 EXPOSE 8080
 
-CMD ["node", "backend/dist/src/server.js"]
+CMD ["sh", "-lc", "cd backend && pnpm run db:generate && cd .. && node backend/dist/src/server.js"]
