@@ -461,4 +461,12 @@ export const api = {
     });
     return res.json();
   },
+
+  claimTimeout: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/claim-timeout`), {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
 };

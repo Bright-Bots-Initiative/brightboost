@@ -9,7 +9,7 @@ const MatchStatus = {
 } as const;
 type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 import { requireAuth } from "../utils/auth";
-import { resolveTurn, computeBattleState } from "../services/game";
+import { resolveTurn, computeBattleState, claimTimeout } from "../services/game";
 import { isValidBand } from "../utils/validation";
 
 const router = Router();
@@ -127,6 +127,26 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
     res.json(result);
   } catch (e: any) {
     res.status(400).json({ error: e.message });
+  }
+});
+
+// Claim timeout
+router.post("/match/:id/claim-timeout", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+  const matchId = req.params.id;
+
+  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+  if (!myAvatar) return res.status(400).json({ error: "No avatar found" });
+
+  try {
+    const result = await claimTimeout(matchId, myAvatar.id);
+    res.json(result);
+  } catch (e: any) {
+    if (e.message === "Timeout not claimable yet") {
+      res.status(409).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
   }
 });
 
