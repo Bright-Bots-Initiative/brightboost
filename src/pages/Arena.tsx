@@ -12,9 +12,17 @@ export default function Arena() {
   const { toast } = useToast();
   const [turnResult, setTurnResult] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
-  const [activeQuestion, setActiveQuestion] = useState<{ id: string; prompt: string; options: string[] } | null>(null);
-  const [pendingAbilityId, setPendingAbilityId] = useState<string | null>(null);
-  const [isFetchingQuestion, setIsFetchingQuestion] = useState(false);
+  const [myId, setMyId] = useState<string>("");
+
+  // Poll match state
+  const pollMatch = async (matchId: string) => {
+    try {
+      const m = await api.getMatch(matchId);
+      setMatch(m);
+    } catch (e) {
+      console.error("Poll failed", e);
+    }
+  };
 
   const handleQueue = async () => {
     setLoading(true);
@@ -117,7 +125,9 @@ export default function Arena() {
 
   const [myId, setMyId] = useState<string>("");
   useEffect(() => {
-    api.getAvatar().then((av) => setMyId(av.studentId));
+    api.getAvatar()
+      .then((av) => setMyId(av.studentId))
+      .catch((err) => console.error("Failed to load avatar", err));
   }, []);
 
   // Scroll log to bottom on update
