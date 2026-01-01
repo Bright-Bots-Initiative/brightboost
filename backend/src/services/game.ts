@@ -62,6 +62,8 @@ export function computeBattleState(match: any, turns: any[]) {
   };
 }
 
+export const TURN_SECONDS = 30;
+
 export async function resolveTurn(
   matchId: string,
   actorId: string,
@@ -82,6 +84,21 @@ export async function resolveTurn(
   if (!match || match.status !== MatchStatus.ACTIVE)
     throw new Error("Invalid match");
 
+  // Optimization: Fetch turns first to get round count AND history for HP calc.
+  // Saves 1 count query + 1 redundant findMany.
+  const turns = await prisma.matchTurn.findMany({
+    where: { matchId },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const currentTurnIndex = turns.length;
+  const expectedActorId =
+    currentTurnIndex % 2 === 0 ? match.player1Id : match.player2Id;
+
+  if (actorId !== expectedActorId) {
+    throw new Error("Not your turn");
+  }
+
   const isP1 = match.player1Id === actorId;
   const actor = isP1 ? match.Player1 : match.Player2;
   const opponent = isP1 ? match.Player2 : match.Player1;
@@ -99,7 +116,7 @@ export async function resolveTurn(
 
   // Note: unlocked.Ability is guaranteed by the 'include' in the Prisma query
   if (!unlocked || !unlocked.Ability) {
-     throw new Error("Ability not found or not unlocked");
+    throw new Error("Ability not unlocked");
   }
 
   const ability = unlocked.Ability;
@@ -118,9 +135,6 @@ export async function resolveTurn(
     heal = config.value || 10;
   }
 
-  // Optimization: Fetch turns first to get round count AND history for HP calc.
-  // Saves 1 count query + 1 redundant findMany.
-  const turns = await prisma.matchTurn.findMany({ where: { matchId } });
   const nextRound = turns.length + 1;
 
   const newTurn = await prisma.matchTurn.create({
@@ -159,6 +173,60 @@ export async function resolveTurn(
   }
 
   return { matchOver: false, p1Hp: p1CurrentHp, p2Hp: p2CurrentHp };
+}
+
+export async function claimTimeout(matchId: string, requesterId: string) {
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: { turns: { orderBy: { createdAt: "asc" } } },
+  });
+
+  if (!match || match.status !== MatchStatus.ACTIVE)
+    throw new Error("Match not active");
+  if (!match.player2Id) throw new Error("Match waiting for players");
+
+  if (match.player1Id !== requesterId && match.player2Id !== requesterId) {
+    throw new Error("Not a participant");
+  }
+
+  const turns = match.turns;
+  const turnIndex = turns.length;
+  const expectedActorId =
+    turnIndex % 2 === 0 ? match.player1Id : match.player2Id;
+
+  // Requester must be the one WAITING (i.e. expected actor is the opponent)
+  if (requesterId === expectedActorId) {
+    throw new Error("It is your turn, cannot claim timeout");
+  }
+
+  // Calculate deadline
+  // If no turns, use match.updatedAt (when it became ACTIVE usually)
+  // If turns exist, use the last turn's createdAt
+  let lastActionTime = match.updatedAt;
+  if (turns.length > 0) {
+    lastActionTime = turns[turns.length - 1].createdAt;
+  }
+
+  const deadline = new Date(lastActionTime.getTime() + TURN_SECONDS * 1000);
+  const now = new Date();
+
+  if (now > deadline) {
+    // Forfeit
+    await prisma.match.update({
+      where: { id: matchId },
+      data: {
+        status: MatchStatus.FORFEIT,
+        winnerId: requesterId,
+      },
+    });
+    return {
+      matchOver: true,
+      winnerId: requesterId,
+      status: MatchStatus.FORFEIT,
+    };
+  } else {
+    throw new Error("Timeout not claimable yet");
+  }
 }
 
 export async function checkUnlocks(studentId: string) {

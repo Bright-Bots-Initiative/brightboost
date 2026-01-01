@@ -26,14 +26,31 @@ export default function Arena() {
     }
   };
 
-  const pollMatch = (id: string) => {
-    const interval = setInterval(async () => {
-      const m = await api.getMatch(id);
-      setMatch(m);
-      if (m.status === "COMPLETED") clearInterval(interval);
-    }, 2000);
-    return () => clearInterval(interval);
-  };
+  // Adaptive polling
+  useEffect(() => {
+    if (!match || match.status === "COMPLETED" || match.status === "FORFEIT")
+      return;
+
+    const isMyTurn =
+      (match.turns.length % 2 === 0 && match.player1Id === myId) ||
+      (match.turns.length % 2 !== 0 && match.player2Id === myId);
+
+    // Fast poll if waiting (1.2s), slow if my turn (3.5s)
+    // If waiting for opponent, we want to know ASAP when they act.
+    // If it's my turn, I will trigger update via action, so background poll can be slow.
+    const delay = isMyTurn ? 3500 : 1200;
+
+    const timer = setTimeout(async () => {
+      try {
+        const m = await api.getMatch(match.id);
+        setMatch(m);
+      } catch (e) {
+        console.error("Poll failed", e);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [match, myId]);
 
   const handleAct = async (abilityId: string) => {
     if (!match) return;
@@ -122,6 +139,47 @@ export default function Arena() {
   const round = Math.floor(currentTurn / 2) + 1;
   const isMyTurn =
     (currentTurn % 2 === 0 && isP1) || (currentTurn % 2 !== 0 && !isP1);
+
+  // Turn Timer Logic
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (match.status !== "ACTIVE") {
+      setTimeLeft(null);
+      return;
+    }
+
+    const lastTurn =
+      match.turns.length > 0 ? match.turns[match.turns.length - 1] : null;
+    const lastTime = lastTurn
+      ? new Date(lastTurn.createdAt).getTime()
+      : new Date(match.updatedAt).getTime();
+    const deadline = lastTime + 30000; // 30s turn
+
+    const tick = () => {
+      const now = Date.now();
+      const remaining = Math.ceil((deadline - now) / 1000);
+
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        // If it's 0 and NOT my turn (opponent's turn), claim timeout
+        if (!isMyTurn && match.status === "ACTIVE") {
+          api.claimTimeout(match.id).then((res) => {
+            if (res.matchOver) {
+              setMatch((prev: any) => ({ ...prev, status: res.status, winnerId: res.winnerId }));
+              toast({ title: "Timeout!", description: "Opponent took too long. You win!" });
+            }
+          }).catch(() => {}); // Ignore 409s if polling raced
+        }
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
+
+    tick(); // Initial
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [match.turns, match.status, isMyTurn, match.id, match.updatedAt]);
 
   // Computed Data
   const computed = match.computed || {
@@ -224,7 +282,7 @@ export default function Arena() {
 
         <div className="text-center py-2">
           <div className="text-2xl font-black text-slate-800 drop-shadow-sm">
-            {match.status === "COMPLETED"
+            {match.status === "COMPLETED" || match.status === "FORFEIT"
               ? match.winnerId === myId
                 ? "VICTORY! 🎉"
                 : "DEFEAT 💀"
@@ -232,6 +290,11 @@ export default function Arena() {
                 ? "YOUR TURN!"
                 : "OPPONENT'S TURN..."}
           </div>
+          {match.status === "ACTIVE" && timeLeft !== null && (
+             <div className={`text-sm font-bold ${timeLeft < 10 ? "text-red-600 animate-pulse" : "text-slate-500"}`}>
+               {timeLeft > 0 ? `Time left: ${timeLeft}s` : "Calculating timeout..."}
+             </div>
+          )}
         </div>
       </div>
 
