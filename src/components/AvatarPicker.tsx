@@ -40,7 +40,7 @@ async function invalidateAvatarCache(url: string): Promise<void> {
 }
 
 const AvatarPicker: React.FC<AvatarProps> = ({
-  currentAvatarUrl = "https://api.dicebear.com/7.x/identicon/svg?seed=default",
+  currentAvatarUrl = "/robots/robot_default.png",
   userInitials,
   onAvatarChange,
 }) => {

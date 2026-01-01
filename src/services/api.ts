@@ -455,17 +455,33 @@ export const api = {
     return res.json();
   },
 
-  submitTurn: async (matchId: string, abilityId: string) => {
+  getMatchQuestion: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/question`), {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch question");
+    return res.json();
+  },
+
+  submitTurn: async (matchId: string, abilityId: string, quiz?: { questionId: string, answerIndex: number }) => {
     const res = await fetch(join(API_BASE, `/match/${matchId}/act`), {
       method: "POST",
       headers: getHeaders(),
-      body: JSON.stringify({ abilityId }),
+      body: JSON.stringify({ abilityId, quiz }),
     });
     return res.json();
   },
 
   getMatch: async (matchId: string) => {
     const res = await fetch(join(API_BASE, `/match/${matchId}`), {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  claimTimeout: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/claim-timeout`), {
+      method: "POST",
       headers: getHeaders(),
     });
     return res.json();
