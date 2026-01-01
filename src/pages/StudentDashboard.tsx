@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Bot, Flame, BookOpen, Rocket, Trophy, PlayCircle, ArrowRight, Lock } from "lucide-react";
+import { Flame, BookOpen, Rocket, Trophy, PlayCircle, ArrowRight, Lock } from "lucide-react";
 import { format } from "date-fns";
 
 export default function StudentDashboard() {
@@ -68,14 +68,6 @@ export default function StudentDashboard() {
               Let’s learn and have fun!
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="hidden md:flex items-center gap-2 border-slate-300 text-slate-700 hover:bg-slate-50"
-            onClick={() => navigate("/student/avatar")}
-          >
-            <Bot className="w-5 h-5" />
-            Customize Bot
-          </Button>
         </div>
 
         {/* Hero Widgets */}
