@@ -16,17 +16,23 @@ const DUMMY_HASH = "$2b$10$JIuf8WbA.Ni58wGtmscGveaFfGo.9Jf.uSS7PNgdHJd3w3/Aun8Na
 
 // Schemas
 const studentSignupSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  email: z.string().email("Invalid email").max(255, "Email too long"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password too long"),
 });
 
 const teacherSignupSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  school: z.string().optional(),
-  subject: z.string().optional(),
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  email: z.string().email("Invalid email").max(255, "Email too long"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(100, "Password too long"),
+  school: z.string().max(100, "School name too long").optional(),
+  subject: z.string().max(100, "Subject name too long").optional(),
 });
 
 const loginSchema = z.object({

@@ -6,9 +6,13 @@ const router = Router();
 
 // Schemas
 const updateProfileSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
-  school: z.string().optional(),
-  subject: z.string().optional(),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name too long")
+    .optional(),
+  school: z.string().max(100, "School name too long").optional(),
+  subject: z.string().max(100, "Subject name too long").optional(),
 });
 
 // GET /profile - Get current user's profile
