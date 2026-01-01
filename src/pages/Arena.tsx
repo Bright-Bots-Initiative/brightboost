@@ -12,6 +12,9 @@ export default function Arena() {
   const { toast } = useToast();
   const [turnResult, setTurnResult] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const [activeQuestion, setActiveQuestion] = useState<{ id: string; prompt: string; options: string[] } | null>(null);
+  const [pendingAbilityId, setPendingAbilityId] = useState<string | null>(null);
+  const [isFetchingQuestion, setIsFetchingQuestion] = useState(false);
 
   const handleQueue = async () => {
     setLoading(true);
@@ -52,15 +55,22 @@ export default function Arena() {
     return () => clearTimeout(timer);
   }, [match, myId]);
 
-  const handleAct = async (abilityId: string) => {
+  const handleAct = async (abilityId: string, quiz?: { questionId: string, answerIndex: number }) => {
     if (!match) return;
     try {
-      const res = await api.submitTurn(match.id, abilityId);
+      const res = await api.submitTurn(match.id, abilityId, quiz);
 
-      // Determine simplified feedback
-      // We'd ideally analyze the diff, but for MVP simple is okay.
-      // Let's assume generic "Big Hit" for now if HP dropped significantly.
-      setTurnResult("Big Hit!");
+      // Feedback handling
+      let feedback = "Big Hit!";
+      // We can check if knowledge bonus was applied by checking the response or inferring
+      // Ideally backend returns the action result. Assuming it returns { p1Hp, p2Hp... } for now.
+      // If we passed a quiz and didn't fail, we assume it helped.
+      if (quiz) {
+         // This is a heuristic since we don't have the exact action result in the response immediately
+         // without re-parsing the log. We'll trust the turn processed.
+      }
+
+      setTurnResult(feedback);
       setTimeout(() => setTurnResult(null), 1500);
 
       if (res.matchOver) {
@@ -75,6 +85,34 @@ export default function Arena() {
     } catch (e) {
       toast({ title: "Error", description: "Failed to act" });
     }
+  };
+
+  const onAbilityClick = async (abilityId: string) => {
+    if (!match || isFetchingQuestion) return;
+    setIsFetchingQuestion(true);
+    // Try to get a question
+    try {
+      const q = await api.getMatchQuestion(match.id);
+      if (q && q.id) {
+        setPendingAbilityId(abilityId);
+        setActiveQuestion(q);
+      } else {
+        // Fallback: just act
+        handleAct(abilityId);
+      }
+    } catch (e) {
+      // If fetch fails, just act
+      handleAct(abilityId);
+    } finally {
+      setIsFetchingQuestion(false);
+    }
+  };
+
+  const handleAnswer = (index: number) => {
+    if (!pendingAbilityId || !activeQuestion) return;
+    handleAct(pendingAbilityId, { questionId: activeQuestion.id, answerIndex: index });
+    setActiveQuestion(null);
+    setPendingAbilityId(null);
   };
 
   const [myId, setMyId] = useState<string>("");
@@ -240,6 +278,40 @@ export default function Arena() {
           </AnimatePresence>
         </div>
 
+        {/* Question Modal Overlay */}
+        <AnimatePresence>
+          {activeQuestion && (
+             <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+             >
+               <motion.div
+                 initial={{ scale: 0.9, y: 20 }}
+                 animate={{ scale: 1, y: 0 }}
+                 className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border-4 border-blue-500"
+               >
+                 <div className="text-center space-y-4">
+                   <h3 className="text-xl font-bold text-slate-800">Quick Check! 🧠</h3>
+                   <p className="text-lg font-medium text-slate-600">{activeQuestion.prompt}</p>
+                   <div className="grid gap-2">
+                     {activeQuestion.options.map((opt: string, i: number) => (
+                       <button
+                         key={i}
+                         onClick={() => handleAnswer(i)}
+                         className="w-full p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 font-bold transition-all active:scale-95"
+                       >
+                         {opt}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+               </motion.div>
+             </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Battle Log (Scrollable) */}
         <div className="flex-1 px-4 py-2 overflow-y-auto space-y-2 z-10">
           <div
@@ -273,6 +345,11 @@ export default function Arena() {
                   )}
                   {entry.healAmount > 0 && (
                     <span> to HEAL {entry.healAmount}</span>
+                  )}
+                  {entry.knowledge?.correct && (
+                     <span className="ml-1 text-xs bg-yellow-100 text-yellow-700 px-1 rounded border border-yellow-200">
+                       🧠 +25%
+                     </span>
                   )}
                 </div>
               );
@@ -327,19 +404,23 @@ export default function Arena() {
           {me?.unlockedAbilities?.map((ua: any) => (
             <button
               key={ua.id}
-              disabled={!isMyTurn || match.status !== "ACTIVE"}
-              onClick={() => handleAct(ua.abilityId)}
+              disabled={!isMyTurn || match.status !== "ACTIVE" || isFetchingQuestion}
+              onClick={() => onAbilityClick(ua.abilityId)}
               className={`
                         flex items-center gap-3 p-3 rounded-xl border-b-4 transition-all active:scale-95 text-left
-                        ${isMyTurn ? "bg-blue-50 border-blue-200 hover:bg-blue-100" : "bg-gray-50 border-gray-100 opacity-60 grayscale"}
+                        ${isMyTurn && !isFetchingQuestion ? "bg-blue-50 border-blue-200 hover:bg-blue-100" : "bg-gray-50 border-gray-100 opacity-60 grayscale"}
                      `}
             >
               <div
                 className={`p-2 rounded-full ${isMyTurn ? "bg-white shadow-sm" : "bg-gray-200"}`}
               >
-                <Zap
-                  className={`w-5 h-5 ${isMyTurn ? "text-orange-500" : "text-gray-400"}`}
-                />
+                {isFetchingQuestion && pendingAbilityId === ua.abilityId ? (
+                   <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                   <Zap
+                     className={`w-5 h-5 ${isMyTurn ? "text-orange-500" : "text-gray-400"}`}
+                   />
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-slate-700 text-sm">

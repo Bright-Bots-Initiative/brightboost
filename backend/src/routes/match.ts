@@ -10,6 +10,7 @@ const MatchStatus = {
 type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 import { requireAuth } from "../utils/auth";
 import { resolveTurn, computeBattleState, claimTimeout } from "../services/game";
+import { getQuestionForBand } from "../services/pvpQuestions";
 import { isValidBand } from "../utils/validation";
 
 const router = Router();
@@ -104,9 +105,34 @@ router.get("/match/:id", requireAuth, async (req, res) => {
   res.json({ ...match, computed });
 });
 
+// Get a knowledge question for the match
+router.get("/match/:id/question", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+  const matchId = req.params.id;
+
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) return res.status(404).json({ error: "Match not found" });
+
+  // Verify user is in match (IDOR)
+  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+  if (
+    !myAvatar ||
+    (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
+  ) {
+    return res.status(403).json({ error: "Not authorized to view this match" });
+  }
+
+  if (match.status !== MatchStatus.ACTIVE) {
+    return res.status(409).json({ error: "Match not active" });
+  }
+
+  const question = getQuestionForBand(match.band || "K2");
+  res.json(question);
+});
+
 // Perform action
 router.post("/match/:id/act", requireAuth, async (req, res) => {
-  const { abilityId } = req.body;
+  const { abilityId, quiz } = req.body;
   const studentId = req.user!.id;
   const matchId = req.params.id;
 
@@ -123,7 +149,7 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
   }
 
   try {
-    const result = await resolveTurn(matchId, myAvatar.id, abilityId);
+    const result = await resolveTurn(matchId, myAvatar.id, abilityId, quiz);
     res.json(result);
   } catch (e: any) {
     res.status(400).json({ error: e.message });
