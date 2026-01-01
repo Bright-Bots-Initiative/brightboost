@@ -85,7 +85,9 @@ router.get("/match/:id", requireAuth, async (req, res) => {
       Player2: {
         include: { unlockedAbilities: { include: { Ability: true } } },
       },
-      turns: true,
+      turns: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!match) return res.status(404).json({ error: "Match not found" });

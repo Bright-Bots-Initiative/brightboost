@@ -169,11 +169,9 @@ describe("resolveTurn - Knowledge Bonus", () => {
       player2Id: p2Id,
       Player1: mockPlayer1,
       Player2: mockPlayer2,
+      turns: [], // Mocking turns directly on match
       band: "K2"
     });
-
-    // Setup turns (empty, so p1's turn)
-    prismaMock.matchTurn.findMany.mockResolvedValue([]);
 
     // Mock create return to satisfy turns.push(newTurn)
     prismaMock.matchTurn.create.mockResolvedValue({
@@ -209,10 +207,9 @@ describe("resolveTurn - Knowledge Bonus", () => {
       player2Id: p2Id,
       Player1: mockPlayer1,
       Player2: mockPlayer2,
+      turns: [],
       band: "K2"
     });
-
-    prismaMock.matchTurn.findMany.mockResolvedValue([]);
 
     // Mock create return
     prismaMock.matchTurn.create.mockResolvedValue({
@@ -248,10 +245,9 @@ describe("resolveTurn - Knowledge Bonus", () => {
       player2Id: p2Id,
       Player1: mockPlayer1,
       Player2: mockPlayer2,
+      turns: [],
       band: "K2"
     });
-
-    prismaMock.matchTurn.findMany.mockResolvedValue([]);
 
     // Mock create return
     prismaMock.matchTurn.create.mockResolvedValue({
