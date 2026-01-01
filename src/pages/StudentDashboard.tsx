@@ -1,64 +1,174 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Flame, BookOpen, Rocket, Trophy, PlayCircle, ArrowRight, Lock } from "lucide-react";
-import { format } from "date-fns";
+import { Lock, Unlock, Bot, Flame } from "lucide-react";
+import { api } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+
+type NextActivity = {
+  moduleSlug: string;
+  moduleTitle: string;
+  unitId: string;
+  unitTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  activityId: string;
+  activityTitle: string;
+  kind: "INFO" | "INTERACT";
+  orderKey: string;
+};
+
+function sortNum(n: any, fallback = 9999) {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : fallback;
+}
+
+function flattenModule(module: any): NextActivity[] {
+  const out: NextActivity[] = [];
+  const units = (module?.units || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+  for (const u of units) {
+    const lessons = (u?.lessons || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+    for (const l of lessons) {
+      const acts = (l?.activities || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+      for (const a of acts) {
+        out.push({
+          moduleSlug: module.slug,
+          moduleTitle: module.title,
+          unitId: String(u.id),
+          unitTitle: u.title,
+          lessonId: String(l.id),
+          lessonTitle: l.title,
+          activityId: String(a.id),
+          activityTitle: a.title,
+          kind: a.kind,
+          orderKey: `${sortNum(u.order)}.${sortNum(l.order)}.${sortNum(a.order)}`,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { streak } = useStreak();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const currentLevel = (() => {
-    const lvl = user?.level;
-    if (!lvl) return 1;
-    const num = Number(String(lvl).replace(/[^0-9]/g, ""));
-    return !isNaN(num) && num > 0 ? num : 1;
-  })();
+  const [avatar, setAvatar] = useState<any>(null);
+  const [modules, setModules] = useState<any[]>([]);
+  const [progressRows, setProgressRows] = useState<any[]>([]);
+  const [currentModule, setCurrentModule] = useState<any>(null);
+  const [upNext, setUpNext] = useState<NextActivity[]>([]);
+  const [nextOne, setNextOne] = useState<NextActivity | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const dashboardCards = [
-    {
-      title: "Current Module",
-      subtitle: "Unit 1: Introduction to Robots",
-      icon: <BookOpen className="w-8 h-8 text-blue-500" />,
-      ctaText: "Continue",
-      ctaAction: () => navigate("/student/modules"),
-      color: "bg-blue-50 border-blue-200",
-    },
-    {
-      title: "STEM Module",
-      subtitle: "STEM 1: Mars Rover Mission",
-      icon: <Rocket className="w-8 h-8 text-purple-500" />,
-      ctaText: "Open STEM 1",
-      ctaAction: () => navigate("/student/modules"), // Fallback to modules list as explicit Stem1 route is dynamic/hidden
-      color: "bg-purple-50 border-purple-200",
-    },
-    {
-      title: "Next Module",
-      subtitle: "Unit 2: Advanced Programming",
-      icon: <PlayCircle className="w-8 h-8 text-emerald-500" />,
-      ctaText: "Preview",
-      ctaAction: () => navigate("/student/modules"),
-      color: "bg-emerald-50 border-emerald-200",
-    },
-    {
-      title: "Leaderboard",
-      subtitle: "Class Standings",
-      icon: <Trophy className="w-8 h-8 text-amber-500" />,
-      ctaText: "View",
-      ctaAction: () => navigate("/student/arena"),
-      color: "bg-amber-50 border-amber-200",
-    },
-  ];
+  const currentLevel = useMemo(() => {
+    const lvl = Number(avatar?.level);
+    return Number.isFinite(lvl) && lvl > 0 ? lvl : 1;
+  }, [avatar?.level]);
+
+  const currentXp = useMemo(() => {
+    const xp = Number(avatar?.xp);
+    return Number.isFinite(xp) && xp >= 0 ? xp : 0;
+  }, [avatar?.xp]);
+
+  const badgeLevels = [1, 2, 3, 4, 5, 6];
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [av, mods, prog] = await Promise.all([
+          api.getAvatar(),
+          api.getModules(),
+          api.getProgress(),
+        ]);
+        if (cancelled) return;
+
+        setAvatar(av);
+        setModules(Array.isArray(mods) ? mods : []);
+        setProgressRows(Array.isArray(prog?.progress) ? prog.progress : []);
+
+        const modsList = Array.isArray(mods) ? mods : [];
+        const progList = Array.isArray(prog?.progress) ? prog.progress : [];
+
+        // Choose module: most recently progressed, else first available
+        let chosenSlug: string | null = null;
+        if (progList.length > 0) {
+          const sorted = progList
+            .slice()
+            .sort((a: any, b: any) => {
+              const at = new Date(a.updatedAt || 0).getTime();
+              const bt = new Date(b.updatedAt || 0).getTime();
+              return bt - at;
+            });
+          chosenSlug = sorted[0]?.moduleSlug || null;
+        }
+        if (!chosenSlug && modsList.length > 0) chosenSlug = modsList[0].slug;
+
+        if (!chosenSlug) {
+          setCurrentModule(null);
+          setNextOne(null);
+          setUpNext([]);
+          return;
+        }
+
+        const deep = await api.getModule(chosenSlug);
+        if (cancelled) return;
+
+        setCurrentModule(deep);
+
+        const ordered = flattenModule(deep);
+        const completed = new Set(
+          progList
+            .filter((p: any) => p?.moduleSlug === chosenSlug && p?.status === "COMPLETED")
+            .map((p: any) => String(p.activityId)),
+        );
+
+        const firstIncomplete = ordered.find((x) => !completed.has(String(x.activityId))) || null;
+        setNextOne(firstIncomplete);
+
+        if (!firstIncomplete) {
+          setUpNext([]);
+        } else {
+          const startIdx = ordered.findIndex((x) => x.activityId === firstIncomplete.activityId);
+          setUpNext(ordered.slice(startIdx, startIdx + 3));
+        }
+      } catch (e) {
+        console.error(e);
+        toast({
+          title: "Dashboard unavailable",
+          description: "Could not load your learning progress.",
+          variant: "destructive",
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [toast]);
+
+  const goToNext = () => {
+    if (!nextOne) return navigate("/student/modules");
+    navigate(
+      `/student/modules/${nextOne.moduleSlug}/lessons/${nextOne.lessonId}/activities/${nextOne.activityId}`,
+    );
+  };
 
   return (
-    <div className="p-6 space-y-8 max-w-6xl mx-auto">
+    <div className="p-6 space-y-8 max-w-4xl mx-auto">
       {/* Header Section */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
@@ -74,7 +184,7 @@ export default function StudentDashboard() {
         <div className="pt-2 flex flex-col md:flex-row gap-4 items-stretch">
           <div className="flex-1">
             <XPProgressWidget
-              currentXp={user?.xp || 0}
+              currentXp={currentXp}
               nextLevelXp={1000 * currentLevel}
               level={currentLevel}
             />
@@ -179,42 +289,131 @@ export default function StudentDashboard() {
 
       {/* Dashboard Card Grid */}
       <section>
-        <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          Your Dashboard
+        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          Your Lessons
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboardCards.map((card, index) => (
-            <Card
-              key={index}
-              className={`flex flex-col h-full hover:shadow-lg transition-all duration-300 border-t-4 ${card.color.replace('bg-', 'border-t-').split(' ')[1]}`}
-            >
-              <CardHeader className={`${card.color} pb-4`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    {card.icon}
-                  </div>
-                </div>
-                <CardTitle className="text-lg font-bold text-slate-800">
-                  {card.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow pt-4">
-                <p className="text-slate-600 font-medium">
-                  {card.subtitle}
+        <Card
+          className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
+          onClick={() => (nextOne ? goToNext() : navigate("/student/modules"))}
+        >
+          <div className="bg-gradient-to-r from-blue-50 to-white p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                  {loading ? "Loading…" : nextOne ? "Continue Learning" : "Pick a Module"}
+                </h3>
+                <p className="text-slate-600">
+                  {nextOne
+                    ? `${nextOne.moduleTitle} • ${nextOne.unitTitle} • ${nextOne.lessonTitle}`
+                    : modules.length > 0
+                      ? "Choose a module to start your next mission."
+                      : "No modules available yet."}
                 </p>
-              </CardContent>
-              <CardFooter className="pt-0">
-                <Button
-                  className="w-full gap-2 font-semibold"
-                  variant={index === 0 ? "default" : "secondary"}
-                  onClick={card.ctaAction}
+                {nextOne ? (
+                  <p className="text-slate-500 text-sm mt-1">
+                    Up next: {nextOne.kind === "INFO" ? "📖" : "🎮"} {nextOne.activityTitle}
+                  </p>
+                ) : null}
+              </div>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (nextOne) goToNext();
+                  else navigate("/student/modules");
+                }}
+              >
+                {nextOne ? "Start Activity" : "Browse Modules"}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Your Activities Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4">
+          Your Activities
+        </h2>
+        {upNext.length === 0 ? (
+          <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
+            <p className="text-slate-500 font-medium">
+              {loading ? "Loading your activities…" : "You’re all caught up. Pick a module to keep learning!"}
+            </p>
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => navigate("/student/modules")}>
+                Go to Modules
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {upNext.map((a) => (
+              <Card key={a.activityId} className="border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {a.kind === "INFO" ? "📖" : "🎮"} {a.activityTitle}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm text-slate-600">
+                    {a.unitTitle} • {a.lessonTitle}
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      navigate(
+                        `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
+                      )
+                    }
+                  >
+                    Play
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Your Badges Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          Your Badges
+        </h2>
+        <div className="flex flex-wrap gap-4">
+          {badgeLevels.map((lvl) => {
+            const isUnlocked = currentLevel >= lvl;
+            const badgeName = `Level ${lvl}`;
+            // If user has a badge with this name, we can show date, etc.
+            // For now, just unlocked/locked based on level.
+            return (
+              <Card
+                key={lvl}
+                className={`w-24 h-32 flex flex-col items-center justify-center gap-2 transition-all ${
+                  isUnlocked
+                    ? "bg-yellow-50 border-yellow-200 shadow-sm"
+                    : "bg-slate-100 border-slate-200 opacity-60 grayscale"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-full ${
+                    isUnlocked ? "bg-yellow-100 text-yellow-600" : "bg-slate-200 text-slate-400"
+                  }`}
                 >
-                  {card.ctaText}
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  {isUnlocked ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                </div>
+                <span
+                  className={`text-sm font-bold ${
+                    isUnlocked ? "text-yellow-700" : "text-slate-500"
+                  }`}
+                >
+                  {badgeName}
+                </span>
+              </Card>
+            );
+          })}
         </div>
       </section>
     </div>

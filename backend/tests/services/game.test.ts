@@ -50,7 +50,15 @@ describe("resolveTurn Performance Optimization", () => {
         id: "player-1",
         hp: 100,
         archetype: "AI",
-        unlockedAbilities: [{ abilityId: "ability-1", Ability: { id: "ability-1", config: { type: "attack", value: 10 } } }],
+        unlockedAbilities: [
+          {
+            abilityId: abilityId,
+            Ability: {
+              id: abilityId,
+              config: { type: "attack", value: 10 },
+            },
+          },
+        ],
       },
       Player2: {
         id: "player-2",

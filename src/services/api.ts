@@ -409,6 +409,13 @@ export const api = {
     return res.json();
   },
 
+  getProgress: async () => {
+    const res = await fetch(join(API_BASE, "/get-progress"), {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
   getModule: async (slug: string) => {
     const res = await fetch(join(API_BASE, `/module/${slug}`), {
       headers: getHeaders(),
@@ -434,7 +441,9 @@ export const api = {
     const res = await fetch(join(API_BASE, "/avatar/me"), {
       headers: getHeaders(),
     });
-    return res.json();
+    const data = await res.json().catch(() => null);
+    // Backend returns { avatar }, but many frontend callers expect the avatar object directly.
+    return data?.avatar ?? null;
   },
 
   queueMatch: async (band: string) => {
