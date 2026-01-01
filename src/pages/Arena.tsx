@@ -1,10 +1,9 @@
 // src/pages/Arena.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "../services/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Shield, Zap, Swords } from "lucide-react";
+import { Heart, Zap, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Arena() {
@@ -12,6 +11,7 @@ export default function Arena() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [turnResult, setTurnResult] = useState<string | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
   const handleQueue = async () => {
     setLoading(true);
@@ -65,6 +65,37 @@ export default function Arena() {
     api.getAvatar().then((av) => setMyId(av.studentId));
   }, []);
 
+  // Scroll log to bottom on update
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [match?.computed?.log]);
+
+  // Update Turn Result based on Last Event from backend
+  useEffect(() => {
+    if (!match?.computed?.lastEvent) return;
+    const le = match.computed.lastEvent;
+
+    // Only show if it's recent (last few seconds) - logic simplified for MVP
+    // If the log length changed, show it.
+    // For now, let's just show it briefly if we have a lastEvent.
+    // Ideally we'd compare lastEvent timestamps or IDs.
+    // We'll rely on the parent causing a re-render or explicit turn submission trigger for now,
+    // but we can deduce text from the event type.
+
+    let text = "";
+    if (le.damageDealt > 15) text = "CRITICAL HIT!";
+    else if (le.damageDealt > 0) text = `HIT -${le.damageDealt}!`;
+    else if (le.healAmount > 0) text = `HEAL +${le.healAmount}!`;
+
+    if (text) {
+      setTurnResult(text);
+      const timer = setTimeout(() => setTurnResult(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [match?.computed?.lastEvent]);
+
   if (!match) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] space-y-8">
@@ -92,96 +123,180 @@ export default function Arena() {
   const isMyTurn =
     (currentTurn % 2 === 0 && isP1) || (currentTurn % 2 !== 0 && !isP1);
 
-  // Computed HP (rough approximation from stored turns for MVP display)
-  // In real app, backend sends current HP. We'll use the one from state if available, or static max for now.
-  // The backend `resolveTurn` updates persistent HP on avatar?
-  // No, the previous `resolveTurn` returned `p1Hp`, `p2Hp`. But `getMatch` fetches Avatar.
-  // We need current HP in match response.
-  // Assuming backend returns unmodified Avatar for now, let's just show hearts.
+  // Computed Data
+  const computed = match.computed || {
+    p1Hp: 100,
+    p2Hp: 100,
+    log: [],
+    lastEvent: null,
+  };
+  const myHp = isP1 ? computed.p1Hp : computed.p2Hp;
+  const oppHp = isP1 ? computed.p2Hp : computed.p1Hp;
+  const myMax = me?.hp || 100;
+  const oppMax = opponent?.hp || 100;
+
+  const myHpPct = Math.max(0, (myHp / myMax) * 100);
+  const oppHpPct = Math.max(0, (oppHp / oppMax) * 100);
 
   return (
-    <div className="flex flex-col h-[85vh] relative">
+    <div className="flex flex-col h-[85vh] relative max-w-lg mx-auto w-full">
       {/* Top Bar: Opponent */}
-      <div className="flex justify-center pt-4 pb-2">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full border-4 border-red-200 flex items-center justify-center mb-1">
-            <span className="text-2xl">🤖</span>
-          </div>
-          <div className="flex gap-1">
-            <Heart className="fill-red-500 text-red-500 w-4 h-4" />
-            <Heart className="fill-red-500 text-red-500 w-4 h-4" />
-            <Heart className="fill-red-500 text-red-500 w-4 h-4" />
-          </div>
-        </div>
-      </div>
-
-      {/* Center: Status */}
-      <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-        <div className="bg-slate-100 px-4 py-1 rounded-full text-slate-500 font-bold text-sm">
-          ROUND {Math.min(round, 3)}/3
-        </div>
-
-        <AnimatePresence>
-          {turnResult && (
-            <motion.div
-              initial={{ scale: 0, rotate: -10 }}
-              animate={{ scale: 1.5, rotate: 0 }}
-              exit={{ opacity: 0 }}
-              className="absolute z-10 bg-yellow-400 border-4 border-white text-yellow-900 px-6 py-3 rounded-xl font-black text-2xl shadow-lg transform -translate-y-12"
-            >
-              {turnResult}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="text-2xl font-black text-slate-800">
-          {match.status === "COMPLETED"
-            ? match.winnerId === myId
-              ? "YOU WIN! 🎉"
-              : "Draw / Loss"
-            : isMyTurn
-              ? "YOUR TURN!"
-              : "Waiting..."}
-        </div>
-
-        {/* My Portrait */}
-        <div className="flex flex-col items-center mt-4">
-          <div className="w-20 h-20 bg-blue-100 rounded-full border-4 border-blue-300 flex items-center justify-center mb-2">
-            <span className="text-4xl">😎</span>
-          </div>
-          <div className="flex gap-1">
-            <Heart className="fill-green-500 text-green-500 w-5 h-5" />
-            <Heart className="fill-green-500 text-green-500 w-5 h-5" />
-            <Heart className="fill-green-500 text-green-500 w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom: Abilities */}
-      <div className="grid grid-cols-2 gap-4 pb-4">
-        {me?.unlockedAbilities?.map((ua: any) => (
-          <button
-            key={ua.id}
-            disabled={!isMyTurn || match.status !== "ACTIVE"}
-            onClick={() => handleAct(ua.abilityId)}
-            className={`
-                        flex flex-col items-center justify-center p-4 rounded-2xl border-b-4 transition-all active:scale-95
-                        ${isMyTurn ? "bg-white border-blue-200 shadow-lg" : "bg-gray-100 border-gray-200 opacity-50"}
-                     `}
-          >
-            <div className="bg-orange-100 p-3 rounded-full mb-2">
-              <Zap className="text-orange-500 w-6 h-6" />
+      <div className="flex flex-col pt-4 pb-2 px-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-12 h-12 bg-red-100 rounded-full border-2 border-red-200 flex items-center justify-center">
+              <span className="text-xl">🤖</span>
             </div>
-            <span className="font-bold text-slate-700">{ua.Ability.name}</span>
-            {/* Advantage Badge Logic can go here if we know opponent archetype */}
-          </button>
-        ))}
-        {/* Fallback if no abilities */}
-        {(!me?.unlockedAbilities || me?.unlockedAbilities.length === 0) && (
-          <div className="col-span-2 text-center text-gray-400">
-            No abilities unlocked!
+            <span className="font-bold text-slate-700">Opponent</span>
           </div>
-        )}
+          <div className="text-sm font-bold text-red-600">
+            {oppHp}/{oppMax} HP
+          </div>
+        </div>
+        {/* Opponent HP Bar */}
+        <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+          <motion.div
+            className="h-full bg-red-500"
+            initial={{ width: "100%" }}
+            animate={{ width: `${oppHpPct}%` }}
+            transition={{ type: "spring", stiffness: 100 }}
+          />
+        </div>
+      </div>
+
+      {/* Center: Battle Area & Log */}
+      <div className="flex-1 flex flex-col relative overflow-hidden">
+        {/* Floating Feedback */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <AnimatePresence>
+            {turnResult && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0, y: 20 }}
+                animate={{ scale: 1.2, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: -20 }}
+                className="bg-yellow-400 border-4 border-white text-yellow-900 px-6 py-3 rounded-xl font-black text-2xl shadow-xl whitespace-nowrap"
+              >
+                {turnResult}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Battle Log (Scrollable) */}
+        <div className="flex-1 px-4 py-2 overflow-y-auto space-y-2 z-10">
+          <div
+            ref={logRef}
+            className="bg-white/50 backdrop-blur-sm rounded-xl p-4 h-full overflow-y-auto border border-slate-200 shadow-inner"
+          >
+            <h3 className="text-xs font-bold text-slate-400 uppercase mb-2">
+              Battle Log
+            </h3>
+            {computed.log.length === 0 && (
+              <p className="text-slate-400 text-sm italic">
+                Battle starting...
+              </p>
+            )}
+            {computed.log.map((entry: any, i: number) => {
+              const isMe = entry.actorId === myId;
+              return (
+                <div
+                  key={i}
+                  className={`text-sm mb-1 ${isMe ? "text-blue-600 text-right" : "text-red-600 text-left"}`}
+                >
+                  <span className="font-bold">
+                    {isMe ? "You" : "Opponent"}
+                  </span>{" "}
+                  used{" "}
+                  <span className="font-mono bg-slate-100 px-1 rounded">
+                    {entry.abilityId || "Action"}
+                  </span>
+                  {entry.damageDealt > 0 && (
+                    <span> for {entry.damageDealt} DMG</span>
+                  )}
+                  {entry.healAmount > 0 && (
+                    <span> to HEAL {entry.healAmount}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="text-center py-2">
+          <div className="text-2xl font-black text-slate-800 drop-shadow-sm">
+            {match.status === "COMPLETED"
+              ? match.winnerId === myId
+                ? "VICTORY! 🎉"
+                : "DEFEAT 💀"
+              : isMyTurn
+                ? "YOUR TURN!"
+                : "OPPONENT'S TURN..."}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom: My Stats & Abilities */}
+      <div className="bg-white border-t border-slate-200 p-4 pb-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+        <div className="flex flex-col space-y-2 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 bg-blue-100 rounded-full border-2 border-blue-200 flex items-center justify-center">
+                <span className="text-xl">😎</span>
+              </div>
+              <span className="font-bold text-slate-700">You</span>
+            </div>
+            <div className="text-sm font-bold text-blue-600">
+              {myHp}/{myMax} HP
+            </div>
+          </div>
+          {/* My HP Bar */}
+          <div className="h-4 w-full bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+            <motion.div
+              className="h-full bg-green-500"
+              initial={{ width: "100%" }}
+              animate={{ width: `${myHpPct}%` }}
+              transition={{ type: "spring", stiffness: 100 }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {me?.unlockedAbilities?.map((ua: any) => (
+            <button
+              key={ua.id}
+              disabled={!isMyTurn || match.status !== "ACTIVE"}
+              onClick={() => handleAct(ua.abilityId)}
+              className={`
+                        flex items-center gap-3 p-3 rounded-xl border-b-4 transition-all active:scale-95 text-left
+                        ${isMyTurn ? "bg-blue-50 border-blue-200 hover:bg-blue-100" : "bg-gray-50 border-gray-100 opacity-60 grayscale"}
+                     `}
+            >
+              <div
+                className={`p-2 rounded-full ${isMyTurn ? "bg-white shadow-sm" : "bg-gray-200"}`}
+              >
+                <Zap
+                  className={`w-5 h-5 ${isMyTurn ? "text-orange-500" : "text-gray-400"}`}
+                />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-slate-700 text-sm">
+                  {ua.Ability.name}
+                </span>
+                <span className="text-xs text-slate-500">
+                  {ua.Ability.config?.type === "attack"
+                    ? `DMG ${ua.Ability.config.value}`
+                    : "HEAL"}
+                </span>
+              </div>
+            </button>
+          ))}
+          {/* Fallback if no abilities */}
+          {(!me?.unlockedAbilities || me?.unlockedAbilities.length === 0) && (
+            <div className="col-span-2 text-center text-gray-400 py-2 bg-gray-50 rounded-lg">
+              No abilities unlocked!
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
