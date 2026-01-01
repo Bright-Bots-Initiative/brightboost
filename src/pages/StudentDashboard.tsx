@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Lock, Unlock, Bot, Flame } from "lucide-react";
+import { Lock, Unlock, Flame } from "lucide-react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 type NextActivity = {
   moduleSlug: string;
@@ -62,8 +63,6 @@ export default function StudentDashboard() {
 
   const [avatar, setAvatar] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
-  const [progressRows, setProgressRows] = useState<any[]>([]);
-  const [currentModule, setCurrentModule] = useState<any>(null);
   const [upNext, setUpNext] = useState<NextActivity[]>([]);
   const [nextOne, setNextOne] = useState<NextActivity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +93,6 @@ export default function StudentDashboard() {
 
         setAvatar(av);
         setModules(Array.isArray(mods) ? mods : []);
-        setProgressRows(Array.isArray(prog?.progress) ? prog.progress : []);
 
         const modsList = Array.isArray(mods) ? mods : [];
         const progList = Array.isArray(prog?.progress) ? prog.progress : [];
@@ -114,7 +112,6 @@ export default function StudentDashboard() {
         if (!chosenSlug && modsList.length > 0) chosenSlug = modsList[0].slug;
 
         if (!chosenSlug) {
-          setCurrentModule(null);
           setNextOne(null);
           setUpNext([]);
           return;
@@ -122,8 +119,6 @@ export default function StudentDashboard() {
 
         const deep = await api.getModule(chosenSlug);
         if (cancelled) return;
-
-        setCurrentModule(deep);
 
         const ordered = flattenModule(deep);
         const completed = new Set(
@@ -211,8 +206,8 @@ export default function StudentDashboard() {
           </Card>
 
           {/* My Avatar */}
-          <Card
-            className="flex items-center gap-3 px-4 py-2 border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
+          <div
+            className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
             onClick={() => navigate("/student/avatar")}
             role="button"
             tabIndex={0}
@@ -238,7 +233,7 @@ export default function StudentDashboard() {
               </p>
               <p className="text-sm font-bold text-slate-700">Customize</p>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
@@ -292,8 +287,8 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
           Your Lessons
         </h2>
-        <Card
-          className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
+        <div
+          className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
           onClick={() => (nextOne ? goToNext() : navigate("/student/modules"))}
         >
           <div className="bg-gradient-to-r from-blue-50 to-white p-6">
@@ -328,7 +323,7 @@ export default function StudentDashboard() {
               </Button>
             </div>
           </div>
-        </Card>
+        </div>
       </section>
 
       {/* Your Activities Section */}

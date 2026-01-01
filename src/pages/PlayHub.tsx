@@ -19,7 +19,7 @@ export default function PlayHub() {
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab]);
 
   return (
     <div className="h-full flex flex-col w-full max-w-6xl mx-auto">

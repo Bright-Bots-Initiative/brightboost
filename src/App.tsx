@@ -23,7 +23,6 @@ import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
-import Arena from "./pages/Arena";
 import PlayHub from "./pages/PlayHub";
 import ActivityPlayer from "./pages/ActivityPlayer";
 import StudentLayout from "./layouts/StudentLayout";

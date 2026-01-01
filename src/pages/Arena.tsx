@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { api } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Zap, Swords } from "lucide-react";
+import { Zap, Swords } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Arena() {
@@ -13,6 +13,9 @@ export default function Arena() {
   const [turnResult, setTurnResult] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const [myId, setMyId] = useState<string>("");
+  const [isFetchingQuestion, setIsFetchingQuestion] = useState(false);
+  const [pendingAbilityId, setPendingAbilityId] = useState<string | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState<any>(null);
 
   // Poll match state
   const pollMatch = async (matchId: string) => {
@@ -36,6 +39,12 @@ export default function Arena() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    api.getAvatar()
+      .then((av) => setMyId(av.studentId))
+      .catch((err) => console.error("Failed to load avatar", err));
+  }, []);
 
   // Adaptive polling
   useEffect(() => {
@@ -69,7 +78,7 @@ export default function Arena() {
       const res = await api.submitTurn(match.id, abilityId, quiz);
 
       // Feedback handling
-      let feedback = "Big Hit!";
+      const feedback = "Big Hit!";
       // We can check if knowledge bonus was applied by checking the response or inferring
       // Ideally backend returns the action result. Assuming it returns { p1Hp, p2Hp... } for now.
       // If we passed a quiz and didn't fail, we assume it helped.
@@ -123,13 +132,6 @@ export default function Arena() {
     setPendingAbilityId(null);
   };
 
-  const [myId, setMyId] = useState<string>("");
-  useEffect(() => {
-    api.getAvatar()
-      .then((av) => setMyId(av.studentId))
-      .catch((err) => console.error("Failed to load avatar", err));
-  }, []);
-
   // Scroll log to bottom on update
   useEffect(() => {
     if (logRef.current) {
@@ -161,38 +163,14 @@ export default function Arena() {
     }
   }, [match?.computed?.lastEvent]);
 
-  if (!match) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] space-y-8">
-        <div className="bg-blue-100 p-8 rounded-full">
-          <Swords size={64} className="text-blue-600" />
-        </div>
-        <h1 className="text-4xl font-black text-slate-800">Battle Arena</h1>
-        <Button
-          size="lg"
-          onClick={handleQueue}
-          disabled={loading}
-          className="text-xl px-12 py-8 rounded-2xl shadow-xl hover:scale-105 transition"
-        >
-          {loading ? "Finding Opponent..." : "Find Match"}
-        </Button>
-      </div>
-    );
-  }
-
-  const isP1 = match.player1Id === myId;
-  const me = isP1 ? match.Player1 : match.Player2;
-  const opponent = isP1 ? match.Player2 : match.Player1;
-  const currentTurn = match.turns?.length || 0;
-  const round = Math.floor(currentTurn / 2) + 1;
-  const isMyTurn =
-    (currentTurn % 2 === 0 && isP1) || (currentTurn % 2 !== 0 && !isP1);
-
   // Turn Timer Logic
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
+  const isP1 = match ? match.player1Id === myId : false;
+  const isMyTurn = match ? (match.turns.length % 2 === 0 && isP1) || (match.turns.length % 2 !== 0 && !isP1) : false;
+
   useEffect(() => {
-    if (match.status !== "ACTIVE") {
+    if (!match || match.status !== "ACTIVE") {
       setTimeLeft(null);
       return;
     }
@@ -227,7 +205,29 @@ export default function Arena() {
     tick(); // Initial
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [match.turns, match.status, isMyTurn, match.id, match.updatedAt]);
+  }, [match?.turns, match?.status, isMyTurn, match?.id, match?.updatedAt, match, toast]);
+
+  if (!match) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] space-y-8">
+        <div className="bg-blue-100 p-8 rounded-full">
+          <Swords size={64} className="text-blue-600" />
+        </div>
+        <h1 className="text-4xl font-black text-slate-800">Battle Arena</h1>
+        <Button
+          size="lg"
+          onClick={handleQueue}
+          disabled={loading}
+          className="text-xl px-12 py-8 rounded-2xl shadow-xl hover:scale-105 transition"
+        >
+          {loading ? "Finding Opponent..." : "Find Match"}
+        </Button>
+      </div>
+    );
+  }
+
+  const me = isP1 ? match.Player1 : match.Player2;
+  const opponent = isP1 ? match.Player2 : match.Player1;
 
   // Computed Data
   const computed = match.computed || {
