@@ -1,44 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const LANGUAGE_KEY = "preferredLanguage";
 
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
+  // Initialize state from i18n.language which is the source of truth,
+  // falling back to localStorage or "en" if somehow i18n isn't ready (though it should be).
   const [language, setLanguage] = useState(
-    localStorage.getItem(LANGUAGE_KEY) || "en",
+    i18n.language || localStorage.getItem(LANGUAGE_KEY) || "en",
   );
   const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
 
-  const toggleLanguage = async () => {
-    const newLanguage = language === "en" ? "es" : "en";
-    setLanguage(newLanguage);
-
+  const toggleLanguage = () => {
+    // If not enabled, we shouldn't even render, but just in case.
     if (!ENABLE_I18N) return;
 
-    try {
-      const translations = await import(
-        `../locales/${newLanguage}/common.json`
-      );
-      if (!i18n.hasResourceBundle(newLanguage, "translation")) {
-        i18n.addResourceBundle(
-          newLanguage,
-          "translation",
-          translations.default,
-        );
-      }
-      await i18n.changeLanguage(newLanguage);
-      localStorage.setItem(LANGUAGE_KEY, newLanguage);
-    } catch (err) {
-      console.warn(`Could not load translations for ${newLanguage}`, err);
-    }
-  };
+    // Toggle logic
+    const newLanguage = language === "en" ? "es" : "en";
 
-  useEffect(() => {
-    if (ENABLE_I18N) {
-      i18n.changeLanguage(language);
-    }
-  }, [language, i18n, ENABLE_I18N]);
+    // Attempt to change language
+    i18n.changeLanguage(newLanguage)
+      .then(() => {
+        // Only update state and storage if change was successful
+        setLanguage(newLanguage);
+        localStorage.setItem(LANGUAGE_KEY, newLanguage);
+      })
+      .catch((err) => {
+        console.warn(`Failed to change language to ${newLanguage}`, err);
+        // Keep current language state
+      });
+  };
 
   if (!ENABLE_I18N) {
     return null;

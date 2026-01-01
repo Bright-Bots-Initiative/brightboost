@@ -6,22 +6,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import LanguageToggle from "../components/LanguageToggle";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-
-// Initialize i18n if enabled
-if (import.meta.env.VITE_ENABLE_I18N === "true" && !i18n.isInitialized) {
-  i18n
-    .use(initReactI18next)
-    .init({
-      lng: localStorage.getItem("preferredLanguage") || "en",
-      fallbackLng: "en",
-      interpolation: {
-        escapeValue: false,
-      },
-      resources: {}, // Resources are loaded dynamically in LanguageToggle
-    });
-}
 
 export default function StudentLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
