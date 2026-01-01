@@ -18,19 +18,30 @@ const prismaMock = vi.hoisted(() => ({
     findFirst: vi.fn(),
     create: vi.fn(),
   },
+  match: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  matchTurn: {
+    findMany: vi.fn(),
+    create: vi.fn(),
+  },
 }));
 
-vi.mock("@prisma/client", () => ({
-  PrismaClient: class {
-    constructor() {
-      return prismaMock;
-    }
-  },
-  MatchStatus: {},
+vi.mock("../utils/prisma", () => ({
+  default: prismaMock,
+}));
+
+// Mock pvpQuestions
+vi.mock("./pvpQuestions", () => ({
+  checkAnswer: vi.fn().mockImplementation((band, qId, ansIndex) => {
+    // Correct if index is 1
+    return ansIndex === 1;
+  })
 }));
 
 // Import after mock
-import { checkUnlocks } from "./game";
+import { checkUnlocks, resolveTurn } from "./game";
 
 describe("checkUnlocks", () => {
   beforeEach(() => {
@@ -115,6 +126,155 @@ describe("checkUnlocks", () => {
       data: [
         expect.objectContaining({ avatarId: avatarId, abilityId: "ab-2" }),
       ],
+    });
+  });
+});
+
+describe("resolveTurn - Knowledge Bonus", () => {
+  const matchId = "match-123";
+  const p1Id = "p1";
+  const p2Id = "p2";
+  const abilityId = "ab-attack";
+
+  const mockAbility = {
+    id: abilityId,
+    config: { type: "attack", value: 20 },
+    name: "Strike"
+  };
+
+  const mockPlayer1 = {
+    id: "p1",
+    archetype: "AI",
+    hp: 100,
+    unlockedAbilities: [{ abilityId: abilityId, Ability: mockAbility }]
+  };
+
+  const mockPlayer2 = {
+    id: "p2",
+    archetype: "BIOTECH",
+    hp: 100,
+    unlockedAbilities: []
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should apply 25% bonus for correct answer", async () => {
+    // Setup match state
+    prismaMock.match.findUnique.mockResolvedValue({
+      id: matchId,
+      status: "ACTIVE",
+      player1Id: p1Id,
+      player2Id: p2Id,
+      Player1: mockPlayer1,
+      Player2: mockPlayer2,
+      band: "K2"
+    });
+
+    // Setup turns (empty, so p1's turn)
+    prismaMock.matchTurn.findMany.mockResolvedValue([]);
+
+    // Mock create return to satisfy turns.push(newTurn)
+    prismaMock.matchTurn.create.mockResolvedValue({
+      id: "turn-1",
+      matchId,
+      round: 1,
+      actorId: p1Id,
+      action: {
+        abilityId,
+        damageDealt: 25,
+        knowledge: { correct: true, bonusMult: 1.25 }
+      }
+    });
+
+    // Call with correct answer (index 1)
+    await resolveTurn(matchId, p1Id, abilityId, { questionId: "q1", answerIndex: 1 });
+
+    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: expect.objectContaining({
+          damageDealt: 25,
+          knowledge: expect.objectContaining({ correct: true, bonusMult: 1.25 })
+        })
+      })
+    });
+  });
+
+  it("should NOT apply bonus for incorrect answer", async () => {
+    prismaMock.match.findUnique.mockResolvedValue({
+      id: matchId,
+      status: "ACTIVE",
+      player1Id: p1Id,
+      player2Id: p2Id,
+      Player1: mockPlayer1,
+      Player2: mockPlayer2,
+      band: "K2"
+    });
+
+    prismaMock.matchTurn.findMany.mockResolvedValue([]);
+
+    // Mock create return
+    prismaMock.matchTurn.create.mockResolvedValue({
+      id: "turn-1",
+      matchId,
+      round: 1,
+      actorId: p1Id,
+      action: {
+        abilityId,
+        damageDealt: 20,
+        knowledge: { correct: false }
+      }
+    });
+
+    // Call with incorrect answer (index 0)
+    await resolveTurn(matchId, p1Id, abilityId, { questionId: "q1", answerIndex: 0 });
+
+    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: expect.objectContaining({
+          damageDealt: 20,
+          knowledge: expect.objectContaining({ correct: false })
+        })
+      })
+    });
+  });
+
+  it("should handle missing quiz data gracefuly (no bonus)", async () => {
+    prismaMock.match.findUnique.mockResolvedValue({
+      id: matchId,
+      status: "ACTIVE",
+      player1Id: p1Id,
+      player2Id: p2Id,
+      Player1: mockPlayer1,
+      Player2: mockPlayer2,
+      band: "K2"
+    });
+
+    prismaMock.matchTurn.findMany.mockResolvedValue([]);
+
+    // Mock create return
+    prismaMock.matchTurn.create.mockResolvedValue({
+      id: "turn-1",
+      matchId,
+      round: 1,
+      actorId: p1Id,
+      action: {
+        abilityId,
+        damageDealt: 20,
+        knowledge: null
+      }
+    });
+
+    await resolveTurn(matchId, p1Id, abilityId);
+
+    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        action: expect.objectContaining({
+          damageDealt: 20,
+          knowledge: null
+        })
+      })
     });
   });
 });

@@ -1,5 +1,6 @@
 // backend/src/services/game.ts
 import prisma from "../utils/prisma";
+import { checkAnswer } from "./pvpQuestions";
 
 const MatchStatus = {
   PENDING: "PENDING",
@@ -68,6 +69,7 @@ export async function resolveTurn(
   matchId: string,
   actorId: string,
   abilityId: string,
+  quiz?: { questionId: string; answerIndex: number },
 ) {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
@@ -125,14 +127,43 @@ export async function resolveTurn(
   let heal = 0;
   const config = ability.config as any;
 
+  let quizResult = null;
+  if (quiz) {
+    const isCorrect = checkAnswer(match.band || "K2", quiz.questionId, quiz.answerIndex);
+    if (isCorrect) {
+      quizResult = {
+        questionId: quiz.questionId,
+        correct: true,
+        bonusMult: 1.25
+      };
+    } else {
+      quizResult = {
+        questionId: quiz.questionId,
+        correct: false
+      };
+    }
+  }
+
   if (config.type === "attack") {
     damage = config.value || 10;
-    // Check modifier
+
+    // 1. Archetype bonus
     if (modifiers[actor.archetype] === opponent.archetype) {
       damage = Math.floor(damage * 1.15);
     }
+
+    // 2. Knowledge bonus
+    if (quizResult?.correct) {
+      damage = Math.floor(damage * 1.25);
+    }
+
   } else if (config.type === "heal") {
     heal = config.value || 10;
+
+    // Knowledge bonus for heal too
+    if (quizResult?.correct) {
+      heal = Math.floor(heal * 1.25);
+    }
   }
 
   const nextRound = turns.length + 1;
@@ -146,6 +177,7 @@ export async function resolveTurn(
         abilityId,
         damageDealt: damage,
         healAmount: heal,
+        knowledge: quizResult
       },
     },
   });
