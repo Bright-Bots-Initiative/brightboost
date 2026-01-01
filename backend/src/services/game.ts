@@ -71,6 +71,8 @@ export async function resolveTurn(
   abilityId: string,
   quiz?: { questionId: string; answerIndex: number },
 ) {
+  // Optimization: Fetch match and turns in a single query to reduce DB round trips.
+  // We include turns ordered by createdAt to ensure correct replay sequence.
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
@@ -80,19 +82,16 @@ export async function resolveTurn(
       Player2: {
         include: { unlockedAbilities: { include: { Ability: true } } },
       },
+      turns: {
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
   if (!match || match.status !== MatchStatus.ACTIVE)
     throw new Error("Invalid match");
 
-  // Optimization: Fetch turns first to get round count AND history for HP calc.
-  // Saves 1 count query + 1 redundant findMany.
-  const turns = await prisma.matchTurn.findMany({
-    where: { matchId },
-    orderBy: { createdAt: "asc" },
-  });
-
+  const turns = match.turns;
   const currentTurnIndex = turns.length;
   const expectedActorId =
     currentTurnIndex % 2 === 0 ? match.player1Id : match.player2Id;
