@@ -74,5 +74,28 @@
     "back": "⬅ Back to Dashboard",
     "nextModule": "Next Module",
     "noNextModule": "No next module assigned."
+  },
+  "studentLogin": {
+    "title": "Student Login",
+    "subtitle": "Ready to continue your learning adventure?",
+    "error": {
+      "studentOnly": "This login is only for students. Please use the teacher login if you are a teacher.",
+      "generic": "Failed to login. Please check your credentials."
+    },
+    "form": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submitButton": "Login",
+      "loggingIn": "Logging in..."
+    },
+    "footer": {
+      "noAccount": "Don't have an account?",
+      "signup": "Sign up",
+      "backHome": "Back to Home"
+    }
   }
 }
