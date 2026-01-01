@@ -19,6 +19,49 @@ const modifiers: Record<string, string> = {
   BIOTECH: "AI", // Biotech > AI
 };
 
+export function computeBattleState(match: any, turns: any[]) {
+  // Sort turns by round to ensure correct order
+  const sortedTurns = [...turns].sort((a, b) => a.round - b.round);
+
+  let p1Hp = match.Player1.hp;
+  // Player2 might be null if not loaded or still pending, but usually loaded in context
+  let p2Hp = match.Player2?.hp || 100;
+
+  const log: any[] = [];
+  let lastEvent = null;
+
+  for (const t of sortedTurns) {
+    const act = t.action as any;
+    const isP1 = t.actorId === match.player1Id;
+
+    // Construct log entry
+    const entry = {
+      round: t.round,
+      actorId: t.actorId,
+      abilityId: act.abilityId,
+      damageDealt: act.damageDealt || 0,
+      healAmount: act.healAmount || 0,
+    };
+    log.push(entry);
+    lastEvent = entry;
+
+    if (isP1) {
+      p2Hp -= entry.damageDealt;
+      p1Hp += entry.healAmount;
+    } else {
+      p1Hp -= entry.damageDealt;
+      p2Hp += entry.healAmount;
+    }
+  }
+
+  return {
+    p1Hp,
+    p2Hp,
+    log,
+    lastEvent,
+  };
+}
+
 export async function resolveTurn(
   matchId: string,
   actorId: string,
@@ -95,22 +138,10 @@ export async function resolveTurn(
 
   turns.push(newTurn);
 
-  let p1DamageTaken = 0;
-  let p2DamageTaken = 0;
-
-  for (const t of turns) {
-    const act = t.action as any;
-    if (t.actorId === match.player1Id) {
-      p2DamageTaken += act.damageDealt || 0;
-      p1DamageTaken -= act.healAmount || 0;
-    } else {
-      p1DamageTaken += act.damageDealt || 0;
-      p2DamageTaken -= act.healAmount || 0;
-    }
-  }
-
-  const p1CurrentHp = match.Player1.hp - p1DamageTaken;
-  const p2CurrentHp = match.Player2!.hp - p2DamageTaken;
+  const { p1Hp: p1CurrentHp, p2Hp: p2CurrentHp } = computeBattleState(
+    match,
+    turns,
+  );
 
   if (p1CurrentHp <= 0 || p2CurrentHp <= 0 || turns.length >= 6) {
     let winnerId = null;

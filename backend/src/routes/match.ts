@@ -9,7 +9,7 @@ const MatchStatus = {
 } as const;
 type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 import { requireAuth } from "../utils/auth";
-import { resolveTurn } from "../services/game";
+import { resolveTurn, computeBattleState } from "../services/game";
 import { isValidBand } from "../utils/validation";
 
 const router = Router();
@@ -100,7 +100,8 @@ router.get("/match/:id", requireAuth, async (req, res) => {
     return res.status(403).json({ error: "Not authorized to view this match" });
   }
 
-  res.json(match);
+  const computed = computeBattleState(match, match.turns);
+  res.json({ ...match, computed });
 });
 
 // Perform action
