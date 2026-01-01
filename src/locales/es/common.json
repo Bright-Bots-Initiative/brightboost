@@ -75,5 +75,28 @@
     "back": "⬅ Volver al panel",
     "nextModule": "Próximo módulo",
     "noNextModule": "No hay módulo siguiente asignado."
+  },
+  "studentLogin": {
+    "title": "Acceso de Estudiante",
+    "subtitle": "¿Listo para continuar tu aventura de aprendizaje?",
+    "error": {
+      "studentOnly": "Este inicio de sesión es solo para estudiantes. Por favor, usa el inicio de sesión de profesores si eres un profesor.",
+      "generic": "Error al iniciar sesión. Por favor, verifica tus credenciales."
+    },
+    "form": {
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "Ingresa tu correo electrónico",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Ingresa tu contraseña",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "submitButton": "Iniciar sesión",
+      "loggingIn": "Iniciando sesión..."
+    },
+    "footer": {
+      "noAccount": "¿No tienes una cuenta?",
+      "signup": "Regístrate",
+      "backHome": "Volver al inicio"
+    }
   }
 }
