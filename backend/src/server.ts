@@ -69,7 +69,7 @@ const distPath = path.resolve(
 app.use(express.static(distPath));
 
 // SPA Fallback
-app.get("*", (req, res) => {
+app.get(/(.*)/, (req, res) => {
   if (req.path.startsWith("/api")) return res.status(404).end();
   res.sendFile(path.join(distPath, "index.html"));
 });
