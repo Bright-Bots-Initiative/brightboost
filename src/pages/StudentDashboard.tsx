@@ -5,14 +5,20 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Bot, Flame, BookOpen, Rocket, Trophy, PlayCircle, ArrowRight } from "lucide-react";
+import { Bot, Flame, BookOpen, Rocket, Trophy, PlayCircle, ArrowRight, Lock } from "lucide-react";
+import { format } from "date-fns";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { streak } = useStreak();
   const navigate = useNavigate();
 
-  const currentLevel = user?.level ? Number(user.level) : 1;
+  const currentLevel = (() => {
+    const lvl = user?.level;
+    if (!lvl) return 1;
+    const num = Number(String(lvl).replace(/[^0-9]/g, ""));
+    return !isNaN(num) && num > 0 ? num : 1;
+  })();
 
   const dashboardCards = [
     {
@@ -132,6 +138,51 @@ export default function StudentDashboard() {
             </div>
           </Card>
         </div>
+      </div>
+
+      {/* Level Progress Strip */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((level) => {
+          const isUnlocked = level <= currentLevel;
+          const badge = user?.badges?.find((b) =>
+            b.name.toLowerCase().includes(`level ${level}`)
+          );
+
+          return (
+            <div
+              key={level}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                isUnlocked
+                  ? "bg-white border-blue-200 shadow-sm"
+                  : "bg-slate-50 border-slate-200 opacity-60"
+              }`}
+            >
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
+                Level
+              </div>
+              <div
+                className={`text-2xl font-black ${
+                  isUnlocked ? "text-blue-600" : "text-slate-400"
+                }`}
+              >
+                {level}
+              </div>
+              <div className="mt-1 h-5 flex items-center justify-center">
+                {!isUnlocked ? (
+                  <Lock className="w-4 h-4 text-slate-400" />
+                ) : badge?.awardedAt ? (
+                  <span className="text-[10px] font-medium text-slate-500">
+                    {format(new Date(badge.awardedAt), "MMM d")}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-blue-400">
+                    Unlocked
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Dashboard Card Grid */}
