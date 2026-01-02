@@ -401,6 +401,22 @@ const getHeaders = () => {
   return headers;
 };
 
+// --- Simple in-memory cache for module detail ---
+// Prevents request storms when multiple components request the same module.
+const MODULE_TTL_MS = 30_000;
+const moduleCache = new Map<string, { ts: number; data: any }>();
+const moduleInFlight = new Map<string, Promise<any>>();
+
+async function safeJson(res: Response) {
+  // If backend sends plain text (e.g. rate limit), this won't crash
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
 export const api = {
   getModules: async () => {
     const res = await fetch(join(API_BASE, "/modules"), {
@@ -417,10 +433,39 @@ export const api = {
   },
 
   getModule: async (slug: string) => {
-    const res = await fetch(join(API_BASE, `/module/${slug}`), {
-      headers: getHeaders(),
-    });
-    return res.json();
+    // cache hit
+    const cached = moduleCache.get(slug);
+    if (cached && Date.now() - cached.ts < MODULE_TTL_MS) return cached.data;
+
+    // in-flight dedupe
+    const existing = moduleInFlight.get(slug);
+    if (existing) return existing;
+
+    const p = (async () => {
+      const res = await fetch(join(API_BASE, `/module/${slug}`), {
+        headers: getHeaders(),
+      });
+
+      if (!res.ok) {
+        const errBody = await safeJson(res);
+        const msg =
+          res.status === 429
+            ? "Too many requests (rate limited). Please refresh after restarting backend or switching networks."
+            : errBody?.error || errBody?.message || `Request failed: ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      moduleCache.set(slug, { ts: Date.now(), data });
+      return data;
+    })();
+
+    moduleInFlight.set(slug, p);
+    try {
+      return await p;
+    } finally {
+      moduleInFlight.delete(slug);
+    }
   },
 
   completeActivity: async (data: {

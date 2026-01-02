@@ -17,14 +17,15 @@ export default function ModuleDetail() {
     api
       .getModule(slug)
       .then((m) => setModule(m))
-      .catch(() => {
+      .catch((e) => {
         toast({
           title: "Error",
-          description: "Failed to load module.",
+          description: e?.message || "Failed to load module.",
           variant: "destructive",
         });
       });
-  }, [slug, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]); // avoid accidental reruns
 
   if (!module) return <div>Loading...</div>;
 
