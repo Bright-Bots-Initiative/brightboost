@@ -1,7 +1,7 @@
 {
   "student": "Estudiante",
   "dashboard": {
-    "loading": "Cargando tu panel...",
+    "loading": "Cargando…",
     "stillLoading": "Todavía cargando...",
     "errorPrefix": "¡Vaya!",
     "tryAgain": "Inténtalo de nuevo",
@@ -39,7 +39,30 @@
     },
     "noData": "¡Comienza tu primera misión!",
     "startLearning": "Comenzar Aprendizaje",
-    "viewProgress": "Ver Progreso"
+    "viewProgress": "Ver Progreso",
+    "tagline": "¡Aprendamos y divirtámonos!",
+    "streak": "Racha",
+    "record": "Récord:",
+    "myAvatar": "Mi Avatar",
+    "customize": "Personalizar",
+    "level": "Nivel",
+    "unlocked": "Desbloqueado",
+    "yourLessons": "Tus Lecciones",
+    "yourActivities": "Tus Actividades",
+    "yourBadges": "Tus Insignias",
+    "continueLearning": "Continuar Aprendiendo",
+    "pickAModule": "Elige un Módulo",
+    "chooseModulePrompt": "Elige un módulo para comenzar tu próxima misión.",
+    "noModules": "Aún no hay módulos disponibles.",
+    "upNext": "Siguiente:",
+    "startActivity": "Iniciar Actividad",
+    "browseModules": "Explorar Módulos",
+    "loadingActivities": "Cargando tus actividades…",
+    "caughtUp": "Estás al día. ¡Elige un módulo para seguir aprendiendo!",
+    "goToModules": "Ir a Módulos",
+    "play": "Jugar",
+    "unavailableTitle": "Tablero no disponible",
+    "unavailableDesc": "No se pudo cargar tu progreso de aprendizaje."
   },
 
   "api": {

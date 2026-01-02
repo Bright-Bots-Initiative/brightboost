@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ function flattenModule(module: any): NextActivity[] {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { streak } = useStreak();
   const navigate = useNavigate();
@@ -139,8 +141,8 @@ export default function StudentDashboard() {
       } catch (e) {
         console.error(e);
         toast({
-          title: "Dashboard unavailable",
-          description: "Could not load your learning progress.",
+          title: t("dashboard.unavailableTitle"),
+          description: t("dashboard.unavailableDesc"),
           variant: "destructive",
         });
       } finally {
@@ -151,7 +153,7 @@ export default function StudentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [toast]);
+  }, [toast, t]);
 
   const goToNext = () => {
     if (!nextOne) return navigate("/student/modules");
@@ -167,10 +169,10 @@ export default function StudentDashboard() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-              Hello, {user?.name || "Explorer"}!
+              {t("dashboard.greeting", { name: user?.name || "Explorer" })}
             </h1>
             <p className="text-xl text-slate-600 font-medium">
-              Let’s learn and have fun!
+              {t("dashboard.tagline")}
             </p>
           </div>
         </div>
@@ -192,14 +194,14 @@ export default function StudentDashboard() {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Streak
+                {t("dashboard.streak")}
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-xl font-bold text-slate-900">
                   {streak?.currentStreak || 0}
                 </span>
                 <span className="text-xs font-medium text-slate-400">
-                  Record: {streak?.longestStreak || 0}
+                  {t("dashboard.record")} {streak?.longestStreak || 0}
                 </span>
               </div>
             </div>
@@ -229,9 +231,9 @@ export default function StudentDashboard() {
             </Avatar>
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                My Avatar
+                {t("dashboard.myAvatar")}
               </p>
-              <p className="text-sm font-bold text-slate-700">Customize</p>
+              <p className="text-sm font-bold text-slate-700">{t("dashboard.customize")}</p>
             </div>
           </div>
         </div>
@@ -255,7 +257,7 @@ export default function StudentDashboard() {
               }`}
             >
               <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
-                Level
+                {t("dashboard.level")}
               </div>
               <div
                 className={`text-2xl font-black ${
@@ -273,7 +275,7 @@ export default function StudentDashboard() {
                   </span>
                 ) : (
                   <span className="text-[10px] font-medium text-blue-400">
-                    Unlocked
+                    {t("dashboard.unlocked")}
                   </span>
                 )}
               </div>
@@ -285,7 +287,7 @@ export default function StudentDashboard() {
       {/* Dashboard Card Grid */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-          Your Lessons
+          {t("dashboard.yourLessons")}
         </h2>
         <div
           className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
@@ -295,18 +297,18 @@ export default function StudentDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                  {loading ? "Loading…" : nextOne ? "Continue Learning" : "Pick a Module"}
+                  {loading ? t("dashboard.loading") : nextOne ? t("dashboard.continueLearning") : t("dashboard.pickAModule")}
                 </h3>
                 <p className="text-slate-600">
                   {nextOne
                     ? `${nextOne.moduleTitle} • ${nextOne.unitTitle} • ${nextOne.lessonTitle}`
                     : modules.length > 0
-                      ? "Choose a module to start your next mission."
-                      : "No modules available yet."}
+                      ? t("dashboard.chooseModulePrompt")
+                      : t("dashboard.noModules")}
                 </p>
                 {nextOne ? (
                   <p className="text-slate-500 text-sm mt-1">
-                    Up next: {nextOne.kind === "INFO" ? "📖" : "🎮"} {nextOne.activityTitle}
+                    {t("dashboard.upNext")} {nextOne.kind === "INFO" ? "📖" : "🎮"} {nextOne.activityTitle}
                   </p>
                 ) : null}
               </div>
@@ -319,7 +321,7 @@ export default function StudentDashboard() {
                   else navigate("/student/modules");
                 }}
               >
-                {nextOne ? "Start Activity" : "Browse Modules"}
+                {nextOne ? t("dashboard.startActivity") : t("dashboard.browseModules")}
               </Button>
             </div>
           </div>
@@ -329,16 +331,16 @@ export default function StudentDashboard() {
       {/* Your Activities Section */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4">
-          Your Activities
+          {t("dashboard.yourActivities")}
         </h2>
         {upNext.length === 0 ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
-              {loading ? "Loading your activities…" : "You’re all caught up. Pick a module to keep learning!"}
+              {loading ? t("dashboard.loadingActivities") : t("dashboard.caughtUp")}
             </p>
             <div className="mt-4">
               <Button variant="outline" onClick={() => navigate("/student/modules")}>
-                Go to Modules
+                {t("dashboard.goToModules")}
               </Button>
             </div>
           </div>
@@ -363,7 +365,7 @@ export default function StudentDashboard() {
                       )
                     }
                   >
-                    Play
+                    {t("dashboard.play")}
                   </Button>
                 </CardContent>
               </Card>
@@ -375,7 +377,7 @@ export default function StudentDashboard() {
       {/* Your Badges Section */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-          Your Badges
+          {t("dashboard.yourBadges")}
         </h2>
         <div className="flex flex-wrap gap-4">
           {badgeLevels.map((lvl) => {
