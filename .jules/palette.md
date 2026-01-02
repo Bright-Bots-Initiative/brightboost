@@ -20,5 +20,5 @@
 
 ## 2025-01-20 - Password Visibility Patterns
 
-**Learning:** Password fields without a visibility toggle are a significant usability hurdle and accessibility issue. Implementing them with `lucide-react` icons (Eye/EyeOff) is straightforward but requires checking icon availability in the project dependencies first.
-**Action:** When adding password inputs, always include a visibility toggle using the relative container pattern found in `StudentLogin` and `TeacherLogin`.
+**Learning:** Password fields without a visibility toggle are a significant usability hurdle and accessibility issue.
+**Action:** Use `PasswordInput` component (`src/components/ui/password-input.tsx`) which handles the toggle state, icons, and accessibility attributes (ARIA labels, keyboard focus) automatically, ensuring consistency across Student and Teacher login flows.
