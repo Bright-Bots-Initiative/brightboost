@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { upsertCheckpoint } from "./progress";
+import { upsertCheckpoint, getAggregatedProgress } from "./progress";
 import prisma from "../utils/prisma";
 
 const ProgressStatus = {
@@ -16,6 +16,10 @@ vi.mock("../utils/prisma", () => ({
       update: vi.fn(),
       create: vi.fn(),
       upsert: vi.fn(),
+      findMany: vi.fn(),
+    },
+    module: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -91,5 +95,57 @@ describe("upsertCheckpoint", () => {
         },
       }),
     );
+  });
+});
+
+describe("getAggregatedProgress", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch progress and module structure", async () => {
+    const studentId = "student-1";
+    const moduleSlug = "module-1";
+
+    const mockProgress = [
+      { activityId: "act-1", status: "COMPLETED", timeSpentS: 100 },
+      { activityId: "act-2", status: "IN_PROGRESS", timeSpentS: 50 },
+    ];
+
+    const mockModule = {
+      title: "Test Module",
+      units: [
+        {
+          id: "unit-1",
+          lessons: [
+            {
+              id: "lesson-1",
+              activities: [
+                { id: "act-1" },
+                { id: "act-2" },
+                { id: "act-3" },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    vi.mocked(prisma.progress.findMany).mockResolvedValue(mockProgress as any);
+    vi.mocked(prisma.module.findUnique).mockResolvedValue(mockModule as any);
+
+    const result = await getAggregatedProgress(studentId, moduleSlug);
+
+    expect(prisma.progress.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { studentId, moduleSlug },
+      })
+    );
+
+    expect(result.module.units[0].lessons[0].activities[0].userProgress).toEqual({
+      status: "COMPLETED",
+      timeSpentS: 100,
+    });
+    expect(result.module.units[0].lessons[0].activities[2].userProgress).toBeNull();
   });
 });
