@@ -3,13 +3,12 @@ import { ReactNode } from "react";
 import BottomNav from "../components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import LanguageToggle from "../components/LanguageToggle";
 
 export default function StudentLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 to-blue-50 flex flex-col pb-20">

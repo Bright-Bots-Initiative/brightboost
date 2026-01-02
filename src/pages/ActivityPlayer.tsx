@@ -48,6 +48,11 @@ export default function ActivityPlayer() {
     if (!slug || !lessonId || !activityId) return;
 
     setLoading(true);
+    // clear stale content to avoid “half-loaded” UI when rate-limited
+    setModule(null);
+    setActivity(null);
+    setContent(null);
+
     api
       .getModule(slug)
       .then((m) => {
@@ -77,15 +82,16 @@ export default function ActivityPlayer() {
         setMode("story");
         setAnswers({});
       })
-      .catch(() => {
+      .catch((e) => {
         toast({
           title: "Error",
-          description: "Failed to load activity.",
+          description: e?.message || "Failed to load activity.",
           variant: "destructive",
         });
       })
       .finally(() => setLoading(false));
-  }, [slug, lessonId, activityId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, lessonId, activityId]); // avoid accidental reruns
 
   const getTimeSpentS = () => {
     const ms = Date.now() - startMsRef.current;
