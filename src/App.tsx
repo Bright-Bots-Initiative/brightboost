@@ -7,6 +7,7 @@ import {
   Outlet,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Import pages
 import TeacherLogin from "./pages/TeacherLogin";
@@ -41,9 +42,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="app">
-          <Routes>
-            {/* Public routes */}
+        <TooltipProvider>
+          <div className="app">
+            <Routes>
+              {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginSelection />} />
             <Route path="/signup" element={<SignupSelection />} />
@@ -101,7 +103,8 @@ function App() {
               v{import.meta.env.VITE_APP_VERSION}
             </div>
           ) : null}
-        </div>
+          </div>
+        </TooltipProvider>
       </AuthProvider>
     </Router>
   );
