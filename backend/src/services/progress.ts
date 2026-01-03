@@ -58,6 +58,11 @@ export async function getAggregatedProgress(
     // 1. Get all progress for this user + module
     prisma.progress.findMany({
       where: { studentId, moduleSlug },
+      select: {
+        activityId: true,
+        status: true,
+        timeSpentS: true,
+      },
     }),
 
     // 2. Get module structure (units, lessons, activities)
