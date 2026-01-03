@@ -9,6 +9,7 @@ import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
 import matchRouter from "./routes/match";
 import authRouter from "./routes/auth";
+import profileRouter from "./routes/profile";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp } from "./utils/security";
 
@@ -52,9 +53,10 @@ app.use("/api", modulesRouter);
 app.use("/api", progressRouter);
 app.use("/api", avatarRouter);
 app.use("/api", matchRouter);
+app.use("/api", profileRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
-  res.status(200).json({ status: "ok" })
+  res.status(200).json({ status: "ok" }),
 );
 
 // Serve static frontend files
@@ -62,12 +64,12 @@ app.get("/health", (_req: Request, res: Response) =>
 // In development (src/server.ts), the frontend build is in ../../dist
 const distPath = path.resolve(
   __dirname,
-  process.env.NODE_ENV === "production" ? "../../../dist" : "../../dist"
+  process.env.NODE_ENV === "production" ? "../../../dist" : "../../dist",
 );
 app.use(express.static(distPath));
 
 // SPA Fallback
-app.get("*", (req, res) => {
+app.get(/(.*)/, (req, res) => {
   if (req.path.startsWith("/api")) return res.status(404).end();
   res.sendFile(path.join(distPath, "index.html"));
 });

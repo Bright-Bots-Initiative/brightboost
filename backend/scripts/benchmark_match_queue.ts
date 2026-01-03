@@ -1,5 +1,4 @@
-
-import { PrismaClient, MatchStatus } from '@prisma/client';
+import { PrismaClient, MatchStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -22,12 +21,12 @@ async function main() {
       role: "student",
       avatar: {
         create: {
-            archetype: "AI",
-            level: 1
-        }
-    }
+          archetype: "AI",
+          level: 1,
+        },
+      },
     },
-    include: { avatar: true }
+    include: { avatar: true },
   });
 
   const avatarId = player.avatar!.id;
@@ -38,26 +37,26 @@ async function main() {
     player2Id: avatarId, // Self-play for seeding speed
     status: MatchStatus.COMPLETED,
     band: "K2",
-    winnerId: avatarId
+    winnerId: avatarId,
   }));
 
   // Chunking to avoid parameter limits
   const chunkSize = 1000;
   for (let i = 0; i < datas.length; i += chunkSize) {
-      await prisma.match.createMany({
-          data: datas.slice(i, i + chunkSize)
-      });
-      if (i % 5000 === 0) process.stdout.write('.');
+    await prisma.match.createMany({
+      data: datas.slice(i, i + chunkSize),
+    });
+    if (i % 5000 === 0) process.stdout.write(".");
   }
   console.log("\n✅ Seeding complete.");
 
   // 3. Create ONE pending match at the very end (worst case for full scan)
   await prisma.match.create({
-      data: {
-          player1Id: avatarId,
-          status: MatchStatus.PENDING,
-          band: "K2"
-      }
+    data: {
+      player1Id: avatarId,
+      status: MatchStatus.PENDING,
+      band: "K2",
+    },
   });
 
   // 4. Measure Query Time
@@ -72,7 +71,7 @@ async function main() {
       band: "K2",
       // We simulate a different user searching, so we don't exclude the creator
       // NOT: { player1Id: "some-other-id" }
-    }
+    },
   });
 
   const end = performance.now();
@@ -82,9 +81,9 @@ async function main() {
   console.log(`⚡ Query Duration: ${duration.toFixed(3)}ms`);
 
   if (duration > 50) {
-      console.log("⚠️  SLOW! This query likely performed a full table scan.");
+    console.log("⚠️  SLOW! This query likely performed a full table scan.");
   } else {
-      console.log("🚀 FAST! Index likely engaged.");
+    console.log("🚀 FAST! Index likely engaged.");
   }
 
   // Cleanup

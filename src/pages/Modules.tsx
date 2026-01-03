@@ -17,7 +17,8 @@ export default function Modules() {
 
   useEffect(() => {
     setLoading(true);
-    api.getModules()
+    api
+      .getModules()
       .then((data) => {
         setModules(data);
         setError(null);
@@ -32,7 +33,9 @@ export default function Modules() {
 
   return (
     <div className="p-4 space-y-4 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-brightboost-navy mb-6">K-2 STEM Modules</h1>
+      <h1 className="text-2xl font-bold text-brightboost-navy mb-6">
+        K-2 STEM Modules
+      </h1>
 
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -47,14 +50,21 @@ export default function Modules() {
       ) : modules.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {modules.map((m) => (
-            <Card key={m.id} className="hover:shadow-lg transition flex flex-col h-full border-2 border-transparent hover:border-brightboost-blue/20">
+            <Card
+              key={m.id}
+              className="hover:shadow-lg transition flex flex-col h-full border-2 border-transparent hover:border-brightboost-blue/20"
+            >
               <CardHeader>
-                <CardTitle className="text-xl text-brightboost-navy">{m.title}</CardTitle>
+                <CardTitle className="text-xl text-brightboost-navy">
+                  {m.title}
+                </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
-                <p className="text-sm text-gray-500 mb-6">{m.subtitle || "No subtitle"}</p>
+                <p className="text-sm text-gray-500 mb-6">
+                  {m.subtitle || "No subtitle"}
+                </p>
                 <Button
-                  onClick={() => navigate(`/modules/${m.slug}`)}
+                  onClick={() => navigate(`/student/modules/${m.slug}`)}
                   className="w-full sm:w-auto"
                   aria-label={`Start learning ${m.title}`}
                 >
@@ -70,9 +80,12 @@ export default function Modules() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
               <BookOpen size={32} />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Modules Found</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              No Modules Found
+            </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              We couldn't find any learning modules at the moment. Please check back later!
+              We couldn't find any learning modules at the moment. Please check
+              back later!
             </p>
           </div>
         )

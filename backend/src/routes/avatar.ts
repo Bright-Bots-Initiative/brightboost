@@ -4,6 +4,17 @@ import { requireAuth } from "../utils/auth";
 
 const router = Router();
 
+// Get user XP
+router.get("/user/xp", requireAuth, async (req, res) => {
+  const studentId = req.user!.id;
+  const avatar = await prisma.avatar.findUnique({
+    where: { studentId },
+    select: { xp: true },
+  });
+
+  res.json({ currentXp: avatar?.xp || 0 });
+});
+
 // Get current user's avatar
 router.get("/avatar/me", requireAuth, async (req, res) => {
   const studentId = req.user!.id;

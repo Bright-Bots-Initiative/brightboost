@@ -1,10 +1,13 @@
 // src/pages/TeacherSignup.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { signupTeacher } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
+import { Input } from "../components/ui/input";
+import { PasswordInput } from "../components/ui/password-input";
 
 const TeacherSignup: React.FC = () => {
   const [name, setName] = useState("");
@@ -51,6 +54,9 @@ const TeacherSignup: React.FC = () => {
     }
   };
 
+  const inputClasses =
+    "bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:ring-brightboost-blue focus:border-transparent";
+
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
@@ -69,92 +75,73 @@ const TeacherSignup: React.FC = () => {
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4"
+                role="alert"
+                aria-live="polite"
+              >
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-brightboost-navy mb-1"
-                >
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <Input
+                label="Full Name"
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className={inputClasses}
+                placeholder="Enter your full name"
+              />
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-brightboost-navy mb-1"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
-                  placeholder="Enter your email"
-                />
-              </div>
+              <Input
+                label="Email"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className={inputClasses}
+                placeholder="Enter your email"
+              />
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-brightboost-navy mb-1"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
-                  placeholder="Create a password"
-                />
-              </div>
+              <PasswordInput
+                label="Password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={inputClasses}
+                placeholder="Create a password"
+              />
 
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-brightboost-navy mb-1"
-                >
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all"
-                  placeholder="Confirm your password"
-                />
-              </div>
+              <PasswordInput
+                label="Confirm Password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className={inputClasses}
+                placeholder="Confirm your password"
+              />
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ${
+                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ${
                   isLoading ? "bg-brightboost-blue/70" : "bg-brightboost-blue"
                 } transition-colors`}
               >
-                {isLoading ? "Signing up..." : "Sign Up"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Signing up...</span>
+                  </>
+                ) : (
+                  "Sign Up"
+                )}
               </button>
             </form>
 

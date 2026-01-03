@@ -22,8 +22,8 @@ export default function BottomNav() {
     {
       label: "Play",
       icon: Swords,
-      path: "/student/arena",
-      testId: "nav-arena",
+      path: "/student/play",
+      testId: "nav-play",
     },
   ];
 

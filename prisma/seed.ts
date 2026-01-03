@@ -15,7 +15,7 @@ async function main() {
         xp: 1000,
         level: "Explorer",
         streak: 5,
-        avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=student_1",
+        avatarUrl: "/robots/robot_default.png",
       },
       {
         name: "Glenn Hoffman",
@@ -25,7 +25,7 @@ async function main() {
         xp: 100,
         level: "Explorer",
         streak: 1,
-        avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=student_2",
+        avatarUrl: "/robots/robot_explorer.png",
       },
       {
         name: "Justine Weiss",
@@ -35,7 +35,7 @@ async function main() {
         xp: 500,
         level: "Explorer",
         streak: 3,
-        avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=student_3",
+        avatarUrl: "/robots/robot_builder.png",
       },
       {
         name: "Alfonso Randall",
@@ -45,7 +45,7 @@ async function main() {
         xp: 3000,
         level: "Explorer",
         streak: 10,
-        avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=student_4",
+        avatarUrl: "/robots/robot_stem1_master.png",
       },
       {
         name: "Elba Zamora",
@@ -55,7 +55,7 @@ async function main() {
         xp: 200,
         level: "Explorer",
         streak: 2,
-        avatarUrl: "https://api.dicebear.com/7.x/identicon/svg?seed=student_5",
+        avatarUrl: "/robots/robot_default.png",
       },
     ];
 

@@ -37,7 +37,7 @@ describe("Security Middleware", () => {
     const limit = 100;
     const promises = [];
     for (let i = 0; i < limit; i++) {
-        promises.push(agent.get(url));
+      promises.push(agent.get(url));
     }
     await Promise.all(promises);
 

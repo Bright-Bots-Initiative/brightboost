@@ -36,7 +36,7 @@ Users earn XP, badges, streaks, and levels through actions that reinforce positi
 
 ## API
 
-**Base URL:** `${VITE_AWS_API_URL}`
+**Base URL:** `${VITE_API_BASE}` (or `${VITE_AWS_API_URL}/api` for legacy support)
 
 All endpoints require an `Authorization: Bearer <JWT>` header.
 

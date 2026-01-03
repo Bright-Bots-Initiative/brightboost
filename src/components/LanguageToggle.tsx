@@ -1,52 +1,60 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const LANGUAGE_KEY = "preferredLanguage";
 
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
-  const [language, setLanguage] = useState(
-    localStorage.getItem(LANGUAGE_KEY) || "en",
-  );
-  const ENABLE_I18N = import.meta.env.VITE_ENABLE_I18N === "true";
+  // Using a tick state to force re-render when language changes
+  const [, setTick] = useState(0);
 
-  const toggleLanguage = async () => {
-    const newLanguage = language === "en" ? "es" : "en";
-    setLanguage(newLanguage);
-
-    if (!ENABLE_I18N) return;
-
-    try {
-      const translations = await import(
-        `../locales/${newLanguage}/common.json`
-      );
-      if (!i18n.hasResourceBundle(newLanguage, "translation")) {
-        i18n.addResourceBundle(
-          newLanguage,
-          "translation",
-          translations.default,
-        );
-      }
-      await i18n.changeLanguage(newLanguage);
-      localStorage.setItem(LANGUAGE_KEY, newLanguage);
-    } catch (err) {
-      console.warn(`Could not load translations for ${newLanguage}`, err);
-    }
-  };
+  // Handle potential whitespace in env var
+  const envVal = import.meta.env.VITE_ENABLE_I18N;
+  const ENABLE_I18N = typeof envVal === "string" && envVal.trim() === "true";
 
   useEffect(() => {
-    if (ENABLE_I18N) {
-      i18n.changeLanguage(language);
-    }
-  }, [language, i18n, ENABLE_I18N]);
+    if (!ENABLE_I18N) return;
+
+    const handleLanguageChanged = () => {
+      setTick((t) => t + 1);
+    };
+
+    i18n.on("languageChanged", handleLanguageChanged);
+
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [i18n, ENABLE_I18N]);
+
+  const toggleLanguage = () => {
+    if (!ENABLE_I18N) return;
+
+    const currentLang = i18n.resolvedLanguage || i18n.language;
+    const newLanguage = currentLang === "en" ? "es" : "en";
+
+    // Attempt to change language
+    i18n.changeLanguage(newLanguage)
+      .then(() => {
+        localStorage.setItem(LANGUAGE_KEY, newLanguage);
+      })
+      .catch((err) => {
+        console.warn(`Failed to change language to ${newLanguage}`, err);
+      });
+  };
+
+  if (!ENABLE_I18N) {
+    return null;
+  }
+
+  const currentLang = i18n.resolvedLanguage || i18n.language;
 
   return (
     <button
       onClick={toggleLanguage}
       className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
-      aria-label={language === "en" ? "Switch to Spanish" : "Switch to English"}
+      aria-label={currentLang === "en" ? "Switch to Spanish" : "Switch to English"}
     >
-      {language === "en" ? "Español" : "English"}
+      {currentLang === "en" ? "Español" : "English"}
     </button>
   );
 };

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
@@ -18,6 +19,7 @@ const studentLoginSchema = z.object({
 type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
 
 const StudentLogin: React.FC = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
@@ -43,9 +45,7 @@ const StudentLogin: React.FC = () => {
         response.user.role !== "STUDENT" &&
         response.user.role !== "student"
       ) {
-        setError(
-          "This login is only for students. Please use the teacher login if you are a teacher.",
-        );
+        setError(t("studentLogin.error.studentOnly"));
         return;
       }
       login(response.token, response.user, "/student/dashboard");
@@ -53,7 +53,7 @@ const StudentLogin: React.FC = () => {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to login. Please check your credentials.",
+          : t("studentLogin.error.generic"),
       );
     }
   };
@@ -64,15 +64,15 @@ const StudentLogin: React.FC = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-4xl">
           <div className="text-center md:text-left flex-1">
             <h1 className="text-3xl md:text-4xl font-bold text-brightboost-navy mb-4">
-              Student Login
+              {t("studentLogin.title")}
             </h1>
             <p className="text-lg text-brightboost-navy mb-6">
-              Ready to continue your learning adventure?
+              {t("studentLogin.subtitle")}
             </p>
             <BrightBoostRobot className="hidden md:block" />
           </div>
 
-          <div className="game-card p-6 flex-1 w-full max-w-md">
+          <div className="game-card p-6 flex-1 w-full max-w-md ui-sheen ui-highlight">
             <BrightBoostRobot className="md:hidden mx-auto mb-6" size="sm" />
 
             {error && (
@@ -91,7 +91,7 @@ const StudentLogin: React.FC = () => {
                   htmlFor="email"
                   className="block text-sm font-medium text-brightboost-navy mb-1"
                 >
-                  Email
+                  {t("studentLogin.form.emailLabel")}
                 </label>
                 <input
                   id="email"
@@ -104,7 +104,7 @@ const StudentLogin: React.FC = () => {
                       ? "border-red-500"
                       : "border-brightboost-lightblue"
                   } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
-                  placeholder="Enter your email"
+                  placeholder={t("studentLogin.form.emailPlaceholder")}
                 />
                 {errors.email && (
                   <p
@@ -122,7 +122,7 @@ const StudentLogin: React.FC = () => {
                   htmlFor="password"
                   className="block text-sm font-medium text-brightboost-navy mb-1"
                 >
-                  Password
+                  {t("studentLogin.form.passwordLabel")}
                 </label>
                 <div className="relative">
                   <input
@@ -138,14 +138,16 @@ const StudentLogin: React.FC = () => {
                         ? "border-red-500"
                         : "border-brightboost-lightblue"
                     } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all pr-10`}
-                    placeholder="Enter your password"
+                    placeholder={t("studentLogin.form.passwordPlaceholder")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-brightboost-navy/60 hover:text-brightboost-navy bg-transparent focus:outline-none focus:ring-2 focus:ring-brightboost-blue rounded-full p-1"
                     aria-label={
-                      showPassword ? "Hide password" : "Show password"
+                      showPassword
+                        ? t("studentLogin.form.hidePassword")
+                        : t("studentLogin.form.showPassword")
                     }
                   >
                     {showPassword ? (
@@ -169,7 +171,7 @@ const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ${
+                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ui-lift ${
                   isSubmitting
                     ? "bg-brightboost-lightblue/70"
                     : "bg-brightboost-lightblue"
@@ -178,22 +180,22 @@ const StudentLogin: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Logging in...</span>
+                    <span>{t("studentLogin.form.loggingIn")}</span>
                   </>
                 ) : (
-                  "Login"
+                  t("studentLogin.form.submitButton")
                 )}
               </button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-brightboost-navy">
-                Don't have an account?{" "}
+                {t("studentLogin.footer.noAccount")}{" "}
                 <Link
                   to="/student/signup"
                   className="text-brightboost-blue font-bold hover:underline transition-colors"
                 >
-                  Sign up
+                  {t("studentLogin.footer.signup")}
                 </Link>
               </p>
               <p className="text-sm text-brightboost-navy mt-2">
@@ -201,7 +203,7 @@ const StudentLogin: React.FC = () => {
                   to="/"
                   className="text-brightboost-blue font-bold hover:underline transition-colors"
                 >
-                  Back to Home
+                  {t("studentLogin.footer.backHome")}
                 </Link>
               </p>
             </div>

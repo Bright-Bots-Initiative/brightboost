@@ -25,7 +25,7 @@ const stem1Quests: QuestProgress[] = [
 const renderQuestButton = (status: string, t: (key: string) => string) => {
   if (status === "Complete") {
     return (
-      <button className="mt-3 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg w-full">
+      <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
         {t("stem1.reviewQuest")}
       </button>
     );
@@ -37,7 +37,7 @@ const renderQuestButton = (status: string, t: (key: string) => string) => {
     );
   } else {
     return (
-      <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
+      <button className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg w-full">
         {t("stem1.startQuest")}
       </button>
     );

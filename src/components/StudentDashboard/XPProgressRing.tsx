@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { join } from "../../services/api";
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+import { useApi } from "../../services/api";
 
 const XPProgressRing = () => {
+  const api = useApi();
   const [xp, setXp] = useState<number | null>(null);
   // const [percent, setPercent] = useState(0);
   const [levelUp, setLevelUp] = useState(false);
@@ -20,22 +19,16 @@ const XPProgressRing = () => {
   const [hasLeveledUp, setHasLeveledUp] = useState(false);
 
   useEffect(() => {
-    // Mock fetch — replace with real API later
     const fetchXP = async () => {
       try {
-        // to test out different xp values, use the following two rows and change the value in setXp
-        //await new Promise(resolve => setTimeout(resolve, 200)); // simulate delay
-        //setXp(50);
-        const res = await fetch(join(API_BASE, "/user/xp"));
-        if (!res.ok) throw new Error("Fetch failed");
-        const data = await res.json();
+        const data = await api.get("/user/xp");
         setXp(data.currentXp);
       } catch {
         setXp(0); // fallback
       }
     };
     fetchXP();
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     if (xp === null) return;

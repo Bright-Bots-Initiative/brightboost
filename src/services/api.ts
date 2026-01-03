@@ -7,9 +7,33 @@ import { t } from "i18next";
 export const join = (base: string, path: string): string =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
-const API_BASE = import.meta.env.VITE_AWS_API_URL
-  ? join(import.meta.env.VITE_AWS_API_URL, "/api")
-  : import.meta.env.VITE_API_BASE ?? "/api";
+const resolveApiBase = (): string => {
+  const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
+
+  if (VITE_API_BASE) {
+    let base = VITE_API_BASE.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    if (!base.startsWith("http") && !base.startsWith("/")) base = `/${base}`;
+    return base;
+  }
+
+  if (VITE_AWS_API_URL) {
+    let base = VITE_AWS_API_URL.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    return `${base}/api`;
+  }
+
+  if (VITE_API_URL) {
+    let base = VITE_API_URL.trim();
+    if (base.endsWith("/")) base = base.slice(0, -1);
+    if (!base.startsWith("http") && !base.startsWith("/")) base = `/${base}`;
+    return base;
+  }
+
+  return "/api";
+};
+
+const API_BASE = resolveApiBase();
 
 if (import.meta.env.DEV) {
   console.log("API_BASE:", API_BASE);
@@ -377,12 +401,71 @@ const getHeaders = () => {
   return headers;
 };
 
+// --- Simple in-memory cache for module detail ---
+// Prevents request storms when multiple components request the same module.
+const MODULE_TTL_MS = 30_000;
+const moduleCache = new Map<string, { ts: number; data: any }>();
+const moduleInFlight = new Map<string, Promise<any>>();
+
+async function safeJson(res: Response) {
+  // If backend sends plain text (e.g. rate limit), this won't crash
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
 export const api = {
   getModules: async () => {
     const res = await fetch(join(API_BASE, "/modules"), {
       headers: getHeaders(),
     });
     return res.json();
+  },
+
+  getProgress: async () => {
+    const res = await fetch(join(API_BASE, "/get-progress"), {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  getModule: async (slug: string) => {
+    // cache hit
+    const cached = moduleCache.get(slug);
+    if (cached && Date.now() - cached.ts < MODULE_TTL_MS) return cached.data;
+
+    // in-flight dedupe
+    const existing = moduleInFlight.get(slug);
+    if (existing) return existing;
+
+    const p = (async () => {
+      const res = await fetch(join(API_BASE, `/module/${slug}`), {
+        headers: getHeaders(),
+      });
+
+      if (!res.ok) {
+        const errBody = await safeJson(res);
+        const msg =
+          res.status === 429
+            ? "Too many requests (rate limited). Please refresh after restarting backend or switching networks."
+            : errBody?.error || errBody?.message || `Request failed: ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      moduleCache.set(slug, { ts: Date.now(), data });
+      return data;
+    })();
+
+    moduleInFlight.set(slug, p);
+    try {
+      return await p;
+    } finally {
+      moduleInFlight.delete(slug);
+    }
   },
 
   completeActivity: async (data: {
@@ -403,7 +486,9 @@ export const api = {
     const res = await fetch(join(API_BASE, "/avatar/me"), {
       headers: getHeaders(),
     });
-    return res.json();
+    const data = await res.json().catch(() => null);
+    // Backend returns { avatar }, but many frontend callers expect the avatar object directly.
+    return data?.avatar ?? null;
   },
 
   queueMatch: async (band: string) => {
@@ -415,17 +500,33 @@ export const api = {
     return res.json();
   },
 
-  submitTurn: async (matchId: string, abilityId: string) => {
+  getMatchQuestion: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/question`), {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch question");
+    return res.json();
+  },
+
+  submitTurn: async (matchId: string, abilityId: string, quiz?: { questionId: string, answerIndex: number }) => {
     const res = await fetch(join(API_BASE, `/match/${matchId}/act`), {
       method: "POST",
       headers: getHeaders(),
-      body: JSON.stringify({ abilityId }),
+      body: JSON.stringify({ abilityId, quiz }),
     });
     return res.json();
   },
 
   getMatch: async (matchId: string) => {
     const res = await fetch(join(API_BASE, `/match/${matchId}`), {
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  claimTimeout: async (matchId: string) => {
+    const res = await fetch(join(API_BASE, `/match/${matchId}/claim-timeout`), {
+      method: "POST",
       headers: getHeaders(),
     });
     return res.json();

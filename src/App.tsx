@@ -23,7 +23,8 @@ import Index from "./pages/Index";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
-import Arena from "./pages/Arena";
+import PlayHub from "./pages/PlayHub";
+import ActivityPlayer from "./pages/ActivityPlayer";
 import StudentLayout from "./layouts/StudentLayout";
 
 // Import styles
@@ -74,8 +75,13 @@ function App() {
               <Route path="dashboard" element={<StudentDashboard />} />
               <Route path="modules" element={<Modules />} />
               <Route path="modules/:slug" element={<ModuleDetail />} />
+              <Route
+                path="modules/:slug/lessons/:lessonId/activities/:activityId"
+                element={<ActivityPlayer />}
+              />
               <Route path="avatar" element={<Avatar />} />
-              <Route path="arena" element={<Arena />} />
+              <Route path="play" element={<PlayHub />} />
+              <Route path="arena" element={<Navigate to="/student/play?tab=pvp" replace />} />
             </Route>
 
             {/* Legacy Redirects for Flat Routes (if any external links exist) */}
@@ -84,7 +90,7 @@ function App() {
               element={<Navigate to="/student/modules" />}
             />
             <Route path="/avatar" element={<Navigate to="/student/avatar" />} />
-            <Route path="/arena" element={<Navigate to="/student/arena" />} />
+            <Route path="/arena" element={<Navigate to="/student/play?tab=pvp" />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

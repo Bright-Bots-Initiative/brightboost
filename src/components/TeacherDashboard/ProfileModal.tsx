@@ -27,26 +27,29 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadProfile();
-    }
-  }, [isOpen, studentId]);
-
-  const loadProfile = async () => {
+  const loadProfile = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Use mock data for now - in production, this would call the real API
-      const profileData = await profileService.getMockProfile();
+      // Fetch profile using the service
+      // If studentId is provided, fetch that student's profile (as teacher)
+      // Otherwise fetch the current user's profile (teacher or student viewing themselves)
+      const targetId = studentId;
+      const profileData = await profileService.getProfile(targetId);
       setProfile(profileData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadProfile();
+    }
+  }, [isOpen, loadProfile]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

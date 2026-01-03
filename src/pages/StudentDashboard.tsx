@@ -1,71 +1,418 @@
-// src/pages/StudentDashboard.tsx
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../contexts/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
+import { Lock, Unlock, Flame } from "lucide-react";
+import { api } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+type NextActivity = {
+  moduleSlug: string;
+  moduleTitle: string;
+  unitId: string;
+  unitTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  activityId: string;
+  activityTitle: string;
+  kind: "INFO" | "INTERACT";
+  orderKey: string;
+};
+
+function sortNum(n: any, fallback = 9999) {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : fallback;
+}
+
+function flattenModule(module: any): NextActivity[] {
+  const out: NextActivity[] = [];
+  const units = (module?.units || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+  for (const u of units) {
+    const lessons = (u?.lessons || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+    for (const l of lessons) {
+      const acts = (l?.activities || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+      for (const a of acts) {
+        out.push({
+          moduleSlug: module.slug,
+          moduleTitle: module.title,
+          unitId: String(u.id),
+          unitTitle: u.title,
+          lessonId: String(l.id),
+          lessonTitle: l.title,
+          activityId: String(a.id),
+          activityTitle: a.title,
+          kind: a.kind,
+          orderKey: `${sortNum(u.order)}.${sortNum(l.order)}.${sortNum(a.order)}`,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 export default function StudentDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const { streak } = useStreak();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [avatar, setAvatar] = useState<any>(null);
+  const [modules, setModules] = useState<any[]>([]);
+  const [upNext, setUpNext] = useState<NextActivity[]>([]);
+  const [nextOne, setNextOne] = useState<NextActivity | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const currentLevel = useMemo(() => {
+    const lvl = Number(avatar?.level);
+    return Number.isFinite(lvl) && lvl > 0 ? lvl : 1;
+  }, [avatar?.level]);
+
+  const currentXp = useMemo(() => {
+    const xp = Number(avatar?.xp);
+    return Number.isFinite(xp) && xp >= 0 ? xp : 0;
+  }, [avatar?.xp]);
+
+  const badgeLevels = [1, 2, 3, 4, 5, 6];
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [av, mods, prog] = await Promise.all([
+          api.getAvatar(),
+          api.getModules(),
+          api.getProgress(),
+        ]);
+        if (cancelled) return;
+
+        setAvatar(av);
+        setModules(Array.isArray(mods) ? mods : []);
+
+        const modsList = Array.isArray(mods) ? mods : [];
+        const progList = Array.isArray(prog?.progress) ? prog.progress : [];
+
+        // Choose module: most recently progressed, else first available
+        let chosenSlug: string | null = null;
+        if (progList.length > 0) {
+          const sorted = progList
+            .slice()
+            .sort((a: any, b: any) => {
+              const at = new Date(a.updatedAt || 0).getTime();
+              const bt = new Date(b.updatedAt || 0).getTime();
+              return bt - at;
+            });
+          chosenSlug = sorted[0]?.moduleSlug || null;
+        }
+        if (!chosenSlug && modsList.length > 0) chosenSlug = modsList[0].slug;
+
+        if (!chosenSlug) {
+          setNextOne(null);
+          setUpNext([]);
+          return;
+        }
+
+        const deep = await api.getModule(chosenSlug);
+        if (cancelled) return;
+
+        const ordered = flattenModule(deep);
+        const completed = new Set(
+          progList
+            .filter((p: any) => p?.moduleSlug === chosenSlug && p?.status === "COMPLETED")
+            .map((p: any) => String(p.activityId)),
+        );
+
+        const firstIncomplete = ordered.find((x) => !completed.has(String(x.activityId))) || null;
+        setNextOne(firstIncomplete);
+
+        if (!firstIncomplete) {
+          setUpNext([]);
+        } else {
+          const startIdx = ordered.findIndex((x) => x.activityId === firstIncomplete.activityId);
+          setUpNext(ordered.slice(startIdx, startIdx + 3));
+        }
+      } catch (e) {
+        console.error(e);
+        toast({
+          title: t("dashboard.unavailableTitle"),
+          description: t("dashboard.unavailableDesc"),
+          variant: "destructive",
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [toast, t]);
+
+  const goToNext = () => {
+    if (!nextOne) return navigate("/student/modules");
+    navigate(
+      `/student/modules/${nextOne.moduleSlug}/lessons/${nextOne.lessonId}/activities/${nextOne.activityId}`,
+    );
+  };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-black text-slate-800">
-          Hi, {user?.name || "Explorer"}! 👋
-        </h1>
-      </div>
+    <div className="p-6 space-y-8 max-w-4xl mx-auto">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
+              {t("dashboard.greeting", { name: user?.name || "Explorer" })}
+            </h1>
+            <p className="text-xl text-slate-600 font-medium">
+              {t("dashboard.tagline")}
+            </p>
+          </div>
+        </div>
 
-      <XPProgressWidget
-        currentXp={user?.xp || 0}
-        nextLevelXp={1000 * ((user?.level ? Number(user.level) : 1) || 1)}
-        level={user?.level ? Number(user.level) : 1}
-      />
+        {/* Hero Widgets */}
+        <div className="pt-2 flex flex-col md:flex-row gap-4 items-stretch">
+          <div className="flex-1">
+            <XPProgressWidget
+              currentXp={currentXp}
+              nextLevelXp={1000 * currentLevel}
+              level={currentLevel}
+            />
+          </div>
 
-      {/* Big Continue CTA */}
-      <div className="mb-8">
-        <div
-          onClick={() => navigate("/modules")}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl cursor-pointer transform hover:scale-[1.02] transition-all"
-        >
-          <h2 className="text-2xl font-black mb-2">Continue Journey 🚀</h2>
-          <p className="opacity-90 mb-4">Unit 1: Introduction to Robots</p>
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full font-bold text-blue-700"
+          {/* Streak Meter */}
+          <Card className="flex items-center gap-3 px-4 py-2 border-slate-200 shadow-sm min-w-[200px]">
+            <div className="p-2 bg-orange-100 rounded-full">
+              <Flame className="w-5 h-5 text-orange-600 fill-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                {t("dashboard.streak")}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xl font-bold text-slate-900">
+                  {streak?.currentStreak || 0}
+                </span>
+                <span className="text-xs font-medium text-slate-400">
+                  {t("dashboard.record")} {streak?.longestStreak || 0}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* My Avatar */}
+          <div
+            className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
+            onClick={() => navigate("/student/avatar")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/student/avatar");
+              }
+            }}
           >
-            Play Next Lesson
-          </Button>
+            <Avatar className="w-10 h-10 border-2 border-slate-200">
+              <AvatarImage
+                src={(user as any)?.avatarUrl}
+                alt={user?.name || "User"}
+              />
+              <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                {(user?.name || "ME").substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                {t("dashboard.myAvatar")}
+              </p>
+              <p className="text-sm font-bold text-slate-700">{t("dashboard.customize")}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-        <Card
-          className="hover:shadow-lg transition cursor-pointer border-l-4 border-l-green-400"
-          onClick={() => navigate("/modules")}
-        >
-          <CardHeader>
-            <CardTitle>All Modules</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-500">Replay your favorite activities</p>
-          </CardContent>
-        </Card>
+      {/* Level Progress Strip */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((level) => {
+          const isUnlocked = level <= currentLevel;
+          const badge = user?.badges?.find((b) =>
+            b.name.toLowerCase().includes(`level ${level}`)
+          );
 
-        <Card
-          className="hover:shadow-lg transition cursor-pointer border-l-4 border-l-purple-400"
-          onClick={() => navigate("/avatar")}
-        >
-          <CardHeader>
-            <CardTitle>My Bot</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-500">Level 1 • AI Archetype</p>
-          </CardContent>
-        </Card>
+          return (
+            <div
+              key={level}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                isUnlocked
+                  ? "bg-white border-blue-200 shadow-sm"
+                  : "bg-slate-50 border-slate-200 opacity-60"
+              }`}
+            >
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
+                {t("dashboard.level")}
+              </div>
+              <div
+                className={`text-2xl font-black ${
+                  isUnlocked ? "text-blue-600" : "text-slate-400"
+                }`}
+              >
+                {level}
+              </div>
+              <div className="mt-1 h-5 flex items-center justify-center">
+                {!isUnlocked ? (
+                  <Lock className="w-4 h-4 text-slate-400" />
+                ) : badge?.awardedAt ? (
+                  <span className="text-[10px] font-medium text-slate-500">
+                    {format(new Date(badge.awardedAt), "MMM d")}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-blue-400">
+                    {t("dashboard.unlocked")}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* Dashboard Card Grid */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          {t("dashboard.yourLessons")}
+        </h2>
+        <div
+          className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
+          onClick={() => (nextOne ? goToNext() : navigate("/student/modules"))}
+        >
+          <div className="bg-gradient-to-r from-blue-50 to-white p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
+                  {loading ? t("dashboard.loading") : nextOne ? t("dashboard.continueLearning") : t("dashboard.pickAModule")}
+                </h3>
+                <p className="text-slate-600">
+                  {nextOne
+                    ? `${nextOne.moduleTitle} • ${nextOne.unitTitle} • ${nextOne.lessonTitle}`
+                    : modules.length > 0
+                      ? t("dashboard.chooseModulePrompt")
+                      : t("dashboard.noModules")}
+                </p>
+                {nextOne ? (
+                  <p className="text-slate-500 text-sm mt-1">
+                    {t("dashboard.upNext")} {nextOne.kind === "INFO" ? "📖" : "🎮"} {nextOne.activityTitle}
+                  </p>
+                ) : null}
+              </div>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (nextOne) goToNext();
+                  else navigate("/student/modules");
+                }}
+              >
+                {nextOne ? t("dashboard.startActivity") : t("dashboard.browseModules")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Your Activities Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4">
+          {t("dashboard.yourActivities")}
+        </h2>
+        {upNext.length === 0 ? (
+          <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
+            <p className="text-slate-500 font-medium">
+              {loading ? t("dashboard.loadingActivities") : t("dashboard.caughtUp")}
+            </p>
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => navigate("/student/modules")}>
+                {t("dashboard.goToModules")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {upNext.map((a) => (
+              <Card key={a.activityId} className="border-slate-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {a.kind === "INFO" ? "📖" : "🎮"} {a.activityTitle}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm text-slate-600">
+                    {a.unitTitle} • {a.lessonTitle}
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      navigate(
+                        `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
+                      )
+                    }
+                  >
+                    {t("dashboard.play")}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Your Badges Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          {t("dashboard.yourBadges")}
+        </h2>
+        <div className="flex flex-wrap gap-4">
+          {badgeLevels.map((lvl) => {
+            const isUnlocked = currentLevel >= lvl;
+            const badgeName = `Level ${lvl}`;
+            // If user has a badge with this name, we can show date, etc.
+            // For now, just unlocked/locked based on level.
+            return (
+              <Card
+                key={lvl}
+                className={`w-24 h-32 flex flex-col items-center justify-center gap-2 transition-all ${
+                  isUnlocked
+                    ? "bg-yellow-50 border-yellow-200 shadow-sm"
+                    : "bg-slate-100 border-slate-200 opacity-60 grayscale"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-full ${
+                    isUnlocked ? "bg-yellow-100 text-yellow-600" : "bg-slate-200 text-slate-400"
+                  }`}
+                >
+                  {isUnlocked ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                </div>
+                <span
+                  className={`text-sm font-bold ${
+                    isUnlocked ? "text-yellow-700" : "text-slate-500"
+                  }`}
+                >
+                  {badgeName}
+                </span>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

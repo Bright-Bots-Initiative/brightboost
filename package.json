@@ -3,6 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@9.15.1",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "vite",
     "local": "vite --mode local-be",
@@ -34,7 +38,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.1.1",
     "@iframe-resizer/react": "^5.4.7",
-    "@prisma/client": "^6.8.2",
+    "@prisma/client": "^6.19.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -97,7 +101,6 @@
     "@chromatic-com/storybook": "^3.2.6",
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
-    "@eslint/js": "^9.39.2",
     "@jest/globals": "^30.0.3",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-onboarding": "^8.6.14",
@@ -161,10 +164,6 @@
     "react",
     "typescript"
   ],
-  "engines": {
-    "node": "20.x",
-    "bun": ">=1.1.0"
-  },
   "author": "Bright Bots Initiative",
   "license": "ISC",
   "eslintConfig": {
