@@ -1,5 +1,6 @@
 import { Router } from "express";
 import prisma from "../utils/prisma";
+import { getModuleWithContent } from "../services/module";
 
 const router = Router();
 
@@ -15,23 +16,9 @@ router.get("/modules", async (_req, res) => {
 // Get specific module (by slug)
 router.get("/module/:slug", async (req, res) => {
   const { slug } = req.params;
-  const mod = await prisma.module.findUnique({
-    where: { slug },
-    include: {
-      units: {
-        orderBy: { order: "asc" },
-        include: {
-          lessons: {
-            orderBy: { order: "asc" },
-            include: {
-              activities: { orderBy: { order: "asc" } },
-            },
-          },
-        },
-      },
-      badges: true,
-    },
-  });
+  // ⚡ Bolt Optimization: Use cached module structure
+  const mod = await getModuleWithContent(slug);
+
   if (!mod) return res.status(404).json({ error: "not_found" });
   res.json(mod);
 });
