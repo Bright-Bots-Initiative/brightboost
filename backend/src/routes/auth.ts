@@ -36,8 +36,8 @@ const teacherSignupSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("Invalid email").max(255),
+  password: z.string().min(1, "Password is required").max(100),
 });
 
 // Helper to generate token
