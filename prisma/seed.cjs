@@ -51,9 +51,7 @@ async function main() {
   // 3. Seed Abilities (idempotent)
   const existingAbilityCount = await prisma.ability.count().catch(() => 0);
   if (existingAbilityCount > 0) {
-    console.log(
-      `Skipping abilities (already exist: ${existingAbilityCount}).`,
-    );
+    console.log(`Skipping abilities (already exist: ${existingAbilityCount}).`);
   } else {
     console.log("Seeding abilities...");
     const AI = Archetype ? Archetype.AI : "AI";

@@ -2,8 +2,7 @@ import * as React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-export interface PasswordInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string | boolean;
   /**

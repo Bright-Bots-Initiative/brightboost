@@ -37,7 +37,7 @@ vi.mock("./pvpQuestions", () => ({
   checkAnswer: vi.fn().mockImplementation((band, qId, ansIndex) => {
     // Correct if index is 1
     return ansIndex === 1;
-  })
+  }),
 }));
 
 // Import after mock
@@ -139,21 +139,21 @@ describe("resolveTurn - Knowledge Bonus", () => {
   const mockAbility = {
     id: abilityId,
     config: { type: "attack", value: 20 },
-    name: "Strike"
+    name: "Strike",
   };
 
   const mockPlayer1 = {
     id: "p1",
     archetype: "AI",
     hp: 100,
-    unlockedAbilities: [{ abilityId: abilityId, Ability: mockAbility }]
+    unlockedAbilities: [{ abilityId: abilityId, Ability: mockAbility }],
   };
 
   const mockPlayer2 = {
     id: "p2",
     archetype: "BIOTECH",
     hp: 100,
-    unlockedAbilities: []
+    unlockedAbilities: [],
   };
 
   beforeEach(() => {
@@ -170,7 +170,7 @@ describe("resolveTurn - Knowledge Bonus", () => {
       Player1: mockPlayer1,
       Player2: mockPlayer2,
       turns: [], // Mocking turns directly on match
-      band: "K2"
+      band: "K2",
     });
 
     // Mock create return to satisfy turns.push(newTurn)
@@ -182,20 +182,26 @@ describe("resolveTurn - Knowledge Bonus", () => {
       action: {
         abilityId,
         damageDealt: 25,
-        knowledge: { correct: true, bonusMult: 1.25 }
-      }
+        knowledge: { correct: true, bonusMult: 1.25 },
+      },
     });
 
     // Call with correct answer (index 1)
-    await resolveTurn(matchId, p1Id, abilityId, { questionId: "q1", answerIndex: 1 });
+    await resolveTurn(matchId, p1Id, abilityId, {
+      questionId: "q1",
+      answerIndex: 1,
+    });
 
     expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: expect.objectContaining({
           damageDealt: 25,
-          knowledge: expect.objectContaining({ correct: true, bonusMult: 1.25 })
-        })
-      })
+          knowledge: expect.objectContaining({
+            correct: true,
+            bonusMult: 1.25,
+          }),
+        }),
+      }),
     });
   });
 
@@ -208,7 +214,7 @@ describe("resolveTurn - Knowledge Bonus", () => {
       Player1: mockPlayer1,
       Player2: mockPlayer2,
       turns: [],
-      band: "K2"
+      band: "K2",
     });
 
     // Mock create return
@@ -220,20 +226,23 @@ describe("resolveTurn - Knowledge Bonus", () => {
       action: {
         abilityId,
         damageDealt: 20,
-        knowledge: { correct: false }
-      }
+        knowledge: { correct: false },
+      },
     });
 
     // Call with incorrect answer (index 0)
-    await resolveTurn(matchId, p1Id, abilityId, { questionId: "q1", answerIndex: 0 });
+    await resolveTurn(matchId, p1Id, abilityId, {
+      questionId: "q1",
+      answerIndex: 0,
+    });
 
     expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         action: expect.objectContaining({
           damageDealt: 20,
-          knowledge: expect.objectContaining({ correct: false })
-        })
-      })
+          knowledge: expect.objectContaining({ correct: false }),
+        }),
+      }),
     });
   });
 
@@ -246,7 +255,7 @@ describe("resolveTurn - Knowledge Bonus", () => {
       Player1: mockPlayer1,
       Player2: mockPlayer2,
       turns: [],
-      band: "K2"
+      band: "K2",
     });
 
     // Mock create return
@@ -258,8 +267,8 @@ describe("resolveTurn - Knowledge Bonus", () => {
       action: {
         abilityId,
         damageDealt: 20,
-        knowledge: null
-      }
+        knowledge: null,
+      },
     });
 
     await resolveTurn(matchId, p1Id, abilityId);
@@ -268,9 +277,9 @@ describe("resolveTurn - Knowledge Bonus", () => {
       data: expect.objectContaining({
         action: expect.objectContaining({
           damageDealt: 20,
-          knowledge: null
-        })
-      })
+          knowledge: null,
+        }),
+      }),
     });
   });
 });

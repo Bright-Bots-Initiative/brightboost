@@ -41,7 +41,8 @@ export default function Arena() {
   };
 
   useEffect(() => {
-    api.getAvatar()
+    api
+      .getAvatar()
       .then((av) => setMyId(av.studentId))
       .catch((err) => console.error("Failed to load avatar", err));
   }, []);
@@ -72,7 +73,10 @@ export default function Arena() {
     return () => clearTimeout(timer);
   }, [match, myId]);
 
-  const handleAct = async (abilityId: string, quiz?: { questionId: string, answerIndex: number }) => {
+  const handleAct = async (
+    abilityId: string,
+    quiz?: { questionId: string; answerIndex: number },
+  ) => {
     if (!match) return;
     try {
       const res = await api.submitTurn(match.id, abilityId, quiz);
@@ -83,8 +87,8 @@ export default function Arena() {
       // Ideally backend returns the action result. Assuming it returns { p1Hp, p2Hp... } for now.
       // If we passed a quiz and didn't fail, we assume it helped.
       if (quiz) {
-         // This is a heuristic since we don't have the exact action result in the response immediately
-         // without re-parsing the log. We'll trust the turn processed.
+        // This is a heuristic since we don't have the exact action result in the response immediately
+        // without re-parsing the log. We'll trust the turn processed.
       }
 
       setTurnResult(feedback);
@@ -127,7 +131,10 @@ export default function Arena() {
 
   const handleAnswer = (index: number) => {
     if (!pendingAbilityId || !activeQuestion) return;
-    handleAct(pendingAbilityId, { questionId: activeQuestion.id, answerIndex: index });
+    handleAct(pendingAbilityId, {
+      questionId: activeQuestion.id,
+      answerIndex: index,
+    });
     setActiveQuestion(null);
     setPendingAbilityId(null);
   };
@@ -167,7 +174,10 @@ export default function Arena() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const isP1 = match ? match.player1Id === myId : false;
-  const isMyTurn = match ? (match.turns.length % 2 === 0 && isP1) || (match.turns.length % 2 !== 0 && !isP1) : false;
+  const isMyTurn = match
+    ? (match.turns.length % 2 === 0 && isP1) ||
+      (match.turns.length % 2 !== 0 && !isP1)
+    : false;
 
   useEffect(() => {
     if (!match || match.status !== "ACTIVE") {
@@ -190,12 +200,22 @@ export default function Arena() {
         setTimeLeft(0);
         // If it's 0 and NOT my turn (opponent's turn), claim timeout
         if (!isMyTurn && match.status === "ACTIVE") {
-          api.claimTimeout(match.id).then((res) => {
-            if (res.matchOver) {
-              setMatch((prev: any) => ({ ...prev, status: res.status, winnerId: res.winnerId }));
-              toast({ title: "Timeout!", description: "Opponent took too long. You win!" });
-            }
-          }).catch(() => {}); // Ignore 409s if polling raced
+          api
+            .claimTimeout(match.id)
+            .then((res) => {
+              if (res.matchOver) {
+                setMatch((prev: any) => ({
+                  ...prev,
+                  status: res.status,
+                  winnerId: res.winnerId,
+                }));
+                toast({
+                  title: "Timeout!",
+                  description: "Opponent took too long. You win!",
+                });
+              }
+            })
+            .catch(() => {}); // Ignore 409s if polling raced
         }
       } else {
         setTimeLeft(remaining);
@@ -205,7 +225,15 @@ export default function Arena() {
     tick(); // Initial
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [match?.turns, match?.status, isMyTurn, match?.id, match?.updatedAt, match, toast]);
+  }, [
+    match?.turns,
+    match?.status,
+    isMyTurn,
+    match?.id,
+    match?.updatedAt,
+    match,
+    toast,
+  ]);
 
   if (!match) {
     return (
@@ -291,34 +319,38 @@ export default function Arena() {
         {/* Question Modal Overlay */}
         <AnimatePresence>
           {activeQuestion && (
-             <motion.div
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-             >
-               <motion.div
-                 initial={{ scale: 0.9, y: 20 }}
-                 animate={{ scale: 1, y: 0 }}
-                 className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border-4 border-blue-500"
-               >
-                 <div className="text-center space-y-4">
-                   <h3 className="text-xl font-bold text-slate-800">Quick Check! 🧠</h3>
-                   <p className="text-lg font-medium text-slate-600">{activeQuestion.prompt}</p>
-                   <div className="grid gap-2">
-                     {activeQuestion.options.map((opt: string, i: number) => (
-                       <button
-                         key={i}
-                         onClick={() => handleAnswer(i)}
-                         className="w-full p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 font-bold transition-all active:scale-95"
-                       >
-                         {opt}
-                       </button>
-                     ))}
-                   </div>
-                 </div>
-               </motion.div>
-             </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border-4 border-blue-500"
+              >
+                <div className="text-center space-y-4">
+                  <h3 className="text-xl font-bold text-slate-800">
+                    Quick Check! 🧠
+                  </h3>
+                  <p className="text-lg font-medium text-slate-600">
+                    {activeQuestion.prompt}
+                  </p>
+                  <div className="grid gap-2">
+                    {activeQuestion.options.map((opt: string, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => handleAnswer(i)}
+                        className="w-full p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 text-blue-700 font-bold transition-all active:scale-95"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -343,9 +375,7 @@ export default function Arena() {
                   key={i}
                   className={`text-sm mb-1 ${isMe ? "text-blue-600 text-right" : "text-red-600 text-left"}`}
                 >
-                  <span className="font-bold">
-                    {isMe ? "You" : "Opponent"}
-                  </span>{" "}
+                  <span className="font-bold">{isMe ? "You" : "Opponent"}</span>{" "}
                   used{" "}
                   <span className="font-mono bg-slate-100 px-1 rounded">
                     {entry.abilityId || "Action"}
@@ -357,9 +387,9 @@ export default function Arena() {
                     <span> to HEAL {entry.healAmount}</span>
                   )}
                   {entry.knowledge?.correct && (
-                     <span className="ml-1 text-xs bg-yellow-100 text-yellow-700 px-1 rounded border border-yellow-200">
-                       🧠 +25%
-                     </span>
+                    <span className="ml-1 text-xs bg-yellow-100 text-yellow-700 px-1 rounded border border-yellow-200">
+                      🧠 +25%
+                    </span>
                   )}
                 </div>
               );
@@ -378,9 +408,13 @@ export default function Arena() {
                 : "OPPONENT'S TURN..."}
           </div>
           {match.status === "ACTIVE" && timeLeft !== null && (
-             <div className={`text-sm font-bold ${timeLeft < 10 ? "text-red-600 animate-pulse" : "text-slate-500"}`}>
-               {timeLeft > 0 ? `Time left: ${timeLeft}s` : "Calculating timeout..."}
-             </div>
+            <div
+              className={`text-sm font-bold ${timeLeft < 10 ? "text-red-600 animate-pulse" : "text-slate-500"}`}
+            >
+              {timeLeft > 0
+                ? `Time left: ${timeLeft}s`
+                : "Calculating timeout..."}
+            </div>
           )}
         </div>
       </div>
@@ -414,7 +448,9 @@ export default function Arena() {
           {me?.unlockedAbilities?.map((ua: any) => (
             <button
               key={ua.id}
-              disabled={!isMyTurn || match.status !== "ACTIVE" || isFetchingQuestion}
+              disabled={
+                !isMyTurn || match.status !== "ACTIVE" || isFetchingQuestion
+              }
               onClick={() => onAbilityClick(ua.abilityId)}
               className={`
                         flex items-center gap-3 p-3 rounded-xl border-b-4 transition-all active:scale-95 text-left
@@ -425,11 +461,11 @@ export default function Arena() {
                 className={`p-2 rounded-full ${isMyTurn ? "bg-white shadow-sm" : "bg-gray-200"}`}
               >
                 {isFetchingQuestion && pendingAbilityId === ua.abilityId ? (
-                   <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
                 ) : (
-                   <Zap
-                     className={`w-5 h-5 ${isMyTurn ? "text-orange-500" : "text-gray-400"}`}
-                   />
+                  <Zap
+                    className={`w-5 h-5 ${isMyTurn ? "text-orange-500" : "text-gray-400"}`}
+                  />
                 )}
               </div>
               <div className="flex flex-col">

@@ -51,9 +51,7 @@ const StudentLogin: React.FC = () => {
       login(response.token, response.user, "/student/dashboard");
     } catch (err: unknown) {
       setError(
-        err instanceof Error
-          ? err.message
-          : t("studentLogin.error.generic"),
+        err instanceof Error ? err.message : t("studentLogin.error.generic"),
       );
     }
   };

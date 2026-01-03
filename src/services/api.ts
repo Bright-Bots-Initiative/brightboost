@@ -451,7 +451,9 @@ export const api = {
         const msg =
           res.status === 429
             ? "Too many requests (rate limited). Please refresh after restarting backend or switching networks."
-            : errBody?.error || errBody?.message || `Request failed: ${res.status}`;
+            : errBody?.error ||
+              errBody?.message ||
+              `Request failed: ${res.status}`;
         throw new Error(msg);
       }
 
@@ -508,7 +510,11 @@ export const api = {
     return res.json();
   },
 
-  submitTurn: async (matchId: string, abilityId: string, quiz?: { questionId: string, answerIndex: number }) => {
+  submitTurn: async (
+    matchId: string,
+    abilityId: string,
+    quiz?: { questionId: string; answerIndex: number },
+  ) => {
     const res = await fetch(join(API_BASE, `/match/${matchId}/act`), {
       method: "POST",
       headers: getHeaders(),
