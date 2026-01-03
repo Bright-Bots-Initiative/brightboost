@@ -1,4 +1,5 @@
 import prisma from "../utils/prisma";
+import { getModuleWithContent } from "./module";
 
 const ProgressStatus = {
   IN_PROGRESS: "IN_PROGRESS",
@@ -66,24 +67,8 @@ export async function getAggregatedProgress(
     }),
 
     // 2. Get module structure (units, lessons, activities)
-    prisma.module.findUnique({
-      where: { slug: moduleSlug },
-      include: {
-        units: {
-          orderBy: { order: "asc" },
-          include: {
-            lessons: {
-              orderBy: { order: "asc" },
-              include: {
-                activities: {
-                  orderBy: { order: "asc" },
-                },
-              },
-            },
-          },
-        },
-      },
-    }),
+    // ⚡ Bolt Optimization: Use cached module structure
+    getModuleWithContent(moduleSlug),
   ]);
 
   if (!module) {
