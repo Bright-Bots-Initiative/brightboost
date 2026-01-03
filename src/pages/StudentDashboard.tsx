@@ -4,6 +4,11 @@ import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
@@ -208,34 +213,43 @@ export default function StudentDashboard() {
           </Card>
 
           {/* My Avatar */}
-          <div
-            className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
-            onClick={() => navigate("/student/avatar")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                navigate("/student/avatar");
-              }
-            }}
-          >
-            <Avatar className="w-10 h-10 border-2 border-slate-200">
-              <AvatarImage
-                src={(user as any)?.avatarUrl}
-                alt={user?.name || "User"}
-              />
-              <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
-                {(user?.name || "ME").substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                {t("dashboard.myAvatar")}
-              </p>
-              <p className="text-sm font-bold text-slate-700">{t("dashboard.customize")}</p>
-            </div>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
+                onClick={() => navigate("/student/avatar")}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate("/student/avatar");
+                  }
+                }}
+              >
+                <Avatar className="w-10 h-10 border-2 border-slate-200">
+                  <AvatarImage
+                    src={(user as any)?.avatarUrl}
+                    alt={user?.name || "User"}
+                  />
+                  <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                    {(user?.name || "ME").substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    {t("dashboard.myAvatar")}
+                  </p>
+                  <p className="text-sm font-bold text-slate-700">
+                    {t("dashboard.customize")}
+                  </p>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t("dashboard.customize")}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -248,38 +262,61 @@ export default function StudentDashboard() {
           );
 
           return (
-            <div
-              key={level}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
-                isUnlocked
-                  ? "bg-white border-blue-200 shadow-sm"
-                  : "bg-slate-50 border-slate-200 opacity-60"
-              }`}
-            >
-              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
-                {t("dashboard.level")}
-              </div>
-              <div
-                className={`text-2xl font-black ${
-                  isUnlocked ? "text-blue-600" : "text-slate-400"
-                }`}
-              >
-                {level}
-              </div>
-              <div className="mt-1 h-5 flex items-center justify-center">
-                {!isUnlocked ? (
-                  <Lock className="w-4 h-4 text-slate-400" />
-                ) : badge?.awardedAt ? (
-                  <span className="text-[10px] font-medium text-slate-500">
-                    {format(new Date(badge.awardedAt), "MMM d")}
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium text-blue-400">
-                    {t("dashboard.unlocked")}
-                  </span>
-                )}
-              </div>
-            </div>
+            <Tooltip key={level}>
+              <TooltipTrigger asChild>
+                <div
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                    isUnlocked
+                      ? "bg-white border-blue-200 shadow-sm"
+                      : "bg-slate-50 border-slate-200 opacity-60"
+                  }`}
+                  tabIndex={0} // Make focusable for tooltip on keyboard
+                >
+                  <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
+                    {t("dashboard.level")}
+                  </div>
+                  <div
+                    className={`text-2xl font-black ${
+                      isUnlocked ? "text-blue-600" : "text-slate-400"
+                    }`}
+                  >
+                    {level}
+                  </div>
+                  <div className="mt-1 h-5 flex items-center justify-center">
+                    {!isUnlocked ? (
+                      <Lock
+                        className="w-4 h-4 text-slate-400"
+                        role="img"
+                        aria-label={t("dashboard.locked", "Locked")}
+                      />
+                    ) : badge?.awardedAt ? (
+                      <span className="text-[10px] font-medium text-slate-500">
+                        {format(new Date(badge.awardedAt), "MMM d")}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-blue-400">
+                        {t("dashboard.unlocked")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {isUnlocked
+                    ? badge?.awardedAt
+                      ? `${t("dashboard.unlockedOn", "Unlocked on")} ${format(
+                          new Date(badge.awardedAt),
+                          "PPP",
+                        )}`
+                      : t("dashboard.levelReached", "Level reached!")
+                    : `${t("dashboard.reachLevel", "Reach Level")} ${level} ${t(
+                        "dashboard.toUnlock",
+                        "to unlock",
+                      )}`}
+                </p>
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
