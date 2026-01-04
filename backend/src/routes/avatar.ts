@@ -64,9 +64,12 @@ router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
     where: { archetype: archetype as any, reqLevel: 1 },
   });
 
-  for (const ab of defaults) {
-    await prisma.unlockedAbility.create({
-      data: { avatarId: avatar.id, abilityId: ab.id },
+  if (defaults.length > 0) {
+    await prisma.unlockedAbility.createMany({
+      data: defaults.map((ab) => ({
+        avatarId: avatar.id,
+        abilityId: ab.id,
+      })),
     });
   }
 
