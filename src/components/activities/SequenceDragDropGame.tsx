@@ -3,11 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import {
+  LocalizedField,
+  resolveChoiceList,
+} from "@/utils/localizedContent";
 
 type Level = {
   id: string;
-  cards: string[];
-  answer: string[];
+  cards: LocalizedField[];
+  answer: LocalizedField[];
 };
 
 type Config = {
@@ -24,29 +29,40 @@ export default function SequenceDragDropGame({
   onComplete: () => void;
 }) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const levels = Array.isArray(config?.levels) ? config.levels : [];
   const [levelIndex, setLevelIndex] = useState(0);
 
   const level = levels[levelIndex];
-  const slotCount = level?.answer?.length ?? 0;
+
+  // Resolve localized strings for the current level
+  const resolvedLevel = useMemo(() => {
+    if (!level) return null;
+    return {
+      cards: resolveChoiceList(t, level.cards),
+      answer: resolveChoiceList(t, level.answer),
+    };
+  }, [level, t]);
+
+  const slotCount = resolvedLevel?.answer?.length ?? 0;
 
   const [slots, setSlots] = useState<Array<string | null>>([]);
   const [available, setAvailable] = useState<string[]>([]);
 
   const shuffled = useMemo(() => {
-    if (!level?.cards) return [];
-    const copy = [...level.cards];
+    if (!resolvedLevel?.cards) return [];
+    const copy = [...resolvedLevel.cards];
     copy.sort(() => Math.random() - 0.5);
     return copy;
-  }, [level]);
+  }, [resolvedLevel]);
 
   useEffect(() => {
-    if (!level) return;
+    if (!resolvedLevel) return;
     setSlots(Array.from({ length: slotCount }, () => null));
     setAvailable(shuffled);
-  }, [level, levelIndex, slotCount, shuffled]);
+  }, [resolvedLevel, levelIndex, slotCount, shuffled]);
 
-  if (!level) {
+  if (!level || !resolvedLevel) {
     return (
       <div className="max-w-2xl mx-auto">
         <Card>
@@ -84,7 +100,7 @@ export default function SequenceDragDropGame({
   const check = () => {
     const isComplete = slots.every((s) => s !== null);
     if (!isComplete) return;
-    const correct = slots.every((s, i) => s === level.answer[i]);
+    const correct = slots.every((s, i) => s === resolvedLevel.answer[i]);
     if (!correct) {
       toast({
         title: "Try again!",
