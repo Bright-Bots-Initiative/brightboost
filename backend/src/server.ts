@@ -37,7 +37,35 @@ const apiLimiter = rateLimit({
 // Apply rate limiting to all API routes - BEFORE body parsing
 app.use("/api", apiLimiter);
 
-app.use(cors());
+// 🛡️ Sentinel: Configure CORS securely
+// Only allow trusted origins in production to prevent unauthorized access
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check allowed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow localhost in development
+      if (process.env.NODE_ENV !== "production") {
+        if (origin.match(/^http:\/\/localhost:\d+$/)) {
+          return callback(null, true);
+        }
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Public routes (Auth) - Mount before auth middleware to ensure access
