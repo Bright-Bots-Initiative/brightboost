@@ -28,7 +28,11 @@ vi.mock("@prisma/client", () => ({
   },
 }));
 
-import { resolveTurn, claimTimeout, TURN_SECONDS } from "../../src/services/game";
+import {
+  resolveTurn,
+  claimTimeout,
+  TURN_SECONDS,
+} from "../../src/services/game";
 
 describe("resolveTurn Performance Optimization", () => {
   beforeEach(() => {
@@ -126,8 +130,9 @@ describe("PvP Fairness Checks", () => {
       Player2: { id: "p2", unlockedAbilities: [] },
     });
 
-    await expect(resolveTurn(matchId, "p2", "ab1"))
-      .rejects.toThrow("Not your turn");
+    await expect(resolveTurn(matchId, "p2", "ab1")).rejects.toThrow(
+      "Not your turn",
+    );
   });
 
   it("should enforce ability ownership", async () => {
@@ -141,13 +146,14 @@ describe("PvP Fairness Checks", () => {
       turns: [], // 0 turns -> P1 acts
       Player1: {
         id: "p1",
-        unlockedAbilities: [] // Empty -> no abilities unlocked
+        unlockedAbilities: [], // Empty -> no abilities unlocked
       },
       Player2: { id: "p2", unlockedAbilities: [] },
     });
 
-    await expect(resolveTurn(matchId, "p1", "ab1"))
-      .rejects.toThrow("Ability not unlocked");
+    await expect(resolveTurn(matchId, "p1", "ab1")).rejects.toThrow(
+      "Ability not unlocked",
+    );
   });
 
   it("should allow claiming timeout if deadline passed", async () => {
@@ -174,7 +180,7 @@ describe("PvP Fairness Checks", () => {
       expect.objectContaining({
         where: { id: matchId },
         data: expect.objectContaining({ status: "FORFEIT", winnerId: "p2" }),
-      })
+      }),
     );
   });
 
@@ -192,8 +198,9 @@ describe("PvP Fairness Checks", () => {
       turns: [], // P1 turn
     });
 
-    await expect(claimTimeout(matchId, "p2"))
-      .rejects.toThrow("Timeout not claimable yet");
+    await expect(claimTimeout(matchId, "p2")).rejects.toThrow(
+      "Timeout not claimable yet",
+    );
   });
 
   it("should reject timeout claim if it is requester's turn", async () => {
@@ -211,7 +218,8 @@ describe("PvP Fairness Checks", () => {
     });
 
     // P1 tries to claim timeout (but it's P1's turn!)
-    await expect(claimTimeout(matchId, "p1"))
-      .rejects.toThrow("It is your turn, cannot claim timeout");
+    await expect(claimTimeout(matchId, "p1")).rejects.toThrow(
+      "It is your turn, cannot claim timeout",
+    );
   });
 });

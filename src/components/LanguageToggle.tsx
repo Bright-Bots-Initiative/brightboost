@@ -33,7 +33,8 @@ const LanguageToggle = () => {
     const newLanguage = currentLang === "en" ? "es" : "en";
 
     // Attempt to change language
-    i18n.changeLanguage(newLanguage)
+    i18n
+      .changeLanguage(newLanguage)
       .then(() => {
         localStorage.setItem(LANGUAGE_KEY, newLanguage);
       })
@@ -52,7 +53,9 @@ const LanguageToggle = () => {
     <button
       onClick={toggleLanguage}
       className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
-      aria-label={currentLang === "en" ? "Switch to Spanish" : "Switch to English"}
+      aria-label={
+        currentLang === "en" ? "Switch to Spanish" : "Switch to English"
+      }
     >
       {currentLang === "en" ? "Español" : "English"}
     </button>

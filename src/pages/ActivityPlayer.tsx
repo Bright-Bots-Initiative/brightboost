@@ -6,12 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
+import { useTranslation } from "react-i18next";
+import {
+  LocalizedField,
+  resolveText,
+  resolveChoiceList,
+} from "@/utils/localizedContent";
 
-type StorySlide = { id: string; text: string };
+type StorySlide = { id: string; text: LocalizedField };
 type StoryQuestion = {
   id: string;
-  prompt: string;
-  choices: string[];
+  prompt: LocalizedField;
+  choices: LocalizedField[];
   answerIndex: number;
 };
 
@@ -27,6 +33,7 @@ export default function ActivityPlayer() {
   const { slug, lessonId, activityId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [module, setModule] = useState<any>(null);
@@ -152,14 +159,17 @@ export default function ActivityPlayer() {
 
     if (content?.type !== "story_quiz" || slides.length === 0) {
       // fallback display
+      const text = resolveText(
+        t,
+        content?.text ?? activity.content,
+        activity.content,
+      );
       return (
         <div className="p-6 max-w-2xl mx-auto">
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="text-xl font-bold">{activity.title}</div>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {content?.text ?? activity.content}
-              </div>
+              <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
               <div className="flex gap-2">
                 <Button
                   onClick={() => navigate(`/student/modules/${slug}`)}
@@ -197,7 +207,9 @@ export default function ActivityPlayer() {
 
           <Card>
             <CardContent className="p-8 text-center min-h-[200px] flex items-center justify-center">
-              <div className="text-xl font-semibold">{current?.text}</div>
+              <div className="text-xl font-semibold">
+                {resolveText(t, current?.text)}
+              </div>
             </CardContent>
           </Card>
 
@@ -241,9 +253,11 @@ export default function ActivityPlayer() {
 
             {questions.map((q) => (
               <div key={q.id} className="space-y-2">
-                <div className="font-semibold">{q.prompt}</div>
+                <div className="font-semibold">
+                  {resolveText(t, q.prompt)}
+                </div>
                 <div className="grid gap-2">
-                  {q.choices.map((c, idx) => {
+                  {resolveChoiceList(t, q.choices).map((c, idx) => {
                     const selected = answers[q.id] === idx;
                     return (
                       <Button

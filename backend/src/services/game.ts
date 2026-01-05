@@ -112,7 +112,7 @@ export async function resolveTurn(
   // Explicitly type the search to avoid 'any'
   // The 'match' query above includes unlockedAbilities -> Ability
   const unlocked = actor.unlockedAbilities.find(
-    (u) => u.abilityId === abilityId
+    (u) => u.abilityId === abilityId,
   );
 
   // Note: unlocked.Ability is guaranteed by the 'include' in the Prisma query
@@ -161,7 +161,6 @@ export async function resolveTurn(
     if (quizResult?.correct) {
       damage = Math.floor(damage * 1.25);
     }
-
   } else if (config.type === "heal") {
     heal = config.value || 10;
 
@@ -182,7 +181,7 @@ export async function resolveTurn(
         abilityId,
         damageDealt: damage,
         healAmount: heal,
-        knowledge: quizResult
+        knowledge: quizResult,
       },
     },
   });
