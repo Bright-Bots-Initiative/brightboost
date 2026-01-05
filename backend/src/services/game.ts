@@ -71,17 +71,16 @@ export async function resolveTurn(
   abilityId: string,
   quiz?: { questionId: string; answerIndex: number },
 ) {
-  // Optimization: Fetch match and turns in a single query to reduce DB round trips.
-  // We include turns ordered by createdAt to ensure correct replay sequence.
+  // ⚡ Bolt Optimization:
+  // Split fetch to avoid massive joined query (Match + P1.Abilities + P2.Abilities + Turns).
+  // 1. Fetch Match + Turns + Basic Players (lightweight).
+  // 2. Fetch only the ACTOR'S ability to verify (indexed single row lookup).
+
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
-      Player1: {
-        include: { unlockedAbilities: { include: { Ability: true } } },
-      },
-      Player2: {
-        include: { unlockedAbilities: { include: { Ability: true } } },
-      },
+      Player1: { select: { id: true, archetype: true, hp: true } },
+      Player2: { select: { id: true, archetype: true, hp: true } },
       turns: {
         orderBy: { createdAt: "asc" },
       },
@@ -106,16 +105,15 @@ export async function resolveTurn(
 
   if (!actor || !opponent) throw new Error("Missing players");
 
-  // OPTIMIZED: Use already fetched unlockedAbilities to find ability config
-  // Prevents extra DB call + enforces security (user must own ability)
+  // Verify ability ownership + fetch config in one go
+  const unlocked = await prisma.unlockedAbility.findFirst({
+    where: {
+      avatarId: actorId,
+      abilityId: abilityId,
+    },
+    include: { Ability: true },
+  });
 
-  // Explicitly type the search to avoid 'any'
-  // The 'match' query above includes unlockedAbilities -> Ability
-  const unlocked = actor.unlockedAbilities.find(
-    (u) => u.abilityId === abilityId,
-  );
-
-  // Note: unlocked.Ability is guaranteed by the 'include' in the Prisma query
   if (!unlocked || !unlocked.Ability) {
     throw new Error("Ability not unlocked");
   }
