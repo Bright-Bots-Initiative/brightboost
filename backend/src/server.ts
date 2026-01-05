@@ -39,9 +39,10 @@ app.use("/api", apiLimiter);
 
 // 🛡️ Sentinel: Configure CORS securely
 // Only allow trusted origins in production to prevent unauthorized access
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-  : [];
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
@@ -61,6 +62,11 @@ app.use(
         }
       }
 
+      console.error("[CORS BLOCKED]", {
+        origin,
+        allowedOrigins,
+        nodeEnv: process.env.NODE_ENV,
+      });
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
