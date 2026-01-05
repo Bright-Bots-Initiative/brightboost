@@ -9,7 +9,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { PasswordInput } from "../components/ui/password-input";
 
 const studentLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -21,7 +22,6 @@ type StudentLoginFormData = z.infer<typeof studentLoginSchema>;
 const StudentLogin: React.FC = () => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
   const {
@@ -122,48 +122,17 @@ const StudentLogin: React.FC = () => {
                 >
                   {t("studentLogin.form.passwordLabel")}
                 </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                    aria-invalid={errors.password ? "true" : "false"}
-                    aria-describedby={
-                      errors.password ? "password-error" : undefined
-                    }
-                    className={`w-full px-4 py-2 bg-white border-2 ${
-                      errors.password
-                        ? "border-red-500"
-                        : "border-brightboost-lightblue"
-                    } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all pr-10`}
-                    placeholder={t("studentLogin.form.passwordPlaceholder")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-brightboost-navy/60 hover:text-brightboost-navy bg-transparent focus:outline-none focus:ring-2 focus:ring-brightboost-blue rounded-full p-1"
-                    aria-label={
-                      showPassword
-                        ? t("studentLogin.form.hidePassword")
-                        : t("studentLogin.form.showPassword")
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p
-                    id="password-error"
-                    role="alert"
-                    className="text-red-500 text-sm mt-1"
-                  >
-                    {errors.password.message}
-                  </p>
-                )}
+                <PasswordInput
+                  id="password"
+                  {...register("password")}
+                  error={errors.password?.message}
+                  placeholder={t("studentLogin.form.passwordPlaceholder")}
+                  className={`px-4 py-2 bg-white border-2 text-brightboost-navy rounded-lg focus:ring-brightboost-blue focus:border-transparent transition-all ${
+                    errors.password
+                      ? "border-red-500"
+                      : "border-brightboost-lightblue"
+                  }`}
+                />
               </div>
 
               <button
