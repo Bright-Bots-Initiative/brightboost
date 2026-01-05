@@ -170,16 +170,14 @@ async function main() {
     where: { slug: "k2-stem-sequencing" },
     update: {
       title: "Boost’s Lost Steps",
-      description:
-        "Put steps in order and fix mistakes (sequencing + debugging).",
+      description: "Help Boost the Robot fix the order! ⭐",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-sequencing",
       title: "Boost’s Lost Steps",
-      description:
-        "Put steps in order and fix mistakes (sequencing + debugging).",
+      description: "Help Boost the Robot fix the order! ⭐",
       level: "K-2",
       published: true,
     },
@@ -221,43 +219,34 @@ async function main() {
   const storyContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: "Boost is baking Galaxy Cookies for the class." },
-      { id: "s2", text: "But the recipe steps got mixed up!" },
+      { id: "s1", text: "Hi! I am Boost.", icon: "🤖" },
+      { id: "s2", text: "I want to bake a cake!", icon: "🎂" },
       {
         id: "s3",
-        text: "Boost tries: Frost → Bake… splat! The frosting melts.",
+        text: "Oops… the steps are mixed up!",
+        icon: "😵‍💫",
       },
-      { id: "s4", text: "A helper drone says: 'Put the steps in order.'" },
-      { id: "s5", text: "Boost smiles: 'We debugged it! Now it works.'" },
+      { id: "s4", text: "A plan with steps is called an algorithm.", icon: "📝" },
+      { id: "s5", text: "Let’s put the steps in the right order!", icon: "✅" },
     ],
     questions: [
       {
         id: "q1",
-        prompt: "Why did the frosting melt?",
-        choices: [
-          "Because it was baked too late",
-          "Because it went in before baking",
-          "Because it was too cold",
-        ],
+        prompt: "What is Boost making?",
+        choices: ["A shoe 👞", "A cake 🎂", "A car 🚗"],
         answerIndex: 1,
       },
       {
         id: "q2",
-        prompt: "What does 'debug' mean?",
-        choices: ["Make a bigger mess", "Fix a mistake", "Add sprinkles"],
-        answerIndex: 1,
+        prompt: "A plan with steps is called…",
+        choices: ["An algorithm 📜", "Magic ✨", "A nap 💤"],
+        answerIndex: 0,
       },
       {
         id: "q3",
-        prompt: "What step should happen before baking?",
-        choices: ["Pour/mix the batter", "Eat the cookies", "Frost first"],
-        answerIndex: 0,
-      },
-      {
-        id: "q4",
-        prompt: "How did Boost feel after fixing it?",
-        choices: ["Proud", "Angry", "Sleepy"],
-        answerIndex: 0,
+        prompt: "What does debug mean?",
+        choices: ["Fix a mistake 🛠️", "Make a mess 🙃", "Eat snacks 🍪"],
+        answerIndex: 1,
       },
     ],
     review: {
@@ -265,13 +254,18 @@ async function main() {
       vocab: ["step", "order", "debug"],
     },
   });
-  const existingStory = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, title: "Story: Lost Steps" },
+  const storyAct = await prisma.activity.findFirst({
+    where: { lessonId: k2SeqLesson.id, kind: INFO, order: 1 },
   });
-  if (!existingStory) {
+  if (storyAct) {
+    await prisma.activity.update({
+      where: { id: storyAct.id },
+      data: { title: "Story: Boost Bakes", content: storyContent },
+    });
+  } else {
     await prisma.activity.create({
       data: {
-        title: "Story: Lost Steps",
+        title: "Story: Boost Bakes",
         kind: INFO,
         order: 1,
         content: storyContent,
@@ -286,28 +280,50 @@ async function main() {
     levels: [
       {
         id: "k",
-        cards: ["Pour", "Bake", "Eat", "Frost"],
+        cards: [
+          { text: "Pour", icon: "🥣" },
+          { text: "Bake", icon: "🔥" },
+          { text: "Frost", icon: "🧁" },
+          { text: "Eat", icon: "😋" },
+        ],
         answer: ["Pour", "Bake", "Frost", "Eat"],
       },
       {
         id: "g1",
-        cards: ["Wash", "Soap", "Rinse", "Dry", "Turn water on"],
+        cards: [
+          { text: "Turn water on", icon: "🚰" },
+          { text: "Wash", icon: "🧼" },
+          { text: "Soap", icon: "🫧" },
+          { text: "Rinse", icon: "💧" },
+          { text: "Dry", icon: "🧻" },
+        ],
         answer: ["Turn water on", "Wash", "Soap", "Rinse", "Dry"],
       },
       {
         id: "g2",
-        cards: ["Plan", "Code", "Test", "Fix", "Share"],
+        cards: [
+          { text: "Plan", icon: "📝" },
+          { text: "Code", icon: "💻" },
+          { text: "Test", icon: "🧪" },
+          { text: "Fix", icon: "🛠️" },
+          { text: "Share", icon: "📤" },
+        ],
         answer: ["Plan", "Code", "Test", "Fix", "Share"],
       },
     ],
   });
-  const existingGame = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, title: "Game: Fix the Recipe" },
+  const gameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2SeqLesson.id, kind: INTERACT, order: 2 },
   });
-  if (!existingGame) {
+  if (gameAct) {
+    await prisma.activity.update({
+      where: { id: gameAct.id },
+      data: { title: "Game: Fix the Order", content: gameContent },
+    });
+  } else {
     await prisma.activity.create({
       data: {
-        title: "Game: Fix the Recipe",
+        title: "Game: Fix the Order",
         kind: INTERACT,
         order: 2,
         content: gameContent,
