@@ -27,3 +27,9 @@
 **Vulnerability:** The login schema lacked maximum length validation for passwords and emails. This allowed attackers to send excessively long strings (e.g., 1MB+) which could be processed by bcrypt or database queries, causing CPU spikes or memory exhaustion (DoS).
 **Learning:** Always mirror input constraints from signup/creation schemas to login schemas. If a user can only sign up with a 100-char password, they should only be able to log in with a 100-char password.
 **Prevention:** Audit all `zod` schemas for `.max()` constraints on string fields, especially those processed by expensive algorithms like bcrypt.
+
+## 2025-02-18 - Overly Permissive CORS
+
+**Vulnerability:** `app.use(cors())` was used without options, allowing any origin to access the API.
+**Learning:** Permissive CORS defaults (allowing `*`) are dangerous for APIs handling sensitive user data, even if authentication is token-based. It allows unauthorized clients (like malicious websites) to read API responses if the user has a valid session (though less critical with header-based auth, it's still best practice).
+**Prevention:** Configure CORS to explicitly check `origin` against a trusted list (`ALLOWED_ORIGINS` env var) or allow specific patterns (like localhost in dev), rather than allowing everything.
