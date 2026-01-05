@@ -19,6 +19,9 @@ const prismaMock = vi.hoisted(() => ({
   progress: {
     findMany: vi.fn(),
   },
+  unlockedAbility: {
+    findMany: vi.fn(),
+  },
 }));
 
 vi.mock("@prisma/client", () => {
@@ -106,6 +109,9 @@ describe("GET /match/:id IDOR", () => {
       id: userAvatarId,
       studentId: userId,
     });
+
+    // Mock unlockedAbility lookup (new optimization)
+    prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
     const response = await request(app)
       .get(`/api/match/${matchId}`)

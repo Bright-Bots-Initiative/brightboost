@@ -61,27 +61,68 @@ router.post("/match/queue", requireAuth, async (req, res) => {
 });
 router.get("/match/:id", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
+
+  // ⚡ Bolt Optimization:
+  // 1. Fetch match + basic player info + turns (no abilities) to avoid over-fetching.
+  // 2. Explicitly fetch unlocked abilities ONLY for the requesting user.
+  // This prevents information leakage (seeing opponent's hand) and reduces payload size.
+
   const match = await prisma.match.findUnique({
     where: { id: req.params.id },
     include: {
       Player1: {
-        include: { unlockedAbilities: { include: { Ability: true } } },
+        select: {
+          id: true,
+          archetype: true,
+          hp: true,
+          level: true,
+          xp: true,
+          energy: true,
+        },
       },
       Player2: {
-        include: { unlockedAbilities: { include: { Ability: true } } },
+        select: {
+          id: true,
+          archetype: true,
+          hp: true,
+          level: true,
+          xp: true,
+          energy: true,
+        },
       },
       turns: { orderBy: { createdAt: "asc" } },
     },
   });
+
   if (!match) return res.status(404).json({ error: "Match not found" });
+
   const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (
     !myAvatar ||
     (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
   )
     return res.status(403).json({ error: "Not authorized to view this match" });
-  const computed = computeBattleState(match, match.turns);
-  res.json({ ...match, computed });
+
+  // Fetch abilities for ME only
+  const myAbilities = await prisma.unlockedAbility.findMany({
+    where: { avatarId: myAvatar.id },
+    include: { Ability: true },
+  });
+
+  // Attach abilities to the correct player object in the response
+  const responseMatch: any = { ...match };
+  if (match.player1Id === myAvatar.id) {
+    if (responseMatch.Player1) {
+      responseMatch.Player1.unlockedAbilities = myAbilities;
+    }
+  } else if (match.player2Id === myAvatar.id) {
+    if (responseMatch.Player2) {
+      responseMatch.Player2.unlockedAbilities = myAbilities;
+    }
+  }
+
+  const computed = computeBattleState(responseMatch, match.turns);
+  res.json({ ...responseMatch, computed });
 });
 router.get("/match/:id/question", requireAuth, async (req, res) => {
   const studentId = req.user!.id;

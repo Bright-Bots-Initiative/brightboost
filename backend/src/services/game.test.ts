@@ -167,10 +167,18 @@ describe("resolveTurn - Knowledge Bonus", () => {
       status: "ACTIVE",
       player1Id: p1Id,
       player2Id: p2Id,
-      Player1: mockPlayer1,
-      Player2: mockPlayer2,
-      turns: [], // Mocking turns directly on match
+      Player1: mockPlayer1, // Basic fields
+      Player2: mockPlayer2, // Basic fields
+      turns: [],
       band: "K2",
+    });
+
+    // Mock ability verification for optimization
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
+        id: "ua-1",
+        avatarId: p1Id,
+        abilityId: abilityId,
+        Ability: mockAbility,
     });
 
     // Mock create return to satisfy turns.push(newTurn)
@@ -217,6 +225,13 @@ describe("resolveTurn - Knowledge Bonus", () => {
       band: "K2",
     });
 
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
+        id: "ua-1",
+        avatarId: p1Id,
+        abilityId: abilityId,
+        Ability: mockAbility,
+    });
+
     // Mock create return
     prismaMock.matchTurn.create.mockResolvedValue({
       id: "turn-1",
@@ -256,6 +271,13 @@ describe("resolveTurn - Knowledge Bonus", () => {
       Player2: mockPlayer2,
       turns: [],
       band: "K2",
+    });
+
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
+        id: "ua-1",
+        avatarId: p1Id,
+        abilityId: abilityId,
+        Ability: mockAbility,
     });
 
     // Mock create return
