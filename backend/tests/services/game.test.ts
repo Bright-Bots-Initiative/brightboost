@@ -44,12 +44,19 @@ describe("resolveTurn Performance Optimization", () => {
     const actorId = "player-1";
     const abilityId = "ability-1";
 
+    // Mock previous turns
+    const previousTurns = [
+      { matchId, round: 1, actorId: "player-1", action: { damageDealt: 10 } },
+      { matchId, round: 2, actorId: "player-2", action: { damageDealt: 10 } },
+    ];
+
     // Mock match data
     prismaMock.match.findUnique.mockResolvedValue({
       id: matchId,
       status: "ACTIVE",
       player1Id: "player-1",
       player2Id: "player-2",
+      turns: previousTurns,
       Player1: {
         id: "player-1",
         hp: 100,
@@ -72,13 +79,6 @@ describe("resolveTurn Performance Optimization", () => {
       },
     });
 
-    // Mock ability (though resolveTurn now uses the one from unlockedAbilities)
-    // We retain this if other functions use it, but resolveTurn shouldn't anymore for the config source
-    prismaMock.ability.findUnique.mockResolvedValue({
-      id: abilityId,
-      config: { type: "attack", value: 10 },
-    });
-
     // Mock create
     prismaMock.matchTurn.create.mockResolvedValue({
       id: "turn-3",
@@ -87,14 +87,6 @@ describe("resolveTurn Performance Optimization", () => {
       actorId,
       action: { abilityId, damageDealt: 10 },
     });
-
-    // Mock findMany (ONLY previous turns)
-    // The optimization relies on fetching history first, then appending the new turn in memory.
-    const previousTurns = [
-      { matchId, round: 1, actorId: "player-1", action: { damageDealt: 10 } },
-      { matchId, round: 2, actorId: "player-2", action: { damageDealt: 10 } },
-    ];
-    prismaMock.matchTurn.findMany.mockResolvedValue([...previousTurns]); // Return a copy so we don't mutate the mock setup if reused
 
     const result = await resolveTurn(matchId, actorId, abilityId);
 
@@ -106,12 +98,8 @@ describe("resolveTurn Performance Optimization", () => {
     expect(result.matchOver).toBe(false);
 
     // Verify Optimizations
-    expect(prismaMock.matchTurn.count).not.toHaveBeenCalled(); // We removed the count query
-    expect(prismaMock.matchTurn.findMany).toHaveBeenCalledTimes(1); // Only called once
-    expect(prismaMock.matchTurn.findMany).toHaveBeenCalledWith({
-      where: { matchId },
-      orderBy: { createdAt: "asc" },
-    });
+    expect(prismaMock.matchTurn.count).not.toHaveBeenCalled();
+    expect(prismaMock.matchTurn.findMany).not.toHaveBeenCalled(); // Optimization: turns fetched with match
 
     // Ensure create was called with correct round
     expect(prismaMock.matchTurn.create).toHaveBeenCalledWith(
@@ -131,14 +119,13 @@ describe("PvP Fairness Checks", () => {
 
   it("should enforce turn order (P2 cannot act on P1 turn)", async () => {
     const matchId = "m1";
-    // 0 turns -> P1 should act
-    prismaMock.matchTurn.findMany.mockResolvedValue([]);
 
     prismaMock.match.findUnique.mockResolvedValue({
       id: matchId,
       status: "ACTIVE",
       player1Id: "p1",
       player2Id: "p2",
+      turns: [], // 0 turns -> P1 should act
       Player1: { id: "p1", unlockedAbilities: [] },
       Player2: { id: "p2", unlockedAbilities: [] },
     });
@@ -150,14 +137,13 @@ describe("PvP Fairness Checks", () => {
 
   it("should enforce ability ownership", async () => {
     const matchId = "m1";
-    // 0 turns -> P1 acts
-    prismaMock.matchTurn.findMany.mockResolvedValue([]);
 
     prismaMock.match.findUnique.mockResolvedValue({
       id: matchId,
       status: "ACTIVE",
       player1Id: "p1",
       player2Id: "p2",
+      turns: [], // 0 turns -> P1 acts
       Player1: {
         id: "p1",
         unlockedAbilities: [], // Empty -> no abilities unlocked
