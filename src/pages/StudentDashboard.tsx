@@ -37,11 +37,17 @@ function sortNum(n: any, fallback = 9999) {
 
 function flattenModule(module: any): NextActivity[] {
   const out: NextActivity[] = [];
-  const units = (module?.units || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+  const units = (module?.units || [])
+    .slice()
+    .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
   for (const u of units) {
-    const lessons = (u?.lessons || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+    const lessons = (u?.lessons || [])
+      .slice()
+      .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
     for (const l of lessons) {
-      const acts = (l?.activities || []).slice().sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
+      const acts = (l?.activities || [])
+        .slice()
+        .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
       for (const a of acts) {
         out.push({
           moduleSlug: module.slug,
@@ -107,13 +113,11 @@ export default function StudentDashboard() {
         // Choose module: most recently progressed, else first available
         let chosenSlug: string | null = null;
         if (progList.length > 0) {
-          const sorted = progList
-            .slice()
-            .sort((a: any, b: any) => {
-              const at = new Date(a.updatedAt || 0).getTime();
-              const bt = new Date(b.updatedAt || 0).getTime();
-              return bt - at;
-            });
+          const sorted = progList.slice().sort((a: any, b: any) => {
+            const at = new Date(a.updatedAt || 0).getTime();
+            const bt = new Date(b.updatedAt || 0).getTime();
+            return bt - at;
+          });
           chosenSlug = sorted[0]?.moduleSlug || null;
         }
         if (!chosenSlug && modsList.length > 0) chosenSlug = modsList[0].slug;
@@ -130,17 +134,23 @@ export default function StudentDashboard() {
         const ordered = flattenModule(deep);
         const completed = new Set(
           progList
-            .filter((p: any) => p?.moduleSlug === chosenSlug && p?.status === "COMPLETED")
+            .filter(
+              (p: any) =>
+                p?.moduleSlug === chosenSlug && p?.status === "COMPLETED",
+            )
             .map((p: any) => String(p.activityId)),
         );
 
-        const firstIncomplete = ordered.find((x) => !completed.has(String(x.activityId))) || null;
+        const firstIncomplete =
+          ordered.find((x) => !completed.has(String(x.activityId))) || null;
         setNextOne(firstIncomplete);
 
         if (!firstIncomplete) {
           setUpNext([]);
         } else {
-          const startIdx = ordered.findIndex((x) => x.activityId === firstIncomplete.activityId);
+          const startIdx = ordered.findIndex(
+            (x) => x.activityId === firstIncomplete.activityId,
+          );
           setUpNext(ordered.slice(startIdx, startIdx + 3));
         }
       } catch (e) {
@@ -258,7 +268,7 @@ export default function StudentDashboard() {
         {[1, 2, 3, 4, 5, 6].map((level) => {
           const isUnlocked = level <= currentLevel;
           const badge = user?.badges?.find((b) =>
-            b.name.toLowerCase().includes(`level ${level}`)
+            b.name.toLowerCase().includes(`level ${level}`),
           );
 
           return (
@@ -334,7 +344,11 @@ export default function StudentDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                  {loading ? t("dashboard.loading") : nextOne ? t("dashboard.continueLearning") : t("dashboard.pickAModule")}
+                  {loading
+                    ? t("dashboard.loading")
+                    : nextOne
+                      ? t("dashboard.continueLearning")
+                      : t("dashboard.pickAModule")}
                 </h3>
                 <p className="text-slate-600">
                   {nextOne
@@ -345,7 +359,9 @@ export default function StudentDashboard() {
                 </p>
                 {nextOne ? (
                   <p className="text-slate-500 text-sm mt-1">
-                    {t("dashboard.upNext")} {nextOne.kind === "INFO" ? "📖" : "🎮"} {nextOne.activityTitle}
+                    {t("dashboard.upNext")}{" "}
+                    {nextOne.kind === "INFO" ? "📖" : "🎮"}{" "}
+                    {nextOne.activityTitle}
                   </p>
                 ) : null}
               </div>
@@ -358,7 +374,9 @@ export default function StudentDashboard() {
                   else navigate("/student/modules");
                 }}
               >
-                {nextOne ? t("dashboard.startActivity") : t("dashboard.browseModules")}
+                {nextOne
+                  ? t("dashboard.startActivity")
+                  : t("dashboard.browseModules")}
               </Button>
             </div>
           </div>
@@ -373,10 +391,15 @@ export default function StudentDashboard() {
         {upNext.length === 0 ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
-              {loading ? t("dashboard.loadingActivities") : t("dashboard.caughtUp")}
+              {loading
+                ? t("dashboard.loadingActivities")
+                : t("dashboard.caughtUp")}
             </p>
             <div className="mt-4">
-              <Button variant="outline" onClick={() => navigate("/student/modules")}>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/student/modules")}
+              >
                 {t("dashboard.goToModules")}
               </Button>
             </div>
@@ -433,10 +456,16 @@ export default function StudentDashboard() {
               >
                 <div
                   className={`p-2 rounded-full ${
-                    isUnlocked ? "bg-yellow-100 text-yellow-600" : "bg-slate-200 text-slate-400"
+                    isUnlocked
+                      ? "bg-yellow-100 text-yellow-600"
+                      : "bg-slate-200 text-slate-400"
                   }`}
                 >
-                  {isUnlocked ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+                  {isUnlocked ? (
+                    <Unlock className="w-6 h-6" />
+                  ) : (
+                    <Lock className="w-6 h-6" />
+                  )}
                 </div>
                 <span
                   className={`text-sm font-bold ${

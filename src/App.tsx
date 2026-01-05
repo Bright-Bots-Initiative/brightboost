@@ -83,7 +83,10 @@ function App() {
               />
               <Route path="avatar" element={<Avatar />} />
               <Route path="play" element={<PlayHub />} />
-              <Route path="arena" element={<Navigate to="/student/play?tab=pvp" replace />} />
+              <Route
+                path="arena"
+                element={<Navigate to="/student/play?tab=pvp" replace />}
+              />
             </Route>
 
             {/* Legacy Redirects for Flat Routes (if any external links exist) */}
@@ -92,7 +95,10 @@ function App() {
               element={<Navigate to="/student/modules" />}
             />
             <Route path="/avatar" element={<Navigate to="/student/avatar" />} />
-            <Route path="/arena" element={<Navigate to="/student/play?tab=pvp" />} />
+            <Route
+              path="/arena"
+              element={<Navigate to="/student/play?tab=pvp" />}
+            />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

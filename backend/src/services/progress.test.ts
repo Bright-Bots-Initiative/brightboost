@@ -120,11 +120,7 @@ describe("getAggregatedProgress", () => {
           lessons: [
             {
               id: "lesson-1",
-              activities: [
-                { id: "act-1" },
-                { id: "act-2" },
-                { id: "act-3" },
-              ],
+              activities: [{ id: "act-1" }, { id: "act-2" }, { id: "act-3" }],
             },
           ],
         },
@@ -139,13 +135,17 @@ describe("getAggregatedProgress", () => {
     expect(prisma.progress.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { studentId, moduleSlug },
-      })
+      }),
     );
 
-    expect(result.module.units[0].lessons[0].activities[0].userProgress).toEqual({
+    expect(
+      result.module.units[0].lessons[0].activities[0].userProgress,
+    ).toEqual({
       status: "COMPLETED",
       timeSpentS: 100,
     });
-    expect(result.module.units[0].lessons[0].activities[2].userProgress).toBeNull();
+    expect(
+      result.module.units[0].lessons[0].activities[2].userProgress,
+    ).toBeNull();
   });
 });

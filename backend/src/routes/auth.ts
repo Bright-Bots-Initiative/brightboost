@@ -12,7 +12,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 // 🛡️ Sentinel: Pre-calculated hash for timing-safe user lookups.
 // This ensures that valid/invalid user lookups take roughly the same amount of time.
 // Generated with bcrypt cost 10.
-const DUMMY_HASH = "$2b$10$JIuf8WbA.Ni58wGtmscGveaFfGo.9Jf.uSS7PNgdHJd3w3/Aun8Na";
+const DUMMY_HASH =
+  "$2b$10$JIuf8WbA.Ni58wGtmscGveaFfGo.9Jf.uSS7PNgdHJd3w3/Aun8Na";
 
 // Schemas
 const studentSignupSchema = z.object({
