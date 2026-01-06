@@ -2,6 +2,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import path from "path";
 import cors from "cors";
+import compression from "compression";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import modulesRouter from "./routes/modules";
@@ -20,6 +21,10 @@ app.set("trust proxy", 1);
 
 // Security headers
 app.use(helmet());
+
+// ⚡ Bolt Optimization: Enable gzip compression
+// Reduces payload size by 70-90% for JSON APIs and static assets
+app.use(compression());
 
 // 🛡️ Sentinel: Prevent HTTP Parameter Pollution (HPP)
 // Flattens repeated query parameters to the last value to prevent logic bypass
