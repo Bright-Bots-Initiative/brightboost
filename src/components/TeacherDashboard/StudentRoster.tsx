@@ -223,6 +223,7 @@ export default function StudentRoster() {
                         size="sm"
                         onClick={() => handleViewStudent(student.id)}
                         className="border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                        aria-label={`View ${student.name}'s profile`}
                       >
                         View
                       </Button>
