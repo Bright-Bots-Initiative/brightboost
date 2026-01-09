@@ -1,5 +1,5 @@
 [build]
-command = "corepack enable && corepack prepare pnpm@9.15.1 --activate && pnpm install --frozen-lockfile && pnpm run build && pnpm --prefix backend install --frozen-lockfile && pnpm --prefix backend run db:generate && pnpm --prefix backend exec tsc -p tsconfig.json && echo '--- backend dist ---' && ls -R backend/dist"
+command = "npm ci && npm run build && npm --prefix backend ci && npm --prefix backend run db:generate && npm --prefix backend run build"
 
 [deploy]
-startCommand = "sh -lc 'ls -R backend/dist || true; node backend/dist/src/server.js'"
+startCommand = "sh -lc 'node backend/dist/src/server.js'"
