@@ -226,7 +226,7 @@ export default function StudentDashboard() {
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm min-w-[150px] cursor-pointer hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 onClick={() => navigate("/student/avatar")}
                 role="button"
                 tabIndex={0}
@@ -275,14 +275,29 @@ export default function StudentDashboard() {
             <Tooltip key={level}>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                     isUnlocked
                       ? "bg-white border-blue-200 shadow-sm"
                       : "bg-slate-50 border-slate-200 opacity-60"
                   }`}
-                  tabIndex={0} // Make focusable for tooltip on keyboard
+                  tabIndex={0}
+                  role="img"
+                  aria-label={
+                    isUnlocked
+                      ? t("dashboard.levelUnlockedAria", {
+                          defaultValue: "Level {{level}} Unlocked",
+                          level,
+                        })
+                      : t("dashboard.levelLockedAria", {
+                          defaultValue: "Level {{level}} Locked",
+                          level,
+                        })
+                  }
                 >
-                  <div className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500">
+                  <div
+                    className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500"
+                    aria-hidden="true"
+                  >
                     {t("dashboard.level")}
                   </div>
                   <div

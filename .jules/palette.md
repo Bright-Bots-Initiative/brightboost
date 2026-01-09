@@ -23,4 +23,12 @@
 **Learning:** Password fields without a visibility toggle are a significant usability hurdle and accessibility issue.
 **Action:** Use `PasswordInput` component (`src/components/ui/password-input.tsx`) which handles the toggle state, icons, and accessibility attributes (ARIA labels, keyboard focus) automatically, ensuring consistency across Student and Teacher login flows.
 
-## 2025-05-22 - Component Adoption\n\n**Learning:** Standardized components (like `PasswordInput`) are only effective if they are universally adopted. Legacy implementations (like in `StudentLogin.tsx`) miss out on new accessibility features (Caps Lock warning).\n**Action:** Prioritize refactoring legacy views to use standard components before adding new features to those components.
+## 2025-05-22 - Component Adoption
+
+**Learning:** Standardized components (like `PasswordInput`) are only effective if they are universally adopted. Legacy implementations (like in `StudentLogin.tsx`) miss out on new accessibility features (Caps Lock warning).
+**Action:** Prioritize refactoring legacy views to use standard components before adding new features to those components.
+
+## 2025-10-27 - Interactive Div Focus Styles
+
+**Learning:** Interactive elements implemented as `div`s (with `role="button"` or `tabIndex={0}`) do not inherit default browser focus rings, making them invisible to keyboard users.
+**Action:** Always add explicit `focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none` classes to any non-button interactive element.
