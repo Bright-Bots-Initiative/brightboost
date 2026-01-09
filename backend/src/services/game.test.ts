@@ -175,10 +175,10 @@ describe("resolveTurn - Knowledge Bonus", () => {
 
     // Mock ability verification for optimization
     prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-        id: "ua-1",
-        avatarId: p1Id,
-        abilityId: abilityId,
-        Ability: mockAbility,
+      id: "ua-1",
+      avatarId: p1Id,
+      abilityId: abilityId,
+      Ability: mockAbility,
     });
 
     // Mock create return to satisfy turns.push(newTurn)
@@ -226,10 +226,10 @@ describe("resolveTurn - Knowledge Bonus", () => {
     });
 
     prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-        id: "ua-1",
-        avatarId: p1Id,
-        abilityId: abilityId,
-        Ability: mockAbility,
+      id: "ua-1",
+      avatarId: p1Id,
+      abilityId: abilityId,
+      Ability: mockAbility,
     });
 
     // Mock create return
@@ -274,10 +274,10 @@ describe("resolveTurn - Knowledge Bonus", () => {
     });
 
     prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-        id: "ua-1",
-        avatarId: p1Id,
-        abilityId: abilityId,
-        Ability: mockAbility,
+      id: "ua-1",
+      avatarId: p1Id,
+      abilityId: abilityId,
+      Ability: mockAbility,
     });
 
     // Mock create return

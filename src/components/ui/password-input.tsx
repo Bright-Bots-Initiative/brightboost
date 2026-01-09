@@ -24,7 +24,9 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
     const hasError = !!error;
 
     const checkCapsLock = (
-      e: React.KeyboardEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>,
+      e:
+        | React.KeyboardEvent<HTMLInputElement>
+        | React.MouseEvent<HTMLInputElement>,
     ) => {
       if (e.getModifierState("CapsLock")) {
         setCapsLock(true);

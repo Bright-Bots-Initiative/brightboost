@@ -253,9 +253,7 @@ export default function ActivityPlayer() {
 
             {questions.map((q) => (
               <div key={q.id} className="space-y-2">
-                <div className="font-semibold">
-                  {resolveText(t, q.prompt)}
-                </div>
+                <div className="font-semibold">{resolveText(t, q.prompt)}</div>
                 <div className="grid gap-2">
                   {resolveChoiceList(t, q.choices).map((c, idx) => {
                     const selected = answers[q.id] === idx;

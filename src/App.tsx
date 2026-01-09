@@ -46,69 +46,72 @@ function App() {
           <div className="app">
             <Routes>
               {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginSelection />} />
-            <Route path="/signup" element={<SignupSelection />} />
-            <Route path="/teacher/login" element={<TeacherLogin />} />
-            <Route path="/teacher/signup" element={<TeacherSignup />} />
-            <Route path="/student/login" element={<StudentLogin />} />
-            <Route path="/student/signup" element={<StudentSignup />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<LoginSelection />} />
+              <Route path="/signup" element={<SignupSelection />} />
+              <Route path="/teacher/login" element={<TeacherLogin />} />
+              <Route path="/teacher/signup" element={<TeacherSignup />} />
+              <Route path="/student/login" element={<StudentLogin />} />
+              <Route path="/student/signup" element={<StudentSignup />} />
 
-            {/* Protected Teacher routes */}
-            <Route
-              path="/teacher/dashboard"
-              element={
-                <ProtectedRoute requiredRole="teacher">
-                  <TeacherDashboard />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Protected Student Routes (Nested) */}
-            <Route
-              path="/student"
-              element={
-                <ProtectedRoute requiredRole="student">
-                  <StudentRoot />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<StudentDashboard />} />
-              <Route path="modules" element={<Modules />} />
-              <Route path="modules/:slug" element={<ModuleDetail />} />
+              {/* Protected Teacher routes */}
               <Route
-                path="modules/:slug/lessons/:lessonId/activities/:activityId"
-                element={<ActivityPlayer />}
+                path="/teacher/dashboard"
+                element={
+                  <ProtectedRoute requiredRole="teacher">
+                    <TeacherDashboard />
+                  </ProtectedRoute>
+                }
               />
-              <Route path="avatar" element={<Avatar />} />
-              <Route path="play" element={<PlayHub />} />
+
+              {/* Protected Student Routes (Nested) */}
               <Route
-                path="arena"
-                element={<Navigate to="/student/play?tab=pvp" replace />}
+                path="/student"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentRoot />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<StudentDashboard />} />
+                <Route path="modules" element={<Modules />} />
+                <Route path="modules/:slug" element={<ModuleDetail />} />
+                <Route
+                  path="modules/:slug/lessons/:lessonId/activities/:activityId"
+                  element={<ActivityPlayer />}
+                />
+                <Route path="avatar" element={<Avatar />} />
+                <Route path="play" element={<PlayHub />} />
+                <Route
+                  path="arena"
+                  element={<Navigate to="/student/play?tab=pvp" replace />}
+                />
+              </Route>
+
+              {/* Legacy Redirects for Flat Routes (if any external links exist) */}
+              <Route
+                path="/modules"
+                element={<Navigate to="/student/modules" />}
               />
-            </Route>
+              <Route
+                path="/avatar"
+                element={<Navigate to="/student/avatar" />}
+              />
+              <Route
+                path="/arena"
+                element={<Navigate to="/student/play?tab=pvp" />}
+              />
 
-            {/* Legacy Redirects for Flat Routes (if any external links exist) */}
-            <Route
-              path="/modules"
-              element={<Navigate to="/student/modules" />}
-            />
-            <Route path="/avatar" element={<Navigate to="/student/avatar" />} />
-            <Route
-              path="/arena"
-              element={<Navigate to="/student/play?tab=pvp" />}
-            />
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
 
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-
-          {import.meta.env.VITE_APP_VERSION ? (
-            <div className="fixed right-2 bottom-2 opacity-60 text-xs pointer-events-none">
-              v{import.meta.env.VITE_APP_VERSION}
-            </div>
-          ) : null}
+            {import.meta.env.VITE_APP_VERSION ? (
+              <div className="fixed right-2 bottom-2 opacity-60 text-xs pointer-events-none">
+                v{import.meta.env.VITE_APP_VERSION}
+              </div>
+            ) : null}
           </div>
         </TooltipProvider>
       </AuthProvider>

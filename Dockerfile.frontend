@@ -9,11 +9,8 @@ COPY . .
 RUN npm ci
 
 # Build frontend
-# Pass API base URL if provided
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-
-# Build the Vite app (outputs to dist/)
 RUN npm run build
 
 # Runner stage
