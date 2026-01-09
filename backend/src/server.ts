@@ -20,7 +20,38 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Security headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "cdn.gpteng.co",
+          "api.dicebear.com",
+          "stub-bucket.s3.amazonaws.com",
+          "quantumai.google",
+        ],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'", // Needed for Vite/React inline scripts
+          "cdn.gpteng.co",
+          "quantumai.google",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        connectSrc: [
+          "'self'",
+          "bb-dev-func.azurewebsites.net",
+          "cl-quantum-game.appspot.com",
+        ],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 // ⚡ Bolt Optimization: Enable gzip compression
 // Reduces payload size by 70-90% for JSON APIs and static assets
@@ -33,7 +64,7 @@ app.use(preventHpp);
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  limit: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: "Too many requests from this IP, please try again after 15 minutes",
