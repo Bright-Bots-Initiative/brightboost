@@ -1,23 +1,31 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copy application code
+# Copy full repository
 COPY . .
 
-# Generate Prisma client
+# Install root dependencies (including devDependencies for build tools if needed, though production usually uses npm ci --omit=dev, but user said npm ci)
+RUN npm ci
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm ci
+
+# Generate Prisma Client
+# This uses the root schema which has a generator pointing to backend/node_modules
+WORKDIR /app
 RUN npx prisma generate
 
-# Expose the port the app runs on
+# Build backend (TypeScript compilation)
+WORKDIR /app/backend
+RUN npm run build:railway
+
+# Expose port
 EXPOSE 3000
 
-# Set environment variables
-ENV NODE_ENV=production
-# Database URL will be injected at runtime
-
-# Start the application
-CMD ["node", "server.cjs"]
+# Start server
+# Note: migrations/seeding are typically done in a release phase or init container,
+# but per instructions we just start the server entrypoint.
+WORKDIR /app
+CMD ["node", "backend/dist/src/server.js"]
