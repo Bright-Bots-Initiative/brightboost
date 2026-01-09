@@ -1,31 +1,27 @@
 name: Bundle Size Check
 on: [push, pull_request]
+
 jobs:
   check-bundle-size:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
         with:
-          version: 9.15.1
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-          cache: "pnpm"
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: |
-            pnpm-lock.yaml
+            package-lock.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: Build application
-        run: pnpm build
+        run: npm run build
 
       - name: Check bundle size
         run: |
