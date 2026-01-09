@@ -19,31 +19,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9.15.1
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Lint code
-        run: pnpm run lint
+        run: npm run lint
 
       - name: Check formatting
-        run: pnpm run format:check
+        run: npm run format:check
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: npx playwright install --with-deps
 
       - name: Run tests
-        run: pnpm test
+        run: npm test
 
       - name: Build application
-        run: pnpm run build
+        run: npm run build

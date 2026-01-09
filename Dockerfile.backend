@@ -5,27 +5,24 @@ WORKDIR /app
 # Copy full repository
 COPY . .
 
-# Install root dependencies (including devDependencies for build tools if needed, though production usually uses npm ci --omit=dev, but user said npm ci)
+# Install root dependencies
 RUN npm ci
 
 # Install backend dependencies
 WORKDIR /app/backend
 RUN npm ci
 
-# Generate Prisma Client
-# This uses the root schema which has a generator pointing to backend/node_modules
+# Generate Prisma Client (root schema)
 WORKDIR /app
 RUN npx prisma generate
 
-# Build backend (TypeScript compilation)
-WORKDIR /app/backend
-RUN npm run build:railway
+# Build backend
+# Using explicit prefix command as requested to run from root context if needed, or consistent with instruction
+# "Build backend using npm --prefix backend run build:railway"
+RUN npm --prefix backend run build:railway
 
 # Expose port
 EXPOSE 3000
 
 # Start server
-# Note: migrations/seeding are typically done in a release phase or init container,
-# but per instructions we just start the server entrypoint.
-WORKDIR /app
 CMD ["node", "backend/dist/src/server.js"]

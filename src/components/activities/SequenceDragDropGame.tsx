@@ -4,10 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import {
-  LocalizedField,
-  resolveChoiceList,
-} from "@/utils/localizedContent";
+import { LocalizedField, resolveChoiceList } from "@/utils/localizedContent";
 
 type Level = {
   id: string;

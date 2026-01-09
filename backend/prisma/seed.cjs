@@ -226,7 +226,11 @@ async function main() {
         text: "Oops… the steps are mixed up!",
         icon: "😵‍💫",
       },
-      { id: "s4", text: "A plan with steps is called an algorithm.", icon: "📝" },
+      {
+        id: "s4",
+        text: "A plan with steps is called an algorithm.",
+        icon: "📝",
+      },
       { id: "s5", text: "Let’s put the steps in the right order!", icon: "✅" },
     ],
     questions: [

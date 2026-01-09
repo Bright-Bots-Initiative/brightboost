@@ -22,4 +22,5 @@
 
 **Learning:** Password fields without a visibility toggle are a significant usability hurdle and accessibility issue.
 **Action:** Use `PasswordInput` component (`src/components/ui/password-input.tsx`) which handles the toggle state, icons, and accessibility attributes (ARIA labels, keyboard focus) automatically, ensuring consistency across Student and Teacher login flows.
+
 ## 2025-05-22 - Component Adoption\n\n**Learning:** Standardized components (like `PasswordInput`) are only effective if they are universally adopted. Legacy implementations (like in `StudentLogin.tsx`) miss out on new accessibility features (Caps Lock warning).\n**Action:** Prioritize refactoring legacy views to use standard components before adding new features to those components.

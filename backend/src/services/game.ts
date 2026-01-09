@@ -125,23 +125,27 @@ export async function resolveTurn(
   const config = ability.config as any;
 
   let quizResult = null;
-  if (quiz && typeof quiz === 'object') {
+  if (quiz && typeof quiz === "object") {
     // 🛡️ Sentinel: Validate quiz input structure
     // We ignore any 'correct' or 'bonusMult' sent by the client and recalculate server-side
     const { questionId, answerIndex } = quiz as any;
 
-    if (typeof questionId === 'string' && typeof answerIndex === 'number') {
-      const isCorrect = checkAnswer(match.band || "K2", questionId, answerIndex);
+    if (typeof questionId === "string" && typeof answerIndex === "number") {
+      const isCorrect = checkAnswer(
+        match.band || "K2",
+        questionId,
+        answerIndex,
+      );
       if (isCorrect) {
         quizResult = {
           questionId,
           correct: true,
-          bonusMult: 1.25
+          bonusMult: 1.25,
         };
       } else {
         quizResult = {
           questionId,
-          correct: false
+          correct: false,
         };
       }
     }
