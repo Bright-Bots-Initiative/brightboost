@@ -145,6 +145,10 @@ model Progress {
   User       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, activityId])
+  // Index for counting completed activities (checkUnlocks)
+  @@index([studentId, status])
+  // Index for fetching progress by module (Module Map)
+  @@index([studentId, moduleSlug])
 }
 
 model WeeklySnapshot {
