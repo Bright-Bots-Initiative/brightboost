@@ -26,10 +26,11 @@ router.get("/progress", requireAuth, async (req, res) => {
 // Legacy endpoint for AuthContext (supports existing frontend)
 router.get("/get-progress", requireAuth, async (req, res) => {
   // Return format expected by AuthContext
-  const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
-  const progress = await prisma.progress.findMany({
-    where: { studentId: req.user!.id },
-  });
+  // ⚡ Bolt Optimization: Use Promise.all to fetch independent data concurrently
+  const [user, progress] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user!.id } }),
+    prisma.progress.findMany({ where: { studentId: req.user!.id } }),
+  ]);
   res.json({ user, progress });
 });
 
