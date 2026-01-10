@@ -10,6 +10,7 @@ import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Loader2 } from "lucide-react";
+import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
 
 const studentLoginSchema = z.object({
@@ -91,28 +92,14 @@ const StudentLogin: React.FC = () => {
                 >
                   {t("studentLogin.form.emailLabel")}
                 </label>
-                <input
+                <Input
                   id="email"
                   type="email"
                   {...register("email")}
-                  aria-invalid={errors.email ? "true" : "false"}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  className={`w-full px-4 py-2 bg-white border-2 ${
-                    errors.email
-                      ? "border-red-500"
-                      : "border-brightboost-lightblue"
-                  } text-brightboost-navy rounded-lg focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-transparent transition-all`}
+                  error={errors.email?.message}
+                  className="px-4 py-2 bg-white border-2 border-brightboost-lightblue text-brightboost-navy rounded-lg focus:ring-brightboost-blue focus:border-transparent transition-all"
                   placeholder={t("studentLogin.form.emailPlaceholder")}
                 />
-                {errors.email && (
-                  <p
-                    id="email-error"
-                    role="alert"
-                    className="text-red-500 text-sm mt-1"
-                  >
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
 
               <div>

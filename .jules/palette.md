@@ -32,3 +32,8 @@
 
 **Learning:** Interactive elements implemented as `div`s (with `role="button"` or `tabIndex={0}`) do not inherit default browser focus rings, making them invisible to keyboard users.
 **Action:** Always add explicit `focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none` classes to any non-button interactive element.
+
+## 2026-01-10 - Input Label Customization Limitations
+
+**Learning:** The shared `Input` component enforces hardcoded styles (e.g., `text-gray-700`) for its internal label, making it difficult to use in custom-styled pages (like "Game" themes requiring `text-brightboost-navy`) without forking the component.
+**Action:** For pages with strict custom styling, render the `<label>` externally and use the `Input` component without its `label` prop to utilize its accessibility features (ref forwarding, error states) while maintaining visual fidelity.
