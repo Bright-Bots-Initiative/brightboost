@@ -16,6 +16,7 @@ import { Lock, Unlock, Flame } from "lucide-react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type NextActivity = {
   moduleSlug: string;
@@ -352,8 +353,29 @@ export default function StudentDashboard() {
           {t("dashboard.yourLessons")}
         </h2>
         <div
-          className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden"
-          onClick={() => (nextOne ? goToNext() : navigate("/student/modules"))}
+          className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          role="button"
+          tabIndex={0}
+          aria-label={
+            nextOne
+              ? t("dashboard.continueLearningAria", {
+                  defaultValue: "Continue Learning: {{module}} - {{activity}}",
+                  module: nextOne.moduleTitle,
+                  activity: nextOne.activityTitle,
+                })
+              : t("dashboard.browseModulesAria", "Browse all modules")
+          }
+          onClick={() => {
+             if (nextOne) goToNext();
+             else navigate("/student/modules");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (nextOne) goToNext();
+              else navigate("/student/modules");
+            }
+          }}
         >
           <div className="bg-gradient-to-r from-blue-50 to-white p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -380,19 +402,17 @@ export default function StudentDashboard() {
                   </p>
                 ) : null}
               </div>
-              <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (nextOne) goToNext();
-                  else navigate("/student/modules");
-                }}
+              <div
+                className={cn(
+                  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                  "bg-blue-600 hover:bg-blue-700 text-white shadow-md h-10 px-4 py-2",
+                )}
+                aria-hidden="true"
               >
                 {nextOne
                   ? t("dashboard.startActivity")
                   : t("dashboard.browseModules")}
-              </Button>
+              </div>
             </div>
           </div>
         </div>
