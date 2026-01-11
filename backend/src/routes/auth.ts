@@ -16,22 +16,25 @@ const DUMMY_HASH =
   "$2b$10$JIuf8WbA.Ni58wGtmscGveaFfGo.9Jf.uSS7PNgdHJd3w3/Aun8Na";
 
 // Schemas
+// 🛡️ Sentinel: Enforce strong password policy
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(100, "Password too long")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number");
+
 const studentSignupSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
   email: z.string().email("Invalid email").max(255, "Email too long"),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(100, "Password too long"),
+  password: passwordSchema,
 });
 
 const teacherSignupSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
   email: z.string().email("Invalid email").max(255, "Email too long"),
-  password: z
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .max(100, "Password too long"),
+  password: passwordSchema,
   school: z.string().max(100, "School name too long").optional(),
   subject: z.string().max(100, "Subject name too long").optional(),
 });

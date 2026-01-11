@@ -48,3 +48,9 @@
 - Always configure `helmet.contentSecurityPolicy` explicitly with a whitelist.
 - Calculate expected request volume for "heavy" users (gamers) before setting rate limits.
 - Use separate rate limiters for high-traffic endpoints (like `/match`) versus sensitive ones (like `/login`).
+
+## 2025-02-19 - Weak Password Policy
+
+**Vulnerability:** The application allowed creation of accounts with simple passwords (e.g., "123456", "password"), exposing users to brute-force and credential stuffing attacks.
+**Learning:** Default validation (`min(6)`) is insufficient for modern security standards. Users often default to the simplest possible password if not constrained.
+**Prevention:** Enforce complexity rules (uppercase, lowercase, number, minimum length of 8) at the schema level for all new accounts.
