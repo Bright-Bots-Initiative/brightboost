@@ -17,3 +17,8 @@
 
 **Learning:** Sequential await calls (e.g., `await query1; await query2`) for independent data increase total latency. For example, fetching user progress and module structure separately doubled the time for the module detail view.
 **Action:** Use `Promise.all([query1, query2])` to execute independent queries concurrently.
+
+## 2026-01-11 - Optimizing Payload Size with Prisma Select
+
+**Learning:** Fetching full objects (all columns) when only a subset is needed (e.g., for status checks) significantly inflates payload size, especially for large lists like user progress. Prisma `select` can reduce this by >50%.
+**Action:** Use `select` in `findMany` queries to retrieve only the fields required by the frontend.
