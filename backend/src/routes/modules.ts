@@ -1,11 +1,12 @@
 import { Router } from "express";
 import prisma from "../utils/prisma";
 import { getModuleWithContent } from "../services/module";
+import { requireAuth } from "../utils/auth";
 
 const router = Router();
 
 // List all modules
-router.get("/modules", async (_req, res) => {
+router.get("/modules", requireAuth, async (_req, res) => {
   try {
     const modules = await prisma.module.findMany({
       where: { published: true },
@@ -19,7 +20,7 @@ router.get("/modules", async (_req, res) => {
 });
 
 // Get specific module (by slug)
-router.get("/module/:slug", async (req, res) => {
+router.get("/module/:slug", requireAuth, async (req, res) => {
   try {
     const { slug } = req.params;
     // ⚡ Bolt Optimization: Use cached module structure
