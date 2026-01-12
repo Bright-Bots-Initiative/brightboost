@@ -44,7 +44,7 @@ describe("Auth Routes", () => {
       const response = await request(app).post("/api/signup/student").send({
         name: "Test Student",
         email: "student@test.com",
-        password: "password123",
+        password: "Password123", // Strong password
       });
 
       expect(response.status).toBe(201);
@@ -67,7 +67,7 @@ describe("Auth Routes", () => {
       const response = await request(app).post("/api/signup/student").send({
         name: "Test Student",
         email: "existing@test.com",
-        password: "password123",
+        password: "Password123", // Strong password
       });
 
       expect(response.status).toBe(409);
