@@ -29,7 +29,17 @@ router.get("/get-progress", requireAuth, async (req, res) => {
   // ⚡ Bolt Optimization: Use Promise.all to fetch independent data concurrently
   const [user, progress] = await Promise.all([
     prisma.user.findUnique({ where: { id: req.user!.id } }),
-    prisma.progress.findMany({ where: { studentId: req.user!.id } }),
+    prisma.progress.findMany({
+      where: { studentId: req.user!.id },
+      // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
+      select: {
+        id: true,
+        moduleSlug: true,
+        activityId: true,
+        status: true,
+        updatedAt: true,
+      },
+    }),
   ]);
   res.json({ user, progress });
 });
