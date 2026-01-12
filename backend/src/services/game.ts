@@ -76,16 +76,27 @@ export async function resolveTurn(
   // 1. Fetch Match + Turns + Basic Players (lightweight).
   // 2. Fetch only the ACTOR'S ability to verify (indexed single row lookup).
 
-  const match = await prisma.match.findUnique({
-    where: { id: matchId },
-    include: {
-      Player1: { select: { id: true, archetype: true, hp: true } },
-      Player2: { select: { id: true, archetype: true, hp: true } },
-      turns: {
-        orderBy: { createdAt: "asc" },
+  // ⚡ Bolt Optimization: Parallelize independent DB fetches
+  // Fetch Match context and Ability verification concurrently to reduce latency.
+  const [match, unlocked] = await Promise.all([
+    prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        Player1: { select: { id: true, archetype: true, hp: true } },
+        Player2: { select: { id: true, archetype: true, hp: true } },
+        turns: {
+          orderBy: { createdAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+    prisma.unlockedAbility.findFirst({
+      where: {
+        avatarId: actorId,
+        abilityId: abilityId,
+      },
+      include: { Ability: true },
+    }),
+  ]);
 
   if (!match || match.status !== MatchStatus.ACTIVE)
     throw new Error("Invalid match");
@@ -104,15 +115,6 @@ export async function resolveTurn(
   const opponent = isP1 ? match.Player2 : match.Player1;
 
   if (!actor || !opponent) throw new Error("Missing players");
-
-  // Verify ability ownership + fetch config in one go
-  const unlocked = await prisma.unlockedAbility.findFirst({
-    where: {
-      avatarId: actorId,
-      abilityId: abilityId,
-    },
-    include: { Ability: true },
-  });
 
   if (!unlocked || !unlocked.Ability) {
     throw new Error("Ability not unlocked");
