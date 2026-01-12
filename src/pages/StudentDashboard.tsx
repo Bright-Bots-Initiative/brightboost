@@ -366,8 +366,8 @@ export default function StudentDashboard() {
               : t("dashboard.browseModulesAria", "Browse all modules")
           }
           onClick={() => {
-             if (nextOne) goToNext();
-             else navigate("/student/modules");
+            if (nextOne) goToNext();
+            else navigate("/student/modules");
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
