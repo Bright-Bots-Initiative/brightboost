@@ -46,6 +46,25 @@ This project is built with a modern web technology stack:
 
 **Architecture:** Frontend: Replit | Backend: Replit | Database: Supabase PostgreSQL
 
+## Backend Configuration
+
+The backend is configured via environment variables.
+
+### CORS Configuration
+
+The backend uses a strict CORS policy. By default, it allows:
+- `https://fe-production-3552.up.railway.app`
+- `http://localhost:5173`
+- `http://localhost:3000`
+
+To add more origins (e.g., for a custom domain or new preview env), set the `FRONTEND_ORIGINS` environment variable:
+
+```env
+FRONTEND_ORIGINS=https://my-custom-domain.com,https://another-preview.app
+```
+
+The `FRONTEND_ORIGIN` variable is also supported for a single origin.
+
 - **Testing:**
   - Vitest (for unit/integration tests)
   - Cypress (for End-to-End tests)

@@ -75,39 +75,51 @@ app.use("/api", apiLimiter);
 
 // 🛡️ Sentinel: Configure CORS securely
 // Only allow trusted origins in production to prevent unauthorized access
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+const defaultAllowedOrigins = [
+  "https://fe-production-3552.up.railway.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+const envAllowedOrigins = (
+  process.env.FRONTEND_ORIGINS ||
+  process.env.FRONTEND_ORIGIN ||
+  process.env.ALLOWED_ORIGINS ||
+  ""
+)
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+const allowedOrigins = [...defaultAllowedOrigins, ...envAllowedOrigins];
 
-      // Check allowed origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
 
-      // Allow localhost in development
-      if (process.env.NODE_ENV !== "production") {
-        if (origin.match(/^http:\/\/localhost:\d+$/)) {
-          return callback(null, true);
-        }
-      }
+    // Check allowed origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.error("[CORS BLOCKED]", {
-        origin,
-        allowedOrigins,
-        nodeEnv: process.env.NODE_ENV,
-      });
-      callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  }),
-);
+    // Explicitly reject unknown origins with logging
+    console.error(`[CORS BLOCKED] origin: ${origin}`, {
+      allowedOrigins,
+      nodeEnv: process.env.NODE_ENV,
+    });
+    callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.options("*", cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Public routes (Auth) - Mount before auth middleware to ensure access
