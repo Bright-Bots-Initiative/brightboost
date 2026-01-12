@@ -62,7 +62,16 @@
     "goToModules": "Go to Modules",
     "play": "Play",
     "unavailableTitle": "Dashboard unavailable",
-    "unavailableDesc": "Could not load your learning progress."
+    "unavailableDesc": "Could not load your learning progress.",
+    "levelUnlockedAria": "Level {{level}} Unlocked",
+    "levelLockedAria": "Level {{level}} Locked",
+    "locked": "Locked",
+    "unlockedOn": "Unlocked on",
+    "levelReached": "Level reached!",
+    "reachLevel": "Reach Level",
+    "toUnlock": "to unlock",
+    "continueLearningAria": "Continue Learning: {{module}} - {{activity}}",
+    "browseModulesAria": "Browse all modules"
   },
   "api": {
     "sessionExpired": "Session expired",
