@@ -1,7 +1,7 @@
 // src/pages/StudentSignup.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, Circle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { signupStudent } from "../services/api";
 import GameBackground from "../components/GameBackground";
@@ -17,6 +17,13 @@ const StudentSignup: React.FC = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+
+  const requirements = [
+    { re: /.{8,}/, label: "8+ characters" },
+    { re: /[A-Z]/, label: "Uppercase letter" },
+    { re: /[a-z]/, label: "Lowercase letter" },
+    { re: /[0-9]/, label: "Number" },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +143,37 @@ const StudentSignup: React.FC = () => {
                   className={inputClassName}
                   placeholder="Create a password"
                 />
+                {password.length > 0 && (
+                  <ul
+                    className="mt-2 space-y-1"
+                    aria-label="Password requirements"
+                  >
+                    {requirements.map((req, index) => {
+                      const isMet = req.re.test(password);
+                      return (
+                        <li
+                          key={index}
+                          className={`text-xs flex items-center gap-1.5 ${
+                            isMet ? "text-green-600" : "text-slate-500"
+                          }`}
+                        >
+                          {isMet ? (
+                            <Check className="w-3 h-3" aria-hidden="true" />
+                          ) : (
+                            <Circle
+                              className="w-3 h-3 text-slate-300"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span>{req.label}</span>
+                          <span className="sr-only">
+                            {isMet ? " - Completed" : " - Incomplete"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
 
               <div>

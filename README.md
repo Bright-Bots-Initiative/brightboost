@@ -60,6 +60,7 @@ The backend can serve the frontend static files (SPA) or run as an API-only serv
 ### CORS Configuration
 
 The backend uses a strict CORS policy. By default, it allows:
+
 - `https://fe-production-3552.up.railway.app`
 - `http://localhost:5173`
 - `http://localhost:3000`
