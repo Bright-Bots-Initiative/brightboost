@@ -63,40 +63,41 @@ router.get("/match/:id", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
 
   // ⚡ Bolt Optimization:
-  // 1. Fetch match + basic player info + turns (no abilities) to avoid over-fetching.
+  // 1. Fetch match and avatar concurrently using Promise.all to reduce latency.
   // 2. Explicitly fetch unlocked abilities ONLY for the requesting user.
   // This prevents information leakage (seeing opponent's hand) and reduces payload size.
 
-  const match = await prisma.match.findUnique({
-    where: { id: req.params.id },
-    include: {
-      Player1: {
-        select: {
-          id: true,
-          archetype: true,
-          hp: true,
-          level: true,
-          xp: true,
-          energy: true,
+  const [match, myAvatar] = await Promise.all([
+    prisma.match.findUnique({
+      where: { id: req.params.id },
+      include: {
+        Player1: {
+          select: {
+            id: true,
+            archetype: true,
+            hp: true,
+            level: true,
+            xp: true,
+            energy: true,
+          },
         },
-      },
-      Player2: {
-        select: {
-          id: true,
-          archetype: true,
-          hp: true,
-          level: true,
-          xp: true,
-          energy: true,
+        Player2: {
+          select: {
+            id: true,
+            archetype: true,
+            hp: true,
+            level: true,
+            xp: true,
+            energy: true,
+          },
         },
+        turns: { orderBy: { createdAt: "asc" } },
       },
-      turns: { orderBy: { createdAt: "asc" } },
-    },
-  });
+    }),
+    prisma.avatar.findUnique({ where: { studentId } }),
+  ]);
 
   if (!match) return res.status(404).json({ error: "Match not found" });
-
-  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (
     !myAvatar ||
     (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
