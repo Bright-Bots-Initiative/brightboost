@@ -50,6 +50,13 @@ This project is built with a modern web technology stack:
 
 The backend is configured via environment variables.
 
+### Static Frontend Serving (Split vs Monolith)
+
+The backend can serve the frontend static files (SPA) or run as an API-only service.
+
+- **Split Services (Default):** If you deploy frontend and backend as separate services (e.g. Option B), leave `SERVE_FRONTEND` unset or set to `false`. The backend will only serve API routes.
+- **Monolith:** To serve the frontend from the backend container, set `SERVE_FRONTEND=true` and ensure the `dist/` folder is present in the container.
+
 ### CORS Configuration
 
 The backend uses a strict CORS policy. By default, it allows:
