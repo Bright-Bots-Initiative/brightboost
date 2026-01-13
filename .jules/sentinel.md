@@ -57,3 +57,9 @@
 **Vulnerability:** The application allowed creation of accounts with simple passwords (e.g., "123456", "password"), exposing users to brute-force and credential stuffing attacks.
 **Learning:** Default validation (`min(6)`) is insufficient for modern security standards. Users often default to the simplest possible password if not constrained.
 **Prevention:** Enforce complexity rules (uppercase, lowercase, number, minimum length of 8) at the schema level for all new accounts.
+
+## 2024-05-22 - Prevent Password Hash Leak in Progress Endpoint
+
+**Vulnerability:** `GET /get-progress` endpoint was returning the full `User` object, including the hashed `password` field, because `findUnique` was used without a `select` clause.
+**Learning:** Prisma's `findUnique` (and other find methods) return all scalar fields by default unless `select` or `omit` is used. Always be explicit about selected fields when returning user objects to the client.
+**Prevention:** Use `select` to whitelist public fields when fetching User models for API responses.
