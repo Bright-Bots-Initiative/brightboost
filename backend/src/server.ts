@@ -1,6 +1,7 @@
 import express from "express";
 import type { Request, Response } from "express";
 import path from "path";
+import fs from "fs";
 import cors from "cors";
 import compression from "compression";
 import helmet from "helmet";
@@ -148,13 +149,35 @@ const distPath = path.resolve(
   __dirname,
   process.env.NODE_ENV === "production" ? "../../../dist" : "../../dist",
 );
-app.use(express.static(distPath));
 
-// SPA Fallback
-app.get(/(.*)/, (req, res) => {
-  if (req.path.startsWith("/api")) return res.status(404).end();
-  res.sendFile(path.join(distPath, "index.html"));
-});
+const serveFrontend =
+  process.env.SERVE_FRONTEND === "true" &&
+  process.env.NODE_ENV === "production";
+
+let frontendServed = false;
+
+if (serveFrontend) {
+  if (fs.existsSync(path.join(distPath, "index.html"))) {
+    app.use(express.static(distPath));
+
+    // SPA Fallback
+    app.get(/(.*)/, (req, res) => {
+      if (req.path.startsWith("/api")) return res.status(404).end();
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    frontendServed = true;
+  } else {
+    console.warn(
+      "[WARN] SERVE_FRONTEND=true but dist/index.html missing; running API-only.",
+    );
+  }
+}
+
+if (!frontendServed) {
+  app.get("/", (_req: Request, res: Response) => {
+    res.json({ status: "ok", service: "backend" });
+  });
+}
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 if (process.env.NODE_ENV !== "test") {
