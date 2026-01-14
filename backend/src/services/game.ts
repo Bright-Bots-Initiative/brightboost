@@ -270,11 +270,15 @@ export async function claimTimeout(matchId: string, requesterId: string) {
 }
 
 export async function checkUnlocks(studentId: string) {
-  const progressCount = await prisma.progress.count({
-    where: { studentId, status: "COMPLETED" },
-  });
+  // ⚡ Bolt Optimization: Parallelize independent DB queries
+  // Fetch progress count and avatar details concurrently.
+  const [progressCount, avatar] = await Promise.all([
+    prisma.progress.count({
+      where: { studentId, status: "COMPLETED" },
+    }),
+    prisma.avatar.findUnique({ where: { studentId } }),
+  ]);
 
-  const avatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!avatar) return;
 
   const newLevel = 1 + Math.floor(progressCount / 2);
