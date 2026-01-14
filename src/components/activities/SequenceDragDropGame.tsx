@@ -174,7 +174,7 @@ export default function SequenceDragDropGame({
         distance: 8, // Require movement to start drag, allowing clicks
       },
     }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   // Helper to find the active card object for the overlay
@@ -241,19 +241,19 @@ export default function SequenceDragDropGame({
     if (overId.startsWith("slot-")) {
       targetSlotIndex = parseInt(overId.replace("slot-", ""), 10);
     } else {
-        // Did we drop onto a card that is inside a slot?
-        // If the droppable is the slot container, this is handled.
-        // But if we drop onto the card *inside* the slot, the over.id might be the card ID?
-        // Wait, the card inside the slot is a Draggable, does it act as a Droppable?
-        // No, unless we wrap it.
-        // In my `DroppableSlot`, the `useDroppable` is on the container div.
-        // The `DraggableItem` is inside.
-        // Usually `dnd-kit` detects the droppable container even if dropping on children if pointer-events allow.
-        // However, if the draggable captures events, it might obscure the droppable.
-        // But `DraggableItem` shouldn't obscure the `DroppableSlot` it is in, strictly speaking,
-        // but often it's safer to make sure the slot is the drop target.
-        // Actually, if we drop on a card in a slot, we want to swap.
-        // Let's assume the slot captures the drop.
+      // Did we drop onto a card that is inside a slot?
+      // If the droppable is the slot container, this is handled.
+      // But if we drop onto the card *inside* the slot, the over.id might be the card ID?
+      // Wait, the card inside the slot is a Draggable, does it act as a Droppable?
+      // No, unless we wrap it.
+      // In my `DroppableSlot`, the `useDroppable` is on the container div.
+      // The `DraggableItem` is inside.
+      // Usually `dnd-kit` detects the droppable container even if dropping on children if pointer-events allow.
+      // However, if the draggable captures events, it might obscure the droppable.
+      // But `DraggableItem` shouldn't obscure the `DroppableSlot` it is in, strictly speaking,
+      // but often it's safer to make sure the slot is the drop target.
+      // Actually, if we drop on a card in a slot, we want to swap.
+      // Let's assume the slot captures the drop.
     }
 
     // If dropped into the available area (or outside slots but inside the game area? We need an "available" droppable area to drag BACK to)
@@ -327,7 +327,10 @@ export default function SequenceDragDropGame({
     // To properly reset, we need to gather all cards back to available.
     // Ideally we re-trigger the init effect or just manually move all.
     // The init effect depends on `levelIndex`, so we can just clear slots and combine.
-    const allCards = [...available, ...slots.filter((c): c is GameCard => c !== null)];
+    const allCards = [
+      ...available,
+      ...slots.filter((c): c is GameCard => c !== null),
+    ];
     // Ideally restore original shuffle order? Or just shuffle again?
     // Let's just shuffle again to be simple
     allCards.sort(() => Math.random() - 0.5);
@@ -400,7 +403,7 @@ export default function SequenceDragDropGame({
               {/* AVAILABLE AREA */}
               {/* We make this a droppable so we can drag cards back here */}
               <AvailableArea id="available-area">
-                 <div className="flex flex-wrap gap-2 min-h-[60px] p-2 bg-slate-50 rounded-md border border-dashed border-gray-200">
+                <div className="flex flex-wrap gap-2 min-h-[60px] p-2 bg-slate-50 rounded-md border border-dashed border-gray-200">
                   {available.map((c) => (
                     <DraggableItem
                       key={c.id}
@@ -410,9 +413,9 @@ export default function SequenceDragDropGame({
                     />
                   ))}
                   {available.length === 0 && (
-                     <div className="text-gray-400 text-sm italic w-full text-center py-2">
-                       (Empty)
-                     </div>
+                    <div className="text-gray-400 text-sm italic w-full text-center py-2">
+                      (Empty)
+                    </div>
                   )}
                 </div>
               </AvailableArea>
@@ -431,7 +434,10 @@ export default function SequenceDragDropGame({
 
         <DragOverlay dropAnimation={dropAnimation}>
           {activeCard ? (
-            <Button variant="secondary" className="h-12 w-40 cursor-grabbing shadow-xl">
+            <Button
+              variant="secondary"
+              className="h-12 w-40 cursor-grabbing shadow-xl"
+            >
               {activeCard.text}
             </Button>
           ) : null}
@@ -441,14 +447,23 @@ export default function SequenceDragDropGame({
   );
 }
 
-function AvailableArea({ id, children }: { id: string; children: React.ReactNode }) {
-    const { setNodeRef, isOver } = useDroppable({
-        id: id,
-    });
+function AvailableArea({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: id,
+  });
 
-    return (
-        <div ref={setNodeRef} className={`transition-colors rounded-md ${isOver ? 'bg-slate-100 ring-2 ring-slate-200' : ''}`}>
-            {children}
-        </div>
-    )
+  return (
+    <div
+      ref={setNodeRef}
+      className={`transition-colors rounded-md ${isOver ? "bg-slate-100 ring-2 ring-slate-200" : ""}`}
+    >
+      {children}
+    </div>
+  );
 }

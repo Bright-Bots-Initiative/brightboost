@@ -63,8 +63,8 @@ describe("Progress Route Security", () => {
             email: true,
             // We want to ensure 'password' is NOT in the select keys or is explicitly false (though Prisma uses exclusion by omission in select)
             // Ideally we check that select exists and has the fields we want.
-          })
-        })
+          }),
+        }),
       );
 
       // Verify explicitly that we didn't ask for password

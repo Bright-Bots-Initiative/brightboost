@@ -488,6 +488,12 @@ export default function StudentDashboard() {
                     ? "bg-yellow-50 border-yellow-200 shadow-sm"
                     : "bg-slate-100 border-slate-200 opacity-60 grayscale"
                 }`}
+                role="status"
+                aria-label={`${badgeName}: ${
+                  isUnlocked
+                    ? t("dashboard.unlocked", "Unlocked")
+                    : t("dashboard.locked", "Locked")
+                }`}
               >
                 <div
                   className={`p-2 rounded-full ${
@@ -495,6 +501,7 @@ export default function StudentDashboard() {
                       ? "bg-yellow-100 text-yellow-600"
                       : "bg-slate-200 text-slate-400"
                   }`}
+                  aria-hidden="true"
                 >
                   {isUnlocked ? (
                     <Unlock className="w-6 h-6" />
@@ -506,6 +513,7 @@ export default function StudentDashboard() {
                   className={`text-sm font-bold ${
                     isUnlocked ? "text-yellow-700" : "text-slate-500"
                   }`}
+                  aria-hidden="true"
                 >
                   {badgeName}
                 </span>

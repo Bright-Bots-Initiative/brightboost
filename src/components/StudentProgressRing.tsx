@@ -4,6 +4,7 @@ type Props = {
   stroke?: number;
   label?: string;
 };
+
 export default function StudentProgressRing({
   percent,
   size = 120,
@@ -19,9 +20,13 @@ export default function StudentProgressRing({
     <div
       className="inline-flex flex-col items-center"
       data-testid="xp-ring"
-      aria-label={label}
+      role="progressbar"
+      aria-valuenow={Math.round(clamped)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label || `${Math.round(clamped)}% Complete`}
     >
-      <svg width={size} height={size} role="img" aria-label={label}>
+      <svg width={size} height={size} aria-hidden="true" focusable="false">
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -48,11 +53,16 @@ export default function StudentProgressRing({
           dominantBaseline="middle"
           textAnchor="middle"
           className="font-semibold"
+          fill="currentColor"
         >
           {Math.round(clamped)}%
         </text>
       </svg>
-      {label ? <div className="mt-2 text-sm opacity-80">{label}</div> : null}
+      {label ? (
+        <div className="mt-2 text-sm opacity-80" aria-hidden="true">
+          {label}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -10,14 +10,16 @@ vi.mock("@/hooks/use-toast", () => ({
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
-    i18n: { language: 'en' }
+    i18n: { language: "en" },
   }),
 }));
 
 // Mock dnd-kit to avoid JSDOM issues and focus on game logic
 vi.mock("@dnd-kit/core", async () => {
   return {
-    DndContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    DndContext: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
     DragOverlay: () => null,
     useSensor: () => null,
     useSensors: () => null,
@@ -99,7 +101,9 @@ describe("SequenceDragDropGame", () => {
 
   it("calls onComplete when correct", () => {
     const onComplete = vi.fn();
-    render(<SequenceDragDropGame config={mockConfig} onComplete={onComplete} />);
+    render(
+      <SequenceDragDropGame config={mockConfig} onComplete={onComplete} />,
+    );
 
     // Place in correct order: A, B, C
     fireEvent.click(screen.getByText("A"));
@@ -112,8 +116,10 @@ describe("SequenceDragDropGame", () => {
   });
 
   it("does not call onComplete when incorrect", () => {
-     const onComplete = vi.fn();
-    render(<SequenceDragDropGame config={mockConfig} onComplete={onComplete} />);
+    const onComplete = vi.fn();
+    render(
+      <SequenceDragDropGame config={mockConfig} onComplete={onComplete} />,
+    );
 
     // Place in wrong order: B, A, C
     // Note: click fills first empty slot.
