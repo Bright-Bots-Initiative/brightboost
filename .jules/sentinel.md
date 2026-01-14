@@ -63,3 +63,8 @@
 **Vulnerability:** `GET /get-progress` endpoint was returning the full `User` object, including the hashed `password` field, because `findUnique` was used without a `select` clause.
 **Learning:** Prisma's `findUnique` (and other find methods) return all scalar fields by default unless `select` or `omit` is used. Always be explicit about selected fields when returning user objects to the client.
 **Prevention:** Use `select` to whitelist public fields when fetching User models for API responses.
+
+## 2026-01-14 - Missing Input Validation in Progress Route
+**Vulnerability:** The `POST /api/progress/complete-activity` endpoint blindly trusted `req.body`, allowing negative `timeSpentS` (corrupting data) and missing fields (causing 500 errors).
+**Learning:** MVP/Prototype endpoints often lack rigorous validation that "legacy" or "comprehensive" endpoints have. Always audit "quick fix" endpoints.
+**Prevention:** Enforce Zod schemas for ALL POST endpoints, even internal/MVP ones. Added `completeActivitySchema`.

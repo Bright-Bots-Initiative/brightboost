@@ -9,7 +9,10 @@ const ProgressStatus = {
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { requireAuth } from "../utils/auth";
 import { checkUnlocks } from "../services/game";
-import { checkpointSchema } from "../validation/schemas";
+import {
+  checkpointSchema,
+  completeActivitySchema,
+} from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 
 const router = Router();
@@ -66,7 +69,13 @@ router.get("/get-progress", requireAuth, async (req, res) => {
 // Complete an activity (MVP)
 router.post("/progress/complete-activity", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
-  const { moduleSlug, lessonId, activityId, timeSpentS } = req.body;
+
+  const parse = completeActivitySchema.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ error: parse.error.flatten() });
+  }
+
+  const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
   // 1. Upsert progress
   const existing = await prisma.progress.findFirst({

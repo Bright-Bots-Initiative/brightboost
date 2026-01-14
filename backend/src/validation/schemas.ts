@@ -28,3 +28,10 @@ export const matchActSchema = z.object({
     })
     .optional(),
 });
+
+export const completeActivitySchema = z.object({
+  moduleSlug: z.string().min(1, "Module slug required"),
+  lessonId: z.string().optional().nullable(),
+  activityId: z.string().min(1, "Activity ID required"),
+  timeSpentS: z.number().int().nonnegative().optional().default(0),
+});
