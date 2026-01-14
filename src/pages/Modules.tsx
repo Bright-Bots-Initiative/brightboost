@@ -20,7 +20,11 @@ export default function Modules() {
     api
       .getModules()
       .then((data) => {
-        setModules(data);
+        // Filter: only K-2 and explicitly exclude stem-1-intro
+        const visible = data.filter(
+          (m: any) => m.level === "K-2" && m.slug !== "stem-1-intro",
+        );
+        setModules(visible);
         setError(null);
       })
       .catch(() => {
@@ -61,7 +65,7 @@ export default function Modules() {
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between">
                 <p className="text-sm text-gray-500 mb-6">
-                  {m.subtitle || "No subtitle"}
+                  {m.description ?? m.subtitle ?? "..."}
                 </p>
                 <Button
                   onClick={() => navigate(`/student/modules/${m.slug}`)}

@@ -153,14 +153,14 @@ async function main() {
       title: "STEM-1: Introduction to Tech",
       description: "K-2 Intro to AI, Quantum, and Bio",
       level: "K-2",
-      published: true,
+      published: false,
     },
     create: {
       slug: "stem-1-intro",
       title: "STEM-1: Introduction to Tech",
       description: "K-2 Intro to AI, Quantum, and Bio",
       level: "K-2",
-      published: true,
+      published: false,
     },
   });
   console.log("Created module:", module.slug);
@@ -170,14 +170,14 @@ async function main() {
     where: { slug: "k2-stem-sequencing" },
     update: {
       title: "Boost’s Lost Steps",
-      description: "Help Boost the Robot fix the order! ⭐",
+      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-sequencing",
       title: "Boost’s Lost Steps",
-      description: "Help Boost the Robot fix the order! ⭐",
+      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
       level: "K-2",
       published: true,
     },
@@ -239,18 +239,21 @@ async function main() {
         prompt: "What is Boost making?",
         choices: ["A shoe 👞", "A cake 🎂", "A car 🚗"],
         answerIndex: 1,
+        hint: "Look at the picture with the candles! 🎂",
       },
       {
         id: "q2",
         prompt: "A plan with steps is called…",
         choices: ["An algorithm 📜", "Magic ✨", "A nap 💤"],
         answerIndex: 0,
+        hint: "It's a big word that starts with A... 📜",
       },
       {
         id: "q3",
         prompt: "What does debug mean?",
         choices: ["Fix a mistake 🛠️", "Make a mess 🙃", "Eat snacks 🍪"],
-        answerIndex: 1,
+        answerIndex: 0,
+        hint: "When something is broken, we have to ___ it. 🛠️",
       },
     ],
     review: {
