@@ -150,6 +150,7 @@ export default function SequenceDragDropGame({
   const [available, setAvailable] = useState<GameCard[]>([]);
   // State: Active drag item (for overlay)
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [hintText, setHintText] = useState<string | null>(null);
 
   // Initialize level
   useEffect(() => {
@@ -166,6 +167,7 @@ export default function SequenceDragDropGame({
 
     setSlots(Array.from({ length: slotCount }, () => null));
     setAvailable(shuffled);
+    setHintText(null);
   }, [resolvedLevel, levelIndex, slotCount]);
 
   const sensors = useSensors(
@@ -336,23 +338,57 @@ export default function SequenceDragDropGame({
     allCards.sort(() => Math.random() - 0.5);
     setSlots(Array.from({ length: slotCount }, () => null));
     setAvailable(allCards);
+    setHintText(null);
+  };
+
+  const getHint = (levelId: string, index: number): string | null => {
+    if (levelId === "k") {
+      if (index === 0) return "Hint: What do you do first to start cooking? 🥣";
+      if (index === 1) return "Hint: The oven 🔥 comes before frosting 🧁.";
+      if (index === 2) return "Hint: Frosting goes on AFTER baking.";
+      if (index === 3) return "Hint: Eating 😋 comes last!";
+    }
+    if (levelId === "g1") {
+      if (index === 0) return "Hint: Turn the water on first! 🚰";
+      if (index === 4) return "Hint: Dry your hands last! 🧻";
+      return "Hint: Think about what you do with soap and water.";
+    }
+    if (levelId === "g2") {
+      if (index === 0) return "Hint: Always make a plan first! 📝";
+      if (index === 4) return "Hint: Share your work when it's done! 📤";
+      return "Hint: Build, test, then fix!";
+    }
+    return null;
   };
 
   const check = () => {
     const isComplete = slots.every((s) => s !== null);
     if (!isComplete) return;
-    const correct = slots.every((s, i) => s?.text === resolvedLevel.answer[i]);
-    if (!correct) {
+
+    // Find first wrong index
+    const firstWrongIndex = slots.findIndex(
+      (s, i) => s?.text !== resolvedLevel.answer[i],
+    );
+
+    if (firstWrongIndex !== -1) {
+      // Choose hint
+      const hint =
+        getHint(level.id, firstWrongIndex) ||
+        "Hint: Try asking 'What happens first?'";
+      setHintText(hint);
+
       toast({
-        title: "Try again!",
-        description: "That order isn’t quite right.",
-        variant: "destructive",
+        title: "Almost!",
+        description: "Check the hint for help!",
+        // Friendly toast, not destructive/red
       });
-      // Optionally reset? The original code did resetLevel().
-      // "Maintain existing Reset and Check Order UX" -> Original code: resetLevel() on fail.
-      resetLevel();
+      // DO NOT reset automatically
       return;
     }
+
+    // Correct
+    setHintText(null);
+
     if (levelIndex < levels.length - 1) {
       toast({ title: "Great job!", description: "Next level unlocked." });
       setLevelIndex((i) => i + 1);
@@ -380,8 +416,18 @@ export default function SequenceDragDropGame({
       >
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="font-semibold">
-              Drag or tap cards to place them into slots.
+            <div className="space-y-1">
+              <div className="font-semibold text-lg text-brightboost-navy">
+                Goal: Put the steps in order (First → Next → Last)
+              </div>
+              <div className="text-sm text-gray-500">
+                Tip: Ask "What has to happen before…?"
+              </div>
+              {hintText && (
+                <div className="mt-2 p-3 bg-blue-50 text-blue-800 rounded-md text-sm font-medium border border-blue-100 animate-in fade-in slide-in-from-top-1">
+                  {hintText}
+                </div>
+              )}
             </div>
 
             {/* SLOTS AREA */}

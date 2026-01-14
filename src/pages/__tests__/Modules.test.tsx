@@ -51,10 +51,36 @@ describe("Modules Page", () => {
     expect(screen.getByTestId("modules-skeleton")).toBeDefined();
   });
 
-  it("renders modules after loading", async () => {
+  it("renders K-2 modules after loading and filters others", async () => {
     const mockModules = [
-      { id: 1, title: "Module 1", subtitle: "Subtitle 1", slug: "module-1" },
-      { id: 2, title: "Module 2", subtitle: "Subtitle 2", slug: "module-2" },
+      {
+        id: 1,
+        title: "Module 1",
+        subtitle: "Subtitle 1",
+        slug: "module-1",
+        level: "K-2",
+      },
+      {
+        id: 2,
+        title: "Module 2",
+        subtitle: "Subtitle 2",
+        slug: "module-2",
+        level: "K-2",
+      },
+      {
+        id: 3,
+        title: "Module 3",
+        subtitle: "Advanced Module",
+        slug: "module-3",
+        level: "3-5",
+      },
+      {
+        id: 4,
+        title: "STEM Intro",
+        subtitle: "Hidden Intro",
+        slug: "stem-1-intro",
+        level: "K-2",
+      },
     ];
     (api.getModules as any).mockResolvedValue(mockModules);
 
@@ -70,6 +96,8 @@ describe("Modules Page", () => {
 
     expect(screen.getByText("Module 1")).toBeDefined();
     expect(screen.getByText("Module 2")).toBeDefined();
+    expect(screen.queryByText("Module 3")).toBeNull(); // Should be filtered out (wrong level)
+    expect(screen.queryByText("STEM Intro")).toBeNull(); // Should be filtered out (excluded slug)
     expect(screen.getByLabelText("Start learning Module 1")).toBeDefined();
   });
 

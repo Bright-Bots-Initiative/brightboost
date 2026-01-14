@@ -19,6 +19,7 @@ type StoryQuestion = {
   prompt: LocalizedField;
   choices: LocalizedField[];
   answerIndex: number;
+  hint?: LocalizedField;
 };
 
 function safeJsonParse(raw: string): any {
@@ -44,6 +45,8 @@ export default function ActivityPlayer() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [mode, setMode] = useState<"story" | "quiz">("story");
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [incorrectIds, setIncorrectIds] = useState<string[]>([]);
 
   const startMsRef = useRef<number>(Date.now());
 
@@ -88,6 +91,8 @@ export default function ActivityPlayer() {
         setSlideIndex(0);
         setMode("story");
         setAnswers({});
+        setSubmitted(false);
+        setIncorrectIds([]);
       })
       .catch((e) => {
         toast({
@@ -251,31 +256,59 @@ export default function ActivityPlayer() {
           <CardContent className="p-6 space-y-6">
             <div className="text-2xl font-bold">{activity.title}</div>
 
-            {questions.map((q) => (
-              <div key={q.id} className="space-y-2">
-                <div className="font-semibold">{resolveText(t, q.prompt)}</div>
-                <div className="grid gap-2">
-                  {resolveChoiceList(t, q.choices).map((c, idx) => {
-                    const selected = answers[q.id] === idx;
-                    return (
-                      <Button
-                        key={idx}
-                        variant={selected ? "default" : "outline"}
-                        className="justify-start"
-                        onClick={() =>
-                          setAnswers((prev) => ({ ...prev, [q.id]: idx }))
-                        }
-                      >
-                        {c}
-                      </Button>
-                    );
-                  })}
+            {questions.map((q) => {
+              const isWrong = submitted && incorrectIds.includes(q.id);
+              return (
+                <div key={q.id} className="space-y-2">
+                  <div className="font-semibold">
+                    {resolveText(t, q.prompt)}
+                    {isWrong && (
+                      <span className="text-red-500 ml-2 text-sm">
+                        (Try again!)
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-2">
+                    {resolveChoiceList(t, q.choices).map((c, idx) => {
+                      const selected = answers[q.id] === idx;
+                      return (
+                        <Button
+                          key={idx}
+                          variant={selected ? "default" : "outline"}
+                          className={`justify-start ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
+                          onClick={() => {
+                            setAnswers((prev) => ({ ...prev, [q.id]: idx }));
+                            // Clear incorrect status for this specific question when they change answer
+                            if (isWrong) {
+                              setIncorrectIds((prev) =>
+                                prev.filter((id) => id !== q.id),
+                              );
+                            }
+                          }}
+                        >
+                          {c}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  {isWrong && q.hint && (
+                    <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded border border-blue-100 animate-in fade-in">
+                      💡 {resolveText(t, q.hint)}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setAnswers({})}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAnswers({});
+                  setSubmitted(false);
+                  setIncorrectIds([]);
+                }}
+              >
                 Reset
               </Button>
               <Button
@@ -288,10 +321,11 @@ export default function ActivityPlayer() {
                     completeAndExit();
                     return;
                   }
+                  setSubmitted(true);
+                  setIncorrectIds(incorrect.map((q) => q.id));
                   toast({
-                    title: "Try again!",
-                    description: `You missed ${incorrect.length} question(s).`,
-                    variant: "destructive",
+                    title: "Almost!",
+                    description: `Check the hints and try again!`,
                   });
                 }}
               >
