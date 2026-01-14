@@ -315,21 +315,30 @@ export default function ActivityPlayer() {
       );
     }
 
+    // Fallback for unsupported or legacy interact
+    const text = resolveText(
+      t,
+      content?.text ?? activity.content,
+      activity.content,
+    );
+
     return (
       <div className="p-6 max-w-2xl mx-auto">
         <Card>
           <CardContent className="p-6 space-y-4">
             <div className="text-xl font-bold">{activity.title}</div>
-            <div className="text-gray-700">
-              This game type isn’t supported yet:{" "}
-              <span className="font-mono">{String(key)}</span>
+            {/* Show text content if available */}
+            <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate(`/student/modules/${slug}`)}
+                variant="outline"
+              >
+                Back
+              </Button>
+              <Button onClick={completeAndExit}>Mark Complete</Button>
             </div>
-            <Button
-              onClick={() => navigate(`/student/modules/${slug}`)}
-              variant="outline"
-            >
-              Back to Module
-            </Button>
           </CardContent>
         </Card>
       </div>
