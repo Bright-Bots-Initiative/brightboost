@@ -8,6 +8,12 @@ import { ModulesSkeleton } from "@/components/ModulesSkeleton";
 import { BookOpen } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { ActivityThumb } from "@/components/shared/ActivityThumb";
+import { ImageKey } from "@/theme/activityIllustrations";
+
+const MODULE_THUMBNAILS: Record<string, ImageKey> = {
+  "k2-stem-sequencing": "module_sequencing",
+};
 
 export default function Modules() {
   const [modules, setModules] = useState<any[]>([]);
@@ -58,6 +64,13 @@ export default function Modules() {
               key={m.id}
               className="hover:shadow-lg transition flex flex-col h-full border-2 border-transparent hover:border-brightboost-blue/20"
             >
+              <div className="p-4 pb-0">
+                <ActivityThumb
+                  imageKey={MODULE_THUMBNAILS[m.slug] || "module_sequencing"}
+                  variant="module"
+                  className="h-24 w-full"
+                />
+              </div>
               <CardHeader>
                 <CardTitle className="text-xl text-brightboost-navy">
                   {m.title}
