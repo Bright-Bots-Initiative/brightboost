@@ -12,9 +12,10 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Lock, Unlock, Flame } from "lucide-react";
+import { Lock, Unlock, Flame, BookOpen, Star, Zap, Check } from "lucide-react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -441,30 +442,54 @@ export default function StudentDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {upNext.map((a) => (
-              <Card key={a.activityId} className="border-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {a.kind === "INFO" ? "📖" : "🎮"} {a.activityTitle}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-sm text-slate-600">
-                    {a.unitTitle} • {a.lessonTitle}
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={() =>
-                      navigate(
-                        `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
-                      )
-                    }
-                  >
-                    {t("dashboard.play")}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {upNext.map((a) => {
+              const tokenKey = a.kind === "INFO" ? "story" : "game";
+              const token = ACTIVITY_VISUAL_TOKENS[tokenKey];
+              const Icon = () => {
+                if (token.emoji)
+                  return <span className="text-lg">{token.emoji}</span>;
+                switch (token.iconName) {
+                  case "BookOpen":
+                    return <BookOpen className="w-5 h-5" />;
+                  case "Star":
+                    return <Star className="w-5 h-5" />;
+                  case "Zap":
+                    return <Zap className="w-5 h-5" />;
+                  default:
+                    return <Star className="w-5 h-5" />;
+                }
+              };
+
+              return (
+                <Card key={a.activityId} className="border-slate-200 shadow-sm">
+                  <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${token.bubbleClass}`}
+                    >
+                      <Icon />
+                    </div>
+                    <CardTitle className="text-base text-brightboost-navy leading-tight">
+                      {a.activityTitle}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-sm text-slate-600 pl-[3.25rem]">
+                      {a.unitTitle} • {a.lessonTitle}
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        navigate(
+                          `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
+                        )
+                      }
+                    >
+                      {t("dashboard.play")}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </section>
