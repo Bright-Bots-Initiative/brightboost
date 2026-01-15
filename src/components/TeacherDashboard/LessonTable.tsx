@@ -57,6 +57,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
         <IconButton
           onClick={() => {}}
           title="Drag to reorder"
+          ariaLabel={`Drag to reorder ${lesson.title}`}
           className="cursor-grab"
           {...listeners}
         >
@@ -96,6 +97,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
           <IconButton
             onClick={() => onEditLesson(lesson)}
             title="Edit"
+            ariaLabel={`Edit ${lesson.title}`}
             className="text-blue-600 hover:text-blue-900"
           >
             <EditIcon />
@@ -103,6 +105,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
           <IconButton
             onClick={() => onDuplicateLesson(lesson.id)}
             title="Duplicate"
+            ariaLabel={`Duplicate ${lesson.title}`}
             className="text-green-600 hover:text-green-900"
           >
             <DuplicateIcon />
@@ -110,6 +113,7 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
           <IconButton
             onClick={() => onDeleteLesson(lesson.id)}
             title="Delete"
+            ariaLabel={`Delete ${lesson.title}`}
             className="text-red-600 hover:text-red-900"
           >
             <DeleteIcon />

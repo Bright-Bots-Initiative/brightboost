@@ -1,8 +1,9 @@
 import React from "react";
 
-interface IconButtonProps {
+interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClick: () => void;
   title: string;
+  ariaLabel?: string;
   children: React.ReactNode; // SVG icon will be passed as children
   className?: string;
 }
@@ -10,14 +11,18 @@ interface IconButtonProps {
 const IconButton: React.FC<IconButtonProps> = ({
   onClick,
   title,
+  ariaLabel,
   children,
   className = "",
+  ...props
 }) => {
   return (
     <button
       onClick={onClick}
       title={title}
+      aria-label={ariaLabel || title}
       className={`p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition duration-150 ${className}`}
+      {...props}
     >
       {children}
     </button>

@@ -36,4 +36,34 @@ describe("IconButton", () => {
       expect(handleClick).toHaveBeenCalledTimes(1);
     }
   });
+
+  it("uses title as aria-label by default", () => {
+    render(
+      <IconButton onClick={() => {}} title="Edit item">
+        <EditIcon />
+      </IconButton>,
+    );
+    const button = screen.getByRole("button", { name: "Edit item" });
+    expect(button).toBeDefined();
+  });
+
+  it("uses provided ariaLabel as aria-label", () => {
+    render(
+      <IconButton onClick={() => {}} title="Edit" ariaLabel="Edit item specific">
+        <EditIcon />
+      </IconButton>,
+    );
+    const button = screen.getByRole("button", { name: "Edit item specific" });
+    expect(button).toBeDefined();
+  });
+
+  it("spreads additional props to the button", () => {
+    render(
+      <IconButton onClick={() => {}} title="Edit" data-testid="custom-button">
+        <EditIcon />
+      </IconButton>,
+    );
+    const button = screen.getByTestId("custom-button");
+    expect(button).toBeDefined();
+  });
 });
