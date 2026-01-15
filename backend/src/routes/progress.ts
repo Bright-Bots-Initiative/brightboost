@@ -77,13 +77,31 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
+  // 0. Fetch Avatar & Abilities Before (for calculating rewards)
+  const [avatarBefore, abilitiesBefore] = await Promise.all([
+    prisma.avatar.findUnique({ where: { studentId } }),
+    prisma.unlockedAbility.count({ where: { avatarId: studentId } }),
+  ]);
+
   // 1. Upsert progress
   const existing = await prisma.progress.findFirst({
     where: { studentId, activityId },
   });
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
-    return res.json({ message: "Already completed", progress: existing });
+    // Idempotent return with 0 rewards
+    return res.json({
+      message: "Already completed",
+      progress: existing,
+      reward: {
+        xpDelta: 0,
+        levelDelta: 0,
+        energyDelta: 0,
+        hpDelta: 0,
+        newAbilitiesDelta: 0,
+      },
+      avatar: avatarBefore,
+    });
   }
 
   let finalProgress;
@@ -106,21 +124,65 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
         timeSpentS: timeSpentS || 0,
       },
     });
-
-    try {
-      // Award XP
-      await prisma.avatar.update({
-        where: { studentId },
-        data: { xp: { increment: 50 } },
-      });
-    } catch (e) {
-      console.warn("Could not give XP to avatar", e);
-    }
-
-    await checkUnlocks(studentId);
   }
 
-  res.json(finalProgress);
+  // 2. Apply Rewards & Check Unlocks (only if avatar exists)
+  if (avatarBefore) {
+    try {
+      // Award XP + Energy + HP
+      const energyGain = 5;
+      const hpGain = 2;
+      const currentEnergy = avatarBefore.energy || 0;
+      const currentHp = avatarBefore.hp || 0;
+
+      await prisma.avatar.update({
+        where: { studentId },
+        data: {
+          xp: { increment: 50 },
+          energy: Math.min(100, currentEnergy + energyGain),
+          hp: Math.min(100, currentHp + hpGain),
+        },
+      });
+
+      // Check for level up (may add more XP and unlocks)
+      await checkUnlocks(studentId);
+    } catch (e) {
+      console.warn("Could not give rewards to avatar", e);
+    }
+  }
+
+  // 3. Fetch Avatar & Abilities After
+  const [avatarAfter, abilitiesAfter] = await Promise.all([
+    prisma.avatar.findUnique({ where: { studentId } }),
+    prisma.unlockedAbility.count({ where: { avatarId: studentId } }),
+  ]);
+
+  // 4. Calculate Deltas
+  let xpDelta = 0;
+  let levelDelta = 0;
+  let energyDelta = 0;
+  let hpDelta = 0;
+  let newAbilitiesDelta = 0;
+
+  if (avatarBefore && avatarAfter) {
+    xpDelta = avatarAfter.xp - avatarBefore.xp;
+    levelDelta = avatarAfter.level - avatarBefore.level;
+    energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
+    hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
+    newAbilitiesDelta = Math.max(0, abilitiesAfter - abilitiesBefore);
+  }
+
+  res.json({
+    progress: finalProgress,
+    reward: {
+      xpDelta,
+      levelDelta,
+      energyDelta,
+      hpDelta,
+      newAbilitiesDelta,
+    },
+    avatar: avatarAfter,
+  });
 });
 
 // Legacy / Comprehensive Routes (with validation)

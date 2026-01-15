@@ -36,6 +36,7 @@ type Config = {
 type GameCard = {
   id: string;
   text: string;
+  matchValue: string;
 };
 
 // --- Sub-components for DND ---
@@ -137,7 +138,7 @@ export default function SequenceDragDropGame({
   const resolvedLevel = useMemo(() => {
     if (!level) return null;
     return {
-      cards: resolveChoiceList(t, level.cards),
+      // We don't resolve cards here because they might be objects
       answer: resolveChoiceList(t, level.answer),
     };
   }, [level, t]);
@@ -154,13 +155,38 @@ export default function SequenceDragDropGame({
 
   // Initialize level
   useEffect(() => {
-    if (!resolvedLevel) return;
+    if (!level) return;
 
-    // Generate stable IDs for cards
-    const cardsWithIds = resolvedLevel.cards.map((text, i) => ({
-      id: `card-${levelIndex}-${i}-${Math.random().toString(36).substr(2, 9)}`,
-      text,
-    }));
+    // Generate stable IDs for cards and resolve content
+    const cardsWithIds: GameCard[] = level.cards.map((c: any, i: number) => {
+      let text = "";
+      let matchValue = "";
+
+      if (typeof c === "string") {
+        const resolved = resolveText(t, c);
+        text = resolved;
+        matchValue = resolved;
+      } else if (c && typeof c === "object") {
+        if ("i18nKey" in c) {
+          const resolved = resolveText(t, c);
+          text = resolved;
+          matchValue = resolved;
+        } else {
+          // { text, icon } object
+          const rawText = c.text;
+          const icon = c.icon || "";
+          const resolvedText = resolveText(t, rawText);
+          text = icon ? `${icon} ${resolvedText}` : resolvedText;
+          matchValue = resolvedText;
+        }
+      }
+
+      return {
+        id: `card-${levelIndex}-${i}-${Math.random().toString(36).substr(2, 9)}`,
+        text,
+        matchValue,
+      };
+    });
 
     // Shuffle
     const shuffled = [...cardsWithIds].sort(() => Math.random() - 0.5);
@@ -168,7 +194,7 @@ export default function SequenceDragDropGame({
     setSlots(Array.from({ length: slotCount }, () => null));
     setAvailable(shuffled);
     setHintText(null);
-  }, [resolvedLevel, levelIndex, slotCount]);
+  }, [level, levelIndex, slotCount, t]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -367,7 +393,7 @@ export default function SequenceDragDropGame({
 
     // Find first wrong index
     const firstWrongIndex = slots.findIndex(
-      (s, i) => s?.text !== resolvedLevel.answer[i],
+      (s, i) => s?.matchValue !== resolvedLevel!.answer[i],
     );
 
     if (firstWrongIndex !== -1) {
@@ -400,10 +426,18 @@ export default function SequenceDragDropGame({
 
   const filledAll = slots.length > 0 && slots.every((s) => s !== null);
 
+  const getMissionTitle = (id: string) => {
+    if (id === "k") return "Mission: Bake a Cake 🎂";
+    if (id === "g1") return "Mission: Wash Your Hands 🧼";
+    return "Mission: Fix the Order";
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-xl font-bold">Fix the Order</div>
+        <div className="text-xl font-bold text-brightboost-navy">
+          {getMissionTitle(level.id)}
+        </div>
         <div className="text-sm text-gray-500">
           Level {levelIndex + 1}/{levels.length}
         </div>
