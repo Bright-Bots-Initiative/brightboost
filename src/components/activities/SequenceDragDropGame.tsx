@@ -19,7 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { LocalizedField, resolveChoiceList } from "@/utils/localizedContent";
+import { LocalizedField, resolveChoiceList, resolveText } from "@/utils/localizedContent";
+import ActivityHeader from "@/components/activities/ActivityHeader";
+import { VisualKey } from "@/theme/activityVisualTokens";
 
 type Level = {
   id: string;
@@ -426,22 +428,21 @@ export default function SequenceDragDropGame({
 
   const filledAll = slots.length > 0 && slots.every((s) => s !== null);
 
-  const getMissionTitle = (id: string) => {
-    if (id === "k") return "Mission: Bake a Cake 🎂";
-    if (id === "g1") return "Mission: Wash Your Hands 🧼";
-    return "Mission: Fix the Order";
+  const getVisualKey = (id: string): VisualKey => {
+    if (id === "k") return "mission_cake";
+    if (id === "g1") return "mission_hands";
+    if (id === "g2") return "mission_plan";
+    return "game";
   };
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xl font-bold text-brightboost-navy">
-          {getMissionTitle(level.id)}
-        </div>
-        <div className="text-sm text-gray-500">
-          Level {levelIndex + 1}/{levels.length}
-        </div>
-      </div>
+      <ActivityHeader
+        title="Sequence Game"
+        visualKey="game"
+        missionKey={getVisualKey(level.id)}
+        subtitle={`Level ${levelIndex + 1}/${levels.length}`}
+      />
 
       <DndContext
         sensors={sensors}

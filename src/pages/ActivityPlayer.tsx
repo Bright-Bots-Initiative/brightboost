@@ -13,6 +13,8 @@ import {
   resolveText,
   resolveChoiceList,
 } from "@/utils/localizedContent";
+import ActivityHeader from "@/components/activities/ActivityHeader";
+import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 
 type StorySlide = { id: string; text: LocalizedField };
 type StoryQuestion = {
@@ -135,14 +137,15 @@ export default function ActivityPlayer() {
   if (completionData) {
     const { reward } = completionData;
     const isLevelUp = (reward?.levelDelta || 0) > 0;
+    const rewardToken = ACTIVITY_VISUAL_TOKENS["reward"];
 
     return (
       <div className="p-6 min-h-screen flex items-center justify-center bg-slate-50">
-        <Card className="max-w-md w-full border-2 border-yellow-400 bg-white shadow-xl animate-in zoom-in-50 duration-500">
+        <Card className={`max-w-md w-full border-2 ${rewardToken.borderClass || "border-yellow-400"} bg-white shadow-xl animate-in zoom-in-50 duration-500`}>
           <CardContent className="p-8 space-y-6 text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-green-100 p-4 rounded-full">
-                <Check className="w-12 h-12 text-green-600" />
+              <div className={`p-4 rounded-full ${rewardToken.bubbleClass} w-20 h-20 flex items-center justify-center`}>
+                <Check className="w-10 h-10" />
               </div>
             </div>
 
@@ -153,8 +156,8 @@ export default function ActivityPlayer() {
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-2">
                 <div className="text-gray-500 text-lg">You earned</div>
-                <div className="text-5xl font-black text-yellow-500 flex items-center gap-2">
-                  <Star className="w-8 h-8 fill-yellow-500" />
+                <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
+                  <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
                   {reward?.xpDelta ? `+${reward.xpDelta}` : "+0"} XP
                 </div>
               </div>
@@ -248,10 +251,10 @@ export default function ActivityPlayer() {
         activity.content,
       );
       return (
-        <div className="p-6 max-w-2xl mx-auto">
+        <div className="p-6 max-w-2xl mx-auto space-y-4">
+          <ActivityHeader title={activity.title} visualKey="story" />
           <Card>
             <CardContent className="p-6 space-y-4">
-              <div className="text-xl font-bold">{activity.title}</div>
               <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
               <div className="flex gap-2">
                 <Button
@@ -276,6 +279,11 @@ export default function ActivityPlayer() {
     if (mode === "story") {
       return (
         <div className="p-6 max-w-3xl mx-auto space-y-4">
+          <ActivityHeader
+            title={activity.title}
+            visualKey="story"
+            subtitle={`Slide ${Math.min(slideIndex + 1, slides.length)} of ${slides.length}`}
+          />
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
@@ -283,9 +291,6 @@ export default function ActivityPlayer() {
             >
               Back
             </Button>
-            <div className="text-sm text-gray-500">
-              Slide {Math.min(slideIndex + 1, slides.length)}/{slides.length}
-            </div>
           </div>
 
           <Card>
@@ -323,17 +328,19 @@ export default function ActivityPlayer() {
     // Quiz
     return (
       <div className="p-6 max-w-3xl mx-auto space-y-4">
+        <ActivityHeader
+          title={activity.title}
+          visualKey="quiz"
+          subtitle="Answer questions to complete the lesson!"
+        />
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => setMode("story")}>
             Back to Story
           </Button>
-          <div className="text-sm text-gray-500">Quick Quiz</div>
         </div>
 
         <Card>
           <CardContent className="p-6 space-y-6">
-            <div className="text-2xl font-bold">{activity.title}</div>
-
             {questions.map((q) => {
               const isWrong = submitted && incorrectIds.includes(q.id);
               return (
@@ -435,10 +442,10 @@ export default function ActivityPlayer() {
     );
 
     return (
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-6 max-w-2xl mx-auto space-y-4">
+        <ActivityHeader title={activity.title} visualKey="game" />
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="text-xl font-bold">{activity.title}</div>
             {/* Show text content if available */}
             <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
 
