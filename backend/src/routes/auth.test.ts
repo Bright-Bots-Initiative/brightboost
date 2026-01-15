@@ -96,7 +96,7 @@ describe("Auth Routes", () => {
       expect(response.body).toHaveProperty("token");
     });
 
-    it("should login successfully with plaintext credentials (legacy/seed)", async () => {
+    it("should reject plaintext credentials", async () => {
       // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue({
         id: "user-123",
@@ -110,34 +110,7 @@ describe("Auth Routes", () => {
         password: "password123",
       });
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("token");
-    });
-
-    it("should reject plaintext credentials in production", async () => {
-      // Mock NODE_ENV to production
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = "production";
-
-      try {
-        // @ts-ignore
-        prismaMock.user.findUnique.mockResolvedValue({
-          id: "user-123",
-          email: "user@test.com",
-          password: "password123", // Stored as plaintext
-          role: "student",
-        });
-
-        const response = await request(app).post("/api/login").send({
-          email: "user@test.com",
-          password: "password123",
-        });
-
-        expect(response.status).toBe(401);
-      } finally {
-        // Reset NODE_ENV
-        process.env.NODE_ENV = originalEnv;
-      }
+      expect(response.status).toBe(401);
     });
 
     it("should return 401 for invalid password", async () => {

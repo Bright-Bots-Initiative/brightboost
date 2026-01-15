@@ -1,4 +1,5 @@
 const { PrismaClient, Archetype, ActivityKind } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
@@ -111,11 +112,12 @@ async function main() {
     where: { email: "teacher@school.com" },
   });
   if (!teacher) {
+    const hashedPassword = await bcrypt.hash("password123", 10);
     teacher = await prisma.user.create({
       data: {
         name: "Ms. Frizzle",
         email: "teacher@school.com",
-        password: "password123",
+        password: hashedPassword,
         role: "teacher",
       },
     });
@@ -130,12 +132,13 @@ async function main() {
     });
   }
   if (!student) {
+    const hashedPassword = await bcrypt.hash("password", 10);
     student = await prisma.user.create({
       data: {
         id: "student-123",
         name: "Test Student",
         email: "student@test.com",
-        password: "password",
+        password: hashedPassword,
         role: "student",
         xp: 0,
         level: "Novice",
