@@ -15,8 +15,15 @@ import {
 } from "@/utils/localizedContent";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
+import { ImageKey } from "@/theme/activityIllustrations";
+import { ActivityThumb } from "@/components/shared/ActivityThumb";
 
-type StorySlide = { id: string; text: LocalizedField };
+type StorySlide = {
+  id: string;
+  text: LocalizedField;
+  icon?: string;
+  imageKey?: ImageKey;
+};
 type StoryQuestion = {
   id: string;
   prompt: LocalizedField;
@@ -294,7 +301,19 @@ export default function ActivityPlayer() {
           </div>
 
           <Card>
-            <CardContent className="p-8 text-center min-h-[200px] flex items-center justify-center">
+            <CardContent className="p-8 text-center min-h-[200px] flex flex-col items-center justify-center gap-6">
+              {current.imageKey ? (
+                <ActivityThumb
+                  imageKey={current.imageKey}
+                  variant="story"
+                  className="h-24 w-24 rounded-2xl"
+                />
+              ) : current.icon ? (
+                <div className="text-6xl" aria-hidden>
+                  {current.icon}
+                </div>
+              ) : null}
+
               <div className="text-xl font-semibold">
                 {resolveText(t, current?.text)}
               </div>

@@ -219,19 +219,36 @@ async function main() {
   const storyContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: "Hi! I am Boost.", icon: "🤖" },
-      { id: "s2", text: "I want to bake a cake!", icon: "🎂" },
+      {
+        id: "s1",
+        text: "Hi! I am Boost.",
+        icon: "🤖",
+        imageKey: "type_story",
+      },
+      {
+        id: "s2",
+        text: "I want to bake a cake!",
+        icon: "🎂",
+        imageKey: "mission_cake",
+      },
       {
         id: "s3",
         text: "Oops… the steps are mixed up!",
         icon: "😵‍💫",
+        imageKey: "module_sequencing",
       },
       {
         id: "s4",
         text: "A plan with steps is called an algorithm.",
         icon: "📝",
+        imageKey: "type_quiz",
       },
-      { id: "s5", text: "Let’s put the steps in the right order!", icon: "✅" },
+      {
+        id: "s5",
+        text: "Let’s put the steps in the right order!",
+        icon: "✅",
+        imageKey: "type_game",
+      },
     ],
     questions: [
       {
@@ -304,7 +321,7 @@ async function main() {
           { id: "rinse", text: "Rinse", imageKey: "step_rinse" },
           { id: "dry", text: "Dry", imageKey: "step_dry" },
         ],
-        answer: ["Turn water on", "Wash", "Soap", "Rinse", "Dry"],
+        answer: ["Turn water on", "Soap", "Wash", "Rinse", "Dry"],
       },
       {
         id: "g2",
