@@ -22,6 +22,8 @@ import { useTranslation } from "react-i18next";
 import { LocalizedField, resolveChoiceList, resolveText } from "@/utils/localizedContent";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { VisualKey } from "@/theme/activityVisualTokens";
+import { ActivityThumb } from "@/components/shared/ActivityThumb";
+import { ImageKey } from "@/theme/activityIllustrations";
 
 type Level = {
   id: string;
@@ -39,6 +41,7 @@ type GameCard = {
   id: string;
   text: string;
   matchValue: string;
+  imageKey?: ImageKey;
 };
 
 // --- Sub-components for DND ---
@@ -46,11 +49,13 @@ type GameCard = {
 function DraggableItem({
   id,
   text,
+  imageKey,
   onClick,
   disabled,
 }: {
   id: string;
   text: string;
+  imageKey?: ImageKey;
   onClick?: () => void;
   disabled?: boolean;
 }) {
@@ -71,10 +76,17 @@ function DraggableItem({
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <Button
         variant="secondary"
-        className="h-12 cursor-grab active:cursor-grabbing w-full"
+        className="h-auto py-2 px-3 flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing w-full min-h-[80px]"
         onClick={onClick}
       >
-        {text}
+        {imageKey && (
+          <ActivityThumb
+            imageKey={imageKey}
+            variant="game"
+            className="h-10 w-10 shrink-0"
+          />
+        )}
+        <span className="text-sm leading-tight text-center">{text}</span>
       </Button>
     </div>
   );
@@ -102,12 +114,13 @@ function DroppableSlot({
         <DraggableItem
           id={content.id}
           text={content.text}
+          imageKey={content.imageKey}
           onClick={onSlotClick}
         />
       ) : (
         <Button
           variant="outline"
-          className={`h-16 w-full justify-center ${
+          className={`h-24 w-full justify-center ${
             isOver ? "ring-2 ring-primary" : ""
           }`}
           onClick={onSlotClick}
@@ -121,6 +134,18 @@ function DroppableSlot({
 }
 
 // --- Main Component ---
+
+const FALLBACK_IMAGES: Record<string, ImageKey> = {
+  Pour: "step_pour",
+  Bake: "step_bake",
+  Frost: "step_frost",
+  Eat: "step_eat",
+  "Turn water on": "step_water_on",
+  Wash: "step_wash",
+  Soap: "step_soap",
+  Rinse: "step_rinse",
+  Dry: "step_dry",
+};
 
 export default function SequenceDragDropGame({
   config,
@@ -163,12 +188,18 @@ export default function SequenceDragDropGame({
     const cardsWithIds: GameCard[] = level.cards.map((c: any, i: number) => {
       let text = "";
       let matchValue = "";
+      let imageKey: ImageKey | undefined;
 
       if (typeof c === "string") {
         const resolved = resolveText(t, c);
         text = resolved;
         matchValue = resolved;
+        if (FALLBACK_IMAGES[c]) imageKey = FALLBACK_IMAGES[c];
       } else if (c && typeof c === "object") {
+        if (c.imageKey) {
+          imageKey = c.imageKey as ImageKey;
+        }
+
         if ("i18nKey" in c) {
           const resolved = resolveText(t, c);
           text = resolved;
@@ -180,6 +211,11 @@ export default function SequenceDragDropGame({
           const resolvedText = resolveText(t, rawText);
           text = icon ? `${icon} ${resolvedText}` : resolvedText;
           matchValue = resolvedText;
+
+          // Try fallback if not set
+          if (!imageKey && FALLBACK_IMAGES[rawText]) {
+            imageKey = FALLBACK_IMAGES[rawText];
+          }
         }
       }
 
@@ -187,6 +223,7 @@ export default function SequenceDragDropGame({
         id: `card-${levelIndex}-${i}-${Math.random().toString(36).substr(2, 9)}`,
         text,
         matchValue,
+        imageKey,
       };
     });
 
@@ -263,31 +300,11 @@ export default function SequenceDragDropGame({
     if (!sourceCard) return;
 
     // Identify target
-    // Target could be a slot ID ("slot-0") or "available-area" (if we made one)
-    // Or target could be a card in a slot (swapping)
-
-    // Check if dropping onto a slot directly
+    const droppedInAvailable = overId === "available-area";
     let targetSlotIndex = -1;
     if (overId.startsWith("slot-")) {
       targetSlotIndex = parseInt(overId.replace("slot-", ""), 10);
-    } else {
-      // Did we drop onto a card that is inside a slot?
-      // If the droppable is the slot container, this is handled.
-      // But if we drop onto the card *inside* the slot, the over.id might be the card ID?
-      // Wait, the card inside the slot is a Draggable, does it act as a Droppable?
-      // No, unless we wrap it.
-      // In my `DroppableSlot`, the `useDroppable` is on the container div.
-      // The `DraggableItem` is inside.
-      // Usually `dnd-kit` detects the droppable container even if dropping on children if pointer-events allow.
-      // However, if the draggable captures events, it might obscure the droppable.
-      // But `DraggableItem` shouldn't obscure the `DroppableSlot` it is in, strictly speaking,
-      // but often it's safer to make sure the slot is the drop target.
-      // Actually, if we drop on a card in a slot, we want to swap.
-      // Let's assume the slot captures the drop.
     }
-
-    // If dropped into the available area (or outside slots but inside the game area? We need an "available" droppable area to drag BACK to)
-    const droppedInAvailable = overId === "available-area";
 
     if (droppedInAvailable) {
       if (sourceIsSlot) {
@@ -297,7 +314,6 @@ export default function SequenceDragDropGame({
         setSlots(newSlots);
         setAvailable([...available, sourceCard]);
       }
-      // If already in available, do nothing (reorder?)
       return;
     }
 
@@ -310,10 +326,9 @@ export default function SequenceDragDropGame({
         if (sourceSlotIndex === targetSlotIndex) return;
 
         const newSlots = [...slots];
-        // Swap or Move?
-        // Requirement: "Option A: swap cards"
+        // Swap
         newSlots[targetSlotIndex] = sourceCard;
-        newSlots[sourceSlotIndex] = targetCard; // targetCard might be null
+        newSlots[sourceSlotIndex] = targetCard;
         setSlots(newSlots);
       } else {
         // Move from Available to Slot
@@ -353,16 +368,10 @@ export default function SequenceDragDropGame({
   };
 
   const resetLevel = () => {
-    // Re-create from scratch or just empty slots
-    // To properly reset, we need to gather all cards back to available.
-    // Ideally we re-trigger the init effect or just manually move all.
-    // The init effect depends on `levelIndex`, so we can just clear slots and combine.
     const allCards = [
       ...available,
       ...slots.filter((c): c is GameCard => c !== null),
     ];
-    // Ideally restore original shuffle order? Or just shuffle again?
-    // Let's just shuffle again to be simple
     allCards.sort(() => Math.random() - 0.5);
     setSlots(Array.from({ length: slotCount }, () => null));
     setAvailable(allCards);
@@ -408,9 +417,7 @@ export default function SequenceDragDropGame({
       toast({
         title: "Almost!",
         description: "Check the hint for help!",
-        // Friendly toast, not destructive/red
       });
-      // DO NOT reset automatically
       return;
     }
 
@@ -482,7 +489,6 @@ export default function SequenceDragDropGame({
               <div className="text-sm text-gray-600 mb-2">Available cards</div>
 
               {/* AVAILABLE AREA */}
-              {/* We make this a droppable so we can drag cards back here */}
               <AvailableArea id="available-area">
                 <div className="flex flex-wrap gap-2 min-h-[60px] p-2 bg-slate-50 rounded-md border border-dashed border-gray-200">
                   {available.map((c) => (
@@ -490,6 +496,7 @@ export default function SequenceDragDropGame({
                       key={c.id}
                       id={c.id}
                       text={c.text}
+                      imageKey={c.imageKey}
                       onClick={() => fillFirstEmpty(c)}
                     />
                   ))}
@@ -517,9 +524,18 @@ export default function SequenceDragDropGame({
           {activeCard ? (
             <Button
               variant="secondary"
-              className="h-12 w-40 cursor-grabbing shadow-xl"
+              className="h-auto py-2 px-3 flex flex-col items-center justify-center gap-2 cursor-grabbing shadow-xl w-40"
             >
-              {activeCard.text}
+              {activeCard.imageKey && (
+                <ActivityThumb
+                  imageKey={activeCard.imageKey}
+                  variant="game"
+                  className="h-10 w-10 shrink-0"
+                />
+              )}
+              <span className="text-sm leading-tight text-center">
+                {activeCard.text}
+              </span>
             </Button>
           ) : null}
         </DragOverlay>

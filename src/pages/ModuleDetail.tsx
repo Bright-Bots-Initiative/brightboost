@@ -5,7 +5,7 @@ import { api } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
+import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { BookOpen, Star, Zap, Check } from "lucide-react";
 
 export default function ModuleDetail() {
@@ -43,23 +43,6 @@ export default function ModuleDetail() {
 
   if (!module) return <div>Loading...</div>;
 
-  const getIcon = (token: any) => {
-    if (token.emoji)
-      return <span className="text-lg leading-none">{token.emoji}</span>;
-    switch (token.iconName) {
-      case "BookOpen":
-        return <BookOpen className="w-4 h-4" />;
-      case "Star":
-        return <Star className="w-4 h-4" />;
-      case "Zap":
-        return <Zap className="w-4 h-4" />;
-      case "Check":
-        return <Check className="w-4 h-4" />;
-      default:
-        return <Star className="w-4 h-4" />;
-    }
-  };
-
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-brightboost-navy">
@@ -81,9 +64,9 @@ export default function ModuleDetail() {
                 <div className="flex gap-3 flex-wrap">
                   {l.activities?.map((a: any) => {
                     const isCompleted = completedActivities.has(String(a.id));
-                    const tokenKey = a.kind === "INFO" ? "story" : "game";
-                    const token = ACTIVITY_VISUAL_TOKENS[tokenKey];
-                    const rewardToken = ACTIVITY_VISUAL_TOKENS["reward"];
+                    const imageKey =
+                      a.kind === "INFO" ? "type_story" : "type_game";
+                    const variant = a.kind === "INFO" ? "story" : "game";
 
                     return (
                       <Card
@@ -94,26 +77,32 @@ export default function ModuleDetail() {
                           {isCompleted ? (
                             <div className="flex items-center gap-2">
                               <Button
-                                size="sm"
                                 variant="outline"
-                                className={`border ${rewardToken.chipClass} hover:bg-opacity-80`}
+                                className="h-14 justify-start px-2 border-brightboost-green/30 bg-brightboost-green/5 text-brightboost-navy hover:bg-brightboost-green/10"
                                 onClick={() =>
                                   navigate(
                                     `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
                                   )
                                 }
                               >
-                                <div
-                                  className={`mr-2 w-6 h-6 rounded-full flex items-center justify-center ${rewardToken.bubbleClass}`}
-                                >
-                                  <Check className="w-3 h-3" />
+                                <ActivityThumb
+                                  imageKey={imageKey}
+                                  variant={variant}
+                                  className="h-10 w-10 mr-3"
+                                />
+                                <div className="flex flex-col items-start text-left">
+                                  <span className="text-sm font-semibold">
+                                    {a.title}
+                                  </span>
+                                  <span className="text-[10px] bg-white/50 px-1.5 rounded text-green-700 flex items-center gap-1">
+                                    <Check className="h-3 w-3" /> Done
+                                  </span>
                                 </div>
-                                Done
                               </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-xs text-gray-400 h-9 px-2"
+                                className="text-xs text-gray-400 h-14 px-2"
                                 onClick={() =>
                                   navigate(
                                     `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
@@ -125,21 +114,27 @@ export default function ModuleDetail() {
                             </div>
                           ) : (
                             <Button
-                              size="sm"
                               variant="outline"
-                              className="h-10 bg-white hover:bg-slate-50 border-slate-200"
+                              className="h-14 justify-start px-2 bg-white hover:bg-slate-50 border-slate-200"
                               onClick={() =>
                                 navigate(
                                   `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
                                 )
                               }
                             >
-                              <div
-                                className={`mr-2 w-6 h-6 rounded-full flex items-center justify-center ${token.bubbleClass}`}
-                              >
-                                {getIcon(token)}
+                              <ActivityThumb
+                                imageKey={imageKey}
+                                variant={variant}
+                                className="h-10 w-10 mr-3"
+                              />
+                              <div className="flex flex-col items-start text-left">
+                                <span className="text-sm font-semibold text-brightboost-navy">
+                                  {a.title}
+                                </span>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                                  {variant}
+                                </span>
                               </div>
-                              {a.title}
                             </Button>
                           )}
                         </CardContent>
