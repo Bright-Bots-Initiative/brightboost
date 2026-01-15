@@ -1,0 +1,63 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getAllModules, getModuleWithContent, clearModuleCache } from "./module";
+import prisma from "../utils/prisma";
+
+// Mock Prisma
+vi.mock("../utils/prisma", () => ({
+  default: {
+    module: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
+  },
+}));
+
+describe("Module Service", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearModuleCache();
+  });
+
+  describe("getAllModules", () => {
+    it("should fetch modules from DB on first call", async () => {
+      const mockModules = [{ id: "1", title: "Module 1" }];
+      vi.mocked(prisma.module.findMany).mockResolvedValue(mockModules as any);
+
+      const result = await getAllModules();
+
+      expect(prisma.module.findMany).toHaveBeenCalledWith({
+        where: { published: true },
+        orderBy: { level: "asc" },
+      });
+      expect(result).toEqual(mockModules);
+    });
+
+    it("should return cached modules on second call", async () => {
+      const mockModules = [{ id: "1", title: "Module 1" }];
+      vi.mocked(prisma.module.findMany).mockResolvedValue(mockModules as any);
+
+      // First call to populate cache
+      await getAllModules();
+      expect(prisma.module.findMany).toHaveBeenCalledTimes(1);
+
+      // Second call should use cache
+      const result2 = await getAllModules();
+      expect(prisma.module.findMany).toHaveBeenCalledTimes(1); // Still 1
+      expect(result2).toEqual(mockModules);
+    });
+  });
+
+  describe("getModuleWithContent", () => {
+    it("should fetch module from DB on first call", async () => {
+        const mockModule = { slug: "slug-1", title: "Module 1" };
+        vi.mocked(prisma.module.findUnique).mockResolvedValue(mockModule as any);
+
+        const result = await getModuleWithContent("slug-1");
+
+        expect(prisma.module.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+            where: { slug: "slug-1" }
+        }));
+        expect(result).toEqual(mockModule);
+    });
+  });
+});

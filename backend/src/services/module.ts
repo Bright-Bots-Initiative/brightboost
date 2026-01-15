@@ -5,6 +5,33 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 50; // Modules are few, but safety first
 const moduleCache = new Map<string, { data: any; expiresAt: number }>();
 
+let allModulesCache: { data: any[]; expiresAt: number } | null = null;
+
+// Export for testing
+export function clearModuleCache() {
+  moduleCache.clear();
+  allModulesCache = null;
+}
+
+export async function getAllModules() {
+  const now = Date.now();
+  if (allModulesCache && allModulesCache.expiresAt > now) {
+    return allModulesCache.data;
+  }
+
+  const modules = await prisma.module.findMany({
+    where: { published: true },
+    orderBy: { level: "asc" },
+  });
+
+  allModulesCache = {
+    data: modules,
+    expiresAt: now + CACHE_TTL_MS,
+  };
+
+  return modules;
+}
+
 export async function getModuleWithContent(slug: string) {
   const now = Date.now();
   const cached = moduleCache.get(slug);
