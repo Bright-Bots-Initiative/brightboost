@@ -5,3 +5,7 @@
 ## 2024-05-23 - Accessible Status Badges
 **Learning:** Visual status indicators (like Locked/Unlocked icons + text) often lack explicit text for screen readers if the status is conveyed only by icon or color.
 **Action:** Add `aria-label` to the container describing the full state (e.g., "Level 1: Unlocked") or use `sr-only` text to explicitly state the status. Mark purely decorative icons as `aria-hidden="true"`.
+
+## 2024-05-24 - Dynamic ARIA Labels in Lists
+**Learning:** In tables or lists, generic labels like "Edit" or "Delete" are confusing for screen reader users when navigating by form controls. They hear repeated "Edit" without context.
+**Action:** When iterating over items (like rows in a table), append the item's name to the action button's `aria-label` (e.g., "Edit Algebra 101") to provide necessary context.
