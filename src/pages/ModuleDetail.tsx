@@ -9,14 +9,26 @@ import { useToast } from "@/hooks/use-toast";
 export default function ModuleDetail() {
   const { slug } = useParams();
   const [module, setModule] = useState<any>(null);
+  const [completedActivities, setCompletedActivities] = useState<Set<string>>(
+    new Set(),
+  );
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!slug) return;
-    api
-      .getModule(slug)
-      .then((m) => setModule(m))
+    Promise.all([api.getModule(slug), api.getProgress()])
+      .then(([m, p]) => {
+        setModule(m);
+        if (p?.progress) {
+          const completed = new Set<string>(
+            p.progress
+              .filter((item: any) => item.status === "COMPLETED")
+              .map((item: any) => String(item.activityId)),
+          );
+          setCompletedActivities(completed);
+        }
+      })
       .catch((e) => {
         toast({
           title: "Error",
@@ -44,17 +56,46 @@ export default function ModuleDetail() {
                   {l.activities?.map((a: any) => (
                     <Card key={a.id} className="p-0 border-0 shadow-none">
                       <CardContent className="p-0">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() =>
-                            navigate(
-                              `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
-                            )
-                          }
-                        >
-                          {a.kind === "INFO" ? "📖" : "🎮"} Play: {a.title}
-                        </Button>
+                        {completedActivities.has(String(a.id)) ? (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                              onClick={() =>
+                                navigate(
+                                  `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
+                                )
+                              }
+                            >
+                              ✅ Done
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs text-gray-400 h-8 px-2"
+                              onClick={() =>
+                                navigate(
+                                  `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
+                                )
+                              }
+                            >
+                              Replay
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              navigate(
+                                `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,
+                              )
+                            }
+                          >
+                            {a.kind === "INFO" ? "📖" : "🎮"} Play: {a.title}
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   ))}

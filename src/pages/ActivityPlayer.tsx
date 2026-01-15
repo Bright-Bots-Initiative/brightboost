@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
+import { Check, Zap, Heart, Star, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   LocalizedField,
@@ -47,6 +48,7 @@ export default function ActivityPlayer() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [incorrectIds, setIncorrectIds] = useState<string[]>([]);
+  const [completionData, setCompletionData] = useState<any>(null);
 
   const startMsRef = useRef<number>(Date.now());
 
@@ -110,17 +112,17 @@ export default function ActivityPlayer() {
     return Math.max(1, Math.round(ms / 1000));
   };
 
-  const completeAndExit = async () => {
+  const handleComplete = async () => {
     if (!slug || !lessonId || !activityId) return;
     try {
-      await api.completeActivity({
+      const res = await api.completeActivity({
         moduleSlug: slug,
         lessonId: String(lessonId),
         activityId: String(activityId),
         timeSpentS: getTimeSpentS(),
       });
+      setCompletionData(res);
       toast({ title: "Activity Completed!", description: "+50 XP" });
-      navigate(`/student/modules/${slug}`);
     } catch {
       toast({
         title: "Error",
@@ -129,6 +131,82 @@ export default function ActivityPlayer() {
       });
     }
   };
+
+  if (completionData) {
+    const { reward } = completionData;
+    const isLevelUp = (reward?.levelDelta || 0) > 0;
+
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center bg-slate-50">
+        <Card className="max-w-md w-full border-2 border-yellow-400 bg-white shadow-xl animate-in zoom-in-50 duration-500">
+          <CardContent className="p-8 space-y-6 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="bg-green-100 p-4 rounded-full">
+                <Check className="w-12 h-12 text-green-600" />
+              </div>
+            </div>
+
+            <h2 className="text-3xl font-black text-brightboost-navy">
+              Activity Complete!
+            </h2>
+
+            <div className="space-y-4 py-4">
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-gray-500 text-lg">You earned</div>
+                <div className="text-5xl font-black text-yellow-500 flex items-center gap-2">
+                  <Star className="w-8 h-8 fill-yellow-500" />
+                  {reward?.xpDelta ? `+${reward.xpDelta}` : "+0"} XP
+                </div>
+              </div>
+
+              {isLevelUp && (
+                <div className="p-3 bg-purple-100 rounded-lg animate-bounce border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-700">
+                    LEVEL UP! 🆙
+                  </div>
+                  <div className="text-sm text-purple-600">
+                    You are getting stronger!
+                  </div>
+                </div>
+              )}
+
+              {(reward?.energyDelta > 0 || reward?.hpDelta > 0) && (
+                <div className="flex justify-center gap-4 pt-2">
+                  {reward.energyDelta > 0 && (
+                    <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-3 py-1 rounded-full font-bold">
+                      <Zap className="w-4 h-4 fill-blue-600" /> +
+                      {reward.energyDelta}
+                    </div>
+                  )}
+                  {reward.hpDelta > 0 && (
+                    <div className="flex items-center gap-1 text-red-600 bg-red-50 px-3 py-1 rounded-full font-bold">
+                      <Heart className="w-4 h-4 fill-red-600" /> +
+                      {reward.hpDelta}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {reward?.newAbilitiesDelta > 0 && (
+                <div className="text-blue-600 font-semibold bg-blue-50 p-2 rounded border border-blue-100">
+                  Unlocked {reward.newAbilitiesDelta} new abilit
+                  {reward.newAbilitiesDelta > 1 ? "ies" : "y"}! ⚡
+                </div>
+              )}
+            </div>
+
+            <Button
+              size="lg"
+              className="w-full text-lg gap-2"
+              onClick={() => navigate(`/student/modules/${slug}`)}
+            >
+              Done <ArrowRight className="w-5 h-5" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="p-6">Loading activity...</div>;
@@ -182,7 +260,7 @@ export default function ActivityPlayer() {
                 >
                   Back
                 </Button>
-                <Button onClick={completeAndExit}>Mark Complete</Button>
+                <Button onClick={handleComplete}>Mark Complete</Button>
               </div>
             </CardContent>
           </Card>
@@ -318,7 +396,7 @@ export default function ActivityPlayer() {
                     (q) => answers[q.id] !== q.answerIndex,
                   );
                   if (incorrect.length === 0) {
-                    completeAndExit();
+                    handleComplete();
                     return;
                   }
                   setSubmitted(true);
@@ -344,7 +422,7 @@ export default function ActivityPlayer() {
     if (key === "sequence_drag_drop") {
       return (
         <div className="p-6">
-          <SequenceDragDropGame config={content} onComplete={completeAndExit} />
+          <SequenceDragDropGame config={content} onComplete={handleComplete} />
         </div>
       );
     }
@@ -371,7 +449,7 @@ export default function ActivityPlayer() {
               >
                 Back
               </Button>
-              <Button onClick={completeAndExit}>Mark Complete</Button>
+              <Button onClick={handleComplete}>Mark Complete</Button>
             </div>
           </CardContent>
         </Card>
