@@ -19,6 +19,7 @@ const prismaMock = vi.hoisted(() => ({
   unlockedAbility: {
     findMany: vi.fn(),
     createMany: vi.fn(),
+    count: vi.fn(),
   },
   user: {
     findUnique: vi.fn(),
@@ -55,6 +56,8 @@ describe("Progress Route Input Validation", () => {
     prismaMock.ability.findMany.mockResolvedValue([]);
     // @ts-ignore
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
+    // @ts-ignore
+    prismaMock.unlockedAbility.count.mockResolvedValue(0);
     // @ts-ignore
     prismaMock.user.findUnique.mockResolvedValue({
       id: "student-123",

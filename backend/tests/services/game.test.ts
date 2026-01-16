@@ -14,6 +14,9 @@ const prismaMock = vi.hoisted(() => ({
   ability: {
     findUnique: vi.fn(),
   },
+  unlockedAbility: {
+    findFirst: vi.fn(),
+  },
 }));
 
 vi.mock("@prisma/client", () => ({
@@ -88,6 +91,15 @@ describe("resolveTurn Performance Optimization", () => {
       action: { abilityId, damageDealt: 10 },
     });
 
+    // Mock unlocked ability check
+    // @ts-ignore
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
+      Ability: {
+        id: abilityId,
+        config: { type: "attack", value: 10 },
+      },
+    });
+
     const result = await resolveTurn(matchId, actorId, abilityId);
 
     // Verify correct HP calc
@@ -130,6 +142,13 @@ describe("PvP Fairness Checks", () => {
       Player2: { id: "p2", unlockedAbilities: [] },
     });
 
+    // We don't need to mock unlockedAbility here because "Not your turn" checks happen before ability check
+    // BUT resolveTurn now fetches both concurrently!
+    // So if findFirst fails (undefined mock), Promise.all might fail or the destructuring [match, unlocked] might fail.
+    // So we MUST mock it to avoid "Cannot read properties of undefined".
+    // @ts-ignore
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue(null);
+
     await expect(resolveTurn(matchId, "p2", "ab1")).rejects.toThrow(
       "Not your turn",
     );
@@ -150,6 +169,10 @@ describe("PvP Fairness Checks", () => {
       },
       Player2: { id: "p2", unlockedAbilities: [] },
     });
+
+    // Mock ability NOT unlocked
+    // @ts-ignore
+    prismaMock.unlockedAbility.findFirst.mockResolvedValue(null);
 
     await expect(resolveTurn(matchId, "p1", "ab1")).rejects.toThrow(
       "Ability not unlocked",

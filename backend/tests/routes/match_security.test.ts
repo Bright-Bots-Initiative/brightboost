@@ -80,7 +80,9 @@ describe("Match Routes - Queue", () => {
       .send({ band: "INVALID_BAND" });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe("Invalid band");
+    // Expect Zod error array
+    expect(Array.isArray(res.body.error)).toBe(true);
+    expect(res.body.error[0].message).toContain("Invalid enum value");
   });
 
   it("should prevent multiple pending matches for the same user", async () => {
