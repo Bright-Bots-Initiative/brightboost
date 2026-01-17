@@ -50,8 +50,16 @@ const XPProgressRing = () => {
   }, [levelUp]);
 
   return (
-    <div className="relative w-24 h-24 text-brightboost-yellow">
-      <svg height="100" width="100">
+    <div
+      className="relative w-24 h-24 text-brightboost-yellow"
+      role="progressbar"
+      aria-valuenow={currentXp}
+      aria-valuetext={`${currentXp} XP`}
+      aria-valuemin={0}
+      aria-valuemax={xpGoal}
+      aria-label="Current XP Progress"
+    >
+      <svg height="100" width="100" aria-hidden="true">
         <circle
           stroke="#e5e7eb" // background ring
           fill="transparent"
@@ -79,12 +87,19 @@ const XPProgressRing = () => {
       </svg>
 
       {/* XP Text with brightboost-navy */}
-      <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-brightboost-navy">
+      <div
+        className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-brightboost-navy"
+        aria-hidden="true"
+      >
         {xp !== null ? `${currentXp} XP` : "0 XP"}
       </div>
 
       {levelUp && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          role="status"
+          aria-live="polite"
+        >
           <div className="text-yellow-400 text-sm font-bold animate-bounce">
             🎉 Level Up!
           </div>
