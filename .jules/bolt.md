@@ -22,3 +22,8 @@
 
 **Learning:** Fetching full objects (all columns) when only a subset is needed (e.g., for status checks) significantly inflates payload size, especially for large lists like user progress. Prisma `select` can reduce this by >50%.
 **Action:** Use `select` in `findMany` queries to retrieve only the fields required by the frontend.
+
+## 2026-05-24 - Redundant Service Fetches
+
+**Learning:** Service functions often fetch their own data (e.g., `resolveTurn` fetching `Match`), leading to redundant queries when the caller (Route) could have fetched it efficiently in parallel with other data.
+**Action:** Allow service functions to accept optional "preloaded" data entities. Use `Promise.all` in the route to fetch all necessary data (including what the service needs) and pass it down.

@@ -65,11 +65,20 @@ export function computeBattleState(match: any, turns: any[]) {
 
 export const TURN_SECONDS = 30;
 
+export const matchInclude = {
+  Player1: { select: { id: true, archetype: true, hp: true } },
+  Player2: { select: { id: true, archetype: true, hp: true } },
+  turns: {
+    orderBy: { createdAt: "asc" as const },
+  },
+};
+
 export async function resolveTurn(
   matchId: string,
   actorId: string,
   abilityId: string,
   quiz?: { questionId: string; answerIndex: number },
+  preloadedMatch?: any,
 ) {
   // ⚡ Bolt Optimization:
   // Split fetch to avoid massive joined query (Match + P1.Abilities + P2.Abilities + Turns).
@@ -79,16 +88,12 @@ export async function resolveTurn(
   // ⚡ Bolt Optimization: Parallelize independent DB fetches
   // Fetch Match context and Ability verification concurrently to reduce latency.
   const [match, unlocked] = await Promise.all([
-    prisma.match.findUnique({
-      where: { id: matchId },
-      include: {
-        Player1: { select: { id: true, archetype: true, hp: true } },
-        Player2: { select: { id: true, archetype: true, hp: true } },
-        turns: {
-          orderBy: { createdAt: "asc" },
-        },
-      },
-    }),
+    preloadedMatch
+      ? Promise.resolve(preloadedMatch)
+      : prisma.match.findUnique({
+          where: { id: matchId },
+          include: matchInclude,
+        }),
     prisma.unlockedAbility.findFirst({
       where: {
         avatarId: actorId,

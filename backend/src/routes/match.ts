@@ -13,6 +13,7 @@ import {
   resolveTurn,
   computeBattleState,
   claimTimeout,
+  matchInclude,
 } from "../services/game";
 import { getQuestionForBand } from "../services/pvpQuestions";
 import { matchQueueSchema, matchActSchema } from "../validation/schemas";
@@ -128,9 +129,15 @@ router.get("/match/:id", requireAuth, async (req, res) => {
 router.get("/match/:id/question", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const matchId = req.params.id;
-  const match = await prisma.match.findUnique({ where: { id: matchId } });
+
+  // ⚡ Bolt Optimization: Parallelize independent DB fetches
+  const [match, myAvatar] = await Promise.all([
+    prisma.match.findUnique({ where: { id: matchId } }),
+    prisma.avatar.findUnique({ where: { studentId } }),
+  ]);
+
   if (!match) return res.status(404).json({ error: "Match not found" });
-  const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+
   if (
     !myAvatar ||
     (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
@@ -146,15 +153,34 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
     const { abilityId, quiz } = matchActSchema.parse(req.body);
     const studentId = req.user!.id;
     const matchId = req.params.id;
-    const match = await prisma.match.findUnique({ where: { id: matchId } });
+
+    // ⚡ Bolt Optimization:
+    // 1. Parallelize match and avatar fetch.
+    // 2. Fetch match with full includes needed for resolveTurn to avoid re-fetching in the service.
+    const [match, myAvatar] = await Promise.all([
+      prisma.match.findUnique({
+        where: { id: matchId },
+        include: matchInclude,
+      }),
+      prisma.avatar.findUnique({ where: { studentId } }),
+    ]);
+
     if (!match) return res.status(404).json({ error: "Match not found" });
-    const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
+
     if (
       !myAvatar ||
       (match.player1Id !== myAvatar.id && match.player2Id !== myAvatar.id)
     )
       return res.status(403).json({ error: "Not in this match" });
-    const result = await resolveTurn(matchId, myAvatar.id, abilityId, quiz);
+
+    // Pass the preloaded match object to resolveTurn
+    const result = await resolveTurn(
+      matchId,
+      myAvatar.id,
+      abilityId,
+      quiz,
+      match,
+    );
     res.json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError)
