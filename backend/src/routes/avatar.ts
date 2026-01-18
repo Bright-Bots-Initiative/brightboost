@@ -1,6 +1,8 @@
 import { Router } from "express";
+import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
+import { selectArchetypeSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -44,13 +46,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
 router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
   try {
     const studentId = req.user!.id;
-    const { archetype } = req.body;
-
-    const validArchetypes = ["AI", "QUANTUM", "BIOTECH"];
-
-    if (!validArchetypes.includes(archetype)) {
-      return res.status(400).json({ error: "Invalid archetype" });
-    }
+    const { archetype } = selectArchetypeSchema.parse(req.body);
 
     // Check if already exists
     const existing = await prisma.avatar.findUnique({ where: { studentId } });
@@ -62,7 +58,7 @@ router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
     const avatar = await prisma.avatar.create({
       data: {
         studentId,
-        archetype: archetype as any, // Cast to any to avoid TS enum check which might be strict
+        archetype: archetype as any, // Cast kept to be safe with Prisma types
         level: 1,
         xp: 0,
         hp: 100,
@@ -86,6 +82,9 @@ router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
 
     res.json({ avatar });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors });
+    }
     console.error("Select archetype error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
