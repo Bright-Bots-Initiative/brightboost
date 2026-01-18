@@ -418,8 +418,12 @@ async function safeJson(res: Response) {
 }
 
 export const api = {
-  getModules: async () => {
-    const res = await fetch(join(API_BASE, "/modules"), {
+  getModules: async (params?: { level?: string }) => {
+    const url = new URL(join(API_BASE, "/modules"), window.location.origin);
+    if (params?.level) {
+      url.searchParams.append("level", params.level);
+    }
+    const res = await fetch(url.toString(), {
       headers: getHeaders(),
     });
     return res.json();

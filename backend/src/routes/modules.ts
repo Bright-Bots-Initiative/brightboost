@@ -6,10 +6,12 @@ import { requireAuth } from "../utils/auth";
 const router = Router();
 
 // List all modules
-router.get("/modules", requireAuth, async (_req, res) => {
+router.get("/modules", requireAuth, async (req, res) => {
   try {
-    // ⚡ Bolt Optimization: Use cached module list
-    const modules = await getAllModules();
+    const level = req.query.level as string | undefined;
+    // ⚡ Bolt Optimization: Use cached module list with optional server-side filtering
+    // This reduces payload size when client only needs specific grade levels (e.g. K-2)
+    const modules = await getAllModules({ level });
     res.json(modules);
   } catch (error) {
     console.error("List modules error:", error);

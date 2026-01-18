@@ -23,13 +23,12 @@ export default function Modules() {
 
   useEffect(() => {
     setLoading(true);
+    // ⚡ Bolt Optimization: Request filtered data from backend to reduce payload size
     api
-      .getModules()
+      .getModules({ level: "K-2" })
       .then((data) => {
-        // Filter: only K-2 and explicitly exclude stem-1-intro
-        const visible = data.filter(
-          (m: any) => m.level === "K-2" && m.slug !== "stem-1-intro",
-        );
+        // Still exclude specific slug if needed
+        const visible = data.filter((m: any) => m.slug !== "stem-1-intro");
         setModules(visible);
         setError(null);
       })

@@ -13,21 +13,27 @@ export function clearModuleCache() {
   allModulesCache = null;
 }
 
-export async function getAllModules() {
+export async function getAllModules(filter?: { level?: string }) {
   const now = Date.now();
+  let modules;
+
   if (allModulesCache && allModulesCache.expiresAt > now) {
-    return allModulesCache.data;
+    modules = allModulesCache.data;
+  } else {
+    modules = await prisma.module.findMany({
+      where: { published: true },
+      orderBy: { level: "asc" },
+    });
+
+    allModulesCache = {
+      data: modules,
+      expiresAt: now + CACHE_TTL_MS,
+    };
   }
 
-  const modules = await prisma.module.findMany({
-    where: { published: true },
-    orderBy: { level: "asc" },
-  });
-
-  allModulesCache = {
-    data: modules,
-    expiresAt: now + CACHE_TTL_MS,
-  };
+  if (filter?.level) {
+    return modules.filter((m: any) => m.level === filter.level);
+  }
 
   return modules;
 }
