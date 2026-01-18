@@ -23,6 +23,16 @@ import IconButton, {
   DeleteIcon,
   DragHandleIcon,
 } from "../shared/IconButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
   lesson,
@@ -131,6 +141,9 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
   onDuplicateLesson,
   onDeleteLesson,
 }) => {
+  const [deleteId, setDeleteId] = React.useState<string | number | null>(null);
+  const lessonToDelete = lessons.find((l) => l.id === deleteId);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -202,13 +215,40 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
                   lesson={lesson}
                   onEditLesson={onEditLesson}
                   onDuplicateLesson={onDuplicateLesson}
-                  onDeleteLesson={onDeleteLesson}
+                  onDeleteLesson={(id) => setDeleteId(id)}
                 />
               ))}
             </tbody>
           </SortableContext>
         </table>
       </DndContext>
+
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{lessonToDelete?.title}"? This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white"
+              onClick={() => {
+                if (deleteId) onDeleteLesson(deleteId);
+                setDeleteId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

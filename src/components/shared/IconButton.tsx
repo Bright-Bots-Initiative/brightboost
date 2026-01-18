@@ -8,26 +8,26 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   className?: string;
 }
 
-const IconButton: React.FC<IconButtonProps> = ({
-  onClick,
-  title,
-  ariaLabel,
-  children,
-  className = "",
-  ...props
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      aria-label={ariaLabel || title}
-      className={`p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition duration-150 ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
+const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
+  (
+    { onClick, title, ariaLabel, children, className = "", ...props },
+    ref,
+  ) => {
+    return (
+      <button
+        ref={ref}
+        onClick={onClick}
+        title={title}
+        aria-label={ariaLabel || title}
+        className={`p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition duration-150 ${className}`}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  },
+);
+IconButton.displayName = "IconButton";
 
 export default IconButton;
 
@@ -38,6 +38,7 @@ export const EditIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
+    aria-hidden="true"
     className="w-5 h-5"
   >
     <path
@@ -55,6 +56,7 @@ export const DuplicateIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
+    aria-hidden="true"
     className="w-5 h-5"
   >
     <path
@@ -72,6 +74,7 @@ export const DeleteIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
+    aria-hidden="true"
     className="w-5 h-5"
   >
     <path
@@ -89,6 +92,7 @@ export const DragHandleIcon = () => (
     viewBox="0 0 24 24"
     strokeWidth={1.5}
     stroke="currentColor"
+    aria-hidden="true"
     className="w-5 h-5 text-gray-400 cursor-grab"
   >
     <path
