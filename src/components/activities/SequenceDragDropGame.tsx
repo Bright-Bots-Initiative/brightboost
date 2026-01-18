@@ -1,5 +1,5 @@
 // src/components/activities/SequenceDragDropGame.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, memo, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -46,17 +46,17 @@ type GameCard = {
 
 // --- Sub-components for DND ---
 
-function DraggableItem({
+const DraggableItem = memo(function DraggableItem({
   id,
   text,
   imageKey,
-  onClick,
+  onItemClick,
   disabled,
 }: {
   id: string;
   text: string;
   imageKey?: ImageKey;
-  onClick?: () => void;
+  onItemClick?: (id: string) => void;
   disabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -72,12 +72,16 @@ function DraggableItem({
     touchAction: "none",
   };
 
+  const handleClick = useCallback(() => {
+    if (onItemClick) onItemClick(id);
+  }, [id, onItemClick]);
+
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <Button
         variant="secondary"
         className="h-auto py-2 px-3 flex flex-col items-center justify-center gap-2 cursor-grab active:cursor-grabbing w-full min-h-[80px]"
-        onClick={onClick}
+        onClick={handleClick}
       >
         {imageKey && (
           <ActivityThumb
@@ -90,9 +94,9 @@ function DraggableItem({
       </Button>
     </div>
   );
-}
+});
 
-function DroppableSlot({
+const DroppableSlot = memo(function DroppableSlot({
   id,
   index,
   content,
@@ -101,12 +105,16 @@ function DroppableSlot({
   id: string;
   index: number;
   content: GameCard | null;
-  onSlotClick: () => void;
+  onSlotClick: (index: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
     data: { index, type: "slot" },
   });
+
+  const handleClick = useCallback(() => {
+    onSlotClick(index);
+  }, [index, onSlotClick]);
 
   return (
     <div ref={setNodeRef} className="relative">
@@ -115,7 +123,7 @@ function DroppableSlot({
           id={content.id}
           text={content.text}
           imageKey={content.imageKey}
-          onClick={onSlotClick}
+          onItemClick={() => onSlotClick(index)}
         />
       ) : (
         <Button
@@ -123,7 +131,7 @@ function DroppableSlot({
           className={`h-24 w-full justify-center ${
             isOver ? "ring-2 ring-primary" : ""
           }`}
-          onClick={onSlotClick}
+          onClick={handleClick}
           aria-label={`Slot ${index + 1} empty`}
         >
           <span className="opacity-40">Slot {index + 1}</span>
@@ -131,7 +139,28 @@ function DroppableSlot({
       )}
     </div>
   );
-}
+});
+
+const AvailableArea = memo(function AvailableArea({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`transition-colors rounded-md ${isOver ? "bg-slate-100 ring-2 ring-slate-200" : ""}`}
+    >
+      {children}
+    </div>
+  );
+});
 
 // --- Main Component ---
 
@@ -263,18 +292,6 @@ export default function SequenceDragDropGame({
     }),
   };
 
-  if (!level || !resolvedLevel) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardContent className="p-6">
-            <div className="font-semibold">Game config missing levels.</div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // --- Logic ---
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -348,24 +365,33 @@ export default function SequenceDragDropGame({
   };
 
   // --- Fallback Tap Logic ---
+  // Memoized handlers moved UP before any conditional return
 
-  const fillFirstEmpty = (card: GameCard) => {
+  const handleSlotClick = useCallback((index: number) => {
+    // If the slot has content, remove it.
+    // Logic from removeFromSlot:
+    const card = slots[index];
+    if (!card) return;
+
+    const next = [...slots];
+    next[index] = null;
+    setSlots(next);
+    setAvailable((prev) => [...prev, card]);
+  }, [slots]);
+
+  const handleAvailableItemClick = useCallback((id: string) => {
+    const card = available.find(c => c.id === id);
+    if (!card) return;
+
+    // Logic from fillFirstEmpty
     const idx = slots.findIndex((s) => s === null);
     if (idx < 0) return;
+
     const next = [...slots];
     next[idx] = card;
     setSlots(next);
     setAvailable((prev) => prev.filter((c) => c.id !== card.id));
-  };
-
-  const removeFromSlot = (slotIdx: number) => {
-    const card = slots[slotIdx];
-    if (!card) return;
-    const next = [...slots];
-    next[slotIdx] = null;
-    setSlots(next);
-    setAvailable((prev) => [...prev, card]);
-  };
+  }, [available, slots]);
 
   const resetLevel = () => {
     const allCards = [
@@ -399,6 +425,8 @@ export default function SequenceDragDropGame({
   };
 
   const check = () => {
+    if (!level || !resolvedLevel) return; // Guard for check function as well
+
     const isComplete = slots.every((s) => s !== null);
     if (!isComplete) return;
 
@@ -432,6 +460,19 @@ export default function SequenceDragDropGame({
     toast({ title: "You did it!", description: "All levels complete." });
     onComplete();
   };
+
+  // Now we can do the early return
+  if (!level || !resolvedLevel) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="p-6">
+            <div className="font-semibold">Game config missing levels.</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const filledAll = slots.length > 0 && slots.every((s) => s !== null);
 
@@ -480,7 +521,7 @@ export default function SequenceDragDropGame({
                   id={`slot-${i}`}
                   index={i}
                   content={s}
-                  onSlotClick={() => removeFromSlot(i)}
+                  onSlotClick={handleSlotClick}
                 />
               ))}
             </div>
@@ -497,7 +538,7 @@ export default function SequenceDragDropGame({
                       id={c.id}
                       text={c.text}
                       imageKey={c.imageKey}
-                      onClick={() => fillFirstEmpty(c)}
+                      onItemClick={handleAvailableItemClick}
                     />
                   ))}
                   {available.length === 0 && (
@@ -540,27 +581,6 @@ export default function SequenceDragDropGame({
           ) : null}
         </DragOverlay>
       </DndContext>
-    </div>
-  );
-}
-
-function AvailableArea({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: id,
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`transition-colors rounded-md ${isOver ? "bg-slate-100 ring-2 ring-slate-200" : ""}`}
-    >
-      {children}
     </div>
   );
 }
