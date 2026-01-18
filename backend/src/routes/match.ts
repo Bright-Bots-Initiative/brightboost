@@ -17,6 +17,7 @@ import {
 } from "../services/game";
 import { getQuestionForBand } from "../services/pvpQuestions";
 import { matchQueueSchema, matchActSchema } from "../validation/schemas";
+import { GameError } from "../utils/errors";
 const router = Router();
 router.post("/match/queue", requireAuth, async (req, res) => {
   try {
@@ -185,8 +186,11 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
   } catch (error: any) {
     if (error instanceof z.ZodError)
       return res.status(400).json({ error: error.errors });
-    if (error instanceof Error && error.message)
+    // 🛡️ Sentinel: Only expose safe "GameError" messages.
+    // All other errors are logged and a generic message is returned to prevent info leakage.
+    if (error instanceof GameError) {
       return res.status(400).json({ error: error.message });
+    }
     console.error("Match act error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -200,9 +204,14 @@ router.post("/match/:id/claim-timeout", requireAuth, async (req, res) => {
     const result = await claimTimeout(matchId, myAvatar.id);
     res.json(result);
   } catch (e: any) {
-    if (e.message === "Timeout not claimable yet")
-      res.status(409).json({ error: e.message });
-    else res.status(400).json({ error: e.message });
+    // 🛡️ Sentinel: Only expose safe "GameError" messages.
+    if (e instanceof GameError) {
+      if (e.message === "Timeout not claimable yet")
+        return res.status(409).json({ error: e.message });
+      return res.status(400).json({ error: e.message });
+    }
+    console.error("Claim timeout error:", e);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 export default router;

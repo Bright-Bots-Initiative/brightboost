@@ -1,6 +1,7 @@
 // backend/src/services/game.ts
 import prisma from "../utils/prisma";
 import { checkAnswer } from "./pvpQuestions";
+import { GameError } from "../utils/errors";
 
 const MatchStatus = {
   PENDING: "PENDING",
@@ -104,7 +105,7 @@ export async function resolveTurn(
   ]);
 
   if (!match || match.status !== MatchStatus.ACTIVE)
-    throw new Error("Invalid match");
+    throw new GameError("Invalid match");
 
   const turns = match.turns;
   const currentTurnIndex = turns.length;
@@ -112,17 +113,17 @@ export async function resolveTurn(
     currentTurnIndex % 2 === 0 ? match.player1Id : match.player2Id;
 
   if (actorId !== expectedActorId) {
-    throw new Error("Not your turn");
+    throw new GameError("Not your turn");
   }
 
   const isP1 = match.player1Id === actorId;
   const actor = isP1 ? match.Player1 : match.Player2;
   const opponent = isP1 ? match.Player2 : match.Player1;
 
-  if (!actor || !opponent) throw new Error("Missing players");
+  if (!actor || !opponent) throw new GameError("Missing players");
 
   if (!unlocked || !unlocked.Ability) {
-    throw new Error("Ability not unlocked");
+    throw new GameError("Ability not unlocked");
   }
 
   const ability = unlocked.Ability;
@@ -227,11 +228,11 @@ export async function claimTimeout(matchId: string, requesterId: string) {
   });
 
   if (!match || match.status !== MatchStatus.ACTIVE)
-    throw new Error("Match not active");
-  if (!match.player2Id) throw new Error("Match waiting for players");
+    throw new GameError("Match not active");
+  if (!match.player2Id) throw new GameError("Match waiting for players");
 
   if (match.player1Id !== requesterId && match.player2Id !== requesterId) {
-    throw new Error("Not a participant");
+    throw new GameError("Not a participant");
   }
 
   const turns = match.turns;
@@ -241,7 +242,7 @@ export async function claimTimeout(matchId: string, requesterId: string) {
 
   // Requester must be the one WAITING (i.e. expected actor is the opponent)
   if (requesterId === expectedActorId) {
-    throw new Error("It is your turn, cannot claim timeout");
+    throw new GameError("It is your turn, cannot claim timeout");
   }
 
   // Calculate deadline
@@ -270,7 +271,7 @@ export async function claimTimeout(matchId: string, requesterId: string) {
       status: MatchStatus.FORFEIT,
     };
   } else {
-    throw new Error("Timeout not claimable yet");
+    throw new GameError("Timeout not claimable yet");
   }
 }
 

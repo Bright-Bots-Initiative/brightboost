@@ -1,5 +1,6 @@
 import prisma from "../utils/prisma";
 import { getModuleWithContent } from "./module";
+import { GameError } from "../utils/errors";
 
 const ProgressStatus = {
   IN_PROGRESS: "IN_PROGRESS",
@@ -72,7 +73,7 @@ export async function getAggregatedProgress(
   ]);
 
   if (!module) {
-    throw new Error(`Module ${moduleSlug} not found`);
+    throw new GameError(`Module ${moduleSlug} not found`);
   }
 
   // 3. Merge
