@@ -96,10 +96,15 @@ export async function getAggregatedProgress(
         ...u,
         lessons: u.lessons.map((l: any) => ({
           ...l,
-          activities: l.activities.map((a: any) => ({
-            ...a,
-            userProgress: progressMap[a.id] || null,
-          })),
+          activities: l.activities.map((a: any) => {
+            // ⚡ Bolt Optimization: Strip 'content' (JSON/HTML) from the aggregated view
+            // This significantly reduces payload size for the dashboard/map view.
+            const { content, ...rest } = a;
+            return {
+              ...rest,
+              userProgress: progressMap[a.id] || null,
+            };
+          }),
         })),
       })),
     },
