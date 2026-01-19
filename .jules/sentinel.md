@@ -68,3 +68,9 @@
 **Vulnerability:** The `POST /api/progress/complete-activity` endpoint blindly trusted `req.body`, allowing negative `timeSpentS` (corrupting data) and missing fields (causing 500 errors).
 **Learning:** MVP/Prototype endpoints often lack rigorous validation that "legacy" or "comprehensive" endpoints have. Always audit "quick fix" endpoints.
 **Prevention:** Enforce Zod schemas for ALL POST endpoints, even internal/MVP ones. Added `completeActivitySchema`.
+
+## 2026-03-03 - Unbounded Request Body Size (DoS Risk)
+
+**Vulnerability:** The application was using `express.json()` without a specific size limit (defaulting to 100kb). While reasonable, relying on defaults can be risky if they change or if custom parsers are added.
+**Learning:** Explicit configuration is better than implicit defaults. Setting a strict limit (50kb) based on actual usage prevents potential DoS attacks via large payloads and documents the constraint.
+**Prevention:** Configure `express.json({ limit: "50kb" })` in `server.ts`.
