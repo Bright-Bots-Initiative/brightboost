@@ -9,10 +9,7 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  (
-    { onClick, title, ariaLabel, children, className = "", ...props },
-    ref,
-  ) => {
+  ({ onClick, title, ariaLabel, children, className = "", ...props }, ref) => {
     return (
       <button
         ref={ref}

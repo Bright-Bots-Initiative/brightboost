@@ -49,7 +49,11 @@ describe("IconButton", () => {
 
   it("uses provided ariaLabel as aria-label", () => {
     render(
-      <IconButton onClick={() => {}} title="Edit" ariaLabel="Edit item specific">
+      <IconButton
+        onClick={() => {}}
+        title="Edit"
+        ariaLabel="Edit item specific"
+      >
         <EditIcon />
       </IconButton>,
     );

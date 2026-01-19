@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getAllModules, getModuleWithContent, clearModuleCache } from "./module";
+import {
+  getAllModules,
+  getModuleWithContent,
+  clearModuleCache,
+} from "./module";
 import prisma from "../utils/prisma";
 
 // Mock Prisma
@@ -72,15 +76,17 @@ describe("Module Service", () => {
 
   describe("getModuleWithContent", () => {
     it("should fetch module from DB on first call", async () => {
-        const mockModule = { slug: "slug-1", title: "Module 1" };
-        vi.mocked(prisma.module.findUnique).mockResolvedValue(mockModule as any);
+      const mockModule = { slug: "slug-1", title: "Module 1" };
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockModule as any);
 
-        const result = await getModuleWithContent("slug-1");
+      const result = await getModuleWithContent("slug-1");
 
-        expect(prisma.module.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-            where: { slug: "slug-1" }
-        }));
-        expect(result).toEqual(mockModule);
+      expect(prisma.module.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { slug: "slug-1" },
+        }),
+      );
+      expect(result).toEqual(mockModule);
     });
   });
 });

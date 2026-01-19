@@ -19,7 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { LocalizedField, resolveChoiceList, resolveText } from "@/utils/localizedContent";
+import {
+  LocalizedField,
+  resolveChoiceList,
+  resolveText,
+} from "@/utils/localizedContent";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { VisualKey } from "@/theme/activityVisualTokens";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
@@ -367,31 +371,37 @@ export default function SequenceDragDropGame({
   // --- Fallback Tap Logic ---
   // Memoized handlers moved UP before any conditional return
 
-  const handleSlotClick = useCallback((index: number) => {
-    // If the slot has content, remove it.
-    // Logic from removeFromSlot:
-    const card = slots[index];
-    if (!card) return;
+  const handleSlotClick = useCallback(
+    (index: number) => {
+      // If the slot has content, remove it.
+      // Logic from removeFromSlot:
+      const card = slots[index];
+      if (!card) return;
 
-    const next = [...slots];
-    next[index] = null;
-    setSlots(next);
-    setAvailable((prev) => [...prev, card]);
-  }, [slots]);
+      const next = [...slots];
+      next[index] = null;
+      setSlots(next);
+      setAvailable((prev) => [...prev, card]);
+    },
+    [slots],
+  );
 
-  const handleAvailableItemClick = useCallback((id: string) => {
-    const card = available.find(c => c.id === id);
-    if (!card) return;
+  const handleAvailableItemClick = useCallback(
+    (id: string) => {
+      const card = available.find((c) => c.id === id);
+      if (!card) return;
 
-    // Logic from fillFirstEmpty
-    const idx = slots.findIndex((s) => s === null);
-    if (idx < 0) return;
+      // Logic from fillFirstEmpty
+      const idx = slots.findIndex((s) => s === null);
+      if (idx < 0) return;
 
-    const next = [...slots];
-    next[idx] = card;
-    setSlots(next);
-    setAvailable((prev) => prev.filter((c) => c.id !== card.id));
-  }, [available, slots]);
+      const next = [...slots];
+      next[idx] = card;
+      setSlots(next);
+      setAvailable((prev) => prev.filter((c) => c.id !== card.id));
+    },
+    [available, slots],
+  );
 
   const resetLevel = () => {
     const allCards = [
