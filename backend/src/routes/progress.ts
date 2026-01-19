@@ -14,6 +14,7 @@ import {
   completeActivitySchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
+import { GameError } from "../utils/errors";
 
 const router = Router();
 
@@ -200,7 +201,12 @@ router.get("/progress/:studentId", requireAuth, async (req, res) => {
     const result = await getAggregatedProgress(studentId, moduleSlug);
     res.json(result);
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    // 🛡️ Sentinel: Only expose safe "GameError" messages.
+    if (e instanceof GameError) {
+      return res.status(400).json({ error: e.message });
+    }
+    console.error("Get progress error:", e);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -223,7 +229,12 @@ router.post("/progress/checkpoint", requireAuth, async (req, res) => {
       status: saved.status,
     });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    // 🛡️ Sentinel: Only expose safe "GameError" messages.
+    if (e instanceof GameError) {
+      return res.status(400).json({ error: e.message });
+    }
+    console.error("Checkpoint error:", e);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
