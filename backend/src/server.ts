@@ -121,7 +121,8 @@ const corsOptions = {
 
 app.options("*", cors(corsOptions));
 app.use(cors(corsOptions));
-app.use(express.json());
+// 🛡️ Sentinel: Enforce strict request body size limit to prevent DoS
+app.use(express.json({ limit: "50kb" }));
 
 // Public routes (Auth) - Mount before auth middleware to ensure access
 app.use("/api", authRouter);

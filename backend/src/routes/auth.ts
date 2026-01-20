@@ -172,7 +172,7 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     // Let's assume new users are hashed.
     // If bcrypt compare fails, and the password in DB matches exactly, we might allow it (migration/fallback).
 
-    let isValid = await bcrypt.compare(data.password, user.password);
+    const isValid = await bcrypt.compare(data.password, user.password);
 
     if (!isValid) {
       return res.status(401).json({ error: "Invalid credentials" });
