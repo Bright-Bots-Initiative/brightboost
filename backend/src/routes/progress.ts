@@ -189,7 +189,7 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 // Legacy / Comprehensive Routes (with validation)
 
 router.get("/progress/:studentId", requireAuth, async (req, res) => {
-  const studentId = req.params.studentId;
+  const studentId = req.params.studentId as string;
 
   // Authorization check: User can only access their own progress, unless they are admin/teacher
   if (req.user!.id !== studentId && req.user!.role === "student") {

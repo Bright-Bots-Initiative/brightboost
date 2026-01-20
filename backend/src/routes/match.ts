@@ -71,7 +71,7 @@ router.get("/match/:id", requireAuth, async (req, res) => {
 
   const [match, myAvatar] = await Promise.all([
     prisma.match.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         Player1: {
           select: {
@@ -129,7 +129,7 @@ router.get("/match/:id", requireAuth, async (req, res) => {
 });
 router.get("/match/:id/question", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
-  const matchId = req.params.id;
+  const matchId = req.params.id as string;
 
   // ⚡ Bolt Optimization: Parallelize independent DB fetches
   const [match, myAvatar] = await Promise.all([
@@ -153,7 +153,7 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
   try {
     const { abilityId, quiz } = matchActSchema.parse(req.body);
     const studentId = req.user!.id;
-    const matchId = req.params.id;
+    const matchId = req.params.id as string;
 
     // ⚡ Bolt Optimization:
     // 1. Parallelize match and avatar fetch.
@@ -197,7 +197,7 @@ router.post("/match/:id/act", requireAuth, async (req, res) => {
 });
 router.post("/match/:id/claim-timeout", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
-  const matchId = req.params.id;
+  const matchId = req.params.id as string;
   const myAvatar = await prisma.avatar.findUnique({ where: { studentId } });
   if (!myAvatar) return res.status(400).json({ error: "No avatar found" });
   try {

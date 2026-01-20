@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
+import { logAudit } from "../utils/audit";
 
 const router = Router();
 
@@ -64,7 +65,7 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const requesterId = req.user!.id;
     const requesterRole = req.user!.role;
-    const targetUserId = req.params.id;
+    const targetUserId = req.params.id as string;
 
     // Authorization Check
     const isSelf = requesterId === targetUserId;
@@ -152,6 +153,9 @@ router.post(
         avatar: updatedUser.avatarUrl || undefined,
         created_at: updatedUser.createdAt.toISOString(),
       };
+
+      // 🛡️ Sentinel: Audit log
+      await logAudit(userId, "PROFILE_UPDATE", { changed: Object.keys(data) });
 
       res.json({ success: true, user: profile });
     } catch (error) {

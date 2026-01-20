@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
+import { logAudit } from "../utils/audit";
 
 const router = Router();
 
@@ -85,6 +86,9 @@ router.post(
       const token = generateToken(user);
       const { password, ...userWithoutPassword } = user;
 
+      // 🛡️ Sentinel: Audit log
+      await logAudit(user.id, "USER_SIGNUP", { role: "student", method: "email" });
+
       res.status(201).json({
         message: "Student account created",
         user: userWithoutPassword,
@@ -131,6 +135,9 @@ router.post(
 
       const token = generateToken(user);
       const { password, ...userWithoutPassword } = user;
+
+      // 🛡️ Sentinel: Audit log
+      await logAudit(user.id, "USER_SIGNUP", { role: "teacher", method: "email" });
 
       res.status(201).json({
         message: "Teacher account created",
@@ -180,6 +187,9 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
 
     const token = generateToken(user);
     const { password, ...userWithoutPassword } = user;
+
+    // 🛡️ Sentinel: Audit log
+    await logAudit(user.id, "USER_LOGIN", { method: "email" });
 
     res.json({
       message: "Login successful",

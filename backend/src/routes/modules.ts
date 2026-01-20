@@ -24,7 +24,7 @@ router.get("/module/:slug", requireAuth, async (req, res) => {
   try {
     const { slug } = req.params;
     // ⚡ Bolt Optimization: Use cached module structure
-    const mod = await getModuleWithContent(slug);
+    const mod = await getModuleWithContent(slug as string);
 
     if (!mod) return res.status(404).json({ error: "not_found" });
     res.json(mod);
