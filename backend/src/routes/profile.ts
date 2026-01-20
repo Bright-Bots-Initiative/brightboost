@@ -114,50 +114,54 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
 });
 
 // POST /edit-profile (or PUT /profile)
-router.post("/edit-profile", requireAuth, async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.id;
+router.post(
+  "/edit-profile",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
 
-    const data = updateProfileSchema.parse(req.body);
+      const data = updateProfileSchema.parse(req.body);
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: data.name,
-        school: data.school,
-        subject: data.subject,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        school: true,
-        subject: true,
-        role: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
-    });
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: data.name,
+          school: data.school,
+          subject: data.subject,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          school: true,
+          subject: true,
+          role: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
 
-    const profile = {
-      id: updatedUser.id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      school: updatedUser.school || undefined,
-      subject: updatedUser.subject || undefined,
-      role: updatedUser.role,
-      avatar: updatedUser.avatarUrl || undefined,
-      created_at: updatedUser.createdAt.toISOString(),
-    };
+      const profile = {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        school: updatedUser.school || undefined,
+        subject: updatedUser.subject || undefined,
+        role: updatedUser.role,
+        avatar: updatedUser.avatarUrl || undefined,
+        created_at: updatedUser.createdAt.toISOString(),
+      };
 
-    res.json({ success: true, user: profile });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors[0].message });
+      res.json({ success: true, user: profile });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Update profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-    console.error("Update profile error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 export default router;

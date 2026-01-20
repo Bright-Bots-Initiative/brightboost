@@ -84,8 +84,8 @@ describe("Profile Routes", () => {
       // Mock finding the student
       // @ts-ignore
       prismaMock.user.findUnique.mockImplementation(({ where }) => {
-          if (where.id === "student-456") return Promise.resolve(mockStudent);
-          return Promise.resolve(null);
+        if (where.id === "student-456") return Promise.resolve(mockStudent);
+        return Promise.resolve(null);
       });
 
       const response = await request(app)
@@ -110,27 +110,27 @@ describe("Profile Routes", () => {
     });
 
     it("should forbid student from viewing other student profile", async () => {
-       // @ts-ignore
-       prismaMock.user.findUnique.mockResolvedValue(mockStudent);
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue(mockStudent);
 
-       const response = await request(app)
-         .get("/api/users/student-456")
-         .set("x-user-id", "student-789") // Another student
-         .set("x-role", "student");
+      const response = await request(app)
+        .get("/api/users/student-456")
+        .set("x-user-id", "student-789") // Another student
+        .set("x-role", "student");
 
-       expect(response.status).toBe(403);
+      expect(response.status).toBe(403);
     });
 
     it("should allow user to view their own profile via ID", async () => {
-        // @ts-ignore
-        prismaMock.user.findUnique.mockResolvedValue(mockStudent);
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue(mockStudent);
 
-        const response = await request(app)
-          .get("/api/users/student-456")
-          .set("x-user-id", "student-456") // Same ID
-          .set("x-role", "student");
+      const response = await request(app)
+        .get("/api/users/student-456")
+        .set("x-user-id", "student-456") // Same ID
+        .set("x-role", "student");
 
-        expect(response.status).toBe(200);
+      expect(response.status).toBe(200);
     });
   });
 
