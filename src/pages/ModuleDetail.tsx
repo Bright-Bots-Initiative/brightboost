@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Star, Zap, Check } from "lucide-react";
 
 export default function ModuleDetail() {
@@ -41,7 +42,26 @@ export default function ModuleDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]); // avoid accidental reruns
 
-  if (!module) return <div>Loading...</div>;
+  if (!module) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+        <div className="space-y-6">
+          <div className="border p-6 rounded-xl bg-white shadow-sm space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-1/3" />
+              <div className="flex gap-3">
+                <Skeleton className="h-14 w-40" />
+                <Skeleton className="h-14 w-40" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -103,6 +123,7 @@ export default function ModuleDetail() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-xs text-gray-400 h-14 px-2"
+                                aria-label={`Replay ${a.title}`}
                                 onClick={() =>
                                   navigate(
                                     `/student/modules/${slug}/lessons/${l.id}/activities/${a.id}`,

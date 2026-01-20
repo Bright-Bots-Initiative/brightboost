@@ -12,3 +12,8 @@
 
 **Learning:** In tables or lists, generic labels like "Edit" or "Delete" are confusing for screen reader users when navigating by form controls. They hear repeated "Edit" without context.
 **Action:** When iterating over items (like rows in a table), append the item's name to the action button's `aria-label` (e.g., "Edit Algebra 101") to provide necessary context.
+
+## 2024-05-24 - Contextual Replay Buttons
+
+**Learning:** When a "Replay" button is placed next to a completed item (which might have its own "Done" status or button), the context can be lost for screen reader users if the button label is just "Replay". They might not know *which* item they are about to replay.
+**Action:** Always include the item name in the `aria-label` for "Replay" or similar repetitive actions in a list (e.g., "Replay [Activity Name]").
