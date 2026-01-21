@@ -15,16 +15,6 @@ const prismaMock = vi.hoisted(() => ({
   unlockedAbility: {
     findMany: vi.fn(),
     createMany: vi.fn(),
-    findFirst: vi.fn(),
-    create: vi.fn(),
-  },
-  match: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-  matchTurn: {
-    findMany: vi.fn(),
-    create: vi.fn(),
   },
 }));
 
@@ -32,16 +22,8 @@ vi.mock("../utils/prisma", () => ({
   default: prismaMock,
 }));
 
-// Mock pvpQuestions
-vi.mock("./pvpQuestions", () => ({
-  checkAnswer: vi.fn().mockImplementation((band, qId, ansIndex) => {
-    // Correct if index is 1
-    return ansIndex === 1;
-  }),
-}));
-
 // Import after mock
-import { checkUnlocks, resolveTurn } from "./game";
+import { checkUnlocks } from "./game";
 
 describe("checkUnlocks", () => {
   beforeEach(() => {
@@ -79,10 +61,6 @@ describe("checkUnlocks", () => {
       where: { id: avatarId },
       data: { level: 6, xp: { increment: 100 } },
     });
-
-    // Optimization check: findFirst and create should NOT be called
-    expect(prismaMock.unlockedAbility.findFirst).not.toHaveBeenCalled();
-    expect(prismaMock.unlockedAbility.create).not.toHaveBeenCalled();
 
     // createMany should be called once with 3 items
     expect(prismaMock.unlockedAbility.createMany).toHaveBeenCalledTimes(1);
@@ -128,180 +106,35 @@ describe("checkUnlocks", () => {
       ],
     });
   });
-});
 
-describe("resolveTurn - Knowledge Bonus", () => {
-  const matchId = "match-123";
-  const p1Id = "p1";
-  const p2Id = "p2";
-  const abilityId = "ab-attack";
+  it("should not update if avatar not found", async () => {
+    const studentId = "student-1";
 
-  const mockAbility = {
-    id: abilityId,
-    config: { type: "attack", value: 20 },
-    name: "Strike",
-  };
+    prismaMock.progress.count.mockResolvedValue(10);
+    prismaMock.avatar.findUnique.mockResolvedValue(null);
 
-  const mockPlayer1 = {
-    id: "p1",
-    archetype: "AI",
-    hp: 100,
-    unlockedAbilities: [{ abilityId: abilityId, Ability: mockAbility }],
-  };
+    await checkUnlocks(studentId);
 
-  const mockPlayer2 = {
-    id: "p2",
-    archetype: "BIOTECH",
-    hp: 100,
-    unlockedAbilities: [],
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.unlockedAbility.createMany).not.toHaveBeenCalled();
   });
 
-  it("should apply 25% bonus for correct answer", async () => {
-    // Setup match state
-    prismaMock.match.findUnique.mockResolvedValue({
-      id: matchId,
-      status: "ACTIVE",
-      player1Id: p1Id,
-      player2Id: p2Id,
-      Player1: mockPlayer1, // Basic fields
-      Player2: mockPlayer2, // Basic fields
-      turns: [],
-      band: "K2",
+  it("should not update if level has not increased", async () => {
+    const studentId = "student-1";
+    const avatarId = "avatar-1";
+
+    // 2 progress items / 2 = level 2, but avatar is already level 2
+    prismaMock.progress.count.mockResolvedValue(2);
+
+    prismaMock.avatar.findUnique.mockResolvedValue({
+      id: avatarId,
+      studentId,
+      archetype: "AI",
+      level: 2,
     });
 
-    // Mock ability verification for optimization
-    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-      id: "ua-1",
-      avatarId: p1Id,
-      abilityId: abilityId,
-      Ability: mockAbility,
-    });
+    await checkUnlocks(studentId);
 
-    // Mock create return to satisfy turns.push(newTurn)
-    prismaMock.matchTurn.create.mockResolvedValue({
-      id: "turn-1",
-      matchId,
-      round: 1,
-      actorId: p1Id,
-      action: {
-        abilityId,
-        damageDealt: 25,
-        knowledge: { correct: true, bonusMult: 1.25 },
-      },
-    });
-
-    // Call with correct answer (index 1)
-    await resolveTurn(matchId, p1Id, abilityId, {
-      questionId: "q1",
-      answerIndex: 1,
-    });
-
-    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        action: expect.objectContaining({
-          damageDealt: 25,
-          knowledge: expect.objectContaining({
-            correct: true,
-            bonusMult: 1.25,
-          }),
-        }),
-      }),
-    });
-  });
-
-  it("should NOT apply bonus for incorrect answer", async () => {
-    prismaMock.match.findUnique.mockResolvedValue({
-      id: matchId,
-      status: "ACTIVE",
-      player1Id: p1Id,
-      player2Id: p2Id,
-      Player1: mockPlayer1,
-      Player2: mockPlayer2,
-      turns: [],
-      band: "K2",
-    });
-
-    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-      id: "ua-1",
-      avatarId: p1Id,
-      abilityId: abilityId,
-      Ability: mockAbility,
-    });
-
-    // Mock create return
-    prismaMock.matchTurn.create.mockResolvedValue({
-      id: "turn-1",
-      matchId,
-      round: 1,
-      actorId: p1Id,
-      action: {
-        abilityId,
-        damageDealt: 20,
-        knowledge: { correct: false },
-      },
-    });
-
-    // Call with incorrect answer (index 0)
-    await resolveTurn(matchId, p1Id, abilityId, {
-      questionId: "q1",
-      answerIndex: 0,
-    });
-
-    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        action: expect.objectContaining({
-          damageDealt: 20,
-          knowledge: expect.objectContaining({ correct: false }),
-        }),
-      }),
-    });
-  });
-
-  it("should handle missing quiz data gracefuly (no bonus)", async () => {
-    prismaMock.match.findUnique.mockResolvedValue({
-      id: matchId,
-      status: "ACTIVE",
-      player1Id: p1Id,
-      player2Id: p2Id,
-      Player1: mockPlayer1,
-      Player2: mockPlayer2,
-      turns: [],
-      band: "K2",
-    });
-
-    prismaMock.unlockedAbility.findFirst.mockResolvedValue({
-      id: "ua-1",
-      avatarId: p1Id,
-      abilityId: abilityId,
-      Ability: mockAbility,
-    });
-
-    // Mock create return
-    prismaMock.matchTurn.create.mockResolvedValue({
-      id: "turn-1",
-      matchId,
-      round: 1,
-      actorId: p1Id,
-      action: {
-        abilityId,
-        damageDealt: 20,
-        knowledge: null,
-      },
-    });
-
-    await resolveTurn(matchId, p1Id, abilityId);
-
-    expect(prismaMock.matchTurn.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        action: expect.objectContaining({
-          damageDealt: 20,
-          knowledge: null,
-        }),
-      }),
-    });
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
   });
 });

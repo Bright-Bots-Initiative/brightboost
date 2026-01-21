@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import Arena from "./Arena";
+import SpacewarArena from "./SpacewarArena";
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -31,12 +31,12 @@ export default function PlayHub() {
         className="w-full flex-1 flex flex-col"
       >
         <TabsList className="grid w-full grid-cols-2 mb-4 max-w-md mx-auto">
-          <TabsTrigger value="pvp">PvP Arena</TabsTrigger>
+          <TabsTrigger value="pvp">Spacewar PvP</TabsTrigger>
           <TabsTrigger value="coop">Co-op Adventure</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pvp" className="flex-1 w-full">
-          <Arena />
+          <SpacewarArena />
         </TabsContent>
 
         <TabsContent
