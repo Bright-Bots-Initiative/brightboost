@@ -3,7 +3,12 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 export function ModulesSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      role="status"
+      aria-label="Loading modules"
+      aria-busy="true"
+    >
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <Card key={i} className="h-full">
           <CardHeader>
@@ -15,6 +20,7 @@ export function ModulesSkeleton() {
           </CardContent>
         </Card>
       ))}
+      <span className="sr-only">Loading modules...</span>
     </div>
   );
 }
