@@ -1,0 +1,6 @@
+# Placeholder for Unity WebGL build output
+# After building in Unity, this directory will contain:
+# - spacewar.loader.js
+# - spacewar.data
+# - spacewar.framework.js
+# - spacewar.wasm
