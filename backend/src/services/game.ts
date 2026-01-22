@@ -1,16 +1,31 @@
 // backend/src/services/game.ts
 import prisma from "../utils/prisma";
+import type { Avatar } from "@prisma/client";
 
 type AbilityRow = { id: string };
 
-export async function checkUnlocks(studentId: string) {
-  // Fetch progress count and avatar details concurrently.
-  const [progressCount, avatar] = await Promise.all([
+export async function checkUnlocks(
+  studentId: string,
+  preloadedAvatar?: Avatar | null,
+) {
+  let avatar = preloadedAvatar;
+
+  // ⚡ Bolt Optimization: Use preloaded avatar if available to save a query
+  const queries: [Promise<number>, Promise<Avatar | null>?] = [
     prisma.progress.count({
       where: { studentId, status: "COMPLETED" },
     }),
-    prisma.avatar.findUnique({ where: { studentId } }),
-  ]);
+  ];
+
+  if (!avatar) {
+    queries.push(prisma.avatar.findUnique({ where: { studentId } }));
+  }
+
+  const results = await Promise.all(queries);
+  const progressCount = results[0];
+  if (!avatar) {
+    avatar = results[1] as Avatar | null;
+  }
 
   if (!avatar) return;
 

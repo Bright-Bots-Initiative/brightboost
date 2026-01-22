@@ -136,7 +136,8 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
       const currentEnergy = avatarBefore.energy || 0;
       const currentHp = avatarBefore.hp || 0;
 
-      await prisma.avatar.update({
+      // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
+      const updatedAvatar = await prisma.avatar.update({
         where: { studentId },
         data: {
           xp: { increment: 50 },
@@ -146,7 +147,7 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
       });
 
       // Check for level up (may add more XP and unlocks)
-      await checkUnlocks(studentId);
+      await checkUnlocks(studentId, updatedAvatar);
     } catch (e) {
       console.warn("Could not give rewards to avatar", e);
     }
