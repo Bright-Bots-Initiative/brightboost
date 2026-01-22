@@ -8,6 +8,9 @@ const prismaMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  auditLog: {
+    create: vi.fn(),
+  },
 }));
 
 vi.mock("@prisma/client", () => {

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
+import { logAudit } from "../utils/audit";
 
 const router = Router();
 
@@ -82,6 +83,12 @@ router.post(
         },
       });
 
+      // 🛡️ Sentinel: Audit Log
+      await logAudit("USER_SIGNUP", user.id, {
+        email: user.email,
+        role: user.role,
+      });
+
       const token = generateToken(user);
       const { password, ...userWithoutPassword } = user;
 
@@ -127,6 +134,12 @@ router.post(
           school: data.school,
           subject: data.subject,
         },
+      });
+
+      // 🛡️ Sentinel: Audit Log
+      await logAudit("USER_SIGNUP", user.id, {
+        email: user.email,
+        role: user.role,
       });
 
       const token = generateToken(user);
@@ -177,6 +190,9 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     if (!isValid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
+
+    // 🛡️ Sentinel: Audit Log
+    await logAudit("USER_LOGIN", user.id, { email: user.email });
 
     const token = generateToken(user);
     const { password, ...userWithoutPassword } = user;
