@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getAllModules,
   getModuleWithContent,
+  getModuleStructure,
   clearModuleCache,
 } from "./module";
 import prisma from "../utils/prisma";
@@ -84,9 +85,64 @@ describe("Module Service", () => {
       expect(prisma.module.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { slug: "slug-1" },
+          include: expect.anything(),
         }),
       );
       expect(result).toEqual(mockModule);
+    });
+  });
+
+  describe("getModuleStructure", () => {
+    it("should fetch module from DB on first call using select (no content)", async () => {
+      const mockStructure = { slug: "slug-1", title: "Module 1" };
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockStructure as any);
+
+      const result = await getModuleStructure("slug-1");
+
+      expect(prisma.module.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { slug: "slug-1" },
+          select: expect.anything(), // Should use select, not include
+        }),
+      );
+      // Ensure select was actually used (shallow check on implementation detail)
+      const callArgs = vi.mocked(prisma.module.findUnique).mock.calls[0][0];
+      expect(callArgs?.select).toBeDefined();
+      expect(callArgs?.include).toBeUndefined();
+
+      expect(result).toEqual(mockStructure);
+    });
+
+    it("should use moduleCache if available", async () => {
+      const mockFull = { slug: "slug-1", title: "Module 1 Full" };
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockFull as any);
+
+      // 1. Populate Full Cache
+      await getModuleWithContent("slug-1");
+      expect(prisma.module.findUnique).toHaveBeenCalledTimes(1);
+
+      // 2. Call Structure
+      const result = await getModuleStructure("slug-1");
+
+      // Should NOT fetch again
+      expect(prisma.module.findUnique).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockFull);
+    });
+
+    it("should use moduleStructureCache if available", async () => {
+      const mockStructure = { slug: "slug-1", title: "Module 1 Structure" };
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockStructure as any);
+
+      // 1. Populate Structure Cache
+      await getModuleStructure("slug-1");
+      expect(prisma.module.findUnique).toHaveBeenCalledTimes(1);
+
+      // 2. Call Structure Again
+      const result = await getModuleStructure("slug-1");
+
+      // Should NOT fetch again
+      expect(prisma.module.findUnique).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockStructure);
     });
   });
 });

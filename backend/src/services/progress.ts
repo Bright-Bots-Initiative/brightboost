@@ -1,5 +1,5 @@
 import prisma from "../utils/prisma";
-import { getModuleWithContent } from "./module";
+import { getModuleStructure } from "./module";
 import { GameError } from "../utils/errors";
 
 const ProgressStatus = {
@@ -69,7 +69,7 @@ export async function getAggregatedProgress(
 
     // 2. Get module structure (units, lessons, activities)
     // ⚡ Bolt Optimization: Use cached module structure
-    getModuleWithContent(moduleSlug),
+    getModuleStructure(moduleSlug),
   ]);
 
   if (!module) {
