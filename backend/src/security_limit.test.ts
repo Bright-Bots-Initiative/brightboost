@@ -30,13 +30,11 @@ describe("Security Limits", () => {
     // Generate a large payload (approx 200KB)
     const largeString = "a".repeat(200 * 1024);
 
-    const response = await request(app)
-      .post("/api/login")
-      .send({
-        email: "test@example.com",
-        password: "password123",
-        padding: largeString
-      });
+    const response = await request(app).post("/api/login").send({
+      email: "test@example.com",
+      password: "password123",
+      padding: largeString,
+    });
 
     // Express default is 100kb, so this should return 413 even without my change if default is active.
     // If it returns 413, then I should lower the limit to 50kb and test with 60kb to verify MY change.
@@ -52,13 +50,11 @@ describe("Security Limits", () => {
     // Generate a payload approx 60KB
     const largeString = "a".repeat(60 * 1024);
 
-    const response = await request(app)
-      .post("/api/login")
-      .send({
-        email: "test@example.com",
-        password: "password123",
-        padding: largeString
-      });
+    const response = await request(app).post("/api/login").send({
+      email: "test@example.com",
+      password: "password123",
+      padding: largeString,
+    });
 
     expect(response.status).toBe(413);
   });

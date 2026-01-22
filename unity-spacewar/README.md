@@ -12,12 +12,14 @@ A 1962 Spacewar-style duel game with BrightBoost robot theming.
 ### Controls
 
 **Player 1:**
+
 - `A` / `D` - Rotate left/right
 - `W` - Thrust
 - `Space` - Fire
 - `S` - Hyperspace (random teleport, 15% risk of explosion)
 
 **Player 2:**
+
 - `Left` / `Right Arrow` - Rotate left/right
 - `Up Arrow` - Thrust
 - `Right Ctrl` - Fire (or `Left Ctrl` in WebGL)
@@ -31,11 +33,11 @@ When playing in a browser (WebGL build), the game canvas must have focus for key
 
 Ships are styled as robot-jets with archetype-based visuals:
 
-| Archetype | Color | Description |
-|-----------|-------|-------------|
-| AI | Blue | Artificial Intelligence |
-| QUANTUM | Purple | Quantum Computing |
-| BIOTECH | Green | Biotechnology |
+| Archetype | Color  | Description             |
+| --------- | ------ | ----------------------- |
+| AI        | Blue   | Artificial Intelligence |
+| QUANTUM   | Purple | Quantum Computing       |
+| BIOTECH   | Green  | Biotechnology           |
 
 ## Setup Instructions
 
@@ -81,6 +83,7 @@ Main Camera (Orthographic, size 5-7)
 ### Creating Prefabs
 
 **Projectile Prefab:**
+
 - Sprite (small dot/circle)
 - Rigidbody2D (Kinematic or Dynamic with no gravity)
 - CircleCollider2D (trigger)
@@ -100,6 +103,7 @@ Main Camera (Orthographic, size 5-7)
 5. Select output folder: `../public/games/spacewar/`
 
 The build will create:
+
 - `Build/spacewar.loader.js`
 - `Build/spacewar.data`
 - `Build/spacewar.framework.js`
@@ -114,18 +118,22 @@ The `WebBridge.cs` component handles communication with the React frontend:
 
 ```javascript
 // Call from React after Unity loads
-unityInstance.SendMessage('WebBridge', 'SetPlayerConfig', JSON.stringify({
-  archetype: 'AI',
-  level: 5,
-  xp: 1200
-}));
+unityInstance.SendMessage(
+  "WebBridge",
+  "SetPlayerConfig",
+  JSON.stringify({
+    archetype: "AI",
+    level: 5,
+    xp: 1200,
+  }),
+);
 ```
 
 ### Listening for Match End
 
 ```javascript
-window.addEventListener('unityMatchOver', (event) => {
-  console.log('Match result:', event.detail);
+window.addEventListener("unityMatchOver", (event) => {
+  console.log("Match result:", event.detail);
   // { winner: 1, player1Score: 5, player2Score: 3, timestamp: "..." }
 });
 ```
@@ -134,13 +142,13 @@ window.addEventListener('unityMatchOver', (event) => {
 
 ```javascript
 // Pause
-unityInstance.SendMessage('WebBridge', 'PauseGame');
+unityInstance.SendMessage("WebBridge", "PauseGame");
 
 // Resume
-unityInstance.SendMessage('WebBridge', 'ResumeGame');
+unityInstance.SendMessage("WebBridge", "ResumeGame");
 
 // Restart
-unityInstance.SendMessage('WebBridge', 'RestartGame');
+unityInstance.SendMessage("WebBridge", "RestartGame");
 ```
 
 ## Project Structure
