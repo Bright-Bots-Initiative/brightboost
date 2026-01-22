@@ -1,5 +1,5 @@
 // src/components/unity/UnityWebGL.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UnityConfig {
   archetype?: string;
@@ -31,12 +31,49 @@ declare global {
   }
 }
 
+// Keys used by the game that browsers may steal (scroll, back navigation, etc.)
+const GAMEPLAY_KEYS = new Set([
+  "Space",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "KeyW",
+  "KeyA",
+  "KeyS",
+  "KeyD",
+  "ControlLeft",
+  "ControlRight",
+]);
+
 export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
+
+  // Block browser-default handling of gameplay keys when canvas is focused
+  const handleKeyCapture = useCallback(
+    (e: KeyboardEvent) => {
+      if (focused && GAMEPLAY_KEYS.has(e.code)) {
+        e.preventDefault();
+      }
+    },
+    [focused]
+  );
+
+  useEffect(() => {
+    // Capture phase listeners to intercept before browser defaults
+    window.addEventListener("keydown", handleKeyCapture, { capture: true });
+    window.addEventListener("keyup", handleKeyCapture, { capture: true });
+    return () => {
+      window.removeEventListener("keydown", handleKeyCapture, { capture: true });
+      window.removeEventListener("keyup", handleKeyCapture, { capture: true });
+    };
+  }, [handleKeyCapture]);
 
   useEffect(() => {
     let mounted = true;
@@ -91,10 +128,10 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
           instanceRef.current = instance;
           setLoading(false);
 
-          // Send config to Unity if provided
+          // Send config to Unity via WebBridge
           if (config) {
             instance.SendMessage(
-              "GameManager",
+              "WebBridge",
               "SetPlayerConfig",
               JSON.stringify(config)
             );
@@ -143,8 +180,24 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
     );
   }
 
+  const handleFocus = () => {
+    setFocused(true);
+  };
+
+  const handleBlur = () => {
+    setFocused(false);
+  };
+
+  const handleContainerClick = () => {
+    canvasRef.current?.focus();
+  };
+
   return (
-    <div className="relative w-full h-full bg-black rounded-xl overflow-hidden">
+    <div
+      ref={containerRef}
+      className="relative w-full h-full bg-black rounded-xl overflow-hidden"
+      onClick={handleContainerClick}
+    >
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
           <div className="text-4xl mb-4">🚀</div>
@@ -158,11 +211,26 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
           <p className="text-slate-400 mt-2">{progress}%</p>
         </div>
       )}
+      {/* Focus hint overlay - shown when game loaded but canvas not focused */}
+      {!loading && !focused && (
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 cursor-pointer"
+          onClick={handleContainerClick}
+        >
+          <div className="text-center text-white">
+            <p className="text-lg font-semibold">Click to play</p>
+            <p className="text-sm text-slate-300 mt-1">Focus the game to enable controls</p>
+          </div>
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         id="unity-canvas"
-        className="w-full h-full"
+        tabIndex={0}
+        className="w-full h-full outline-none"
         style={{ display: loading ? "none" : "block" }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
       />
     </div>
   );

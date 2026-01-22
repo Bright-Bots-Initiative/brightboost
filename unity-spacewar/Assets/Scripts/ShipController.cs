@@ -202,7 +202,14 @@ public class ShipController : MonoBehaviour
     /// </summary>
     private void HandleFiring()
     {
-        if (Input.GetKeyDown(fireKey))
+        // P2 accepts both LeftControl and RightControl as fire (WebGL browser compat)
+        bool firePressed = Input.GetKeyDown(fireKey);
+        if (!firePressed && playerNumber == 2)
+        {
+            firePressed = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
+        }
+
+        if (firePressed)
         {
             TryFire();
         }

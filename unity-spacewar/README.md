@@ -20,8 +20,12 @@ A 1962 Spacewar-style duel game with BrightBoost robot theming.
 **Player 2:**
 - `Left` / `Right Arrow` - Rotate left/right
 - `Up Arrow` - Thrust
-- `Right Ctrl` - Fire
+- `Right Ctrl` - Fire (or `Left Ctrl` in WebGL)
 - `Down Arrow` - Hyperspace
+
+### WebGL Controls Note
+
+When playing in a browser (WebGL build), the game canvas must have focus for keyboard input to work. The React component displays a "Click to play" overlay when the canvas is not focused. Additionally, Player 2 can use either `Left Ctrl` or `Right Ctrl` to fire, as some browsers/keyboards may not reliably detect `Right Ctrl`.
 
 ## Robot Theming
 
