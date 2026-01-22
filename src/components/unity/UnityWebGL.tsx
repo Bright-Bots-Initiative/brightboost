@@ -86,12 +86,8 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
       const loaderUrl = `${basePath}/Build/spacewar.loader.js`;
 
       try {
-        // Check if loader exists first
-        const loaderCheck = await fetch(loaderUrl, { method: "HEAD" });
-        if (!loaderCheck.ok) {
-          throw new Error("Unity build files not found");
-        }
-
+        // Load the Unity loader script directly - rely on script.onerror
+        // to detect missing files (HEAD requests may return 405 on some servers)
         script = document.createElement("script");
         script.src = loaderUrl;
         script.async = true;
@@ -130,11 +126,15 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
 
           // Send config to Unity via WebBridge
           if (config) {
-            instance.SendMessage(
-              "WebBridge",
-              "SetPlayerConfig",
-              JSON.stringify(config)
-            );
+            try {
+              instance.SendMessage(
+                "WebBridge",
+                "SetPlayerConfig",
+                JSON.stringify(config)
+              );
+            } catch (err) {
+              console.warn("Failed to send player config to Unity:", err);
+            }
           }
         }
       } catch (err) {
