@@ -20,6 +20,7 @@ public class GravityWell : MonoBehaviour
     [SerializeField] private float pulseAmount = 0.1f;
 
     private Vector3 baseScale;
+    private Vector3 originalScale; // Store original for scale multiplier calculations
 
     private void Awake()
     {
@@ -33,7 +34,8 @@ public class GravityWell : MonoBehaviour
             return;
         }
 
-        baseScale = transform.localScale;
+        originalScale = transform.localScale;
+        baseScale = originalScale;
     }
 
     private void Update()
@@ -120,6 +122,20 @@ public class GravityWell : MonoBehaviour
         minDistance = minDist;
         maxDistance = maxDist;
         Debug.Log($"[GravityWell] Tuning applied: strength={strength}, minDist={minDist}, maxDist={maxDist}");
+    }
+
+    /// <summary>
+    /// Set sun visual scale at runtime (called by GameManager for balance).
+    /// Scales transform and adjusts kill radius proportionally.
+    /// </summary>
+    public void SetSunScale(float scaleMultiplier)
+    {
+        // Apply multiplier to original scale - pulsing effect will use new baseScale
+        baseScale = originalScale * scaleMultiplier;
+        transform.localScale = baseScale;
+
+        // Note: CircleCollider2D scales automatically with transform
+        Debug.Log($"[GravityWell] Scale set to: {scaleMultiplier} (baseScale: {baseScale})");
     }
 
     /// <summary>
