@@ -37,6 +37,27 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool cpuOpponentEnabled = true;
     [SerializeField] private CpuPilot.Difficulty cpuDifficulty = CpuPilot.Difficulty.Normal;
 
+    [Header("Balance Tuning")]
+    [Tooltip("Sun gravity strength (default scene value: 50, balanced: 25)")]
+    [SerializeField] private float sunGravityStrength = 25f;
+    [Tooltip("Minimum distance for gravity calc (prevents singularity spike)")]
+    [SerializeField] private float sunMinDistance = 0.6f;
+    [Tooltip("Maximum distance for gravity effect")]
+    [SerializeField] private float sunMaxDistance = 20f;
+    [Tooltip("Ship thrust force (default: 5, balanced: 8)")]
+    [SerializeField] private float shipThrustForce = 8f;
+    [Tooltip("Ship max speed (default: 8, balanced: 11)")]
+    [SerializeField] private float shipMaxSpeed = 11f;
+    [Tooltip("Ship drag/friction (default: 0.5, balanced: 0.45)")]
+    [SerializeField] private float shipDrag = 0.45f;
+    [Tooltip("Gravity multiplier on ships (1.0 = normal, <1 = less pull)")]
+    [SerializeField] private float shipGravityMultiplier = 1.0f;
+
+    // Balance metrics tracking (editor/dev builds only)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private float roundStartTime = 0f;
+#endif
+
     // Player data
     private int player1Score = 0;
     private int player2Score = 0;
@@ -72,7 +93,49 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        ApplyBalanceTuning();
         InitializeGame();
+    }
+
+    /// <summary>
+    /// Apply balance tuning to GravityWell, ships, and ShipGravity components
+    /// This allows tuning without editing scene serialized values
+    /// </summary>
+    private void ApplyBalanceTuning()
+    {
+        // Apply gravity well tuning
+        if (GravityWell.Instance != null)
+        {
+            GravityWell.Instance.SetGravityTuning(sunGravityStrength, sunMinDistance, sunMaxDistance);
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] GravityWell.Instance not found, cannot apply gravity tuning");
+        }
+
+        // Apply ship movement tuning
+        ApplyShipTuning(player1Ship);
+        ApplyShipTuning(player2Ship);
+
+        Debug.Log($"[GameManager] Balance tuning applied - Gravity: {sunGravityStrength}, Thrust: {shipThrustForce}, MaxSpeed: {shipMaxSpeed}, Drag: {shipDrag}");
+    }
+
+    /// <summary>
+    /// Apply tuning to a single ship
+    /// </summary>
+    private void ApplyShipTuning(ShipController ship)
+    {
+        if (ship == null) return;
+
+        // Apply movement tuning
+        ship.SetMovementTuning(shipThrustForce, shipMaxSpeed, shipDrag);
+
+        // Apply gravity multiplier if ShipGravity component exists
+        ShipGravity shipGravity = ship.GetComponent<ShipGravity>();
+        if (shipGravity != null)
+        {
+            shipGravity.SetMultiplier(shipGravityMultiplier);
+        }
     }
 
     /// <summary>
@@ -183,6 +246,11 @@ public class GameManager : MonoBehaviour
         ShowMessage("");
         isRoundActive = true;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Track round start time for balance metrics
+        roundStartTime = Time.time;
+#endif
+
         if (audioSource != null && roundStartSound != null)
         {
             audioSource.PlayOneShot(roundStartSound);
@@ -225,6 +293,18 @@ public class GameManager : MonoBehaviour
 
         isRoundActive = false;
         EnableShipControls(false);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Log balance metrics for sun deaths (self-destruct with no attacker)
+        if (attacker == null && roundStartTime > 0f)
+        {
+            float timeToDeath = Time.time - roundStartTime;
+            Vector3 spawnPos = destroyedShip == player1Ship && player1SpawnPoint != null
+                ? player1SpawnPoint.position
+                : (player2SpawnPoint != null ? player2SpawnPoint.position : Vector3.zero);
+            Debug.Log($"[Balance] time_to_sun_death_seconds={timeToDeath:F2} spawn={spawnPos} ship=P{destroyedShip?.PlayerNumber}");
+        }
+#endif
 
         // Award point to the attacker (or other player if self-destruct)
         if (attacker != null)

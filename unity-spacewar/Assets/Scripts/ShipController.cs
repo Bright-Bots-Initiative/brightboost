@@ -591,4 +591,15 @@ public class ShipController : MonoBehaviour
         externalFire = fire;
         externalHyperspace = hyperspace;
     }
+
+    /// <summary>
+    /// Set movement tuning at runtime (called by GameManager for balance)
+    /// </summary>
+    public void SetMovementTuning(float newThrustForce, float newMaxSpeed, float newDrag)
+    {
+        thrustForce = newThrustForce;
+        maxSpeed = newMaxSpeed;
+        drag = newDrag;
+        Debug.Log($"[ShipController P{playerNumber}] Tuning applied: thrust={newThrustForce}, maxSpeed={newMaxSpeed}, drag={newDrag}");
+    }
 }

@@ -25,4 +25,13 @@ public class ShipGravity : MonoBehaviour
         Vector2 gravityForce = GravityWell.Instance.CalculateGravityForce(transform.position);
         rb.AddForce(gravityForce * gravityMultiplier);
     }
+
+    /// <summary>
+    /// Set gravity multiplier at runtime (called by GameManager for balance)
+    /// </summary>
+    public void SetMultiplier(float multiplier)
+    {
+        gravityMultiplier = multiplier;
+        Debug.Log($"[ShipGravity] Multiplier set to: {multiplier}");
+    }
 }

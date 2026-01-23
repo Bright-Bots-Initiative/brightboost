@@ -110,4 +110,20 @@ public class GravityWell : MonoBehaviour
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, maxDistance);
     }
+
+    /// <summary>
+    /// Set gravity tuning at runtime (called by GameManager for balance)
+    /// </summary>
+    public void SetGravityTuning(float strength, float minDist, float maxDist)
+    {
+        gravityStrength = strength;
+        minDistance = minDist;
+        maxDistance = maxDist;
+        Debug.Log($"[GravityWell] Tuning applied: strength={strength}, minDist={minDist}, maxDist={maxDist}");
+    }
+
+    /// <summary>
+    /// Get the kill radius (for balance metrics)
+    /// </summary>
+    public float KillRadius => killRadius;
 }
