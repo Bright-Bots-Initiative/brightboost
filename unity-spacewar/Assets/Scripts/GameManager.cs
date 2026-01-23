@@ -57,25 +57,29 @@ public class GameManager : MonoBehaviour
     [Tooltip("Classic1962: Newtonian inertia, orbitable sun, no artificial drag. Arcade: drag + speed clamp.")]
     [SerializeField] private PhysicsPreset physicsPreset = PhysicsPreset.Classic1962;
 
-    [Header("Classic1962 Tuning (default)")]
-    [Tooltip("Sun gravity strength for classic mode (reduced for survivable orbits)")]
-    [SerializeField] private float classicSunGravity = 14f;
-    [Tooltip("Minimum distance for gravity calc (higher = less singularity spike near sun)")]
-    [SerializeField] private float classicSunMinDistance = 1.2f;
+    [Header("Classic1962 Tuning (balance-v1.3)")]
+    [Tooltip("Sun gravity strength (v1.3: 10, much weaker than original 50)")]
+    [SerializeField] private float classicSunGravity = 10f;
+    [Tooltip("Minimum distance for gravity calc (v1.3: 1.8, reduces near-center spike)")]
+    [SerializeField] private float classicSunMinDistance = 1.8f;
     [Tooltip("Maximum distance for gravity effect")]
     [SerializeField] private float classicSunMaxDistance = 20f;
-    [Tooltip("Ship thrust force (higher to counter gravity effectively)")]
-    [SerializeField] private float classicShipThrust = 14f;
-    [Tooltip("Sun visual scale multiplier (smaller sun = easier to navigate)")]
+    [Tooltip("Ship thrust force (v1.3: 18, rockets must fight gravity)")]
+    [SerializeField] private float classicShipThrust = 18f;
+    [Tooltip("Sun visual scale multiplier (v1.3: 0.67, 33% smaller)")]
     [SerializeField] private float classicSunScale = 0.67f;
-    [Tooltip("Distance from center for ship spawns (farther = more time to react)")]
-    [SerializeField] private float classicSpawnDistance = 6.0f;
-    [Tooltip("Ship max speed (0 or very high = no clamp, true Newtonian)")]
-    [SerializeField] private float classicShipMaxSpeed = 0f;
-    [Tooltip("Ship drag (0 = no artificial drag, true Newtonian inertia)")]
-    [SerializeField] private float classicShipDrag = 0f;
-    [Tooltip("Gravity multiplier on ships (can reduce if gravity still too strong)")]
-    [SerializeField] private float classicGravityMultiplier = 0.9f;
+    [Tooltip("Distance from center for ship spawns (v1.3: 8.0, farther spawns)")]
+    [SerializeField] private float classicSpawnDistance = 8.0f;
+    [Tooltip("Spawn Y jitter range (v1.3: 1.5)")]
+    [SerializeField] private float classicSpawnYJitter = 1.5f;
+    [Tooltip("Ship max speed (v1.3: 50, effectively no clamp)")]
+    [SerializeField] private float classicShipMaxSpeed = 50f;
+    [Tooltip("Ship drag (v1.3: 0.02, near-zero inertia bleed)")]
+    [SerializeField] private float classicShipDrag = 0.02f;
+    [Tooltip("Gravity multiplier on ships (v1.3: 0.6, additional relief)")]
+    [SerializeField] private float classicGravityMultiplier = 0.6f;
+    [Tooltip("Enable arcade-style clamp and manual drag (v1.3: false for classic feel)")]
+    [SerializeField] private bool classicClampAndManualDrag = false;
 
     [Header("Arcade Tuning (optional)")]
     [Tooltip("Sun gravity strength for arcade mode")]
@@ -96,6 +100,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float arcadeSunScale = 1.0f;
     [Tooltip("Distance from center for ship spawns")]
     [SerializeField] private float arcadeSpawnDistance = 4.5f;
+    [Tooltip("Spawn Y jitter range")]
+    [SerializeField] private float arcadeSpawnYJitter = 0.5f;
+    [Tooltip("Enable arcade-style clamp and manual drag")]
+    [SerializeField] private bool arcadeClampAndManualDrag = true;
 
     // Balance metrics tracking (editor/dev builds only)
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -115,6 +123,7 @@ public class GameManager : MonoBehaviour
     private bool isGameActive = false;
     private bool isRoundActive = false;
     private AudioSource audioSource;
+    private bool buildStampLogged = false;
 
     private void Awake()
     {
@@ -137,7 +146,18 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        // Log build stamp once
+        if (!buildStampLogged)
+        {
+            Debug.Log($"[Spacewar] {BuildInfo.Stamp}");
+            buildStampLogged = true;
+        }
+
         ApplyPhysicsPreset();
+
+        // Show build stamp briefly on game start
+        ShowMessage($"Spacewar {BuildInfo.Stamp}\nFirst to {scoreToWin}. Avoid the Sun.");
+
         InitializeGame();
     }
 
@@ -159,27 +179,28 @@ public class GameManager : MonoBehaviour
         float gravMult = isClassic ? classicGravityMultiplier : arcadeGravityMultiplier;
         float sunScale = isClassic ? classicSunScale : arcadeSunScale;
         float spawnDist = isClassic ? classicSpawnDistance : arcadeSpawnDistance;
-        bool arcadeMode = !isClassic;
+        float spawnYJit = isClassic ? classicSpawnYJitter : arcadeSpawnYJitter;
+        bool useClampDrag = isClassic ? classicClampAndManualDrag : arcadeClampAndManualDrag;
 
         // Apply gravity well tuning and sun scale
         if (GravityWell.Instance != null)
         {
             GravityWell.Instance.SetGravityTuning(sunGravity, sunMinDist, sunMaxDist);
-            GravityWell.Instance.SetSunScale(sunScale);
+            GravityWell.Instance.SetSunScaleFactor(sunScale);
         }
         else
         {
             Debug.LogWarning("[GameManager] GravityWell.Instance not found, cannot apply gravity tuning");
         }
 
-        // Apply ship movement tuning
-        ApplyShipTuning(player1Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, arcadeMode);
-        ApplyShipTuning(player2Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, arcadeMode);
+        // Apply ship movement tuning (pass useClampDrag instead of !isClassic)
+        ApplyShipTuning(player1Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, useClampDrag);
+        ApplyShipTuning(player2Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, useClampDrag);
 
         // Reposition spawn points based on distance setting
-        RepositionSpawnPoints(spawnDist);
+        RepositionSpawnPoints(spawnDist, spawnYJit);
 
-        Debug.Log($"[GameManager] Physics preset applied: {physicsPreset} - Gravity={sunGravity}, Thrust={shipThrust}, SunScale={sunScale}, SpawnDist={spawnDist}");
+        Debug.Log($"[GameManager] Physics preset applied: {physicsPreset} - Gravity={sunGravity}, MinDist={sunMinDist}, Thrust={shipThrust}, SunScale={sunScale}, SpawnDist={spawnDist}, GravMult={gravMult}");
     }
 
     /// <summary>
@@ -202,31 +223,42 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Reposition spawn points at runtime based on distance from center.
-    /// Player 1 spawns on the left, Player 2 on the right, with slight Y jitter.
+    /// Player 1 spawns on the left, Player 2 on the right, with Y jitter.
+    /// Clamps X to stay within camera bounds.
     /// </summary>
-    private void RepositionSpawnPoints(float distanceFromCenter)
+    private void RepositionSpawnPoints(float distanceFromCenter, float yJitterRange = 1.5f)
     {
         Vector3 center = GravityWell.Instance != null ? GravityWell.Instance.transform.position : Vector3.zero;
 
-        // Small Y jitter for variety (-0.5 to +0.5)
-        float yJitter1 = Random.Range(-0.5f, 0.5f);
-        float yJitter2 = Random.Range(-0.5f, 0.5f);
+        // Clamp spawn distance to camera bounds if camera exists
+        float desiredX = distanceFromCenter;
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            float halfH = cam.orthographicSize * 0.9f;
+            float halfW = halfH * cam.aspect;
+            desiredX = Mathf.Min(desiredX, halfW * 0.8f);
+        }
+
+        // Y jitter for variety
+        float yJitter1 = Random.Range(-yJitterRange, yJitterRange);
+        float yJitter2 = Random.Range(-yJitterRange, yJitterRange);
 
         // Player 1 spawns on the left, facing right
         if (player1SpawnPoint != null)
         {
-            player1SpawnPoint.position = center + new Vector3(-distanceFromCenter, yJitter1, 0f);
+            player1SpawnPoint.position = center + new Vector3(-desiredX, yJitter1, 0f);
             player1SpawnPoint.rotation = Quaternion.Euler(0f, 0f, -90f); // Face right
         }
 
         // Player 2 spawns on the right, facing left
         if (player2SpawnPoint != null)
         {
-            player2SpawnPoint.position = center + new Vector3(distanceFromCenter, yJitter2, 0f);
+            player2SpawnPoint.position = center + new Vector3(desiredX, yJitter2, 0f);
             player2SpawnPoint.rotation = Quaternion.Euler(0f, 0f, 90f); // Face left
         }
 
-        Debug.Log($"[GameManager] Spawn points repositioned: distance={distanceFromCenter}, P1=({-distanceFromCenter},{yJitter1:F1}), P2=({distanceFromCenter},{yJitter2:F1})");
+        Debug.Log($"[GameManager] Spawn points repositioned: desiredX={desiredX:F1}, yJitter={yJitterRange}, P1=({-desiredX:F1},{yJitter1:F1}), P2=({desiredX:F1},{yJitter2:F1})");
     }
 
     /// <summary>
