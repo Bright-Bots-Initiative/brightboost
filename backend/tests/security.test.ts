@@ -23,4 +23,15 @@ describe("Security Middleware", () => {
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
   });
+
+  it("should enforce Cache-Control headers on API routes", async () => {
+    // Check a non-existent route under /api (middleware should still apply if mounted on /api)
+    // OR check a known route like /api/modules (will return 401, but headers should be there)
+    const res = await request(app).get("/api/modules");
+
+    expect(res.headers["cache-control"]).toContain("no-store");
+    expect(res.headers["cache-control"]).toContain("no-cache");
+    expect(res.headers["pragma"]).toBe("no-cache");
+    expect(res.headers["expires"]).toBe("0");
+  });
 });

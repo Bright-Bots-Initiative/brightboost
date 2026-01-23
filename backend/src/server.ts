@@ -12,7 +12,7 @@ import avatarRouter from "./routes/avatar";
 import authRouter from "./routes/auth";
 import profileRouter from "./routes/profile";
 import { devRoleShim, authenticateToken } from "./utils/auth";
-import { preventHpp } from "./utils/security";
+import { preventHpp, nocache } from "./utils/security";
 
 const app = express();
 
@@ -72,6 +72,9 @@ const apiLimiter = rateLimit({
 
 // Apply rate limiting to all API routes - BEFORE body parsing
 app.use("/api", apiLimiter);
+
+// 🛡️ Sentinel: Disable caching for all API routes to protect PII
+app.use("/api", nocache);
 
 // 🛡️ Sentinel: Configure CORS securely
 // Only allow trusted origins in production to prevent unauthorized access

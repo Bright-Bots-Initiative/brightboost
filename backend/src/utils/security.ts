@@ -36,3 +36,19 @@ export function preventHpp(req: Request, _res: Response, next: NextFunction) {
   }
   next();
 }
+
+/**
+ * 🛡️ Sentinel: Middleware to disable client-side caching.
+ *
+ * Ensures that sensitive API responses (PII, progress) are not stored
+ * in browser history or disk cache.
+ */
+export function nocache(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+}
