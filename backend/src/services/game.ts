@@ -7,7 +7,7 @@ type AbilityRow = { id: string };
 export async function checkUnlocks(
   studentId: string,
   preloadedAvatar?: Avatar | null,
-) {
+): Promise<{ avatar: Avatar; newAbilitiesCount: number } | undefined> {
   let avatar = preloadedAvatar;
 
   // ⚡ Bolt Optimization: Use preloaded avatar if available to save a query
@@ -27,12 +27,13 @@ export async function checkUnlocks(
     avatar = results[1] as Avatar | null;
   }
 
-  if (!avatar) return;
+  if (!avatar) return undefined;
 
   const newLevel = 1 + Math.floor(progressCount / 2);
+  let newAbilitiesCount = 0;
 
   if (newLevel > avatar.level) {
-    await prisma.avatar.update({
+    avatar = await prisma.avatar.update({
       where: { id: avatar.id },
       data: { level: newLevel, xp: { increment: 100 } },
     });
@@ -42,31 +43,34 @@ export async function checkUnlocks(
       where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
     });
 
-    if (eligibleAbilities.length === 0) return;
-
-    const existingUnlocks = await prisma.unlockedAbility.findMany({
-      where: {
-        avatarId: avatar.id,
-        abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
-      },
-      select: { abilityId: true },
-    });
-
-    const existingAbilityIds = new Set(
-      existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
-    );
-    const newUnlocks = eligibleAbilities.filter(
-      (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
-    );
-
-    if (newUnlocks.length > 0) {
-      await prisma.unlockedAbility.createMany({
-        data: newUnlocks.map((ab: AbilityRow) => ({
+    if (eligibleAbilities.length > 0) {
+      const existingUnlocks = await prisma.unlockedAbility.findMany({
+        where: {
           avatarId: avatar.id,
-          abilityId: ab.id,
-          equipped: false,
-        })),
+          abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
+        },
+        select: { abilityId: true },
       });
+
+      const existingAbilityIds = new Set(
+        existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
+      );
+      const newUnlocks = eligibleAbilities.filter(
+        (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
+      );
+
+      if (newUnlocks.length > 0) {
+        await prisma.unlockedAbility.createMany({
+          data: newUnlocks.map((ab: AbilityRow) => ({
+            avatarId: avatar.id,
+            abilityId: ab.id,
+            equipped: false,
+          })),
+        });
+        newAbilitiesCount = newUnlocks.length;
+      }
     }
   }
+
+  return { avatar, newAbilitiesCount };
 }
