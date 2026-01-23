@@ -1,4 +1,9 @@
 import React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClick: () => void;
@@ -6,15 +11,16 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   ariaLabel?: string;
   children: React.ReactNode; // SVG icon will be passed as children
   className?: string;
+  showTooltip?: boolean;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ onClick, title, ariaLabel, children, className = "", ...props }, ref) => {
-    return (
+  ({ onClick, title, ariaLabel, children, className = "", showTooltip = true, ...props }, ref) => {
+    const button = (
       <button
         ref={ref}
         onClick={onClick}
-        title={title}
+        title={showTooltip ? undefined : title}
         aria-label={ariaLabel || title}
         className={`p-1 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition duration-150 ${className}`}
         {...props}
@@ -22,6 +28,21 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         {children}
       </button>
     );
+
+    if (showTooltip) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {button}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{title}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return button;
   },
 );
 IconButton.displayName = "IconButton";
