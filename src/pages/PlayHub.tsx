@@ -31,7 +31,7 @@ export default function PlayHub() {
         className="w-full flex-1 flex flex-col"
       >
         <TabsList className="grid w-full grid-cols-2 mb-4 max-w-md mx-auto">
-          <TabsTrigger value="pvp">Spacewar PvP</TabsTrigger>
+          <TabsTrigger value="pvp">Spacewar (vs CPU)</TabsTrigger>
           <TabsTrigger value="coop">Co-op Adventure</TabsTrigger>
         </TabsList>
 

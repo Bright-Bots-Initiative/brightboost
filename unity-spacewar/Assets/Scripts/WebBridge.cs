@@ -191,6 +191,71 @@ public class WebBridge : MonoBehaviour
         Time.timeScale = 1f;
     }
 
+    /// <summary>
+    /// Called from JavaScript to set opponent mode
+    /// </summary>
+    /// <param name="mode">"cpu" for CPU opponent, "pvp" for local PvP</param>
+    public void SetOpponentMode(string mode)
+    {
+        Debug.Log($"[WebBridge] SetOpponentMode: {mode}");
+
+        if (GameManager.Instance != null)
+        {
+            bool cpuEnabled = mode?.ToLower() == "cpu";
+            GameManager.Instance.SetCpuEnabled(cpuEnabled);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript to set CPU difficulty
+    /// </summary>
+    /// <param name="difficulty">"easy", "normal", or "hard"</param>
+    public void SetCpuDifficulty(string difficulty)
+    {
+        Debug.Log($"[WebBridge] SetCpuDifficulty: {difficulty}");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetCpuDifficulty(difficulty);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript to set runtime config (combined method)
+    /// Expected JSON format:
+    /// {
+    ///   "opponentMode": "cpu",
+    ///   "difficulty": "normal"
+    /// }
+    /// </summary>
+    public void SetRuntimeConfig(string json)
+    {
+        Debug.Log($"[WebBridge] SetRuntimeConfig: {json}");
+
+        try
+        {
+            RuntimeConfig config = JsonUtility.FromJson<RuntimeConfig>(json);
+
+            if (config != null && GameManager.Instance != null)
+            {
+                if (!string.IsNullOrEmpty(config.opponentMode))
+                {
+                    bool cpuEnabled = config.opponentMode.ToLower() == "cpu";
+                    GameManager.Instance.SetCpuEnabled(cpuEnabled);
+                }
+
+                if (!string.IsNullOrEmpty(config.difficulty))
+                {
+                    GameManager.Instance.SetCpuDifficulty(config.difficulty);
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[WebBridge] Failed to parse runtime config: {e.Message}");
+        }
+    }
+
     // Data classes for JSON serialization
     [System.Serializable]
     private class PlayerConfig
@@ -224,5 +289,12 @@ public class WebBridge : MonoBehaviour
         public int player1Score;
         public int player2Score;
         public string timestamp;
+    }
+
+    [System.Serializable]
+    private class RuntimeConfig
+    {
+        public string opponentMode;
+        public string difficulty;
     }
 }

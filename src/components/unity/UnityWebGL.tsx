@@ -11,6 +11,8 @@ interface UnityConfig {
 interface UnityWebGLProps {
   basePath: string;
   config?: UnityConfig;
+  onInstanceReady?: (instance: any) => void;
+  onRestartRequest?: () => void;
 }
 
 declare global {
@@ -42,11 +44,12 @@ const GAMEPLAY_KEYS = new Set([
   "KeyA",
   "KeyS",
   "KeyD",
+  "KeyR",
   "ControlLeft",
   "ControlRight",
 ]);
 
-export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
+export default function UnityWebGL({ basePath, config, onInstanceReady, onRestartRequest }: UnityWebGLProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
@@ -60,9 +63,29 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
     (e: KeyboardEvent) => {
       if (focused && GAMEPLAY_KEYS.has(e.code)) {
         e.preventDefault();
+
+        // Handle "R" key for restart (only on keydown, not keyup)
+        if (e.type === "keydown" && e.code === "KeyR" && !e.repeat) {
+          // Don't restart if user is typing in an input field
+          const target = e.target as HTMLElement;
+          if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+            return;
+          }
+
+          // Trigger restart via callback or direct SendMessage
+          if (onRestartRequest) {
+            onRestartRequest();
+          } else if (instanceRef.current) {
+            try {
+              instanceRef.current.SendMessage("WebBridge", "RestartGame");
+            } catch (err) {
+              console.warn("Failed to restart game:", err);
+            }
+          }
+        }
       }
     },
-    [focused]
+    [focused, onRestartRequest]
   );
 
   useEffect(() => {
@@ -124,6 +147,11 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
           instanceRef.current = instance;
           setLoading(false);
 
+          // Notify parent that instance is ready
+          if (onInstanceReady) {
+            onInstanceReady(instance);
+          }
+
           // Send config to Unity via WebBridge
           if (config) {
             try {
@@ -163,13 +191,13 @@ export default function UnityWebGL({ basePath, config }: UnityWebGLProps) {
         script.parentNode.removeChild(script);
       }
     };
-  }, [basePath, config]);
+  }, [basePath, config, onInstanceReady]);
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-slate-900 rounded-xl p-8 text-center">
         <div className="text-6xl mb-4">🚀</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Spacewar PvP</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">Spacewar (vs CPU)</h2>
         <p className="text-slate-400 mb-4">
           Game build is not available yet.
         </p>
