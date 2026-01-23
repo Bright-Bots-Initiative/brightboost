@@ -130,12 +130,21 @@ public class GravityWell : MonoBehaviour
     /// </summary>
     public void SetSunScale(float scaleMultiplier)
     {
-        // Apply multiplier to original scale - pulsing effect will use new baseScale
-        baseScale = originalScale * scaleMultiplier;
+        SetSunScaleFactor(scaleMultiplier);
+    }
+
+    /// <summary>
+    /// Set sun scale factor with clamping (0.1 to 5.0).
+    /// Updates baseScale so pulsing effect respects the new scale.
+    /// </summary>
+    public void SetSunScaleFactor(float factor)
+    {
+        float clampedFactor = UnityEngine.Mathf.Clamp(factor, 0.1f, 5f);
+        baseScale = originalScale * clampedFactor;
         transform.localScale = baseScale;
 
         // Note: CircleCollider2D scales automatically with transform
-        Debug.Log($"[GravityWell] Scale set to: {scaleMultiplier} (baseScale: {baseScale})");
+        Debug.Log($"[GravityWell] Scale factor set to: {clampedFactor} (baseScale: {baseScale})");
     }
 
     /// <summary>
