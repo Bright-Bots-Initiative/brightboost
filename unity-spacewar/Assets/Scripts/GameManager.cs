@@ -33,11 +33,18 @@ public class GameManager : MonoBehaviour
     [SerializeField] private AudioClip scoreSound;
     [SerializeField] private AudioClip gameOverSound;
 
+    [Header("CPU Opponent")]
+    [SerializeField] private bool cpuOpponentEnabled = true;
+    [SerializeField] private CpuPilot.Difficulty cpuDifficulty = CpuPilot.Difficulty.Normal;
+
     // Player data
     private int player1Score = 0;
     private int player2Score = 0;
     private string player1Archetype = "AI";
     private string player2Archetype = "QUANTUM";
+
+    // CPU pilot reference
+    private CpuPilot cpuPilot;
 
     // Game state
     private bool isGameActive = false;
@@ -84,7 +91,56 @@ public class GameManager : MonoBehaviour
             gameOverPanel.SetActive(false);
         }
 
+        // Setup CPU opponent
+        SetupCpuOpponent();
+
         StartCoroutine(StartRound());
+    }
+
+    /// <summary>
+    /// Setup CPU opponent for player 2
+    /// </summary>
+    private void SetupCpuOpponent()
+    {
+        if (player2Ship == null)
+        {
+            Debug.LogWarning("[GameManager] Player 2 ship not assigned, cannot setup CPU");
+            return;
+        }
+
+        if (cpuOpponentEnabled)
+        {
+            // Ensure CpuPilot exists on player 2
+            cpuPilot = player2Ship.GetComponent<CpuPilot>();
+            if (cpuPilot == null)
+            {
+                cpuPilot = player2Ship.gameObject.AddComponent<CpuPilot>();
+            }
+
+            // Configure the pilot
+            cpuPilot.SetTarget(player1Ship);
+            cpuPilot.SetSelf(player2Ship);
+            cpuPilot.SetDifficulty(cpuDifficulty);
+            cpuPilot.ResetState();
+
+            // Enable external control on player 2's ship
+            player2Ship.ExternalControlEnabled = true;
+
+            Debug.Log($"[GameManager] CPU opponent enabled (difficulty: {cpuDifficulty})");
+        }
+        else
+        {
+            // Disable external control for local PvP mode
+            player2Ship.ExternalControlEnabled = false;
+
+            // Disable CPU pilot if it exists
+            if (cpuPilot != null)
+            {
+                cpuPilot.enabled = false;
+            }
+
+            Debug.Log("[GameManager] CPU opponent disabled (local PvP mode)");
+        }
     }
 
     /// <summary>
@@ -311,4 +367,46 @@ public class GameManager : MonoBehaviour
     {
         return (player1Score, player2Score);
     }
+
+    /// <summary>
+    /// Enable or disable CPU opponent
+    /// </summary>
+    public void SetCpuEnabled(bool enabled)
+    {
+        cpuOpponentEnabled = enabled;
+        SetupCpuOpponent();
+        Debug.Log($"[GameManager] CPU opponent {(enabled ? "enabled" : "disabled")}");
+    }
+
+    /// <summary>
+    /// Set CPU difficulty from string
+    /// </summary>
+    public void SetCpuDifficulty(string difficulty)
+    {
+        switch (difficulty?.ToLower())
+        {
+            case "easy":
+                cpuDifficulty = CpuPilot.Difficulty.Easy;
+                break;
+            case "hard":
+                cpuDifficulty = CpuPilot.Difficulty.Hard;
+                break;
+            default:
+                cpuDifficulty = CpuPilot.Difficulty.Normal;
+                break;
+        }
+
+        // Update existing pilot if present
+        if (cpuPilot != null)
+        {
+            cpuPilot.SetDifficulty(cpuDifficulty);
+        }
+
+        Debug.Log($"[GameManager] CPU difficulty set to: {cpuDifficulty}");
+    }
+
+    /// <summary>
+    /// Check if CPU opponent is enabled
+    /// </summary>
+    public bool IsCpuOpponentEnabled => cpuOpponentEnabled;
 }

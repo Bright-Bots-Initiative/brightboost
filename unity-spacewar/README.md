@@ -4,28 +4,51 @@ A 1962 Spacewar-style duel game with BrightBoost robot theming.
 
 ## Gameplay
 
+- **Objective:** First to 5 points wins the match!
+- **Scoring:** Destroy your opponent with missiles OR let them fall into the sun
 - **2D top-down** view with two ships battling around a central gravity well
 - **Screen wrapping** - ships and projectiles wrap around screen edges
-- **Central gravity well** - pulls ships and projectiles toward it; entering the sun destroys you
-- **First to N** scoring system
+- **Central sun (gravity well)** - constantly pulls ships toward it; touching the sun destroys you!
+
+### Game Modes
+
+**vs CPU (Default):**
+Player 1 battles against an AI opponent. Three difficulty levels available:
+- **Easy:** More forgiving aim, slower reactions
+- **Normal:** Balanced challenge
+- **Hard:** Precise aim, aggressive tactics
+
+**Local PvP:**
+Two players share the keyboard. (Toggle from "cpu" to "pvp" mode via the frontend or WebBridge)
+
+> **Note:** True online PvP matchmaking is coming in a future update. For now, the opponent is CPU-controlled by default.
 
 ### Controls
 
 **Player 1:**
 - `A` / `D` - Rotate left/right
-- `W` - Thrust
-- `Space` - Fire
-- `S` - Hyperspace (random teleport, 15% risk of explosion)
+- `W` - Thrust forward
+- `Space` - Fire missile
+- `S` - Hyperspace (random teleport, 15% risk of explosion!)
+- `R` - Restart match (when canvas is focused)
 
-**Player 2:**
+**Player 2 (Local PvP only):**
 - `Left` / `Right Arrow` - Rotate left/right
 - `Up Arrow` - Thrust
-- `Right Ctrl` - Fire (or `Left Ctrl` in WebGL)
+- `Right Ctrl` or `Left Ctrl` - Fire
 - `Down Arrow` - Hyperspace
 
-### WebGL Controls Note
+### Hazards
 
-When playing in a browser (WebGL build), the game canvas must have focus for keyboard input to work. The React component displays a "Click to play" overlay when the canvas is not focused. Additionally, Player 2 can use either `Left Ctrl` or `Right Ctrl` to fire, as some browsers/keyboards may not reliably detect `Right Ctrl`.
+- **The Sun:** Kills on contact. Gravity constantly pulls you in!
+- **Hyperspace:** Teleports you randomly but has a 15% chance of causing your ship to explode.
+
+### Tips
+
+- Use thrust sparingly - momentum can carry you into the sun
+- Lead your shots - missiles travel in straight lines
+- Use gravity to your advantage - slingshot around the sun
+- When in danger, hyperspace is a risky escape option
 
 ## Robot Theming
 
@@ -66,7 +89,7 @@ Main Camera (Orthographic, size 5-7)
 │   └── Collider2D (trigger)
 │   └── TrailRenderer
 │   └── FirePoint (empty child at nose)
-├── Player2Ship (similar to Player1)
+├── Player2Ship (similar to Player1, CpuPilot.cs auto-added at runtime)
 ├── SpawnPoint1 (empty, left side)
 ├── SpawnPoint2 (empty, right side)
 └── UI Canvas
@@ -121,6 +144,32 @@ unityInstance.SendMessage('WebBridge', 'SetPlayerConfig', JSON.stringify({
 }));
 ```
 
+### Setting Opponent Mode
+
+```javascript
+// Set to CPU opponent (default)
+unityInstance.SendMessage('WebBridge', 'SetOpponentMode', 'cpu');
+
+// Set to local PvP
+unityInstance.SendMessage('WebBridge', 'SetOpponentMode', 'pvp');
+```
+
+### Setting CPU Difficulty
+
+```javascript
+// Options: 'easy', 'normal', 'hard'
+unityInstance.SendMessage('WebBridge', 'SetCpuDifficulty', 'normal');
+```
+
+### Combined Runtime Config
+
+```javascript
+unityInstance.SendMessage('WebBridge', 'SetRuntimeConfig', JSON.stringify({
+  opponentMode: 'cpu',
+  difficulty: 'hard'
+}));
+```
+
 ### Listening for Match End
 
 ```javascript
@@ -149,8 +198,9 @@ unityInstance.SendMessage('WebBridge', 'RestartGame');
 unity-spacewar/
 ├── Assets/
 │   ├── Scripts/
-│   │   ├── GameManager.cs      # Game state, scoring, rounds
-│   │   ├── ShipController.cs   # Ship movement, firing, hyperspace
+│   │   ├── GameManager.cs      # Game state, scoring, rounds, CPU toggle
+│   │   ├── ShipController.cs   # Ship movement, firing, hyperspace, external control
+│   │   ├── CpuPilot.cs         # CPU opponent AI behavior
 │   │   ├── Projectile.cs       # Missile behavior
 │   │   ├── GravityWell.cs      # Central gravity source
 │   │   ├── ScreenWrap.cs       # Screen edge wrapping
@@ -170,7 +220,8 @@ unity-spacewar/
 
 1. Open the main scene
 2. Press Play
-3. Use keyboard controls for both players
+3. Use keyboard controls for Player 1
+4. CPU controls Player 2 by default
 
 ### In Browser
 
@@ -178,3 +229,6 @@ unity-spacewar/
 2. Run `npm run dev` from the brightboost root
 3. Navigate to `/student/play?tab=pvp`
 4. The game should load in the SpacewarArena component
+5. Use "How to Play" button to see controls
+6. Use difficulty dropdown to adjust CPU challenge
+7. Press "R" or click "Restart" to restart the match
