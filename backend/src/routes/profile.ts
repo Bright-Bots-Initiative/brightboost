@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
-import { requireAuth } from "../utils/auth";
+import { requireAuth, requireSelfOrRole } from "../utils/auth";
 
 const router = Router();
 
@@ -60,25 +60,16 @@ router.get("/profile", requireAuth, async (req: Request, res: Response) => {
 
 // GET /users/:id - Get specific user's profile
 // 🛡️ Sentinel: Ported from dead code in user.ts and secured.
-router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
-  try {
-    const requesterId = req.user!.id;
-    const requesterRole = req.user!.role;
-    const targetUserId = req.params.id;
+router.get(
+  "/users/:id",
+  requireAuth,
+  requireSelfOrRole(["teacher", "admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const targetUserId = req.params.id;
 
-    // Authorization Check
-    const isSelf = requesterId === targetUserId;
-    const isTeacher = requesterRole === "teacher";
-    const isAdmin = requesterRole === "admin";
-
-    // 🛡️ Sentinel: MVP Logic - Allow any teacher to view any student.
-    // TODO: In production, verify that the student belongs to the teacher's class.
-    if (!isSelf && !isTeacher && !isAdmin) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: targetUserId },
+      const user = await prisma.user.findUnique({
+        where: { id: targetUserId },
       select: {
         id: true,
         name: true,

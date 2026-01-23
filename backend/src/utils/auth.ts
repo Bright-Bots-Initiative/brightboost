@@ -82,3 +82,27 @@ export function requireRole(role: UserRole) {
     next();
   };
 }
+
+/**
+ * 🛡️ Sentinel: Enforce resource ownership or privileged role.
+ * Allows access if:
+ * 1. The user's ID matches the route parameter (default: "id")
+ * 2. OR the user has one of the allowed roles (default: ["admin", "teacher"])
+ */
+export function requireSelfOrRole(
+  allowedRoles: UserRole[] = ["admin", "teacher"],
+  paramName = "id",
+) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(401).json({ error: "unauthorized" });
+
+    const targetId = req.params[paramName];
+    const isSelf = req.user.id === targetId;
+    const hasRole = allowedRoles.includes(req.user.role);
+
+    if (!isSelf && !hasRole) {
+      return res.status(403).json({ error: "forbidden" });
+    }
+    next();
+  };
+}
