@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
+import { logAudit } from "../utils/audit";
 
 const router = Router();
 
@@ -140,6 +141,11 @@ router.post(
           avatarUrl: true,
           createdAt: true,
         },
+      });
+
+      // 🛡️ Sentinel: Audit Log
+      await logAudit("PROFILE_UPDATE", updatedUser.id, {
+        updatedFields: Object.keys(data),
       });
 
       const profile = {
