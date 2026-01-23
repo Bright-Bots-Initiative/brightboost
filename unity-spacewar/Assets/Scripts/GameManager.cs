@@ -3,6 +3,22 @@ using UnityEngine.UI;
 using System.Collections;
 
 /// <summary>
+/// Physics preset for Spacewar gameplay feel
+/// </summary>
+public enum PhysicsPreset
+{
+    /// <summary>
+    /// Classic 1962-inspired physics: Newtonian inertia, no artificial drag, orbitable sun
+    /// </summary>
+    Classic1962,
+
+    /// <summary>
+    /// Arcade physics: artificial drag, speed clamp, more forgiving
+    /// </summary>
+    Arcade
+}
+
+/// <summary>
 /// GameManager - Controls game state, scoring, and round management for Spacewar
 /// </summary>
 public class GameManager : MonoBehaviour
@@ -36,6 +52,47 @@ public class GameManager : MonoBehaviour
     [Header("CPU Opponent")]
     [SerializeField] private bool cpuOpponentEnabled = true;
     [SerializeField] private CpuPilot.Difficulty cpuDifficulty = CpuPilot.Difficulty.Normal;
+
+    [Header("Physics Preset")]
+    [Tooltip("Classic1962: Newtonian inertia, orbitable sun, no artificial drag. Arcade: drag + speed clamp.")]
+    [SerializeField] private PhysicsPreset physicsPreset = PhysicsPreset.Classic1962;
+
+    [Header("Classic1962 Tuning (default)")]
+    [Tooltip("Sun gravity strength for classic mode (reduced for survivable orbits)")]
+    [SerializeField] private float classicSunGravity = 22f;
+    [Tooltip("Minimum distance for gravity calc (higher = less singularity spike near sun)")]
+    [SerializeField] private float classicSunMinDistance = 1.0f;
+    [Tooltip("Maximum distance for gravity effect")]
+    [SerializeField] private float classicSunMaxDistance = 20f;
+    [Tooltip("Ship thrust force (higher to counter gravity effectively)")]
+    [SerializeField] private float classicShipThrust = 12f;
+    [Tooltip("Ship max speed (0 or very high = no clamp, true Newtonian)")]
+    [SerializeField] private float classicShipMaxSpeed = 0f;
+    [Tooltip("Ship drag (0 = no artificial drag, true Newtonian inertia)")]
+    [SerializeField] private float classicShipDrag = 0f;
+    [Tooltip("Gravity multiplier on ships (can reduce if gravity still too strong)")]
+    [SerializeField] private float classicGravityMultiplier = 0.9f;
+
+    [Header("Arcade Tuning (optional)")]
+    [Tooltip("Sun gravity strength for arcade mode")]
+    [SerializeField] private float arcadeSunGravity = 25f;
+    [Tooltip("Minimum distance for gravity calc")]
+    [SerializeField] private float arcadeSunMinDistance = 0.6f;
+    [Tooltip("Maximum distance for gravity effect")]
+    [SerializeField] private float arcadeSunMaxDistance = 20f;
+    [Tooltip("Ship thrust force")]
+    [SerializeField] private float arcadeShipThrust = 8f;
+    [Tooltip("Ship max speed clamp")]
+    [SerializeField] private float arcadeShipMaxSpeed = 11f;
+    [Tooltip("Ship drag/friction")]
+    [SerializeField] private float arcadeShipDrag = 0.45f;
+    [Tooltip("Gravity multiplier on ships")]
+    [SerializeField] private float arcadeGravityMultiplier = 1.0f;
+
+    // Balance metrics tracking (editor/dev builds only)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private float roundStartTime = 0f;
+#endif
 
     // Player data
     private int player1Score = 0;
@@ -72,7 +129,61 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        ApplyPhysicsPreset();
         InitializeGame();
+    }
+
+    /// <summary>
+    /// Apply physics preset tuning to GravityWell, ships, and ShipGravity components
+    /// This allows tuning without editing scene serialized values
+    /// </summary>
+    private void ApplyPhysicsPreset()
+    {
+        bool isClassic = physicsPreset == PhysicsPreset.Classic1962;
+
+        // Select tuning values based on preset
+        float sunGravity = isClassic ? classicSunGravity : arcadeSunGravity;
+        float sunMinDist = isClassic ? classicSunMinDistance : arcadeSunMinDistance;
+        float sunMaxDist = isClassic ? classicSunMaxDistance : arcadeSunMaxDistance;
+        float shipThrust = isClassic ? classicShipThrust : arcadeShipThrust;
+        float shipMaxSpd = isClassic ? classicShipMaxSpeed : arcadeShipMaxSpeed;
+        float shipDrg = isClassic ? classicShipDrag : arcadeShipDrag;
+        float gravMult = isClassic ? classicGravityMultiplier : arcadeGravityMultiplier;
+        bool arcadeMode = !isClassic;
+
+        // Apply gravity well tuning
+        if (GravityWell.Instance != null)
+        {
+            GravityWell.Instance.SetGravityTuning(sunGravity, sunMinDist, sunMaxDist);
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] GravityWell.Instance not found, cannot apply gravity tuning");
+        }
+
+        // Apply ship movement tuning
+        ApplyShipTuning(player1Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, arcadeMode);
+        ApplyShipTuning(player2Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, arcadeMode);
+
+        Debug.Log($"[GameManager] Physics preset applied: {physicsPreset} - Gravity={sunGravity}, Thrust={shipThrust}, MaxSpeed={shipMaxSpd}, Drag={shipDrg}, GravMult={gravMult}");
+    }
+
+    /// <summary>
+    /// Apply tuning to a single ship
+    /// </summary>
+    private void ApplyShipTuning(ShipController ship, float thrust, float maxSpd, float drg, float gravMult, bool arcadeMode)
+    {
+        if (ship == null) return;
+
+        // Apply movement tuning with physics mode
+        ship.SetMovementTuning(thrust, maxSpd, drg, arcadeMode);
+
+        // Apply gravity multiplier if ShipGravity component exists
+        ShipGravity shipGravity = ship.GetComponent<ShipGravity>();
+        if (shipGravity != null)
+        {
+            shipGravity.SetMultiplier(gravMult);
+        }
     }
 
     /// <summary>
@@ -183,6 +294,11 @@ public class GameManager : MonoBehaviour
         ShowMessage("");
         isRoundActive = true;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Track round start time for balance metrics
+        roundStartTime = Time.time;
+#endif
+
         if (audioSource != null && roundStartSound != null)
         {
             audioSource.PlayOneShot(roundStartSound);
@@ -225,6 +341,18 @@ public class GameManager : MonoBehaviour
 
         isRoundActive = false;
         EnableShipControls(false);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Log balance metrics for sun deaths (self-destruct with no attacker)
+        if (attacker == null && roundStartTime > 0f)
+        {
+            float timeToDeath = Time.time - roundStartTime;
+            Vector3 spawnPos = destroyedShip == player1Ship && player1SpawnPoint != null
+                ? player1SpawnPoint.position
+                : (player2SpawnPoint != null ? player2SpawnPoint.position : Vector3.zero);
+            Debug.Log($"[{physicsPreset}] time_to_sun_death_seconds={timeToDeath:F2} spawn={spawnPos} ship=P{destroyedShip?.PlayerNumber}");
+        }
+#endif
 
         // Award point to the attacker (or other player if self-destruct)
         if (attacker != null)
@@ -409,4 +537,37 @@ public class GameManager : MonoBehaviour
     /// Check if CPU opponent is enabled
     /// </summary>
     public bool IsCpuOpponentEnabled => cpuOpponentEnabled;
+
+    /// <summary>
+    /// Set physics preset at runtime
+    /// </summary>
+    public void SetPhysicsPreset(PhysicsPreset preset)
+    {
+        physicsPreset = preset;
+        ApplyPhysicsPreset();
+        Debug.Log($"[GameManager] Physics preset changed to: {preset}");
+    }
+
+    /// <summary>
+    /// Set physics preset from string (for WebBridge)
+    /// </summary>
+    public void SetPhysicsPresetFromString(string presetName)
+    {
+        switch (presetName?.ToLower())
+        {
+            case "arcade":
+                SetPhysicsPreset(PhysicsPreset.Arcade);
+                break;
+            case "classic":
+            case "classic1962":
+            default:
+                SetPhysicsPreset(PhysicsPreset.Classic1962);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Get current physics preset
+    /// </summary>
+    public PhysicsPreset CurrentPhysicsPreset => physicsPreset;
 }

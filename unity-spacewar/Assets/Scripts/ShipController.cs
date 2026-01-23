@@ -61,6 +61,11 @@ public class ShipController : MonoBehaviour
     private bool externalFire = false;
     private bool externalHyperspace = false;
 
+    // Physics mode (Classic1962 vs Arcade)
+    // In Classic mode: no artificial drag, no hard speed clamp (true Newtonian inertia)
+    // In Arcade mode: manual drag + speed clamp (original behavior)
+    private bool useArcadePhysics = false;
+
     // Input keys based on player number
     private KeyCode rotateLeftKey;
     private KeyCode rotateRightKey;
@@ -137,14 +142,24 @@ public class ShipController : MonoBehaviour
     {
         if (!isAlive) return;
 
-        // Apply drag
-        rb.linearVelocity *= (1f - drag * Time.fixedDeltaTime);
-
-        // Clamp max speed
-        if (rb.linearVelocity.magnitude > maxSpeed)
+        // Only apply arcade-style drag and speed clamp if enabled
+        // In Classic1962 mode, we preserve Newtonian inertia (no artificial slowdown)
+        if (useArcadePhysics)
         {
-            rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+            // Apply drag (arcade mode only)
+            if (drag > 0f)
+            {
+                rb.linearVelocity *= (1f - drag * Time.fixedDeltaTime);
+            }
+
+            // Clamp max speed (arcade mode only, or if maxSpeed is very high it's effectively disabled)
+            if (maxSpeed > 0f && maxSpeed < 100f && rb.linearVelocity.magnitude > maxSpeed)
+            {
+                rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+            }
         }
+        // In Classic mode: velocity remains constant unless acted upon by forces (gravity, thrust)
+        // This is true Newtonian physics - no artificial damping
     }
 
     /// <summary>
@@ -590,5 +605,23 @@ public class ShipController : MonoBehaviour
         externalThrust = thrust;
         externalFire = fire;
         externalHyperspace = hyperspace;
+    }
+
+    /// <summary>
+    /// Set movement tuning at runtime (called by GameManager for balance)
+    /// </summary>
+    /// <param name="newThrustForce">Thrust force applied when thrusting</param>
+    /// <param name="newMaxSpeed">Max speed clamp (only used in Arcade mode, 0 or very high = no clamp)</param>
+    /// <param name="newDrag">Drag coefficient (only used in Arcade mode, 0 = no drag)</param>
+    /// <param name="arcadeMode">If true, use arcade physics (drag + clamp). If false, use Classic1962 (Newtonian)</param>
+    public void SetMovementTuning(float newThrustForce, float newMaxSpeed, float newDrag, bool arcadeMode = false)
+    {
+        thrustForce = newThrustForce;
+        maxSpeed = newMaxSpeed;
+        drag = newDrag;
+        useArcadePhysics = arcadeMode;
+
+        string mode = arcadeMode ? "Arcade" : "Classic1962";
+        Debug.Log($"[ShipController P{playerNumber}] Tuning applied: thrust={newThrustForce}, maxSpeed={newMaxSpeed}, drag={newDrag}, mode={mode}");
     }
 }
