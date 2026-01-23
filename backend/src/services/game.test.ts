@@ -137,4 +137,34 @@ describe("checkUnlocks", () => {
 
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
   });
+
+  it("should use preloaded avatar if provided and skip findUnique", async () => {
+    const studentId = "student-1";
+    const preloadedAvatar = {
+      id: "avatar-1",
+      studentId,
+      archetype: "AI",
+      level: 1,
+      xp: 0,
+      hp: 100,
+      energy: 100,
+      // Add other necessary Avatar fields if strict typing requires it, or cast as any
+    } as any;
+
+    prismaMock.progress.count.mockResolvedValue(10); // Level should go to 6
+
+    // We do NOT mock avatar.findUnique because it shouldn't be called
+
+    const abilities = [{ id: "ab-1", archetype: "AI", reqLevel: 1 }];
+    prismaMock.ability.findMany.mockResolvedValue(abilities);
+    prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
+
+    await checkUnlocks(studentId, preloadedAvatar);
+
+    // Verify findUnique was NOT called
+    expect(prismaMock.avatar.findUnique).not.toHaveBeenCalled();
+
+    // Verify logic still ran (update happened)
+    expect(prismaMock.avatar.update).toHaveBeenCalled();
+  });
 });
