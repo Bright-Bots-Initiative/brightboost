@@ -20,7 +20,10 @@ export default function ModuleDetail() {
 
   useEffect(() => {
     if (!slug) return;
-    Promise.all([api.getModule(slug), api.getProgress()])
+    Promise.all([
+      api.getModule(slug, { structureOnly: true }),
+      api.getProgress(),
+    ])
       .then(([m, p]) => {
         setModule(m);
         if (p?.progress) {

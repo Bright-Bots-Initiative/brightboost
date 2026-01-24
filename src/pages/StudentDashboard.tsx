@@ -130,7 +130,7 @@ export default function StudentDashboard() {
           return;
         }
 
-        const deep = await api.getModule(chosenSlug);
+        const deep = await api.getModule(chosenSlug, { structureOnly: true });
         if (cancelled) return;
 
         const ordered = flattenModule(deep);

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import prisma from "../utils/prisma";
-import { getModuleWithContent, getAllModules } from "../services/module";
+import { getModuleWithContent, getAllModules, getModuleStructure } from "../services/module";
 import { requireAuth } from "../utils/auth";
 
 const router = Router();
@@ -23,8 +23,12 @@ router.get("/modules", requireAuth, async (req, res) => {
 router.get("/module/:slug", requireAuth, async (req, res) => {
   try {
     const { slug } = req.params;
-    // ⚡ Bolt Optimization: Use cached module structure
-    const mod = await getModuleWithContent(slug);
+    const structureOnly = req.query.structure === "true";
+
+    // ⚡ Bolt Optimization: Use cached module structure when content is not needed
+    const mod = structureOnly
+      ? await getModuleStructure(slug)
+      : await getModuleWithContent(slug);
 
     if (!mod) return res.status(404).json({ error: "not_found" });
     res.json(mod);
