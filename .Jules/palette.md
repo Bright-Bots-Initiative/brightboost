@@ -22,3 +22,8 @@
 
 **Learning:** Visual-only loading skeletons are invisible to screen readers, leaving users in silence during load times.
 **Action:** Wrap skeleton groups in a container with `role="status"`, `aria-busy="true"`, and an `aria-label` (e.g., "Loading modules"). Also include a visually hidden text element (using `sr-only`) as a fallback description.
+
+## 2024-05-25 - Tooltips and Title Attributes
+
+**Learning:** Using both a `title` attribute on a button and a custom Tooltip component results in double tooltips (system + custom) and potentially duplicate screen reader announcements.
+**Action:** When integrating a custom Tooltip, conditionally remove the `title` attribute from the trigger element while ensuring `aria-label` is still present for accessibility.

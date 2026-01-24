@@ -5,11 +5,17 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import IconButton, { EditIcon } from "../IconButton";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+// Helper to wrap component in TooltipProvider
+const renderWithTooltip = (component: React.ReactNode) => {
+  return render(<TooltipProvider>{component}</TooltipProvider>);
+};
 
 describe("IconButton", () => {
-  it("renders with correct title attribute", () => {
-    render(
-      <IconButton onClick={() => {}} title="Edit item">
+  it("renders with correct title attribute when tooltip is disabled", () => {
+    renderWithTooltip(
+      <IconButton onClick={() => {}} title="Edit item" showTooltip={false}>
         <EditIcon />
       </IconButton>,
     );
@@ -19,10 +25,22 @@ describe("IconButton", () => {
     expect(buttons[0]).toBeDefined();
   });
 
+  it("does not render title attribute when tooltip is enabled", () => {
+    renderWithTooltip(
+      <IconButton onClick={() => {}} title="Edit item">
+        <EditIcon />
+      </IconButton>,
+    );
+
+    // Title should not be present on the button itself to avoid duplication
+    const button = screen.getByRole("button", { name: "Edit item" });
+    expect(button.getAttribute("title")).toBeNull();
+  });
+
   it("fires onClick handler when clicked", () => {
     const handleClick = vi.fn();
 
-    const { container } = render(
+    const { container } = renderWithTooltip(
       <IconButton onClick={handleClick} title="Edit item">
         <EditIcon />
       </IconButton>,
@@ -38,7 +56,7 @@ describe("IconButton", () => {
   });
 
   it("uses title as aria-label by default", () => {
-    render(
+    renderWithTooltip(
       <IconButton onClick={() => {}} title="Edit item">
         <EditIcon />
       </IconButton>,
@@ -48,7 +66,7 @@ describe("IconButton", () => {
   });
 
   it("uses provided ariaLabel as aria-label", () => {
-    render(
+    renderWithTooltip(
       <IconButton
         onClick={() => {}}
         title="Edit"
@@ -62,7 +80,7 @@ describe("IconButton", () => {
   });
 
   it("spreads additional props to the button", () => {
-    render(
+    renderWithTooltip(
       <IconButton onClick={() => {}} title="Edit" data-testid="custom-button">
         <EditIcon />
       </IconButton>,
