@@ -128,6 +128,9 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
   }
 
   // 2. Apply Rewards & Check Unlocks (only if avatar exists)
+  let avatarAfter: any = null;
+  let newAbilitiesFromUnlock = 0;
+
   if (avatarBefore) {
     try {
       // Award XP + Energy + HP
@@ -147,17 +150,19 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
       });
 
       // Check for level up (may add more XP and unlocks)
-      await checkUnlocks(studentId, updatedAvatar);
+      const result = await checkUnlocks(studentId, updatedAvatar);
+      if (result) {
+        avatarAfter = result.avatar;
+        newAbilitiesFromUnlock = result.newAbilitiesCount;
+      } else {
+        avatarAfter = updatedAvatar;
+      }
     } catch (e) {
       console.warn("Could not give rewards to avatar", e);
     }
   }
 
-  // 3. Fetch Avatar & Abilities After
-  const [avatarAfter, abilitiesAfter] = await Promise.all([
-    prisma.avatar.findUnique({ where: { studentId } }),
-    prisma.unlockedAbility.count({ where: { avatarId: studentId } }),
-  ]);
+  // 3. Fetch Avatar & Abilities After - REMOVED (Bolt Optimization: use returned values)
 
   // 4. Calculate Deltas
   let xpDelta = 0;
@@ -171,7 +176,7 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
     levelDelta = avatarAfter.level - avatarBefore.level;
     energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
     hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
-    newAbilitiesDelta = Math.max(0, abilitiesAfter - abilitiesBefore);
+    newAbilitiesDelta = newAbilitiesFromUnlock;
   }
 
   res.json({

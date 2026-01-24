@@ -54,7 +54,11 @@ describe("checkUnlocks", () => {
     // Simulate no existing unlocks for the optimized implementation
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
-    await checkUnlocks(studentId);
+    // Mock update return value because checkUnlocks uses it
+    const updatedAvatar = { id: avatarId, level: 6 };
+    prismaMock.avatar.update.mockResolvedValue(updatedAvatar);
+
+    const result = await checkUnlocks(studentId);
 
     // Verify avatar updated
     expect(prismaMock.avatar.update).toHaveBeenCalledWith({
@@ -71,6 +75,11 @@ describe("checkUnlocks", () => {
         expect.objectContaining({ avatarId: avatarId, abilityId: "ab-3" }),
       ]),
     });
+
+    // Verify return value
+    expect(result).toBeDefined();
+    expect(result?.avatar).toEqual(updatedAvatar);
+    expect(result?.newAbilitiesCount).toBe(3);
   });
 
   it("should only create unlocks for abilities not already unlocked", async () => {
@@ -97,7 +106,10 @@ describe("checkUnlocks", () => {
       { abilityId: "ab-1" },
     ]);
 
-    await checkUnlocks(studentId);
+    // Mock update return value
+    prismaMock.avatar.update.mockResolvedValue({ id: avatarId, level: 6 });
+
+    const result = await checkUnlocks(studentId);
 
     // createMany should be called with only ab-2
     expect(prismaMock.unlockedAbility.createMany).toHaveBeenCalledWith({
@@ -105,6 +117,8 @@ describe("checkUnlocks", () => {
         expect.objectContaining({ avatarId: avatarId, abilityId: "ab-2" }),
       ],
     });
+
+    expect(result?.newAbilitiesCount).toBe(1);
   });
 
   it("should not update if avatar not found", async () => {
@@ -113,10 +127,11 @@ describe("checkUnlocks", () => {
     prismaMock.progress.count.mockResolvedValue(10);
     prismaMock.avatar.findUnique.mockResolvedValue(null);
 
-    await checkUnlocks(studentId);
+    const result = await checkUnlocks(studentId);
 
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
     expect(prismaMock.unlockedAbility.createMany).not.toHaveBeenCalled();
+    expect(result).toBeUndefined();
   });
 
   it("should not update if level has not increased", async () => {
@@ -126,16 +141,20 @@ describe("checkUnlocks", () => {
     // 2 progress items / 2 = level 2, but avatar is already level 2
     prismaMock.progress.count.mockResolvedValue(2);
 
-    prismaMock.avatar.findUnique.mockResolvedValue({
+    const mockAvatar = {
       id: avatarId,
       studentId,
       archetype: "AI",
       level: 2,
-    });
+    };
+    prismaMock.avatar.findUnique.mockResolvedValue(mockAvatar);
 
-    await checkUnlocks(studentId);
+    const result = await checkUnlocks(studentId);
 
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(result).toBeDefined();
+    expect(result?.avatar).toEqual(mockAvatar);
+    expect(result?.newAbilitiesCount).toBe(0);
   });
 
   it("should use preloaded avatar if provided and skip findUnique", async () => {
@@ -159,12 +178,16 @@ describe("checkUnlocks", () => {
     prismaMock.ability.findMany.mockResolvedValue(abilities);
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
-    await checkUnlocks(studentId, preloadedAvatar);
+    // Mock update
+    prismaMock.avatar.update.mockResolvedValue({ ...preloadedAvatar, level: 6 });
+
+    const result = await checkUnlocks(studentId, preloadedAvatar);
 
     // Verify findUnique was NOT called
     expect(prismaMock.avatar.findUnique).not.toHaveBeenCalled();
 
     // Verify logic still ran (update happened)
     expect(prismaMock.avatar.update).toHaveBeenCalled();
+    expect(result?.newAbilitiesCount).toBe(1);
   });
 });
