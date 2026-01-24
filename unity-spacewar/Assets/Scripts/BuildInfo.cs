@@ -6,12 +6,12 @@ public static class BuildInfo
     /// <summary>
     /// Current balance version identifier
     /// </summary>
-    public const string BalanceVersion = "balance-v1.3";
+    public const string BalanceVersion = "balance-v1.3.2";
 
     /// <summary>
     /// Build timestamp in UTC (set at implementation time)
     /// </summary>
-    public const string BuildTimestampUtc = "2026-01-23T12:00:00Z";
+    public const string BuildTimestampUtc = "2026-01-24T15:00:00Z";
 
     /// <summary>
     /// Combined stamp for display and logging
