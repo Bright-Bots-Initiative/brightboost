@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { logAudit } from "../utils/audit";
+import { sensitiveOpsLimiter } from "../utils/security";
 
 const router = Router();
 
@@ -118,6 +119,7 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
 router.post(
   "/edit-profile",
   requireAuth,
+  sensitiveOpsLimiter,
   async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id;

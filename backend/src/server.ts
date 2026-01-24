@@ -53,6 +53,15 @@ app.use(
   }),
 );
 
+// 🛡️ Sentinel: Add Permissions-Policy header to disable powerful browser features
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(), camera=(), payment=()",
+  );
+  next();
+});
+
 // ⚡ Bolt Optimization: Enable gzip compression
 // Reduces payload size by 70-90% for JSON APIs and static assets
 app.use(compression());

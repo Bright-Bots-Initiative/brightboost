@@ -3,6 +3,7 @@ import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { selectArchetypeSchema } from "../validation/schemas";
+import { sensitiveOpsLimiter } from "../utils/security";
 
 const router = Router();
 
@@ -43,9 +44,13 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
 });
 
 // Select archetype (create avatar)
-router.post("/avatar/select-archetype", requireAuth, async (req, res) => {
-  try {
-    const studentId = req.user!.id;
+router.post(
+  "/avatar/select-archetype",
+  requireAuth,
+  sensitiveOpsLimiter,
+  async (req, res) => {
+    try {
+      const studentId = req.user!.id;
     const { archetype } = selectArchetypeSchema.parse(req.body);
 
     // Check if already exists

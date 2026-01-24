@@ -13,6 +13,14 @@ describe("Security Middleware", () => {
     expect(res.headers["x-content-type-options"]).toBe("nosniff");
   });
 
+  it("should have Permissions-Policy header", async () => {
+    const res = await request(app).get("/health");
+    expect(res.status).toBe(200);
+    expect(res.headers["permissions-policy"]).toBe(
+      "geolocation=(), microphone=(), camera=(), payment=()",
+    );
+  });
+
   // Note: Rate limiting test requires many requests and might be slow or flaky in this env.
   // The global limit is 1000/15min, which is hard to test quickly.
   // We can skip this test or use a mock if we want to verify the middleware is present.
