@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { Lightbulb } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   LocalizedField,
@@ -517,8 +518,16 @@ export default function SequenceDragDropGame({
                 Tip: Ask "What has to happen before…?"
               </div>
               {hintText && (
-                <div className="mt-2 p-3 bg-blue-50 text-blue-800 rounded-md text-sm font-medium border border-blue-100 animate-in fade-in slide-in-from-top-1">
-                  {hintText}
+                <div
+                  className="mt-2 p-3 bg-blue-50 text-blue-800 rounded-md text-sm font-medium border border-blue-100 animate-in fade-in slide-in-from-top-1 flex items-start gap-2"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Lightbulb
+                    className="w-4 h-4 mt-0.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{hintText}</span>
                 </div>
               )}
             </div>
