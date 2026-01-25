@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import AvatarPicker from "@/components/AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -13,7 +14,49 @@ export default function Avatar() {
     api.getAvatar().then(setAvatar);
   }, []);
 
-  if (!avatar) return <div>Loading Avatar...</div>;
+  if (!avatar) {
+    return (
+      <div
+        className="p-4 space-y-6"
+        role="status"
+        aria-busy="true"
+        aria-label="Loading avatar details"
+      >
+        <span className="sr-only">Loading avatar details...</span>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-48" />
+        </div>
+
+        <div className="mb-6 flex justify-center">
+          <Skeleton className="w-24 h-24 rounded-full" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-24" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -73,7 +116,9 @@ export default function Avatar() {
           </CardHeader>
           <CardContent>
             {avatar.unlockedAbilities?.length === 0 ? (
-              <p>No abilities unlocked yet.</p>
+              <p className="text-gray-500 italic">
+                No abilities unlocked yet. Keep playing to earn them!
+              </p>
             ) : (
               <ul className="space-y-2">
                 {avatar.unlockedAbilities?.map((ua: any) => (
