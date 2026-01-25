@@ -57,15 +57,15 @@ public class GameManager : MonoBehaviour
     [Tooltip("Classic1962: Newtonian inertia, orbitable sun, no artificial drag. Arcade: drag + speed clamp.")]
     [SerializeField] private PhysicsPreset physicsPreset = PhysicsPreset.Classic1962;
 
-    [Header("Classic1962 Tuning (balance-v1.3)")]
-    [Tooltip("Sun gravity strength (v1.3: 10, much weaker than original 50)")]
-    [SerializeField] private float classicSunGravity = 10f;
+    [Header("Classic1962 Tuning (balance-v1.3.2)")]
+    [Tooltip("Sun gravity strength (v1.3.2: 12, slightly increased for tension)")]
+    [SerializeField] private float classicSunGravity = 12f;
     [Tooltip("Minimum distance for gravity calc (v1.3: 1.8, reduces near-center spike)")]
     [SerializeField] private float classicSunMinDistance = 1.8f;
     [Tooltip("Maximum distance for gravity effect")]
     [SerializeField] private float classicSunMaxDistance = 20f;
-    [Tooltip("Ship thrust force (v1.3: 18, rockets must fight gravity)")]
-    [SerializeField] private float classicShipThrust = 18f;
+    [Tooltip("Ship thrust force (v1.3.2: 16, slightly reduced)")]
+    [SerializeField] private float classicShipThrust = 16f;
     [Tooltip("Sun visual scale multiplier (v1.3: 0.67, 33% smaller)")]
     [SerializeField] private float classicSunScale = 0.67f;
     [Tooltip("Distance from center for ship spawns (v1.3: 8.0, farther spawns)")]
@@ -76,8 +76,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float classicShipMaxSpeed = 50f;
     [Tooltip("Ship drag (v1.3: 0.02, near-zero inertia bleed)")]
     [SerializeField] private float classicShipDrag = 0.02f;
-    [Tooltip("Gravity multiplier on ships (v1.3: 0.6, additional relief)")]
-    [SerializeField] private float classicGravityMultiplier = 0.6f;
+    [Tooltip("Gravity multiplier on ships (v1.3.2: 0.65, slight increase)")]
+    [SerializeField] private float classicGravityMultiplier = 0.65f;
     [Tooltip("Enable arcade-style clamp and manual drag (v1.3: false for classic feel)")]
     [SerializeField] private bool classicClampAndManualDrag = false;
 
