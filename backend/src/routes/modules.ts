@@ -31,6 +31,12 @@ router.get("/module/:slug", requireAuth, async (req, res) => {
       : await getModuleWithContent(slug);
 
     if (!mod) return res.status(404).json({ error: "not_found" });
+
+    // 🛡️ Sentinel: Prevent students from accessing unpublished modules (IDOR fix)
+    if (!mod.published && req.user!.role === "student") {
+      return res.status(404).json({ error: "not_found" });
+    }
+
     res.json(mod);
   } catch (error) {
     console.error("Get module error:", error);

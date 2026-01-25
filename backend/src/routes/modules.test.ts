@@ -33,6 +33,7 @@ describe("Module Routes", () => {
         slug: "test-module",
         title: "Test Module",
         content: "some-heavy-content",
+        published: true,
       });
 
       const response = await request(app)
@@ -45,6 +46,7 @@ describe("Module Routes", () => {
         slug: "test-module",
         title: "Test Module",
         content: "some-heavy-content",
+        published: true,
       });
 
       expect(moduleServiceMock.getModuleWithContent).toHaveBeenCalledWith("test-module");
@@ -57,6 +59,7 @@ describe("Module Routes", () => {
         id: "1",
         slug: "test-module",
         title: "Test Module",
+        published: true,
         // No content
       });
 
@@ -69,6 +72,7 @@ describe("Module Routes", () => {
         id: "1",
         slug: "test-module",
         title: "Test Module",
+        published: true,
       });
 
       expect(moduleServiceMock.getModuleStructure).toHaveBeenCalledWith("test-module");
