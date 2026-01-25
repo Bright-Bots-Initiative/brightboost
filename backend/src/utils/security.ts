@@ -15,6 +15,21 @@ export const authLimiter = rateLimit({
 });
 
 /**
+ * 🛡️ Sentinel: Rate limiter for sensitive state-changing operations.
+ * Applies to profile updates, avatar creation, etc.
+ * Limit: 50 requests per 15 minutes per IP.
+ */
+export const sensitiveOpsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many requests for this operation, please try again later.",
+  },
+});
+
+/**
  * 🛡️ Sentinel: Middleware to prevent HTTP Parameter Pollution (HPP).
  *
  * Express by default populates `req.query` with an array if a parameter is repeated.
