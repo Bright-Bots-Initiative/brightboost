@@ -78,11 +78,9 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
-  // 0. Fetch Avatar & Abilities Before (for calculating rewards)
-  const [avatarBefore, abilitiesBefore] = await Promise.all([
-    prisma.avatar.findUnique({ where: { studentId } }),
-    prisma.unlockedAbility.count({ where: { avatarId: studentId } }),
-  ]);
+  // 0. Fetch Avatar Before (for calculating rewards)
+  // ⚡ Bolt Optimization: Removed redundant abilities count query
+  const avatarBefore = await prisma.avatar.findUnique({ where: { studentId } });
 
   // 1. Upsert progress
   const existing = await prisma.progress.findFirst({
