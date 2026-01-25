@@ -645,4 +645,57 @@ public class GameManager : MonoBehaviour
     /// Get current physics preset
     /// </summary>
     public PhysicsPreset CurrentPhysicsPreset => physicsPreset;
+
+    /// <summary>
+    /// Apply external input to Player 1 (for touch controls).
+    /// Called from WebBridge.SetPlayer1Input.
+    /// </summary>
+    /// <param name="json">JSON with rotate, thrust, fire, hyperspace fields</param>
+    public void ApplyPlayer1ExternalInput(string json)
+    {
+        if (player1Ship == null)
+        {
+            Debug.LogWarning("[GameManager] ApplyPlayer1ExternalInput: player1Ship is null");
+            return;
+        }
+
+        try
+        {
+            WebBridge.TouchInputData input = JsonUtility.FromJson<WebBridge.TouchInputData>(json);
+
+            if (input != null)
+            {
+                // Ensure external control is enabled
+                if (!player1Ship.ExternalControlEnabled)
+                {
+                    player1Ship.ExternalControlEnabled = true;
+                }
+
+                player1Ship.SetExternalInput(input.rotate, input.thrust, input.fire, input.hyperspace);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[GameManager] Failed to parse touch input: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Enable or disable external control for Player 1 (for touch controls).
+    /// Called from WebBridge.EnableTouchControls.
+    /// </summary>
+    /// <param name="enabled">"true" or "false"</param>
+    public void SetPlayer1ExternalControl(string enabled)
+    {
+        if (player1Ship == null)
+        {
+            Debug.LogWarning("[GameManager] SetPlayer1ExternalControl: player1Ship is null");
+            return;
+        }
+
+        bool isEnabled = enabled?.ToLower() == "true";
+        player1Ship.ExternalControlEnabled = isEnabled;
+
+        Debug.Log($"[GameManager] Player 1 external control: {(isEnabled ? "enabled" : "disabled")}");
+    }
 }

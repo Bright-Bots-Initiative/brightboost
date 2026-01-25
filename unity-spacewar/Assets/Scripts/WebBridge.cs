@@ -256,6 +256,38 @@ public class WebBridge : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called from JavaScript to set Player 1 input (for touch controls).
+    /// Expected JSON format:
+    /// {
+    ///   "rotate": 0.0,     // -1 to 1 (negative = right, positive = left)
+    ///   "thrust": false,
+    ///   "fire": false,
+    ///   "hyperspace": false
+    /// }
+    /// </summary>
+    public void SetPlayer1Input(string json)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ApplyPlayer1ExternalInput(json);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript to enable/disable touch controls for Player 1.
+    /// </summary>
+    /// <param name="enabled">"true" or "false"</param>
+    public void EnableTouchControls(string enabled)
+    {
+        Debug.Log($"[WebBridge] EnableTouchControls: {enabled}");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetPlayer1ExternalControl(enabled);
+        }
+    }
+
     // Data classes for JSON serialization
     [System.Serializable]
     private class PlayerConfig
@@ -296,5 +328,14 @@ public class WebBridge : MonoBehaviour
     {
         public string opponentMode;
         public string difficulty;
+    }
+
+    [System.Serializable]
+    public class TouchInputData
+    {
+        public float rotate;
+        public bool thrust;
+        public bool fire;
+        public bool hyperspace;
     }
 }
