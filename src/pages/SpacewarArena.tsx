@@ -12,12 +12,29 @@ interface AvatarData {
 
 type Difficulty = "easy" | "normal" | "hard";
 
+// Detect touch device
+const isTouchDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    navigator.maxTouchPoints > 0
+  );
+};
+
 export default function SpacewarArena() {
   const [avatarConfig, setAvatarConfig] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [isTouch] = useState(isTouchDevice);
   const unityInstanceRef = useRef<any>(null);
+
+  // Touch control state
+  const [rotateLeft, setRotateLeft] = useState(false);
+  const [rotateRight, setRotateRight] = useState(false);
+  const [thrust, setThrust] = useState(false);
+  const [fire, setFire] = useState(false);
+  const hyperspaceTapRef = useRef(false);
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -60,10 +77,50 @@ export default function SpacewarArena() {
     try {
       instance.SendMessage("WebBridge", "SetOpponentMode", "cpu");
       instance.SendMessage("WebBridge", "SetCpuDifficulty", difficulty);
+
+      // Enable touch controls on touch devices
+      if (isTouch) {
+        instance.SendMessage("WebBridge", "EnableTouchControls", "true");
+      }
     } catch (err) {
-      console.warn("Failed to set initial CPU config:", err);
+      console.warn("Failed to set initial config:", err);
     }
-  }, [difficulty]);
+  }, [difficulty, isTouch]);
+
+  // Input pump for touch controls (30 fps)
+  useEffect(() => {
+    if (!isTouch || !unityInstanceRef.current) return;
+
+    const interval = setInterval(() => {
+      const instance = unityInstanceRef.current;
+      if (!instance) return;
+
+      // Calculate rotate: left = +1, right = -1
+      const rotate = (rotateLeft ? 1 : 0) + (rotateRight ? -1 : 0);
+
+      // Get hyperspace tap (consume it after sending)
+      const hyperspace = hyperspaceTapRef.current;
+      if (hyperspace) {
+        hyperspaceTapRef.current = false;
+      }
+
+      try {
+        instance.SendMessage(
+          "WebBridge",
+          "SetPlayer1Input",
+          JSON.stringify({ rotate, thrust, fire, hyperspace })
+        );
+      } catch (err) {
+        // Silently ignore - instance may not be ready
+      }
+    }, 33); // ~30 fps
+
+    return () => clearInterval(interval);
+  }, [isTouch, rotateLeft, rotateRight, thrust, fire]);
+
+  const handleHyperspaceTap = useCallback(() => {
+    hyperspaceTapRef.current = true;
+  }, []);
 
   const handleRestart = useCallback(() => {
     if (unityInstanceRef.current) {
@@ -131,13 +188,98 @@ export default function SpacewarArena() {
       </div>
 
       {/* Game container */}
-      <div className="flex-1 w-full">
+      <div className="flex-1 w-full relative">
         <UnityWebGL
           basePath="/games/spacewar"
           config={avatarConfig ?? undefined}
           onInstanceReady={handleInstanceReady}
           onRestartRequest={handleRestart}
         />
+
+        {/* Touch controls overlay (mobile only) */}
+        {isTouch && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ touchAction: "none" }}
+          >
+            {/* Left cluster: Rotate + Thrust */}
+            <div className="absolute left-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
+              {/* Rotate buttons row */}
+              <div className="flex gap-2">
+                <button
+                  className={`w-16 h-16 rounded-full text-2xl font-bold transition-colors select-none ${
+                    rotateLeft
+                      ? "bg-blue-500 text-white"
+                      : "bg-slate-700/80 text-slate-300"
+                  }`}
+                  style={{ touchAction: "none" }}
+                  onPointerDown={() => setRotateLeft(true)}
+                  onPointerUp={() => setRotateLeft(false)}
+                  onPointerCancel={() => setRotateLeft(false)}
+                  onPointerLeave={() => setRotateLeft(false)}
+                >
+                  ◀
+                </button>
+                <button
+                  className={`w-16 h-16 rounded-full text-2xl font-bold transition-colors select-none ${
+                    rotateRight
+                      ? "bg-blue-500 text-white"
+                      : "bg-slate-700/80 text-slate-300"
+                  }`}
+                  style={{ touchAction: "none" }}
+                  onPointerDown={() => setRotateRight(true)}
+                  onPointerUp={() => setRotateRight(false)}
+                  onPointerCancel={() => setRotateRight(false)}
+                  onPointerLeave={() => setRotateRight(false)}
+                >
+                  ▶
+                </button>
+              </div>
+              {/* Thrust button */}
+              <button
+                className={`w-full h-14 rounded-lg text-sm font-bold transition-colors select-none ${
+                  thrust
+                    ? "bg-orange-500 text-white"
+                    : "bg-slate-700/80 text-slate-300"
+                }`}
+                style={{ touchAction: "none" }}
+                onPointerDown={() => setThrust(true)}
+                onPointerUp={() => setThrust(false)}
+                onPointerCancel={() => setThrust(false)}
+                onPointerLeave={() => setThrust(false)}
+              >
+                THRUST
+              </button>
+            </div>
+
+            {/* Right cluster: Fire + Hyperspace */}
+            <div className="absolute right-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
+              {/* Fire button */}
+              <button
+                className={`w-20 h-20 rounded-full text-sm font-bold transition-colors select-none ${
+                  fire
+                    ? "bg-red-500 text-white"
+                    : "bg-slate-700/80 text-slate-300"
+                }`}
+                style={{ touchAction: "none" }}
+                onPointerDown={() => setFire(true)}
+                onPointerUp={() => setFire(false)}
+                onPointerCancel={() => setFire(false)}
+                onPointerLeave={() => setFire(false)}
+              >
+                FIRE
+              </button>
+              {/* Hyperspace button (tap only) */}
+              <button
+                className="w-20 h-12 rounded-lg text-xs font-bold bg-purple-700/80 text-purple-200 active:bg-purple-500 active:text-white transition-colors select-none"
+                style={{ touchAction: "none" }}
+                onPointerDown={handleHyperspaceTap}
+              >
+                HYPER
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* How to Play Modal */}
@@ -175,21 +317,41 @@ export default function SpacewarArena() {
               </div>
 
               <div>
-                <h4 className="text-green-400 font-semibold mb-1">Controls</h4>
-                <div className="bg-slate-700 rounded p-3 font-mono text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <span className="text-slate-400">A / D</span>
-                    <span>Rotate left / right</span>
-                    <span className="text-slate-400">W</span>
-                    <span>Thrust forward</span>
-                    <span className="text-slate-400">Space</span>
-                    <span>Fire missile</span>
-                    <span className="text-slate-400">S</span>
-                    <span>Hyperspace (risky!)</span>
-                    <span className="text-slate-400">R</span>
-                    <span>Restart match</span>
+                <h4 className="text-green-400 font-semibold mb-1">
+                  {isTouch ? "Mobile Controls" : "Controls"}
+                </h4>
+                {isTouch ? (
+                  <div className="bg-slate-700 rounded p-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="text-slate-400">◀ / ▶</span>
+                      <span>Hold to rotate</span>
+                      <span className="text-slate-400">THRUST</span>
+                      <span>Hold to accelerate</span>
+                      <span className="text-slate-400">FIRE</span>
+                      <span>Hold to shoot</span>
+                      <span className="text-slate-400">HYPER</span>
+                      <span>Tap for hyperspace</span>
+                    </div>
+                    <p className="text-slate-400 mt-2 text-[10px]">
+                      Touch controls appear at bottom of screen
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-slate-700 rounded p-3 font-mono text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="text-slate-400">A / D</span>
+                      <span>Rotate left / right</span>
+                      <span className="text-slate-400">W</span>
+                      <span>Thrust forward</span>
+                      <span className="text-slate-400">Space</span>
+                      <span>Fire missile</span>
+                      <span className="text-slate-400">S</span>
+                      <span>Hyperspace (risky!)</span>
+                      <span className="text-slate-400">R</span>
+                      <span>Restart match</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
