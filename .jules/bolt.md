@@ -27,3 +27,8 @@
 
 **Learning:** Service functions often fetch their own data (e.g., `resolveTurn` fetching `Match`), leading to redundant queries when the caller (Route) could have fetched it efficiently in parallel with other data.
 **Action:** Allow service functions to accept optional "preloaded" data entities. Use `Promise.all` in the route to fetch all necessary data (including what the service needs) and pass it down.
+
+## 2024-05-24 - Optimizing Module Structure Fetch
+
+**Learning:** `getModule` was fetching full content (including heavy JSON/HTML) even when only the structure (titles, IDs) was needed for navigation in Dashboard and Module Detail pages.
+**Action:** Implemented a `structureOnly` option in `api.getModule` and a corresponding query param in the backend to use `getModuleStructure` (which excludes content) instead of `getModuleWithContent`.

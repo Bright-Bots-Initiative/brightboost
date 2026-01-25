@@ -436,17 +436,23 @@ export const api = {
     return res.json();
   },
 
-  getModule: async (slug: string) => {
+  getModule: async (slug: string, options?: { structureOnly?: boolean }) => {
+    const cacheKey = options?.structureOnly ? `${slug}:structure` : slug;
+
     // cache hit
-    const cached = moduleCache.get(slug);
+    const cached = moduleCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < MODULE_TTL_MS) return cached.data;
 
     // in-flight dedupe
-    const existing = moduleInFlight.get(slug);
+    const existing = moduleInFlight.get(cacheKey);
     if (existing) return existing;
 
     const p = (async () => {
-      const res = await fetch(join(API_BASE, `/module/${slug}`), {
+      const endpoint = options?.structureOnly
+        ? `/module/${slug}?structure=true`
+        : `/module/${slug}`;
+
+      const res = await fetch(join(API_BASE, endpoint), {
         headers: getHeaders(),
       });
 
@@ -462,15 +468,15 @@ export const api = {
       }
 
       const data = await res.json();
-      moduleCache.set(slug, { ts: Date.now(), data });
+      moduleCache.set(cacheKey, { ts: Date.now(), data });
       return data;
     })();
 
-    moduleInFlight.set(slug, p);
+    moduleInFlight.set(cacheKey, p);
     try {
       return await p;
     } finally {
-      moduleInFlight.delete(slug);
+      moduleInFlight.delete(cacheKey);
     }
   },
 
