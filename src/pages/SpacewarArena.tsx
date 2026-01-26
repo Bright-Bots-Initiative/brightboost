@@ -199,8 +199,8 @@ export default function SpacewarArena() {
         {/* Touch controls overlay (mobile only) */}
         {isTouch && (
           <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ touchAction: "none" }}
+            className="absolute inset-0 pointer-events-none z-20"
+            style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
           >
             {/* Left cluster: Rotate + Thrust */}
             <div className="absolute left-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
@@ -212,11 +212,17 @@ export default function SpacewarArena() {
                       ? "bg-blue-500 text-white"
                       : "bg-slate-700/80 text-slate-300"
                   }`}
-                  style={{ touchAction: "none" }}
-                  onPointerDown={() => setRotateLeft(true)}
-                  onPointerUp={() => setRotateLeft(false)}
+                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setRotateLeft(true);
+                  }}
+                  onPointerUp={(e) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    setRotateLeft(false);
+                  }}
                   onPointerCancel={() => setRotateLeft(false)}
-                  onPointerLeave={() => setRotateLeft(false)}
                 >
                   ◀
                 </button>
@@ -226,11 +232,17 @@ export default function SpacewarArena() {
                       ? "bg-blue-500 text-white"
                       : "bg-slate-700/80 text-slate-300"
                   }`}
-                  style={{ touchAction: "none" }}
-                  onPointerDown={() => setRotateRight(true)}
-                  onPointerUp={() => setRotateRight(false)}
+                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setRotateRight(true);
+                  }}
+                  onPointerUp={(e) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    setRotateRight(false);
+                  }}
                   onPointerCancel={() => setRotateRight(false)}
-                  onPointerLeave={() => setRotateRight(false)}
                 >
                   ▶
                 </button>
@@ -242,11 +254,17 @@ export default function SpacewarArena() {
                     ? "bg-orange-500 text-white"
                     : "bg-slate-700/80 text-slate-300"
                 }`}
-                style={{ touchAction: "none" }}
-                onPointerDown={() => setThrust(true)}
-                onPointerUp={() => setThrust(false)}
+                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  setThrust(true);
+                }}
+                onPointerUp={(e) => {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                  setThrust(false);
+                }}
                 onPointerCancel={() => setThrust(false)}
-                onPointerLeave={() => setThrust(false)}
               >
                 THRUST
               </button>
@@ -261,19 +279,28 @@ export default function SpacewarArena() {
                     ? "bg-red-500 text-white"
                     : "bg-slate-700/80 text-slate-300"
                 }`}
-                style={{ touchAction: "none" }}
-                onPointerDown={() => setFire(true)}
-                onPointerUp={() => setFire(false)}
+                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  setFire(true);
+                }}
+                onPointerUp={(e) => {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                  setFire(false);
+                }}
                 onPointerCancel={() => setFire(false)}
-                onPointerLeave={() => setFire(false)}
               >
                 FIRE
               </button>
               {/* Hyperspace button (tap only) */}
               <button
                 className="w-20 h-12 rounded-lg text-xs font-bold bg-purple-700/80 text-purple-200 active:bg-purple-500 active:text-white transition-colors select-none"
-                style={{ touchAction: "none" }}
-                onPointerDown={handleHyperspaceTap}
+                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  handleHyperspaceTap();
+                }}
               >
                 HYPER
               </button>
