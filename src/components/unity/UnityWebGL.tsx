@@ -33,6 +33,15 @@ declare global {
   }
 }
 
+// Detect touch device (suppress focus overlay on mobile)
+const isTouchDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    navigator.maxTouchPoints > 0
+  );
+};
+
 // Keys used by the game that browsers may steal (scroll, back navigation, etc.)
 const GAMEPLAY_KEYS = new Set([
   "Space",
@@ -57,6 +66,7 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  const [isTouch] = useState(isTouchDevice);
 
   // Block browser-default handling of gameplay keys when canvas is focused
   const handleKeyCapture = useCallback(
@@ -239,8 +249,8 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
           <p className="text-slate-400 mt-2">{progress}%</p>
         </div>
       )}
-      {/* Focus hint overlay - shown when game loaded but canvas not focused */}
-      {!loading && !focused && (
+      {/* Focus hint overlay - shown when game loaded but canvas not focused (desktop only) */}
+      {!loading && !focused && !isTouch && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 cursor-pointer"
           onClick={handleContainerClick}
