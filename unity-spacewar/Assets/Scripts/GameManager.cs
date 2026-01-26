@@ -195,7 +195,15 @@ public class GameManager : MonoBehaviour
 
         // Apply ship movement tuning (pass useClampDrag instead of !isClassic)
         ApplyShipTuning(player1Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, useClampDrag);
-        ApplyShipTuning(player2Ship, shipThrust, shipMaxSpd, shipDrg, gravMult, useClampDrag);
+
+        // Apply CPU ship scaling based on difficulty (only affects player2Ship when CPU enabled)
+        float cpuThrustScale = 1f;
+        float cpuMaxSpeedScale = 1f;
+        if (cpuOpponentEnabled)
+        {
+            GetCpuSpeedScaling(out cpuThrustScale, out cpuMaxSpeedScale);
+        }
+        ApplyShipTuning(player2Ship, shipThrust * cpuThrustScale, shipMaxSpd * cpuMaxSpeedScale, shipDrg, gravMult, useClampDrag);
 
         // Reposition spawn points based on distance setting
         RepositionSpawnPoints(spawnDist, spawnYJit);
@@ -218,6 +226,29 @@ public class GameManager : MonoBehaviour
         if (shipGravity != null)
         {
             shipGravity.SetMultiplier(gravMult);
+        }
+    }
+
+    /// <summary>
+    /// Get CPU ship speed scaling factors based on difficulty.
+    /// Easy = slower, Normal = baseline, Hard = faster
+    /// </summary>
+    private void GetCpuSpeedScaling(out float thrustScale, out float maxSpeedScale)
+    {
+        switch (cpuDifficulty)
+        {
+            case CpuPilot.Difficulty.Easy:
+                thrustScale = 0.75f;
+                maxSpeedScale = 0.85f;
+                break;
+            case CpuPilot.Difficulty.Hard:
+                thrustScale = 1.15f;
+                maxSpeedScale = 1.10f;
+                break;
+            default: // Normal
+                thrustScale = 1.00f;
+                maxSpeedScale = 1.00f;
+                break;
         }
     }
 
@@ -604,6 +635,9 @@ public class GameManager : MonoBehaviour
         {
             cpuPilot.SetDifficulty(cpuDifficulty);
         }
+
+        // Re-apply physics preset to update CPU ship speed scaling
+        ApplyPhysicsPreset();
 
         Debug.Log($"[GameManager] CPU difficulty set to: {cpuDifficulty}");
     }
