@@ -38,6 +38,9 @@ export async function checkUnlocks(
       data: { level: newLevel, xp: { increment: 100 } },
     });
 
+    // Capture avatarId for use in closures (TS can't narrow `let` across callbacks)
+    const avatarId = avatar.id;
+
     // Batch fetch & create to avoid N+1 query
     const eligibleAbilities = await prisma.ability.findMany({
       where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
@@ -46,7 +49,7 @@ export async function checkUnlocks(
     if (eligibleAbilities.length > 0) {
       const existingUnlocks = await prisma.unlockedAbility.findMany({
         where: {
-          avatarId: avatar.id,
+          avatarId,
           abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
         },
         select: { abilityId: true },
@@ -62,7 +65,7 @@ export async function checkUnlocks(
       if (newUnlocks.length > 0) {
         await prisma.unlockedAbility.createMany({
           data: newUnlocks.map((ab: AbilityRow) => ({
-            avatarId: avatar.id,
+            avatarId,
             abilityId: ab.id,
             equipped: false,
           })),
