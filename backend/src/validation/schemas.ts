@@ -1,6 +1,16 @@
 import { z } from "zod";
 
 // 🛡️ Sentinel: Shared validation schemas for consistent security
+
+// 🛡️ Sentinel: Prevent XSS by disallowing HTML tags in user input
+export const safeString = z
+  .string()
+  .regex(/^[^<>]*$/, "Input cannot contain HTML characters (< or >)");
+
+export const nameSchema = safeString
+  .min(1, "Name is required")
+  .max(100, "Name too long");
+
 export const slugSchema = z
   .string()
   .min(1, "Slug is required")
