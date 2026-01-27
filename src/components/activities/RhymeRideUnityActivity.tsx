@@ -3,19 +3,24 @@ import { useEffect, useRef, useCallback, useMemo } from "react";
 import UnityWebGL from "../unity/UnityWebGL";
 import { useTranslation } from "react-i18next";
 import { LocalizedField, resolveText } from "@/utils/localizedContent";
+import ActivityHeader from "@/components/activities/ActivityHeader";
 
 interface RhymeRideRound {
   promptWord: LocalizedField;
   correctWord: LocalizedField;
   distractors: LocalizedField[];
-  lane?: number;
+}
+
+interface RhymeRideSettings {
+  lives?: number;
+  roundTimeS?: number;
+  speed?: number;
 }
 
 interface RhymeRideConfig {
   gameKey: "rhyme_ride_unity";
+  settings?: RhymeRideSettings;
   rounds: RhymeRideRound[];
-  targetScore?: number;
-  timeLimit?: number;
 }
 
 interface RhymeRideUnityActivityProps {
@@ -29,6 +34,7 @@ export default function RhymeRideUnityActivity({
 }: RhymeRideUnityActivityProps) {
   const { t } = useTranslation();
   const unityInstanceRef = useRef<any>(null);
+  const alreadyCompletedRef = useRef(false);
 
   // Generate stable sessionId for this activity instance
   const sessionId = useMemo(() => crypto.randomUUID(), []);
@@ -39,18 +45,27 @@ export default function RhymeRideUnityActivity({
       promptWord: resolveText(t, round.promptWord),
       correctWord: resolveText(t, round.correctWord),
       distractors: round.distractors.map((d) => resolveText(t, d)),
-      lane: round.lane,
     }));
   }, [config.rounds, t]);
 
   // Listen for completion event from Unity
   useEffect(() => {
-    const handleComplete = (e: CustomEvent<{ sessionId: string; score: number; accuracy: number }>) => {
+    const handleComplete = (
+      e: CustomEvent<{ sessionId: string; score: number; total: number; streakMax: number }>
+    ) => {
       // Validate sessionId to prevent stale/cross-tab events
       if (e.detail.sessionId !== sessionId) {
         console.warn("[RhymeRide] Ignoring completion event with mismatched sessionId");
         return;
       }
+
+      // Prevent duplicate completion signals
+      if (alreadyCompletedRef.current) {
+        console.warn("[RhymeRide] Ignoring duplicate completion event");
+        return;
+      }
+
+      alreadyCompletedRef.current = true;
       onComplete();
     };
 
@@ -64,29 +79,35 @@ export default function RhymeRideUnityActivity({
     (instance: any) => {
       unityInstanceRef.current = instance;
 
-      // Send game config to Unity
+      // Send game config to Unity using InitFromJson
       try {
         const unityConfig = {
           sessionId,
+          settings: {
+            lives: config.settings?.lives ?? 3,
+            roundTimeS: config.settings?.roundTimeS ?? 10,
+            speed: config.settings?.speed ?? 3,
+          },
           rounds: resolvedRounds,
-          targetScore: config.targetScore ?? resolvedRounds.length,
-          timeLimit: config.timeLimit ?? 0,
         };
-        instance.SendMessage("WebBridge", "InitRhymeRide", JSON.stringify(unityConfig));
+        instance.SendMessage("WebBridge", "InitFromJson", JSON.stringify(unityConfig));
       } catch (err) {
         console.warn("[RhymeRide] Failed to send config to Unity:", err);
       }
     },
-    [sessionId, resolvedRounds, config.targetScore, config.timeLimit]
+    [sessionId, resolvedRounds, config.settings]
   );
 
   return (
-    <div className="w-full h-[70vh] max-w-4xl mx-auto">
-      <UnityWebGL
-        basePath="/games/rhyme-ride"
-        buildName="rhyme-ride"
-        onInstanceReady={handleInstanceReady}
-      />
+    <div className="max-w-4xl mx-auto space-y-4">
+      <ActivityHeader title="Rhyme & Ride" visualKey="game" />
+      <div className="w-full h-[60vh]">
+        <UnityWebGL
+          basePath="/games/rhyme-ride"
+          buildName="rhyme_ride"
+          onInstanceReady={handleInstanceReady}
+        />
+      </div>
     </div>
   );
 }
