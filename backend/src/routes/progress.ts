@@ -30,40 +30,46 @@ router.get("/progress", requireAuth, async (req, res) => {
 // Legacy endpoint for AuthContext (supports existing frontend)
 router.get("/get-progress", requireAuth, async (req, res) => {
   // Return format expected by AuthContext
-  // ⚡ Bolt Optimization: Use Promise.all to fetch independent data concurrently
-  const [user, progress] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: req.user!.id },
-      // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        school: true,
-        subject: true,
-        bio: true,
-        grade: true,
-        xp: true,
-        level: true,
-        streak: true,
-        avatarUrl: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.progress.findMany({
-      where: { studentId: req.user!.id },
-      // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
-      select: {
-        id: true,
-        moduleSlug: true,
-        activityId: true,
-        status: true,
-        updatedAt: true,
-      },
-    }),
-  ]);
+  // ⚡ Bolt Optimization: Allow excluding progress to reduce payload size (e.g. for AuthContext)
+  // Default to true (legacy behavior) to prevent breaking other consumers.
+  const excludeProgress = req.query.excludeProgress === "true";
+
+  const userPromise = prisma.user.findUnique({
+    where: { id: req.user!.id },
+    // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      school: true,
+      subject: true,
+      bio: true,
+      grade: true,
+      xp: true,
+      level: true,
+      streak: true,
+      avatarUrl: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  const progressPromise = !excludeProgress
+    ? prisma.progress.findMany({
+        where: { studentId: req.user!.id },
+        // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
+        select: {
+          id: true,
+          moduleSlug: true,
+          activityId: true,
+          status: true,
+          updatedAt: true,
+        },
+      })
+    : Promise.resolve([]);
+
+  const [user, progress] = await Promise.all([userPromise, progressPromise]);
   res.json({ user, progress });
 });
 
