@@ -5,6 +5,7 @@ import request from "supertest";
 const prismaMock = vi.hoisted(() => ({
   progress: {
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     count: vi.fn(),
@@ -98,7 +99,7 @@ describe("Progress Route Input Validation", () => {
 
     it("should return 200 for valid input", async () => {
       // @ts-ignore
-      prismaMock.progress.findFirst.mockResolvedValue(null);
+      prismaMock.progress.findUnique.mockResolvedValue(null);
       // @ts-ignore
       prismaMock.progress.create.mockResolvedValue({
         id: "new-progress",

@@ -27,3 +27,7 @@
 
 **Learning:** Using both a `title` attribute on a button and a custom Tooltip component results in double tooltips (system + custom) and potentially duplicate screen reader announcements.
 **Action:** When integrating a custom Tooltip, conditionally remove the `title` attribute from the trigger element while ensuring `aria-label` is still present for accessibility.
+
+## 2024-05-25 - Accessible Loading Buttons
+**Learning:** When a button enters a loading state, replacing content with "Loading..." text can break layout for icon-only buttons (`size="icon"`). Also, screen readers benefit from `aria-busy="true"` to understand the state.
+**Action:** Conditionally hide loading text for icon buttons and ensure `aria-busy` is toggled.
