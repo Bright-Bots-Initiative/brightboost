@@ -239,8 +239,8 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
     >
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
-          <div className="text-4xl mb-4">🚀</div>
-          <h2 className="text-xl font-bold text-white mb-4">Loading Spacewar...</h2>
+          <div className="text-4xl mb-4">🎮</div>
+          <h2 className="text-xl font-bold text-white mb-4">Loading game...</h2>
           <div className="w-64 h-3 bg-slate-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 transition-all duration-300"
