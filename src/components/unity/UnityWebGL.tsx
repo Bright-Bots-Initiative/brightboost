@@ -6,6 +6,7 @@ interface UnityConfig {
   level?: number;
   xp?: number;
   avatarUrl?: string;
+  stem1Set1Completed?: string[];
 }
 
 interface UnityWebGLProps {

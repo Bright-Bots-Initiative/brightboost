@@ -116,6 +116,19 @@ public class GameManager : MonoBehaviour
     private string player1Archetype = "AI";
     private string player2Archetype = "QUANTUM";
 
+    // STEM-1 Set 1 completed games (for perks)
+    private System.Collections.Generic.HashSet<string> p1Stem1Set1 = new System.Collections.Generic.HashSet<string>();
+    private System.Collections.Generic.HashSet<string> p2Stem1Set1 = new System.Collections.Generic.HashSet<string>();
+
+    // Baseline stats (captured after physics preset applied, before perks)
+    private float baseThrust = 16f;
+    private float baseRotationSpeed = 180f;
+    private float baseFireRate = 0.3f;
+    private float baseProjectileSpeed = 12f;
+    private float baseHyperspaceCooldown = 5f;
+    private float baseHyperspaceRisk = 0.15f;
+    private float baseGravityMultiplier = 0.65f;
+
     // CPU pilot reference
     private CpuPilot cpuPilot;
 
@@ -209,6 +222,9 @@ public class GameManager : MonoBehaviour
         RepositionSpawnPoints(spawnDist, spawnYJit);
 
         Debug.Log($"[GameManager] Physics preset applied: {physicsPreset} - Gravity={sunGravity}, MinDist={sunMinDist}, Thrust={shipThrust}, SunScale={sunScale}, SpawnDist={spawnDist}, GravMult={gravMult}");
+
+        // Capture baseline stats for perk calculations
+        CaptureBaselineStats();
     }
 
     /// <summary>
@@ -310,6 +326,10 @@ public class GameManager : MonoBehaviour
 
         // Setup CPU opponent
         SetupCpuOpponent();
+
+        // Reapply perks (in case they were set before initialization)
+        ApplyPlayerPerks(1);
+        ApplyPlayerPerks(2);
 
         StartCoroutine(StartRound());
     }
@@ -639,6 +659,10 @@ public class GameManager : MonoBehaviour
         // Re-apply physics preset to update CPU ship speed scaling
         ApplyPhysicsPreset();
 
+        // Reapply perks after physics preset (perks multiply baseline)
+        ApplyPlayerPerks(1);
+        ApplyPlayerPerks(2);
+
         Debug.Log($"[GameManager] CPU difficulty set to: {cpuDifficulty}");
     }
 
@@ -654,6 +678,8 @@ public class GameManager : MonoBehaviour
     {
         physicsPreset = preset;
         ApplyPhysicsPreset();
+        ApplyPlayerPerks(1);
+        ApplyPlayerPerks(2);
         Debug.Log($"[GameManager] Physics preset changed to: {preset}");
     }
 
@@ -731,5 +757,136 @@ public class GameManager : MonoBehaviour
         player1Ship.ExternalControlEnabled = isEnabled;
 
         Debug.Log($"[GameManager] Player 1 external control: {(isEnabled ? "enabled" : "disabled")}");
+    }
+
+    /// <summary>
+    /// Set STEM-1 Set 1 completed games for a player (for perks)
+    /// Called from WebBridge when config is received
+    /// </summary>
+    /// <param name="playerNum">1 or 2</param>
+    /// <param name="ids">Array of completed game IDs</param>
+    public void SetStem1Set1Completed(int playerNum, string[] ids)
+    {
+        var targetSet = playerNum == 1 ? p1Stem1Set1 : p2Stem1Set1;
+        targetSet.Clear();
+
+        if (ids != null)
+        {
+            foreach (var id in ids)
+            {
+                if (!string.IsNullOrEmpty(id))
+                {
+                    targetSet.Add(id.ToLower());
+                }
+            }
+        }
+
+        Debug.Log($"[GameManager] P{playerNum} STEM-1 Set 1 completed: {targetSet.Count}/5");
+        ApplyPlayerPerks(playerNum);
+    }
+
+    /// <summary>
+    /// Apply perks to a player's ship based on completed STEM-1 Set 1 games
+    /// Perk mapping:
+    /// - bounce-buds: gravity multiplier *= 0.90
+    /// - tank-trek: thrust *= 1.06, rotationSpeed *= 1.08
+    /// - quantum-quest: hyperspaceCooldown *= 0.85, hyperspaceRiskChance *= 0.80
+    /// - gotcha-gears: fireRate *= 0.90
+    /// - rhyme-ride: projectileSpeed *= 1.10
+    /// </summary>
+    private void ApplyPlayerPerks(int playerNum)
+    {
+        ShipController ship = playerNum == 1 ? player1Ship : player2Ship;
+        if (ship == null) return;
+
+        var completedSet = playerNum == 1 ? p1Stem1Set1 : p2Stem1Set1;
+
+        // Start with baseline values
+        float thrust = baseThrust;
+        float rotSpeed = baseRotationSpeed;
+        float fireRateSec = baseFireRate;
+        float projSpeed = baseProjectileSpeed;
+        float hyperCd = baseHyperspaceCooldown;
+        float hyperRisk = baseHyperspaceRisk;
+        float gravMult = baseGravityMultiplier;
+
+        // Apply perks based on completed games
+        if (completedSet.Contains("bounce-buds"))
+        {
+            gravMult *= 0.90f;
+        }
+        if (completedSet.Contains("tank-trek"))
+        {
+            thrust *= 1.06f;
+            rotSpeed *= 1.08f;
+        }
+        if (completedSet.Contains("quantum-quest"))
+        {
+            hyperCd *= 0.85f;
+            hyperRisk *= 0.80f;
+        }
+        if (completedSet.Contains("gotcha-gears"))
+        {
+            fireRateSec *= 0.90f;
+        }
+        if (completedSet.Contains("rhyme-ride"))
+        {
+            projSpeed *= 1.10f;
+        }
+
+        // Apply guardrails
+        fireRateSec = Mathf.Max(0.12f, fireRateSec);
+        hyperRisk = Mathf.Clamp(hyperRisk, 0.02f, 0.30f);
+        if (gravMult <= 0f) gravMult = 0.01f;
+
+        // Apply to ship
+        ship.SetRotationSpeed(rotSpeed);
+        ship.SetWeaponTuning(fireRateSec, projSpeed);
+        ship.SetHyperspaceTuning(hyperCd, hyperRisk);
+
+        // Apply gravity multiplier
+        ShipGravity shipGravity = ship.GetComponent<ShipGravity>();
+        if (shipGravity != null)
+        {
+            shipGravity.SetMultiplier(gravMult);
+        }
+
+        // For thrust, we need to re-apply movement tuning (keeping other settings)
+        bool isClassic = physicsPreset == PhysicsPreset.Classic1962;
+        float maxSpd = isClassic ? classicShipMaxSpeed : arcadeShipMaxSpeed;
+        float drg = isClassic ? classicShipDrag : arcadeShipDrag;
+        bool useClampDrag = isClassic ? classicClampAndManualDrag : arcadeClampAndManualDrag;
+
+        // Apply CPU scaling for player 2 if enabled
+        if (playerNum == 2 && cpuOpponentEnabled)
+        {
+            GetCpuSpeedScaling(out float cpuThrustScale, out float cpuMaxSpeedScale);
+            thrust *= cpuThrustScale;
+            maxSpd *= cpuMaxSpeedScale;
+        }
+
+        ship.SetMovementTuning(thrust, maxSpd, drg, useClampDrag);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Log perks for debugging
+        Debug.Log($"[Perks] P{playerNum} stem1Set1={completedSet.Count}/5 thrust={thrust:F1} rot={rotSpeed:F1} gravMult={gravMult:F2} fireRate={fireRateSec:F2} proj={projSpeed:F1} hyperCd={hyperCd:F1} hyperRisk={hyperRisk:F2}");
+#endif
+    }
+
+    /// <summary>
+    /// Capture baseline stats from current physics preset (called after ApplyPhysicsPreset)
+    /// </summary>
+    private void CaptureBaselineStats()
+    {
+        bool isClassic = physicsPreset == PhysicsPreset.Classic1962;
+        baseThrust = isClassic ? classicShipThrust : arcadeShipThrust;
+        baseGravityMultiplier = isClassic ? classicGravityMultiplier : arcadeGravityMultiplier;
+
+        // These are from ShipController defaults (not preset-dependent)
+        baseRotationSpeed = 180f;
+        baseFireRate = 0.3f;
+        baseProjectileSpeed = 12f;
+        baseHyperspaceCooldown = 5f;
+        baseHyperspaceRisk = 0.15f;
     }
 }
