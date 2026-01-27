@@ -12,10 +12,10 @@ public class WebBridge : MonoBehaviour
     // JavaScript functions to call from Unity (WebGL only)
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
-    private static extern void OnRhymeRideComplete(string json);
+    private static extern void OnRhymeRideReady();
 
     [DllImport("__Internal")]
-    private static extern void OnUnityReady();
+    private static extern void OnRhymeRideComplete(string json);
 #endif
 
     private void Awake()
@@ -34,79 +34,131 @@ public class WebBridge : MonoBehaviour
 
     private void Start()
     {
-        NotifyUnityReady();
+        NotifyReady();
     }
 
     /// <summary>
-    /// Called from JavaScript to initialize the game with round config.
+    /// Called from JavaScript to initialize the game with config.
     /// Expected JSON format:
     /// {
     ///   "sessionId": "uuid-string",
+    ///   "settings": { "lives": 3, "roundTimeS": 10, "speed": 3 },
     ///   "rounds": [
-    ///     { "promptWord": "cat", "correctWord": "hat", "distractors": ["dog", "tree"], "lane": 1 },
+    ///     { "promptWord": "cat", "correctWord": "hat", "distractors": ["dog", "tree"] },
     ///     ...
-    ///   ],
-    ///   "targetScore": 5,
-    ///   "timeLimit": 0
+    ///   ]
     /// }
     /// </summary>
-    public void InitRhymeRide(string json)
+    public void InitFromJson(string json)
     {
-        Debug.Log($"[WebBridge] InitRhymeRide: {json}");
+        Debug.Log($"[WebBridge] InitFromJson: {json}");
 
         try
         {
-            RhymeRideConfig config = JsonUtility.FromJson<RhymeRideConfig>(json);
+            GameConfig config = JsonUtility.FromJson<GameConfig>(json);
 
             if (config != null && RhymeRideGameManager.Instance != null)
             {
                 RhymeRideGameManager.Instance.Initialize(config);
                 Debug.Log($"[WebBridge] Initialized with {config.rounds?.Length ?? 0} rounds");
             }
+            else if (config == null)
+            {
+                Debug.LogError("[WebBridge] Failed to parse config - using defaults");
+                UseDefaultConfig();
+            }
         }
         catch (System.Exception e)
         {
             Debug.LogError($"[WebBridge] Failed to parse config: {e.Message}");
+            UseDefaultConfig();
         }
     }
 
     /// <summary>
-    /// Notify JavaScript that the game is complete.
+    /// Fallback to default config if JSON is malformed.
     /// </summary>
-    public void NotifyGameComplete(string sessionId, int score, float accuracy)
+    private void UseDefaultConfig()
+    {
+        if (RhymeRideGameManager.Instance != null)
+        {
+            GameConfig defaultConfig = new GameConfig
+            {
+                sessionId = System.Guid.NewGuid().ToString(),
+                settings = new GameSettings { lives = 3, roundTimeS = 10, speed = 3 },
+                rounds = new RoundData[]
+                {
+                    new RoundData { promptWord = "cat", correctWord = "hat", distractors = new[] { "dog", "sun" } },
+                    new RoundData { promptWord = "sun", correctWord = "run", distractors = new[] { "moon", "star" } },
+                    new RoundData { promptWord = "bed", correctWord = "red", distractors = new[] { "blue", "top" } }
+                }
+            };
+            RhymeRideGameManager.Instance.Initialize(defaultConfig);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript to restart the game.
+    /// </summary>
+    public void RestartGame()
+    {
+        Debug.Log("[WebBridge] RestartGame requested");
+
+        if (RhymeRideGameManager.Instance != null)
+        {
+            RhymeRideGameManager.Instance.RestartGame();
+        }
+    }
+
+    /// <summary>
+    /// Notify JavaScript that the game is ready.
+    /// </summary>
+    private void NotifyReady()
+    {
+        Debug.Log("[WebBridge] NotifyReady");
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        OnRhymeRideReady();
+#endif
+    }
+
+    /// <summary>
+    /// Notify JavaScript that the game is complete.
+    /// Called by GameManager when game ends.
+    /// </summary>
+    public void NotifyComplete(string sessionId, int score, int total, int streakMax)
     {
         CompletionResult result = new CompletionResult
         {
             sessionId = sessionId,
             score = score,
-            accuracy = accuracy
+            total = total,
+            streakMax = streakMax
         };
 
         string json = JsonUtility.ToJson(result);
-        Debug.Log($"[WebBridge] Game Complete: {json}");
+        Debug.Log($"[WebBridge] NotifyComplete: {json}");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         OnRhymeRideComplete(json);
 #endif
     }
 
-    private void NotifyUnityReady()
-    {
-        Debug.Log("[WebBridge] Unity Ready");
-
-#if UNITY_WEBGL && !UNITY_EDITOR
-        OnUnityReady();
-#endif
-    }
-
     // Data classes for JSON serialization
     [System.Serializable]
-    public class RhymeRideConfig
+    public class GameConfig
     {
         public string sessionId;
+        public GameSettings settings;
         public RoundData[] rounds;
-        public int targetScore;
-        public int timeLimit;
+    }
+
+    [System.Serializable]
+    public class GameSettings
+    {
+        public int lives = 3;
+        public float roundTimeS = 10f;
+        public float speed = 3f;
     }
 
     [System.Serializable]
@@ -115,7 +167,6 @@ public class WebBridge : MonoBehaviour
         public string promptWord;
         public string correctWord;
         public string[] distractors;
-        public int lane;
     }
 
     [System.Serializable]
@@ -123,6 +174,7 @@ public class WebBridge : MonoBehaviour
     {
         public string sessionId;
         public int score;
-        public float accuracy;
+        public int total;
+        public int streakMax;
     }
 }

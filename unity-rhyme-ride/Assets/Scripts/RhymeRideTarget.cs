@@ -1,42 +1,38 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// RhymeRideTarget - Represents a word target moving down a lane.
+/// RhymeRideTarget - Represents a word target moving horizontally across a lane.
+/// Gotcha-style: targets move from left to right.
 /// </summary>
 public class RhymeRideTarget : MonoBehaviour
 {
     [Header("Visual References")]
-    [SerializeField] private Text wordText;
     [SerializeField] private SpriteRenderer backgroundSprite;
-    [SerializeField] private Color correctColor = new Color(0.4f, 0.8f, 0.4f);
-    [SerializeField] private Color incorrectColor = new Color(0.8f, 0.4f, 0.4f);
+    [SerializeField] private TextMesh wordText;
+
+    [Header("Colors")]
+    [SerializeField] private Color normalColor = new Color(0.3f, 0.5f, 0.8f);
+    [SerializeField] private Color correctHitColor = new Color(0.3f, 0.8f, 0.4f);
+    [SerializeField] private Color wrongHitColor = new Color(0.8f, 0.3f, 0.3f);
 
     public event System.Action<RhymeRideTarget, bool> OnTargetHit;
-    public event System.Action<RhymeRideTarget> OnTargetMissed;
+    public event System.Action<RhymeRideTarget> OnTargetExited;
 
     public string Word { get; private set; }
-    public bool IsCorrect { get; private set; }
-    public string PromptWord { get; private set; }
     public int Lane { get; private set; }
+    public bool IsCorrect { get; private set; }
 
     private float speed;
-    private float destroyY;
+    private float destroyX;
     private bool isActive = true;
 
-    public void Initialize(string word, bool isCorrect, string promptWord, float moveSpeed, float destroyAtY)
+    public void Initialize(string word, int lane, bool isCorrect, float moveSpeed, float exitX)
     {
         Word = word;
+        Lane = lane;
         IsCorrect = isCorrect;
-        PromptWord = promptWord;
         speed = moveSpeed;
-        destroyY = destroyAtY;
-
-        // Determine lane from X position
-        float x = transform.position.x;
-        if (x < -1.5f) Lane = 0;
-        else if (x > 1.5f) Lane = 2;
-        else Lane = 1;
+        destroyX = exitX;
 
         // Set visual
         if (wordText != null)
@@ -44,28 +40,24 @@ public class RhymeRideTarget : MonoBehaviour
             wordText.text = word;
         }
 
-        // Optional: tint based on correct/incorrect (for debugging)
-        // In production, all targets should look the same
-#if UNITY_EDITOR
         if (backgroundSprite != null)
         {
-            backgroundSprite.color = isCorrect ? correctColor : incorrectColor;
+            backgroundSprite.color = normalColor;
         }
-#endif
     }
 
     private void Update()
     {
         if (!isActive) return;
 
-        // Move down
-        transform.Translate(Vector3.down * speed * Time.deltaTime);
+        // Move right (horizontal movement for Gotcha feel)
+        transform.Translate(Vector3.right * speed * Time.deltaTime);
 
-        // Check if past destroy line
-        if (transform.position.y < destroyY)
+        // Check if past destroy line (right side of screen)
+        if (transform.position.x > destroyX)
         {
             isActive = false;
-            OnTargetMissed?.Invoke(this);
+            OnTargetExited?.Invoke(this);
         }
     }
 
@@ -77,6 +69,13 @@ public class RhymeRideTarget : MonoBehaviour
         if (!isActive) return;
 
         isActive = false;
+
+        // Visual feedback
+        if (backgroundSprite != null)
+        {
+            backgroundSprite.color = IsCorrect ? correctHitColor : wrongHitColor;
+        }
+
         OnTargetHit?.Invoke(this, IsCorrect);
     }
 

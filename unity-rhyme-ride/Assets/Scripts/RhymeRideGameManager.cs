@@ -5,21 +5,16 @@ using System.Collections.Generic;
 
 /// <summary>
 /// RhymeRideGameManager - Main game logic for Rhyme & Ride minigame.
-/// Handles round spawning, scoring, and game completion.
+/// Gotcha-style gameplay: targets move horizontally across lanes.
 /// </summary>
 public class RhymeRideGameManager : MonoBehaviour
 {
     public static RhymeRideGameManager Instance { get; private set; }
 
-    [Header("Game Settings")]
-    [SerializeField] private float targetSpawnInterval = 2f;
-    [SerializeField] private float targetSpeed = 2f;
-    [SerializeField] private int maxMisses = 3;
-
-    [Header("Lane Positions")]
-    [SerializeField] private float[] laneXPositions = { -3f, 0f, 3f };
-    [SerializeField] private float spawnY = 6f;
-    [SerializeField] private float destroyY = -6f;
+    [Header("Lane Positions (Y coordinates for 3 horizontal lanes)")]
+    [SerializeField] private float[] laneYPositions = { 2f, 0f, -2f };
+    [SerializeField] private float spawnX = -10f;
+    [SerializeField] private float destroyX = 10f;
 
     [Header("Prefabs")]
     [SerializeField] private GameObject targetPrefab;
@@ -28,20 +23,29 @@ public class RhymeRideGameManager : MonoBehaviour
     [SerializeField] private Text scoreText;
     [SerializeField] private Text promptText;
     [SerializeField] private Text livesText;
+    [SerializeField] private Text timerText;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private Text gameOverText;
 
-    // Game state
+    // Config from JavaScript
     private string sessionId;
+    private WebBridge.GameSettings settings;
     private WebBridge.RoundData[] rounds;
+
+    // Game state
     private int currentRoundIndex = 0;
     private int score = 0;
-    private int misses = 0;
-    private int totalShots = 0;
-    private int totalHits = 0;
+    private int lives = 3;
+    private int totalRounds = 0;
+    private int currentStreak = 0;
+    private int maxStreak = 0;
+    private float roundTimer = 0f;
     private bool gameActive = false;
+    private bool roundActive = false;
+    private bool completionNotified = false;
 
     private List<RhymeRideTarget> activeTargets = new List<RhymeRideTarget>();
+    private WebBridge.RoundData currentRound;
 
     private void Awake()
     {
@@ -64,18 +68,64 @@ public class RhymeRideGameManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (roundActive && settings != null && settings.roundTimeS > 0)
+        {
+            roundTimer -= Time.deltaTime;
+            UpdateTimerUI();
+
+            if (roundTimer <= 0)
+            {
+                // Time's up for this round - count as miss
+                OnRoundTimeout();
+            }
+        }
+    }
+
     /// <summary>
     /// Initialize the game with config from JavaScript.
     /// </summary>
-    public void Initialize(WebBridge.RhymeRideConfig config)
+    public void Initialize(WebBridge.GameConfig config)
     {
         sessionId = config.sessionId;
-        rounds = config.rounds;
+        settings = config.settings ?? new WebBridge.GameSettings();
+        rounds = config.rounds ?? new WebBridge.RoundData[0];
+
+        // Reset state
         currentRoundIndex = 0;
         score = 0;
-        misses = 0;
-        totalShots = 0;
-        totalHits = 0;
+        lives = settings.lives;
+        totalRounds = rounds.Length;
+        currentStreak = 0;
+        maxStreak = 0;
+        completionNotified = false;
+
+        UpdateUI();
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
+
+        StartGame();
+    }
+
+    /// <summary>
+    /// Restart the game with same config.
+    /// </summary>
+    public void RestartGame()
+    {
+        // Clear active targets
+        ClearAllTargets();
+
+        // Reset state
+        currentRoundIndex = 0;
+        score = 0;
+        lives = settings?.lives ?? 3;
+        currentStreak = 0;
+        maxStreak = 0;
+        completionNotified = false;
 
         UpdateUI();
 
@@ -89,31 +139,49 @@ public class RhymeRideGameManager : MonoBehaviour
 
     private void StartGame()
     {
-        gameActive = true;
-        StartCoroutine(SpawnRoundsCoroutine());
-    }
-
-    private IEnumerator SpawnRoundsCoroutine()
-    {
-        while (gameActive && currentRoundIndex < rounds.Length)
+        if (rounds == null || rounds.Length == 0)
         {
-            SpawnRound(rounds[currentRoundIndex]);
-            currentRoundIndex++;
-
-            yield return new WaitForSeconds(targetSpawnInterval);
+            Debug.LogError("[RhymeRideGameManager] No rounds configured!");
+            return;
         }
 
-        // Wait for remaining targets to clear
-        yield return new WaitUntil(() => activeTargets.Count == 0 || !gameActive);
+        gameActive = true;
+        StartCoroutine(GameLoopCoroutine());
+    }
+
+    private IEnumerator GameLoopCoroutine()
+    {
+        // Brief delay before starting
+        yield return new WaitForSeconds(0.5f);
+
+        while (gameActive && currentRoundIndex < rounds.Length && lives > 0)
+        {
+            // Spawn round
+            SpawnRound(rounds[currentRoundIndex]);
+            roundActive = true;
+            roundTimer = settings.roundTimeS;
+
+            // Wait for round to complete (all targets cleared or timeout)
+            yield return new WaitUntil(() => !roundActive || !gameActive);
+
+            if (!gameActive) break;
+
+            currentRoundIndex++;
+
+            // Brief pause between rounds
+            yield return new WaitForSeconds(0.3f);
+        }
 
         if (gameActive)
         {
-            EndGame(true);
+            EndGame();
         }
     }
 
     private void SpawnRound(WebBridge.RoundData round)
     {
+        currentRound = round;
+
         if (targetPrefab == null)
         {
             Debug.LogError("[RhymeRideGameManager] Target prefab not assigned!");
@@ -126,85 +194,119 @@ public class RhymeRideGameManager : MonoBehaviour
             promptText.text = $"Find the rhyme for: {round.promptWord}";
         }
 
-        // Determine which lanes to use (3 lanes total)
-        List<int> availableLanes = new List<int> { 0, 1, 2 };
-        ShuffleList(availableLanes);
+        // Shuffle lanes for variety
+        List<int> lanes = new List<int> { 0, 1, 2 };
+        ShuffleList(lanes);
 
-        // Spawn correct answer in one lane
-        int correctLane = round.lane >= 0 && round.lane < 3 ? round.lane : availableLanes[0];
-        SpawnTarget(round.correctWord, correctLane, true, round.promptWord);
+        // Spawn correct answer
+        int correctLane = lanes[0];
+        SpawnTarget(round.correctWord, correctLane, true);
 
         // Spawn distractors in other lanes
         int distractorIndex = 0;
-        for (int i = 0; i < laneXPositions.Length && distractorIndex < round.distractors.Length; i++)
+        for (int i = 1; i < lanes.Count && distractorIndex < round.distractors.Length; i++)
         {
-            if (i != correctLane)
-            {
-                SpawnTarget(round.distractors[distractorIndex], i, false, round.promptWord);
-                distractorIndex++;
-            }
+            SpawnTarget(round.distractors[distractorIndex], lanes[i], false);
+            distractorIndex++;
         }
     }
 
-    private void SpawnTarget(string word, int lane, bool isCorrect, string promptWord)
+    private void SpawnTarget(string word, int lane, bool isCorrect)
     {
-        if (lane < 0 || lane >= laneXPositions.Length) return;
+        if (lane < 0 || lane >= laneYPositions.Length) return;
 
-        Vector3 spawnPos = new Vector3(laneXPositions[lane], spawnY, 0);
+        // Spawn off-screen to the left, targets move right
+        Vector3 spawnPos = new Vector3(spawnX, laneYPositions[lane], 0);
         GameObject targetObj = Instantiate(targetPrefab, spawnPos, Quaternion.identity);
 
         RhymeRideTarget target = targetObj.GetComponent<RhymeRideTarget>();
         if (target != null)
         {
-            target.Initialize(word, isCorrect, promptWord, targetSpeed, destroyY);
+            target.Initialize(word, lane, isCorrect, settings.speed, destroyX);
             target.OnTargetHit += HandleTargetHit;
-            target.OnTargetMissed += HandleTargetMissed;
+            target.OnTargetExited += HandleTargetExited;
             activeTargets.Add(target);
         }
     }
 
     private void HandleTargetHit(RhymeRideTarget target, bool wasCorrect)
     {
-        totalShots++;
-
         if (wasCorrect)
         {
+            // Correct answer!
             score++;
-            totalHits++;
-            // Play positive feedback
-            Debug.Log($"[RhymeRideGameManager] Correct! Score: {score}");
+            currentStreak++;
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
+
+            Debug.Log($"[RhymeRideGameManager] Correct! Score: {score}, Streak: {currentStreak}");
+
+            // Clear all targets and end round
+            ClearAllTargets();
+            roundActive = false;
         }
         else
         {
-            misses++;
-            // Play negative feedback
-            Debug.Log($"[RhymeRideGameManager] Wrong! Misses: {misses}");
+            // Wrong answer
+            lives--;
+            currentStreak = 0;
 
-            if (misses >= maxMisses)
+            Debug.Log($"[RhymeRideGameManager] Wrong! Lives: {lives}");
+
+            // Remove only the hit target
+            RemoveTarget(target);
+
+            if (lives <= 0)
             {
-                EndGame(false);
+                gameActive = false;
+                EndGame();
             }
         }
 
-        RemoveTarget(target);
         UpdateUI();
     }
 
-    private void HandleTargetMissed(RhymeRideTarget target)
+    private void HandleTargetExited(RhymeRideTarget target)
     {
-        if (target.IsCorrect)
-        {
-            // Missed a correct answer
-            misses++;
-            Debug.Log($"[RhymeRideGameManager] Missed correct answer! Misses: {misses}");
+        // Target left screen without being hit
+        bool wasCorrect = target.IsCorrect;
+        RemoveTarget(target);
 
-            if (misses >= maxMisses)
+        // If correct answer escaped and round is still active, it's a miss
+        if (wasCorrect && roundActive)
+        {
+            lives--;
+            currentStreak = 0;
+            Debug.Log($"[RhymeRideGameManager] Missed correct answer! Lives: {lives}");
+
+            ClearAllTargets();
+            roundActive = false;
+
+            if (lives <= 0)
             {
-                EndGame(false);
+                gameActive = false;
+                EndGame();
             }
+
+            UpdateUI();
+        }
+    }
+
+    private void OnRoundTimeout()
+    {
+        // Time ran out - count as a miss
+        lives--;
+        currentStreak = 0;
+        Debug.Log($"[RhymeRideGameManager] Timeout! Lives: {lives}");
+
+        ClearAllTargets();
+        roundActive = false;
+
+        if (lives <= 0)
+        {
+            gameActive = false;
+            EndGame();
         }
 
-        RemoveTarget(target);
         UpdateUI();
     }
 
@@ -215,23 +317,26 @@ public class RhymeRideGameManager : MonoBehaviour
             activeTargets.Remove(target);
         }
         target.OnTargetHit -= HandleTargetHit;
-        target.OnTargetMissed -= HandleTargetMissed;
+        target.OnTargetExited -= HandleTargetExited;
         Destroy(target.gameObject);
     }
 
-    private void EndGame(bool completed)
+    private void ClearAllTargets()
     {
-        gameActive = false;
-
-        // Clear remaining targets
         foreach (var target in activeTargets.ToArray())
         {
+            target.OnTargetHit -= HandleTargetHit;
+            target.OnTargetExited -= HandleTargetExited;
             Destroy(target.gameObject);
         }
         activeTargets.Clear();
+    }
 
-        // Calculate accuracy
-        float accuracy = totalShots > 0 ? (float)totalHits / totalShots : 0f;
+    private void EndGame()
+    {
+        gameActive = false;
+        roundActive = false;
+        ClearAllTargets();
 
         // Show game over UI
         if (gameOverPanel != null)
@@ -239,16 +344,18 @@ public class RhymeRideGameManager : MonoBehaviour
             gameOverPanel.SetActive(true);
             if (gameOverText != null)
             {
+                bool completed = currentRoundIndex >= totalRounds;
                 gameOverText.text = completed
-                    ? $"Great job!\nScore: {score}\nAccuracy: {Mathf.RoundToInt(accuracy * 100)}%"
-                    : $"Game Over\nScore: {score}\nAccuracy: {Mathf.RoundToInt(accuracy * 100)}%";
+                    ? $"Great job!\n\nScore: {score}/{totalRounds}\nBest Streak: {maxStreak}"
+                    : $"Game Over\n\nScore: {score}/{totalRounds}\nBest Streak: {maxStreak}";
             }
         }
 
-        // Notify JavaScript
-        if (WebBridge.Instance != null)
+        // Notify JavaScript (only once)
+        if (!completionNotified && WebBridge.Instance != null)
         {
-            WebBridge.Instance.NotifyGameComplete(sessionId, score, accuracy);
+            completionNotified = true;
+            WebBridge.Instance.NotifyComplete(sessionId, score, totalRounds, maxStreak);
         }
     }
 
@@ -260,8 +367,22 @@ public class RhymeRideGameManager : MonoBehaviour
         }
         if (livesText != null)
         {
-            int lives = maxMisses - misses;
             livesText.text = $"Lives: {lives}";
+        }
+    }
+
+    private void UpdateTimerUI()
+    {
+        if (timerText != null)
+        {
+            if (roundActive && roundTimer > 0)
+            {
+                timerText.text = $"{Mathf.CeilToInt(roundTimer)}s";
+            }
+            else
+            {
+                timerText.text = "";
+            }
         }
     }
 
@@ -270,24 +391,24 @@ public class RhymeRideGameManager : MonoBehaviour
     /// </summary>
     public void OnLaneTap(int lane)
     {
-        if (!gameActive) return;
+        if (!gameActive || !roundActive) return;
 
-        // Find the lowest target in this lane
-        RhymeRideTarget lowestTarget = null;
-        float lowestY = float.MaxValue;
+        // Find the rightmost (closest to exit) target in this lane
+        RhymeRideTarget closestTarget = null;
+        float maxX = float.MinValue;
 
         foreach (var target in activeTargets)
         {
-            if (target.Lane == lane && target.transform.position.y < lowestY)
+            if (target.Lane == lane && target.transform.position.x > maxX)
             {
-                lowestY = target.transform.position.y;
-                lowestTarget = target;
+                maxX = target.transform.position.x;
+                closestTarget = target;
             }
         }
 
-        if (lowestTarget != null)
+        if (closestTarget != null)
         {
-            lowestTarget.Hit();
+            closestTarget.Hit();
         }
     }
 

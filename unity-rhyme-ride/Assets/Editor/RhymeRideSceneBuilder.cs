@@ -1,245 +1,335 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
-/// <summary>
-/// Editor script to auto-generate the Rhyme & Ride scene and prefabs.
-/// Menu: BrightBoost > Build Rhyme & Ride Scene
-/// </summary>
-public class RhymeRideSceneBuilder : EditorWindow
+namespace BrightBoost
 {
-    [MenuItem("BrightBoost/Build Rhyme & Ride Scene")]
-    public static void BuildScene()
+    /// <summary>
+    /// Editor script to auto-generate the Rhyme & Ride scene and prefabs.
+    /// Menu: Tools/BrightBoost/Rhyme & Ride/Generate Scene
+    /// </summary>
+    public class RhymeRideSceneBuilder : EditorWindow
     {
-        // Create folders if needed
-        if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
+        [MenuItem("Tools/BrightBoost/Rhyme & Ride/Generate Scene")]
+        public static void GenerateScene()
         {
-            AssetDatabase.CreateFolder("Assets", "Prefabs");
-        }
-        if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
-        {
-            AssetDatabase.CreateFolder("Assets", "Scenes");
+            // Create folders if needed
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Prefabs");
+            }
+            if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Scenes");
+            }
+
+            // Create a new scene
+            var newScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            // Create Main Camera
+            var cameraObj = new GameObject("Main Camera");
+            var camera = cameraObj.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 5;
+            camera.backgroundColor = new Color(0.1f, 0.15f, 0.25f);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            cameraObj.AddComponent<AudioListener>();
+            cameraObj.transform.position = new Vector3(0, 0, -10);
+            cameraObj.tag = "MainCamera";
+
+            // Create WebBridge
+            var webBridgeObj = new GameObject("WebBridge");
+            webBridgeObj.AddComponent<WebBridge>();
+
+            // Create GameManager
+            var gameManagerObj = new GameObject("GameManager");
+            var gameManager = gameManagerObj.AddComponent<RhymeRideGameManager>();
+
+            // Create Canvas for UI
+            var canvasObj = new GameObject("Canvas");
+            var canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            var scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(960, 600);
+            canvasObj.AddComponent<GraphicRaycaster>();
+
+            // HUD Panel (top)
+            var hudPanel = CreateUIPanel(canvasObj.transform, "HUDPanel",
+                new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1),
+                new Vector2(0, -10), new Vector2(-20, 80));
+
+            // Prompt Text (center top)
+            var promptObj = new GameObject("PromptText");
+            promptObj.transform.SetParent(hudPanel.transform, false);
+            var promptText = promptObj.AddComponent<Text>();
+            promptText.text = "Find the rhyme for: ???";
+            promptText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            promptText.fontSize = 28;
+            promptText.color = Color.yellow;
+            promptText.alignment = TextAnchor.MiddleCenter;
+            var promptRect = promptObj.GetComponent<RectTransform>();
+            promptRect.anchorMin = new Vector2(0.2f, 0);
+            promptRect.anchorMax = new Vector2(0.8f, 1);
+            promptRect.offsetMin = Vector2.zero;
+            promptRect.offsetMax = Vector2.zero;
+
+            // Score Text (left)
+            var scoreObj = new GameObject("ScoreText");
+            scoreObj.transform.SetParent(hudPanel.transform, false);
+            var scoreText = scoreObj.AddComponent<Text>();
+            scoreText.text = "Score: 0";
+            scoreText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            scoreText.fontSize = 24;
+            scoreText.color = Color.white;
+            scoreText.alignment = TextAnchor.MiddleLeft;
+            var scoreRect = scoreObj.GetComponent<RectTransform>();
+            scoreRect.anchorMin = new Vector2(0, 0);
+            scoreRect.anchorMax = new Vector2(0.2f, 1);
+            scoreRect.offsetMin = new Vector2(10, 0);
+            scoreRect.offsetMax = Vector2.zero;
+
+            // Lives Text (right)
+            var livesObj = new GameObject("LivesText");
+            livesObj.transform.SetParent(hudPanel.transform, false);
+            var livesText = livesObj.AddComponent<Text>();
+            livesText.text = "Lives: 3";
+            livesText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            livesText.fontSize = 24;
+            livesText.color = new Color(1f, 0.4f, 0.4f);
+            livesText.alignment = TextAnchor.MiddleRight;
+            var livesRect = livesObj.GetComponent<RectTransform>();
+            livesRect.anchorMin = new Vector2(0.8f, 0);
+            livesRect.anchorMax = new Vector2(1, 1);
+            livesRect.offsetMin = Vector2.zero;
+            livesRect.offsetMax = new Vector2(-10, 0);
+
+            // Timer Text (below prompt)
+            var timerObj = new GameObject("TimerText");
+            timerObj.transform.SetParent(canvasObj.transform, false);
+            var timerText = timerObj.AddComponent<Text>();
+            timerText.text = "";
+            timerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            timerText.fontSize = 20;
+            timerText.color = Color.cyan;
+            timerText.alignment = TextAnchor.UpperCenter;
+            var timerRect = timerObj.GetComponent<RectTransform>();
+            timerRect.anchorMin = new Vector2(0.5f, 1);
+            timerRect.anchorMax = new Vector2(0.5f, 1);
+            timerRect.pivot = new Vector2(0.5f, 1);
+            timerRect.anchoredPosition = new Vector2(0, -100);
+            timerRect.sizeDelta = new Vector2(200, 40);
+
+            // Game Over Panel
+            var gameOverPanel = new GameObject("GameOverPanel");
+            gameOverPanel.transform.SetParent(canvasObj.transform, false);
+            var panelImage = gameOverPanel.AddComponent<Image>();
+            panelImage.color = new Color(0, 0, 0, 0.85f);
+            var panelRect = gameOverPanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+            gameOverPanel.SetActive(false);
+
+            var gameOverTextObj = new GameObject("GameOverText");
+            gameOverTextObj.transform.SetParent(gameOverPanel.transform, false);
+            var gameOverText = gameOverTextObj.AddComponent<Text>();
+            gameOverText.text = "Game Over";
+            gameOverText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            gameOverText.fontSize = 42;
+            gameOverText.color = Color.white;
+            gameOverText.alignment = TextAnchor.MiddleCenter;
+            var gameOverRect = gameOverTextObj.GetComponent<RectTransform>();
+            gameOverRect.anchorMin = Vector2.zero;
+            gameOverRect.anchorMax = Vector2.one;
+            gameOverRect.offsetMin = Vector2.zero;
+            gameOverRect.offsetMax = Vector2.zero;
+
+            // Create Target Prefab
+            var targetPrefab = CreateTargetPrefab();
+
+            // Create lane backgrounds (visual guides)
+            CreateLaneBackgrounds();
+
+            // Wire up GameManager references via SerializedObject
+            var so = new SerializedObject(gameManager);
+            so.FindProperty("scoreText").objectReferenceValue = scoreText;
+            so.FindProperty("promptText").objectReferenceValue = promptText;
+            so.FindProperty("livesText").objectReferenceValue = livesText;
+            so.FindProperty("timerText").objectReferenceValue = timerText;
+            so.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
+            so.FindProperty("gameOverText").objectReferenceValue = gameOverText;
+            so.FindProperty("targetPrefab").objectReferenceValue = targetPrefab;
+            so.ApplyModifiedProperties();
+
+            // Save scene
+            var scenePath = "Assets/Scenes/RhymeRideMain.unity";
+            EditorSceneManager.SaveScene(newScene, scenePath);
+
+            // Add scene to Build Settings
+            AddSceneToBuildSettings(scenePath);
+
+            Debug.Log("[RhymeRideSceneBuilder] Scene built successfully at " + scenePath);
+            EditorUtility.DisplayDialog("Scene Generated",
+                "Rhyme & Ride scene created at:\n" + scenePath +
+                "\n\nScene has been added to Build Settings.", "OK");
         }
 
-        // Clear existing scene objects
-        foreach (var go in Object.FindObjectsOfType<GameObject>())
+        private static GameObject CreateUIPanel(Transform parent, string name,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot,
+            Vector2 offsetMin, Vector2 offsetMax)
         {
-            if (go.transform.parent == null)
+            var panel = new GameObject(name);
+            panel.transform.SetParent(parent, false);
+            var rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+            return panel;
+        }
+
+        private static GameObject CreateTargetPrefab()
+        {
+            // Create target prefab
+            var targetObj = new GameObject("Target");
+
+            // Background sprite
+            var bgObj = new GameObject("Background");
+            bgObj.transform.SetParent(targetObj.transform, false);
+            var bgSprite = bgObj.AddComponent<SpriteRenderer>();
+            bgSprite.color = new Color(0.3f, 0.5f, 0.8f);
+            bgSprite.sortingOrder = 0;
+
+            // Create a simple white square sprite
+            var texture = new Texture2D(64, 64);
+            var colors = new Color[64 * 64];
+            for (int i = 0; i < colors.Length; i++) colors[i] = Color.white;
+            texture.SetPixels(colors);
+            texture.Apply();
+            bgSprite.sprite = Sprite.Create(texture, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f), 64);
+            bgObj.transform.localScale = new Vector3(2.5f, 1.2f, 1f);
+
+            // Add collider for clicking
+            var collider = targetObj.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(2.5f, 1.2f);
+
+            // Word text (using TextMesh for world space)
+            var textObj = new GameObject("WordText");
+            textObj.transform.SetParent(targetObj.transform, false);
+            var textMesh = textObj.AddComponent<TextMesh>();
+            textMesh.text = "WORD";
+            textMesh.fontSize = 48;
+            textMesh.characterSize = 0.08f;
+            textMesh.anchor = TextAnchor.MiddleCenter;
+            textMesh.alignment = TextAlignment.Center;
+            textMesh.color = Color.white;
+            textObj.transform.localPosition = new Vector3(0, 0, -0.1f);
+
+            // Add Target script
+            var target = targetObj.AddComponent<RhymeRideTarget>();
+
+            // Wire up references
+            var so = new SerializedObject(target);
+            so.FindProperty("backgroundSprite").objectReferenceValue = bgSprite;
+            so.FindProperty("wordText").objectReferenceValue = textMesh;
+            so.ApplyModifiedProperties();
+
+            // Save as prefab
+            var prefabPath = "Assets/Prefabs/Target.prefab";
+            var prefab = PrefabUtility.SaveAsPrefabAsset(targetObj, prefabPath);
+
+            // Destroy the scene instance
+            Object.DestroyImmediate(targetObj);
+
+            Debug.Log("[RhymeRideSceneBuilder] Target prefab created at " + prefabPath);
+            return prefab;
+        }
+
+        private static void CreateLaneBackgrounds()
+        {
+            // Create lane visual guides (3 horizontal lanes)
+            float[] laneY = { 2f, 0f, -2f };
+            Color[] laneColors = {
+                new Color(0.15f, 0.2f, 0.3f, 0.5f),
+                new Color(0.12f, 0.18f, 0.28f, 0.5f),
+                new Color(0.15f, 0.2f, 0.3f, 0.5f)
+            };
+
+            var lanesParent = new GameObject("Lanes");
+
+            for (int i = 0; i < 3; i++)
             {
-                Object.DestroyImmediate(go);
+                var laneObj = new GameObject($"Lane_{i}");
+                laneObj.transform.SetParent(lanesParent.transform, false);
+                laneObj.transform.position = new Vector3(0, laneY[i], 1);
+
+                var sprite = laneObj.AddComponent<SpriteRenderer>();
+                sprite.color = laneColors[i];
+                sprite.sortingOrder = -10;
+
+                // Create lane background sprite
+                var texture = new Texture2D(1, 1);
+                texture.SetPixel(0, 0, Color.white);
+                texture.Apply();
+                sprite.sprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1);
+                laneObj.transform.localScale = new Vector3(20f, 1.5f, 1f);
+
+                // Add click handler for lane
+                var collider = laneObj.AddComponent<BoxCollider2D>();
+                collider.size = new Vector2(1f, 1f);
+                collider.isTrigger = true;
+
+                var handler = laneObj.AddComponent<LaneTouchHandler>();
+                var so = new SerializedObject(handler);
+                so.FindProperty("laneIndex").intValue = i;
+                so.ApplyModifiedProperties();
             }
         }
 
-        // Create Main Camera
-        var cameraObj = new GameObject("Main Camera");
-        var camera = cameraObj.AddComponent<Camera>();
-        camera.orthographic = true;
-        camera.orthographicSize = 7;
-        camera.backgroundColor = new Color(0.1f, 0.1f, 0.2f);
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        cameraObj.AddComponent<AudioListener>();
-        cameraObj.transform.position = new Vector3(0, 0, -10);
-        cameraObj.tag = "MainCamera";
-
-        // Create WebBridge
-        var webBridgeObj = new GameObject("WebBridge");
-        webBridgeObj.AddComponent<WebBridge>();
-
-        // Create GameManager
-        var gameManagerObj = new GameObject("GameManager");
-        var gameManager = gameManagerObj.AddComponent<RhymeRideGameManager>();
-
-        // Create Canvas for UI
-        var canvasObj = new GameObject("Canvas");
-        var canvas = canvasObj.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvasObj.AddComponent<CanvasScaler>();
-        canvasObj.AddComponent<GraphicRaycaster>();
-
-        // Score Text
-        var scoreObj = new GameObject("ScoreText");
-        scoreObj.transform.SetParent(canvasObj.transform, false);
-        var scoreText = scoreObj.AddComponent<Text>();
-        scoreText.text = "Score: 0";
-        scoreText.fontSize = 36;
-        scoreText.color = Color.white;
-        scoreText.alignment = TextAnchor.UpperLeft;
-        var scoreRect = scoreObj.GetComponent<RectTransform>();
-        scoreRect.anchorMin = new Vector2(0, 1);
-        scoreRect.anchorMax = new Vector2(0, 1);
-        scoreRect.pivot = new Vector2(0, 1);
-        scoreRect.anchoredPosition = new Vector2(20, -20);
-        scoreRect.sizeDelta = new Vector2(200, 50);
-
-        // Prompt Text
-        var promptObj = new GameObject("PromptText");
-        promptObj.transform.SetParent(canvasObj.transform, false);
-        var promptText = promptObj.AddComponent<Text>();
-        promptText.text = "Find the rhyme for: ???";
-        promptText.fontSize = 32;
-        promptText.color = Color.yellow;
-        promptText.alignment = TextAnchor.UpperCenter;
-        var promptRect = promptObj.GetComponent<RectTransform>();
-        promptRect.anchorMin = new Vector2(0.5f, 1);
-        promptRect.anchorMax = new Vector2(0.5f, 1);
-        promptRect.pivot = new Vector2(0.5f, 1);
-        promptRect.anchoredPosition = new Vector2(0, -20);
-        promptRect.sizeDelta = new Vector2(400, 50);
-
-        // Lives Text
-        var livesObj = new GameObject("LivesText");
-        livesObj.transform.SetParent(canvasObj.transform, false);
-        var livesText = livesObj.AddComponent<Text>();
-        livesText.text = "Lives: 3";
-        livesText.fontSize = 36;
-        livesText.color = Color.red;
-        livesText.alignment = TextAnchor.UpperRight;
-        var livesRect = livesObj.GetComponent<RectTransform>();
-        livesRect.anchorMin = new Vector2(1, 1);
-        livesRect.anchorMax = new Vector2(1, 1);
-        livesRect.pivot = new Vector2(1, 1);
-        livesRect.anchoredPosition = new Vector2(-20, -20);
-        livesRect.sizeDelta = new Vector2(200, 50);
-
-        // Game Over Panel
-        var gameOverPanel = new GameObject("GameOverPanel");
-        gameOverPanel.transform.SetParent(canvasObj.transform, false);
-        var panelImage = gameOverPanel.AddComponent<Image>();
-        panelImage.color = new Color(0, 0, 0, 0.8f);
-        var panelRect = gameOverPanel.GetComponent<RectTransform>();
-        panelRect.anchorMin = Vector2.zero;
-        panelRect.anchorMax = Vector2.one;
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-        gameOverPanel.SetActive(false);
-
-        var gameOverTextObj = new GameObject("GameOverText");
-        gameOverTextObj.transform.SetParent(gameOverPanel.transform, false);
-        var gameOverText = gameOverTextObj.AddComponent<Text>();
-        gameOverText.text = "Game Over";
-        gameOverText.fontSize = 48;
-        gameOverText.color = Color.white;
-        gameOverText.alignment = TextAnchor.MiddleCenter;
-        var gameOverRect = gameOverTextObj.GetComponent<RectTransform>();
-        gameOverRect.anchorMin = Vector2.zero;
-        gameOverRect.anchorMax = Vector2.one;
-        gameOverRect.offsetMin = Vector2.zero;
-        gameOverRect.offsetMax = Vector2.zero;
-
-        // Create Target Prefab
-        var targetPrefab = CreateTargetPrefab();
-
-        // Wire up GameManager references via SerializedObject
-        var so = new SerializedObject(gameManager);
-        so.FindProperty("scoreText").objectReferenceValue = scoreText;
-        so.FindProperty("promptText").objectReferenceValue = promptText;
-        so.FindProperty("livesText").objectReferenceValue = livesText;
-        so.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
-        so.FindProperty("gameOverText").objectReferenceValue = gameOverText;
-        so.FindProperty("targetPrefab").objectReferenceValue = targetPrefab;
-        so.ApplyModifiedProperties();
-
-        // Create Lane Touch Zones
-        CreateLaneTouchZones();
-
-        // Save scene
-        var scenePath = "Assets/Scenes/RhymeRideScene.unity";
-        UnityEditor.SceneManagement.EditorSceneManager.SaveScene(
-            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene(),
-            scenePath
-        );
-
-        Debug.Log("[RhymeRideSceneBuilder] Scene built successfully at " + scenePath);
-        EditorUtility.DisplayDialog("Scene Built", "Rhyme & Ride scene created at:\n" + scenePath, "OK");
-    }
-
-    private static GameObject CreateTargetPrefab()
-    {
-        // Create target prefab
-        var targetObj = new GameObject("Target");
-
-        // Background sprite
-        var bgObj = new GameObject("Background");
-        bgObj.transform.SetParent(targetObj.transform, false);
-        var bgSprite = bgObj.AddComponent<SpriteRenderer>();
-        bgSprite.color = new Color(0.3f, 0.5f, 0.8f);
-        // Create a simple white square sprite
-        var texture = new Texture2D(64, 64);
-        var colors = new Color[64 * 64];
-        for (int i = 0; i < colors.Length; i++) colors[i] = Color.white;
-        texture.SetPixels(colors);
-        texture.Apply();
-        bgSprite.sprite = Sprite.Create(texture, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f), 64);
-        bgObj.transform.localScale = new Vector3(2f, 1f, 1f);
-
-        // Add collider for clicking
-        var collider = targetObj.AddComponent<BoxCollider2D>();
-        collider.size = new Vector2(2f, 1f);
-
-        // Word text (using TextMesh for world space)
-        var textObj = new GameObject("WordText");
-        textObj.transform.SetParent(targetObj.transform, false);
-        var textMesh = textObj.AddComponent<TextMesh>();
-        textMesh.text = "WORD";
-        textMesh.fontSize = 48;
-        textMesh.characterSize = 0.1f;
-        textMesh.anchor = TextAnchor.MiddleCenter;
-        textMesh.alignment = TextAlignment.Center;
-        textMesh.color = Color.white;
-        textObj.transform.localPosition = new Vector3(0, 0, -0.1f);
-
-        // Add Target script
-        var target = targetObj.AddComponent<RhymeRideTarget>();
-
-        // Wire up references
-        var so = new SerializedObject(target);
-        so.FindProperty("backgroundSprite").objectReferenceValue = bgSprite;
-        so.ApplyModifiedProperties();
-
-        // Save as prefab
-        var prefabPath = "Assets/Prefabs/Target.prefab";
-        var prefab = PrefabUtility.SaveAsPrefabAsset(targetObj, prefabPath);
-
-        // Destroy the scene instance
-        Object.DestroyImmediate(targetObj);
-
-        Debug.Log("[RhymeRideSceneBuilder] Target prefab created at " + prefabPath);
-        return prefab;
-    }
-
-    private static void CreateLaneTouchZones()
-    {
-        float[] laneX = { -3f, 0f, 3f };
-
-        for (int i = 0; i < 3; i++)
+        private static void AddSceneToBuildSettings(string scenePath)
         {
-            var zoneObj = new GameObject($"LaneTouchZone_{i}");
-            zoneObj.transform.position = new Vector3(laneX[i], 0, 0);
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
 
-            var collider = zoneObj.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(2.8f, 14f);
-            collider.isTrigger = true;
+            // Check if scene already exists
+            bool exists = false;
+            foreach (var scene in scenes)
+            {
+                if (scene.path == scenePath)
+                {
+                    exists = true;
+                    scene.enabled = true;
+                    break;
+                }
+            }
 
-            var handler = zoneObj.AddComponent<LaneTouchHandler>();
-            var so = new SerializedObject(handler);
-            so.FindProperty("laneIndex").intValue = i;
-            so.ApplyModifiedProperties();
+            if (!exists)
+            {
+                scenes.Add(new EditorBuildSettingsScene(scenePath, true));
+            }
+
+            EditorBuildSettings.scenes = scenes.ToArray();
+            Debug.Log("[RhymeRideSceneBuilder] Added scene to Build Settings: " + scenePath);
         }
     }
-}
 
-/// <summary>
-/// Simple component to handle lane touches.
-/// </summary>
-public class LaneTouchHandler : MonoBehaviour
-{
-    [SerializeField] private int laneIndex;
-
-    private void OnMouseDown()
+    /// <summary>
+    /// Simple component to handle lane touches/clicks.
+    /// </summary>
+    public class LaneTouchHandler : MonoBehaviour
     {
-        if (RhymeRideGameManager.Instance != null)
+        [SerializeField] private int laneIndex;
+
+        private void OnMouseDown()
         {
-            RhymeRideGameManager.Instance.OnLaneTap(laneIndex);
+            if (RhymeRideGameManager.Instance != null)
+            {
+                RhymeRideGameManager.Instance.OnLaneTap(laneIndex);
+            }
         }
     }
 }
