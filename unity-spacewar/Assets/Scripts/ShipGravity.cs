@@ -34,4 +34,9 @@ public class ShipGravity : MonoBehaviour
         gravityMultiplier = multiplier;
         Debug.Log($"[ShipGravity] Multiplier set to: {multiplier}");
     }
+
+    /// <summary>
+    /// Get current gravity multiplier (for perk calculations)
+    /// </summary>
+    public float Multiplier => gravityMultiplier;
 }

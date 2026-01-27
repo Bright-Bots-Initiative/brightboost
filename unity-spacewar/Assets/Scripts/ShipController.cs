@@ -624,4 +624,64 @@ public class ShipController : MonoBehaviour
         string mode = arcadeMode ? "Arcade" : "Classic1962";
         Debug.Log($"[ShipController P{playerNumber}] Tuning applied: thrust={newThrustForce}, maxSpeed={newMaxSpeed}, drag={newDrag}, mode={mode}");
     }
+
+    /// <summary>
+    /// Set rotation speed at runtime (called by GameManager for perks)
+    /// </summary>
+    public void SetRotationSpeed(float newRotationSpeed)
+    {
+        rotationSpeed = newRotationSpeed;
+    }
+
+    /// <summary>
+    /// Set weapon tuning at runtime (called by GameManager for perks)
+    /// </summary>
+    /// <param name="newFireRate">Fire rate cooldown in seconds (minimum 0.12)</param>
+    /// <param name="newProjectileSpeed">Projectile speed</param>
+    public void SetWeaponTuning(float newFireRate, float newProjectileSpeed)
+    {
+        fireRate = Mathf.Max(0.12f, newFireRate);
+        projectileSpeed = newProjectileSpeed;
+    }
+
+    /// <summary>
+    /// Set hyperspace tuning at runtime (called by GameManager for perks)
+    /// </summary>
+    /// <param name="newCooldown">Hyperspace cooldown in seconds</param>
+    /// <param name="newRiskChance">Risk chance (clamped 0.02-0.30)</param>
+    public void SetHyperspaceTuning(float newCooldown, float newRiskChance)
+    {
+        hyperspaceCooldown = newCooldown;
+        hyperspaceRiskChance = Mathf.Clamp(newRiskChance, 0.02f, 0.30f);
+    }
+
+    /// <summary>
+    /// Get current thrust force (for perk calculations)
+    /// </summary>
+    public float ThrustForce => thrustForce;
+
+    /// <summary>
+    /// Get current rotation speed (for perk calculations)
+    /// </summary>
+    public float RotationSpeed => rotationSpeed;
+
+    /// <summary>
+    /// Get current fire rate (for perk calculations)
+    /// </summary>
+    public float FireRate => fireRate;
+
+    /// <summary>
+    /// Get current projectile speed (for perk calculations)
+    /// </summary>
+    public float ProjectileSpeed => projectileSpeed;
+
+    /// <summary>
+    /// Get current hyperspace cooldown (for perk calculations)
+    /// </summary>
+    public float HyperspaceCooldown => hyperspaceCooldown;
+
+    /// <summary>
+    /// Get current hyperspace risk chance (for perk calculations)
+    /// </summary>
+    public float HyperspaceRiskChance => hyperspaceRiskChance;
 }

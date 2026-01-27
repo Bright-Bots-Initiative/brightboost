@@ -2,12 +2,14 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { api } from "../services/api";
 import UnityWebGL from "../components/unity/UnityWebGL";
+import { STEM1_SET1_IDS } from "../constants/stem1Set1Games";
 
 interface AvatarData {
   archetype?: string;
   level?: number;
   xp?: number;
   avatarUrl?: string;
+  stem1Set1Completed?: string[];
 }
 
 type Difficulty = "easy" | "normal" | "hard";
@@ -37,15 +39,27 @@ export default function SpacewarArena() {
   const hyperspaceTapRef = useRef(false);
 
   useEffect(() => {
-    const fetchAvatar = async () => {
+    const fetchAvatarAndProgress = async () => {
       try {
-        const avatar = await api.getAvatar();
+        // Fetch avatar and progress in parallel
+        const [avatar, progressList] = await Promise.all([
+          api.getAvatar(),
+          api.getProgress().catch(() => []), // Gracefully handle missing progress
+        ]);
+
+        // Compute completed STEM-1 Set 1 games
+        const completedSet1 = progressList
+          .filter((p: { status: string }) => p.status === "COMPLETED")
+          .map((p: { activityId: string }) => p.activityId)
+          .filter((id: string) => STEM1_SET1_IDS.includes(id as typeof STEM1_SET1_IDS[number]));
+
         if (avatar) {
           setAvatarConfig({
             archetype: avatar.archetype,
             level: avatar.level ?? 1,
             xp: avatar.xp ?? 0,
             avatarUrl: avatar.avatarUrl,
+            stem1Set1Completed: completedSet1,
           });
         } else {
           // Fallback config if no avatar
@@ -53,6 +67,7 @@ export default function SpacewarArena() {
             archetype: "explorer",
             level: 1,
             xp: 0,
+            stem1Set1Completed: completedSet1,
           });
         }
       } catch (err) {
@@ -62,13 +77,14 @@ export default function SpacewarArena() {
           archetype: "explorer",
           level: 1,
           xp: 0,
+          stem1Set1Completed: [],
         });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAvatar();
+    fetchAvatarAndProgress();
   }, []);
 
   const handleInstanceReady = useCallback((instance: any) => {
