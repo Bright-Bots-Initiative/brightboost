@@ -89,8 +89,14 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
   const avatarBefore = await prisma.avatar.findUnique({ where: { studentId } });
 
   // 1. Upsert progress
-  const existing = await prisma.progress.findFirst({
-    where: { studentId, activityId },
+  // ⚡ Bolt Optimization: Use findUnique to leverage the compound index for O(1) lookup
+  const existing = await prisma.progress.findUnique({
+    where: {
+      studentId_activityId: {
+        studentId,
+        activityId,
+      },
+    },
   });
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
