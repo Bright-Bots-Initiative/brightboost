@@ -37,3 +37,8 @@
 
 **Learning:** `AuthContext` was fetching all user progress records via `/get-progress` but only using the user profile, causing unnecessary DB load and large payloads on every session check.
 **Action:** Ensure "me" or "profile" endpoints are scoped strictly to the data needed for authentication/context, or use optional parameters to include heavy related data only when necessary.
+
+## 2026-05-24 - Optimized Progress Lookup
+
+**Learning:** `findFirst` on unique fields is functionally equivalent to `findUnique`, but `findUnique` explicitly communicates the intent to the database and ORM, ensuring optimal index usage (O(1) lookup).
+**Action:** Replaced `prisma.progress.findFirst` with `prisma.progress.findUnique` in `complete-activity` handler, utilizing the compound unique index `@@unique([studentId, activityId])`.
