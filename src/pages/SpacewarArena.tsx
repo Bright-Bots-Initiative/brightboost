@@ -29,12 +29,20 @@ export default function SpacewarArena() {
   const [isTouch] = useState(isTouchDevice);
   const unityInstanceRef = useRef<any>(null);
 
-  // Touch control state
-  const [rotateLeft, setRotateLeft] = useState(false);
-  const [rotateRight, setRotateRight] = useState(false);
+  // Gesture control state (mobile)
+  const [rotate, setRotate] = useState(0); // -1..1 (negative = right, positive = left per WebBridge doc)
   const [thrust, setThrust] = useState(false);
-  const [fire, setFire] = useState(false);
+  const fireTapRef = useRef(false);
   const hyperspaceTapRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
+  const startPosRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const lastTapTimeRef = useRef<number>(0);
+
+  // Gesture sensitivity constants
+  const ROTATE_SENS_PX = 80; // smaller = more sensitive
+  const THRUST_SENS_PX = 35; // drag up beyond this = thrust
+  const TAP_MAX_MOVE_PX = 12;
+  const DOUBLE_TAP_MS = 260;
 
   useEffect(() => {
     const fetchAvatar = async () => {
@@ -95,14 +103,12 @@ export default function SpacewarArena() {
       const instance = unityInstanceRef.current;
       if (!instance) return;
 
-      // Calculate rotate: left = +1, right = -1
-      const rotate = (rotateLeft ? 1 : 0) + (rotateRight ? -1 : 0);
+      // Consume tap pulses (one-shot)
+      const fire = fireTapRef.current;
+      if (fire) fireTapRef.current = false;
 
-      // Get hyperspace tap (consume it after sending)
       const hyperspace = hyperspaceTapRef.current;
-      if (hyperspace) {
-        hyperspaceTapRef.current = false;
-      }
+      if (hyperspace) hyperspaceTapRef.current = false;
 
       try {
         instance.SendMessage(
@@ -116,11 +122,56 @@ export default function SpacewarArena() {
     }, 33); // ~30 fps
 
     return () => clearInterval(interval);
-  }, [isTouch, rotateLeft, rotateRight, thrust, fire]);
+  }, [isTouch, rotate, thrust]);
 
-  const handleHyperspaceTap = useCallback(() => {
-    hyperspaceTapRef.current = true;
+  // Gesture handlers for mobile
+  const handleGesturePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    activePointerIdRef.current = e.pointerId;
+    startPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
   }, []);
+
+  const handleGesturePointerMove = useCallback((e: React.PointerEvent) => {
+    if (e.pointerId !== activePointerIdRef.current || !startPosRef.current) return;
+
+    const dx = e.clientX - startPosRef.current.x;
+    const dy = e.clientY - startPosRef.current.y;
+
+    // Rotate: left swipe => positive, right swipe => negative (per WebBridge doc)
+    setRotate(Math.max(-1, Math.min(1, -dx / ROTATE_SENS_PX)));
+    // Thrust: drag up (negative dy) beyond threshold
+    setThrust(dy < -THRUST_SENS_PX);
+  }, [ROTATE_SENS_PX, THRUST_SENS_PX]);
+
+  const handleGesturePointerEnd = useCallback((e: React.PointerEvent) => {
+    if (e.pointerId !== activePointerIdRef.current || !startPosRef.current) return;
+
+    const dx = e.clientX - startPosRef.current.x;
+    const dy = e.clientY - startPosRef.current.y;
+    const movedDist = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if it was a tap (minimal movement)
+    if (movedDist < TAP_MAX_MOVE_PX) {
+      const now = Date.now();
+      if (now - lastTapTimeRef.current < DOUBLE_TAP_MS) {
+        // Double-tap = hyperspace
+        hyperspaceTapRef.current = true;
+        lastTapTimeRef.current = 0;
+      } else {
+        // Single tap = fire
+        fireTapRef.current = true;
+        lastTapTimeRef.current = now;
+      }
+    }
+
+    // Reset state
+    setRotate(0);
+    setThrust(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    activePointerIdRef.current = null;
+    startPosRef.current = null;
+  }, [TAP_MAX_MOVE_PX, DOUBLE_TAP_MS]);
 
   const handleRestart = useCallback(() => {
     if (unityInstanceRef.current) {
@@ -196,116 +247,29 @@ export default function SpacewarArena() {
           onRestartRequest={handleRestart}
         />
 
-        {/* Touch controls overlay (mobile only) */}
+        {/* Gesture control layer (mobile only) */}
         {isTouch && (
-          <div
-            className="absolute inset-0 pointer-events-none z-20"
-            style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-          >
-            {/* Left cluster: Rotate + Thrust */}
-            <div className="absolute left-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
-              {/* Rotate buttons row */}
-              <div className="flex gap-2">
-                <button
-                  className={`w-16 h-16 rounded-full text-2xl font-bold transition-colors select-none ${
-                    rotateLeft
-                      ? "bg-blue-500 text-white"
-                      : "bg-slate-700/80 text-slate-300"
-                  }`}
-                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    setRotateLeft(true);
-                  }}
-                  onPointerUp={(e) => {
-                    e.currentTarget.releasePointerCapture(e.pointerId);
-                    setRotateLeft(false);
-                  }}
-                  onPointerCancel={() => setRotateLeft(false)}
-                >
-                  ◀
-                </button>
-                <button
-                  className={`w-16 h-16 rounded-full text-2xl font-bold transition-colors select-none ${
-                    rotateRight
-                      ? "bg-blue-500 text-white"
-                      : "bg-slate-700/80 text-slate-300"
-                  }`}
-                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    setRotateRight(true);
-                  }}
-                  onPointerUp={(e) => {
-                    e.currentTarget.releasePointerCapture(e.pointerId);
-                    setRotateRight(false);
-                  }}
-                  onPointerCancel={() => setRotateRight(false)}
-                >
-                  ▶
-                </button>
-              </div>
-              {/* Thrust button */}
-              <button
-                className={`w-full h-14 rounded-lg text-sm font-bold transition-colors select-none ${
-                  thrust
-                    ? "bg-orange-500 text-white"
-                    : "bg-slate-700/80 text-slate-300"
-                }`}
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  setThrust(true);
-                }}
-                onPointerUp={(e) => {
-                  e.currentTarget.releasePointerCapture(e.pointerId);
-                  setThrust(false);
-                }}
-                onPointerCancel={() => setThrust(false)}
-              >
-                THRUST
-              </button>
+          <>
+            {/* Full-screen gesture capture */}
+            <div
+              className="absolute inset-0 z-30"
+              style={{
+                touchAction: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+              }}
+              onPointerDown={handleGesturePointerDown}
+              onPointerMove={handleGesturePointerMove}
+              onPointerUp={handleGesturePointerEnd}
+              onPointerCancel={handleGesturePointerEnd}
+            />
+            {/* Hint text at bottom */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-20">
+              <p className="text-white/70 text-xs bg-black/40 px-3 py-1 rounded-full select-none">
+                Drag to steer + thrust • Tap to fire • Double-tap for hyperspace
+              </p>
             </div>
-
-            {/* Right cluster: Fire + Hyperspace */}
-            <div className="absolute right-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
-              {/* Fire button */}
-              <button
-                className={`w-20 h-20 rounded-full text-sm font-bold transition-colors select-none ${
-                  fire
-                    ? "bg-red-500 text-white"
-                    : "bg-slate-700/80 text-slate-300"
-                }`}
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  setFire(true);
-                }}
-                onPointerUp={(e) => {
-                  e.currentTarget.releasePointerCapture(e.pointerId);
-                  setFire(false);
-                }}
-                onPointerCancel={() => setFire(false)}
-              >
-                FIRE
-              </button>
-              {/* Hyperspace button (tap only) */}
-              <button
-                className="w-20 h-12 rounded-lg text-xs font-bold bg-purple-700/80 text-purple-200 active:bg-purple-500 active:text-white transition-colors select-none"
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  handleHyperspaceTap();
-                }}
-              >
-                HYPER
-              </button>
-            </div>
-          </div>
+          </>
         )}
       </div>
 
@@ -350,17 +314,17 @@ export default function SpacewarArena() {
                 {isTouch ? (
                   <div className="bg-slate-700 rounded p-3 text-xs">
                     <div className="grid grid-cols-2 gap-2">
-                      <span className="text-slate-400">◀ / ▶</span>
-                      <span>Hold to rotate</span>
-                      <span className="text-slate-400">THRUST</span>
-                      <span>Hold to accelerate</span>
-                      <span className="text-slate-400">FIRE</span>
-                      <span>Hold to shoot</span>
-                      <span className="text-slate-400">HYPER</span>
-                      <span>Tap for hyperspace</span>
+                      <span className="text-slate-400">Drag ← / →</span>
+                      <span>Rotate ship</span>
+                      <span className="text-slate-400">Drag ↑</span>
+                      <span>Thrust forward</span>
+                      <span className="text-slate-400">Tap</span>
+                      <span>Fire missile</span>
+                      <span className="text-slate-400">Double-tap</span>
+                      <span>Hyperspace (risky!)</span>
                     </div>
                     <p className="text-slate-400 mt-2 text-[10px]">
-                      Touch controls appear at bottom of screen
+                      One-thumb gesture controls - drag anywhere on screen
                     </p>
                   </div>
                 ) : (
