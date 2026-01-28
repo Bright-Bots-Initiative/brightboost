@@ -75,3 +75,9 @@
 **Vulnerability:** The application was using `express.json()` without a specific size limit (defaulting to 100kb). While reasonable, relying on defaults can be risky if they change or if custom parsers are added.
 **Learning:** Explicit configuration is better than implicit defaults. Setting a strict limit (50kb) based on actual usage prevents potential DoS attacks via large payloads and documents the constraint.
 **Prevention:** Configure `express.json({ limit: "50kb" })` in `server.ts`.
+
+## 2026-03-03 - Missing Email Normalization and Input Limits
+
+**Vulnerability:** Emails were treated as case-sensitive on signup/login, leading to potential account duplication. Activity time spent was unbounded, posing DoS/Data corruption risks.
+**Learning:** Default `z.string().email()` does not normalize case. Numeric inputs without `.max()` are risky for databases.
+**Prevention:** Use centralized Zod schemas with `.toLowerCase()` for emails and explicit `.max()` constraints for all numeric inputs.

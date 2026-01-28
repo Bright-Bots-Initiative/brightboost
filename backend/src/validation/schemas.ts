@@ -11,6 +11,21 @@ export const nameSchema = safeString
   .min(1, "Name is required")
   .max(100, "Name too long");
 
+// 🛡️ Sentinel: Enforce email normalization to prevent duplicate accounts via case variance
+export const emailSchema = z
+  .string()
+  .email("Invalid email")
+  .max(255, "Email too long")
+  .toLowerCase();
+
+// 🛡️ Sentinel: Enforce reasonable limits on time spent to prevent integer overflow and data corruption
+// Cap at 24 hours (86400 seconds)
+export const timeSpentSchema = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(86400, "Time spent cannot exceed 24 hours");
+
 export const slugSchema = z
   .string()
   .min(1, "Slug is required")
@@ -28,7 +43,7 @@ export const checkpointSchema = z.object({
   moduleSlug: slugSchema,
   lessonId: z.string().max(100),
   activityId: z.string().max(100),
-  timeSpentS: z.number().nonnegative(),
+  timeSpentS: timeSpentSchema,
   completed: z.boolean().optional(),
 });
 
@@ -38,7 +53,7 @@ export const completeActivitySchema = z.object({
   moduleSlug: slugSchema,
   lessonId: z.string().max(100).optional().nullable(),
   activityId: z.string().min(1, "Activity ID required").max(100),
-  timeSpentS: z.number().int().nonnegative().optional().default(0),
+  timeSpentS: timeSpentSchema.optional().default(0),
 });
 
 export const selectArchetypeSchema = z.object({
