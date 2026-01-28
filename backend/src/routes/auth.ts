@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
 import { logAudit } from "../utils/audit";
-import { nameSchema, safeString } from "../validation/schemas";
+import { nameSchema, safeString, emailSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -29,20 +29,20 @@ const passwordSchema = z
 
 const studentSignupSchema = z.object({
   name: nameSchema,
-  email: z.string().email("Invalid email").max(255, "Email too long"),
+  email: emailSchema,
   password: passwordSchema,
 });
 
 const teacherSignupSchema = z.object({
   name: nameSchema,
-  email: z.string().email("Invalid email").max(255, "Email too long"),
+  email: emailSchema,
   password: passwordSchema,
   school: safeString.max(100, "School name too long").optional(),
   subject: safeString.max(100, "Subject name too long").optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email").max(255),
+  email: emailSchema,
   password: z.string().min(1, "Password is required").max(100),
 });
 
