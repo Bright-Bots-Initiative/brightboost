@@ -76,6 +76,33 @@ namespace BrightBoost
             }
         }
 
+        /// <summary>
+        /// Clean Build folder (preserves .gitkeep).
+        /// Menu: Tools/BrightBoost/Rhyme & Ride/Clean Build Folder
+        /// </summary>
+        [MenuItem("Tools/BrightBoost/Rhyme & Ride/Clean Build Folder")]
+        public static void CleanBuildFolder()
+        {
+            string repoRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "../.."));
+            string buildPath = Path.Combine(repoRoot, "public/games/rhyme-ride/Build");
+
+            if (Directory.Exists(buildPath))
+            {
+                CleanBuildDirectory(buildPath);
+                Debug.Log("[RhymeRideBuildTools] Build folder cleaned (preserved .gitkeep)");
+
+                if (!Application.isBatchMode)
+                {
+                    EditorUtility.DisplayDialog("Clean Complete",
+                        "Build folder cleaned.\n\n.gitkeep preserved.", "OK");
+                }
+            }
+            else
+            {
+                Debug.Log("[RhymeRideBuildTools] Build folder does not exist, nothing to clean");
+            }
+        }
+
         private static bool DoBuildWebGL()
         {
             // Determine output path (BrightBoost repo root)
@@ -93,6 +120,12 @@ namespace BrightBoost
             {
                 Directory.CreateDirectory(buildPath);
                 Debug.Log($"[RhymeRideBuildTools] Created directory: {buildPath}");
+            }
+            else
+            {
+                // Clean old build outputs (preserve .gitkeep)
+                CleanBuildDirectory(buildPath);
+                Debug.Log("[RhymeRideBuildTools] Cleaned old build outputs");
             }
 
             // Configure player settings for correct output naming
@@ -221,6 +254,53 @@ namespace BrightBoost
             {
                 Directory.Delete(templateData, true);
                 Debug.Log("[RhymeRideBuildTools] Removed TemplateData folder");
+            }
+        }
+
+        /// <summary>
+        /// Clean build directory, preserving .gitkeep.
+        /// </summary>
+        private static void CleanBuildDirectory(string buildPath)
+        {
+            if (!Directory.Exists(buildPath)) return;
+
+            // Delete all files except .gitkeep
+            foreach (string file in Directory.GetFiles(buildPath))
+            {
+                if (Path.GetFileName(file) != ".gitkeep")
+                {
+                    try
+                    {
+                        File.Delete(file);
+                        Debug.Log($"[RhymeRideBuildTools] Deleted: {Path.GetFileName(file)}");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogWarning($"[RhymeRideBuildTools] Failed to delete {file}: {e.Message}");
+                    }
+                }
+            }
+
+            // Delete subdirectories
+            foreach (string dir in Directory.GetDirectories(buildPath))
+            {
+                try
+                {
+                    Directory.Delete(dir, true);
+                    Debug.Log($"[RhymeRideBuildTools] Deleted directory: {Path.GetFileName(dir)}");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[RhymeRideBuildTools] Failed to delete {dir}: {e.Message}");
+                }
+            }
+
+            // Ensure .gitkeep exists
+            string gitkeep = Path.Combine(buildPath, ".gitkeep");
+            if (!File.Exists(gitkeep))
+            {
+                File.WriteAllText(gitkeep, "");
+                Debug.Log("[RhymeRideBuildTools] Created .gitkeep");
             }
         }
     }

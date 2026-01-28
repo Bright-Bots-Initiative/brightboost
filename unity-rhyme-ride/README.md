@@ -15,6 +15,7 @@ A K-2 reading/rhyming minigame built with Unity for BrightBoost. Gotcha-style ga
 | `Tools/BrightBoost/Rhyme & Ride/Generate Scene` | Creates scene, prefabs, and wires all references |
 | `Tools/BrightBoost/Rhyme & Ride/Build WebGL (One Click)` | Builds WebGL (requires scene to exist) |
 | `Tools/BrightBoost/Rhyme & Ride/Generate + Build WebGL (One Click)` | Does both in one step |
+| `Tools/BrightBoost/Rhyme & Ride/Clean Build Folder` | Removes old build outputs (preserves .gitkeep) |
 
 ## Batch/CI Build
 
@@ -119,5 +120,42 @@ The React wrapper at `src/components/activities/RhymeRideUnityActivity.tsx`:
 - No manual Unity work required - everything is code-generated
 - Scene builder creates all UI, prefabs, and wires SerializedObject references
 - Build tool auto-renames files if Unity emits different prefixes
+- Build tool auto-cleans old outputs before building (preserves .gitkeep)
 - WebGL compression is disabled for local dev stability
 - Malformed JSON config falls back to safe defaults
+
+## Runbook: After Deleting Library Folder
+
+If your Unity Library folder gets corrupted or you need to do a clean rebuild:
+
+1. **Delete corrupted folders** (optional):
+   ```bash
+   rm -rf unity-rhyme-ride/Library
+   rm -rf unity-rhyme-ride/Temp
+   rm -rf public/games/rhyme-ride/Build/*.js
+   rm -rf public/games/rhyme-ride/Build/*.data
+   rm -rf public/games/rhyme-ride/Build/*.wasm
+   ```
+
+2. **Open Unity project**:
+   - Open Unity Hub
+   - Open the `unity-rhyme-ride` project
+   - Wait for Unity to reimport all assets (may take a few minutes)
+
+3. **Generate scene and build**:
+   - Go to **Tools → BrightBoost → Rhyme & Ride → Generate + Build WebGL (One Click)**
+   - Wait for build to complete
+
+4. **Verify the build**:
+   ```bash
+   ls public/games/rhyme-ride/Build/
+   # Should show: rhyme_ride.loader.js, rhyme_ride.data, rhyme_ride.framework.js, rhyme_ride.wasm
+   ```
+
+5. **Test in BrightBoost**:
+   ```bash
+   npm run dev
+   # Navigate to an activity with gameKey: "rhyme_ride_unity"
+   ```
+
+**Important:** You never need to manually create Unity objects or rename build files. Everything is automated.
