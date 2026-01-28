@@ -159,3 +159,20 @@ If your Unity Library folder gets corrupted or you need to do a clean rebuild:
    ```
 
 **Important:** You never need to manually create Unity objects or rename build files. Everything is automated.
+
+## Runbook: Fixing Package Signature Errors
+
+If Unity Package Manager shows "Signature: Invalid" for packages:
+
+1. Close Unity and Unity Hub completely
+2. Delete the project Library and lock file:
+   ```
+   rd /s /q unity-rhyme-ride\Library
+   del unity-rhyme-ride\Packages\packages-lock.json
+   ```
+3. Clear Unity global package caches:
+   - `%LOCALAPPDATA%\Unity\cache\packages`
+   - `%LOCALAPPDATA%\Unity\cache\npm`
+   - `%LOCALAPPDATA%\Unity\PackageManager`
+4. Reopen the project in Unity
+5. Run Tools → BrightBoost → Rhyme & Ride → Generate + Build WebGL

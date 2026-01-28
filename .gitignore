@@ -30,3 +30,21 @@ storybook-static/
 GHL.txt
 KEYS.txt
 key.txt
+
+# Unity
+**/Library/
+**/Temp/
+**/Obj/
+**/Build/
+**/Builds/
+**/Logs/
+**/UserSettings/
+*.csproj
+*.sln
+*.slnx
+*.pidb
+*.unityproj
+# Unity build artifacts in public (keep .gitkeep)
+public/games/*/Build/*.js
+public/games/*/Build/*.data
+public/games/*/Build/*.wasm
