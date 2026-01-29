@@ -15,7 +15,7 @@
 
 ## 2024-05-24 - Contextual Replay Buttons
 
-**Learning:** When a "Replay" button is placed next to a completed item (which might have its own "Done" status or button), the context can be lost for screen reader users if the button label is just "Replay". They might not know *which* item they are about to replay.
+**Learning:** When a "Replay" button is placed next to a completed item (which might have its own "Done" status or button), the context can be lost for screen reader users if the button label is just "Replay". They might not know _which_ item they are about to replay.
 **Action:** Always include the item name in the `aria-label` for "Replay" or similar repetitive actions in a list (e.g., "Replay [Activity Name]").
 
 ## 2024-05-25 - Accessible Skeleton Loading
@@ -29,5 +29,6 @@
 **Action:** When integrating a custom Tooltip, conditionally remove the `title` attribute from the trigger element while ensuring `aria-label` is still present for accessibility.
 
 ## 2024-05-25 - Accessible Loading Buttons
+
 **Learning:** When a button enters a loading state, replacing content with "Loading..." text can break layout for icon-only buttons (`size="icon"`). Also, screen readers benefit from `aria-busy="true"` to understand the state.
 **Action:** Conditionally hide loading text for icon buttons and ensure `aria-busy` is toggled.

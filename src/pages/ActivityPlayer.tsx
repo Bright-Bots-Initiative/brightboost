@@ -460,7 +460,10 @@ export default function ActivityPlayer() {
     if (key === "rhyme_ride_unity") {
       return (
         <div className="p-6">
-          <RhymeRideUnityActivity config={content} onComplete={handleComplete} />
+          <RhymeRideUnityActivity
+            config={content}
+            onComplete={handleComplete}
+          />
         </div>
       );
     }

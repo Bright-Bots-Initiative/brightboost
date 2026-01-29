@@ -10,18 +10,19 @@ A K-2 reading/rhyming minigame built with Unity for BrightBoost. Gotcha-style ga
 
 ## Menu Commands
 
-| Menu Path | Description |
-|-----------|-------------|
-| `Tools/BrightBoost/Rhyme & Ride/Generate Scene` | Creates scene, prefabs, and wires all references |
-| `Tools/BrightBoost/Rhyme & Ride/Build WebGL (One Click)` | Builds WebGL (requires scene to exist) |
-| `Tools/BrightBoost/Rhyme & Ride/Generate + Build WebGL (One Click)` | Does both in one step |
-| `Tools/BrightBoost/Rhyme & Ride/Clean Build Folder` | Removes old build outputs (preserves .gitkeep) |
+| Menu Path                                                           | Description                                      |
+| ------------------------------------------------------------------- | ------------------------------------------------ |
+| `Tools/BrightBoost/Rhyme & Ride/Generate Scene`                     | Creates scene, prefabs, and wires all references |
+| `Tools/BrightBoost/Rhyme & Ride/Build WebGL (One Click)`            | Builds WebGL (requires scene to exist)           |
+| `Tools/BrightBoost/Rhyme & Ride/Generate + Build WebGL (One Click)` | Does both in one step                            |
+| `Tools/BrightBoost/Rhyme & Ride/Clean Build Folder`                 | Removes old build outputs (preserves .gitkeep)   |
 
 ## Batch/CI Build
 
 For automated builds, use the batchmode entry point:
 
 **Windows:**
+
 ```batch
 "C:\Program Files\Unity\Hub\Editor\2022.3.x\Editor\Unity.exe" ^
   -batchmode -quit ^
@@ -30,6 +31,7 @@ For automated builds, use the batchmode entry point:
 ```
 
 **macOS/Linux:**
+
 ```bash
 /Applications/Unity/Hub/Editor/2022.3.x/Unity.app/Contents/MacOS/Unity \
   -batchmode -quit \
@@ -40,6 +42,7 @@ For automated builds, use the batchmode entry point:
 ## Game Design
 
 ### Gameplay
+
 - **Gotcha-style**: Word targets scroll horizontally from left to right
 - **3 Lanes**: Targets appear in one of three horizontal lanes
 - **Objective**: Tap the word that rhymes with the prompt before it exits
@@ -47,6 +50,7 @@ For automated builds, use the batchmode entry point:
 - **Win condition**: Complete all rounds or run out of lives
 
 ### Config Format (from JavaScript)
+
 ```json
 {
   "sessionId": "uuid-string",
@@ -66,6 +70,7 @@ For automated builds, use the batchmode entry point:
 ```
 
 ### Completion Event
+
 ```javascript
 window.addEventListener("unityRhymeRideComplete", (e) => {
   const { sessionId, score, total, streakMax } = e.detail;
@@ -98,18 +103,19 @@ unity-rhyme-ride/
 
 After building, these files are created in `public/games/rhyme-ride/Build/`:
 
-| File | Purpose |
-|------|---------|
-| `rhyme_ride.loader.js` | Unity WebGL loader script |
-| `rhyme_ride.data` | Game data/assets |
-| `rhyme_ride.framework.js` | Unity runtime framework |
-| `rhyme_ride.wasm` | WebAssembly binary |
+| File                      | Purpose                   |
+| ------------------------- | ------------------------- |
+| `rhyme_ride.loader.js`    | Unity WebGL loader script |
+| `rhyme_ride.data`         | Game data/assets          |
+| `rhyme_ride.framework.js` | Unity runtime framework   |
+| `rhyme_ride.wasm`         | WebAssembly binary        |
 
 **Note:** Files use underscores (`rhyme_ride`) not hyphens. The React wrapper is configured to load these correctly.
 
 ## BrightBoost Integration
 
 The React wrapper at `src/components/activities/RhymeRideUnityActivity.tsx`:
+
 - Loads the Unity build from `/games/rhyme-ride/Build/rhyme_ride.*`
 - Resolves LocalizedField content before sending to Unity
 - Validates sessionId on completion events to prevent stale/cross-tab issues
@@ -129,6 +135,7 @@ The React wrapper at `src/components/activities/RhymeRideUnityActivity.tsx`:
 If your Unity Library folder gets corrupted or you need to do a clean rebuild:
 
 1. **Delete corrupted folders** (optional):
+
    ```bash
    rm -rf unity-rhyme-ride/Library
    rm -rf unity-rhyme-ride/Temp
@@ -147,6 +154,7 @@ If your Unity Library folder gets corrupted or you need to do a clean rebuild:
    - Wait for build to complete
 
 4. **Verify the build**:
+
    ```bash
    ls public/games/rhyme-ride/Build/
    # Should show: rhyme_ride.loader.js, rhyme_ride.data, rhyme_ride.framework.js, rhyme_ride.wasm

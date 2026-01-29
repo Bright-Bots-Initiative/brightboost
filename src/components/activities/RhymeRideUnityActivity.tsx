@@ -51,11 +51,18 @@ export default function RhymeRideUnityActivity({
   // Listen for completion event from Unity
   useEffect(() => {
     const handleComplete = (
-      e: CustomEvent<{ sessionId: string; score: number; total: number; streakMax: number }>
+      e: CustomEvent<{
+        sessionId: string;
+        score: number;
+        total: number;
+        streakMax: number;
+      }>,
     ) => {
       // Validate sessionId to prevent stale/cross-tab events
       if (e.detail.sessionId !== sessionId) {
-        console.warn("[RhymeRide] Ignoring completion event with mismatched sessionId");
+        console.warn(
+          "[RhymeRide] Ignoring completion event with mismatched sessionId",
+        );
         return;
       }
 
@@ -69,9 +76,15 @@ export default function RhymeRideUnityActivity({
       onComplete();
     };
 
-    window.addEventListener("unityRhymeRideComplete", handleComplete as EventListener);
+    window.addEventListener(
+      "unityRhymeRideComplete",
+      handleComplete as EventListener,
+    );
     return () => {
-      window.removeEventListener("unityRhymeRideComplete", handleComplete as EventListener);
+      window.removeEventListener(
+        "unityRhymeRideComplete",
+        handleComplete as EventListener,
+      );
     };
   }, [sessionId, onComplete]);
 
@@ -90,12 +103,16 @@ export default function RhymeRideUnityActivity({
           },
           rounds: resolvedRounds,
         };
-        instance.SendMessage("WebBridge", "InitFromJson", JSON.stringify(unityConfig));
+        instance.SendMessage(
+          "WebBridge",
+          "InitFromJson",
+          JSON.stringify(unityConfig),
+        );
       } catch (err) {
         console.warn("[RhymeRide] Failed to send config to Unity:", err);
       }
     },
-    [sessionId, resolvedRounds, config.settings]
+    [sessionId, resolvedRounds, config.settings],
   );
 
   return (

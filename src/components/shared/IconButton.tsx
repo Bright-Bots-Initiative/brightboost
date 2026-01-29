@@ -15,7 +15,18 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ onClick, title, ariaLabel, children, className = "", showTooltip = true, ...props }, ref) => {
+  (
+    {
+      onClick,
+      title,
+      ariaLabel,
+      children,
+      className = "",
+      showTooltip = true,
+      ...props
+    },
+    ref,
+  ) => {
     const button = (
       <button
         ref={ref}
@@ -32,9 +43,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     if (showTooltip) {
       return (
         <Tooltip>
-          <TooltipTrigger asChild>
-            {button}
-          </TooltipTrigger>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
           <TooltipContent>
             <p>{title}</p>
           </TooltipContent>

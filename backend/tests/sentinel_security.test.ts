@@ -45,8 +45,8 @@ describe("Sentinel Security - Module Access Control", () => {
   });
 
   it("Should allow teachers to access unpublished modules", async () => {
-     // Setup mock
-     moduleServiceMock.getModuleWithContent.mockResolvedValue({
+    // Setup mock
+    moduleServiceMock.getModuleWithContent.mockResolvedValue({
       id: "draft-1",
       slug: "draft-module",
       title: "Secret Draft",

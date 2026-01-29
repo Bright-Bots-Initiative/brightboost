@@ -5,7 +5,11 @@ import RhymeRideUnityActivity from "./RhymeRideUnityActivity";
 
 // Mock UnityWebGL component
 vi.mock("../unity/UnityWebGL", () => ({
-  default: ({ onInstanceReady }: { onInstanceReady?: (instance: any) => void }) => {
+  default: ({
+    onInstanceReady,
+  }: {
+    onInstanceReady?: (instance: any) => void;
+  }) => {
     // Simulate instance ready after render
     setTimeout(() => {
       if (onInstanceReady) {
@@ -71,14 +75,26 @@ describe("RhymeRideUnityActivity", () => {
   });
 
   it("renders UnityWebGL component and ActivityHeader", () => {
-    render(<RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />);
+    render(
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
+    );
     expect(screen.getByTestId("unity-webgl")).toBeInTheDocument();
     expect(screen.getByTestId("activity-header")).toBeInTheDocument();
-    expect(screen.getByTestId("activity-header")).toHaveTextContent("Rhyme & Ride");
+    expect(screen.getByTestId("activity-header")).toHaveTextContent(
+      "Rhyme & Ride",
+    );
   });
 
   it("calls onComplete when receiving valid completion event", async () => {
-    render(<RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />);
+    render(
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
+    );
 
     // Dispatch completion event with matching sessionId
     const event = new CustomEvent("unityRhymeRideComplete", {
@@ -92,7 +108,12 @@ describe("RhymeRideUnityActivity", () => {
   });
 
   it("ignores completion event with mismatched sessionId", async () => {
-    render(<RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />);
+    render(
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
+    );
 
     // Dispatch completion event with wrong sessionId
     const event = new CustomEvent("unityRhymeRideComplete", {
@@ -106,7 +127,12 @@ describe("RhymeRideUnityActivity", () => {
   });
 
   it("ignores duplicate completion events (alreadyCompleted guard)", async () => {
-    render(<RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />);
+    render(
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
+    );
 
     // Dispatch first completion event
     const event1 = new CustomEvent("unityRhymeRideComplete", {
@@ -133,14 +159,17 @@ describe("RhymeRideUnityActivity", () => {
     const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
     const { unmount } = render(
-      <RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
     );
 
     unmount();
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       "unityRhymeRideComplete",
-      expect.any(Function)
+      expect.any(Function),
     );
   });
 
@@ -148,7 +177,12 @@ describe("RhymeRideUnityActivity", () => {
     // This test verifies the component calls SendMessage with "InitFromJson"
     // The actual SendMessage call is tested via integration - here we verify
     // the component renders correctly which implies the callback is wired up
-    render(<RhymeRideUnityActivity config={mockConfig} onComplete={mockOnComplete} />);
+    render(
+      <RhymeRideUnityActivity
+        config={mockConfig}
+        onComplete={mockOnComplete}
+      />,
+    );
 
     // Component renders successfully, meaning the onInstanceReady callback is configured
     expect(screen.getByTestId("unity-webgl")).toBeInTheDocument();

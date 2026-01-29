@@ -49,7 +49,9 @@ describe("Module Routes", () => {
         published: true,
       });
 
-      expect(moduleServiceMock.getModuleWithContent).toHaveBeenCalledWith("test-module");
+      expect(moduleServiceMock.getModuleWithContent).toHaveBeenCalledWith(
+        "test-module",
+      );
       expect(moduleServiceMock.getModuleStructure).not.toHaveBeenCalled();
     });
 
@@ -75,7 +77,9 @@ describe("Module Routes", () => {
         published: true,
       });
 
-      expect(moduleServiceMock.getModuleStructure).toHaveBeenCalledWith("test-module");
+      expect(moduleServiceMock.getModuleStructure).toHaveBeenCalledWith(
+        "test-module",
+      );
       expect(moduleServiceMock.getModuleWithContent).not.toHaveBeenCalled();
     });
   });

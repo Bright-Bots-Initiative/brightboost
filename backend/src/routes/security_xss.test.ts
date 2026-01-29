@@ -41,7 +41,9 @@ describe("Security: XSS Prevention", () => {
 
       expect(response.status).toBe(400);
       // The error structure from Zod is { error: [ { ... message: "..." } ] }
-      expect(JSON.stringify(response.body)).toContain("Input cannot contain HTML characters");
+      expect(JSON.stringify(response.body)).toContain(
+        "Input cannot contain HTML characters",
+      );
     });
 
     it("should reject names containing <", async () => {
@@ -55,7 +57,7 @@ describe("Security: XSS Prevention", () => {
     });
 
     it("should allow safe names", async () => {
-       // @ts-ignore
+      // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue(null);
       // @ts-ignore
       prismaMock.user.create.mockResolvedValue({
@@ -80,8 +82,8 @@ describe("Security: XSS Prevention", () => {
       // Setup mock user for update
       // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue({
-          id: "student-123",
-          role: "student"
+        id: "student-123",
+        role: "student",
       });
 
       const response = await request(app)
@@ -92,19 +94,23 @@ describe("Security: XSS Prevention", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(JSON.stringify(response.body)).toContain("Input cannot contain HTML characters");
+      expect(JSON.stringify(response.body)).toContain(
+        "Input cannot contain HTML characters",
+      );
     });
 
     it("should reject subject names containing HTML tags", async () => {
-        const response = await request(app)
-          .post("/api/edit-profile")
-          .set("Authorization", "Bearer mock-token-for-mvp") // Uses devRoleShim
-          .send({
-            subject: "Math <b>101</b>",
-          });
+      const response = await request(app)
+        .post("/api/edit-profile")
+        .set("Authorization", "Bearer mock-token-for-mvp") // Uses devRoleShim
+        .send({
+          subject: "Math <b>101</b>",
+        });
 
-        expect(response.status).toBe(400);
-        expect(JSON.stringify(response.body)).toContain("Input cannot contain HTML characters");
-      });
+      expect(response.status).toBe(400);
+      expect(JSON.stringify(response.body)).toContain(
+        "Input cannot contain HTML characters",
+      );
+    });
   });
 });

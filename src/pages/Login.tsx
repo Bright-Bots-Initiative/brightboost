@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -86,15 +87,15 @@ const Login: React.FC = () => {
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={isLoading}
-            className={`w-full py-2 px-4 rounded-md text-white font-medium ${
-              isLoading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-            } transition-colors`}
+            variant="primary"
+            isLoading={isLoading}
+            loadingText="Logging in..."
+            className="w-full"
           >
-            {isLoading ? "Logging in..." : "Login"}
-          </button>
+            Login
+          </Button>
         </form>
 
         <div className="mt-6 text-center">

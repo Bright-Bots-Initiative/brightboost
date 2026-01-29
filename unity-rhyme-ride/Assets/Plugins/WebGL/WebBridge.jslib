@@ -17,12 +17,12 @@ mergeInto(LibraryManager.library, {
           sessionId: data.sessionId,
           score: data.score,
           total: data.total,
-          streakMax: data.streakMax
-        }
+          streakMax: data.streakMax,
+        },
       });
       window.dispatchEvent(event);
     } catch (e) {
       console.error("[WebBridge.jslib] Failed to parse completion data:", e);
     }
-  }
+  },
 });
