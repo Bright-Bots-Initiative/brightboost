@@ -31,20 +31,18 @@ GHL.txt
 KEYS.txt
 key.txt
 
-# Unity
-**/Library/
-**/Temp/
-**/Obj/
-**/Build/
-**/Builds/
-**/Logs/
-**/UserSettings/
+# Unity — project-level generated folders
+unity-*/Library/
+unity-*/Temp/
+unity-*/Obj/
+unity-*/Builds/
+unity-*/Logs/
+unity-*/UserSettings/
 *.csproj
-*.sln
 *.slnx
 *.pidb
 *.unityproj
-# Unity build artifacts in public (keep .gitkeep)
+# Unity WebGL build artifacts in public (keep .gitkeep)
 public/games/*/Build/*.js
 public/games/*/Build/*.data
 public/games/*/Build/*.wasm
