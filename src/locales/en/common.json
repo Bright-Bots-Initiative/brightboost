@@ -62,6 +62,7 @@
     "caughtUp": "You’re all caught up. Pick a module to keep learning!",
     "goToModules": "Go to Modules",
     "play": "Play",
+    "playActivity": "Play {{activity}}",
     "unavailableTitle": "Dashboard unavailable",
     "unavailableDesc": "Could not load your learning progress.",
     "levelUnlockedAria": "Level {{level}} Unlocked",
