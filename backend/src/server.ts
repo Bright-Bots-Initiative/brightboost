@@ -20,6 +20,8 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Security headers
+const isProduction = process.env.NODE_ENV === "production";
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -35,7 +37,8 @@ app.use(
         ],
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'", // Needed for Vite/React inline scripts
+          // 🛡️ Sentinel: Only allow unsafe-inline in dev to prevent XSS
+          ...(isProduction ? [] : ["'unsafe-inline'"]),
           "cdn.gpteng.co",
           "quantumai.google",
         ],
@@ -46,10 +49,16 @@ app.use(
           "cl-quantum-game.appspot.com",
         ],
         objectSrc: ["'none'"],
+        // 🛡️ Sentinel: Add defense in depth
+        frameAncestors: ["'none'"], // Prevent Clickjacking
+        baseUri: ["'self'"], // Prevent base tag injection
+        formAction: ["'self'"], // Restrict form destinations
         upgradeInsecureRequests: [],
       },
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
+    // 🛡️ Sentinel: Deny framing to prevent Clickjacking (legacy browsers)
+    xFrameOptions: { action: "deny" },
   }),
 );
 
