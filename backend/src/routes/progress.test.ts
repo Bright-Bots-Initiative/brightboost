@@ -106,5 +106,21 @@ describe("Progress Route Security", () => {
       expect(response.body.progress).toEqual([]);
       expect(prismaMock.progress.findMany).not.toHaveBeenCalled();
     });
+
+    it("should NOT fetch user when excludeUser=true", async () => {
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue({ id: "student-123" }); // Should not be called if optimization works
+      // @ts-ignore
+      prismaMock.progress.findMany.mockResolvedValue([{ id: "prog-1" }]);
+
+      const response = await request(app)
+        .get("/api/get-progress?excludeUser=true")
+        .set("Authorization", "Bearer mock-token-for-mvp");
+
+      expect(response.status).toBe(200);
+      expect(response.body.user).toBeNull();
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+      expect(response.body.progress).toHaveLength(1);
+    });
   });
 });

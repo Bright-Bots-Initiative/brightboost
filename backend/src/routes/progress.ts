@@ -33,27 +33,30 @@ router.get("/get-progress", requireAuth, async (req, res) => {
   // ⚡ Bolt Optimization: Allow excluding progress to reduce payload size (e.g. for AuthContext)
   // Default to true (legacy behavior) to prevent breaking other consumers.
   const excludeProgress = req.query.excludeProgress === "true";
+  const excludeUser = req.query.excludeUser === "true";
 
-  const userPromise = prisma.user.findUnique({
-    where: { id: req.user!.id },
-    // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      school: true,
-      subject: true,
-      bio: true,
-      grade: true,
-      xp: true,
-      level: true,
-      streak: true,
-      avatarUrl: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const userPromise = !excludeUser
+    ? prisma.user.findUnique({
+        where: { id: req.user!.id },
+        // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          school: true,
+          subject: true,
+          bio: true,
+          grade: true,
+          xp: true,
+          level: true,
+          streak: true,
+          avatarUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    : Promise.resolve(null);
 
   const progressPromise = !excludeProgress
     ? prisma.progress.findMany({

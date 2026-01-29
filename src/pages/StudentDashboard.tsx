@@ -102,7 +102,8 @@ export default function StudentDashboard() {
         const [av, mods, prog] = await Promise.all([
           api.getAvatar(),
           api.getModules(),
-          api.getProgress(),
+          // ⚡ Bolt Optimization: Exclude user data (already have it via AuthContext) to save DB call
+          api.getProgress({ excludeUser: true }),
         ]);
         if (cancelled) return;
 

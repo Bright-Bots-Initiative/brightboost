@@ -429,8 +429,13 @@ export const api = {
     return res.json();
   },
 
-  getProgress: async () => {
-    const res = await fetch(join(API_BASE, "/get-progress"), {
+  getProgress: async (options?: { excludeUser?: boolean }) => {
+    const url = new URL(join(API_BASE, "/get-progress"), window.location.origin);
+    if (options?.excludeUser) {
+      url.searchParams.append("excludeUser", "true");
+    }
+
+    const res = await fetch(url.toString(), {
       headers: getHeaders(),
     });
     return res.json();
