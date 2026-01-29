@@ -84,20 +84,19 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
-  // 0. Fetch Avatar Before (for calculating rewards)
-  // ⚡ Bolt Optimization: Removed redundant abilities count query
-  const avatarBefore = await prisma.avatar.findUnique({ where: { studentId } });
-
-  // 1. Upsert progress
-  // ⚡ Bolt Optimization: Use findUnique to leverage the compound index for O(1) lookup
-  const existing = await prisma.progress.findUnique({
-    where: {
-      studentId_activityId: {
-        studentId,
-        activityId,
+  // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
+  // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
+  const [avatarBefore, existing] = await Promise.all([
+    prisma.avatar.findUnique({ where: { studentId } }),
+    prisma.progress.findUnique({
+      where: {
+        studentId_activityId: {
+          studentId,
+          activityId,
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
     // Idempotent return with 0 rewards
