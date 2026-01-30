@@ -81,3 +81,9 @@
 **Vulnerability:** Emails were treated as case-sensitive on signup/login, leading to potential account duplication. Activity time spent was unbounded, posing DoS/Data corruption risks.
 **Learning:** Default `z.string().email()` does not normalize case. Numeric inputs without `.max()` are risky for databases.
 **Prevention:** Use centralized Zod schemas with `.toLowerCase()` for emails and explicit `.max()` constraints for all numeric inputs.
+
+## 2026-05-18 - Development Configuration Leaking to Production
+
+**Vulnerability:** The CSP `script-src` directive included `'unsafe-inline'` to support Vite's development HMR (Hot Module Replacement) and React Refresh, but this setting persisted in production.
+**Learning:** Development tools often require insecure configurations (like inline scripts) that undermine production security. It's critical to conditionally apply these settings based on `NODE_ENV`.
+**Prevention:** Explicitly check `process.env.NODE_ENV === 'production'` when configuring security headers. Use strict CSP in production while allowing necessary dev conveniences locally.
