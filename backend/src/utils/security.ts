@@ -67,3 +67,22 @@ export function nocache(_req: Request, res: Response, next: NextFunction) {
   res.setHeader("Expires", "0");
   next();
 }
+
+/**
+ * 🛡️ Sentinel: Rate limiter for game actions (XP/Progress).
+ * Prevents scripting/botting of game mechanics.
+ * Limit: 200 requests per 15 minutes per IP.
+ * (~1 action every 4.5 seconds on average)
+ */
+// 🛡️ Sentinel: Lower limit for tests to avoid slow loops
+const GAME_ACTION_LIMIT = process.env.NODE_ENV === "test" ? 5 : 200;
+
+export const gameActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: GAME_ACTION_LIMIT,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many game actions, please slow down.",
+  },
+});

@@ -8,6 +8,7 @@ const ProgressStatus = {
 } as const;
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { requireAuth } from "../utils/auth";
+import { gameActionLimiter } from "../utils/security";
 import { checkUnlocks } from "../services/game";
 import {
   checkpointSchema,
@@ -77,132 +78,137 @@ router.get("/get-progress", requireAuth, async (req, res) => {
 });
 
 // Complete an activity (MVP)
-router.post("/progress/complete-activity", requireAuth, async (req, res) => {
-  const studentId = req.user!.id;
+router.post(
+  "/progress/complete-activity",
+  requireAuth,
+  gameActionLimiter,
+  async (req, res) => {
+    const studentId = req.user!.id;
 
-  const parse = completeActivitySchema.safeParse(req.body);
-  if (!parse.success) {
-    return res.status(400).json({ error: parse.error.flatten() });
-  }
+    const parse = completeActivitySchema.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ error: parse.error.flatten() });
+    }
 
-  const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
+    const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
-  // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
-  // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
-  const [avatarBefore, existing] = await Promise.all([
-    prisma.avatar.findUnique({ where: { studentId } }),
-    prisma.progress.findUnique({
-      where: {
-        studentId_activityId: {
-          studentId,
-          activityId,
+    // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
+    // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
+    const [avatarBefore, existing] = await Promise.all([
+      prisma.avatar.findUnique({ where: { studentId } }),
+      prisma.progress.findUnique({
+        where: {
+          studentId_activityId: {
+            studentId,
+            activityId,
+          },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  if (existing && existing.status === ProgressStatus.COMPLETED) {
-    // Idempotent return with 0 rewards
-    return res.json({
-      message: "Already completed",
-      progress: existing,
-      reward: {
-        xpDelta: 0,
-        levelDelta: 0,
-        energyDelta: 0,
-        hpDelta: 0,
-        newAbilitiesDelta: 0,
-      },
-      avatar: avatarBefore,
-    });
-  }
+    if (existing && existing.status === ProgressStatus.COMPLETED) {
+      // Idempotent return with 0 rewards
+      return res.json({
+        message: "Already completed",
+        progress: existing,
+        reward: {
+          xpDelta: 0,
+          levelDelta: 0,
+          energyDelta: 0,
+          hpDelta: 0,
+          newAbilitiesDelta: 0,
+        },
+        avatar: avatarBefore,
+      });
+    }
 
-  let finalProgress;
-  if (existing) {
-    finalProgress = await prisma.progress.update({
-      where: { id: existing.id },
-      data: {
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: { increment: timeSpentS || 0 },
-      },
-    });
-  } else {
-    finalProgress = await prisma.progress.create({
-      data: {
-        studentId,
-        moduleSlug,
-        lessonId,
-        activityId,
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: timeSpentS || 0,
-      },
-    });
-  }
-
-  // 2. Apply Rewards & Check Unlocks (only if avatar exists)
-  let avatarAfter: any = null;
-  let newAbilitiesFromUnlock = 0;
-
-  if (avatarBefore) {
-    try {
-      // Award XP + Energy + HP
-      const energyGain = 5;
-      const hpGain = 2;
-      const currentEnergy = avatarBefore.energy || 0;
-      const currentHp = avatarBefore.hp || 0;
-
-      // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
-      const updatedAvatar = await prisma.avatar.update({
-        where: { studentId },
+    let finalProgress;
+    if (existing) {
+      finalProgress = await prisma.progress.update({
+        where: { id: existing.id },
         data: {
-          xp: { increment: 50 },
-          energy: Math.min(100, currentEnergy + energyGain),
-          hp: Math.min(100, currentHp + hpGain),
+          status: ProgressStatus.COMPLETED,
+          timeSpentS: { increment: timeSpentS || 0 },
         },
       });
-
-      // Check for level up (may add more XP and unlocks)
-      const result = await checkUnlocks(studentId, updatedAvatar);
-      if (result) {
-        avatarAfter = result.avatar;
-        newAbilitiesFromUnlock = result.newAbilitiesCount;
-      } else {
-        avatarAfter = updatedAvatar;
-      }
-    } catch (e) {
-      console.warn("Could not give rewards to avatar", e);
+    } else {
+      finalProgress = await prisma.progress.create({
+        data: {
+          studentId,
+          moduleSlug,
+          lessonId,
+          activityId,
+          status: ProgressStatus.COMPLETED,
+          timeSpentS: timeSpentS || 0,
+        },
+      });
     }
-  }
 
-  // 3. Fetch Avatar & Abilities After - REMOVED (Bolt Optimization: use returned values)
+    // 2. Apply Rewards & Check Unlocks (only if avatar exists)
+    let avatarAfter: any = null;
+    let newAbilitiesFromUnlock = 0;
 
-  // 4. Calculate Deltas
-  let xpDelta = 0;
-  let levelDelta = 0;
-  let energyDelta = 0;
-  let hpDelta = 0;
-  let newAbilitiesDelta = 0;
+    if (avatarBefore) {
+      try {
+        // Award XP + Energy + HP
+        const energyGain = 5;
+        const hpGain = 2;
+        const currentEnergy = avatarBefore.energy || 0;
+        const currentHp = avatarBefore.hp || 0;
 
-  if (avatarBefore && avatarAfter) {
-    xpDelta = avatarAfter.xp - avatarBefore.xp;
-    levelDelta = avatarAfter.level - avatarBefore.level;
-    energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
-    hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
-    newAbilitiesDelta = newAbilitiesFromUnlock;
-  }
+        // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
+        const updatedAvatar = await prisma.avatar.update({
+          where: { studentId },
+          data: {
+            xp: { increment: 50 },
+            energy: Math.min(100, currentEnergy + energyGain),
+            hp: Math.min(100, currentHp + hpGain),
+          },
+        });
 
-  res.json({
-    progress: finalProgress,
-    reward: {
-      xpDelta,
-      levelDelta,
-      energyDelta,
-      hpDelta,
-      newAbilitiesDelta,
-    },
-    avatar: avatarAfter,
-  });
-});
+        // Check for level up (may add more XP and unlocks)
+        const result = await checkUnlocks(studentId, updatedAvatar);
+        if (result) {
+          avatarAfter = result.avatar;
+          newAbilitiesFromUnlock = result.newAbilitiesCount;
+        } else {
+          avatarAfter = updatedAvatar;
+        }
+      } catch (e) {
+        console.warn("Could not give rewards to avatar", e);
+      }
+    }
+
+    // 3. Fetch Avatar & Abilities After - REMOVED (Bolt Optimization: use returned values)
+
+    // 4. Calculate Deltas
+    let xpDelta = 0;
+    let levelDelta = 0;
+    let energyDelta = 0;
+    let hpDelta = 0;
+    let newAbilitiesDelta = 0;
+
+    if (avatarBefore && avatarAfter) {
+      xpDelta = avatarAfter.xp - avatarBefore.xp;
+      levelDelta = avatarAfter.level - avatarBefore.level;
+      energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
+      hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
+      newAbilitiesDelta = newAbilitiesFromUnlock;
+    }
+
+    res.json({
+      progress: finalProgress,
+      reward: {
+        xpDelta,
+        levelDelta,
+        energyDelta,
+        hpDelta,
+        newAbilitiesDelta,
+      },
+      avatar: avatarAfter,
+    });
+  },
+);
 
 // Legacy / Comprehensive Routes (with validation)
 
@@ -228,33 +234,38 @@ router.get("/progress/:studentId", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/progress/checkpoint", requireAuth, async (req, res) => {
-  const parse = checkpointSchema.safeParse(req.body);
-  if (!parse.success)
-    return res.status(400).json({ error: parse.error.flatten() });
+router.post(
+  "/progress/checkpoint",
+  requireAuth,
+  gameActionLimiter,
+  async (req, res) => {
+    const parse = checkpointSchema.safeParse(req.body);
+    if (!parse.success)
+      return res.status(400).json({ error: parse.error.flatten() });
 
-  // Authorization check
-  if (req.user!.id !== parse.data.studentId && req.user!.role === "student") {
-    return res.status(403).json({ error: "forbidden" });
-  }
-
-  try {
-    const saved = await upsertCheckpoint(parse.data);
-    res.json({
-      ok: true,
-      id: saved.id,
-      timeSpentS: saved.timeSpentS,
-      status: saved.status,
-    });
-  } catch (e: any) {
-    // 🛡️ Sentinel: Only expose safe "GameError" messages.
-    if (e instanceof GameError) {
-      return res.status(400).json({ error: e.message });
+    // Authorization check
+    if (req.user!.id !== parse.data.studentId && req.user!.role === "student") {
+      return res.status(403).json({ error: "forbidden" });
     }
-    console.error("Checkpoint error:", e);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+
+    try {
+      const saved = await upsertCheckpoint(parse.data);
+      res.json({
+        ok: true,
+        id: saved.id,
+        timeSpentS: saved.timeSpentS,
+        status: saved.status,
+      });
+    } catch (e: any) {
+      // 🛡️ Sentinel: Only expose safe "GameError" messages.
+      if (e instanceof GameError) {
+        return res.status(400).json({ error: e.message });
+      }
+      console.error("Checkpoint error:", e);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
 
 // Note: Assessment schema is missing, disabling this route for now or removing if unused
 // router.post("/assessment/submit", requireAuth, async (req, res) => {
