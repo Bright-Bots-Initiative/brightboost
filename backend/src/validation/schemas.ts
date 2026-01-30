@@ -30,13 +30,19 @@ export const slugSchema = z
   .string()
   .min(1, "Slug is required")
   .max(100, "Slug too long")
-  .regex(/^[a-z0-9-]+$/, "Invalid slug format (only lowercase, numbers, hyphens)");
+  .regex(
+    /^[a-z0-9-]+$/,
+    "Invalid slug format (only lowercase, numbers, hyphens)",
+  );
 
 export const levelSchema = z
   .string()
   .min(1, "Level is required")
   .max(20, "Level too long")
-  .regex(/^[a-zA-Z0-9-]+$/, "Invalid level format (only alphanumeric and hyphens)");
+  .regex(
+    /^[a-zA-Z0-9-]+$/,
+    "Invalid level format (only alphanumeric and hyphens)",
+  );
 
 export const checkpointSchema = z.object({
   studentId: z.string().max(100),

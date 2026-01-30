@@ -68,7 +68,7 @@ describe("Security Validation", () => {
       // Note: If this fails (i.e. validation not yet implemented), it will call with mixed case
       // or verification will fail.
       if (response.status === 201) {
-         expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect(prismaMock.user.create).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
               email: "student@test.com",
@@ -111,7 +111,7 @@ describe("Security Validation", () => {
 
   describe("Time Spent Limit", () => {
     it("should reject timeSpentS > 86400", async () => {
-       const response = await request(app)
+      const response = await request(app)
         .post("/api/progress/complete-activity")
         .set("Authorization", "Bearer mock-token-for-mvp")
         .send({

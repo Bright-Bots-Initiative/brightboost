@@ -64,7 +64,7 @@ describe("ModuleDetail", () => {
         <Routes>
           <Route path="/student/modules/:slug" element={<ModuleDetail />} />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Initial loading state (should be skeleton eventually)
@@ -94,7 +94,7 @@ describe("ModuleDetail", () => {
         <Routes>
           <Route path="/student/modules/:slug" element={<ModuleDetail />} />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => {

@@ -307,7 +307,11 @@ export default function SpacewarArena() {
         {isTouch && (
           <div
             className="absolute inset-0 pointer-events-none z-20"
-            style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+            style={{
+              touchAction: "none",
+              WebkitUserSelect: "none",
+              userSelect: "none",
+            }}
           >
             {/* Left cluster: Rotate + Thrust */}
             <div className="absolute left-4 bottom-4 flex flex-col gap-2 pointer-events-auto">
@@ -319,7 +323,11 @@ export default function SpacewarArena() {
                       ? "bg-blue-500 text-white"
                       : "bg-slate-700/80 text-slate-300"
                   }`}
-                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                  style={{
+                    touchAction: "none",
+                    WebkitUserSelect: "none",
+                    userSelect: "none",
+                  }}
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.currentTarget.setPointerCapture(e.pointerId);
@@ -339,7 +347,11 @@ export default function SpacewarArena() {
                       ? "bg-blue-500 text-white"
                       : "bg-slate-700/80 text-slate-300"
                   }`}
-                  style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                  style={{
+                    touchAction: "none",
+                    WebkitUserSelect: "none",
+                    userSelect: "none",
+                  }}
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.currentTarget.setPointerCapture(e.pointerId);
@@ -361,7 +373,11 @@ export default function SpacewarArena() {
                     ? "bg-orange-500 text-white"
                     : "bg-slate-700/80 text-slate-300"
                 }`}
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                style={{
+                  touchAction: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                }}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   e.currentTarget.setPointerCapture(e.pointerId);
@@ -386,7 +402,11 @@ export default function SpacewarArena() {
                     ? "bg-red-500 text-white"
                     : "bg-slate-700/80 text-slate-300"
                 }`}
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                style={{
+                  touchAction: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                }}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   e.currentTarget.setPointerCapture(e.pointerId);
@@ -403,7 +423,11 @@ export default function SpacewarArena() {
               {/* Hyperspace button (tap only) */}
               <button
                 className="w-20 h-12 rounded-lg text-xs font-bold bg-purple-700/80 text-purple-200 active:bg-purple-500 active:text-white transition-colors select-none"
-                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+                style={{
+                  touchAction: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                }}
                 onPointerDown={(e) => {
                   e.preventDefault();
                   handleHyperspaceTap();

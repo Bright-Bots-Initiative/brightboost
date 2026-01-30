@@ -29,7 +29,7 @@ declare global {
         productName?: string;
         productVersion?: string;
       },
-      onProgress?: (progress: number) => void
+      onProgress?: (progress: number) => void,
     ) => Promise<any>;
   }
 }
@@ -59,7 +59,13 @@ const GAMEPLAY_KEYS = new Set([
   "ControlRight",
 ]);
 
-export default function UnityWebGL({ basePath, buildName = "spacewar", config, onInstanceReady, onRestartRequest }: UnityWebGLProps) {
+export default function UnityWebGL({
+  basePath,
+  buildName = "spacewar",
+  config,
+  onInstanceReady,
+  onRestartRequest,
+}: UnityWebGLProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
@@ -79,7 +85,11 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
         if (e.type === "keydown" && e.code === "KeyR" && !e.repeat) {
           // Don't restart if user is typing in an input field
           const target = e.target as HTMLElement;
-          if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+          if (
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable
+          ) {
             return;
           }
 
@@ -96,7 +106,7 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
         }
       }
     },
-    [focused, onRestartRequest]
+    [focused, onRestartRequest],
   );
 
   useEffect(() => {
@@ -104,7 +114,9 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
     window.addEventListener("keydown", handleKeyCapture, { capture: true });
     window.addEventListener("keyup", handleKeyCapture, { capture: true });
     return () => {
-      window.removeEventListener("keydown", handleKeyCapture, { capture: true });
+      window.removeEventListener("keydown", handleKeyCapture, {
+        capture: true,
+      });
       window.removeEventListener("keyup", handleKeyCapture, { capture: true });
     };
   }, [handleKeyCapture]);
@@ -128,7 +140,8 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
 
         await new Promise<void>((resolve, reject) => {
           script!.onload = () => resolve();
-          script!.onerror = () => reject(new Error("Failed to load Unity loader"));
+          script!.onerror = () =>
+            reject(new Error("Failed to load Unity loader"));
           document.body.appendChild(script!);
         });
 
@@ -151,7 +164,7 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
           unityConfig,
           (p: number) => {
             if (mounted) setProgress(Math.round(p * 100));
-          }
+          },
         );
 
         if (mounted) {
@@ -169,7 +182,7 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
               instance.SendMessage(
                 "WebBridge",
                 "SetPlayerConfig",
-                JSON.stringify(config)
+                JSON.stringify(config),
               );
             } catch (err) {
               console.warn("Failed to send player config to Unity:", err);
@@ -208,12 +221,17 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
     return (
       <div className="flex flex-col items-center justify-center h-full bg-slate-900 rounded-xl p-8 text-center">
         <div className="text-6xl mb-4">🎮</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Game Not Available</h2>
-        <p className="text-slate-400 mb-4">
-          Game build is not available yet.
-        </p>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Game Not Available
+        </h2>
+        <p className="text-slate-400 mb-4">Game build is not available yet.</p>
         <div className="bg-slate-800 rounded-lg p-4 text-sm text-slate-500">
-          <p>Expected files at: <code className="text-slate-400">{basePath}/Build/{buildName}.*</code></p>
+          <p>
+            Expected files at:{" "}
+            <code className="text-slate-400">
+              {basePath}/Build/{buildName}.*
+            </code>
+          </p>
         </div>
       </div>
     );
@@ -258,7 +276,9 @@ export default function UnityWebGL({ basePath, buildName = "spacewar", config, o
         >
           <div className="text-center text-white">
             <p className="text-lg font-semibold">Click to play</p>
-            <p className="text-sm text-slate-300 mt-1">Focus the game to enable controls</p>
+            <p className="text-sm text-slate-300 mt-1">
+              Focus the game to enable controls
+            </p>
           </div>
         </div>
       )}

@@ -4,7 +4,10 @@ import prisma from "../utils/prisma";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 50; // Modules are few, but safety first
 const moduleCache = new Map<string, { data: any; expiresAt: number }>();
-const moduleStructureCache = new Map<string, { data: any; expiresAt: number }>();
+const moduleStructureCache = new Map<
+  string,
+  { data: any; expiresAt: number }
+>();
 
 let allModulesCache: { data: any[]; expiresAt: number } | null = null;
 
