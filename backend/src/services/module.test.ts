@@ -115,8 +115,22 @@ describe("Module Service", () => {
       expect(result).toEqual(mockStructure);
     });
 
-    it("should use moduleCache if available", async () => {
-      const mockFull = { slug: "slug-1", title: "Module 1 Full" };
+    it("should use moduleCache if available but strip content", async () => {
+      const mockFull = {
+        slug: "slug-1",
+        title: "Module 1 Full",
+        units: [
+          {
+            lessons: [
+              {
+                activities: [
+                  { id: "a1", content: "heavy-content", title: "A1" },
+                ],
+              },
+            ],
+          },
+        ],
+      };
       vi.mocked(prisma.module.findUnique).mockResolvedValue(mockFull as any);
 
       // 1. Populate Full Cache
@@ -128,7 +142,12 @@ describe("Module Service", () => {
 
       // Should NOT fetch again
       expect(prisma.module.findUnique).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(mockFull);
+
+      // Expect content to be stripped
+      // @ts-ignore
+      expect(result.units[0].lessons[0].activities[0].content).toBeUndefined();
+      // @ts-ignore
+      expect(result.units[0].lessons[0].activities[0].title).toBe("A1");
     });
 
     it("should use moduleStructureCache if available", async () => {

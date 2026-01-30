@@ -46,22 +46,28 @@ export async function getAllModules(filter?: { level?: string }) {
 export async function getModuleStructure(slug: string) {
   const now = Date.now();
 
-  // 1. Try Full Cache first (fastest, in memory)
-  // If we have the full content in memory, use it (and strip content downstream if needed,
-  // or just return it as it satisfies the structure shape).
-  // The caller (getAggregatedProgress) discards content anyway, but passing full object is fine in-memory.
-  const fullCached = moduleCache.get(slug);
-  if (fullCached && fullCached.expiresAt > now) {
-    return fullCached.data;
-  }
-
-  // 2. Try Structure Cache
+  // 1. Try Structure Cache
   const structCached = moduleStructureCache.get(slug);
   if (structCached) {
     if (structCached.expiresAt > now) {
       return structCached.data;
     }
     moduleStructureCache.delete(slug);
+  }
+
+  // 2. Try Full Cache
+  // If we have the full content in memory, use it but STRIP content to avoid payload leak.
+  const fullCached = moduleCache.get(slug);
+  if (fullCached && fullCached.expiresAt > now) {
+    const structure = stripContent(fullCached.data);
+
+    // Cache the derived structure so we don't have to strip it again next time
+    moduleStructureCache.set(slug, {
+      data: structure,
+      expiresAt: now + CACHE_TTL_MS,
+    });
+
+    return structure;
   }
 
   // 3. Fetch from DB (Optimized: No Content)
@@ -168,4 +174,22 @@ export async function getModuleWithContent(slug: string) {
   }
 
   return moduleData;
+}
+
+function stripContent(moduleData: any): any {
+  if (!moduleData) return moduleData;
+  return {
+    ...moduleData,
+    units: moduleData.units?.map((u: any) => ({
+      ...u,
+      lessons: u.lessons?.map((l: any) => ({
+        ...l,
+        activities: l.activities?.map((a: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { content, ...rest } = a;
+          return rest;
+        }),
+      })),
+    })),
+  };
 }
