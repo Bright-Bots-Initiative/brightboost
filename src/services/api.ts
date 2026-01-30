@@ -430,7 +430,10 @@ export const api = {
   },
 
   getProgress: async (options?: { excludeUser?: boolean }) => {
-    const url = new URL(join(API_BASE, "/get-progress"), window.location.origin);
+    const url = new URL(
+      join(API_BASE, "/get-progress"),
+      window.location.origin,
+    );
     if (options?.excludeUser) {
       url.searchParams.append("excludeUser", "true");
     }

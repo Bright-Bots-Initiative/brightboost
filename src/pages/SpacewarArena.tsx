@@ -43,7 +43,9 @@ export default function SpacewarArena() {
   const fireTapRef = useRef(false);
   const hyperspaceTapRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
-  const startPosRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const startPosRef = useRef<{ x: number; y: number; time: number } | null>(
+    null,
+  );
   const lastTapTimeRef = useRef<number>(0);
 
   // Gesture sensitivity constants
@@ -65,7 +67,9 @@ export default function SpacewarArena() {
         const completedSet1 = progressList
           .filter((p: { status: string }) => p.status === "COMPLETED")
           .map((p: { activityId: string }) => p.activityId)
-          .filter((id: string) => STEM1_SET1_IDS.includes(id as typeof STEM1_SET1_IDS[number]));
+          .filter((id: string) =>
+            STEM1_SET1_IDS.includes(id as (typeof STEM1_SET1_IDS)[number]),
+          );
 
         if (avatar) {
           setAvatarConfig({
@@ -157,46 +161,54 @@ export default function SpacewarArena() {
     startPosRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
   }, []);
 
-  const handleGesturePointerMove = useCallback((e: React.PointerEvent) => {
-    if (e.pointerId !== activePointerIdRef.current || !startPosRef.current) return;
+  const handleGesturePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerId !== activePointerIdRef.current || !startPosRef.current)
+        return;
 
-    const dx = e.clientX - startPosRef.current.x;
-    const dy = e.clientY - startPosRef.current.y;
+      const dx = e.clientX - startPosRef.current.x;
+      const dy = e.clientY - startPosRef.current.y;
 
-    // Rotate: left swipe => positive, right swipe => negative (per WebBridge doc)
-    setRotate(Math.max(-1, Math.min(1, -dx / ROTATE_SENS_PX)));
-    // Thrust: drag up (negative dy) beyond threshold
-    setThrust(dy < -THRUST_SENS_PX);
-  }, [ROTATE_SENS_PX, THRUST_SENS_PX]);
+      // Rotate: left swipe => positive, right swipe => negative (per WebBridge doc)
+      setRotate(Math.max(-1, Math.min(1, -dx / ROTATE_SENS_PX)));
+      // Thrust: drag up (negative dy) beyond threshold
+      setThrust(dy < -THRUST_SENS_PX);
+    },
+    [ROTATE_SENS_PX, THRUST_SENS_PX],
+  );
 
-  const handleGesturePointerEnd = useCallback((e: React.PointerEvent) => {
-    if (e.pointerId !== activePointerIdRef.current || !startPosRef.current) return;
+  const handleGesturePointerEnd = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerId !== activePointerIdRef.current || !startPosRef.current)
+        return;
 
-    const dx = e.clientX - startPosRef.current.x;
-    const dy = e.clientY - startPosRef.current.y;
-    const movedDist = Math.sqrt(dx * dx + dy * dy);
+      const dx = e.clientX - startPosRef.current.x;
+      const dy = e.clientY - startPosRef.current.y;
+      const movedDist = Math.sqrt(dx * dx + dy * dy);
 
-    // Check if it was a tap (minimal movement)
-    if (movedDist < TAP_MAX_MOVE_PX) {
-      const now = Date.now();
-      if (now - lastTapTimeRef.current < DOUBLE_TAP_MS) {
-        // Double-tap = hyperspace
-        hyperspaceTapRef.current = true;
-        lastTapTimeRef.current = 0;
-      } else {
-        // Single tap = fire
-        fireTapRef.current = true;
-        lastTapTimeRef.current = now;
+      // Check if it was a tap (minimal movement)
+      if (movedDist < TAP_MAX_MOVE_PX) {
+        const now = Date.now();
+        if (now - lastTapTimeRef.current < DOUBLE_TAP_MS) {
+          // Double-tap = hyperspace
+          hyperspaceTapRef.current = true;
+          lastTapTimeRef.current = 0;
+        } else {
+          // Single tap = fire
+          fireTapRef.current = true;
+          lastTapTimeRef.current = now;
+        }
       }
-    }
 
-    // Reset state
-    setRotate(0);
-    setThrust(false);
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    activePointerIdRef.current = null;
-    startPosRef.current = null;
-  }, [TAP_MAX_MOVE_PX, DOUBLE_TAP_MS]);
+      // Reset state
+      setRotate(0);
+      setThrust(false);
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      activePointerIdRef.current = null;
+      startPosRef.current = null;
+    },
+    [TAP_MAX_MOVE_PX, DOUBLE_TAP_MS],
+  );
 
   const handleRestart = useCallback(() => {
     if (unityInstanceRef.current) {
@@ -410,7 +422,9 @@ export default function SpacewarArena() {
             <div className="space-y-4 text-sm">
               <div>
                 <h4 className="text-blue-400 font-semibold mb-1">Objective</h4>
-                <p className="text-slate-300">First to 5 points wins the match!</p>
+                <p className="text-slate-300">
+                  First to 5 points wins the match!
+                </p>
               </div>
 
               <div>
@@ -471,7 +485,9 @@ export default function SpacewarArena() {
                 <h4 className="text-yellow-400 font-semibold mb-1">Tips</h4>
                 <ul className="text-slate-300 list-disc list-inside">
                   <li>Use thrust sparingly - don't drift into the sun!</li>
-                  <li>Hyperspace teleports you randomly (15% explosion risk)</li>
+                  <li>
+                    Hyperspace teleports you randomly (15% explosion risk)
+                  </li>
                   <li>Lead your shots - missiles travel in straight lines</li>
                 </ul>
               </div>
