@@ -407,14 +407,24 @@ public class GameManager : MonoBehaviour
     {
         isRoundActive = false;
 
+        // Disable controls and gravity during countdown to prevent drift into sun
+        EnableShipControls(false);
+        SetShipGravityEnabled(false);
+
+        // Reset ship positions (zeroes velocity)
+        ResetShips();
+
         // Show round start message
         ShowMessage("Get Ready!");
 
-        // Reset ship positions
-        ResetShips();
-
         // Wait for delay
         yield return new WaitForSeconds(roundStartDelay);
+
+        // Re-zero velocity just before starting (safety)
+        ResetShips();
+
+        // Re-enable gravity
+        SetShipGravityEnabled(true);
 
         // Clear message and start round
         ShowMessage("");
@@ -456,6 +466,23 @@ public class GameManager : MonoBehaviour
     {
         if (player1Ship != null) player1Ship.SetControlsEnabled(enabled);
         if (player2Ship != null) player2Ship.SetControlsEnabled(enabled);
+    }
+
+    /// <summary>
+    /// Enable or disable gravity on ships (used during countdown to prevent drift)
+    /// </summary>
+    private void SetShipGravityEnabled(bool enabled)
+    {
+        if (player1Ship != null)
+        {
+            var g = player1Ship.GetComponent<ShipGravity>();
+            if (g != null) g.enabled = enabled;
+        }
+        if (player2Ship != null)
+        {
+            var g = player2Ship.GetComponent<ShipGravity>();
+            if (g != null) g.enabled = enabled;
+        }
     }
 
     /// <summary>
