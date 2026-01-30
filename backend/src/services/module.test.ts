@@ -95,7 +95,9 @@ describe("Module Service", () => {
   describe("getModuleStructure", () => {
     it("should fetch module from DB on first call using select (no content)", async () => {
       const mockStructure = { slug: "slug-1", title: "Module 1" };
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockStructure as any);
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(
+        mockStructure as any,
+      );
 
       const result = await getModuleStructure("slug-1");
 
@@ -131,7 +133,9 @@ describe("Module Service", () => {
 
     it("should use moduleStructureCache if available", async () => {
       const mockStructure = { slug: "slug-1", title: "Module 1 Structure" };
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(mockStructure as any);
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(
+        mockStructure as any,
+      );
 
       // 1. Populate Structure Cache
       await getModuleStructure("slug-1");

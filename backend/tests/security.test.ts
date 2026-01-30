@@ -7,10 +7,16 @@ describe("Security Middleware", () => {
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
     expect(res.headers["x-dns-prefetch-control"]).toBe("off");
-    expect(res.headers["x-frame-options"]).toBe("SAMEORIGIN");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
     expect(res.headers["strict-transport-security"]).toBeDefined();
     expect(res.headers["x-download-options"]).toBe("noopen");
     expect(res.headers["x-content-type-options"]).toBe("nosniff");
+
+    // Check for hardened CSP
+    const csp = res.headers["content-security-policy"];
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain("form-action 'self'");
   });
 
   it("should have Permissions-Policy header", async () => {

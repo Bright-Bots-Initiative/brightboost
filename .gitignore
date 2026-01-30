@@ -30,3 +30,19 @@ storybook-static/
 GHL.txt
 KEYS.txt
 key.txt
+
+# Unity — project-level generated folders
+unity-*/Library/
+unity-*/Temp/
+unity-*/Obj/
+unity-*/Builds/
+unity-*/Logs/
+unity-*/UserSettings/
+*.csproj
+*.slnx
+*.pidb
+*.unityproj
+# Unity WebGL build artifacts in public (keep .gitkeep)
+public/games/*/Build/*.js
+public/games/*/Build/*.data
+public/games/*/Build/*.wasm

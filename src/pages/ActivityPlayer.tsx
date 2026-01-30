@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
+import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
 import { Check, Zap, Heart, Star, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -453,6 +454,16 @@ export default function ActivityPlayer() {
       return (
         <div className="p-6">
           <SequenceDragDropGame config={content} onComplete={handleComplete} />
+        </div>
+      );
+    }
+    if (key === "rhyme_ride_unity") {
+      return (
+        <div className="p-6">
+          <RhymeRideUnityActivity
+            config={content}
+            onComplete={handleComplete}
+          />
         </div>
       );
     }

@@ -55,7 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(userData);
       setToken(storedToken);
 
-      fetch(join(API_BASE, "/get-progress"), {
+      // ⚡ Bolt Optimization: Exclude progress data to speed up session check
+      fetch(join(API_BASE, "/get-progress?excludeProgress=true"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

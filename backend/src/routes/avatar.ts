@@ -51,48 +51,49 @@ router.post(
   async (req, res) => {
     try {
       const studentId = req.user!.id;
-    const { archetype } = selectArchetypeSchema.parse(req.body);
+      const { archetype } = selectArchetypeSchema.parse(req.body);
 
-    // Check if already exists
-    const existing = await prisma.avatar.findUnique({ where: { studentId } });
-    if (existing) {
-      return res.status(400).json({ error: "Avatar already exists" });
-    }
+      // Check if already exists
+      const existing = await prisma.avatar.findUnique({ where: { studentId } });
+      if (existing) {
+        return res.status(400).json({ error: "Avatar already exists" });
+      }
 
-    // Create avatar
-    const avatar = await prisma.avatar.create({
-      data: {
-        studentId,
-        archetype: archetype as any, // Cast kept to be safe with Prisma types
-        level: 1,
-        xp: 0,
-        hp: 100,
-        energy: 100,
-      },
-    });
-
-    // Unlock default abilities
-    const defaults = await prisma.ability.findMany({
-      where: { archetype: archetype as any, reqLevel: 1 },
-    });
-
-    if (defaults.length > 0) {
-      await prisma.unlockedAbility.createMany({
-        data: defaults.map((ab) => ({
-          avatarId: avatar.id,
-          abilityId: ab.id,
-        })),
+      // Create avatar
+      const avatar = await prisma.avatar.create({
+        data: {
+          studentId,
+          archetype: archetype as any, // Cast kept to be safe with Prisma types
+          level: 1,
+          xp: 0,
+          hp: 100,
+          energy: 100,
+        },
       });
-    }
 
-    res.json({ avatar });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
+      // Unlock default abilities
+      const defaults = await prisma.ability.findMany({
+        where: { archetype: archetype as any, reqLevel: 1 },
+      });
+
+      if (defaults.length > 0) {
+        await prisma.unlockedAbility.createMany({
+          data: defaults.map((ab) => ({
+            avatarId: avatar.id,
+            abilityId: ab.id,
+          })),
+        });
+      }
+
+      res.json({ avatar });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Select archetype error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-    console.error("Select archetype error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 export default router;

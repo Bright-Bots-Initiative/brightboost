@@ -62,6 +62,7 @@
     "caughtUp": "Estás al día. ¡Elige un módulo para seguir aprendiendo!",
     "goToModules": "Ir a Módulos",
     "play": "Jugar",
+    "playActivity": "Jugar {{activity}}",
     "unavailableTitle": "Tablero no disponible",
     "unavailableDesc": "No se pudo cargar tu progreso de aprendizaje."
   },

@@ -11,6 +11,7 @@ interface UnityConfig {
 
 interface UnityWebGLProps {
   basePath: string;
+  buildName?: string;
   config?: UnityConfig;
   onInstanceReady?: (instance: any) => void;
   onRestartRequest?: () => void;
@@ -29,7 +30,7 @@ declare global {
         productName?: string;
         productVersion?: string;
       },
-      onProgress?: (progress: number) => void
+      onProgress?: (progress: number) => void,
     ) => Promise<any>;
   }
 }
@@ -59,7 +60,13 @@ const GAMEPLAY_KEYS = new Set([
   "ControlRight",
 ]);
 
-export default function UnityWebGL({ basePath, config, onInstanceReady, onRestartRequest }: UnityWebGLProps) {
+export default function UnityWebGL({
+  basePath,
+  buildName = "spacewar",
+  config,
+  onInstanceReady,
+  onRestartRequest,
+}: UnityWebGLProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<any>(null);
@@ -79,7 +86,11 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
         if (e.type === "keydown" && e.code === "KeyR" && !e.repeat) {
           // Don't restart if user is typing in an input field
           const target = e.target as HTMLElement;
-          if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+          if (
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable
+          ) {
             return;
           }
 
@@ -96,7 +107,7 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
         }
       }
     },
-    [focused, onRestartRequest]
+    [focused, onRestartRequest],
   );
 
   useEffect(() => {
@@ -104,7 +115,9 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
     window.addEventListener("keydown", handleKeyCapture, { capture: true });
     window.addEventListener("keyup", handleKeyCapture, { capture: true });
     return () => {
-      window.removeEventListener("keydown", handleKeyCapture, { capture: true });
+      window.removeEventListener("keydown", handleKeyCapture, {
+        capture: true,
+      });
       window.removeEventListener("keyup", handleKeyCapture, { capture: true });
     };
   }, [handleKeyCapture]);
@@ -117,7 +130,7 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
       if (!canvasRef.current) return;
 
       // Load the Unity loader script
-      const loaderUrl = `${basePath}/Build/spacewar.loader.js`;
+      const loaderUrl = `${basePath}/Build/${buildName}.loader.js`;
 
       try {
         // Load the Unity loader script directly - rely on script.onerror
@@ -128,7 +141,8 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
 
         await new Promise<void>((resolve, reject) => {
           script!.onload = () => resolve();
-          script!.onerror = () => reject(new Error("Failed to load Unity loader"));
+          script!.onerror = () =>
+            reject(new Error("Failed to load Unity loader"));
           document.body.appendChild(script!);
         });
 
@@ -137,12 +151,12 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
         }
 
         const unityConfig = {
-          dataUrl: `${basePath}/Build/spacewar.data`,
-          frameworkUrl: `${basePath}/Build/spacewar.framework.js`,
-          codeUrl: `${basePath}/Build/spacewar.wasm`,
+          dataUrl: `${basePath}/Build/${buildName}.data`,
+          frameworkUrl: `${basePath}/Build/${buildName}.framework.js`,
+          codeUrl: `${basePath}/Build/${buildName}.wasm`,
           streamingAssetsUrl: `${basePath}/StreamingAssets`,
           companyName: "BrightBoost",
-          productName: "Spacewar",
+          productName: buildName,
           productVersion: "1.0",
         };
 
@@ -151,7 +165,7 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
           unityConfig,
           (p: number) => {
             if (mounted) setProgress(Math.round(p * 100));
-          }
+          },
         );
 
         if (mounted) {
@@ -169,7 +183,7 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
               instance.SendMessage(
                 "WebBridge",
                 "SetPlayerConfig",
-                JSON.stringify(config)
+                JSON.stringify(config),
               );
             } catch (err) {
               console.warn("Failed to send player config to Unity:", err);
@@ -202,18 +216,23 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
         script.parentNode.removeChild(script);
       }
     };
-  }, [basePath, config, onInstanceReady]);
+  }, [basePath, buildName, config, onInstanceReady]);
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-slate-900 rounded-xl p-8 text-center">
-        <div className="text-6xl mb-4">🚀</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Spacewar (vs CPU)</h2>
-        <p className="text-slate-400 mb-4">
-          Game build is not available yet.
-        </p>
+        <div className="text-6xl mb-4">🎮</div>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Game Not Available
+        </h2>
+        <p className="text-slate-400 mb-4">Game build is not available yet.</p>
         <div className="bg-slate-800 rounded-lg p-4 text-sm text-slate-500">
-          <p>Expected files at: <code className="text-slate-400">{basePath}/Build/</code></p>
+          <p>
+            Expected files at:{" "}
+            <code className="text-slate-400">
+              {basePath}/Build/{buildName}.*
+            </code>
+          </p>
         </div>
       </div>
     );
@@ -239,8 +258,8 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
     >
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
-          <div className="text-4xl mb-4">🚀</div>
-          <h2 className="text-xl font-bold text-white mb-4">Loading Spacewar...</h2>
+          <div className="text-4xl mb-4">🎮</div>
+          <h2 className="text-xl font-bold text-white mb-4">Loading game...</h2>
           <div className="w-64 h-3 bg-slate-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-500 transition-all duration-300"
@@ -258,7 +277,9 @@ export default function UnityWebGL({ basePath, config, onInstanceReady, onRestar
         >
           <div className="text-center text-white">
             <p className="text-lg font-semibold">Click to play</p>
-            <p className="text-sm text-slate-300 mt-1">Focus the game to enable controls</p>
+            <p className="text-sm text-slate-300 mt-1">
+              Focus the game to enable controls
+            </p>
           </div>
         </div>
       )}
