@@ -22,7 +22,8 @@ export default function ModuleDetail() {
     if (!slug) return;
     Promise.all([
       api.getModule(slug, { structureOnly: true }),
-      api.getProgress(),
+      // ⚡ Bolt Optimization: Exclude user data to save DB call
+      api.getProgress({ excludeUser: true }),
     ])
       .then(([m, p]) => {
         setModule(m);

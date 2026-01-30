@@ -2,12 +2,20 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { api } from "../services/api";
 import UnityWebGL from "../components/unity/UnityWebGL";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface AvatarData {
   archetype?: string;
   level?: number;
   xp?: number;
   avatarUrl?: string;
+  stem1Set1Completed?: string[];
 }
 
 type Difficulty = "easy" | "normal" | "hard";
@@ -45,15 +53,27 @@ export default function SpacewarArena() {
   const DOUBLE_TAP_MS = 260;
 
   useEffect(() => {
-    const fetchAvatar = async () => {
+    const fetchAvatarAndProgress = async () => {
       try {
-        const avatar = await api.getAvatar();
+        // Fetch avatar and progress in parallel
+        const [avatar, progressList] = await Promise.all([
+          api.getAvatar(),
+          api.getProgress().catch(() => []), // Gracefully handle missing progress
+        ]);
+
+        // Compute completed STEM-1 Set 1 games
+        const completedSet1 = progressList
+          .filter((p: { status: string }) => p.status === "COMPLETED")
+          .map((p: { activityId: string }) => p.activityId)
+          .filter((id: string) => STEM1_SET1_IDS.includes(id as typeof STEM1_SET1_IDS[number]));
+
         if (avatar) {
           setAvatarConfig({
             archetype: avatar.archetype,
             level: avatar.level ?? 1,
             xp: avatar.xp ?? 0,
             avatarUrl: avatar.avatarUrl,
+            stem1Set1Completed: completedSet1,
           });
         } else {
           // Fallback config if no avatar
@@ -61,6 +81,7 @@ export default function SpacewarArena() {
             archetype: "explorer",
             level: 1,
             xp: 0,
+            stem1Set1Completed: completedSet1,
           });
         }
       } catch (err) {
@@ -70,30 +91,34 @@ export default function SpacewarArena() {
           archetype: "explorer",
           level: 1,
           xp: 0,
+          stem1Set1Completed: [],
         });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAvatar();
+    fetchAvatarAndProgress();
   }, []);
 
-  const handleInstanceReady = useCallback((instance: any) => {
-    unityInstanceRef.current = instance;
-    // Set initial CPU mode and difficulty
-    try {
-      instance.SendMessage("WebBridge", "SetOpponentMode", "cpu");
-      instance.SendMessage("WebBridge", "SetCpuDifficulty", difficulty);
+  const handleInstanceReady = useCallback(
+    (instance: any) => {
+      unityInstanceRef.current = instance;
+      // Set initial CPU mode and difficulty
+      try {
+        instance.SendMessage("WebBridge", "SetOpponentMode", "cpu");
+        instance.SendMessage("WebBridge", "SetCpuDifficulty", difficulty);
 
-      // Enable touch controls on touch devices
-      if (isTouch) {
-        instance.SendMessage("WebBridge", "EnableTouchControls", "true");
+        // Enable touch controls on touch devices
+        if (isTouch) {
+          instance.SendMessage("WebBridge", "EnableTouchControls", "true");
+        }
+      } catch (err) {
+        console.warn("Failed to set initial config:", err);
       }
-    } catch (err) {
-      console.warn("Failed to set initial config:", err);
-    }
-  }, [difficulty, isTouch]);
+    },
+    [difficulty, isTouch],
+  );
 
   // Input pump for touch controls (30 fps)
   useEffect(() => {
@@ -114,7 +139,7 @@ export default function SpacewarArena() {
         instance.SendMessage(
           "WebBridge",
           "SetPlayer1Input",
-          JSON.stringify({ rotate, thrust, fire, hyperspace })
+          JSON.stringify({ rotate, thrust, fire, hyperspace }),
         );
       } catch (err) {
         // Silently ignore - instance may not be ready
@@ -187,7 +212,11 @@ export default function SpacewarArena() {
     setDifficulty(newDifficulty);
     if (unityInstanceRef.current) {
       try {
-        unityInstanceRef.current.SendMessage("WebBridge", "SetCpuDifficulty", newDifficulty);
+        unityInstanceRef.current.SendMessage(
+          "WebBridge",
+          "SetCpuDifficulty",
+          newDifficulty,
+        );
       } catch (err) {
         console.warn("Failed to set difficulty:", err);
       }
@@ -212,7 +241,9 @@ export default function SpacewarArena() {
           {/* Difficulty selector */}
           <select
             value={difficulty}
-            onChange={(e) => handleDifficultyChange(e.target.value as Difficulty)}
+            onChange={(e) =>
+              handleDifficultyChange(e.target.value as Difficulty)
+            }
             className="bg-slate-700 text-white text-sm rounded px-2 py-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="easy">Easy</option>
@@ -221,12 +252,103 @@ export default function SpacewarArena() {
           </select>
 
           {/* How to Play button */}
-          <button
-            onClick={() => setShowHelp(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition-colors"
-          >
-            How to Play
-          </button>
+          <Dialog open={showHelp} onOpenChange={setShowHelp}>
+            <DialogTrigger asChild>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition-colors">
+                How to Play
+              </button>
+            </DialogTrigger>
+            <DialogContent className="bg-slate-800 text-white border-slate-700 max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold mb-4">
+                  How to Play
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                <div>
+                  <h4 className="text-blue-400 font-semibold mb-1">
+                    Objective
+                  </h4>
+                  <p className="text-slate-300">
+                    First to 5 points wins the match!
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-blue-400 font-semibold mb-1">Scoring</h4>
+                  <ul className="text-slate-300 list-disc list-inside">
+                    <li>Destroy your opponent with missiles</li>
+                    <li>Your opponent falls into the sun</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-red-400 font-semibold mb-1">Hazards</h4>
+                  <ul className="text-slate-300 list-disc list-inside">
+                    <li>The Sun kills on contact - avoid it!</li>
+                    <li>Gravity constantly pulls you toward the sun</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-green-400 font-semibold mb-1">
+                    {isTouch ? "Mobile Controls" : "Controls"}
+                  </h4>
+                  {isTouch ? (
+                    <div className="bg-slate-700 rounded p-3 text-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <span className="text-slate-400">◀ / ▶</span>
+                        <span>Hold to rotate</span>
+                        <span className="text-slate-400">THRUST</span>
+                        <span>Hold to accelerate</span>
+                        <span className="text-slate-400">FIRE</span>
+                        <span>Hold to shoot</span>
+                        <span className="text-slate-400">HYPER</span>
+                        <span>Tap for hyperspace</span>
+                      </div>
+                      <p className="text-slate-400 mt-2 text-[10px]">
+                        Touch controls appear at bottom of screen
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-700 rounded p-3 font-mono text-xs">
+                      <div className="grid grid-cols-2 gap-2">
+                        <span className="text-slate-400">A / D</span>
+                        <span>Rotate left / right</span>
+                        <span className="text-slate-400">W</span>
+                        <span>Thrust forward</span>
+                        <span className="text-slate-400">Space</span>
+                        <span>Fire missile</span>
+                        <span className="text-slate-400">S</span>
+                        <span>Hyperspace (risky!)</span>
+                        <span className="text-slate-400">R</span>
+                        <span>Restart match</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-yellow-400 font-semibold mb-1">Tips</h4>
+                  <ul className="text-slate-300 list-disc list-inside">
+                    <li>Use thrust sparingly - don't drift into the sun!</li>
+                    <li>
+                      Hyperspace teleports you randomly (15% explosion risk)
+                    </li>
+                    <li>Lead your shots - missiles travel in straight lines</li>
+                  </ul>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowHelp(false)}
+                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors"
+              >
+                Got it!
+              </button>
+            </DialogContent>
+          </Dialog>
 
           {/* Restart button */}
           <button

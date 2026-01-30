@@ -179,7 +179,10 @@ describe("checkUnlocks", () => {
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
     // Mock update
-    prismaMock.avatar.update.mockResolvedValue({ ...preloadedAvatar, level: 6 });
+    prismaMock.avatar.update.mockResolvedValue({
+      ...preloadedAvatar,
+      level: 6,
+    });
 
     const result = await checkUnlocks(studentId, preloadedAvatar);
 

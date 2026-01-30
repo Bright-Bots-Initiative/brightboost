@@ -102,7 +102,8 @@ export default function StudentDashboard() {
         const [av, mods, prog] = await Promise.all([
           api.getAvatar(),
           api.getModules(),
-          api.getProgress(),
+          // ⚡ Bolt Optimization: Exclude user data (already have it via AuthContext) to save DB call
+          api.getProgress({ excludeUser: true }),
         ]);
         if (cancelled) return;
 
@@ -483,6 +484,9 @@ export default function StudentDashboard() {
                           `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
                         )
                       }
+                      aria-label={t("dashboard.playActivity", {
+                        activity: a.activityTitle,
+                      })}
                     >
                       {t("dashboard.play")}
                     </Button>

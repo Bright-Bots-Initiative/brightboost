@@ -76,5 +76,51 @@ describe("Progress Route Security", () => {
       // 2. Verify the response body (which comes from the mock) is clean
       expect(response.body.user).not.toHaveProperty("password");
     });
+
+    it("should fetch progress by default (Legacy Compatibility)", async () => {
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue({ id: "student-123" });
+      // @ts-ignore
+      prismaMock.progress.findMany.mockResolvedValue([{ id: "prog-1" }]);
+
+      const response = await request(app)
+        .get("/api/get-progress")
+        .set("Authorization", "Bearer mock-token-for-mvp");
+
+      expect(response.status).toBe(200);
+      expect(response.body.progress).toHaveLength(1);
+      expect(prismaMock.progress.findMany).toHaveBeenCalled();
+    });
+
+    it("should NOT fetch progress when excludeProgress=true", async () => {
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue({ id: "student-123" });
+      // @ts-ignore
+      prismaMock.progress.findMany.mockResolvedValue([]);
+
+      const response = await request(app)
+        .get("/api/get-progress?excludeProgress=true")
+        .set("Authorization", "Bearer mock-token-for-mvp");
+
+      expect(response.status).toBe(200);
+      expect(response.body.progress).toEqual([]);
+      expect(prismaMock.progress.findMany).not.toHaveBeenCalled();
+    });
+
+    it("should NOT fetch user when excludeUser=true", async () => {
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue({ id: "student-123" }); // Should not be called if optimization works
+      // @ts-ignore
+      prismaMock.progress.findMany.mockResolvedValue([{ id: "prog-1" }]);
+
+      const response = await request(app)
+        .get("/api/get-progress?excludeUser=true")
+        .set("Authorization", "Bearer mock-token-for-mvp");
+
+      expect(response.status).toBe(200);
+      expect(response.body.user).toBeNull();
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+      expect(response.body.progress).toHaveLength(1);
+    });
   });
 });

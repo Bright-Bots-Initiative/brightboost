@@ -27,6 +27,7 @@ import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
 import { UserProfile } from "../services/profileService";
 import AssignmentTable from "@/components/TeacherDashboard/Assignments/AssignmentsTable";
 import { getAssignments } from "@/services/assignmentService";
+import { Button } from "@/components/ui/button";
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -276,14 +277,15 @@ const TeacherClassDetail: React.FC = () => {
             <div id="grade-help" className="sr-only">
               Select the grade level for this class
             </div>
-            <button
+            <Button
               onClick={handleSave}
-              disabled={isSaving}
-              className="bg-brightboost-blue text-white px-4 py-2 rounded hover:bg-brightboost-navy transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+              isLoading={isSaving}
+              loadingText="Saving..."
+              className="bg-brightboost-blue text-white hover:bg-brightboost-navy focus:ring-brightboost-blue"
               aria-describedby={isSaving ? "save-status" : undefined}
             >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
+              Save Changes
+            </Button>
             {isSaving && (
               <div id="save-status" className="sr-only" aria-live="polite">
                 Saving changes, please wait

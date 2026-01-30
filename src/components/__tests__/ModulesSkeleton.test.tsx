@@ -28,6 +28,8 @@ describe("ModulesSkeleton", () => {
     // We can count the number of skeleton elements if we can identify them.
     // Or just check that it renders content.
 
-    expect(container.getElementsByClassName("animate-pulse").length).toBeGreaterThan(0);
+    expect(
+      container.getElementsByClassName("animate-pulse").length,
+    ).toBeGreaterThan(0);
   });
 });

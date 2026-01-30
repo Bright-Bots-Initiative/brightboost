@@ -65,6 +65,16 @@ public class WebBridge : MonoBehaviour
                     config.player2?.level
                 );
 
+                // Apply STEM-1 Set 1 perks for each player (future PvP support)
+                if (config.player1?.stem1Set1Completed != null && config.player1.stem1Set1Completed.Length > 0)
+                {
+                    GameManager.Instance.SetStem1Set1Completed(1, config.player1.stem1Set1Completed);
+                }
+                if (config.player2?.stem1Set1Completed != null && config.player2.stem1Set1Completed.Length > 0)
+                {
+                    GameManager.Instance.SetStem1Set1Completed(2, config.player2.stem1Set1Completed);
+                }
+
                 Debug.Log($"[WebBridge] Configured: P1={p1Archetype}, P2={p2Archetype}");
             }
         }
@@ -101,6 +111,13 @@ public class WebBridge : MonoBehaviour
                     config.level,
                     null
                 );
+
+                // Apply STEM-1 Set 1 perks if present
+                if (config.stem1Set1Completed != null && config.stem1Set1Completed.Length > 0)
+                {
+                    GameManager.Instance.SetStem1Set1Completed(1, config.stem1Set1Completed);
+                    Debug.Log($"[WebBridge] STEM-1 Set 1 completed: {config.stem1Set1Completed.Length} games");
+                }
             }
         }
         catch (System.Exception e)
@@ -303,6 +320,7 @@ public class WebBridge : MonoBehaviour
         public int? level;
         public int? xp;
         public string avatarUrl;
+        public string[] stem1Set1Completed;
     }
 
     [System.Serializable]
@@ -312,6 +330,7 @@ public class WebBridge : MonoBehaviour
         public int? level;
         public int? xp;
         public string avatarUrl;
+        public string[] stem1Set1Completed;
     }
 
     [System.Serializable]

@@ -30,40 +30,49 @@ router.get("/progress", requireAuth, async (req, res) => {
 // Legacy endpoint for AuthContext (supports existing frontend)
 router.get("/get-progress", requireAuth, async (req, res) => {
   // Return format expected by AuthContext
-  // ⚡ Bolt Optimization: Use Promise.all to fetch independent data concurrently
-  const [user, progress] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: req.user!.id },
-      // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        school: true,
-        subject: true,
-        bio: true,
-        grade: true,
-        xp: true,
-        level: true,
-        streak: true,
-        avatarUrl: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.progress.findMany({
-      where: { studentId: req.user!.id },
-      // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
-      select: {
-        id: true,
-        moduleSlug: true,
-        activityId: true,
-        status: true,
-        updatedAt: true,
-      },
-    }),
-  ]);
+  // ⚡ Bolt Optimization: Allow excluding progress to reduce payload size (e.g. for AuthContext)
+  // Default to true (legacy behavior) to prevent breaking other consumers.
+  const excludeProgress = req.query.excludeProgress === "true";
+  const excludeUser = req.query.excludeUser === "true";
+
+  const userPromise = !excludeUser
+    ? prisma.user.findUnique({
+        where: { id: req.user!.id },
+        // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          school: true,
+          subject: true,
+          bio: true,
+          grade: true,
+          xp: true,
+          level: true,
+          streak: true,
+          avatarUrl: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    : Promise.resolve(null);
+
+  const progressPromise = !excludeProgress
+    ? prisma.progress.findMany({
+        where: { studentId: req.user!.id },
+        // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
+        select: {
+          id: true,
+          moduleSlug: true,
+          activityId: true,
+          status: true,
+          updatedAt: true,
+        },
+      })
+    : Promise.resolve([]);
+
+  const [user, progress] = await Promise.all([userPromise, progressPromise]);
   res.json({ user, progress });
 });
 
@@ -78,14 +87,19 @@ router.post("/progress/complete-activity", requireAuth, async (req, res) => {
 
   const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
-  // 0. Fetch Avatar Before (for calculating rewards)
-  // ⚡ Bolt Optimization: Removed redundant abilities count query
-  const avatarBefore = await prisma.avatar.findUnique({ where: { studentId } });
-
-  // 1. Upsert progress
-  const existing = await prisma.progress.findFirst({
-    where: { studentId, activityId },
-  });
+  // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
+  // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
+  const [avatarBefore, existing] = await Promise.all([
+    prisma.avatar.findUnique({ where: { studentId } }),
+    prisma.progress.findUnique({
+      where: {
+        studentId_activityId: {
+          studentId,
+          activityId,
+        },
+      },
+    }),
+  ]);
 
   if (existing && existing.status === ProgressStatus.COMPLETED) {
     // Idempotent return with 0 rewards
