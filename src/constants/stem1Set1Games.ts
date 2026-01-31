@@ -33,7 +33,8 @@ export const STEM1_SET1_NAMES: Record<Stem1Set1GameId, string> = {
 export const STEM1_SET1_PERKS: Record<Stem1Set1GameId, string> = {
   "bounce-buds": "Reduced gravity pull (×0.90)",
   "tank-trek": "Faster thrust (×1.06) and rotation (×1.08)",
-  "quantum-quest": "Shorter hyperspace cooldown (×0.85) and safer jumps (×0.80 risk)",
+  "quantum-quest":
+    "Shorter hyperspace cooldown (×0.85) and safer jumps (×0.80 risk)",
   "gotcha-gears": "Faster fire rate (×0.90 cooldown)",
   "rhyme-ride": "Faster projectiles (×1.10)",
 };
@@ -41,6 +42,8 @@ export const STEM1_SET1_PERKS: Record<Stem1Set1GameId, string> = {
 /**
  * Check if an activity ID is a STEM-1 Set 1 game
  */
-export function isStem1Set1Game(activityId: string): activityId is Stem1Set1GameId {
+export function isStem1Set1Game(
+  activityId: string,
+): activityId is Stem1Set1GameId {
   return STEM1_SET1_IDS.includes(activityId as Stem1Set1GameId);
 }
