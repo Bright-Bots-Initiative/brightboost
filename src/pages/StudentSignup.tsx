@@ -1,13 +1,14 @@
 // src/pages/StudentSignup.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Check, Circle } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { signupStudent } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
+import { Button } from "../components/ui/button";
 
 const StudentSignup: React.FC = () => {
   const [name, setName] = useState("");
@@ -199,24 +200,14 @@ const StudentSignup: React.FC = () => {
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={isLoading}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-brightboost-navy font-bold flex items-center justify-center gap-2 ${
-                  isLoading
-                    ? "bg-brightboost-yellow/70"
-                    : "bg-brightboost-yellow"
-                } transition-colors`}
+                isLoading={isLoading}
+                loadingText="Signing up..."
+                className="button-shadow w-full py-3 px-4 rounded-xl text-brightboost-navy font-bold ui-lift bg-brightboost-yellow hover:bg-brightboost-yellow/90"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Signing up...</span>
-                  </>
-                ) : (
-                  "Sign Up"
-                )}
-              </button>
+                Sign Up
+              </Button>
             </form>
 
             <div className="mt-6 text-center">

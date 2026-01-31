@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
+import { Button } from "../components/ui/button";
 
 const TeacherLogin: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -96,23 +97,14 @@ const TeacherLogin: React.FC = () => {
               placeholder="Enter your password"
             />
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              aria-busy={isLoading}
-              className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ui-lift ${
-                isLoading ? "bg-brightboost-blue/70" : "bg-brightboost-blue"
-              } transition-colors flex items-center justify-center`}
+              isLoading={isLoading}
+              loadingText="Logging in..."
+              className="button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ui-lift bg-brightboost-blue hover:bg-brightboost-blue/90"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                  Logging in...
-                </>
-              ) : (
-                "Login"
-              )}
-            </button>
+              Login
+            </Button>
           </form>
 
           <div className="mt-6 text-center">

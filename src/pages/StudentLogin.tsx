@@ -9,9 +9,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { loginUser } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { Loader2 } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
+import { Button } from "../components/ui/button";
 
 const studentLoginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -122,24 +122,14 @@ const StudentLogin: React.FC = () => {
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={isSubmitting}
-                className={`button-shadow w-full py-3 px-4 rounded-xl text-white font-bold flex items-center justify-center gap-2 ui-lift ${
-                  isSubmitting
-                    ? "bg-brightboost-lightblue/70"
-                    : "bg-brightboost-lightblue"
-                } transition-colors`}
+                isLoading={isSubmitting}
+                loadingText={t("studentLogin.form.loggingIn")}
+                className="button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ui-lift bg-brightboost-lightblue hover:bg-brightboost-lightblue/90"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{t("studentLogin.form.loggingIn")}</span>
-                  </>
-                ) : (
-                  t("studentLogin.form.submitButton")
-                )}
-              </button>
+                {t("studentLogin.form.submitButton")}
+              </Button>
             </form>
 
             <div className="mt-6 text-center">
