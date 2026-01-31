@@ -23,7 +23,7 @@ describe("Security Middleware", () => {
     const res = await request(app).get("/health");
     expect(res.status).toBe(200);
     expect(res.headers["permissions-policy"]).toBe(
-      "geolocation=(), microphone=(), camera=(), payment=()",
+      "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()",
     );
   });
 
