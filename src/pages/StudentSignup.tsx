@@ -16,6 +16,7 @@ const StudentSignup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const { login } = useAuth();
 
   const requirements = [
@@ -139,14 +140,19 @@ const StudentSignup: React.FC = () => {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
                   required
                   className={inputClassName}
                   placeholder="Create a password"
+                  aria-describedby="password-requirements"
                 />
-                {password.length > 0 && (
+                {(password.length > 0 || isPasswordFocused) && (
                   <ul
+                    id="password-requirements"
                     className="mt-2 space-y-1"
                     aria-label="Password requirements"
+                    aria-live="polite"
                   >
                     {requirements.map((req, index) => {
                       const isMet = req.re.test(password);
