@@ -185,7 +185,6 @@ function stripContent(moduleData: any): any {
       lessons: u.lessons?.map((l: any) => ({
         ...l,
         activities: l.activities?.map((a: any) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { content, ...rest } = a;
           return rest;
         }),
