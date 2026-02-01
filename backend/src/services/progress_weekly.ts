@@ -68,11 +68,15 @@ export async function getWeeklyProgress(studentId: string) {
 
   // 1. Requirement: "A placeholder snapshot for the most recent completed week is automatically created."
   const lastCompletedWeekStart = getStartOfLastCompletedWeek(now);
-  await ensureSnapshot(studentId, lastCompletedWeekStart);
 
   // 2. Also ensure current week exists so the user sees *something* for "Weekly Progress"
   const currentWeekStart = getStartOfWeek(now);
-  const currentSnapshot = await ensureSnapshot(studentId, currentWeekStart);
+
+  // ⚡ Bolt Optimization: Ensure snapshots in parallel to reduce latency
+  const [_, currentSnapshot] = await Promise.all([
+    ensureSnapshot(studentId, lastCompletedWeekStart),
+    ensureSnapshot(studentId, currentWeekStart),
+  ]);
 
   return currentSnapshot;
 }
