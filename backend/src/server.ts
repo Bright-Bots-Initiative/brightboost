@@ -59,6 +59,16 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
     // 🛡️ Sentinel: Deny framing to prevent Clickjacking (legacy browsers)
     xFrameOptions: { action: "deny" },
+    // 🛡️ Sentinel: Enforce strict HSTS to prevent downgrade attacks
+    strictTransportSecurity: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    // 🛡️ Sentinel: Set strict referrer policy to protect privacy
+    referrerPolicy: {
+      policy: "strict-origin-when-cross-origin",
+    },
   }),
 );
 
@@ -66,7 +76,7 @@ app.use(
 app.use((_req, res, next) => {
   res.setHeader(
     "Permissions-Policy",
-    "geolocation=(), microphone=(), camera=(), payment=()",
+    "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()",
   );
   next();
 });
