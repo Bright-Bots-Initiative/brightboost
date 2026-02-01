@@ -9,6 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { STEM1_SET1_IDS } from "../constants/stem1Set1Games";
 
 interface AvatarData {
   archetype?: string;
@@ -252,6 +254,7 @@ export default function SpacewarArena() {
         <div className="flex items-center gap-3">
           {/* Difficulty selector */}
           <select
+            aria-label="Select Difficulty"
             value={difficulty}
             onChange={(e) =>
               handleDifficultyChange(e.target.value as Difficulty)
@@ -266,9 +269,9 @@ export default function SpacewarArena() {
           {/* How to Play button */}
           <Dialog open={showHelp} onOpenChange={setShowHelp}>
             <DialogTrigger asChild>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition-colors">
+              <Button variant="primary" size="sm">
                 How to Play
-              </button>
+              </Button>
             </DialogTrigger>
             <DialogContent className="bg-slate-800 text-white border-slate-700 max-w-lg">
               <DialogHeader>
@@ -353,22 +356,24 @@ export default function SpacewarArena() {
                 </div>
               </div>
 
-              <button
+              <Button
+                variant="primary"
                 onClick={() => setShowHelp(false)}
-                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors"
+                className="mt-6 w-full"
               >
                 Got it!
-              </button>
+              </Button>
             </DialogContent>
           </Dialog>
 
           {/* Restart button */}
-          <button
+          <Button
             onClick={handleRestart}
-            className="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium px-3 py-1 rounded transition-colors"
+            size="sm"
+            className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             Restart
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -406,102 +411,6 @@ export default function SpacewarArena() {
           </>
         )}
       </div>
-
-      {/* How to Play Modal */}
-      {showHelp && (
-        <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setShowHelp(false)}
-        >
-          <div
-            className="bg-slate-800 rounded-xl p-6 max-w-lg mx-4 text-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-2xl font-bold mb-4">How to Play</h3>
-
-            <div className="space-y-4 text-sm">
-              <div>
-                <h4 className="text-blue-400 font-semibold mb-1">Objective</h4>
-                <p className="text-slate-300">
-                  First to 5 points wins the match!
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-blue-400 font-semibold mb-1">Scoring</h4>
-                <ul className="text-slate-300 list-disc list-inside">
-                  <li>Destroy your opponent with missiles</li>
-                  <li>Your opponent falls into the sun</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-red-400 font-semibold mb-1">Hazards</h4>
-                <ul className="text-slate-300 list-disc list-inside">
-                  <li>The Sun kills on contact - avoid it!</li>
-                  <li>Gravity constantly pulls you toward the sun</li>
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-green-400 font-semibold mb-1">
-                  {isTouch ? "Mobile Controls" : "Controls"}
-                </h4>
-                {isTouch ? (
-                  <div className="bg-slate-700 rounded p-3 text-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="text-slate-400">Drag ← / →</span>
-                      <span>Rotate ship</span>
-                      <span className="text-slate-400">Drag ↑</span>
-                      <span>Thrust forward</span>
-                      <span className="text-slate-400">Tap</span>
-                      <span>Fire missile</span>
-                      <span className="text-slate-400">Double-tap</span>
-                      <span>Hyperspace (risky!)</span>
-                    </div>
-                    <p className="text-slate-400 mt-2 text-[10px]">
-                      One-thumb gesture controls - drag anywhere on screen
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-slate-700 rounded p-3 font-mono text-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="text-slate-400">A / D</span>
-                      <span>Rotate left / right</span>
-                      <span className="text-slate-400">W</span>
-                      <span>Thrust forward</span>
-                      <span className="text-slate-400">Space</span>
-                      <span>Fire missile</span>
-                      <span className="text-slate-400">S</span>
-                      <span>Hyperspace (risky!)</span>
-                      <span className="text-slate-400">R</span>
-                      <span>Restart match</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="text-yellow-400 font-semibold mb-1">Tips</h4>
-                <ul className="text-slate-300 list-disc list-inside">
-                  <li>Use thrust sparingly - don't drift into the sun!</li>
-                  <li>
-                    Hyperspace teleports you randomly (15% explosion risk)
-                  </li>
-                  <li>Lead your shots - missiles travel in straight lines</li>
-                </ul>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowHelp(false)}
-              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors"
-            >
-              Got it!
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
