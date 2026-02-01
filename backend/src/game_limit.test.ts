@@ -16,6 +16,9 @@ const prismaMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  activity: {
+    findUnique: vi.fn(),
+  },
 }));
 
 vi.mock("@prisma/client", () => {
@@ -58,6 +61,7 @@ describe("Game Action Rate Limiting", () => {
       xp: 0,
       level: 1,
     });
+    prismaMock.activity.findUnique.mockResolvedValue({ id: "act-1" });
 
     // Blast 5 requests (allowed in test env)
     for (let i = 0; i < 5; i++) {
