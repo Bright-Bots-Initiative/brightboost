@@ -7,6 +7,13 @@ export const safeString = z
   .string()
   .regex(/^[^<>]*$/, "Input cannot contain HTML characters (< or >)");
 
+// 🛡️ Sentinel: ID validation for CUIDs/UUIDs
+export const idSchema = z
+  .string()
+  .min(1, "ID is required")
+  .max(50, "ID too long")
+  .regex(/^[a-zA-Z0-9_-]+$/, "Invalid ID format");
+
 export const nameSchema = safeString
   .min(1, "Name is required")
   .max(100, "Name too long");

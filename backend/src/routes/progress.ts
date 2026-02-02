@@ -13,6 +13,8 @@ import { checkUnlocks } from "../services/game";
 import {
   checkpointSchema,
   completeActivitySchema,
+  idSchema,
+  slugSchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 import { GameError } from "../utils/errors";
@@ -221,12 +223,25 @@ router.post(
 router.get("/progress/:studentId", requireAuth, async (req, res) => {
   const studentId = req.params.studentId;
 
+  // 🛡️ Sentinel: Validate student ID format
+  const parseId = idSchema.safeParse(studentId);
+  if (!parseId.success) {
+    return res.status(400).json({ error: "Invalid student ID format" });
+  }
+
   // Authorization check: User can only access their own progress, unless they are admin/teacher
   if (req.user!.id !== studentId && req.user!.role === "student") {
     return res.status(403).json({ error: "forbidden" });
   }
 
   const moduleSlug = (req.query.module as string) || "stem-1";
+
+  // 🛡️ Sentinel: Validate module slug format
+  const parseSlug = slugSchema.safeParse(moduleSlug);
+  if (!parseSlug.success) {
+    return res.status(400).json({ error: "Invalid module slug format" });
+  }
+
   try {
     const result = await getAggregatedProgress(studentId, moduleSlug);
     res.json(result);
