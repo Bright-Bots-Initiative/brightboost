@@ -13,6 +13,12 @@ import { ImageKey } from "@/theme/activityIllustrations";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-sequencing": "module_sequencing",
+  "k2-stem-rhyme-ride": "type_game",
+};
+
+const MODULE_ORDER: Record<string, number> = {
+  "k2-stem-sequencing": 1,
+  "k2-stem-rhyme-ride": 2,
 };
 
 export default function Modules() {
@@ -29,6 +35,11 @@ export default function Modules() {
       .then((data) => {
         // Still exclude specific slug if needed
         const visible = data.filter((m: any) => m.slug !== "stem-1-intro");
+        visible.sort(
+          (a: any, b: any) =>
+            (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
+            a.title.localeCompare(b.title),
+        );
         setModules(visible);
         setError(null);
       })
