@@ -94,7 +94,8 @@ router.post(
 
     // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
-    const [avatarBefore, existing] = await Promise.all([
+    // 🛡️ Sentinel: Verify activity existence to prevent Game Integrity/Infinite Leveling exploit
+    const [avatarBefore, existing, activity] = await Promise.all([
       prisma.avatar.findUnique({ where: { studentId } }),
       prisma.progress.findUnique({
         where: {
@@ -104,7 +105,12 @@ router.post(
           },
         },
       }),
+      prisma.activity.findUnique({ where: { id: activityId } }),
     ]);
+
+    if (!activity) {
+      return res.status(404).json({ error: "Activity not found" });
+    }
 
     if (existing && existing.status === ProgressStatus.COMPLETED) {
       // Idempotent return with 0 rewards
