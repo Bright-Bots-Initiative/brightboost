@@ -44,17 +44,14 @@ describe("Weekly Progress Service", () => {
     // Verify calls
     expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledTimes(2);
 
-    // Check first call (last week)
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(
-      1,
+    // Check calls (order agnostic due to Promise.all)
+    expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } },
       }),
     );
 
-    // Check second call (current week)
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenNthCalledWith(
-      2,
+    expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           studentId_weekStart: { studentId, weekStart: currentWeekStart },
