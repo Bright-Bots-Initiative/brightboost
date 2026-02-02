@@ -111,8 +111,8 @@ describe("Progress Route Input Validation", () => {
       });
       // @ts-ignore
       prismaMock.avatar.update.mockResolvedValue({});
-    // @ts-ignore
-    prismaMock.activity.findUnique.mockResolvedValue({ id: "test-activity" });
+      // @ts-ignore
+      prismaMock.activity.findUnique.mockResolvedValue({ id: "test-activity" });
 
       const response = await request(app)
         .post("/api/progress/complete-activity")
