@@ -26,6 +26,12 @@ router.get("/modules", requireAuth, async (req, res) => {
     // ⚡ Bolt Optimization: Use cached module list with optional server-side filtering
     // This reduces payload size when client only needs specific grade levels (e.g. K-2)
     const modules = await getAllModules({ level });
+
+    // ⚡ Bolt Optimization: Enable client-side caching for 5 minutes
+    res.setHeader("Cache-Control", "private, max-age=300");
+    res.removeHeader("Pragma");
+    res.removeHeader("Expires");
+
     res.json(modules);
   } catch (error) {
     console.error("List modules error:", error);
@@ -55,6 +61,13 @@ router.get("/module/:slug", requireAuth, async (req, res) => {
     // 🛡️ Sentinel: Prevent students from accessing unpublished modules (IDOR fix)
     if (!mod.published && req.user!.role === "student") {
       return res.status(404).json({ error: "not_found" });
+    }
+
+    // ⚡ Bolt Optimization: Enable client-side caching for published modules (5 minutes)
+    if (mod.published) {
+      res.setHeader("Cache-Control", "private, max-age=300");
+      res.removeHeader("Pragma");
+      res.removeHeader("Expires");
     }
 
     res.json(mod);
