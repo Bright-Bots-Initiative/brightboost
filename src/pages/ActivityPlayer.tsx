@@ -367,9 +367,10 @@ export default function ActivityPlayer() {
           <CardContent className="p-6 space-y-6">
             {questions.map((q) => {
               const isWrong = submitted && incorrectIds.includes(q.id);
+              const promptId = `question-prompt-${q.id}`;
               return (
                 <div key={q.id} className="space-y-2">
-                  <div className="font-semibold">
+                  <div className="font-semibold" id={promptId}>
                     {resolveText(t, q.prompt)}
                     {isWrong && (
                       <span className="text-red-500 ml-2 text-sm">
@@ -377,13 +378,18 @@ export default function ActivityPlayer() {
                       </span>
                     )}
                   </div>
-                  <div className="grid gap-2">
+                  <div
+                    className="grid gap-2"
+                    role="group"
+                    aria-labelledby={promptId}
+                  >
                     {resolveChoiceList(t, q.choices).map((c, idx) => {
                       const selected = answers[q.id] === idx;
                       return (
                         <Button
                           key={idx}
                           variant={selected ? "default" : "outline"}
+                          aria-pressed={selected}
                           className={`justify-start ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                           onClick={() => {
                             setAnswers((prev) => ({ ...prev, [q.id]: idx }));
