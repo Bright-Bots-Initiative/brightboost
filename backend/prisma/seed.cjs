@@ -460,7 +460,8 @@ async function main() {
       },
     ],
     review: {
-      keyIdea: "Rhyming words sound the same at the end, like cat/hat and sun/run.",
+      keyIdea:
+        "Rhyming words sound the same at the end, like cat/hat and sun/run.",
       vocab: ["rhyme", "sound", "end"],
     },
   });

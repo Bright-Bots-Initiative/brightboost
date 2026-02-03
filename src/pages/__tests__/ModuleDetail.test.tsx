@@ -113,4 +113,24 @@ describe("ModuleDetail", () => {
     // To TDD this, we should look for the button by label
     expect(screen.getByLabelText("Replay Activity 1")).toBeInTheDocument();
   });
+
+  it("renders accessible loading skeleton", async () => {
+    // Return a promise that never resolves (or delays) to keep it in loading state
+    (api.getModule as any).mockImplementation(() => new Promise(() => {}));
+
+    render(
+      <MemoryRouter initialEntries={["/student/modules/test-module"]}>
+        <Routes>
+          <Route path="/student/modules/:slug" element={<ModuleDetail />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const loadingRegion = screen.getByRole("status");
+    expect(loadingRegion).toHaveAttribute("aria-busy", "true");
+    expect(loadingRegion).toHaveAttribute(
+      "aria-label",
+      "Loading module details",
+    );
+  });
 });

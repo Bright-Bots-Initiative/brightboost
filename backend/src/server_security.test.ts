@@ -39,14 +39,14 @@ describe("Server Security Headers", () => {
   it("should have correct Strict-Transport-Security header", async () => {
     const response = await request(app).get("/health");
     expect(response.headers["strict-transport-security"]).toBe(
-      "max-age=31536000; includeSubDomains; preload"
+      "max-age=31536000; includeSubDomains; preload",
     );
   });
 
   it("should have correct Referrer-Policy header", async () => {
     const response = await request(app).get("/health");
     expect(response.headers["referrer-policy"]).toBe(
-      "strict-origin-when-cross-origin"
+      "strict-origin-when-cross-origin",
     );
   });
 

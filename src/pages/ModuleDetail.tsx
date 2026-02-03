@@ -48,7 +48,13 @@ export default function ModuleDetail() {
 
   if (!module) {
     return (
-      <div className="p-4 max-w-4xl mx-auto space-y-6">
+      <div
+        className="p-4 max-w-4xl mx-auto space-y-6"
+        role="status"
+        aria-busy="true"
+        aria-label="Loading module details"
+      >
+        <span className="sr-only">Loading module details...</span>
         <Skeleton className="h-8 w-1/2" />
         <Skeleton className="h-4 w-3/4" />
         <div className="space-y-6">
