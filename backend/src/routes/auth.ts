@@ -175,6 +175,14 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
       // Even if user is not found, we perform a hash comparison to consume time.
       // This prevents attackers from guessing valid emails based on response time.
       await bcrypt.compare(data.password, DUMMY_HASH);
+
+      // 🛡️ Sentinel: Audit Log Failed Login (User Not Found)
+      await logAudit("LOGIN_FAILED", null, {
+        email: data.email,
+        reason: "user_not_found",
+        ip: req.ip,
+      });
+
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -189,11 +197,18 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     const isValid = await bcrypt.compare(data.password, user.password);
 
     if (!isValid) {
+      // 🛡️ Sentinel: Audit Log Failed Login (Invalid Password)
+      await logAudit("LOGIN_FAILED", user.id, {
+        email: user.email,
+        reason: "invalid_password",
+        ip: req.ip,
+      });
+
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // 🛡️ Sentinel: Audit Log
-    await logAudit("USER_LOGIN", user.id, { email: user.email });
+    await logAudit("USER_LOGIN", user.id, { email: user.email, ip: req.ip });
 
     const token = generateToken(user);
     const { password, ...userWithoutPassword } = user;

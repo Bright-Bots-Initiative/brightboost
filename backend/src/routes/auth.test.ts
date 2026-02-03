@@ -97,6 +97,20 @@ describe("Auth Routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("token");
+
+      // Verify audit log
+      expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: "USER_LOGIN",
+            actorId: "user-123",
+            meta: expect.objectContaining({
+              email: "user@test.com",
+              // ip might be undefined or '::ffff:127.0.0.1' in test environment
+            }),
+          }),
+        }),
+      );
     });
 
     it("should reject plaintext credentials", async () => {
@@ -133,6 +147,46 @@ describe("Auth Routes", () => {
       });
 
       expect(response.status).toBe(401);
+
+      // Verify audit log
+      expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: "LOGIN_FAILED",
+            actorId: "user-123",
+            meta: expect.objectContaining({
+              email: "user@test.com",
+              reason: "invalid_password",
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("should log audit event when user not found", async () => {
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      const response = await request(app).post("/api/login").send({
+        email: "unknown@test.com",
+        password: "password123",
+      });
+
+      expect(response.status).toBe(401);
+
+      // Verify audit log
+      expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: "LOGIN_FAILED",
+            actorId: null,
+            meta: expect.objectContaining({
+              email: "unknown@test.com",
+              reason: "user_not_found",
+            }),
+          }),
+        }),
+      );
     });
   });
 });
