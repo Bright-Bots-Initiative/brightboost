@@ -19,48 +19,27 @@ export function getStartOfLastCompletedWeek(date: Date): Date {
 
 /**
  * Ensures a snapshot exists for the given week. If missing, creates a placeholder.
+ * ⚡ Bolt Optimization: Replaced check-then-create with atomic upsert to reduce DB round trips and race conditions.
  */
 async function ensureSnapshot(studentId: string, weekStart: Date) {
-  const existing = await prisma.weeklySnapshot.findUnique({
+  return await prisma.weeklySnapshot.upsert({
     where: {
       studentId_weekStart: {
         studentId,
         weekStart,
       },
     },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  // Create placeholder
-  try {
-    return await prisma.weeklySnapshot.create({
+    create: {
+      studentId,
+      weekStart,
       data: {
-        studentId,
-        weekStart,
-        data: {
-          xp: 0,
-          timeSpent: 0,
-          lessonsCompleted: 0,
-        },
+        xp: 0,
+        timeSpent: 0,
+        lessonsCompleted: 0,
       },
-    });
-  } catch (e: any) {
-    // If race condition caused unique constraint violation, just fetch it
-    if (e.code === "P2002") {
-      return prisma.weeklySnapshot.findUniqueOrThrow({
-        where: {
-          studentId_weekStart: {
-            studentId,
-            weekStart,
-          },
-        },
-      });
-    }
-    throw e;
-  }
+    },
+    update: {}, // No-op update if it exists
+  });
 }
 
 export async function getWeeklyProgress(studentId: string) {
