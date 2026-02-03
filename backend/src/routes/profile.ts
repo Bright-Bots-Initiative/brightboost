@@ -4,7 +4,7 @@ import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { logAudit } from "../utils/audit";
 import { sensitiveOpsLimiter } from "../utils/security";
-import { nameSchema, safeString } from "../validation/schemas";
+import { nameSchema, safeString, idSchema } from "../validation/schemas";
 
 const router = Router();
 
@@ -64,6 +64,12 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
     const requesterId = req.user!.id;
     const requesterRole = req.user!.role;
     const targetUserId = req.params.id;
+
+    // 🛡️ Sentinel: Validate user ID format
+    const parseId = idSchema.safeParse(targetUserId);
+    if (!parseId.success) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
 
     // Authorization Check
     const isSelf = requesterId === targetUserId;
