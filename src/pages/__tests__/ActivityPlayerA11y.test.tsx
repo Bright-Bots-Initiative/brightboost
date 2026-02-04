@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ActivityPlayer from "../ActivityPlayer";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/services/api";
 import { vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -56,11 +57,13 @@ describe("ActivityPlayer Accessibility", () => {
     (api.getModule as any).mockResolvedValue(mockModule);
 
     render(
-      <MemoryRouter initialEntries={["/student/modules/test-module/lessons/l-1/activities/a-1"]}>
-        <Routes>
-          <Route path="/student/modules/:slug/lessons/:lessonId/activities/:activityId" element={<ActivityPlayer />} />
-        </Routes>
-      </MemoryRouter>
+      <TooltipProvider>
+        <MemoryRouter initialEntries={["/student/modules/test-module/lessons/l-1/activities/a-1"]}>
+          <Routes>
+            <Route path="/student/modules/:slug/lessons/:lessonId/activities/:activityId" element={<ActivityPlayer />} />
+          </Routes>
+        </MemoryRouter>
+      </TooltipProvider>
     );
 
     // Wait for activity to load

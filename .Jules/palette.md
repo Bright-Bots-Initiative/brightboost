@@ -32,3 +32,8 @@
 
 **Learning:** When a button enters a loading state, replacing content with "Loading..." text can break layout for icon-only buttons (`size="icon"`). Also, screen readers benefit from `aria-busy="true"` to understand the state.
 **Action:** Conditionally hide loading text for icon buttons and ensure `aria-busy` is toggled.
+
+## 2024-05-26 - Keyboard Shortcuts & Tooltips
+
+**Learning:** Power users rely on keyboard shortcuts for flow, but they are often invisible. Combining shortcuts (like Arrow Left/Right) with tooltips that explicitly mention them (e.g., "Next Slide (→)") makes the interface discoverable and efficient for everyone.
+**Action:** When adding keyboard navigation, always surface the shortcuts in the UI via tooltips or helper text so users know they exist.
