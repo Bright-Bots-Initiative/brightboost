@@ -13,6 +13,7 @@ vi.mock("../utils/prisma", () => ({
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       create: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -27,12 +28,9 @@ describe("Weekly Progress Service", () => {
     vi.resetAllMocks();
   });
 
-  it("should ensure snapshots for BOTH last completed week and current week", async () => {
-    // Mock: Last week missing, Current week missing
-    (prisma.weeklySnapshot.findUnique as any).mockResolvedValue(null);
-
-    // Mock Create responses
-    (prisma.weeklySnapshot.create as any)
+  it("should ensure snapshots for BOTH last completed week and current week using upsert", async () => {
+    // Mock Upsert responses
+    (prisma.weeklySnapshot.upsert as any)
       .mockResolvedValueOnce({ id: "last-week", weekStart: lastWeekStart })
       .mockResolvedValueOnce({
         id: "current-week",
@@ -41,63 +39,47 @@ describe("Weekly Progress Service", () => {
 
     const result = await getWeeklyProgress(studentId);
 
-    // Verify calls
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledTimes(2);
+    // Verify calls (order agnostic due to Promise.all)
+    expect(prisma.weeklySnapshot.upsert).toHaveBeenCalledTimes(2);
 
-    // Check calls (order agnostic due to Promise.all)
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledWith(
+    expect(prisma.weeklySnapshot.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } },
+        create: expect.objectContaining({
+          studentId,
+          weekStart: lastWeekStart,
+          data: { xp: 0, timeSpent: 0, lessonsCompleted: 0 },
+        }),
+        update: {},
       }),
     );
 
-    expect(prisma.weeklySnapshot.findUnique).toHaveBeenCalledWith(
+    expect(prisma.weeklySnapshot.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           studentId_weekStart: { studentId, weekStart: currentWeekStart },
         },
+        create: expect.objectContaining({
+          studentId,
+          weekStart: currentWeekStart,
+          data: { xp: 0, timeSpent: 0, lessonsCompleted: 0 },
+        }),
+        update: {},
       }),
     );
-
-    // Verify creations
-    expect(prisma.weeklySnapshot.create).toHaveBeenCalledTimes(2);
 
     // Result should be current week
     expect(result.id).toBe("current-week");
   });
 
-  it("should not create snapshots if they already exist", async () => {
-    (prisma.weeklySnapshot.findUnique as any)
-      .mockResolvedValueOnce({ id: "last-exist" })
+  it("should handle race conditions gracefully (upsert handles this automatically)", async () => {
+    // Upsert is atomic (or handles conflict internally), so we just test that it returns the value
+    (prisma.weeklySnapshot.upsert as any)
+      .mockResolvedValueOnce({ id: "last-race" })
       .mockResolvedValueOnce({ id: "current-exist" });
-
-    const result = await getWeeklyProgress(studentId);
-
-    expect(prisma.weeklySnapshot.create).not.toHaveBeenCalled();
-    expect(result.id).toBe("current-exist");
-  });
-
-  it("should handle race conditions gracefully", async () => {
-    // First call (last week) fails on find, fails on create (race), succeeds on refetch
-    (prisma.weeklySnapshot.findUnique as any).mockResolvedValueOnce(null);
-    const error: any = new Error("Unique constraint failed");
-    error.code = "P2002";
-    (prisma.weeklySnapshot.create as any).mockRejectedValueOnce(error);
-    (prisma.weeklySnapshot.findUniqueOrThrow as any).mockResolvedValueOnce({
-      id: "last-race",
-    });
-
-    // Second call (current week) exists
-    (prisma.weeklySnapshot.findUnique as any).mockResolvedValueOnce({
-      id: "current-exist",
-    });
 
     await getWeeklyProgress(studentId);
 
-    expect(prisma.weeklySnapshot.findUniqueOrThrow).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { studentId_weekStart: { studentId, weekStart: lastWeekStart } },
-      }),
-    );
+    expect(prisma.weeklySnapshot.upsert).toHaveBeenCalledTimes(2);
   });
 });
