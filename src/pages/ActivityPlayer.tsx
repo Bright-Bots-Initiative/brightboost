@@ -132,7 +132,10 @@ export default function ActivityPlayer() {
         timeSpentS: getTimeSpentS(),
       });
       setCompletionData(res);
-      toast({ title: "Activity Completed!", description: "+50 XP" });
+      toast({
+        title: "Activity Completed!",
+        description: res.reward?.xpDelta ? `+${res.reward.xpDelta} XP` : "Progress saved!"
+      });
     } catch {
       toast({
         title: "Error",

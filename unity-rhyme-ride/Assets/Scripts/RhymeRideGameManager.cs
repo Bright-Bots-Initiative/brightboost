@@ -26,6 +26,9 @@ public class RhymeRideGameManager : MonoBehaviour
     [SerializeField] private Text timerText;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private Text gameOverText;
+    [SerializeField] private GameObject introPanel;
+    [SerializeField] private Button startButton;
+    [SerializeField] private Text hintText;
 
     // Config from JavaScript
     private string sessionId;
@@ -43,6 +46,7 @@ public class RhymeRideGameManager : MonoBehaviour
     private bool gameActive = false;
     private bool roundActive = false;
     private bool completionNotified = false;
+    private bool waitingForStart = false;
 
     private List<RhymeRideTarget> activeTargets = new List<RhymeRideTarget>();
     private WebBridge.RoundData currentRound;
@@ -65,6 +69,14 @@ public class RhymeRideGameManager : MonoBehaviour
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false);
+        }
+        if (introPanel != null)
+        {
+            introPanel.SetActive(false);
+        }
+        if (hintText != null)
+        {
+            hintText.gameObject.SetActive(false);
         }
     }
 
@@ -106,6 +118,39 @@ public class RhymeRideGameManager : MonoBehaviour
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false);
+        }
+
+        // Show intro panel and wait for start button
+        if (introPanel != null)
+        {
+            introPanel.SetActive(true);
+            waitingForStart = true;
+
+            // Wire up start button
+            if (startButton != null)
+            {
+                startButton.onClick.RemoveAllListeners();
+                startButton.onClick.AddListener(OnStartButtonClicked);
+            }
+        }
+        else
+        {
+            StartGame();
+        }
+    }
+
+    /// <summary>
+    /// Called when player clicks the Start button on intro panel.
+    /// </summary>
+    public void OnStartButtonClicked()
+    {
+        if (!waitingForStart) return;
+
+        waitingForStart = false;
+
+        if (introPanel != null)
+        {
+            introPanel.SetActive(false);
         }
 
         StartGame();
@@ -191,7 +236,7 @@ public class RhymeRideGameManager : MonoBehaviour
         // Update prompt display
         if (promptText != null)
         {
-            promptText.text = $"Find the rhyme for: {round.promptWord}";
+            promptText.text = $"Tap the rhyme for: {round.promptWord.ToUpper()}";
         }
 
         // Shuffle lanes for variety
@@ -368,6 +413,11 @@ public class RhymeRideGameManager : MonoBehaviour
         if (livesText != null)
         {
             livesText.text = $"Lives: {lives}";
+        }
+        // Show hint text during active gameplay
+        if (hintText != null)
+        {
+            hintText.gameObject.SetActive(gameActive && roundActive);
         }
     }
 

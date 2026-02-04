@@ -9,7 +9,11 @@ const ProgressStatus = {
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { requireAuth } from "../utils/auth";
 import { gameActionLimiter } from "../utils/security";
-import { checkUnlocks } from "../services/game";
+import {
+  checkUnlocks,
+  ensureAvatarWithBackfill,
+  XP_PER_ACTIVITY,
+} from "../services/game";
 import {
   checkpointSchema,
   completeActivitySchema,
@@ -94,11 +98,10 @@ router.post(
 
     const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
 
-    // 0 & 1. Fetch Avatar Before (for calculating rewards) and Existing Progress concurrently
+    // 0. Fetch Existing Progress and Activity concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
     // 🛡️ Sentinel: Verify activity existence to prevent Game Integrity/Infinite Leveling exploit
-    const [avatarBefore, existing, activity] = await Promise.all([
-      prisma.avatar.findUnique({ where: { studentId } }),
+    const [existing, activity] = await Promise.all([
       prisma.progress.findUnique({
         where: {
           studentId_activityId: {
@@ -114,8 +117,34 @@ router.post(
       return res.status(404).json({ error: "Activity not found" });
     }
 
+    // 1. Ensure avatar exists (with backfill if needed)
+    const {
+      avatar: avatarBefore,
+      wasBackfilled,
+      backfilledXp,
+    } = await ensureAvatarWithBackfill(studentId);
+
+    // Handle idempotent case: activity already completed
     if (existing && existing.status === ProgressStatus.COMPLETED) {
-      // Idempotent return with 0 rewards
+      // If avatar was just backfilled, return the backfilled XP as the delta
+      // This handles the edge case where user completed activities without an avatar
+      // and later triggers completion again
+      if (wasBackfilled) {
+        return res.json({
+          message: "Already completed (avatar backfilled)",
+          progress: existing,
+          reward: {
+            xpDelta: backfilledXp,
+            levelDelta: avatarBefore.level - 1, // Delta from level 1
+            energyDelta: 0,
+            hpDelta: 0,
+            newAbilitiesDelta: 0,
+          },
+          avatar: avatarBefore,
+        });
+      }
+
+      // Normal idempotent return with 0 rewards
       return res.json({
         message: "Already completed",
         progress: existing,
@@ -130,6 +159,7 @@ router.post(
       });
     }
 
+    // 2. Create or update progress record
     let finalProgress;
     if (existing) {
       finalProgress = await prisma.progress.update({
@@ -152,56 +182,50 @@ router.post(
       });
     }
 
-    // 2. Apply Rewards & Check Unlocks (only if avatar exists)
-    let avatarAfter: any = null;
+    // 3. Apply Rewards & Check Unlocks
+    let avatarAfter: any = avatarBefore;
     let newAbilitiesFromUnlock = 0;
 
-    if (avatarBefore) {
-      try {
-        // Award XP + Energy + HP
-        const energyGain = 5;
-        const hpGain = 2;
-        const currentEnergy = avatarBefore.energy || 0;
-        const currentHp = avatarBefore.hp || 0;
+    try {
+      // Award XP + Energy + HP
+      const energyGain = 5;
+      const hpGain = 2;
+      const currentEnergy = avatarBefore.energy || 0;
+      const currentHp = avatarBefore.hp || 0;
 
-        // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
-        const updatedAvatar = await prisma.avatar.update({
-          where: { studentId },
-          data: {
-            xp: { increment: 50 },
-            energy: Math.min(100, currentEnergy + energyGain),
-            hp: Math.min(100, currentHp + hpGain),
-          },
-        });
+      // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
+      const updatedAvatar = await prisma.avatar.update({
+        where: { studentId },
+        data: {
+          xp: { increment: XP_PER_ACTIVITY },
+          energy: Math.min(100, currentEnergy + energyGain),
+          hp: Math.min(100, currentHp + hpGain),
+        },
+      });
 
-        // Check for level up (may add more XP and unlocks)
-        const result = await checkUnlocks(studentId, updatedAvatar);
-        if (result) {
-          avatarAfter = result.avatar;
-          newAbilitiesFromUnlock = result.newAbilitiesCount;
-        } else {
-          avatarAfter = updatedAvatar;
-        }
-      } catch (e) {
-        console.warn("Could not give rewards to avatar", e);
+      // Check for level up (may add more XP and unlocks)
+      const result = await checkUnlocks(studentId, updatedAvatar);
+      if (result) {
+        avatarAfter = result.avatar;
+        newAbilitiesFromUnlock = result.newAbilitiesCount;
+      } else {
+        avatarAfter = updatedAvatar;
       }
+    } catch (e) {
+      console.warn("Could not give rewards to avatar", e);
     }
 
-    // 3. Fetch Avatar & Abilities After - REMOVED (Bolt Optimization: use returned values)
-
     // 4. Calculate Deltas
-    let xpDelta = 0;
-    let levelDelta = 0;
-    let energyDelta = 0;
-    let hpDelta = 0;
-    let newAbilitiesDelta = 0;
+    let xpDelta = avatarAfter.xp - avatarBefore.xp;
+    let levelDelta = avatarAfter.level - avatarBefore.level;
+    let energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
+    let hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
+    let newAbilitiesDelta = newAbilitiesFromUnlock;
 
-    if (avatarBefore && avatarAfter) {
-      xpDelta = avatarAfter.xp - avatarBefore.xp;
-      levelDelta = avatarAfter.level - avatarBefore.level;
-      energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
-      hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
-      newAbilitiesDelta = newAbilitiesFromUnlock;
+    // If avatar was backfilled, add backfilled XP to delta for accurate display
+    if (wasBackfilled) {
+      xpDelta += backfilledXp;
+      levelDelta = avatarAfter.level - 1; // Show level gained from level 1
     }
 
     res.json({

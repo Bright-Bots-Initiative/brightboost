@@ -65,9 +65,10 @@ namespace BrightBoost
             var promptObj = new GameObject("PromptText");
             promptObj.transform.SetParent(hudPanel.transform, false);
             var promptText = promptObj.AddComponent<Text>();
-            promptText.text = "Find the rhyme for: ???";
+            promptText.text = "Tap the rhyme for: ???";
             promptText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             promptText.fontSize = 28;
+            promptText.fontStyle = FontStyle.Bold;
             promptText.color = Color.yellow;
             promptText.alignment = TextAnchor.MiddleCenter;
             var promptRect = promptObj.GetComponent<RectTransform>();
@@ -75,6 +76,13 @@ namespace BrightBoost
             promptRect.anchorMax = new Vector2(0.8f, 1);
             promptRect.offsetMin = Vector2.zero;
             promptRect.offsetMax = Vector2.zero;
+            // Add Outline for better visibility
+            var promptOutline = promptObj.AddComponent<Outline>();
+            promptOutline.effectColor = new Color(0, 0, 0, 0.8f);
+            promptOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            var promptShadow = promptObj.AddComponent<Shadow>();
+            promptShadow.effectColor = new Color(0, 0, 0, 0.5f);
+            promptShadow.effectDistance = new Vector2(2, -2);
 
             // Score Text (left)
             var scoreObj = new GameObject("ScoreText");
@@ -83,6 +91,7 @@ namespace BrightBoost
             scoreText.text = "Score: 0";
             scoreText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             scoreText.fontSize = 24;
+            scoreText.fontStyle = FontStyle.Bold;
             scoreText.color = Color.white;
             scoreText.alignment = TextAnchor.MiddleLeft;
             var scoreRect = scoreObj.GetComponent<RectTransform>();
@@ -90,6 +99,9 @@ namespace BrightBoost
             scoreRect.anchorMax = new Vector2(0.2f, 1);
             scoreRect.offsetMin = new Vector2(10, 0);
             scoreRect.offsetMax = Vector2.zero;
+            var scoreOutline = scoreObj.AddComponent<Outline>();
+            scoreOutline.effectColor = new Color(0, 0, 0, 0.8f);
+            scoreOutline.effectDistance = new Vector2(1, -1);
 
             // Lives Text (right)
             var livesObj = new GameObject("LivesText");
@@ -98,6 +110,7 @@ namespace BrightBoost
             livesText.text = "Lives: 3";
             livesText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             livesText.fontSize = 24;
+            livesText.fontStyle = FontStyle.Bold;
             livesText.color = new Color(1f, 0.4f, 0.4f);
             livesText.alignment = TextAnchor.MiddleRight;
             var livesRect = livesObj.GetComponent<RectTransform>();
@@ -105,6 +118,9 @@ namespace BrightBoost
             livesRect.anchorMax = new Vector2(1, 1);
             livesRect.offsetMin = Vector2.zero;
             livesRect.offsetMax = new Vector2(-10, 0);
+            var livesOutline = livesObj.AddComponent<Outline>();
+            livesOutline.effectColor = new Color(0, 0, 0, 0.8f);
+            livesOutline.effectDistance = new Vector2(1, -1);
 
             // Timer Text (below prompt)
             var timerObj = new GameObject("TimerText");
@@ -113,6 +129,7 @@ namespace BrightBoost
             timerText.text = "";
             timerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             timerText.fontSize = 20;
+            timerText.fontStyle = FontStyle.Bold;
             timerText.color = Color.cyan;
             timerText.alignment = TextAnchor.UpperCenter;
             var timerRect = timerObj.GetComponent<RectTransform>();
@@ -121,6 +138,26 @@ namespace BrightBoost
             timerRect.pivot = new Vector2(0.5f, 1);
             timerRect.anchoredPosition = new Vector2(0, -100);
             timerRect.sizeDelta = new Vector2(200, 40);
+            var timerOutline = timerObj.AddComponent<Outline>();
+            timerOutline.effectColor = new Color(0, 0, 0, 0.8f);
+            timerOutline.effectDistance = new Vector2(1, -1);
+
+            // Hint Text (persistent during play, bottom center)
+            var hintObj = new GameObject("HintText");
+            hintObj.transform.SetParent(canvasObj.transform, false);
+            var hintText = hintObj.AddComponent<Text>();
+            hintText.text = "Tap the rhyming word!";
+            hintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            hintText.fontSize = 16;
+            hintText.color = new Color(0.7f, 0.8f, 0.9f, 0.8f);
+            hintText.alignment = TextAnchor.LowerCenter;
+            var hintRect = hintObj.GetComponent<RectTransform>();
+            hintRect.anchorMin = new Vector2(0.5f, 0);
+            hintRect.anchorMax = new Vector2(0.5f, 0);
+            hintRect.pivot = new Vector2(0.5f, 0);
+            hintRect.anchoredPosition = new Vector2(0, 20);
+            hintRect.sizeDelta = new Vector2(300, 30);
+            hintObj.SetActive(false);
 
             // Game Over Panel
             var gameOverPanel = new GameObject("GameOverPanel");
@@ -148,6 +185,84 @@ namespace BrightBoost
             gameOverRect.offsetMin = Vector2.zero;
             gameOverRect.offsetMax = Vector2.zero;
 
+            // Intro Panel (shown before game starts)
+            var introPanel = new GameObject("IntroPanel");
+            introPanel.transform.SetParent(canvasObj.transform, false);
+            var introPanelImage = introPanel.AddComponent<Image>();
+            introPanelImage.color = new Color(0.05f, 0.1f, 0.2f, 0.95f);
+            var introPanelRect = introPanel.GetComponent<RectTransform>();
+            introPanelRect.anchorMin = Vector2.zero;
+            introPanelRect.anchorMax = Vector2.one;
+            introPanelRect.offsetMin = Vector2.zero;
+            introPanelRect.offsetMax = Vector2.zero;
+
+            // Intro Title
+            var introTitleObj = new GameObject("IntroTitle");
+            introTitleObj.transform.SetParent(introPanel.transform, false);
+            var introTitle = introTitleObj.AddComponent<Text>();
+            introTitle.text = "Rhyme & Ride";
+            introTitle.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            introTitle.fontSize = 48;
+            introTitle.fontStyle = FontStyle.Bold;
+            introTitle.color = Color.yellow;
+            introTitle.alignment = TextAnchor.MiddleCenter;
+            var introTitleRect = introTitleObj.GetComponent<RectTransform>();
+            introTitleRect.anchorMin = new Vector2(0, 0.65f);
+            introTitleRect.anchorMax = new Vector2(1, 0.85f);
+            introTitleRect.offsetMin = Vector2.zero;
+            introTitleRect.offsetMax = Vector2.zero;
+            var titleOutline = introTitleObj.AddComponent<Outline>();
+            titleOutline.effectColor = new Color(0.1f, 0.1f, 0.3f, 1f);
+            titleOutline.effectDistance = new Vector2(2, -2);
+            var titleShadow = introTitleObj.AddComponent<Shadow>();
+            titleShadow.effectColor = new Color(0, 0, 0, 0.5f);
+            titleShadow.effectDistance = new Vector2(3, -3);
+
+            // Intro Instructions
+            var introInstrObj = new GameObject("IntroInstructions");
+            introInstrObj.transform.SetParent(introPanel.transform, false);
+            var introInstr = introInstrObj.AddComponent<Text>();
+            introInstr.text = "Tap the word that RHYMES\nwith the prompt word!\n\nAvoid wrong words - they cost a life!";
+            introInstr.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            introInstr.fontSize = 24;
+            introInstr.color = Color.white;
+            introInstr.alignment = TextAnchor.MiddleCenter;
+            var introInstrRect = introInstrObj.GetComponent<RectTransform>();
+            introInstrRect.anchorMin = new Vector2(0.1f, 0.35f);
+            introInstrRect.anchorMax = new Vector2(0.9f, 0.6f);
+            introInstrRect.offsetMin = Vector2.zero;
+            introInstrRect.offsetMax = Vector2.zero;
+
+            // Start Button
+            var startBtnObj = new GameObject("StartButton");
+            startBtnObj.transform.SetParent(introPanel.transform, false);
+            var startBtn = startBtnObj.AddComponent<Button>();
+            var startBtnImage = startBtnObj.AddComponent<Image>();
+            startBtnImage.color = new Color(0.2f, 0.7f, 0.3f);
+            var startBtnRect = startBtnObj.GetComponent<RectTransform>();
+            startBtnRect.anchorMin = new Vector2(0.3f, 0.15f);
+            startBtnRect.anchorMax = new Vector2(0.7f, 0.28f);
+            startBtnRect.offsetMin = Vector2.zero;
+            startBtnRect.offsetMax = Vector2.zero;
+
+            // Start Button Text
+            var startBtnTextObj = new GameObject("Text");
+            startBtnTextObj.transform.SetParent(startBtnObj.transform, false);
+            var startBtnText = startBtnTextObj.AddComponent<Text>();
+            startBtnText.text = "START";
+            startBtnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            startBtnText.fontSize = 32;
+            startBtnText.fontStyle = FontStyle.Bold;
+            startBtnText.color = Color.white;
+            startBtnText.alignment = TextAnchor.MiddleCenter;
+            var startBtnTextRect = startBtnTextObj.GetComponent<RectTransform>();
+            startBtnTextRect.anchorMin = Vector2.zero;
+            startBtnTextRect.anchorMax = Vector2.one;
+            startBtnTextRect.offsetMin = Vector2.zero;
+            startBtnTextRect.offsetMax = Vector2.zero;
+
+            introPanel.SetActive(false);
+
             // Create Target Prefab
             var targetPrefab = CreateTargetPrefab();
 
@@ -163,6 +278,9 @@ namespace BrightBoost
             so.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
             so.FindProperty("gameOverText").objectReferenceValue = gameOverText;
             so.FindProperty("targetPrefab").objectReferenceValue = targetPrefab;
+            so.FindProperty("introPanel").objectReferenceValue = introPanel;
+            so.FindProperty("startButton").objectReferenceValue = startBtn;
+            so.FindProperty("hintText").objectReferenceValue = hintText;
             so.ApplyModifiedProperties();
 
             // Save scene
@@ -218,12 +336,24 @@ namespace BrightBoost
             var collider = targetObj.AddComponent<BoxCollider2D>();
             collider.size = new Vector2(2.5f, 1.2f);
 
+            // Shadow text (behind main text for depth effect)
+            var shadowTextObj = new GameObject("ShadowText");
+            shadowTextObj.transform.SetParent(targetObj.transform, false);
+            var shadowTextMesh = shadowTextObj.AddComponent<TextMesh>();
+            shadowTextMesh.text = "WORD";
+            shadowTextMesh.fontSize = 48;
+            shadowTextMesh.characterSize = 0.08f;
+            shadowTextMesh.anchor = TextAnchor.MiddleCenter;
+            shadowTextMesh.alignment = TextAlignment.Center;
+            shadowTextMesh.color = new Color(0, 0, 0, 0.5f);
+            shadowTextObj.transform.localPosition = new Vector3(0.05f, -0.05f, 0f);
+
             // Word text (using TextMesh for world space)
             var textObj = new GameObject("WordText");
             textObj.transform.SetParent(targetObj.transform, false);
             var textMesh = textObj.AddComponent<TextMesh>();
             textMesh.text = "WORD";
-            textMesh.fontSize = 48;
+            textMesh.fontSize = 52;
             textMesh.characterSize = 0.08f;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;
@@ -237,6 +367,7 @@ namespace BrightBoost
             var so = new SerializedObject(target);
             so.FindProperty("backgroundSprite").objectReferenceValue = bgSprite;
             so.FindProperty("wordText").objectReferenceValue = textMesh;
+            so.FindProperty("shadowText").objectReferenceValue = shadowTextMesh;
             so.ApplyModifiedProperties();
 
             // Save as prefab

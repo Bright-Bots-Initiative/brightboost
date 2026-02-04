@@ -9,6 +9,7 @@ public class RhymeRideTarget : MonoBehaviour
     [Header("Visual References")]
     [SerializeField] private SpriteRenderer backgroundSprite;
     [SerializeField] private TextMesh wordText;
+    [SerializeField] private TextMesh shadowText;
 
     [Header("Colors")]
     [SerializeField] private Color normalColor = new Color(0.3f, 0.5f, 0.8f);
@@ -38,6 +39,11 @@ public class RhymeRideTarget : MonoBehaviour
         if (wordText != null)
         {
             wordText.text = word;
+        }
+
+        if (shadowText != null)
+        {
+            shadowText.text = word;
         }
 
         if (backgroundSprite != null)

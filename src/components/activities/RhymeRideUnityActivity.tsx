@@ -1,9 +1,19 @@
 // src/components/activities/RhymeRideUnityActivity.tsx
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import UnityWebGL from "../unity/UnityWebGL";
 import { useTranslation } from "react-i18next";
 import { LocalizedField, resolveText } from "@/utils/localizedContent";
 import ActivityHeader from "@/components/activities/ActivityHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { HelpCircle } from "lucide-react";
 
 interface RhymeRideRound {
   promptWord: LocalizedField;
@@ -35,6 +45,7 @@ export default function RhymeRideUnityActivity({
   const { t } = useTranslation();
   const unityInstanceRef = useRef<any>(null);
   const alreadyCompletedRef = useRef(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Generate stable sessionId for this activity instance
   const sessionId = useMemo(() => crypto.randomUUID(), []);
@@ -118,6 +129,61 @@ export default function RhymeRideUnityActivity({
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <ActivityHeader title="Rhyme & Ride" visualKey="game" />
+
+      {/* Instructions Card */}
+      <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 p-2 bg-indigo-100 rounded-full">
+              <HelpCircle className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-indigo-900 mb-1">How to Play</h3>
+              <p className="text-sm text-indigo-700">
+                Words scroll across the screen. Tap or click the word that rhymes with the prompt word shown at the top!
+              </p>
+            </div>
+            <Dialog open={showHelp} onOpenChange={setShowHelp}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  More Details
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Rhyme & Ride Instructions</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <h4 className="font-semibold text-blue-600 mb-1">Objective</h4>
+                    <p className="text-gray-600">Find the word that rhymes with the prompt word before time runs out!</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-green-600 mb-1">How to Play</h4>
+                    <ul className="text-gray-600 list-disc list-inside space-y-1">
+                      <li>Look at the prompt word at the top of the screen</li>
+                      <li>Words will scroll across in different lanes</li>
+                      <li>Tap/click the word that rhymes with the prompt</li>
+                      <li>Avoid clicking wrong words - you'll lose a life!</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-600 mb-1">Tips</h4>
+                    <ul className="text-gray-600 list-disc list-inside space-y-1">
+                      <li>Watch out for tricky words that look similar but don't rhyme</li>
+                      <li>Don't let the correct answer scroll off-screen!</li>
+                    </ul>
+                  </div>
+                </div>
+                <Button onClick={() => setShowHelp(false)} className="mt-4 w-full">
+                  Got it!
+                </Button>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="w-full h-[60vh]">
         <UnityWebGL
           basePath="/games/rhyme-ride"
