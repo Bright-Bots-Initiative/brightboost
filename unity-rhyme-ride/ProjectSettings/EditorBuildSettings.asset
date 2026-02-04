@@ -4,6 +4,9 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/RhymeRideMain.unity
+    guid: 4f674fc98e4ca204d9a774aea91e4d7e
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
