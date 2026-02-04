@@ -28,12 +28,15 @@ async function getDbConnection(): Promise<Pool> {
     console.log("Creating new database connection pool...");
     let secret: DatabaseSecret;
     if (process.env.NODE_ENV === "local") {
+      if (!process.env.DB_PASSWORD) {
+        throw new Error("DB_PASSWORD environment variable is required");
+      }
       secret = {
         host: "host.docker.internal",
         port: 5435,
         dbname: "brightboost",
         username: "postgres",
-        password: "brightboostpass",
+        password: process.env.DB_PASSWORD,
       };
     } else {
       const secretArn = process.env.DATABASE_SECRET_ARN;
@@ -159,7 +162,11 @@ export const handler = async (
       };
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET environment variable is required");
+    }
+
     const token = jwt.sign(
       {
         id: user.id,
