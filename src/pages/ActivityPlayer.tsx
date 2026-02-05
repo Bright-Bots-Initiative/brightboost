@@ -18,6 +18,11 @@ import ActivityHeader from "@/components/activities/ActivityHeader";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type StorySlide = {
   id: string;
@@ -52,6 +57,11 @@ export default function ActivityPlayer() {
   const [activity, setActivity] = useState<any>(null);
   const [content, setContent] = useState<any>(null);
 
+  const slides: StorySlide[] =
+    activity?.kind === "INFO" && Array.isArray(content?.slides)
+      ? content.slides
+      : [];
+
   // INFO state
   const [slideIndex, setSlideIndex] = useState(0);
   const [mode, setMode] = useState<"story" | "quiz">("story");
@@ -65,6 +75,29 @@ export default function ActivityPlayer() {
   useEffect(() => {
     startMsRef.current = Date.now();
   }, [slug, lessonId, activityId]);
+
+  useEffect(() => {
+    if (mode !== "story" || slides.length === 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+
+      if (e.key === "ArrowLeft") {
+        setSlideIndex((i) => Math.max(0, i - 1));
+      } else if (e.key === "ArrowRight") {
+        if (slideIndex < slides.length - 1) {
+          setSlideIndex((i) => Math.min(slides.length - 1, i + 1));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mode, slides.length, slideIndex]);
 
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
@@ -251,9 +284,7 @@ export default function ActivityPlayer() {
 
   // INFO: story + quiz
   if (activity.kind === "INFO") {
-    const slides: StorySlide[] = Array.isArray(content?.slides)
-      ? content.slides
-      : [];
+    // slides is already defined at top level
     const questions: StoryQuestion[] = Array.isArray(content?.questions)
       ? content.questions
       : [];
@@ -329,21 +360,38 @@ export default function ActivityPlayer() {
           </Card>
 
           <div className="flex justify-between">
-            <Button
-              variant="outline"
-              disabled={slideIndex === 0}
-              onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
-            >
-              Back
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={slideIndex === 0}
+                  onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
+                  aria-label="Go to previous slide"
+                >
+                  Back
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Previous Slide (←)</p>
+              </TooltipContent>
+            </Tooltip>
+
             {slideIndex < slides.length - 1 ? (
-              <Button
-                onClick={() =>
-                  setSlideIndex((i) => Math.min(slides.length - 1, i + 1))
-                }
-              >
-                Next
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() =>
+                      setSlideIndex((i) => Math.min(slides.length - 1, i + 1))
+                    }
+                    aria-label="Go to next slide"
+                  >
+                    Next
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Next Slide (→)</p>
+                </TooltipContent>
+              </Tooltip>
             ) : (
               <Button onClick={() => setMode("quiz")}>Start Quiz</Button>
             )}
