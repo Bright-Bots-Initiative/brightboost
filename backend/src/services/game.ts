@@ -37,18 +37,25 @@ export async function checkUnlocks(
   let newAbilitiesCount = 0;
 
   if (newLevel > avatar.level) {
-    avatar = await prisma.avatar.update({
-      where: { id: avatar.id },
-      data: { level: newLevel, xp: { increment: XP_PER_LEVEL_UP } },
-    });
+    // ⚡ Bolt Optimization: Parallelize avatar update and ability fetch
+    // Capture archetype before update to allow parallel execution
+    const archetype = avatar.archetype;
+
+    const [updatedAvatar, eligibleAbilities] = await Promise.all([
+      prisma.avatar.update({
+        where: { id: avatar.id },
+        data: { level: newLevel, xp: { increment: XP_PER_LEVEL_UP } },
+      }),
+      // Batch fetch & create to avoid N+1 query
+      prisma.ability.findMany({
+        where: { archetype, reqLevel: { lte: newLevel } },
+      }),
+    ]);
+
+    avatar = updatedAvatar;
 
     // Capture avatarId for use in closures (TS can't narrow `let` across callbacks)
     const avatarId = avatar.id;
-
-    // Batch fetch & create to avoid N+1 query
-    const eligibleAbilities = await prisma.ability.findMany({
-      where: { archetype: avatar.archetype, reqLevel: { lte: newLevel } },
-    });
 
     if (eligibleAbilities.length > 0) {
       const existingUnlocks = await prisma.unlockedAbility.findMany({
