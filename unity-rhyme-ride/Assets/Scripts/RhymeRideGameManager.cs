@@ -120,6 +120,12 @@ public class RhymeRideGameManager : MonoBehaviour
             gameOverPanel.SetActive(false);
         }
 
+        // Show first round prompt word before game starts
+        if (rounds.Length > 0 && promptText != null)
+        {
+            promptText.text = $"Tap START \u2014 rhyme for: {rounds[0].promptWord.ToUpper()}";
+        }
+
         // Show intro panel and wait for start button
         if (introPanel != null)
         {
