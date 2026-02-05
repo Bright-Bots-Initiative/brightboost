@@ -45,6 +45,8 @@ export default function RhymeRideUnityActivity({
   const { t } = useTranslation();
   const unityInstanceRef = useRef<any>(null);
   const alreadyCompletedRef = useRef(false);
+  const unityReadyRef = useRef(false);
+  const configSentRef = useRef(false);
   const [showHelp, setShowHelp] = useState(false);
 
   // Generate stable sessionId for this activity instance
@@ -70,21 +72,33 @@ export default function RhymeRideUnityActivity({
     rounds: resolvedRounds,
   }), [sessionId, resolvedRounds, config.settings]);
 
+  // Send config exactly once, when both instance AND ready are true
+  const sendConfig = useCallback(() => {
+    if (!unityReadyRef.current || !unityInstanceRef.current || configSentRef.current) return;
+    configSentRef.current = true;
+    console.log("[RhymeRide] Both ready and instance available — sending config");
+    try {
+      unityInstanceRef.current.SendMessage(
+        "WebBridge",
+        "InitFromJson",
+        JSON.stringify(unityConfig),
+      );
+    } catch (err) {
+      console.warn("[RhymeRide] Failed to send config to Unity:", err);
+      configSentRef.current = false; // allow retry
+    }
+  }, [unityConfig]);
+
   // Listen for Unity ready + completion events
   useEffect(() => {
     const handleReady = () => {
-      // WebBridge.Start() has run — safe to send config now
-      if (unityInstanceRef.current) {
-        try {
-          unityInstanceRef.current.SendMessage(
-            "WebBridge",
-            "InitFromJson",
-            JSON.stringify(unityConfig),
-          );
-        } catch (err) {
-          console.warn("[RhymeRide] Failed to send config to Unity:", err);
-        }
-      }
+      console.log("[RhymeRide] unityRhymeRideReady received");
+      unityReadyRef.current = true;
+      sendConfig();
+      // Retry in case instance arrives slightly after ready
+      setTimeout(sendConfig, 250);
+      setTimeout(sendConfig, 500);
+      setTimeout(sendConfig, 1000);
     };
 
     const handleComplete = (
@@ -95,20 +109,14 @@ export default function RhymeRideUnityActivity({
         streakMax: number;
       }>,
     ) => {
-      // Validate sessionId to prevent stale/cross-tab events
       if (e.detail.sessionId !== sessionId) {
-        console.warn(
-          "[RhymeRide] Ignoring completion event with mismatched sessionId",
-        );
+        console.warn("[RhymeRide] Ignoring completion event with mismatched sessionId");
         return;
       }
-
-      // Prevent duplicate completion signals
       if (alreadyCompletedRef.current) {
         console.warn("[RhymeRide] Ignoring duplicate completion event");
         return;
       }
-
       alreadyCompletedRef.current = true;
       onComplete();
     };
@@ -125,14 +133,16 @@ export default function RhymeRideUnityActivity({
         handleComplete as EventListener,
       );
     };
-  }, [sessionId, onComplete, unityConfig]);
+  }, [sessionId, onComplete, sendConfig]);
 
-  // Store instance ref when Unity is loaded (config sent later on unityRhymeRideReady)
+  // Store instance ref when Unity is loaded, then attempt to send config
   const handleInstanceReady = useCallback(
     (instance: any) => {
+      console.log("[RhymeRide] onInstanceReady received");
       unityInstanceRef.current = instance;
+      sendConfig();
     },
-    [],
+    [sendConfig],
   );
 
   return (
