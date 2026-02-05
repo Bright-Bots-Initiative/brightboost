@@ -59,8 +59,34 @@ export default function RhymeRideUnityActivity({
     }));
   }, [config.rounds, t]);
 
-  // Listen for completion event from Unity
+  // Build the config object to send to Unity
+  const unityConfig = useMemo(() => ({
+    sessionId,
+    settings: {
+      lives: config.settings?.lives ?? 3,
+      roundTimeS: config.settings?.roundTimeS ?? 10,
+      speed: config.settings?.speed ?? 3,
+    },
+    rounds: resolvedRounds,
+  }), [sessionId, resolvedRounds, config.settings]);
+
+  // Listen for Unity ready + completion events
   useEffect(() => {
+    const handleReady = () => {
+      // WebBridge.Start() has run — safe to send config now
+      if (unityInstanceRef.current) {
+        try {
+          unityInstanceRef.current.SendMessage(
+            "WebBridge",
+            "InitFromJson",
+            JSON.stringify(unityConfig),
+          );
+        } catch (err) {
+          console.warn("[RhymeRide] Failed to send config to Unity:", err);
+        }
+      }
+    };
+
     const handleComplete = (
       e: CustomEvent<{
         sessionId: string;
@@ -87,43 +113,26 @@ export default function RhymeRideUnityActivity({
       onComplete();
     };
 
+    window.addEventListener("unityRhymeRideReady", handleReady);
     window.addEventListener(
       "unityRhymeRideComplete",
       handleComplete as EventListener,
     );
     return () => {
+      window.removeEventListener("unityRhymeRideReady", handleReady);
       window.removeEventListener(
         "unityRhymeRideComplete",
         handleComplete as EventListener,
       );
     };
-  }, [sessionId, onComplete]);
+  }, [sessionId, onComplete, unityConfig]);
 
+  // Store instance ref when Unity is loaded (config sent later on unityRhymeRideReady)
   const handleInstanceReady = useCallback(
     (instance: any) => {
       unityInstanceRef.current = instance;
-
-      // Send game config to Unity using InitFromJson
-      try {
-        const unityConfig = {
-          sessionId,
-          settings: {
-            lives: config.settings?.lives ?? 3,
-            roundTimeS: config.settings?.roundTimeS ?? 10,
-            speed: config.settings?.speed ?? 3,
-          },
-          rounds: resolvedRounds,
-        };
-        instance.SendMessage(
-          "WebBridge",
-          "InitFromJson",
-          JSON.stringify(unityConfig),
-        );
-      } catch (err) {
-        console.warn("[RhymeRide] Failed to send config to Unity:", err);
-      }
     },
-    [sessionId, resolvedRounds, config.settings],
+    [],
   );
 
   return (
