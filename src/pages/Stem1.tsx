@@ -22,23 +22,40 @@ const stem1Quests: QuestProgress[] = [
   },
 ] as const as QuestProgress[];
 
-const renderQuestButton = (status: string, t: (key: string) => string) => {
+const renderQuestButton = (
+  quest: QuestProgress,
+  t: (key: string) => string,
+) => {
+  const { status, title } = quest;
+
   if (status === "Complete") {
+    const text = t("stem1.reviewQuest");
     return (
-      <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full">
-        {t("stem1.reviewQuest")}
+      <button
+        className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg w-full"
+        aria-label={`${text}: ${title}`}
+      >
+        {text}
       </button>
     );
   } else if (status === "In Progress") {
+    const text = t("stem1.continueQuest");
     return (
-      <button className="mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg w-full">
-        {t("stem1.continueQuest")}
+      <button
+        className="mt-3 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg w-full"
+        aria-label={`${text}: ${title}`}
+      >
+        {text}
       </button>
     );
   } else {
+    const text = t("stem1.startQuest");
     return (
-      <button className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg w-full">
-        {t("stem1.startQuest")}
+      <button
+        className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg w-full"
+        aria-label={`${text}: ${title}`}
+      >
+        {text}
       </button>
     );
   }
@@ -105,7 +122,7 @@ const Stem1Page = () => {
               <p className="text-sm text-gray-600">
                 {t("stem1.due")}: {stem1Quests[0].dueDate}
               </p>
-              {renderQuestButton(stem1Quests[0].status, t)}
+              {renderQuestButton(stem1Quests[0], t)}
             </div>
           </div>
 
@@ -135,7 +152,7 @@ const Stem1Page = () => {
               <p className="text-sm text-gray-600">
                 {t("stem1.due")}: {stem1Quests[1].dueDate}
               </p>
-              {renderQuestButton(stem1Quests[1].status, t)}
+              {renderQuestButton(stem1Quests[1], t)}
             </div>
           </div>
 
@@ -166,7 +183,7 @@ const Stem1Page = () => {
                 <p className="text-sm text-gray-600">
                   {t("stem1.due")}: {stem1Quests[2].dueDate}
                 </p>
-                {renderQuestButton(stem1Quests[2].status, t)}
+              {renderQuestButton(stem1Quests[2], t)}
               </div>
             </div>
           </div>
