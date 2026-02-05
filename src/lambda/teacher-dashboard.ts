@@ -115,7 +115,10 @@ export const handler = async (
     }
 
     const token = authHeader.substring(7);
-    const jwtSecret = process.env.JWT_SECRET || "fallback-secret-key";
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET environment variable is required");
+    }
 
     let decoded;
     try {
