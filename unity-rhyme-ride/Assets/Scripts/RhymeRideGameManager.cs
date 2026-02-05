@@ -47,6 +47,7 @@ public class RhymeRideGameManager : MonoBehaviour
     private bool roundActive = false;
     private bool completionNotified = false;
     private bool waitingForStart = false;
+    private bool hasInitializedFromConfig = false;
 
     private List<RhymeRideTarget> activeTargets = new List<RhymeRideTarget>();
     private WebBridge.RoundData currentRound;
@@ -66,18 +67,12 @@ public class RhymeRideGameManager : MonoBehaviour
 
     private void Start()
     {
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
-        if (introPanel != null)
-        {
-            introPanel.SetActive(false);
-        }
-        if (hintText != null)
-        {
-            hintText.gameObject.SetActive(false);
-        }
+        // If we already received config & set up intro flow, don't override UI state here.
+        if (hasInitializedFromConfig) return;
+
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (introPanel != null) introPanel.SetActive(false);
+        if (hintText != null) hintText.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -100,6 +95,7 @@ public class RhymeRideGameManager : MonoBehaviour
     /// </summary>
     public void Initialize(WebBridge.GameConfig config)
     {
+        hasInitializedFromConfig = true;
         sessionId = config.sessionId;
         settings = config.settings ?? new WebBridge.GameSettings();
         rounds = config.rounds ?? new WebBridge.RoundData[0];
