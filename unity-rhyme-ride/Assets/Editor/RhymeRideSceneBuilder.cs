@@ -62,10 +62,10 @@ namespace BrightBoost
             eventSystemObj.AddComponent<EventSystem>();
             eventSystemObj.AddComponent<StandaloneInputModule>();
 
-            // HUD Panel (top)
+            // HUD Panel (top) - anchored to top, offset down into visible area
             var hudPanel = CreateUIPanel(canvasObj.transform, "HUDPanel",
                 new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1),
-                new Vector2(0, -10), new Vector2(-20, 80));
+                new Vector2(20, -90), new Vector2(-20, 0));
 
             // Prompt Text (center top)
             var promptObj = new GameObject("PromptText");
