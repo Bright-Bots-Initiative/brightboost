@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
 namespace BrightBoost
@@ -56,6 +57,11 @@ namespace BrightBoost
             scaler.referenceResolution = new Vector2(960, 600);
             canvasObj.AddComponent<GraphicRaycaster>();
 
+            // EventSystem (required for UI button clicks in WebGL)
+            var eventSystemObj = new GameObject("EventSystem");
+            eventSystemObj.AddComponent<EventSystem>();
+            eventSystemObj.AddComponent<StandaloneInputModule>();
+
             // HUD Panel (top)
             var hudPanel = CreateUIPanel(canvasObj.transform, "HUDPanel",
                 new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1),
@@ -79,10 +85,10 @@ namespace BrightBoost
             // Add Outline for better visibility
             var promptOutline = promptObj.AddComponent<Outline>();
             promptOutline.effectColor = new Color(0, 0, 0, 0.8f);
-            promptOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            promptOutline.effectDistance = new Vector2(2f, -2f);
             var promptShadow = promptObj.AddComponent<Shadow>();
-            promptShadow.effectColor = new Color(0, 0, 0, 0.5f);
-            promptShadow.effectDistance = new Vector2(2, -2);
+            promptShadow.effectColor = new Color(0, 0, 0, 0.6f);
+            promptShadow.effectDistance = new Vector2(3, -3);
 
             // Score Text (left)
             var scoreObj = new GameObject("ScoreText");
@@ -213,10 +219,10 @@ namespace BrightBoost
             introTitleRect.offsetMax = Vector2.zero;
             var titleOutline = introTitleObj.AddComponent<Outline>();
             titleOutline.effectColor = new Color(0.1f, 0.1f, 0.3f, 1f);
-            titleOutline.effectDistance = new Vector2(2, -2);
+            titleOutline.effectDistance = new Vector2(3, -3);
             var titleShadow = introTitleObj.AddComponent<Shadow>();
-            titleShadow.effectColor = new Color(0, 0, 0, 0.5f);
-            titleShadow.effectDistance = new Vector2(3, -3);
+            titleShadow.effectColor = new Color(0, 0, 0, 0.6f);
+            titleShadow.effectDistance = new Vector2(4, -4);
 
             // Intro Instructions
             var introInstrObj = new GameObject("IntroInstructions");
@@ -341,19 +347,23 @@ namespace BrightBoost
             shadowTextObj.transform.SetParent(targetObj.transform, false);
             var shadowTextMesh = shadowTextObj.AddComponent<TextMesh>();
             shadowTextMesh.text = "WORD";
-            shadowTextMesh.fontSize = 48;
+            shadowTextMesh.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            shadowTextMesh.fontSize = 56;
+            shadowTextMesh.fontStyle = FontStyle.Bold;
             shadowTextMesh.characterSize = 0.08f;
             shadowTextMesh.anchor = TextAnchor.MiddleCenter;
             shadowTextMesh.alignment = TextAlignment.Center;
-            shadowTextMesh.color = new Color(0, 0, 0, 0.5f);
-            shadowTextObj.transform.localPosition = new Vector3(0.05f, -0.05f, 0f);
+            shadowTextMesh.color = new Color(0, 0, 0, 0.6f);
+            shadowTextObj.transform.localPosition = new Vector3(0.06f, -0.06f, 0f);
 
             // Word text (using TextMesh for world space)
             var textObj = new GameObject("WordText");
             textObj.transform.SetParent(targetObj.transform, false);
             var textMesh = textObj.AddComponent<TextMesh>();
             textMesh.text = "WORD";
-            textMesh.fontSize = 52;
+            textMesh.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            textMesh.fontSize = 56;
+            textMesh.fontStyle = FontStyle.Bold;
             textMesh.characterSize = 0.08f;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;

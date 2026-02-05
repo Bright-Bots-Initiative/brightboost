@@ -82,8 +82,8 @@ export default function UnityWebGL({
       if (focused && GAMEPLAY_KEYS.has(e.code)) {
         e.preventDefault();
 
-        // Handle "R" key for restart (only on keydown, not keyup)
-        if (e.type === "keydown" && e.code === "KeyR" && !e.repeat) {
+        // Handle "R" key for restart (only for spacewar, not other games)
+        if (e.type === "keydown" && e.code === "KeyR" && !e.repeat && buildName === "spacewar") {
           // Don't restart if user is typing in an input field
           const target = e.target as HTMLElement;
           if (
@@ -107,7 +107,7 @@ export default function UnityWebGL({
         }
       }
     },
-    [focused, onRestartRequest],
+    [focused, onRestartRequest, buildName],
   );
 
   useEffect(() => {
