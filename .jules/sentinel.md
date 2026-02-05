@@ -87,3 +87,9 @@
 **Vulnerability:** The CSP `script-src` directive included `'unsafe-inline'` to support Vite's development HMR (Hot Module Replacement) and React Refresh, but this setting persisted in production.
 **Learning:** Development tools often require insecure configurations (like inline scripts) that undermine production security. It's critical to conditionally apply these settings based on `NODE_ENV`.
 **Prevention:** Explicitly check `process.env.NODE_ENV === 'production'` when configuring security headers. Use strict CSP in production while allowing necessary dev conveniences locally.
+
+## 2026-05-25 - Hardcoded Fallback JWT Secret in Lambdas
+
+**Vulnerability:** 9 Lambda functions in `src/lambda/` were using a hardcoded fallback string ("fallback-secret-key") when `JWT_SECRET` environment variable was missing.
+**Learning:** Copy-paste boilerplate for environment variables often carries over insecure defaults. A fallback that is convenient for local dev becomes a critical backdoor if deployed.
+**Prevention:** Strictly enforce environment variable presence using `if (!envVar) throw new Error(...)` pattern. Do not provide default values for secrets.
