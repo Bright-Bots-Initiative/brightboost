@@ -222,6 +222,19 @@ public class BounceBudsGameManager : MonoBehaviour
     {
         ClearRound();
 
+        // Safety check: ensure all prefabs are wired
+        if (paddlePrefab == null) Debug.LogError("[BounceBuds] paddlePrefab is NULL (scene wiring broken). Re-run Tools → BrightBoost → Bounce & Buds → Generate Scene.");
+        if (buddyBallPrefab == null) Debug.LogError("[BounceBuds] buddyBallPrefab is NULL (scene wiring broken). Re-run Tools → BrightBoost → Bounce & Buds → Generate Scene.");
+        if (budGatePrefab == null) Debug.LogError("[BounceBuds] budGatePrefab is NULL (scene wiring broken). Re-run Tools → BrightBoost → Bounce & Buds → Generate Scene.");
+        if (obstaclePrefab == null) Debug.LogError("[BounceBuds] obstaclePrefab is NULL (scene wiring broken). Re-run Tools → BrightBoost → Bounce & Buds → Generate Scene.");
+
+        // If any prefab is null, stop gameplay spawn to avoid "UI-only" state
+        if (paddlePrefab == null || buddyBallPrefab == null || budGatePrefab == null || obstaclePrefab == null)
+        {
+            Debug.LogError("[BounceBuds] Cannot spawn round - missing prefab references. UI will display but gameplay won't work.");
+            return;
+        }
+
         // Update clue display
         if (clueText != null)
         {
