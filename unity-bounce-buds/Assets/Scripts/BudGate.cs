@@ -25,6 +25,12 @@ public class BudGate : MonoBehaviour
 
         if (backgroundSprite != null)
         {
+            // Ensure gate background has a visible sprite (fallback if not assigned)
+            if (backgroundSprite.sprite == null)
+            {
+                backgroundSprite.sprite = RuntimeSprites.Square;
+                Debug.Log("[BudGate] Assigned fallback square sprite to background");
+            }
             // All gates look the same initially
             backgroundSprite.color = new Color(0.3f, 0.6f, 0.4f);
         }
