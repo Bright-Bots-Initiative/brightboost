@@ -67,6 +67,13 @@ export const completeActivitySchema = z.object({
   lessonId: z.string().max(100).optional().nullable(),
   activityId: z.string().min(1, "Activity ID required").max(100),
   timeSpentS: timeSpentSchema.optional().default(0),
+  result: z.object({
+    gameKey: z.string().max(50).optional(),
+    score: z.number().int().nonnegative().max(10000).optional(),
+    total: z.number().int().nonnegative().max(10000).optional(),
+    streakMax: z.number().int().nonnegative().max(10000).optional(),
+    roundsCompleted: z.number().int().nonnegative().max(1000).optional(),
+  }).optional(),
 });
 
 export const selectArchetypeSchema = z.object({

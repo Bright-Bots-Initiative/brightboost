@@ -33,9 +33,17 @@ interface RhymeRideConfig {
   rounds: RhymeRideRound[];
 }
 
+interface RhymeRideResult {
+  gameKey: string;
+  score: number;
+  total: number;
+  streakMax: number;
+  roundsCompleted: number;
+}
+
 interface RhymeRideUnityActivityProps {
   config: RhymeRideConfig;
-  onComplete: () => void;
+  onComplete: (result?: RhymeRideResult) => void;
 }
 
 export default function RhymeRideUnityActivity({
@@ -107,6 +115,7 @@ export default function RhymeRideUnityActivity({
         score: number;
         total: number;
         streakMax: number;
+        roundsCompleted: number;
       }>,
     ) => {
       if (e.detail.sessionId !== sessionId) {
@@ -118,7 +127,13 @@ export default function RhymeRideUnityActivity({
         return;
       }
       alreadyCompletedRef.current = true;
-      onComplete();
+      onComplete({
+        gameKey: "rhyme_ride_unity",
+        score: e.detail.score,
+        total: e.detail.total,
+        streakMax: e.detail.streakMax,
+        roundsCompleted: e.detail.roundsCompleted,
+      });
     };
 
     window.addEventListener("unityRhymeRideReady", handleReady);

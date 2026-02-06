@@ -18,6 +18,7 @@ mergeInto(LibraryManager.library, {
           score: data.score,
           total: data.total,
           streakMax: data.streakMax,
+          roundsCompleted: data.roundsCompleted,
         },
       });
       window.dispatchEvent(event);

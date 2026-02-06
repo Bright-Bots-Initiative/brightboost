@@ -155,7 +155,13 @@ export default function ActivityPlayer() {
     return Math.max(1, Math.round(ms / 1000));
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (result?: {
+    gameKey?: string;
+    score?: number;
+    total?: number;
+    streakMax?: number;
+    roundsCompleted?: number;
+  }) => {
     if (!slug || !lessonId || !activityId) return;
     try {
       const res = await api.completeActivity({
@@ -163,6 +169,7 @@ export default function ActivityPlayer() {
         lessonId: String(lessonId),
         activityId: String(activityId),
         timeSpentS: getTimeSpentS(),
+        result,
       });
       setCompletionData(res);
       toast({
