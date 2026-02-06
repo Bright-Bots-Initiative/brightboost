@@ -85,12 +85,16 @@ public class WebBridge : MonoBehaviour
             GameConfig defaultConfig = new GameConfig
             {
                 sessionId = System.Guid.NewGuid().ToString(),
-                settings = new GameSettings { lives = 3, roundTimeS = 10, speed = 3 },
+                settings = new GameSettings { lives = 3, roundTimeS = 7, speed = 3f, speedRamp = 0.18f, maxSpeed = 6.0f },
                 rounds = new RoundData[]
                 {
                     new RoundData { promptWord = "cat", correctWord = "hat", distractors = new[] { "dog", "sun" } },
                     new RoundData { promptWord = "sun", correctWord = "run", distractors = new[] { "moon", "star" } },
-                    new RoundData { promptWord = "bed", correctWord = "red", distractors = new[] { "blue", "top" } }
+                    new RoundData { promptWord = "bed", correctWord = "red", distractors = new[] { "blue", "top" } },
+                    new RoundData { promptWord = "bug", correctWord = "hug", distractors = new[] { "pin", "cup" } },
+                    new RoundData { promptWord = "map", correctWord = "cap", distractors = new[] { "tree", "car" } },
+                    new RoundData { promptWord = "top", correctWord = "mop", distractors = new[] { "bed", "sun" } },
+                    new RoundData { promptWord = "boat", correctWord = "coat", distractors = new[] { "cat", "bug" } }
                 }
             };
             RhymeRideGameManager.Instance.Initialize(defaultConfig);
