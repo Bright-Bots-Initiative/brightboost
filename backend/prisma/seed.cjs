@@ -487,11 +487,15 @@ async function main() {
 
   const rhymeGameContent = JSON.stringify({
     gameKey: "rhyme_ride_unity",
-    settings: { lives: 3, roundTimeS: 10, speed: 3 },
+    settings: { lives: 3, roundTimeS: 7, speed: 3.0, speedRamp: 0.18, maxSpeed: 6.0 },
     rounds: [
       { promptWord: "cat", correctWord: "hat", distractors: ["dog", "sun"] },
       { promptWord: "sun", correctWord: "run", distractors: ["moon", "star"] },
       { promptWord: "bed", correctWord: "red", distractors: ["blue", "top"] },
+      { promptWord: "bug", correctWord: "hug", distractors: ["pin", "cup"] },
+      { promptWord: "map", correctWord: "cap", distractors: ["tree", "car"] },
+      { promptWord: "top", correctWord: "mop", distractors: ["bed", "sun"] },
+      { promptWord: "boat", correctWord: "coat", distractors: ["cat", "bug"] },
     ],
   });
   const rhymeGameAct = await prisma.activity.findFirst({
