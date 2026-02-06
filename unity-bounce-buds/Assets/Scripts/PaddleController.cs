@@ -16,6 +16,17 @@ public class PaddleController : MonoBehaviour
         speed = newSpeed;
     }
 
+    private void Awake()
+    {
+        // Ensure paddle has a visible sprite (fallback if not assigned)
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null && sr.sprite == null)
+        {
+            sr.sprite = RuntimeSprites.Square;
+            Debug.Log("[PaddleController] Assigned fallback square sprite");
+        }
+    }
+
     private void Update()
     {
         // Keyboard input

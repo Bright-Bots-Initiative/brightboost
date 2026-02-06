@@ -19,6 +19,14 @@ public class BuddyBall : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        // Ensure ball has a visible sprite (fallback if not assigned)
+        var sr = GetComponent<SpriteRenderer>();
+        if (sr != null && sr.sprite == null)
+        {
+            sr.sprite = RuntimeSprites.Circle;
+            Debug.Log("[BuddyBall] Assigned fallback circle sprite");
+        }
     }
 
     private void Start()
