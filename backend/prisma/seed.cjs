@@ -519,6 +519,167 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-rhyme-ride");
 
+  // --- STEM-1 (K–2) Game #3: Bounce & Buds ---
+  const k2BounceModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-bounce-buds" },
+    update: {
+      title: "STEM-1: Module 3 — Bounce & Buds",
+      description: "Bounce through the right gate to answer clues!",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-bounce-buds",
+      title: "STEM-1: Module 3 — Bounce & Buds",
+      description: "Bounce through the right gate to answer clues!",
+      level: "K-2",
+      published: true,
+    },
+  });
+  console.log("Created module:", k2BounceModule.slug);
+
+  let k2BounceUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2BounceModule.id, title: "Unit 1: Reading Bounce" },
+  });
+  if (!k2BounceUnit) {
+    k2BounceUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Reading Bounce",
+        order: 1,
+        Module: { connect: { id: k2BounceModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
+  }
+  console.log("Created unit:", k2BounceUnit.title);
+
+  let k2BounceLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2BounceUnit.id, title: "Bounce & Buds" },
+  });
+  if (!k2BounceLesson) {
+    k2BounceLesson = await prisma.lesson.create({
+      data: {
+        title: "Bounce & Buds",
+        order: 1,
+        Unit: { connect: { id: k2BounceUnit.id } },
+      },
+    });
+  }
+  console.log("Created lesson:", k2BounceLesson.title);
+
+  const bounceStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      {
+        id: "s1",
+        text: "Hi! I'm Buddy the Bouncing Ball!",
+        icon: "🔵",
+        imageKey: "type_story",
+      },
+      {
+        id: "s2",
+        text: "I need to bounce through gates to find the right answers!",
+        icon: "🎯",
+        imageKey: "type_story",
+      },
+      {
+        id: "s3",
+        text: "Read the clue and help me find the correct gate.",
+        icon: "📖",
+        imageKey: "type_quiz",
+      },
+      {
+        id: "s4",
+        text: "Use the paddle to bounce me up! Don't let me fall!",
+        icon: "🏓",
+        imageKey: "type_game",
+      },
+    ],
+    questions: [
+      {
+        id: "q1",
+        prompt: "What do you use to bounce Buddy?",
+        choices: ["A paddle 🏓", "A hat 🎩", "A spoon 🥄"],
+        answerIndex: 0,
+        hint: "It's like in ping-pong! 🏓",
+      },
+      {
+        id: "q2",
+        prompt: "What happens if Buddy falls?",
+        choices: ["You lose a life 💔", "You win 🏆", "Nothing 😴"],
+        answerIndex: 0,
+        hint: "You need to keep Buddy in the air! 💔",
+      },
+      {
+        id: "q3",
+        prompt: "How do you score points?",
+        choices: ["Bounce through the wrong gate ❌", "Hit the correct gate ✅", "Stand still 🧍"],
+        answerIndex: 1,
+        hint: "Read the clue and find the matching answer! ✅",
+      },
+    ],
+    review: {
+      keyIdea: "Bounce Buddy through the correct gate by reading clues carefully!",
+      vocab: ["paddle", "gate", "clue", "bounce"],
+    },
+  });
+  const bounceStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2BounceLesson.id, kind: INFO, order: 1 },
+  });
+  if (bounceStoryAct) {
+    await prisma.activity.update({
+      where: { id: bounceStoryAct.id },
+      data: { title: "Story: Meet Buddy", content: bounceStoryContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Story: Meet Buddy",
+        kind: INFO,
+        order: 1,
+        content: bounceStoryContent,
+        Lesson: { connect: { id: k2BounceLesson.id } },
+      },
+    });
+  }
+
+  const bounceGameContent = JSON.stringify({
+    gameKey: "bounce_buds_unity",
+    settings: { lives: 3, roundTimeS: 12, ballSpeed: 7, paddleSpeed: 12, obstacleCount: 4 },
+    rounds: [
+      { clueText: "An animal that says meow", correctLabel: "CAT", distractors: ["DOG", "BIRD"], hint: "It purrs!" },
+      { clueText: "The color of the sky", correctLabel: "BLUE", distractors: ["RED", "GREEN"], hint: "Look up on a sunny day!" },
+      { clueText: "You sleep in this", correctLabel: "BED", distractors: ["CAR", "TREE"], hint: "It has pillows and blankets!" },
+      { clueText: "It shines at night", correctLabel: "MOON", distractors: ["SUN", "ROCK"], hint: "You see it when you look up at night!" },
+      { clueText: "You write with this", correctLabel: "PEN", distractors: ["CUP", "HAT"], hint: "It has ink inside!" },
+      { clueText: "A big animal with a trunk", correctLabel: "ELEPHANT", distractors: ["MOUSE", "FISH"], hint: "It's the biggest land animal!" },
+      { clueText: "You eat this for breakfast", correctLabel: "EGG", distractors: ["SHOE", "BOOK"], hint: "Chickens make these!" },
+    ],
+  });
+
+  // Use upsert pattern with specific ID for SpacewarArena perk detection
+  const bounceGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2BounceLesson.id, kind: INTERACT, order: 2 },
+  });
+  if (bounceGameAct) {
+    await prisma.activity.update({
+      where: { id: bounceGameAct.id },
+      data: { id: "bounce-buds", title: "Game: Bounce & Buds", content: bounceGameContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        id: "bounce-buds",
+        title: "Game: Bounce & Buds",
+        kind: INTERACT,
+        order: 2,
+        content: bounceGameContent,
+        Lesson: { connect: { id: k2BounceLesson.id } },
+      },
+    });
+  }
+  console.log("Seeded module: k2-stem-bounce-buds");
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },
