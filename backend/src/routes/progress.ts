@@ -96,7 +96,7 @@ router.post(
       return res.status(400).json({ error: parse.error.flatten() });
     }
 
-    const { moduleSlug, lessonId, activityId, timeSpentS } = parse.data;
+    const { moduleSlug, lessonId, activityId, timeSpentS, result } = parse.data;
 
     // 0. Fetch Existing Progress and Activity concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
@@ -186,6 +186,29 @@ router.post(
     let avatarAfter: any = avatarBefore;
     let newAbilitiesFromUnlock = 0;
 
+    // Calculate XP award based on roundsCompleted (if provided)
+    let xpAward = XP_PER_ACTIVITY;
+    if (result?.roundsCompleted !== undefined) {
+      // Parse activity.content to get totalRounds from server (source of truth)
+      let totalRoundsFromContent = 0;
+      try {
+        const parsed = JSON.parse(activity.content || "{}");
+        if (Array.isArray(parsed.rounds)) {
+          totalRoundsFromContent = parsed.rounds.length;
+        }
+      } catch {
+        // If parsing fails, use default XP
+        console.warn("[complete-activity] Failed to parse activity.content for totalRounds");
+      }
+
+      if (totalRoundsFromContent > 0) {
+        // Clamp roundsCompleted to server-known totalRounds (prevents cheating)
+        const rc = Math.min(Math.max(result.roundsCompleted, 0), totalRoundsFromContent);
+        xpAward = Math.round((rc / totalRoundsFromContent) * XP_PER_ACTIVITY);
+        xpAward = Math.min(Math.max(xpAward, 0), XP_PER_ACTIVITY); // Final clamp
+      }
+    }
+
     try {
       // Award XP + Energy + HP
       const energyGain = 5;
@@ -197,7 +220,7 @@ router.post(
       const updatedAvatar = await prisma.avatar.update({
         where: { studentId },
         data: {
-          xp: { increment: XP_PER_ACTIVITY },
+          xp: { increment: xpAward },
           energy: Math.min(100, currentEnergy + energyGain),
           hp: Math.min(100, currentHp + hpGain),
         },

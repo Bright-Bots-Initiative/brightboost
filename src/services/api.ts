@@ -493,6 +493,13 @@ export const api = {
     lessonId: string;
     activityId: string;
     timeSpentS: number;
+    result?: {
+      gameKey?: string;
+      score?: number;
+      total?: number;
+      streakMax?: number;
+      roundsCompleted?: number;
+    };
   }) => {
     const res = await fetch(join(API_BASE, "/progress/complete-activity"), {
       method: "POST",

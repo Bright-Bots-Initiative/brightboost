@@ -126,14 +126,15 @@ public class WebBridge : MonoBehaviour
     /// Notify JavaScript that the game is complete.
     /// Called by GameManager when game ends.
     /// </summary>
-    public void NotifyComplete(string sessionId, int score, int total, int streakMax)
+    public void NotifyComplete(string sessionId, int score, int total, int streakMax, int roundsCompleted)
     {
         CompletionResult result = new CompletionResult
         {
             sessionId = sessionId,
             score = score,
             total = total,
-            streakMax = streakMax
+            streakMax = streakMax,
+            roundsCompleted = roundsCompleted
         };
 
         string json = JsonUtility.ToJson(result);
@@ -159,6 +160,8 @@ public class WebBridge : MonoBehaviour
         public int lives = 3;
         public float roundTimeS = 10f;
         public float speed = 3f;
+        public float speedRamp = 0.18f;  // 18% increase per round
+        public float maxSpeed = 6.0f;    // Speed cap
     }
 
     [System.Serializable]
@@ -176,5 +179,6 @@ public class WebBridge : MonoBehaviour
         public int score;
         public int total;
         public int streakMax;
+        public int roundsCompleted;
     }
 }

@@ -274,7 +274,7 @@ public class RhymeRideGameManager : MonoBehaviour
         RhymeRideTarget target = targetObj.GetComponent<RhymeRideTarget>();
         if (target != null)
         {
-            target.Initialize(word, lane, isCorrect, settings.speed, destroyX);
+            target.Initialize(word, lane, isCorrect, GetRoundSpeed(), destroyX);
             target.OnTargetHit += HandleTargetHit;
             target.OnTargetExited += HandleTargetExited;
             activeTargets.Add(target);
@@ -407,7 +407,9 @@ public class RhymeRideGameManager : MonoBehaviour
         if (!completionNotified && WebBridge.Instance != null)
         {
             completionNotified = true;
-            WebBridge.Instance.NotifyComplete(sessionId, score, totalRounds, maxStreak);
+            // roundsCompleted = currentRoundIndex (0-based, increments after each completed round)
+            int roundsCompleted = Mathf.Clamp(currentRoundIndex, 0, totalRounds);
+            WebBridge.Instance.NotifyComplete(sessionId, score, totalRounds, maxStreak, roundsCompleted);
         }
     }
 
@@ -478,5 +480,18 @@ public class RhymeRideGameManager : MonoBehaviour
             list[i] = list[j];
             list[j] = temp;
         }
+    }
+
+    /// <summary>
+    /// Calculate speed for current round with ramp.
+    /// </summary>
+    private float GetRoundSpeed()
+    {
+        float baseSpeed = (settings != null && settings.speed > 0) ? settings.speed : 3.0f;
+        float ramp = (settings != null && settings.speedRamp >= 0) ? settings.speedRamp : 0.18f;
+        float max = (settings != null && settings.maxSpeed > 0) ? settings.maxSpeed : 6.0f;
+
+        float s = baseSpeed * (1f + (ramp * currentRoundIndex));
+        return Mathf.Min(s, max);
     }
 }
