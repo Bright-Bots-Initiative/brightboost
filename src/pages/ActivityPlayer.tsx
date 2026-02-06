@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
 import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
+import BounceBudsUnityActivity from "@/components/activities/BounceBudsUnityActivity";
 import { Check, Zap, Heart, Star, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -525,6 +526,16 @@ export default function ActivityPlayer() {
       return (
         <div className="p-6">
           <RhymeRideUnityActivity
+            config={content}
+            onComplete={handleComplete}
+          />
+        </div>
+      );
+    }
+    if (key === "bounce_buds_unity") {
+      return (
+        <div className="p-6">
+          <BounceBudsUnityActivity
             config={content}
             onComplete={handleComplete}
           />
