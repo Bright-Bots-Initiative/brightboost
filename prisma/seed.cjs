@@ -357,6 +357,242 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-sequencing");
 
+  // --- STEM-1 (K–2) Game #2: Rhyme & Ride ---
+  const k2RhymeModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-rhyme-ride" },
+    update: {
+      title: "STEM-1: Module 2 — Rhyme & Ride",
+      description: "Shoot the rhyme fast! 🎵🚲",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-rhyme-ride",
+      title: "STEM-1: Module 2 — Rhyme & Ride",
+      description: "Shoot the rhyme fast! 🎵🚲",
+      level: "K-2",
+      published: true,
+    },
+  });
+  console.log("Created module:", k2RhymeModule.slug);
+
+  let k2RhymeUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2RhymeModule.id, title: "Unit 1: Rhyme Power" },
+  });
+  if (!k2RhymeUnit) {
+    k2RhymeUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Rhyme Power",
+        order: 1,
+        Module: { connect: { id: k2RhymeModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
+  }
+  console.log("Created unit:", k2RhymeUnit.title);
+
+  let k2RhymeLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2RhymeUnit.id, title: "Rhyme & Ride" },
+  });
+  if (!k2RhymeLesson) {
+    k2RhymeLesson = await prisma.lesson.create({
+      data: {
+        title: "Rhyme & Ride",
+        order: 1,
+        Unit: { connect: { id: k2RhymeUnit.id } },
+      },
+    });
+  }
+  console.log("Created lesson:", k2RhymeLesson.title);
+
+  const rhymeStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      { id: "s1", text: "Hey there! I'm Rhymo the Rider!", icon: "🚲", imageKey: "type_story" },
+      { id: "s2", text: "Words that sound alike at the end are called rhymes.", icon: "🎵", imageKey: "type_story" },
+      { id: "s3", text: "Cat and hat rhyme because they both end in -at!", icon: "🐱", imageKey: "type_quiz" },
+      { id: "s4", text: "Can you find the word that rhymes? Let's ride and find out!", icon: "🏁", imageKey: "type_game" },
+    ],
+    questions: [
+      { id: "q1", prompt: "Which word rhymes with cat?", choices: ["Hat 🎩", "Dog 🐶", "Cup ☕"], answerIndex: 0, hint: "It sounds like cat but goes on your head! 🎩" },
+      { id: "q2", prompt: "Which word rhymes with sun?", choices: ["Moon 🌙", "Run 🏃", "Star ⭐"], answerIndex: 1, hint: "You do this with your legs really fast! 🏃" },
+      { id: "q3", prompt: "Words that rhyme sound the same at the…", choices: ["Beginning 🔤", "End 🔚", "Middle 🔵"], answerIndex: 1, hint: "Cat and hat both END with -at! 🔚" },
+    ],
+    review: { keyIdea: "Rhyming words sound the same at the end, like cat/hat and sun/run.", vocab: ["rhyme", "sound", "end"] },
+  });
+  const rhymeStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2RhymeLesson.id, kind: INFO, order: 1 },
+  });
+  if (rhymeStoryAct) {
+    await prisma.activity.update({
+      where: { id: rhymeStoryAct.id },
+      data: { title: "Story: Meet Rhymo", content: rhymeStoryContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Story: Meet Rhymo",
+        kind: INFO,
+        order: 1,
+        content: rhymeStoryContent,
+        Lesson: { connect: { id: k2RhymeLesson.id } },
+      },
+    });
+  }
+
+  const rhymeGameContent = JSON.stringify({
+    gameKey: "rhyme_ride_unity",
+    settings: { lives: 3, roundTimeS: 7, speed: 3.0, speedRamp: 0.18, maxSpeed: 6.0 },
+    rounds: [
+      { promptWord: "cat", correctWord: "hat", distractors: ["dog", "sun"] },
+      { promptWord: "sun", correctWord: "run", distractors: ["moon", "star"] },
+      { promptWord: "bed", correctWord: "red", distractors: ["blue", "top"] },
+      { promptWord: "bug", correctWord: "hug", distractors: ["pin", "cup"] },
+      { promptWord: "map", correctWord: "cap", distractors: ["tree", "car"] },
+      { promptWord: "top", correctWord: "mop", distractors: ["bed", "sun"] },
+      { promptWord: "boat", correctWord: "coat", distractors: ["cat", "bug"] },
+    ],
+  });
+  const rhymeGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2RhymeLesson.id, kind: INTERACT, order: 2 },
+  });
+  if (rhymeGameAct) {
+    await prisma.activity.update({
+      where: { id: rhymeGameAct.id },
+      data: { title: "Game: Rhyme & Ride", content: rhymeGameContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Game: Rhyme & Ride",
+        kind: INTERACT,
+        order: 2,
+        content: rhymeGameContent,
+        Lesson: { connect: { id: k2RhymeLesson.id } },
+      },
+    });
+  }
+  console.log("Seeded module: k2-stem-rhyme-ride");
+
+  // --- STEM-1 (K–2) Game #3: Bounce & Buds ---
+  const k2BounceModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-bounce-buds" },
+    update: {
+      title: "STEM-1: Module 3 — Bounce & Buds",
+      description: "Bounce through the right gate to answer clues!",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-bounce-buds",
+      title: "STEM-1: Module 3 — Bounce & Buds",
+      description: "Bounce through the right gate to answer clues!",
+      level: "K-2",
+      published: true,
+    },
+  });
+  console.log("Created module:", k2BounceModule.slug);
+
+  let k2BounceUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2BounceModule.id, title: "Unit 1: Reading Bounce" },
+  });
+  if (!k2BounceUnit) {
+    k2BounceUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Reading Bounce",
+        order: 1,
+        Module: { connect: { id: k2BounceModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
+  }
+  console.log("Created unit:", k2BounceUnit.title);
+
+  let k2BounceLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2BounceUnit.id, title: "Bounce & Buds" },
+  });
+  if (!k2BounceLesson) {
+    k2BounceLesson = await prisma.lesson.create({
+      data: {
+        title: "Bounce & Buds",
+        order: 1,
+        Unit: { connect: { id: k2BounceUnit.id } },
+      },
+    });
+  }
+  console.log("Created lesson:", k2BounceLesson.title);
+
+  const bounceStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      { id: "s1", text: "Hi! I'm Buddy. I'm a Bio Explorer! 🌿🔬", icon: "🌿", imageKey: "type_story" },
+      { id: "s2", text: "Living things are made of tiny parts called cells. 🧫", icon: "🧫", imageKey: "type_story" },
+      { id: "s3", text: "Tiny helpers called microbes live in soil and help plants. 🦠", icon: "🦠", imageKey: "type_quiz" },
+      { id: "s4", text: "We read clues and test ideas—like steps in code! ✅", icon: "💻", imageKey: "type_game" },
+    ],
+    questions: [
+      { id: "q1", prompt: "Tiny parts of living things are called…", choices: ["Cells 🧫", "Rocks 🪨", "Cars 🚗"], answerIndex: 0, hint: "Cells are tiny building blocks. 🧫" },
+      { id: "q2", prompt: "Microbes are…", choices: ["Tiny living helpers 🦠", "Big elephants 🐘", "Toys 🧸"], answerIndex: 0, hint: "Microbes are tiny and alive. 🦠" },
+      { id: "q3", prompt: "Roots help a plant…", choices: ["Drink water 💧", "Fly ✈️", "Sing 🎵"], answerIndex: 0, hint: "Roots take in water from the ground. 💧" },
+    ],
+    review: { keyIdea: "Cells and microbes are tiny parts of life. We read clues and test ideas like scientists!", vocab: ["cell", "microbe", "root"] },
+  });
+  const bounceStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2BounceLesson.id, kind: INFO, order: 1 },
+  });
+  if (bounceStoryAct) {
+    await prisma.activity.update({
+      where: { id: bounceStoryAct.id },
+      data: { title: "Story: Meet Buddy", content: bounceStoryContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Story: Meet Buddy",
+        kind: INFO,
+        order: 1,
+        content: bounceStoryContent,
+        Lesson: { connect: { id: k2BounceLesson.id } },
+      },
+    });
+  }
+
+  const bounceGameContent = JSON.stringify({
+    gameKey: "bounce_buds_unity",
+    settings: { lives: 3, roundTimeS: 12, ballSpeed: 7, paddleSpeed: 12, obstacleCount: 4 },
+    rounds: [
+      { clueText: "A baby plant is a ____.", correctLabel: "seed", distractors: ["leaf", "rock"], hint: "Seeds can grow!" },
+      { clueText: "This part drinks water.", correctLabel: "root", distractors: ["leaf", "sun"], hint: "Roots are under the ground." },
+      { clueText: "Leaves help plants use ____.", correctLabel: "sunlight", distractors: ["pizza", "shoes"], hint: "Sunlight helps plants grow." },
+      { clueText: "Tiny living helpers in soil are ____.", correctLabel: "microbes", distractors: ["cars", "clouds"], hint: "Microbes are tiny and alive." },
+      { clueText: "Tiny building blocks are called ____.", correctLabel: "cells", distractors: ["chairs", "snacks"], hint: "Cells are very small." },
+      { clueText: "A plant needs water and ____.", correctLabel: "sunlight", distractors: ["tv", "candy"], hint: "Plants need light." },
+      { clueText: "A flower can help make ____.", correctLabel: "seeds", distractors: ["socks", "stones"], hint: "Flowers help plants make seeds." },
+    ],
+  });
+  // Use specific ID for SpacewarArena perk detection
+  const bounceGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2BounceLesson.id, kind: INTERACT, order: 2 },
+  });
+  if (bounceGameAct) {
+    await prisma.activity.update({
+      where: { id: bounceGameAct.id },
+      data: { id: "bounce-buds", title: "Game: Bounce & Buds", content: bounceGameContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        id: "bounce-buds",
+        title: "Game: Bounce & Buds",
+        kind: INTERACT,
+        order: 2,
+        content: bounceGameContent,
+        Lesson: { connect: { id: k2BounceLesson.id } },
+      },
+    });
+  }
+  console.log("Seeded module: k2-stem-bounce-buds");
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },
