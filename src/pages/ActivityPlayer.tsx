@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
 import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
 import BounceBudsUnityActivity from "@/components/activities/BounceBudsUnityActivity";
+import GotchaGearsUnityActivity from "@/components/activities/GotchaGearsUnityActivity";
 import { Check, Zap, Heart, Star, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -536,6 +537,16 @@ export default function ActivityPlayer() {
       return (
         <div className="p-6">
           <BounceBudsUnityActivity
+            config={content}
+            onComplete={handleComplete}
+          />
+        </div>
+      );
+    }
+    if (key === "gotcha_gears_unity") {
+      return (
+        <div className="p-6">
+          <GotchaGearsUnityActivity
             config={content}
             onComplete={handleComplete}
           />
