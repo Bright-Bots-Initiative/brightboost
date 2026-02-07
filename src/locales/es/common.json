@@ -50,7 +50,7 @@
     "unlocked": "Desbloqueado",
     "yourLessons": "Tus Lecciones",
     "yourActivities": "Tus Actividades",
-    "yourBadges": "Tus Insignias",
+    "yourBadges": "Tus Logros",
     "continueLearning": "Continuar Aprendiendo",
     "pickAModule": "Elige un Módulo",
     "chooseModulePrompt": "Elige un módulo para comenzar tu próxima misión.",
@@ -64,7 +64,48 @@
     "play": "Jugar",
     "playActivity": "Jugar {{activity}}",
     "unavailableTitle": "Tablero no disponible",
-    "unavailableDesc": "No se pudo cargar tu progreso de aprendizaje."
+    "unavailableDesc": "No se pudo cargar tu progreso de aprendizaje.",
+    "locked": "Bloqueado",
+    "levelUnlockedAria": "Nivel {{level}} Desbloqueado",
+    "levelLockedAria": "Nivel {{level}} Bloqueado",
+    "unlockedOn": "Desbloqueado el",
+    "levelReached": "¡Nivel alcanzado!",
+    "reachLevel": "Alcanza el Nivel",
+    "toUnlock": "para desbloquear",
+    "continueLearningAria": "Continuar Aprendiendo: {{module}} - {{activity}}",
+    "browseModulesAria": "Explorar todos los módulos",
+    "goals": "Metas",
+    "todaysGoal": "Meta de Hoy",
+    "todaysGoalDesc": "Completa 1 actividad (~15 minutos).",
+    "todaysGoalCompleteTitle": "¡Meta de Hoy Completada!",
+    "todaysGoalCompleteDesc": "¡Buen trabajo! Completaste una actividad hoy.",
+    "thisWeek": "Esta Semana",
+    "thisWeekDesc": "Aprende en 3 días diferentes esta semana.",
+    "days": "días",
+    "activity": "actividad",
+    "finishCurrentToUnlockMore": "¡Termina tu actividad actual para desbloquear lo siguiente!",
+    "achievements": {
+      "firstSteps": {
+        "title": "Primeros Pasos",
+        "desc": "Completa 1 actividad"
+      },
+      "streakStarter": {
+        "title": "Inicio de Racha",
+        "desc": "Racha de 3 días"
+      },
+      "dailyChallenge": {
+        "title": "Campeón Diario",
+        "desc": "Racha de 5 días"
+      },
+      "weekWarrior": {
+        "title": "Guerrero Semanal",
+        "desc": "3 días de aprendizaje esta semana"
+      },
+      "moduleMaster": {
+        "title": "Maestro del Módulo",
+        "desc": "Completa un módulo completo"
+      }
+    }
   },
 
   "api": {

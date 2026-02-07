@@ -10,14 +10,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "../contexts/AuthContext";
-import { useStreak } from "@/hooks/useStreak";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
-import { Lock, Unlock, Flame, BookOpen, Star, Zap, Check } from "lucide-react";
+import {
+  Lock,
+  Flame,
+  BookOpen,
+  Star,
+  Zap,
+  Trophy,
+  Sparkles,
+  CalendarDays,
+  Target,
+  Check,
+} from "lucide-react";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  computeStreakFromProgress,
+  ProgressLike,
+  StreakStats,
+} from "@/lib/streakFromProgress";
+import StreakMeter from "@/components/ui/StreakMeter";
 
 type NextActivity = {
   moduleSlug: string;
@@ -30,6 +45,11 @@ type NextActivity = {
   activityTitle: string;
   kind: "INFO" | "INTERACT";
   orderKey: string;
+};
+
+type CompletedModule = {
+  slug: string;
+  title: string;
 };
 
 function sortNum(n: any, fallback = 9999) {
@@ -69,18 +89,59 @@ function flattenModule(module: any): NextActivity[] {
   return out;
 }
 
+/**
+ * Build priority-ordered list of module slugs:
+ * - First: modules with recent progress, sorted by most recent
+ * - Then: remaining modules in catalog order
+ */
+function buildModuleSlugPriority(
+  modules: any[],
+  progress: (ProgressLike & { moduleSlug?: string })[],
+): string[] {
+  // Get slugs with progress, sorted by most recent
+  const progressBySlug = new Map<string, Date>();
+  for (const p of progress) {
+    if (!p.moduleSlug || !p.updatedAt) continue;
+    const date = new Date(p.updatedAt);
+    if (isNaN(date.getTime())) continue;
+    const existing = progressBySlug.get(p.moduleSlug);
+    if (!existing || date > existing) {
+      progressBySlug.set(p.moduleSlug, date);
+    }
+  }
+
+  const progressedSlugs = Array.from(progressBySlug.entries())
+    .sort((a, b) => b[1].getTime() - a[1].getTime())
+    .map(([slug]) => slug);
+
+  // Add remaining modules in catalog order
+  const allSlugs = modules.map((m) => m.slug);
+  const remainingSlugs = allSlugs.filter((s) => !progressBySlug.has(s));
+
+  return [...progressedSlugs, ...remainingSlugs];
+}
+
 export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { streak } = useStreak();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [avatar, setAvatar] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
+  const [progressList, setProgressList] = useState<any[]>([]);
   const [upNext, setUpNext] = useState<NextActivity[]>([]);
   const [nextOne, setNextOne] = useState<NextActivity | null>(null);
+  const [completedModules, setCompletedModules] = useState<CompletedModule[]>(
+    [],
+  );
+  const [completedActivitiesCount, setCompletedActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Compute streak from progress
+  const streakStats: StreakStats = useMemo(() => {
+    return computeStreakFromProgress(progressList);
+  }, [progressList]);
 
   const currentLevel = useMemo(() => {
     const lvl = Number(avatar?.level);
@@ -92,8 +153,6 @@ export default function StudentDashboard() {
     return Number.isFinite(xp) && xp >= 0 ? xp : 0;
   }, [avatar?.xp]);
 
-  const badgeLevels = [1, 2, 3, 4, 5, 6];
-
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -102,7 +161,6 @@ export default function StudentDashboard() {
         const [av, mods, prog] = await Promise.all([
           api.getAvatar(),
           api.getModules(),
-          // ⚡ Bolt Optimization: Exclude user data (already have it via AuthContext) to save DB call
           api.getProgress({ excludeUser: true }),
         ]);
         if (cancelled) return;
@@ -112,50 +170,72 @@ export default function StudentDashboard() {
 
         const modsList = Array.isArray(mods) ? mods : [];
         const progList = Array.isArray(prog?.progress) ? prog.progress : [];
+        setProgressList(progList);
 
-        // Choose module: most recently progressed, else first available
-        let chosenSlug: string | null = null;
-        if (progList.length > 0) {
-          const sorted = progList.slice().sort((a: any, b: any) => {
-            const at = new Date(a.updatedAt || 0).getTime();
-            const bt = new Date(b.updatedAt || 0).getTime();
-            return bt - at;
-          });
-          chosenSlug = sorted[0]?.moduleSlug || null;
-        }
-        if (!chosenSlug && modsList.length > 0) chosenSlug = modsList[0].slug;
+        // Count completed activities
+        const completedCount = progList.filter(
+          (p: any) => p?.status === "COMPLETED",
+        ).length;
+        setCompletedActivitiesCount(completedCount);
 
-        if (!chosenSlug) {
+        // Build priority order for module scanning
+        const slugPriority = buildModuleSlugPriority(modsList, progList);
+
+        if (slugPriority.length === 0) {
           setNextOne(null);
           setUpNext([]);
+          setCompletedModules([]);
           return;
         }
 
-        const deep = await api.getModule(chosenSlug, { structureOnly: true });
-        if (cancelled) return;
+        // Scan modules in priority order to find first incomplete activity
+        let foundNextOne: NextActivity | null = null;
+        let foundUpNext: NextActivity[] = [];
+        const completedMods: CompletedModule[] = [];
 
-        const ordered = flattenModule(deep);
-        const completed = new Set(
-          progList
-            .filter(
-              (p: any) =>
-                p?.moduleSlug === chosenSlug && p?.status === "COMPLETED",
-            )
-            .map((p: any) => String(p.activityId)),
-        );
+        for (const slug of slugPriority) {
+          try {
+            const deep = await api.getModule(slug, { structureOnly: true });
+            if (cancelled) return;
 
-        const firstIncomplete =
-          ordered.find((x) => !completed.has(String(x.activityId))) || null;
-        setNextOne(firstIncomplete);
+            const ordered = flattenModule(deep);
+            if (ordered.length === 0) continue;
 
-        if (!firstIncomplete) {
-          setUpNext([]);
-        } else {
-          const startIdx = ordered.findIndex(
-            (x) => x.activityId === firstIncomplete.activityId,
-          );
-          setUpNext(ordered.slice(startIdx, startIdx + 3));
+            const completedSet = new Set(
+              progList
+                .filter(
+                  (p: any) =>
+                    p?.moduleSlug === slug && p?.status === "COMPLETED",
+                )
+                .map((p: any) => String(p.activityId)),
+            );
+
+            const firstIncomplete = ordered.find(
+              (x) => !completedSet.has(String(x.activityId)),
+            );
+
+            if (firstIncomplete) {
+              // Found the next activity to do
+              foundNextOne = firstIncomplete;
+              const startIdx = ordered.findIndex(
+                (x) => x.activityId === firstIncomplete.activityId,
+              );
+              // Get activities AFTER nextOne (not including it)
+              foundUpNext = ordered.slice(startIdx + 1, startIdx + 4);
+              break;
+            } else {
+              // Module is complete
+              completedMods.push({ slug, title: deep.title || slug });
+            }
+          } catch (e) {
+            // Skip module on fetch failure
+            console.warn(`Failed to fetch module ${slug}:`, e);
+          }
         }
+
+        setNextOne(foundNextOne);
+        setUpNext(foundUpNext);
+        setCompletedModules(completedMods);
       } catch (e) {
         console.error(e);
         toast({
@@ -179,6 +259,47 @@ export default function StudentDashboard() {
       `/student/modules/${nextOne.moduleSlug}/lessons/${nextOne.lessonId}/activities/${nextOne.activityId}`,
     );
   };
+
+  // Achievement definitions
+  const achievements = useMemo(() => {
+    return [
+      {
+        id: "firstSteps",
+        icon: Sparkles,
+        target: 1,
+        current: completedActivitiesCount,
+        unlocked: completedActivitiesCount >= 1,
+      },
+      {
+        id: "streakStarter",
+        icon: Flame,
+        target: 3,
+        current: streakStats.currentStreak,
+        unlocked: streakStats.currentStreak >= 3,
+      },
+      {
+        id: "dailyChallenge",
+        icon: Trophy,
+        target: 5,
+        current: streakStats.currentStreak,
+        unlocked: streakStats.currentStreak >= 5,
+      },
+      {
+        id: "weekWarrior",
+        icon: CalendarDays,
+        target: 3,
+        current: streakStats.daysThisWeek,
+        unlocked: streakStats.daysThisWeek >= 3,
+      },
+      {
+        id: "moduleMaster",
+        icon: Target,
+        target: 1,
+        current: completedModules.length,
+        unlocked: completedModules.length >= 1,
+      },
+    ];
+  }, [completedActivitiesCount, streakStats, completedModules]);
 
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
@@ -205,23 +326,14 @@ export default function StudentDashboard() {
             />
           </div>
 
-          {/* Streak Meter */}
+          {/* Streak Meter with StreakMeter component */}
           <Card className="flex items-center gap-3 px-4 py-2 border-slate-200 shadow-sm min-w-[200px]">
-            <div className="p-2 bg-orange-100 rounded-full">
-              <Flame className="w-5 h-5 text-orange-600 fill-orange-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                {t("dashboard.streak")}
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-slate-900">
-                  {streak?.currentStreak || 0}
-                </span>
-                <span className="text-xs font-medium text-slate-400">
-                  {t("dashboard.record")} {streak?.longestStreak || 0}
-                </span>
-              </div>
+            <div className="flex-1">
+              <StreakMeter
+                currentStreak={streakStats.currentStreak}
+                longestStreak={streakStats.longestStreak}
+                currentStreakDays={streakStats.weekDaysActive}
+              />
             </div>
           </Card>
 
@@ -266,90 +378,107 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Level Progress Strip */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((level) => {
-          const isUnlocked = level <= currentLevel;
-          const badge = user?.badges?.find((b) =>
-            b.name.toLowerCase().includes(`level ${level}`),
-          );
+      {/* Goals Section */}
+      <section>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          {t("dashboard.goals", { defaultValue: "Goals" })}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Today's Goal */}
+          <Card
+            className={cn(
+              "border-2 transition-all",
+              streakStats.didCompleteToday
+                ? "bg-green-50 border-green-200"
+                : "bg-white border-slate-200",
+            )}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                {streakStats.didCompleteToday ? (
+                  <Check className="w-5 h-5 text-green-600" />
+                ) : (
+                  <Target className="w-5 h-5 text-blue-600" />
+                )}
+                {streakStats.didCompleteToday
+                  ? t("dashboard.todaysGoalCompleteTitle", {
+                      defaultValue: "Today's Goal Complete!",
+                    })
+                  : t("dashboard.todaysGoal", {
+                      defaultValue: "Today's Goal",
+                    })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 mb-3">
+                {streakStats.didCompleteToday
+                  ? t("dashboard.todaysGoalCompleteDesc", {
+                      defaultValue: "Great job! You completed an activity today.",
+                    })
+                  : t("dashboard.todaysGoalDesc", {
+                      defaultValue: "Complete 1 activity (~15 minutes).",
+                    })}
+              </p>
+              {!streakStats.didCompleteToday && (
+                <Button size="sm" onClick={goToNext}>
+                  {nextOne
+                    ? t("dashboard.startActivity")
+                    : t("dashboard.browseModules")}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
-          return (
-            <Tooltip key={level}>
-              <TooltipTrigger asChild>
-                <div
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-                    isUnlocked
-                      ? "bg-white border-blue-200 shadow-sm"
-                      : "bg-slate-50 border-slate-200 opacity-60"
-                  }`}
-                  tabIndex={0}
-                  role="img"
-                  aria-label={
-                    isUnlocked
-                      ? t("dashboard.levelUnlockedAria", {
-                          defaultValue: "Level {{level}} Unlocked",
-                          level,
-                        })
-                      : t("dashboard.levelLockedAria", {
-                          defaultValue: "Level {{level}} Locked",
-                          level,
-                        })
-                  }
-                >
+          {/* This Week Goal */}
+          <Card
+            className={cn(
+              "border-2 transition-all",
+              streakStats.daysThisWeek >= 3
+                ? "bg-green-50 border-green-200"
+                : "bg-white border-slate-200",
+            )}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                {streakStats.daysThisWeek >= 3 ? (
+                  <Check className="w-5 h-5 text-green-600" />
+                ) : (
+                  <CalendarDays className="w-5 h-5 text-blue-600" />
+                )}
+                {t("dashboard.thisWeek", { defaultValue: "This Week" })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 mb-3">
+                {t("dashboard.thisWeekDesc", {
+                  defaultValue: "Learn on 3 different days this week.",
+                })}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="text-xs font-bold uppercase tracking-wider mb-1 text-slate-500"
-                    aria-hidden="true"
-                  >
-                    {t("dashboard.level")}
-                  </div>
-                  <div
-                    className={`text-2xl font-black ${
-                      isUnlocked ? "text-blue-600" : "text-slate-400"
-                    }`}
-                  >
-                    {level}
-                  </div>
-                  <div className="mt-1 h-5 flex items-center justify-center">
-                    {!isUnlocked ? (
-                      <Lock
-                        className="w-4 h-4 text-slate-400"
-                        role="img"
-                        aria-label={t("dashboard.locked", "Locked")}
-                      />
-                    ) : badge?.awardedAt ? (
-                      <span className="text-[10px] font-medium text-slate-500">
-                        {format(new Date(badge.awardedAt), "MMM d")}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-medium text-blue-400">
-                        {t("dashboard.unlocked")}
-                      </span>
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      streakStats.daysThisWeek >= 3
+                        ? "bg-green-500"
+                        : "bg-blue-500",
                     )}
-                  </div>
+                    style={{
+                      width: `${Math.min(100, (streakStats.daysThisWeek / 3) * 100)}%`,
+                    }}
+                  />
                 </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {isUnlocked
-                    ? badge?.awardedAt
-                      ? `${t("dashboard.unlockedOn", "Unlocked on")} ${format(
-                          new Date(badge.awardedAt),
-                          "PPP",
-                        )}`
-                      : t("dashboard.levelReached", "Level reached!")
-                    : `${t("dashboard.reachLevel", "Reach Level")} ${level} ${t(
-                        "dashboard.toUnlock",
-                        "to unlock",
-                      )}`}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
+                <span className="text-sm font-medium text-slate-600">
+                  {Math.min(streakStats.daysThisWeek, 3)}/3{" "}
+                  {t("dashboard.days", { defaultValue: "days" })}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
-      {/* Dashboard Card Grid */}
+      {/* Continue Learning Section */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
           {t("dashboard.yourLessons")}
@@ -420,24 +549,38 @@ export default function StudentDashboard() {
         </div>
       </section>
 
-      {/* Your Activities Section */}
+      {/* Your Activities Section - shows activities AFTER nextOne */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4">
           {t("dashboard.yourActivities")}
         </h2>
-        {upNext.length === 0 ? (
+        {loading ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
-              {loading
-                ? t("dashboard.loadingActivities")
+              {t("dashboard.loadingActivities")}
+            </p>
+          </div>
+        ) : upNext.length === 0 ? (
+          <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
+            <p className="text-slate-500 font-medium">
+              {nextOne
+                ? t("dashboard.finishCurrentToUnlockMore", {
+                    defaultValue:
+                      "Finish your current activity to unlock what's next!",
+                  })
                 : t("dashboard.caughtUp")}
             </p>
             <div className="mt-4">
               <Button
-                variant="outline"
-                onClick={() => navigate("/student/modules")}
+                variant={nextOne ? "default" : "outline"}
+                onClick={() => {
+                  if (nextOne) goToNext();
+                  else navigate("/student/modules");
+                }}
               >
-                {t("dashboard.goToModules")}
+                {nextOne
+                  ? t("dashboard.startActivity")
+                  : t("dashboard.goToModules")}
               </Button>
             </div>
           </div>
@@ -498,55 +641,80 @@ export default function StudentDashboard() {
         )}
       </section>
 
-      {/* Your Badges Section */}
+      {/* Your Achievements Section */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
           {t("dashboard.yourBadges")}
         </h2>
-        <div className="flex flex-wrap gap-4">
-          {badgeLevels.map((lvl) => {
-            const isUnlocked = currentLevel >= lvl;
-            const badgeName = `Level ${lvl}`;
-            // If user has a badge with this name, we can show date, etc.
-            // For now, just unlocked/locked based on level.
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {achievements.map((ach) => {
+            const Icon = ach.icon;
+            const progress = Math.min(1, ach.current / ach.target);
+
             return (
-              <Card
-                key={lvl}
-                className={`w-24 h-32 flex flex-col items-center justify-center gap-2 transition-all ${
-                  isUnlocked
-                    ? "bg-yellow-50 border-yellow-200 shadow-sm"
-                    : "bg-slate-100 border-slate-200 opacity-60 grayscale"
-                }`}
+              <div
+                key={ach.id}
                 role="status"
-                aria-label={`${badgeName}: ${
-                  isUnlocked
+                aria-label={`${t(`dashboard.achievements.${ach.id}.title`, {
+                  defaultValue: ach.id,
+                })}: ${
+                  ach.unlocked
                     ? t("dashboard.unlocked", "Unlocked")
                     : t("dashboard.locked", "Locked")
                 }`}
               >
-                <div
-                  className={`p-2 rounded-full ${
-                    isUnlocked
-                      ? "bg-yellow-100 text-yellow-600"
-                      : "bg-slate-200 text-slate-400"
-                  }`}
-                  aria-hidden="true"
-                >
-                  {isUnlocked ? (
-                    <Unlock className="w-6 h-6" />
-                  ) : (
-                    <Lock className="w-6 h-6" />
+                <Card
+                  className={cn(
+                    "flex flex-col items-center p-4 transition-all h-full",
+                    ach.unlocked
+                      ? "bg-yellow-50 border-yellow-200 shadow-sm"
+                      : "bg-slate-50 border-slate-200",
                   )}
-                </div>
-                <span
-                  className={`text-sm font-bold ${
-                    isUnlocked ? "text-yellow-700" : "text-slate-500"
-                  }`}
-                  aria-hidden="true"
                 >
-                  {badgeName}
-                </span>
-              </Card>
+                  <div
+                    className={cn(
+                      "p-3 rounded-full mb-2",
+                      ach.unlocked
+                        ? "bg-yellow-100 text-yellow-600"
+                        : "bg-slate-200 text-slate-400",
+                    )}
+                  >
+                    {ach.unlocked ? (
+                      <Icon className="w-6 h-6" />
+                    ) : (
+                      <Lock className="w-6 h-6" />
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-sm font-bold text-center mb-1",
+                      ach.unlocked ? "text-yellow-700" : "text-slate-500",
+                    )}
+                  >
+                    {t(`dashboard.achievements.${ach.id}.title`, {
+                      defaultValue: ach.id,
+                    })}
+                  </span>
+                  <span className="text-xs text-slate-500 text-center mb-2">
+                    {t(`dashboard.achievements.${ach.id}.desc`, {
+                      defaultValue: "",
+                    })}
+                  </span>
+                  {!ach.unlocked && (
+                    <div className="w-full">
+                      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-400 rounded-full transition-all"
+                          style={{ width: `${progress * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-400 text-center mt-1">
+                        {ach.current}/{ach.target}
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              </div>
             );
           })}
         </div>

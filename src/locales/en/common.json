@@ -50,7 +50,7 @@
     "unlocked": "Unlocked",
     "yourLessons": "Your Lessons",
     "yourActivities": "Your Activities",
-    "yourBadges": "Your Badges",
+    "yourBadges": "Your Achievements",
     "continueLearning": "Continue Learning",
     "pickAModule": "Pick a Module",
     "chooseModulePrompt": "Choose a module to start your next mission.",
@@ -73,7 +73,39 @@
     "reachLevel": "Reach Level",
     "toUnlock": "to unlock",
     "continueLearningAria": "Continue Learning: {{module}} - {{activity}}",
-    "browseModulesAria": "Browse all modules"
+    "browseModulesAria": "Browse all modules",
+    "goals": "Goals",
+    "todaysGoal": "Today's Goal",
+    "todaysGoalDesc": "Complete 1 activity (~15 minutes).",
+    "todaysGoalCompleteTitle": "Today's Goal Complete!",
+    "todaysGoalCompleteDesc": "Great job! You completed an activity today.",
+    "thisWeek": "This Week",
+    "thisWeekDesc": "Learn on 3 different days this week.",
+    "days": "days",
+    "activity": "activity",
+    "finishCurrentToUnlockMore": "Finish your current activity to unlock what's next!",
+    "achievements": {
+      "firstSteps": {
+        "title": "First Steps",
+        "desc": "Complete 1 activity"
+      },
+      "streakStarter": {
+        "title": "Streak Starter",
+        "desc": "3-day streak"
+      },
+      "dailyChallenge": {
+        "title": "Daily Champion",
+        "desc": "5-day streak"
+      },
+      "weekWarrior": {
+        "title": "Week Warrior",
+        "desc": "3 learning days this week"
+      },
+      "moduleMaster": {
+        "title": "Module Master",
+        "desc": "Complete a full module"
+      }
+    }
   },
   "api": {
     "sessionExpired": "Session expired",
