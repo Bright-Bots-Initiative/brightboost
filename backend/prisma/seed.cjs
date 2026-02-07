@@ -660,6 +660,136 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-bounce-buds");
 
+  // --- STEM-1 (K–2) Game #4: Gotcha Gears ---
+  const k2GotchaModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-gotcha-gears" },
+    update: {
+      title: "STEM-1: Module 4 — Gotcha Gears",
+      description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-gotcha-gears",
+      title: "STEM-1: Module 4 — Gotcha Gears",
+      description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
+      level: "K-2",
+      published: true,
+    },
+  });
+  console.log("Created module:", k2GotchaModule.slug);
+
+  let k2GotchaUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2GotchaModule.id, title: "Unit 1: Strategy Steps" },
+  });
+  if (!k2GotchaUnit) {
+    k2GotchaUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Strategy Steps",
+        order: 1,
+        Module: { connect: { id: k2GotchaModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
+  }
+  console.log("Created unit:", k2GotchaUnit.title);
+
+  let k2GotchaLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2GotchaUnit.id, title: "Gotcha Gears" },
+  });
+  if (!k2GotchaLesson) {
+    k2GotchaLesson = await prisma.lesson.create({
+      data: {
+        title: "Gotcha Gears",
+        order: 1,
+        Unit: { connect: { id: k2GotchaUnit.id } },
+      },
+    });
+  }
+  console.log("Created lesson:", k2GotchaLesson.title);
+
+  const gotchaStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      { id: "s1", text: "Hi! I'm Gearbot. I help robots think! ⚙️🤖", icon: "⚙️", imageKey: "type_story" },
+      { id: "s2", text: "Robots need a plan to solve problems. 📝", icon: "📝", imageKey: "type_story" },
+      { id: "s3", text: "When robots make mistakes, we debug—that means fix! 🛠️", icon: "🛠️", imageKey: "type_quiz" },
+      { id: "s4", text: "Practice helps robots learn, just like you! 🌟", icon: "🌟", imageKey: "type_game" },
+    ],
+    questions: [
+      { id: "q1", prompt: "What does debug mean?", choices: ["Fix a mistake 🛠️", "Take a nap 💤", "Eat lunch 🍕"], answerIndex: 0, hint: "Debug means to fix what went wrong! 🛠️" },
+      { id: "q2", prompt: "What helps robots learn?", choices: ["Practice 🌟", "Skipping ⏭️", "Hiding 🙈"], answerIndex: 0, hint: "Practice makes progress! 🌟" },
+      { id: "q3", prompt: "A plan with steps is called a…", choices: ["Rule 📜", "Nap 💤", "Snack 🍪"], answerIndex: 0, hint: "Rules tell us what to do step by step! 📜" },
+    ],
+    review: { keyIdea: "Robots use plans and rules. Debug means fix mistakes. Practice helps us learn!", vocab: ["debug", "plan", "practice", "rule"] },
+  });
+  const gotchaStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2GotchaLesson.id, kind: INFO, order: 1 },
+  });
+  if (gotchaStoryAct) {
+    await prisma.activity.update({
+      where: { id: gotchaStoryAct.id },
+      data: { title: "Story: Meet Gearbot", content: gotchaStoryContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Story: Meet Gearbot",
+        kind: INFO,
+        order: 1,
+        content: gotchaStoryContent,
+        Lesson: { connect: { id: k2GotchaLesson.id } },
+      },
+    });
+  }
+
+  const gotchaGameContent = JSON.stringify({
+    gameKey: "gotcha_gears_unity",
+    settings: {
+      lives: 3,
+      roundTimeS: 12,
+      speed: 2.6,
+      speedRamp: 0.15,
+      maxSpeed: 6.0,
+      planningTimeS: 1.8,
+      kidModeWrongNoLife: true,
+      kidModeWhiffNoLife: true,
+      catchWindowX: 1.0,
+    },
+    rounds: [
+      { clue: "The robot keeps making mistakes. What should it do?", correctAnswer: "debug", distractors: ["guess", "ignore"], hint: "Debug means fix the mistake." },
+      { clue: "We want the robot to learn. What helps most?", correctAnswer: "practice", distractors: ["skip", "sleep"], hint: "Practice means try again." },
+      { clue: "We need to sort things. What do we pick first?", correctAnswer: "rule", distractors: ["random", "noise"], hint: "A rule tells how to group things." },
+      { clue: "The robot needs steps to follow. What is that?", correctAnswer: "plan", distractors: ["rush", "mess"], hint: "A plan is steps in order." },
+      { clue: "We look at clues to find an answer. That is called…", correctAnswer: "pattern", distractors: ["luck", "magic"], hint: "A pattern repeats or matches." },
+      { clue: "The robot tries something new. What is it doing?", correctAnswer: "testing", distractors: ["sleeping", "hiding"], hint: "Testing means trying to see if it works." },
+      { clue: "We teach the robot by giving it…", correctAnswer: "data", distractors: ["candy", "toys"], hint: "Data is information the robot uses to learn." },
+    ],
+  });
+
+  // Use specific ID "gotcha-gears" for STEM1 set/perk detection
+  const gotchaGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2GotchaLesson.id, kind: INTERACT, order: 2 },
+  });
+  if (gotchaGameAct) {
+    await prisma.activity.update({
+      where: { id: gotchaGameAct.id },
+      data: { id: "gotcha-gears", title: "Game: Gotcha Gears", content: gotchaGameContent },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        id: "gotcha-gears",
+        title: "Game: Gotcha Gears",
+        kind: INTERACT,
+        order: 2,
+        content: gotchaGameContent,
+        Lesson: { connect: { id: k2GotchaLesson.id } },
+      },
+    });
+  }
+  console.log("Seeded module: k2-stem-gotcha-gears");
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },
