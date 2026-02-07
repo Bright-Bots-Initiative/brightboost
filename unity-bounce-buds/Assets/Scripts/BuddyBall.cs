@@ -2,6 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// BuddyBall - The ball that players bounce through gates.
+/// Supports "serve" mode: ball sits on paddle until launched.
 /// </summary>
 public class BuddyBall : MonoBehaviour
 {
@@ -10,6 +11,11 @@ public class BuddyBall : MonoBehaviour
     private Rigidbody2D rb;
     private float targetSpeed = 7f;
     private bool isActive = true;
+
+    // Serve/launch state
+    private Transform followPaddle;
+    private float followYOffset = 0.8f;
+    public bool IsLaunched { get; private set; } = false;
 
     public void SetSpeed(float speed)
     {
@@ -31,14 +37,73 @@ public class BuddyBall : MonoBehaviour
 
     private void Start()
     {
-        // Launch upward with slight random X
-        float randomX = Random.Range(-0.3f, 0.3f);
-        rb.linearVelocity = new Vector2(randomX, 1f).normalized * targetSpeed;
+        // Don't auto-launch - wait for AttachToPaddle + LaunchUp
+        // If not attached to paddle, stay still
+        if (!IsLaunched && followPaddle == null && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.simulated = false;
+        }
+    }
+
+    /// <summary>
+    /// Attach ball to paddle for serve mode.
+    /// Ball follows paddle until LaunchUp() is called.
+    /// </summary>
+    public void AttachToPaddle(Transform paddle, float yOffset = 0.8f)
+    {
+        followPaddle = paddle;
+        followYOffset = yOffset;
+        IsLaunched = false;
+        isActive = true;
+
+        if (rb != null)
+        {
+            rb.simulated = false;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0;
+        }
+
+        // Snap to paddle position
+        if (followPaddle != null)
+        {
+            transform.position = new Vector3(followPaddle.position.x, followPaddle.position.y + followYOffset, 0);
+        }
+
+        Debug.Log("[BuddyBall] Attached to paddle, awaiting launch");
+    }
+
+    /// <summary>
+    /// Launch ball straight up from current position.
+    /// </summary>
+    public void LaunchUp()
+    {
+        if (IsLaunched) return;
+
+        IsLaunched = true;
+        followPaddle = null;
+
+        if (rb != null)
+        {
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.up * targetSpeed;
+        }
+
+        Debug.Log("[BuddyBall] Launched straight up!");
+    }
+
+    private void Update()
+    {
+        // Follow paddle while not launched
+        if (!IsLaunched && followPaddle != null)
+        {
+            transform.position = new Vector3(followPaddle.position.x, followPaddle.position.y + followYOffset, 0);
+        }
     }
 
     private void FixedUpdate()
     {
-        if (!isActive || rb == null) return;
+        if (!isActive || rb == null || !IsLaunched) return;
 
         // Maintain velocity magnitude to prevent drift
         float currentSpeed = rb.linearVelocity.magnitude;
@@ -63,6 +128,9 @@ public class BuddyBall : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Only process if launched
+        if (!IsLaunched) return;
+
         // Check for out of bounds zone
         if (other.GetComponent<OutOfBoundsZone>() != null)
         {
@@ -73,10 +141,25 @@ public class BuddyBall : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (!IsLaunched) return;
+
         // Ensure bouncing maintains speed
         if (rb != null)
         {
             rb.linearVelocity = rb.linearVelocity.normalized * targetSpeed;
+        }
+
+        // Add slight angle variation when hitting paddle for more control
+        var paddle = collision.gameObject.GetComponent<PaddleController>();
+        if (paddle != null && rb != null)
+        {
+            // Calculate hit position on paddle (-1 to 1)
+            float hitPoint = (transform.position.x - collision.transform.position.x) / 1.25f;
+            hitPoint = Mathf.Clamp(hitPoint, -1f, 1f);
+
+            // Adjust angle based on hit position
+            Vector2 dir = new Vector2(hitPoint * 0.6f, 1f).normalized;
+            rb.linearVelocity = dir * targetSpeed;
         }
     }
 }

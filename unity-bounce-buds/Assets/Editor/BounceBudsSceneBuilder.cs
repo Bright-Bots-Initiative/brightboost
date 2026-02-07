@@ -89,6 +89,7 @@ namespace BrightBoost
             var timerText = CreateTimerText(canvasObj.transform);
             var gameOverPanel = CreateGameOverPanel(canvasObj.transform);
             var introPanel = CreateIntroPanel(canvasObj.transform);
+            var launchButton = CreateLaunchButton(canvasObj.transform);
 
             // Wire up GameManager references
             var so = new SerializedObject(gameManager);
@@ -105,6 +106,7 @@ namespace BrightBoost
             so.FindProperty("gameOverText").objectReferenceValue = gameOverPanel.GetComponentInChildren<Text>();
             so.FindProperty("introPanel").objectReferenceValue = introPanel.gameObject;
             so.FindProperty("startButton").objectReferenceValue = introPanel.GetComponentInChildren<Button>();
+            so.FindProperty("launchButton").objectReferenceValue = launchButton;
             so.ApplyModifiedProperties();
 
             // Save scene
@@ -494,6 +496,50 @@ namespace BrightBoost
 
             panel.SetActive(false);
             return image;
+        }
+
+        private static Button CreateLaunchButton(Transform parent)
+        {
+            var btnObj = new GameObject("LaunchButton");
+            btnObj.transform.SetParent(parent, false);
+
+            var btn = btnObj.AddComponent<Button>();
+            var btnImage = btnObj.AddComponent<Image>();
+            btnImage.color = new Color(0.3f, 0.7f, 0.9f); // Bright blue for visibility
+
+            var btnRect = btnObj.GetComponent<RectTransform>();
+            // Position at bottom center, above the hint text area
+            btnRect.anchorMin = new Vector2(0.35f, 0.12f);
+            btnRect.anchorMax = new Vector2(0.65f, 0.22f);
+            btnRect.offsetMin = Vector2.zero;
+            btnRect.offsetMax = Vector2.zero;
+
+            // Button text
+            var textObj = new GameObject("Text");
+            textObj.transform.SetParent(btnObj.transform, false);
+            var text = textObj.AddComponent<Text>();
+            text.text = "LAUNCH!";
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 28;
+            text.fontStyle = FontStyle.Bold;
+            text.color = Color.white;
+            text.alignment = TextAnchor.MiddleCenter;
+
+            var textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            // Add outline for visibility
+            var outline = textObj.AddComponent<Outline>();
+            outline.effectColor = new Color(0, 0, 0, 0.7f);
+            outline.effectDistance = new Vector2(2, -2);
+
+            // Start hidden - will be shown during gameplay
+            btnObj.SetActive(false);
+
+            return btn;
         }
 
         private static Texture2D CreateCircleTexture(int size, Color color)

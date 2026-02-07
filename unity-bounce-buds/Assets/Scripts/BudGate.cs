@@ -40,10 +40,18 @@ public class BudGate : MonoBehaviour
     {
         if (hasBeenHit) return;
 
+        // Don't register hits before ball is launched
+        if (BounceBudsGameManager.Instance != null && BounceBudsGameManager.Instance.IsAwaitingLaunch)
+        {
+            return;
+        }
+
         // Check if it's the buddy ball
         var ball = other.GetComponent<BuddyBall>();
         if (ball != null)
         {
+            // Also check if ball is launched
+            if (!ball.IsLaunched) return;
             hasBeenHit = true;
 
             // Show feedback color

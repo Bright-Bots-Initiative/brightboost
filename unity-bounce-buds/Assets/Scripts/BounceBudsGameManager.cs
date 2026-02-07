@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// BounceBudsGameManager - Main game logic for Bounce & Buds minigame.
-/// Pong-style gameplay: bounce Buddy through gates to answer clues.
+/// Kid-friendly Pong-style gameplay: position paddle, launch ball, bounce through gates.
 /// </summary>
 public class BounceBudsGameManager : MonoBehaviour
 {
@@ -27,11 +27,15 @@ public class BounceBudsGameManager : MonoBehaviour
     [SerializeField] private Text gameOverText;
     [SerializeField] private GameObject introPanel;
     [SerializeField] private Button startButton;
+    [SerializeField] private Button launchButton;
 
     [Header("Spawn Points")]
     [SerializeField] private float gateY = 4f;
     [SerializeField] private float paddleY = -4f;
     [SerializeField] private float ballSpawnY = -3f;
+
+    [Header("Kid Mode")]
+    [SerializeField] private bool kidModeWrongGateNoLife = true;
 
     // Config from JavaScript
     private string sessionId;
@@ -51,6 +55,13 @@ public class BounceBudsGameManager : MonoBehaviour
     private bool completionNotified = false;
     private bool waitingForStart = false;
     private bool hasInitializedFromConfig = false;
+
+    // Launch state
+    private bool awaitingLaunch = false;
+    public bool IsAwaitingLaunch => awaitingLaunch;
+
+    // Current round data for re-serve
+    private WebBridge.RoundData currentRoundData;
 
     // Active game objects
     private GameObject currentBall;
@@ -74,6 +85,7 @@ public class BounceBudsGameManager : MonoBehaviour
     private void Start()
     {
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (launchButton != null) launchButton.gameObject.SetActive(false);
 
         if (!hasInitializedFromConfig)
         {
@@ -85,7 +97,8 @@ public class BounceBudsGameManager : MonoBehaviour
 
     private void Update()
     {
-        if (roundActive && settings != null && settings.roundTimeS > 0)
+        // Only run timer after launch
+        if (roundActive && !awaitingLaunch && settings != null && settings.roundTimeS > 0)
         {
             roundTimer -= Time.deltaTime;
             UpdateTimerUI();
@@ -94,6 +107,12 @@ public class BounceBudsGameManager : MonoBehaviour
             {
                 OnRoundTimeout();
             }
+        }
+
+        // Space bar to launch
+        if (awaitingLaunch && Input.GetKeyDown(KeyCode.Space))
+        {
+            LaunchCurrentBall();
         }
     }
 
@@ -115,12 +134,17 @@ public class BounceBudsGameManager : MonoBehaviour
         currentStreak = 0;
         maxStreak = 0;
         completionNotified = false;
+        awaitingLaunch = false;
 
         UpdateUI();
 
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false);
+        }
+        if (launchButton != null)
+        {
+            launchButton.gameObject.SetActive(false);
         }
 
         // Show first round clue before game starts
@@ -171,12 +195,17 @@ public class BounceBudsGameManager : MonoBehaviour
         currentStreak = 0;
         maxStreak = 0;
         completionNotified = false;
+        awaitingLaunch = false;
 
         UpdateUI();
 
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false);
+        }
+        if (launchButton != null)
+        {
+            launchButton.gameObject.SetActive(false);
         }
 
         StartGame();
@@ -202,7 +231,7 @@ public class BounceBudsGameManager : MonoBehaviour
         {
             SpawnRound(rounds[currentRoundIndex]);
             roundActive = true;
-            roundTimer = settings.roundTimeS;
+            // Timer starts after launch, not here
 
             yield return new WaitUntil(() => !roundActive || !gameActive);
 
@@ -221,6 +250,7 @@ public class BounceBudsGameManager : MonoBehaviour
     private void SpawnRound(WebBridge.RoundData round)
     {
         ClearRound();
+        currentRoundData = round;
 
         // Safety check: ensure all prefabs are wired
         if (paddlePrefab == null) Debug.LogError("[BounceBuds] paddlePrefab is NULL (scene wiring broken). Re-run Tools → BrightBoost → Bounce & Buds → Generate Scene.");
@@ -241,14 +271,7 @@ public class BounceBudsGameManager : MonoBehaviour
             clueText.text = round.clueText;
         }
 
-        // Show hint if available
-        if (hintText != null && !string.IsNullOrEmpty(round.hint))
-        {
-            hintText.text = round.hint;
-            hintText.gameObject.SetActive(true);
-        }
-
-        // Spawn paddle
+        // Spawn paddle first
         if (paddlePrefab != null)
         {
             currentPaddle = Instantiate(paddlePrefab, new Vector3(0, paddleY, 0), Quaternion.identity);
@@ -284,17 +307,131 @@ public class BounceBudsGameManager : MonoBehaviour
         // Spawn obstacles
         SpawnObstacles(settings.obstacleCount);
 
-        // Spawn ball
-        if (buddyBallPrefab != null)
+        // Spawn ball and attach to paddle
+        if (buddyBallPrefab != null && currentPaddle != null)
         {
-            currentBall = Instantiate(buddyBallPrefab, new Vector3(0, ballSpawnY, 0), Quaternion.identity);
+            currentBall = Instantiate(buddyBallPrefab, new Vector3(0, paddleY + 0.8f, 0), Quaternion.identity);
             var ball = currentBall.GetComponent<BuddyBall>();
             if (ball != null)
             {
                 ball.SetSpeed(settings.ballSpeed);
+                ball.AttachToPaddle(currentPaddle.transform, 0.8f);
                 ball.OnFellOut += HandleBallFellOut;
             }
         }
+
+        // Set up launch state
+        awaitingLaunch = true;
+        roundTimer = settings.roundTimeS;
+
+        // Show launch button
+        if (launchButton != null)
+        {
+            launchButton.gameObject.SetActive(true);
+            launchButton.onClick.RemoveAllListeners();
+            launchButton.onClick.AddListener(LaunchCurrentBall);
+        }
+
+        // Show instruction hint
+        if (hintText != null)
+        {
+            hintText.text = "Move paddle under correct answer, then tap LAUNCH!";
+            hintText.gameObject.SetActive(true);
+        }
+
+        // Clear timer display while waiting
+        if (timerText != null)
+        {
+            timerText.text = "";
+        }
+    }
+
+    public void LaunchCurrentBall()
+    {
+        if (!awaitingLaunch) return;
+        if (currentBall == null) return;
+
+        var ball = currentBall.GetComponent<BuddyBall>();
+        if (ball != null && !ball.IsLaunched)
+        {
+            ball.LaunchUp();
+            awaitingLaunch = false;
+
+            // Hide launch button
+            if (launchButton != null)
+            {
+                launchButton.gameObject.SetActive(false);
+            }
+
+            // Switch to round hint or hide
+            if (hintText != null)
+            {
+                if (currentRoundData != null && !string.IsNullOrEmpty(currentRoundData.hint))
+                {
+                    hintText.text = currentRoundData.hint;
+                }
+                else
+                {
+                    hintText.gameObject.SetActive(false);
+                }
+            }
+
+            // Start timer now
+            roundTimer = settings.roundTimeS;
+
+            Debug.Log("[BounceBudsGameManager] Ball launched!");
+        }
+    }
+
+    private void ResetBallToServe(string message)
+    {
+        // Destroy current ball
+        if (currentBall != null)
+        {
+            var ball = currentBall.GetComponent<BuddyBall>();
+            if (ball != null) ball.OnFellOut -= HandleBallFellOut;
+            Destroy(currentBall);
+            currentBall = null;
+        }
+
+        // Create new ball attached to paddle
+        if (buddyBallPrefab != null && currentPaddle != null)
+        {
+            currentBall = Instantiate(buddyBallPrefab, new Vector3(currentPaddle.transform.position.x, paddleY + 0.8f, 0), Quaternion.identity);
+            var ball = currentBall.GetComponent<BuddyBall>();
+            if (ball != null)
+            {
+                ball.SetSpeed(settings.ballSpeed);
+                ball.AttachToPaddle(currentPaddle.transform, 0.8f);
+                ball.OnFellOut += HandleBallFellOut;
+            }
+        }
+
+        // Set up launch state
+        awaitingLaunch = true;
+
+        // Show launch button
+        if (launchButton != null)
+        {
+            launchButton.gameObject.SetActive(true);
+            launchButton.onClick.RemoveAllListeners();
+            launchButton.onClick.AddListener(LaunchCurrentBall);
+        }
+
+        // Show message
+        if (hintText != null)
+        {
+            hintText.text = message;
+            hintText.gameObject.SetActive(true);
+        }
+
+        // Clear timer
+        if (timerText != null)
+        {
+            timerText.text = "";
+        }
+
+        Debug.Log($"[BounceBudsGameManager] Re-serving ball: {message}");
     }
 
     private void SpawnObstacles(int count)
@@ -313,6 +450,7 @@ public class BounceBudsGameManager : MonoBehaviour
     private void HandleGateHit(bool wasCorrect)
     {
         if (!roundActive) return;
+        if (awaitingLaunch) return; // Shouldn't happen, but just in case
 
         if (wasCorrect)
         {
@@ -327,20 +465,31 @@ public class BounceBudsGameManager : MonoBehaviour
         }
         else
         {
-            lives--;
             currentStreak = 0;
 
-            Debug.Log($"[BounceBudsGameManager] Wrong! Lives: {lives}");
-
-            if (lives <= 0)
+            if (kidModeWrongGateNoLife)
             {
-                gameActive = false;
-                EndGame();
+                // Kid mode: don't lose life, just re-serve
+                Debug.Log("[BounceBudsGameManager] Wrong gate (kid mode) - re-serving");
+                ResetBallToServe("Try again! Move to the right answer.");
+                // Keep roundActive true, don't advance
             }
             else
             {
-                // Retry same round
-                roundActive = false;
+                // Regular mode: lose a life
+                lives--;
+                Debug.Log($"[BounceBudsGameManager] Wrong! Lives: {lives}");
+
+                if (lives <= 0)
+                {
+                    gameActive = false;
+                    EndGame();
+                }
+                else
+                {
+                    // Retry same round
+                    roundActive = false;
+                }
             }
         }
 
@@ -350,6 +499,7 @@ public class BounceBudsGameManager : MonoBehaviour
     private void HandleBallFellOut()
     {
         if (!roundActive) return;
+        if (awaitingLaunch) return;
 
         lives--;
         currentStreak = 0;
@@ -362,8 +512,8 @@ public class BounceBudsGameManager : MonoBehaviour
         }
         else
         {
-            // Retry same round
-            roundActive = false;
+            // Re-serve instead of respawning whole round
+            ResetBallToServe("Oops! Try again.");
         }
 
         UpdateUI();
@@ -371,16 +521,22 @@ public class BounceBudsGameManager : MonoBehaviour
 
     private void OnRoundTimeout()
     {
+        if (awaitingLaunch) return; // Timer shouldn't run before launch
+
         lives--;
         currentStreak = 0;
         Debug.Log($"[BounceBudsGameManager] Timeout! Lives: {lives}");
 
-        roundActive = false;
-
         if (lives <= 0)
         {
             gameActive = false;
+            roundActive = false;
             EndGame();
+        }
+        else
+        {
+            // Re-serve instead of respawning whole round
+            ResetBallToServe("Time's up! Try again.");
         }
 
         UpdateUI();
@@ -388,6 +544,13 @@ public class BounceBudsGameManager : MonoBehaviour
 
     private void ClearRound()
     {
+        awaitingLaunch = false;
+
+        if (launchButton != null)
+        {
+            launchButton.gameObject.SetActive(false);
+        }
+
         if (currentBall != null)
         {
             var ball = currentBall.GetComponent<BuddyBall>();
@@ -426,6 +589,7 @@ public class BounceBudsGameManager : MonoBehaviour
     {
         gameActive = false;
         roundActive = false;
+        awaitingLaunch = false;
         ClearRound();
 
         if (gameOverPanel != null)
@@ -464,7 +628,7 @@ public class BounceBudsGameManager : MonoBehaviour
     {
         if (timerText != null)
         {
-            if (roundActive && roundTimer > 0)
+            if (roundActive && !awaitingLaunch && roundTimer > 0)
             {
                 timerText.text = $"{Mathf.CeilToInt(roundTimer)}s";
             }
