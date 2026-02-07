@@ -20,7 +20,7 @@ public class BudGate : MonoBehaviour
 
         if (labelText != null)
         {
-            labelText.text = label.ToUpper();
+            ApplyGateLabel(label.ToUpper());
         }
 
         if (backgroundSprite != null)
@@ -34,6 +34,83 @@ public class BudGate : MonoBehaviour
             // All gates look the same initially
             backgroundSprite.color = new Color(0.3f, 0.6f, 0.4f);
         }
+    }
+
+    /// <summary>
+    /// Apply label text with auto-sizing to prevent overlap.
+    /// Shrinks font and wraps long words to fit within gate.
+    /// </summary>
+    private void ApplyGateLabel(string text)
+    {
+        if (labelText == null) return;
+
+        int len = text.Length;
+        string displayText = text;
+
+        // Auto-size based on text length
+        if (len <= 6)
+        {
+            // Short words: full size
+            labelText.characterSize = 0.10f;
+            labelText.fontSize = 48;
+        }
+        else if (len <= 9)
+        {
+            // Medium words: slightly smaller
+            labelText.characterSize = 0.085f;
+            labelText.fontSize = 44;
+        }
+        else if (len <= 12)
+        {
+            // Long words: smaller + wrap
+            labelText.characterSize = 0.075f;
+            labelText.fontSize = 40;
+            displayText = WrapText(text);
+        }
+        else
+        {
+            // Very long words: smallest + wrap
+            labelText.characterSize = 0.065f;
+            labelText.fontSize = 36;
+            displayText = WrapText(text);
+        }
+
+        labelText.text = displayText;
+    }
+
+    /// <summary>
+    /// Wrap text by inserting a newline near the middle.
+    /// </summary>
+    private string WrapText(string text)
+    {
+        if (text.Length <= 8) return text;
+
+        int mid = text.Length / 2;
+        // Try to find a good break point near the middle
+        int breakPoint = mid;
+
+        // Look for a natural break (space, hyphen) within 3 chars of middle
+        for (int i = 0; i <= 3; i++)
+        {
+            if (mid + i < text.Length && (text[mid + i] == ' ' || text[mid + i] == '-'))
+            {
+                breakPoint = mid + i + 1;
+                break;
+            }
+            if (mid - i >= 0 && (text[mid - i] == ' ' || text[mid - i] == '-'))
+            {
+                breakPoint = mid - i + 1;
+                break;
+            }
+        }
+
+        // If no natural break, just split at middle
+        if (breakPoint == mid)
+        {
+            breakPoint = mid;
+        }
+
+        return text.Substring(0, breakPoint).Trim() + "\n" + text.Substring(breakPoint).Trim();
     }
 
     private void OnTriggerEnter2D(Collider2D other)

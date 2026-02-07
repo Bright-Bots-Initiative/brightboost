@@ -78,6 +78,14 @@ public class BuddyBall : MonoBehaviour
     /// </summary>
     public void LaunchUp()
     {
+        Launch(Vector2.up);
+    }
+
+    /// <summary>
+    /// Launch ball in a specific direction.
+    /// </summary>
+    public void Launch(Vector2 direction)
+    {
         if (IsLaunched) return;
 
         IsLaunched = true;
@@ -86,10 +94,10 @@ public class BuddyBall : MonoBehaviour
         if (rb != null)
         {
             rb.simulated = true;
-            rb.linearVelocity = Vector2.up * targetSpeed;
+            rb.linearVelocity = direction.normalized * targetSpeed;
         }
 
-        Debug.Log("[BuddyBall] Launched straight up!");
+        Debug.Log($"[BuddyBall] Launched with direction: {direction.normalized}");
     }
 
     private void Update()

@@ -69,11 +69,15 @@ namespace BrightBoost
             eventSystemObj.AddComponent<EventSystem>();
             eventSystemObj.AddComponent<StandaloneInputModule>();
 
-            // Create walls
+            // Create walls (now visible)
             CreateWalls();
 
             // Create out of bounds zone
             CreateOutOfBoundsZone();
+
+            // Create aim indicator
+            var aimIndicatorObj = new GameObject("AimIndicator");
+            var aimIndicator = aimIndicatorObj.AddComponent<AimIndicator>();
 
             // Create prefabs
             var ballPrefab = CreateBuddyBallPrefab(bouncyMat);
@@ -107,6 +111,7 @@ namespace BrightBoost
             so.FindProperty("introPanel").objectReferenceValue = introPanel.gameObject;
             so.FindProperty("startButton").objectReferenceValue = introPanel.GetComponentInChildren<Button>();
             so.FindProperty("launchButton").objectReferenceValue = launchButton;
+            so.FindProperty("aimIndicator").objectReferenceValue = aimIndicator;
             so.ApplyModifiedProperties();
 
             // Save scene
@@ -135,26 +140,46 @@ namespace BrightBoost
         {
             var wallsParent = new GameObject("Walls");
 
+            // Wall visual settings
+            var wallColor = new Color(0.2f, 0.7f, 0.3f, 0.45f); // Green-tinted, semi-transparent
+            var wallTexture = CreateSquareTexture(4, Color.white);
+            var wallSprite = Sprite.Create(wallTexture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f), 4);
+
             // Left wall
             var leftWall = new GameObject("LeftWall");
             leftWall.transform.SetParent(wallsParent.transform);
-            leftWall.transform.position = new Vector3(-7f, 0, 0);
+            leftWall.transform.position = new Vector3(-6.5f, 0, 0);
+            leftWall.transform.localScale = new Vector3(0.3f, 12f, 1f);
             var leftCollider = leftWall.AddComponent<BoxCollider2D>();
-            leftCollider.size = new Vector2(1f, 14f);
+            leftCollider.size = new Vector2(1f, 1f);
+            var leftSprite = leftWall.AddComponent<SpriteRenderer>();
+            leftSprite.sprite = wallSprite;
+            leftSprite.color = wallColor;
+            leftSprite.sortingOrder = -5;
 
             // Right wall
             var rightWall = new GameObject("RightWall");
             rightWall.transform.SetParent(wallsParent.transform);
-            rightWall.transform.position = new Vector3(7f, 0, 0);
+            rightWall.transform.position = new Vector3(6.5f, 0, 0);
+            rightWall.transform.localScale = new Vector3(0.3f, 12f, 1f);
             var rightCollider = rightWall.AddComponent<BoxCollider2D>();
-            rightCollider.size = new Vector2(1f, 14f);
+            rightCollider.size = new Vector2(1f, 1f);
+            var rightSprite = rightWall.AddComponent<SpriteRenderer>();
+            rightSprite.sprite = wallSprite;
+            rightSprite.color = wallColor;
+            rightSprite.sortingOrder = -5;
 
             // Top wall
             var topWall = new GameObject("TopWall");
             topWall.transform.SetParent(wallsParent.transform);
-            topWall.transform.position = new Vector3(0, 6f, 0);
+            topWall.transform.position = new Vector3(0, 5.5f, 0);
+            topWall.transform.localScale = new Vector3(13.3f, 0.3f, 1f);
             var topCollider = topWall.AddComponent<BoxCollider2D>();
-            topCollider.size = new Vector2(14f, 1f);
+            topCollider.size = new Vector2(1f, 1f);
+            var topSprite = topWall.AddComponent<SpriteRenderer>();
+            topSprite.sprite = wallSprite;
+            topSprite.color = wallColor;
+            topSprite.sortingOrder = -5;
         }
 
         private static void CreateOutOfBoundsZone()

@@ -37,6 +37,9 @@ public class BounceBudsGameManager : MonoBehaviour
     [Header("Kid Mode")]
     [SerializeField] private bool kidModeWrongGateNoLife = true;
 
+    [Header("Aim System")]
+    [SerializeField] private AimIndicator aimIndicator;
+
     // Config from JavaScript
     private string sessionId;
     private WebBridge.GameSettings settings;
@@ -59,6 +62,12 @@ public class BounceBudsGameManager : MonoBehaviour
     // Launch state
     private bool awaitingLaunch = false;
     public bool IsAwaitingLaunch => awaitingLaunch;
+
+    // Aim state
+    private float aimAngleDeg = 90f; // Straight up
+    private const float AIM_MIN = 35f;  // Leftmost angle (degrees)
+    private const float AIM_MAX = 145f; // Rightmost angle (degrees)
+    private bool isAiming = false;
 
     // Current round data for re-serve
     private WebBridge.RoundData currentRoundData;
@@ -109,10 +118,64 @@ public class BounceBudsGameManager : MonoBehaviour
             }
         }
 
-        // Space bar to launch
-        if (awaitingLaunch && Input.GetKeyDown(KeyCode.Space))
+        // Handle aiming while awaiting launch
+        if (awaitingLaunch)
         {
-            LaunchCurrentBall();
+            UpdateAiming();
+
+            // Space bar to launch
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                LaunchCurrentBall();
+            }
+        }
+    }
+
+    private void UpdateAiming()
+    {
+        // Position aim indicator above paddle
+        if (aimIndicator != null && currentPaddle != null)
+        {
+            aimIndicator.transform.position = currentPaddle.transform.position + Vector3.up * 0.6f;
+        }
+
+        // Handle mouse/touch input for aiming
+        if (Input.GetMouseButton(0))
+        {
+            if (currentPaddle != null && Camera.main != null)
+            {
+                Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector2 paddlePos = currentPaddle.transform.position;
+                Vector2 delta = new Vector2(mouseWorldPos.x, mouseWorldPos.y) - paddlePos;
+
+                // Only adjust angle if pointer is above paddle (prevents aiming down)
+                if (delta.y > 0.2f)
+                {
+                    float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+                    aimAngleDeg = Mathf.Clamp(angle, AIM_MIN, AIM_MAX);
+                    isAiming = true;
+                }
+            }
+        }
+        else
+        {
+            isAiming = false;
+        }
+
+        // Keyboard aim adjustment (arrow keys)
+        if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            aimAngleDeg = Mathf.Clamp(aimAngleDeg + 60f * Time.deltaTime, AIM_MIN, AIM_MAX);
+        }
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            aimAngleDeg = Mathf.Clamp(aimAngleDeg - 60f * Time.deltaTime, AIM_MIN, AIM_MAX);
+        }
+
+        // Update aim indicator visual
+        if (aimIndicator != null)
+        {
+            aimIndicator.SetAngle(aimAngleDeg);
         }
     }
 
@@ -323,6 +386,7 @@ public class BounceBudsGameManager : MonoBehaviour
         // Set up launch state
         awaitingLaunch = true;
         roundTimer = settings.roundTimeS;
+        aimAngleDeg = 90f; // Reset to straight up
 
         // Show launch button
         if (launchButton != null)
@@ -332,10 +396,17 @@ public class BounceBudsGameManager : MonoBehaviour
             launchButton.onClick.AddListener(LaunchCurrentBall);
         }
 
+        // Show aim indicator
+        if (aimIndicator != null)
+        {
+            aimIndicator.SetAngle(aimAngleDeg);
+            aimIndicator.SetVisible(true);
+        }
+
         // Show instruction hint
         if (hintText != null)
         {
-            hintText.text = "Move paddle under correct answer, then tap LAUNCH!";
+            hintText.text = "Drag to aim, then tap LAUNCH!";
             hintText.gameObject.SetActive(true);
         }
 
@@ -354,13 +425,22 @@ public class BounceBudsGameManager : MonoBehaviour
         var ball = currentBall.GetComponent<BuddyBall>();
         if (ball != null && !ball.IsLaunched)
         {
-            ball.LaunchUp();
+            // Launch with aimed direction
+            float rad = aimAngleDeg * Mathf.Deg2Rad;
+            Vector2 launchDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+            ball.Launch(launchDir);
             awaitingLaunch = false;
 
             // Hide launch button
             if (launchButton != null)
             {
                 launchButton.gameObject.SetActive(false);
+            }
+
+            // Hide aim indicator
+            if (aimIndicator != null)
+            {
+                aimIndicator.SetVisible(false);
             }
 
             // Switch to round hint or hide
@@ -379,7 +459,7 @@ public class BounceBudsGameManager : MonoBehaviour
             // Start timer now
             roundTimer = settings.roundTimeS;
 
-            Debug.Log("[BounceBudsGameManager] Ball launched!");
+            Debug.Log($"[BounceBudsGameManager] Ball launched at angle {aimAngleDeg:F1}°!");
         }
     }
 
@@ -409,6 +489,7 @@ public class BounceBudsGameManager : MonoBehaviour
 
         // Set up launch state
         awaitingLaunch = true;
+        aimAngleDeg = 90f; // Reset to straight up
 
         // Show launch button
         if (launchButton != null)
@@ -416,6 +497,13 @@ public class BounceBudsGameManager : MonoBehaviour
             launchButton.gameObject.SetActive(true);
             launchButton.onClick.RemoveAllListeners();
             launchButton.onClick.AddListener(LaunchCurrentBall);
+        }
+
+        // Show aim indicator
+        if (aimIndicator != null)
+        {
+            aimIndicator.SetAngle(aimAngleDeg);
+            aimIndicator.SetVisible(true);
         }
 
         // Show message
@@ -549,6 +637,11 @@ public class BounceBudsGameManager : MonoBehaviour
         if (launchButton != null)
         {
             launchButton.gameObject.SetActive(false);
+        }
+
+        if (aimIndicator != null)
+        {
+            aimIndicator.SetVisible(false);
         }
 
         if (currentBall != null)
