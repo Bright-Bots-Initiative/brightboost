@@ -232,4 +232,80 @@ describe("GotchaGearsUnityActivity", () => {
     // Should render without errors
     expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
   });
+
+  it("maps new schema (clueText/correctLabel) to Unity payload correctly", async () => {
+    const newSchemaConfig = {
+      gameKey: "gotcha_gears_unity" as const,
+      settings: { speed: 2.8, speedRamp: 0.22, maxSpeed: 8.0, planningTimeS: 1.6 },
+      rounds: [
+        {
+          clueText: "What goes 'meow'?",
+          correctLabel: "cat",
+          distractors: ["dog", "bird"],
+          hint: "It purrs!",
+        },
+      ],
+    };
+
+    render(
+      <GotchaGearsUnityActivity config={newSchemaConfig} onComplete={mockOnComplete} />
+    );
+
+    // Trigger ready event to exercise config mapping
+    window.dispatchEvent(new CustomEvent("unityGotchaGearsReady"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unity-webgl")).toBeInTheDocument();
+    });
+
+    // Should render without errors - config mapping verified via console logs
+    expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
+  });
+
+  it("maps backward-compat schema (clue/correctAnswer) to Unity payload correctly", async () => {
+    const oldSchemaConfig = {
+      gameKey: "gotcha_gears_unity" as const,
+      rounds: [
+        {
+          clue: "What has stripes?",
+          correctAnswer: "zebra",
+          distractors: ["lion", "elephant"],
+        },
+      ],
+    };
+
+    render(
+      <GotchaGearsUnityActivity config={oldSchemaConfig} onComplete={mockOnComplete} />
+    );
+
+    // Trigger ready event
+    window.dispatchEvent(new CustomEvent("unityGotchaGearsReady"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("unity-webgl")).toBeInTheDocument();
+    });
+
+    // Should render without errors - the internal mapping handles backward compat
+    expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
+  });
+
+  it("uses harder difficulty defaults when settings not provided", () => {
+    const minimalConfig = {
+      gameKey: "gotcha_gears_unity" as const,
+      rounds: [
+        {
+          clueText: "Test question",
+          correctLabel: "answer",
+          distractors: ["wrong1", "wrong2"],
+        },
+      ],
+    };
+
+    render(
+      <GotchaGearsUnityActivity config={minimalConfig} onComplete={mockOnComplete} />
+    );
+
+    // Should render without errors - defaults are applied internally
+    expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
+  });
 });

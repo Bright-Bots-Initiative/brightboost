@@ -16,16 +16,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 
 interface GotchaGearsRound {
-  clue: LocalizedField;          // Maps to Unity's clueText
-  correctAnswer: LocalizedField; // Maps to Unity's correctLabel
-  distractors: LocalizedField[];
+  // Preferred keys (seed + Unity schema)
+  clueText?: LocalizedField;
+  correctLabel?: LocalizedField;
   hint?: LocalizedField;
+
+  // Backward-compat keys (older wrapper format)
+  clue?: LocalizedField;
+  correctAnswer?: LocalizedField;
+
+  distractors: LocalizedField[];
 }
 
 interface GotchaGearsSettings {
   lives?: number;
   roundTimeS?: number;
   speed?: number;
+  speedRamp?: number;
+  maxSpeed?: number;
+  planningTimeS?: number;
+  catchWindowX?: number;
   kidModeWrongNoLife?: boolean;
   kidModeWhiffNoLife?: boolean;
 }
@@ -65,27 +75,42 @@ export default function GotchaGearsUnityActivity({
 
   // Resolve localized fields before sending to Unity
   // IMPORTANT: Field names must match Unity's WebBridge.RoundData exactly
+  // Supports both new (clueText/correctLabel) and old (clue/correctAnswer) keys
   const resolvedRounds = useMemo(() => {
-    return config.rounds.map((round) => ({
-      clueText: resolveText(t, round.clue),           // Unity expects "clueText"
-      correctLabel: resolveText(t, round.correctAnswer), // Unity expects "correctLabel"
-      distractors: round.distractors.map((d) => resolveText(t, d)),
-      hint: round.hint ? resolveText(t, round.hint) : "",
-    }));
+    return config.rounds.map((round, idx) => {
+      // Prefer clueText, fall back to clue for backward compat
+      const clueText = resolveText(t, round.clueText ?? round.clue);
+      // Prefer correctLabel, fall back to correctAnswer for backward compat
+      const correctLabel = resolveText(t, round.correctLabel ?? round.correctAnswer);
+      const hint = round.hint ? resolveText(t, round.hint) : "";
+      const distractors = (round.distractors || []).map((d) => resolveText(t, d));
+
+      // HARD VALIDATION: avoid sending empty correctLabel into Unity
+      if (!correctLabel?.trim()) {
+        console.warn(`[GotchaGears] Round ${idx} missing correctLabel/correctAnswer. Using fallback.`);
+      }
+
+      return {
+        clueText: clueText || "Pick the best solution!",
+        correctLabel: correctLabel?.trim() ? correctLabel : (distractors[0] || "debug"),
+        distractors,
+        hint,
+      };
+    });
   }, [config.rounds, t]);
 
   // Build the config object to send to Unity
-  // IMPORTANT: Include ALL settings fields Unity expects, with sensible defaults
+  // IMPORTANT: Include ALL settings fields Unity expects, with harder difficulty defaults
   const unityConfig = useMemo(() => ({
     sessionId,
     settings: {
       lives: config.settings?.lives ?? 3,
       roundTimeS: config.settings?.roundTimeS ?? 12,
-      speed: config.settings?.speed ?? 2.5,
-      speedRamp: 0.15,        // Unity default
-      maxSpeed: 6.0,          // Unity default
-      planningTimeS: 1.8,     // Unity default - CRITICAL for phase transition
-      catchWindowX: 1.0,      // Unity default
+      speed: config.settings?.speed ?? 2.8,
+      speedRamp: config.settings?.speedRamp ?? 0.22,      // Noticeable increase per round
+      maxSpeed: config.settings?.maxSpeed ?? 8.0,
+      planningTimeS: config.settings?.planningTimeS ?? 1.6,
+      catchWindowX: config.settings?.catchWindowX ?? 0.95,
       kidModeWrongNoLife: config.settings?.kidModeWrongNoLife ?? true,
       kidModeWhiffNoLife: config.settings?.kidModeWhiffNoLife ?? true,
     },
@@ -96,7 +121,7 @@ export default function GotchaGearsUnityActivity({
   const sendConfig = useCallback(() => {
     if (!unityReadyRef.current || !unityInstanceRef.current || configSentRef.current) return;
     configSentRef.current = true;
-    console.log("[GotchaGears] Both ready and instance available — sending config");
+    console.log("[GotchaGears] Both ready and instance available — sending config", unityConfig);
     try {
       unityInstanceRef.current.SendMessage(
         "WebBridge",
@@ -226,6 +251,7 @@ export default function GotchaGearsUnityActivity({
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
                       <li>Watch for gears scrolling on all three lanes</li>
                       <li>Position early and wait for the right moment!</li>
+                      <li>Speed increases each round - stay focused!</li>
                     </ul>
                   </div>
                 </div>

@@ -748,13 +748,13 @@ async function main() {
     settings: {
       lives: 3,
       roundTimeS: 12,
-      speed: 2.6,
-      speedRamp: 0.15,
-      maxSpeed: 6.0,
-      planningTimeS: 1.8,
+      speed: 2.8,
+      speedRamp: 0.22,
+      maxSpeed: 8.0,
+      planningTimeS: 1.6,
       kidModeWrongNoLife: true,
       kidModeWhiffNoLife: true,
-      catchWindowX: 1.0,
+      catchWindowX: 0.95,
     },
     rounds: [
       { clueText: "The robot keeps making mistakes. What should it do?", correctLabel: "debug", distractors: ["guess", "ignore"], hint: "Debug means fix the mistake." },
