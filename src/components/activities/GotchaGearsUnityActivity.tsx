@@ -16,9 +16,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle } from "lucide-react";
 
 interface GotchaGearsRound {
-  clue: LocalizedField;
-  correctAnswer: LocalizedField;
+  clue: LocalizedField;          // Maps to Unity's clueText
+  correctAnswer: LocalizedField; // Maps to Unity's correctLabel
   distractors: LocalizedField[];
+  hint?: LocalizedField;
 }
 
 interface GotchaGearsSettings {
@@ -63,21 +64,28 @@ export default function GotchaGearsUnityActivity({
   const sessionId = useMemo(() => crypto.randomUUID(), []);
 
   // Resolve localized fields before sending to Unity
+  // IMPORTANT: Field names must match Unity's WebBridge.RoundData exactly
   const resolvedRounds = useMemo(() => {
     return config.rounds.map((round) => ({
-      clue: resolveText(t, round.clue),
-      correctAnswer: resolveText(t, round.correctAnswer),
+      clueText: resolveText(t, round.clue),           // Unity expects "clueText"
+      correctLabel: resolveText(t, round.correctAnswer), // Unity expects "correctLabel"
       distractors: round.distractors.map((d) => resolveText(t, d)),
+      hint: round.hint ? resolveText(t, round.hint) : "",
     }));
   }, [config.rounds, t]);
 
   // Build the config object to send to Unity
+  // IMPORTANT: Include ALL settings fields Unity expects, with sensible defaults
   const unityConfig = useMemo(() => ({
     sessionId,
     settings: {
       lives: config.settings?.lives ?? 3,
       roundTimeS: config.settings?.roundTimeS ?? 12,
       speed: config.settings?.speed ?? 2.5,
+      speedRamp: 0.15,        // Unity default
+      maxSpeed: 6.0,          // Unity default
+      planningTimeS: 1.8,     // Unity default - CRITICAL for phase transition
+      catchWindowX: 1.0,      // Unity default
       kidModeWrongNoLife: config.settings?.kidModeWrongNoLife ?? true,
       kidModeWhiffNoLife: config.settings?.kidModeWhiffNoLife ?? true,
     },

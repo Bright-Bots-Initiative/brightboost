@@ -690,13 +690,13 @@ async function main() {
       catchWindowX: 1.0,
     },
     rounds: [
-      { clue: "The robot keeps making mistakes. What should it do?", correctAnswer: "debug", distractors: ["guess", "ignore"], hint: "Debug means fix the mistake." },
-      { clue: "We want the robot to learn. What helps most?", correctAnswer: "practice", distractors: ["skip", "sleep"], hint: "Practice means try again." },
-      { clue: "We need to sort things. What do we pick first?", correctAnswer: "rule", distractors: ["random", "noise"], hint: "A rule tells how to group things." },
-      { clue: "The robot needs steps to follow. What is that?", correctAnswer: "plan", distractors: ["rush", "mess"], hint: "A plan is steps in order." },
-      { clue: "We look at clues to find an answer. That is called…", correctAnswer: "pattern", distractors: ["luck", "magic"], hint: "A pattern repeats or matches." },
-      { clue: "The robot tries something new. What is it doing?", correctAnswer: "testing", distractors: ["sleeping", "hiding"], hint: "Testing means trying to see if it works." },
-      { clue: "We teach the robot by giving it…", correctAnswer: "data", distractors: ["candy", "toys"], hint: "Data is information the robot uses to learn." },
+      { clueText: "The robot keeps making mistakes. What should it do?", correctLabel: "debug", distractors: ["guess", "ignore"], hint: "Debug means fix the mistake." },
+      { clueText: "We want the robot to learn. What helps most?", correctLabel: "practice", distractors: ["skip", "sleep"], hint: "Practice means try again." },
+      { clueText: "We need to sort things. What do we pick first?", correctLabel: "rule", distractors: ["random", "noise"], hint: "A rule tells how to group things." },
+      { clueText: "The robot needs steps to follow. What is that?", correctLabel: "plan", distractors: ["rush", "mess"], hint: "A plan is steps in order." },
+      { clueText: "We look at clues to find an answer. That is called…", correctLabel: "pattern", distractors: ["luck", "magic"], hint: "A pattern repeats or matches." },
+      { clueText: "The robot tries something new. What is it doing?", correctLabel: "testing", distractors: ["sleeping", "hiding"], hint: "Testing means trying to see if it works." },
+      { clueText: "We teach the robot by giving it…", correctLabel: "data", distractors: ["candy", "toys"], hint: "Data is information the robot uses to learn." },
     ],
   });
 

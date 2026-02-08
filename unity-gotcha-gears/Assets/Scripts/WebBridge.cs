@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Runtime.InteropServices;
+using System.Collections;
 
 /// <summary>
 /// WebBridge - Handles communication between Unity WebGL and JavaScript.
@@ -8,6 +9,8 @@ using System.Runtime.InteropServices;
 public class WebBridge : MonoBehaviour
 {
     public static WebBridge Instance { get; private set; }
+
+    private bool hasInitialized = false;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
@@ -73,7 +76,26 @@ public class WebBridge : MonoBehaviour
     private void Start()
     {
         NotifyReady();
+
+#if UNITY_EDITOR
+        // In Editor, auto-init with default config if no JS config arrives
+        StartCoroutine(EditorAutoInitCoroutine());
+#endif
     }
+
+#if UNITY_EDITOR
+    private IEnumerator EditorAutoInitCoroutine()
+    {
+        // Wait a short time for JS config to arrive
+        yield return new WaitForSeconds(0.5f);
+
+        if (!hasInitialized)
+        {
+            Debug.Log("[WebBridge] Editor: No config received, using default config");
+            UseDefaultConfig();
+        }
+    }
+#endif
 
     private void NotifyReady()
     {
@@ -109,6 +131,7 @@ public class WebBridge : MonoBehaviour
 
             if (GotchaGearsGameManager.Instance != null)
             {
+                hasInitialized = true;
                 GotchaGearsGameManager.Instance.Initialize(config);
             }
             else
@@ -190,6 +213,7 @@ public class WebBridge : MonoBehaviour
 
         if (GotchaGearsGameManager.Instance != null)
         {
+            hasInitialized = true;
             GotchaGearsGameManager.Instance.Initialize(config);
         }
     }

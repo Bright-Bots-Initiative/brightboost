@@ -104,13 +104,14 @@ public class GotchaGearsGameManager : MonoBehaviour
 
     private void Update()
     {
-        // Planning phase countdown
-        if (inPlanningPhase && planningTimer > 0)
+        // Planning phase countdown - ALWAYS decrement when in planning phase
+        // This ensures we transition even if planningTimer started at 0
+        if (inPlanningPhase)
         {
             planningTimer -= Time.deltaTime;
             UpdatePhaseUI();
 
-            if (planningTimer <= 0)
+            if (planningTimer <= 0f)
             {
                 StartActionPhase();
             }
@@ -140,10 +141,14 @@ public class GotchaGearsGameManager : MonoBehaviour
     /// </summary>
     public void Initialize(WebBridge.GameConfig config)
     {
+        Debug.Log($"[GotchaGears] Initialize: sessionId={config.sessionId}, rounds={config.rounds?.Length ?? 0}");
+
         hasInitializedFromConfig = true;
         sessionId = config.sessionId;
         settings = config.settings ?? new WebBridge.GameSettings();
         rounds = config.rounds ?? new WebBridge.RoundData[0];
+
+        Debug.Log($"[GotchaGears] Settings: planningTimeS={settings.planningTimeS}, speed={settings.speed}, roundTimeS={settings.roundTimeS}");
 
         // Reset state
         currentRoundIndex = 0;
@@ -259,10 +264,16 @@ public class GotchaGearsGameManager : MonoBehaviour
             return;
         }
 
-        // Update clue
+        // Update clue with fallback
         if (clueText != null)
         {
-            clueText.text = round.clueText;
+            clueText.text = string.IsNullOrEmpty(round.clueText)
+                ? "Pick the best solution!"
+                : round.clueText;
+        }
+        else
+        {
+            Debug.LogError("[GotchaGears] clueText is NULL. Re-run Tools → BrightBoost → Gotcha Gears → Generate Scene.");
         }
 
         // Build labels: 1 correct + distractors
@@ -314,8 +325,11 @@ public class GotchaGearsGameManager : MonoBehaviour
         inPlanningPhase = true;
         roundActive = true;
         catchEnabled = false;
-        planningTimer = settings.planningTimeS;
+        // Clamp planningTimer to minimum 0.25s so phase ALWAYS transitions
+        planningTimer = Mathf.Max(0.25f, settings.planningTimeS);
         roundTimer = settings.roundTimeS;
+
+        Debug.Log($"[GotchaGears] SpawnRound: planningTimer={planningTimer}, planningTimeS={settings.planningTimeS}, speed={currentSpeed}");
 
         if (catchButton != null) catchButton.gameObject.SetActive(false);
         if (catchZoneVisual != null) catchZoneVisual.SetActive(false);
