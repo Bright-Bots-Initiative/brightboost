@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SafeAvatarImage } from "@/components/ui/SafeAvatarImage";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -353,8 +354,8 @@ export default function StudentDashboard() {
                 }}
               >
                 <Avatar className="w-10 h-10 border-2 border-slate-200">
-                  <AvatarImage
-                    src={(user as any)?.avatarUrl || "/robots/robot_default.png"}
+                  <SafeAvatarImage
+                    src={user?.avatarUrl}
                     alt={user?.name || "User"}
                   />
                   <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">

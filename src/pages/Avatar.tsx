@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import AvatarPicker from "@/components/AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
 import { STEM1_SET1_IDS } from "../constants/stem1Set1Games";
+import { normalizeAvatarUrl } from "@/lib/avatarDefaults";
 
 // Helper to get display name for archetype
 function getArchetypeDisplay(avatar: any): string {
@@ -130,7 +131,7 @@ export default function Avatar() {
       <div className="mb-6 flex justify-center">
         <AvatarPicker
           userInitials={getInitials(user?.name || "??")}
-          currentAvatarUrl={(user as any)?.avatarUrl || "/robots/robot_default.png"}
+          currentAvatarUrl={normalizeAvatarUrl(user?.avatarUrl)}
           // Note: AuthContext user might not be updated immediately after upload unless we refresh it.
           // For now, we rely on the component's internal state for immediate feedback.
           onAvatarChange={(url) => {

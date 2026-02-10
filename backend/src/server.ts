@@ -11,6 +11,7 @@ import progressRouter from "./routes/progress";
 import avatarRouter from "./routes/avatar";
 import authRouter from "./routes/auth";
 import profileRouter from "./routes/profile";
+import userAvatarRouter from "./routes/userAvatar";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 
@@ -167,6 +168,7 @@ app.use("/api", modulesRouter);
 app.use("/api", progressRouter);
 app.use("/api", avatarRouter);
 app.use("/api", profileRouter);
+app.use("/api", userAvatarRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" }),

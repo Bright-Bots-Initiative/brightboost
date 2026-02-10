@@ -19,6 +19,7 @@ interface User {
   xp?: number;
   level?: string;
   streak?: number;
+  avatarUrl?: string | null;
   badges?: Array<{ id: string; name: string; awardedAt: string }>;
 }
 
@@ -27,6 +28,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, userData: User, next?: string) => void;
   logout: () => void;
+  updateUser: (patch: Partial<User>) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -116,6 +118,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     navigate("/");
   }, [navigate]);
 
+  /**
+   * Update user state partially (e.g., after avatar upload).
+   * Updates both React state and localStorage.
+   */
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...patch };
+      localStorage.setItem("user", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -123,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         token,
         login,
         logout,
+        updateUser,
         isAuthenticated: !!user,
         isLoading,
       }}

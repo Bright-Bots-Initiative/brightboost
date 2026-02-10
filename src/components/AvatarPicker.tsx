@@ -1,6 +1,9 @@
 import React, { useRef, useState } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SafeAvatarImage } from "@/components/ui/SafeAvatarImage";
 import { join } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
+import { normalizeAvatarUrl } from "@/lib/avatarDefaults";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -10,33 +13,33 @@ interface AvatarProps {
   onAvatarChange?: (url: string) => void;
 }
 
-//Stubs - replace later
-async function getPresignedUrlStub(): Promise<string> {
-  return "https://stub-bucket.s3.amazonaws.com/avatar";
-}
-
-async function patchUserAvatarStub(url: string): Promise<void> {
+/**
+ * Upload avatar to the backend and return the new avatar URL
+ */
+async function uploadAvatar(file: Blob): Promise<string> {
   const token = localStorage.getItem("bb_access_token");
   if (!token) {
     throw new Error("No authentication token found");
   }
 
-  const response = await fetch(join(API_BASE, "/user/avatar"), {
-    method: "PATCH",
+  const formData = new FormData();
+  formData.append("avatar", file, "avatar.webp");
+
+  const response = await fetch(join(API_BASE, "/user/avatar/upload"), {
+    method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ avatarUrl: url }),
+    body: formData,
   });
 
   if (!response.ok) {
-    throw new Error("Failed to update avatar");
+    const error = await response.json().catch(() => ({ error: "Upload failed" }));
+    throw new Error(error.error || "Failed to upload avatar");
   }
-}
 
-async function invalidateAvatarCache(url: string): Promise<void> {
-  console.log("Invalidate avatar cache for:", url);
+  const data = await response.json();
+  return data.avatarUrl;
 }
 
 const AvatarPicker: React.FC<AvatarProps> = ({
@@ -45,48 +48,47 @@ const AvatarPicker: React.FC<AvatarProps> = ({
   onAvatarChange,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
-    currentAvatarUrl,
+  const { updateUser } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string>(
+    normalizeAvatarUrl(currentAvatarUrl),
   );
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
+    setError(undefined);
     try {
-      console.log("File selected:", file.name);
       const cropped = await cropToSquare(file);
-      console.log("Cropped profile");
       const compressed = await compressToWebP(cropped);
-      console.log("Compressed profile");
-      const previewUrl = URL.createObjectURL(compressed);
-      setPreviewUrl(previewUrl);
+      const localPreview = URL.createObjectURL(compressed);
+      setPreviewUrl(localPreview);
 
-      const presignedUrl = await getPresignedUrlStub();
-      const finalUrl = presignedUrl.split("?")[0];
-      console.log("Uploading to:", presignedUrl);
+      // Upload to backend
+      const newAvatarUrl = await uploadAvatar(compressed);
 
-      await fetch(presignedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "image/webp" },
-        body: compressed,
-      });
-
-      await invalidateAvatarCache(finalUrl);
-      await patchUserAvatarStub(finalUrl);
-
-      setAvatarUrl(finalUrl);
+      // Update local state
+      setAvatarUrl(newAvatarUrl);
       setPreviewUrl(undefined);
-      if (onAvatarChange) onAvatarChange(finalUrl);
+
+      // Update AuthContext so other components see the change
+      updateUser({ avatarUrl: newAvatarUrl });
+
+      if (onAvatarChange) onAvatarChange(newAvatarUrl);
     } catch (err) {
       console.error("Upload failed:", err);
-      setAvatarUrl(undefined);
+      setError(err instanceof Error ? err.message : "Upload failed");
       setPreviewUrl(undefined);
     } finally {
       setLoading(false);
+      // Reset file input so same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -137,7 +139,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center gap-2">
       <button
         type="button"
         aria-label="Change avatar"
@@ -153,7 +155,10 @@ const AvatarPicker: React.FC<AvatarProps> = ({
             />
           ) : (
             <>
-              <AvatarImage src={previewUrl ?? avatarUrl} alt="Current avatar" />
+              <SafeAvatarImage
+                src={previewUrl ?? avatarUrl}
+                alt="Current avatar"
+              />
               <AvatarFallback aria-hidden="true">{userInitials}</AvatarFallback>
             </>
           )}
@@ -161,13 +166,18 @@ const AvatarPicker: React.FC<AvatarProps> = ({
       </button>
       <input
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp"
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
         aria-hidden="true"
         tabIndex={-1}
       />
+      {error && (
+        <p className="text-sm text-red-500" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
