@@ -143,7 +143,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
       <button
         type="button"
         aria-label="Change avatar"
-        className="relative w-24 h-24 cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none"
+        className="relative w-72 h-72 cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none"
         onClick={() => fileInputRef.current?.click()}
       >
         <Avatar className="w-full h-full rounded-md">
