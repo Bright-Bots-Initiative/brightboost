@@ -80,7 +80,7 @@ export default function Avatar() {
         </div>
 
         <div className="mb-6 flex justify-center">
-          <Skeleton className="w-24 h-24 rounded-full" />
+          <Skeleton className="w-72 h-72 rounded-md" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -130,13 +130,11 @@ export default function Avatar() {
 
       <div className="mb-6 flex justify-center">
         <AvatarPicker
+          size="xl"
           userInitials={getInitials(user?.name || "??")}
           currentAvatarUrl={normalizeAvatarUrl(user?.avatarUrl)}
-          // Note: AuthContext user might not be updated immediately after upload unless we refresh it.
-          // For now, we rely on the component's internal state for immediate feedback.
           onAvatarChange={(url) => {
             console.log("Avatar updated:", url);
-            // Optionally trigger a user profile refresh here
           }}
         />
       </div>
