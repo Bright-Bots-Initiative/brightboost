@@ -130,7 +130,7 @@ export default function Avatar() {
       <div className="mb-6 flex justify-center">
         <AvatarPicker
           userInitials={getInitials(user?.name || "??")}
-          currentAvatarUrl={(user as any)?.avatarUrl} // Assuming user object has avatarUrl, or we use a fallback if not present in AuthContext user type.
+          currentAvatarUrl={(user as any)?.avatarUrl || "/robots/robot_default.png"}
           // Note: AuthContext user might not be updated immediately after upload unless we refresh it.
           // For now, we rely on the component's internal state for immediate feedback.
           onAvatarChange={(url) => {

@@ -4,17 +4,21 @@ import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
 import { selectArchetypeSchema } from "../validation/schemas";
 import { sensitiveOpsLimiter } from "../utils/security";
+import {
+  ensureAvatarWithBackfill,
+  XP_PER_ACTIVITY,
+  XP_PER_LEVEL_UP,
+} from "../services/game";
 
 const router = Router();
 
-// Get user XP
+// Get user XP - auto-backfill if no avatar exists
 router.get("/user/xp", requireAuth, async (req, res) => {
   try {
     const studentId = req.user!.id;
-    const avatar = await prisma.avatar.findUnique({
-      where: { studentId },
-      select: { xp: true },
-    });
+
+    // Ensure avatar exists (auto-backfill from progress if needed)
+    const { avatar } = await ensureAvatarWithBackfill(studentId);
 
     res.json({ currentXp: avatar?.xp || 0 });
   } catch (error) {
@@ -23,17 +27,64 @@ router.get("/user/xp", requireAuth, async (req, res) => {
   }
 });
 
-// Get current user's avatar
+// Get current user's avatar - NEVER returns null, auto-backfills from progress
 router.get("/avatar/me", requireAuth, async (req, res) => {
   try {
     const studentId = req.user!.id;
-    const avatar = await prisma.avatar.findUnique({
+
+    // First, try to get existing avatar
+    let avatar = await prisma.avatar.findUnique({
       where: { studentId },
       include: { unlockedAbilities: { include: { Ability: true } } },
     });
 
     if (!avatar) {
-      return res.json({ avatar: null });
+      // No avatar exists - create one with backfilled XP from progress
+      const { avatar: backfilledAvatar } = await ensureAvatarWithBackfill(studentId);
+
+      // Refetch with abilities included
+      avatar = await prisma.avatar.findUnique({
+        where: { studentId },
+        include: { unlockedAbilities: { include: { Ability: true } } },
+      });
+
+      if (avatar) {
+        console.log(`[/avatar/me] Backfilled avatar for ${studentId}: level=${avatar.level}, xp=${avatar.xp}`);
+      }
+    } else if (avatar.xp === 0) {
+      // Avatar exists but xp=0 - check if we need to "repair" from progress
+      const completedCount = await prisma.progress.count({
+        where: { studentId, status: "COMPLETED" },
+      });
+
+      if (completedCount > 0) {
+        // Repair: user has completed activities but avatar shows xp=0
+        const expectedLevel = 1 + Math.floor(completedCount / 2);
+        const expectedXp =
+          completedCount * XP_PER_ACTIVITY +
+          (expectedLevel - 1) * XP_PER_LEVEL_UP;
+
+        // Only update if it would increase values (never decrease)
+        const newLevel = Math.max(avatar.level, expectedLevel);
+        const newXp = Math.max(avatar.xp, expectedXp);
+
+        if (newLevel > avatar.level || newXp > avatar.xp) {
+          await prisma.avatar.update({
+            where: { studentId },
+            data: { level: newLevel, xp: newXp },
+          });
+
+          // Refetch with updated values
+          avatar = await prisma.avatar.findUnique({
+            where: { studentId },
+            include: { unlockedAbilities: { include: { Ability: true } } },
+          });
+
+          console.log(
+            `[/avatar/me] Repaired avatar for ${studentId}: level=${newLevel}, xp=${newXp} (completedCount=${completedCount})`
+          );
+        }
+      }
     }
 
     res.json({ avatar });

@@ -354,7 +354,7 @@ export default function StudentDashboard() {
               >
                 <Avatar className="w-10 h-10 border-2 border-slate-200">
                   <AvatarImage
-                    src={(user as any)?.avatarUrl}
+                    src={(user as any)?.avatarUrl || "/robots/robot_default.png"}
                     alt={user?.name || "User"}
                   />
                   <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
