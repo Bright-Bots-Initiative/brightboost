@@ -6,6 +6,9 @@ import type { Avatar } from "@prisma/client";
 export const XP_PER_ACTIVITY = 50;
 export const XP_PER_LEVEL_UP = 100;
 
+// Stat constants
+export const STAT_MAX = 100;
+
 type AbilityRow = { id: string };
 
 export async function checkUnlocks(
@@ -37,51 +40,49 @@ export async function checkUnlocks(
   let newAbilitiesCount = 0;
 
   if (newLevel > avatar.level) {
-    // ⚡ Bolt Optimization: Parallelize avatar update and ability fetch
-    // Capture archetype before update to allow parallel execution
-    const archetype = avatar.archetype;
-
-    const [updatedAvatar, eligibleAbilities] = await Promise.all([
-      prisma.avatar.update({
-        where: { id: avatar.id },
-        data: { level: newLevel, xp: { increment: XP_PER_LEVEL_UP } },
-      }),
-      // Batch fetch & create to avoid N+1 query
-      prisma.ability.findMany({
-        where: { archetype, reqLevel: { lte: newLevel } },
-      }),
-    ]);
-
+    // Update avatar level
+    const updatedAvatar = await prisma.avatar.update({
+      where: { id: avatar.id },
+      data: { level: newLevel, xp: { increment: XP_PER_LEVEL_UP } },
+    });
     avatar = updatedAvatar;
 
-    // Capture avatarId for use in closures (TS can't narrow `let` across callbacks)
-    const avatarId = avatar.id;
+    // ONLY unlock abilities if avatar is SPECIALIZED with an archetype
+    // GENERAL avatars (archetype=null) do not get abilities
+    if (avatar.archetype && avatar.stage === "SPECIALIZED") {
+      const archetype = avatar.archetype;
+      const avatarId = avatar.id;
 
-    if (eligibleAbilities.length > 0) {
-      const existingUnlocks = await prisma.unlockedAbility.findMany({
-        where: {
-          avatarId,
-          abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
-        },
-        select: { abilityId: true },
+      const eligibleAbilities = await prisma.ability.findMany({
+        where: { archetype, reqLevel: { lte: newLevel } },
       });
 
-      const existingAbilityIds = new Set(
-        existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
-      );
-      const newUnlocks = eligibleAbilities.filter(
-        (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
-      );
-
-      if (newUnlocks.length > 0) {
-        await prisma.unlockedAbility.createMany({
-          data: newUnlocks.map((ab: AbilityRow) => ({
+      if (eligibleAbilities.length > 0) {
+        const existingUnlocks = await prisma.unlockedAbility.findMany({
+          where: {
             avatarId,
-            abilityId: ab.id,
-            equipped: false,
-          })),
+            abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
+          },
+          select: { abilityId: true },
         });
-        newAbilitiesCount = newUnlocks.length;
+
+        const existingAbilityIds = new Set(
+          existingUnlocks.map((u: { abilityId: string }) => u.abilityId),
+        );
+        const newUnlocks = eligibleAbilities.filter(
+          (ab: AbilityRow) => !existingAbilityIds.has(ab.id),
+        );
+
+        if (newUnlocks.length > 0) {
+          await prisma.unlockedAbility.createMany({
+            data: newUnlocks.map((ab: AbilityRow) => ({
+              avatarId,
+              abilityId: ab.id,
+              equipped: false,
+            })),
+          });
+          newAbilitiesCount = newUnlocks.length;
+        }
       }
     }
   }
@@ -90,8 +91,12 @@ export async function checkUnlocks(
 }
 
 /**
- * Ensures a student has an avatar. If missing, creates one with backfilled XP
- * based on their completed activities.
+ * Ensures a student has an avatar. If missing, creates one as GENERAL (Explorer)
+ * with backfilled XP based on their completed activities.
+ *
+ * IMPORTANT: Backfilled avatars are created as stage=GENERAL with archetype=null.
+ * This means they are "Explorers" until the user explicitly selects a specialty.
+ * No abilities are unlocked for GENERAL avatars.
  *
  * @param studentId - The student's ID
  * @returns Object containing the avatar and whether it was newly created with backfill
@@ -125,36 +130,28 @@ export async function ensureAvatarWithBackfill(
   const levelUpBonusXp = (initialLevel - 1) * XP_PER_LEVEL_UP;
   const totalBackfilledXp = backfilledXp + levelUpBonusXp;
 
-  // Create avatar with backfilled XP using default archetype
-  // Note: User should ideally select archetype first, but this handles edge cases
+  // Create avatar as GENERAL (Explorer) - no archetype, no abilities
+  // User must explicitly select a specialty to become SPECIALIZED
   const newAvatar = await prisma.avatar.create({
     data: {
       studentId,
-      archetype: "AI", // Default archetype for backfill
+      stage: "GENERAL",      // Explorer stage
+      archetype: null,       // No archetype until specialty selected
       level: initialLevel,
       xp: totalBackfilledXp,
       hp: 100,
       energy: 100,
+      speed: 0,              // General stats start at 0
+      control: 0,
+      focus: 0,
     },
   });
 
-  // Unlock abilities for the backfilled level
-  const eligibleAbilities = await prisma.ability.findMany({
-    where: { archetype: newAvatar.archetype, reqLevel: { lte: initialLevel } },
-  });
-
-  if (eligibleAbilities.length > 0) {
-    await prisma.unlockedAbility.createMany({
-      data: eligibleAbilities.map((ab: AbilityRow) => ({
-        avatarId: newAvatar.id,
-        abilityId: ab.id,
-        equipped: false,
-      })),
-    });
-  }
+  // NOTE: No abilities are unlocked for GENERAL avatars
+  // Abilities are only unlocked when user selects a specialty (SPECIALIZED stage)
 
   console.log(
-    `[ensureAvatarWithBackfill] Created backfilled avatar for student ${studentId}: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`
+    `[ensureAvatarWithBackfill] Created GENERAL avatar for student ${studentId}: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`
   );
 
   return {
@@ -162,4 +159,40 @@ export async function ensureAvatarWithBackfill(
     wasBackfilled: true,
     backfilledXp: totalBackfilledXp,
   };
+}
+
+/**
+ * Calculates stat gains from activity completion.
+ * Only applies to GENERAL avatars (before specialization).
+ *
+ * @param result - Activity result with optional score/total/timeSpentS
+ * @returns Object with speed, control, focus deltas
+ */
+export function calculateStatGains(result?: {
+  score?: number;
+  total?: number;
+  timeSpentS?: number;
+}): { speed: number; control: number; focus: number } {
+  // Base gains per completion
+  let speed = 1;
+  let control = 1;
+  let focus = 1;
+
+  // Performance-based modifiers
+  if (result?.score !== undefined && result?.total && result.total > 0) {
+    const accuracy = result.score / result.total;
+    control += Math.round(accuracy * 2); // 0-2 bonus
+    focus += Math.round(accuracy * 1);   // 0-1 bonus
+  }
+
+  // Speed bonus for fast completion
+  if (result?.timeSpentS !== undefined) {
+    if (result.timeSpentS <= 30) {
+      speed += 2;
+    } else if (result.timeSpentS <= 60) {
+      speed += 1;
+    }
+  }
+
+  return { speed, control, focus };
 }

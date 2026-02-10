@@ -517,4 +517,17 @@ export const api = {
     // Backend returns { avatar }, but many frontend callers expect the avatar object directly.
     return data?.avatar ?? null;
   },
+
+  selectArchetype: async (archetype: string) => {
+    const res = await fetch(join(API_BASE, "/avatar/select-archetype"), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ archetype }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(err.error || "Failed to select archetype");
+    }
+    return res.json();
+  },
 };

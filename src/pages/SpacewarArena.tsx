@@ -74,8 +74,14 @@ export default function SpacewarArena() {
           );
 
         if (avatar) {
+          // Use "explorer" for GENERAL stage avatars (no specialty selected)
+          const archetypeForUnity =
+            avatar.stage === "GENERAL" || !avatar.archetype
+              ? "explorer"
+              : avatar.archetype;
+
           setAvatarConfig({
-            archetype: avatar.archetype,
+            archetype: archetypeForUnity,
             level: avatar.level ?? 1,
             xp: avatar.xp ?? 0,
             avatarUrl: avatar.avatarUrl,

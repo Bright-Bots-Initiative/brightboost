@@ -12,7 +12,9 @@ import { gameActionLimiter } from "../utils/security";
 import {
   checkUnlocks,
   ensureAvatarWithBackfill,
+  calculateStatGains,
   XP_PER_ACTIVITY,
+  STAT_MAX,
 } from "../services/game";
 import {
   checkpointSchema,
@@ -216,21 +218,41 @@ router.post(
       const currentEnergy = avatarBefore.energy || 0;
       const currentHp = avatarBefore.hp || 0;
 
+      // Calculate stat gains (only meaningful for GENERAL avatars)
+      const statGains = calculateStatGains({
+        score: result?.score,
+        total: result?.total,
+        timeSpentS,
+      });
+
+      // Build update data
+      const updateData: any = {
+        xp: { increment: xpAward },
+        energy: Math.min(100, currentEnergy + energyGain),
+        hp: Math.min(100, currentHp + hpGain),
+      };
+
+      // Apply stat gains (clamped to STAT_MAX)
+      // Stats accrue for all avatars, but are most meaningful for GENERAL
+      const currentSpeed = (avatarBefore as any).speed || 0;
+      const currentControl = (avatarBefore as any).control || 0;
+      const currentFocus = (avatarBefore as any).focus || 0;
+
+      updateData.speed = Math.min(STAT_MAX, currentSpeed + statGains.speed);
+      updateData.control = Math.min(STAT_MAX, currentControl + statGains.control);
+      updateData.focus = Math.min(STAT_MAX, currentFocus + statGains.focus);
+
       // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
       const updatedAvatar = await prisma.avatar.update({
         where: { studentId },
-        data: {
-          xp: { increment: xpAward },
-          energy: Math.min(100, currentEnergy + energyGain),
-          hp: Math.min(100, currentHp + hpGain),
-        },
+        data: updateData,
       });
 
       // Check for level up (may add more XP and unlocks)
-      const result = await checkUnlocks(studentId, updatedAvatar);
-      if (result) {
-        avatarAfter = result.avatar;
-        newAbilitiesFromUnlock = result.newAbilitiesCount;
+      const unlockResult = await checkUnlocks(studentId, updatedAvatar);
+      if (unlockResult) {
+        avatarAfter = unlockResult.avatar;
+        newAbilitiesFromUnlock = unlockResult.newAbilitiesCount;
       } else {
         avatarAfter = updatedAvatar;
       }

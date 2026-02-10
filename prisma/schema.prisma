@@ -174,14 +174,25 @@ enum Archetype {
   BIOTECH
 }
 
+enum AvatarStage {
+  GENERAL
+  SPECIALIZED
+}
+
 model Avatar {
-  id        String    @id @default(cuid())
-  studentId String    @unique
-  archetype Archetype
-  level     Int       @default(1)
-  xp        Int       @default(0)
-  hp        Int       @default(100)
-  energy    Int       @default(100)
+  id        String       @id @default(cuid())
+  studentId String       @unique
+  stage     AvatarStage  @default(GENERAL)
+  archetype Archetype?   // Nullable until user selects specialty
+  level     Int          @default(1)
+  xp        Int          @default(0)
+  hp        Int          @default(100)
+  energy    Int          @default(100)
+
+  // General stats (accrue before specialization)
+  speed     Int          @default(0)
+  control   Int          @default(0)
+  focus     Int          @default(0)
 
   // Loadout/Unlocks
   unlockedAbilities UnlockedAbility[]
