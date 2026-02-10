@@ -276,25 +276,59 @@ public class GotchaGearsGameManager : MonoBehaviour
             Debug.LogError("[GotchaGears] clueText is NULL. Re-run Tools → BrightBoost → Gotcha Gears → Generate Scene.");
         }
 
-        // Build labels: 1 correct + distractors
-        List<string> labels = new List<string> { round.correctLabel };
+        // SAFETY: Ensure correctLabel is never null/empty
+        string correctLbl = round.correctLabel;
+        if (string.IsNullOrEmpty(correctLbl) || string.IsNullOrWhiteSpace(correctLbl))
+        {
+            // Fallback: use first non-empty distractor, else "debug"
+            string fallback = null;
+            if (round.distractors != null)
+            {
+                foreach (var d in round.distractors)
+                {
+                    if (!string.IsNullOrEmpty(d) && !string.IsNullOrWhiteSpace(d))
+                    {
+                        fallback = d.Trim();
+                        break;
+                    }
+                }
+            }
+            correctLbl = !string.IsNullOrEmpty(fallback) ? fallback : "debug";
+            Debug.LogError("[GotchaGears] correctLabel missing; using fallback=" + correctLbl);
+        }
+        else
+        {
+            correctLbl = correctLbl.Trim();
+        }
+
+        // Build labels: 1 correct + distractors (no nulls, no duplicates of correct)
+        List<string> labels = new List<string> { correctLbl };
         if (round.distractors != null)
         {
             foreach (var d in round.distractors)
             {
-                if (!string.IsNullOrEmpty(d) && d != round.correctLabel)
+                if (!string.IsNullOrEmpty(d) && !string.IsNullOrWhiteSpace(d))
                 {
-                    labels.Add(d);
+                    string trimmed = d.Trim();
+                    // Skip if matches correctLabel (case-insensitive)
+                    if (!trimmed.Equals(correctLbl, System.StringComparison.OrdinalIgnoreCase) && !labels.Contains(trimmed))
+                    {
+                        labels.Add(trimmed);
+                    }
                 }
             }
         }
 
-        // Pad to 3 if needed
-        while (labels.Count < 3)
+        // Pad to 3 if needed (use words that don't match correctLabel)
+        string[] padOptions = { "wait", "look", "think", "help", "try" };
+        int padIdx = 0;
+        while (labels.Count < 3 && padIdx < padOptions.Length)
         {
-            string pad = labels.Count == 1 ? "wait" : "look";
-            if (!labels.Contains(pad)) labels.Add(pad);
-            else labels.Add("think");
+            string pad = padOptions[padIdx++];
+            if (!pad.Equals(correctLbl, System.StringComparison.OrdinalIgnoreCase) && !labels.Contains(pad))
+            {
+                labels.Add(pad);
+            }
         }
 
         // Shuffle labels to lanes
@@ -308,7 +342,8 @@ public class GotchaGearsGameManager : MonoBehaviour
         for (int i = 0; i < 3 && i < labels.Count; i++)
         {
             string label = labels[i];
-            bool isCorrect = label == round.correctLabel;
+            // Compare against our validated correctLbl (case-insensitive)
+            bool isCorrect = label.Equals(correctLbl, System.StringComparison.OrdinalIgnoreCase);
             float y = laneYPositions[i];
 
             var gearObj = Instantiate(gearTargetPrefab, new Vector3(spawnX, y, 0), Quaternion.identity);

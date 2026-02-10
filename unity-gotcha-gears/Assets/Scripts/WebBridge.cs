@@ -33,13 +33,13 @@ public class WebBridge : MonoBehaviour
     {
         public int lives = 3;
         public float roundTimeS = 12f;
-        public float speed = 2.6f;
-        public float speedRamp = 0.15f;
-        public float maxSpeed = 6f;
-        public float planningTimeS = 1.8f;
+        public float speed = 2.8f;
+        public float speedRamp = 0.25f;
+        public float maxSpeed = 9f;
+        public float planningTimeS = 1.6f;
         public bool kidModeWrongNoLife = true;
         public bool kidModeWhiffNoLife = true;
-        public float catchWindowX = 1.0f;
+        public float catchWindowX = 0.95f;
     }
 
     [System.Serializable]

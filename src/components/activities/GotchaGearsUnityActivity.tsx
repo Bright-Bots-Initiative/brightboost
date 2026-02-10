@@ -81,18 +81,25 @@ export default function GotchaGearsUnityActivity({
       // Prefer clueText, fall back to clue for backward compat
       const clueText = resolveText(t, round.clueText ?? round.clue);
       // Prefer correctLabel, fall back to correctAnswer for backward compat
-      const correctLabel = resolveText(t, round.correctLabel ?? round.correctAnswer);
+      let correctLabel = resolveText(t, round.correctLabel ?? round.correctAnswer);
       const hint = round.hint ? resolveText(t, round.hint) : "";
-      const distractors = (round.distractors || []).map((d) => resolveText(t, d));
+      const rawDistractors = (round.distractors || []).map((d) => resolveText(t, d));
 
       // HARD VALIDATION: avoid sending empty correctLabel into Unity
       if (!correctLabel?.trim()) {
         console.warn(`[GotchaGears] Round ${idx} missing correctLabel/correctAnswer. Using fallback.`);
+        // Use first non-empty distractor, else "debug"
+        correctLabel = rawDistractors.find((d) => d?.trim()) || "debug";
       }
+
+      // Filter out duplicates: remove correctLabel from distractors
+      const distractors = rawDistractors.filter(
+        (d) => d?.trim() && d.trim().toLowerCase() !== correctLabel.trim().toLowerCase()
+      );
 
       return {
         clueText: clueText || "Pick the best solution!",
-        correctLabel: correctLabel?.trim() ? correctLabel : (distractors[0] || "debug"),
+        correctLabel: correctLabel.trim(),
         distractors,
         hint,
       };
@@ -101,21 +108,32 @@ export default function GotchaGearsUnityActivity({
 
   // Build the config object to send to Unity
   // IMPORTANT: Include ALL settings fields Unity expects, with harder difficulty defaults
-  const unityConfig = useMemo(() => ({
-    sessionId,
-    settings: {
-      lives: config.settings?.lives ?? 3,
-      roundTimeS: config.settings?.roundTimeS ?? 12,
-      speed: config.settings?.speed ?? 2.8,
-      speedRamp: config.settings?.speedRamp ?? 0.22,      // Noticeable increase per round
-      maxSpeed: config.settings?.maxSpeed ?? 8.0,
-      planningTimeS: config.settings?.planningTimeS ?? 1.6,
-      catchWindowX: config.settings?.catchWindowX ?? 0.95,
-      kidModeWrongNoLife: config.settings?.kidModeWrongNoLife ?? true,
-      kidModeWhiffNoLife: config.settings?.kidModeWhiffNoLife ?? true,
-    },
-    rounds: resolvedRounds,
-  }), [sessionId, resolvedRounds, config.settings]);
+  const unityConfig = useMemo(() => {
+    const cfg = {
+      sessionId,
+      settings: {
+        lives: config.settings?.lives ?? 3,
+        roundTimeS: config.settings?.roundTimeS ?? 12,
+        speed: config.settings?.speed ?? 2.8,
+        speedRamp: config.settings?.speedRamp ?? 0.25,      // Aggressive speed ramp per round
+        maxSpeed: config.settings?.maxSpeed ?? 9.0,         // Higher cap for challenge
+        planningTimeS: config.settings?.planningTimeS ?? 1.6,
+        catchWindowX: config.settings?.catchWindowX ?? 0.95,
+        kidModeWrongNoLife: config.settings?.kidModeWrongNoLife ?? true,
+        kidModeWhiffNoLife: config.settings?.kidModeWhiffNoLife ?? true,
+      },
+      rounds: resolvedRounds,
+    };
+    // Debug: log round 0 to verify config mapping
+    if (resolvedRounds.length > 0) {
+      console.log("[GotchaGears] Round 0 preview:", {
+        clueText: resolvedRounds[0].clueText,
+        correctLabel: resolvedRounds[0].correctLabel,
+        distractors: resolvedRounds[0].distractors,
+      });
+    }
+    return cfg;
+  }, [sessionId, resolvedRounds, config.settings]);
 
   // Send config exactly once, when both instance AND ready are true
   const sendConfig = useCallback(() => {

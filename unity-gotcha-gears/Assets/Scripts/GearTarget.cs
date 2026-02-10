@@ -27,7 +27,10 @@ public class GearTarget : MonoBehaviour
 
     public void Configure(string label, bool correct, int lane, float speed, float destroyX)
     {
-        this.label = label;
+        // NULL-SAFE: prevent ToUpper crash on null/empty label
+        string safeLabel = string.IsNullOrEmpty(label) ? "???" : label;
+
+        this.label = safeLabel;
         this.isCorrect = correct;
         this.lane = lane;
         this.speed = speed;
@@ -37,11 +40,11 @@ public class GearTarget : MonoBehaviour
 
         if (labelText != null)
         {
-            labelText.text = label.ToUpper();
+            labelText.text = safeLabel.ToUpper();
         }
         if (shadowText != null)
         {
-            shadowText.text = label.ToUpper();
+            shadowText.text = safeLabel.ToUpper();
         }
         if (backgroundSprite != null)
         {

@@ -308,4 +308,49 @@ describe("GotchaGearsUnityActivity", () => {
     // Should render without errors - defaults are applied internally
     expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
   });
+
+  it("uses fallback when correctLabel is missing", () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const missingLabelConfig = {
+      gameKey: "gotcha_gears_unity" as const,
+      rounds: [
+        {
+          clueText: "What is the answer?",
+          // correctLabel is missing!
+          distractors: ["option1", "option2"],
+        },
+      ],
+    };
+
+    render(
+      <GotchaGearsUnityActivity config={missingLabelConfig} onComplete={mockOnComplete} />
+    );
+
+    // Should render without crashing - fallback to first distractor
+    expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("missing correctLabel"));
+
+    consoleSpy.mockRestore();
+  });
+
+  it("removes correctLabel from distractors to avoid duplicates", () => {
+    const duplicateConfig = {
+      gameKey: "gotcha_gears_unity" as const,
+      rounds: [
+        {
+          clueText: "Which one is correct?",
+          correctLabel: "answer",
+          distractors: ["answer", "wrong1", "wrong2"], // "answer" is duplicate
+        },
+      ],
+    };
+
+    render(
+      <GotchaGearsUnityActivity config={duplicateConfig} onComplete={mockOnComplete} />
+    );
+
+    // Should render without errors - duplicate filtered internally
+    expect(screen.getByText("Gotcha Gears")).toBeInTheDocument();
+  });
 });
