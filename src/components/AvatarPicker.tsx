@@ -146,7 +146,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
         className="relative w-24 h-24 cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none"
         onClick={() => fileInputRef.current?.click()}
       >
-        <Avatar className="w-full h-full">
+        <Avatar className="w-full h-full rounded-md">
           {loading ? (
             <div
               className="w-full h-full animate-pulse bg-muted rounded-md"
@@ -159,7 +159,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
                 src={previewUrl ?? avatarUrl}
                 alt="Current avatar"
               />
-              <AvatarFallback aria-hidden="true">{userInitials}</AvatarFallback>
+              <AvatarFallback className="rounded-md" aria-hidden="true">{userInitials}</AvatarFallback>
             </>
           )}
         </Avatar>
