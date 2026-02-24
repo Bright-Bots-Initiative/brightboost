@@ -12,6 +12,7 @@ import avatarRouter from "./routes/avatar";
 import authRouter from "./routes/auth";
 import profileRouter from "./routes/profile";
 import userAvatarRouter from "./routes/userAvatar";
+import contextRouter from "./routes/context";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 
@@ -157,6 +158,9 @@ app.use(express.json({ limit: "50kb" }));
 
 // Public routes (Auth) - Mount before auth middleware to ensure access
 app.use("/api", authRouter);
+
+// Public route for Task Ranker integration
+app.use("/context", contextRouter);
 
 // 🛡️ Sentinel: Mount dev shim BEFORE auth token middleware.
 // This allows the "mock-token-for-mvp" to be handled by the shim
