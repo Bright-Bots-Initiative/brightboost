@@ -157,6 +157,88 @@ export const handlers = [
   http.post(`/auth/login`, loginHandler),
   http.post(`/auth/signup`, signupHandler),
 
+  // Pilot Mode: Teacher courses
+  http.get(`${API_BASE}/teacher/courses`, () => {
+    return HttpResponse.json([
+      {
+        id: "course-001",
+        name: "Period 3 STEM",
+        joinCode: "ABC123",
+        enrollmentCount: 2,
+        createdAt: "2025-06-01T00:00:00Z",
+      },
+    ]);
+  }),
+
+  http.post(`${API_BASE}/teacher/courses`, async ({ request }) => {
+    const body = (await request.json()) as { name: string };
+    return HttpResponse.json(
+      {
+        id: `course-${Date.now()}`,
+        name: body.name,
+        joinCode: "XYZ789",
+        enrollmentCount: 0,
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.get(`${API_BASE}/teacher/courses/:courseId`, () => {
+    return HttpResponse.json({
+      id: "course-001",
+      name: "Period 3 STEM",
+      joinCode: "ABC123",
+      enrollmentCount: 2,
+      students: [
+        { id: "stu-1", name: "Alice", email: "alice@test.com", enrolledAt: "2025-06-02T00:00:00Z" },
+        { id: "stu-2", name: "Bob", email: "bob@test.com", enrolledAt: "2025-06-03T00:00:00Z" },
+      ],
+      createdAt: "2025-06-01T00:00:00Z",
+    });
+  }),
+
+  http.get(`${API_BASE}/teacher/courses/:courseId/assignments`, () => {
+    return HttpResponse.json([]);
+  }),
+
+  http.post(`${API_BASE}/teacher/courses/:courseId/assignments`, async ({ request }) => {
+    const body = (await request.json()) as { title: string; activityId: string; dueDate: string };
+    return HttpResponse.json(
+      {
+        id: `assign-${Date.now()}`,
+        title: body.title,
+        activityId: body.activityId,
+        dueDate: body.dueDate,
+        status: "Open",
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.get(`${API_BASE}/teacher/courses/:courseId/pulse/summary`, () => {
+    return HttpResponse.json({ preCount: 0, postCount: 0, avgPre: null, avgPost: null, delta: null });
+  }),
+
+  // Pilot Mode: Student endpoints
+  http.post(`${API_BASE}/student/join-course`, async ({ request }) => {
+    const body = (await request.json()) as { joinCode: string };
+    if (body.joinCode === "ABC123") {
+      return HttpResponse.json({ message: "Enrolled successfully", courseId: "course-001", courseName: "Period 3 STEM" }, { status: 201 });
+    }
+    return HttpResponse.json({ error: "Invalid join code" }, { status: 404 });
+  }),
+
+  http.get(`${API_BASE}/student/assignments`, () => {
+    return HttpResponse.json([]);
+  }),
+
+  http.post(`${API_BASE}/pulse`, () => {
+    return HttpResponse.json({ id: `pulse-${Date.now()}` }, { status: 201 });
+  }),
+
+  // Legacy mock class endpoints (kept for backwards compat)
   http.get(`${API_BASE}/teacher/classes`, () => {
     return HttpResponse.json({ classes: mockClasses });
   }),

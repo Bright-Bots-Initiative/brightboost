@@ -1,505 +1,526 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import {
-  Class,
-  gradeOptions,
-  Assignment,
-} from "../components/TeacherDashboard/types";
-import {
-  fetchMockClassById,
-  patchMockClass,
-} from "../services/mockClassService";
-import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
-import ProfileModal from "../components/TeacherDashboard/ProfileModal";
-import EditProfileModal from "../components/TeacherDashboard/EditProfileModal";
+import { useParams } from "react-router-dom";
+import { useApi } from "../services/api";
+import { api as directApi } from "../services/api";
 import {
   Users,
-  GraduationCap,
   Zap,
-  Trophy,
-  Target,
+  Copy,
+  Check,
   Clock,
-  User,
-  Edit,
+  TrendingUp,
 } from "lucide-react";
-import { getSTEM1Summary, STEM1_QUESTS } from "../services/stem1GradeService";
-import { UserProfile } from "../services/profileService";
-import AssignmentTable from "@/components/TeacherDashboard/Assignments/AssignmentsTable";
-import { getAssignments } from "@/services/assignmentService";
-import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface CourseDetail {
+  id: string;
+  name: string;
+  joinCode: string;
+  enrollmentCount: number;
+  students: { id: string; name: string; email: string; enrolledAt: string }[];
+  createdAt: string;
+}
+
+interface AssignmentWithStats {
+  id: string;
+  title: string;
+  description?: string;
+  activityId?: string;
+  dueDate: string;
+  status: string;
+  enrolledCount: number;
+  completedCount: number;
+  avgTimeSpentS: number;
+  createdAt: string;
+}
+
+interface PulseSummary {
+  preCount: number;
+  postCount: number;
+  avgPre: number | null;
+  avgPost: number | null;
+  delta: number | null;
+}
+
+interface ModuleSummary {
+  slug: string;
+  title: string;
+  units: {
+    id: string;
+    title: string;
+    lessons: {
+      id: string;
+      title: string;
+      activities: { id: string; title: string; kind: string }[];
+    }[];
+  }[];
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 const TeacherClassDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [classData, setClassData] = useState<Class | null>(null);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loadingAssignments, setLoadingAssignments] = useState(true);
-  const [editingName, setEditingName] = useState("");
-  const [editingGrade, setEditingGrade] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    null,
-  );
+  const api = useApi();
 
-  useEffect(() => {
-    if (id) {
-      fetchMockClassById(id)
-        .then((cls) => {
-          setClassData(cls);
-          setEditingName(cls.name);
-          setEditingGrade(cls.grade ?? "");
-        })
-        .catch(() => {
-          setClassData(null);
-          setError("Class not found");
-        });
-    }
-  }, [id]);
+  // Course data
+  const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  // Assignments with stats
+  const [assignments, setAssignments] = useState<AssignmentWithStats[]>([]);
+
+  // Pulse summary
+  const [pulse, setPulse] = useState<PulseSummary | null>(null);
+
+  // Launch session wizard
+  const [launchOpen, setLaunchOpen] = useState(false);
+  const [modules, setModules] = useState<ModuleSummary[]>([]);
+  const [selModule, setSelModule] = useState<string>("");
+  const [selActivity, setSelActivity] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [sessionTitle, setSessionTitle] = useState("");
+  const [dueDate, setDueDate] = useState(
+    new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
+  );
+  const [launching, setLaunching] = useState(false);
+
+  // -------------------------------------------------------------------
+  // Load course detail + assignments + pulse
+  // -------------------------------------------------------------------
 
   useEffect(() => {
     if (!id) return;
-    setLoadingAssignments(true);
-    getAssignments(id)
-      .then(setAssignments)
-      .finally(() => setLoadingAssignments(false));
-  }, [id]);
+    (async () => {
+      setLoading(true);
+      try {
+        const [courseData, assignmentData, pulseData] = await Promise.all([
+          api.get(`/teacher/courses/${id}`),
+          api.get(`/teacher/courses/${id}/assignments`),
+          api.get(`/teacher/courses/${id}/pulse/summary`),
+        ]);
+        setCourse(courseData);
+        setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
+        setPulse(pulseData);
+      } catch {
+        setError("Failed to load course details");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id, api]);
 
-  const handleSave = async () => {
-    if (!classData) return;
-    setIsSaving(true);
-    setClassData({
-      ...classData,
-      name: editingName,
-      grade: editingGrade as Class["grade"],
-    });
+  // -------------------------------------------------------------------
+  // Copy join code
+  // -------------------------------------------------------------------
 
-    await patchMockClass(classData.id, {
-      name: editingName,
-      grade: editingGrade as Class["grade"],
-    });
-
-    setIsSaving(false);
+  const handleCopy = () => {
+    if (!course) return;
+    navigator.clipboard.writeText(course.joinCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleViewStudentProfile = (studentId: string) => {
-    setSelectedStudentId(studentId);
-    setIsProfileModalOpen(true);
+  // -------------------------------------------------------------------
+  // Launch session wizard helpers
+  // -------------------------------------------------------------------
+
+  const openLaunchWizard = async () => {
+    setLaunchOpen(true);
+    if (modules.length === 0) {
+      try {
+        const mods = await directApi.getModules();
+        const modArray = Array.isArray(mods) ? mods : mods?.modules ?? [];
+        // For each module, load its structure
+        const detailed = await Promise.all(
+          modArray.map((m: any) =>
+            directApi.getModule(m.slug, { structureOnly: true }),
+          ),
+        );
+        setModules(detailed);
+      } catch {
+        // modules will stay empty
+      }
+    }
   };
 
-  const handleProfileUpdated = (profile: UserProfile) => {
-    console.log("Profile updated:", profile);
+  const activitiesForModule = (slug: string) => {
+    const mod = modules.find((m) => m.slug === slug);
+    if (!mod) return [];
+    const acts: { id: string; title: string; breadcrumb: string }[] = [];
+    for (const u of mod.units ?? []) {
+      for (const l of u.lessons ?? []) {
+        for (const a of l.activities ?? []) {
+          acts.push({
+            id: a.id,
+            title: a.title,
+            breadcrumb: `${u.title} > ${l.title}`,
+          });
+        }
+      }
+    }
+    return acts;
   };
 
-  const navigateToAssignmentDetail = (assignmentId: string) => {
-    navigate(`/teacher/classes/${id}/assignments/${assignmentId}`);
+  const handleLaunch = async () => {
+    if (!selActivity || !id) return;
+    setLaunching(true);
+    try {
+      const created = await api.post(
+        `/teacher/courses/${id}/assignments`,
+        {
+          title: sessionTitle || selActivity.title,
+          activityId: selActivity.id,
+          dueDate,
+        } as Record<string, unknown>,
+      );
+      setAssignments((prev) => [
+        { ...created, enrolledCount: course?.enrollmentCount ?? 0, completedCount: 0, avgTimeSpentS: 0 },
+        ...prev,
+      ]);
+      setLaunchOpen(false);
+      setSelModule("");
+      setSelActivity(null);
+      setSessionTitle("");
+    } catch {
+      // error toast from useApi
+    } finally {
+      setLaunching(false);
+    }
   };
 
-  if (error) {
+  // -------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------
+
+  if (loading) {
     return (
-      <div className="flex justify-center items-start w-full p-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">
-            404: Class Not Found
-          </h2>
-          <p className="text-gray-600 mt-2">
-            The class you're looking for doesn't exist or was removed.
-          </p>
-        </div>
+      <div className="w-full p-6">
+        <div className="h-8 bg-gray-300 animate-pulse w-1/3 mb-4 rounded" />
+        <div className="h-4 bg-gray-200 animate-pulse w-2/3 rounded" />
       </div>
     );
   }
 
-  if (!classData) {
-    return <p className="ml-64 p-6 text-gray-500">Loading class details...</p>;
+  if (error || !course) {
+    return (
+      <div className="w-full p-6 text-center">
+        <h2 className="text-2xl font-bold text-red-600">
+          {error ?? "Course not found"}
+        </h2>
+      </div>
+    );
   }
-
-  const stem1Summary = getSTEM1Summary(classData);
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-start mb-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
-            STEM-1 Class Details
+            {course.name}
           </h1>
-          <p className="text-gray-600 mt-1">
-            Manage class information and track student progress through core
-            quests
-          </p>
+          <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600">
+            <span className="flex items-center">
+              <Users className="w-4 h-4 mr-1" />
+              {course.enrollmentCount} students
+            </span>
+            <span className="flex items-center font-mono bg-gray-100 px-2 py-1 rounded text-xs">
+              Join Code: <strong className="ml-1 text-base">{course.joinCode}</strong>
+              <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title="Copy">
+                {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </span>
+          </div>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setIsProfileModalOpen(true)}
-            aria-label="View teacher profile"
-            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-green text-white rounded-md hover:bg-green-600 transition-colors"
-          >
-            <User className="w-4 h-4 mr-1" />
-            Profile
-          </button>
-          <button
-            onClick={() => setIsEditProfileModalOpen(true)}
-            aria-label="Edit teacher profile"
-            className="flex items-center px-3 py-1.5 text-sm bg-brightboost-yellow text-white rounded-md hover:bg-yellow-600 transition-colors"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </button>
-          <ExportGradesButton
-            classData={classData}
-            teacherName={user?.name}
-            variant="primary"
-            size="md"
-          />
-        </div>
+        <button
+          onClick={openLaunchWizard}
+          className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+        >
+          Launch Weekly Session
+        </button>
       </div>
 
       {/* Summary Cards */}
-      <section
-        aria-labelledby="summary-heading"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-      >
-        <h2 id="summary-heading" className="sr-only">
-          Class Performance Summary
-        </h2>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-md">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm">Average XP</p>
-              <p
-                className="text-2xl font-bold"
-                aria-label={`Average XP: ${stem1Summary.averageXP} out of 500`}
-              >
-                {stem1Summary.averageXP}
-              </p>
-              <p className="text-blue-100 text-xs">out of 500</p>
-            </div>
-            <Zap className="w-8 h-8 text-blue-200" />
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm">Completion Rate</p>
-              <p
-                className="text-2xl font-bold"
-                aria-label={`Completion rate: ${stem1Summary.averageCompletion} percent`}
-              >
-                {stem1Summary.averageCompletion}%
-              </p>
-              <p className="text-green-100 text-xs">class average</p>
-            </div>
-            <Target className="w-8 h-8 text-green-200" />
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-yellow-100 text-sm">Students Passed</p>
-              <p
-                className="text-2xl font-bold"
-                aria-label={`${stem1Summary.studentsPassedSTEM1} students passed out of ${stem1Summary.totalStudents} total students`}
-              >
-                {stem1Summary.studentsPassedSTEM1}
-              </p>
-              <p className="text-yellow-100 text-xs">
-                of {stem1Summary.totalStudents} students
+              <p className="text-sm text-gray-500">Sessions Launched</p>
+              <p className="text-2xl font-bold text-brightboost-navy">
+                {assignments.length}
               </p>
             </div>
-            <Trophy className="w-8 h-8 text-yellow-200" />
+            <Zap className="w-8 h-8 text-brightboost-blue opacity-40" />
           </div>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm">Last Updated</p>
-              <p className="text-lg font-bold">{stem1Summary.lastUpdated}</p>
-              <p className="text-purple-100 text-xs">progress sync</p>
-            </div>
-            <Clock className="w-8 h-8 text-purple-200" />
-          </div>
-        </div>
-      </section>
 
-      {/* Class Info + Quests */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <section
-          className="lg:col-span-2 bg-white rounded-lg shadow-md p-6"
-          aria-labelledby="class-info-heading"
-        >
-          <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
-            <GraduationCap className="w-5 h-5 mr-2" />
-            Class Information
-          </h3>
-          <fieldset className="flex flex-col gap-4 max-w-lg">
-            <legend className="sr-only">Edit class information</legend>
-            <label
-              htmlFor="class-name-input"
-              className="text-sm font-semibold text-gray-700"
-            >
-              Class Name:
-              <input
-                id="class-name-input"
-                value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
-                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue focus:outline-none"
-                aria-describedby="class-name-help"
-              />
-            </label>
-            <div id="class-name-help" className="sr-only">
-              Enter the name for this class
+        <div className="bg-white rounded-lg shadow p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Avg Completion</p>
+              <p className="text-2xl font-bold text-brightboost-green">
+                {assignments.length > 0 && course.enrollmentCount > 0
+                  ? Math.round(
+                      (assignments.reduce((s, a) => s + a.completedCount, 0) /
+                        (assignments.length * course.enrollmentCount)) *
+                        100,
+                    )
+                  : 0}
+                %
+              </p>
             </div>
-            <label
-              htmlFor="grade-select"
-              className="text-sm font-semibold text-gray-700"
-            >
-              Grade:
-              <select
-                id="grade-select"
-                value={editingGrade}
-                onChange={(e) => setEditingGrade(e.target.value)}
-                className="mt-1 p-2 border rounded w-full focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue focus:outline-none"
-                aria-describedby="grade-help"
-              >
-                <option value="">Select grade</option>
-                {gradeOptions.map((grade) => (
-                  <option key={grade} value={grade}>
-                    {grade}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div id="grade-help" className="sr-only">
-              Select the grade level for this class
-            </div>
-            <Button
-              onClick={handleSave}
-              isLoading={isSaving}
-              loadingText="Saving..."
-              className="bg-brightboost-blue text-white hover:bg-brightboost-navy focus:ring-brightboost-blue"
-              aria-describedby={isSaving ? "save-status" : undefined}
-            >
-              Save Changes
-            </Button>
-            {isSaving && (
-              <div id="save-status" className="sr-only" aria-live="polite">
-                Saving changes, please wait
-              </div>
-            )}
-          </fieldset>
-        </section>
-
-        <aside
-          className="bg-white rounded-lg shadow-md p-6"
-          aria-labelledby="quests-heading"
-        >
-          <h3 className="text-lg font-semibold mb-4 text-brightboost-navy flex items-center">
-            <Zap className="w-5 h-5 mr-2" />
-            STEM-1 Core Quests
-          </h3>
-          <div className="space-y-3">
-            {STEM1_QUESTS.map((quest) => (
-              <div
-                key={quest.id}
-                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800">
-                    {quest.name}
-                  </span>
-                  <span className="text-xs font-bold text-brightboost-blue">
-                    {quest.maxXP} XP
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600">{quest.description}</p>
-              </div>
-            ))}
+            <TrendingUp className="w-8 h-8 text-brightboost-green opacity-40" />
           </div>
-        </aside>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Confidence Lift</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {pulse?.delta !== null && pulse?.delta !== undefined
+                  ? `${pulse.delta > 0 ? "+" : ""}${pulse.delta}`
+                  : "—"}
+              </p>
+              <p className="text-xs text-gray-400">
+                Pre {pulse?.avgPre ?? "—"} / Post {pulse?.avgPost ?? "—"} ({pulse?.preCount ?? 0}/{pulse?.postCount ?? 0} responses)
+              </p>
+            </div>
+            <TrendingUp className="w-8 h-8 text-purple-400 opacity-40" />
+          </div>
+        </div>
       </div>
 
-      {/* Class Roster */}
-      <section
-        className="bg-white rounded-lg shadow-md p-6"
-        aria-labelledby="roster-heading"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2
-            id="roster-heading"
-            className="text-lg font-semibold text-brightboost-navy flex items-center"
-          >
-            <Users className="w-5 h-5 mr-2" />
-            Class Roster ({classData.students.length} students)
-          </h2>
-          <ExportGradesButton
-            classData={classData}
-            teacherName={user?.name}
-            variant="secondary"
-            size="sm"
-          />
-        </div>
-        {classData.students.length === 0 ? (
-          <div className="text-center py-8">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-lg text-gray-500 mb-2">No students enrolled</p>
-          </div>
+      {/* Enrolled Students */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
+          <Users className="w-5 h-5 mr-2" />
+          Enrolled Students ({course.students.length})
+        </h2>
+        {course.students.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">
+            No students yet. Share the join code above.
+          </p>
         ) : (
           <div className="overflow-x-auto">
-            <table
-              className="w-full text-left table-auto"
-              role="table"
-              aria-labelledby="roster-heading"
-            >
+            <table className="w-full text-left text-sm">
               <thead>
-                <tr className="text-sm text-gray-600 border-b bg-gray-50">
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    Student ID
-                  </th>
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    Name
-                  </th>
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    Email
-                  </th>
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    STEM-1 Progress
-                  </th>
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    XP Earned
-                  </th>
-                  <th scope="col" className="py-3 px-4 font-medium">
-                    Status
-                  </th>
+                <tr className="text-xs text-gray-500 border-b bg-gray-50">
+                  <th className="py-2 px-3 font-medium">Name</th>
+                  <th className="py-2 px-3 font-medium">Email</th>
+                  <th className="py-2 px-3 font-medium">Enrolled</th>
                 </tr>
               </thead>
               <tbody>
-                {classData.students.map((student) => {
-                  // Mock progress data for display
-                  const mockXP = Math.floor(Math.random() * 200) + 300;
-                  const mockCompletion = Math.floor((mockXP / 500) * 100);
-                  const mockPassed = mockCompletion >= 70;
-
-                  return (
-                    <tr
-                      key={student.id}
-                      className="border-b text-sm text-gray-800 hover:bg-gray-50"
-                    >
-                      <th scope="row" className="py-3 px-4 font-mono text-xs">
-                        {student.id}
-                      </th>
-                      <td className="py-3 px-4 font-medium">{student.name}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <button
-                            onClick={() => handleViewStudentProfile(student.id)}
-                            aria-label={`View profile for ${student.name}`}
-                            className="text-brightboost-blue hover:text-brightboost-navy mr-2"
-                            title="View student profile"
-                          >
-                            <User className="w-4 h-4" />
-                          </button>
-                          {student.email ?? (
-                            <span className="text-gray-400 italic">N/A</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div
-                              className={`h-2 rounded-full ${
-                                mockPassed ? "bg-green-500" : "bg-yellow-500"
-                              }`}
-                              style={{ width: `${mockCompletion}%` }}
-                              role="progressbar"
-                              aria-valuenow={mockCompletion}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-label={`Progress: ${mockCompletion} percent complete`}
-                            ></div>
-                          </div>
-                          <span className="text-xs font-medium">
-                            {mockCompletion}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono text-sm">{mockXP}/500</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            mockPassed
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                          aria-label={`Status: ${mockPassed ? "STEM-1 Complete" : "In Progress"}`}
-                        >
-                          {mockPassed ? "STEM-1 Complete" : "In Progress"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {course.students.map((s) => (
+                  <tr key={s.id} className="border-b hover:bg-gray-50">
+                    <td className="py-2 px-3 font-medium">{s.name}</td>
+                    <td className="py-2 px-3">{s.email}</td>
+                    <td className="py-2 px-3 text-xs text-gray-400">
+                      {new Date(s.enrolledAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
 
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => {
-          setIsProfileModalOpen(false);
-          setSelectedStudentId(null);
-        }}
-        studentId={selectedStudentId || undefined}
-        isTeacherProfile={!selectedStudentId}
-      />
-
-      <EditProfileModal
-        isOpen={isEditProfileModalOpen}
-        onClose={() => setIsEditProfileModalOpen(false)}
-        onProfileUpdated={handleProfileUpdated}
-      />
-      {/* Assignments */}
-      <section
-        className="bg-white rounded-lg shadow-md p-6"
-        aria-labelledby="assignments-heading"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2
-            id="assignments-heading"
-            className="text-lg font-semibold text-brightboost-navy"
-          >
-            Assignments
-          </h2>
-          <button
-            onClick={() =>
-              navigate(`/teacher/classes/${classData.id}/assignments`)
-            }
-            className="bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm px-3 py-1.5 rounded transition focus:outline-none focus:ring-2 focus:ring-blue-600"
-            aria-label="View all assignments for this class"
-          >
-            View All
-          </button>
-        </div>
-        {loadingAssignments ? (
-          <p className="text-gray-500 italic">Loading assignments…</p>
-        ) : assignments.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No assignments yet.</p>
+      {/* Sessions / Assignments */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
+          <Clock className="w-5 h-5 mr-2" />
+          Weekly Sessions
+        </h2>
+        {assignments.length === 0 ? (
+          <p className="text-sm text-gray-500 italic">
+            No sessions yet. Click "Launch Weekly Session" to get started.
+          </p>
         ) : (
-          <AssignmentTable
-            assignments={assignments}
-            onRowClick={navigateToAssignmentDetail}
-          />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-xs text-gray-500 border-b bg-gray-50">
+                  <th className="py-2 px-3 font-medium">Session</th>
+                  <th className="py-2 px-3 font-medium">Due</th>
+                  <th className="py-2 px-3 font-medium">Completed</th>
+                  <th className="py-2 px-3 font-medium">Avg Time</th>
+                  <th className="py-2 px-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((a) => (
+                  <tr key={a.id} className="border-b hover:bg-gray-50">
+                    <td className="py-2 px-3 font-medium">{a.title}</td>
+                    <td className="py-2 px-3">{a.dueDate}</td>
+                    <td className="py-2 px-3">
+                      {a.completedCount}/{a.enrolledCount}
+                    </td>
+                    <td className="py-2 px-3">
+                      {a.avgTimeSpentS > 0
+                        ? `${Math.round(a.avgTimeSpentS / 60)}m ${a.avgTimeSpentS % 60}s`
+                        : "—"}
+                    </td>
+                    <td className="py-2 px-3">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          a.status === "Open"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {a.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
+
+      {/* Launch Session Dialog */}
+      <Dialog open={launchOpen} onOpenChange={setLaunchOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Launch Weekly Session</DialogTitle>
+            <DialogDescription>
+              Select an activity from the curriculum for students to complete this week.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Module picker */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Module
+              </label>
+              {modules.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">Loading modules...</p>
+              ) : (
+                <select
+                  value={selModule}
+                  onChange={(e) => {
+                    setSelModule(e.target.value);
+                    setSelActivity(null);
+                  }}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+                >
+                  <option value="">Select a module</option>
+                  {modules.map((m) => (
+                    <option key={m.slug} value={m.slug}>
+                      {m.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Activity picker */}
+            {selModule && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Activity
+                </label>
+                <div className="max-h-48 overflow-y-auto border rounded-md divide-y">
+                  {activitiesForModule(selModule).map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setSelActivity({ id: a.id, title: a.title });
+                        setSessionTitle(a.title);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center justify-between ${
+                        selActivity?.id === a.id ? "bg-blue-50 font-medium" : ""
+                      }`}
+                    >
+                      <div>
+                        <span className="text-xs text-gray-400 block">{a.breadcrumb}</span>
+                        {a.title}
+                      </div>
+                      {selActivity?.id === a.id && (
+                        <Check className="w-4 h-4 text-brightboost-blue" />
+                      )}
+                    </button>
+                  ))}
+                  {activitiesForModule(selModule).length === 0 && (
+                    <p className="text-sm text-gray-400 italic p-3">
+                      No activities in this module
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Session title */}
+            {selActivity && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Session Title
+                  </label>
+                  <input
+                    type="text"
+                    value={sessionTitle}
+                    onChange={(e) => setSessionTitle(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setLaunchOpen(false)}
+              className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleLaunch}
+              disabled={!selActivity || launching}
+              className="px-4 py-2 text-sm text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50"
+            >
+              {launching ? "Launching..." : "Launch Session"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

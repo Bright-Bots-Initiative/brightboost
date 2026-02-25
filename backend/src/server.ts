@@ -13,6 +13,9 @@ import authRouter from "./routes/auth";
 import profileRouter from "./routes/profile";
 import userAvatarRouter from "./routes/userAvatar";
 import contextRouter from "./routes/context";
+import coursesRouter from "./routes/courses";
+import assignmentsRouter from "./routes/assignments";
+import pulseRouter from "./routes/pulse";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 
@@ -173,6 +176,9 @@ app.use("/api", progressRouter);
 app.use("/api", avatarRouter);
 app.use("/api", profileRouter);
 app.use("/api", userAvatarRouter);
+app.use("/api", coursesRouter);
+app.use("/api", assignmentsRouter);
+app.use("/api", pulseRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" }),

@@ -30,6 +30,7 @@ import StudentLayout from "./layouts/StudentLayout";
 import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
 import TeacherClasses from "./pages/TeacherClasses";
 import TeacherClassDetail from "./pages/TeacherClassDetail";
+import JoinClass from "./pages/JoinClass";
 
 // Import styles
 import "./App.css";
@@ -95,6 +96,7 @@ function App() {
                   path="modules/:slug/lessons/:lessonId/activities/:activityId"
                   element={<ActivityPlayer />}
                 />
+                <Route path="join" element={<JoinClass />} />
                 <Route path="avatar" element={<Avatar />} />
                 <Route path="play" element={<PlayHub />} />
                 <Route

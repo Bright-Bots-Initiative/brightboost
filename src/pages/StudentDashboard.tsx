@@ -24,7 +24,7 @@ import {
   Target,
   Check,
 } from "lucide-react";
-import { api } from "@/services/api";
+import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,19 @@ import {
   StreakStats,
 } from "@/lib/streakFromProgress";
 import StreakMeter from "@/components/ui/StreakMeter";
+import { ClipboardList, ArrowRight } from "lucide-react";
+
+type AssignedSession = {
+  id: string;
+  title: string;
+  activityId?: string;
+  activityTitle: string;
+  moduleSlug?: string | null;
+  lessonId?: string | null;
+  dueDate: string;
+  courseName: string;
+  completed: boolean;
+};
 
 type NextActivity = {
   moduleSlug: string;
@@ -127,6 +140,7 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const authApi = useApi();
 
   const [avatar, setAvatar] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -138,6 +152,7 @@ export default function StudentDashboard() {
   );
   const [completedActivitiesCount, setCompletedActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>([]);
 
   // Compute streak from progress
   const streakStats: StreakStats = useMemo(() => {
@@ -237,6 +252,16 @@ export default function StudentDashboard() {
         setNextOne(foundNextOne);
         setUpNext(foundUpNext);
         setCompletedModules(completedMods);
+
+        // Load assigned sessions (pilot mode)
+        try {
+          const sessions = await authApi.get("/student/assignments");
+          if (!cancelled && Array.isArray(sessions)) {
+            setAssignedSessions(sessions);
+          }
+        } catch {
+          // No sessions or not enrolled — that's fine
+        }
       } catch (e) {
         console.error(e);
         toast({
@@ -252,7 +277,7 @@ export default function StudentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [toast, t]);
+  }, [toast, t, authApi]);
 
   const goToNext = () => {
     if (!nextOne) return navigate("/student/modules");
@@ -478,6 +503,52 @@ export default function StudentDashboard() {
           </Card>
         </div>
       </section>
+
+      {/* Assigned Sessions (Pilot Mode) */}
+      {assignedSessions.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <ClipboardList className="w-6 h-6 text-blue-600" />
+            Assigned Sessions
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {assignedSessions
+              .filter((s) => !s.completed)
+              .map((s) => (
+                <Card key={s.id} className="border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{s.title}</CardTitle>
+                    <p className="text-xs text-slate-500">
+                      {s.courseName} &middot; Due {s.dueDate}
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (s.moduleSlug && s.lessonId && s.activityId) {
+                          navigate(
+                            `/student/modules/${s.moduleSlug}/lessons/${s.lessonId}/activities/${s.activityId}`,
+                          );
+                        }
+                      }}
+                      disabled={!s.moduleSlug || !s.activityId}
+                    >
+                      Start
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            {assignedSessions.filter((s) => s.completed).length > 0 && (
+              <div className="col-span-full text-sm text-green-600 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                {assignedSessions.filter((s) => s.completed).length} session(s) completed
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Continue Learning Section */}
       <section>

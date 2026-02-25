@@ -49,6 +49,7 @@ model User {
   progress        Progress[]
   avatar          Avatar?
   weeklySnapshots WeeklySnapshot[]
+  pulseResponses  PulseResponse[]
 }
 
 // -----------------------------------------------------------------------------
@@ -305,13 +306,15 @@ model UserBadge {
 model Course {
   id        String   @id @default(cuid())
   name      String
+  joinCode  String   @unique @default(cuid())
   teacherId String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  teacher     User         @relation(fields: [teacherId], references: [id])
-  enrollments Enrollment[]
-  assignments Assignment[]
+
+  teacher        User            @relation(fields: [teacherId], references: [id])
+  enrollments    Enrollment[]
+  assignments    Assignment[]
+  pulseResponses PulseResponse[]
 
   // Index for filtering courses by teacher
   @@index([teacherId])
@@ -333,18 +336,36 @@ model Enrollment {
 }
 
 model Assignment {
-  id        String   @id @default(cuid())
-  title     String
-  dueDate   String
-  status    String   // "pending", "completed"
-  courseId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     String
+  status      String   // "Open", "Closed", "Draft"
+  activityId  String?  // links to Activity.id for session assignments
+  courseId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   course   Course @relation(fields: [courseId], references: [id])
 
   // Index for filtering assignments by course
   @@index([courseId])
+}
+
+model PulseResponse {
+  id           String   @id @default(cuid())
+  respondentId String
+  courseId     String
+  kind         String   // "PRE" or "POST"
+  score        Int      // 1-5 overall confidence
+  answers      Json?    // optional structured answers
+  createdAt    DateTime @default(now())
+
+  respondent   User   @relation(fields: [respondentId], references: [id])
+  course       Course @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@index([respondentId])
 }
 
 model AuditLog {
