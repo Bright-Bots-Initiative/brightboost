@@ -9,11 +9,16 @@ import { Upload, Plus, Zap, Users, TrendingUp, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import ExportGradesButton from "../components/TeacherDashboard/ExportGradesButton";
 import { useAuth } from "../contexts/AuthContext";
-import { getSTEM1Summary } from "../services/stem1GradeService";
+import {
+  getSTEM1Summary,
+  generateMockSTEM1Progress,
+} from "../services/stem1GradeService";
 import { UserProfile } from "../services/profileService";
+import { useApi } from "../services/api";
 
 const ClassesPage: React.FC = () => {
   const { user } = useAuth();
+  const api = useApi();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -26,12 +31,25 @@ const ClassesPage: React.FC = () => {
   useEffect(() => {
     const loadClasses = async () => {
       setIsLoading(true);
-      const result = await fetchMockClasses();
-      setClasses(result);
-      setIsLoading(false);
+      try {
+        const response = await api.get("/teacher/classes");
+        if (Array.isArray(response)) {
+          setClasses(response);
+        } else if (response?.classes) {
+          setClasses(response.classes);
+        } else {
+          setClasses([]);
+        }
+      } catch {
+        // API unavailable — fall back to mock data
+        const result = await fetchMockClasses();
+        setClasses(result);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadClasses();
-  }, []);
+  }, [api]);
 
   const handleViewStudentProfile = (studentId: string) => {
     setSelectedStudentId(studentId);
@@ -114,6 +132,10 @@ const ClassesPage: React.FC = () => {
           </h2>
           {classes.map((cls) => {
             const stem1Summary = getSTEM1Summary(cls);
+            const studentProgress = generateMockSTEM1Progress(cls.students);
+            const progressMap = new Map(
+              studentProgress.map((p) => [p.studentId, p]),
+            );
             return (
               <article
                 key={cls.id}
@@ -266,8 +288,8 @@ const ClassesPage: React.FC = () => {
                       </thead>
                       <tbody>
                         {cls.students.map((student) => {
-                          // Mock STEM-1 status for display
-                          const mockPassed = Math.random() > 0.3;
+                          const progress = progressMap.get(student.id);
+                          const mockPassed = progress?.passedSTEM1 ?? false;
                           return (
                             <tr
                               key={student.id}

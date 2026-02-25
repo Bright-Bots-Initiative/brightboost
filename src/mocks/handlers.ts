@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { Lesson } from "../components/TeacherDashboard/types";
+import { mockClasses } from "../services/mockClassService";
 
 const resolveApiBase = (): string => {
   const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
@@ -155,6 +156,18 @@ export const handlers = [
   // Legacy fallback for /auth paths to prevent regression if used
   http.post(`/auth/login`, loginHandler),
   http.post(`/auth/signup`, signupHandler),
+
+  http.get(`${API_BASE}/teacher/classes`, () => {
+    return HttpResponse.json({ classes: mockClasses });
+  }),
+
+  http.get(`${API_BASE}/teacher/classes/:id`, ({ params }) => {
+    const cls = mockClasses.find((c) => c.id === params.id);
+    if (!cls) {
+      return HttpResponse.json({ error: "Class not found" }, { status: 404 });
+    }
+    return HttpResponse.json(cls);
+  }),
 
   http.post(`${API_BASE}/lessons`, async ({ request }) => {
     const requestBody = (await request.json()) as LessonCreateRequest;

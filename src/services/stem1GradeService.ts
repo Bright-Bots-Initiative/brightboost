@@ -1,5 +1,25 @@
 import { Class, Student } from "../components/TeacherDashboard/types";
 
+// Deterministic seeded RNG based on string hash (djb2)
+const hashString = (str: string): number => {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  return hash >>> 0; // unsigned 32-bit
+};
+
+const createSeededRng = (seed: string) => {
+  let state = hashString(seed);
+  return (): number => {
+    // xorshift32
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 4294967296;
+  };
+};
+
 // STEM-1 specific quest data structure
 export interface STEM1Quest {
   id: string;
@@ -87,15 +107,21 @@ export const STEM1_QUESTS: STEM1Quest[] = [
   },
 ];
 
-// Mock data generator for STEM-1 progress
-const generateMockSTEM1Progress = (
+// Deterministic mock data generator for STEM-1 progress
+// Uses student ID as seed so values are stable across renders/reloads.
+export const generateMockSTEM1Progress = (
   students: Student[],
 ): STEM1StudentProgress[] => {
+  // Use a fixed reference date so completedDate / lastActivity are stable
+  const refDate = new Date("2025-06-01T00:00:00Z").getTime();
+
   return students.map((student) => {
-    const matterScore = Math.floor(Math.random() * 3) + 3; // 3-5 out of 5
-    const forceScore = Math.floor(Math.random() * 30) + 70; // 70-100%
-    const codeBlocks = Math.floor(Math.random() * 4) + 1; // 1-4 blocks
-    const reflectionDuration = Math.floor(Math.random() * 10) + 15; // 15-25 seconds
+    const rng = createSeededRng(student.id);
+
+    const matterScore = Math.floor(rng() * 3) + 3; // 3-5 out of 5
+    const forceScore = Math.floor(rng() * 30) + 70; // 70-100%
+    const codeBlocks = Math.floor(rng() * 4) + 1; // 1-4 blocks
+    const reflectionDuration = Math.floor(rng() * 10) + 15; // 15-25 seconds
 
     const matterXP =
       matterScore >= 4 ? 125 : Math.floor((matterScore / 5) * 125);
@@ -111,6 +137,8 @@ const generateMockSTEM1Progress = (
     const overallCompletion = (totalXP / 500) * 100;
     const passedSTEM1 = overallCompletion >= 70 && reflectionDuration >= 15;
 
+    const dayMs = 24 * 60 * 60 * 1000;
+
     return {
       studentId: student.id,
       studentName: student.name,
@@ -122,7 +150,7 @@ const generateMockSTEM1Progress = (
         xpEarned: matterXP,
         completedDate:
           matterScore >= 4
-            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+            ? new Date(refDate - rng() * 7 * dayMs)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -134,7 +162,7 @@ const generateMockSTEM1Progress = (
         xpEarned: forceXP,
         completedDate:
           forceScore >= 70
-            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+            ? new Date(refDate - rng() * 7 * dayMs)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -143,11 +171,11 @@ const generateMockSTEM1Progress = (
       codeAPathJr: {
         completed: codeBlocks <= 4,
         blocksUsed: codeBlocks,
-        hintsUsed: Math.floor(Math.random() * 3), // 0-2 hints
+        hintsUsed: Math.floor(rng() * 3), // 0-2 hints
         xpEarned: codeXP,
         completedDate:
           codeBlocks <= 4
-            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+            ? new Date(refDate - rng() * 7 * dayMs)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -160,7 +188,7 @@ const generateMockSTEM1Progress = (
         xpEarned: showTellXP,
         completedDate:
           reflectionDuration >= 15
-            ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
+            ? new Date(refDate - rng() * 7 * dayMs)
                 .toISOString()
                 .split("T")[0]
             : undefined,
@@ -168,16 +196,14 @@ const generateMockSTEM1Progress = (
 
       totalXP,
       badgesEarned,
-      dailyStreak: Math.floor(Math.random() * 14) + 1, // 1-14 days
+      dailyStreak: Math.floor(rng() * 14) + 1, // 1-14 days
       overallCompletion: Math.round(overallCompletion),
       passedSTEM1,
-      lastActivity: new Date(
-        Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000,
-      )
+      lastActivity: new Date(refDate - rng() * 3 * dayMs)
         .toISOString()
         .split("T")[0],
       notes:
-        Math.random() > 0.7
+        rng() > 0.7
           ? "Excellent engagement with STEM concepts!"
           : undefined,
     };
