@@ -15,7 +15,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get("/teacher/dashboard");
+      const response = await api.get("/teacher_dashboard");
       if (Array.isArray(response)) {
         const formattedLessons = response.map(
           (teacher: {
@@ -84,7 +84,7 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       const updatedLesson = await api.put(
-        `/api/lessons/${lesson.id}`,
+        `/lessons/${lesson.id}`,
         lesson as unknown as Record<string, unknown>,
       );
       setLessonsData((prevLessons) =>
@@ -109,7 +109,7 @@ const TeacherDashboard: React.FC = () => {
   const handleDeleteLesson = async (lessonId: string | number) => {
     setIsLoading(true);
     try {
-      await api.delete(`/api/lessons/${lessonId}`);
+      await api.delete(`/lessons/${lessonId}`);
       setLessonsData((prevLessons) =>
         prevLessons.filter((lesson) => String(lesson.id) !== String(lessonId)),
       );
