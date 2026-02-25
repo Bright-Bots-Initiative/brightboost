@@ -25,8 +25,8 @@ export interface LessonsTableProps {
 export interface MainContentProps {
   lessonsData: Lesson[];
   setLessonsData: React.Dispatch<React.SetStateAction<Lesson[]>>;
-  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => void;
-  onEditLesson: (lesson: Lesson) => void;
+  onAddLesson: (lesson: Pick<Lesson, "title" | "content" | "category">) => Promise<void>;
+  onEditLesson: (lesson: Lesson) => Promise<void>;
   onDeleteLesson: (id: Lesson["id"]) => void;
 }
 

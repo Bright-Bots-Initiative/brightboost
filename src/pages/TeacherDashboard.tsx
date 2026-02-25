@@ -75,6 +75,7 @@ const TeacherDashboard: React.FC = () => {
     } catch (err) {
       console.error("Failed to add lesson:", err);
       setError(err instanceof Error ? err.message : "Failed to add lesson.");
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +102,7 @@ const TeacherDashboard: React.FC = () => {
     } catch (err) {
       console.error("Failed to edit lesson:", err);
       setError(err instanceof Error ? err.message : "Failed to edit lesson.");
+      throw err;
     } finally {
       setIsLoading(false);
     }

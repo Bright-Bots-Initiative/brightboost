@@ -1,27 +1,65 @@
-import React from "react";
+import React, { useState } from "react";
 import { MainContentProps, Lesson } from "./types";
 import LessonsTable from "./LessonTable";
+import LessonFormDialog from "./LessonFormDialog";
+import { Plus } from "lucide-react";
 
 const MainContent: React.FC<MainContentProps> = ({
   lessonsData,
   setLessonsData,
+  onAddLesson,
   onEditLesson,
   onDeleteLesson,
 }) => {
-  const openEditForm = (lesson: Lesson) => {
-    onEditLesson(lesson);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [editingLesson, setEditingLesson] = useState<Lesson | undefined>();
+
+  const handleOpenCreate = () => {
+    setDialogMode("create");
+    setEditingLesson(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleOpenEdit = (lesson: Lesson) => {
+    setDialogMode("edit");
+    setEditingLesson(lesson);
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (
+    data: Pick<Lesson, "title" | "content" | "category">,
+  ) => {
+    if (dialogMode === "create") {
+      await onAddLesson(data);
+    } else if (editingLesson) {
+      await onEditLesson({ ...editingLesson, ...data });
+    }
   };
 
   const handleDuplicateLesson = (id: string | number) => {
-    console.log("Duplicate lesson (not implemented):", id);
+    const original = lessonsData.find(
+      (l) => String(l.id) === String(id),
+    );
+    if (!original) return;
+    onAddLesson({
+      title: `${original.title} (Copy)`,
+      content: original.content ?? "",
+      category: original.category,
+    });
   };
 
   return (
     <section className="flex-grow p-6">
-      <header>
-        <h1 className="text-2xl font-bold mb-6 text-brightboost-navy">
-          Lessons
-        </h1>
+      <header className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-brightboost-navy">Lessons</h1>
+        <button
+          onClick={handleOpenCreate}
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy focus:outline-none focus:ring-2 focus:ring-brightboost-blue transition-colors"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Lesson
+        </button>
       </header>
 
       <section
@@ -40,11 +78,19 @@ const MainContent: React.FC<MainContentProps> = ({
         <LessonsTable
           lessons={lessonsData}
           setLessons={setLessonsData}
-          onEditLesson={openEditForm}
+          onEditLesson={handleOpenEdit}
           onDuplicateLesson={handleDuplicateLesson}
           onDeleteLesson={onDeleteLesson}
         />
       </section>
+
+      <LessonFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        initialData={editingLesson}
+        onSubmit={handleSubmit}
+      />
     </section>
   );
 };
