@@ -17,7 +17,7 @@ const MainContent: React.FC<MainContentProps> = ({
   };
 
   return (
-    <main className="flex-grow p-6" role="main">
+    <section className="flex-grow p-6">
       <header>
         <h1 className="text-2xl font-bold mb-6 text-brightboost-navy">
           Lessons
@@ -45,7 +45,7 @@ const MainContent: React.FC<MainContentProps> = ({
           onDeleteLesson={onDeleteLesson}
         />
       </section>
-    </main>
+    </section>
   );
 };
 

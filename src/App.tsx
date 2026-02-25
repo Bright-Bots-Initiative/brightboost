@@ -27,15 +27,24 @@ import Avatar from "./pages/Avatar";
 import PlayHub from "./pages/PlayHub";
 import ActivityPlayer from "./pages/ActivityPlayer";
 import StudentLayout from "./layouts/StudentLayout";
+import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
+import TeacherClasses from "./pages/TeacherClasses";
+import TeacherClassDetail from "./pages/TeacherClassDetail";
 
 // Import styles
 import "./App.css";
 
-// Layout Wrapper
+// Layout Wrappers
 const StudentRoot = () => (
   <StudentLayout>
     <Outlet />
   </StudentLayout>
+);
+
+const TeacherRoot = () => (
+  <TeacherLayout>
+    <Outlet />
+  </TeacherLayout>
 );
 
 function App() {
@@ -54,15 +63,20 @@ function App() {
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
 
-              {/* Protected Teacher routes */}
+              {/* Protected Teacher routes (nested) */}
               <Route
-                path="/teacher/dashboard"
+                path="/teacher"
                 element={
                   <ProtectedRoute requiredRole="teacher">
-                    <TeacherDashboard />
+                    <TeacherRoot />
                   </ProtectedRoute>
                 }
-              />
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<TeacherDashboard />} />
+                <Route path="classes" element={<TeacherClasses />} />
+                <Route path="classes/:id" element={<TeacherClassDetail />} />
+              </Route>
 
               {/* Protected Student Routes (Nested) */}
               <Route

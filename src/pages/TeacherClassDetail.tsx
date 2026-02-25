@@ -121,7 +121,7 @@ const TeacherClassDetail: React.FC = () => {
   const stem1Summary = getSTEM1Summary(classData);
 
   return (
-    <main className="w-full space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
@@ -500,7 +500,7 @@ const TeacherClassDetail: React.FC = () => {
           />
         )}
       </section>
-    </main>
+    </div>
   );
 };
 

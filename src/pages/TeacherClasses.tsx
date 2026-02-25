@@ -43,7 +43,7 @@ const ClassesPage: React.FC = () => {
   };
 
   return (
-    <main className="w-full">
+    <div className="w-full">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
@@ -350,7 +350,7 @@ const ClassesPage: React.FC = () => {
         onClose={() => setIsEditProfileModalOpen(false)}
         onProfileUpdated={handleProfileUpdated}
       />
-    </main>
+    </div>
   );
 };
 
