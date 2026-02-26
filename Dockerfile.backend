@@ -25,4 +25,4 @@ RUN npm --prefix backend run build:railway
 EXPOSE 3000
 
 # Start server
-CMD ["node", "backend/dist/src/server.js"]
+CMD ["npm", "--prefix", "backend", "run", "start"]

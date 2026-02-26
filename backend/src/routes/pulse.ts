@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
 import { z } from "zod";
@@ -49,7 +50,7 @@ router.post(
         courseId: parsed.data.courseId,
         kind: parsed.data.kind,
         score: parsed.data.score,
-        answers: parsed.data.answers ?? undefined,
+        answers: (parsed.data.answers as Prisma.InputJsonValue) ?? undefined,
       },
     });
 

@@ -121,6 +121,14 @@ async function main() {
         role: "teacher",
       },
     });
+  } else if (!teacher.password.startsWith("$2")) {
+    // Repair plaintext / non-bcrypt password
+    const hashedPassword = await bcrypt.hash("password123", 10);
+    teacher = await prisma.user.update({
+      where: { id: teacher.id },
+      data: { password: hashedPassword },
+    });
+    console.log("Repaired teacher password to bcrypt hash.");
   }
   console.log("Seeded teacher:", teacher.email);
 
@@ -144,6 +152,14 @@ async function main() {
         level: "Novice",
       },
     });
+  } else if (!student.password.startsWith("$2")) {
+    // Repair plaintext / non-bcrypt password
+    const hashedPassword = await bcrypt.hash("password", 10);
+    student = await prisma.user.update({
+      where: { id: student.id },
+      data: { password: hashedPassword },
+    });
+    console.log("Repaired student password to bcrypt hash.");
   }
   console.log("Seeded student:", student.email);
 
