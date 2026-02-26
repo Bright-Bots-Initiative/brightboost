@@ -17,10 +17,11 @@ This guide provides instructions for deploying the BrightBoost application stack
 
 1.  Create a new project on Supabase.
 2.  Go to **Project Settings** -> **Database**.
-3.  Copy the **Connection String** (URI). Select "Transaction Mode" (port 6543) or "Session Mode" (port 5432).
-    - _Note: For Prisma migrations (`migrate deploy`), use Session Mode (5432)._
-    - _Note: For the application connection, you can use Transaction Mode (6543) if you use a connection pooler, otherwise stick to Session Mode._
-    - Ensure `?sslmode=require` is appended to the connection string.
+3.  Copy **two** connection strings from **Project Settings → Database → Connection String**:
+    - **Transaction Mode (port 6543)** → used as `DATABASE_URL` (runtime queries via pooler).
+    - **Session Mode (port 5432)** → used as `DIRECT_URL` (Prisma migrations, which require a direct/session connection).
+    - Ensure both strings end with `?sslmode=require`.
+    - _Note: if the direct host `db.<ref>.supabase.co:5432` is blocked by your hosting provider, use the **pooler Session** string (`<ref>.pooler.supabase.com:5432`) as `DIRECT_URL` instead._
 
 ## 2. Backend (Railway)
 
@@ -31,9 +32,11 @@ This guide provides instructions for deploying the BrightBoost application stack
     - **Build Command**: `npm run build`
     - **Start Command**: `npm run start`
 4.  Set Environment Variables:
-    - `DATABASE_URL`: Paste the Supabase connection string (Session Mode recommended for simplicity, or Transaction Mode if you know how to configure Prisma for it).
+    - `DATABASE_URL`: Supabase **Transaction Mode** connection string (port 6543). Used by the app at runtime.
+    - `DIRECT_URL`: Supabase **Session Mode** connection string (port 5432). Used by Prisma Migrate during predeploy.
     - `PORT`: `3000` (Railway usually injects its own PORT, but setting a default is safe).
     - `NODE_ENV`: `production`
+    - _For local dev, `DIRECT_URL` can equal `DATABASE_URL` (both point at your local Postgres)._
 
 ## 3. Frontend (Vercel)
 
