@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "../services/api";
 import { Users, ArrowRight } from "lucide-react";
+import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 const JoinClass: React.FC = () => {
   const api = useApi();
@@ -10,6 +11,11 @@ const JoinClass: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Pulse survey state
+  const [pulseOpen, setPulseOpen] = useState(false);
+  const [joinedCourseId, setJoinedCourseId] = useState("");
+  const [joinedCourseName, setJoinedCourseName] = useState("");
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +27,9 @@ const JoinClass: React.FC = () => {
         joinCode: joinCode.trim().toUpperCase(),
       });
       setSuccess(`Joined "${result.courseName}" successfully!`);
-      setTimeout(() => navigate("/student/dashboard"), 1500);
+      setJoinedCourseId(result.courseId as string);
+      setJoinedCourseName(result.courseName as string);
+      setPulseOpen(true);
     } catch (err) {
       setError(
         err instanceof Error && err.message.includes("404")
@@ -33,6 +41,10 @@ const JoinClass: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePulseDone = () => {
+    navigate("/student/dashboard");
   };
 
   return (
@@ -96,6 +108,20 @@ const JoinClass: React.FC = () => {
           </button>
         </form>
       </div>
+
+      {joinedCourseId && (
+        <PulseSurveyDialog
+          open={pulseOpen}
+          onOpenChange={(open) => {
+            setPulseOpen(open);
+            if (!open) handlePulseDone();
+          }}
+          courseId={joinedCourseId}
+          courseName={joinedCourseName}
+          kind="PRE"
+          onSubmitted={handlePulseDone}
+        />
+      )}
     </div>
   );
 };

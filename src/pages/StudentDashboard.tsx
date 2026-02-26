@@ -34,7 +34,8 @@ import {
   StreakStats,
 } from "@/lib/streakFromProgress";
 import StreakMeter from "@/components/ui/StreakMeter";
-import { ClipboardList, ArrowRight } from "lucide-react";
+import { ClipboardList, ArrowRight, Heart } from "lucide-react";
+import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 type AssignedSession = {
   id: string;
@@ -154,6 +155,11 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>([]);
 
+  // Enrolled courses + pulse survey state
+  const [enrolledCourses, setEnrolledCourses] = useState<{ id: string; name: string }[]>([]);
+  const [pulseTarget, setPulseTarget] = useState<{ courseId: string; courseName: string; kind: "PRE" | "POST" } | null>(null);
+  const [pulseDoneKeys, setPulseDoneKeys] = useState<Set<string>>(new Set());
+
   // Compute streak from progress
   const streakStats: StreakStats = useMemo(() => {
     return computeStreakFromProgress(progressList);
@@ -261,6 +267,23 @@ export default function StudentDashboard() {
           }
         } catch {
           // No sessions or not enrolled — that's fine
+        }
+
+        // Load enrolled courses for pulse surveys
+        try {
+          const courses = await authApi.get("/student/courses");
+          if (!cancelled && Array.isArray(courses)) {
+            setEnrolledCourses(courses.map((c: any) => ({ id: c.id, name: c.name })));
+            // Build set of already-completed pulse keys from localStorage
+            const doneKeys = new Set<string>();
+            for (const c of courses) {
+              if (localStorage.getItem(`bb_pulse_pre_${c.id}`)) doneKeys.add(`pre_${c.id}`);
+              if (localStorage.getItem(`bb_pulse_post_${c.id}`)) doneKeys.add(`post_${c.id}`);
+            }
+            setPulseDoneKeys(doneKeys);
+          }
+        } catch {
+          // Not enrolled in any courses — that's fine
         }
       } catch (e) {
         console.error(e);
@@ -548,6 +571,86 @@ export default function StudentDashboard() {
             )}
           </div>
         </section>
+      )}
+
+      {/* Confidence Pulse Section */}
+      {enrolledCourses.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <Heart className="w-6 h-6 text-pink-500" />
+            Confidence Pulse
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {enrolledCourses.map((course) => {
+              const preDone = pulseDoneKeys.has(`pre_${course.id}`);
+              const postDone = pulseDoneKeys.has(`post_${course.id}`);
+              return (
+                <Card key={course.id} className="border-l-4 border-l-pink-400">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{course.name}</CardTitle>
+                    <p className="text-xs text-slate-500">
+                      {preDone && postDone
+                        ? "PRE & POST complete"
+                        : preDone
+                          ? "PRE complete"
+                          : "No pulses yet"}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="flex gap-2">
+                    {!preDone && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setPulseTarget({ courseId: course.id, courseName: course.name, kind: "PRE" })
+                        }
+                      >
+                        Take PRE Pulse
+                      </Button>
+                    )}
+                    {!postDone && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setPulseTarget({ courseId: course.id, courseName: course.name, kind: "POST" })
+                        }
+                      >
+                        Take POST Pulse
+                      </Button>
+                    )}
+                    {preDone && postDone && (
+                      <span className="text-sm text-green-600 flex items-center gap-1">
+                        <Check className="w-4 h-4" /> All done!
+                      </span>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Pulse Survey Dialog */}
+      {pulseTarget && (
+        <PulseSurveyDialog
+          open={!!pulseTarget}
+          onOpenChange={(open) => {
+            if (!open) setPulseTarget(null);
+          }}
+          courseId={pulseTarget.courseId}
+          courseName={pulseTarget.courseName}
+          kind={pulseTarget.kind}
+          onSubmitted={() => {
+            // Update local done keys so UI refreshes immediately
+            setPulseDoneKeys((prev) => {
+              const next = new Set(prev);
+              next.add(`${pulseTarget.kind.toLowerCase()}_${pulseTarget.courseId}`);
+              return next;
+            });
+            setPulseTarget(null);
+          }}
+        />
       )}
 
       {/* Continue Learning Section */}
