@@ -88,7 +88,7 @@ router.get(
     const avgPre =
       preResponses.length > 0
         ? Math.round(
-            (preResponses.reduce((s, r) => s + r.score, 0) /
+            (preResponses.reduce((s: number, r: { score: number }) => s + r.score, 0) /
               preResponses.length) *
               10,
           ) / 10
@@ -97,7 +97,7 @@ router.get(
     const avgPost =
       postResponses.length > 0
         ? Math.round(
-            (postResponses.reduce((s, r) => s + r.score, 0) /
+            (postResponses.reduce((s: number, r: { score: number }) => s + r.score, 0) /
               postResponses.length) *
               10,
           ) / 10
