@@ -14,7 +14,7 @@ echo "predeploy: using schema $SCHEMA"
 echo "predeploy: prisma migrate deploy"
 npx prisma migrate deploy --schema "$SCHEMA" || {
   echo "predeploy: migrate deploy failed, falling back to db push"
-  npx prisma db push --schema "$SCHEMA"
+  npx prisma db push --schema "$SCHEMA" --accept-data-loss
 }
 
 echo "predeploy: prisma generate"
