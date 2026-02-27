@@ -1,4 +1,6 @@
 // src/services/profileService.ts
+import { API_BASE, join } from "./api";
+
 interface UserProfile {
   id: string;
   name: string;
@@ -24,22 +26,8 @@ interface ApiResponse<T> {
 }
 
 class ProfileService {
-  private baseUrl: string;
-
-  constructor() {
-    this.baseUrl =
-      import.meta.env.VITE_REACT_APP_API_BASE_URL ||
-      (import.meta.env.VITE_API_BASE ?? "/api");
-    // Use existing pattern from api.ts or default to /api if env vars are missing/different
-    if (this.baseUrl.startsWith("http")) {
-      // If it's a full URL, keep it. If it's relative, it will use current origin.
-    } else {
-      // Ensure leading slash if relative
-      if (!this.baseUrl.startsWith("/")) this.baseUrl = "/" + this.baseUrl;
-    }
-
-    // Alignment with api.ts which constructs API_BASE more dynamically
-    // But for now, simple relative path /api usually works if proxy is set up or same origin.
+  private get baseUrl(): string {
+    return API_BASE;
   }
 
   private getAuthHeaders(): Record<string, string> {
@@ -58,9 +46,7 @@ class ProfileService {
   async getProfile(userId?: string): Promise<UserProfile> {
     try {
       const endpoint = userId ? `/users/${userId}` : `/profile`;
-      // Ensure baseUrl doesn't have trailing slash and endpoint starts with slash, or handle it.
-      // this.baseUrl might be "/api"
-      const url = `${this.baseUrl.replace(/\/$/, "")}${endpoint}`;
+      const url = join(this.baseUrl, endpoint);
 
       const response = await fetch(url, {
         method: "GET",
@@ -92,7 +78,7 @@ class ProfileService {
 
   async updateProfile(profileData: UpdateProfileData): Promise<UserProfile> {
     try {
-      const url = `${this.baseUrl.replace(/\/$/, "")}/edit-profile`;
+      const url = join(this.baseUrl, "/edit-profile");
 
       const response = await fetch(url, {
         method: "POST",

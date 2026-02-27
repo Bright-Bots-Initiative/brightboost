@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import GameBackground from "../GameBackground";
 import Sidebar from "./Sidebar";
 import TeacherNavbar from "./TeacherNavbar";
 import ProfileModal from "./ProfileModal";
@@ -53,8 +52,8 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <GameBackground>
-      <div className="min-h-screen flex flex-col relative z-10">
+    <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen flex flex-col">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-brightboost-blue text-white px-4 py-2 rounded-md z-50"
@@ -70,7 +69,7 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
         <Sidebar />
         <main
           id="main-content"
-          className="flex-grow ml-64 pt-6 px-6 pb-6"
+          className="flex-grow ml-64 pt-6 px-6 pb-6 bg-white"
           role="main"
         >
           {children}
@@ -88,7 +87,7 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
         onClose={() => setIsEditProfileModalOpen(false)}
         onProfileUpdated={handleProfileUpdated}
       />
-    </GameBackground>
+    </div>
   );
 };
 

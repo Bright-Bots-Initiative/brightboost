@@ -53,7 +53,7 @@ const resolveApiBase = (): string => {
   return "/api";
 };
 
-const API_BASE = resolveApiBase();
+export const API_BASE = resolveApiBase();
 
 // Temporary: log in all environments to debug 503s (remove after fix verified)
 console.log("[BrightBoost] API_BASE:", API_BASE);
@@ -340,8 +340,17 @@ export const useApi = () => {
           if (response.status === 401) throw new Error(t("api.sessionExpired"));
           if (response.status === 403)
             throw new Error(t("api.dashboardUnavailable"));
-          const errorData = await response.json();
-          throw new Error(errorData.error || t("api.apiRequestFailed"));
+          // Parse error body safely — backend may return HTML for unknown routes
+          const text = await response.text();
+          let errorMsg = t("api.apiRequestFailed");
+          try {
+            const errorData = JSON.parse(text);
+            errorMsg = extractErrorMessage(errorData) || errorMsg;
+          } catch {
+            // non-JSON response (e.g. HTML 404) — use status text
+            errorMsg = `${t("api.apiRequestFailed")}: ${response.status} ${response.statusText}`;
+          }
+          throw new Error(errorMsg);
         }
 
         return await response.json();

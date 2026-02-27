@@ -15,34 +15,23 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get("/teacher_dashboard");
+      const response = await api.get("/teacher/courses");
       if (Array.isArray(response)) {
         const formattedLessons = response.map(
-          (teacher: {
+          (course: {
             id: string;
             name: string;
-            email: string;
+            joinCode: string;
+            enrollmentCount: number;
             createdAt: string;
           }) => ({
-            id: String(teacher.id),
-            title: teacher.name,
-            content: `Teacher: ${teacher.email}`,
-            category: "Teacher",
-            date: teacher.createdAt,
+            id: String(course.id),
+            title: course.name,
+            content: `Join code: ${course.joinCode} · ${course.enrollmentCount} student${course.enrollmentCount !== 1 ? "s" : ""}`,
+            category: "Course",
+            date: course.createdAt,
             status: "active",
           }),
-        );
-        setLessonsData(formattedLessons);
-      } else if (response.lessons) {
-        const formattedLessons = response.lessons.map(
-          (lesson: {
-            id: string;
-            title: string;
-            content: string;
-            category: string;
-            date: string;
-            status: string;
-          }) => lesson,
         );
         setLessonsData(formattedLessons);
       } else {
@@ -67,7 +56,9 @@ const TeacherDashboard: React.FC = () => {
   ) => {
     setIsLoading(true);
     try {
-      const createdLesson = await api.post("/lessons", newLesson);
+      const createdLesson = await api.post("/teacher/courses", {
+        name: newLesson.title,
+      });
       setLessonsData((prevLessons) => [
         ...prevLessons,
         { ...createdLesson, id: String(createdLesson.id) },
@@ -85,8 +76,8 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       const updatedLesson = await api.put(
-        `/lessons/${lesson.id}`,
-        lesson as unknown as Record<string, unknown>,
+        `/teacher/courses/${lesson.id}`,
+        { name: lesson.title } as Record<string, unknown>,
       );
       setLessonsData((prevLessons) =>
         prevLessons.map((existingLesson) =>
@@ -111,7 +102,7 @@ const TeacherDashboard: React.FC = () => {
   const handleDeleteLesson = async (lessonId: string | number) => {
     setIsLoading(true);
     try {
-      await api.delete(`/lessons/${lessonId}`);
+      await api.delete(`/teacher/courses/${lessonId}`);
       setLessonsData((prevLessons) =>
         prevLessons.filter((lesson) => String(lesson.id) !== String(lessonId)),
       );
