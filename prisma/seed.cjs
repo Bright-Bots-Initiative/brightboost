@@ -1,4 +1,5 @@
 const { PrismaClient, Archetype, ActivityKind } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
@@ -107,6 +108,7 @@ async function main() {
   console.log("Seeding users (idempotent)...");
 
   // Teacher (unique by email)
+  const teacherPasswordHash = await bcrypt.hash("password123", 10);
   let teacher = await prisma.user.findUnique({
     where: { email: "teacher@school.com" },
   });
@@ -115,14 +117,23 @@ async function main() {
       data: {
         name: "Ms. Frizzle",
         email: "teacher@school.com",
-        password: "password123",
+        password: teacherPasswordHash,
         role: "teacher",
       },
     });
+    console.log("Created teacher with bcrypt-hashed password.");
+  } else if (!teacher.password.startsWith("$2")) {
+    // Repair: existing teacher has plaintext password, upgrade to bcrypt
+    teacher = await prisma.user.update({
+      where: { id: teacher.id },
+      data: { password: teacherPasswordHash },
+    });
+    console.log("Repaired teacher password to bcrypt hash.");
   }
   console.log("Seeded teacher:", teacher.email);
 
   // Student (unique by id; fallback by email)
+  const studentPasswordHash = await bcrypt.hash("password", 10);
   let student = await prisma.user.findUnique({ where: { id: "student-123" } });
   if (!student) {
     student = await prisma.user.findUnique({
@@ -135,12 +146,20 @@ async function main() {
         id: "student-123",
         name: "Test Student",
         email: "student@test.com",
-        password: "password",
+        password: studentPasswordHash,
         role: "student",
         xp: 0,
         level: "Novice",
       },
     });
+    console.log("Created student with bcrypt-hashed password.");
+  } else if (!student.password.startsWith("$2")) {
+    // Repair: existing student has plaintext password, upgrade to bcrypt
+    student = await prisma.user.update({
+      where: { id: student.id },
+      data: { password: studentPasswordHash },
+    });
+    console.log("Repaired student password to bcrypt hash.");
   }
   console.log("Seeded student:", student.email);
 

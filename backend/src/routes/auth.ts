@@ -186,14 +186,7 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Compare password (check if hashed or plaintext)
-    // Legacy/Seed users might have plaintext passwords, so we check both if needed
-    // But standard practice is assumes hashed.
-    // If the user provided plaintext in seed, bcrypt.compare will fail unless the hash in DB is actually plaintext (which it isn't, it's a hash string).
-    // Wait, seed users might be plaintext if seeded that way.
-    // Let's assume new users are hashed.
-    // If bcrypt compare fails, and the password in DB matches exactly, we might allow it (migration/fallback).
-
+    // All passwords are bcrypt-hashed (seed.cjs hashes on insert and repairs legacy plaintext)
     const isValid = await bcrypt.compare(data.password, user.password);
 
     if (!isValid) {
