@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { loginUser } from "../services/api";
 import { Button } from "@/components/ui/button";
 
 const Login: React.FC = () => {
@@ -17,16 +18,8 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // For demo purposes, let's assume a student login with dummy data
-      // In a real app, you would authenticate with your backend
-      const userData = {
-        id: "student-123",
-        name: "Alex",
-        email: email,
-        role: "student",
-      };
-
-      login("dummy-token", userData);
+      const response = await loginUser(email, password);
+      login(response.token, response.user);
     } catch (err: unknown) {
       console.error("Login error:", err);
       setError(

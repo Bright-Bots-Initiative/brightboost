@@ -35,9 +35,8 @@ const resolveApiBase = (): string => {
 
 const API_BASE = resolveApiBase();
 
-if (import.meta.env.DEV) {
-  console.log("API_BASE:", API_BASE);
-}
+// Temporary: log in all environments to debug 503s (remove after fix verified)
+console.log("[BrightBoost] API_BASE:", API_BASE);
 
 const API_CALL_DELAY = 334;
 let lastApiCall = 0;
