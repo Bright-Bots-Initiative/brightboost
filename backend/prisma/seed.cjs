@@ -874,7 +874,6 @@ async function main() {
     });
   }
   console.log("Seeded activities.");
-}
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Seed Resources (worksheets, handouts, guides)
@@ -1434,6 +1433,7 @@ async function main() {
       console.log("Skipping PD templates (no teacher found for ownership).");
     }
   }
+}
 
 main()
   .then(() => {
