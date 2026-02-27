@@ -627,7 +627,7 @@ export default function StudentDashboard() {
                           : "No pulses yet"}
                     </p>
                   </CardHeader>
-                  <CardContent className="flex gap-2">
+                  <CardContent className="flex flex-col gap-2">
                     {!preDone && (
                       <Button
                         size="sm"
@@ -639,7 +639,7 @@ export default function StudentDashboard() {
                         Take PRE Pulse
                       </Button>
                     )}
-                    {!postDone && (
+                    {preDone && !postDone && completedActivitiesCount >= 3 && (
                       <Button
                         size="sm"
                         onClick={() =>
@@ -648,6 +648,11 @@ export default function StudentDashboard() {
                       >
                         Take POST Pulse
                       </Button>
+                    )}
+                    {preDone && !postDone && completedActivitiesCount < 3 && (
+                      <p className="text-xs text-slate-400">
+                        Complete {3 - completedActivitiesCount} more activit{3 - completedActivitiesCount === 1 ? "y" : "ies"} to unlock POST Pulse
+                      </p>
                     )}
                     {preDone && postDone && (
                       <span className="text-sm text-green-600 flex items-center gap-1">

@@ -7,11 +7,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type PulseKind = "PRE" | "POST";
 
@@ -28,7 +27,6 @@ const SCALE = ["1", "2", "3", "4", "5"] as const;
 const SCALE_LABELS = ["Not at all", "A little", "Okay", "Pretty good", "Super confident!"];
 
 function ScaleQuestion({
-  id,
   question,
   value,
   onChange,
@@ -41,28 +39,28 @@ function ScaleQuestion({
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-700">{question}</p>
-      <RadioGroup
-        value={value}
-        onValueChange={onChange}
-        className="flex gap-3"
-      >
+      <div className="flex gap-2">
         {SCALE.map((n, i) => (
-          <div key={n} className="flex flex-col items-center gap-1">
-            <RadioGroupItem value={n} id={`${id}-${n}`} />
-            <Label
-              htmlFor={`${id}-${n}`}
-              className="text-xs text-slate-500 cursor-pointer text-center leading-tight max-w-[60px]"
-            >
-              {n}
-            </Label>
-            {i === 0 || i === 4 ? (
-              <span className="text-[10px] text-slate-400 text-center leading-tight max-w-[60px]">
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            className={cn(
+              "flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-all cursor-pointer min-w-[48px]",
+              value === n
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+            )}
+          >
+            <span className="text-lg font-bold">{n}</span>
+            {(i === 0 || i === 4) && (
+              <span className="text-[10px] leading-tight text-center max-w-[60px]">
                 {SCALE_LABELS[i]}
               </span>
-            ) : null}
-          </div>
+            )}
+          </button>
         ))}
-      </RadioGroup>
+      </div>
     </div>
   );
 }
