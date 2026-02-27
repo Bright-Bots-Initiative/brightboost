@@ -7,6 +7,18 @@ import { t } from "i18next";
 export const join = (base: string, path: string): string =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
+/** Extract a readable string from backend error payloads.
+ *  Handles Zod's `{ error: [{ message: "..." }, ...] }` and plain `{ error: "string" }`. */
+const extractErrorMessage = (data: any): string => {
+  const err = data?.error;
+  if (typeof err === "string") return err;
+  if (Array.isArray(err)) {
+    return err.map((e: any) => e.message || String(e)).join(". ");
+  }
+  if (typeof data?.message === "string") return data.message;
+  return "";
+};
+
 const resolveApiBase = (): string => {
   const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
 
@@ -86,7 +98,7 @@ export const loginUser = async (
       else {
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
+          errorMessage = extractErrorMessage(errorData) || errorMessage;
         } catch {
           errorMessage = `${t("api.loginFailed")}: ${response.status} ${response.statusText}`;
         }
@@ -146,7 +158,7 @@ export const signupUser = async (
       else {
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
+          errorMessage = extractErrorMessage(errorData) || errorMessage;
         } catch {
           errorMessage = `${t("api.signupFailed")}: ${response.status} ${response.statusText}`;
         }
@@ -207,7 +219,7 @@ export const signupTeacher = async (
       else {
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
+          errorMessage = extractErrorMessage(errorData) || errorMessage;
         } catch {
           errorMessage = `${t("api.teacherSignupFailed")}: ${response.status} ${response.statusText}`;
         }
@@ -266,7 +278,7 @@ export const signupStudent = async (
       else {
         try {
           const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
+          errorMessage = extractErrorMessage(errorData) || errorMessage;
         } catch {
           errorMessage = `${t("api.studentSignupFailed")}: ${response.status} ${response.statusText}`;
         }
