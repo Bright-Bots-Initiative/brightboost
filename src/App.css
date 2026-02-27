@@ -76,3 +76,56 @@ body {
   box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
   transform: translateY(4px);
 }
+
+/* Print styles for teacher pages */
+@media print {
+  /* Hide navigation, sidebars, and interactive controls */
+  nav,
+  .print\\:hidden,
+  [class*="sidebar"],
+  [class*="Sidebar"],
+  button:not(.print-visible),
+  footer {
+    display: none !important;
+  }
+
+  /* Reset layout for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  main,
+  [role="main"] {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove shadows and borders for clean print */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Ensure cards print with visible borders */
+  .bg-white {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Show all tab content in print */
+  .hidden.print\\:block {
+    display: block !important;
+  }
+
+  /* Page break hints */
+  section {
+    page-break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+}

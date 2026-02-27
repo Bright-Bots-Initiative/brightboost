@@ -35,6 +35,9 @@ import TeacherStudentRoster from "./pages/TeacherStudentRoster";
 import JoinClass from "./pages/JoinClass";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import TeacherModulePrep from "./pages/TeacherModulePrep";
+import TeacherResources from "./pages/TeacherResources";
+import TeacherPDHub from "./pages/TeacherPDHub";
 
 // Import styles
 import "./App.css";
@@ -84,6 +87,9 @@ function App() {
                 <Route path="classes" element={<TeacherClasses />} />
                 <Route path="classes/:id" element={<TeacherClassDetail />} />
                 <Route path="students" element={<TeacherStudentRoster />} />
+                <Route path="prep/:slug" element={<TeacherModulePrep />} />
+                <Route path="resources" element={<TeacherResources />} />
+                <Route path="pd" element={<TeacherPDHub />} />
                 <Route path="settings" element={<TeacherSettings />} />
               </Route>
 

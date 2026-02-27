@@ -5,6 +5,8 @@ const navItems = [
   { name: "Lessons", path: "/teacher/dashboard" },
   { name: "Students", path: "/teacher/students" },
   { name: "Classes", path: "/teacher/classes" },
+  { name: "Resources", path: "/teacher/resources" },
+  { name: "PD Hub", path: "/teacher/pd" },
   { name: "Settings", path: "/teacher/settings" },
 ];
 

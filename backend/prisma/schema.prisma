@@ -48,6 +48,12 @@ model User {
   avatar          Avatar?
   weeklySnapshots WeeklySnapshot[]
   pulseResponses  PulseResponse[]
+
+  // Teacher Enablement Relations
+  prepChecklists  TeacherPrepChecklist[]
+  pdSessions      PDSession[]
+  pdReflections   PDReflection[]
+  facultyPosts    FacultyPost[]
 }
 
 // -----------------------------------------------------------------------------
@@ -372,4 +378,98 @@ model AuditLog {
   action    String
   meta      Json?
   createdAt DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// Teacher Enablement: Prep Toolkit, Resources, PD
+// -----------------------------------------------------------------------------
+
+model TeacherPrepChecklist {
+  id          String   @id @default(cuid())
+  teacherId   String
+  moduleSlug  String
+  items       Json     // { "review": true, "printQuestions": false, ... }
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, moduleSlug])
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String   // WORKSHEET, HANDOUT, GUIDE, LINK
+  moduleSlug  String?  // null = general resource
+  category    String   // PRE_ACTIVITY, POST_ACTIVITY, ASSESSMENT, SUPPLEMENTAL, GENERAL
+  contentHtml String?  // for generated worksheets/handouts
+  contentUrl  String?  // for external links
+  printable   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([moduleSlug])
+  @@index([type])
+  @@index([category])
+}
+
+model PDSession {
+  id                 String   @id @default(cuid())
+  teacherId          String
+  date               DateTime
+  durationMinutes    Int
+  topic              String
+  facilitator        String?
+  notes              String?
+  actionItems        Json?    // ["item1", "item2"]
+  relatedModuleSlugs Json?    // ["k2-stem-sequencing", ...]
+  isTemplate         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  teacher            User           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  reflections        PDReflection[]
+
+  @@index([teacherId])
+}
+
+model PDReflection {
+  id                  String   @id @default(cuid())
+  teacherId           String
+  pdSessionId         String
+  moduleSlug          String?
+  whatWorked           String?
+  whatToChange         String?
+  studentObservations  String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  teacher             User      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  pdSession           PDSession @relation(fields: [pdSessionId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([pdSessionId])
+}
+
+model FacultyPost {
+  id         String   @id @default(cuid())
+  authorId   String
+  moduleSlug String?
+  title      String?
+  content    String
+  isPinned   Boolean  @default(false)
+  parentId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent     FacultyPost?  @relation("Replies", fields: [parentId], references: [id])
+  replies    FacultyPost[] @relation("Replies")
+
+  @@index([authorId])
+  @@index([parentId])
+  @@index([moduleSlug])
 }

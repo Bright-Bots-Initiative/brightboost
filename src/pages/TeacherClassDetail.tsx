@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useApi } from "../services/api";
 import { api as directApi } from "../services/api";
 import {
@@ -435,6 +435,17 @@ const TeacherClassDetail: React.FC = () => {
                 </select>
               )}
             </div>
+
+            {/* Teacher Prep link */}
+            {selModule && (
+              <Link
+                to={`/teacher/prep/${selModule}`}
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                target="_blank"
+              >
+                Prepare for this session &rarr;
+              </Link>
+            )}
 
             {/* Activity picker */}
             {selModule && (
