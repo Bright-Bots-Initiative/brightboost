@@ -93,10 +93,7 @@ export const handler = async (
     "Access-Control-Allow-Methods": "POST,OPTIONS",
   };
 
-  console.log(
-    "Login Lambda function started, event:",
-    JSON.stringify(event, null, 2),
-  );
+  console.log("Login Lambda function started");
 
   try {
     if (event.httpMethod === "OPTIONS") {

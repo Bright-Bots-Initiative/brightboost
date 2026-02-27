@@ -31,9 +31,7 @@ const TeacherSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to sign up teacher:", { name, email });
       const response = await signupTeacher(name, email, password);
-      console.log("Signup successful:", response);
 
       // Auto login after successful signup
       if (response && response.token) {

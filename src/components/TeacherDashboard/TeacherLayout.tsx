@@ -47,8 +47,8 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
     setIsEditProfileModalOpen(true);
   };
 
-  const handleProfileUpdated = (profile: UserProfile) => {
-    console.log("Profile updated:", profile);
+  const handleProfileUpdated = (_profile: UserProfile) => {
+    // Profile updated — no-op; parent re-fetches as needed
   };
 
   return (

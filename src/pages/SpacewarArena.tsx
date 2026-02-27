@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { STEM1_SET1_IDS } from "../constants/stem1Set1Games";
+import { STEM_SET_1_IDS } from "../constants/stemSets";
 
 interface AvatarData {
   archetype?: string;
@@ -70,7 +70,7 @@ export default function SpacewarArena() {
           .filter((p: { status: string }) => p.status === "COMPLETED")
           .map((p: { activityId: string }) => p.activityId)
           .filter((id: string) =>
-            STEM1_SET1_IDS.includes(id as (typeof STEM1_SET1_IDS)[number]),
+            STEM_SET_1_IDS.includes(id as (typeof STEM_SET_1_IDS)[number]),
           );
 
         if (avatar) {

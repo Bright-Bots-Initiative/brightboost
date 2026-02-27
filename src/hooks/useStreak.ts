@@ -135,8 +135,7 @@ export function useStreak() {
     if (pending.length === 0) return;
 
     try {
-      const server = await api.get("/gamification/streak");
-      console.log(server);
+      await api.get("/gamification/streak");
 
       const seen = new Set<string>();
       const deduped: StreakEvent[] = [];

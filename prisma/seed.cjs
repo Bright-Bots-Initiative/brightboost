@@ -361,11 +361,12 @@ async function main() {
   if (gameAct) {
     await prisma.activity.update({
       where: { id: gameAct.id },
-      data: { title: "Game: Fix the Order", content: gameContent },
+      data: { id: "lost-steps", title: "Game: Fix the Order", content: gameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
+        id: "lost-steps",
         title: "Game: Fix the Order",
         kind: INTERACT,
         order: 2,
@@ -478,11 +479,12 @@ async function main() {
   if (rhymeGameAct) {
     await prisma.activity.update({
       where: { id: rhymeGameAct.id },
-      data: { title: "Game: Rhyme & Ride", content: rhymeGameContent },
+      data: { id: "rhyme-ride", title: "Game: Rhyme & Ride", content: rhymeGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
+        id: "rhyme-ride",
         title: "Game: Rhyme & Ride",
         kind: INTERACT,
         order: 2,
@@ -793,9 +795,15 @@ async function main() {
   const buildBot = await prisma.activity.findFirst({
     where: { lessonId: lesson.id, title: "Build a Bot" },
   });
-  if (!buildBot) {
+  if (buildBot) {
+    await prisma.activity.update({
+      where: { id: buildBot.id },
+      data: { id: "build-a-bot", title: "Build a Bot", content: "Drag the parts to build a robot." },
+    });
+  } else {
     await prisma.activity.create({
       data: {
+        id: "build-a-bot",
         title: "Build a Bot",
         kind: INTERACT,
         order: 2,

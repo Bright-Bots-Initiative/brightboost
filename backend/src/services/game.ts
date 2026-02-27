@@ -151,7 +151,7 @@ export async function ensureAvatarWithBackfill(
   // Abilities are only unlocked when user selects a specialty (SPECIALIZED stage)
 
   console.log(
-    `[ensureAvatarWithBackfill] Created GENERAL avatar for student ${studentId}: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`
+    `[ensureAvatarWithBackfill] Created GENERAL avatar: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`
   );
 
   return {

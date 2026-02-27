@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import AvatarPicker from "@/components/AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
-import { STEM1_SET1_IDS } from "../constants/stem1Set1Games";
+import {
+  ALL_STEM_SETS,
+  TOTAL_SETS,
+  GAMES_PER_SET,
+  SET_LABELS,
+  countCompletedSets,
+  countCompletedInSet,
+} from "../constants/stemSets";
 import { normalizeAvatarUrl } from "@/lib/avatarDefaults";
 
 // Helper to get display name for archetype
@@ -24,6 +31,8 @@ export default function Avatar() {
   const [loading, setLoading] = useState(true);
   const [specialtyUnlocked, setSpecialtyUnlocked] = useState(false);
   const [selectingArchetype, setSelectingArchetype] = useState(false);
+  const [setProgress, setSetProgress] = useState<{ completed: number; total: number }[]>([]);
+  const [completedSetsCount, setCompletedSetsCount] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -35,14 +44,20 @@ export default function Avatar() {
         ]);
         setAvatar(avatarData);
 
-        // Check if specialty is unlocked (3+ STEM1 activities completed)
+        // Compute per-set progress and overall unlock status
         const completedIds = progressList
           .filter((p: any) => p.status === "COMPLETED")
           .map((p: any) => p.activityId);
-        const foundationCount = completedIds.filter((id: string) =>
-          STEM1_SET1_IDS.includes(id as any)
-        ).length;
-        setSpecialtyUnlocked(foundationCount >= 3);
+
+        const perSet = ALL_STEM_SETS.map((setIds) => ({
+          completed: countCompletedInSet(completedIds, setIds),
+          total: GAMES_PER_SET,
+        }));
+        setSetProgress(perSet);
+
+        const setsComplete = countCompletedSets(completedIds);
+        setCompletedSetsCount(setsComplete);
+        setSpecialtyUnlocked(setsComplete >= TOTAL_SETS);
       } catch (err) {
         console.error("Failed to fetch avatar data:", err);
       } finally {
@@ -133,8 +148,8 @@ export default function Avatar() {
           size="xl"
           userInitials={getInitials(user?.name || "??")}
           currentAvatarUrl={normalizeAvatarUrl(user?.avatarUrl)}
-          onAvatarChange={(url) => {
-            console.log("Avatar updated:", url);
+          onAvatarChange={() => {
+            // Avatar change handled by AvatarPicker
           }}
         />
       </div>
@@ -213,12 +228,34 @@ export default function Avatar() {
             </CardHeader>
             <CardContent>
               {!specialtyUnlocked ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500 mb-2">
-                    Complete 3 foundation activities to unlock specialty selection!
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Keep exploring and learning to choose your path.
+                <div className="space-y-4 py-2">
+                  {/* Per-set progress */}
+                  {ALL_STEM_SETS.map((_, idx) => {
+                    const sp = setProgress[idx] ?? { completed: 0, total: GAMES_PER_SET };
+                    const isComingSoon = idx > 0; // Only Set 1 exists in pilot
+                    return (
+                      <div
+                        key={idx}
+                        className={`rounded-lg border p-3 ${isComingSoon ? "opacity-50" : ""}`}
+                      >
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium">
+                            {SET_LABELS[idx]}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {isComingSoon ? "Coming Soon" : `${sp.completed}/${sp.total}`}
+                          </span>
+                        </div>
+                        <Progress
+                          value={isComingSoon ? 0 : (sp.completed / sp.total) * 100}
+                          className="h-2"
+                        />
+                      </div>
+                    );
+                  })}
+
+                  <p className="text-center text-sm text-gray-500 pt-2">
+                    Complete {TOTAL_SETS} sets to unlock specialization ({completedSetsCount}/{TOTAL_SETS} complete)
                   </p>
                 </div>
               ) : (

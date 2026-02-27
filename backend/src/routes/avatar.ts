@@ -49,7 +49,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
       });
 
       if (avatar) {
-        console.log(`[/avatar/me] Backfilled avatar for ${studentId}: level=${avatar.level}, xp=${avatar.xp}`);
+        console.log(`[/avatar/me] Backfilled avatar: level=${avatar.level}, xp=${avatar.xp}`);
       }
     } else if (avatar.xp === 0) {
       // Avatar exists but xp=0 - check if we need to "repair" from progress
@@ -81,7 +81,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
           });
 
           console.log(
-            `[/avatar/me] Repaired avatar for ${studentId}: level=${newLevel}, xp=${newXp} (completedCount=${completedCount})`
+            `[/avatar/me] Repaired avatar: level=${newLevel}, xp=${newXp} (completedCount=${completedCount})`
           );
         }
       }

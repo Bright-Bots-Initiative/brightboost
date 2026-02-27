@@ -14,8 +14,7 @@ const TestingSB: React.FC = () => {
   };
 
   const handleGetInfo = async () => {
-    const progress = await api.get("api/get-progress");
-    console.log(progress);
+    await api.get("api/get-progress");
   };
 
   const handleAddBadge = () => {
