@@ -30,6 +30,8 @@ import StudentLayout from "./layouts/StudentLayout";
 import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
 import TeacherClasses from "./pages/TeacherClasses";
 import TeacherClassDetail from "./pages/TeacherClassDetail";
+import TeacherSettings from "./pages/TeacherSettings";
+import TeacherStudentRoster from "./pages/TeacherStudentRoster";
 import JoinClass from "./pages/JoinClass";
 
 // Import styles
@@ -77,6 +79,8 @@ function App() {
                 <Route path="dashboard" element={<TeacherDashboard />} />
                 <Route path="classes" element={<TeacherClasses />} />
                 <Route path="classes/:id" element={<TeacherClassDetail />} />
+                <Route path="students" element={<TeacherStudentRoster />} />
+                <Route path="settings" element={<TeacherSettings />} />
               </Route>
 
               {/* Protected Student Routes (Nested) */}

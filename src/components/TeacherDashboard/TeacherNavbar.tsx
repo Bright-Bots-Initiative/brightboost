@@ -1,6 +1,7 @@
 // src/components/TeacherDashboard/TeacherNavbar.tsx
 import React, { useState } from "react";
 import BrightBoostRobot from "../BrightBoostRobot";
+import LanguageToggle from "../LanguageToggle";
 import { LogOut, User, Edit, ChevronDown } from "lucide-react";
 
 interface TeacherNavbarProps {
@@ -40,78 +41,80 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             <h1 className="text-xl font-bold tracking-wide">Bright Boost</h1>
           </div>
 
-          {/* Right side - User menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-brightboost-blue/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-light"
-              aria-expanded={isDropdownOpen}
-              aria-haspopup="true"
-              aria-label={`User menu for ${userName}`} // Added aria-label
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={userName}
-                  className="w-8 h-8 rounded-full object-cover"
+          {/* Right side - Language toggle + User menu */}
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-brightboost-blue/20 transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-light"
+                aria-expanded={isDropdownOpen}
+                aria-haspopup="true"
+                aria-label={`User menu for ${userName}`}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={userName}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold text-brightboost-navy">
+                      {getInitials(userName)}
+                    </span>
+                  </div>
+                )}
+                <span className="font-medium">Welcome, {userName}</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
                 />
-              ) : (
-                <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
-                  <span className="text-sm font-bold text-brightboost-navy">
-                    {getInitials(userName)}
-                  </span>
+              </button>
+
+              {/* Dropdown menu */}
+              {isDropdownOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                  role="menu"
+                  aria-labelledby="user-menu-button"
+                >
+                  <button
+                    onClick={() => {
+                      onProfileClick();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                    role="menuitem"
+                  >
+                    <User className="w-4 h-4 text-gray-400" />
+                    View Profile
+                  </button>
+                  <button
+                    onClick={() => {
+                      onEditProfileClick();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
+                    role="menuitem"
+                  >
+                    <Edit className="w-4 h-4 text-gray-400" />
+                    Edit Profile
+                  </button>
+                  <hr className="my-1 border-gray-100" role="separator" />
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-red-50"
+                    role="menuitem"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
                 </div>
               )}
-              <span className="font-medium">Welcome, {userName}</span>{" "}
-              {/* Added "Welcome, " */}
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {/* Dropdown menu */}
-            {isDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
-                role="menu"
-                aria-labelledby="user-menu-button"
-              >
-                <button
-                  onClick={() => {
-                    onProfileClick();
-                    setIsDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 bg-brightboost-green text-white hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
-                  role="menuitem"
-                >
-                  <User className="w-4 h-4" />
-                  View Profile
-                </button>
-                <button
-                  onClick={() => {
-                    onEditProfileClick();
-                    setIsDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 bg-brightboost-yellow text-white hover:bg-gray-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-gray-50"
-                  role="menuitem"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit Profile
-                </button>
-                <hr className="my-2 border-gray-200" role="separator" />
-                <button
-                  onClick={() => {
-                    onLogout();
-                    setIsDropdownOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors focus:outline-none focus:bg-red-50"
-                  role="menuitem"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
