@@ -30,6 +30,14 @@ const resolveApiBase = (): string => {
     return base;
   }
 
+  // Production fallback: env vars may not be baked in during Docker build on Railway
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname.includes("fe-production")
+  ) {
+    return "https://brightboost-production.up.railway.app/api";
+  }
+
   return "/api";
 };
 
