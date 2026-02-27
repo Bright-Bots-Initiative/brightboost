@@ -62,6 +62,7 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
         </a>
         <TeacherNavbar
           userName={user?.name || "Teacher"}
+          avatarUrl={user?.avatarUrl}
           onLogout={handleLogout}
           onProfileClick={handleProfileClick}
           onEditProfileClick={handleEditProfileClick}

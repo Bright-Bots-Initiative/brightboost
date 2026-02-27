@@ -5,13 +5,21 @@ import { LogOut, User, Edit, ChevronDown } from "lucide-react";
 
 interface TeacherNavbarProps {
   userName: string;
+  avatarUrl?: string | null;
   onLogout: () => void;
   onProfileClick: () => void;
   onEditProfileClick: () => void;
 }
 
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+};
+
 const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   userName,
+  avatarUrl,
   onLogout,
   onProfileClick,
   onEditProfileClick,
@@ -41,9 +49,19 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               aria-haspopup="true"
               aria-label={`User menu for ${userName}`} // Added aria-label
             >
-              <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-brightboost-navy" />
-              </div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={userName}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-brightboost-light rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-brightboost-navy">
+                    {getInitials(userName)}
+                  </span>
+                </div>
+              )}
               <span className="font-medium">Welcome, {userName}</span>{" "}
               {/* Added "Welcome, " */}
               <ChevronDown

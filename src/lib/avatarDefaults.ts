@@ -9,14 +9,32 @@ const assetV = (import.meta as any).env?.VITE_ASSET_VERSION ?? "1";
 export const DEFAULT_AVATAR_URL = `${DEFAULT_AVATAR_PATH}?v=${assetV}`;
 
 /**
+ * Returns true if the role is a teacher (case-insensitive).
+ */
+export function isTeacherRole(role?: string | null): boolean {
+  return !!role && role.toLowerCase() === "teacher";
+}
+
+/**
  * Normalizes an avatar URL to ensure:
- * - Empty/null/undefined → default robot avatar
+ * - Empty/null/undefined → default robot avatar (students only)
+ * - Teachers with no avatar → returns empty string (callers show initials)
  * - Default path without version → cache-busted version
  * - Data URLs and other valid URLs → passed through
  */
-export function normalizeAvatarUrl(url?: string | null): string {
+export function normalizeAvatarUrl(
+  url?: string | null,
+  role?: string | null,
+): string {
   if (!url || url.trim() === "") {
+    // Teachers should show initials, not the game robot
+    if (isTeacherRole(role)) return "";
     return DEFAULT_AVATAR_URL;
+  }
+
+  // Teachers shouldn't show the robot default either
+  if (isTeacherRole(role) && (url === DEFAULT_AVATAR_PATH || url.startsWith(DEFAULT_AVATAR_PATH))) {
+    return "";
   }
 
   // Add cache-bust to default path if missing

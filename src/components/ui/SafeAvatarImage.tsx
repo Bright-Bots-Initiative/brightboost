@@ -12,22 +12,26 @@ interface SafeAvatarImageProps {
   fallbackSrc?: string;
   alt: string;
   className?: string;
+  /** Pass user role so teachers get initials fallback instead of robot */
+  role?: string | null;
 }
 
 /**
  * SafeAvatarImage - An AvatarImage wrapper that falls back to default robot
- * on load errors or broken URLs.
+ * on load errors or broken URLs. For teachers, falls back to empty (callers
+ * should render AvatarFallback with initials).
  */
 export function SafeAvatarImage({
   src,
   fallbackSrc = DEFAULT_AVATAR_URL,
   alt,
   className,
+  role,
 }: SafeAvatarImageProps) {
   // Pre-check for known broken URLs
   const initialSrc = isLikelyBrokenUrl(src)
     ? fallbackSrc
-    : normalizeAvatarUrl(src);
+    : normalizeAvatarUrl(src, role);
 
   const [currentSrc, setCurrentSrc] = useState(initialSrc);
   const [hasErrored, setHasErrored] = useState(false);
@@ -36,10 +40,14 @@ export function SafeAvatarImage({
   useEffect(() => {
     const newSrc = isLikelyBrokenUrl(src)
       ? fallbackSrc
-      : normalizeAvatarUrl(src);
+      : normalizeAvatarUrl(src, role);
     setCurrentSrc(newSrc);
     setHasErrored(false);
-  }, [src, fallbackSrc]);
+  }, [src, fallbackSrc, role]);
+
+  // If normalizeAvatarUrl returned empty (teacher with no avatar),
+  // don't render the image — let AvatarFallback show initials
+  if (!currentSrc) return null;
 
   const handleError = () => {
     // If current src is not the fallback, try fallback

@@ -122,7 +122,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
-                    <User className="w-10 h-10 text-brightboost-blue" />
+                    <span className="text-2xl font-bold text-brightboost-blue">
+                      {profile.name
+                        .trim()
+                        .split(/\s+/)
+                        .map((p: string) => p[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()}
+                    </span>
                   )}
                 </div>
                 <h3 className="text-xl font-semibold text-brightboost-navy">

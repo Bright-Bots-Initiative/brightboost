@@ -34,7 +34,7 @@ import {
   StreakStats,
 } from "@/lib/streakFromProgress";
 import StreakMeter from "@/components/ui/StreakMeter";
-import { ClipboardList, ArrowRight, Heart } from "lucide-react";
+import { ClipboardList, ArrowRight, Heart, Users } from "lucide-react";
 import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 type AssignedSession = {
@@ -572,6 +572,37 @@ export default function StudentDashboard() {
           </div>
         </section>
       )}
+
+      {/* Join a Class */}
+      <section>
+        <Card
+          className="border-2 border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer"
+          onClick={() => navigate("/student/join")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              navigate("/student/join");
+            }
+          }}
+        >
+          <CardContent className="flex items-center gap-4 py-4">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-slate-800">Join a Class</p>
+              <p className="text-sm text-slate-500">
+                {enrolledCourses.length > 0
+                  ? `${enrolledCourses.length} class${enrolledCourses.length !== 1 ? "es" : ""} joined · Enter another code`
+                  : "Enter a join code from your teacher"}
+              </p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-blue-400" />
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Confidence Pulse Section */}
       {enrolledCourses.length > 0 && (

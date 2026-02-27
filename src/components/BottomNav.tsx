@@ -1,6 +1,6 @@
 // src/components/BottomNav.tsx
 import { useNavigate, useLocation } from "react-router-dom";
-import { BookOpen, Bot, Swords } from "lucide-react";
+import { BookOpen, Bot, Swords, Users } from "lucide-react";
 
 export default function BottomNav() {
   const navigate = useNavigate();
@@ -12,6 +12,12 @@ export default function BottomNav() {
       icon: BookOpen,
       path: "/student/modules",
       testId: "nav-learn",
+    },
+    {
+      label: "Classes",
+      icon: Users,
+      path: "/student/join",
+      testId: "nav-classes",
     },
     {
       label: "My Bot",
