@@ -8,6 +8,7 @@ import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
 import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
 
 const TeacherSignup: React.FC = () => {
   const [name, setName] = useState("");
@@ -16,6 +17,7 @@ const TeacherSignup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,9 +127,42 @@ const TeacherSignup: React.FC = () => {
                 placeholder="Confirm your password"
               />
 
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="agreeTerms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) =>
+                    setAgreedToTerms(checked === true)
+                  }
+                  className="mt-0.5"
+                />
+                <label
+                  htmlFor="agreeTerms"
+                  className="text-sm text-brightboost-navy leading-snug"
+                >
+                  I agree to the{" "}
+                  <Link
+                    to="/terms"
+                    className="text-brightboost-blue font-bold hover:underline"
+                    target="_blank"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy"
+                    className="text-brightboost-blue font-bold hover:underline"
+                    target="_blank"
+                  >
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+
               <Button
                 type="submit"
                 isLoading={isLoading}
+                disabled={!agreedToTerms}
                 loadingText="Signing up..."
                 className="button-shadow w-full py-3 px-4 rounded-xl text-white font-bold ui-lift bg-brightboost-blue hover:bg-brightboost-blue/90"
               >

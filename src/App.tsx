@@ -33,6 +33,8 @@ import TeacherClassDetail from "./pages/TeacherClassDetail";
 import TeacherSettings from "./pages/TeacherSettings";
 import TeacherStudentRoster from "./pages/TeacherStudentRoster";
 import JoinClass from "./pages/JoinClass";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 // Import styles
 import "./App.css";
@@ -65,6 +67,8 @@ function App() {
               <Route path="/teacher/signup" element={<TeacherSignup />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
 
               {/* Protected Teacher routes (nested) */}
               <Route

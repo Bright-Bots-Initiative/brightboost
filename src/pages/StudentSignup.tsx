@@ -9,6 +9,7 @@ import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
 import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
 
 const StudentSignup: React.FC = () => {
   const [name, setName] = useState("");
@@ -18,6 +19,7 @@ const StudentSignup: React.FC = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { login } = useAuth();
 
   const requirements = [
@@ -200,9 +202,42 @@ const StudentSignup: React.FC = () => {
                 />
               </div>
 
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="agreeTerms"
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) =>
+                    setAgreedToTerms(checked === true)
+                  }
+                  className="mt-0.5"
+                />
+                <label
+                  htmlFor="agreeTerms"
+                  className="text-sm text-brightboost-navy leading-snug"
+                >
+                  I agree to the{" "}
+                  <Link
+                    to="/terms"
+                    className="text-brightboost-blue font-bold hover:underline"
+                    target="_blank"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy"
+                    className="text-brightboost-blue font-bold hover:underline"
+                    target="_blank"
+                  >
+                    Privacy Policy
+                  </Link>
+                </label>
+              </div>
+
               <Button
                 type="submit"
                 isLoading={isLoading}
+                disabled={!agreedToTerms}
                 loadingText="Signing up..."
                 className="button-shadow w-full py-3 px-4 rounded-xl text-brightboost-navy font-bold ui-lift bg-brightboost-yellow hover:bg-brightboost-yellow/90"
               >
