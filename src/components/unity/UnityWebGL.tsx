@@ -253,7 +253,7 @@ export default function UnityWebGL({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full bg-black rounded-xl overflow-hidden"
+      className="game-container relative w-full h-full bg-black rounded-xl overflow-hidden"
       onClick={handleContainerClick}
     >
       {loading && (
