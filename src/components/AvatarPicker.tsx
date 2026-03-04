@@ -1,11 +1,10 @@
 import React, { useRef, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SafeAvatarImage } from "@/components/ui/SafeAvatarImage";
-import { join } from "../services/api";
+import { join, API_BASE } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { normalizeAvatarUrl } from "@/lib/avatarDefaults";
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+import { Camera } from "lucide-react";
 
 interface AvatarProps {
   currentAvatarUrl?: string;
@@ -141,32 +140,68 @@ const AvatarPicker: React.FC<AvatarProps> = ({
     });
   };
 
+  const isDefaultAvatar =
+    !previewUrl &&
+    (!avatarUrl ||
+      avatarUrl.includes("robot_default") ||
+      avatarUrl === "/robots/robot_default.png");
+
   return (
-    <div className="flex flex-col items-center justify-center gap-2">
+    <div className="flex flex-col items-center justify-center gap-3">
       <button
         type="button"
-        aria-label="Change avatar"
-        className={`relative ${sizeClass} cursor-pointer rounded-md border-2 border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none`}
+        aria-label="Upload your photo"
+        className={`group relative ${sizeClass} cursor-pointer rounded-xl border-4 border-dashed border-brightboost-yellow overflow-hidden focus-visible:ring-4 focus-visible:ring-brightboost-yellow/50 focus:outline-none transition-all duration-200 hover:border-solid hover:scale-[1.03] hover:shadow-lg`}
         onClick={() => fileInputRef.current?.click()}
       >
-        <Avatar className="w-full h-full rounded-md">
+        <Avatar className="w-full h-full rounded-xl">
           {loading ? (
             <div
-              className="w-full h-full animate-pulse bg-muted rounded-md"
+              className="w-full h-full animate-pulse bg-blue-100 rounded-xl flex items-center justify-center"
               role="status"
-              aria-label="Uploading avatar"
-            />
+              aria-label="Uploading your photo..."
+            >
+              <span className="text-blue-400 text-sm font-medium">
+                Uploading...
+              </span>
+            </div>
           ) : (
             <>
               <SafeAvatarImage
                 src={previewUrl ?? avatarUrl}
-                alt="Current avatar"
+                alt="Your avatar"
               />
-              <AvatarFallback className="rounded-md" aria-hidden="true">{userInitials}</AvatarFallback>
+              <AvatarFallback className="rounded-xl bg-gradient-to-br from-blue-100 to-purple-100" aria-hidden="true">
+                {userInitials}
+              </AvatarFallback>
             </>
           )}
         </Avatar>
+
+        {/* Kid-friendly CTA overlay for default/placeholder state */}
+        {isDefaultAvatar && !loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-400/80 to-purple-400/80 rounded-xl transition-all group-hover:from-blue-500/90 group-hover:to-purple-500/90">
+            <Camera className="w-12 h-12 text-white mb-2 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-bold text-base px-2 text-center leading-tight">
+              Add Your Photo!
+            </span>
+            <span className="text-white/80 text-xs mt-1">
+              Tap here to upload
+            </span>
+          </div>
+        )}
+
+        {/* Hover overlay for custom photos */}
+        {!isDefaultAvatar && !loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/0 group-hover:bg-black/40 rounded-xl transition-all">
+            <Camera className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+              Change Photo
+            </span>
+          </div>
+        )}
       </button>
+
       <input
         type="file"
         accept="image/png,image/jpeg,image/webp"
@@ -177,7 +212,7 @@ const AvatarPicker: React.FC<AvatarProps> = ({
         tabIndex={-1}
       />
       {error && (
-        <p className="text-sm text-red-500" role="alert">
+        <p className="text-sm text-red-500 bg-red-50 px-3 py-1.5 rounded-lg" role="alert">
           {error}
         </p>
       )}

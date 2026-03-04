@@ -35,7 +35,9 @@ export default function SpacewarArena() {
   const [avatarConfig, setAvatarConfig] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
-  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [difficulty, setDifficulty] = useState<Difficulty>(
+    () => (localStorage.getItem("bb_spacewar_difficulty") as Difficulty) || "easy",
+  );
   const [isTouch] = useState(isTouchDevice);
   const unityInstanceRef = useRef<any>(null);
 
@@ -230,6 +232,7 @@ export default function SpacewarArena() {
 
   const handleDifficultyChange = useCallback((newDifficulty: Difficulty) => {
     setDifficulty(newDifficulty);
+    localStorage.setItem("bb_spacewar_difficulty", newDifficulty);
     if (unityInstanceRef.current) {
       try {
         unityInstanceRef.current.SendMessage(
@@ -258,19 +261,28 @@ export default function SpacewarArena() {
       <div className="flex items-center justify-between bg-slate-800 rounded-t-xl px-4 py-2">
         <h2 className="text-white font-semibold text-lg">Spacewar (vs CPU)</h2>
         <div className="flex items-center gap-3">
-          {/* Difficulty selector */}
-          <select
-            aria-label="Select Difficulty"
-            value={difficulty}
-            onChange={(e) =>
-              handleDifficultyChange(e.target.value as Difficulty)
-            }
-            className="bg-slate-700 text-white text-sm rounded px-2 py-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="easy">Easy</option>
-            <option value="normal">Normal</option>
-            <option value="hard">Hard</option>
-          </select>
+          {/* Difficulty selector — kid-friendly buttons */}
+          <div className="flex gap-1" role="radiogroup" aria-label="Difficulty">
+            {([
+              { value: "easy" as Difficulty, emoji: "\uD83D\uDC23", label: "Easy" },
+              { value: "normal" as Difficulty, emoji: "\uD83C\uDFAE", label: "Medium" },
+              { value: "hard" as Difficulty, emoji: "\uD83D\uDD25", label: "Hard" },
+            ]).map((opt) => (
+              <button
+                key={opt.value}
+                role="radio"
+                aria-checked={difficulty === opt.value}
+                onClick={() => handleDifficultyChange(opt.value)}
+                className={`px-2.5 py-1 rounded-md text-sm font-medium transition-all ${
+                  difficulty === opt.value
+                    ? "bg-blue-500 text-white shadow-md scale-105"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                {opt.emoji} {opt.label}
+              </button>
+            ))}
+          </div>
 
           {/* How to Play button */}
           <Dialog open={showHelp} onOpenChange={setShowHelp}>
@@ -353,11 +365,12 @@ export default function SpacewarArena() {
                 <div>
                   <h4 className="text-yellow-400 font-semibold mb-1">Tips</h4>
                   <ul className="text-slate-300 list-disc list-inside">
-                    <li>Use thrust sparingly - don't drift into the sun!</li>
+                    <li>Don't go too fast — you might fly into the sun!</li>
                     <li>
-                      Hyperspace teleports you randomly (15% explosion risk)
+                      Hyperspace moves you to a random spot (a little risky!)
                     </li>
-                    <li>Lead your shots - missiles travel in straight lines</li>
+                    <li>Aim a little ahead of where your opponent is going</li>
+                    <li>Start on Easy to learn the controls, then try harder!</li>
                   </ul>
                 </div>
               </div>

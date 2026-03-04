@@ -1,5 +1,5 @@
 // backend/src/routes/userAvatar.ts
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import { z } from "zod";
 import prisma from "../utils/prisma";
@@ -50,6 +50,29 @@ const patchAvatarSchema = z.object({
 });
 
 /**
+ * Multer wrapper that catches multer errors and returns proper JSON 400s
+ * instead of letting them fall through to the global 500 handler.
+ */
+function handleUpload(req: Request, res: Response, next: NextFunction) {
+  upload.single("avatar")(req, res, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res
+          .status(400)
+          .json({ error: "File too large. Maximum size is 300KB." });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    if (err) {
+      return res
+        .status(400)
+        .json({ error: err.message || "Invalid file upload" });
+    }
+    next();
+  });
+}
+
+/**
  * POST /user/avatar/upload
  * Upload avatar as multipart form data, convert to base64 data URL
  */
@@ -57,7 +80,7 @@ router.post(
   "/user/avatar/upload",
   requireAuth,
   sensitiveOpsLimiter,
-  upload.single("avatar"),
+  handleUpload,
   async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -100,17 +123,6 @@ router.post(
         },
       });
     } catch (error) {
-      if (error instanceof multer.MulterError) {
-        if (error.code === "LIMIT_FILE_SIZE") {
-          return res
-            .status(400)
-            .json({ error: "File too large. Maximum size is 300KB." });
-        }
-        return res.status(400).json({ error: error.message });
-      }
-      if (error instanceof Error) {
-        return res.status(400).json({ error: error.message });
-      }
       console.error("Avatar upload error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
