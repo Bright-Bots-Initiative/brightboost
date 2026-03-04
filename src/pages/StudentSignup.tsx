@@ -23,10 +23,10 @@ const StudentSignup: React.FC = () => {
   const { login } = useAuth();
 
   const requirements = [
-    { re: /.{8,}/, label: "8+ characters" },
-    { re: /[A-Z]/, label: "Uppercase letter" },
-    { re: /[a-z]/, label: "Lowercase letter" },
-    { re: /[0-9]/, label: "Number" },
+    { re: /.{8,}/, label: "At least 8 characters long" },
+    { re: /[A-Z]/, label: "One BIG letter (like A, B, C)" },
+    { re: /[a-z]/, label: "One small letter (like a, b, c)" },
+    { re: /[0-9]/, label: "One number (like 1, 2, 3)" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
