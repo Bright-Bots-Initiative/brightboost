@@ -1433,6 +1433,171 @@ async function main() {
       console.log("Skipping PD templates (no teacher found for ownership).");
     }
   }
+
+  // =============================================
+  // DEMO ACCOUNTS — for Friday pitch demo
+  // =============================================
+  console.log("Seeding demo accounts...");
+
+  const demoPassword = await bcrypt.hash("BrightBoost1", 10);
+
+  // Demo Teacher
+  let demoTeacher = await prisma.user.findUnique({
+    where: { email: "demo_teacher@brightboost.com" },
+  });
+  if (!demoTeacher) {
+    demoTeacher = await prisma.user.create({
+      data: {
+        name: "Ms. Johnson",
+        email: "demo_teacher@brightboost.com",
+        password: demoPassword,
+        role: "teacher",
+      },
+    });
+    console.log("Created demo teacher:", demoTeacher.email);
+  } else {
+    console.log("Demo teacher already exists:", demoTeacher.email);
+  }
+
+  // Demo Student
+  let demoStudent = await prisma.user.findUnique({
+    where: { email: "demo_student@brightboost.com" },
+  });
+  if (!demoStudent) {
+    demoStudent = await prisma.user.create({
+      data: {
+        name: "Maya",
+        email: "demo_student@brightboost.com",
+        password: demoPassword,
+        role: "student",
+      },
+    });
+    console.log("Created demo student:", demoStudent.email);
+  } else {
+    console.log("Demo student already exists:", demoStudent.email);
+  }
+
+  // Create demo class: "Ms. Johnson's Science Stars"
+  let demoCourse = await prisma.course.findFirst({
+    where: { teacherId: demoTeacher.id, name: "Ms. Johnson's Science Stars" },
+  });
+  if (!demoCourse) {
+    demoCourse = await prisma.course.create({
+      data: {
+        name: "Ms. Johnson's Science Stars",
+        joinCode: "STARS2026",
+        teacherId: demoTeacher.id,
+      },
+    });
+    console.log("Created demo class:", demoCourse.name, "code:", demoCourse.joinCode);
+  }
+
+  // Enroll Maya in the class
+  const existingEnrollment = await prisma.enrollment.findFirst({
+    where: { studentId: demoStudent.id, courseId: demoCourse.id },
+  });
+  if (!existingEnrollment) {
+    await prisma.enrollment.create({
+      data: {
+        studentId: demoStudent.id,
+        courseId: demoCourse.id,
+      },
+    });
+    console.log("Enrolled Maya in", demoCourse.name);
+  }
+
+  // Create avatar for Maya (Level 2, 350 XP)
+  const existingAvatar = await prisma.avatar.findUnique({
+    where: { studentId: demoStudent.id },
+  });
+  if (!existingAvatar) {
+    await prisma.avatar.create({
+      data: {
+        studentId: demoStudent.id,
+        stage: "GENERAL",
+        level: 2,
+        xp: 350,
+        hp: 100,
+        energy: 100,
+      },
+    });
+    console.log("Created Maya's avatar (Level 2, 350 XP)");
+  }
+
+  // Create demo progress: complete 2-3 activities from the sequencing module
+  const seqModule = await prisma.module.findUnique({
+    where: { slug: "k2-stem-sequencing" },
+  });
+  if (seqModule) {
+    const seqActivities = await prisma.activity.findMany({
+      where: {
+        Lesson: {
+          Unit: {
+            moduleId: seqModule.id,
+          },
+        },
+      },
+      orderBy: { order: "asc" },
+      take: 3,
+      include: { Lesson: { include: { Unit: true } } },
+    });
+
+    const now = new Date();
+    for (let i = 0; i < seqActivities.length; i++) {
+      const act = seqActivities[i];
+      const progressDate = new Date(now);
+      progressDate.setDate(progressDate.getDate() - (2 - i)); // 2 days ago, 1 day ago, today
+      try {
+        await prisma.progress.upsert({
+          where: {
+            studentId_activityId: {
+              studentId: demoStudent.id,
+              activityId: act.id,
+            },
+          },
+          update: {},
+          create: {
+            studentId: demoStudent.id,
+            moduleSlug: "k2-stem-sequencing",
+            lessonId: act.Lesson?.id || null,
+            activityId: act.id,
+            status: "COMPLETED",
+            timeSpentS: 180 + i * 60,
+            updatedAt: progressDate,
+          },
+        });
+      } catch (e) {
+        console.warn("Skipped progress for activity", act.id, ":", e.message);
+      }
+    }
+    console.log(`Created ${seqActivities.length} progress records for Maya (streak: 3 days)`);
+  }
+
+  // Create a PRE pulse response for Maya
+  try {
+    const existingPulse = await prisma.pulseResponse.findFirst({
+      where: { studentId: demoStudent.id, courseId: demoCourse.id, kind: "PRE" },
+    });
+    if (!existingPulse) {
+      await prisma.pulseResponse.create({
+        data: {
+          studentId: demoStudent.id,
+          courseId: demoCourse.id,
+          kind: "PRE",
+          score: 4,
+          answers: { enjoyment: 5, continue: 4, note: "I love the games!" },
+        },
+      });
+      console.log("Created PRE pulse for Maya");
+    }
+  } catch (e) {
+    console.warn("Skipped pulse creation:", e.message);
+  }
+
+  console.log("Demo accounts seeded successfully!");
+  console.log("  Teacher: demo_teacher@brightboost.com / BrightBoost1");
+  console.log("  Student: demo_student@brightboost.com / BrightBoost1");
+  console.log("  Class code: STARS2026");
 }
 
 main()
