@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Target,
   Check,
+  Rocket,
 } from "lucide-react";
 import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
@@ -352,6 +353,34 @@ export default function StudentDashboard() {
 
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
+      {/* Hero Action — the ONE thing a kid should click */}
+      {!loading && (
+        <button
+          onClick={() => {
+            if (nextOne) goToNext();
+            else navigate("/student/modules");
+          }}
+          className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-1 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
+        >
+          <div className="rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 px-6 py-5 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Rocket className="w-8 h-8 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                {nextOne ? "Play Next!" : "Start Playing!"}
+              </h2>
+              <p className="text-white/80 text-sm md:text-base mt-0.5">
+                {nextOne
+                  ? `${nextOne.moduleTitle} — ${nextOne.activityTitle}`
+                  : "Pick a module and start your adventure!"}
+              </p>
+            </div>
+            <ArrowRight className="w-8 h-8 text-white/80 group-hover:translate-x-1 transition-transform shrink-0" />
+          </div>
+        </button>
+      )}
+
       {/* Header Section */}
       <div className="space-y-2">
         <div className="flex justify-between items-start">
