@@ -31,9 +31,30 @@ const isTouchDevice = (): boolean => {
   );
 };
 
+const FUN_LOADING_MESSAGES = [
+  "Warming up the rockets...",
+  "Feeding the robots...",
+  "Polishing the stars...",
+  "Counting down... 3, 2, 1!",
+  "Checking the fuel tanks...",
+  "Asking the aliens for directions...",
+];
+
+function useFunLoadingMessage() {
+  const [msgIndex, setMsgIndex] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex((i) => (i + 1) % FUN_LOADING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+  return FUN_LOADING_MESSAGES[msgIndex];
+}
+
 export default function SpacewarArena() {
   const [avatarConfig, setAvatarConfig] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState(true);
+  const funMessage = useFunLoadingMessage();
   const [showHelp, setShowHelp] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>(
     () => (localStorage.getItem("bb_spacewar_difficulty") as Difficulty) || "easy",
@@ -249,8 +270,8 @@ export default function SpacewarArena() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh]">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-600">Preparing arena...</p>
+        <div className="text-5xl mb-4 animate-bounce">🚀</div>
+        <p className="text-lg font-semibold text-slate-700 transition-all duration-300">{funMessage}</p>
       </div>
     );
   }

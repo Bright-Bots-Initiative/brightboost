@@ -1,5 +1,5 @@
 // src/components/unity/UnityWebGL.tsx
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 
 interface UnityConfig {
   archetype?: string;
@@ -44,6 +44,15 @@ const isTouchDevice = (): boolean => {
   );
 };
 
+const FUN_LOADING_MESSAGES = [
+  "Warming up the rockets...",
+  "Feeding the robots...",
+  "Polishing the stars...",
+  "Counting down... 3, 2, 1!",
+  "Building your world...",
+  "Almost ready!",
+];
+
 // Keys used by the game that browsers may steal (scroll, back navigation, etc.)
 const GAMEPLAY_KEYS = new Set([
   "Space",
@@ -74,7 +83,17 @@ export default function UnityWebGL({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [isTouch] = useState(isTouchDevice);
+
+  // Rotate fun loading messages
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setLoadingMsgIdx((i) => (i + 1) % FUN_LOADING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   // Block browser-default handling of gameplay keys when canvas is focused
   const handleKeyCapture = useCallback(
@@ -258,11 +277,11 @@ export default function UnityWebGL({
     >
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-10">
-          <div className="text-4xl mb-4">🎮</div>
-          <h2 className="text-xl font-bold text-white mb-4">Loading game...</h2>
+          <div className="text-5xl mb-4 animate-bounce">🚀</div>
+          <h2 className="text-lg font-bold text-white mb-4">{FUN_LOADING_MESSAGES[loadingMsgIdx]}</h2>
           <div className="w-64 h-3 bg-slate-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
