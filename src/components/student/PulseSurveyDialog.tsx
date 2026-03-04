@@ -123,7 +123,7 @@ export default function PulseSurveyDialog({
         );
       }
       localStorage.setItem(`bb_pulse_${kind.toLowerCase()}_${courseId}`, "1");
-      toast({ title: "Thanks for sharing!", description: "Your response was saved." });
+      toast({ title: "Thanks for sharing!", description: "Got it, thanks!" });
       reset();
       onOpenChange(false);
       onSubmitted?.();
@@ -147,7 +147,7 @@ export default function PulseSurveyDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            Quick Check-in ({kind})
+            Quick Check-In
           </DialogTitle>
           <DialogDescription>
             {courseName} — Tell us how you feel! This only takes a moment.

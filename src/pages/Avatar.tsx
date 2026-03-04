@@ -168,7 +168,7 @@ export default function Avatar() {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium">Archetype:</span>
+              <span className="font-medium">Character Type:</span>
               <span className="font-bold">{getArchetypeDisplay(avatar)}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -176,7 +176,7 @@ export default function Avatar() {
               <span>{avatar?.level || 1}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium">XP:</span>
+              <span className="font-medium">Points:</span>
               <span>{avatar?.xp || 0}</span>
             </div>
             <div className="flex items-center justify-between">

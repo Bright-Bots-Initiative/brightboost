@@ -633,12 +633,12 @@ export default function StudentDashboard() {
         </Card>
       </section>
 
-      {/* Confidence Pulse Section */}
+      {/* Quick Check-In Section */}
       {enrolledCourses.length > 0 && (
         <section>
           <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
             <Heart className="w-6 h-6 text-pink-500" />
-            Confidence Pulse
+            Quick Check-In
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {enrolledCourses.map((course) => {
@@ -650,10 +650,10 @@ export default function StudentDashboard() {
                     <CardTitle className="text-base">{course.name}</CardTitle>
                     <p className="text-xs text-slate-500">
                       {preDone && postDone
-                        ? "PRE & POST complete"
+                        ? "All check-ins done!"
                         : preDone
-                          ? "PRE complete"
-                          : "No pulses yet"}
+                          ? "First check-in done"
+                          : "Tell us how you feel!"}
                     </p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-2">
@@ -665,7 +665,7 @@ export default function StudentDashboard() {
                           setPulseTarget({ courseId: course.id, courseName: course.name, kind: "PRE" })
                         }
                       >
-                        Take PRE Pulse
+                        How Do I Feel?
                       </Button>
                     )}
                     {preDone && !postDone && completedActivitiesCount >= 3 && (
@@ -675,12 +675,12 @@ export default function StudentDashboard() {
                           setPulseTarget({ courseId: course.id, courseName: course.name, kind: "POST" })
                         }
                       >
-                        Take POST Pulse
+                        Check In Again
                       </Button>
                     )}
                     {preDone && !postDone && completedActivitiesCount < 3 && (
                       <p className="text-xs text-slate-400">
-                        Complete {3 - completedActivitiesCount} more activit{3 - completedActivitiesCount === 1 ? "y" : "ies"} to unlock POST Pulse
+                        Complete {3 - completedActivitiesCount} more activit{3 - completedActivitiesCount === 1 ? "y" : "ies"} to unlock your next check-in
                       </p>
                     )}
                     {preDone && postDone && (
