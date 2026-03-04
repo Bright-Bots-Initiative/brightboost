@@ -386,10 +386,10 @@ export default function StudentDashboard() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-              {t("dashboard.greeting", { name: user?.name || "Explorer" })}
+              Welcome back, {(user?.name || "Explorer").split(" ")[0]}!
             </h1>
             <p className="text-xl text-slate-600 font-medium">
-              {t("dashboard.tagline")}
+              Ready for today's adventure?
             </p>
           </div>
         </div>
