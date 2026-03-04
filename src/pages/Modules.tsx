@@ -16,6 +16,7 @@ const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-rhyme-ride": "type_game",
   "k2-stem-bounce-buds": "type_game",
   "k2-stem-gotcha-gears": "type_game",
+  "stem-1-intro": "type_game",
 };
 
 const MODULE_ORDER: Record<string, number> = {
@@ -23,7 +24,10 @@ const MODULE_ORDER: Record<string, number> = {
   "k2-stem-rhyme-ride": 2,
   "k2-stem-bounce-buds": 3,
   "k2-stem-gotcha-gears": 4,
+  "stem-1-intro": 5,
 };
+
+const COMING_SOON_SLUGS = new Set(["stem-1-intro"]);
 
 export default function Modules() {
   const [modules, setModules] = useState<any[]>([]);
@@ -37,8 +41,7 @@ export default function Modules() {
     api
       .getModules({ level: "K-2" })
       .then((data) => {
-        // Still exclude specific slug if needed
-        const visible = data.filter((m: any) => m.slug !== "stem-1-intro");
+        const visible = data;
         visible.sort(
           (a: any, b: any) =>
             (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
@@ -73,37 +76,59 @@ export default function Modules() {
         <ModulesSkeleton />
       ) : modules.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((m) => (
-            <Card
-              key={m.id}
-              className="hover:shadow-lg transition flex flex-col h-full border-2 border-transparent hover:border-brightboost-blue/20"
-            >
-              <div className="p-4 pb-0">
-                <ActivityThumb
-                  imageKey={MODULE_THUMBNAILS[m.slug] || "module_sequencing"}
-                  variant="module"
-                  className="h-24 w-full"
-                />
-              </div>
-              <CardHeader>
-                <CardTitle className="text-xl text-brightboost-navy">
-                  {m.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-between">
-                <p className="text-sm text-gray-500 mb-6">
-                  {m.description ?? m.subtitle ?? "..."}
-                </p>
-                <Button
-                  onClick={() => navigate(`/student/modules/${m.slug}`)}
-                  className="w-full sm:w-auto"
-                  aria-label={`Start learning ${m.title}`}
-                >
-                  Start Learning
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {modules.map((m) => {
+            const isComingSoon = COMING_SOON_SLUGS.has(m.slug);
+            return (
+              <Card
+                key={m.id}
+                className={`transition flex flex-col h-full border-2 ${
+                  isComingSoon
+                    ? "border-purple-200 bg-purple-50/50 opacity-90"
+                    : "border-transparent hover:border-brightboost-blue/20 hover:shadow-lg"
+                }`}
+              >
+                <div className="p-4 pb-0 relative">
+                  <ActivityThumb
+                    imageKey={MODULE_THUMBNAILS[m.slug] || "module_sequencing"}
+                    variant="module"
+                    className="h-24 w-full"
+                  />
+                  {isComingSoon && (
+                    <span className="absolute top-6 right-6 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
+                      Coming Soon!
+                    </span>
+                  )}
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-xl text-brightboost-navy">
+                    {isComingSoon ? `${m.title}` : m.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col justify-between">
+                  <p className="text-sm text-gray-500 mb-6">
+                    {m.description ?? m.subtitle ?? "..."}
+                  </p>
+                  {isComingSoon ? (
+                    <Button
+                      disabled
+                      className="w-full sm:w-auto bg-purple-400 cursor-not-allowed"
+                      aria-label={`${m.title} — coming soon`}
+                    >
+                      Coming Soon!
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => navigate(`/student/modules/${m.slug}`)}
+                      className="w-full sm:w-auto"
+                      aria-label={`Start learning ${m.title}`}
+                    >
+                      Start Learning
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         !error && (
