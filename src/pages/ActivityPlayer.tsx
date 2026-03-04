@@ -159,8 +159,8 @@ export default function ActivityPlayer() {
       })
       .catch((e) => {
         toast({
-          title: "Error",
-          description: e?.message || "Failed to load activity.",
+          title: "Oops!",
+          description: "Something went wrong loading this activity. Try again!",
           variant: "destructive",
         });
       })
@@ -203,8 +203,8 @@ export default function ActivityPlayer() {
       }
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to save progress.",
+        title: "Oops!",
+        description: "We couldn't save that one. Try again!",
         variant: "destructive",
       });
     }
@@ -238,7 +238,7 @@ export default function ActivityPlayer() {
                 <div className="text-gray-500 text-lg">You earned</div>
                 <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
                   <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
-                  {reward?.xpDelta ? `+${reward.xpDelta}` : "+0"} XP
+                  {reward?.xpDelta ? `+${reward.xpDelta}` : "+0"} points
                 </div>
               </div>
 

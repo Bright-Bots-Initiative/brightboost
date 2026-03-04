@@ -38,8 +38,8 @@ export default function ModuleDetail() {
       })
       .catch((e) => {
         toast({
-          title: "Error",
-          description: e?.message || "Failed to load module.",
+          title: "Oops!",
+          description: "We couldn't load this module. Try again!",
           variant: "destructive",
         });
       });
