@@ -9,7 +9,13 @@ import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
 import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
 import BounceBudsUnityActivity from "@/components/activities/BounceBudsUnityActivity";
 import GotchaGearsUnityActivity from "@/components/activities/GotchaGearsUnityActivity";
-import { Check, Zap, Heart, Star, ArrowRight } from "lucide-react";
+import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
 import {
   LocalizedField,
@@ -71,6 +77,16 @@ export default function ActivityPlayer() {
   const [submitted, setSubmitted] = useState(false);
   const [incorrectIds, setIncorrectIds] = useState<string[]>([]);
   const [completionData, setCompletionData] = useState<any>(null);
+  const [showBreak, setShowBreak] = useState(false);
+
+  const BREAK_SUGGESTIONS = [
+    "Do 10 jumping jacks!",
+    "Draw a picture of what you just learned!",
+    "Tell someone nearby one cool thing you learned!",
+    "Stretch your arms up high like a rocket!",
+    "Look out the window and find something interesting!",
+    "Take 5 deep breaths — in through your nose, out through your mouth!",
+  ];
 
   const startMsRef = useRef<number>(Date.now());
 
@@ -176,8 +192,15 @@ export default function ActivityPlayer() {
       setCompletionData(res);
       toast({
         title: "Activity Completed!",
-        description: res.reward?.xpDelta ? `+${res.reward.xpDelta} XP` : "Progress saved!"
+        description: res.reward?.xpDelta ? `+${res.reward.xpDelta} points!` : "Awesome, saved!"
       });
+
+      // Track session completions for break-time interstitial
+      const count = Number(sessionStorage.getItem("bb_session_completions") || "0") + 1;
+      sessionStorage.setItem("bb_session_completions", String(count));
+      if (count > 0 && count % 3 === 0) {
+        setShowBreak(true);
+      }
     } catch {
       toast({
         title: "Error",
@@ -264,6 +287,35 @@ export default function ActivityPlayer() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Break Time Interstitial */}
+        <Dialog open={showBreak} onOpenChange={setShowBreak}>
+          <DialogContent className="max-w-sm text-center">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-extrabold flex items-center justify-center gap-2">
+                <TreePine className="w-7 h-7 text-green-600" />
+                Time for a Break!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-lg text-slate-700">
+                Great work! You've finished 3 activities! Time to stretch, move around, or try something fun:
+              </p>
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                <p className="text-green-800 font-semibold text-lg">
+                  {BREAK_SUGGESTIONS[Math.floor(Math.random() * BREAK_SUGGESTIONS.length)]}
+                </p>
+              </div>
+            </div>
+            <Button
+              size="lg"
+              className="w-full text-lg"
+              onClick={() => setShowBreak(false)}
+            >
+              Ready to keep going!
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
