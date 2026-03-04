@@ -1,5 +1,5 @@
 // src/components/unity/UnityWebGL.tsx
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UnityConfig {
   archetype?: string;
