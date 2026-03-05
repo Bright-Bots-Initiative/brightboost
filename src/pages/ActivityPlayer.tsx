@@ -1,5 +1,5 @@
 // src/pages/ActivityPlayer.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -54,20 +54,14 @@ function safeJsonParse(raw: string): any {
   }
 }
 
-/** Fisher-Yates shuffle — returns a new shuffled array of indices [0..n-1] */
-function shuffleIndices(n: number, seed: string): number[] {
-  const indices = Array.from({ length: n }, (_, i) => i);
-  // Simple deterministic-ish seed from question id so order is stable per render
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (h * 31 + seed.charCodeAt(i)) | 0;
+/** Fisher-Yates shuffle — returns a new shuffled copy of indices [0..n-1] */
+function shuffledIndices(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  for (let i = indices.length - 1; i > 0; i--) {
-    h = (h * 1103515245 + 12345) | 0;
-    const j = ((h >>> 0) % (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  return indices;
+  return arr;
 }
 
 export default function ActivityPlayer() {
@@ -94,6 +88,8 @@ export default function ActivityPlayer() {
   const [incorrectIds, setIncorrectIds] = useState<string[]>([]);
   const [completionData, setCompletionData] = useState<any>(null);
   const [showBreak, setShowBreak] = useState(false);
+  // Per-question shuffled choice order: questionId → shuffled array of original indices
+  const [shuffleMap, setShuffleMap] = useState<Record<string, number[]>>({});
 
   const BREAK_SUGGESTIONS = [
     "Do 10 jumping jacks!",
@@ -165,13 +161,21 @@ export default function ActivityPlayer() {
           return;
         }
         setActivity(found);
-        setContent(safeJsonParse(found.content || ""));
+        const parsed = safeJsonParse(found.content || "");
+        setContent(parsed);
         // reset INFO local state
         setSlideIndex(0);
         setMode("story");
         setAnswers({});
         setSubmitted(false);
         setIncorrectIds([]);
+        // Build shuffled choice order for each quiz question
+        const qs: StoryQuestion[] = Array.isArray(parsed?.questions) ? parsed.questions : [];
+        const sMap: Record<string, number[]> = {};
+        for (const q of qs) {
+          sMap[q.id] = shuffledIndices(q.choices.length);
+        }
+        setShuffleMap(sMap);
       })
       .catch((e) => {
         toast({
@@ -365,17 +369,6 @@ export default function ActivityPlayer() {
     const questions: StoryQuestion[] = Array.isArray(content?.questions)
       ? content.questions
       : [];
-
-    // Build a stable shuffled-index map per question so choices appear in random order
-    // but stay consistent across re-renders. Key = question id, value = shuffled indices.
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const shuffleMap: Record<string, number[]> = useMemo(() => {
-      const map: Record<string, number[]> = {};
-      for (const q of questions) {
-        map[q.id] = shuffleIndices(q.choices.length, q.id);
-      }
-      return map;
-    }, [questions]);
 
     if (content?.type !== "story_quiz" || slides.length === 0) {
       // fallback display
