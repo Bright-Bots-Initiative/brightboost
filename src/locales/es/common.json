@@ -394,6 +394,55 @@
     "hours": "horas",
     "families": "familias"
   },
+  "nav": {
+    "learn": "Aprender",
+    "classes": "Clases",
+    "myStar": "Mi Estrella",
+    "play": "Jugar"
+  },
+  "joinClass": {
+    "title": "Unirse a una Clase",
+    "subtitle": "Ingresa el código que te dio tu profesor",
+    "codeLabel": "Código de Clase",
+    "joinButton": "Unirse",
+    "joining": "Uniéndose...",
+    "success": "¡Te uniste a \"{{name}}\" con éxito!",
+    "invalidCode": "Código inválido. Pregúntale a tu profesor.",
+    "failed": "No se pudo unir a la clase"
+  },
+  "myStar": {
+    "title": "Mi Estrella",
+    "powerLevel": "Nivel de Poder",
+    "stars": "Estrellas",
+    "levelLabel": "Nivel",
+    "nextStage": "¡{{needed}} más para llegar a {{next}}!",
+    "superpowers": "Mis Superpoderes",
+    "maxPower": "¡MÁXIMO!",
+    "arenaTitle": "Mejoras de Arena",
+    "arenaDesc": "¡Estos potencian tus juegos!",
+    "specialtyTitle": "Progreso de Especialidad",
+    "specialtyHint": "¡Sigue jugando para llenar tus barras!",
+    "locked": "Bloqueado",
+    "complete": "¡Completo!",
+    "stage": {
+      "rookie": "Novato",
+      "explorer": "Explorador",
+      "champion": "Campeón",
+      "legend": "Leyenda"
+    },
+    "stats": {
+      "heartPower": "Poder del Corazón",
+      "brainJuice": "Jugo Cerebral",
+      "lightningFast": "Súper Veloz",
+      "superFocus": "Súper Enfoque",
+      "starPower": "Poder Estelar"
+    },
+    "sets": {
+      "set1": "Fundamentos",
+      "set2": "Exploración",
+      "set3": "Maestría"
+    }
+  },
   "showcase": {
     "title": "Noche Familiar STEAM",
     "slide1Title": "¡Bienvenidos a la Noche Familiar STEAM!",

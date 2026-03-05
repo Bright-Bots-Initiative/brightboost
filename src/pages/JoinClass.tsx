@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useApi } from "../services/api";
 import { Users, ArrowRight } from "lucide-react";
 import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 const JoinClass: React.FC = () => {
+  const { t } = useTranslation();
   const api = useApi();
   const navigate = useNavigate();
   const [joinCode, setJoinCode] = useState("");
@@ -26,17 +28,17 @@ const JoinClass: React.FC = () => {
       const result = await api.post("/student/join-course", {
         joinCode: joinCode.trim().toUpperCase(),
       });
-      setSuccess(`Joined "${result.courseName}" successfully!`);
+      setSuccess(t("joinClass.success", { name: result.courseName }));
       setJoinedCourseId(result.courseId as string);
       setJoinedCourseName(result.courseName as string);
       setPulseOpen(true);
     } catch (err) {
       setError(
         err instanceof Error && err.message.includes("404")
-          ? "Invalid join code. Please check with your teacher."
+          ? t("joinClass.invalidCode")
           : err instanceof Error
             ? err.message
-            : "Failed to join class",
+            : t("joinClass.failed"),
       );
     } finally {
       setLoading(false);
@@ -53,10 +55,10 @@ const JoinClass: React.FC = () => {
         <div className="text-center mb-6">
           <Users className="w-12 h-12 text-brightboost-blue mx-auto mb-3" />
           <h1 className="text-2xl font-bold text-brightboost-navy">
-            Join a Class
+            {t("joinClass.title")}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Enter the join code your teacher gave you
+            {t("joinClass.subtitle")}
           </p>
         </div>
 
@@ -66,7 +68,7 @@ const JoinClass: React.FC = () => {
               htmlFor="joinCode"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Join Code
+              {t("joinClass.codeLabel")}
             </label>
             <input
               id="joinCode"
@@ -98,10 +100,10 @@ const JoinClass: React.FC = () => {
             className="w-full flex items-center justify-center px-4 py-3 text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
           >
             {loading ? (
-              "Joining..."
+              t("joinClass.joining")
             ) : (
               <>
-                Join Class
+                {t("joinClass.joinButton")}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}

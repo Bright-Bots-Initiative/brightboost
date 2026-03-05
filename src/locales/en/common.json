@@ -394,6 +394,55 @@
     "hours": "hours",
     "families": "families"
   },
+  "nav": {
+    "learn": "Learn",
+    "classes": "Classes",
+    "myStar": "My Star",
+    "play": "Play"
+  },
+  "joinClass": {
+    "title": "Join a Class",
+    "subtitle": "Enter the join code your teacher gave you",
+    "codeLabel": "Join Code",
+    "joinButton": "Join Class",
+    "joining": "Joining...",
+    "success": "Joined \"{{name}}\" successfully!",
+    "invalidCode": "Invalid join code. Please check with your teacher.",
+    "failed": "Failed to join class"
+  },
+  "myStar": {
+    "title": "My Star",
+    "powerLevel": "Power Level",
+    "stars": "Stars",
+    "levelLabel": "Level",
+    "nextStage": "{{needed}} more to reach {{next}}!",
+    "superpowers": "My Superpowers",
+    "maxPower": "MAX!",
+    "arenaTitle": "Arena Boosts",
+    "arenaDesc": "These power up your games!",
+    "specialtyTitle": "Specialty Progress",
+    "specialtyHint": "Keep playing to fill your bars!",
+    "locked": "Locked",
+    "complete": "Complete!",
+    "stage": {
+      "rookie": "Rookie",
+      "explorer": "Explorer",
+      "champion": "Champion",
+      "legend": "Legend"
+    },
+    "stats": {
+      "heartPower": "Heart Power",
+      "brainJuice": "Brain Juice",
+      "lightningFast": "Lightning Fast",
+      "superFocus": "Super Focus",
+      "starPower": "Star Power"
+    },
+    "sets": {
+      "set1": "Foundation",
+      "set2": "Exploration",
+      "set3": "Mastery"
+    }
+  },
   "showcase": {
     "title": "Family STEAM Night",
     "slide1Title": "Welcome to Family STEAM Night!",
