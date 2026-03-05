@@ -189,211 +189,45 @@ async function main() {
   });
   console.log("Created module:", module.slug);
 
-  // --- STEM-1 (K–2) Game #1: Boost’s Lost Steps ---
-  const k2SeqModule = await prisma.module.upsert({
-    where: { slug: "k2-stem-sequencing" },
-    update: {
-      title: "Boost’s Lost Steps",
-      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
-      level: "K-2",
-      published: true,
-    },
-    create: {
-      slug: "k2-stem-sequencing",
-      title: "Boost’s Lost Steps",
-      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
-      level: "K-2",
-      published: true,
-    },
-  });
-  console.log("Created module:", k2SeqModule.slug);
-
-  let k2SeqUnit = await prisma.unit.findFirst({
-    where: { moduleId: k2SeqModule.id, title: "Unit 1: Step Power" },
-  });
-  if (!k2SeqUnit) {
-    k2SeqUnit = await prisma.unit.create({
-      data: {
-        title: "Unit 1: Step Power",
-        order: 1,
-        Module: { connect: { id: k2SeqModule.id } },
-        teacher: { connect: { id: teacher.id } },
-      },
-    });
+  // --- Cleanup removed modules ---
+  // Delete "Boost’s Lost Steps" (k2-stem-sequencing) if it exists in DB
+  try {
+    const oldSeqModule = await prisma.module.findUnique({ where: { slug: "k2-stem-sequencing" } });
+    if (oldSeqModule) {
+      // Delete progress, activities, lessons, units, then module
+      await prisma.progress.deleteMany({ where: { moduleSlug: "k2-stem-rhyme-ride" } });
+      const oldUnits = await prisma.unit.findMany({ where: { moduleId: oldSeqModule.id } });
+      for (const u of oldUnits) {
+        const lessons = await prisma.lesson.findMany({ where: { unitId: u.id } });
+        for (const l of lessons) {
+          await prisma.activity.deleteMany({ where: { lessonId: l.id } });
+        }
+        await prisma.lesson.deleteMany({ where: { unitId: u.id } });
+      }
+      await prisma.unit.deleteMany({ where: { moduleId: oldSeqModule.id } });
+      await prisma.module.delete({ where: { slug: "k2-stem-sequencing" } });
+      console.log("Cleaned up removed module: k2-stem-sequencing");
+    }
+  } catch (e) {
+    console.warn("Cleanup k2-stem-sequencing:", e.message);
   }
-  console.log("Created unit:", k2SeqUnit.title);
-
-  let k2SeqLesson = await prisma.lesson.findFirst({
-    where: { unitId: k2SeqUnit.id, title: "Lost Steps" },
-  });
-  if (!k2SeqLesson) {
-    k2SeqLesson = await prisma.lesson.create({
-      data: {
-        title: "Lost Steps",
-        order: 1,
-        Unit: { connect: { id: k2SeqUnit.id } },
-      },
-    });
-  }
-  console.log("Created lesson:", k2SeqLesson.title);
 
   const INFO = ActivityKind ? ActivityKind.INFO : "INFO";
   const INTERACT = ActivityKind ? ActivityKind.INTERACT : "INTERACT";
 
-  const storyContent = JSON.stringify({
-    type: "story_quiz",
-    slides: [
-      {
-        id: "s1",
-        text: "Hi! I am Boost.",
-        icon: "🤖",
-        imageKey: "type_story",
-      },
-      {
-        id: "s2",
-        text: "I want to bake a cake!",
-        icon: "🎂",
-        imageKey: "mission_cake",
-      },
-      {
-        id: "s3",
-        text: "Oops… the steps are mixed up!",
-        icon: "😵‍💫",
-        imageKey: "module_sequencing",
-      },
-      {
-        id: "s4",
-        text: "A plan with steps is called an algorithm.",
-        icon: "📝",
-        imageKey: "type_quiz",
-      },
-      {
-        id: "s5",
-        text: "Let’s put the steps in the right order!",
-        icon: "✅",
-        imageKey: "type_game",
-      },
-    ],
-    questions: [
-      {
-        id: "q1",
-        prompt: "What is Boost making?",
-        choices: ["A shoe 👞", "A cake 🎂", "A car 🚗"],
-        answerIndex: 1,
-        hint: "Look at the picture with the candles! 🎂",
-      },
-      {
-        id: "q2",
-        prompt: "A plan with steps is called…",
-        choices: ["An algorithm 📜", "Magic ✨", "A nap 💤"],
-        answerIndex: 0,
-        hint: "It's a big word that starts with A... 📜",
-      },
-      {
-        id: "q3",
-        prompt: "What does debug mean?",
-        choices: ["Fix a mistake 🛠️", "Make a mess 🙃", "Eat snacks 🍪"],
-        answerIndex: 0,
-        hint: "When something is broken, we have to ___ it. 🛠️",
-      },
-    ],
-    review: {
-      keyIdea: "An algorithm is steps in order. Debug means fix mistakes.",
-      vocab: ["step", "order", "debug"],
-    },
-  });
-  const storyAct = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, kind: INFO, order: 1 },
-  });
-  if (storyAct) {
-    await prisma.activity.update({
-      where: { id: storyAct.id },
-      data: { title: "Story: Boost Bakes", content: storyContent },
-    });
-  } else {
-    await prisma.activity.create({
-      data: {
-        title: "Story: Boost Bakes",
-        kind: INFO,
-        order: 1,
-        content: storyContent,
-        Lesson: { connect: { id: k2SeqLesson.id } },
-      },
-    });
-  }
-
-  const gameContent = JSON.stringify({
-    type: "minigame",
-    gameKey: "sequence_drag_drop",
-    levels: [
-      {
-        id: "k",
-        cards: [
-          { id: "pour", text: "Pour", imageKey: "step_pour" },
-          { id: "bake", text: "Bake", imageKey: "step_bake" },
-          { id: "frost", text: "Frost", imageKey: "step_frost" },
-          { id: "eat", text: "Eat", imageKey: "step_eat" },
-        ],
-        answer: ["Pour", "Bake", "Frost", "Eat"],
-      },
-      {
-        id: "g1",
-        cards: [
-          { id: "water", text: "Turn on the water 🚰", imageKey: "step_water_on" },
-          { id: "soap", text: "Put soap on hands 🧼", imageKey: "step_soap" },
-          { id: "scrub", text: "Scrub hands together 🤲", imageKey: "step_wash" },
-          { id: "rinse", text: "Rinse off the soap 💦", imageKey: "step_rinse" },
-          { id: "dry", text: "Dry with a towel 🧻", imageKey: "step_dry" },
-        ],
-        answer: ["Turn on the water 🚰", "Put soap on hands 🧼", "Scrub hands together 🤲", "Rinse off the soap 💦", "Dry with a towel 🧻"],
-      },
-      {
-        id: "g2",
-        cards: [
-          { text: "Wake up ⏰", icon: "⏰" },
-          { text: "Get dressed 👕", icon: "👕" },
-          { text: "Eat breakfast 🥣", icon: "🥣" },
-          { text: "Brush your teeth 🪥", icon: "🪥" },
-          { text: "Go to school 🏫", icon: "🏫" },
-        ],
-        answer: ["Wake up ⏰", "Get dressed 👕", "Eat breakfast 🥣", "Brush your teeth 🪥", "Go to school 🏫"],
-      },
-    ],
-  });
-  const gameAct = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, kind: INTERACT, order: 2 },
-  });
-  if (gameAct) {
-    await prisma.activity.update({
-      where: { id: gameAct.id },
-      data: { title: "Game: Fix the Order", content: gameContent },
-    });
-  } else {
-    await prisma.activity.create({
-      data: {
-        title: "Game: Fix the Order",
-        kind: INTERACT,
-        order: 2,
-        content: gameContent,
-        Lesson: { connect: { id: k2SeqLesson.id } },
-      },
-    });
-  }
-  console.log("Seeded module: k2-stem-sequencing");
-
-  // --- STEM-1 (K–2) Game #2: Rhyme & Ride ---
+  // --- STEM-1 (K–2) Module 1: Rhyme & Ride ---
   const k2RhymeModule = await prisma.module.upsert({
     where: { slug: "k2-stem-rhyme-ride" },
     update: {
-      title: "STEM-1: Module 2 — Rhyme & Ride",
-      description: "Shoot the rhyme fast! 🎵🚲",
+      title: "Module 1 — Rhyme & Ride",
+      description: "Find the rhyming word! 🎵🚲",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-rhyme-ride",
-      title: "STEM-1: Module 2 — Rhyme & Ride",
-      description: "Shoot the rhyme fast! 🎵🚲",
+      title: "Module 1 — Rhyme & Ride",
+      description: "Find the rhyming word! 🎵🚲",
       level: "K-2",
       published: true,
     },
@@ -434,25 +268,25 @@ async function main() {
     slides: [
       {
         id: "s1",
-        text: "Hey there! I'm Rhymo the Rider!",
+        text: "Hi! I am Rhymo! 🚲",
         icon: "🚲",
         imageKey: "type_story",
       },
       {
         id: "s2",
-        text: "Words that sound alike at the end are called rhymes.",
+        text: "Cat and hat sound the same!",
         icon: "🎵",
         imageKey: "type_story",
       },
       {
         id: "s3",
-        text: "Cat and hat rhyme because they both end in -at!",
+        text: "They rhyme! -at, -at! 🐱🎩",
         icon: "🐱",
         imageKey: "type_quiz",
       },
       {
         id: "s4",
-        text: "Can you find the word that rhymes? Let's ride and find out!",
+        text: "Tap the rhyme! Let's go! 🏁",
         icon: "🏁",
         imageKey: "type_game",
       },
@@ -460,30 +294,29 @@ async function main() {
     questions: [
       {
         id: "q1",
-        prompt: "Which word rhymes with cat?",
+        prompt: "What rhymes with cat?",
         choices: ["Hat 🎩", "Dog 🐶", "Cup ☕"],
         answerIndex: 0,
-        hint: "It sounds like cat but goes on your head! 🎩",
+        hint: "Cat… hat! They end the same! 🎩",
       },
       {
         id: "q2",
-        prompt: "Which word rhymes with sun?",
-        choices: ["Moon 🌙", "Run 🏃", "Star ⭐"],
-        answerIndex: 1,
-        hint: "You do this with your legs really fast! 🏃",
+        prompt: "What rhymes with sun?",
+        choices: ["Run 🏃", "Moon 🌙", "Star ⭐"],
+        answerIndex: 0,
+        hint: "Sun… run! They end the same! 🏃",
       },
       {
         id: "q3",
-        prompt: "Words that rhyme sound the same at the…",
-        choices: ["Beginning 🔤", "End 🔚", "Middle 🔵"],
-        answerIndex: 1,
-        hint: "Cat and hat both END with -at! 🔚",
+        prompt: "Rhymes sound the same at the…",
+        choices: ["End 🔚", "Start 🔤", "Middle 🔵"],
+        answerIndex: 0,
+        hint: "Cat and hat end the same! 🔚",
       },
     ],
     review: {
-      keyIdea:
-        "Rhyming words sound the same at the end, like cat/hat and sun/run.",
-      vocab: ["rhyme", "sound", "end"],
+      keyIdea: "Words that rhyme sound the same at the end!",
+      vocab: ["rhyme", "end"],
     },
   });
   const rhymeStoryAct = await prisma.activity.findFirst({
@@ -508,15 +341,22 @@ async function main() {
 
   const rhymeGameContent = JSON.stringify({
     gameKey: "rhyme_ride_unity",
-    settings: { lives: 3, roundTimeS: 7, speed: 3.0, speedRamp: 0.18, maxSpeed: 6.0 },
+    settings: {
+      lives: 5,
+      roundTimeS: 15,
+      speed: 1.8,
+      speedRamp: 0.08,
+      maxSpeed: 3.5,
+      kidModeWrongNoLife: true,
+    },
     rounds: [
       { promptWord: "cat", correctWord: "hat", distractors: ["dog", "sun"] },
-      { promptWord: "sun", correctWord: "run", distractors: ["moon", "star"] },
-      { promptWord: "bed", correctWord: "red", distractors: ["blue", "top"] },
-      { promptWord: "bug", correctWord: "hug", distractors: ["pin", "cup"] },
-      { promptWord: "map", correctWord: "cap", distractors: ["tree", "car"] },
-      { promptWord: "top", correctWord: "mop", distractors: ["bed", "sun"] },
-      { promptWord: "boat", correctWord: "coat", distractors: ["cat", "bug"] },
+      { promptWord: "sun", correctWord: "run", distractors: ["cup", "big"] },
+      { promptWord: "bed", correctWord: "red", distractors: ["top", "sit"] },
+      { promptWord: "bug", correctWord: "hug", distractors: ["pen", "lip"] },
+      { promptWord: "man", correctWord: "can", distractors: ["pig", "log"] },
+      { promptWord: "hop", correctWord: "mop", distractors: ["bed", "fun"] },
+      { promptWord: "fox", correctWord: "box", distractors: ["cat", "pen"] },
     ],
   });
   const rhymeGameAct = await prisma.activity.findFirst({
@@ -540,18 +380,18 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-rhyme-ride");
 
-  // --- STEM-1 (K–2) Game #3: Bounce & Buds ---
+  // --- STEM-1 (K–2) Module 2: Bounce & Buds ---
   const k2BounceModule = await prisma.module.upsert({
     where: { slug: "k2-stem-bounce-buds" },
     update: {
-      title: "STEM-1: Module 3 — Bounce & Buds",
+      title: "Module 2 — Bounce & Buds",
       description: "Bounce through the right gate to answer clues!",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-bounce-buds",
-      title: "STEM-1: Module 3 — Bounce & Buds",
+      title: "Module 2 — Bounce & Buds",
       description: "Bounce through the right gate to answer clues!",
       level: "K-2",
       published: true,
@@ -681,18 +521,18 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-bounce-buds");
 
-  // --- STEM-1 (K–2) Game #4: Gotcha Gears ---
+  // --- STEM-1 (K–2) Module 3: Gotcha Gears ---
   const k2GotchaModule = await prisma.module.upsert({
     where: { slug: "k2-stem-gotcha-gears" },
     update: {
-      title: "STEM-1: Module 4 — Gotcha Gears",
+      title: "Module 3 — Gotcha Gears",
       description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-gotcha-gears",
-      title: "STEM-1: Module 4 — Gotcha Gears",
+      title: "Module 3 — Gotcha Gears",
       description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
       level: "K-2",
       published: true,
@@ -811,69 +651,21 @@ async function main() {
   }
   console.log("Seeded module: k2-stem-gotcha-gears");
 
-  console.log("Seeding units...");
-  let unit = await prisma.unit.findFirst({
-    where: { moduleId: module.id, title: "Unit 1: The Basics" },
-  });
-  if (!unit) {
-    unit = await prisma.unit.create({
-      data: {
-        title: "Unit 1: The Basics",
-        order: 1,
-        Module: { connect: { id: module.id } },
-        teacher: { connect: { id: teacher.id } },
-      },
-    });
+  // --- Cleanup old "Robot Parts" / "Build a Bot" activities from Quantum Explorers ---
+  try {
+    const oldUnit = await prisma.unit.findFirst({ where: { moduleId: module.id, title: "Unit 1: The Basics" } });
+    if (oldUnit) {
+      const oldLesson = await prisma.lesson.findFirst({ where: { unitId: oldUnit.id, title: "Lesson 1: What is a Robot?" } });
+      if (oldLesson) {
+        await prisma.activity.deleteMany({ where: { lessonId: oldLesson.id } });
+        await prisma.lesson.delete({ where: { id: oldLesson.id } });
+      }
+      await prisma.unit.delete({ where: { id: oldUnit.id } });
+      console.log("Cleaned up Robot Parts / Build a Bot activities");
+    }
+  } catch (e) {
+    console.warn("Cleanup Robot Parts:", e.message);
   }
-  console.log("Created unit:", unit.title);
-
-  console.log("Seeding lessons...");
-  let lesson = await prisma.lesson.findFirst({
-    where: { unitId: unit.id, title: "Lesson 1: What is a Robot?" },
-  });
-  if (!lesson) {
-    lesson = await prisma.lesson.create({
-      data: {
-        title: "Lesson 1: What is a Robot?",
-        order: 1,
-        Unit: { connect: { id: unit.id } },
-      },
-    });
-  }
-  console.log("Created lesson:", lesson.title);
-
-  console.log("Seeding activities...");
-
-  const robotParts = await prisma.activity.findFirst({
-    where: { lessonId: lesson.id, title: "Robot Parts" },
-  });
-  if (!robotParts) {
-    await prisma.activity.create({
-      data: {
-        title: "Robot Parts",
-        kind: INFO,
-        order: 1,
-        content: "Robots have sensors and motors.",
-        Lesson: { connect: { id: lesson.id } },
-      },
-    });
-  }
-
-  const buildBot = await prisma.activity.findFirst({
-    where: { lessonId: lesson.id, title: "Build a Bot" },
-  });
-  if (!buildBot) {
-    await prisma.activity.create({
-      data: {
-        title: "Build a Bot",
-        kind: INTERACT,
-        order: 2,
-        content: "Drag the parts to build a robot.",
-        Lesson: { connect: { id: lesson.id } },
-      },
-    });
-  }
-  console.log("Seeded activities.");
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Seed Resources (worksheets, handouts, guides)
@@ -885,87 +677,7 @@ async function main() {
     console.log("Seeding resources...");
 
     const resources = [
-      // ── k2-stem-sequencing ─────────────────────────────────
-      {
-        title: "Sequencing Pre-Activity Worksheet",
-        description: "Warm-up activity for Boost's Lost Steps — vocabulary and predictions",
-        type: "WORKSHEET",
-        moduleSlug: "k2-stem-sequencing",
-        category: "PRE_ACTIVITY",
-        printable: true,
-        contentHtml: `
-<h2>Before We Begin: Boost's Lost Steps</h2>
-<h3>Vocabulary Match</h3>
-<p>Draw a line from each word to its meaning:</p>
-<table>
-  <tr><td><strong>Sequence</strong></td><td>Finding and fixing a mistake</td></tr>
-  <tr><td><strong>Algorithm</strong></td><td>The order things happen in</td></tr>
-  <tr><td><strong>Debug</strong></td><td>Step-by-step instructions</td></tr>
-</table>
-
-<h3>Think About It</h3>
-<p>What do you do every morning to get ready for school? Draw or write 3 steps in order:</p>
-<p><strong>Step 1:</strong></p>
-<div class="line"></div>
-<p><strong>Step 2:</strong></p>
-<div class="line"></div>
-<p><strong>Step 3:</strong></p>
-<div class="line"></div>
-
-<h3>Predict!</h3>
-<p>What do you think happens when a robot's steps are in the wrong order? Draw or write your prediction:</p>
-<div class="worksheet-area"></div>`,
-      },
-      {
-        title: "Sequencing Post-Activity Reflection",
-        description: "Reflection sheet after completing Boost's Lost Steps module",
-        type: "WORKSHEET",
-        moduleSlug: "k2-stem-sequencing",
-        category: "POST_ACTIVITY",
-        printable: true,
-        contentHtml: `
-<h2>After the Adventure: Boost's Lost Steps</h2>
-<h3>What I Learned</h3>
-<p>Draw or write one thing you learned about sequences:</p>
-<div class="worksheet-area"></div>
-
-<h3>Fix the Sequence!</h3>
-<p>These steps are mixed up. Write the numbers 1, 2, 3 to put them in the right order:</p>
-<table>
-  <tr><td>___ Eat the cereal</td></tr>
-  <tr><td>___ Pour milk in the bowl</td></tr>
-  <tr><td>___ Get a bowl and cereal box</td></tr>
-</table>
-
-<h3>Connect to Real Life</h3>
-<p>Where do you use sequences at home or school? Draw or write an example:</p>
-<div class="worksheet-area"></div>`,
-      },
-      {
-        title: "Sequencing Assessment",
-        description: "Quick check-for-understanding quiz on sequencing concepts",
-        type: "WORKSHEET",
-        moduleSlug: "k2-stem-sequencing",
-        category: "ASSESSMENT",
-        printable: true,
-        contentHtml: `
-<h2>Check What You Know: Sequences</h2>
-<p><strong>1.</strong> What is a sequence?</p>
-<p>a) A type of robot &nbsp;&nbsp; b) The order things happen in &nbsp;&nbsp; c) A picture</p>
-<div class="line"></div>
-<p><strong>2.</strong> What does "debug" mean?</p>
-<p>a) Find and fix a mistake &nbsp;&nbsp; b) Make something new &nbsp;&nbsp; c) Draw a picture</p>
-<div class="line"></div>
-<p><strong>3.</strong> Draw 3 steps for brushing your teeth in the right order:</p>
-<table>
-  <tr><td style="text-align:center; height:80px;">Step 1</td><td style="text-align:center;">Step 2</td><td style="text-align:center;">Step 3</td></tr>
-  <tr><td style="height:100px;"></td><td></td><td></td></tr>
-</table>
-<p><strong>4.</strong> Why is it important for steps to be in order? Write or draw your answer:</p>
-<div class="worksheet-area"></div>`,
-      },
-
-      // ── k2-stem-rhyme-ride ─────────────────────────────────
+      // ── k2-stem-rhyme-ride (Module 1) ─────────────────────────────────
       {
         title: "Rhyme & Ride Pre-Activity Worksheet",
         description: "Warm-up phonics activity before Rhyme & Ride module",
@@ -1304,7 +1016,7 @@ async function main() {
         title: "Code.org: K-2 Introduction to Sequences",
         description: "Free online sequencing activities from Code.org designed for K-2 students",
         type: "LINK",
-        moduleSlug: "k2-stem-sequencing",
+        moduleSlug: "k2-stem-rhyme-ride",
         category: "SUPPLEMENTAL",
         printable: false,
         contentUrl: "https://code.org/educate/curriculum/csf",
@@ -1372,7 +1084,7 @@ async function main() {
             "Complete one module as a student to preview the experience",
             "Share join code with 2-3 students before next session",
           ],
-          relatedModuleSlugs: ["k2-stem-sequencing"],
+          relatedModuleSlugs: ["k2-stem-rhyme-ride"],
           isTemplate: true,
         },
         {
@@ -1388,7 +1100,7 @@ async function main() {
             "Check your dashboard after students complete the activity",
             "Write a brief reflection on what worked and what to adjust",
           ],
-          relatedModuleSlugs: ["k2-stem-sequencing", "k2-stem-rhyme-ride"],
+          relatedModuleSlugs: ["k2-stem-rhyme-ride", "k2-stem-bounce-buds"],
           isTemplate: true,
         },
         {
@@ -1420,7 +1132,7 @@ async function main() {
             "Prepare a 3-minute summary of your experience for the showcase",
             "Practice your presentation with a colleague",
           ],
-          relatedModuleSlugs: ["k2-stem-sequencing", "k2-stem-rhyme-ride", "k2-stem-bounce-buds", "k2-stem-gotcha-gears"],
+          relatedModuleSlugs: ["k2-stem-rhyme-ride", "k2-stem-bounce-buds", "k2-stem-gotcha-gears"],
           isTemplate: true,
         },
       ];
@@ -1569,17 +1281,14 @@ async function main() {
     { name: "Luna",     icon: "🐞", lang: "en" },
   ];
 
-  // Fetch activities once for progress assignment
-  const seqModule = await prisma.module.findUnique({
-    where: { slug: "k2-stem-sequencing" },
-  });
+  // Fetch activities once for progress assignment (from Rhyme & Ride — Module 1)
   let allActivities = [];
-  if (seqModule) {
+  if (k2RhymeModule) {
     allActivities = await prisma.activity.findMany({
       where: {
         Lesson: {
           Unit: {
-            moduleId: seqModule.id,
+            moduleId: k2RhymeModule.id,
           },
         },
       },
@@ -1675,7 +1384,7 @@ async function main() {
           update: {},
           create: {
             studentId: student.id,
-            moduleSlug: "k2-stem-sequencing",
+            moduleSlug: "k2-stem-rhyme-ride",
             lessonId: act.Lesson?.id || null,
             activityId: act.id,
             status: "COMPLETED",
@@ -1751,7 +1460,7 @@ async function main() {
           update: {},
           create: {
             studentId: demoStudent.id,
-            moduleSlug: "k2-stem-sequencing",
+            moduleSlug: "k2-stem-rhyme-ride",
             lessonId: act.Lesson?.id || null,
             activityId: act.id,
             status: "COMPLETED",

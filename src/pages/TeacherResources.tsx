@@ -38,10 +38,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const MODULE_LABELS: Record<string, string> = {
-  "k2-stem-sequencing": "Boost's Lost Steps",
-  "k2-stem-rhyme-ride": "Rhyme & Ride",
-  "k2-stem-bounce-buds": "Bounce & Buds",
-  "k2-stem-gotcha-gears": "Gotcha Gears",
+  "k2-stem-rhyme-ride": "Module 1 — Rhyme & Ride",
+  "k2-stem-bounce-buds": "Module 2 — Bounce & Buds",
+  "k2-stem-gotcha-gears": "Module 3 — Gotcha Gears",
 };
 
 const TYPE_COLORS: Record<string, string> = {

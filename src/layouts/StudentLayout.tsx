@@ -30,12 +30,14 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <Button
-            variant="ghost"
-            size="icon"
+            variant="outline"
+            size="sm"
             onClick={logout}
-            aria-label="Log out"
+            className="text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 gap-1.5"
+            aria-label={t("common.logOut")}
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs">{t("common.logOut")}</span>
           </Button>
         </div>
       </header>

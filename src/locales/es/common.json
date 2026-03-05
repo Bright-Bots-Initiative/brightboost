@@ -223,7 +223,8 @@
     "oops": "¡Vaya!",
     "reset": "Reiniciar",
     "done": "Listo",
-    "replay": "Repetir"
+    "replay": "Repetir",
+    "logOut": "Cerrar Sesión"
   },
   "teacher": {
     "nav": {

@@ -143,12 +143,11 @@ export default function ShowcaseMode() {
       >
         Lo Que Aprendimos
       </motion.p>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
         {[
-          { emoji: "🧮", label: "Sequencing / Secuencias" },
-          { emoji: "🔬", label: "Science / Ciencia" },
-          { emoji: "🎮", label: "Games / Juegos" },
-          { emoji: "⚛️", label: "Quantum / Cuántica" },
+          { emoji: "🎵", label: "Rhyme & Ride / Rimas" },
+          { emoji: "🌿", label: "Bounce & Buds / Ciencia" },
+          { emoji: "⚙️", label: "Gotcha Gears / Estrategia" },
         ].map((item, i) => (
           <motion.div
             key={item.label}

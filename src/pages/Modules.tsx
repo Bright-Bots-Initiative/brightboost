@@ -12,7 +12,6 @@ import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
-  "k2-stem-sequencing": "module_sequencing",
   "k2-stem-rhyme-ride": "type_game",
   "k2-stem-bounce-buds": "type_game",
   "k2-stem-gotcha-gears": "type_game",
@@ -20,11 +19,10 @@ const MODULE_THUMBNAILS: Record<string, ImageKey> = {
 };
 
 const MODULE_ORDER: Record<string, number> = {
-  "k2-stem-sequencing": 1,
-  "k2-stem-rhyme-ride": 2,
-  "k2-stem-bounce-buds": 3,
-  "k2-stem-gotcha-gears": 4,
-  "stem-1-intro": 5,
+  "k2-stem-rhyme-ride": 1,
+  "k2-stem-bounce-buds": 2,
+  "k2-stem-gotcha-gears": 3,
+  "stem-1-intro": 4,
 };
 
 const COMING_SOON_SLUGS = new Set(["stem-1-intro"]);
