@@ -38,6 +38,7 @@ import TermsOfService from "./pages/TermsOfService";
 import TeacherModulePrep from "./pages/TeacherModulePrep";
 import TeacherResources from "./pages/TeacherResources";
 import TeacherPDHub from "./pages/TeacherPDHub";
+import CommunityImpactDashboard from "./pages/CommunityImpactDashboard";
 import StudentClassLogin from "./pages/StudentClassLogin";
 
 // Import styles
@@ -93,6 +94,7 @@ function App() {
                 <Route path="resources" element={<TeacherResources />} />
                 <Route path="pd" element={<TeacherPDHub />} />
                 <Route path="settings" element={<TeacherSettings />} />
+                <Route path="impact" element={<CommunityImpactDashboard />} />
               </Route>
 
               {/* Protected Student Routes (Nested) */}
