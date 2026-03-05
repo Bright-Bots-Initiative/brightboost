@@ -274,12 +274,12 @@ export default function StudentDashboard() {
         try {
           const courses = await authApi.get("/student/courses");
           if (!cancelled && Array.isArray(courses)) {
-            setEnrolledCourses(courses.map((c: any) => ({ id: c.id, name: c.name })));
+            setEnrolledCourses(courses.map((c: any) => ({ id: c.courseId, name: c.courseName })));
             // Build set of already-completed pulse keys from localStorage
             const doneKeys = new Set<string>();
             for (const c of courses) {
-              if (localStorage.getItem(`bb_pulse_pre_${c.id}`)) doneKeys.add(`pre_${c.id}`);
-              if (localStorage.getItem(`bb_pulse_post_${c.id}`)) doneKeys.add(`post_${c.id}`);
+              if (localStorage.getItem(`bb_pulse_pre_${c.courseId}`)) doneKeys.add(`pre_${c.courseId}`);
+              if (localStorage.getItem(`bb_pulse_post_${c.courseId}`)) doneKeys.add(`post_${c.courseId}`);
             }
             setPulseDoneKeys(doneKeys);
           }
