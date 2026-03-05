@@ -81,7 +81,7 @@ export default function PulseSurveyDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = confidence !== "";
+  const canSubmit = confidence !== "" && enjoyment !== "" && willContinue !== "" && !!courseId;
 
   const reset = () => {
     setConfidence("");
@@ -94,27 +94,32 @@ export default function PulseSurveyDialog({
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    if (!courseId || !kind) {
+      setError("Missing course information. Please close and try again.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const token = localStorage.getItem("bb_access_token");
       const { join: joinUrl, API_BASE: base } = await import("@/services/api");
+      const payload = {
+        courseId,
+        kind,
+        score: Number(confidence),
+        answers: {
+          enjoyment: enjoyment ? Number(enjoyment) : undefined,
+          continue: willContinue ? Number(willContinue) : undefined,
+          note: note.trim() || undefined,
+        },
+      };
       const res = await fetch(joinUrl(base, "/pulse"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          courseId,
-          kind,
-          score: Number(confidence),
-          answers: {
-            enjoyment: enjoyment ? Number(enjoyment) : undefined,
-            continue: willContinue ? Number(willContinue) : undefined,
-            note: note.trim() || undefined,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

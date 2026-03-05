@@ -27,7 +27,9 @@ router.post(
   async (req: Request, res: Response) => {
     const parsed = submitPulseSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message });
+      const issue = parsed.error.issues[0];
+      const field = issue.path.join(".") || "body";
+      return res.status(400).json({ error: `${field}: ${issue.message}` });
     }
 
     // Verify student is enrolled in the course

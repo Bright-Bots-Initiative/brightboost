@@ -1,5 +1,5 @@
 // src/pages/ActivityPlayer.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,22 @@ function safeJsonParse(raw: string): any {
   } catch {
     return { type: "text", text: raw };
   }
+}
+
+/** Fisher-Yates shuffle — returns a new shuffled array of indices [0..n-1] */
+function shuffleIndices(n: number, seed: string): number[] {
+  const indices = Array.from({ length: n }, (_, i) => i);
+  // Simple deterministic-ish seed from question id so order is stable per render
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (h * 31 + seed.charCodeAt(i)) | 0;
+  }
+  for (let i = indices.length - 1; i > 0; i--) {
+    h = (h * 1103515245 + 12345) | 0;
+    const j = ((h >>> 0) % (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices;
 }
 
 export default function ActivityPlayer() {
@@ -350,6 +366,17 @@ export default function ActivityPlayer() {
       ? content.questions
       : [];
 
+    // Build a stable shuffled-index map per question so choices appear in random order
+    // but stay consistent across re-renders. Key = question id, value = shuffled indices.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const shuffleMap: Record<string, number[]> = useMemo(() => {
+      const map: Record<string, number[]> = {};
+      for (const q of questions) {
+        map[q.id] = shuffleIndices(q.choices.length, q.id);
+      }
+      return map;
+    }, [questions]);
+
     if (content?.type !== "story_quiz" || slides.length === 0) {
       // fallback display
       const text = resolveText(
@@ -495,28 +522,31 @@ export default function ActivityPlayer() {
                     role="group"
                     aria-labelledby={promptId}
                   >
-                    {resolveChoiceList(t, q.choices).map((c, idx) => {
-                      const selected = answers[q.id] === idx;
-                      return (
-                        <Button
-                          key={idx}
-                          variant={selected ? "default" : "outline"}
-                          aria-pressed={selected}
-                          className={`justify-start ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
-                          onClick={() => {
-                            setAnswers((prev) => ({ ...prev, [q.id]: idx }));
-                            // Clear incorrect status for this specific question when they change answer
-                            if (isWrong) {
-                              setIncorrectIds((prev) =>
-                                prev.filter((id) => id !== q.id),
-                              );
-                            }
-                          }}
-                        >
-                          {c}
-                        </Button>
-                      );
-                    })}
+                    {(() => {
+                      const resolved = resolveChoiceList(t, q.choices);
+                      const order = shuffleMap[q.id] ?? q.choices.map((_, i) => i);
+                      return order.map((origIdx) => {
+                        const selected = answers[q.id] === origIdx;
+                        return (
+                          <Button
+                            key={origIdx}
+                            variant={selected ? "default" : "outline"}
+                            aria-pressed={selected}
+                            className={`justify-start ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
+                            onClick={() => {
+                              setAnswers((prev) => ({ ...prev, [q.id]: origIdx }));
+                              if (isWrong) {
+                                setIncorrectIds((prev) =>
+                                  prev.filter((id) => id !== q.id),
+                                );
+                              }
+                            }}
+                          >
+                            {resolved[origIdx]}
+                          </Button>
+                        );
+                      });
+                    })()}
                   </div>
                   {isWrong && q.hint && (
                     <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded border border-blue-100 animate-in fade-in">
