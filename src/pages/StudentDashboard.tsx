@@ -718,81 +718,11 @@ export default function StudentDashboard() {
         />
       )}
 
-      {/* Continue Learning Section */}
+      {/* Keep Playing — merged lessons + activities in one sequential list */}
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-          {t("dashboard.yourLessons")}
-        </h2>
-        <div
-          className="bg-white rounded-lg border shadow-sm group cursor-pointer hover:shadow-lg transition-all duration-300 border-l-8 border-l-blue-500 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          role="button"
-          tabIndex={0}
-          aria-label={
-            nextOne
-              ? t("dashboard.continueLearningAria", {
-                  defaultValue: "Continue Learning: {{module}} - {{activity}}",
-                  module: nextOne.moduleTitle,
-                  activity: nextOne.activityTitle,
-                })
-              : t("dashboard.browseModulesAria", "Browse all modules")
-          }
-          onClick={() => {
-            if (nextOne) goToNext();
-            else navigate("/student/modules");
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              if (nextOne) goToNext();
-              else navigate("/student/modules");
-            }
-          }}
-        >
-          <div className="bg-gradient-to-r from-blue-50 to-white p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors">
-                  {loading
-                    ? t("dashboard.loading")
-                    : nextOne
-                      ? t("dashboard.continueLearning")
-                      : t("dashboard.pickAModule")}
-                </h3>
-                <p className="text-slate-600">
-                  {nextOne
-                    ? `${nextOne.moduleTitle} • ${nextOne.unitTitle} • ${nextOne.lessonTitle}`
-                    : modules.length > 0
-                      ? t("dashboard.chooseModulePrompt")
-                      : t("dashboard.noModules")}
-                </p>
-                {nextOne ? (
-                  <p className="text-slate-500 text-sm mt-1">
-                    {t("dashboard.upNext")}{" "}
-                    {nextOne.kind === "INFO" ? "📖" : "🎮"}{" "}
-                    {nextOne.activityTitle}
-                  </p>
-                ) : null}
-              </div>
-              <div
-                className={cn(
-                  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-                  "bg-blue-600 hover:bg-blue-700 text-white shadow-md h-10 px-4 py-2",
-                )}
-                aria-hidden="true"
-              >
-                {nextOne
-                  ? t("dashboard.startActivity")
-                  : t("dashboard.browseModules")}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Your Activities Section - shows activities AFTER nextOne */}
-      <section>
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">
-          {t("dashboard.yourActivities")}
+          <Rocket className="w-6 h-6 text-purple-500" />
+          Keep Playing
         </h2>
         {loading ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
@@ -800,81 +730,68 @@ export default function StudentDashboard() {
               {t("dashboard.loadingActivities")}
             </p>
           </div>
-        ) : upNext.length === 0 ? (
+        ) : !nextOne && upNext.length === 0 ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
-              {nextOne
-                ? t("dashboard.finishCurrentToUnlockMore", {
-                    defaultValue:
-                      "Finish your current activity to unlock what's next!",
-                  })
-                : t("dashboard.caughtUp")}
+              {t("dashboard.caughtUp")}
             </p>
             <div className="mt-4">
               <Button
-                variant={nextOne ? "default" : "outline"}
-                onClick={() => {
-                  if (nextOne) goToNext();
-                  else navigate("/student/modules");
-                }}
+                variant="outline"
+                onClick={() => navigate("/student/modules")}
               >
-                {nextOne
-                  ? t("dashboard.startActivity")
-                  : t("dashboard.goToModules")}
+                {t("dashboard.goToModules")}
               </Button>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {upNext.map((a) => {
-              const tokenKey = a.kind === "INFO" ? "story" : "game";
-              const token = ACTIVITY_VISUAL_TOKENS[tokenKey];
-              const Icon = () => {
-                if (token.emoji)
-                  return <span className="text-lg">{token.emoji}</span>;
-                switch (token.iconName) {
-                  case "BookOpen":
-                    return <BookOpen className="w-5 h-5" />;
-                  case "Star":
-                    return <Star className="w-5 h-5" />;
-                  case "Zap":
-                    return <Zap className="w-5 h-5" />;
-                  default:
-                    return <Star className="w-5 h-5" />;
-                }
-              };
+          <div className="space-y-3">
+            {/* Merged list: nextOne first (highlighted), then upNext items */}
+            {[...(nextOne ? [nextOne] : []), ...upNext].map((a, idx) => {
+              const isUpNext = idx === 0 && !!nextOne;
+              const icon = a.kind === "INFO" ? "📖" : "🎮";
+              const label = a.kind === "INFO" ? "Story" : "Game";
 
               return (
-                <Card key={a.activityId} className="border-slate-200 shadow-sm">
-                  <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${token.bubbleClass}`}
-                    >
-                      <Icon />
+                <div
+                  key={a.activityId}
+                  className={cn(
+                    "flex items-center gap-4 rounded-xl border p-4 transition-all",
+                    isUpNext
+                      ? "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-300 shadow-md"
+                      : "bg-white border-slate-200 shadow-sm hover:shadow-md",
+                  )}
+                >
+                  <span className="text-2xl" aria-hidden>{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-brightboost-navy truncate">
+                        {a.activityTitle}
+                      </span>
+                      {isUpNext && (
+                        <span className="flex-shrink-0 text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                          Up Next!
+                        </span>
+                      )}
                     </div>
-                    <CardTitle className="text-base text-brightboost-navy leading-tight">
-                      {a.activityTitle}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="text-sm text-slate-600 pl-[3.25rem]">
-                      {a.unitTitle} • {a.lessonTitle}
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        navigate(
-                          `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
-                        )
-                      }
-                      aria-label={t("dashboard.playActivity", {
-                        activity: a.activityTitle,
-                      })}
-                    >
-                      {t("dashboard.play")}
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <p className="text-xs text-slate-500 truncate">
+                      {a.moduleTitle} · {label}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className={isUpNext ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    variant={isUpNext ? "default" : "outline"}
+                    onClick={() =>
+                      navigate(
+                        `/student/modules/${a.moduleSlug}/lessons/${a.lessonId}/activities/${a.activityId}`,
+                      )
+                    }
+                  >
+                    {isUpNext ? "Play" : "Start"}
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
               );
             })}
           </div>
