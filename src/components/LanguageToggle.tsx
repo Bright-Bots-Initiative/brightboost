@@ -5,16 +5,9 @@ const LANGUAGE_KEY = "preferredLanguage";
 
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
-  // Using a tick state to force re-render when language changes
   const [, setTick] = useState(0);
 
-  // Handle potential whitespace in env var
-  const envVal = import.meta.env.VITE_ENABLE_I18N;
-  const ENABLE_I18N = typeof envVal === "string" && envVal.trim() === "true";
-
   useEffect(() => {
-    if (!ENABLE_I18N) return;
-
     const handleLanguageChanged = () => {
       setTick((t) => t + 1);
     };
@@ -24,15 +17,12 @@ const LanguageToggle = () => {
     return () => {
       i18n.off("languageChanged", handleLanguageChanged);
     };
-  }, [i18n, ENABLE_I18N]);
+  }, [i18n]);
 
   const toggleLanguage = () => {
-    if (!ENABLE_I18N) return;
-
     const currentLang = i18n.resolvedLanguage || i18n.language;
     const newLanguage = currentLang === "en" ? "es" : "en";
 
-    // Attempt to change language
     i18n
       .changeLanguage(newLanguage)
       .then(() => {
@@ -42,10 +32,6 @@ const LanguageToggle = () => {
         console.warn(`Failed to change language to ${newLanguage}`, err);
       });
   };
-
-  if (!ENABLE_I18N) {
-    return null;
-  }
 
   const currentLang = i18n.resolvedLanguage || i18n.language;
 
