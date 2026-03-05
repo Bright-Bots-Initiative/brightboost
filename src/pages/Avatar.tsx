@@ -1,332 +1,260 @@
-// src/pages/Avatar.tsx
+// src/pages/Avatar.tsx — Kid-friendly "My Star" page with superpowers
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useApi } from "../services/api";
 import { api } from "../services/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import AvatarPicker from "@/components/AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
-import {
-  ALL_STEM_SETS,
-  TOTAL_SETS,
-  GAMES_PER_SET,
-  SET_LABELS,
-  countCompletedSets,
-  countCompletedInSet,
-} from "../constants/stemSets";
-import { normalizeAvatarUrl } from "@/lib/avatarDefaults";
+import { cn } from "@/lib/utils";
 
-// Helper to get display name for archetype
-function getArchetypeDisplay(avatar: any): string {
-  if (!avatar) return "Unknown";
-  if (avatar.stage === "GENERAL" || !avatar.archetype) {
-    return "Explorer";
-  }
-  return avatar.archetype;
-}
+type Stats = {
+  heartPower: number;
+  brainJuice: number;
+  lightningFast: number;
+  superFocus: number;
+  starPower: number;
+  powerLevel: number;
+  stage: string;
+  specialtyProgress: {
+    set1: { current: number; target: number; complete: boolean };
+    set2: { current: number; target: number; complete: boolean };
+    set3: { current: number; target: number; complete: boolean };
+  };
+};
+
+const SUPERPOWERS = [
+  { key: "heartPower" as const, emoji: "\uD83D\uDC96", colorBar: "bg-pink-400", colorBg: "bg-pink-50", colorText: "text-pink-700", colorBorder: "border-pink-200" },
+  { key: "brainJuice" as const, emoji: "\uD83E\uDDE0", colorBar: "bg-yellow-400", colorBg: "bg-yellow-50", colorText: "text-yellow-700", colorBorder: "border-yellow-200" },
+  { key: "lightningFast" as const, emoji: "\u26A1", colorBar: "bg-blue-400", colorBg: "bg-blue-50", colorText: "text-blue-700", colorBorder: "border-blue-200" },
+  { key: "superFocus" as const, emoji: "\uD83C\uDFAF", colorBar: "bg-green-400", colorBg: "bg-green-50", colorText: "text-green-700", colorBorder: "border-green-200" },
+  { key: "starPower" as const, emoji: "\u2B50", colorBar: "bg-purple-400", colorBg: "bg-purple-50", colorText: "text-purple-700", colorBorder: "border-purple-200" },
+];
+
+const ARENA_BOOSTS = [
+  { key: "heartPower" as const, emoji: "\uD83D\uDC96" },
+  { key: "brainJuice" as const, emoji: "\uD83E\uDDE0" },
+  { key: "lightningFast" as const, emoji: "\u26A1" },
+  { key: "superFocus" as const, emoji: "\uD83C\uDFAF" },
+  { key: "starPower" as const, emoji: "\u2B50" },
+];
+
+const SET_CONFIG = [
+  { key: "set1" as const, target: 15 },
+  { key: "set2" as const, target: 30 },
+  { key: "set3" as const, target: 50 },
+];
 
 export default function Avatar() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const authApi = useApi();
+  const [stats, setStats] = useState<Stats | null>(null);
   const [avatar, setAvatar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [specialtyUnlocked, setSpecialtyUnlocked] = useState(false);
-  const [selectingArchetype, setSelectingArchetype] = useState(false);
-  const [setProgress, setSetProgress] = useState<{ completed: number; total: number }[]>([]);
-  const [completedSetsCount, setCompletedSetsCount] = useState(0);
-  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchData = async () => {
+    let cancelled = false;
+    async function load() {
       try {
-        const [avatarData, progressList] = await Promise.all([
+        const [avatarData, statsData] = await Promise.all([
           api.getAvatar(),
-          api.getProgress().catch(() => []),
+          authApi.get("/student/stats"),
         ]);
+        if (cancelled) return;
         setAvatar(avatarData);
-
-        // Compute per-set progress and overall unlock status
-        const completedIds = progressList
-          .filter((p: any) => p.status === "COMPLETED")
-          .map((p: any) => p.activityId);
-
-        const perSet = ALL_STEM_SETS.map((setIds) => ({
-          completed: countCompletedInSet(completedIds, setIds),
-          total: GAMES_PER_SET,
-        }));
-        setSetProgress(perSet);
-
-        const setsComplete = countCompletedSets(completedIds);
-        setCompletedSetsCount(setsComplete);
-        setSpecialtyUnlocked(setsComplete >= TOTAL_SETS);
+        setStats(statsData);
       } catch (err) {
-        console.error("Failed to fetch avatar data:", err);
+        console.error("Failed to load stats:", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-    fetchData();
-  }, []);
-
-  const handleSelectArchetype = async (archetype: string) => {
-    setSelectingArchetype(true);
-    try {
-      const result = await api.selectArchetype(archetype);
-      if (result?.avatar) {
-        setAvatar(result.avatar);
-      }
-    } catch (err) {
-      console.error("Failed to select archetype:", err);
-    } finally {
-      setSelectingArchetype(false);
     }
-  };
+    load();
+    return () => { cancelled = true; };
+  }, [authApi]);
 
   if (loading) {
     return (
-      <div
-        className="p-4 space-y-6"
-        role="status"
-        aria-busy="true"
-        aria-label="Loading avatar details"
-      >
-        <span className="sr-only">Loading avatar details...</span>
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-48" />
-        </div>
-
-        <div className="mb-6 flex justify-center">
-          <Skeleton className="w-72 h-72 rounded-md" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-24" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </CardContent>
-          </Card>
+      <div className="p-4 space-y-6 max-w-2xl mx-auto">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
         </div>
       </div>
     );
   }
 
-  // Determine if avatar is GENERAL (Explorer)
-  const isGeneral = !avatar || avatar.stage === "GENERAL" || !avatar.archetype;
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const s = stats ?? {
+    heartPower: 0, brainJuice: 0, lightningFast: 0, superFocus: 0, starPower: 0,
+    powerLevel: 0, stage: "Rookie",
+    specialtyProgress: {
+      set1: { current: 0, target: 15, complete: false },
+      set2: { current: 0, target: 30, complete: false },
+      set3: { current: 0, target: 50, complete: false },
+    },
   };
 
+  const stageEmoji = s.stage === "Legend" ? "\uD83D\uDC51" : s.stage === "Champion" ? "\uD83C\uDFC6" : s.stage === "Explorer" ? "\uD83D\uDE80" : "\uD83C\uDF1F";
+  const loginIcon = (user as any)?.loginIcon;
+  const xp = avatar?.avatar?.xp ?? avatar?.xp ?? 0;
+  const level = avatar?.avatar?.level ?? avatar?.level ?? 1;
+
   return (
-    <div className="p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">My Avatar</h1>
+    <div className="p-4 space-y-6 max-w-2xl mx-auto">
+      {/* Header: name + stage */}
+      <div className="text-center space-y-1">
+        {loginIcon && (
+          <div className="text-6xl mb-2">{loginIcon}</div>
+        )}
+        <h1 className="text-3xl font-extrabold text-slate-800">
+          {t("myStar.title")}
+        </h1>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-2xl">{stageEmoji}</span>
+          <span className="text-lg font-bold text-slate-600">
+            {t(`myStar.stage.${s.stage.toLowerCase()}`)}
+          </span>
+        </div>
       </div>
 
-      <div className="mb-6 flex justify-center">
-        <AvatarPicker
-          size="xl"
-          userInitials={getInitials(user?.name || "??")}
-          currentAvatarUrl={normalizeAvatarUrl(user?.avatarUrl)}
-          onAvatarChange={() => {
-            // Avatar change handled by AvatarPicker
-          }}
-        />
+      {/* Power Level + Stars/Level */}
+      <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+        <CardContent className="py-5 text-center">
+          <p className="text-sm font-bold text-orange-600 uppercase tracking-wider mb-1">
+            {t("myStar.powerLevel")}
+          </p>
+          <p className="text-5xl font-black text-orange-600">
+            {s.powerLevel} <span className="text-3xl">\uD83D\uDD25</span>
+          </p>
+          <div className="flex justify-center gap-6 mt-3">
+            <div className="text-center">
+              <p className="text-xs text-slate-500">{t("myStar.stars")}</p>
+              <p className="text-lg font-bold text-slate-700">{xp} \u2B50</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500">{t("myStar.levelLabel")}</p>
+              <p className="text-lg font-bold text-slate-700">{level}</p>
+            </div>
+          </div>
+          {/* Stage progress hint */}
+          {s.stage !== "Legend" && (
+            <p className="text-xs text-orange-400 mt-2">
+              {t("myStar.nextStage", {
+                next: s.powerLevel < 11 ? t("myStar.stage.explorer") : s.powerLevel < 26 ? t("myStar.stage.champion") : t("myStar.stage.legend"),
+                needed: s.powerLevel < 11 ? 11 - s.powerLevel : s.powerLevel < 26 ? 26 - s.powerLevel : 41 - s.powerLevel,
+              })}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Superpower Bars */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold text-slate-800">
+          {t("myStar.superpowers")}
+        </h2>
+        {SUPERPOWERS.map((sp) => {
+          const val = s[sp.key];
+          const isMax = val >= 10;
+          return (
+            <div
+              key={sp.key}
+              className={cn(
+                "rounded-xl border-2 p-3 flex items-center gap-3 transition-all",
+                sp.colorBg, sp.colorBorder,
+                isMax && "ring-2 ring-yellow-400",
+              )}
+            >
+              <span className="text-3xl flex-shrink-0">{sp.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className={cn("text-sm font-bold", sp.colorText)}>
+                    {t(`myStar.stats.${sp.key}`)}
+                  </span>
+                  <span className={cn("text-sm font-bold", sp.colorText)}>
+                    {isMax ? t("myStar.maxPower") : `${val}/10`}
+                  </span>
+                </div>
+                <div className="h-4 bg-white/60 rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all duration-500", sp.colorBar)}
+                    style={{ width: `${(val / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Stats Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Stage:</span>
-              <span className={`px-2 py-1 rounded text-sm ${isGeneral ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
-                {isGeneral ? "Explorer" : "Specialized"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Character Type:</span>
-              <span className="font-bold">{getArchetypeDisplay(avatar)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Level:</span>
-              <span>{avatar?.level || 1}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Points:</span>
-              <span>{avatar?.xp || 0}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">HP:</span>
-              <span>{avatar?.hp || 100}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Energy:</span>
-              <span>{avatar?.energy || 100}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Core Stats Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Core Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Speed</span>
-                <span className="text-sm text-gray-500">{avatar?.speed || 0}/100</span>
-              </div>
-              <Progress value={avatar?.speed || 0} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Control</span>
-                <span className="text-sm text-gray-500">{avatar?.control || 0}/100</span>
-              </div>
-              <Progress value={avatar?.control || 0} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Focus</span>
-                <span className="text-sm text-gray-500">{avatar?.focus || 0}/100</span>
-              </div>
-              <Progress value={avatar?.focus || 0} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Specialty Selection Card (only for GENERAL avatars) */}
-        {isGeneral && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Choose Your Specialty</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!specialtyUnlocked ? (
-                <div className="space-y-4 py-2">
-                  {/* Per-set progress */}
-                  {ALL_STEM_SETS.map((_, idx) => {
-                    const sp = setProgress[idx] ?? { completed: 0, total: GAMES_PER_SET };
-                    const isComingSoon = idx > 0; // Only Set 1 exists in pilot
-                    return (
-                      <div
-                        key={idx}
-                        className={`rounded-lg border p-3 ${isComingSoon ? "opacity-50" : ""}`}
-                      >
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">
-                            {SET_LABELS[idx]}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {isComingSoon ? "Coming Soon" : `${sp.completed}/${sp.total}`}
-                          </span>
-                        </div>
-                        <Progress
-                          value={isComingSoon ? 0 : (sp.completed / sp.total) * 100}
-                          className="h-2"
-                        />
-                      </div>
-                    );
-                  })}
-
-                  <p className="text-center text-sm text-gray-500 pt-2">
-                    Complete {TOTAL_SETS} sets to unlock specialization ({completedSetsCount}/{TOTAL_SETS} complete)
-                  </p>
+      {/* Arena Boosts */}
+      <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <CardContent className="py-5">
+          <h2 className="text-lg font-bold text-indigo-700 text-center mb-1">
+            {t("myStar.arenaTitle")}  \u2694\uFE0F
+          </h2>
+          <p className="text-xs text-indigo-500 text-center mb-4">
+            {t("myStar.arenaDesc")}
+          </p>
+          <div className="grid grid-cols-5 gap-2">
+            {ARENA_BOOSTS.map((b) => {
+              const val = s[b.key];
+              return (
+                <div key={b.key} className="text-center">
+                  <span className="text-xl">{b.emoji}</span>
+                  <p className="text-xs font-bold text-indigo-600">+{val}</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-center text-green-600 font-medium">
-                    You've unlocked specialty selection!
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button
-                      variant="outline"
-                      className="h-auto py-4 flex flex-col items-center hover:bg-blue-50 hover:border-blue-300"
-                      onClick={() => handleSelectArchetype("AI")}
-                      disabled={selectingArchetype}
-                    >
-                      <span className="text-2xl mb-2">🤖</span>
-                      <span className="font-bold">AI</span>
-                      <span className="text-xs text-gray-500">Master of Logic</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-auto py-4 flex flex-col items-center hover:bg-purple-50 hover:border-purple-300"
-                      onClick={() => handleSelectArchetype("QUANTUM")}
-                      disabled={selectingArchetype}
-                    >
-                      <span className="text-2xl mb-2">⚛️</span>
-                      <span className="font-bold">Quantum</span>
-                      <span className="text-xs text-gray-500">Reality Bender</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-auto py-4 flex flex-col items-center hover:bg-green-50 hover:border-green-300"
-                      onClick={() => handleSelectArchetype("BIOTECH")}
-                      disabled={selectingArchetype}
-                    >
-                      <span className="text-2xl mb-2">🧬</span>
-                      <span className="font-bold">Biotech</span>
-                      <span className="text-xs text-gray-500">Life Engineer</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Unlocked Abilities Card (only for SPECIALIZED avatars) */}
-        {!isGeneral && (
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Unlocked Abilities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {avatar?.unlockedAbilities?.length === 0 ? (
-                <p className="text-gray-500 italic">
-                  No abilities unlocked yet. Keep playing to earn them!
-                </p>
-              ) : (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {avatar?.unlockedAbilities?.map((ua: any) => (
-                    <li key={ua.id} className="border p-3 rounded-lg">
-                      <div className="font-bold">{ua.Ability?.name || "Unknown Ability"}</div>
-                      <div className="text-sm text-gray-500">
-                        {ua.Ability?.description || ""}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+      {/* Specialty Progress */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold text-slate-800">
+          {t("myStar.specialtyTitle")}
+        </h2>
+        {SET_CONFIG.map((set, idx) => {
+          const sp = s.specialtyProgress[set.key];
+          const prev = idx > 0 ? s.specialtyProgress[SET_CONFIG[idx - 1].key] : null;
+          const locked = idx > 0 && !prev?.complete;
+          const pct = Math.min(100, (sp.current / sp.target) * 100);
+          return (
+            <div
+              key={set.key}
+              className={cn(
+                "rounded-xl border p-4 transition-all",
+                locked ? "opacity-50 bg-slate-50" : sp.complete ? "bg-green-50 border-green-300" : "bg-white border-slate-200",
               )}
-            </CardContent>
-          </Card>
-        )}
+            >
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-bold text-slate-700">
+                  {t(`myStar.sets.${set.key}`)}
+                </span>
+                <span className="text-sm text-slate-500">
+                  {locked ? t("myStar.locked") : sp.complete ? t("myStar.complete") : `${sp.current}/${sp.target}`}
+                </span>
+              </div>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    sp.complete ? "bg-green-500" : "bg-blue-500",
+                  )}
+                  style={{ width: locked ? "0%" : `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+        <p className="text-xs text-slate-400 text-center">
+          {t("myStar.specialtyHint")}
+        </p>
       </div>
     </div>
   );
