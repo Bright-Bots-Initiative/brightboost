@@ -451,6 +451,18 @@
       "set3": "Maestría"
     }
   },
+  "streak": {
+    "noStreak": "Sin racha aún - ¡empieza hoy!",
+    "keepItUp": "¡Sigue así, tu racha actual es {{count}}!",
+    "weeklyStreak": "Racha Semanal",
+    "record": "Récord: {{count}} días",
+    "newRecord": "¡Nuevo Récord de Racha!",
+    "awesome": "¡Genial!"
+  },
+  "xp": {
+    "leveledUp": "¡Subiste de Nivel!",
+    "level": "XP: Nivel"
+  },
   "playHub": {
     "title": "Centro de Juegos",
     "spacewar": "Spacewar (vs CPU)",

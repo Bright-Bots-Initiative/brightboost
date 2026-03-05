@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface XPProgressWidgetProps {
   currentXp: number;
@@ -11,6 +12,7 @@ const XPProgressWidget = ({
   nextLevelXp,
   level,
 }: XPProgressWidgetProps) => {
+  const { t } = useTranslation();
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ const XPProgressWidget = ({
           role="status"
           aria-live="polite"
         >
-          🎉 Leveled Up!
+          {"🎉"} {t("xp.leveledUp")}
         </div>
       )}
 
@@ -45,7 +47,7 @@ const XPProgressWidget = ({
         {/* Level - Made accessible by removing aria-hidden */}
         <div className="flex items-center gap-1">
           <span className="text-base font-bold text-brightboost-navy">
-            XP: Level
+            {t("xp.level")}
           </span>
           <span className="text-base font-bold text-brightboost-navy">
             {displayLevel}

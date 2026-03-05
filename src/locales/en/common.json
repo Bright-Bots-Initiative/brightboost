@@ -451,6 +451,18 @@
       "set3": "Mastery"
     }
   },
+  "streak": {
+    "noStreak": "No streak yet - start today!",
+    "keepItUp": "Keep it up, your current streak is {{count}}!",
+    "weeklyStreak": "Weekly Streak",
+    "record": "Record: {{count}} days",
+    "newRecord": "New Streak Record!",
+    "awesome": "Awesome!"
+  },
+  "xp": {
+    "leveledUp": "Leveled Up!",
+    "level": "XP: Level"
+  },
   "playHub": {
     "title": "Play Hub",
     "spacewar": "Spacewar (vs CPU)",

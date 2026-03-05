@@ -1,6 +1,7 @@
 // src/pages/StudentClassLogin.tsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { API_BASE, join } from "../services/api";
 import GameBackground from "../components/GameBackground";
@@ -67,6 +68,7 @@ type Step = "code" | "icon" | "pin";
 const LAST_CLASS_CODE_KEY = "bb_last_class_code";
 
 export default function StudentClassLogin() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [step, setStep] = useState<Step>("code");
   const [classCode, setClassCode] = useState(
@@ -87,7 +89,7 @@ export default function StudentClassLogin() {
   const handleCodeSubmit = async () => {
     const code = classCode.toUpperCase().trim();
     if (code.length < 3) {
-      setError("Type your class code!");
+      setError(t("classLogin.error.typeCode"));
       return;
     }
     setLoading(true);
@@ -95,14 +97,14 @@ export default function StudentClassLogin() {
     try {
       const info = await getClassByCode(code);
       if (info.students.length === 0) {
-        setError("No students set up yet. Ask your teacher!");
+        setError(t("classLogin.error.noStudents"));
         return;
       }
       setClassInfo(info);
       localStorage.setItem(LAST_CLASS_CODE_KEY, code);
       setStep("icon");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t("classLogin.error.somethingWrong"));
     } finally {
       setLoading(false);
     }
@@ -124,7 +126,7 @@ export default function StudentClassLogin() {
   const handlePinSubmit = () => {
     if (!selectedStudent) return;
     if (pin.length !== 4) {
-      setError("Type all 4 numbers!");
+      setError(t("classLogin.error.typeAllNumbers"));
       return;
     }
     doLogin(selectedStudent.id, pin);
@@ -139,7 +141,7 @@ export default function StudentClassLogin() {
       const result = await classLogin(classInfo.courseId, studentId, pinCode);
       login(result.token, result.user, "/student/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : t("classLogin.error.somethingWrong"));
       setLoading(false);
     }
   };
@@ -154,10 +156,10 @@ export default function StudentClassLogin() {
               <div>
                 <span className="text-5xl mb-2 block">🏫</span>
                 <h1 className="text-2xl font-bold text-brightboost-navy">
-                  What's your class code?
+                  {t("classLogin.title")}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  Ask your teacher!
+                  {t("classLogin.askTeacher")}
                 </p>
               </div>
 
@@ -189,7 +191,7 @@ export default function StudentClassLogin() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Next <ArrowRight className="w-5 h-5" />
+                    {t("classLogin.next")} <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </button>
@@ -199,7 +201,7 @@ export default function StudentClassLogin() {
                   to="/"
                   className="text-sm text-brightboost-blue hover:underline"
                 >
-                  Back to Home
+                  {t("classLogin.backToHome")}
                 </Link>
               </div>
             </div>
@@ -217,7 +219,7 @@ export default function StudentClassLogin() {
                 </button>
                 <span className="text-4xl mb-2 block">👋</span>
                 <h1 className="text-2xl font-bold text-brightboost-navy">
-                  Find your icon!
+                  {t("classLogin.findYourIcon")}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                   {classInfo.className} — {classInfo.teacherName}
@@ -268,10 +270,10 @@ export default function StudentClassLogin() {
                   {selectedStudent.loginIcon}
                 </span>
                 <h1 className="text-2xl font-bold text-brightboost-navy">
-                  Hi, {selectedStudent.name.split(" ")[0]}!
+                  {t("classLogin.hiName", { name: selectedStudent.name.split(" ")[0] })}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  Type your secret number
+                  {t("classLogin.enterPin")}
                 </p>
               </div>
 
@@ -319,7 +321,7 @@ export default function StudentClassLogin() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Go! <ArrowRight className="w-5 h-5" />
+                    {t("classLogin.go")} <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </button>

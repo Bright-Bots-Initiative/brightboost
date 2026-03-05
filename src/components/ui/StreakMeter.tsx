@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Flame, PartyPopper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +18,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
   currentStreakDays = [false, false, false, false, false, false, false],
   barColor,
 }) => {
+  const { t } = useTranslation();
   const [hasBrokenRecord, setHasBrokenRecord] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -141,17 +143,16 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
               data-cy="streak-status"
             >
               {currentStreak === 0 ? (
-                <span>No streak yet - start today!</span>
+                <span>{t("streak.noStreak")}</span>
               ) : (
                 <span>
-                  Keep it up, your current streak is{" "}
-                  <strong>{currentStreak}</strong>!
+                  {t("streak.keepItUp", { count: currentStreak })}
                 </span>
               )}
             </div>
 
             {/* Weekly Streak */}
-            <div className="text-center font-medium mb-2">Weekly Streak</div>
+            <div className="text-center font-medium mb-2">{t("streak.weeklyStreak")}</div>
             <div className="grid grid-cols-7 gap-3 ml-[-6px]">
               {dayLabels.map((day, index) => {
                 const isToday = index === todayIndex;
@@ -177,7 +178,7 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
 
             {/* Record Info */}
             <div className="mt-3 text-center text-xs text-gray-500">
-              Record: {longestStreak} day{longestStreak !== 1 ? "s" : ""}
+              {t("streak.record", { count: longestStreak })}
             </div>
           </div>
         )}
@@ -201,14 +202,14 @@ const StreakMeter: React.FC<StreakMeterProps> = ({
             >
               <PartyPopper className="w-10 h-10 mx-auto text-yellow-500" />
               <h2 className="text-xl font-bold mt-2 text-brightboost-navy">
-                New Streak Record!
+                {t("streak.newRecord")}
               </h2>
               <p className="text-sm mt-1 text-gray-600">+50 XP</p>
               <button
                 onClick={() => setShowCelebration(false)}
                 className="mt-4 px-4 py-2 rounded bg-brightboost-blue text-white hover:bg-brightboost-blue/90"
               >
-                Awesome!
+                {t("streak.awesome")}
               </button>
             </motion.div>
           </motion.div>
