@@ -29,6 +29,7 @@ import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { cn } from "@/lib/utils";
+import { translateContentName } from "@/utils/localizedContent";
 import {
   computeStreakFromProgress,
   ProgressLike,
@@ -372,7 +373,7 @@ export default function StudentDashboard() {
               </h2>
               <p className="text-white/80 text-sm md:text-base mt-0.5">
                 {nextOne
-                  ? `${nextOne.moduleTitle} — ${nextOne.activityTitle}`
+                  ? `${translateContentName(nextOne.moduleTitle)} — ${translateContentName(nextOne.activityTitle)}`
                   : t("dashboard.pickModuleAdventure")}
               </p>
             </div>
@@ -415,7 +416,7 @@ export default function StudentDashboard() {
             </div>
           </Card>
 
-          {/* My Avatar */}
+          {/* My Star */}
           <Tooltip>
             <TooltipTrigger asChild>
               <div
@@ -430,27 +431,33 @@ export default function StudentDashboard() {
                   }
                 }}
               >
-                <Avatar className="w-10 h-10 border-2 border-slate-200">
-                  <SafeAvatarImage
-                    src={user?.avatarUrl}
-                    alt={user?.name || "User"}
-                  />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
-                    {(user?.name || "ME").substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                {(user as any)?.loginIcon ? (
+                  <span className="text-3xl w-10 h-10 flex items-center justify-center">
+                    {(user as any).loginIcon}
+                  </span>
+                ) : (
+                  <Avatar className="w-10 h-10 border-2 border-slate-200">
+                    <SafeAvatarImage
+                      src={user?.avatarUrl}
+                      alt={user?.name || "User"}
+                    />
+                    <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+                      {(user?.name || "ME").substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <div>
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {t("dashboard.myAvatar")}
+                    {t("nav.myStar")}
                   </p>
                   <p className="text-sm font-bold text-slate-700">
-                    {t("dashboard.customize")}
+                    {"⭐"}
                   </p>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("dashboard.customize")}</p>
+              <p>{t("nav.myStar")}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -766,7 +773,7 @@ export default function StudentDashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-brightboost-navy truncate">
-                        {a.activityTitle}
+                        {translateContentName(a.activityTitle)}
                       </span>
                       {isUpNext && (
                         <span className="flex-shrink-0 text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
@@ -775,7 +782,7 @@ export default function StudentDashboard() {
                       )}
                     </div>
                     <p className="text-xs text-slate-500 truncate">
-                      {a.moduleTitle} · {label}
+                      {translateContentName(a.moduleTitle)} · {label}
                     </p>
                   </div>
                   <Button
