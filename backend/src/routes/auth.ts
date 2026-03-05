@@ -1,15 +1,13 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
 import { logAudit } from "../utils/audit";
+import { generateToken } from "../utils/token";
 import { nameSchema, safeString, emailSchema } from "../validation/schemas";
 
 const router = Router();
-
-const SESSION_SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
 // 🛡️ Sentinel: Pre-calculated hash for timing-safe user lookups.
 // This ensures that valid/invalid user lookups take roughly the same amount of time.
@@ -45,13 +43,6 @@ const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Password is required").max(100),
 });
-
-// Helper to generate token
-const generateToken = (user: { id: string; role: string }) => {
-  return jwt.sign({ id: user.id, role: user.role }, SESSION_SECRET, {
-    expiresIn: "7d",
-  });
-};
 
 // Routes
 

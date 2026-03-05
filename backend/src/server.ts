@@ -19,6 +19,7 @@ import pulseRouter from "./routes/pulse";
 import teacherPrepRouter from "./routes/teacherPrep";
 import resourcesRouter from "./routes/resources";
 import pdRouter from "./routes/pd";
+import classLoginRouter from "./routes/classLogin";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 
@@ -162,8 +163,9 @@ app.use(cors(corsOptions));
 // 🛡️ Sentinel: Enforce strict request body size limit to prevent DoS
 app.use(express.json({ limit: "50kb" }));
 
-// Public routes (Auth) - Mount before auth middleware to ensure access
+// Public routes (Auth + Class Login) - Mount before auth middleware to ensure access
 app.use("/api", authRouter);
+app.use("/api", classLoginRouter);
 
 // Public route for Task Ranker integration
 app.use("/context", contextRouter);
