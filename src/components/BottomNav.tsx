@@ -1,32 +1,34 @@
 // src/components/BottomNav.tsx
 import { useNavigate, useLocation } from "react-router-dom";
-import { BookOpen, Bot, Swords, Users } from "lucide-react";
+import { BookOpen, Star, Swords, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
     {
-      label: "Learn",
+      label: t("nav.learn"),
       icon: BookOpen,
       path: "/student/modules",
       testId: "nav-learn",
     },
     {
-      label: "Classes",
+      label: t("nav.classes"),
       icon: Users,
       path: "/student/join",
       testId: "nav-classes",
     },
     {
-      label: "My Bot",
-      icon: Bot,
+      label: t("nav.myStar"),
+      icon: Star,
       path: "/student/avatar",
       testId: "nav-avatar",
     },
     {
-      label: "Play",
+      label: t("nav.play"),
       icon: Swords,
       path: "/student/play",
       testId: "nav-play",
