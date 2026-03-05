@@ -1,5 +1,6 @@
 // src/pages/Modules.tsx
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
+import { translateContentName } from "@/utils/localizedContent";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-rhyme-ride": "type_game",
@@ -28,6 +30,7 @@ const MODULE_ORDER: Record<string, number> = {
 const COMING_SOON_SLUGS = new Set(["stem-1-intro"]);
 
 export default function Modules() {
+  const { t } = useTranslation();
   const [modules, setModules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function Modules() {
         setError(null);
       })
       .catch(() => {
-        setError("Failed to load modules. Please try again later.");
+        setError(t("modules.loadError"));
       })
       .finally(() => {
         setLoading(false);
@@ -59,13 +62,13 @@ export default function Modules() {
   return (
     <div className="p-4 space-y-4 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-brightboost-navy mb-6">
-        K-2 STEM Modules
+        {t("modules.title")}
       </h1>
 
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t("common.error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -93,34 +96,34 @@ export default function Modules() {
                   />
                   {isComingSoon && (
                     <span className="absolute top-6 right-6 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
-                      Coming Soon!
+                      {t("modules.comingSoon")}
                     </span>
                   )}
                 </div>
                 <CardHeader>
                   <CardTitle className="text-xl text-brightboost-navy">
-                    {isComingSoon ? `${m.title}` : m.title}
+                    {translateContentName(m.title)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col justify-between">
                   <p className="text-sm text-gray-500 mb-6">
-                    {m.description ?? m.subtitle ?? "..."}
+                    {translateContentName(m.description ?? m.subtitle ?? "...")}
                   </p>
                   {isComingSoon ? (
                     <Button
                       disabled
                       className="w-full sm:w-auto bg-purple-400 cursor-not-allowed"
-                      aria-label={`${m.title} — coming soon`}
+                      aria-label={`${translateContentName(m.title)} — ${t("modules.comingSoon")}`}
                     >
-                      Coming Soon!
+                      {t("modules.comingSoon")}
                     </Button>
                   ) : (
                     <Button
                       onClick={() => navigate(`/student/modules/${m.slug}`)}
                       className="w-full sm:w-auto"
-                      aria-label={`Start learning ${m.title}`}
+                      aria-label={`${t("modules.startLearning")} ${translateContentName(m.title)}`}
                     >
-                      Start Learning
+                      {t("modules.startLearning")}
                     </Button>
                   )}
                 </CardContent>
@@ -135,11 +138,10 @@ export default function Modules() {
               <BookOpen size={32} />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              No Modules Found
+              {t("modules.noModules")}
             </h2>
             <p className="text-gray-500 max-w-md mx-auto">
-              We couldn't find any learning modules at the moment. Please check
-              back later!
+              {t("modules.noModulesDesc")}
             </p>
           </div>
         )

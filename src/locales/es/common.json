@@ -402,6 +402,14 @@
     "hours": "horas",
     "families": "familias"
   },
+  "modules": {
+    "title": "Módulos STEM K-2",
+    "startLearning": "Comenzar",
+    "comingSoon": "¡Próximamente!",
+    "loadError": "Error al cargar los módulos. Inténtalo de nuevo.",
+    "noModules": "No se encontraron módulos",
+    "noModulesDesc": "No pudimos encontrar módulos de aprendizaje en este momento. ¡Vuelve más tarde!"
+  },
   "nav": {
     "learn": "Aprender",
     "classes": "Clases",

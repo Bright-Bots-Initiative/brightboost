@@ -1,5 +1,6 @@
 // src/pages/SpacewarArena.tsx
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import UnityWebGL from "../components/unity/UnityWebGL";
 import {
@@ -31,27 +32,29 @@ const isTouchDevice = (): boolean => {
   );
 };
 
-const FUN_LOADING_MESSAGES = [
-  "Warming up the rockets...",
-  "Feeding the robots...",
-  "Polishing the stars...",
-  "Counting down... 3, 2, 1!",
-  "Checking the fuel tanks...",
-  "Asking the aliens for directions...",
+const LOADING_KEYS = [
+  "loading.warmingRockets",
+  "loading.feedingRobots",
+  "loading.polishingStars",
+  "loading.countdown",
+  "loading.checkingFuel",
+  "loading.askingAliens",
 ];
 
 function useFunLoadingMessage() {
+  const { t } = useTranslation();
   const [msgIndex, setMsgIndex] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
-      setMsgIndex((i) => (i + 1) % FUN_LOADING_MESSAGES.length);
+      setMsgIndex((i) => (i + 1) % LOADING_KEYS.length);
     }, 2000);
     return () => clearInterval(interval);
   }, []);
-  return FUN_LOADING_MESSAGES[msgIndex];
+  return t(LOADING_KEYS[msgIndex]);
 }
 
 export default function SpacewarArena() {
+  const { t } = useTranslation();
   const [avatarConfig, setAvatarConfig] = useState<AvatarData | null>(null);
   const [loading, setLoading] = useState(true);
   const funMessage = useFunLoadingMessage();
@@ -280,14 +283,14 @@ export default function SpacewarArena() {
     <div className="flex flex-col h-[85vh] w-full">
       {/* Control bar */}
       <div className="flex items-center justify-between bg-slate-800 rounded-t-xl px-4 py-2">
-        <h2 className="text-white font-semibold text-lg">Spacewar (vs CPU)</h2>
+        <h2 className="text-white font-semibold text-lg">{t("spacewar.title")}</h2>
         <div className="flex items-center gap-3">
           {/* Difficulty selector — kid-friendly buttons */}
-          <div className="flex gap-1" role="radiogroup" aria-label="Difficulty">
+          <div className="flex gap-1" role="radiogroup" aria-label={t("spacewar.controls")}>
             {([
-              { value: "easy" as Difficulty, emoji: "\uD83D\uDC23", label: "Easy" },
-              { value: "normal" as Difficulty, emoji: "\uD83C\uDFAE", label: "Medium" },
-              { value: "hard" as Difficulty, emoji: "\uD83D\uDD25", label: "Hard" },
+              { value: "easy" as Difficulty, emoji: "🐣", label: t("spacewar.easy") },
+              { value: "normal" as Difficulty, emoji: "🎮", label: t("spacewar.medium") },
+              { value: "hard" as Difficulty, emoji: "🔥", label: t("spacewar.hard") },
             ]).map((opt) => (
               <button
                 key={opt.value}
@@ -309,89 +312,84 @@ export default function SpacewarArena() {
           <Dialog open={showHelp} onOpenChange={setShowHelp}>
             <DialogTrigger asChild>
               <Button variant="primary" size="sm">
-                How to Play
+                {t("spacewar.howToPlay")}
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-slate-800 text-white border-slate-700 max-w-lg">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold mb-4">
-                  How to Play
+                  {t("spacewar.howToPlay")}
                 </DialogTitle>
               </DialogHeader>
 
               <div className="space-y-4 text-sm">
                 <div>
                   <h4 className="text-blue-400 font-semibold mb-1">
-                    Objective
+                    {t("spacewar.objective")}
                   </h4>
                   <p className="text-slate-300">
-                    First to 5 points wins the match!
+                    {t("spacewar.objectiveDesc")}
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="text-blue-400 font-semibold mb-1">Scoring</h4>
+                  <h4 className="text-blue-400 font-semibold mb-1">{t("spacewar.scoring")}</h4>
                   <ul className="text-slate-300 list-disc list-inside">
-                    <li>Destroy your opponent with missiles</li>
-                    <li>Your opponent falls into the sun</li>
+                    <li>{t("spacewar.scoringMissile")}</li>
+                    <li>{t("spacewar.scoringSun")}</li>
                   </ul>
                 </div>
 
                 <div>
-                  <h4 className="text-red-400 font-semibold mb-1">Hazards</h4>
+                  <h4 className="text-red-400 font-semibold mb-1">{t("spacewar.hazards")}</h4>
                   <ul className="text-slate-300 list-disc list-inside">
-                    <li>The Sun kills on contact - avoid it!</li>
-                    <li>Gravity constantly pulls you toward the sun</li>
+                    <li>{t("spacewar.hazardSun")}</li>
+                    <li>{t("spacewar.hazardGravity")}</li>
                   </ul>
                 </div>
 
                 <div>
                   <h4 className="text-green-400 font-semibold mb-1">
-                    {isTouch ? "Mobile Controls" : "Controls"}
+                    {isTouch ? t("spacewar.mobileControls") : t("spacewar.controls")}
                   </h4>
                   {isTouch ? (
                     <div className="bg-slate-700 rounded p-3 text-xs">
                       <div className="grid grid-cols-2 gap-2">
-                        <span className="text-slate-400">◀ / ▶</span>
-                        <span>Hold to rotate</span>
+                        <span className="text-slate-400">{"◀ / ▶"}</span>
+                        <span>{t("spacewar.rotateLabel")}</span>
                         <span className="text-slate-400">THRUST</span>
-                        <span>Hold to accelerate</span>
+                        <span>{t("spacewar.thrustLabel")}</span>
                         <span className="text-slate-400">FIRE</span>
-                        <span>Hold to shoot</span>
+                        <span>{t("spacewar.fireLabel")}</span>
                         <span className="text-slate-400">HYPER</span>
-                        <span>Tap for hyperspace</span>
+                        <span>{t("spacewar.hyperspaceLabel")}</span>
                       </div>
-                      <p className="text-slate-400 mt-2 text-[10px]">
-                        Touch controls appear at bottom of screen
-                      </p>
                     </div>
                   ) : (
                     <div className="bg-slate-700 rounded p-3 font-mono text-xs">
                       <div className="grid grid-cols-2 gap-2">
                         <span className="text-slate-400">A / D</span>
-                        <span>Rotate left / right</span>
+                        <span>{t("spacewar.rotateLabel")}</span>
                         <span className="text-slate-400">W</span>
-                        <span>Thrust forward</span>
+                        <span>{t("spacewar.thrustLabel")}</span>
                         <span className="text-slate-400">Space</span>
-                        <span>Fire missile</span>
+                        <span>{t("spacewar.fireLabel")}</span>
                         <span className="text-slate-400">S</span>
-                        <span>Hyperspace (risky!)</span>
+                        <span>{t("spacewar.hyperspaceLabel")}</span>
                         <span className="text-slate-400">R</span>
-                        <span>Restart match</span>
+                        <span>{t("spacewar.restartLabel")}</span>
                       </div>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <h4 className="text-yellow-400 font-semibold mb-1">Tips</h4>
+                  <h4 className="text-yellow-400 font-semibold mb-1">{t("spacewar.tips")}</h4>
                   <ul className="text-slate-300 list-disc list-inside">
-                    <li>Don't go too fast — you might fly into the sun!</li>
-                    <li>
-                      Hyperspace moves you to a random spot (a little risky!)
-                    </li>
-                    <li>Aim a little ahead of where your opponent is going</li>
-                    <li>Start on Easy to learn the controls, then try harder!</li>
+                    <li>{t("spacewar.tipSpeed")}</li>
+                    <li>{t("spacewar.tipHyperspace")}</li>
+                    <li>{t("spacewar.tipAim")}</li>
+                    <li>{t("spacewar.tipDifficulty")}</li>
                   </ul>
                 </div>
               </div>
@@ -401,7 +399,7 @@ export default function SpacewarArena() {
                 onClick={() => setShowHelp(false)}
                 className="mt-6 w-full"
               >
-                Got it!
+                {t("spacewar.gotIt")}
               </Button>
             </DialogContent>
           </Dialog>
@@ -412,7 +410,7 @@ export default function SpacewarArena() {
             size="sm"
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
-            Restart
+            {t("spacewar.restart")}
           </Button>
         </div>
       </div>
@@ -445,7 +443,7 @@ export default function SpacewarArena() {
             {/* Hint text at bottom */}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-20">
               <p className="text-white/70 text-xs bg-black/40 px-3 py-1 rounded-full select-none">
-                Drag to steer + thrust • Tap to fire • Double-tap for hyperspace
+                {t("spacewar.gestureHint")}
               </p>
             </div>
           </>
