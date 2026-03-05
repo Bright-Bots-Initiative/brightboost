@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useApi } from "../services/api";
 import { api as directApi } from "../services/api";
@@ -9,7 +9,10 @@ import {
   Check,
   Clock,
   TrendingUp,
+  Printer,
+  Smile,
 } from "lucide-react";
+import PrintLoginCards from "@/components/teacher/PrintLoginCards";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +90,16 @@ const TeacherClassDetail: React.FC = () => {
   // Pulse summary
   const [pulse, setPulse] = useState<PulseSummary | null>(null);
 
+  // Icon assignment
+  const [iconAssignments, setIconAssignments] = useState<Record<string, string>>({});
+  const [savingIcons, setSavingIcons] = useState(false);
+  const [showPrintCards, setShowPrintCards] = useState(false);
+  const [printCardsData, setPrintCardsData] = useState<{
+    className: string;
+    joinCode: string;
+    cards: { name: string; icon: string; hasPin: boolean }[];
+  } | null>(null);
+
   // Launch session wizard
   const [launchOpen, setLaunchOpen] = useState(false);
   const [modules, setModules] = useState<ModuleSummary[]>([]);
@@ -136,6 +149,58 @@ const TeacherClassDetail: React.FC = () => {
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
+
+  // -------------------------------------------------------------------
+  // Icon assignment helpers
+  // -------------------------------------------------------------------
+
+  const AVAILABLE_ICONS = [
+    "🐱", "🐶", "🦊", "🐸", "🦁", "🐰", "🐼", "🦄", "🐢", "🦋",
+    "🐧", "🐨", "🦉", "🐙", "🦈", "🐝", "🦜", "🐳", "🦒", "🐞",
+  ];
+
+  const assignIcon = useCallback((studentId: string, icon: string) => {
+    setIconAssignments((prev) => ({ ...prev, [studentId]: icon }));
+  }, []);
+
+  const autoAssignIcons = useCallback(() => {
+    if (!course) return;
+    const newAssignments: Record<string, string> = {};
+    course.students.forEach((s, i) => {
+      newAssignments[s.id] = AVAILABLE_ICONS[i % AVAILABLE_ICONS.length];
+    });
+    setIconAssignments(newAssignments);
+  }, [course]);
+
+  const saveIcons = useCallback(async () => {
+    if (!id || Object.keys(iconAssignments).length === 0) return;
+    setSavingIcons(true);
+    try {
+      const students = Object.entries(iconAssignments).map(([studentId, icon]) => ({
+        studentId,
+        icon,
+      }));
+      await api.post(`/teacher/courses/${id}/setup-icons`, { students } as Record<string, unknown>);
+      // Refresh to show updated data
+      const updatedCourse = await api.get(`/teacher/courses/${id}`);
+      setCourse(updatedCourse);
+    } catch {
+      // error toast from useApi
+    } finally {
+      setSavingIcons(false);
+    }
+  }, [id, iconAssignments, api]);
+
+  const handlePrintCards = useCallback(async () => {
+    if (!id) return;
+    try {
+      const data = await api.get(`/teacher/courses/${id}/login-cards`);
+      setPrintCardsData(data);
+      setShowPrintCards(true);
+    } catch {
+      // error toast from useApi
+    }
+  }, [id, api]);
 
   // -------------------------------------------------------------------
   // Launch session wizard helpers
@@ -344,6 +409,89 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* K-2 Login Icons Setup */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
+          <Smile className="w-5 h-5 mr-2" />
+          K-2 Login Icons
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Assign an icon to each student for class-code login. Students will pick their icon instead of typing a password.
+        </p>
+
+        {course.students.length === 0 ? (
+          <p className="text-sm text-gray-400 italic">
+            Enroll students first, then assign icons.
+          </p>
+        ) : (
+          <>
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={autoAssignIcons}
+                className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+              >
+                Auto-Assign Icons
+              </button>
+              <button
+                onClick={saveIcons}
+                disabled={savingIcons || Object.keys(iconAssignments).length === 0}
+                className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 transition-colors"
+              >
+                {savingIcons ? "Saving..." : "Save Icons"}
+              </button>
+              <button
+                onClick={handlePrintCards}
+                className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors flex items-center gap-1"
+              >
+                <Printer className="w-4 h-4" />
+                Print Login Cards
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {course.students.map((s) => {
+                const currentIcon = iconAssignments[s.id] || "";
+                return (
+                  <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                    <span className="text-3xl w-10 text-center">
+                      {currentIcon || "❓"}
+                    </span>
+                    <span className="font-medium text-sm text-slate-700 w-32 truncate">
+                      {s.name}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {AVAILABLE_ICONS.map((icon) => (
+                        <button
+                          key={icon}
+                          onClick={() => assignIcon(s.id, icon)}
+                          className={`text-xl w-8 h-8 rounded transition-all ${
+                            currentIcon === icon
+                              ? "bg-blue-100 ring-2 ring-blue-400 scale-110"
+                              : "hover:bg-gray-100"
+                          }`}
+                        >
+                          {icon}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Print cards overlay */}
+      {showPrintCards && printCardsData && (
+        <PrintLoginCards
+          className={printCardsData.className}
+          joinCode={printCardsData.joinCode}
+          cards={printCardsData.cards}
+          onClose={() => setShowPrintCards(false)}
+        />
+      )}
 
       {/* Sessions / Assignments */}
       <section className="bg-white rounded-lg shadow p-6">

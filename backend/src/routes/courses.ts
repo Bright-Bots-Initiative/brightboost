@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
 import { z } from "zod";
@@ -11,6 +12,17 @@ const router = Router();
 
 const createCourseSchema = z.object({
   name: z.string().min(1).max(200),
+  defaultLanguage: z.enum(["en", "es"]).optional(),
+});
+
+const setupIconsSchema = z.object({
+  students: z.array(
+    z.object({
+      studentId: z.string().min(1),
+      icon: z.string().min(1).max(4), // emoji
+      pin: z.string().length(4).regex(/^\d{4}$/).optional(),
+    }),
+  ),
 });
 
 const joinCourseSchema = z.object({
@@ -68,6 +80,7 @@ router.post(
         name: parsed.data.name,
         teacherId: req.user!.id,
         joinCode,
+        defaultLanguage: parsed.data.defaultLanguage || "en",
       },
     });
 
@@ -197,6 +210,118 @@ router.get(
         enrolledAt: e.enrolledAt,
       })),
     );
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Teacher: setup student login icons + optional PINs
+// ---------------------------------------------------------------------------
+
+router.post(
+  "/teacher/courses/:courseId/setup-icons",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    try {
+      const parsed = setupIconsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.issues[0].message });
+      }
+
+      // Verify teacher owns the course
+      const course = await prisma.course.findFirst({
+        where: { id: req.params.courseId, teacherId: req.user!.id },
+      });
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Update each student
+      for (const s of parsed.data.students) {
+        // Verify student is enrolled
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            studentId_courseId: {
+              studentId: s.studentId,
+              courseId: course.id,
+            },
+          },
+        });
+        if (!enrollment) continue;
+
+        const updateData: any = {
+          loginIcon: s.icon,
+          preferredLanguage: course.defaultLanguage,
+        };
+
+        if (s.pin) {
+          updateData.loginPin = await bcrypt.hash(s.pin, 10);
+        }
+
+        await prisma.user.update({
+          where: { id: s.studentId },
+          data: updateData,
+        });
+      }
+
+      res.json({ message: "Icons updated", count: parsed.data.students.length });
+    } catch (error) {
+      console.error("Setup icons error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Teacher: get login cards data for printing
+// ---------------------------------------------------------------------------
+
+router.get(
+  "/teacher/courses/:courseId/login-cards",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    try {
+      const course = await prisma.course.findFirst({
+        where: { id: req.params.courseId, teacherId: req.user!.id },
+        include: {
+          enrollments: {
+            include: {
+              student: {
+                select: {
+                  id: true,
+                  name: true,
+                  loginIcon: true,
+                  loginPin: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      const cards = course.enrollments
+        .filter((e) => e.student.loginIcon)
+        .map((e) => ({
+          name: e.student.name,
+          icon: e.student.loginIcon,
+          hasPin: !!e.student.loginPin,
+        }));
+
+      res.json({
+        className: course.name,
+        joinCode: course.joinCode,
+        defaultLanguage: course.defaultLanguage,
+        cards,
+      });
+    } catch (error) {
+      console.error("Login cards error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   },
 );
 
