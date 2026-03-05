@@ -24,19 +24,19 @@ type Stats = {
 };
 
 const SUPERPOWERS = [
-  { key: "heartPower" as const, emoji: "\uD83D\uDC96", colorBar: "bg-pink-400", colorBg: "bg-pink-50", colorText: "text-pink-700", colorBorder: "border-pink-200" },
-  { key: "brainJuice" as const, emoji: "\uD83E\uDDE0", colorBar: "bg-yellow-400", colorBg: "bg-yellow-50", colorText: "text-yellow-700", colorBorder: "border-yellow-200" },
-  { key: "lightningFast" as const, emoji: "\u26A1", colorBar: "bg-blue-400", colorBg: "bg-blue-50", colorText: "text-blue-700", colorBorder: "border-blue-200" },
-  { key: "superFocus" as const, emoji: "\uD83C\uDFAF", colorBar: "bg-green-400", colorBg: "bg-green-50", colorText: "text-green-700", colorBorder: "border-green-200" },
-  { key: "starPower" as const, emoji: "\u2B50", colorBar: "bg-purple-400", colorBg: "bg-purple-50", colorText: "text-purple-700", colorBorder: "border-purple-200" },
+  { key: "heartPower" as const, emoji: "💖", colorBar: "bg-pink-400", colorBg: "bg-pink-50", colorText: "text-pink-700", colorBorder: "border-pink-200" },
+  { key: "brainJuice" as const, emoji: "🧠", colorBar: "bg-yellow-400", colorBg: "bg-yellow-50", colorText: "text-yellow-700", colorBorder: "border-yellow-200" },
+  { key: "lightningFast" as const, emoji: "⚡", colorBar: "bg-blue-400", colorBg: "bg-blue-50", colorText: "text-blue-700", colorBorder: "border-blue-200" },
+  { key: "superFocus" as const, emoji: "🎯", colorBar: "bg-green-400", colorBg: "bg-green-50", colorText: "text-green-700", colorBorder: "border-green-200" },
+  { key: "starPower" as const, emoji: "⭐", colorBar: "bg-purple-400", colorBg: "bg-purple-50", colorText: "text-purple-700", colorBorder: "border-purple-200" },
 ];
 
 const ARENA_BOOSTS = [
-  { key: "heartPower" as const, emoji: "\uD83D\uDC96" },
-  { key: "brainJuice" as const, emoji: "\uD83E\uDDE0" },
-  { key: "lightningFast" as const, emoji: "\u26A1" },
-  { key: "superFocus" as const, emoji: "\uD83C\uDFAF" },
-  { key: "starPower" as const, emoji: "\u2B50" },
+  { key: "heartPower" as const, emoji: "💖" },
+  { key: "brainJuice" as const, emoji: "🧠" },
+  { key: "lightningFast" as const, emoji: "⚡" },
+  { key: "superFocus" as const, emoji: "🎯" },
+  { key: "starPower" as const, emoji: "⭐" },
 ];
 
 const SET_CONFIG = [
@@ -98,7 +98,7 @@ export default function Avatar() {
     },
   };
 
-  const stageEmoji = s.stage === "Legend" ? "\uD83D\uDC51" : s.stage === "Champion" ? "\uD83C\uDFC6" : s.stage === "Explorer" ? "\uD83D\uDE80" : "\uD83C\uDF1F";
+  const stageEmoji = s.stage === "Legend" ? "👑" : s.stage === "Champion" ? "🏆" : s.stage === "Explorer" ? "🚀" : "🌟";
   const loginIcon = (user as any)?.loginIcon;
   const xp = avatar?.avatar?.xp ?? avatar?.xp ?? 0;
   const level = avatar?.avatar?.level ?? avatar?.level ?? 1;
@@ -128,12 +128,12 @@ export default function Avatar() {
             {t("myStar.powerLevel")}
           </p>
           <p className="text-5xl font-black text-orange-600">
-            {s.powerLevel} <span className="text-3xl">\uD83D\uDD25</span>
+            {s.powerLevel} <span className="text-3xl">{"🔥"}</span>
           </p>
           <div className="flex justify-center gap-6 mt-3">
             <div className="text-center">
               <p className="text-xs text-slate-500">{t("myStar.stars")}</p>
-              <p className="text-lg font-bold text-slate-700">{xp} \u2B50</p>
+              <p className="text-lg font-bold text-slate-700">{xp} {"⭐"}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500">{t("myStar.levelLabel")}</p>
@@ -195,7 +195,7 @@ export default function Avatar() {
       <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
         <CardContent className="py-5">
           <h2 className="text-lg font-bold text-indigo-700 text-center mb-1">
-            {t("myStar.arenaTitle")}  \u2694\uFE0F
+            {t("myStar.arenaTitle")} {"⚔️"}
           </h2>
           <p className="text-xs text-indigo-500 text-center mb-4">
             {t("myStar.arenaDesc")}
