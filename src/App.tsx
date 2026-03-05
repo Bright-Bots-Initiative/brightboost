@@ -38,6 +38,7 @@ import TermsOfService from "./pages/TermsOfService";
 import TeacherModulePrep from "./pages/TeacherModulePrep";
 import TeacherResources from "./pages/TeacherResources";
 import TeacherPDHub from "./pages/TeacherPDHub";
+import StudentClassLogin from "./pages/StudentClassLogin";
 
 // Import styles
 import "./App.css";
@@ -70,6 +71,7 @@ function App() {
               <Route path="/teacher/signup" element={<TeacherSignup />} />
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
+              <Route path="/class-login" element={<StudentClassLogin />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
 

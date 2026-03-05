@@ -28,6 +28,12 @@ const Index: React.FC = () => {
               Let's Go!
             </Link>
             <Link
+              to="/class-login"
+              className="button-shadow rounded-xl px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-center text-lg hover:scale-105 transition-all w-64 ui-lift"
+            >
+              I'm a Student! 🎒
+            </Link>
+            <Link
               to="/signup"
               className="button-shadow rounded-xl px-6 py-3 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 hover:scale-105 transition-all w-56 ui-lift"
             >
