@@ -6,8 +6,9 @@ import BottomNav from "../BottomNav";
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
   BookOpen: () => <div data-testid="icon-book" />,
-  Bot: () => <div data-testid="icon-bot" />,
+  Star: () => <div data-testid="icon-star" />,
   Swords: () => <div data-testid="icon-swords" />,
+  Users: () => <div data-testid="icon-users" />,
 }));
 
 const renderWithRouter = (initialEntry = "/") => {
@@ -23,7 +24,7 @@ describe("BottomNav", () => {
     renderWithRouter();
 
     expect(screen.getByText("Learn")).toBeInTheDocument();
-    expect(screen.getByText("My Bot")).toBeInTheDocument();
+    expect(screen.getByText("My Star")).toBeInTheDocument();
     expect(screen.getByText("Play")).toBeInTheDocument();
   });
 
@@ -41,7 +42,7 @@ describe("BottomNav", () => {
     renderWithRouter("/student/modules");
 
     const learnButton = screen.getByText("Learn").closest("button");
-    const botButton = screen.getByText("My Bot").closest("button");
+    const botButton = screen.getByText("My Star").closest("button");
 
     // This expectation is expected to FAIL before the fix
     expect(learnButton).toHaveAttribute("aria-current", "page");

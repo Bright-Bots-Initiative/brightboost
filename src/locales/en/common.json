@@ -98,8 +98,16 @@
     "completeMoreToUnlock": "Complete {{count}} more activities to unlock your next check-in",
     "allDone": "All done!",
     "playNext": "Play Next!",
+    "startPlaying": "Start Playing!",
+    "pickModuleAdventure": "Pick a module and start your adventure!",
     "welcomeBack": "Welcome back, {{name}}!",
     "readyForAdventure": "Ready for today's adventure?",
+    "keepPlaying": "Keep Playing",
+    "storyLabel": "Story",
+    "gameLabel": "Game",
+    "upNextBadge": "Up Next!",
+    "sessionsCompleted": "{{count}} session(s) completed",
+    "duePrefix": "Due",
     "achievements": {
       "firstSteps": {
         "title": "First Steps",
@@ -442,6 +450,13 @@
       "set2": "Exploration",
       "set3": "Mastery"
     }
+  },
+  "playHub": {
+    "title": "Play Hub",
+    "spacewar": "Spacewar (vs CPU)",
+    "coopAdventure": "Co-op Adventure",
+    "coopMode": "Co-op Mode",
+    "coopComingSoon": "Team up with friends! Coming soon."
   },
   "showcase": {
     "title": "Family STEAM Night",

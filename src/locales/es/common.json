@@ -98,8 +98,16 @@
     "completeMoreToUnlock": "Completa {{count}} actividades más para tu próximo chequeo",
     "allDone": "¡Todo listo!",
     "playNext": "¡Jugar Ahora!",
+    "startPlaying": "¡A Jugar!",
+    "pickModuleAdventure": "¡Elige un módulo y comienza tu aventura!",
     "welcomeBack": "¡Bienvenido, {{name}}!",
     "readyForAdventure": "¿Listo para la aventura de hoy?",
+    "keepPlaying": "Sigue Jugando",
+    "storyLabel": "Historia",
+    "gameLabel": "Juego",
+    "upNextBadge": "¡Siguiente!",
+    "sessionsCompleted": "{{count}} sesión(es) completada(s)",
+    "duePrefix": "Vence",
     "achievements": {
       "firstSteps": {
         "title": "Primeros Pasos",
@@ -442,6 +450,13 @@
       "set2": "Exploración",
       "set3": "Maestría"
     }
+  },
+  "playHub": {
+    "title": "Centro de Juegos",
+    "spacewar": "Spacewar (vs CPU)",
+    "coopAdventure": "Aventura Cooperativa",
+    "coopMode": "Modo Cooperativo",
+    "coopComingSoon": "¡Juega en equipo con amigos! Próximamente."
   },
   "showcase": {
     "title": "Noche Familiar STEAM",

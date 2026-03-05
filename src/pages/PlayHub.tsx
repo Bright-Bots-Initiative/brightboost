@@ -2,8 +2,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SpacewarArena from "./SpacewarArena";
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function PlayHub() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "pvp";
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -23,7 +25,7 @@ export default function PlayHub() {
 
   return (
     <div className="h-full flex flex-col w-full max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-slate-800">Play Hub</h1>
+      <h1 className="text-2xl font-bold mb-4 text-slate-800">{t("playHub.title")}</h1>
 
       <Tabs
         value={activeTab}
@@ -31,8 +33,8 @@ export default function PlayHub() {
         className="w-full flex-1 flex flex-col"
       >
         <TabsList className="grid w-full grid-cols-2 mb-4 max-w-md mx-auto">
-          <TabsTrigger value="pvp">Spacewar (vs CPU)</TabsTrigger>
-          <TabsTrigger value="coop">Co-op Adventure</TabsTrigger>
+          <TabsTrigger value="pvp">{t("playHub.spacewar")}</TabsTrigger>
+          <TabsTrigger value="coop">{t("playHub.coopAdventure")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pvp" className="flex-1 w-full">
@@ -45,8 +47,8 @@ export default function PlayHub() {
         >
           <div className="text-center p-8">
             <span className="text-4xl block mb-2">🤝</span>
-            <h3 className="text-xl font-bold text-slate-700">Co-op Mode</h3>
-            <p className="text-slate-500">Team up with friends! Coming soon.</p>
+            <h3 className="text-xl font-bold text-slate-700">{t("playHub.coopMode")}</h3>
+            <p className="text-slate-500">{t("playHub.coopComingSoon")}</p>
           </div>
         </TabsContent>
       </Tabs>

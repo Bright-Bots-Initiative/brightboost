@@ -368,12 +368,12 @@ export default function StudentDashboard() {
             </div>
             <div className="flex-1 text-left">
               <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                {nextOne ? "Play Next!" : "Start Playing!"}
+                {nextOne ? t("dashboard.playNext") : t("dashboard.startPlaying")}
               </h2>
               <p className="text-white/80 text-sm md:text-base mt-0.5">
                 {nextOne
                   ? `${nextOne.moduleTitle} — ${nextOne.activityTitle}`
-                  : "Pick a module and start your adventure!"}
+                  : t("dashboard.pickModuleAdventure")}
               </p>
             </div>
             <ArrowRight className="w-8 h-8 text-white/80 group-hover:translate-x-1 transition-transform shrink-0" />
@@ -386,10 +386,10 @@ export default function StudentDashboard() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-              Welcome back, {(user?.name || "Explorer").split(" ")[0]}!
+              {t("dashboard.welcomeBack", { name: (user?.name || "Explorer").split(" ")[0] })}
             </h1>
             <p className="text-xl text-slate-600 font-medium">
-              Ready for today's adventure?
+              {t("dashboard.readyForAdventure")}
             </p>
           </div>
         </div>
@@ -561,7 +561,7 @@ export default function StudentDashboard() {
         <section>
           <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-blue-600" />
-            Assigned Sessions
+            {t("dashboard.assignedSessions")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {assignedSessions
@@ -571,7 +571,7 @@ export default function StudentDashboard() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">{s.title}</CardTitle>
                     <p className="text-xs text-slate-500">
-                      {s.courseName} &middot; Due {s.dueDate}
+                      {s.courseName} &middot; {t("dashboard.duePrefix")} {s.dueDate}
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -586,7 +586,7 @@ export default function StudentDashboard() {
                       }}
                       disabled={!s.moduleSlug || !s.activityId}
                     >
-                      Start
+                      {t("dashboard.start")}
                       <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
                   </CardContent>
@@ -595,7 +595,7 @@ export default function StudentDashboard() {
             {assignedSessions.filter((s) => s.completed).length > 0 && (
               <div className="col-span-full text-sm text-green-600 flex items-center gap-1">
                 <Check className="w-4 h-4" />
-                {assignedSessions.filter((s) => s.completed).length} session(s) completed
+                {t("dashboard.sessionsCompleted", { count: assignedSessions.filter((s) => s.completed).length })}
               </div>
             )}
           </div>
@@ -621,11 +621,11 @@ export default function StudentDashboard() {
               <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-slate-800">Join a Class</p>
+              <p className="font-semibold text-slate-800">{t("dashboard.joinClass")}</p>
               <p className="text-sm text-slate-500">
                 {enrolledCourses.length > 0
-                  ? `${enrolledCourses.length} class${enrolledCourses.length !== 1 ? "es" : ""} joined · Enter another code`
-                  : "Enter a join code from your teacher"}
+                  ? t("dashboard.joinClassWithCount", { count: enrolledCourses.length })
+                  : t("dashboard.joinClassDesc")}
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-blue-400" />
@@ -638,7 +638,7 @@ export default function StudentDashboard() {
         <section>
           <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
             <Heart className="w-6 h-6 text-pink-500" />
-            Quick Check-In
+            {t("dashboard.quickCheckIn")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {enrolledCourses.map((course) => {
@@ -650,10 +650,10 @@ export default function StudentDashboard() {
                     <CardTitle className="text-base">{course.name}</CardTitle>
                     <p className="text-xs text-slate-500">
                       {preDone && postDone
-                        ? "All check-ins done!"
+                        ? t("dashboard.allCheckInsDone")
                         : preDone
-                          ? "First check-in done"
-                          : "Tell us how you feel!"}
+                          ? t("dashboard.firstCheckInDone")
+                          : t("dashboard.tellUsHowYouFeel")}
                     </p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-2">
@@ -665,7 +665,7 @@ export default function StudentDashboard() {
                           setPulseTarget({ courseId: course.id, courseName: course.name, kind: "PRE" })
                         }
                       >
-                        How Do I Feel?
+                        {t("dashboard.howDoIFeel")}
                       </Button>
                     )}
                     {preDone && !postDone && completedActivitiesCount >= 3 && (
@@ -675,17 +675,17 @@ export default function StudentDashboard() {
                           setPulseTarget({ courseId: course.id, courseName: course.name, kind: "POST" })
                         }
                       >
-                        Check In Again
+                        {t("dashboard.checkInAgain")}
                       </Button>
                     )}
                     {preDone && !postDone && completedActivitiesCount < 3 && (
                       <p className="text-xs text-slate-400">
-                        Complete {3 - completedActivitiesCount} more activit{3 - completedActivitiesCount === 1 ? "y" : "ies"} to unlock your next check-in
+                        {t("dashboard.completeMoreToUnlock", { count: 3 - completedActivitiesCount })}
                       </p>
                     )}
                     {preDone && postDone && (
                       <span className="text-sm text-green-600 flex items-center gap-1">
-                        <Check className="w-4 h-4" /> All done!
+                        <Check className="w-4 h-4" /> {t("dashboard.allDone")}
                       </span>
                     )}
                   </CardContent>
@@ -722,7 +722,7 @@ export default function StudentDashboard() {
       <section>
         <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Rocket className="w-6 h-6 text-purple-500" />
-          Keep Playing
+          {t("dashboard.keepPlaying")}
         </h2>
         {loading ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
@@ -750,7 +750,7 @@ export default function StudentDashboard() {
             {[...(nextOne ? [nextOne] : []), ...upNext].map((a, idx) => {
               const isUpNext = idx === 0 && !!nextOne;
               const icon = a.kind === "INFO" ? "📖" : "🎮";
-              const label = a.kind === "INFO" ? "Story" : "Game";
+              const label = a.kind === "INFO" ? t("dashboard.storyLabel") : t("dashboard.gameLabel");
 
               return (
                 <div
@@ -770,7 +770,7 @@ export default function StudentDashboard() {
                       </span>
                       {isUpNext && (
                         <span className="flex-shrink-0 text-xs font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                          Up Next!
+                          {t("dashboard.upNextBadge")}
                         </span>
                       )}
                     </div>
@@ -788,7 +788,7 @@ export default function StudentDashboard() {
                       )
                     }
                   >
-                    {isUpNext ? "Play" : "Start"}
+                    {isUpNext ? t("dashboard.play") : t("dashboard.start")}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
