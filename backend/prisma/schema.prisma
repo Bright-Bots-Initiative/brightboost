@@ -28,6 +28,11 @@ model User {
   bio       String   @default("No bio added")
   grade     Int?
 
+  // K-2 Class Code Login
+  loginIcon         String?  // emoji icon for K-2 class-code login
+  loginPin          String?  // optional hashed 4-digit PIN
+  preferredLanguage String?  // "en" or "es"
+
   // Legacy / Hybrid Fields (keep for now to avoid breaking old UI)
   xp        Int      @default(0)
   level     String   @default("Explorer")
@@ -308,12 +313,13 @@ model UserBadge {
 }
 
 model Course {
-  id        String   @id @default(cuid())
-  name      String
-  joinCode  String   @unique @default(cuid())
-  teacherId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  joinCode        String   @unique @default(cuid())
+  teacherId       String
+  defaultLanguage String   @default("en") // class-level language ("en" or "es")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   teacher        User            @relation(fields: [teacherId], references: [id])
   enrollments    Enrollment[]
