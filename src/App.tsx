@@ -39,6 +39,7 @@ import TeacherModulePrep from "./pages/TeacherModulePrep";
 import TeacherResources from "./pages/TeacherResources";
 import TeacherPDHub from "./pages/TeacherPDHub";
 import CommunityImpactDashboard from "./pages/CommunityImpactDashboard";
+import ShowcaseMode from "./pages/ShowcaseMode";
 import StudentClassLogin from "./pages/StudentClassLogin";
 
 // Import styles
@@ -95,6 +96,7 @@ function App() {
                 <Route path="pd" element={<TeacherPDHub />} />
                 <Route path="settings" element={<TeacherSettings />} />
                 <Route path="impact" element={<CommunityImpactDashboard />} />
+                <Route path="showcase" element={<ShowcaseMode />} />
               </Route>
 
               {/* Protected Student Routes (Nested) */}
