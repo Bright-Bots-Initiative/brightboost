@@ -162,7 +162,7 @@ export default function RhymeRideUnityActivity({
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <ActivityHeader title="Rhyme & Ride" visualKey="game" />
+      <ActivityHeader title={t("gameInstructions.rhymeRide.title")} visualKey="game" />
 
       {/* Instructions Card */}
       <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
@@ -172,45 +172,45 @@ export default function RhymeRideUnityActivity({
               <HelpCircle className="w-5 h-5 text-indigo-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-indigo-900 mb-1">How to Play</h3>
+              <h3 className="font-semibold text-indigo-900 mb-1">{t("gameInstructions.rhymeRide.howToPlay")}</h3>
               <p className="text-sm text-indigo-700">
-                Words scroll across the screen. Tap or click the word that rhymes with the prompt word shown at the top!
+                {t("gameInstructions.rhymeRide.howToPlayDesc")}
               </p>
             </div>
             <Dialog open={showHelp} onOpenChange={setShowHelp}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  More Details
+                  {t("gameInstructions.rhymeRide.moreDetails")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">Rhyme & Ride Instructions</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">{t("gameInstructions.rhymeRide.dialogTitle")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <h4 className="font-semibold text-blue-600 mb-1">Objective</h4>
-                    <p className="text-gray-600">Find the word that rhymes with the prompt word before time runs out!</p>
+                    <h4 className="font-semibold text-blue-600 mb-1">{t("gameInstructions.rhymeRide.objective")}</h4>
+                    <p className="text-gray-600">{t("gameInstructions.rhymeRide.objectiveDesc")}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-1">How to Play</h4>
+                    <h4 className="font-semibold text-green-600 mb-1">{t("gameInstructions.rhymeRide.howToPlayLong")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Look at the prompt word at the top of the screen</li>
-                      <li>Words will scroll across in different lanes</li>
-                      <li>Tap/click the word that rhymes with the prompt</li>
-                      <li>Avoid clicking wrong words - you'll lose a life!</li>
+                      <li>{t("gameInstructions.rhymeRide.tip1")}</li>
+                      <li>{t("gameInstructions.rhymeRide.tip2")}</li>
+                      <li>{t("gameInstructions.rhymeRide.tip3")}</li>
+                      <li>{t("gameInstructions.rhymeRide.tip4")}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Tips</h4>
+                    <h4 className="font-semibold text-yellow-600 mb-1">{t("gameInstructions.rhymeRide.tips")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Watch out for tricky words that look similar but don't rhyme</li>
-                      <li>Don't let the correct answer scroll off-screen!</li>
+                      <li>{t("gameInstructions.rhymeRide.tipTricky")}</li>
+                      <li>{t("gameInstructions.rhymeRide.tipScroll")}</li>
                     </ul>
                   </div>
                 </div>
                 <Button onClick={() => setShowHelp(false)} className="mt-4 w-full">
-                  Got it!
+                  {t("gameInstructions.rhymeRide.gotIt")}
                 </Button>
               </DialogContent>
             </Dialog>

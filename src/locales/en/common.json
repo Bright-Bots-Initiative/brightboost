@@ -503,5 +503,266 @@
     "familyActivity2": "Count objects around the house in English and Spanish",
     "familyActivity3": "Draw your favorite animal and label its parts",
     "familyActivity4": "Play a sorting game with household items"
+  },
+  "activityPlayer": {
+    "complete": "Activity Complete!",
+    "youEarned": "You earned",
+    "points": "+{{count}} points",
+    "levelUp": "LEVEL UP! 🆙",
+    "gettingStronger": "You are getting stronger!",
+    "unlocked": "Unlocked {{count}} new ability!",
+    "unlockedPlural": "Unlocked {{count}} new abilities!",
+    "done": "Done",
+    "loadingActivity": "Loading activity...",
+    "notFound": "Activity not found",
+    "backToModule": "Back to Module",
+    "slideOf": "Slide {{current}} of {{total}}",
+    "back": "Back",
+    "next": "Next",
+    "prevSlide": "Previous Slide (←)",
+    "nextSlide": "Next Slide (→)",
+    "startQuiz": "Start Quiz",
+    "backToStory": "Back to Story",
+    "quizSubtitle": "Answer questions to complete the lesson!",
+    "tryAgain": "(Try again!)",
+    "reset": "Reset",
+    "submit": "Submit",
+    "almost": "Almost!",
+    "checkHints": "Check the hints and try again!",
+    "markComplete": "Mark Complete",
+    "unsupported": "Unsupported activity type",
+    "breakTitle": "Time for a Break!",
+    "breakBody": "Great work! You've finished 3 activities! Time to stretch, move around, or try something fun:",
+    "breakReady": "Ready to keep going!",
+    "breakSuggestions": [
+      "Do 10 jumping jacks!",
+      "Draw a picture of what you just learned!",
+      "Tell someone nearby one cool thing you learned!",
+      "Stretch your arms up high like a rocket!",
+      "Look out the window and find something interesting!",
+      "Take 5 deep breaths — in through your nose, out through your mouth!"
+    ]
+  },
+  "gameInstructions": {
+    "rhymeRide": {
+      "title": "Rhyme & Ride",
+      "howToPlay": "How to Play",
+      "howToPlayDesc": "Words scroll across the screen. Tap or click the word that rhymes with the prompt word shown at the top!",
+      "moreDetails": "More Details",
+      "dialogTitle": "Rhyme & Ride Instructions",
+      "objective": "Objective",
+      "objectiveDesc": "Find the word that rhymes with the prompt word before time runs out!",
+      "howToPlayLong": "How to Play",
+      "tip1": "Look at the prompt word at the top of the screen",
+      "tip2": "Words will scroll across in different lanes",
+      "tip3": "Tap/click the word that rhymes with the prompt",
+      "tip4": "Avoid clicking wrong words - you'll lose a life!",
+      "tips": "Tips",
+      "tipTricky": "Watch out for tricky words that look similar but don't rhyme",
+      "tipScroll": "Don't let the correct answer scroll off-screen!",
+      "gotIt": "Got it!"
+    },
+    "bounceBuds": {
+      "title": "Bounce & Buds",
+      "howToPlay": "How to Play",
+      "howToPlayDesc": "Use the paddle to bounce your Buddy through the correct gate! Read the clue and aim for the right answer.",
+      "moreDetails": "More Details",
+      "dialogTitle": "Bounce & Buds Instructions",
+      "objective": "Objective",
+      "objectiveDesc": "Bounce your Buddy ball through the gate that matches the clue!",
+      "controls": "Controls",
+      "control1": "Use arrow keys (Left/Right) or A/D to move the paddle",
+      "control2": "On mobile: drag the paddle left and right",
+      "control3": "Bounce the ball off your paddle to keep it in play",
+      "scoring": "Scoring",
+      "score1": "Hit the correct gate to score a point",
+      "score2": "Wrong gates or falling out costs a life",
+      "score3": "Build a streak for bonus points!",
+      "tips": "Tips",
+      "tip1": "Read the clue carefully before bouncing",
+      "tip2": "Use the obstacles to guide your ball",
+      "tip3": "Take your time - accuracy beats speed!",
+      "gotIt": "Got it!"
+    },
+    "gotchaGears": {
+      "title": "Gotcha Gears",
+      "howToPlay": "How to Play",
+      "howToPlayDesc": "Read the clue, then catch the correct gear! Use arrow keys or tap the lanes to move your catcher.",
+      "moreDetails": "More Details",
+      "dialogTitle": "Gotcha Gears Instructions",
+      "objective": "Objective",
+      "objectiveDesc": "Catch the gear with the correct answer before it scrolls off screen!",
+      "howToPlayLong": "How to Play",
+      "step1": "Planning Phase: Read the clue and watch the gears appear",
+      "step2": "Action Phase: Move your catcher to the right lane",
+      "step3": "Use ↑/↓ arrow keys (or W/S) or tap a lane",
+      "step4": "Press CATCH or click when the gear reaches the catcher zone",
+      "scoring": "Scoring",
+      "score1": "Correct catch = +1 point",
+      "score2": "Wrong catch = Try again (no life lost in kid mode)",
+      "score3": "Missed correct gear = Try again",
+      "tips": "Tips",
+      "tip1": "Watch for gears scrolling on all three lanes",
+      "tip2": "Position early and wait for the right moment!",
+      "tip3": "Speed increases each round - stay focused!",
+      "gotIt": "Got it!"
+    }
+  },
+  "content": {
+    "boost": {
+      "s1": "Hi! I am Boost.",
+      "s2": "I want to bake a cake!",
+      "s3": "Oops… the steps are mixed up!",
+      "s4": "A plan with steps is called an algorithm.",
+      "s5": "Let's put the steps in the right order!",
+      "q1": {
+        "prompt": "What is Boost making?",
+        "c1": "A shoe 👞",
+        "c2": "A cake 🎂",
+        "c3": "A car 🚗",
+        "hint": "Look at the picture with the candles! 🎂"
+      },
+      "q2": {
+        "prompt": "A plan with steps is called…",
+        "c1": "An algorithm 📜",
+        "c2": "Magic ✨",
+        "c3": "A nap 💤",
+        "hint": "It's a big word that starts with A... 📜"
+      },
+      "q3": {
+        "prompt": "What does debug mean?",
+        "c1": "Fix a mistake 🛠️",
+        "c2": "Make a mess 🙃",
+        "c3": "Eat snacks 🍪",
+        "hint": "When something is broken, we have to ___ it. 🛠️"
+      },
+      "reviewKeyIdea": "An algorithm is steps in order. Debug means fix mistakes.",
+      "reviewVocab": "step, order, debug"
+    },
+    "rhymo": {
+      "s1": "Hey there! I'm Rhymo the Rider!",
+      "s2": "Words that sound alike at the end are called rhymes.",
+      "s3": "Cat and hat rhyme because they both end in -at!",
+      "s4": "Can you find the word that rhymes? Let's ride and find out!",
+      "q1": {
+        "prompt": "Which word rhymes with cat?",
+        "c1": "Hat 🎩",
+        "c2": "Dog 🐶",
+        "c3": "Cup ☕",
+        "hint": "It sounds like cat but goes on your head! 🎩"
+      },
+      "q2": {
+        "prompt": "Which word rhymes with sun?",
+        "c1": "Moon 🌙",
+        "c2": "Run 🏃",
+        "c3": "Star ⭐",
+        "hint": "You do this with your legs really fast! 🏃"
+      },
+      "q3": {
+        "prompt": "Words that rhyme sound the same at the…",
+        "c1": "Beginning 🔤",
+        "c2": "End 🔚",
+        "c3": "Middle 🔵",
+        "hint": "Cat and hat both END with -at! 🔚"
+      },
+      "reviewKeyIdea": "Rhyming words sound the same at the end, like cat/hat and sun/run.",
+      "reviewVocab": "rhyme, sound, end"
+    },
+    "buddy": {
+      "s1": "Hi! I'm Buddy. I'm a Bio Explorer! 🌿🔬",
+      "s2": "Living things are made of tiny parts called cells. 🧫",
+      "s3": "Tiny helpers called microbes live in soil and help plants. 🦠",
+      "s4": "We read clues and test ideas—like steps in code! ✅",
+      "q1": {
+        "prompt": "Tiny parts of living things are called…",
+        "c1": "Cells 🧫",
+        "c2": "Rocks 🪨",
+        "c3": "Cars 🚗",
+        "hint": "Cells are tiny building blocks. 🧫"
+      },
+      "q2": {
+        "prompt": "Microbes are…",
+        "c1": "Tiny living helpers 🦠",
+        "c2": "Big elephants 🐘",
+        "c3": "Toys 🧸",
+        "hint": "Microbes are tiny and alive. 🦠"
+      },
+      "q3": {
+        "prompt": "Roots help a plant…",
+        "c1": "Drink water 💧",
+        "c2": "Fly ✈️",
+        "c3": "Sing 🎵",
+        "hint": "Roots take in water from the ground. 💧"
+      },
+      "reviewKeyIdea": "Cells and microbes are tiny parts of life. We read clues and test ideas like scientists!",
+      "reviewVocab": "cell, microbe, root"
+    },
+    "gearbot": {
+      "s1": "Hi! I'm Gearbot. I help robots think! ⚙️🤖",
+      "s2": "Robots need a plan to solve problems. 📝",
+      "s3": "When robots make mistakes, we debug—that means fix! 🛠️",
+      "s4": "Practice helps robots learn, just like you! 🌟",
+      "q1": {
+        "prompt": "What does debug mean?",
+        "c1": "Fix a mistake 🛠️",
+        "c2": "Take a nap 💤",
+        "c3": "Eat lunch 🍕",
+        "hint": "Debug means to fix what went wrong! 🛠️"
+      },
+      "q2": {
+        "prompt": "What helps robots learn?",
+        "c1": "Practice 🌟",
+        "c2": "Skipping ⏭️",
+        "c3": "Hiding 🙈",
+        "hint": "Practice makes progress! 🌟"
+      },
+      "q3": {
+        "prompt": "A plan with steps is called a…",
+        "c1": "Rule 📜",
+        "c2": "Nap 💤",
+        "c3": "Snack 🍪",
+        "hint": "Rules tell us what to do step by step! 📜"
+      },
+      "reviewKeyIdea": "Robots use plans and rules. Debug means fix mistakes. Practice helps us learn!",
+      "reviewVocab": "debug, plan, practice, rule"
+    },
+    "rhymeGame": {
+      "r1": { "prompt": "cat", "correct": "hat", "d1": "dog", "d2": "sun" },
+      "r2": { "prompt": "sun", "correct": "run", "d1": "moon", "d2": "star" },
+      "r3": { "prompt": "bed", "correct": "red", "d1": "blue", "d2": "top" },
+      "r4": { "prompt": "bug", "correct": "hug", "d1": "pin", "d2": "cup" },
+      "r5": { "prompt": "map", "correct": "cap", "d1": "tree", "d2": "car" },
+      "r6": { "prompt": "top", "correct": "mop", "d1": "bed", "d2": "sun" },
+      "r7": { "prompt": "boat", "correct": "coat", "d1": "cat", "d2": "bug" }
+    },
+    "bounceGame": {
+      "r1": { "clue": "A baby plant is a ____.", "correct": "seed", "d1": "leaf", "d2": "rock", "hint": "Seeds can grow!" },
+      "r2": { "clue": "This part drinks water.", "correct": "root", "d1": "leaf", "d2": "sun", "hint": "Roots are under the ground." },
+      "r3": { "clue": "Leaves help plants use ____.", "correct": "sunlight", "d1": "pizza", "d2": "shoes", "hint": "Sunlight helps plants grow." },
+      "r4": { "clue": "Tiny living helpers in soil are ____.", "correct": "microbes", "d1": "cars", "d2": "clouds", "hint": "Microbes are tiny and alive." },
+      "r5": { "clue": "Tiny building blocks are called ____.", "correct": "cells", "d1": "chairs", "d2": "snacks", "hint": "Cells are very small." },
+      "r6": { "clue": "A plant needs water and ____.", "correct": "sunlight", "d1": "tv", "d2": "candy", "hint": "Plants need light." },
+      "r7": { "clue": "A flower can help make ____.", "correct": "seeds", "d1": "socks", "d2": "stones", "hint": "Flowers help plants make seeds." }
+    },
+    "gotchaGame": {
+      "r1": { "clue": "The robot keeps making mistakes. What should it do?", "correct": "debug", "d1": "guess", "d2": "ignore", "hint": "Debug means fix the mistake." },
+      "r2": { "clue": "We want the robot to learn. What helps most?", "correct": "practice", "d1": "skip", "d2": "sleep", "hint": "Practice means try again." },
+      "r3": { "clue": "We need to sort things. What do we pick first?", "correct": "rule", "d1": "random", "d2": "noise", "hint": "A rule tells how to group things." },
+      "r4": { "clue": "The robot needs steps to follow. What is that?", "correct": "plan", "d1": "rush", "d2": "mess", "hint": "A plan is steps in order." },
+      "r5": { "clue": "We look at clues to find an answer. That is called…", "correct": "pattern", "d1": "luck", "d2": "magic", "hint": "A pattern repeats or matches." },
+      "r6": { "clue": "The robot tries something new. What is it doing?", "correct": "testing", "d1": "sleeping", "d2": "hiding", "hint": "Testing means trying to see if it works." },
+      "r7": { "clue": "We teach the robot by giving it…", "correct": "data", "d1": "candy", "d2": "toys", "hint": "Data is information the robot uses to learn." }
+    },
+    "seqGame": {
+      "l1": {
+        "c1": "Pour", "c2": "Bake", "c3": "Frost", "c4": "Eat"
+      },
+      "l2": {
+        "c1": "Turn water on", "c2": "Wash", "c3": "Soap", "c4": "Rinse", "c5": "Dry"
+      },
+      "l3": {
+        "c1": "Plan", "c2": "Code", "c3": "Test", "c4": "Fix", "c5": "Share"
+      }
+    }
   }
 }

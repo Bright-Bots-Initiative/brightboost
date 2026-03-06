@@ -217,7 +217,7 @@ export default function GotchaGearsUnityActivity({
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <ActivityHeader title="Gotcha Gears" visualKey="game" />
+      <ActivityHeader title={t("gameInstructions.gotchaGears.title")} visualKey="game" />
 
       {/* Instructions Card */}
       <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
@@ -227,54 +227,54 @@ export default function GotchaGearsUnityActivity({
               <HelpCircle className="w-5 h-5 text-orange-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-orange-900 mb-1">How to Play</h3>
+              <h3 className="font-semibold text-orange-900 mb-1">{t("gameInstructions.gotchaGears.howToPlay")}</h3>
               <p className="text-sm text-orange-700">
-                Read the clue, then catch the correct gear! Use arrow keys or tap the lanes to move your catcher.
+                {t("gameInstructions.gotchaGears.howToPlayDesc")}
               </p>
             </div>
             <Dialog open={showHelp} onOpenChange={setShowHelp}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  More Details
+                  {t("gameInstructions.gotchaGears.moreDetails")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">Gotcha Gears Instructions</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">{t("gameInstructions.gotchaGears.dialogTitle")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <h4 className="font-semibold text-orange-600 mb-1">Objective</h4>
-                    <p className="text-gray-600">Catch the gear with the correct answer before it scrolls off screen!</p>
+                    <h4 className="font-semibold text-orange-600 mb-1">{t("gameInstructions.gotchaGears.objective")}</h4>
+                    <p className="text-gray-600">{t("gameInstructions.gotchaGears.objectiveDesc")}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-1">How to Play</h4>
+                    <h4 className="font-semibold text-green-600 mb-1">{t("gameInstructions.gotchaGears.howToPlayLong")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li><strong>Planning Phase:</strong> Read the clue and watch the gears appear</li>
-                      <li><strong>Action Phase:</strong> Move your catcher to the right lane</li>
-                      <li>Use ↑/↓ arrow keys (or W/S) or tap a lane</li>
-                      <li>Press CATCH or click when the gear reaches the catcher zone</li>
+                      <li>{t("gameInstructions.gotchaGears.step1")}</li>
+                      <li>{t("gameInstructions.gotchaGears.step2")}</li>
+                      <li>{t("gameInstructions.gotchaGears.step3")}</li>
+                      <li>{t("gameInstructions.gotchaGears.step4")}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-blue-600 mb-1">Scoring</h4>
+                    <h4 className="font-semibold text-blue-600 mb-1">{t("gameInstructions.gotchaGears.scoring")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Correct catch = +1 point</li>
-                      <li>Wrong catch = Try again (no life lost in kid mode)</li>
-                      <li>Missed correct gear = Try again</li>
+                      <li>{t("gameInstructions.gotchaGears.score1")}</li>
+                      <li>{t("gameInstructions.gotchaGears.score2")}</li>
+                      <li>{t("gameInstructions.gotchaGears.score3")}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Tips</h4>
+                    <h4 className="font-semibold text-yellow-600 mb-1">{t("gameInstructions.gotchaGears.tips")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Watch for gears scrolling on all three lanes</li>
-                      <li>Position early and wait for the right moment!</li>
-                      <li>Speed increases each round - stay focused!</li>
+                      <li>{t("gameInstructions.gotchaGears.tip1")}</li>
+                      <li>{t("gameInstructions.gotchaGears.tip2")}</li>
+                      <li>{t("gameInstructions.gotchaGears.tip3")}</li>
                     </ul>
                   </div>
                 </div>
                 <Button onClick={() => setShowHelp(false)} className="mt-4 w-full">
-                  Got it!
+                  {t("gameInstructions.gotchaGears.gotIt")}
                 </Button>
               </DialogContent>
             </Dialog>

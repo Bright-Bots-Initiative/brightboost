@@ -168,7 +168,7 @@ export default function BounceBudsUnityActivity({
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <ActivityHeader title="Bounce & Buds" visualKey="game" />
+      <ActivityHeader title={t("gameInstructions.bounceBuds.title")} visualKey="game" />
 
       {/* Instructions Card */}
       <Card className="bg-gradient-to-r from-green-50 to-teal-50 border-green-200">
@@ -178,53 +178,53 @@ export default function BounceBudsUnityActivity({
               <HelpCircle className="w-5 h-5 text-green-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-green-900 mb-1">How to Play</h3>
+              <h3 className="font-semibold text-green-900 mb-1">{t("gameInstructions.bounceBuds.howToPlay")}</h3>
               <p className="text-sm text-green-700">
-                Use the paddle to bounce your Buddy through the correct gate! Read the clue and aim for the right answer.
+                {t("gameInstructions.bounceBuds.howToPlayDesc")}
               </p>
             </div>
             <Dialog open={showHelp} onOpenChange={setShowHelp}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  More Details
+                  {t("gameInstructions.bounceBuds.moreDetails")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">Bounce & Buds Instructions</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">{t("gameInstructions.bounceBuds.dialogTitle")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <h4 className="font-semibold text-blue-600 mb-1">Objective</h4>
-                    <p className="text-gray-600">Bounce your Buddy ball through the gate that matches the clue!</p>
+                    <h4 className="font-semibold text-blue-600 mb-1">{t("gameInstructions.bounceBuds.objective")}</h4>
+                    <p className="text-gray-600">{t("gameInstructions.bounceBuds.objectiveDesc")}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-1">Controls</h4>
+                    <h4 className="font-semibold text-green-600 mb-1">{t("gameInstructions.bounceBuds.controls")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Use arrow keys (Left/Right) or A/D to move the paddle</li>
-                      <li>On mobile: drag the paddle left and right</li>
-                      <li>Bounce the ball off your paddle to keep it in play</li>
+                      <li>{t("gameInstructions.bounceBuds.control1")}</li>
+                      <li>{t("gameInstructions.bounceBuds.control2")}</li>
+                      <li>{t("gameInstructions.bounceBuds.control3")}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-purple-600 mb-1">Scoring</h4>
+                    <h4 className="font-semibold text-purple-600 mb-1">{t("gameInstructions.bounceBuds.scoring")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Hit the correct gate to score a point</li>
-                      <li>Wrong gates or falling out costs a life</li>
-                      <li>Build a streak for bonus points!</li>
+                      <li>{t("gameInstructions.bounceBuds.score1")}</li>
+                      <li>{t("gameInstructions.bounceBuds.score2")}</li>
+                      <li>{t("gameInstructions.bounceBuds.score3")}</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-yellow-600 mb-1">Tips</h4>
+                    <h4 className="font-semibold text-yellow-600 mb-1">{t("gameInstructions.bounceBuds.tips")}</h4>
                     <ul className="text-gray-600 list-disc list-inside space-y-1">
-                      <li>Read the clue carefully before bouncing</li>
-                      <li>Use the obstacles to guide your ball</li>
-                      <li>Take your time - accuracy beats speed!</li>
+                      <li>{t("gameInstructions.bounceBuds.tip1")}</li>
+                      <li>{t("gameInstructions.bounceBuds.tip2")}</li>
+                      <li>{t("gameInstructions.bounceBuds.tip3")}</li>
                     </ul>
                   </div>
                 </div>
                 <Button onClick={() => setShowHelp(false)} className="mt-4 w-full">
-                  Got it!
+                  {t("gameInstructions.bounceBuds.gotIt")}
                 </Button>
               </DialogContent>
             </Dialog>

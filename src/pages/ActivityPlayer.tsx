@@ -91,14 +91,7 @@ export default function ActivityPlayer() {
   // Per-question shuffled choice order: questionId → shuffled array of original indices
   const [shuffleMap, setShuffleMap] = useState<Record<string, number[]>>({});
 
-  const BREAK_SUGGESTIONS = [
-    "Do 10 jumping jacks!",
-    "Draw a picture of what you just learned!",
-    "Tell someone nearby one cool thing you learned!",
-    "Stretch your arms up high like a rocket!",
-    "Look out the window and find something interesting!",
-    "Take 5 deep breaths — in through your nose, out through your mouth!",
-  ];
+  const breakSuggestions = t("activityPlayer.breakSuggestions", { returnObjects: true }) as string[];
 
   const startMsRef = useRef<number>(Date.now());
 
@@ -179,8 +172,8 @@ export default function ActivityPlayer() {
       })
       .catch((e) => {
         toast({
-          title: "Oops!",
-          description: "Something went wrong loading this activity. Try again!",
+          title: t("common.oops"),
+          description: t("activity.loadError"),
           variant: "destructive",
         });
       })
@@ -211,8 +204,8 @@ export default function ActivityPlayer() {
       });
       setCompletionData(res);
       toast({
-        title: "Activity Completed!",
-        description: res.reward?.xpDelta ? `+${res.reward.xpDelta} points!` : "Awesome, saved!"
+        title: t("activity.completed"),
+        description: res.reward?.xpDelta ? t("activityPlayer.points", { count: res.reward.xpDelta }) : t("activity.saved")
       });
 
       // Track session completions for break-time interstitial
@@ -223,8 +216,8 @@ export default function ActivityPlayer() {
       }
     } catch {
       toast({
-        title: "Oops!",
-        description: "We couldn't save that one. Try again!",
+        title: t("common.oops"),
+        description: t("activity.saveError"),
         variant: "destructive",
       });
     }
@@ -250,25 +243,25 @@ export default function ActivityPlayer() {
             </div>
 
             <h2 className="text-3xl font-black text-brightboost-navy">
-              Activity Complete!
+              {t("activityPlayer.complete")}
             </h2>
 
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-2">
-                <div className="text-gray-500 text-lg">You earned</div>
+                <div className="text-gray-500 text-lg">{t("activityPlayer.youEarned")}</div>
                 <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
                   <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
-                  {reward?.xpDelta ? `+${reward.xpDelta}` : "+0"} points
+                  {t("activityPlayer.points", { count: reward?.xpDelta ?? 0 })}
                 </div>
               </div>
 
               {isLevelUp && (
                 <div className="p-3 bg-purple-100 rounded-lg animate-bounce border border-purple-200">
                   <div className="text-2xl font-bold text-purple-700">
-                    LEVEL UP! 🆙
+                    {t("activityPlayer.levelUp")}
                   </div>
                   <div className="text-sm text-purple-600">
-                    You are getting stronger!
+                    {t("activityPlayer.gettingStronger")}
                   </div>
                 </div>
               )}
@@ -292,8 +285,7 @@ export default function ActivityPlayer() {
 
               {reward?.newAbilitiesDelta > 0 && (
                 <div className="text-blue-600 font-semibold bg-blue-50 p-2 rounded border border-blue-100">
-                  Unlocked {reward.newAbilitiesDelta} new abilit
-                  {reward.newAbilitiesDelta > 1 ? "ies" : "y"}! ⚡
+                  {t(reward.newAbilitiesDelta > 1 ? "activityPlayer.unlockedPlural" : "activityPlayer.unlocked", { count: reward.newAbilitiesDelta })} {"⚡"}
                 </div>
               )}
             </div>
@@ -303,7 +295,7 @@ export default function ActivityPlayer() {
               className="w-full text-lg gap-2"
               onClick={() => navigate(`/student/modules/${slug}`)}
             >
-              Done <ArrowRight className="w-5 h-5" />
+              {t("activityPlayer.done")} <ArrowRight className="w-5 h-5" />
             </Button>
           </CardContent>
         </Card>
@@ -314,16 +306,16 @@ export default function ActivityPlayer() {
             <DialogHeader>
               <DialogTitle className="text-2xl font-extrabold flex items-center justify-center gap-2">
                 <TreePine className="w-7 h-7 text-green-600" />
-                Time for a Break!
+                {t("activityPlayer.breakTitle")}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <p className="text-lg text-slate-700">
-                Great work! You've finished 3 activities! Time to stretch, move around, or try something fun:
+                {t("activityPlayer.breakBody")}
               </p>
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
                 <p className="text-green-800 font-semibold text-lg">
-                  {BREAK_SUGGESTIONS[Math.floor(Math.random() * BREAK_SUGGESTIONS.length)]}
+                  {breakSuggestions[Math.floor(Math.random() * breakSuggestions.length)]}
                 </p>
               </div>
             </div>
@@ -332,7 +324,7 @@ export default function ActivityPlayer() {
               className="w-full text-lg"
               onClick={() => setShowBreak(false)}
             >
-              Ready to keep going!
+              {t("activityPlayer.breakReady")}
             </Button>
           </DialogContent>
         </Dialog>
@@ -341,7 +333,7 @@ export default function ActivityPlayer() {
   }
 
   if (loading) {
-    return <div className="p-6">Loading activity...</div>;
+    return <div className="p-6">{t("activityPlayer.loadingActivity")}</div>;
   }
 
   if (!module || !activity) {
@@ -349,13 +341,13 @@ export default function ActivityPlayer() {
       <div className="p-6 max-w-2xl mx-auto">
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="text-lg font-semibold">Activity not found</div>
+            <div className="text-lg font-semibold">{t("activityPlayer.notFound")}</div>
             <Button
               onClick={() =>
                 navigate(slug ? `/student/modules/${slug}` : "/student/modules")
               }
             >
-              Back to Module
+              {t("activityPlayer.backToModule")}
             </Button>
           </CardContent>
         </Card>
@@ -390,7 +382,7 @@ export default function ActivityPlayer() {
                 >
                   Back
                 </Button>
-                <Button onClick={handleComplete}>Mark Complete</Button>
+                <Button onClick={handleComplete}>{t("activityPlayer.markComplete")}</Button>
               </div>
             </CardContent>
           </Card>
@@ -409,7 +401,7 @@ export default function ActivityPlayer() {
           <ActivityHeader
             title={activity.title}
             visualKey="story"
-            subtitle={`Slide ${Math.min(slideIndex + 1, slides.length)} of ${slides.length}`}
+            subtitle={t("activityPlayer.slideOf", { current: Math.min(slideIndex + 1, slides.length), total: slides.length })}
           />
           <div className="flex items-center justify-between">
             <Button
@@ -447,13 +439,13 @@ export default function ActivityPlayer() {
                   variant="outline"
                   disabled={slideIndex === 0}
                   onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
-                  aria-label="Go to previous slide"
+                  aria-label={t("activityPlayer.prevSlide")}
                 >
-                  Back
+                  {t("activityPlayer.back")}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Previous Slide (←)</p>
+                <p>{t("activityPlayer.prevSlide")}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -464,17 +456,17 @@ export default function ActivityPlayer() {
                     onClick={() =>
                       setSlideIndex((i) => Math.min(slides.length - 1, i + 1))
                     }
-                    aria-label="Go to next slide"
+                    aria-label={t("activityPlayer.nextSlide")}
                   >
-                    Next
+                    {t("activityPlayer.next")}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Next Slide (→)</p>
+                  <p>{t("activityPlayer.nextSlide")}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <Button onClick={() => setMode("quiz")}>Start Quiz</Button>
+              <Button onClick={() => setMode("quiz")}>{t("activityPlayer.startQuiz")}</Button>
             )}
           </div>
         </div>
@@ -487,11 +479,11 @@ export default function ActivityPlayer() {
         <ActivityHeader
           title={activity.title}
           visualKey="quiz"
-          subtitle="Answer questions to complete the lesson!"
+          subtitle={t("activityPlayer.quizSubtitle")}
         />
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => setMode("story")}>
-            Back to Story
+            {t("activityPlayer.backToStory")}
           </Button>
         </div>
 
@@ -506,7 +498,7 @@ export default function ActivityPlayer() {
                     {resolveText(t, q.prompt)}
                     {isWrong && (
                       <span className="text-red-500 ml-2 text-sm">
-                        (Try again!)
+                        {t("activityPlayer.tryAgain")}
                       </span>
                     )}
                   </div>
@@ -559,7 +551,7 @@ export default function ActivityPlayer() {
                   setIncorrectIds([]);
                 }}
               >
-                Reset
+                {t("activityPlayer.reset")}
               </Button>
               <Button
                 disabled={!allAnswered}
@@ -574,12 +566,12 @@ export default function ActivityPlayer() {
                   setSubmitted(true);
                   setIncorrectIds(incorrect.map((q) => q.id));
                   toast({
-                    title: "Almost!",
-                    description: `Check the hints and try again!`,
+                    title: t("activityPlayer.almost"),
+                    description: t("activityPlayer.checkHints"),
                   });
                 }}
               >
-                Submit
+                {t("activityPlayer.submit")}
               </Button>
             </div>
           </CardContent>
@@ -651,7 +643,7 @@ export default function ActivityPlayer() {
               >
                 Back
               </Button>
-              <Button onClick={handleComplete}>Mark Complete</Button>
+              <Button onClick={handleComplete}>{t("activityPlayer.markComplete")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -663,12 +655,12 @@ export default function ActivityPlayer() {
     <div className="p-6 max-w-2xl mx-auto">
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="text-xl font-bold">Unsupported activity type</div>
+          <div className="text-xl font-bold">{t("activityPlayer.unsupported")}</div>
           <Button
             onClick={() => navigate(`/student/modules/${slug}`)}
             variant="outline"
           >
-            Back to Module
+            {t("activityPlayer.backToModule")}
           </Button>
         </CardContent>
       </Card>

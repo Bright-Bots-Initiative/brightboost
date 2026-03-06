@@ -503,5 +503,266 @@
     "familyActivity2": "Cuenta objetos de la casa en inglés y español",
     "familyActivity3": "Dibuja tu animal favorito y etiqueta sus partes",
     "familyActivity4": "Juega un juego de clasificación con cosas de la casa"
+  },
+  "activityPlayer": {
+    "complete": "¡Actividad Completada!",
+    "youEarned": "Ganaste",
+    "points": "+{{count}} puntos",
+    "levelUp": "¡SUBISTE DE NIVEL! 🆙",
+    "gettingStronger": "¡Te estás haciendo más fuerte!",
+    "unlocked": "¡Desbloqueaste {{count}} nueva habilidad!",
+    "unlockedPlural": "¡Desbloqueaste {{count}} nuevas habilidades!",
+    "done": "Listo",
+    "loadingActivity": "Cargando actividad...",
+    "notFound": "Actividad no encontrada",
+    "backToModule": "Volver al Módulo",
+    "slideOf": "Página {{current}} de {{total}}",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "prevSlide": "Página anterior (←)",
+    "nextSlide": "Siguiente página (→)",
+    "startQuiz": "Empezar el Quiz",
+    "backToStory": "Volver a la Historia",
+    "quizSubtitle": "¡Responde las preguntas para completar la lección!",
+    "tryAgain": "(¡Inténtalo de nuevo!)",
+    "reset": "Reiniciar",
+    "submit": "Enviar",
+    "almost": "¡Casi!",
+    "checkHints": "¡Revisa las pistas e inténtalo de nuevo!",
+    "markComplete": "Marcar Completado",
+    "unsupported": "Tipo de actividad no soportado",
+    "breakTitle": "¡Hora de un Descanso!",
+    "breakBody": "¡Buen trabajo! ¡Terminaste 3 actividades! Es hora de estirarte, moverte o probar algo divertido:",
+    "breakReady": "¡Listo para seguir!",
+    "breakSuggestions": [
+      "¡Haz 10 saltos de tijera!",
+      "¡Dibuja lo que acabas de aprender!",
+      "¡Cuéntale a alguien algo genial que aprendiste!",
+      "¡Estira los brazos bien alto como un cohete!",
+      "¡Mira por la ventana y encuentra algo interesante!",
+      "¡Respira profundo 5 veces — inhala por la nariz, exhala por la boca!"
+    ]
+  },
+  "gameInstructions": {
+    "rhymeRide": {
+      "title": "Rima y Viaje",
+      "howToPlay": "Cómo Jugar",
+      "howToPlayDesc": "Las palabras pasan por la pantalla. ¡Toca o haz clic en la palabra que rima con la palabra de arriba!",
+      "moreDetails": "Más Detalles",
+      "dialogTitle": "Instrucciones de Rima y Viaje",
+      "objective": "Objetivo",
+      "objectiveDesc": "¡Encuentra la palabra que rima con la palabra clave antes de que se acabe el tiempo!",
+      "howToPlayLong": "Cómo Jugar",
+      "tip1": "Mira la palabra clave en la parte de arriba",
+      "tip2": "Las palabras pasarán por diferentes carriles",
+      "tip3": "Toca/haz clic en la palabra que rima con la clave",
+      "tip4": "¡No toques palabras incorrectas — perderás una vida!",
+      "tips": "Consejos",
+      "tipTricky": "¡Cuidado con palabras que se parecen pero no riman!",
+      "tipScroll": "¡No dejes que la respuesta correcta se escape de la pantalla!",
+      "gotIt": "¡Entendido!"
+    },
+    "bounceBuds": {
+      "title": "Rebota y Amigos",
+      "howToPlay": "Cómo Jugar",
+      "howToPlayDesc": "¡Usa la paleta para rebotar a tu Amigo por la puerta correcta! Lee la pista y apunta a la respuesta.",
+      "moreDetails": "Más Detalles",
+      "dialogTitle": "Instrucciones de Rebota y Amigos",
+      "objective": "Objetivo",
+      "objectiveDesc": "¡Rebota la pelota de tu Amigo por la puerta que coincide con la pista!",
+      "controls": "Controles",
+      "control1": "Usa las flechas (Izquierda/Derecha) o A/D para mover la paleta",
+      "control2": "En el celular: arrastra la paleta a izquierda y derecha",
+      "control3": "Rebota la pelota en tu paleta para mantenerla en juego",
+      "scoring": "Puntuación",
+      "score1": "Pasa por la puerta correcta para ganar un punto",
+      "score2": "Puertas incorrectas o caerse cuesta una vida",
+      "score3": "¡Haz una racha para puntos extra!",
+      "tips": "Consejos",
+      "tip1": "Lee la pista con cuidado antes de rebotar",
+      "tip2": "Usa los obstáculos para guiar tu pelota",
+      "tip3": "¡Tómate tu tiempo — la precisión gana!",
+      "gotIt": "¡Entendido!"
+    },
+    "gotchaGears": {
+      "title": "Engranajes Gotcha",
+      "howToPlay": "Cómo Jugar",
+      "howToPlayDesc": "¡Lee la pista y atrapa el engranaje correcto! Usa las flechas o toca los carriles para mover tu atrapador.",
+      "moreDetails": "Más Detalles",
+      "dialogTitle": "Instrucciones de Engranajes Gotcha",
+      "objective": "Objetivo",
+      "objectiveDesc": "¡Atrapa el engranaje con la respuesta correcta antes de que se escape!",
+      "howToPlayLong": "Cómo Jugar",
+      "step1": "Fase de Planificación: Lee la pista y mira los engranajes aparecer",
+      "step2": "Fase de Acción: Mueve tu atrapador al carril correcto",
+      "step3": "Usa las flechas ↑/↓ (o W/S) o toca un carril",
+      "step4": "Presiona ATRAPAR o haz clic cuando el engranaje llegue a la zona",
+      "scoring": "Puntuación",
+      "score1": "Atrapar correcto = +1 punto",
+      "score2": "Atrapar incorrecto = Intenta de nuevo (sin perder vida)",
+      "score3": "Engranaje perdido = Intenta de nuevo",
+      "tips": "Consejos",
+      "tip1": "Mira los engranajes pasando por los tres carriles",
+      "tip2": "¡Posiciónate temprano y espera el momento justo!",
+      "tip3": "¡La velocidad aumenta cada ronda — mantente atento!",
+      "gotIt": "¡Entendido!"
+    }
+  },
+  "content": {
+    "boost": {
+      "s1": "¡Hola! Soy Boost.",
+      "s2": "¡Quiero hacer un pastel!",
+      "s3": "¡Ay… los pasos están mezclados!",
+      "s4": "Un plan con pasos se llama algoritmo.",
+      "s5": "¡Pongamos los pasos en el orden correcto!",
+      "q1": {
+        "prompt": "¿Qué está haciendo Boost?",
+        "c1": "Un zapato 👞",
+        "c2": "Un pastel 🎂",
+        "c3": "Un carro 🚗",
+        "hint": "¡Mira la imagen con las velitas! 🎂"
+      },
+      "q2": {
+        "prompt": "Un plan con pasos se llama…",
+        "c1": "Un algoritmo 📜",
+        "c2": "Magia ✨",
+        "c3": "Una siesta 💤",
+        "hint": "Es una palabra grande que empieza con A... 📜"
+      },
+      "q3": {
+        "prompt": "¿Qué significa depurar?",
+        "c1": "Arreglar un error 🛠️",
+        "c2": "Hacer un desorden 🙃",
+        "c3": "Comer galletas 🍪",
+        "hint": "Cuando algo está roto, tenemos que ___. 🛠️"
+      },
+      "reviewKeyIdea": "Un algoritmo son pasos en orden. Depurar significa arreglar errores.",
+      "reviewVocab": "paso, orden, depurar"
+    },
+    "rhymo": {
+      "s1": "¡Hola! ¡Soy Rhymo el Ciclista!",
+      "s2": "Las palabras que suenan igual al final se llaman rimas.",
+      "s3": "¡Gato y pato riman porque terminan en -ato!",
+      "s4": "¿Puedes encontrar la palabra que rima? ¡Vamos a descubrirlo!",
+      "q1": {
+        "prompt": "¿Qué rima con gato?",
+        "c1": "Pato 🦆",
+        "c2": "Perro 🐕",
+        "c3": "Mesa 🪑",
+        "hint": "¡Suena como gato y nada en el agua! 🦆"
+      },
+      "q2": {
+        "prompt": "¿Qué rima con sol?",
+        "c1": "Luna 🌙",
+        "c2": "Col 🥬",
+        "c3": "Flor 🌸",
+        "hint": "¡Es una verdura verde que rima con sol! 🥬"
+      },
+      "q3": {
+        "prompt": "Las rimas suenan igual al…",
+        "c1": "Inicio 🔤",
+        "c2": "Final 🔚",
+        "c3": "Medio 🔵",
+        "hint": "¡Gato y pato terminan igual en -ato! 🔚"
+      },
+      "reviewKeyIdea": "Las palabras que riman suenan igual al final, como gato/pato y sol/col.",
+      "reviewVocab": "rima, sonido, final"
+    },
+    "buddy": {
+      "s1": "¡Hola! Soy Buddy. ¡Soy un Explorador Bio! 🌿🔬",
+      "s2": "Los seres vivos están hechos de partes diminutas llamadas células. 🧫",
+      "s3": "Pequeños ayudantes llamados microbios viven en la tierra y ayudan a las plantas. 🦠",
+      "s4": "¡Leemos pistas y probamos ideas — como pasos en código! ✅",
+      "q1": {
+        "prompt": "Las partes diminutas de los seres vivos se llaman…",
+        "c1": "Células 🧫",
+        "c2": "Rocas 🪨",
+        "c3": "Carros 🚗",
+        "hint": "Las células son bloques diminutos. 🧫"
+      },
+      "q2": {
+        "prompt": "Los microbios son…",
+        "c1": "Pequeños ayudantes vivos 🦠",
+        "c2": "Elefantes grandes 🐘",
+        "c3": "Juguetes 🧸",
+        "hint": "Los microbios son diminutos y están vivos. 🦠"
+      },
+      "q3": {
+        "prompt": "Las raíces ayudan a una planta a…",
+        "c1": "Beber agua 💧",
+        "c2": "Volar ✈️",
+        "c3": "Cantar 🎵",
+        "hint": "Las raíces toman agua del suelo. 💧"
+      },
+      "reviewKeyIdea": "Las células y los microbios son partes diminutas de la vida. ¡Leemos pistas y probamos ideas como científicos!",
+      "reviewVocab": "célula, microbio, raíz"
+    },
+    "gearbot": {
+      "s1": "¡Hola! Soy Gearbot. ¡Ayudo a los robots a pensar! ⚙️🤖",
+      "s2": "Los robots necesitan un plan para resolver problemas. 📝",
+      "s3": "Cuando los robots se equivocan, depuramos — ¡eso significa arreglar! 🛠️",
+      "s4": "¡La práctica ayuda a los robots a aprender, igual que a ti! 🌟",
+      "q1": {
+        "prompt": "¿Qué significa depurar?",
+        "c1": "Arreglar un error 🛠️",
+        "c2": "Tomar una siesta 💤",
+        "c3": "Comer pizza 🍕",
+        "hint": "¡Depurar significa arreglar lo que salió mal! 🛠️"
+      },
+      "q2": {
+        "prompt": "¿Qué ayuda a los robots a aprender?",
+        "c1": "Practicar 🌟",
+        "c2": "Saltarse todo ⏭️",
+        "c3": "Esconderse 🙈",
+        "hint": "¡Practicar es progresar! 🌟"
+      },
+      "q3": {
+        "prompt": "Un plan con pasos se llama…",
+        "c1": "Regla 📜",
+        "c2": "Siesta 💤",
+        "c3": "Merienda 🍪",
+        "hint": "¡Las reglas nos dicen qué hacer paso a paso! 📜"
+      },
+      "reviewKeyIdea": "Los robots usan planes y reglas. Depurar significa arreglar errores. ¡La práctica nos ayuda a aprender!",
+      "reviewVocab": "depurar, plan, practicar, regla"
+    },
+    "rhymeGame": {
+      "r1": { "prompt": "gato", "correct": "pato", "d1": "mesa", "d2": "sol" },
+      "r2": { "prompt": "sol", "correct": "col", "d1": "luna", "d2": "flor" },
+      "r3": { "prompt": "casa", "correct": "masa", "d1": "pez", "d2": "luz" },
+      "r4": { "prompt": "luna", "correct": "cuna", "d1": "pan", "d2": "mar" },
+      "r5": { "prompt": "pez", "correct": "diez", "d1": "oso", "d2": "rey" },
+      "r6": { "prompt": "flor", "correct": "color", "d1": "pan", "d2": "gato" },
+      "r7": { "prompt": "pan", "correct": "van", "d1": "sol", "d2": "pez" }
+    },
+    "bounceGame": {
+      "r1": { "clue": "Una planta bebé es una ____.", "correct": "semilla", "d1": "hoja", "d2": "roca", "hint": "¡Las semillas pueden crecer!" },
+      "r2": { "clue": "Esta parte bebe agua.", "correct": "raíz", "d1": "hoja", "d2": "sol", "hint": "Las raíces están bajo la tierra." },
+      "r3": { "clue": "Las hojas ayudan a las plantas a usar ____.", "correct": "luz solar", "d1": "pizza", "d2": "zapatos", "hint": "La luz solar ayuda a las plantas a crecer." },
+      "r4": { "clue": "Pequeños ayudantes vivos en la tierra son ____.", "correct": "microbios", "d1": "carros", "d2": "nubes", "hint": "Los microbios son diminutos y están vivos." },
+      "r5": { "clue": "Los bloques diminutos se llaman ____.", "correct": "células", "d1": "sillas", "d2": "galletas", "hint": "Las células son muy pequeñas." },
+      "r6": { "clue": "Una planta necesita agua y ____.", "correct": "luz solar", "d1": "tele", "d2": "dulces", "hint": "Las plantas necesitan luz." },
+      "r7": { "clue": "Una flor puede ayudar a hacer ____.", "correct": "semillas", "d1": "calcetines", "d2": "piedras", "hint": "Las flores ayudan a las plantas a hacer semillas." }
+    },
+    "gotchaGame": {
+      "r1": { "clue": "El robot sigue cometiendo errores. ¿Qué debe hacer?", "correct": "depurar", "d1": "adivinar", "d2": "ignorar", "hint": "Depurar significa arreglar el error." },
+      "r2": { "clue": "Queremos que el robot aprenda. ¿Qué ayuda más?", "correct": "practicar", "d1": "saltarse", "d2": "dormir", "hint": "Practicar significa intentar de nuevo." },
+      "r3": { "clue": "Necesitamos ordenar cosas. ¿Qué elegimos primero?", "correct": "regla", "d1": "al azar", "d2": "ruido", "hint": "Una regla dice cómo agrupar cosas." },
+      "r4": { "clue": "El robot necesita pasos a seguir. ¿Qué es eso?", "correct": "plan", "d1": "prisa", "d2": "lío", "hint": "Un plan son pasos en orden." },
+      "r5": { "clue": "Buscamos pistas para encontrar una respuesta. Eso se llama…", "correct": "patrón", "d1": "suerte", "d2": "magia", "hint": "Un patrón se repite o coincide." },
+      "r6": { "clue": "El robot prueba algo nuevo. ¿Qué está haciendo?", "correct": "probar", "d1": "dormir", "d2": "esconder", "hint": "Probar significa ver si funciona." },
+      "r7": { "clue": "Le enseñamos al robot dándole…", "correct": "datos", "d1": "dulces", "d2": "juguetes", "hint": "Los datos son información que el robot usa para aprender." }
+    },
+    "seqGame": {
+      "l1": {
+        "c1": "Verter", "c2": "Hornear", "c3": "Decorar", "c4": "Comer"
+      },
+      "l2": {
+        "c1": "Abrir el agua", "c2": "Lavar", "c3": "Jabón", "c4": "Enjuagar", "c5": "Secar"
+      },
+      "l3": {
+        "c1": "Planear", "c2": "Programar", "c3": "Probar", "c4": "Arreglar", "c5": "Compartir"
+      }
+    }
   }
 }
