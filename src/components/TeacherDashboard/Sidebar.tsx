@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   BookOpen,
   Users,
@@ -14,14 +15,14 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { name: "Lessons", path: "/teacher/dashboard", icon: BookOpen },
-  { name: "Students", path: "/teacher/students", icon: Users },
-  { name: "Classes", path: "/teacher/classes", icon: School },
-  { name: "Resources", path: "/teacher/resources", icon: FolderOpen },
-  { name: "PD Hub", path: "/teacher/pd", icon: GraduationCap },
-  { name: "Impact", path: "/teacher/impact", icon: BarChart3 },
-  { name: "Showcase", path: "/teacher/showcase", icon: Trophy },
-  { name: "Settings", path: "/teacher/settings", icon: Settings },
+  { i18nKey: "teacher.nav.lessons", path: "/teacher/dashboard", icon: BookOpen },
+  { i18nKey: "teacher.nav.students", path: "/teacher/students", icon: Users },
+  { i18nKey: "teacher.nav.classes", path: "/teacher/classes", icon: School },
+  { i18nKey: "teacher.nav.resources", path: "/teacher/resources", icon: FolderOpen },
+  { i18nKey: "teacher.nav.pdHub", path: "/teacher/pd", icon: GraduationCap },
+  { i18nKey: "teacher.nav.impact", path: "/teacher/impact", icon: BarChart3 },
+  { i18nKey: "teacher.nav.showcase", path: "/teacher/showcase", icon: Trophy },
+  { i18nKey: "teacher.nav.settings", path: "/teacher/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -37,6 +38,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onMobileClose,
 }) => {
+  const { t } = useTranslation();
+
   const sidebarContent = (
     <div
       className={`h-screen bg-gray-800 text-white p-4 space-y-2 fixed top-0 left-0 shadow-lg z-40 flex flex-col transition-[width] duration-200 ease-in-out ${
@@ -44,38 +47,41 @@ const Sidebar: React.FC<SidebarProps> = ({
       } hidden md:flex`}
     >
       {/* Header */}
-      <div className={`mb-4 ${collapsed ? "text-center" : "text-center"}`}>
+      <div className="mb-4 text-center">
         {!collapsed && (
           <h2 className="text-lg font-semibold whitespace-nowrap overflow-hidden">
-            Teacher Admin
+            {t("teacher.admin")}
           </h2>
         )}
       </div>
 
       {/* Nav items */}
       <nav className="flex-1 space-y-1">
-        {navItems.map(({ name, path, icon: Icon }) => (
-          <NavLink
-            key={name}
-            to={path}
-            title={collapsed ? name : undefined}
-            className={({ isActive }) =>
-              `flex items-center gap-3 py-3 rounded-lg transition duration-200 ease-in-out text-sm font-medium
-              hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                collapsed ? "px-0 justify-center" : "px-4"
-              } ${
-                isActive
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-gray-300"
-              }`
-            }
-          >
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && (
-              <span className="whitespace-nowrap overflow-hidden">{name}</span>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map(({ i18nKey, path, icon: Icon }) => {
+          const label = t(i18nKey);
+          return (
+            <NavLink
+              key={i18nKey}
+              to={path}
+              title={collapsed ? label : undefined}
+              className={({ isActive }) =>
+                `flex items-center gap-3 py-3 rounded-lg transition duration-200 ease-in-out text-sm font-medium
+                hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  collapsed ? "px-0 justify-center" : "px-4"
+                } ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-300"
+                }`
+              }
+            >
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && (
+                <span className="whitespace-nowrap overflow-hidden">{label}</span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Toggle button */}
@@ -109,27 +115,30 @@ const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         <div className="mb-4 text-center">
-          <h2 className="text-lg font-semibold">Teacher Admin</h2>
+          <h2 className="text-lg font-semibold">{t("teacher.admin")}</h2>
         </div>
         <nav className="flex-1 space-y-1">
-          {navItems.map(({ name, path, icon: Icon }) => (
-            <NavLink
-              key={name}
-              to={path}
-              onClick={onMobileClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
-                hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-gray-300"
-                }`
-              }
-            >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span>{name}</span>
-            </NavLink>
-          ))}
+          {navItems.map(({ i18nKey, path, icon: Icon }) => {
+            const label = t(i18nKey);
+            return (
+              <NavLink
+                key={i18nKey}
+                to={path}
+                onClick={onMobileClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 py-3 px-4 rounded-lg transition duration-200 ease-in-out text-sm font-medium
+                  hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "text-gray-300"
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span>{label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
     </>

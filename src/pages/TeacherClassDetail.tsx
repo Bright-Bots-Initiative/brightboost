@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { useApi } from "../services/api";
 import { api as directApi } from "../services/api";
@@ -75,6 +76,7 @@ interface ModuleSummary {
 // ---------------------------------------------------------------------------
 
 const TeacherClassDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const api = useApi();
 
@@ -132,12 +134,12 @@ const TeacherClassDetail: React.FC = () => {
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
         setPulse(pulseData);
       } catch {
-        setError("Failed to load course details");
+        setError(t("teacher.classDetail.failedLoad"));
       } finally {
         setLoading(false);
       }
     })();
-  }, [id, api]);
+  }, [id, api, t]);
 
   // -------------------------------------------------------------------
   // Copy join code
@@ -181,7 +183,6 @@ const TeacherClassDetail: React.FC = () => {
         icon,
       }));
       await api.post(`/teacher/courses/${id}/setup-icons`, { students } as Record<string, unknown>);
-      // Refresh to show updated data
       const updatedCourse = await api.get(`/teacher/courses/${id}`);
       setCourse(updatedCourse);
     } catch {
@@ -212,7 +213,6 @@ const TeacherClassDetail: React.FC = () => {
       try {
         const mods = await directApi.getModules();
         const modArray = Array.isArray(mods) ? mods : mods?.modules ?? [];
-        // For each module, load its structure
         const detailed = await Promise.all(
           modArray.map((m: any) =>
             directApi.getModule(m.slug, { structureOnly: true }),
@@ -287,7 +287,7 @@ const TeacherClassDetail: React.FC = () => {
     return (
       <div className="w-full p-6 text-center">
         <h2 className="text-2xl font-bold text-red-600">
-          {error ?? "Course not found"}
+          {error ?? t("teacher.classDetail.courseNotFound")}
         </h2>
       </div>
     );
@@ -296,20 +296,20 @@ const TeacherClassDetail: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
             {course.name}
           </h1>
-          <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600">
+          <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600 flex-wrap gap-y-2">
             <span className="flex items-center">
               <Users className="w-4 h-4 mr-1" />
-              {course.enrollmentCount} students
+              {t("teacher.classDetail.students", { count: course.enrollmentCount })}
             </span>
             <span className="flex items-center font-mono bg-gray-100 px-2 py-1 rounded text-xs">
-              Join Code: <strong className="ml-1 text-base">{course.joinCode}</strong>
-              <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title="Copy">
+              {t("teacher.classDetail.joinCode")} <strong className="ml-1 text-base">{course.joinCode}</strong>
+              <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title={t("teacher.classDetail.copy")}>
                 {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
             </span>
@@ -317,9 +317,9 @@ const TeacherClassDetail: React.FC = () => {
         </div>
         <button
           onClick={openLaunchWizard}
-          className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+          className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue whitespace-nowrap"
         >
-          Launch Weekly Session
+          {t("teacher.classDetail.launchSession")}
         </button>
       </div>
 
@@ -328,7 +328,7 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Sessions Launched</p>
+              <p className="text-sm text-gray-500">{t("teacher.classDetail.sessionsLaunched")}</p>
               <p className="text-2xl font-bold text-brightboost-navy">
                 {assignments.length}
               </p>
@@ -340,7 +340,7 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Avg Completion</p>
+              <p className="text-sm text-gray-500">{t("teacher.classDetail.avgCompletion")}</p>
               <p className="text-2xl font-bold text-brightboost-green">
                 {assignments.length > 0 && course.enrollmentCount > 0
                   ? Math.round(
@@ -359,14 +359,14 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Confidence Lift</p>
+              <p className="text-sm text-gray-500">{t("teacher.classDetail.confidenceLift")}</p>
               <p className="text-2xl font-bold text-purple-600">
                 {pulse?.delta !== null && pulse?.delta !== undefined
                   ? `${pulse.delta > 0 ? "+" : ""}${pulse.delta}`
                   : "—"}
               </p>
               <p className="text-xs text-gray-400">
-                Pre {pulse?.avgPre ?? "—"} / Post {pulse?.avgPost ?? "—"} ({pulse?.preCount ?? 0}/{pulse?.postCount ?? 0} responses)
+                {t("teacher.classDetail.pre")} {pulse?.avgPre ?? "—"} / {t("teacher.classDetail.post")} {pulse?.avgPost ?? "—"} ({pulse?.preCount ?? 0}/{pulse?.postCount ?? 0} {t("teacher.classDetail.responses")})
               </p>
             </div>
             <TrendingUp className="w-8 h-8 text-purple-400 opacity-40" />
@@ -378,20 +378,20 @@ const TeacherClassDetail: React.FC = () => {
       <section className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
           <Users className="w-5 h-5 mr-2" />
-          Enrolled Students ({course.students.length})
+          {t("teacher.classDetail.enrolledStudents", { count: course.students.length })}
         </h2>
         {course.students.length === 0 ? (
           <p className="text-sm text-gray-500 italic">
-            No students yet. Share the join code above.
+            {t("teacher.classDetail.noStudents")}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b bg-gray-50">
-                  <th className="py-2 px-3 font-medium">Name</th>
-                  <th className="py-2 px-3 font-medium">Email</th>
-                  <th className="py-2 px-3 font-medium">Enrolled</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.name")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.email")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.enrolled")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,38 +414,38 @@ const TeacherClassDetail: React.FC = () => {
       <section className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
           <Smile className="w-5 h-5 mr-2" />
-          K-2 Login Icons
+          {t("teacher.classDetail.k2Icons")}
         </h2>
         <p className="text-sm text-gray-500 mb-4">
-          Assign an icon to each student for class-code login. Students will pick their icon instead of typing a password.
+          {t("teacher.classDetail.k2IconsDesc")}
         </p>
 
         {course.students.length === 0 ? (
           <p className="text-sm text-gray-400 italic">
-            Enroll students first, then assign icons.
+            {t("teacher.classDetail.enrollFirst")}
           </p>
         ) : (
           <>
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
                 onClick={autoAssignIcons}
                 className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
               >
-                Auto-Assign Icons
+                {t("teacher.classDetail.autoAssign")}
               </button>
               <button
                 onClick={saveIcons}
                 disabled={savingIcons || Object.keys(iconAssignments).length === 0}
                 className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 transition-colors"
               >
-                {savingIcons ? "Saving..." : "Save Icons"}
+                {savingIcons ? t("teacher.classDetail.saving") : t("teacher.classDetail.saveIcons")}
               </button>
               <button
                 onClick={handlePrintCards}
                 className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors flex items-center gap-1"
               >
                 <Printer className="w-4 h-4" />
-                Print Login Cards
+                {t("teacher.classDetail.printCards")}
               </button>
             </div>
 
@@ -497,22 +497,22 @@ const TeacherClassDetail: React.FC = () => {
       <section className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
           <Clock className="w-5 h-5 mr-2" />
-          Weekly Sessions
+          {t("teacher.classDetail.weeklySessions")}
         </h2>
         {assignments.length === 0 ? (
           <p className="text-sm text-gray-500 italic">
-            No sessions yet. Click "Launch Weekly Session" to get started.
+            {t("teacher.classDetail.noSessions")}
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b bg-gray-50">
-                  <th className="py-2 px-3 font-medium">Session</th>
-                  <th className="py-2 px-3 font-medium">Due</th>
-                  <th className="py-2 px-3 font-medium">Completed</th>
-                  <th className="py-2 px-3 font-medium">Avg Time</th>
-                  <th className="py-2 px-3 font-medium">Status</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.session")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.due")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.completed")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.avgTime")}</th>
+                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.statusLabel")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -551,9 +551,9 @@ const TeacherClassDetail: React.FC = () => {
       <Dialog open={launchOpen} onOpenChange={setLaunchOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Launch Weekly Session</DialogTitle>
+            <DialogTitle>{t("teacher.classDetail.launchTitle")}</DialogTitle>
             <DialogDescription>
-              Select an activity from the curriculum for students to complete this week.
+              {t("teacher.classDetail.launchDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -561,10 +561,10 @@ const TeacherClassDetail: React.FC = () => {
             {/* Module picker */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Module
+                {t("teacher.classDetail.module")}
               </label>
               {modules.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">Loading modules...</p>
+                <p className="text-sm text-gray-400 italic">{t("teacher.classDetail.loadingModules")}</p>
               ) : (
                 <select
                   value={selModule}
@@ -574,7 +574,7 @@ const TeacherClassDetail: React.FC = () => {
                   }}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
                 >
-                  <option value="">Select a module</option>
+                  <option value="">{t("teacher.classDetail.selectModule")}</option>
                   {modules.map((m) => (
                     <option key={m.slug} value={m.slug}>
                       {m.title}
@@ -591,7 +591,7 @@ const TeacherClassDetail: React.FC = () => {
                 className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
                 target="_blank"
               >
-                Prepare for this session &rarr;
+                {t("teacher.classDetail.prepareSession")} &rarr;
               </Link>
             )}
 
@@ -599,7 +599,7 @@ const TeacherClassDetail: React.FC = () => {
             {selModule && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Activity
+                  {t("teacher.classDetail.activity")}
                 </label>
                 <div className="max-h-48 overflow-y-auto border rounded-md divide-y">
                   {activitiesForModule(selModule).map((a) => (
@@ -625,7 +625,7 @@ const TeacherClassDetail: React.FC = () => {
                   ))}
                   {activitiesForModule(selModule).length === 0 && (
                     <p className="text-sm text-gray-400 italic p-3">
-                      No activities in this module
+                      {t("teacher.classDetail.noActivities")}
                     </p>
                   )}
                 </div>
@@ -637,7 +637,7 @@ const TeacherClassDetail: React.FC = () => {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Session Title
+                    {t("teacher.classDetail.sessionTitle")}
                   </label>
                   <input
                     type="text"
@@ -648,7 +648,7 @@ const TeacherClassDetail: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Due Date
+                    {t("teacher.classDetail.dueDate")}
                   </label>
                   <input
                     type="date"
@@ -667,7 +667,7 @@ const TeacherClassDetail: React.FC = () => {
               onClick={() => setLaunchOpen(false)}
               className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Cancel
+              {t("teacher.classDetail.cancel")}
             </button>
             <button
               type="button"
@@ -675,7 +675,7 @@ const TeacherClassDetail: React.FC = () => {
               disabled={!selActivity || launching}
               className="px-4 py-2 text-sm text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50"
             >
-              {launching ? "Launching..." : "Launch Session"}
+              {launching ? t("teacher.classDetail.launching") : t("teacher.classDetail.launchBtn")}
             </button>
           </DialogFooter>
         </DialogContent>

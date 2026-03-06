@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
   initialData,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
@@ -58,7 +60,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
       onOpenChange(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unexpected error occurred.",
+        err instanceof Error ? err.message : t("teacher.lessonForm.unexpectedError"),
       );
     } finally {
       setSubmitting(false);
@@ -70,12 +72,12 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Add New Lesson" : "Edit Lesson"}
+            {mode === "create" ? t("teacher.lessonForm.addTitle") : t("teacher.lessonForm.editTitle")}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Fill in the details below to create a new lesson."
-              : "Update the lesson details below."}
+              ? t("teacher.lessonForm.addDesc")
+              : t("teacher.lessonForm.editDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -85,7 +87,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               htmlFor="lessonTitle"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Title <span className="text-red-500">*</span>
+              {t("teacher.lessonForm.titleLabel")} <span className="text-red-500">*</span>
             </label>
             <input
               id="lessonTitle"
@@ -93,10 +95,10 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
-              placeholder="Lesson title"
+              placeholder={t("teacher.lessonForm.titlePlaceholder")}
             />
             {title.trim() === "" && (
-              <p className="text-xs text-gray-500 mt-1">Title is required.</p>
+              <p className="text-xs text-gray-500 mt-1">{t("teacher.lessonForm.titleRequired")}</p>
             )}
           </div>
 
@@ -105,7 +107,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               htmlFor="lessonContent"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Content
+              {t("teacher.lessonForm.contentLabel")}
             </label>
             <textarea
               id="lessonContent"
@@ -113,7 +115,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
-              placeholder="Lesson content"
+              placeholder={t("teacher.lessonForm.contentPlaceholder")}
             />
           </div>
 
@@ -122,7 +124,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               htmlFor="lessonCategory"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Category <span className="text-red-500">*</span>
+              {t("teacher.lessonForm.categoryLabel")} <span className="text-red-500">*</span>
             </label>
             <input
               id="lessonCategory"
@@ -130,11 +132,11 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue focus:border-brightboost-blue"
-              placeholder="e.g. Math, Science"
+              placeholder={t("teacher.lessonForm.categoryPlaceholder")}
             />
             {category.trim() === "" && (
               <p className="text-xs text-gray-500 mt-1">
-                Category is required.
+                {t("teacher.lessonForm.categoryRequired")}
               </p>
             )}
           </div>
@@ -151,7 +153,7 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               onClick={() => onOpenChange(false)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
             >
-              Cancel
+              {t("teacher.lessonForm.cancel")}
             </button>
             <button
               type="submit"
@@ -159,10 +161,10 @@ const LessonFormDialog: React.FC<LessonFormDialogProps> = ({
               className="px-4 py-2 text-sm font-medium text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy focus:outline-none focus:ring-2 focus:ring-brightboost-blue disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting
-                ? "Saving..."
+                ? t("teacher.lessonForm.saving")
                 : mode === "create"
-                  ? "Create Lesson"
-                  : "Save Changes"}
+                  ? t("teacher.lessonForm.create")
+                  : t("teacher.lessonForm.saveChanges")}
             </button>
           </DialogFooter>
         </form>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useApi } from "../services/api";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
 
 const TeacherDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const api = useApi();
 
   const [lessonsData, setLessonsData] = useState<Lesson[]>([]);
@@ -27,7 +29,7 @@ const TeacherDashboard: React.FC = () => {
           }) => ({
             id: String(course.id),
             title: course.name,
-            content: `Join code: ${course.joinCode} · ${course.enrollmentCount} student${course.enrollmentCount !== 1 ? "s" : ""}`,
+            content: `${t("teacher.classes.joinCode")} ${course.joinCode} · ${t("teacher.classDetail.students", { count: course.enrollmentCount })}`,
             category: "Course",
             date: course.createdAt,
             status: "active",
@@ -40,12 +42,12 @@ const TeacherDashboard: React.FC = () => {
     } catch (err) {
       console.error("Failed to fetch teacher data:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to fetch teacher data.",
+        err instanceof Error ? err.message : t("teacher.lessons.failedFetch"),
       );
     } finally {
       setIsLoading(false);
     }
-  }, [api, setIsLoading, setError, setLessonsData]);
+  }, [api, setIsLoading, setError, setLessonsData, t]);
 
   useEffect(() => {
     fetchLessons();
@@ -65,7 +67,7 @@ const TeacherDashboard: React.FC = () => {
       ]);
     } catch (err) {
       console.error("Failed to add lesson:", err);
-      setError(err instanceof Error ? err.message : "Failed to add lesson.");
+      setError(err instanceof Error ? err.message : t("teacher.lessons.failedAdd"));
       throw err;
     } finally {
       setIsLoading(false);
@@ -92,7 +94,7 @@ const TeacherDashboard: React.FC = () => {
       );
     } catch (err) {
       console.error("Failed to edit lesson:", err);
-      setError(err instanceof Error ? err.message : "Failed to edit lesson.");
+      setError(err instanceof Error ? err.message : t("teacher.lessons.failedEdit"));
       throw err;
     } finally {
       setIsLoading(false);
@@ -108,7 +110,7 @@ const TeacherDashboard: React.FC = () => {
       );
     } catch (err) {
       console.error("Failed to delete lesson:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete lesson.");
+      setError(err instanceof Error ? err.message : t("teacher.lessons.failedDelete"));
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +126,7 @@ const TeacherDashboard: React.FC = () => {
         >
           <BrightBoostRobot size="lg" />
           <p className="text-xl text-brightboost-navy mt-4">
-            Loading dashboard data...
+            {t("teacher.lessons.loading")}
           </p>
         </div>
       )}
@@ -135,17 +137,17 @@ const TeacherDashboard: React.FC = () => {
           aria-live="polite"
         >
           <BrightBoostRobot size="lg" />
-          <p className="text-xl text-red-500 mt-4">Error: {error}</p>
+          <p className="text-xl text-red-500 mt-4">{t("teacher.lessons.errorPrefix")} {error}</p>
         </div>
       )}
       {!isLoading && !error && lessonsData.length === 0 && (
         <div className="flex-grow p-6 text-center" role="status">
           <BrightBoostRobot size="lg" />
           <h2 className="text-xl text-brightboost-navy mt-4">
-            No teacher data available yet.
+            {t("teacher.lessons.noData")}
           </h2>
           <p className="text-sm text-gray-600 mt-2">
-            Teachers will appear here once they're registered in the system.
+            {t("teacher.lessons.noDataDesc")}
           </p>
         </div>
       )}

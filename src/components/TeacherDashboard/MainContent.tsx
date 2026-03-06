@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MainContentProps, Lesson } from "./types";
 import LessonsTable from "./LessonTable";
 import LessonFormDialog from "./LessonFormDialog";
@@ -11,6 +12,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onEditLesson,
   onDeleteLesson,
 }) => {
+  const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
   const [editingLesson, setEditingLesson] = useState<Lesson | undefined>();
@@ -43,7 +45,7 @@ const MainContent: React.FC<MainContentProps> = ({
     );
     if (!original) return;
     onAddLesson({
-      title: `${original.title} (Copy)`,
+      title: `${original.title} ${t("teacher.lessonTable.copy")}`,
       content: original.content ?? "",
       category: original.category,
     });
@@ -52,13 +54,13 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <section className="flex-grow p-6">
       <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-brightboost-navy">Lessons</h1>
+        <h1 className="text-2xl font-bold text-brightboost-navy">{t("teacher.lessons.title")}</h1>
         <button
           onClick={handleOpenCreate}
           className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy focus:outline-none focus:ring-2 focus:ring-brightboost-blue transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add New Lesson
+          {t("teacher.lessons.addNew")}
         </button>
       </header>
 
@@ -70,10 +72,10 @@ const MainContent: React.FC<MainContentProps> = ({
           id="lessons-management-heading"
           className="text-xl font-semibold mb-4"
         >
-          Lessons Management
+          {t("teacher.lessons.management")}
         </h2>
         <p className="text-gray-600 mb-4">
-          You have {lessonsData.length} lessons available.
+          {t("teacher.lessons.available", { count: lessonsData.length })}
         </p>
         <LessonsTable
           lessons={lessonsData}

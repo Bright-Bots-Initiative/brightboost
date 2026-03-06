@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Plus, Users, Copy, Check, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -21,6 +22,7 @@ interface CourseListItem {
 }
 
 const ClassesPage: React.FC = () => {
+  const { t } = useTranslation();
   const api = useApi();
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,10 +77,10 @@ const ClassesPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
-            My Classes
+            {t("teacher.classes.title")}
           </h1>
           <p className="text-gray-600 mt-1">
-            Create classes, share join codes, and launch weekly sessions
+            {t("teacher.classes.subtitle")}
           </p>
         </div>
         <button
@@ -86,7 +88,7 @@ const ClassesPage: React.FC = () => {
           className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Class
+          {t("teacher.classes.newClass")}
         </button>
       </div>
 
@@ -103,17 +105,17 @@ const ClassesPage: React.FC = () => {
         <section className="bg-white rounded-lg shadow-md p-8 text-center">
           <BrightBoostRobot size="lg" />
           <h2 className="text-xl text-brightboost-navy mt-4">
-            No classes yet
+            {t("teacher.classes.noClasses")}
           </h2>
           <p className="text-sm text-gray-600 mb-4">
-            Create your first class to get a join code and start the pilot
+            {t("teacher.classes.noClassesDesc")}
           </p>
           <button
             onClick={() => setCreateOpen(true)}
             className="inline-flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create First Class
+            {t("teacher.classes.createFirst")}
           </button>
         </section>
       ) : (
@@ -134,14 +136,14 @@ const ClassesPage: React.FC = () => {
                   <div className="flex items-center space-x-6 mt-2 text-sm text-gray-600">
                     <span className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {c.enrollmentCount} students
+                      {t("teacher.classes.students", { count: c.enrollmentCount })}
                     </span>
                     <span className="flex items-center font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                      Join Code: <strong className="ml-1">{c.joinCode}</strong>
+                      {t("teacher.classes.joinCode")} <strong className="ml-1">{c.joinCode}</strong>
                       <button
                         onClick={() => copyCode(c.joinCode, c.id)}
                         className="ml-1 text-brightboost-blue hover:text-brightboost-navy"
-                        title="Copy join code"
+                        title={t("teacher.classes.copyJoinCode")}
                       >
                         {copiedId === c.id ? (
                           <Check className="w-3.5 h-3.5" />
@@ -156,7 +158,7 @@ const ClassesPage: React.FC = () => {
                   to={`/teacher/classes/${c.id}`}
                   className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
                 >
-                  Open
+                  {t("teacher.classes.open")}
                 </Link>
               </div>
             </article>
@@ -168,9 +170,9 @@ const ClassesPage: React.FC = () => {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Class</DialogTitle>
+            <DialogTitle>{t("teacher.classes.createTitle")}</DialogTitle>
             <DialogDescription>
-              Give your class a name. Students will join using the generated code.
+              {t("teacher.classes.createDesc")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -185,7 +187,7 @@ const ClassesPage: React.FC = () => {
                 htmlFor="className"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Class Name
+                {t("teacher.classes.className")}
               </label>
               <input
                 id="className"
@@ -193,7 +195,7 @@ const ClassesPage: React.FC = () => {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
-                placeholder="e.g. Period 3 STEM"
+                placeholder={t("teacher.classes.classNamePlaceholder")}
               />
             </div>
             <DialogFooter>
@@ -202,14 +204,14 @@ const ClassesPage: React.FC = () => {
                 onClick={() => setCreateOpen(false)}
                 className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                Cancel
+                {t("teacher.classes.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={!newName.trim() || creating}
                 className="px-4 py-2 text-sm text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50"
               >
-                {creating ? "Creating..." : "Create Class"}
+                {creating ? t("teacher.classes.creating") : t("teacher.classes.createClass")}
               </button>
             </DialogFooter>
           </form>

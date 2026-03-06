@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { useApi } from "../services/api";
 import {
@@ -28,21 +29,22 @@ interface PrepData {
   checklist: { items: Record<string, boolean>; completedAt: string | null } | null;
 }
 
-const MODULE_TITLES: Record<string, string> = {
-  "k2-stem-rhyme-ride": "Module 1 — Rhyme & Ride",
-  "k2-stem-bounce-buds": "Module 2 — Bounce & Buds",
-  "k2-stem-gotcha-gears": "Module 3 — Gotcha Gears",
+const MODULE_TITLE_KEYS: Record<string, string> = {
+  "k2-stem-rhyme-ride": "teacher.modulePrep.module1",
+  "k2-stem-bounce-buds": "teacher.modulePrep.module2",
+  "k2-stem-gotcha-gears": "teacher.modulePrep.module3",
 };
 
-const DEFAULT_CHECKLIST_ITEMS: Record<string, string> = {
-  reviewModule: "Review the module content yourself",
-  printQuestions: "Print discussion questions for group work",
-  prepareMaterials: "Prepare any physical materials needed",
-  setupDevices: "Set up devices/tablets for student access",
-  shareJoinCode: "Share the class join code with any new students",
+const CHECKLIST_KEYS: Record<string, string> = {
+  reviewModule: "teacher.modulePrep.checklistReviewModule",
+  printQuestions: "teacher.modulePrep.checklistPrintQuestions",
+  prepareMaterials: "teacher.modulePrep.checklistPrepareMaterials",
+  setupDevices: "teacher.modulePrep.checklistSetupDevices",
+  shareJoinCode: "teacher.modulePrep.checklistShareJoinCode",
 };
 
 const TeacherModulePrep: React.FC = () => {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const api = useApi();
   const [prep, setPrep] = useState<PrepData | null>(null);
@@ -67,11 +69,11 @@ const TeacherModulePrep: React.FC = () => {
           setChecklistItems(data.checklist.items as Record<string, boolean>);
         } else {
           const defaults: Record<string, boolean> = {};
-          Object.keys(DEFAULT_CHECKLIST_ITEMS).forEach((k) => (defaults[k] = false));
+          Object.keys(CHECKLIST_KEYS).forEach((k) => (defaults[k] = false));
           setChecklistItems(defaults);
         }
       })
-      .catch(() => setError("Failed to load prep data for this module."))
+      .catch(() => setError(t("teacher.modulePrep.failedLoad")))
       .finally(() => setLoading(false));
   }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -104,15 +106,17 @@ const TeacherModulePrep: React.FC = () => {
 
   const totalPacingMinutes = pacingGuide.reduce((sum, item) => sum + item.minutes, 0);
   const completedCount = Object.values(checklistItems).filter(Boolean).length;
-  const totalChecklistCount = Object.keys(DEFAULT_CHECKLIST_ITEMS).length;
+  const totalChecklistCount = Object.keys(CHECKLIST_KEYS).length;
 
   const handlePrint = () => window.print();
+
+  const moduleTitle = t(MODULE_TITLE_KEYS[slug || ""] || slug || "");
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading prep data...</span>
+        <span className="ml-2 text-gray-500">{t("teacher.modulePrep.loadingPrep")}</span>
       </div>
     );
   }
@@ -121,9 +125,9 @@ const TeacherModulePrep: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto py-10">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600">{error || "Module prep data not found."}</p>
+          <p className="text-red-600">{error || t("teacher.modulePrep.notFound")}</p>
           <Link to="/teacher/dashboard" className="text-blue-600 hover:underline mt-2 inline-block">
-            Back to Dashboard
+            {t("teacher.modulePrep.backToDashboard")}
           </Link>
         </div>
       </div>
@@ -131,10 +135,10 @@ const TeacherModulePrep: React.FC = () => {
   }
 
   const tabs = [
-    { key: "overview" as const, label: "Overview", icon: BookOpen },
-    { key: "checklist" as const, label: `Checklist (${completedCount}/${totalChecklistCount})`, icon: CheckSquare },
-    { key: "discussion" as const, label: "Discussion Guide", icon: MessageCircle },
-    { key: "pacing" as const, label: "Pacing Guide", icon: Clock },
+    { key: "overview" as const, label: t("teacher.modulePrep.overview"), icon: BookOpen },
+    { key: "checklist" as const, label: t("teacher.modulePrep.checklist", { completed: completedCount, total: totalChecklistCount }), icon: CheckSquare },
+    { key: "discussion" as const, label: t("teacher.modulePrep.discussionGuide"), icon: MessageCircle },
+    { key: "pacing" as const, label: t("teacher.modulePrep.pacingGuide"), icon: Clock },
   ];
 
   return (
@@ -145,33 +149,33 @@ const TeacherModulePrep: React.FC = () => {
           to="/teacher/dashboard"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-3"
         >
-          <ChevronLeft className="w-4 h-4 mr-1" /> Back to Dashboard
+          <ChevronLeft className="w-4 h-4 mr-1" /> {t("teacher.modulePrep.backToDashboard")}
         </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Teacher Prep: {MODULE_TITLES[slug || ""] || slug}
+              {t("teacher.modulePrep.title", { module: moduleTitle })}
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Estimated class time: {prep.estimatedMinutes} minutes
+              {t("teacher.modulePrep.estimatedTime", { minutes: prep.estimatedMinutes })}
             </p>
           </div>
           <button
             onClick={handlePrint}
             className="print:hidden inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
-            <Printer className="w-4 h-4" /> Print
+            <Printer className="w-4 h-4" /> {t("teacher.modulePrep.print")}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="print:hidden flex border-b border-gray-200 mb-6">
+      <div className="print:hidden flex border-b border-gray-200 mb-6 overflow-x-auto">
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
               activeTab === key
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -184,12 +188,12 @@ const TeacherModulePrep: React.FC = () => {
 
       {/* Tab content */}
       <div className="space-y-6">
-        {/* ── Overview Tab ── */}
+        {/* Overview Tab */}
         {(activeTab === "overview" || typeof window !== "undefined" && window.matchMedia?.("print")?.matches) && (
           <div className={activeTab !== "overview" ? "hidden print:block" : ""}>
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-blue-600" /> Learning Objectives
+                <BookOpen className="w-5 h-5 text-blue-600" /> {t("teacher.modulePrep.learningObjectives")}
               </h2>
               <ul className="space-y-2">
                 {prep.objectives.map((obj, i) => (
@@ -201,7 +205,7 @@ const TeacherModulePrep: React.FC = () => {
             </section>
 
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Key Vocabulary</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("teacher.modulePrep.keyVocabulary")}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {prep.vocabulary.map((v, i) => (
                   <div key={i} className="bg-gray-50 rounded-md p-3">
@@ -213,7 +217,7 @@ const TeacherModulePrep: React.FC = () => {
             </section>
 
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Prerequisite Knowledge</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("teacher.modulePrep.prerequisiteKnowledge")}</h2>
               <ul className="space-y-1">
                 {prep.prerequisites.map((p, i) => (
                   <li key={i} className="text-sm text-gray-700">&#8226; {p}</li>
@@ -223,7 +227,7 @@ const TeacherModulePrep: React.FC = () => {
 
             <section className="bg-amber-50 border border-amber-200 rounded-lg p-6 mt-4">
               <h2 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-600" /> Common Misconceptions
+                <AlertTriangle className="w-5 h-5 text-amber-600" /> {t("teacher.modulePrep.commonMisconceptions")}
               </h2>
               <ul className="space-y-2">
                 {prep.misconceptions.map((m, i) => (
@@ -233,7 +237,7 @@ const TeacherModulePrep: React.FC = () => {
             </section>
 
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Materials Needed</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("teacher.modulePrep.materialsNeeded")}</h2>
               <ul className="space-y-1">
                 {prep.materials.map((m, i) => (
                   <li key={i} className="text-sm text-gray-700">&#8226; {m}</li>
@@ -243,19 +247,19 @@ const TeacherModulePrep: React.FC = () => {
           </div>
         )}
 
-        {/* ── Checklist Tab ── */}
+        {/* Checklist Tab */}
         {activeTab === "checklist" && (
           <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-blue-600" /> Before Class Checklist
+                <CheckSquare className="w-5 h-5 text-blue-600" /> {t("teacher.modulePrep.beforeClassChecklist")}
               </h2>
               {savingChecklist && (
-                <span className="text-xs text-gray-400">Saving...</span>
+                <span className="text-xs text-gray-400">{t("teacher.modulePrep.savingChecklist")}</span>
               )}
             </div>
             <div className="space-y-3">
-              {Object.entries(DEFAULT_CHECKLIST_ITEMS).map(([key, label]) => (
+              {Object.entries(CHECKLIST_KEYS).map(([key, i18nKey]) => (
                 <label
                   key={key}
                   className="flex items-start gap-3 p-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
@@ -271,28 +275,28 @@ const TeacherModulePrep: React.FC = () => {
                       checklistItems[key] ? "text-gray-400 line-through" : "text-gray-700"
                     }`}
                   >
-                    {label}
+                    {t(i18nKey)}
                   </span>
                 </label>
               ))}
             </div>
             {completedCount === totalChecklistCount && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700">
-                All items complete! You're ready to launch this session.
+                {t("teacher.modulePrep.allComplete")}
               </div>
             )}
           </section>
         )}
 
-        {/* ── Discussion Guide Tab ── */}
+        {/* Discussion Guide Tab */}
         {(activeTab === "discussion" || typeof window !== "undefined" && window.matchMedia?.("print")?.matches) && (
           <div className={activeTab !== "discussion" ? "hidden print:block" : ""}>
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-blue-600" /> Before the Activity
+                <MessageCircle className="w-5 h-5 text-blue-600" /> {t("teacher.modulePrep.beforeActivity")}
               </h2>
               <p className="text-xs text-gray-500 mb-3">
-                Use these questions to prime student thinking before going on the platform.
+                {t("teacher.modulePrep.beforeActivityDesc")}
               </p>
               <ol className="space-y-3">
                 {prep.discussionBefore.map((q, i) => (
@@ -305,10 +309,10 @@ const TeacherModulePrep: React.FC = () => {
 
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-green-600" /> After the Activity
+                <MessageCircle className="w-5 h-5 text-green-600" /> {t("teacher.modulePrep.afterActivity")}
               </h2>
               <p className="text-xs text-gray-500 mb-3">
-                Use these questions to debrief and connect learning.
+                {t("teacher.modulePrep.afterActivityDesc")}
               </p>
               <ol className="space-y-3">
                 {prep.discussionAfter.map((q, i) => (
@@ -321,30 +325,30 @@ const TeacherModulePrep: React.FC = () => {
 
             <section className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
               <h2 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-blue-600" /> Turn and Talk Prompts
+                <Lightbulb className="w-5 h-5 text-blue-600" /> {t("teacher.modulePrep.turnAndTalk")}
               </h2>
               <p className="text-xs text-blue-700 mb-3">
-                Quick pair-work prompts for partner discussions.
+                {t("teacher.modulePrep.turnAndTalkDesc")}
               </p>
               <ul className="space-y-2">
-                {prep.turnAndTalk.map((t, i) => (
-                  <li key={i} className="text-sm text-blue-800">&#8226; {t}</li>
+                {prep.turnAndTalk.map((item, i) => (
+                  <li key={i} className="text-sm text-blue-800">&#8226; {item}</li>
                 ))}
               </ul>
             </section>
           </div>
         )}
 
-        {/* ── Pacing Guide Tab ── */}
+        {/* Pacing Guide Tab */}
         {(activeTab === "pacing" || typeof window !== "undefined" && window.matchMedia?.("print")?.matches) && (
           <div className={activeTab !== "pacing" ? "hidden print:block" : ""}>
             <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-600" /> Suggested Pacing
+                  <Clock className="w-5 h-5 text-blue-600" /> {t("teacher.modulePrep.suggestedPacing")}
                 </h2>
                 <span className="text-sm text-gray-500">
-                  Total: {totalPacingMinutes} min
+                  {t("teacher.modulePrep.totalMinutes", { minutes: totalPacingMinutes })}
                 </span>
               </div>
               <div className="space-y-3">

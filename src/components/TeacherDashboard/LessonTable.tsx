@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   closestCenter,
@@ -34,11 +35,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
+const SortableLessonRow: React.FC<SortableLessonRowProps & { t: (key: string, opts?: Record<string, unknown>) => string }> = ({
   lesson,
   onEditLesson,
   onDuplicateLesson,
   onDeleteLesson,
+  t,
 }) => {
   const {
     attributes,
@@ -66,22 +68,22 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
       <td className="py-4 px-2 text-sm font-medium text-gray-900 whitespace-nowrap align-middle">
         <IconButton
           onClick={() => {}}
-          title="Drag to reorder"
-          ariaLabel={`Drag to reorder ${lesson.title}`}
+          title={t("teacher.lessonTable.dragToReorder")}
+          ariaLabel={`${t("teacher.lessonTable.dragToReorder")} ${lesson.title}`}
           className="cursor-grab"
           {...listeners}
         >
           <DragHandleIcon />
         </IconButton>
       </td>
-      <td className="py-4 px-4 text-sm font-medium text-gray-900 whitespace-nowrap align-middle">
+      <td className="py-4 px-4 text-sm font-medium text-gray-900 align-middle max-w-[200px] truncate">
         {lesson.title}
       </td>
       <td
-        className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap align-middle max-w-xs truncate"
+        className="py-4 px-6 text-sm text-gray-500 align-middle max-w-xs truncate"
         title={lesson.content}
       >
-        {lesson.content ? `${lesson.content.substring(0, 50)}...` : "N/A"}
+        {lesson.content ? `${lesson.content.substring(0, 50)}...` : t("teacher.lessonTable.na")}
       </td>
       <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap align-middle">
         {lesson.category}
@@ -106,24 +108,24 @@ const SortableLessonRow: React.FC<SortableLessonRowProps> = ({
         <div className="flex items-center space-x-2">
           <IconButton
             onClick={() => onEditLesson(lesson)}
-            title="Edit"
-            ariaLabel={`Edit ${lesson.title}`}
+            title={t("teacher.lessonTable.edit")}
+            ariaLabel={`${t("teacher.lessonTable.edit")} ${lesson.title}`}
             className="text-blue-600 hover:text-blue-900"
           >
             <EditIcon />
           </IconButton>
           <IconButton
             onClick={() => onDuplicateLesson(lesson.id)}
-            title="Duplicate"
-            ariaLabel={`Duplicate ${lesson.title}`}
+            title={t("teacher.lessonTable.duplicate")}
+            ariaLabel={`${t("teacher.lessonTable.duplicate")} ${lesson.title}`}
             className="text-green-600 hover:text-green-900"
           >
             <DuplicateIcon />
           </IconButton>
           <IconButton
             onClick={() => onDeleteLesson(lesson.id)}
-            title="Delete"
-            ariaLabel={`Delete ${lesson.title}`}
+            title={t("teacher.lessonTable.delete")}
+            ariaLabel={`${t("teacher.lessonTable.delete")} ${lesson.title}`}
             className="text-red-600 hover:text-red-900"
           >
             <DeleteIcon />
@@ -141,6 +143,7 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
   onDuplicateLesson,
   onDeleteLesson,
 }) => {
+  const { t } = useTranslation();
   const [deleteId, setDeleteId] = React.useState<string | number | null>(null);
   const lessonToDelete = lessons.find((l) => l.id === deleteId);
 
@@ -165,7 +168,7 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
   }
 
   if (!lessons || lessons.length === 0) {
-    return <p className="text-gray-600 p-4">No lessons available.</p>;
+    return <p className="text-gray-600 p-4">{t("teacher.lessons.noLessons")}</p>;
   }
 
   return (
@@ -180,22 +183,22 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
             <tr>
               <th className="py-3 px-2 w-12 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
+                {t("teacher.lessonTable.title")}
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Content (Summary)
+                {t("teacher.lessonTable.contentSummary")}
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
+                {t("teacher.lessonTable.category")}
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+                {t("teacher.lessonTable.date")}
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                {t("teacher.lessonTable.status")}
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                Actions
+                {t("teacher.lessonTable.actions")}
               </th>
             </tr>
           </thead>
@@ -211,6 +214,7 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
                   onEditLesson={onEditLesson}
                   onDuplicateLesson={onDuplicateLesson}
                   onDeleteLesson={(id) => setDeleteId(id)}
+                  t={t}
                 />
               ))}
             </tbody>
@@ -224,14 +228,13 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
+            <AlertDialogTitle>{t("teacher.lessonTable.deleteLesson")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{lessonToDelete?.title}"? This
-              action cannot be undone.
+              {t("teacher.lessonTable.deleteConfirm", { title: lessonToDelete?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("teacher.lessonTable.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white"
               onClick={() => {
@@ -239,7 +242,7 @@ const LessonsTable: React.FC<LessonsTableProps> = ({
                 setDeleteId(null);
               }}
             >
-              Delete
+              {t("teacher.lessonTable.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

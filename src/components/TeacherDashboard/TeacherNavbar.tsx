@@ -1,5 +1,6 @@
 // src/components/TeacherDashboard/TeacherNavbar.tsx
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import BrightBoostRobot from "../BrightBoostRobot";
 import LanguageToggle from "../LanguageToggle";
 import { LogOut, User, Edit, ChevronDown } from "lucide-react";
@@ -25,6 +26,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   onProfileClick,
   onEditProfileClick,
 }) => {
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
@@ -38,7 +40,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           {/* Left side - Logo */}
           <div className="flex items-center gap-3">
             <BrightBoostRobot size="sm" className="w-10 h-10" />
-            <h1 className="text-xl font-bold tracking-wide">Bright Boost</h1>
+            <h1 className="text-xl font-bold tracking-wide">{t("teacher.brightBoost")}</h1>
           </div>
 
           {/* Right side - Language toggle + User menu */}
@@ -65,7 +67,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     </span>
                   </div>
                 )}
-                <span className="font-medium">Welcome, {userName}</span>
+                <span className="font-medium hidden sm:inline">{t("teacher.welcome", { name: userName })}</span>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
                 />
@@ -87,7 +89,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     role="menuitem"
                   >
                     <User className="w-4 h-4 text-gray-400" />
-                    View Profile
+                    {t("teacher.viewProfile")}
                   </button>
                   <button
                     onClick={() => {
@@ -98,7 +100,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     role="menuitem"
                   >
                     <Edit className="w-4 h-4 text-gray-400" />
-                    Edit Profile
+                    {t("teacher.editProfile")}
                   </button>
                   <hr className="my-1 border-gray-100" role="separator" />
                   <button
@@ -110,7 +112,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                     role="menuitem"
                   >
                     <LogOut className="w-4 h-4" />
-                    Logout
+                    {t("teacher.logout")}
                   </button>
                 </div>
               )}
