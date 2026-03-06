@@ -133,8 +133,9 @@ const TeacherClassDetail: React.FC = () => {
         setCourse(courseData);
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
         setPulse(pulseData);
-      } catch {
-        setError(t("teacher.classDetail.failedLoad"));
+      } catch (err) {
+        const is404 = err instanceof Error && /404/.test(err.message);
+        setError(is404 ? t("teacher.classDetail.notFound") : t("teacher.classDetail.failedLoad"));
       } finally {
         setLoading(false);
       }
@@ -286,9 +287,15 @@ const TeacherClassDetail: React.FC = () => {
   if (error || !course) {
     return (
       <div className="w-full p-6 text-center">
-        <h2 className="text-2xl font-bold text-red-600">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">
           {error ?? t("teacher.classDetail.courseNotFound")}
         </h2>
+        <Link
+          to="/teacher/classes"
+          className="inline-block px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+        >
+          {t("teacher.classDetail.backToClasses")}
+        </Link>
       </div>
     );
   }

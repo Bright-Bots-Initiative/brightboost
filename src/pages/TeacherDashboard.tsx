@@ -41,9 +41,7 @@ const TeacherDashboard: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to fetch teacher data:", err);
-      setError(
-        err instanceof Error ? err.message : t("teacher.lessons.failedFetch"),
-      );
+      setError(t("teacher.lessons.failedFetch"));
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +65,7 @@ const TeacherDashboard: React.FC = () => {
       ]);
     } catch (err) {
       console.error("Failed to add lesson:", err);
-      setError(err instanceof Error ? err.message : t("teacher.lessons.failedAdd"));
+      setError(t("teacher.lessons.failedAdd"));
       throw err;
     } finally {
       setIsLoading(false);
@@ -94,7 +92,7 @@ const TeacherDashboard: React.FC = () => {
       );
     } catch (err) {
       console.error("Failed to edit lesson:", err);
-      setError(err instanceof Error ? err.message : t("teacher.lessons.failedEdit"));
+      setError(t("teacher.lessons.failedEdit"));
       throw err;
     } finally {
       setIsLoading(false);
@@ -105,15 +103,21 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       await api.delete(`/teacher/courses/${lessonId}`);
-      setLessonsData((prevLessons) =>
-        prevLessons.filter((lesson) => String(lesson.id) !== String(lessonId)),
-      );
     } catch (err) {
-      console.error("Failed to delete lesson:", err);
-      setError(err instanceof Error ? err.message : t("teacher.lessons.failedDelete"));
-    } finally {
-      setIsLoading(false);
+      // Treat 404 as success — the class is already gone
+      const is404 = err instanceof Error && /404/.test(err.message);
+      if (!is404) {
+        console.error("Failed to delete lesson:", err);
+        setError(t("teacher.lessons.failedDelete"));
+        setIsLoading(false);
+        return;
+      }
     }
+    // Always remove from local state (whether delete succeeded or was 404)
+    setLessonsData((prevLessons) =>
+      prevLessons.filter((lesson) => String(lesson.id) !== String(lessonId)),
+    );
+    setIsLoading(false);
   };
 
   return (
@@ -137,7 +141,7 @@ const TeacherDashboard: React.FC = () => {
           aria-live="polite"
         >
           <BrightBoostRobot size="lg" />
-          <p className="text-xl text-red-500 mt-4">{t("teacher.lessons.errorPrefix")} {error}</p>
+          <p className="text-xl text-red-500 mt-4">{error}</p>
         </div>
       )}
       {!isLoading && !error && lessonsData.length === 0 && (

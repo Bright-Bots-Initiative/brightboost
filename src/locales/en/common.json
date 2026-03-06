@@ -903,7 +903,9 @@
       "launching": "Launching...",
       "launchBtn": "Launch Session",
       "courseNotFound": "Course not found",
-      "failedLoad": "Failed to load course details"
+      "failedLoad": "Failed to load course details",
+      "notFound": "This class no longer exists. It may have been deleted.",
+      "backToClasses": "Back to Classes"
     },
 
     "resources": {

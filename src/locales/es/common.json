@@ -903,7 +903,9 @@
       "launching": "Iniciando...",
       "launchBtn": "Iniciar Sesión",
       "courseNotFound": "Curso no encontrado",
-      "failedLoad": "Error al cargar detalles del curso"
+      "failedLoad": "Error al cargar detalles del curso",
+      "notFound": "Esta clase ya no existe. Es posible que haya sido eliminada.",
+      "backToClasses": "Volver a Clases"
     },
 
     "resources": {

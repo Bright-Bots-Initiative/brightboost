@@ -352,10 +352,24 @@ export const useApi = () => {
 
         return await response.json();
       } catch (error) {
+        // Only retry on network errors or 5xx — never retry 4xx client errors
+        const isClientError =
+          error instanceof Error && /: [45]\d\d /.test(error.message)
+            ? /: 4\d\d /.test(error.message)
+            : false;
+        const isAuthError =
+          error instanceof Error && error.message.includes("Authentication");
+        const isSessionExpired =
+          error instanceof Error &&
+          (error.message.includes(t("api.sessionExpired")) ||
+            error.message.includes(t("api.dashboardUnavailable")));
+
         if (
           retries > 0 &&
           error instanceof Error &&
-          !error.message.includes("Authentication")
+          !isClientError &&
+          !isAuthError &&
+          !isSessionExpired
         ) {
           toast({
             title: t("api.networkIssue"),
@@ -365,11 +379,14 @@ export const useApi = () => {
           return authFetch(endpoint, options, retries - 1);
         }
 
-        toast({
-          title: t("api.networkIssue"),
-          description: t("api.networkFailed"),
-          variant: "destructive",
-        });
+        // Don't show network toast for client errors (they have their own handling)
+        if (!isClientError && !isAuthError && !isSessionExpired) {
+          toast({
+            title: t("api.networkIssue"),
+            description: t("api.networkFailed"),
+            variant: "destructive",
+          });
+        }
 
         throw error;
       }
