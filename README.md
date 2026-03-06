@@ -1,270 +1,229 @@
-# BrightBoost: Interactive Learning Platform
+# BrightBoost 🚀
 
-BrightBoost is an interactive learning platform designed to help teachers create engaging lessons and students to learn in a fun, gamified environment.
+> A gamified K-2 STEM learning platform by Bright Bots Initiative
 
-## Key Features
+## Overview
 
-- **Teacher Accounts & Dashboard:** Teachers can sign up, log in, and manage their lessons through a dedicated dashboard.
-- **Student Accounts & Dashboard:** Students can sign up, log in, and access assigned lessons and activities.
-- **Lesson Creation & Management:** Teachers can create, edit, and delete lessons, including title, content, category, and status.
-- **Student Lesson Viewing & Activity Tracking:** Students can view lessons assigned to them and mark activities as complete.
-- **Persistent Data Storage:** User and lesson data is stored persistently using Supabase PostgreSQL.
-- **Role-Based Access Control:** Clear distinction between teacher and student functionalities.
-- **E2E Tested Core Flow:** The primary user journeys for teachers and students have been tested.
+BrightBoost is a bilingual (English/Spanish) interactive learning platform that brings STEM education to life for K-2 students through character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
 
-## Demo Flow Summary
+## ✅ Current Working Features
 
-A typical demo showcases:
+### 👩‍🏫 Teacher Dashboard
 
-1.  A **teacher** signing up or logging in.
-2.  The teacher navigating their dashboard and creating a new lesson (e.g., "Introduction to Photosynthesis", Category: "Science", Content: "Learn about how plants make food.", Status: "Published").
-3.  The teacher verifying the lesson is displayed on their dashboard.
-4.  The teacher logging out.
-5.  A **student** signing up or logging in.
-6.  The student viewing the "Introduction to Photosynthesis" lesson on their dashboard.
-7.  The student marking an activity associated with this lesson as "complete".
-8.  The student logging out.
+- **Class Management** — Create courses, generate unique join codes, and manage student rosters
+- **Icon-Based Login Setup** — Assign emoji icons and 4-digit PINs to K-2 students (no keyboard required for login)
+- **Printable Login Cards** — Generate and print student login cards with icons and PINs for classroom distribution
+- **Assignment Launching** — Assign any activity to a class with due dates; track completion rates and time spent
+- **Pulse Surveys** — Run PRE/POST confidence assessments and view aggregate delta scores per class
+- **Module Prep Checklists** — Per-module prep workflow with objectives, vocabulary, prerequisites, misconceptions, and pacing guides
+- **Discussion Prompts** — Before-teaching prompts, after-teaching debrief questions, and turn-and-talk activities
+- **Teacher Resource Library** — Searchable, filterable resources (worksheets, handouts, guides, links) organized by module and category; printable HTML worksheets
+- **PD Hub** — Log professional development sessions with duration, topic, facilitator, and action items; save reusable session templates
+- **PD Reflections** — Record module-specific reflections (what worked, what to change, student observations) linked to PD sessions
+- **Faculty Discussion Board** — Threaded discussion forum with module tagging, pinning, and replies
+- **Community Impact Dashboard** — Aggregate analytics: student engagement, module completion rates, weekly/monthly trends, time-spent statistics, and progress distribution
+- **Showcase Mode** — 6-slide bilingual presentation for family nights with full-screen navigation; includes take-home card generation
+- **CSV Student Import** — Bulk-import students into a class
+- **Grade Export** — Export class grades as CSV
+- **Profile & Settings** — Edit name, email, school, subject, bio, and password
 
-## Technologies Used
+### 🎒 Student Experience
 
-This project is built with a modern web technology stack:
+- **Student Dashboard** — XP progress ring, current streak, assignment tracking with due dates, next-activity recommendation, and completed-module list
+- **Module Browser** — Browse K-2 modules with thumbnails, descriptions, and completion indicators
+- **Module Detail** — Hierarchical Unit → Lesson → Activity navigation with completion tracking
+- **Activity Player** — Plays story slides with comprehension quizzes (shuffled answers, hint system) or launches interactive games; awards XP and stat boosts on completion
+- **Avatar & Superpowers ("My Star")** — Track 5 superpowers (Heart Power 💖, Brain Juice 🧠, Lightning Fast ⚡, Super Focus 🎯, Star Power ⭐) with stage progression (Rookie → Explorer → Champion → Legend)
+- **Archetype Selection** — Choose AI, Quantum, or Biotech specialization pathway
+- **Play Hub** — Game hub with PvP tab (Spacewar Arena) and Coop tab (coming soon)
+- **Class Code Login** — Icon-based login for K-2 students: select class code → pick your icon → enter PIN
+- **Join Class** — Students join a teacher's class via join code
+- **Bilingual UI** — Full English/Spanish toggle across the entire interface
+- **Streak System** — Daily streak tracking with 7-day calendar visualization, streak record celebrations (+50 XP bonus)
+- **Pulse Surveys** — Confidence, enjoyment, and motivation check-ins (1–5 scale) with optional free-text feedback
+- **Break Suggestions** — Prompts students to take breaks during long sessions
 
-- **Frontend:**
-  - React
-  - Vite
-  - TypeScript
-  - Tailwind CSS
-  - shadcn-ui (for UI components)
-  - React Router (for navigation)
-  - Context API (for state management, e.g., AuthContext)
-- **Backend:**
-  - Node.js / Express
-  - Prisma ORM
-  - Supabase PostgreSQL
-  - JSON Web Tokens (JWT) for authentication
-  - `bcryptjs` for password hashing
+### 🎮 Games & Activities
 
-**Architecture:** Frontend: Replit | Backend: Replit | Database: Supabase PostgreSQL
+| Game | Type | Description |
+|---|---|---|
+| **Boost's Lost Steps** | Drag-and-drop sequencing | Arrange step cards in the correct order (First → Next → Last); teaches algorithms and procedures |
+| **Rhyme & Ride** | Unity WebGL action game | Tap the word that rhymes with the prompt as words scroll across lanes; teaches phonemic awareness |
+| **Bounce & Buds** | Unity WebGL paddle game | Bounce a ball through the gate matching the clue; teaches biology, cells, and plant science |
+| **Gotcha Gears** | Unity WebGL catch game | Read a clue in the planning phase, then catch the correct gear as gears scroll down lanes; teaches AI thinking, debugging, and pattern recognition |
+| **Spacewar Arena** | Unity WebGL space combat | 2D physics-based PvP shooter with gravity, missiles, and hyperspace; supports keyboard and touch gesture controls; 3 difficulty levels |
 
-## Backend Configuration
+Each module also includes **character-driven story activities** (Meet Boost, Meet Rhymo, Meet Buddy, Meet Gearbot) with illustrated narrative slides and multiple-choice comprehension quizzes.
 
-The backend is configured via environment variables.
+### 📊 Progress & Data
 
-### Static Frontend Serving (Split vs Monolith)
+- **XP System** — 50 XP per completed activity, level-up every 100 XP with visual notifications
+- **Streak Tracking** — Current and record streaks stored per student with daily activity checks
+- **Achievement Badges** — First Steps, Streak Starter, Daily Champion, Week Warrior, Module Master
+- **Arena Perks** — Completing STEM Set 1 games unlocks Spacewar boosts (reduced gravity, faster fire rate, better shields, faster projectiles, enhanced thrust)
+- **Time Tracking** — Seconds spent per activity recorded for teacher analytics
+- **Weekly Snapshots** — Aggregated weekly stats (XP, time spent) for trend analysis
+- **Audit Log** — Server-side audit trail for sensitive actions
 
-The backend can serve the frontend static files (SPA) or run as an API-only service.
+## 🛠 Tech Stack
 
-- **Split Services (Default):** If you deploy frontend and backend as separate services (e.g. Option B), leave `SERVE_FRONTEND` unset or set to `false`. The backend will only serve API routes.
-- **Monolith:** To serve the frontend from the backend container, set `SERVE_FRONTEND=true` and ensure the `dist/` folder is present in the container.
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion |
+| Routing | React Router v6 |
+| State | React Context API |
+| i18n | i18next + react-i18next (EN / ES) |
+| Backend | Node.js 20, Express 5, TypeScript |
+| Database | PostgreSQL (Supabase) |
+| ORM | Prisma 6 |
+| Auth | JWT (jsonwebtoken) + bcryptjs password hashing |
+| Games | Unity WebGL (4 games) + native drag-and-drop (1 game) |
+| Testing | Vitest, Cypress, Testing Library, Storybook |
+| Hosting | Frontend → Vercel · Backend → Railway · DB → Supabase |
 
-### CORS Configuration
+## 🗄 Database Schema
 
-The backend uses a strict CORS policy. By default, it allows:
+Key models in `prisma/schema.prisma`:
 
-- `https://fe-production-3552.up.railway.app`
-- `http://localhost:5173`
-- `http://localhost:3000`
+| Model | Purpose |
+|---|---|
+| `User` | Students and teachers with role, XP, level, streak, login icon/PIN, language preference |
+| `Module` | Learning modules (K-2 / 3-5 levels) with slug, title, description |
+| `Unit` → `Lesson` → `Activity` | Hierarchical content: units contain lessons, lessons contain activities (INFO or INTERACT) |
+| `Progress` | Per-student activity completion tracking with time spent |
+| `Avatar` | Student avatar with stage, archetype, level, XP, and 5 stat attributes |
+| `Ability` / `UnlockedAbility` | Unlockable abilities tied to archetypes and levels |
+| `Match` / `MatchTurn` | PvP match records with turn-by-turn action logs |
+| `Course` / `Enrollment` | Teacher classes with join codes and student enrollments |
+| `Assignment` | Activities assigned to a class with due dates and status |
+| `PulseResponse` | PRE/POST confidence survey responses (1–5 scale + JSON answers) |
+| `TeacherPrepChecklist` | Per-module prep checklist state |
+| `Resource` | Teacher resource library (worksheets, handouts, guides, links) |
+| `PDSession` / `PDReflection` | Professional development logs and module reflections |
+| `FacultyPost` | Threaded discussion board posts with pinning and replies |
+| `Badge` / `UserBadge` | Achievement definitions and earned badges |
+| `WeeklySnapshot` | Aggregated weekly student stats |
+| `AuditLog` | System audit trail |
 
-To add more origins (e.g., for a custom domain or new preview env), set the `FRONTEND_ORIGINS` environment variable:
+## 🚀 Getting Started
 
-```env
-FRONTEND_ORIGINS=https://my-custom-domain.com,https://another-preview.app
-```
+### Prerequisites
 
-The `FRONTEND_ORIGIN` variable is also supported for a single origin.
+- Node.js v20+
+- npm or pnpm
+- PostgreSQL (local via Docker, or a Supabase project)
 
-- **Testing:**
-  - Vitest (for unit/integration tests)
-  - Cypress (for End-to-End tests)
-- **Development Tools:**
-  - ESLint (for linting)
-  - Storybook (for UI component development and testing)
-
-## Getting Started
-
-To get a local copy up and running, follow these simple steps.
-
-**Prerequisites:**
-
-- Node.js (v18 or later recommended)
-- npm (comes with Node.js)
-- pnpm (recommended for package management)
-
-**Installation & Setup:**
-
-1.  **Clone the repository:**
-
-    ```sh
-    git clone <YOUR_GIT_URL> # Replace <YOUR_GIT_URL> with the actual Git URL of this project
-    cd <YOUR_PROJECT_NAME>   # Replace <YOUR_PROJECT_NAME> with the directory name
-    ```
-
-2.  **Install dependencies:**
-    This will install both frontend and backend dependencies.
-
-    ```sh
-    pnpm install
-    ```
-
-3.  **Configure Environment Variables:**
-    Create a `.env` file in the root of the project. See `.env.example` for required variables.
-
-    ```env
-    VITE_API_BASE=http://localhost:3000/api
-    ```
-
-## API Configuration
-
-The application uses `VITE_API_BASE` to configure the backend API endpoint.
-
-### Cypress Production Testing
-
-To run Cypress tests against production or staging environments:
+### Installation
 
 ```bash
-# Test smoke tests against production
-CYPRESS_BASE_URL=https://your-replit-app.replit.app npx cypress run --spec "cypress/e2e/smoke.cy.ts"
-
-# Test all tests against production
-CYPRESS_BASE_URL=https://your-replit-app.replit.app npx cypress run
+git clone https://github.com/BrightBotsInitiative/brightboost.git
+cd brightboost
+pnpm install
+cd backend && npm install && cd ..
 ```
 
-The Cypress configuration automatically uses `CYPRESS_BASE_URL` environment variable when provided, falling back to `http://localhost:5173` for local development.
+### Environment Setup
 
-4.  **Running the Application:**
-    To run the frontend Vite development server:
+Copy `.env.example` to `.env` and fill in:
 
-    ```sh
-    npm run dev
-    ```
+```env
+# Frontend
+VITE_API_BASE=http://localhost:3000        # Backend API URL
 
-    This command starts:
-    - Frontend (Vite): `http://localhost:5173` (or another port if 5173 is busy)
-
-5.  **Running the Backend Locally:**
-    ```sh
-    cd backend
-    npm run dev
-    ```
-    This will start a local Express server for development.
-
-## Production Deployment
-
-### Railway Deployment
-
-The application is deployed to Railway using a `railway.toml` configuration file that specifies a Node.js runtime.
-
-- **Deployment Config:** `railway.toml`
-- **Runtime:** Node.js (via `npm start` which runs the backend server)
-- **Static Files:** The backend serves the built frontend from `dist/`
-
-**Note:** The `docs/Dockerfile.nginx` file is preserved for reference or alternative static hosting but is **not** used by the active Railway deployment pipeline.
-
-## Deployment
-
-This project uses a modern deployment approach:
-
-### Backend Deployment (Replit)
-
-The backend is deployed to Replit.
-
-**Backend Infrastructure:**
-
-- **Node.js** for backend server
-- **Supabase PostgreSQL** for data persistence
-- **Prisma ORM** for database access
-
-### Frontend Deployment (Replit)
-
-The frontend is deployed to Replit.
-
-### Deployment Pipeline
-
-The deployment pipeline:
-
-1. **Frontend**: Builds and deploys React application to Replit
-2. **Backend**: Builds TypeScript Express app and deploys to Replit
-3. **Database**: Uses Supabase PostgreSQL
-
-**Environment Variables:**
-
-- `VITE_API_BASE`: Backend API URL
-
-## Troubleshooting Auth Redirects
-
-### Common Issues
-
-**"Failed to fetch" errors during login/signup:**
-
-- Ensure `VITE_API_BASE` is set correctly in your `.env` file
-- Check that the backend server is running
-- Verify network connectivity
-
-**Redirects not working after login/signup:**
-
-- Check browser localStorage for `bb_access_token` key
-- Ensure user object contains valid `role` field ('teacher' or 'student')
-- Check browser console for navigation errors
-
-**Token not persisting across page reloads:**
-
-- Verify `bb_access_token` is stored in localStorage
-- Check that AuthContext is properly wrapping your app
-- Ensure token hasn't expired
-
-## Project Structure (Simplified)
-
-```
-├── public/             # Static assets
-├── src/                # Frontend source code (React, Vite, TypeScript)
-│   ├── components/     # Reusable UI components
-│   ├── contexts/       # React contexts (e.g., AuthContext)
-│   ├── hooks/          # Custom React hooks
-│   ├── lib/            # Utility functions
-│   ├── pages/          # Page components (routed views)
-│   ├── services/       # API service integration
-│   ├── App.tsx         # Main application component
-│   └── main.tsx        # Entry point for the React app
-├── backend/            # Express backend
-│   ├── src/            # Backend source code
-│   ├── prisma/         # Prisma ORM schema and migrations
-│   └── package.json    # Backend dependencies
-├── cypress/            # Cypress E2E tests
-├── vite.config.ts      # Vite configuration
-├── tailwind.config.js  # Tailwind CSS configuration
-├── postcss.config.js   # PostCSS configuration
-├── README.md           # This file
-└── package.json        # Project dependencies and scripts
+# Backend (in /backend/.env)
+DATABASE_URL=postgresql://user:pass@host:5432/brightboost
+DIRECT_URL=postgresql://user:pass@host:5432/brightboost
+SESSION_SECRET=your-jwt-secret             # Required — signs auth tokens
+PORT=3000
 ```
 
-## How can I edit this code?
+For local development with Docker Compose:
 
-This project uses standard web development practices and can be edited using any modern code editor or IDE.
+```bash
+docker compose -f docker-compose-pg.yml up -d
+# Uses postgres:latest on localhost:5435, user: postgres, pass: brightboostpass
+```
 
-**Local Development**
-Follow the "Getting Started" section above to set up the project locally for development.
+### Seed the Database
 
-## Custom Domain Setup
+```bash
+npx prisma migrate deploy --schema prisma/schema.prisma
+npx prisma db seed
+```
 
-For custom domain configuration, you can use Replit's custom domain features.
+Or use the shortcut:
 
-## What technologies are used for this project?
+```bash
+npm run db:init
+```
 
-This project is built with:
+### Run Locally
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Node.js / Express (backend)
-- Prisma ORM
-- Supabase PostgreSQL
+```bash
+# Terminal 1 — Backend
+cd backend && npm run dev
 
-## Testing
+# Terminal 2 — Frontend
+npm run dev
+```
 
-BrightBoost includes comprehensive testing:
+Frontend runs at `http://localhost:5173` · Backend at `http://localhost:3000`
 
-- **Unit Tests**: Component and utility testing with Vitest
-- **E2E Tests**: End-to-end workflows with Cypress
-- **Linting**: Code quality checks with ESLint
+## 👤 Demo Accounts
+
+Seeded by `prisma/seed.cjs`:
+
+| Role | Email | Password |
+|---|---|---|
+| Teacher | `teacher@school.com` | `password123` |
+| Student | `student@test.com` | `password` |
+
+## 📁 Project Structure
+
+```
+brightboost/
+├── src/                        # Frontend (React + Vite + TypeScript)
+│   ├── components/
+│   │   ├── activities/         # Game components (SequenceDragDrop, Unity wrappers)
+│   │   ├── StudentDashboard/   # XP ring, module cards, leaderboard
+│   │   ├── TeacherDashboard/   # Sidebar, navbar, lesson table, forms
+│   │   ├── student/            # Pulse survey, class login
+│   │   ├── teacher/            # Roster, CSV import, print cards, showcase
+│   │   ├── unity/              # Unity WebGL container
+│   │   └── ui/                 # shadcn/ui primitives
+│   ├── contexts/               # AuthContext
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # XP, streak, and utility functions
+│   ├── locales/                # en/common.json, es/common.json
+│   ├── pages/                  # All routed page components
+│   ├── services/               # API service layer
+│   └── App.tsx                 # Route definitions
+├── backend/                    # Express API server
+│   ├── src/
+│   │   ├── routes/             # auth, modules, progress, courses, PD, pulse, etc.
+│   │   ├── services/           # Business logic (game, progress)
+│   │   ├── utils/              # Auth middleware, token helpers
+│   │   └── server.ts           # Express app entry point
+│   └── prisma/                 # Backend Prisma schema (synced for Railway)
+├── prisma/                     # Root Prisma schema + seed + migrations
+├── dist/games/spacewar/        # Built Spacewar WebGL assets
+├── cypress/                    # E2E tests
+├── public/                     # Static assets
+├── vercel.json                 # Vercel deployment config
+└── package.json
+```
+
+## 🗺 Roadmap
+
+- [ ] Next set of games (Quantum / AI / Biotech pathways — Set 2 & 3)
+- [ ] Build-a-Bot interactive activity (scaffolded, not yet playable)
+- [ ] Real-time PvP matchmaking for Spacewar Arena
+- [ ] Donation-enabled website
+- [ ] Collegiate STEM principles integration (Nathan Frank collab)
+- [ ] Community showcase night flow enhancements
+- [ ] Mobile-optimized game controls
+- [ ] Parent progress portal
+
+## 📬 Contact
+
+Built by the **Bright Bots Initiative**
