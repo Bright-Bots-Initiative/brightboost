@@ -29,7 +29,7 @@ const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 
   return (
     <nav
-      className="bg-brightboost-navy text-white shadow-lg ml-64"
+      className="bg-brightboost-navy text-white shadow-lg"
       role="navigation"
       aria-label="Main navigation"
     >
