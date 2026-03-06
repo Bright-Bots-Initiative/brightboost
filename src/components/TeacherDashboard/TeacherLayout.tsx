@@ -4,8 +4,11 @@ import Sidebar from "./Sidebar";
 import TeacherNavbar from "./TeacherNavbar";
 import ProfileModal from "./ProfileModal";
 import EditProfileModal from "./EditProfileModal";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { UserProfile } from "@/services/profileService";
+import { Menu } from "lucide-react";
+
+const SIDEBAR_KEY = "teacher-sidebar-collapsed";
 
 const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -16,6 +19,26 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+
+  // Sidebar state
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleToggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -60,17 +83,36 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
         >
           Skip to main content
         </a>
-        <TeacherNavbar
-          userName={user?.name || "Teacher"}
-          avatarUrl={user?.avatarUrl}
-          onLogout={handleLogout}
-          onProfileClick={handleProfileClick}
-          onEditProfileClick={handleEditProfileClick}
+        <div className="flex items-center">
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden fixed top-4 left-4 z-30 p-2 bg-gray-800 text-white rounded-lg shadow-lg hover:bg-gray-700 transition"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex-1">
+            <TeacherNavbar
+              userName={user?.name || "Teacher"}
+              avatarUrl={user?.avatarUrl}
+              onLogout={handleLogout}
+              onProfileClick={handleProfileClick}
+              onEditProfileClick={handleEditProfileClick}
+            />
+          </div>
+        </div>
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={handleToggle}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
         />
-        <Sidebar />
         <main
           id="main-content"
-          className="flex-grow ml-64 pt-6 px-6 pb-6 bg-white"
+          className={`flex-grow pt-6 px-6 pb-6 bg-white transition-[margin-left] duration-200 ease-in-out ${
+            collapsed ? "md:ml-[60px]" : "md:ml-64"
+          } ml-0`}
           role="main"
         >
           {children}
