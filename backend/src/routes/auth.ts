@@ -7,6 +7,7 @@ import { authLimiter } from "../utils/security";
 import { logAudit } from "../utils/audit";
 import { generateToken } from "../utils/token";
 import { nameSchema, safeString, emailSchema } from "../validation/schemas";
+import { sendPasswordResetEmail } from "../utils/mail";
 
 const router = Router();
 
@@ -248,14 +249,11 @@ router.post(
         },
       });
 
-      // In production, send email here. For dev/pilot, log to console.
       const frontendUrl =
         process.env.FRONTEND_URL || "http://localhost:5173";
       const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
-      console.log(
-        `\n[PASSWORD RESET] Reset link for ${data.email}:\n${resetUrl}\n`,
-      );
+      await sendPasswordResetEmail(data.email, resetUrl);
 
       await logAudit("PASSWORD_RESET_REQUESTED", user.id, {
         email: user.email,
