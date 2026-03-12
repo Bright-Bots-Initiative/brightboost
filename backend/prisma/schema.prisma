@@ -58,7 +58,9 @@ model User {
   prepChecklists  TeacherPrepChecklist[]
   pdSessions      PDSession[]
   pdReflections   PDReflection[]
+  feedbacks       Feedback[]
   facultyPosts    FacultyPost[]
+  resetTokens     PasswordResetToken[]
 }
 
 // -----------------------------------------------------------------------------
@@ -478,4 +480,33 @@ model FacultyPost {
   @@index([authorId])
   @@index([parentId])
   @@index([moduleSlug])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Feedback {
+  id            String   @id @default(cuid())
+  userId        String?
+  role          String?  // teacher, student, admin, partner, other
+  liked         String?
+  confused      String?
+  wantsFollowUp Boolean  @default(false)
+  email         String?
+  createdAt     DateTime @default(now())
+
+  user          User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

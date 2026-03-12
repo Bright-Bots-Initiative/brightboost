@@ -51,6 +51,8 @@ model User {
   avatar          Avatar?
   weeklySnapshots WeeklySnapshot[]
   pulseResponses  PulseResponse[]
+  feedbacks       Feedback[]
+  resetTokens     PasswordResetToken[]
 }
 
 // -----------------------------------------------------------------------------
@@ -375,4 +377,33 @@ model AuditLog {
   action    String
   meta      Json?
   createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Feedback {
+  id            String   @id @default(cuid())
+  userId        String?
+  role          String?
+  liked         String?
+  confused      String?
+  wantsFollowUp Boolean  @default(false)
+  email         String?
+  createdAt     DateTime @default(now())
+
+  user          User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

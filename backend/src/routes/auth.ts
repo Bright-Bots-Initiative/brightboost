@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
@@ -210,5 +211,129 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// POST /forgot-password
+const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+router.post(
+  "/forgot-password",
+  authLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const data = forgotPasswordSchema.parse(req.body);
+
+      // Always return success to prevent email enumeration
+      const successMsg =
+        "If that email exists, a reset link has been sent.";
+
+      const user = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (!user) {
+        return res.json({ message: successMsg });
+      }
+
+      // Generate secure token
+      const token = crypto.randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          token,
+          expiresAt,
+        },
+      });
+
+      // In production, send email here. For dev/pilot, log to console.
+      const frontendUrl =
+        process.env.FRONTEND_URL || "http://localhost:5173";
+      const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+
+      console.log(
+        `\n[PASSWORD RESET] Reset link for ${data.email}:\n${resetUrl}\n`,
+      );
+
+      await logAudit("PASSWORD_RESET_REQUESTED", user.id, {
+        email: user.email,
+        ip: req.ip,
+      });
+
+      res.json({ message: successMsg });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+// POST /reset-password
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password too long")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+});
+
+router.post(
+  "/reset-password",
+  authLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const data = resetPasswordSchema.parse(req.body);
+
+      const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { token: data.token },
+        include: { user: true },
+      });
+
+      if (
+        !resetToken ||
+        resetToken.usedAt ||
+        resetToken.expiresAt < new Date()
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Invalid or expired reset token" });
+      }
+
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: resetToken.userId },
+          data: { password: hashedPassword },
+        }),
+        prisma.passwordResetToken.update({
+          where: { id: resetToken.id },
+          data: { usedAt: new Date() },
+        }),
+      ]);
+
+      await logAudit("PASSWORD_RESET_COMPLETED", resetToken.userId, {
+        email: resetToken.user.email,
+        ip: req.ip,
+      });
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
 
 export default router;
