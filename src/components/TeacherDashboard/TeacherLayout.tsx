@@ -4,6 +4,8 @@ import Sidebar from "./Sidebar";
 import TeacherNavbar from "./TeacherNavbar";
 import ProfileModal from "./ProfileModal";
 import EditProfileModal from "./EditProfileModal";
+import FeedbackFab from "../FeedbackFab";
+import TeacherTutorial from "../teacher/TeacherTutorial";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { UserProfile } from "@/services/profileService";
 import { Menu } from "lucide-react";
@@ -137,6 +139,9 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
         onClose={() => setIsEditProfileModalOpen(false)}
         onProfileUpdated={handleProfileUpdated}
       />
+
+      <FeedbackFab />
+      <TeacherTutorial />
     </div>
   );
 };

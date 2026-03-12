@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { User, Bell, Globe } from "lucide-react";
+import { User, Bell, Globe, RotateCcw } from "lucide-react";
+import { resetTutorial } from "@/components/teacher/TeacherTutorial";
 import { useAuth } from "../contexts/AuthContext";
 import LanguageToggle from "../components/LanguageToggle";
 
@@ -49,6 +50,27 @@ const TeacherSettings = () => {
             <p className="text-sm text-slate-500">
               {t("teacher.settings.notificationsComingSoon")}
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Tutorial */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-slate-500" />
+              {t("tutorial.replayTutorial")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <button
+              onClick={() => {
+                resetTutorial();
+                window.location.reload();
+              }}
+              className="px-4 py-2 text-sm bg-brightboost-blue text-white rounded-lg hover:bg-brightboost-navy transition-colors"
+            >
+              {t("tutorial.replayTutorial")}
+            </button>
           </CardContent>
         </Card>
 
