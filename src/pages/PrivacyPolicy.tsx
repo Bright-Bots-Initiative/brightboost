@@ -75,7 +75,7 @@ const PrivacyPolicy: React.FC = () => {
               <p className="mt-2 font-medium">
                 Bright Bots Initiative
                 <br />
-                Email: privacy@brightboost.example.com
+                Email: nwalker@brightbotsint.com
               </p>
             </section>
           </div>

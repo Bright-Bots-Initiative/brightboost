@@ -1,8 +1,20 @@
 // src/pages/ShowcaseMode.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Presentation, Printer } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Presentation,
+  Printer,
+  Eye,
+  Heart,
+  Globe,
+  ArrowLeft,
+  X,
+} from "lucide-react";
+import LanguageToggle from "../components/LanguageToggle";
 import ShowcaseStats from "@/components/teacher/ShowcaseStats";
 import TakeHomeCards from "@/components/teacher/TakeHomeCards";
 
@@ -49,44 +61,114 @@ export default function ShowcaseMode({ isPublic = false }: ShowcaseModeProps) {
     setIsFullscreen(true);
   }, []);
 
-  // Pre-showcase setup screen
+  // ─── Pre-showcase entry screen ─────────────────────────────────────
   if (!isFullscreen) {
     return (
-      <div className="w-full space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-brightboost-navy">
-            {t("showcase.title")}
-          </h1>
-          <p className="text-sm text-gray-500">
-            Full-screen bilingual presentation for families
-          </p>
+      <div className="min-h-screen bg-gradient-to-b from-blue-950 via-indigo-950 to-purple-950 text-white">
+        {/* Top bar */}
+        <div className="max-w-3xl mx-auto px-4 pt-4 flex items-center justify-between">
+          {isPublic ? (
+            <Link
+              to="/"
+              className="flex items-center gap-1 text-sm text-white/60 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {t("reviewers.backHome")}
+            </Link>
+          ) : (
+            <div />
+          )}
+          <LanguageToggle />
         </div>
 
-        <div className="bg-white rounded-lg shadow p-8 text-center max-w-lg mx-auto">
-          <Presentation className="w-16 h-16 mx-auto text-brightboost-blue mb-4" />
-          <h2 className="text-xl font-bold text-brightboost-navy mb-2">
-            Ready to present?
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">
-            6 bilingual slides with student achievements.
-            <br />
-            Use arrow keys to navigate, ESC to exit.
-          </p>
+        <div className="max-w-3xl mx-auto px-4 py-12 md:py-16">
+          {/* Eyebrow + Headline */}
+          <div className="text-center mb-10">
+            <span className="inline-block px-3 py-1 bg-white/10 text-blue-300 text-xs font-semibold uppercase tracking-wider rounded-full mb-4">
+              {t("showcase.preEyebrow")}
+            </span>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
+              {t("showcase.preHeadline")}
+            </h1>
+            <p className="text-base md:text-lg text-blue-200/80 max-w-xl mx-auto leading-relaxed">
+              {t("showcase.preSubheadline")}
+            </p>
+          </div>
 
-          <div className="space-y-3">
+          {/* Two info cards */}
+          <div className="grid md:grid-cols-2 gap-4 mb-10">
+            {/* What you'll see */}
+            <div className="bg-white/[0.07] backdrop-blur-sm border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="w-5 h-5 text-blue-300" />
+                <h2 className="text-base font-bold">{t("showcase.preWhatTitle")}</h2>
+              </div>
+              <ul className="space-y-2 text-sm text-blue-100/80">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">-</span>
+                  {t("showcase.preWhat1")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">-</span>
+                  {t("showcase.preWhat2")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">-</span>
+                  {t("showcase.preWhat3")}
+                </li>
+              </ul>
+            </div>
+
+            {/* Why it matters */}
+            <div className="bg-white/[0.07] backdrop-blur-sm border border-white/10 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Heart className="w-5 h-5 text-purple-300" />
+                <h2 className="text-base font-bold">{t("showcase.preWhyTitle")}</h2>
+              </div>
+              <ul className="space-y-2 text-sm text-blue-100/80">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">-</span>
+                  {t("showcase.preWhy1")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">-</span>
+                  {t("showcase.preWhy2")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">-</span>
+                  {t("showcase.preWhy3")}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* CTA group */}
+          <div className="flex flex-col items-center gap-3 mb-8">
             <button
               onClick={startShowcase}
-              className="w-full px-6 py-3 bg-brightboost-blue text-white font-bold rounded-xl hover:bg-brightboost-navy transition-all text-lg"
+              className="flex items-center gap-3 px-8 py-4 bg-white text-indigo-950 font-bold rounded-xl hover:bg-blue-50 transition-all text-lg shadow-lg shadow-black/20"
             >
+              <Presentation className="w-5 h-5" />
               {t("showcase.startShowcase")}
             </button>
             <button
               onClick={() => setShowTakeHome(true)}
-              className="w-full px-6 py-3 bg-purple-100 text-purple-700 font-semibold rounded-xl hover:bg-purple-200 transition-all flex items-center justify-center gap-2"
+              className="flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 transition-all"
             >
-              <Printer className="w-5 h-5" />
+              <Printer className="w-4 h-4" />
               {t("showcase.takeHomeCards")}
             </button>
+          </div>
+
+          {/* Helper text */}
+          <div className="text-center space-y-2">
+            <p className="text-xs text-white/40 flex items-center justify-center gap-1.5">
+              <Globe className="w-3 h-3" />
+              {t("showcase.preKeyboard")}
+            </p>
+            <p className="text-xs text-white/30">
+              {t("showcase.prePowered")}
+            </p>
           </div>
         </div>
 
@@ -100,7 +182,7 @@ export default function ShowcaseMode({ isPublic = false }: ShowcaseModeProps) {
     );
   }
 
-  // Fullscreen showcase
+  // ─── Fullscreen showcase ───────────────────────────────────────────
   const slides = [
     // Slide 1: Welcome
     <div key="s1" className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white px-8">
@@ -326,80 +408,82 @@ export default function ShowcaseMode({ isPublic = false }: ShowcaseModeProps) {
   ];
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 bg-black">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-            className="h-full"
-          >
-            {slides[currentSlide]}
-          </motion.div>
-        </AnimatePresence>
+    <div className="fixed inset-0 z-50 bg-black">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentSlide}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -50 }}
+          transition={{ duration: 0.3 }}
+          className="h-full"
+        >
+          {slides[currentSlide]}
+        </motion.div>
+      </AnimatePresence>
 
-        {/* Navigation arrows */}
-        {currentSlide > 0 && (
-          <button
-            onClick={() => setCurrentSlide((c) => c - 1)}
-            className="fixed left-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/20 rounded-full hover:bg-white/30 text-white transition-colors"
-          >
-            <ChevronLeft className="w-8 h-8" />
-          </button>
-        )}
-        {currentSlide < TOTAL_SLIDES - 1 && (
-          <button
-            onClick={() => setCurrentSlide((c) => c + 1)}
-            className="fixed right-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/20 rounded-full hover:bg-white/30 text-white transition-colors"
-          >
-            <ChevronRight className="w-8 h-8" />
-          </button>
-        )}
+      {/* Navigation arrows */}
+      {currentSlide > 0 && (
+        <button
+          onClick={() => setCurrentSlide((c) => c - 1)}
+          className="fixed left-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors backdrop-blur-sm"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-7 h-7" />
+        </button>
+      )}
+      {currentSlide < TOTAL_SLIDES - 1 && (
+        <button
+          onClick={() => setCurrentSlide((c) => c + 1)}
+          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/10 rounded-full hover:bg-white/20 text-white transition-colors backdrop-blur-sm"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-7 h-7" />
+        </button>
+      )}
 
-        {/* Bottom bar: dots + controls */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-black/50">
-          {/* Slide dots */}
-          <div className="flex gap-2">
-            {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentSlide(i)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  i === currentSlide
-                    ? "bg-white scale-125"
-                    : "bg-white/40 hover:bg-white/60"
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Slide counter + exit */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-white/60">
-              {t("showcase.slideOf", {
-                current: currentSlide + 1,
-                total: TOTAL_SLIDES,
-              })}
-            </span>
+      {/* Bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 bg-gradient-to-t from-black/60 to-transparent">
+        {/* Slide dots */}
+        <div className="flex gap-2">
+          {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
             <button
-              onClick={() => setIsFullscreen(false)}
-              className="px-4 py-1.5 bg-white/20 text-white text-sm rounded-md hover:bg-white/30 transition-colors"
-            >
-              {t("showcase.exitShowcase")}
-            </button>
-          </div>
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                i === currentSlide
+                  ? "bg-white scale-125"
+                  : "bg-white/30 hover:bg-white/50"
+              }`}
+            />
+          ))}
         </div>
 
-        {/* ESC hint */}
-        <div className="fixed top-4 right-4 z-50">
-          <p className="text-xs text-white/40">
-            {t("showcase.pressEscToExit")}
-          </p>
+        {/* Slide counter + exit */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-white/50 font-mono">
+            {t("showcase.slideOf", {
+              current: currentSlide + 1,
+              total: TOTAL_SLIDES,
+            })}
+          </span>
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 text-white text-xs rounded-md hover:bg-white/20 transition-colors backdrop-blur-sm"
+          >
+            <X className="w-3.5 h-3.5" />
+            {t("showcase.exitShowcase")}
+          </button>
         </div>
       </div>
-    </>
+
+      {/* Keyboard hint — fades after a moment */}
+      <div className="fixed top-4 right-4 z-50">
+        <p className="text-[11px] text-white/30">
+          {t("showcase.pressEscToExit")}
+        </p>
+      </div>
+    </div>
   );
 }
