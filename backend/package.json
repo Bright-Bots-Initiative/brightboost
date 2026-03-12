@@ -12,7 +12,8 @@
     "start": "npm run predeploy && node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
-    "predeploy": "sh scripts/predeploy.sh"
+    "predeploy": "sh scripts/predeploy.sh",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
