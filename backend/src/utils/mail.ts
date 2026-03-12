@@ -1,16 +1,17 @@
 /**
  * Mail utility — abstracts email delivery for password reset (and future use).
  *
- * Behavior by environment:
- *   - If SMTP_HOST is configured: sends via nodemailer (must be installed).
+ * Behavior:
+ *   - If SMTP_HOST is configured: sends real email via nodemailer.
  *   - If SMTP_HOST is NOT configured:
  *       - development: logs full reset URL to console (safe for local dev).
  *       - production:  logs a warning (no token leaked) and skips delivery.
  *
- * To enable real email delivery:
- *   1. npm install nodemailer && npm install -D @types/nodemailer
- *   2. Set env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM
+ * Required env vars for real delivery:
+ *   SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASS, MAIL_FROM
  */
+
+import nodemailer from "nodemailer";
 
 interface MailOptions {
   to: string;
@@ -20,17 +21,11 @@ interface MailOptions {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-async function sendViaSMTP(options: MailOptions): Promise<boolean> {
-  try {
-    // Dynamic require so the app doesn't crash if nodemailer isn't installed.
-    // Install with: npm install nodemailer @types/nodemailer
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const nodemailer = require("nodemailer") as {
-      createTransport: (config: Record<string, unknown>) => {
-        sendMail: (opts: Record<string, string>) => Promise<void>;
-      };
-    };
-    const transport = nodemailer.createTransport({
+let transporter: nodemailer.Transporter | null = null;
+
+function getTransporter(): nodemailer.Transporter {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: Number(process.env.SMTP_PORT) === 465,
@@ -39,14 +34,19 @@ async function sendViaSMTP(options: MailOptions): Promise<boolean> {
         pass: process.env.SMTP_PASS,
       },
     });
+  }
+  return transporter;
+}
 
+async function sendViaSMTP(options: MailOptions): Promise<boolean> {
+  try {
+    const transport = getTransporter();
     await transport.sendMail({
-      from: process.env.MAIL_FROM || "noreply@brightboost.app",
+      from: process.env.MAIL_FROM || "BrightBoost <noreply@brightboost.app>",
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
-
     console.log(`[MAIL] Sent to ${options.to} via SMTP`);
     return true;
   } catch (err) {
@@ -56,7 +56,6 @@ async function sendViaSMTP(options: MailOptions): Promise<boolean> {
 }
 
 export async function sendMail(options: MailOptions): Promise<void> {
-  // If SMTP is configured, attempt real delivery
   if (process.env.SMTP_HOST) {
     const sent = await sendViaSMTP(options);
     if (sent) return;
@@ -64,12 +63,10 @@ export async function sendMail(options: MailOptions): Promise<void> {
   }
 
   if (isProduction) {
-    // In production without SMTP, warn but do NOT log email content (may contain tokens)
     console.warn(
       `[MAIL] No email provider configured. Email to ${options.to} was not delivered.`,
     );
   } else {
-    // In development, log the full email for debugging
     console.log(`\n[MAIL] ─── Dev Mode Email ───`);
     console.log(`  To:      ${options.to}`);
     console.log(`  Subject: ${options.subject}`);
@@ -87,13 +84,34 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   await sendMail({
     to: email,
-    subject: "BrightBoost — Reset Your Password",
-    html: [
-      `<p>Hi,</p>`,
-      `<p>We received a request to reset your BrightBoost password.</p>`,
-      `<p><a href="${resetUrl}">Click here to reset your password</a></p>`,
-      `<p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>`,
-      `<p>— The BrightBoost Team</p>`,
-    ].join("\n"),
+    subject: "BrightBoost — Password Reset Request",
+    html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="font-size: 22px; color: #1e40af; margin: 0;">BrightBoost</h1>
+          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">K-2 STEM Learning Platform</p>
+        </div>
+        <p style="font-size: 15px; line-height: 1.6;">Hi,</p>
+        <p style="font-size: 15px; line-height: 1.6;">
+          We received a request to reset your BrightBoost password.
+          Click the button below to choose a new password:
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${resetUrl}"
+             style="display: inline-block; padding: 12px 32px; background-color: #1e40af; color: #ffffff; font-weight: bold; font-size: 15px; text-decoration: none; border-radius: 8px;">
+            Reset Password
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
+          This link expires in 1 hour. If you didn't request a password reset,
+          you can safely ignore this email — your password will not change.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center;">
+          BrightBoost &mdash; Bright Bots Initiative<br />
+          This is an automated message. Please do not reply.
+        </p>
+      </div>
+    `.trim(),
   });
 }
