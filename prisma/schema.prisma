@@ -1,5 +1,8 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// =============================================================================
+// SOURCE OF TRUTH — All Prisma generation and migration uses THIS file.
+// backend/prisma/schema.prisma is a secondary copy kept for Dockerfile compat.
+// If you edit models here, sync backend/prisma/schema.prisma to match.
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -31,6 +34,11 @@ model User {
   bio       String   @default("No bio added")
   grade     Int?
 
+  // K-2 Class Code Login
+  loginIcon         String?  // emoji icon for K-2 class-code login
+  loginPin          String?  // optional hashed 4-digit PIN
+  preferredLanguage String?  // "en" or "es"
+
   // Legacy / Hybrid Fields (keep for now to avoid breaking old UI)
   xp        Int      @default(0)
   level     String   @default("Explorer")
@@ -53,6 +61,12 @@ model User {
   pulseResponses  PulseResponse[]
   feedbacks       Feedback[]
   resetTokens     PasswordResetToken[]
+
+  // Teacher Enablement Relations
+  prepChecklists  TeacherPrepChecklist[]
+  pdSessions      PDSession[]
+  pdReflections   PDReflection[]
+  facultyPosts    FacultyPost[]
 }
 
 // -----------------------------------------------------------------------------
@@ -307,12 +321,13 @@ model UserBadge {
 }
 
 model Course {
-  id        String   @id @default(cuid())
-  name      String
-  joinCode  String   @unique @default(cuid())
-  teacherId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  joinCode        String   @unique @default(cuid())
+  teacherId       String
+  defaultLanguage String   @default("en") // class-level language ("en" or "es")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   teacher        User            @relation(fields: [teacherId], references: [id])
   enrollments    Enrollment[]
@@ -379,6 +394,104 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+// -----------------------------------------------------------------------------
+// Teacher Enablement: Prep Toolkit, Resources, PD
+// -----------------------------------------------------------------------------
+
+model TeacherPrepChecklist {
+  id          String   @id @default(cuid())
+  teacherId   String
+  moduleSlug  String
+  items       Json     // { "review": true, "printQuestions": false, ... }
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, moduleSlug])
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String   // WORKSHEET, HANDOUT, GUIDE, LINK
+  moduleSlug  String?  // null = general resource
+  category    String   // PRE_ACTIVITY, POST_ACTIVITY, ASSESSMENT, SUPPLEMENTAL, GENERAL
+  contentHtml String?  // for generated worksheets/handouts
+  contentUrl  String?  // for external links
+  printable   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([moduleSlug])
+  @@index([type])
+  @@index([category])
+}
+
+model PDSession {
+  id                 String   @id @default(cuid())
+  teacherId          String
+  date               DateTime
+  durationMinutes    Int
+  topic              String
+  facilitator        String?
+  notes              String?
+  actionItems        Json?    // ["item1", "item2"]
+  relatedModuleSlugs Json?    // ["k2-stem-sequencing", ...]
+  isTemplate         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  teacher            User           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  reflections        PDReflection[]
+
+  @@index([teacherId])
+}
+
+model PDReflection {
+  id                  String   @id @default(cuid())
+  teacherId           String
+  pdSessionId         String
+  moduleSlug          String?
+  whatWorked           String?
+  whatToChange         String?
+  studentObservations  String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  teacher             User      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  pdSession           PDSession @relation(fields: [pdSessionId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([pdSessionId])
+}
+
+model FacultyPost {
+  id         String   @id @default(cuid())
+  authorId   String
+  moduleSlug String?
+  title      String?
+  content    String
+  isPinned   Boolean  @default(false)
+  parentId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent     FacultyPost?  @relation("Replies", fields: [parentId], references: [id])
+  replies    FacultyPost[] @relation("Replies")
+
+  @@index([authorId])
+  @@index([parentId])
+  @@index([moduleSlug])
+}
+
+// -----------------------------------------------------------------------------
+// Password Reset & Feedback
+// -----------------------------------------------------------------------------
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
@@ -396,7 +509,7 @@ model PasswordResetToken {
 model Feedback {
   id            String   @id @default(cuid())
   userId        String?
-  role          String?
+  role          String?  // teacher, student, admin, partner, other
   liked         String?
   confused      String?
   wantsFollowUp Boolean  @default(false)

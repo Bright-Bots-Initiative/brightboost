@@ -1,5 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// =============================================================================
+// SECONDARY COPY — kept for backend/Dockerfile (context=backend/ only).
+// The SOURCE OF TRUTH is /prisma/schema.prisma at the repo root.
+// All scripts (db:generate, db:migrate, predeploy.sh) use the root schema.
+// If you add or change models, edit the root schema FIRST, then sync here.
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"

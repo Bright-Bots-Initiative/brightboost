@@ -11,7 +11,9 @@ RUN npm ci --include=dev
 # Copy backend source (this Dockerfile is built with context = backend/)
 COPY . .
 
-# Generate Prisma client using backend-local schema
+# Generate Prisma client using backend-local schema (secondary copy).
+# For full-repo builds, prefer Dockerfile.backend at repo root which uses
+# the authoritative /prisma/schema.prisma with dual generators.
 RUN npx prisma generate --schema prisma/schema.prisma
 
 # Compile TypeScript
