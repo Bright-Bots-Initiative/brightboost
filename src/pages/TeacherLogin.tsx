@@ -107,7 +107,16 @@ const TeacherLogin: React.FC = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-brightboost-blue hover:underline transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center">
             <p className="text-sm text-brightboost-navy">
               Don't have an account?{" "}
               <Link

@@ -132,7 +132,16 @@ const StudentLogin: React.FC = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-brightboost-blue hover:underline transition-colors"
+              >
+                {t("auth.forgotPassword")}
+              </Link>
+            </div>
+
+            <div className="mt-4 text-center">
               <p className="text-sm text-brightboost-navy">
                 {t("studentLogin.footer.noAccount")}{" "}
                 <Link

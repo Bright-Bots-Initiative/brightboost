@@ -41,6 +41,8 @@ import TeacherPDHub from "./pages/TeacherPDHub";
 import CommunityImpactDashboard from "./pages/CommunityImpactDashboard";
 import ShowcaseMode from "./pages/ShowcaseMode";
 import StudentClassLogin from "./pages/StudentClassLogin";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Import styles
 import "./App.css";
@@ -74,6 +76,8 @@ function App() {
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
               <Route path="/class-login" element={<StudentClassLogin />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/showcase" element={<ShowcaseMode isPublic />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
