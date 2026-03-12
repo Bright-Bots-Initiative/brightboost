@@ -170,7 +170,7 @@ export default function ActivityPlayer() {
         }
         setShuffleMap(sMap);
       })
-      .catch((e) => {
+      .catch(() => {
         toast({
           title: t("common.oops"),
           description: t("activity.loadError"),
@@ -382,7 +382,7 @@ export default function ActivityPlayer() {
                 >
                   Back
                 </Button>
-                <Button onClick={handleComplete}>{t("activityPlayer.markComplete")}</Button>
+                <Button onClick={() => handleComplete()}>{t("activityPlayer.markComplete")}</Button>
               </div>
             </CardContent>
           </Card>
@@ -643,7 +643,7 @@ export default function ActivityPlayer() {
               >
                 Back
               </Button>
-              <Button onClick={handleComplete}>{t("activityPlayer.markComplete")}</Button>
+              <Button onClick={() => handleComplete()}>{t("activityPlayer.markComplete")}</Button>
             </div>
           </CardContent>
         </Card>

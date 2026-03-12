@@ -15,9 +15,6 @@ import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
 import {
   Lock,
   Flame,
-  BookOpen,
-  Star,
-  Zap,
   Trophy,
   Sparkles,
   CalendarDays,
@@ -27,7 +24,6 @@ import {
 } from "lucide-react";
 import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
-import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { cn } from "@/lib/utils";
 import { translateContentName } from "@/utils/localizedContent";
 import {
@@ -146,7 +142,7 @@ export default function StudentDashboard() {
   const authApi = useApi();
 
   const [avatar, setAvatar] = useState<any>(null);
-  const [modules, setModules] = useState<any[]>([]);
+  const [, setModules] = useState<any[]>([]);
   const [progressList, setProgressList] = useState<any[]>([]);
   const [upNext, setUpNext] = useState<NextActivity[]>([]);
   const [nextOne, setNextOne] = useState<NextActivity | null>(null);

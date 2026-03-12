@@ -35,7 +35,7 @@ export default function ModuleDetail() {
           setCompletedActivities(completed);
         }
       })
-      .catch((e) => {
+      .catch(() => {
         toast({
           title: "Oops!",
           description: "We couldn't load this module. Try again!",
