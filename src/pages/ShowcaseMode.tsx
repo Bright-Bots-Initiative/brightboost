@@ -8,7 +8,18 @@ import TakeHomeCards from "@/components/teacher/TakeHomeCards";
 
 const TOTAL_SLIDES = 6;
 
-export default function ShowcaseMode() {
+const PUBLIC_STATS = {
+  totalStudents: 24,
+  activitiesCompleted: 156,
+  avgPreScore: 2.8,
+  avgPostScore: 4.1,
+};
+
+interface ShowcaseModeProps {
+  isPublic?: boolean;
+}
+
+export default function ShowcaseMode({ isPublic = false }: ShowcaseModeProps) {
   const { t } = useTranslation();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -185,7 +196,7 @@ export default function ShowcaseMode() {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        <ShowcaseStats />
+        <ShowcaseStats staticData={isPublic ? PUBLIC_STATS : undefined} />
       </motion.div>
     </div>,
 

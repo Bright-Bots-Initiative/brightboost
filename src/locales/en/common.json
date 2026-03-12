@@ -149,6 +149,26 @@
     "networkIssue": "Network Error",
     "networkFailed": "We couldn't connect to the server. Please try again."
   },
+  "feedback": {
+    "button": "Give Feedback",
+    "title": "Share Your Feedback",
+    "roleLabel": "I explored BrightBoost as a...",
+    "roleSelect": "Select role",
+    "roleTeacher": "Teacher",
+    "roleStudent": "Student",
+    "roleAdmin": "School/District Admin",
+    "rolePartner": "Partner/Reviewer",
+    "roleOther": "Other",
+    "likedLabel": "What did you like?",
+    "likedPlaceholder": "Anything that stood out or worked well...",
+    "confusedLabel": "What was confusing or could be better?",
+    "confusedPlaceholder": "Anything unclear, broken, or missing...",
+    "followUp": "I'd like someone to follow up with me",
+    "emailPlaceholder": "Your email address",
+    "send": "Send Feedback",
+    "sending": "Sending...",
+    "thanks": "Thank you for your feedback!"
+  },
   "notFound.pageNotFound": "Page Not Found",
   "notFound.pageDescription": "Oops! The page you are looking for doesn't exist or has been moved.",
   "notFound.backToHome": "Back to Home",
@@ -211,12 +231,57 @@
   "landing": {
     "title": "Bright Boost",
     "subtitle": "Learn. Play. Explore!",
-    "description": "Games and adventures that make you smarter",
-    "letsGo": "Let's Go!",
+    "tagline": "Interactive K-2 STEM adventures that build confidence and problem-solving skills",
+    "feat1": "Interactive Games",
+    "feat2": "Track Progress",
+    "feat3": "Classroom Tools",
+    "feat4": "Bilingual (EN/ES)",
+    "imATeacher": "I'm a Teacher",
     "imAStudent": "I'm a Student!",
     "imNewHere": "I'm New Here",
+    "demoToggle": "Exploring as a partner or reviewer?",
+    "demoTitle": "Demo Credentials",
+    "demoTeacher": "Teacher",
+    "demoStudent": "Student",
+    "demoPath": "Recommended path: Log in as teacher → Create a class → Open Showcase Mode → Log in as student → Join the class → Play a module.",
+    "viewShowcase": "View Showcase Presentation",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "auth": {
+    "forgotPassword": "Forgot password?",
+    "forgotTitle": "Reset Your Password",
+    "forgotDesc": "Enter your email and we'll send you a reset link.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "resetSent": "If that email exists in our system, a reset link has been sent. Check your inbox (or console in dev mode).",
+    "backToLogin": "Back to Login",
+    "resetTitle": "Set New Password",
+    "resetDesc": "Enter your new password below.",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "resetPassword": "Reset Password",
+    "resetting": "Resetting...",
+    "resetSuccess": "Password reset successfully! You can now log in.",
+    "resetInvalid": "This reset link is invalid or has expired.",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "tutorial": {
+    "welcome": "Welcome to BrightBoost!",
+    "welcomeDesc": "Let's take a quick tour of your teacher dashboard.",
+    "step1": "Create a class and share the join code with students.",
+    "step2": "Launch weekly sessions to assign activities.",
+    "step3": "Track student progress and confidence growth.",
+    "step4": "Use Showcase Mode for family nights and presentations.",
+    "next": "Next",
+    "skip": "Skip Tour",
+    "finish": "Get Started!",
+    "stepOf": "Step {{current}} of {{total}}",
+    "replayTutorial": "Replay Tutorial"
   },
   "common": {
     "save": "Save",
@@ -771,6 +836,15 @@
     "welcome": "Welcome, {{name}}",
     "viewProfile": "View Profile",
     "editProfile": "Edit Profile",
+
+    "getStarted": {
+      "title": "Welcome to BrightBoost!",
+      "subtitle": "Get your classroom up and running in a few simple steps.",
+      "step1": "Create your first class",
+      "step2": "Share the join code with students",
+      "step3": "Launch a weekly session",
+      "step4": "View student progress on this dashboard"
+    },
     "logout": "Logout",
 
     "nav": {
@@ -856,7 +930,10 @@
       "classNamePlaceholder": "e.g. Period 3 STEM",
       "cancel": "Cancel",
       "creating": "Creating...",
-      "createClass": "Create Class"
+      "createClass": "Create Class",
+      "deleteClass": "Delete",
+      "deleteTitle": "Delete Class",
+      "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? All students will be unenrolled and all sessions will be removed. This cannot be undone."
     },
 
     "classDetail": {

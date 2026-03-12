@@ -149,6 +149,26 @@
     "networkIssue": "Error de red",
     "networkFailed": "No pudimos conectar con el servidor. Por favor, inténtelo de nuevo."
   },
+  "feedback": {
+    "button": "Dar Opinión",
+    "title": "Comparte tu Opinión",
+    "roleLabel": "Exploré BrightBoost como...",
+    "roleSelect": "Seleccionar rol",
+    "roleTeacher": "Maestro/a",
+    "roleStudent": "Estudiante",
+    "roleAdmin": "Admin de Escuela/Distrito",
+    "rolePartner": "Socio/Revisor",
+    "roleOther": "Otro",
+    "likedLabel": "¿Qué te gustó?",
+    "likedPlaceholder": "Algo que se destacó o funcionó bien...",
+    "confusedLabel": "¿Qué fue confuso o podría mejorar?",
+    "confusedPlaceholder": "Algo poco claro, roto o faltante...",
+    "followUp": "Me gustaría que alguien se comunique conmigo",
+    "emailPlaceholder": "Tu dirección de correo",
+    "send": "Enviar Opinión",
+    "sending": "Enviando...",
+    "thanks": "¡Gracias por tu opinión!"
+  },
   "notFound.pageNotFound": "Página No Encontrada",
   "notFound.pageDescription": "¡Vaya! La página que buscas no existe o ha sido movida.",
   "notFound.backToHome": "Volver al inicio",
@@ -211,12 +231,57 @@
   "landing": {
     "title": "Bright Boost",
     "subtitle": "¡Aprende. Juega. Explora!",
-    "description": "Juegos y aventuras que te hacen más inteligente",
-    "letsGo": "¡Vamos!",
+    "tagline": "Aventuras STEM interactivas para K-2 que construyen confianza y habilidades de resolución de problemas",
+    "feat1": "Juegos Interactivos",
+    "feat2": "Seguir Progreso",
+    "feat3": "Herramientas de Aula",
+    "feat4": "Bilingüe (EN/ES)",
+    "imATeacher": "Soy Maestro/a",
     "imAStudent": "¡Soy Estudiante!",
     "imNewHere": "Soy Nuevo Aquí",
+    "demoToggle": "¿Explorando como socio o revisor?",
+    "demoTitle": "Credenciales de Demostración",
+    "demoTeacher": "Maestro/a",
+    "demoStudent": "Estudiante",
+    "demoPath": "Ruta recomendada: Inicia sesión como maestro → Crea una clase → Abre el Modo Exhibición → Inicia sesión como estudiante → Únete a la clase → Juega un módulo.",
+    "viewShowcase": "Ver Presentación de Exhibición",
     "privacy": "Política de Privacidad",
     "terms": "Términos de Servicio"
+  },
+  "auth": {
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotTitle": "Restablecer Contraseña",
+    "forgotDesc": "Ingresa tu correo electrónico y te enviaremos un enlace de restablecimiento.",
+    "emailLabel": "Correo Electrónico",
+    "emailPlaceholder": "Ingresa tu correo",
+    "sendResetLink": "Enviar Enlace",
+    "sending": "Enviando...",
+    "resetSent": "Si ese correo existe en nuestro sistema, se ha enviado un enlace de restablecimiento. Revisa tu bandeja de entrada (o la consola en modo de desarrollo).",
+    "backToLogin": "Volver al Inicio de Sesión",
+    "resetTitle": "Establecer Nueva Contraseña",
+    "resetDesc": "Ingresa tu nueva contraseña a continuación.",
+    "newPassword": "Nueva Contraseña",
+    "newPasswordPlaceholder": "Ingresa nueva contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "confirmPasswordPlaceholder": "Confirma nueva contraseña",
+    "resetPassword": "Restablecer Contraseña",
+    "resetting": "Restableciendo...",
+    "resetSuccess": "¡Contraseña restablecida exitosamente! Ya puedes iniciar sesión.",
+    "resetInvalid": "Este enlace de restablecimiento es inválido o ha expirado.",
+    "passwordMismatch": "Las contraseñas no coinciden"
+  },
+  "tutorial": {
+    "welcome": "¡Bienvenido a BrightBoost!",
+    "welcomeDesc": "Hagamos un recorrido rápido por tu panel de maestro.",
+    "step1": "Crea una clase y comparte el código de unión con los estudiantes.",
+    "step2": "Inicia sesiones semanales para asignar actividades.",
+    "step3": "Rastrea el progreso y la confianza de los estudiantes.",
+    "step4": "Usa el Modo Exhibición para noches familiares y presentaciones.",
+    "next": "Siguiente",
+    "skip": "Saltar Tour",
+    "finish": "¡Comenzar!",
+    "stepOf": "Paso {{current}} de {{total}}",
+    "replayTutorial": "Repetir Tutorial"
   },
   "common": {
     "save": "Guardar",
@@ -771,6 +836,16 @@
     "welcome": "Bienvenido/a, {{name}}",
     "viewProfile": "Ver Perfil",
     "editProfile": "Editar Perfil",
+
+    "getStarted": {
+      "title": "¡Bienvenido a BrightBoost!",
+      "subtitle": "Prepara tu aula en unos simples pasos.",
+      "step1": "Crea tu primera clase",
+      "step2": "Comparte el código de unión con los estudiantes",
+      "step3": "Lanza una sesión semanal",
+      "step4": "Ve el progreso de los estudiantes en este panel"
+    },
+
     "logout": "Cerrar Sesión",
 
     "nav": {
@@ -856,7 +931,10 @@
       "classNamePlaceholder": "ej. Período 3 STEM",
       "cancel": "Cancelar",
       "creating": "Creando...",
-      "createClass": "Crear Clase"
+      "createClass": "Crear Clase",
+      "deleteClass": "Eliminar",
+      "deleteTitle": "Eliminar Clase",
+      "deleteConfirm": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Todos los estudiantes serán dados de baja y todas las sesiones serán eliminadas. Esta acción no se puede deshacer."
     },
 
     "classDetail": {

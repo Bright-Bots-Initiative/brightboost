@@ -10,11 +10,16 @@ interface StatsData {
   avgPostScore: number | null;
 }
 
-export default function ShowcaseStats() {
+interface ShowcaseStatsProps {
+  staticData?: StatsData;
+}
+
+export default function ShowcaseStats({ staticData }: ShowcaseStatsProps = {}) {
   const api = useApi();
-  const [stats, setStats] = useState<StatsData | null>(null);
+  const [stats, setStats] = useState<StatsData | null>(staticData ?? null);
 
   useEffect(() => {
+    if (staticData) return; // skip fetch when static data provided
     (async () => {
       try {
         const result = await api.get("/teacher/reports/impact");
@@ -23,7 +28,7 @@ export default function ShowcaseStats() {
         // silently fail for showcase
       }
     })();
-  }, [api]);
+  }, [api, staticData]);
 
   if (!stats) return null;
 

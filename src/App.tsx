@@ -74,6 +74,7 @@ function App() {
               <Route path="/student/login" element={<StudentLogin />} />
               <Route path="/student/signup" element={<StudentSignup />} />
               <Route path="/class-login" element={<StudentClassLogin />} />
+              <Route path="/showcase" element={<ShowcaseMode isPublic />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
 
