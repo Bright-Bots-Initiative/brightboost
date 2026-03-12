@@ -40,6 +40,9 @@ jobs:
       - name: Typecheck backend
         run: cd backend && npm run typecheck
 
+      - name: Check Prisma schema drift
+        run: bash scripts/check-prisma-drift.sh
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 

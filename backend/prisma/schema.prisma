@@ -57,14 +57,14 @@ model User {
   avatar          Avatar?
   weeklySnapshots WeeklySnapshot[]
   pulseResponses  PulseResponse[]
+  feedbacks       Feedback[]
+  resetTokens     PasswordResetToken[]
 
   // Teacher Enablement Relations
   prepChecklists  TeacherPrepChecklist[]
   pdSessions      PDSession[]
   pdReflections   PDReflection[]
-  feedbacks       Feedback[]
   facultyPosts    FacultyPost[]
-  resetTokens     PasswordResetToken[]
 }
 
 // -----------------------------------------------------------------------------
