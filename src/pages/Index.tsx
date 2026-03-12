@@ -115,6 +115,10 @@ const Index: React.FC = () => {
         </div>
 
         <footer className="text-center py-4 text-sm text-brightboost-navy/70 space-x-2">
+          <Link to="/for-reviewers" className="hover:underline">
+            {t("landing.forReviewers")}
+          </Link>
+          <span>|</span>
           <Link to="/privacy" className="hover:underline">
             {t("landing.privacy")}
           </Link>
