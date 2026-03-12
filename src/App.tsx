@@ -43,6 +43,7 @@ import ShowcaseMode from "./pages/ShowcaseMode";
 import StudentClassLogin from "./pages/StudentClassLogin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ForReviewers from "./pages/ForReviewers";
 
 // Import styles
 import "./App.css";
@@ -79,6 +80,7 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/showcase" element={<ShowcaseMode isPublic />} />
+              <Route path="/for-reviewers" element={<ForReviewers />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
 

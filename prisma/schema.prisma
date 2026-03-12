@@ -509,9 +509,11 @@ model PasswordResetToken {
 model Feedback {
   id            String   @id @default(cuid())
   userId        String?
-  role          String?  // teacher, student, admin, partner, other
+  role          String?  // teacher, student, admin, school_leader, community, parent, technical, other
   liked         String?
   confused      String?
+  strongest     String?
+  pilotInterest String?  // high, medium, low, na
   wantsFollowUp Boolean  @default(false)
   email         String?
   createdAt     DateTime @default(now())

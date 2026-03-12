@@ -157,17 +157,26 @@
     "roleTeacher": "Teacher",
     "roleStudent": "Student",
     "roleAdmin": "School/District Admin",
-    "rolePartner": "Partner/Reviewer",
+    "roleSchoolLeader": "School Leader / Principal",
+    "roleCommunity": "Community Partner",
+    "roleParent": "Parent / Family Member",
+    "roleTechnical": "Technical Reviewer",
     "roleOther": "Other",
-    "likedLabel": "What did you like?",
-    "likedPlaceholder": "Anything that stood out or worked well...",
+    "strongestLabel": "What felt strongest?",
+    "strongestPlaceholder": "A feature, moment, or idea that stood out...",
     "confusedLabel": "What was confusing or could be better?",
     "confusedPlaceholder": "Anything unclear, broken, or missing...",
+    "pilotLabel": "How interested are you in a pilot?",
+    "pilotSelect": "Select one",
+    "pilotHigh": "Very interested — let's talk",
+    "pilotMedium": "Curious — I'd like to learn more",
+    "pilotLow": "Just exploring for now",
+    "pilotNa": "Not applicable",
     "followUp": "I'd like someone to follow up with me",
     "emailPlaceholder": "Your email address",
     "send": "Send Feedback",
     "sending": "Sending...",
-    "thanks": "Thank you for your feedback!"
+    "thanks": "Thank you! Your feedback helps us improve BrightBoost."
   },
   "notFound.pageNotFound": "Page Not Found",
   "notFound.pageDescription": "Oops! The page you are looking for doesn't exist or has been moved.",
@@ -245,8 +254,72 @@
     "demoStudent": "Student",
     "demoPath": "Recommended path: Log in as teacher → Create a class → Open Showcase Mode → Log in as student → Join the class → Play a module.",
     "viewShowcase": "View Showcase Presentation",
+    "forReviewers": "Evaluator Guide",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
+  },
+  "reviewers": {
+    "backHome": "Back to Home",
+    "title": "BrightBoost Evaluator Guide",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — the K-2 STEM learning platform from the Bright Bots Initiative.",
+    "whatIs": {
+      "title": "What is BrightBoost?",
+      "body": "BrightBoost is a bilingual (English/Spanish) K-2 STEM learning platform that turns foundational skills — sequencing, patterns, problem-solving — into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. The platform is designed for equitable access in under-resourced schools.",
+      "feat1": "Game-Based Learning",
+      "feat2": "Real-Time Progress",
+      "feat3": "Classroom Management",
+      "feat4": "Bilingual (EN/ES)"
+    },
+    "explore": {
+      "title": "How to Explore This Demo",
+      "step1Title": "Watch the Showcase (2 min)",
+      "step1Desc": "A ready-made presentation showing what students learn, sample achievements, and family take-home activities. No login required.",
+      "openShowcase": "Open Showcase",
+      "step2Title": "Try the Teacher View (5 min)",
+      "step2Desc": "Log in with the demo teacher account to see class management, resources, the prep checklist, and the PD Hub.",
+      "step3Title": "Try the Student View (5 min)",
+      "step3Desc": "Log in with the demo student account to play through a module, earn XP, and see the avatar system."
+    },
+    "teachers": {
+      "title": "What Teachers Can Do",
+      "item1": "Create classes and generate join codes for students",
+      "item2": "Assign STEM modules with built-in prep checklists",
+      "item3": "Track individual and class-wide progress in real time",
+      "item4": "Access printable resources (worksheets, handouts, guides)",
+      "item5": "Run a Family STEAM Night showcase from the dashboard",
+      "item6": "Participate in professional development sessions and reflections"
+    },
+    "students": {
+      "title": "What Students Experience",
+      "item1": "Join a class with a simple code — K-2 students use icon + PIN login (no passwords)",
+      "item2": "Play through sequencing, pattern, and problem-solving activities",
+      "item3": "Earn XP, level up, and customize a robot avatar",
+      "item4": "See personal goals and streaks on a kid-friendly dashboard",
+      "item5": "Use the platform in English or Spanish"
+    },
+    "lookFor": {
+      "title": "What to Look For as a Partner",
+      "intro": "As you explore, here are four lenses that help evaluate BrightBoost for your context:",
+      "engagementTitle": "Student Engagement",
+      "engagementDesc": "Are the activities age-appropriate? Would a K-2 student find them motivating? Does the XP/avatar system feel rewarding?",
+      "teacherUxTitle": "Teacher Usability",
+      "teacherUxDesc": "Is it easy to create a class, assign work, and check progress? Does the prep checklist help with lesson planning?",
+      "accessibilityTitle": "Accessibility & Equity",
+      "accessibilityDesc": "Does the icon-based login work for pre-readers? Is the bilingual support effective? Does it load on Chromebooks?",
+      "trustTitle": "Data & Trust",
+      "trustDesc": "Is it clear what data is collected? Does the privacy policy address your concerns? Is the audit trail visible?"
+    },
+    "privacy": {
+      "title": "Privacy & Trust",
+      "item1": "BrightBoost collects only learning progress data — no ads, no third-party tracking",
+      "item2": "COPPA-aware design: K-2 accounts don't require email or passwords",
+      "item3": "All data can be exported or deleted at the end of a pilot",
+      "item4": "Audit logging tracks login, signup, and password reset events"
+    },
+    "ctaPrompt": "Ready to see it in action?",
+    "ctaShowcase": "Watch the Showcase",
+    "ctaTeacher": "Try the Teacher View",
+    "footer": "BrightBoost is a project of the Bright Bots Initiative. Questions? Use the feedback button inside the app or contact your pilot coordinator."
   },
   "auth": {
     "forgotPassword": "Forgot password?",

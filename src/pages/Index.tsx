@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import GameBackground from "../components/GameBackground";
 import LanguageToggle from "../components/LanguageToggle";
-import { Gamepad2, BarChart3, Users, Globe, ChevronDown, ChevronUp, Presentation } from "lucide-react";
+import { Gamepad2, BarChart3, Users, Globe, ChevronDown, ChevronUp, Presentation, ClipboardCheck } from "lucide-react";
 
 const Index: React.FC = () => {
   const { t } = useTranslation();
@@ -74,17 +74,26 @@ const Index: React.FC = () => {
             </Link>
           </div>
 
-          {/* Showcase link for partners */}
-          <Link
-            to="/showcase"
-            className="mt-4 flex items-center gap-2 text-sm text-brightboost-navy/70 hover:text-brightboost-navy transition-colors"
-          >
-            <Presentation className="w-4 h-4" />
-            {t("landing.viewShowcase")}
-          </Link>
+          {/* Reviewer / Partner entry points */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 mt-6">
+            <Link
+              to="/for-reviewers"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 backdrop-blur text-sm font-medium text-brightboost-navy hover:bg-white transition-colors shadow-sm"
+            >
+              <ClipboardCheck className="w-4 h-4 text-brightboost-blue" />
+              {t("landing.forReviewers")}
+            </Link>
+            <Link
+              to="/showcase"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 backdrop-blur text-sm font-medium text-brightboost-navy hover:bg-white transition-colors shadow-sm"
+            >
+              <Presentation className="w-4 h-4 text-brightboost-blue" />
+              {t("landing.viewShowcase")}
+            </Link>
+          </div>
 
           {/* Demo / Partner section */}
-          <div className="mt-8 max-w-md w-full">
+          <div className="mt-6 max-w-md w-full">
             <button
               onClick={() => setShowDemo(!showDemo)}
               className="flex items-center justify-center gap-2 mx-auto text-sm text-brightboost-navy/70 hover:text-brightboost-navy transition-colors"

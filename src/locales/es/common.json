@@ -157,17 +157,26 @@
     "roleTeacher": "Maestro/a",
     "roleStudent": "Estudiante",
     "roleAdmin": "Admin de Escuela/Distrito",
-    "rolePartner": "Socio/Revisor",
+    "roleSchoolLeader": "Líder Escolar / Director(a)",
+    "roleCommunity": "Socio Comunitario",
+    "roleParent": "Padre / Familiar",
+    "roleTechnical": "Revisor Técnico",
     "roleOther": "Otro",
-    "likedLabel": "¿Qué te gustó?",
-    "likedPlaceholder": "Algo que se destacó o funcionó bien...",
+    "strongestLabel": "¿Qué se sintió más fuerte?",
+    "strongestPlaceholder": "Una función, momento o idea que se destacó...",
     "confusedLabel": "¿Qué fue confuso o podría mejorar?",
     "confusedPlaceholder": "Algo poco claro, roto o faltante...",
+    "pilotLabel": "¿Qué tan interesado estás en un piloto?",
+    "pilotSelect": "Selecciona uno",
+    "pilotHigh": "Muy interesado — hablemos",
+    "pilotMedium": "Curioso — me gustaría saber más",
+    "pilotLow": "Solo explorando por ahora",
+    "pilotNa": "No aplica",
     "followUp": "Me gustaría que alguien se comunique conmigo",
     "emailPlaceholder": "Tu dirección de correo",
     "send": "Enviar Opinión",
     "sending": "Enviando...",
-    "thanks": "¡Gracias por tu opinión!"
+    "thanks": "¡Gracias! Tu opinión nos ayuda a mejorar BrightBoost."
   },
   "notFound.pageNotFound": "Página No Encontrada",
   "notFound.pageDescription": "¡Vaya! La página que buscas no existe o ha sido movida.",
@@ -245,8 +254,72 @@
     "demoStudent": "Estudiante",
     "demoPath": "Ruta recomendada: Inicia sesión como maestro → Crea una clase → Abre el Modo Exhibición → Inicia sesión como estudiante → Únete a la clase → Juega un módulo.",
     "viewShowcase": "Ver Presentación de Exhibición",
+    "forReviewers": "Guía para Evaluadores",
     "privacy": "Política de Privacidad",
     "terms": "Términos de Servicio"
+  },
+  "reviewers": {
+    "backHome": "Volver al inicio",
+    "title": "Guía para Evaluadores de BrightBoost",
+    "subtitle": "Todo lo que necesitas para explorar, evaluar y compartir opiniones sobre BrightBoost — la plataforma de aprendizaje STEM para K-2 de la Iniciativa Bright Bots.",
+    "whatIs": {
+      "title": "¿Qué es BrightBoost?",
+      "body": "BrightBoost es una plataforma bilingüe (inglés/español) de aprendizaje STEM para K-2 que convierte habilidades fundamentales — secuencias, patrones, resolución de problemas — en aventuras interactivas basadas en juegos. Los maestros crean clases, asignan módulos y dan seguimiento al progreso. Los estudiantes juegan actividades, ganan XP y construyen confianza. La plataforma está diseñada para acceso equitativo en escuelas con pocos recursos.",
+      "feat1": "Aprendizaje con Juegos",
+      "feat2": "Progreso en Tiempo Real",
+      "feat3": "Gestión de Aula",
+      "feat4": "Bilingüe (EN/ES)"
+    },
+    "explore": {
+      "title": "Cómo Explorar Esta Demo",
+      "step1Title": "Ver la Exhibición (2 min)",
+      "step1Desc": "Una presentación lista mostrando qué aprenden los estudiantes, logros de ejemplo y actividades para llevar a casa. No requiere inicio de sesión.",
+      "openShowcase": "Abrir Exhibición",
+      "step2Title": "Probar la Vista de Maestro (5 min)",
+      "step2Desc": "Inicia sesión con la cuenta demo de maestro para ver gestión de clases, recursos, la lista de preparación y el Centro PD.",
+      "step3Title": "Probar la Vista de Estudiante (5 min)",
+      "step3Desc": "Inicia sesión con la cuenta demo de estudiante para jugar un módulo, ganar XP y ver el sistema de avatar."
+    },
+    "teachers": {
+      "title": "Qué Pueden Hacer los Maestros",
+      "item1": "Crear clases y generar códigos de acceso para estudiantes",
+      "item2": "Asignar módulos STEM con listas de preparación integradas",
+      "item3": "Seguir el progreso individual y de clase en tiempo real",
+      "item4": "Acceder a recursos imprimibles (hojas de trabajo, guías, folletos)",
+      "item5": "Ejecutar una exhibición de Noche STEAM Familiar desde el panel",
+      "item6": "Participar en sesiones de desarrollo profesional y reflexiones"
+    },
+    "students": {
+      "title": "Qué Experimentan los Estudiantes",
+      "item1": "Unirse a una clase con un código simple — estudiantes K-2 usan ícono + PIN (sin contraseñas)",
+      "item2": "Jugar actividades de secuencias, patrones y resolución de problemas",
+      "item3": "Ganar XP, subir de nivel y personalizar un avatar robot",
+      "item4": "Ver metas personales y rachas en un panel amigable para niños",
+      "item5": "Usar la plataforma en inglés o español"
+    },
+    "lookFor": {
+      "title": "Qué Buscar como Evaluador",
+      "intro": "Al explorar, aquí hay cuatro perspectivas para evaluar BrightBoost en tu contexto:",
+      "engagementTitle": "Participación Estudiantil",
+      "engagementDesc": "¿Son las actividades apropiadas para la edad? ¿Las encontraría motivadoras un estudiante de K-2? ¿Se siente gratificante el sistema de XP/avatar?",
+      "teacherUxTitle": "Facilidad para Maestros",
+      "teacherUxDesc": "¿Es fácil crear una clase, asignar trabajo y revisar el progreso? ¿Ayuda la lista de preparación con la planificación?",
+      "accessibilityTitle": "Accesibilidad y Equidad",
+      "accessibilityDesc": "¿Funciona el inicio de sesión con íconos para pre-lectores? ¿Es efectivo el soporte bilingüe? ¿Carga en Chromebooks?",
+      "trustTitle": "Datos y Confianza",
+      "trustDesc": "¿Es claro qué datos se recopilan? ¿La política de privacidad aborda tus preocupaciones? ¿Es visible la auditoría?"
+    },
+    "privacy": {
+      "title": "Privacidad y Confianza",
+      "item1": "BrightBoost solo recopila datos de progreso de aprendizaje — sin anuncios, sin rastreo de terceros",
+      "item2": "Diseño consciente de COPPA: las cuentas K-2 no requieren correo electrónico ni contraseñas",
+      "item3": "Todos los datos pueden exportarse o eliminarse al final de un piloto",
+      "item4": "El registro de auditoría rastrea inicios de sesión, registros y restablecimientos de contraseña"
+    },
+    "ctaPrompt": "¿Listo para verlo en acción?",
+    "ctaShowcase": "Ver la Exhibición",
+    "ctaTeacher": "Probar la Vista de Maestro",
+    "footer": "BrightBoost es un proyecto de la Iniciativa Bright Bots. ¿Preguntas? Usa el botón de opinión dentro de la app o contacta a tu coordinador de piloto."
   },
   "auth": {
     "forgotPassword": "¿Olvidaste tu contraseña?",
