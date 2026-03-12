@@ -94,7 +94,7 @@ Runs on `http://localhost:5173` (Vite default).
 
 This file contains dual generators that output Prisma clients to both `node_modules/@prisma/client` (frontend/root) and `backend/node_modules/.prisma/client` (backend). All `prisma generate`, `prisma migrate`, and `prisma db seed` commands should use this schema.
 
-A secondary copy exists at `backend/prisma/schema.prisma` for Docker builds that use `backend/` as their build context. If you modify models, **edit the root schema first**, then sync the backend copy.
+A secondary copy exists at `backend/prisma/schema.prisma` for Docker builds that use `backend/` as their build context. If you modify models, **edit the root schema first**, then sync the backend copy. A CI drift check (`scripts/check-prisma-drift.sh`) will fail the build if the two schemas diverge.
 
 | Command | Run from | Notes |
 |---------|----------|-------|
@@ -107,17 +107,13 @@ Migrations live in `prisma/migrations/` (root) and `backend/prisma/migrations/` 
 
 ## Password Reset (Email Delivery)
 
-The password reset flow uses a mail abstraction (`backend/src/utils/mail.ts`):
+The password reset flow uses a mail abstraction (`backend/src/utils/mail.ts`) with `nodemailer` (installed as a backend dependency):
 
-- **With SMTP configured** (`SMTP_HOST` set + `nodemailer` installed): sends real email.
+- **With SMTP configured** (`SMTP_HOST` set): sends real email via nodemailer.
 - **Without SMTP in development**: logs the full reset URL to the backend console.
 - **Without SMTP in production**: logs a warning (no token leaked).
 
-To enable real email:
-```bash
-cd backend && npm install nodemailer @types/nodemailer
-```
-Then set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM` in `.env`.
+To enable real email delivery, set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM` in `.env`. No additional package installation is needed — `nodemailer` is already a backend dependency.
 
 ## Project Structure
 
@@ -141,8 +137,9 @@ brightboost/
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui
-- **Backend**: Express 5, Prisma 6, PostgreSQL, JWT auth
+- **Backend**: Express 5, Prisma 6, PostgreSQL, JWT auth, nodemailer
 - **i18n**: react-i18next (English + Spanish)
+- **CI**: GitHub Actions — lint, typecheck (frontend + backend), Prisma drift check, tests, Cypress smoke, Docker build
 
 ## Common Commands
 
@@ -155,5 +152,6 @@ brightboost/
 | `npx prisma db seed` | Seed demo data |
 | `npx prisma studio` | Open Prisma database GUI |
 | `npm run typecheck` | Run TypeScript type checker (frontend) |
-| `cd backend && npx tsc --noEmit` | Run TypeScript type checker (backend) |
+| `cd backend && npm run typecheck` | Run TypeScript type checker (backend) |
+| `bash scripts/check-prisma-drift.sh` | Verify root & backend Prisma schemas match |
 | `npm test` | Run frontend tests |
