@@ -1,10 +1,10 @@
 # BrightBoost 🚀
 
-> A gamified K-2 STEM learning platform by Bright Bots Initiative
+> A bilingual K-8 STEM learning platform by Bright Bots Initiative
 
 ## Overview
 
-BrightBoost is a bilingual (English/Spanish) interactive learning platform that brings STEM education to life for K-2 students through character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
+BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered learning pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard — with upper elementary and middle school tiers planned in future rollouts. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
 
 ## ✅ Current Working Features
 
@@ -30,7 +30,7 @@ BrightBoost is a bilingual (English/Spanish) interactive learning platform that 
 ### 🎒 Student Experience
 
 - **Student Dashboard** — XP progress ring, current streak, assignment tracking with due dates, next-activity recommendation, and completed-module list
-- **Module Browser** — Browse K-2 modules with thumbnails, descriptions, and completion indicators
+- **Module Browser** — Browse available modules with thumbnails, descriptions, and completion indicators (currently K-2 content)
 - **Module Detail** — Hierarchical Unit → Lesson → Activity navigation with completion tracking
 - **Activity Player** — Plays story slides with comprehension quizzes (shuffled answers, hint system) or launches interactive games; awards XP and stat boosts on completion
 - **Avatar & Superpowers ("My Star")** — Track 5 superpowers (Heart Power 💖, Brain Juice 🧠, Lightning Fast ⚡, Super Focus 🎯, Star Power ⭐) with stage progression (Rookie → Explorer → Champion → Legend)

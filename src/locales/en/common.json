@@ -240,7 +240,7 @@
   "landing": {
     "title": "Bright Boost",
     "subtitle": "Learn. Play. Explore!",
-    "tagline": "Interactive K-2 STEM adventures that build confidence and problem-solving skills",
+    "tagline": "Interactive K-8 STEM adventures that build confidence and problem-solving skills",
     "feat1": "Interactive Games",
     "feat2": "Track Progress",
     "feat3": "Classroom Tools",
@@ -261,10 +261,10 @@
   "reviewers": {
     "backHome": "Back to Home",
     "title": "BrightBoost Evaluator Guide",
-    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — the K-2 STEM learning platform from the Bright Bots Initiative.",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — the K-8 STEM learning platform from the Bright Bots Initiative.",
     "whatIs": {
       "title": "What is BrightBoost?",
-      "body": "BrightBoost is a bilingual (English/Spanish) K-2 STEM learning platform that turns foundational skills — sequencing, patterns, problem-solving — into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. The platform is designed for equitable access in under-resourced schools.",
+      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned for future rollouts.",
       "feat1": "Game-Based Learning",
       "feat2": "Real-Time Progress",
       "feat3": "Classroom Management",
@@ -291,7 +291,7 @@
     },
     "students": {
       "title": "What Students Experience",
-      "item1": "Join a class with a simple code — K-2 students use icon + PIN login (no passwords)",
+      "item1": "Join a class with a simple code — early learners (K-2) use icon + PIN login, no passwords needed",
       "item2": "Play through sequencing, pattern, and problem-solving activities",
       "item3": "Earn XP, level up, and customize a robot avatar",
       "item4": "See personal goals and streaks on a kid-friendly dashboard",
@@ -301,7 +301,7 @@
       "title": "What to Look For as a Partner",
       "intro": "As you explore, here are four lenses that help evaluate BrightBoost for your context:",
       "engagementTitle": "Student Engagement",
-      "engagementDesc": "Are the activities age-appropriate? Would a K-2 student find them motivating? Does the XP/avatar system feel rewarding?",
+      "engagementDesc": "Are the current K-2 activities age-appropriate and motivating? Does the XP/avatar system feel rewarding? Can you see this scaling to 3-5 and 6-8?",
       "teacherUxTitle": "Teacher Usability",
       "teacherUxDesc": "Is it easy to create a class, assign work, and check progress? Does the prep checklist help with lesson planning?",
       "accessibilityTitle": "Accessibility & Equity",
@@ -312,7 +312,7 @@
     "privacy": {
       "title": "Privacy & Trust",
       "item1": "BrightBoost collects only learning progress data — no ads, no third-party tracking",
-      "item2": "COPPA-aware design: K-2 accounts don't require email or passwords",
+      "item2": "COPPA-aware design: early learner accounts (K-2) don't require email or passwords",
       "item3": "All data can be exported or deleted at the end of a pilot",
       "item4": "Audit logging tracks login, signup, and password reset events"
     },
@@ -541,7 +541,7 @@
     "families": "families"
   },
   "modules": {
-    "title": "K-2 STEM Modules",
+    "title": "STEM Modules",
     "startLearning": "Start Learning",
     "comingSoon": "Coming Soon!",
     "loadError": "Failed to load modules. Please try again later.",

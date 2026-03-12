@@ -89,7 +89,7 @@ export async function sendPasswordResetEmail(
       <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1e293b;">
         <div style="text-align: center; margin-bottom: 24px;">
           <h1 style="font-size: 22px; color: #1e40af; margin: 0;">BrightBoost</h1>
-          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">K-2 STEM Learning Platform</p>
+          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">K-8 STEM Learning Platform</p>
         </div>
         <p style="font-size: 15px; line-height: 1.6;">Hi,</p>
         <p style="font-size: 15px; line-height: 1.6;">

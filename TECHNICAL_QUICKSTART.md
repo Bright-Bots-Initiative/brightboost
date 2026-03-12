@@ -136,7 +136,7 @@ brightboost/
 
 ## Tech Stack
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (K-8 platform, currently launching with K-2 content)
 - **Backend**: Express 5, Prisma 6, PostgreSQL, JWT auth, nodemailer
 - **i18n**: react-i18next (English + Spanish)
 - **CI**: GitHub Actions — lint, typecheck (frontend + backend), Prisma drift check, tests, Cypress smoke, Docker build

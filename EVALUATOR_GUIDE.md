@@ -4,7 +4,7 @@
 
 ## What is BrightBoost?
 
-BrightBoost is a **bilingual (English / Spanish) K-2 STEM learning platform** built by the Bright Bots Initiative. It turns foundational skills — sequencing, patterns, problem-solving — into interactive game-based adventures that young learners can play in school or at home.
+BrightBoost is a **bilingual (English / Spanish) K-8 STEM learning platform** built by the Bright Bots Initiative, with tiered learning pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Grades 3-5 and 6-8 are planned for future rollouts.
 
 **Teachers** create classes, assign modules, track progress, and run family showcase nights.
 **Students** play activities, earn XP, level up, and customize a robot avatar.
@@ -24,7 +24,7 @@ You can also visit `/for-reviewers` inside the app for an interactive evaluator 
 
 | Lens | Questions to Consider |
 |------|----------------------|
-| **Student Engagement** | Are activities age-appropriate? Is the XP/avatar system motivating for K-2? |
+| **Student Engagement** | Are the current K-2 activities age-appropriate? Is the XP/avatar system motivating? |
 | **Teacher Usability** | Is it easy to create a class, assign modules, and review progress? |
 | **Accessibility & Equity** | Does icon-based login work for pre-readers? Is bilingual support effective? Does it load on Chromebooks? |
 | **Data & Trust** | Is it clear what data is collected? Does the privacy policy address your concerns? |
@@ -56,7 +56,7 @@ You can also visit `/for-reviewers` inside the app for an interactive evaluator 
 
 ## Current Status
 
-BrightBoost is in **active pilot** with a small group of schools. The core learning flow, teacher dashboard, and family showcase are functional. Ongoing work includes expanding module content, deeper analytics, and additional accessibility improvements.
+BrightBoost is in **active pilot** with a small group of schools. The current release features the K-2 learning tier — the core learning flow, teacher dashboard, and family showcase are functional. The platform is built to grow with schools over time: launch with early learners first, then expand into upper elementary (3-5) and middle school (6-8) pathways. Ongoing work includes expanding module content, deeper analytics, and additional accessibility improvements.
 
 ## Sharing Feedback
 

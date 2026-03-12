@@ -4,7 +4,7 @@ Welcome! This guide helps you explore BrightBoost in under 10 minutes.
 
 ## What is BrightBoost?
 
-BrightBoost is an interactive K-2 STEM learning platform designed for classrooms. Teachers create classes, assign game-based learning sessions, and track student progress. Students play through bilingual (English/Spanish) STEM adventures that build confidence and problem-solving skills.
+BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered pathways for K-2, 3-5, and 6-8. The current rollout launches with K-2 content. Teachers create classes, assign game-based learning sessions, and track student progress. Students play through interactive STEM adventures that build confidence and problem-solving skills. Grades 3-5 and 6-8 content is planned for future releases.
 
 ## Demo Credentials
 
@@ -64,7 +64,7 @@ If you need to test password reset:
 ## What This Is (and Isn't)
 
 - **This IS** a working pilot with real learning activities, progress tracking, and classroom management
-- **This IS** designed for K-2 teachers, students, and community stakeholders
+- **This IS** designed for K-8 schools — the current pilot features K-2 content, with 3-5 and 6-8 tiers coming next
 - **This IS NOT** a production-grade deployment — data may be reset periodically
 - Demo accounts are shared — expect to see data from other testers
 
