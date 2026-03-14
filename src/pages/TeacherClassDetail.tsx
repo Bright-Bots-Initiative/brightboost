@@ -77,6 +77,46 @@ interface BenchmarkSummary {
   avgPercent: number | null;
 }
 
+interface GrowthStudent {
+  id: string;
+  name: string;
+  preScore: number | null;
+  postScore: number | null;
+  totalQuestions: number;
+  prePercent: number | null;
+  postPercent: number | null;
+  delta: number | null;
+}
+
+interface GrowthSkill {
+  skillTag: string;
+  preCorrectRate: number | null;
+  postCorrectRate: number | null;
+  delta: number | null;
+  questionCount: number;
+}
+
+interface GrowthReport {
+  templateId: string | null;
+  templateTitle: string | null;
+  preAssignmentId: string | null;
+  postAssignmentId: string | null;
+  hasPreAssignment: boolean;
+  hasPostAssignment: boolean;
+  hasPreAttempts: boolean;
+  hasPostAttempts: boolean;
+  classSummary: {
+    enrolledCount: number;
+    preCompleted: number;
+    postCompleted: number;
+    avgPrePercent: number | null;
+    avgPostPercent: number | null;
+    delta: number | null;
+  } | null;
+  students: GrowthStudent[];
+  skills: GrowthSkill[];
+}
+
 interface ModuleSummary {
   slug: string;
   title: string;
@@ -126,6 +166,7 @@ const TeacherClassDetail: React.FC = () => {
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
   const [benchmarkTemplates, setBenchmarkTemplates] = useState<BenchmarkTemplate[]>([]);
   const [assigningBenchmark, setAssigningBenchmark] = useState(false);
+  const [growth, setGrowth] = useState<GrowthReport | null>(null);
 
   // Launch session wizard
   const [launchOpen, setLaunchOpen] = useState(false);
@@ -150,18 +191,20 @@ const TeacherClassDetail: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
-        const [courseData, assignmentData, pulseData, benchmarkData, templateData] = await Promise.all([
+        const [courseData, assignmentData, pulseData, benchmarkData, templateData, growthData] = await Promise.all([
           api.get(`/teacher/courses/${id}`),
           api.get(`/teacher/courses/${id}/assignments`),
           api.get(`/teacher/courses/${id}/pulse/summary`),
           api.get(`/teacher/courses/${id}/benchmarks`).catch(() => []),
           api.get(`/teacher/benchmark-templates`).catch(() => []),
+          api.get(`/teacher/courses/${id}/benchmarks/growth`).catch(() => null),
         ]);
         setCourse(courseData);
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
         setPulse(pulseData);
         setBenchmarks(Array.isArray(benchmarkData) ? benchmarkData : []);
         setBenchmarkTemplates(Array.isArray(templateData) ? templateData : []);
+        setGrowth(growthData);
       } catch (err) {
         const is404 = (err instanceof ApiError && err.status === 404) ||
           (err instanceof Error && (/404/.test(err.message) || /not found/i.test(err.message)));
@@ -667,6 +710,144 @@ const TeacherClassDetail: React.FC = () => {
           </div>
         )}
       </section>
+
+      {/* Benchmark Growth Report */}
+      {growth && growth.templateId && (growth.hasPreAttempts || growth.hasPostAttempts) && (
+        <section className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-brightboost-navy mb-1 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            {t("teacher.benchmark.growth.title")}
+          </h2>
+          <p className="text-xs text-slate-400 mb-4">{growth.templateTitle}</p>
+
+          {/* Class Summary Cards */}
+          {growth.classSummary && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-blue-600 font-medium">{t("teacher.benchmark.growth.preAvg")}</p>
+                <p className="text-2xl font-bold text-blue-700">
+                  {growth.classSummary.avgPrePercent !== null ? `${growth.classSummary.avgPrePercent}%` : "—"}
+                </p>
+                <p className="text-xs text-blue-400">{growth.classSummary.preCompleted}/{growth.classSummary.enrolledCount} {t("teacher.benchmark.completed")}</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-3 text-center">
+                <p className="text-xs text-purple-600 font-medium">{t("teacher.benchmark.growth.postAvg")}</p>
+                <p className="text-2xl font-bold text-purple-700">
+                  {growth.classSummary.avgPostPercent !== null ? `${growth.classSummary.avgPostPercent}%` : "—"}
+                </p>
+                <p className="text-xs text-purple-400">{growth.classSummary.postCompleted}/{growth.classSummary.enrolledCount} {t("teacher.benchmark.completed")}</p>
+              </div>
+              <div className={`rounded-lg p-3 text-center ${
+                growth.classSummary.delta !== null
+                  ? growth.classSummary.delta > 0 ? "bg-green-50" : growth.classSummary.delta < 0 ? "bg-red-50" : "bg-gray-50"
+                  : "bg-gray-50"
+              }`}>
+                <p className="text-xs font-medium text-slate-600">{t("teacher.benchmark.growth.delta")}</p>
+                <p className={`text-2xl font-bold ${
+                  growth.classSummary.delta !== null
+                    ? growth.classSummary.delta > 0 ? "text-green-700" : growth.classSummary.delta < 0 ? "text-red-700" : "text-gray-500"
+                    : "text-gray-400"
+                }`}>
+                  {growth.classSummary.delta !== null
+                    ? `${growth.classSummary.delta > 0 ? "+" : ""}${growth.classSummary.delta}%`
+                    : "—"}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-xs font-medium text-slate-600">{t("teacher.benchmark.growth.enrolled")}</p>
+                <p className="text-2xl font-bold text-slate-700">{growth.classSummary.enrolledCount}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Skill Breakdown */}
+          {growth.skills.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">{t("teacher.benchmark.growth.bySkill")}</h3>
+              <div className="space-y-3">
+                {growth.skills.map((s) => (
+                  <div key={s.skillTag}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-slate-600 capitalize">{s.skillTag.replace(/-/g, " ")}</span>
+                      <span className="text-xs text-slate-400">
+                        {s.delta !== null ? (
+                          <span className={s.delta > 0 ? "text-green-600" : s.delta < 0 ? "text-red-600" : "text-gray-500"}>
+                            {s.delta > 0 ? "+" : ""}{s.delta}%
+                          </span>
+                        ) : "—"}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 h-4">
+                      <div className="flex-1 bg-gray-100 rounded-full overflow-hidden" title={`PRE: ${s.preCorrectRate ?? 0}%`}>
+                        <div className="h-full bg-blue-400 rounded-full" style={{ width: `${s.preCorrectRate ?? 0}%` }} />
+                      </div>
+                      <div className="flex-1 bg-gray-100 rounded-full overflow-hidden" title={`POST: ${s.postCorrectRate ?? 0}%`}>
+                        <div className="h-full bg-purple-400 rounded-full" style={{ width: `${s.postCorrectRate ?? 0}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex gap-1 mt-0.5">
+                      <span className="flex-1 text-[10px] text-blue-500">{t("teacher.benchmark.growth.pre")} {s.preCorrectRate ?? 0}%</span>
+                      <span className="flex-1 text-[10px] text-purple-500">{t("teacher.benchmark.growth.post")} {s.postCorrectRate ?? 0}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Student Table */}
+          {growth.students.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700 mb-3">{t("teacher.benchmark.growth.studentDetail")}</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-slate-500 border-b">
+                      <th className="py-2 px-2">{t("teacher.benchmark.growth.name")}</th>
+                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.pre")}</th>
+                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.post")}</th>
+                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.delta")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {growth.students.map((s) => (
+                      <tr key={s.id} className="border-b hover:bg-gray-50">
+                        <td className="py-2 px-2 font-medium text-slate-700">{s.name}</td>
+                        <td className="py-2 px-2 text-center">
+                          {s.prePercent !== null ? `${s.prePercent}%` : <span className="text-slate-300">—</span>}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          {s.postPercent !== null ? `${s.postPercent}%` : <span className="text-slate-300">—</span>}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          {s.delta !== null ? (
+                            <span className={`font-medium ${s.delta > 0 ? "text-green-600" : s.delta < 0 ? "text-red-600" : "text-slate-500"}`}>
+                              {s.delta > 0 ? "+" : ""}{s.delta}%
+                            </span>
+                          ) : <span className="text-slate-300">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Waiting state: assignments exist but no attempts */}
+          {!growth.hasPreAttempts && !growth.hasPostAttempts && (
+            <p className="text-sm text-gray-400 italic">{t("teacher.benchmark.growth.waiting")}</p>
+          )}
+        </section>
+      )}
+
+      {/* Empty state: no benchmark template selected */}
+      {growth && !growth.templateId && benchmarks.length === 0 && (
+        <section className="bg-white rounded-lg shadow p-6 text-center">
+          <TrendingUp className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+          <p className="text-sm text-gray-400">{t("teacher.benchmark.growth.assignFirst")}</p>
+        </section>
+      )}
 
       {/* Launch Session Dialog */}
       <Dialog open={launchOpen} onOpenChange={setLaunchOpen}>

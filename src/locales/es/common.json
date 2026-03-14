@@ -1108,7 +1108,21 @@
       "avg": "Prom:",
       "open": "Abierta",
       "closed": "Cerrada",
-      "assign": "Asignar"
+      "assign": "Asignar",
+      "growth": {
+        "title": "Crecimiento de Evaluaciones",
+        "preAvg": "Promedio PRE",
+        "postAvg": "Promedio POST",
+        "delta": "Crecimiento",
+        "enrolled": "Inscritos",
+        "bySkill": "Por Área de Habilidad",
+        "pre": "PRE",
+        "post": "POST",
+        "studentDetail": "Detalle por Estudiante",
+        "name": "Estudiante",
+        "waiting": "Esperando que los estudiantes completen las evaluaciones.",
+        "assignFirst": "Asigna evaluaciones PRE y POST para ver datos de crecimiento."
+      }
     },
 
     "settings": {

@@ -1107,7 +1107,21 @@
       "avg": "Avg:",
       "open": "Open",
       "closed": "Closed",
-      "assign": "Assign"
+      "assign": "Assign",
+      "growth": {
+        "title": "Benchmark Growth",
+        "preAvg": "PRE Average",
+        "postAvg": "POST Average",
+        "delta": "Growth",
+        "enrolled": "Enrolled",
+        "bySkill": "By Skill Area",
+        "pre": "PRE",
+        "post": "POST",
+        "studentDetail": "Student Detail",
+        "name": "Student",
+        "waiting": "Waiting for students to complete benchmarks.",
+        "assignFirst": "Assign PRE and POST benchmarks to see growth data."
+      }
     },
 
     "settings": {

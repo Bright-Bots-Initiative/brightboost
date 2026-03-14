@@ -165,6 +165,161 @@ router.patch(
   },
 );
 
+// GET /api/teacher/courses/:courseId/benchmarks/growth — Growth report
+// Template pairing: uses ?templateId if provided; otherwise auto-selects the
+// most recently assigned template that has at least one PRE or POST assignment.
+// Retake handling: @@unique(assignmentId, studentId) enforces one attempt per
+// student per assignment, so there is always exactly 0 or 1 attempt per kind.
+router.get(
+  "/teacher/courses/:courseId/benchmarks/growth",
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    try {
+      const course = await prisma.course.findFirst({
+        where: { id: req.params.courseId, teacherId: req.user!.id },
+        include: {
+          enrollments: { include: { student: { select: { id: true, name: true } } } },
+        },
+      });
+      if (!course) return res.status(404).json({ error: "Course not found" });
+
+      // Resolve template
+      let templateId = req.query.templateId ? String(req.query.templateId) : null;
+
+      if (!templateId) {
+        // Auto-select: most recently assigned template for this course
+        const latest = await prisma.benchmarkAssignment.findFirst({
+          where: { courseId: course.id },
+          orderBy: { createdAt: "desc" },
+          select: { templateId: true },
+        });
+        if (!latest) {
+          return res.json({
+            templateId: null, templateTitle: null,
+            preAssignmentId: null, postAssignmentId: null,
+            hasPreAssignment: false, hasPostAssignment: false,
+            hasPreAttempts: false, hasPostAttempts: false,
+            classSummary: null, students: [], skills: [],
+          });
+        }
+        templateId = latest.templateId;
+      }
+
+      const template = await prisma.benchmarkTemplate.findUnique({ where: { id: templateId } });
+      if (!template) return res.status(404).json({ error: "Template not found" });
+
+      // Find PRE and POST assignments for this template+course
+      const assignments = await prisma.benchmarkAssignment.findMany({
+        where: { courseId: course.id, templateId },
+        include: {
+          attempts: {
+            include: { student: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      const preAssignment = assignments.find((a) => a.kind === "PRE") ?? null;
+      const postAssignment = assignments.find((a) => a.kind === "POST") ?? null;
+
+      const preAttempts = preAssignment?.attempts ?? [];
+      const postAttempts = postAssignment?.attempts ?? [];
+
+      const hasPreAssignment = !!preAssignment;
+      const hasPostAssignment = !!postAssignment;
+      const hasPreAttempts = preAttempts.length > 0;
+      const hasPostAttempts = postAttempts.length > 0;
+
+      // Build per-student maps (one attempt per student per kind, enforced by DB)
+      const preByStudent = new Map(preAttempts.map((a) => [a.studentId, a]));
+      const postByStudent = new Map(postAttempts.map((a) => [a.studentId, a]));
+
+      const enrolledCount = course.enrollments.length;
+
+      // Class summary
+      const prePercents = preAttempts.map((a) => (a.score / a.totalQuestions) * 100);
+      const postPercents = postAttempts.map((a) => (a.score / a.totalQuestions) * 100);
+      const avgPre = prePercents.length > 0 ? Math.round(prePercents.reduce((s, v) => s + v, 0) / prePercents.length * 10) / 10 : null;
+      const avgPost = postPercents.length > 0 ? Math.round(postPercents.reduce((s, v) => s + v, 0) / postPercents.length * 10) / 10 : null;
+      const delta = avgPre !== null && avgPost !== null ? Math.round((avgPost - avgPre) * 10) / 10 : null;
+
+      // Student detail — sorted by name ascending
+      const students = course.enrollments
+        .map((e) => {
+          const pre = preByStudent.get(e.studentId);
+          const post = postByStudent.get(e.studentId);
+          const totalQ = pre?.totalQuestions ?? post?.totalQuestions ?? 0;
+          const prePercent = pre && totalQ > 0 ? Math.round((pre.score / totalQ) * 1000) / 10 : null;
+          const postPercent = post && totalQ > 0 ? Math.round((post.score / totalQ) * 1000) / 10 : null;
+          const studentDelta = prePercent !== null && postPercent !== null ? Math.round((postPercent - prePercent) * 10) / 10 : null;
+          return {
+            id: e.studentId,
+            name: e.student.name,
+            preScore: pre?.score ?? null,
+            postScore: post?.score ?? null,
+            totalQuestions: totalQ,
+            prePercent,
+            postPercent,
+            delta: studentDelta,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      // Skill breakdown — aggregate isCorrect by skillTag across PRE and POST
+      type SkillBucket = { preCorrect: number; preTotal: number; postCorrect: number; postTotal: number };
+      const skillMap = new Map<string, SkillBucket>();
+
+      const addToSkill = (answers: any[], kind: "pre" | "post") => {
+        for (const a of answers) {
+          const tag = a.skillTag ?? "unknown";
+          const bucket = skillMap.get(tag) ?? { preCorrect: 0, preTotal: 0, postCorrect: 0, postTotal: 0 };
+          if (kind === "pre") {
+            bucket.preTotal++;
+            if (a.isCorrect) bucket.preCorrect++;
+          } else {
+            bucket.postTotal++;
+            if (a.isCorrect) bucket.postCorrect++;
+          }
+          skillMap.set(tag, bucket);
+        }
+      };
+
+      for (const a of preAttempts) addToSkill(a.answers as any[], "pre");
+      for (const a of postAttempts) addToSkill(a.answers as any[], "post");
+
+      const skills = [...skillMap.entries()].map(([skillTag, b]) => {
+        const preRate = b.preTotal > 0 ? Math.round((b.preCorrect / b.preTotal) * 1000) / 10 : null;
+        const postRate = b.postTotal > 0 ? Math.round((b.postCorrect / b.postTotal) * 1000) / 10 : null;
+        const skillDelta = preRate !== null && postRate !== null ? Math.round((postRate - preRate) * 10) / 10 : null;
+        return { skillTag, preCorrectRate: preRate, postCorrectRate: postRate, delta: skillDelta, questionCount: (new Set([...preAttempts.flatMap((a) => (a.answers as any[]).filter((ans: any) => ans.skillTag === skillTag).map((ans: any) => ans.questionId)), ...postAttempts.flatMap((a) => (a.answers as any[]).filter((ans: any) => ans.skillTag === skillTag).map((ans: any) => ans.questionId))])).size };
+      });
+
+      res.json({
+        templateId,
+        templateTitle: template.title,
+        preAssignmentId: preAssignment?.id ?? null,
+        postAssignmentId: postAssignment?.id ?? null,
+        hasPreAssignment,
+        hasPostAssignment,
+        hasPreAttempts,
+        hasPostAttempts,
+        classSummary: {
+          enrolledCount,
+          preCompleted: preAttempts.length,
+          postCompleted: postAttempts.length,
+          avgPrePercent: avgPre,
+          avgPostPercent: avgPost,
+          delta,
+        },
+        students,
+        skills,
+      });
+    } catch (err) {
+      console.error("Error fetching benchmark growth:", err);
+      res.status(500).json({ error: "Failed to fetch growth report" });
+    }
+  },
+);
+
 // ── Student endpoints ───────────────────────────────────────────────────────
 
 // GET /api/student/courses/:courseId/benchmarks — Available benchmarks
