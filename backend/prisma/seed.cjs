@@ -666,10 +666,11 @@ async function main() {
         category: "PRE_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>Before We Begin: Rhyme &amp; Ride</h2>
 <h3>Rhyming Word Match</h3>
 <p>Draw a line to connect the words that rhyme:</p>
-<table>
+<table class="match-table">
   <tr><td><strong>cat</strong></td><td>run</td></tr>
   <tr><td><strong>sun</strong></td><td>tree</td></tr>
   <tr><td><strong>bee</strong></td><td>hat</td></tr>
@@ -677,13 +678,17 @@ async function main() {
 
 <h3>Think of Rhymes!</h3>
 <p>Write or draw a word that rhymes with each word:</p>
-<p><strong>dog</strong> rhymes with _______________</p>
-<p><strong>cake</strong> rhymes with _______________</p>
-<p><strong>star</strong> rhymes with _______________</p>
+<p><strong>dog</strong> rhymes with:</p>
+<div class="line"></div>
+<p><strong>cake</strong> rhymes with:</p>
+<div class="line"></div>
+<p><strong>star</strong> rhymes with:</p>
+<div class="line"></div>
 
 <h3>Predict!</h3>
 <p>Why do you think songs use rhyming words? Write or draw your idea:</p>
-<div class="worksheet-area"></div>`,
+<div class="worksheet-area"></div>
+</div>`,
       },
       {
         title: "Rhyme & Ride Post-Activity Reflection",
@@ -693,19 +698,23 @@ async function main() {
         category: "POST_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>After the Adventure: Rhyme &amp; Ride</h2>
 <h3>My Favorite Rhyme</h3>
 <p>What was your favorite rhyming pair from the game? Draw or write it:</p>
-<div class="worksheet-area"></div>
+<div class="worksheet-area" style="min-height:200px;"></div>
 
 <h3>Make Your Own Rhyme!</h3>
 <p>Finish this silly sentence with a rhyming word:</p>
-<p>The <strong>cat</strong> sat on a _______________</p>
-<p>I saw a <strong>bug</strong> on a _______________</p>
+<p>The <strong>cat</strong> sat on a:</p>
+<div class="line"></div>
+<p>I saw a <strong>bug</strong> on a:</p>
+<div class="line"></div>
 
 <h3>How Rhyming Helps</h3>
 <p>How does knowing rhyming words help you read? Draw or write your answer:</p>
-<div class="worksheet-area"></div>`,
+<div class="worksheet-area" style="min-height:200px;"></div>
+</div>`,
       },
 
       // ── k2-stem-bounce-buds ────────────────────────────────
@@ -717,10 +726,11 @@ async function main() {
         category: "PRE_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>Before We Begin: Bounce &amp; Buds</h2>
 <h3>Vocabulary</h3>
 <p>Draw a line from each word to its meaning:</p>
-<table>
+<table class="match-table">
   <tr><td><strong>Cell</strong></td><td>A tiny living thing you can't see</td></tr>
   <tr><td><strong>Microbe</strong></td><td>The smallest part of living things</td></tr>
   <tr><td><strong>Microscope</strong></td><td>A tool to see tiny things</td></tr>
@@ -732,7 +742,8 @@ async function main() {
 
 <h3>Predict!</h3>
 <p>Are all tiny germs bad for us? Circle your guess:</p>
-<p style="font-size: 18px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>`,
+<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
+</div>`,
       },
       {
         title: "Bounce & Buds Post-Activity Reflection",
@@ -742,6 +753,7 @@ async function main() {
         category: "POST_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>After the Adventure: Bounce &amp; Buds</h2>
 <h3>What I Learned About Cells</h3>
 <p>Draw a cell and label it. What are cells?</p>
@@ -751,12 +763,13 @@ async function main() {
 <p>Draw or write one microbe that helps us and one that can make us sick:</p>
 <table>
   <tr><th style="width:50%; text-align:center;">Helpful</th><th style="text-align:center;">Harmful</th></tr>
-  <tr><td style="height:100px;"></td><td></td></tr>
+  <tr><td style="height:160px;"></td><td></td></tr>
 </table>
 
 <h3>Healthy Habits</h3>
 <p>What is one thing you can do to keep your body healthy? Draw or write:</p>
-<div class="worksheet-area"></div>`,
+<div class="worksheet-area"></div>
+</div>`,
       },
 
       // ── k2-stem-gotcha-gears ───────────────────────────────
@@ -768,10 +781,11 @@ async function main() {
         category: "PRE_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>Before We Begin: Gotcha Gears</h2>
 <h3>Vocabulary</h3>
 <p>Draw a line from each word to its meaning:</p>
-<table>
+<table class="match-table">
   <tr><td><strong>Robot</strong></td><td>Thinking about what to do before you do it</td></tr>
   <tr><td><strong>Plan</strong></td><td>A machine that follows instructions</td></tr>
   <tr><td><strong>Debug</strong></td><td>Finding and fixing a mistake</td></tr>
@@ -783,7 +797,8 @@ async function main() {
 
 <h3>Think About It</h3>
 <p>Can robots think on their own like people? Circle your guess:</p>
-<p style="font-size: 18px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>`,
+<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
+</div>`,
       },
       {
         title: "Gotcha Gears Post-Activity Reflection",
@@ -793,6 +808,7 @@ async function main() {
         category: "POST_ACTIVITY",
         printable: true,
         contentHtml: `
+<div class="k2-worksheet">
 <h2>After the Adventure: Gotcha Gears</h2>
 <h3>What I Learned About Robots</h3>
 <p>Who tells robots what to do? Draw or write your answer:</p>
@@ -805,7 +821,9 @@ async function main() {
 <h3>Robots in Real Life</h3>
 <p>Where have you seen robots in real life (at home, school, or in your town)?</p>
 <div class="line"></div>
-<div class="line"></div>`,
+<div class="line"></div>
+<div class="line"></div>
+</div>`,
       },
 
       // ── General Resources ───────────────────────────────────
@@ -1034,6 +1052,158 @@ async function main() {
       await prisma.resource.create({ data: r });
     }
     console.log(`Seeded ${resources.length} resources.`);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Backfill: Update existing K-2 WORKSHEET contentHtml (idempotent)
+  // Runs every seed so beta/prod DBs get improved worksheet content without wipe.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const k2WorksheetUpdates = [
+    {
+      where: { title: "Rhyme & Ride Pre-Activity Worksheet", moduleSlug: "k2-stem-rhyme-ride", category: "PRE_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>Before We Begin: Rhyme &amp; Ride</h2>
+<h3>Rhyming Word Match</h3>
+<p>Draw a line to connect the words that rhyme:</p>
+<table class="match-table">
+  <tr><td><strong>cat</strong></td><td>run</td></tr>
+  <tr><td><strong>sun</strong></td><td>tree</td></tr>
+  <tr><td><strong>bee</strong></td><td>hat</td></tr>
+</table>
+
+<h3>Think of Rhymes!</h3>
+<p>Write or draw a word that rhymes with each word:</p>
+<p><strong>dog</strong> rhymes with:</p>
+<div class="line"></div>
+<p><strong>cake</strong> rhymes with:</p>
+<div class="line"></div>
+<p><strong>star</strong> rhymes with:</p>
+<div class="line"></div>
+
+<h3>Predict!</h3>
+<p>Why do you think songs use rhyming words? Write or draw your idea:</p>
+<div class="worksheet-area"></div>
+</div>`,
+    },
+    {
+      where: { title: "Rhyme & Ride Post-Activity Reflection", moduleSlug: "k2-stem-rhyme-ride", category: "POST_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>After the Adventure: Rhyme &amp; Ride</h2>
+<h3>My Favorite Rhyme</h3>
+<p>What was your favorite rhyming pair from the game? Draw or write it:</p>
+<div class="worksheet-area" style="min-height:200px;"></div>
+
+<h3>Make Your Own Rhyme!</h3>
+<p>Finish this silly sentence with a rhyming word:</p>
+<p>The <strong>cat</strong> sat on a:</p>
+<div class="line"></div>
+<p>I saw a <strong>bug</strong> on a:</p>
+<div class="line"></div>
+
+<h3>How Rhyming Helps</h3>
+<p>How does knowing rhyming words help you read? Draw or write your answer:</p>
+<div class="worksheet-area" style="min-height:200px;"></div>
+</div>`,
+    },
+    {
+      where: { title: "Bounce & Buds Pre-Activity Worksheet", moduleSlug: "k2-stem-bounce-buds", category: "PRE_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>Before We Begin: Bounce &amp; Buds</h2>
+<h3>Vocabulary</h3>
+<p>Draw a line from each word to its meaning:</p>
+<table class="match-table">
+  <tr><td><strong>Cell</strong></td><td>A tiny living thing you can't see</td></tr>
+  <tr><td><strong>Microbe</strong></td><td>The smallest part of living things</td></tr>
+  <tr><td><strong>Microscope</strong></td><td>A tool to see tiny things</td></tr>
+</table>
+
+<h3>Big and Small</h3>
+<p>Draw the smallest living thing you can think of. What is it?</p>
+<div class="worksheet-area"></div>
+
+<h3>Predict!</h3>
+<p>Are all tiny germs bad for us? Circle your guess:</p>
+<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
+</div>`,
+    },
+    {
+      where: { title: "Bounce & Buds Post-Activity Reflection", moduleSlug: "k2-stem-bounce-buds", category: "POST_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>After the Adventure: Bounce &amp; Buds</h2>
+<h3>What I Learned About Cells</h3>
+<p>Draw a cell and label it. What are cells?</p>
+<div class="worksheet-area"></div>
+
+<h3>Helpful vs. Harmful</h3>
+<p>Draw or write one microbe that helps us and one that can make us sick:</p>
+<table>
+  <tr><th style="width:50%; text-align:center;">Helpful</th><th style="text-align:center;">Harmful</th></tr>
+  <tr><td style="height:160px;"></td><td></td></tr>
+</table>
+
+<h3>Healthy Habits</h3>
+<p>What is one thing you can do to keep your body healthy? Draw or write:</p>
+<div class="worksheet-area"></div>
+</div>`,
+    },
+    {
+      where: { title: "Gotcha Gears Pre-Activity Worksheet", moduleSlug: "k2-stem-gotcha-gears", category: "PRE_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>Before We Begin: Gotcha Gears</h2>
+<h3>Vocabulary</h3>
+<p>Draw a line from each word to its meaning:</p>
+<table class="match-table">
+  <tr><td><strong>Robot</strong></td><td>Thinking about what to do before you do it</td></tr>
+  <tr><td><strong>Plan</strong></td><td>A machine that follows instructions</td></tr>
+  <tr><td><strong>Debug</strong></td><td>Finding and fixing a mistake</td></tr>
+</table>
+
+<h3>Design a Robot!</h3>
+<p>If you could have a robot helper, what would it do? Draw your robot:</p>
+<div class="worksheet-area"></div>
+
+<h3>Think About It</h3>
+<p>Can robots think on their own like people? Circle your guess:</p>
+<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
+</div>`,
+    },
+    {
+      where: { title: "Gotcha Gears Post-Activity Reflection", moduleSlug: "k2-stem-gotcha-gears", category: "POST_ACTIVITY", type: "WORKSHEET" },
+      contentHtml: `
+<div class="k2-worksheet">
+<h2>After the Adventure: Gotcha Gears</h2>
+<h3>What I Learned About Robots</h3>
+<p>Who tells robots what to do? Draw or write your answer:</p>
+<div class="worksheet-area"></div>
+
+<h3>My Strategy</h3>
+<p>What strategy did you use in the Gotcha Gears game? Draw or write:</p>
+<div class="worksheet-area"></div>
+
+<h3>Robots in Real Life</h3>
+<p>Where have you seen robots in real life (at home, school, or in your town)?</p>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+</div>`,
+    },
+  ];
+
+  let backfillCount = 0;
+  for (const entry of k2WorksheetUpdates) {
+    const result = await prisma.resource.updateMany({
+      where: entry.where,
+      data: { contentHtml: entry.contentHtml },
+    });
+    backfillCount += result.count;
+  }
+  if (backfillCount > 0) {
+    console.log(`Backfilled ${backfillCount} K-2 worksheet(s) with improved content.`);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

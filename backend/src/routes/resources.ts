@@ -98,6 +98,14 @@ router.get(
     .name-date span { border-bottom: 1px solid #1a1a2e; min-width: 200px; display: inline-block; }
     table { width: 100%; border-collapse: collapse; margin: 8px 0; }
     td, th { border: 1px solid #d1d5db; padding: 8px; font-size: 13px; text-align: left; }
+    /* K-2 worksheet overrides for early-learner readability */
+    .k2-worksheet h2 { font-size: 22px; margin: 24px 0 10px; }
+    .k2-worksheet h3 { font-size: 18px; margin: 18px 0 8px; }
+    .k2-worksheet p, .k2-worksheet li { font-size: 18px; line-height: 1.7; }
+    .k2-worksheet .worksheet-area { min-height: 180px; padding: 28px; }
+    .k2-worksheet .line { min-height: 40px; margin: 20px 0; }
+    .k2-worksheet td, .k2-worksheet th { padding: 14px; font-size: 18px; }
+    .k2-worksheet .match-table td { border: none; padding: 12px 24px; font-size: 20px; }
     @media print {
       body { padding: 0.5in; }
       .no-print { display: none; }

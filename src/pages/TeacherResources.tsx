@@ -282,6 +282,16 @@ const TeacherResources: React.FC = () => {
               className="p-6 overflow-y-auto flex-grow prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: previewResource.contentHtml || "" }}
             />
+            {/* K-2 worksheet preview styles */}
+            <style>{`
+              .k2-worksheet h2 { font-size: 1.35rem; margin: 1.2rem 0 0.5rem; }
+              .k2-worksheet h3 { font-size: 1.15rem; margin: 1rem 0 0.4rem; }
+              .k2-worksheet p, .k2-worksheet li { font-size: 1.1rem; line-height: 1.7; }
+              .k2-worksheet .worksheet-area { border: 1px dashed #d1d5db; padding: 1.5rem; margin: 0.75rem 0; min-height: 140px; border-radius: 4px; }
+              .k2-worksheet .line { border-bottom: 1px solid #d1d5db; margin: 1rem 0; min-height: 36px; }
+              .k2-worksheet td, .k2-worksheet th { padding: 0.75rem; font-size: 1.05rem; }
+              .k2-worksheet .match-table td { border: none; padding: 0.6rem 1.2rem; font-size: 1.15rem; }
+            `}</style>
           </div>
         </div>
       )}
