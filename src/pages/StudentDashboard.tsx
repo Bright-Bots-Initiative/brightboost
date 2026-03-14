@@ -32,7 +32,7 @@ import {
   StreakStats,
 } from "@/lib/streakFromProgress";
 import StreakMeter from "@/components/ui/StreakMeter";
-import { ClipboardList, ArrowRight, Heart, Users } from "lucide-react";
+import { ClipboardList, ArrowRight, Heart, Users, ClipboardCheck } from "lucide-react";
 import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 type AssignedSession = {
@@ -157,6 +157,11 @@ export default function StudentDashboard() {
   const [enrolledCourses, setEnrolledCourses] = useState<{ id: string; name: string }[]>([]);
   const [pulseTarget, setPulseTarget] = useState<{ courseId: string; courseName: string; kind: "PRE" | "POST" } | null>(null);
   const [pulseDoneKeys, setPulseDoneKeys] = useState<Set<string>>(new Set());
+
+  // Benchmark state (API-driven, not localStorage)
+  const [studentBenchmarks, setStudentBenchmarks] = useState<
+    { id: string; kind: string; courseName: string; courseId: string; templateTitle: string; completed: boolean; locked: boolean }[]
+  >([]);
 
   // Compute streak from progress
   const streakStats: StreakStats = useMemo(() => {
@@ -283,6 +288,33 @@ export default function StudentDashboard() {
         } catch {
           // Not enrolled in any courses — that's fine
         }
+
+        // Load benchmarks for enrolled courses (API-driven)
+        try {
+          const courses = await authApi.get("/student/courses");
+          if (!cancelled && Array.isArray(courses)) {
+            const allBenchmarks: typeof studentBenchmarks = [];
+            for (const c of courses) {
+              try {
+                const bms = await authApi.get(`/student/courses/${c.courseId}/benchmarks`);
+                if (Array.isArray(bms)) {
+                  for (const b of bms) {
+                    allBenchmarks.push({
+                      id: b.id,
+                      kind: b.kind,
+                      courseName: c.courseName,
+                      courseId: c.courseId,
+                      templateTitle: b.template?.title ?? "Benchmark",
+                      completed: !!b.completed,
+                      locked: !!b.locked,
+                    });
+                  }
+                }
+              } catch { /* skip */ }
+            }
+            if (!cancelled) setStudentBenchmarks(allBenchmarks);
+          }
+        } catch { /* skip */ }
       } catch (e) {
         console.error(e);
         toast({
@@ -695,6 +727,46 @@ export default function StudentDashboard() {
                 </Card>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Benchmark Assessments */}
+      {studentBenchmarks.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <ClipboardCheck className="w-6 h-6 text-brightboost-blue" />
+            {t("benchmark.student.sectionTitle")}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {studentBenchmarks.map((b) => (
+              <Card key={b.id} className="border-l-4 border-l-brightboost-blue">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{b.templateTitle}</CardTitle>
+                  <p className="text-xs text-slate-500">
+                    {b.courseName} · {b.kind === "PRE" ? t("benchmark.student.preLabel") : t("benchmark.student.postLabel")}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {b.completed ? (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <Check className="w-4 h-4" /> {t("benchmark.student.done")}
+                    </span>
+                  ) : b.locked ? (
+                    <span className="text-sm text-slate-400 flex items-center gap-1">
+                      <Lock className="w-4 h-4" /> {t("benchmark.student.locked")}
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/student/benchmark/${b.id}`)}
+                    >
+                      {t("benchmark.student.start")}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
       )}

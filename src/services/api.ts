@@ -7,6 +7,16 @@ import { t } from "i18next";
 export const join = (base: string, path: string): string =>
   `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "")}`;
 
+/** Error subclass that carries the HTTP status code so callers can check it. */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 /** Extract a readable string from backend error payloads.
  *  Handles Zod's `{ error: [{ message: "..." }, ...] }` and plain `{ error: "string" }`. */
 const extractErrorMessage = (data: any): string => {
@@ -334,9 +344,9 @@ export const useApi = () => {
         });
 
         if (!response.ok) {
-          if (response.status === 401) throw new Error(t("api.sessionExpired"));
+          if (response.status === 401) throw new ApiError(t("api.sessionExpired"), 401);
           if (response.status === 403)
-            throw new Error(t("api.dashboardUnavailable"));
+            throw new ApiError(t("api.dashboardUnavailable"), 403);
           // Parse error body safely — backend may return HTML for unknown routes
           const text = await response.text();
           let errorMsg = t("api.apiRequestFailed");
@@ -347,22 +357,19 @@ export const useApi = () => {
             // non-JSON response (e.g. HTML 404) — use status text
             errorMsg = `${t("api.apiRequestFailed")}: ${response.status} ${response.statusText}`;
           }
-          throw new Error(errorMsg);
+          throw new ApiError(errorMsg, response.status);
         }
 
         return await response.json();
       } catch (error) {
         // Only retry on network errors or 5xx — never retry 4xx client errors
         const isClientError =
-          error instanceof Error && /: [45]\d\d /.test(error.message)
-            ? /: 4\d\d /.test(error.message)
-            : false;
+          error instanceof ApiError && error.status >= 400 && error.status < 500;
         const isAuthError =
           error instanceof Error && error.message.includes("Authentication");
         const isSessionExpired =
-          error instanceof Error &&
-          (error.message.includes(t("api.sessionExpired")) ||
-            error.message.includes(t("api.dashboardUnavailable")));
+          error instanceof ApiError &&
+          (error.status === 401 || error.status === 403);
 
         if (
           retries > 0 &&
@@ -411,6 +418,15 @@ export const useApi = () => {
           endpoint,
           {
             method: "PUT",
+            body: JSON.stringify(data),
+          },
+          2,
+        ),
+      patch: (endpoint: string, data: Record<string, unknown>) =>
+        authFetch(
+          endpoint,
+          {
+            method: "PATCH",
             body: JSON.stringify(data),
           },
           2,

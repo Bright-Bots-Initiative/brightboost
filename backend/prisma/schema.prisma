@@ -61,10 +61,11 @@ model User {
   resetTokens     PasswordResetToken[]
 
   // Teacher Enablement Relations
-  prepChecklists  TeacherPrepChecklist[]
-  pdSessions      PDSession[]
-  pdReflections   PDReflection[]
-  facultyPosts    FacultyPost[]
+  prepChecklists    TeacherPrepChecklist[]
+  pdSessions        PDSession[]
+  pdReflections     PDReflection[]
+  facultyPosts      FacultyPost[]
+  benchmarkAttempts BenchmarkAttempt[]
 }
 
 // -----------------------------------------------------------------------------
@@ -327,10 +328,11 @@ model Course {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  teacher        User            @relation(fields: [teacherId], references: [id])
-  enrollments    Enrollment[]
-  assignments    Assignment[]
-  pulseResponses PulseResponse[]
+  teacher              User                  @relation(fields: [teacherId], references: [id])
+  enrollments          Enrollment[]
+  assignments          Assignment[]
+  pulseResponses       PulseResponse[]
+  benchmarkAssignments BenchmarkAssignment[]
 
   // Index for filtering courses by teacher
   @@index([teacherId])
@@ -411,17 +413,20 @@ model TeacherPrepChecklist {
 }
 
 model Resource {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  type        String   // WORKSHEET, HANDOUT, GUIDE, LINK
-  moduleSlug  String?  // null = general resource
-  category    String   // PRE_ACTIVITY, POST_ACTIVITY, ASSESSMENT, SUPPLEMENTAL, GENERAL
-  contentHtml String?  // for generated worksheets/handouts
-  contentUrl  String?  // for external links
-  printable   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  type           String   // WORKSHEET, HANDOUT, GUIDE, LINK
+  moduleSlug     String?  // null = general resource
+  category       String   // PRE_ACTIVITY, POST_ACTIVITY, ASSESSMENT, SUPPLEMENTAL, GENERAL
+  contentHtml    String?  // for generated worksheets/handouts
+  contentUrl     String?  // for external links
+  printable      Boolean  @default(false)
+  titleEs        String?  // Spanish translation (fallback: title)
+  descriptionEs  String?  // Spanish translation (fallback: description)
+  contentHtmlEs  String?  // Spanish translation (fallback: contentHtml)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([moduleSlug])
   @@index([type])
@@ -515,4 +520,63 @@ model Feedback {
   user          User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// Benchmark Assessments
+// -----------------------------------------------------------------------------
+
+enum BenchmarkKind {
+  PRE
+  POST
+}
+
+enum BenchmarkStatus {
+  OPEN
+  CLOSED
+}
+
+model BenchmarkTemplate {
+  id         String   @id @default(cuid())
+  title      String
+  gradeRange String   // "K-2"
+  subject    String   // "STEM Readiness"
+  questions  Json     // [{id, prompt, choices: string[], correctIndex: number, skillTag: string}]
+  createdAt  DateTime @default(now())
+
+  assignments BenchmarkAssignment[]
+}
+
+model BenchmarkAssignment {
+  id         String          @id @default(cuid())
+  courseId    String
+  templateId String
+  kind       BenchmarkKind
+  status     BenchmarkStatus @default(OPEN)
+  createdAt  DateTime        @default(now())
+
+  course   Course            @relation(fields: [courseId], references: [id])
+  template BenchmarkTemplate @relation(fields: [templateId], references: [id])
+  attempts BenchmarkAttempt[]
+
+  @@unique([courseId, templateId, kind])
+  @@index([courseId])
+}
+
+model BenchmarkAttempt {
+  id             String   @id @default(cuid())
+  assignmentId   String
+  studentId      String
+  answers        Json     // [{questionId, selectedIndex, isCorrect, skillTag}]
+  score          Int      // number correct
+  totalQuestions Int
+  timeSpentS     Int
+  createdAt      DateTime @default(now())
+
+  assignment BenchmarkAssignment @relation(fields: [assignmentId], references: [id])
+  student    User                @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
 }

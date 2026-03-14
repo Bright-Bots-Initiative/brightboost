@@ -240,7 +240,7 @@
   "landing": {
     "title": "Bright Boost",
     "subtitle": "¡Aprende. Juega. Explora!",
-    "tagline": "Aventuras STEM interactivas para K-8 que construyen confianza y habilidades de resolución de problemas",
+    "tagline": "Una plataforma bilingüe de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas en IA, computación cuántica y biotecnología.",
     "feat1": "Juegos Interactivos",
     "feat2": "Seguir Progreso",
     "feat3": "Herramientas de Aula",
@@ -261,10 +261,10 @@
   "reviewers": {
     "backHome": "Volver al inicio",
     "title": "Guía para Evaluadores de BrightBoost",
-    "subtitle": "Todo lo que necesitas para explorar, evaluar y compartir opiniones sobre BrightBoost — la plataforma de aprendizaje STEM para K-8 de la Iniciativa Bright Bots.",
+    "subtitle": "Todo lo que necesitas para explorar, evaluar y compartir opiniones sobre BrightBoost — una plataforma bilingüe de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas.",
     "whatIs": {
       "title": "¿Qué es BrightBoost?",
-      "body": "BrightBoost es una plataforma bilingüe (inglés/español) de aprendizaje STEM para K-8 con niveles escalonados para K-2, 3-5 y 6-8. El lanzamiento actual comienza con contenido K-2 — convirtiendo habilidades fundamentales como secuencias, patrones y resolución de problemas en aventuras interactivas basadas en juegos. Los maestros crean clases, asignan módulos y dan seguimiento al progreso. Los estudiantes juegan actividades, ganan XP y construyen confianza. Los grados 3-5 y 6-8 están planeados para futuras versiones.",
+      "body": "BrightBoost es una plataforma bilingüe (inglés/español) de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas en IA, computación cuántica y biotecnología. La plataforma ofrece niveles escalonados para K-2, 3-5 y 6-8. El lanzamiento actual comienza con contenido K-2 — convirtiendo habilidades fundamentales como secuencias, patrones y resolución de problemas en aventuras interactivas basadas en juegos. Los maestros crean clases, asignan módulos y dan seguimiento al progreso. Los estudiantes juegan actividades, ganan XP y construyen confianza. Los grados 3-5 y 6-8 están planeados en futuras versiones.",
       "feat1": "Aprendizaje con Juegos",
       "feat2": "Progreso en Tiempo Real",
       "feat3": "Gestión de Aula",
@@ -620,7 +620,7 @@
     "title": "Noche Familiar STEAM",
     "preEyebrow": "Exhibición Pública",
     "preHeadline": "Exhibición Familiar STEAM",
-    "preSubheadline": "Una presentación bilingüe de la experiencia de lanzamiento K-2 de BrightBoost — el primer nivel de nuestra plataforma de aprendizaje STEM K-8.",
+    "preSubheadline": "Una presentación bilingüe del lanzamiento K-2 de BrightBoost — el primer nivel de nuestra plataforma de aprendizaje STEM K-8, construyendo bases sólidas para vías tecnológicas avanzadas.",
     "preWhatTitle": "Lo que verás",
     "preWhat1": "Módulos de aprendizaje estudiantil y actividades STEM",
     "preWhat2": "Datos reales de logros y crecimiento en confianza",
@@ -628,7 +628,7 @@
     "preWhyTitle": "Por qué importa",
     "preWhy1": "Aprendizaje basado en juegos que desarrolla habilidades de resolución de problemas",
     "preWhy2": "Diseñado para acceso equitativo en escuelas con pocos recursos",
-    "preWhy3": "K-2 se lanza primero, con grados 3-5 y 6-8 planeados a continuación",
+    "preWhy3": "K-2 se lanza primero, con grados 3-5 y 6-8 avanzando hacia vías de IA, computación cuántica y biotecnología",
     "preKeyboard": "Usa las flechas para navegar, ESC para salir de pantalla completa",
     "prePowered": "Impulsado por la Iniciativa Bright Bots",
     "slide1Title": "¡Bienvenidos a la Noche Familiar STEAM!",
@@ -1101,6 +1101,16 @@
       "module3": "Módulo 3 — Gotcha Engranajes"
     },
 
+    "benchmark": {
+      "title": "Evaluaciones de Referencia",
+      "noneYet": "No hay evaluaciones asignadas aún.",
+      "completed": "completadas",
+      "avg": "Prom:",
+      "open": "Abierta",
+      "closed": "Cerrada",
+      "assign": "Asignar"
+    },
+
     "settings": {
       "title": "Configuración",
       "account": "Cuenta",
@@ -1213,6 +1223,27 @@
       "module1": "Módulo 1 — Rima y Viaje",
       "module2": "Módulo 2 — Rebote y Amigos",
       "module3": "Módulo 3 — Gotcha Engranajes"
+    }
+  },
+
+  "benchmark": {
+    "student": {
+      "sectionTitle": "Evaluaciones de Referencia",
+      "preLabel": "Pre-Evaluación",
+      "postLabel": "Post-Evaluación",
+      "start": "Comenzar",
+      "done": "Completada",
+      "locked": "Completa la PRE primero",
+      "questionOf": "Pregunta {{current}} de {{total}}",
+      "prev": "Atrás",
+      "next": "Siguiente",
+      "submit": "Enviar",
+      "allDone": "¡Terminaste!",
+      "backToDashboard": "Volver al Panel",
+      "alreadyCompleted": "Ya completaste esta evaluación.",
+      "notAllowed": "No tienes permiso para tomar esta evaluación.",
+      "loadError": "Error al cargar la evaluación.",
+      "submitError": "Error al enviar. Inténtalo de nuevo."
     }
   }
 }

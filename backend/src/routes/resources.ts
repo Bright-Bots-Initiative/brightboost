@@ -5,6 +5,39 @@ import { requireRole } from "../utils/auth";
 
 const router = Router();
 
+// ── Locale helpers ───────────────────────────────────────────────────────────
+
+type SupportedLang = "en" | "es";
+
+/** Sanitize raw lang input: es / es-MX / es_419 → "es"; everything else → "en". */
+function resolveLang(raw: unknown): SupportedLang {
+  if (typeof raw !== "string") return "en";
+  const lower = raw.trim().toLowerCase();
+  if (lower === "es" || lower.startsWith("es-") || lower.startsWith("es_")) return "es";
+  return "en";
+}
+
+/** Project a DB resource row to the requested locale, falling back to English. */
+function localizeResource(
+  resource: Record<string, unknown>,
+  lang: SupportedLang,
+) {
+  if (lang === "es") {
+    return {
+      ...resource,
+      title: (resource.titleEs as string) || resource.title,
+      description: (resource.descriptionEs as string) || resource.description,
+      contentHtml: (resource.contentHtmlEs as string) || resource.contentHtml,
+    };
+  }
+  return resource;
+}
+
+const PRINT_LABELS: Record<SupportedLang, { name: string; date: string }> = {
+  en: { name: "Name", date: "Date" },
+  es: { name: "Nombre", date: "Fecha" },
+};
+
 // ── Branded print shell ──────────────────────────────────────────────────────
 // Single reusable template for all printable resource types (WORKSHEET, GUIDE,
 // HANDOUT).  Inline SVG wordmark avoids external asset dependencies.
@@ -29,9 +62,12 @@ interface PrintableResource {
   description: string;
   type: string;
   contentHtml: string;
+  lang: SupportedLang;
 }
 
 function buildPrintHtml(resource: PrintableResource): string {
+  const labels = PRINT_LABELS[resource.lang];
+
   const descriptionBlock = resource.description
     ? `\n    <div class="subtitle">${resource.description}</div>`
     : "";
@@ -39,13 +75,13 @@ function buildPrintHtml(resource: PrintableResource): string {
   const nameDateBlock =
     resource.type === "WORKSHEET"
       ? `\n  <div class="name-date">
-    <div>Name: <span>&nbsp;</span></div>
-    <div>Date: <span>&nbsp;</span></div>
+    <div>${labels.name}: <span>&nbsp;</span></div>
+    <div>${labels.date}: <span>&nbsp;</span></div>
   </div>`
       : "";
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${resource.lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,7 +149,8 @@ router.get(
   requireRole("teacher"),
   async (req: Request, res: Response) => {
     try {
-      const { moduleSlug, type, category } = req.query;
+      const { moduleSlug, type, category, lang: rawLang } = req.query;
+      const lang = resolveLang(rawLang);
 
       const where: Record<string, unknown> = {};
       if (moduleSlug && moduleSlug !== "all") {
@@ -127,7 +164,7 @@ router.get(
         orderBy: [{ moduleSlug: "asc" }, { category: "asc" }, { title: "asc" }],
       });
 
-      res.json(resources);
+      res.json(resources.map((r) => localizeResource(r, lang)));
     } catch (err) {
       console.error("Error fetching resources:", err);
       res.status(500).json({ error: "Failed to fetch resources" });
@@ -149,7 +186,8 @@ router.get(
         return res.status(404).json({ error: "Resource not found" });
       }
 
-      res.json(resource);
+      const lang = resolveLang(req.query.lang);
+      res.json(localizeResource(resource, lang));
     } catch (err) {
       console.error("Error fetching resource:", err);
       res.status(500).json({ error: "Failed to fetch resource" });
@@ -171,15 +209,19 @@ router.get(
         return res.status(404).json({ error: "Resource not found" });
       }
 
-      if (!resource.contentHtml) {
+      const lang = resolveLang(req.query.lang);
+      const localized = localizeResource(resource, lang) as Record<string, unknown>;
+
+      if (!localized.contentHtml) {
         return res.status(400).json({ error: "Resource has no printable content" });
       }
 
       const printHtml = buildPrintHtml({
-        title: resource.title,
-        description: resource.description,
-        type: resource.type,
-        contentHtml: resource.contentHtml,
+        title: localized.title as string,
+        description: localized.description as string,
+        type: localized.type as string,
+        contentHtml: localized.contentHtml as string,
+        lang,
       });
 
       res.setHeader("Content-Type", "text/html");

@@ -240,7 +240,7 @@
   "landing": {
     "title": "Bright Boost",
     "subtitle": "Learn. Play. Explore!",
-    "tagline": "Interactive K-8 STEM adventures that build confidence and problem-solving skills",
+    "tagline": "A bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech.",
     "feat1": "Interactive Games",
     "feat2": "Track Progress",
     "feat3": "Classroom Tools",
@@ -261,10 +261,10 @@
   "reviewers": {
     "backHome": "Back to Home",
     "title": "BrightBoost Evaluator Guide",
-    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — the K-8 STEM learning platform from the Bright Bots Initiative.",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
     "whatIs": {
       "title": "What is BrightBoost?",
-      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned for future rollouts.",
+      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned in future releases.",
       "feat1": "Game-Based Learning",
       "feat2": "Real-Time Progress",
       "feat3": "Classroom Management",
@@ -620,7 +620,7 @@
     "title": "Family STEAM Night",
     "preEyebrow": "Public Showcase",
     "preHeadline": "Family STEAM Showcase",
-    "preSubheadline": "A bilingual presentation of the BrightBoost K-2 launch experience — the first tier of our K-8 STEM learning platform.",
+    "preSubheadline": "A bilingual presentation of the BrightBoost K-2 launch — the first tier of our K-8 STEM learning platform, building strong foundations for advanced technology pathways.",
     "preWhatTitle": "What you'll see",
     "preWhat1": "Student learning modules and STEM activities",
     "preWhat2": "Real achievement data and confidence growth",
@@ -628,7 +628,7 @@
     "preWhyTitle": "Why it matters",
     "preWhy1": "Game-based learning that builds problem-solving skills",
     "preWhy2": "Designed for equitable access in under-resourced schools",
-    "preWhy3": "K-2 launches first, with grades 3-5 and 6-8 planned next",
+    "preWhy3": "K-2 launches first, with grades 3-5 and 6-8 advancing into AI, quantum, and biotech pathways",
     "preKeyboard": "Use arrow keys to navigate slides, ESC to exit fullscreen",
     "prePowered": "Powered by the Bright Bots Initiative",
     "slide1Title": "Welcome to Family STEAM Night!",
@@ -1100,6 +1100,16 @@
       "module3": "Module 3 — Gotcha Gears"
     },
 
+    "benchmark": {
+      "title": "Benchmark Assessments",
+      "noneYet": "No benchmarks assigned yet.",
+      "completed": "completed",
+      "avg": "Avg:",
+      "open": "Open",
+      "closed": "Closed",
+      "assign": "Assign"
+    },
+
     "settings": {
       "title": "Settings",
       "account": "Account",
@@ -1212,6 +1222,27 @@
       "module1": "Module 1 — Rhyme & Ride",
       "module2": "Module 2 — Bounce & Buds",
       "module3": "Module 3 — Gotcha Gears"
+    }
+  },
+
+  "benchmark": {
+    "student": {
+      "sectionTitle": "Benchmark Assessments",
+      "preLabel": "Pre-Assessment",
+      "postLabel": "Post-Assessment",
+      "start": "Start",
+      "done": "Completed",
+      "locked": "Complete PRE first",
+      "questionOf": "Question {{current}} of {{total}}",
+      "prev": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "allDone": "All Done!",
+      "backToDashboard": "Back to Dashboard",
+      "alreadyCompleted": "You already completed this benchmark.",
+      "notAllowed": "You are not allowed to take this benchmark.",
+      "loadError": "Failed to load benchmark.",
+      "submitError": "Failed to submit. Please try again."
     }
   }
 }

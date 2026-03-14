@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
-import { useApi } from "../services/api";
+import { useApi, ApiError } from "../services/api";
 import { api as directApi } from "../services/api";
 import {
   Users,
@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Printer,
   Smile,
+  ClipboardCheck,
+  Loader2,
 } from "lucide-react";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
 import {
@@ -55,6 +57,24 @@ interface PulseSummary {
   avgPre: number | null;
   avgPost: number | null;
   delta: number | null;
+}
+
+interface BenchmarkTemplate {
+  id: string;
+  title: string;
+  gradeRange: string;
+  subject: string;
+}
+
+interface BenchmarkSummary {
+  id: string;
+  kind: string;
+  status: string;
+  template: BenchmarkTemplate;
+  enrolledCount: number;
+  completedCount: number;
+  avgScore: number | null;
+  avgPercent: number | null;
 }
 
 interface ModuleSummary {
@@ -102,6 +122,11 @@ const TeacherClassDetail: React.FC = () => {
     cards: { name: string; icon: string; hasPin: boolean }[];
   } | null>(null);
 
+  // Benchmarks
+  const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
+  const [benchmarkTemplates, setBenchmarkTemplates] = useState<BenchmarkTemplate[]>([]);
+  const [assigningBenchmark, setAssigningBenchmark] = useState(false);
+
   // Launch session wizard
   const [launchOpen, setLaunchOpen] = useState(false);
   const [modules, setModules] = useState<ModuleSummary[]>([]);
@@ -125,16 +150,21 @@ const TeacherClassDetail: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
-        const [courseData, assignmentData, pulseData] = await Promise.all([
+        const [courseData, assignmentData, pulseData, benchmarkData, templateData] = await Promise.all([
           api.get(`/teacher/courses/${id}`),
           api.get(`/teacher/courses/${id}/assignments`),
           api.get(`/teacher/courses/${id}/pulse/summary`),
+          api.get(`/teacher/courses/${id}/benchmarks`).catch(() => []),
+          api.get(`/teacher/benchmark-templates`).catch(() => []),
         ]);
         setCourse(courseData);
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
         setPulse(pulseData);
+        setBenchmarks(Array.isArray(benchmarkData) ? benchmarkData : []);
+        setBenchmarkTemplates(Array.isArray(templateData) ? templateData : []);
       } catch (err) {
-        const is404 = err instanceof Error && /404/.test(err.message);
+        const is404 = (err instanceof ApiError && err.status === 404) ||
+          (err instanceof Error && (/404/.test(err.message) || /not found/i.test(err.message)));
         setError(is404 ? t("teacher.classDetail.notFound") : t("teacher.classDetail.failedLoad"));
       } finally {
         setLoading(false);
@@ -242,6 +272,26 @@ const TeacherClassDetail: React.FC = () => {
       }
     }
     return acts;
+  };
+
+  const assignBenchmark = async (templateId: string, kind: "PRE" | "POST") => {
+    if (!id) return;
+    setAssigningBenchmark(true);
+    try {
+      await api.post(`/teacher/courses/${id}/benchmarks`, { templateId, kind });
+      const updated = await api.get(`/teacher/courses/${id}/benchmarks`);
+      setBenchmarks(Array.isArray(updated) ? updated : []);
+    } catch { /* toast handles error */ }
+    finally { setAssigningBenchmark(false); }
+  };
+
+  const toggleBenchmarkStatus = async (benchmarkId: string, currentStatus: string) => {
+    if (!id) return;
+    const newStatus = currentStatus === "OPEN" ? "CLOSED" : "OPEN";
+    try {
+      await api.patch(`/teacher/courses/${id}/benchmarks/${benchmarkId}`, { status: newStatus });
+      setBenchmarks((prev) => prev.map((b) => b.id === benchmarkId ? { ...b, status: newStatus } : b));
+    } catch { /* toast handles error */ }
   };
 
   const handleLaunch = async () => {
@@ -550,6 +600,70 @@ const TeacherClassDetail: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* Benchmark Assessments */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
+          <ClipboardCheck className="w-5 h-5 mr-2" />
+          {t("teacher.benchmark.title")}
+        </h2>
+
+        {benchmarks.length === 0 ? (
+          <p className="text-sm text-gray-400 italic mb-4">{t("teacher.benchmark.noneYet")}</p>
+        ) : (
+          <div className="space-y-3 mb-4">
+            {benchmarks.map((b) => (
+              <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+                <div>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-2 ${
+                    b.kind === "PRE" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+                  }`}>
+                    {b.kind}
+                  </span>
+                  <span className="text-sm font-medium text-slate-700">{b.template.title}</span>
+                  <div className="text-xs text-slate-400 mt-1">
+                    {b.completedCount}/{b.enrolledCount} {t("teacher.benchmark.completed")}
+                    {b.avgPercent !== null && ` · ${t("teacher.benchmark.avg")} ${b.avgPercent}%`}
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleBenchmarkStatus(b.id, b.status)}
+                  className={`px-3 py-1 text-xs rounded-full font-medium ${
+                    b.status === "OPEN"
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {b.status === "OPEN" ? t("teacher.benchmark.open") : t("teacher.benchmark.closed")}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Assign buttons — show for each template × kind combo not yet assigned */}
+        {benchmarkTemplates.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {benchmarkTemplates.map((tmpl) =>
+              (["PRE", "POST"] as const).map((kind) => {
+                const exists = benchmarks.some((b) => b.template.id === tmpl.id && b.kind === kind);
+                if (exists) return null;
+                return (
+                  <button
+                    key={`${tmpl.id}-${kind}`}
+                    onClick={() => assignBenchmark(tmpl.id, kind)}
+                    disabled={assigningBenchmark}
+                    className="px-3 py-1.5 text-xs bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {assigningBenchmark && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {t("teacher.benchmark.assign")} {kind}
+                  </button>
+                );
+              }),
+            )}
           </div>
         )}
       </section>

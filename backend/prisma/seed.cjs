@@ -650,13 +650,7 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   // Seed Resources (worksheets, handouts, guides)
   // ═══════════════════════════════════════════════════════════════════════════
-  const existingResources = await prisma.resource.count().catch(() => 0);
-  if (existingResources > 0) {
-    console.log(`Skipping resources (already exist: ${existingResources}).`);
-  } else {
-    console.log("Seeding resources...");
-
-    const resources = [
+  const resources = [
       // ── k2-stem-rhyme-ride (Module 1) ─────────────────────────────────
       {
         title: "Rhyme & Ride Pre-Activity Worksheet",
@@ -665,6 +659,8 @@ async function main() {
         moduleSlug: "k2-stem-rhyme-ride",
         category: "PRE_ACTIVITY",
         printable: true,
+        titleEs: "Hoja de Trabajo Pre-Actividad: Rima y Paseo",
+        descriptionEs: "Actividad de calentamiento de fonética antes del módulo Rima y Paseo",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>Before We Begin: Rhyme &amp; Ride</h2>
@@ -689,6 +685,30 @@ async function main() {
 <p>Why do you think songs use rhyming words? Write or draw your idea:</p>
 <div class="worksheet-area"></div>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Antes de Empezar: Rima y Paseo</h2>
+<h3>Busca las Rimas</h3>
+<p>Dibuja una línea para conectar las palabras que riman:</p>
+<table class="match-table">
+  <tr><td><strong>gato</strong></td><td>luna</td></tr>
+  <tr><td><strong>cuna</strong></td><td>flores</td></tr>
+  <tr><td><strong>colores</strong></td><td>pato</td></tr>
+</table>
+
+<h3>¡Piensa en Rimas!</h3>
+<p>Escribe o dibuja una palabra que rime con cada palabra:</p>
+<p><strong>sol</strong> rima con:</p>
+<div class="line"></div>
+<p><strong>casa</strong> rima con:</p>
+<div class="line"></div>
+<p><strong>flor</strong> rima con:</p>
+<div class="line"></div>
+
+<h3>¡Predice!</h3>
+<p>¿Por qué crees que las canciones usan palabras que riman? Escribe o dibuja tu idea:</p>
+<div class="worksheet-area"></div>
+</div>`,
       },
       {
         title: "Rhyme & Ride Post-Activity Reflection",
@@ -697,6 +717,8 @@ async function main() {
         moduleSlug: "k2-stem-rhyme-ride",
         category: "POST_ACTIVITY",
         printable: true,
+        titleEs: "Reflexión Post-Actividad: Rima y Paseo",
+        descriptionEs: "Hoja de reflexión después de completar el módulo Rima y Paseo",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>After the Adventure: Rhyme &amp; Ride</h2>
@@ -715,6 +737,24 @@ async function main() {
 <p>How does knowing rhyming words help you read? Draw or write your answer:</p>
 <div class="worksheet-area" style="min-height:200px;"></div>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Después de la Aventura: Rima y Paseo</h2>
+<h3>Mi Rima Favorita</h3>
+<p>¿Cuál fue tu par de rimas favorito del juego? Dibuja o escríbelo:</p>
+<div class="worksheet-area" style="min-height:200px;"></div>
+
+<h3>¡Crea Tu Propia Rima!</h3>
+<p>Completa esta oración divertida con una palabra que rime:</p>
+<p>El <strong>gato</strong> se sentó en un:</p>
+<div class="line"></div>
+<p>Vi un <strong>ratón</strong> junto al:</p>
+<div class="line"></div>
+
+<h3>Cómo Ayudan las Rimas</h3>
+<p>¿Cómo te ayuda conocer palabras que riman para leer? Dibuja o escribe tu respuesta:</p>
+<div class="worksheet-area" style="min-height:200px;"></div>
+</div>`,
       },
 
       // ── k2-stem-bounce-buds ────────────────────────────────
@@ -725,6 +765,8 @@ async function main() {
         moduleSlug: "k2-stem-bounce-buds",
         category: "PRE_ACTIVITY",
         printable: true,
+        titleEs: "Hoja de Trabajo Pre-Actividad: Rebote y Brotes",
+        descriptionEs: "Actividad de calentamiento sobre células y seres vivos diminutos",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>Before We Begin: Bounce &amp; Buds</h2>
@@ -744,6 +786,25 @@ async function main() {
 <p>Are all tiny germs bad for us? Circle your guess:</p>
 <p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Antes de Empezar: Rebote y Brotes</h2>
+<h3>Vocabulario</h3>
+<p>Dibuja una línea de cada palabra a su significado:</p>
+<table class="match-table">
+  <tr><td><strong>Célula</strong></td><td>Un ser vivo diminuto que no puedes ver</td></tr>
+  <tr><td><strong>Microbio</strong></td><td>La parte más pequeña de los seres vivos</td></tr>
+  <tr><td><strong>Microscopio</strong></td><td>Una herramienta para ver cosas diminutas</td></tr>
+</table>
+
+<h3>Grande y Pequeño</h3>
+<p>Dibuja el ser vivo más pequeño que se te ocurra. ¿Qué es?</p>
+<div class="worksheet-area"></div>
+
+<h3>¡Predice!</h3>
+<p>¿Todos los microbios son malos para nosotros? Encierra tu respuesta en un círculo:</p>
+<p style="font-size: 24px; text-align: center;"><strong>SÍ</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO ESTOY SEGURO/A</strong></p>
+</div>`,
       },
       {
         title: "Bounce & Buds Post-Activity Reflection",
@@ -752,6 +813,8 @@ async function main() {
         moduleSlug: "k2-stem-bounce-buds",
         category: "POST_ACTIVITY",
         printable: true,
+        titleEs: "Reflexión Post-Actividad: Rebote y Brotes",
+        descriptionEs: "Hoja de reflexión después de completar el módulo de células y biología",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>After the Adventure: Bounce &amp; Buds</h2>
@@ -770,6 +833,24 @@ async function main() {
 <p>What is one thing you can do to keep your body healthy? Draw or write:</p>
 <div class="worksheet-area"></div>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Después de la Aventura: Rebote y Brotes</h2>
+<h3>Lo Que Aprendí Sobre las Células</h3>
+<p>Dibuja una célula y ponle nombre a sus partes. ¿Qué son las células?</p>
+<div class="worksheet-area"></div>
+
+<h3>Útiles vs. Dañinos</h3>
+<p>Dibuja o escribe un microbio que nos ayuda y uno que nos puede enfermar:</p>
+<table>
+  <tr><th style="width:50%; text-align:center;">Útil</th><th style="text-align:center;">Dañino</th></tr>
+  <tr><td style="height:160px;"></td><td></td></tr>
+</table>
+
+<h3>Hábitos Saludables</h3>
+<p>¿Qué puedes hacer para mantener tu cuerpo sano? Dibuja o escribe:</p>
+<div class="worksheet-area"></div>
+</div>`,
       },
 
       // ── k2-stem-gotcha-gears ───────────────────────────────
@@ -780,6 +861,8 @@ async function main() {
         moduleSlug: "k2-stem-gotcha-gears",
         category: "PRE_ACTIVITY",
         printable: true,
+        titleEs: "Hoja de Trabajo Pre-Actividad: Engranajes en Acción",
+        descriptionEs: "Actividad de calentamiento sobre robots, IA y planificación",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>Before We Begin: Gotcha Gears</h2>
@@ -799,6 +882,25 @@ async function main() {
 <p>Can robots think on their own like people? Circle your guess:</p>
 <p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Antes de Empezar: Engranajes en Acción</h2>
+<h3>Vocabulario</h3>
+<p>Dibuja una línea de cada palabra a su significado:</p>
+<table class="match-table">
+  <tr><td><strong>Robot</strong></td><td>Pensar en qué hacer antes de hacerlo</td></tr>
+  <tr><td><strong>Plan</strong></td><td>Una máquina que sigue instrucciones</td></tr>
+  <tr><td><strong>Depurar</strong></td><td>Encontrar y corregir un error</td></tr>
+</table>
+
+<h3>¡Diseña un Robot!</h3>
+<p>Si pudieras tener un robot ayudante, ¿qué haría? Dibuja tu robot:</p>
+<div class="worksheet-area"></div>
+
+<h3>Piénsalo</h3>
+<p>¿Pueden los robots pensar solos como las personas? Encierra tu respuesta en un círculo:</p>
+<p style="font-size: 24px; text-align: center;"><strong>SÍ</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO ESTOY SEGURO/A</strong></p>
+</div>`,
       },
       {
         title: "Gotcha Gears Post-Activity Reflection",
@@ -807,6 +909,8 @@ async function main() {
         moduleSlug: "k2-stem-gotcha-gears",
         category: "POST_ACTIVITY",
         printable: true,
+        titleEs: "Reflexión Post-Actividad: Engranajes en Acción",
+        descriptionEs: "Hoja de reflexión después de completar el módulo de IA y robótica",
         contentHtml: `
 <div class="k2-worksheet">
 <h2>After the Adventure: Gotcha Gears</h2>
@@ -824,6 +928,23 @@ async function main() {
 <div class="line"></div>
 <div class="line"></div>
 </div>`,
+        contentHtmlEs: `
+<div class="k2-worksheet">
+<h2>Después de la Aventura: Engranajes en Acción</h2>
+<h3>Lo Que Aprendí Sobre los Robots</h3>
+<p>¿Quién le dice a los robots qué hacer? Dibuja o escribe tu respuesta:</p>
+<div class="worksheet-area"></div>
+
+<h3>Mi Estrategia</h3>
+<p>¿Qué estrategia usaste en el juego Engranajes en Acción? Dibuja o escribe:</p>
+<div class="worksheet-area"></div>
+
+<h3>Robots en la Vida Real</h3>
+<p>¿Dónde has visto robots en la vida real (en casa, en la escuela o en tu ciudad)?</p>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+</div>`,
       },
 
       // ── General Resources ───────────────────────────────────
@@ -834,6 +955,36 @@ async function main() {
         moduleSlug: null,
         category: "GENERAL",
         printable: true,
+        titleEs: "Primeros Pasos con BrightBoost",
+        descriptionEs: "Guía de una página para maestros nuevos en la plataforma BrightBoost",
+        contentHtmlEs: `
+<h2>Primeros Pasos con BrightBoost</h2>
+<h3>¿Qué es BrightBoost?</h3>
+<p>BrightBoost es una plataforma interactiva de aprendizaje STEM diseñada para estudiantes de K-2. Los estudiantes exploran módulos con historias, cuestionarios y juegos que enseñan secuencias, fonética, biología y conceptos de IA/robótica.</p>
+
+<h3>Configuración Rápida (5 minutos)</h3>
+<ol>
+  <li><strong>Crea tu cuenta de maestro</strong> en la página de registro de BrightBoost</li>
+  <li><strong>Crea una clase</strong> desde tu panel — recibirás un código único para unirse</li>
+  <li><strong>Comparte el código</strong> con los estudiantes (o escríbelo en el pizarrón)</li>
+  <li><strong>Los estudiantes se registran</strong> e ingresan el código para unirse a tu clase</li>
+  <li><strong>Inicia una sesión semanal</strong> seleccionando un módulo y actividad</li>
+</ol>
+
+<h3>Lo Que Experimentan los Estudiantes</h3>
+<p>Cada módulo tiene dos partes:</p>
+<ol>
+  <li><strong>Historia + Cuestionario</strong>: Una historia interactiva con preguntas para verificar comprensión</li>
+  <li><strong>Juego</strong>: Un juego educativo y divertido que refuerza la lección</li>
+</ol>
+
+<h3>Consejos para el Éxito</h3>
+<ul>
+  <li>Revisa cada módulo tú mismo antes de asignarlo a los estudiantes</li>
+  <li>Usa la Guía de Discusión (en Preparación del Maestro) para iniciar conversaciones antes y después</li>
+  <li>Dale a los estudiantes unos 20 minutos de tiempo en la plataforma por sesión</li>
+  <li>Revisa el panel de la clase para ver quién completó sus actividades</li>
+</ul>`,
         contentHtml: `
 <h2>Getting Started with BrightBoost</h2>
 <h3>What is BrightBoost?</h3>
@@ -870,6 +1021,34 @@ async function main() {
         moduleSlug: null,
         category: "GENERAL",
         printable: true,
+        titleEs: "Cómo Realizar una Sesión Semanal",
+        descriptionEs: "Guía paso a paso para realizar una sesión de BrightBoost en tu salón de clases",
+        contentHtmlEs: `
+<h2>Cómo Realizar una Sesión Semanal de BrightBoost</h2>
+<h3>Antes de Clase (5 min de preparación)</h3>
+<ul>
+  <li>Revisa la página de Preparación del Maestro para el módulo que vas a asignar</li>
+  <li>Revisa las preguntas de discusión y la guía de ritmo</li>
+  <li>Asegúrate de que los dispositivos estén cargados y BrightBoost sea accesible</li>
+  <li>Imprime las hojas de trabajo que desees usar (pre-actividad o post-actividad)</li>
+</ul>
+
+<h3>Durante la Clase (45 min)</h3>
+<table>
+  <tr><th>Tiempo</th><th>Actividad</th><th>Consejos</th></tr>
+  <tr><td>5 min</td><td>Discusión de calentamiento</td><td>Usa las preguntas "Antes" de la Guía de Discusión</td></tr>
+  <tr><td>5 min</td><td>Introducción/demostración del maestro</td><td>Muestra el módulo brevemente en tu pantalla</td></tr>
+  <tr><td>20 min</td><td>Estudiantes en BrightBoost</td><td>Circula, ayuda con problemas de inicio de sesión, observa</td></tr>
+  <tr><td>10 min</td><td>Reflexión grupal</td><td>Usa las preguntas "Después" de la Guía de Discusión</td></tr>
+  <tr><td>5 min</td><td>Boleto de salida/reflexión</td><td>Usa la hoja de trabajo post-actividad o comparte verbalmente</td></tr>
+</table>
+
+<h3>Después de Clase</h3>
+<ul>
+  <li>Revisa tu panel para ver tasas de finalización y tiempo dedicado</li>
+  <li>Anota los estudiantes que no terminaron — pueden completar la próxima vez</li>
+  <li>Escribe observaciones para tu diario de reflexión profesional</li>
+</ul>`,
         contentHtml: `
 <h2>How to Run a Weekly BrightBoost Session</h2>
 <h3>Before Class (5 min prep)</h3>
@@ -904,6 +1083,33 @@ async function main() {
         moduleSlug: null,
         category: "GENERAL",
         printable: true,
+        titleEs: "Carta para las Familias Sobre BrightBoost",
+        descriptionEs: "Carta modelo para enviar a casa a los padres sobre el programa piloto de BrightBoost",
+        contentHtmlEs: `
+<h2>Estimadas Familias,</h2>
+<p>Nuestra clase está participando en un programa nuevo y emocionante llamado <strong>BrightBoost</strong>. Es una plataforma de aprendizaje interactiva y divertida donde los estudiantes exploran temas STEM (Ciencia, Tecnología, Ingeniería y Matemáticas) a través de historias y juegos.</p>
+
+<h3>¿Qué Hará Mi Hijo/a?</h3>
+<p>Cada semana, los estudiantes completarán un módulo de aprendizaje corto en BrightBoost. Cada módulo incluye:</p>
+<ul>
+  <li>Una historia interactiva sobre un tema STEM (como robots, células o patrones de rimas)</li>
+  <li>Preguntas de cuestionario para verificar comprensión</li>
+  <li>Un juego educativo y divertido para practicar lo aprendido</li>
+</ul>
+
+<h3>¿Es Seguro?</h3>
+<p>¡Sí! BrightBoost está diseñado específicamente para estudiantes pequeños. Solo recopilamos el nombre, correo electrónico y progreso de aprendizaje de su hijo/a. Nunca vendemos datos ni mostramos anuncios. Para más detalles, visite nuestra Política de Privacidad en el sitio web de BrightBoost.</p>
+
+<h3>¿Cómo Puedo Ayudar en Casa?</h3>
+<ul>
+  <li>¡Pregunte a su hijo/a qué aprendió hoy en BrightBoost!</li>
+  <li>Anímelo/a a contarle sobre las historias y los juegos</li>
+  <li>Busque conexiones con el mundo real de lo que están aprendiendo (robots, rimas, seres vivos diminutos)</li>
+</ul>
+
+<p>Si tiene alguna pregunta, no dude en comunicarse.</p>
+<p>¡Gracias por apoyar el aprendizaje STEM de su hijo/a!</p>
+<p><em>Atentamente, El/La Maestro/a de Su Hijo/a</em></p>`,
         contentHtml: `
 <h2>Dear Families,</h2>
 <p>Our class is participating in an exciting new program called <strong>BrightBoost</strong>! This is a fun, interactive learning platform where students explore STEM topics (Science, Technology, Engineering, and Math) through stories and games.</p>
@@ -937,6 +1143,37 @@ async function main() {
         moduleSlug: null,
         category: "GENERAL",
         printable: true,
+        titleEs: "Tarjeta de Ayuda para Iniciar Sesión",
+        descriptionEs: "Tarjetas imprimibles con instrucciones de inicio de sesión que los maestros pueden recortar y repartir",
+        contentHtmlEs: `
+<h2>Tarjetas de Ayuda para Iniciar Sesión</h2>
+<p><em>Imprime esta página y corta por las líneas punteadas. Dale una tarjeta a cada estudiante.</em></p>
+<div style="border: 2px dashed #d1d5db; padding: 20px; margin: 16px 0; border-radius: 8px;">
+  <h3 style="color: #3b82f6; margin-top: 0;">Inicio de Sesión en BrightBoost</h3>
+  <p><strong>Sitio web:</strong> (Tu URL de BrightBoost)</p>
+  <p><strong>Mi Correo:</strong> ___________________________</p>
+  <p><strong>Mi Contraseña:</strong> ___________________________</p>
+  <p><strong>Código de Clase:</strong> ___________________________</p>
+  <ol style="font-size: 12px;">
+    <li>Ve al sitio web y haz clic en "Iniciar Sesión"</li>
+    <li>Elige "Soy Estudiante"</li>
+    <li>Escribe tu correo y contraseña</li>
+    <li>Si eres nuevo/a, ¡haz clic en "Registrarse" primero!</li>
+  </ol>
+</div>
+<div style="border: 2px dashed #d1d5db; padding: 20px; margin: 16px 0; border-radius: 8px;">
+  <h3 style="color: #3b82f6; margin-top: 0;">Inicio de Sesión en BrightBoost</h3>
+  <p><strong>Sitio web:</strong> (Tu URL de BrightBoost)</p>
+  <p><strong>Mi Correo:</strong> ___________________________</p>
+  <p><strong>Mi Contraseña:</strong> ___________________________</p>
+  <p><strong>Código de Clase:</strong> ___________________________</p>
+  <ol style="font-size: 12px;">
+    <li>Ve al sitio web y haz clic en "Iniciar Sesión"</li>
+    <li>Elige "Soy Estudiante"</li>
+    <li>Escribe tu correo y contraseña</li>
+    <li>Si eres nuevo/a, ¡haz clic en "Registrarse" primero!</li>
+  </ol>
+</div>`,
         contentHtml: `
 <h2>Student Login Help Cards</h2>
 <p><em>Print this page and cut along the dotted lines. Give one card to each student.</em></p>
@@ -974,6 +1211,41 @@ async function main() {
         moduleSlug: null,
         category: "GENERAL",
         printable: true,
+        titleEs: "Lista de Verificación para el Salón",
+        descriptionEs: "Lista de verificación de dispositivos y ambiente para sesiones de BrightBoost",
+        contentHtmlEs: `
+<h2>Lista de Verificación del Salón para BrightBoost</h2>
+<h3>Dispositivos</h3>
+<ul>
+  <li>☐ Suficientes dispositivos para los estudiantes (1 por estudiante o 1 por pareja)</li>
+  <li>☐ Todos los dispositivos cargados o enchufados</li>
+  <li>☐ Wi-Fi/internet funcionando</li>
+  <li>☐ El sitio web de BrightBoost carga en cada dispositivo</li>
+  <li>☐ Sonido encendido (se recomiendan audífonos si están disponibles)</li>
+</ul>
+
+<h3>Cuentas de Estudiantes</h3>
+<ul>
+  <li>☐ Todos los estudiantes han creado sus cuentas</li>
+  <li>☐ Todos los estudiantes se han unido a tu clase (verifica el conteo de inscripción en el panel)</li>
+  <li>☐ Tarjetas de ayuda para iniciar sesión distribuidas a los estudiantes que las necesiten</li>
+</ul>
+
+<h3>Ambiente del Salón</h3>
+<ul>
+  <li>☐ Preguntas de discusión publicadas o listas para mostrar</li>
+  <li>☐ Temporizador visible para los estudiantes (20 min de tiempo en la plataforma)</li>
+  <li>☐ Hojas de trabajo impresas si se usan actividades pre/post</li>
+  <li>☐ Lápices/crayones disponibles para actividades con hojas de trabajo</li>
+</ul>
+
+<h3>Preparación del Maestro</h3>
+<ul>
+  <li>☐ Revisaste el contenido del módulo tú mismo/a</li>
+  <li>☐ Revisaste la Guía de Discusión</li>
+  <li>☐ Iniciaste la Sesión Semanal en tu panel</li>
+  <li>☐ Tu pantalla lista para mostrar el módulo a la clase (demostración opcional)</li>
+</ul>`,
         contentHtml: `
 <h2>Classroom Setup Checklist for BrightBoost</h2>
 <h3>Devices</h3>
@@ -1018,6 +1290,8 @@ async function main() {
         category: "SUPPLEMENTAL",
         printable: false,
         contentUrl: "https://code.org/educate/curriculum/csf",
+        titleEs: "Code.org: Introducción a Secuencias para K-2",
+        descriptionEs: "Actividades gratuitas de secuencias en línea de Code.org diseñadas para estudiantes de K-2",
       },
       {
         title: "PBS Kids: Rhyming Games",
@@ -1027,6 +1301,8 @@ async function main() {
         category: "SUPPLEMENTAL",
         printable: false,
         contentUrl: "https://pbskids.org/games/rhyming",
+        titleEs: "PBS Kids: Juegos de Rimas",
+        descriptionEs: "Juegos interactivos de rimas de PBS Kids que refuerzan la conciencia fonémica",
       },
       {
         title: "BrainPOP Jr: Cells",
@@ -1036,6 +1312,8 @@ async function main() {
         category: "SUPPLEMENTAL",
         printable: false,
         contentUrl: "https://jr.brainpop.com/science/",
+        titleEs: "BrainPOP Jr: Células",
+        descriptionEs: "Video animado que explica las células para estudiantes pequeños",
       },
       {
         title: "PBS Kids: Robot Games",
@@ -1045,9 +1323,16 @@ async function main() {
         category: "SUPPLEMENTAL",
         printable: false,
         contentUrl: "https://pbskids.org/games/engineering",
+        titleEs: "PBS Kids: Juegos de Robots",
+        descriptionEs: "Juegos interactivos de robots y programación de PBS Kids",
       },
-    ];
+  ];
 
+  const existingResources = await prisma.resource.count().catch(() => 0);
+  if (existingResources > 0) {
+    console.log(`Skipping resource creation (already exist: ${existingResources}).`);
+  } else {
+    console.log("Seeding resources...");
     for (const r of resources) {
       await prisma.resource.create({ data: r });
     }
@@ -1055,155 +1340,31 @@ async function main() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Backfill: Update existing K-2 WORKSHEET contentHtml (idempotent)
-  // Runs every seed so beta/prod DBs get improved worksheet content without wipe.
+  // Backfill: Add Spanish translations to all existing resources (idempotent)
+  // Keyed on stable English title + moduleSlug + category + type.
+  // Runs every seed so beta/prod DBs get translations without wipe.
   // ═══════════════════════════════════════════════════════════════════════════
-  const k2WorksheetUpdates = [
-    {
-      where: { title: "Rhyme & Ride Pre-Activity Worksheet", moduleSlug: "k2-stem-rhyme-ride", category: "PRE_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>Before We Begin: Rhyme &amp; Ride</h2>
-<h3>Rhyming Word Match</h3>
-<p>Draw a line to connect the words that rhyme:</p>
-<table class="match-table">
-  <tr><td><strong>cat</strong></td><td>run</td></tr>
-  <tr><td><strong>sun</strong></td><td>tree</td></tr>
-  <tr><td><strong>bee</strong></td><td>hat</td></tr>
-</table>
-
-<h3>Think of Rhymes!</h3>
-<p>Write or draw a word that rhymes with each word:</p>
-<p><strong>dog</strong> rhymes with:</p>
-<div class="line"></div>
-<p><strong>cake</strong> rhymes with:</p>
-<div class="line"></div>
-<p><strong>star</strong> rhymes with:</p>
-<div class="line"></div>
-
-<h3>Predict!</h3>
-<p>Why do you think songs use rhyming words? Write or draw your idea:</p>
-<div class="worksheet-area"></div>
-</div>`,
-    },
-    {
-      where: { title: "Rhyme & Ride Post-Activity Reflection", moduleSlug: "k2-stem-rhyme-ride", category: "POST_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>After the Adventure: Rhyme &amp; Ride</h2>
-<h3>My Favorite Rhyme</h3>
-<p>What was your favorite rhyming pair from the game? Draw or write it:</p>
-<div class="worksheet-area" style="min-height:200px;"></div>
-
-<h3>Make Your Own Rhyme!</h3>
-<p>Finish this silly sentence with a rhyming word:</p>
-<p>The <strong>cat</strong> sat on a:</p>
-<div class="line"></div>
-<p>I saw a <strong>bug</strong> on a:</p>
-<div class="line"></div>
-
-<h3>How Rhyming Helps</h3>
-<p>How does knowing rhyming words help you read? Draw or write your answer:</p>
-<div class="worksheet-area" style="min-height:200px;"></div>
-</div>`,
-    },
-    {
-      where: { title: "Bounce & Buds Pre-Activity Worksheet", moduleSlug: "k2-stem-bounce-buds", category: "PRE_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>Before We Begin: Bounce &amp; Buds</h2>
-<h3>Vocabulary</h3>
-<p>Draw a line from each word to its meaning:</p>
-<table class="match-table">
-  <tr><td><strong>Cell</strong></td><td>A tiny living thing you can't see</td></tr>
-  <tr><td><strong>Microbe</strong></td><td>The smallest part of living things</td></tr>
-  <tr><td><strong>Microscope</strong></td><td>A tool to see tiny things</td></tr>
-</table>
-
-<h3>Big and Small</h3>
-<p>Draw the smallest living thing you can think of. What is it?</p>
-<div class="worksheet-area"></div>
-
-<h3>Predict!</h3>
-<p>Are all tiny germs bad for us? Circle your guess:</p>
-<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
-</div>`,
-    },
-    {
-      where: { title: "Bounce & Buds Post-Activity Reflection", moduleSlug: "k2-stem-bounce-buds", category: "POST_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>After the Adventure: Bounce &amp; Buds</h2>
-<h3>What I Learned About Cells</h3>
-<p>Draw a cell and label it. What are cells?</p>
-<div class="worksheet-area"></div>
-
-<h3>Helpful vs. Harmful</h3>
-<p>Draw or write one microbe that helps us and one that can make us sick:</p>
-<table>
-  <tr><th style="width:50%; text-align:center;">Helpful</th><th style="text-align:center;">Harmful</th></tr>
-  <tr><td style="height:160px;"></td><td></td></tr>
-</table>
-
-<h3>Healthy Habits</h3>
-<p>What is one thing you can do to keep your body healthy? Draw or write:</p>
-<div class="worksheet-area"></div>
-</div>`,
-    },
-    {
-      where: { title: "Gotcha Gears Pre-Activity Worksheet", moduleSlug: "k2-stem-gotcha-gears", category: "PRE_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>Before We Begin: Gotcha Gears</h2>
-<h3>Vocabulary</h3>
-<p>Draw a line from each word to its meaning:</p>
-<table class="match-table">
-  <tr><td><strong>Robot</strong></td><td>Thinking about what to do before you do it</td></tr>
-  <tr><td><strong>Plan</strong></td><td>A machine that follows instructions</td></tr>
-  <tr><td><strong>Debug</strong></td><td>Finding and fixing a mistake</td></tr>
-</table>
-
-<h3>Design a Robot!</h3>
-<p>If you could have a robot helper, what would it do? Draw your robot:</p>
-<div class="worksheet-area"></div>
-
-<h3>Think About It</h3>
-<p>Can robots think on their own like people? Circle your guess:</p>
-<p style="font-size: 24px; text-align: center;"><strong>YES</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>NO</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>I'M NOT SURE</strong></p>
-</div>`,
-    },
-    {
-      where: { title: "Gotcha Gears Post-Activity Reflection", moduleSlug: "k2-stem-gotcha-gears", category: "POST_ACTIVITY", type: "WORKSHEET" },
-      contentHtml: `
-<div class="k2-worksheet">
-<h2>After the Adventure: Gotcha Gears</h2>
-<h3>What I Learned About Robots</h3>
-<p>Who tells robots what to do? Draw or write your answer:</p>
-<div class="worksheet-area"></div>
-
-<h3>My Strategy</h3>
-<p>What strategy did you use in the Gotcha Gears game? Draw or write:</p>
-<div class="worksheet-area"></div>
-
-<h3>Robots in Real Life</h3>
-<p>Where have you seen robots in real life (at home, school, or in your town)?</p>
-<div class="line"></div>
-<div class="line"></div>
-<div class="line"></div>
-</div>`,
-    },
-  ];
+  const spanishBackfill = resources
+    .filter((r) => r.titleEs || r.descriptionEs || r.contentHtmlEs)
+    .map((r) => ({
+      where: { title: r.title, moduleSlug: r.moduleSlug ?? null, category: r.category, type: r.type },
+      data: {
+        ...(r.titleEs ? { titleEs: r.titleEs } : {}),
+        ...(r.descriptionEs ? { descriptionEs: r.descriptionEs } : {}),
+        ...(r.contentHtmlEs ? { contentHtmlEs: r.contentHtmlEs } : {}),
+      },
+    }));
 
   let backfillCount = 0;
-  for (const entry of k2WorksheetUpdates) {
+  for (const entry of spanishBackfill) {
     const result = await prisma.resource.updateMany({
       where: entry.where,
-      data: { contentHtml: entry.contentHtml },
+      data: entry.data,
     });
     backfillCount += result.count;
   }
   if (backfillCount > 0) {
-    console.log(`Backfilled ${backfillCount} K-2 worksheet(s) with improved content.`);
+    console.log(`Backfilled ${backfillCount} resource(s) with Spanish translations.`);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1658,6 +1819,69 @@ async function main() {
       });
     }
   } catch (e) { /* skip */ }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Seed Benchmark Templates (immutable in v1)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const existingTemplates = await prisma.benchmarkTemplate.count().catch(() => 0);
+  if (existingTemplates > 0) {
+    console.log(`Skipping benchmark templates (already exist: ${existingTemplates}).`);
+  } else {
+    console.log("Seeding benchmark template...");
+    await prisma.benchmarkTemplate.create({
+      data: {
+        title: "K-2 STEM Readiness Assessment",
+        gradeRange: "K-2",
+        subject: "STEM Readiness",
+        questions: [
+          { id: "q1", prompt: "What does a robot need to work?", choices: ["Food", "Instructions", "Sleep", "Water"], correctIndex: 1, skillTag: "computational-thinking" },
+          { id: "q2", prompt: "Which word rhymes with 'cat'?", choices: ["Dog", "Hat", "Car", "Cup"], correctIndex: 1, skillTag: "phonics" },
+          { id: "q3", prompt: "What is the smallest part of a living thing?", choices: ["A bone", "A cell", "A leaf", "A rock"], correctIndex: 1, skillTag: "life-science" },
+          { id: "q4", prompt: "What tool helps us see tiny things?", choices: ["Telescope", "Microscope", "Magnifying glass", "Binoculars"], correctIndex: 1, skillTag: "life-science" },
+          { id: "q5", prompt: "What comes next in the pattern: circle, square, circle, square, ___?", choices: ["Triangle", "Square", "Circle", "Star"], correctIndex: 2, skillTag: "patterns" },
+          { id: "q6", prompt: "If a robot follows steps 1-2-3, what is that called?", choices: ["A story", "A sequence", "A game", "A song"], correctIndex: 1, skillTag: "computational-thinking" },
+          { id: "q7", prompt: "Which of these is a living thing?", choices: ["A rock", "A flower", "A toy car", "A chair"], correctIndex: 1, skillTag: "life-science" },
+          { id: "q8", prompt: "What does 'debug' mean?", choices: ["Catch bugs outside", "Fix a mistake", "Draw a picture", "Take a nap"], correctIndex: 1, skillTag: "computational-thinking" },
+        ],
+      },
+    });
+    console.log("Seeded 1 benchmark template (K-2 STEM Readiness, 8 questions).");
+  }
+
+  // Seed demo benchmark assignment + attempt for demo course
+  try {
+    const template = await prisma.benchmarkTemplate.findFirst();
+    if (template && typeof demoCourse !== "undefined" && typeof demoStudent !== "undefined") {
+      const existingAssignment = await prisma.benchmarkAssignment.findFirst({
+        where: { courseId: demoCourse.id, templateId: template.id, kind: "PRE" },
+      });
+      if (!existingAssignment) {
+        const ba = await prisma.benchmarkAssignment.create({
+          data: { courseId: demoCourse.id, templateId: template.id, kind: "PRE" },
+        });
+        await prisma.benchmarkAttempt.create({
+          data: {
+            assignmentId: ba.id,
+            studentId: demoStudent.id,
+            answers: [
+              { questionId: "q1", selectedIndex: 1, isCorrect: true, skillTag: "computational-thinking" },
+              { questionId: "q2", selectedIndex: 1, isCorrect: true, skillTag: "phonics" },
+              { questionId: "q3", selectedIndex: 1, isCorrect: true, skillTag: "life-science" },
+              { questionId: "q4", selectedIndex: 0, isCorrect: false, skillTag: "life-science" },
+              { questionId: "q5", selectedIndex: 2, isCorrect: true, skillTag: "patterns" },
+              { questionId: "q6", selectedIndex: 1, isCorrect: true, skillTag: "computational-thinking" },
+              { questionId: "q7", selectedIndex: 1, isCorrect: true, skillTag: "life-science" },
+              { questionId: "q8", selectedIndex: 0, isCorrect: false, skillTag: "computational-thinking" },
+            ],
+            score: 6,
+            totalQuestions: 8,
+            timeSpentS: 180,
+          },
+        });
+        console.log("Seeded demo PRE benchmark assignment + attempt.");
+      }
+    }
+  } catch (e) { /* skip if demo data not available */ }
 
   console.log("Demo accounts seeded successfully!");
   console.log("  Teacher: demo_teacher@brightboost.com / BrightBoost1");
