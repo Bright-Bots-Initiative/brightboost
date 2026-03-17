@@ -1272,7 +1272,9 @@
       "goodWork": "¡Buen trabajo!",
       "keepTrying": "¡Sigue intentando!",
       "playAgain": "Jugar de Nuevo",
-      "finish": "Terminar"
+      "finish": "Terminar",
+      "firstTry": "¡Primer Intento!",
+      "perfectScore": "¡Puntuación Perfecta!"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -1285,26 +1287,39 @@
       "reset": "Reiniciar",
       "hintBtn": "Pista",
       "level": "Nivel",
-      "hitWall": "¡Ups! El robot chocó con una pared. ¡Inténtalo de nuevo!",
-      "didntReach": "El robot no llegó a la meta. ¡Agrega más comandos!",
-      "perfect": "¡Camino perfecto!",
-      "great": "¡Muy bien!",
+      "movesOrLess": "movimientos o menos",
+      "hitWall": "¡Ups! Bolt chocó con una pared. ¡Prueba otro camino!",
+      "didntReach": "Bolt no llegó a la meta aún. ¡Agrega más comandos!",
+      "perfect": "¡Camino perfecto! ¡Bolt está impresionado!",
+      "great": "¡Gran planificación!",
       "cleared": "¡Nivel completado!",
       "tryAgain": "Intentar de Nuevo",
       "nextLevel": "Siguiente Nivel",
-      "finishGame": "Terminar"
+      "finishGame": "Terminar",
+      "achFirstTry": "Primer Intento",
+      "achCollector": "Colector de Chips",
+      "achMaster": "Maestro del Laberinto",
+      "achNoHints": "Planificador Inteligente"
     },
     "quantumQuest": {
       "title": "Quantum Quest",
       "correct": "¡Correcto!",
       "tryAgain": "No exacto — ¡intenta otro!",
+      "shieldSaved": "¡El escudo te salvó!",
       "missionEnd": "¡Misión Completa!",
       "scoreLabel": "Puntuación",
       "streakLabel": "Mejor Racha",
       "retry": "Reintentar",
       "finishBtn": "Terminar",
       "cleared": "Completado",
-      "nextSector": "Siguiente Sector"
+      "nextSector": "Siguiente Sector",
+      "slowTime": "Tiempo Lento",
+      "shieldBubble": "Escudo",
+      "reveal": "Revelar",
+      "achScanner": "Escáner Preciso",
+      "achPerfect": "Órbita Perfecta",
+      "achExplorer": "Explorador Cuántico",
+      "achFast": "Pensador Rápido"
     }
   }
 }

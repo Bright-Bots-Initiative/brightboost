@@ -1271,7 +1271,9 @@
       "goodWork": "Good Work!",
       "keepTrying": "Keep Trying!",
       "playAgain": "Play Again",
-      "finish": "Finish"
+      "finish": "Finish",
+      "firstTry": "First Try!",
+      "perfectScore": "Perfect Score!"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -1284,26 +1286,39 @@
       "reset": "Reset",
       "hintBtn": "Hint",
       "level": "Level",
-      "hitWall": "Oops! The robot hit a wall. Try again!",
-      "didntReach": "The robot didn't reach the goal. Add more commands!",
-      "perfect": "Perfect path!",
-      "great": "Great job!",
+      "movesOrLess": "moves or less",
+      "hitWall": "Oops! Bolt bumped a wall. Try a different path!",
+      "didntReach": "Bolt didn't reach the goal yet. Add more commands!",
+      "perfect": "Perfect path! Bolt is impressed!",
+      "great": "Great planning!",
       "cleared": "Level cleared!",
       "tryAgain": "Try Again",
       "nextLevel": "Next Level",
-      "finishGame": "Finish"
+      "finishGame": "Finish",
+      "achFirstTry": "First Try Fixer",
+      "achCollector": "Chip Collector",
+      "achMaster": "Maze Master",
+      "achNoHints": "Smart Planner"
     },
     "quantumQuest": {
       "title": "Quantum Quest",
       "correct": "Correct!",
       "tryAgain": "Not quite — try another!",
+      "shieldSaved": "Shield saved you!",
       "missionEnd": "Mission Complete!",
       "scoreLabel": "Score",
       "streakLabel": "Best Streak",
       "retry": "Retry",
       "finishBtn": "Finish",
       "cleared": "Cleared",
-      "nextSector": "Next Sector"
+      "nextSector": "Next Sector",
+      "slowTime": "Slow Time",
+      "shieldBubble": "Shield",
+      "reveal": "Reveal",
+      "achScanner": "Sharp Scanner",
+      "achPerfect": "Perfect Orbit",
+      "achExplorer": "Quantum Explorer",
+      "achFast": "Fast Thinker"
     }
   }
 }
