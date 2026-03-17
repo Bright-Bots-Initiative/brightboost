@@ -1258,5 +1258,52 @@
       "loadError": "Failed to load benchmark.",
       "submitError": "Failed to submit. Please try again."
     }
+  },
+
+  "games": {
+    "shared": {
+      "tips": "Tips",
+      "startMission": "Start Mission",
+      "score": "Score",
+      "accuracy": "Accuracy",
+      "amazing": "Amazing!",
+      "greatJob": "Great Job!",
+      "goodWork": "Good Work!",
+      "keepTrying": "Keep Trying!",
+      "playAgain": "Play Again",
+      "finish": "Finish"
+    },
+    "tankTrek": {
+      "title": "Tank Trek",
+      "forward": "Forward",
+      "left": "Turn Left",
+      "right": "Turn Right",
+      "addCommands": "Tap commands to build your plan...",
+      "clear": "Clear",
+      "run": "Run!",
+      "reset": "Reset",
+      "hintBtn": "Hint",
+      "level": "Level",
+      "hitWall": "Oops! The robot hit a wall. Try again!",
+      "didntReach": "The robot didn't reach the goal. Add more commands!",
+      "perfect": "Perfect path!",
+      "great": "Great job!",
+      "cleared": "Level cleared!",
+      "tryAgain": "Try Again",
+      "nextLevel": "Next Level",
+      "finishGame": "Finish"
+    },
+    "quantumQuest": {
+      "title": "Quantum Quest",
+      "correct": "Correct!",
+      "tryAgain": "Not quite — try another!",
+      "missionEnd": "Mission Complete!",
+      "scoreLabel": "Score",
+      "streakLabel": "Best Streak",
+      "retry": "Retry",
+      "finishBtn": "Finish",
+      "cleared": "Cleared",
+      "nextSector": "Next Sector"
+    }
   }
 }

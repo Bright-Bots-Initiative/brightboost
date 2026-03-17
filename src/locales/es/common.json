@@ -1259,5 +1259,52 @@
       "loadError": "Error al cargar la evaluación.",
       "submitError": "Error al enviar. Inténtalo de nuevo."
     }
+  },
+
+  "games": {
+    "shared": {
+      "tips": "Consejos",
+      "startMission": "Iniciar Misión",
+      "score": "Puntuación",
+      "accuracy": "Precisión",
+      "amazing": "¡Increíble!",
+      "greatJob": "¡Muy bien!",
+      "goodWork": "¡Buen trabajo!",
+      "keepTrying": "¡Sigue intentando!",
+      "playAgain": "Jugar de Nuevo",
+      "finish": "Terminar"
+    },
+    "tankTrek": {
+      "title": "Tank Trek",
+      "forward": "Adelante",
+      "left": "Girar Izq.",
+      "right": "Girar Der.",
+      "addCommands": "Toca los comandos para armar tu plan...",
+      "clear": "Borrar",
+      "run": "¡Ejecutar!",
+      "reset": "Reiniciar",
+      "hintBtn": "Pista",
+      "level": "Nivel",
+      "hitWall": "¡Ups! El robot chocó con una pared. ¡Inténtalo de nuevo!",
+      "didntReach": "El robot no llegó a la meta. ¡Agrega más comandos!",
+      "perfect": "¡Camino perfecto!",
+      "great": "¡Muy bien!",
+      "cleared": "¡Nivel completado!",
+      "tryAgain": "Intentar de Nuevo",
+      "nextLevel": "Siguiente Nivel",
+      "finishGame": "Terminar"
+    },
+    "quantumQuest": {
+      "title": "Quantum Quest",
+      "correct": "¡Correcto!",
+      "tryAgain": "No exacto — ¡intenta otro!",
+      "missionEnd": "¡Misión Completa!",
+      "scoreLabel": "Puntuación",
+      "streakLabel": "Mejor Racha",
+      "retry": "Reintentar",
+      "finishBtn": "Terminar",
+      "cleared": "Completado",
+      "nextSector": "Siguiente Sector"
+    }
   }
 }

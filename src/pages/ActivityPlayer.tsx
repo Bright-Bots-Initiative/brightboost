@@ -9,6 +9,8 @@ import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
 import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
 import BounceBudsUnityActivity from "@/components/activities/BounceBudsUnityActivity";
 import GotchaGearsUnityActivity from "@/components/activities/GotchaGearsUnityActivity";
+import TankTrekGame from "@/components/games/TankTrekGame";
+import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
   Dialog,
@@ -617,6 +619,20 @@ export default function ActivityPlayer() {
             config={content}
             onComplete={handleComplete}
           />
+        </div>
+      );
+    }
+    if (key === "tank_trek") {
+      return (
+        <div className="p-6">
+          <TankTrekGame config={content} onComplete={handleComplete} />
+        </div>
+      );
+    }
+    if (key === "quantum_quest") {
+      return (
+        <div className="p-6">
+          <QuantumQuestGame config={content} onComplete={handleComplete} />
         </div>
       );
     }

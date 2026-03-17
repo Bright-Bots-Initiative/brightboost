@@ -648,6 +648,102 @@ async function main() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // Module 4 — Tank Trek (Set 2: AI / Logic / Robotics)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const k2TankModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-tank-trek" },
+    update: { title: "Module 4 — Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
+    create: { slug: "k2-stem-tank-trek", title: "Module 4 — Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
+  });
+  console.log("Created module:", k2TankModule.slug);
+
+  let k2TankUnit = await prisma.unit.findFirst({ where: { moduleId: k2TankModule.id, title: "Unit 1: Robot Navigation" } });
+  if (!k2TankUnit) {
+    k2TankUnit = await prisma.unit.create({ data: { title: "Unit 1: Robot Navigation", order: 1, Module: { connect: { id: k2TankModule.id } }, teacher: { connect: { id: teacher.id } } } });
+  }
+
+  let k2TankLesson = await prisma.lesson.findFirst({ where: { unitId: k2TankUnit.id, title: "Tank Trek" } });
+  if (!k2TankLesson) {
+    k2TankLesson = await prisma.lesson.create({ data: { title: "Tank Trek", order: 1, Unit: { connect: { id: k2TankUnit.id } } } });
+  }
+
+  const tankStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      { id: "tt-s1", text: { en: "Meet Bolt — a little robot who needs YOUR help to find the way!", es: "¡Conoce a Bolt, un pequeño robot que necesita TU ayuda para encontrar el camino!" }, icon: "🤖" },
+      { id: "tt-s2", text: { en: "You'll give Bolt commands: Forward, Turn Left, Turn Right. Then Bolt follows your plan!", es: "Le darás comandos a Bolt: Adelante, Girar Izquierda, Girar Derecha. ¡Entonces Bolt seguirá tu plan!" }, icon: "🧭" },
+      { id: "tt-s3", text: { en: "Plan carefully — fewer moves means more stars! Can you find the smartest path?", es: "Planifica con cuidado — ¡menos movimientos significan más estrellas! ¿Puedes encontrar el camino más inteligente?" }, icon: "⭐" },
+    ],
+    questions: [
+      { id: "tt-q1", prompt: { en: "What does Bolt need to move?", es: "¿Qué necesita Bolt para moverse?" }, choices: [{ en: "Commands from you", es: "Comandos tuyos" }, { en: "Magic", es: "Magia" }, { en: "Nothing", es: "Nada" }], answerIndex: 0 },
+    ],
+  });
+
+  let tankStoryAct = await prisma.activity.findFirst({ where: { lessonId: k2TankLesson.id, kind: INFO, order: 1 } });
+  if (tankStoryAct) {
+    await prisma.activity.update({ where: { id: tankStoryAct.id }, data: { title: "Story: Meet Bolt", content: tankStoryContent } });
+  } else {
+    await prisma.activity.create({ data: { title: "Story: Meet Bolt", kind: INFO, order: 1, content: tankStoryContent, Lesson: { connect: { id: k2TankLesson.id } } } });
+  }
+
+  const tankGameContent = JSON.stringify({ gameKey: "tank_trek", chapters: [] });
+  let tankGameAct = await prisma.activity.findFirst({ where: { lessonId: k2TankLesson.id, kind: INTERACT, order: 2 } });
+  if (tankGameAct) {
+    await prisma.activity.update({ where: { id: tankGameAct.id }, data: { title: "Game: Tank Trek", content: tankGameContent } });
+  } else {
+    await prisma.activity.create({ data: { title: "Game: Tank Trek", kind: INTERACT, order: 2, content: tankGameContent, Lesson: { connect: { id: k2TankLesson.id } } } });
+  }
+  console.log("Seeded Tank Trek module + activities.");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Module 5 — Quantum Quest (Set 2: Math / Space / Quantum)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const k2QuantumModule = await prisma.module.upsert({
+    where: { slug: "k2-stem-quantum-quest" },
+    update: { title: "Module 5 — Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
+    create: { slug: "k2-stem-quantum-quest", title: "Module 5 — Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
+  });
+  console.log("Created module:", k2QuantumModule.slug);
+
+  let k2QuantumUnit = await prisma.unit.findFirst({ where: { moduleId: k2QuantumModule.id, title: "Unit 1: Star Math" } });
+  if (!k2QuantumUnit) {
+    k2QuantumUnit = await prisma.unit.create({ data: { title: "Unit 1: Star Math", order: 1, Module: { connect: { id: k2QuantumModule.id } }, teacher: { connect: { id: teacher.id } } } });
+  }
+
+  let k2QuantumLesson = await prisma.lesson.findFirst({ where: { unitId: k2QuantumUnit.id, title: "Quantum Quest" } });
+  if (!k2QuantumLesson) {
+    k2QuantumLesson = await prisma.lesson.create({ data: { title: "Quantum Quest", order: 1, Unit: { connect: { id: k2QuantumUnit.id } } } });
+  }
+
+  const quantumStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      { id: "qq-s1", text: { en: "Welcome, Space Explorer! The stars need your math skills!", es: "¡Bienvenido, Explorador Espacial! ¡Las estrellas necesitan tus habilidades de matemáticas!" }, icon: "🚀" },
+      { id: "qq-s2", text: { en: "Solve math problems and tap the correct answer floating in space!", es: "¡Resuelve problemas de matemáticas y toca la respuesta correcta flotando en el espacio!" }, icon: "🌟" },
+      { id: "qq-s3", text: { en: "Get streaks for bonus points! But watch out for wrong answers — you only have 3 lives.", es: "¡Consigue rachas para puntos extra! Pero cuidado con las respuestas incorrectas — solo tienes 3 vidas." }, icon: "❤️" },
+    ],
+    questions: [
+      { id: "qq-q1", prompt: { en: "2 + 1 = ?", es: "2 + 1 = ?" }, choices: [{ en: "3", es: "3" }, { en: "4", es: "4" }, { en: "2", es: "2" }], answerIndex: 0 },
+    ],
+  });
+
+  let quantumStoryAct = await prisma.activity.findFirst({ where: { lessonId: k2QuantumLesson.id, kind: INFO, order: 1 } });
+  if (quantumStoryAct) {
+    await prisma.activity.update({ where: { id: quantumStoryAct.id }, data: { title: "Story: Space Explorer", content: quantumStoryContent } });
+  } else {
+    await prisma.activity.create({ data: { title: "Story: Space Explorer", kind: INFO, order: 1, content: quantumStoryContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
+  }
+
+  const quantumGameContent = JSON.stringify({ gameKey: "quantum_quest", sectors: [] });
+  let quantumGameAct = await prisma.activity.findFirst({ where: { lessonId: k2QuantumLesson.id, kind: INTERACT, order: 2 } });
+  if (quantumGameAct) {
+    await prisma.activity.update({ where: { id: quantumGameAct.id }, data: { title: "Game: Quantum Quest", content: quantumGameContent } });
+  } else {
+    await prisma.activity.create({ data: { title: "Game: Quantum Quest", kind: INTERACT, order: 2, content: quantumGameContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
+  }
+  console.log("Seeded Quantum Quest module + activities.");
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Seed Resources (worksheets, handouts, guides)
   // ═══════════════════════════════════════════════════════════════════════════
   const resources = [
