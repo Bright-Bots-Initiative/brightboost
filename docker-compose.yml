@@ -1,16 +1,16 @@
+# Full-stack local development with Docker
+# For local Postgres only, use: docker compose -f docker-compose-pg.yml up -d
 version: "3.8"
 
 services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.frontend
     ports:
-      - "80:80"
+      - "8080:8080"
     depends_on:
       - backend
-    environment:
-      - REACT_APP_API_URL=http://backend:3000
 
   backend:
     build:
@@ -20,8 +20,9 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - POSTGRES_URL=${POSTGRES_URL}
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - SERVE_FRONTEND=false
     volumes:
       - ./prisma:/app/prisma
-    command: sh -c "npx prisma generate && func start"

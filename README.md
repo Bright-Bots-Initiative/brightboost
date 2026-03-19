@@ -1,10 +1,10 @@
 # BrightBoost 🚀
 
-> A bilingual K-8 STEM learning platform by Bright Bots Initiative
+> A bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech.
 
 ## Overview
 
-BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered learning pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard — with upper elementary and middle school tiers planned in future rollouts. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
+BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered learning pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard — with grades 3-5 and 6-8 planned in future releases. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
 
 ## ✅ Current Working Features
 
@@ -79,7 +79,7 @@ Each module also includes **character-driven story activities** (Meet Boost, Mee
 | Auth | JWT (jsonwebtoken) + bcryptjs password hashing |
 | Games | Unity WebGL (4 games) + native drag-and-drop (1 game) |
 | Testing | Vitest, Cypress, Testing Library, Storybook |
-| Hosting | Frontend → Vercel · Backend → Railway · DB → Supabase |
+| Hosting | Railway (backend serves frontend via Express static) · DB → Supabase Postgres |
 
 ## 🗄 Database Schema
 
@@ -213,9 +213,42 @@ brightboost/
 └── package.json
 ```
 
+## 🚢 Production Deployment
+
+BrightBoost production runs on **Railway + Supabase**:
+
+| Component | Platform | Details |
+|---|---|---|
+| Backend API | Railway | Express server via `Dockerfile.backend`, auto-deploys from `main` |
+| Frontend | Railway | Vite build served by Express (`SERVE_FRONTEND=true`) |
+| Database | Supabase | PostgreSQL, connected via `DATABASE_URL` |
+| Schema | Prisma | `prisma/schema.prisma` is the source of truth |
+
+### Required Production Env Vars (set in Railway)
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Supabase Postgres connection string |
+| `DIRECT_URL` | Supabase direct connection (bypasses pooler) |
+| `SESSION_SECRET` | JWT signing secret (must not be default) |
+| `NODE_ENV` | `production` |
+| `PORT` | Server port (Railway sets automatically) |
+| `SERVE_FRONTEND` | `true` — serves Vite build from Express |
+| `FRONTEND_URL` | Production URL (for password reset emails) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Email delivery (optional) |
+
+### Deploy Process
+
+1. Push to `main` branch on GitHub
+2. Railway auto-deploys using `Dockerfile.backend`
+3. On startup, `backend/scripts/predeploy.sh` runs Prisma migrations and seeds
+4. Express serves API at `/api/*` and frontend SPA for all other routes
+
+> **Note:** The repo contains legacy AWS Lambda, Azure Static Web Apps, and Aurora references from earlier deployment phases. These are no longer the production path. See `docs/legacy/` for historical context.
+
 ## 🗺 Roadmap
 
-- [ ] Next set of games (Quantum / AI / Biotech pathways — Set 2 & 3)
+- [ ] Upper-tier content for grades 3-5 and 6-8 with advanced technology pathways in AI, quantum, and biotech
 - [ ] Build-a-Bot interactive activity (scaffolded, not yet playable)
 - [ ] Real-time PvP matchmaking for Spacewar Arena
 - [ ] Donation-enabled website
@@ -226,4 +259,4 @@ brightboost/
 
 ## 📬 Contact
 
-Built by the **Bright Bots Initiative**
+Built by the **Bright Bots Initiative** — building strong foundations and preparing students for advanced technology pathways.

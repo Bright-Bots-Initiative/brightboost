@@ -1,41 +1,40 @@
-Staging configuration
+# Staging Configuration
 
-Staging Site (Azure Static Web Apps)
+## Production (Railway)
 
-- URL: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+- **URL:** https://fe-production-3552.up.railway.app
+- **Backend API:** Same domain, under `/api/`
+- **Database:** Supabase Postgres (production)
 
-Backend API Base
+> **Note:** The former Azure Static Web Apps staging URL (`brave-bay-0bfacc110-...`) is no longer the production frontend.
 
-- Set as a GitHub Secret and build-time env for Vite:
-  - VITE_API_BASE=https://<your-staging-backend-host> (no trailing slash)
-- All frontend API calls are prefixed with VITE_API_BASE at runtime.
+## Testing Against Production
 
-GitHub Secrets required
+```bash
+# Health check
+curl https://fe-production-3552.up.railway.app/api/login -X POST \
+  -H "Content-Type: application/json" -d '{}'
+# Expected: 400 (validation error = API is up)
+```
 
-- For Azure SWA deploy workflow:
-  - AZURE_STATIC_WEB_APPS_API_TOKEN (copy from Azure Static Web App → Deployment token)
-  - VITE_API_BASE (the staging backend API root)
-- For Cypress staging workflow (optional, if using the smoke):
-  - VITE_API_BASE
-  - CYPRESS_TEACHER_EMAIL
-  - CYPRESS_TEACHER_PASSWORD
-  - CYPRESS_STUDENT_EMAIL
-  - CYPRESS_STUDENT_PASSWORD
-  - Optional:
-    - CYPRESS_STUDENT_ID
-    - CYPRESS_LESSON_ID
+## Cypress Staging Smoke
 
-Local run against staging
+The `cypress-staging.yml` workflow can run against the production Railway URL.
+Set these GitHub Secrets:
 
-1. Create a .env.local in the repo root with:
-   VITE_API_BASE=https://<your-staging-backend-host>
-2. npm run dev
-3. The app will use VITE_API_BASE for all API calls.
+| Secret | Purpose |
+|---|---|
+| `CYPRESS_SWA_URL` | Railway production URL |
+| `VITE_API_BASE` | Railway production API base |
+| `CYPRESS_STUDENT_ID` | Test student ID |
+| `CYPRESS_LESSON_ID` | Test lesson ID |
 
-One-page smoke
+## Local Against Production API
 
-- Verify module endpoint:
-  curl -i "$VITE_API_BASE/api/module/stem-1"
-- Open the staging site:
-  https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
-- In the browser devtools Network tab, confirm requests go to $VITE_API_BASE.
+Create `.env.local` in repo root:
+
+```env
+VITE_API_BASE=https://fe-production-3552.up.railway.app
+```
+
+Then run: `npm run dev`

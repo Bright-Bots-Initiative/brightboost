@@ -59,7 +59,6 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'"],
         connectSrc: [
           "'self'",
-          "bb-dev-func.azurewebsites.net",
           "cl-quantum-game.appspot.com",
         ],
         objectSrc: ["'none'"],

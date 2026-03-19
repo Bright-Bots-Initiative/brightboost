@@ -1,12 +1,15 @@
-name: BrightBoost – STEM-1-MVP SWA Deployment
+# LEGACY WORKFLOW — Azure Static Web Apps deployment for the stem-1-mvp branch.
+# Production now deploys to Railway from main. This workflow is retained for
+# historical reference only and will not trigger on current branches.
+name: "[LEGACY] STEM-1-MVP SWA Deployment"
 on:
   push:
     branches:
-      - stem-1-mvp
+      - stem-1-mvp-DISABLED
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - stem-1-mvp
+      - stem-1-mvp-DISABLED
 
 permissions:
   contents: read

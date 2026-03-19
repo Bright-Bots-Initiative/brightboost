@@ -1,64 +1,39 @@
+# LEGACY WORKFLOW — This was originally for Azure Static Web Apps.
+# Production is now on Railway. The trigger workflow no longer exists,
+# so this workflow will not run automatically.
+#
+# To run a production smoke test against Railway, use workflow_dispatch
+# or update the trigger to match the current deploy process.
+
 name: Production Smoke Test
 
 on:
-  workflow_run:
-    workflows: ["Azure Static Web Apps CI/CD"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch: {}
 
 env:
-  PROD_URL: https://brave-bay-0bfacc110-production.centralus.6.azurestaticapps.net
+  # Railway production URL (replaces former Azure SWA URL)
+  PROD_URL: https://fe-production-3552.up.railway.app
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Test Teacher Dashboard URL
+      - name: Test Frontend
         run: |
-          echo "Testing teacher dashboard at ${{ env.PROD_URL }}/teacher/dashboard"
-          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/teacher/dashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Teacher dashboard returned HTTP $response"
-            exit 1
-          fi
-          echo "✅ Teacher dashboard returned HTTP 200"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/")
+          echo "Frontend: HTTP $response"
+          [ "$response" = "200" ] || exit 1
 
-      - name: Test Student Dashboard URL
+      - name: Test API Health
         run: |
-          echo "Testing student dashboard at ${{ env.PROD_URL }}/student/dashboard"
-          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/student/dashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Student dashboard returned HTTP $response"
-            exit 1
-          fi
-          echo "✅ Student dashboard returned HTTP 200"
-
-      - name: Test Teacher Dashboard API
-        run: |
-          echo "Testing teacher dashboard API at ${{ env.PROD_URL }}/api/teacherDashboard"
-          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/teacherDashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Teacher dashboard API returned HTTP $response"
-            exit 1
-          fi
-          echo "✅ Teacher dashboard API returned HTTP 200"
-
-      - name: Test Student Dashboard API
-        run: |
-          echo "Testing student dashboard API at ${{ env.PROD_URL }}/api/studentDashboard"
-          response=$(curl -I -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/studentDashboard")
-          if [ "$response" != "200" ]; then
-            echo "❌ Student dashboard API returned HTTP $response"
-            exit 1
-          fi
-          echo "✅ Student dashboard API returned HTTP 200"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.PROD_URL }}/api/login" -X POST -H "Content-Type: application/json" -d '{}')
+          echo "API: HTTP $response"
+          # 400 = validation error = API is responding
+          [ "$response" = "400" ] || [ "$response" = "401" ] || exit 1
 
       - name: Summary
         run: |
-          echo "🎉 All production smoke tests passed!"
-          echo "✅ Teacher dashboard: ${{ env.PROD_URL }}/teacher/dashboard"
-          echo "✅ Student dashboard: ${{ env.PROD_URL }}/student/dashboard"
-          echo "✅ Teacher API: ${{ env.PROD_URL }}/api/teacherDashboard"
-          echo "✅ Student API: ${{ env.PROD_URL }}/api/studentDashboard"
+          echo "Production smoke tests passed"
+          echo "Frontend: ${{ env.PROD_URL }}"
+          echo "API: ${{ env.PROD_URL }}/api/"
