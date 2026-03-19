@@ -21,6 +21,11 @@ echo "predeploy: prisma generate"
 npx prisma generate --schema "$SCHEMA"
 
 echo "predeploy: seed"
-node prisma/seed.cjs
+# Prefer root seed.cjs (monorepo layout), fall back to backend-local
+if [ -f "../prisma/seed.cjs" ]; then
+  node ../prisma/seed.cjs
+else
+  node prisma/seed.cjs
+fi
 
 echo "predeploy: done"
