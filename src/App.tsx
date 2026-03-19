@@ -45,6 +45,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import StudentBenchmark from "./pages/StudentBenchmark";
+import StudentSettings from "./pages/StudentSettings";
 
 // Import styles
 import "./App.css";
@@ -127,6 +128,7 @@ function App() {
                 <Route path="join" element={<JoinClass />} />
                 <Route path="avatar" element={<Avatar />} />
                 <Route path="play" element={<PlayHub />} />
+                <Route path="settings" element={<StudentSettings />} />
                 <Route path="benchmark/:assignmentId" element={<StudentBenchmark />} />
                 <Route
                   path="arena"

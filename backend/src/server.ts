@@ -24,6 +24,7 @@ import classLoginRouter from "./routes/classLogin";
 import studentStatsRouter from "./routes/studentStats";
 import feedbackRouter from "./routes/feedback";
 import benchmarkRouter from "./routes/benchmarks";
+import homeAccessRouter from "./routes/homeAccess";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 
@@ -195,6 +196,7 @@ app.use("/api", reportsRouter);
 app.use("/api", studentStatsRouter);
 app.use("/api", feedbackRouter);
 app.use("/api", benchmarkRouter);
+app.use("/api", homeAccessRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" }),

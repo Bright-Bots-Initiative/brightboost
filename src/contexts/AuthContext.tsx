@@ -14,13 +14,16 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string | null;
   role: string;
   xp?: number;
   level?: string;
   streak?: number;
   avatarUrl?: string | null;
   badges?: Array<{ id: string; name: string; awardedAt: string }>;
+  homeAccessEnabled?: boolean;
+  accountMode?: string;
+  loginIcon?: string;
 }
 
 interface AuthContextType {

@@ -184,19 +184,19 @@ async function main() {
   });
   console.log("Created module:", module.slug);
 
-  // --- STEM-1 (K–2) Game #1: Boost’s Lost Steps ---
+  // --- STEM-1 (K–2) Game #1: Boost’s Path Planner (was "Boost’s Lost Steps") ---
   const k2SeqModule = await prisma.module.upsert({
     where: { slug: "k2-stem-sequencing" },
     update: {
-      title: "Boost’s Lost Steps",
-      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
+      title: "Boost’s Path Planner",
+      description: "Plan a path to help Boost reach the goal! 🤖🗺️⭐",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-sequencing",
-      title: "Boost’s Lost Steps",
-      description: "Put steps in order to help Boost bake! 🥣🔥🧁",
+      title: "Boost’s Path Planner",
+      description: "Plan a path to help Boost reach the goal! 🤖🗺️⭐",
       level: "K-2",
       published: true,
     },
@@ -238,39 +238,15 @@ async function main() {
   const storyContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: { i18nKey: "content.boost.s1" }, icon: "🤖", imageKey: "type_story" },
-      { id: "s2", text: { i18nKey: "content.boost.s2" }, icon: "🎂", imageKey: "mission_cake" },
-      { id: "s3", text: { i18nKey: "content.boost.s3" }, icon: "😵‍💫", imageKey: "module_sequencing" },
-      { id: "s4", text: { i18nKey: "content.boost.s4" }, icon: "📝", imageKey: "type_quiz" },
-      { id: "s5", text: { i18nKey: "content.boost.s5" }, icon: "✅", imageKey: "type_game" },
+      { id: "bpp-s1", text: { en: "Boost is a little helper robot in the Bright Lab. Today, Boost has one job: carry a tiny battery to the charging station.", es: "Boost es un pequeño robot ayudante en el Laboratorio Brillante. Hoy, Boost tiene un trabajo: llevar una pequeña batería a la estación de carga." }, icon: "🤖" },
+      { id: "bpp-s2", text: { en: "Boost cannot just rush forward. Boost has to look, think, and put the steps in the right order.", es: "Boost no puede apresurarse. Boost tiene que mirar, pensar y poner los pasos en el orden correcto." }, icon: "🧠" },
+      { id: "bpp-s3", text: { en: "When we help Boost turn and move the right way, we are practicing sequencing. Sequencing means putting steps in order.", es: "Cuando ayudamos a Boost a girar y moverse correctamente, estamos practicando la secuenciación. Secuenciar significa poner los pasos en orden." }, icon: "📋" },
     ],
     questions: [
-      {
-        id: "q1",
-        prompt: { i18nKey: "content.boost.q1.prompt" },
-        choices: [{ i18nKey: "content.boost.q1.c1" }, { i18nKey: "content.boost.q1.c2" }, { i18nKey: "content.boost.q1.c3" }],
-        answerIndex: 1,
-        hint: { i18nKey: "content.boost.q1.hint" },
-      },
-      {
-        id: "q2",
-        prompt: { i18nKey: "content.boost.q2.prompt" },
-        choices: [{ i18nKey: "content.boost.q2.c1" }, { i18nKey: "content.boost.q2.c2" }, { i18nKey: "content.boost.q2.c3" }],
-        answerIndex: 0,
-        hint: { i18nKey: "content.boost.q2.hint" },
-      },
-      {
-        id: "q3",
-        prompt: { i18nKey: "content.boost.q3.prompt" },
-        choices: [{ i18nKey: "content.boost.q3.c1" }, { i18nKey: "content.boost.q3.c2" }, { i18nKey: "content.boost.q3.c3" }],
-        answerIndex: 0,
-        hint: { i18nKey: "content.boost.q3.hint" },
-      },
+      { id: "bpp-q1", prompt: { en: "What is Boost trying to do?", es: "¿Qué intenta hacer Boost?" }, choices: [{ en: "Reach the charging station", es: "Llegar a la estación de carga" }, { en: "Go to sleep", es: "Irse a dormir" }, { en: "Paint the wall", es: "Pintar la pared" }], answerIndex: 0, hint: { en: "Read the first slide again — what is Boost's job today?", es: "Lee la primera diapositiva de nuevo — ¿cuál es el trabajo de Boost hoy?" } },
+      { id: "bpp-q2", prompt: { en: "What should Boost do first?", es: "¿Qué debe hacer Boost primero?" }, choices: [{ en: "Make a plan", es: "Hacer un plan" }, { en: "Guess fast", es: "Adivinar rápido" }, { en: "Spin in circles", es: "Girar en círculos" }], answerIndex: 0, hint: { en: "Boost has to look and think before moving.", es: "Boost tiene que mirar y pensar antes de moverse." } },
+      { id: "bpp-q3", prompt: { en: "What does sequencing mean?", es: "¿Qué significa secuenciar?" }, choices: [{ en: "Putting steps in order", es: "Poner los pasos en orden" }, { en: "Jumping over walls", es: "Saltar sobre paredes" }, { en: "Moving as fast as possible", es: "Moverse lo más rápido posible" }], answerIndex: 0, hint: { en: "The last slide explains what sequencing means.", es: "La última diapositiva explica qué significa secuenciar." } },
     ],
-    review: {
-      keyIdea: { i18nKey: "content.boost.reviewKeyIdea" },
-      vocab: ["step", "order", "debug"],
-    },
   });
   const storyAct = await prisma.activity.findFirst({
     where: { lessonId: k2SeqLesson.id, kind: INFO, order: 1 },
@@ -278,12 +254,12 @@ async function main() {
   if (storyAct) {
     await prisma.activity.update({
       where: { id: storyAct.id },
-      data: { title: "Story: Boost Bakes", content: storyContent },
+      data: { title: "Story: Meet Boost the Careful Planner", content: storyContent },
     });
   } else {
     await prisma.activity.create({
       data: {
-        title: "Story: Boost Bakes",
+        title: "Story: Meet Boost the Careful Planner",
         kind: INFO,
         order: 1,
         content: storyContent,
@@ -292,57 +268,21 @@ async function main() {
     });
   }
 
-  const gameContent = JSON.stringify({
-    type: "minigame",
-    gameKey: "sequence_drag_drop",
-    levels: [
-      {
-        id: "k",
-        cards: [
-          { id: "pour", text: { i18nKey: "content.seqGame.l1.c1" }, imageKey: "step_pour" },
-          { id: "bake", text: { i18nKey: "content.seqGame.l1.c2" }, imageKey: "step_bake" },
-          { id: "frost", text: { i18nKey: "content.seqGame.l1.c3" }, imageKey: "step_frost" },
-          { id: "eat", text: { i18nKey: "content.seqGame.l1.c4" }, imageKey: "step_eat" },
-        ],
-        answer: [{ i18nKey: "content.seqGame.l1.c1" }, { i18nKey: "content.seqGame.l1.c2" }, { i18nKey: "content.seqGame.l1.c3" }, { i18nKey: "content.seqGame.l1.c4" }],
-      },
-      {
-        id: "g1",
-        cards: [
-          { id: "water", text: { i18nKey: "content.seqGame.l2.c1" }, imageKey: "step_water_on" },
-          { id: "wash", text: { i18nKey: "content.seqGame.l2.c2" }, imageKey: "step_wash" },
-          { id: "soap", text: { i18nKey: "content.seqGame.l2.c3" }, imageKey: "step_soap" },
-          { id: "rinse", text: { i18nKey: "content.seqGame.l2.c4" }, imageKey: "step_rinse" },
-          { id: "dry", text: { i18nKey: "content.seqGame.l2.c5" }, imageKey: "step_dry" },
-        ],
-        answer: [{ i18nKey: "content.seqGame.l2.c1" }, { i18nKey: "content.seqGame.l2.c3" }, { i18nKey: "content.seqGame.l2.c2" }, { i18nKey: "content.seqGame.l2.c4" }, { i18nKey: "content.seqGame.l2.c5" }],
-      },
-      {
-        id: "g2",
-        cards: [
-          { text: { i18nKey: "content.seqGame.l3.c1" }, icon: "📝" },
-          { text: { i18nKey: "content.seqGame.l3.c2" }, icon: "💻" },
-          { text: { i18nKey: "content.seqGame.l3.c3" }, icon: "🧪" },
-          { text: { i18nKey: "content.seqGame.l3.c4" }, icon: "🛠️" },
-          { text: { i18nKey: "content.seqGame.l3.c5" }, icon: "📤" },
-        ],
-        answer: [{ i18nKey: "content.seqGame.l3.c1" }, { i18nKey: "content.seqGame.l3.c2" }, { i18nKey: "content.seqGame.l3.c3" }, { i18nKey: "content.seqGame.l3.c4" }, { i18nKey: "content.seqGame.l3.c5" }],
-      },
-    ],
-  });
+  // gameKey: boost_path_planner (old alias: sequence_drag_drop still works via registry)
+  const gameContent = JSON.stringify({ gameKey: "boost_path_planner" });
   const gameAct = await prisma.activity.findFirst({
     where: { lessonId: k2SeqLesson.id, kind: INTERACT, order: 2 },
   });
   if (gameAct) {
     await prisma.activity.update({
       where: { id: gameAct.id },
-      data: { id: "lost-steps", title: "Game: Fix the Order", content: gameContent },
+      data: { id: "lost-steps", title: "Game: Boost's Path Planner", content: gameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "lost-steps",
-        title: "Game: Fix the Order",
+        title: "Game: Boost's Path Planner",
         kind: INTERACT,
         order: 2,
         content: gameContent,
@@ -435,32 +375,21 @@ async function main() {
     });
   }
 
-  const rhymeGameContent = JSON.stringify({
-    gameKey: "rhyme_ride_unity",
-    settings: { lives: 3, roundTimeS: 7, speed: 3.0, speedRamp: 0.18, maxSpeed: 6.0 },
-    rounds: [
-      { promptWord: { i18nKey: "content.rhymeGame.r1.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r1.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r1.d1" }, { i18nKey: "content.rhymeGame.r1.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r2.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r2.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r2.d1" }, { i18nKey: "content.rhymeGame.r2.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r3.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r3.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r3.d1" }, { i18nKey: "content.rhymeGame.r3.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r4.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r4.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r4.d1" }, { i18nKey: "content.rhymeGame.r4.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r5.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r5.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r5.d1" }, { i18nKey: "content.rhymeGame.r5.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r6.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r6.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r6.d1" }, { i18nKey: "content.rhymeGame.r6.d2" }] },
-      { promptWord: { i18nKey: "content.rhymeGame.r7.prompt" }, correctWord: { i18nKey: "content.rhymeGame.r7.correct" }, distractors: [{ i18nKey: "content.rhymeGame.r7.d1" }, { i18nKey: "content.rhymeGame.r7.d2" }] },
-    ],
-  });
+  // gameKey: rhymo_rhyme_rocket (old alias: rhyme_ride_unity still works via registry)
+  const rhymeGameContent = JSON.stringify({ gameKey: "rhymo_rhyme_rocket" });
   const rhymeGameAct = await prisma.activity.findFirst({
     where: { lessonId: k2RhymeLesson.id, kind: INTERACT, order: 2 },
   });
   if (rhymeGameAct) {
     await prisma.activity.update({
       where: { id: rhymeGameAct.id },
-      data: { id: "rhyme-ride", title: "Game: Rhyme & Ride", content: rhymeGameContent },
+      data: { id: "rhyme-ride", title: "Game: Rhymo's Rhyme Rocket", content: rhymeGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "rhyme-ride",
-        title: "Game: Rhyme & Ride",
+        title: "Game: Rhymo's Rhyme Rocket",
         kind: INTERACT,
         order: 2,
         content: rhymeGameContent,
@@ -553,19 +482,8 @@ async function main() {
     });
   }
 
-  const bounceGameContent = JSON.stringify({
-    gameKey: "bounce_buds_unity",
-    settings: { lives: 3, roundTimeS: 12, ballSpeed: 7, paddleSpeed: 12, obstacleCount: 4 },
-    rounds: [
-      { clueText: { i18nKey: "content.bounceGame.r1.clue" }, correctLabel: { i18nKey: "content.bounceGame.r1.correct" }, distractors: [{ i18nKey: "content.bounceGame.r1.d1" }, { i18nKey: "content.bounceGame.r1.d2" }], hint: { i18nKey: "content.bounceGame.r1.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r2.clue" }, correctLabel: { i18nKey: "content.bounceGame.r2.correct" }, distractors: [{ i18nKey: "content.bounceGame.r2.d1" }, { i18nKey: "content.bounceGame.r2.d2" }], hint: { i18nKey: "content.bounceGame.r2.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r3.clue" }, correctLabel: { i18nKey: "content.bounceGame.r3.correct" }, distractors: [{ i18nKey: "content.bounceGame.r3.d1" }, { i18nKey: "content.bounceGame.r3.d2" }], hint: { i18nKey: "content.bounceGame.r3.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r4.clue" }, correctLabel: { i18nKey: "content.bounceGame.r4.correct" }, distractors: [{ i18nKey: "content.bounceGame.r4.d1" }, { i18nKey: "content.bounceGame.r4.d2" }], hint: { i18nKey: "content.bounceGame.r4.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r5.clue" }, correctLabel: { i18nKey: "content.bounceGame.r5.correct" }, distractors: [{ i18nKey: "content.bounceGame.r5.d1" }, { i18nKey: "content.bounceGame.r5.d2" }], hint: { i18nKey: "content.bounceGame.r5.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r6.clue" }, correctLabel: { i18nKey: "content.bounceGame.r6.correct" }, distractors: [{ i18nKey: "content.bounceGame.r6.d1" }, { i18nKey: "content.bounceGame.r6.d2" }], hint: { i18nKey: "content.bounceGame.r6.hint" } },
-      { clueText: { i18nKey: "content.bounceGame.r7.clue" }, correctLabel: { i18nKey: "content.bounceGame.r7.correct" }, distractors: [{ i18nKey: "content.bounceGame.r7.d1" }, { i18nKey: "content.bounceGame.r7.d2" }], hint: { i18nKey: "content.bounceGame.r7.hint" } },
-    ],
-  });
+  // gameKey: buddy_garden_sort (old alias: bounce_buds_unity still works via registry)
+  const bounceGameContent = JSON.stringify({ gameKey: "buddy_garden_sort" });
   // Use specific ID for SpacewarArena perk detection
   const bounceGameAct = await prisma.activity.findFirst({
     where: { lessonId: k2BounceLesson.id, kind: INTERACT, order: 2 },
@@ -573,13 +491,13 @@ async function main() {
   if (bounceGameAct) {
     await prisma.activity.update({
       where: { id: bounceGameAct.id },
-      data: { id: "bounce-buds", title: "Game: Bounce & Buds", content: bounceGameContent },
+      data: { id: "bounce-buds", title: "Game: Buddy's Garden Sort", content: bounceGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "bounce-buds",
-        title: "Game: Bounce & Buds",
+        title: "Game: Buddy's Garden Sort",
         kind: INTERACT,
         order: 2,
         content: bounceGameContent,

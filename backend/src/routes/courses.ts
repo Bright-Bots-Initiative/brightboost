@@ -133,6 +133,73 @@ router.get(
 );
 
 // ---------------------------------------------------------------------------
+// Teacher: update course
+// ---------------------------------------------------------------------------
+
+router.put(
+  "/teacher/courses/:courseId",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const parsed = createCourseSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+
+    const course = await prisma.course.findFirst({
+      where: { id: req.params.courseId, teacherId: req.user!.id },
+    });
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    const updated = await prisma.course.update({
+      where: { id: course.id },
+      data: { name: parsed.data.name },
+      include: { _count: { select: { enrollments: true } } },
+    });
+
+    res.json({
+      id: updated.id,
+      name: updated.name,
+      joinCode: updated.joinCode,
+      enrollmentCount: updated._count.enrollments,
+      createdAt: updated.createdAt,
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Teacher: delete course
+// ---------------------------------------------------------------------------
+
+router.delete(
+  "/teacher/courses/:courseId",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const course = await prisma.course.findFirst({
+      where: { id: req.params.courseId, teacherId: req.user!.id },
+    });
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Delete related records first, then the course
+    await prisma.$transaction([
+      prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
+      prisma.enrollment.deleteMany({ where: { courseId: course.id } }),
+      prisma.assignment.deleteMany({ where: { courseId: course.id } }),
+      prisma.course.delete({ where: { id: course.id } }),
+    ]);
+
+    res.json({ message: "Course deleted" });
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Student: join course by code
 // ---------------------------------------------------------------------------
 
@@ -210,6 +277,77 @@ router.get(
         enrolledAt: e.enrolledAt,
       })),
     );
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Teacher: add K-2 students (no email/password required)
+// ---------------------------------------------------------------------------
+
+const addStudentsSchema = z.object({
+  students: z.array(
+    z.object({
+      name: z.string().min(1).max(100),
+      icon: z.string().min(1).max(4),
+      pin: z
+        .string()
+        .length(4)
+        .regex(/^\d{4}$/)
+        .optional(),
+    }),
+  ),
+});
+
+router.post(
+  "/teacher/courses/:courseId/add-students",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    try {
+      const parsed = addStudentsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.issues[0].message });
+      }
+
+      const course = await prisma.course.findFirst({
+        where: { id: req.params.courseId, teacherId: req.user!.id },
+      });
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      const created: { id: string; name: string; icon: string }[] = [];
+
+      for (const s of parsed.data.students) {
+        const hashedPin = s.pin ? await bcrypt.hash(s.pin, 10) : null;
+
+        const student = await prisma.user.create({
+          data: {
+            name: s.name,
+            role: "student",
+            loginIcon: s.icon,
+            loginPin: hashedPin,
+            preferredLanguage: course.defaultLanguage,
+            accountMode: "CLASS_CODE_ONLY",
+            homeAccessEnabled: false,
+          },
+        });
+
+        await prisma.enrollment.create({
+          data: {
+            studentId: student.id,
+            courseId: course.id,
+          },
+        });
+
+        created.push({ id: student.id, name: student.name, icon: s.icon });
+      }
+
+      res.status(201).json({ message: "Students created", students: created });
+    } catch (error) {
+      console.error("Add students error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   },
 );
 

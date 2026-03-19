@@ -5,12 +5,10 @@ import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import SequenceDragDropGame from "@/components/activities/SequenceDragDropGame";
-import RhymeRideUnityActivity from "@/components/activities/RhymeRideUnityActivity";
-import BounceBudsUnityActivity from "@/components/activities/BounceBudsUnityActivity";
 import GotchaGearsUnityActivity from "@/components/activities/GotchaGearsUnityActivity";
 import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
+import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
   Dialog,
@@ -585,33 +583,17 @@ export default function ActivityPlayer() {
   // INTERACT: mini-game
   if (activity.kind === "INTERACT") {
     const key = content?.gameKey;
-    if (key === "sequence_drag_drop") {
+
+    // Check registry first (covers new React games + old slug aliases)
+    const RegistryGame = key ? GAME_COMPONENTS[key] : undefined;
+    if (RegistryGame) {
       return (
         <div className="p-6">
-          <SequenceDragDropGame config={content} onComplete={handleComplete} />
+          <RegistryGame config={content} onComplete={handleComplete} />
         </div>
       );
     }
-    if (key === "rhyme_ride_unity") {
-      return (
-        <div className="p-6">
-          <RhymeRideUnityActivity
-            config={content}
-            onComplete={handleComplete}
-          />
-        </div>
-      );
-    }
-    if (key === "bounce_buds_unity") {
-      return (
-        <div className="p-6">
-          <BounceBudsUnityActivity
-            config={content}
-            onComplete={handleComplete}
-          />
-        </div>
-      );
-    }
+
     if (key === "gotcha_gears_unity") {
       return (
         <div className="p-6">

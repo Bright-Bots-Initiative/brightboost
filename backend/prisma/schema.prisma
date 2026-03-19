@@ -21,11 +21,17 @@ datasource db {
 // Identity (Merged Legacy + MVP)
 // -----------------------------------------------------------------------------
 
+enum AccountMode {
+  CLASS_CODE_ONLY
+  EMAIL_ONLY
+  CLASS_CODE_PLUS_HOME_ACCESS
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String   @unique
-  password  String
+  email     String?  @unique
+  password  String?
   role      String   // "teacher" or "student"
   school    String?
   subject   String?
@@ -36,6 +42,12 @@ model User {
   loginIcon         String?  // emoji icon for K-2 class-code login
   loginPin          String?  // optional hashed 4-digit PIN
   preferredLanguage String?  // "en" or "es"
+
+  // Home Access (parent/guardian attaches email/password to existing student)
+  accountMode       AccountMode @default(CLASS_CODE_ONLY)
+  homeAccessEnabled Boolean     @default(false)
+  managedByParent   Boolean     @default(false)
+  parentEmail       String?
 
   // Legacy / Hybrid Fields (keep for now to avoid breaking old UI)
   xp        Int      @default(0)

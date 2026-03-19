@@ -72,8 +72,8 @@ router.post(
           email: data.email,
           password: hashedPassword,
           role: "student",
-          level: "Explorer", // Default for student
-          // Initialize other fields as needed
+          level: "Explorer",
+          accountMode: "EMAIL_ONLY",
         },
       });
 
@@ -176,6 +176,16 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
         ip: req.ip,
       });
 
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Class-code-only students have no password — reject email login
+    if (!user.password) {
+      await logAudit("LOGIN_FAILED", user.id, {
+        email: user.email,
+        reason: "no_password_set",
+        ip: req.ip,
+      });
       return res.status(401).json({ error: "Invalid credentials" });
     }
 

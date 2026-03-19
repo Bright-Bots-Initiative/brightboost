@@ -31,6 +31,8 @@ router.get("/profile", requireAuth, async (req: Request, res: Response) => {
         role: true,
         avatarUrl: true,
         createdAt: true,
+        homeAccessEnabled: true,
+        accountMode: true,
       },
     });
 
@@ -48,6 +50,8 @@ router.get("/profile", requireAuth, async (req: Request, res: Response) => {
       role: user.role,
       avatar: user.avatarUrl || undefined,
       created_at: user.createdAt.toISOString(),
+      homeAccessEnabled: user.homeAccessEnabled,
+      accountMode: user.accountMode,
     };
 
     res.json(profile);
