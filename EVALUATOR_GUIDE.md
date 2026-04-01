@@ -4,7 +4,7 @@
 
 ## What is BrightBoost?
 
-BrightBoost is a **bilingual (English / Spanish) K-8 STEM learning platform** built by the Bright Bots Initiative, with tiered learning pathways for K-2, 3-5, and 6-8. The current release launches with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Grades 3-5 and 6-8 are planned for future rollouts.
+BrightBoost is a **bilingual (English / Spanish) K-8 STEM learning platform** that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. Built by the Bright Bots Initiative, the platform features tiered learning pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Grades 3-5 and 6-8 are planned in future releases.
 
 **Teachers** create classes, assign modules, track progress, and run family showcase nights.
 **Students** play activities, earn XP, level up, and customize a robot avatar.
@@ -56,7 +56,7 @@ You can also visit `/for-reviewers` inside the app for an interactive evaluator 
 
 ## Current Status
 
-BrightBoost is in **active pilot** with a small group of schools. The current release features the K-2 learning tier — the core learning flow, teacher dashboard, and family showcase are functional. The platform is built to grow with schools over time: launch with early learners first, then expand into upper elementary (3-5) and middle school (6-8) pathways. Ongoing work includes expanding module content, deeper analytics, and additional accessibility improvements.
+BrightBoost is in **active pilot** with a small group of schools. The current rollout begins with K-2 — the core learning flow, teacher dashboard, and family showcase are functional. The platform is built to grow with schools over time: launch with early learners first, then expand into upper elementary (3-5) and middle school (6-8) with advanced technology pathways in AI, quantum, and biotech. Ongoing work includes expanding module content, deeper analytics, and additional accessibility improvements.
 
 ## Sharing Feedback
 

@@ -26,6 +26,7 @@ import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { translateContentName } from "@/utils/localizedContent";
+import { getStudentArchetype, canAccessModule } from "@/lib/moduleAccess";
 import {
   computeStreakFromProgress,
   ProgressLike,
@@ -191,11 +192,17 @@ export default function StudentDashboard() {
         if (cancelled) return;
 
         setAvatar(av);
-        setModules(Array.isArray(mods) ? mods : []);
 
-        const modsList = Array.isArray(mods) ? mods : [];
+        const allMods = Array.isArray(mods) ? mods : [];
         const progList = Array.isArray(prog?.progress) ? prog.progress : [];
         setProgressList(progList);
+
+        // Filter out specialization-locked modules
+        const studentArch = getStudentArchetype(av);
+        const modsList = allMods.filter((m: any) =>
+          canAccessModule({ slug: m.slug, archetype: studentArch }),
+        );
+        setModules(modsList);
 
         // Count completed activities
         const completedCount = progList.filter(

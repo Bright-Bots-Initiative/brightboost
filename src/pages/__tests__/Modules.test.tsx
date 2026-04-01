@@ -9,6 +9,7 @@ import { api } from "../../services/api";
 vi.mock("../../services/api", () => ({
   api: {
     getModules: vi.fn(),
+    getAvatar: vi.fn().mockResolvedValue(null),
   },
 }));
 

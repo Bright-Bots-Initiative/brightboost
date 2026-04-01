@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useApi } from "../services/api";
-import BrightBoostRobot from "../components/BrightBoostRobot";
+import { Link } from "react-router-dom";
+import { useApi, ApiError } from "../services/api";
 import MainContent from "../components/TeacherDashboard/MainContent";
 import { Lesson } from "../components/TeacherDashboard/types";
+import { Rocket, School, Share2, PlayCircle, BarChart3, CheckCircle2 } from "lucide-react";
 
 const TeacherDashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -105,7 +106,8 @@ const TeacherDashboard: React.FC = () => {
       await api.delete(`/teacher/courses/${lessonId}`);
     } catch (err) {
       // Treat 404 as success — the class is already gone
-      const is404 = err instanceof Error && /404/.test(err.message);
+      const is404 = (err instanceof ApiError && err.status === 404) ||
+        (err instanceof Error && /404/.test(err.message));
       if (!is404) {
         console.error("Failed to delete lesson:", err);
         setError(t("teacher.lessons.failedDelete"));
@@ -120,39 +122,61 @@ const TeacherDashboard: React.FC = () => {
     setIsLoading(false);
   };
 
+  const gettingStartedSteps = [
+    { icon: School, label: t("teacher.getStarted.step1"), to: "/teacher/classes" },
+    { icon: Share2, label: t("teacher.getStarted.step2"), to: "/teacher/classes" },
+    { icon: PlayCircle, label: t("teacher.getStarted.step3"), to: "/teacher/classes" },
+    { icon: BarChart3, label: t("teacher.getStarted.step4"), to: "/teacher/dashboard" },
+  ];
+
   return (
     <>
       {isLoading && (
-        <div
-          className="flex-grow p-6 text-center"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <BrightBoostRobot size="lg" />
-          <p className="text-xl text-brightboost-navy mt-4">
-            {t("teacher.lessons.loading")}
-          </p>
+        <div className="flex-grow p-6 text-center" aria-live="polite" aria-busy="true">
+          <div className="h-8 bg-gray-300 animate-pulse w-1/3 mx-auto mb-4 rounded" />
+          <div className="h-4 bg-gray-200 animate-pulse w-2/3 mx-auto rounded" />
         </div>
       )}
       {error && (
-        <div
-          className="flex-grow p-6 text-center"
-          role="alert"
-          aria-live="polite"
-        >
-          <BrightBoostRobot size="lg" />
+        <div className="flex-grow p-6 text-center" role="alert" aria-live="polite">
           <p className="text-xl text-red-500 mt-4">{error}</p>
+          <button
+            onClick={fetchLessons}
+            className="mt-4 px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+          >
+            {t("common.tryAgain", { defaultValue: "Try Again" })}
+          </button>
         </div>
       )}
       {!isLoading && !error && lessonsData.length === 0 && (
-        <div className="flex-grow p-6 text-center" role="status">
-          <BrightBoostRobot size="lg" />
-          <h2 className="text-xl text-brightboost-navy mt-4">
-            {t("teacher.lessons.noData")}
-          </h2>
-          <p className="text-sm text-gray-600 mt-2">
-            {t("teacher.lessons.noDataDesc")}
-          </p>
+        <div className="flex-grow p-6" role="status">
+          <div className="max-w-xl mx-auto text-center">
+            <Rocket className="w-12 h-12 mx-auto text-brightboost-blue mb-4" />
+            <h2 className="text-2xl font-bold text-brightboost-navy">
+              {t("teacher.getStarted.title")}
+            </h2>
+            <p className="text-gray-600 mt-2 mb-6">
+              {t("teacher.getStarted.subtitle")}
+            </p>
+          </div>
+          <div className="max-w-lg mx-auto space-y-3">
+            {gettingStartedSteps.map(({ icon: Icon, label, to }, i) => (
+              <Link
+                key={i}
+                to={to}
+                className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md hover:border-brightboost-blue/30 transition-all group"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brightboost-blue/10 text-brightboost-blue text-sm font-bold group-hover:bg-brightboost-blue group-hover:text-white transition-colors">
+                  {i + 1}
+                </div>
+                <Icon className="w-5 h-5 text-gray-400 group-hover:text-brightboost-blue transition-colors" />
+                <span className="text-sm font-medium text-gray-700 group-hover:text-brightboost-navy transition-colors">
+                  {label}
+                </span>
+                <CheckCircle2 className="w-4 h-4 ml-auto text-gray-200" />
+              </Link>
+            ))}
+          </div>
         </div>
       )}
       {!isLoading && !error && lessonsData.length > 0 && (

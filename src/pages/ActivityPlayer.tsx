@@ -5,10 +5,14 @@ import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import GotchaGearsUnityActivity from "@/components/activities/GotchaGearsUnityActivity";
 import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
+import {
+  getStudentArchetype,
+  canAccessModule,
+  isQuantumModuleSlug,
+} from "@/lib/moduleAccess";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
   Dialog,
@@ -122,11 +126,28 @@ export default function ActivityPlayer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mode, slides.length, slideIndex]);
 
+  // Guard: block activity deep-links into quantum-locked modules
+  useEffect(() => {
+    if (!slug || !isQuantumModuleSlug(slug)) return;
+    api.getAvatar().then((avatarData) => {
+      const arch = getStudentArchetype(avatarData);
+      if (!canAccessModule({ slug, archetype: arch })) {
+        toast({
+          title: "Module Locked",
+          description:
+            "Choose the Quantum specialization on your avatar page to unlock this module!",
+          variant: "destructive",
+        });
+        navigate("/student/avatar", { replace: true });
+      }
+    });
+  }, [slug]);
+
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
 
     setLoading(true);
-    // clear stale content to avoid “half-loaded” UI when rate-limited
+    // clear stale content to avoid "half-loaded" UI when rate-limited
     setModule(null);
     setActivity(null);
     setContent(null);
@@ -594,16 +615,6 @@ export default function ActivityPlayer() {
       );
     }
 
-    if (key === "gotcha_gears_unity") {
-      return (
-        <div className="p-6">
-          <GotchaGearsUnityActivity
-            config={content}
-            onComplete={handleComplete}
-          />
-        </div>
-      );
-    }
     if (key === "tank_trek") {
       return (
         <div className="p-6">

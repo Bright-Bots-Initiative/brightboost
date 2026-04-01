@@ -184,19 +184,19 @@ async function main() {
   });
   console.log("Created module:", module.slug);
 
-  // --- STEM-1 (K–2) Game #1: Boost’s Path Planner (was "Boost’s Lost Steps") ---
+  // --- STEM-1 (K–2) Game #1: Boost’s Lost Steps ---
   const k2SeqModule = await prisma.module.upsert({
     where: { slug: "k2-stem-sequencing" },
     update: {
-      title: "Boost’s Path Planner",
-      description: "Plan a path to help Boost reach the goal! 🤖🗺️⭐",
+      title: "STEM-1: Module 1 — Boost’s Lost Steps",
+      description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-sequencing",
-      title: "Boost’s Path Planner",
-      description: "Plan a path to help Boost reach the goal! 🤖🗺️⭐",
+      title: "STEM-1: Module 1 — Boost’s Lost Steps",
+      description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
       level: "K-2",
       published: true,
     },
@@ -276,13 +276,13 @@ async function main() {
   if (gameAct) {
     await prisma.activity.update({
       where: { id: gameAct.id },
-      data: { id: "lost-steps", title: "Game: Boost's Path Planner", content: gameContent },
+      data: { id: "lost-steps", title: "Game: Boost's Lost Steps", content: gameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "lost-steps",
-        title: "Game: Boost's Path Planner",
+        title: "Game: Boost's Lost Steps",
         kind: INTERACT,
         order: 2,
         content: gameContent,
@@ -297,14 +297,14 @@ async function main() {
     where: { slug: "k2-stem-rhyme-ride" },
     update: {
       title: "STEM-1: Module 2 — Rhyme & Ride",
-      description: "Shoot the rhyme fast! 🎵🚲",
+      description: "Ride through three worlds and catch the rhymes! 🎵🚲",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-rhyme-ride",
       title: "STEM-1: Module 2 — Rhyme & Ride",
-      description: "Shoot the rhyme fast! 🎵🚲",
+      description: "Ride through three worlds and catch the rhymes! 🎵🚲",
       level: "K-2",
       published: true,
     },
@@ -383,13 +383,13 @@ async function main() {
   if (rhymeGameAct) {
     await prisma.activity.update({
       where: { id: rhymeGameAct.id },
-      data: { id: "rhyme-ride", title: "Game: Rhymo's Rhyme Rocket", content: rhymeGameContent },
+      data: { id: "rhyme-ride", title: "Game: Rhyme & Ride", content: rhymeGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "rhyme-ride",
-        title: "Game: Rhymo's Rhyme Rocket",
+        title: "Game: Rhyme & Ride",
         kind: INTERACT,
         order: 2,
         content: rhymeGameContent,
@@ -404,14 +404,14 @@ async function main() {
     where: { slug: "k2-stem-bounce-buds" },
     update: {
       title: "STEM-1: Module 3 — Bounce & Buds",
-      description: "Bounce through the right gate to answer clues!",
+      description: "Sort plants, parts, and needs with Buddy! 🌿🧫",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-bounce-buds",
       title: "STEM-1: Module 3 — Bounce & Buds",
-      description: "Bounce through the right gate to answer clues!",
+      description: "Sort plants, parts, and needs with Buddy! 🌿🧫",
       level: "K-2",
       published: true,
     },
@@ -491,13 +491,13 @@ async function main() {
   if (bounceGameAct) {
     await prisma.activity.update({
       where: { id: bounceGameAct.id },
-      data: { id: "bounce-buds", title: "Game: Buddy's Garden Sort", content: bounceGameContent },
+      data: { id: "bounce-buds", title: "Game: Bounce & Buds", content: bounceGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "bounce-buds",
-        title: "Game: Buddy's Garden Sort",
+        title: "Game: Bounce & Buds",
         kind: INTERACT,
         order: 2,
         content: bounceGameContent,
@@ -621,13 +621,13 @@ async function main() {
   if (gotchaGameAct) {
     await prisma.activity.update({
       where: { id: gotchaGameAct.id },
-      data: { id: "gotcha-gears", title: "Game: Gotcha Gears", content: gotchaGameContent },
+      data: { id: "gotcha-gears", title: "Game: Gotcha Gears (Catch the Gear!)", content: gotchaGameContent },
     });
   } else {
     await prisma.activity.create({
       data: {
         id: "gotcha-gears",
-        title: "Game: Gotcha Gears",
+        title: "Game: Gotcha Gears (Catch the Gear!)",
         kind: INTERACT,
         order: 2,
         content: gotchaGameContent,

@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import LanguageToggle from "../components/LanguageToggle";
+import FeedbackFab from "../components/FeedbackFab";
 import { useTranslation } from "react-i18next";
 
 export default function StudentLayout({ children }: { children: ReactNode }) {
@@ -48,6 +49,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <BottomNav />
+      <FeedbackFab />
     </div>
   );
 }

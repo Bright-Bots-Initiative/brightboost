@@ -4,7 +4,7 @@ Welcome! This guide helps you explore BrightBoost in under 10 minutes.
 
 ## What is BrightBoost?
 
-BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform with tiered pathways for K-2, 3-5, and 6-8. The current rollout launches with K-2 content. Teachers create classes, assign game-based learning sessions, and track student progress. Students play through interactive STEM adventures that build confidence and problem-solving skills. Grades 3-5 and 6-8 content is planned for future releases.
+BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content. Teachers create classes, assign game-based learning sessions, and track student progress. Students play through interactive STEM adventures that build confidence and problem-solving skills. Grades 3-5 and 6-8 are planned in future releases.
 
 ## Demo Credentials
 

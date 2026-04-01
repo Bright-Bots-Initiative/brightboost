@@ -52,8 +52,9 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const TeacherResources: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const api = useApi();
+  const lang = i18n.resolvedLanguage ?? i18n.language;
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,13 +70,14 @@ const TeacherResources: React.FC = () => {
     if (filterModule !== "all") params.set("moduleSlug", filterModule);
     if (filterType !== "all") params.set("type", filterType);
     if (filterCategory !== "all") params.set("category", filterCategory);
+    params.set("lang", lang);
 
     api
       .get(`/teacher/resources?${params.toString()}`)
       .then((data: Resource[]) => setResources(data))
       .catch(() => setError(t("teacher.resources.failedLoad")))
       .finally(() => setLoading(false));
-  }, [filterModule, filterType, filterCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterModule, filterType, filterCategory, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = resources.filter((r) => {
     if (!searchQuery) return true;
@@ -88,7 +90,7 @@ const TeacherResources: React.FC = () => {
 
   const handlePrint = (resource: Resource) => {
     const token = localStorage.getItem("bb_access_token");
-    const url = join(API_BASE, `/teacher/resources/${resource.id}/print`);
+    const url = join(API_BASE, `/teacher/resources/${resource.id}/print?lang=${lang}`);
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       fetch(url, {

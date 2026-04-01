@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "../contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { getStudentArchetype } from "@/lib/moduleAccess";
 
 type Stats = {
   heartPower: number;
@@ -45,13 +46,21 @@ const SET_CONFIG = [
   { key: "set3" as const, target: 50 },
 ];
 
+const SPECIALIZATIONS = [
+  { key: "AI", label: "AI Explorer", labelEs: "Explorador de IA", icon: "🤖", color: "from-blue-500 to-indigo-500", borderColor: "border-blue-400", desc: "Build smart robots and teach machines to think!", descEs: "¡Construye robots inteligentes y enseña a las máquinas a pensar!" },
+  { key: "QUANTUM", label: "Quantum Voyager", labelEs: "Viajero Cuántico", icon: "🔮", color: "from-purple-500 to-violet-500", borderColor: "border-purple-400", desc: "Explore space math and unlock cosmic puzzles!", descEs: "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!" },
+  { key: "BIOTECH", label: "Bio Builder", labelEs: "Constructor Bio", icon: "🌿", color: "from-green-500 to-emerald-500", borderColor: "border-green-400", desc: "Discover living things and grow amazing gardens!", descEs: "¡Descubre seres vivos y cultiva jardines asombrosos!" },
+];
+
 export default function Avatar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEs = (i18n.resolvedLanguage ?? i18n.language)?.startsWith("es");
   const { user } = useAuth();
   const authApi = useApi();
   const [stats, setStats] = useState<Stats | null>(null);
   const [avatar, setAvatar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +111,21 @@ export default function Avatar() {
   const loginIcon = (user as any)?.loginIcon;
   const xp = avatar?.avatar?.xp ?? avatar?.xp ?? 0;
   const level = avatar?.avatar?.level ?? avatar?.level ?? 1;
+  const currentArchetype = getStudentArchetype(avatar);
+
+  async function handleSelectSpecialization(archetype: string) {
+    setSaving(true);
+    try {
+      await api.selectArchetype(archetype);
+      // Reload avatar to reflect selection
+      const refreshed = await api.getAvatar();
+      setAvatar(refreshed);
+    } catch (err) {
+      console.error("Failed to select specialization:", err);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="p-4 space-y-6 max-w-2xl mx-auto">
@@ -255,6 +279,63 @@ export default function Avatar() {
         <p className="text-xs text-slate-400 text-center">
           {t("myStar.specialtyHint")}
         </p>
+      </div>
+
+      {/* Specialization Picker */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold text-slate-800">
+          {isEs ? "Tu Especialización" : "Your Specialization"}
+        </h2>
+        {currentArchetype ? (
+          <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+            <CardContent className="py-5 text-center">
+              <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-1">
+                {isEs ? "Especialización Activa" : "Active Specialization"}
+              </p>
+              <p className="text-3xl font-black text-indigo-700">
+                {SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.icon ?? "⭐"}{" "}
+                {isEs
+                  ? SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.labelEs
+                  : SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.label}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <p className="text-sm text-slate-600 text-center">
+              {isEs
+                ? "¡Elige tu camino especial! Esto desbloquea módulos y habilidades únicas."
+                : "Pick your special path! This unlocks unique modules and abilities."}
+            </p>
+            <div className="grid gap-3">
+              {SPECIALIZATIONS.map((spec) => (
+                <button
+                  key={spec.key}
+                  disabled={saving}
+                  onClick={() => handleSelectSpecialization(spec.key)}
+                  className={cn(
+                    "rounded-xl border-2 p-4 flex items-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]",
+                    "bg-white shadow-sm hover:shadow-md",
+                    spec.borderColor,
+                    saving && "opacity-50 cursor-not-allowed",
+                  )}
+                >
+                  <div className={cn("w-14 h-14 rounded-full bg-gradient-to-br flex items-center justify-center text-3xl flex-shrink-0", spec.color)}>
+                    {spec.icon}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-lg font-bold text-slate-800">
+                      {isEs ? spec.labelEs : spec.label}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {isEs ? spec.descEs : spec.desc}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

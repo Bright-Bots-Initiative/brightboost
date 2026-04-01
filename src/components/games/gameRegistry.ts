@@ -3,8 +3,9 @@ import type { GameResult } from "./shared/GameShell";
 
 // Lazy-loaded game components
 import BoostPathPlannerGame from "./BoostPathPlannerGame";
-import RhymoRhymeRocketGame from "./RhymoRhymeRocketGame";
+import RhymeRideGame from "./RhymeRideGame";
 import BuddyGardenSortGame from "./BuddyGardenSortGame";
+import GotchaGearsGame from "./GotchaGearsGame";
 
 type GameProps = {
   config?: any;
@@ -17,13 +18,14 @@ type GameProps = {
  * continue to resolve correctly.
  */
 export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
-  // New React games (primary keys)
-  boost_path_planner: BoostPathPlannerGame,
-  rhymo_rhyme_rocket: RhymoRhymeRocketGame,
-  buddy_garden_sort: BuddyGardenSortGame,
+  // ── Primary keys (current canonical names) ──
+  boost_path_planner: BoostPathPlannerGame,   // "Boost's Lost Steps"
+  rhymo_rhyme_rocket: RhymeRideGame,          // "Rhyme & Ride" (lane-based redesign)
+  buddy_garden_sort: BuddyGardenSortGame,     // "Bounce & Buds"
+  gotcha_gears_unity: GotchaGearsGame,         // "Gotcha Gears" (now React)
 
-  // Old slug aliases → new React implementations
+  // ── Legacy / alias keys → same implementations ──
   sequence_drag_drop: BoostPathPlannerGame,
-  rhyme_ride_unity: RhymoRhymeRocketGame,
+  rhyme_ride_unity: RhymeRideGame,
   bounce_buds_unity: BuddyGardenSortGame,
 };

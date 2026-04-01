@@ -7,6 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check } from "lucide-react";
+import {
+  getStudentArchetype,
+  canAccessModule,
+  isQuantumModuleSlug,
+} from "@/lib/moduleAccess";
 
 export default function ModuleDetail() {
   const { slug } = useParams();
@@ -19,6 +24,23 @@ export default function ModuleDetail() {
 
   useEffect(() => {
     if (!slug) return;
+
+    // Guard: if the module is quantum-locked, check archetype first
+    if (isQuantumModuleSlug(slug)) {
+      api.getAvatar().then((avatarData) => {
+        const arch = getStudentArchetype(avatarData);
+        if (!canAccessModule({ slug, archetype: arch })) {
+          toast({
+            title: "Module Locked",
+            description:
+              "Choose the Quantum specialization on your avatar page to unlock this module!",
+            variant: "destructive",
+          });
+          navigate("/student/avatar", { replace: true });
+        }
+      });
+    }
+
     Promise.all([
       api.getModule(slug, { structureOnly: true }),
       // ⚡ Bolt Optimization: Exclude user data to save DB call

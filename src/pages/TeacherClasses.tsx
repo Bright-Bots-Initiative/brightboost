@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import BrightBoostRobot from "../components/BrightBoostRobot";
-import { Plus, Users, Copy, Check, Zap } from "lucide-react";
+import { Plus, Users, Copy, Check, Zap, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useApi } from "../services/api";
+import { useApi, ApiError } from "../services/api";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CourseListItem {
   id: string;
@@ -30,6 +40,8 @@ const ClassesPage: React.FC = () => {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const courseToDelete = courses.find((c) => c.id === deleteId);
 
   const loadCourses = async () => {
     setIsLoading(true);
@@ -69,6 +81,17 @@ const ClassesPage: React.FC = () => {
     navigator.clipboard.writeText(code);
     setCopiedId(courseId);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDelete = async (courseId: string) => {
+    try {
+      await api.delete(`/teacher/courses/${courseId}`);
+    } catch (err) {
+      const is404 = (err instanceof ApiError && err.status === 404) ||
+        (err instanceof Error && /404/.test(err.message));
+      if (!is404) return;
+    }
+    setCourses((prev) => prev.filter((c) => c.id !== courseId));
   };
 
   return (
@@ -154,12 +177,21 @@ const ClassesPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <Link
-                  to={`/teacher/classes/${c.id}`}
-                  className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
-                >
-                  {t("teacher.classes.open")}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/teacher/classes/${c.id}`}
+                    className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors"
+                  >
+                    {t("teacher.classes.open")}
+                  </Link>
+                  <button
+                    onClick={() => setDeleteId(c.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                    title={t("teacher.classes.deleteClass")}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -217,6 +249,30 @@ const ClassesPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("teacher.classes.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("teacher.classes.deleteConfirm", { name: courseToDelete?.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("teacher.classes.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-500 text-white"
+              onClick={() => {
+                if (deleteId) handleDelete(deleteId);
+                setDeleteId(null);
+              }}
+            >
+              {t("teacher.classes.deleteClass")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
