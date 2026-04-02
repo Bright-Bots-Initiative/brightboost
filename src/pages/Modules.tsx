@@ -6,22 +6,20 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ModulesSkeleton } from "@/components/ModulesSkeleton";
-import { BookOpen, Lock } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { translateContentName } from "@/utils/localizedContent";
-import {
-  getStudentArchetype,
-  canAccessModule,
-} from "@/lib/moduleAccess";
+import { getStudentArchetype, canAccessModule } from "@/lib/moduleAccess";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-sequencing": "type_game",
   "k2-stem-rhyme-ride": "type_game",
   "k2-stem-bounce-buds": "type_game",
   "k2-stem-gotcha-gears": "type_game",
+  "k2-stem-tank-trek": "type_game",
   "k2-stem-quantum-quest": "type_game",
   "stem-1-intro": "type_game",
 };
@@ -31,35 +29,36 @@ const MODULE_ORDER: Record<string, number> = {
   "k2-stem-rhyme-ride": 2,
   "k2-stem-bounce-buds": 3,
   "k2-stem-gotcha-gears": 4,
-  "k2-stem-quantum-quest": 5,
-  "stem-1-intro": 6,
+  "k2-stem-tank-trek": 5,
+  "k2-stem-quantum-quest": 6,
+  // Specialization modules come after public content
+  "stem-1-intro": 20,
 };
-
-const COMING_SOON_SLUGS = new Set(["stem-1-intro"]);
 
 export default function Modules() {
   const { t } = useTranslation();
   const [modules, setModules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [archetype, setArchetype] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      api.getModules({ level: "K-2" }),
-      api.getAvatar(),
-    ])
+    Promise.all([api.getModules({ level: "K-2" }), api.getAvatar()])
       .then(([data, avatarData]) => {
-        const visible = data;
+        const archetype = getStudentArchetype(avatarData);
+
+        // Hide specialization-gated modules entirely until unlocked
+        const visible = (data as any[]).filter((m: any) =>
+          canAccessModule({ slug: m.slug, archetype }),
+        );
+
         visible.sort(
           (a: any, b: any) =>
             (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
             a.title.localeCompare(b.title),
         );
         setModules(visible);
-        setArchetype(getStudentArchetype(avatarData));
         setError(null);
       })
       .catch(() => {
@@ -88,82 +87,37 @@ export default function Modules() {
         <ModulesSkeleton />
       ) : modules.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((m) => {
-            const isComingSoon = COMING_SOON_SLUGS.has(m.slug);
-            const isLocked =
-              !isComingSoon &&
-              !canAccessModule({ slug: m.slug, archetype });
-            return (
-              <Card
-                key={m.id}
-                className={`transition flex flex-col h-full border-2 ${
-                  isLocked
-                    ? "border-purple-200 bg-purple-50/40 opacity-80"
-                    : isComingSoon
-                      ? "border-purple-200 bg-purple-50/50 opacity-90"
-                      : "border-transparent hover:border-brightboost-blue/20 hover:shadow-lg"
-                }`}
-              >
-                <div className="p-4 pb-0 relative">
-                  <ActivityThumb
-                    imageKey={MODULE_THUMBNAILS[m.slug] || "module_sequencing"}
-                    variant="module"
-                    className="h-24 w-full"
-                  />
-                  {isComingSoon && (
-                    <span className="absolute top-6 right-6 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
-                      {t("modules.comingSoon")}
-                    </span>
-                  )}
-                  {isLocked && (
-                    <span className="absolute top-6 right-6 bg-slate-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-                      <Lock className="h-3 w-3" />
-                      {t("modules.locked", { defaultValue: "Locked" })}
-                    </span>
-                  )}
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-xl text-brightboost-navy">
-                    {translateContentName(m.title)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between">
-                  <p className="text-sm text-gray-500 mb-6">
-                    {translateContentName(m.description ?? m.subtitle ?? "...")}
-                  </p>
-                  {isLocked ? (
-                    <Button
-                      onClick={() => navigate("/student/avatar")}
-                      variant="outline"
-                      className="w-full sm:w-auto border-purple-300 text-purple-700 hover:bg-purple-50"
-                      aria-label={`${translateContentName(m.title)} — ${t("modules.chooseSpecialization", { defaultValue: "Choose your specialization to unlock" })}`}
-                    >
-                      <Lock className="h-4 w-4 mr-2" />
-                      {t("modules.chooseSpecialization", {
-                        defaultValue: "Choose your specialization to unlock",
-                      })}
-                    </Button>
-                  ) : isComingSoon ? (
-                    <Button
-                      disabled
-                      className="w-full sm:w-auto bg-purple-400 cursor-not-allowed"
-                      aria-label={`${translateContentName(m.title)} — ${t("modules.comingSoon")}`}
-                    >
-                      {t("modules.comingSoon")}
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => navigate(`/student/modules/${m.slug}`)}
-                      className="w-full sm:w-auto"
-                      aria-label={`${t("modules.startLearning")} ${translateContentName(m.title)}`}
-                    >
-                      {t("modules.startLearning")}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+          {modules.map((m) => (
+            <Card
+              key={m.id}
+              className="transition flex flex-col h-full border-2 border-transparent hover:border-brightboost-blue/20 hover:shadow-lg"
+            >
+              <div className="p-4 pb-0 relative">
+                <ActivityThumb
+                  imageKey={MODULE_THUMBNAILS[m.slug] || "module_sequencing"}
+                  variant="module"
+                  className="h-24 w-full"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-xl text-brightboost-navy">
+                  {translateContentName(m.title)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col justify-between">
+                <p className="text-sm text-gray-500 mb-6">
+                  {translateContentName(m.description ?? m.subtitle ?? "...")}
+                </p>
+                <Button
+                  onClick={() => navigate(`/student/modules/${m.slug}`)}
+                  className="w-full sm:w-auto"
+                  aria-label={`${t("modules.startLearning")} ${translateContentName(m.title)}`}
+                >
+                  {t("modules.startLearning")}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       ) : (
         !error && (

@@ -135,23 +135,25 @@ router.get(
     else if (powerLevel >= 11) stage = "Explorer";
     else stage = "Rookie";
 
-    // 11. Specialty progress
+    // 11. Specialty progress — curriculum-based set completion
+    //
+    // Each set tracks how many of its required activity IDs the student
+    // has completed.  Set 3 completion gates specialization selection.
+    const STEM_SET_1 = ["bounce-buds", "gotcha-gears", "lost-steps", "rhyme-ride", "build-a-bot"];
+    const STEM_SET_2 = ["set2-game-1", "set2-game-2", "set2-game-3", "set2-game-4", "set2-game-5"];
+    const STEM_SET_3 = ["set3-game-1", "set3-game-2", "set3-game-3", "set3-game-4", "set3-game-5"];
+
+    const completedActivityIds = new Set(completedProgress.map((p) => p.activityId));
+
+    function setProgress(ids: string[]) {
+      const done = ids.filter((id) => completedActivityIds.has(id)).length;
+      return { current: done, target: ids.length, complete: done >= ids.length };
+    }
+
     const specialtyProgress = {
-      set1: {
-        current: Math.min(powerLevel, 15),
-        target: 15,
-        complete: powerLevel >= 15,
-      },
-      set2: {
-        current: Math.min(powerLevel, 30),
-        target: 30,
-        complete: powerLevel >= 30,
-      },
-      set3: {
-        current: Math.min(powerLevel, 50),
-        target: 50,
-        complete: powerLevel >= 50,
-      },
+      set1: setProgress(STEM_SET_1),
+      set2: setProgress(STEM_SET_2),
+      set3: setProgress(STEM_SET_3),
     };
 
     res.json({

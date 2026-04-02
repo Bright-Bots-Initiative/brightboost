@@ -1,22 +1,27 @@
 /**
  * Centralized module-access logic for specialization-locked content.
  *
- * Currently only the Quantum Quest module is gated behind specialization.
- * Change `QUANTUM_MODULE_SLUG` or `canAccessModule` to adjust the rule.
+ * Rules:
+ * 1. Public/foundation modules (Quantum Quest, Lost Steps, etc.) are always accessible.
+ * 2. Specialization modules (Quantum Explorers / stem-1-intro) are hidden until
+ *    the student has chosen a specialization.
+ * 3. Specialization choice is gated behind completing STEM Set 3
+ *    (enforced in Avatar.tsx + backend POST /avatar/select-archetype).
  */
 
-export const QUANTUM_MODULE_SLUG = "k2-stem-quantum-quest";
+// ── Specialization-gated module slugs ────────────────────────────────────
+// Add future specialization-only modules here.
+const SPECIALIZATION_MODULE_SLUGS = new Set([
+  "stem-1-intro", // "Quantum Explorers" — hidden until archetype chosen
+]);
 
-/** Archetypes that unlock the quantum module. */
-const QUANTUM_ARCHETYPES = new Set(["QUANTUM"]);
+// ── Helpers ──────────────────────────────────────────────────────────────
 
 /**
  * Robustly extract the student's archetype/specialization from avatar data.
  * The API may return nested `{ avatar: { archetype } }` or flat `{ archetype }`.
  */
-export function getStudentArchetype(
-  avatarData: unknown,
-): string | null {
+export function getStudentArchetype(avatarData: unknown): string | null {
   if (!avatarData || typeof avatarData !== "object") return null;
   const obj = avatarData as Record<string, unknown>;
 
@@ -34,15 +39,16 @@ export function getStudentArchetype(
   return null;
 }
 
-/** True when `slug` identifies the quantum module. */
-export function isQuantumModuleSlug(slug: string): boolean {
-  return slug === QUANTUM_MODULE_SLUG;
+/** True when `slug` is a specialization-gated module (e.g. Quantum Explorers). */
+export function isSpecializationModuleSlug(slug: string): boolean {
+  return SPECIALIZATION_MODULE_SLUGS.has(slug);
 }
 
 /**
  * Whether the student can access a given module.
- * Non-quantum modules are always accessible.
- * The quantum module requires a QUANTUM archetype.
+ *
+ * - Foundation/public modules → always true.
+ * - Specialization modules → true only if the student has any archetype.
  */
 export function canAccessModule({
   slug,
@@ -51,7 +57,7 @@ export function canAccessModule({
   slug: string;
   archetype: string | null;
 }): boolean {
-  if (!isQuantumModuleSlug(slug)) return true;
-  if (!archetype) return false;
-  return QUANTUM_ARCHETYPES.has(archetype.toUpperCase());
+  if (!isSpecializationModuleSlug(slug)) return true;
+  // Specialization modules require *any* archetype to be chosen
+  return !!archetype;
 }

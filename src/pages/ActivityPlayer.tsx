@@ -11,7 +11,7 @@ import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import {
   getStudentArchetype,
   canAccessModule,
-  isQuantumModuleSlug,
+  isSpecializationModuleSlug,
 } from "@/lib/moduleAccess";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
@@ -126,16 +126,16 @@ export default function ActivityPlayer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mode, slides.length, slideIndex]);
 
-  // Guard: block activity deep-links into quantum-locked modules
+  // Guard: block activity deep-links into specialization-locked modules
   useEffect(() => {
-    if (!slug || !isQuantumModuleSlug(slug)) return;
+    if (!slug || !isSpecializationModuleSlug(slug)) return;
     api.getAvatar().then((avatarData) => {
       const arch = getStudentArchetype(avatarData);
       if (!canAccessModule({ slug, archetype: arch })) {
         toast({
           title: "Module Locked",
           description:
-            "Choose the Quantum specialization on your avatar page to unlock this module!",
+            "Choose your specialization on the avatar page to unlock this module!",
           variant: "destructive",
         });
         navigate("/student/avatar", { replace: true });

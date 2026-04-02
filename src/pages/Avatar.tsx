@@ -293,14 +293,14 @@ export default function Avatar() {
                 {isEs ? "Especialización Activa" : "Active Specialization"}
               </p>
               <p className="text-3xl font-black text-indigo-700">
-                {SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.icon ?? "⭐"}{" "}
+                {SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.icon ?? "⭐"}{" "}
                 {isEs
-                  ? SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.labelEs
-                  : SPECIALIZATIONS.find((s) => s.key === currentArchetype)?.label}
+                  ? SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.labelEs
+                  : SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.label}
               </p>
             </CardContent>
           </Card>
-        ) : (
+        ) : s.specialtyProgress.set3.complete ? (
           <>
             <p className="text-sm text-slate-600 text-center">
               {isEs
@@ -335,6 +335,22 @@ export default function Avatar() {
               ))}
             </div>
           </>
+        ) : (
+          <Card className="border-2 border-slate-200 bg-slate-50">
+            <CardContent className="py-5 text-center space-y-2">
+              <p className="text-3xl">{"🔒"}</p>
+              <p className="text-sm font-bold text-slate-600">
+                {isEs
+                  ? "Completa el Set 3 de STEM para desbloquear tu especialización."
+                  : "Finish STEM Set 3 to unlock your specialization."}
+              </p>
+              <p className="text-xs text-slate-400">
+                {isEs
+                  ? `Progreso: ${s.specialtyProgress.set3.current}/${s.specialtyProgress.set3.target}`
+                  : `Progress: ${s.specialtyProgress.set3.current}/${s.specialtyProgress.set3.target}`}
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

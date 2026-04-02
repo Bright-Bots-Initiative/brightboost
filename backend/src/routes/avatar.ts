@@ -94,6 +94,18 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
   }
 });
 
+// STEM Set 3 activity IDs — must all be completed before specialization
+const STEM_SET_3_IDS = ["set3-game-1", "set3-game-2", "set3-game-3", "set3-game-4", "set3-game-5"];
+
+async function isSet3Complete(studentId: string): Promise<boolean> {
+  const completed = await prisma.progress.findMany({
+    where: { studentId, status: "COMPLETED" },
+    select: { activityId: true },
+  });
+  const ids = new Set(completed.map((p) => p.activityId));
+  return STEM_SET_3_IDS.every((id) => ids.has(id));
+}
+
 // Select archetype (create or upgrade avatar to SPECIALIZED)
 router.post(
   "/avatar/select-archetype",
@@ -103,6 +115,15 @@ router.post(
     try {
       const studentId = req.user!.id;
       const { archetype } = selectArchetypeSchema.parse(req.body);
+
+      // Guard: require STEM Set 3 completion before specialization
+      const set3Done = await isSet3Complete(studentId);
+      if (!set3Done) {
+        return res.status(403).json({
+          error: "Specialization locked",
+          message: "Complete STEM Set 3 before choosing a specialization.",
+        });
+      }
 
       // Check if avatar already exists
       const existing = await prisma.avatar.findUnique({ where: { studentId } });

@@ -10,7 +10,7 @@ import { Check } from "lucide-react";
 import {
   getStudentArchetype,
   canAccessModule,
-  isQuantumModuleSlug,
+  isSpecializationModuleSlug,
 } from "@/lib/moduleAccess";
 
 export default function ModuleDetail() {
@@ -25,15 +25,15 @@ export default function ModuleDetail() {
   useEffect(() => {
     if (!slug) return;
 
-    // Guard: if the module is quantum-locked, check archetype first
-    if (isQuantumModuleSlug(slug)) {
+    // Guard: if the module requires specialization, check archetype first
+    if (isSpecializationModuleSlug(slug)) {
       api.getAvatar().then((avatarData) => {
         const arch = getStudentArchetype(avatarData);
         if (!canAccessModule({ slug, archetype: arch })) {
           toast({
             title: "Module Locked",
             description:
-              "Choose the Quantum specialization on your avatar page to unlock this module!",
+              "Choose your specialization on the avatar page to unlock this module!",
             variant: "destructive",
           });
           navigate("/student/avatar", { replace: true });

@@ -107,10 +107,10 @@ const SHOWDOWN_CARDS = 5;          // rapid-fire cards in showdown
 const HIT_ZONE_TOP = 300;          // px — top of hit zone
 const HIT_ZONE_BOTTOM = 380;       // px — bottom of hit zone
 const FIELD_HEIGHT = 420;
-const CARD_HEIGHT = 56;
-const BASE_SPEED = 1.8;            // px per animation frame
-const SPEED_RAMP = 0.12;           // increase per world
-const SHOWDOWN_SPEED_MULT = 1.5;
+const CARD_HEIGHT = 64;             // taller cards for readability
+const BASE_SPEED = 1.1;            // px per animation frame — slower for K-2
+const SPEED_RAMP = 0.06;           // gentler increase per world
+const SHOWDOWN_SPEED_MULT = 1.2;   // less aggressive showdown speedup
 
 const LANE_LABELS = ["1", "2", "3"];
 const LANE_KEYS_NUM = ["1", "2", "3"];
@@ -222,16 +222,18 @@ function LaneField({
           const isHit = card.state === "hit";
           const isWrong = card.state === "wrong";
           const isMissed = card.state === "missed";
+          // Derive border-color class from bg-* family color (e.g. bg-blue-400 → border-blue-400)
+          const borderAccent = card.familyColor.replace("bg-", "border-");
           return (
             <div
               key={card.id}
               className={cn(
-                "absolute flex items-center justify-center rounded-xl font-bold text-base shadow-md pointer-events-none",
-                "border-2 transition-all",
-                isHit && "scale-125 opacity-0 bg-green-400 border-green-300 text-white",
-                isWrong && "scale-75 opacity-30 bg-red-300 border-red-200 text-red-800",
-                isMissed && "opacity-20 scale-90",
-                !isHit && !isWrong && !isMissed && `${card.familyColor} border-white/60 text-white shadow-lg`,
+                "absolute flex items-center justify-center rounded-xl font-extrabold text-lg shadow-md pointer-events-none",
+                "transition-all overflow-hidden",
+                isHit && "scale-125 opacity-0 bg-green-100 border-2 border-green-400 text-green-800",
+                isWrong && "scale-75 opacity-30 bg-red-100 border-2 border-red-300 text-red-800",
+                isMissed && "opacity-20 scale-90 bg-white border-2 border-slate-200",
+                !isHit && !isWrong && !isMissed && `bg-white border-l-4 border-r-0 border-t-0 border-b-0 ${borderAccent} text-slate-900 shadow-lg ring-1 ring-slate-200`,
               )}
               style={{
                 left: `${leftPercent}%`,
@@ -245,11 +247,8 @@ function LaneField({
                     : "none",
               }}
             >
-              <span className="mr-1 text-lg">{card.familyIcon}</span>
+              <span className="mr-1.5 text-xl">{card.familyIcon}</span>
               <span className="truncate">{card.word}</span>
-              {card.correct && (
-                <span className="ml-1 text-xs opacity-70">{"✦"}</span>
-              )}
             </div>
           );
         })}
@@ -300,7 +299,7 @@ function RhymeHUD({
         <span>
           Which word rhymes with <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
         </span>
-        <span className={cn("px-2 py-0.5 rounded-full text-sm font-bold", familyColor, "text-white")}>
+        <span className={cn("px-2 py-0.5 rounded-full text-sm font-bold border", familyColor.replace("bg-", "border-"), "bg-white text-slate-700")}>
           {familyPattern}
         </span>
       </div>
@@ -486,7 +485,8 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
   useEffect(() => {
     if (phase !== "playing" && phase !== "showdown") return;
 
-    const currentSpeed = phase === "showdown" ? speed * SHOWDOWN_SPEED_MULT : speed;
+    const isShowdown = phase === "showdown";
+    const currentSpeed = isShowdown ? speed * SHOWDOWN_SPEED_MULT : speed;
 
     const animate = () => {
       setCards((prev) => {
@@ -499,11 +499,23 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
           return { ...c, y: ny };
         });
 
-        // Check if all cards passed — auto-miss
+        // Check if all cards passed off-screen
         const allDone = next.every((c) => c.state !== "falling");
         if (allDone && prev.some((c) => c.state === "falling")) {
-          // A card was missed
-          handleMiss();
+          if (isShowdown) {
+            // Showdown: only penalise if the card was the correct rhyme.
+            // Letting a distractor pass is neutral/good behaviour.
+            const hadCorrect = prev.some((c) => c.correct && c.state === "falling");
+            if (hadCorrect) {
+              handleMiss();
+            } else {
+              // Distractor fell through — advance showdown without penalty
+              handleShowdownDistractorPass();
+            }
+          } else {
+            // Normal round: missing the correct rhyme is always a miss
+            handleMiss();
+          }
         }
 
         return next;
@@ -542,6 +554,23 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
       }
     }, 1000);
   }, [currentFamily, roundIdx, spawnRound]);
+
+  // ── Showdown distractor pass-through (neutral — no penalty) ──
+  const handleShowdownDistractorPass = useCallback(() => {
+    setFeedbackText("Good eye! That wasn't a rhyme.");
+    setPhase("showdownFeedback");
+    setTimeout(() => {
+      setFeedbackText("");
+      const queue = showdownQueueRef.current;
+      queue.shift();
+      if (queue.length === 0) {
+        setPhase("worldTransition");
+      } else {
+        setPhase("showdown");
+        advanceShowdown(queue, WORLDS[worldIdx]);
+      }
+    }, 600);
+  }, [worldIdx, advanceShowdown]);
 
   // ── Lane tap handler ──
   const handleLaneTap = useCallback(

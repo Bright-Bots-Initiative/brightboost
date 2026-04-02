@@ -169,17 +169,17 @@ async function main() {
   const module = await prisma.module.upsert({
     where: { slug: "stem-1-intro" },
     update: {
-      title: "STEM-1: Introduction to Tech",
-      description: "K-2 Intro to AI, Quantum, and Bio",
+      title: "Quantum Explorers",
+      description: "Discover the tiny particles that power the future! Unlocks with specialization.",
       level: "K-2",
-      published: false,
+      published: true,
     },
     create: {
       slug: "stem-1-intro",
-      title: "STEM-1: Introduction to Tech",
-      description: "K-2 Intro to AI, Quantum, and Bio",
+      title: "Quantum Explorers",
+      description: "Discover the tiny particles that power the future! Unlocks with specialization.",
       level: "K-2",
-      published: false,
+      published: true,
     },
   });
   console.log("Created module:", module.slug);
