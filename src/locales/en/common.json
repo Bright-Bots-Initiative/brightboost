@@ -1319,6 +1319,60 @@
       "achPerfect": "Perfect Orbit",
       "achExplorer": "Quantum Explorer",
       "achFast": "Fast Thinker"
+    },
+    "rhymeRide": {
+      "title": "Rhyme & Ride",
+      "briefingTitle": "Rhyme & Ride!",
+      "briefingStory": "Rhymo is riding through three amazing worlds! Word cards are zooming down three lanes. Tap the lane with the rhyming word before it passes. Build combos for bonus points!",
+      "tipTapLane": "Tap the lane with the rhyming word",
+      "tipKeyboard": "Use keys 1, 2, 3 on your keyboard",
+      "tipCombos": "Combos = more points!",
+      "tipShowdown": "Watch for showdown rounds every 5 hits!",
+      "whichRhymes": "Which word rhymes with",
+      "showdownHit": "SHOWDOWN HIT!",
+      "showdownNotRhyme": "Not a rhyme! Let it pass.",
+      "showdownGoodEye": "Good eye! That wasn't a rhyme.",
+      "tooSlow": "Too slow! Try to tap faster.",
+      "rideComplete": "Ride Complete!",
+      "score": "Score",
+      "bestStreak": "Best Streak",
+      "perfectChain": "Perfect Chain Badge!",
+      "worldComplete": "{{world}} Complete!",
+      "nextWorld": "Next: {{world}}",
+      "seeResults": "See Results",
+      "soundOn": "Sound On",
+      "soundOff": "Sound Off",
+      "keyboardHint": "Press 1 2 3 or tap a lane | M mute",
+      "showdownLabel": "SHOWDOWN!",
+      "finish": "Finish"
+    },
+    "gotchaGears": {
+      "title": "Gotcha Gears"
+    },
+    "personalBest": {
+      "highScore": "High Score",
+      "personalBest": "Personal Best",
+      "newRecord": "New Record!",
+      "previous": "Previous Best"
+    }
+  },
+
+  "avatar": {
+    "specialization": "Your Specialization",
+    "activeSpec": "Active Specialization",
+    "pickPath": "Pick your special path! This unlocks unique modules and abilities.",
+    "lockedTitle": "Specialization Locked",
+    "lockedMessage": "Finish STEM Set 3 to unlock your specialization.",
+    "progress": "Progress",
+    "spec": {
+      "AI": "AI Explorer",
+      "QUANTUM": "Quantum Voyager",
+      "BIOTECH": "Bio Builder"
+    },
+    "specDesc": {
+      "AI": "Build smart robots and teach machines to think!",
+      "QUANTUM": "Explore space math and unlock cosmic puzzles!",
+      "BIOTECH": "Discover living things and grow amazing gardens!"
     }
   }
 }

@@ -273,6 +273,55 @@ router.post(
       levelDelta = avatarAfter.level - 1; // Show level gained from level 1
     }
 
+    // 5. Upsert Game Personal Best (when gameKey is present)
+    let personalBest = null;
+    let isNewHighScore = false;
+    let isNewBestStreak = false;
+
+    if (result?.gameKey) {
+      try {
+        const existing = await prisma.gamePersonalBest.findUnique({
+          where: { studentId_gameKey: { studentId, gameKey: result.gameKey } },
+        });
+
+        const newScore = result.score ?? 0;
+        const newStreak = result.streakMax ?? 0;
+        const newRounds = result.roundsCompleted ?? 0;
+
+        if (existing) {
+          isNewHighScore = newScore > existing.bestScore;
+          isNewBestStreak = newStreak > existing.bestStreak;
+          personalBest = await prisma.gamePersonalBest.update({
+            where: { id: existing.id },
+            data: {
+              lastScore: newScore,
+              bestScore: Math.max(existing.bestScore, newScore),
+              bestStreak: Math.max(existing.bestStreak, newStreak),
+              bestRoundsCompleted: Math.max(existing.bestRoundsCompleted, newRounds),
+              playCount: { increment: 1 },
+              lastPlayedAt: new Date(),
+            },
+          });
+        } else {
+          isNewHighScore = true;
+          isNewBestStreak = newStreak > 0;
+          personalBest = await prisma.gamePersonalBest.create({
+            data: {
+              studentId,
+              gameKey: result.gameKey,
+              bestScore: newScore,
+              lastScore: newScore,
+              bestStreak: newStreak,
+              bestRoundsCompleted: newRounds,
+              playCount: 1,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+      }
+    }
+
     res.json({
       progress: finalProgress,
       reward: {
@@ -283,6 +332,9 @@ router.post(
         newAbilitiesDelta,
       },
       avatar: avatarAfter,
+      personalBest,
+      isNewHighScore,
+      isNewBestStreak,
     });
   },
 );
@@ -361,5 +413,19 @@ router.post(
 // router.post("/assessment/submit", requireAuth, async (req, res) => {
 //   // ...
 // });
+
+// Get all personal bests for the current student
+router.get("/game/personal-bests", requireAuth, async (req, res) => {
+  try {
+    const bests = await prisma.gamePersonalBest.findMany({
+      where: { studentId: req.user!.id },
+      orderBy: { lastPlayedAt: "desc" },
+    });
+    res.json({ bests });
+  } catch (e) {
+    console.error("Get personal bests error:", e);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default router;

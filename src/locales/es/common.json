@@ -1320,6 +1320,60 @@
       "achPerfect": "Órbita Perfecta",
       "achExplorer": "Explorador Cuántico",
       "achFast": "Pensador Rápido"
+    },
+    "rhymeRide": {
+      "title": "Rima y Viaja",
+      "briefingTitle": "¡Rima y Viaja!",
+      "briefingStory": "¡Rhymo viaja por tres mundos increíbles! Las tarjetas de palabras bajan por tres carriles. Toca el carril con la palabra que rima antes de que pase. ¡Haz combos para ganar más puntos!",
+      "tipTapLane": "Toca el carril con la palabra que rima",
+      "tipKeyboard": "Usa las teclas 1, 2, 3 en tu teclado",
+      "tipCombos": "¡Combos = más puntos!",
+      "tipShowdown": "¡Mira las rondas de desafío cada 5 aciertos!",
+      "whichRhymes": "¿Qué palabra rima con",
+      "showdownHit": "¡ACIERTO EN DESAFÍO!",
+      "showdownNotRhyme": "¡No rima! Déjala pasar.",
+      "showdownGoodEye": "¡Bien visto! Eso no rimaba.",
+      "tooSlow": "¡Muy lento! Intenta tocar más rápido.",
+      "rideComplete": "¡Viaje Completo!",
+      "score": "Puntuación",
+      "bestStreak": "Mejor Racha",
+      "perfectChain": "¡Insignia de Cadena Perfecta!",
+      "worldComplete": "¡{{world}} Completo!",
+      "nextWorld": "Siguiente: {{world}}",
+      "seeResults": "Ver Resultados",
+      "soundOn": "Sonido",
+      "soundOff": "Sin Sonido",
+      "keyboardHint": "Presiona 1 2 3 o toca un carril | M silenciar",
+      "showdownLabel": "¡DESAFÍO!",
+      "finish": "Terminar"
+    },
+    "gotchaGears": {
+      "title": "Atrapa Engranajes"
+    },
+    "personalBest": {
+      "highScore": "Mejor Puntaje",
+      "personalBest": "Récord Personal",
+      "newRecord": "¡Nuevo Récord!",
+      "previous": "Récord Anterior"
+    }
+  },
+
+  "avatar": {
+    "specialization": "Tu Especialización",
+    "activeSpec": "Especialización Activa",
+    "pickPath": "¡Elige tu camino especial! Esto desbloquea módulos y habilidades únicas.",
+    "lockedTitle": "Especialización Bloqueada",
+    "lockedMessage": "Completa el Set 3 de STEM para desbloquear tu especialización.",
+    "progress": "Progreso",
+    "spec": {
+      "AI": "Explorador de IA",
+      "QUANTUM": "Viajero Cuántico",
+      "BIOTECH": "Constructor Bio"
+    },
+    "specDesc": {
+      "AI": "¡Construye robots inteligentes y enseña a las máquinas a pensar!",
+      "QUANTUM": "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!",
+      "BIOTECH": "¡Descubre seres vivos y cultiva jardines asombrosos!"
     }
   }
 }

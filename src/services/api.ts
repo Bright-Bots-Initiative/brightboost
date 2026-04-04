@@ -576,6 +576,14 @@ export const api = {
     return data?.avatar ?? null;
   },
 
+  getGamePersonalBests: async (): Promise<any[]> => {
+    const res = await fetch(join(API_BASE, "/game/personal-bests"), {
+      headers: getHeaders(),
+    });
+    const data = await res.json().catch(() => ({ bests: [] }));
+    return data?.bests ?? [];
+  },
+
   selectArchetype: async (archetype: string) => {
     const res = await fetch(join(API_BASE, "/avatar/select-archetype"), {
       method: "POST",

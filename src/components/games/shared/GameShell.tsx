@@ -8,8 +8,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award } from "lucide-react";
+import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
 import ActivityHeader from "@/components/activities/ActivityHeader";
+import { usePersonalBest } from "@/hooks/usePersonalBest";
 import "./game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -114,15 +115,15 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function GameShell({
-  gameKey: _gameKey,
+  gameKey,
   title,
   briefing,
   children,
   onComplete,
   starThresholds = [30, 60, 90],
 }: GameShellProps) {
-  void _gameKey;
   const { t } = useTranslation();
+  const personalBest = usePersonalBest(gameKey);
   const [phase, setPhase] = useState<"briefing" | "playing" | "results">(
     briefing ? "briefing" : "playing",
   );
@@ -177,6 +178,12 @@ export default function GameShell({
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {personalBest && personalBest.bestScore > 0 && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/50 shadow-sm text-sm">
+                <Trophy className="w-4 h-4 text-yellow-500" />
+                <span className="font-bold text-slate-600">{t("games.personalBest.highScore", { defaultValue: "High Score" })}: {personalBest.bestScore}</span>
               </div>
             )}
             <Button
@@ -251,6 +258,19 @@ export default function GameShell({
                 <p className="text-xs font-medium text-slate-500 mt-1">{t("games.shared.accuracy")}</p>
               </div>
             </div>
+
+            {/* Personal Best */}
+            {personalBest && result.score > personalBest.bestScore && (
+              <div className="bounce-in flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-300 rounded-xl shadow-md" style={{ animationDelay: "500ms" }}>
+                <Trophy className="w-5 h-5 text-yellow-600" />
+                <span className="text-sm font-bold text-yellow-800">{t("games.personalBest.newRecord", { defaultValue: "New Record!" })}</span>
+              </div>
+            )}
+            {personalBest && personalBest.bestScore > 0 && result.score <= personalBest.bestScore && (
+              <div className="text-xs text-slate-400">
+                {t("games.personalBest.personalBest", { defaultValue: "Personal Best" })}: {personalBest.bestScore}
+              </div>
+            )}
 
             {/* First try / perfect badges */}
             <div className="flex flex-wrap gap-2 justify-center">

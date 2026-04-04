@@ -291,13 +291,14 @@ function RhymeHUD({
   worldIcon: string;
   roundLabel: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2 max-w-[480px] mx-auto">
       {/* Prompt chip */}
       <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-5 py-3 rounded-xl font-extrabold text-xl text-center shadow-lg border border-white/10 flex items-center justify-center gap-3">
         <span className="text-2xl">{familyIcon}</span>
         <span>
-          Which word rhymes with <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
+          {t("games.rhymeRide.whichRhymes")} <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
         </span>
         <span className={cn("px-2 py-0.5 rounded-full text-sm font-bold border", familyColor.replace("bg-", "border-"), "bg-white text-slate-700")}>
           {familyPattern}
@@ -339,8 +340,7 @@ function RhymeHUD({
 // ═══════════════════════════════════════════════════════════════════════════
 
 function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void }) {
-  const { t: _t } = useTranslation();
-  void _t; // available for future i18n
+  const { t } = useTranslation();
   const prefersReducedMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
     [],
@@ -364,6 +364,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
   const [prompt, setPrompt] = useState("");
   const [currentFamily, setCurrentFamily] = useState<RhymeFamily | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"positive" | "negative" | "neutral">("neutral");
 
   // Missed families to recycle
   const missedFamiliesRef = useRef<RhymeFamily[]>([]);
@@ -372,6 +373,20 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
 
   const world = WORLDS[worldIdx];
   const speed = BASE_SPEED + worldIdx * SPEED_RAMP;
+
+  /**
+   * Shared helper: register a successful decision (correct tap OR correct pass).
+   * Increments combo, updates max streak, adds to score, increments totalCorrect.
+   * Returns the new combo value for feedback text.
+   */
+  const registerSuccess = useCallback((points: number): number => {
+    let newCombo = 0;
+    setCombo((c) => { newCombo = c + 1; return newCombo; });
+    setMaxStreak((m) => Math.max(m, newCombo));
+    setTotalCorrect((c) => c + 1);
+    setScore((s) => s + points);
+    return newCombo;
+  }, []);
 
   // ── Spawn a round ──
   const spawnRound = useCallback(
@@ -541,7 +556,8 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
       }
       return nl;
     });
-    setFeedbackText("Too slow! Try to tap faster.");
+    setFeedbackText(t("games.rhymeRide.tooSlow"));
+    setFeedbackType("negative");
     setPhase("feedback");
     setTimeout(() => {
       setFeedbackText("");
@@ -555,9 +571,11 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
     }, 1000);
   }, [currentFamily, roundIdx, spawnRound]);
 
-  // ── Showdown distractor pass-through (neutral — no penalty) ──
+  // ── Showdown distractor pass-through (correct decision — reward) ──
   const handleShowdownDistractorPass = useCallback(() => {
-    setFeedbackText("Good eye! That wasn't a rhyme.");
+    const nc = registerSuccess(15); // reward for correct pass
+    setFeedbackText(nc >= 3 ? `${t("games.rhymeRide.showdownGoodEye")} x${nc}` : t("games.rhymeRide.showdownGoodEye"));
+    setFeedbackType("positive");
     setPhase("showdownFeedback");
     setTimeout(() => {
       setFeedbackText("");
@@ -570,7 +588,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         advanceShowdown(queue, WORLDS[worldIdx]);
       }
     }, 600);
-  }, [worldIdx, advanceShowdown]);
+  }, [worldIdx, advanceShowdown, registerSuccess]);
 
   // ── Lane tap handler ──
   const handleLaneTap = useCallback(
@@ -590,12 +608,15 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
           // Should tap — correct!
           setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, state: "hit" as const } : c));
           setShowdownCorrect((c) => c + 1);
-          setScore((s) => s + 20);
-          setFeedbackText("SHOWDOWN HIT!");
+          const nc = registerSuccess(20); // reward for correct showdown tap
+          setFeedbackText(nc >= 3 ? `${t("games.rhymeRide.showdownHit")} x${nc}` : t("games.rhymeRide.showdownHit"));
+          setFeedbackType("positive");
         } else {
-          // Shouldn't tap — it's a distractor
+          // Shouldn't tap — it's a distractor → gentle penalty
           setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, state: "wrong" as const } : c));
-          setFeedbackText("Not a rhyme! Let it pass.");
+          setCombo(0);
+          setFeedbackText(t("games.rhymeRide.showdownNotRhyme"));
+          setFeedbackType("negative");
         }
         setPhase("showdownFeedback");
 
@@ -635,19 +656,15 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
                 : c,
           ),
         );
-        const newCombo = combo + 1;
-        setCombo(newCombo);
-        setMaxStreak((m) => Math.max(m, newCombo));
-        setTotalCorrect((c) => c + 1);
-        const points = 10 * newCombo;
-        setScore((s) => s + points);
+        const nc = registerSuccess(10 * (combo + 1));
         setFeedbackText(
-          newCombo >= 5
-            ? `AMAZING! "${target.word}" rhymes! x${newCombo}`
-            : newCombo >= 3
-              ? `Great! "${target.word}" rhymes! x${newCombo}`
-              : `Yes! "${target.word}" rhymes with "${prompt}"!`,
+          nc >= 5
+            ? `${t("games.shared.amazing")} "${target.word}" x${nc}`
+            : nc >= 3
+              ? `${t("games.shared.greatJob")} "${target.word}" x${nc}`
+              : `${t("games.shared.goodWork")} "${target.word}"!`,
         );
+        setFeedbackType("positive");
         setPhase("feedback");
 
         const nextRound = roundIdx + 1;
@@ -682,7 +699,8 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
           if (nl <= 0) setPhase("gameOver");
           return nl;
         });
-        setFeedbackText(`Not quite — "${target.word}" doesn't rhyme with "${prompt}".`);
+        setFeedbackText(`${t("games.shared.keepTrying")} "${target.word}"`);
+        setFeedbackType("negative");
 
         // Don't advance yet — let remaining cards keep falling
         setTimeout(() => setFeedbackText(""), 1200);
@@ -751,22 +769,22 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
     return (
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{"🎵"}</div>
-        <h3 className="text-2xl font-extrabold text-slate-800">Ride Complete!</h3>
+        <h3 className="text-2xl font-extrabold text-slate-800">{t("games.rhymeRide.rideComplete")}</h3>
         <p className="text-lg text-slate-600">
-          Score: <span className="font-bold text-purple-600">{score}</span>
+          {t("games.rhymeRide.score")}: <span className="font-bold text-purple-600">{score}</span>
           {" | "}
-          Best streak: <span className="font-bold text-orange-600">{maxStreak}</span>
+          {t("games.rhymeRide.bestStreak")}: <span className="font-bold text-orange-600">{maxStreak}</span>
         </p>
         {maxStreak >= 5 && (
           <div className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold rounded-full shadow-lg">
-            {"🏆"} Perfect Chain Badge!
+            {"🏆"} {t("games.rhymeRide.perfectChain")}
           </div>
         )}
         <button
           className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
           onClick={finishGame}
         >
-          Finish
+          {t("games.rhymeRide.finish")}
         </button>
       </div>
     );
@@ -779,16 +797,16 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{world?.icon}</div>
         <h3 className="text-2xl font-extrabold text-slate-800">
-          {world?.name} Complete!
+          {t("games.rhymeRide.worldComplete", { world: world?.name })}
         </h3>
         <div className="flex gap-4 justify-center">
           <div className="bg-white/80 rounded-xl px-4 py-3 shadow-sm">
             <p className="text-2xl font-extrabold text-yellow-600">{score}</p>
-            <p className="text-xs text-slate-500">Score</p>
+            <p className="text-xs text-slate-500">{t("games.rhymeRide.score")}</p>
           </div>
           <div className="bg-white/80 rounded-xl px-4 py-3 shadow-sm">
             <p className="text-2xl font-extrabold text-orange-600">{maxStreak}</p>
-            <p className="text-xs text-slate-500">Best Streak</p>
+            <p className="text-xs text-slate-500">{t("games.rhymeRide.bestStreak")}</p>
           </div>
         </div>
         {nextWorld ? (
@@ -796,14 +814,14 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
             className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
             onClick={advanceWorld}
           >
-            {"🚀"} Next: {nextWorld.name}
+            {"🚀"} {t("games.rhymeRide.nextWorld", { world: nextWorld.name })}
           </button>
         ) : (
           <button
             className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
             onClick={finishGame}
           >
-            {"🌟"} See Results
+            {"🌟"} {t("games.rhymeRide.seeResults")}
           </button>
         )}
       </div>
@@ -821,7 +839,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
           className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
           aria-label={muted ? "Unmute" : "Mute"}
         >
-          {muted ? "🔇" : "🔊"} {muted ? "Sound Off" : "Sound On"}
+          {muted ? "🔇" : "🔊"} {muted ? t("games.rhymeRide.soundOff") : t("games.rhymeRide.soundOn")}
         </button>
       </div>
 
@@ -838,7 +856,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         worldIcon={world.icon}
         roundLabel={
           phase === "showdown" || phase === "showdownFeedback"
-            ? "SHOWDOWN!"
+            ? t("games.rhymeRide.showdownLabel")
             : `${roundIdx + 1}/${ROUNDS_PER_WORLD}`
         }
       />
@@ -857,11 +875,11 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         <div
           className={cn(
             "text-center py-2 rounded-xl font-bold text-sm max-w-[480px] mx-auto",
-            phase === "showdownFeedback"
-              ? "bg-yellow-100 text-yellow-800 bounce-in"
-              : feedbackText.startsWith("Yes") || feedbackText.startsWith("Great") || feedbackText.startsWith("AMAZING") || feedbackText.startsWith("SHOWDOWN")
-                ? "bg-green-100 text-green-800 bounce-in"
-                : "bg-red-100 text-red-800 shake",
+            feedbackType === "positive"
+              ? "bg-green-100 text-green-800 bounce-in"
+              : feedbackType === "negative"
+                ? "bg-red-100 text-red-800 shake"
+                : "bg-yellow-100 text-yellow-800 bounce-in",
           )}
         >
           {feedbackText}
@@ -870,11 +888,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
 
       {/* Keyboard hint */}
       <p className="text-center text-xs text-slate-400 max-w-[480px] mx-auto">
-        Press <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">1</kbd>{" "}
-        <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">2</kbd>{" "}
-        <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">3</kbd> or tap a lane
-        {" | "}
-        <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-600 font-mono">M</kbd> mute
+        {t("games.rhymeRide.keyboardHint")}
       </p>
     </div>
   );
@@ -895,18 +909,16 @@ export default function RhymeRideGame({
   const { t } = useTranslation();
 
   const briefing: MissionBriefing = {
-    title: "Rhyme & Ride!",
-    story:
-      "Rhymo is riding through three amazing worlds! Word cards are zooming down three lanes. " +
-      "Tap the lane with the rhyming word before it passes. Build combos for bonus points!",
+    title: t("games.rhymeRide.briefingTitle"),
+    story: t("games.rhymeRide.briefingStory"),
     icon: "🚲",
-    chapterLabel: "Rhyme & Ride",
+    chapterLabel: t("games.rhymeRide.title"),
     themeColor: "purple",
     tips: [
-      "Tap the lane with the rhyming word",
-      "Use keys 1, 2, 3 on your keyboard",
-      "Combos = more points!",
-      "Watch for showdown rounds every 5 hits!",
+      t("games.rhymeRide.tipTapLane"),
+      t("games.rhymeRide.tipKeyboard"),
+      t("games.rhymeRide.tipCombos"),
+      t("games.rhymeRide.tipShowdown"),
     ],
   };
 

@@ -77,7 +77,8 @@ model User {
   pdSessions        PDSession[]
   pdReflections     PDReflection[]
   facultyPosts      FacultyPost[]
-  benchmarkAttempts BenchmarkAttempt[]
+  benchmarkAttempts  BenchmarkAttempt[]
+  gamePersonalBests  GamePersonalBest[]
 }
 
 // -----------------------------------------------------------------------------
@@ -590,5 +591,28 @@ model BenchmarkAttempt {
 
   @@unique([assignmentId, studentId])
   @@index([assignmentId])
+  @@index([studentId])
+}
+
+// -----------------------------------------------------------------------------
+// Game Personal Bests — per-student per-game high scores
+// -----------------------------------------------------------------------------
+
+model GamePersonalBest {
+  id                  String   @id @default(cuid())
+  studentId           String
+  gameKey             String   // e.g. "rhymo_rhyme_rocket", "boost_path_planner"
+  bestScore           Int      @default(0)
+  lastScore           Int      @default(0)
+  bestStreak          Int      @default(0)
+  bestRoundsCompleted Int      @default(0)
+  playCount           Int      @default(0)
+  firstPlayedAt       DateTime @default(now())
+  lastPlayedAt        DateTime @default(now())
+  meta                Json?    // optional extra data
+
+  student User @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, gameKey])
   @@index([studentId])
 }

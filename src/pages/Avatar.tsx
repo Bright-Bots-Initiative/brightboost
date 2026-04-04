@@ -53,8 +53,7 @@ const SPECIALIZATIONS = [
 ];
 
 export default function Avatar() {
-  const { t, i18n } = useTranslation();
-  const isEs = (i18n.resolvedLanguage ?? i18n.language)?.startsWith("es");
+  const { t } = useTranslation();
   const { user } = useAuth();
   const authApi = useApi();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -284,28 +283,24 @@ export default function Avatar() {
       {/* Specialization Picker */}
       <div className="space-y-3">
         <h2 className="text-xl font-bold text-slate-800">
-          {isEs ? "Tu Especialización" : "Your Specialization"}
+          {t("avatar.specialization")}
         </h2>
         {currentArchetype ? (
           <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="py-5 text-center">
               <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-1">
-                {isEs ? "Especialización Activa" : "Active Specialization"}
+                {t("avatar.activeSpec")}
               </p>
               <p className="text-3xl font-black text-indigo-700">
                 {SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.icon ?? "⭐"}{" "}
-                {isEs
-                  ? SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.labelEs
-                  : SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.label}
+                {t(`avatar.spec.${currentArchetype}`, { defaultValue: SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.label })}
               </p>
             </CardContent>
           </Card>
         ) : s.specialtyProgress.set3.complete ? (
           <>
             <p className="text-sm text-slate-600 text-center">
-              {isEs
-                ? "¡Elige tu camino especial! Esto desbloquea módulos y habilidades únicas."
-                : "Pick your special path! This unlocks unique modules and abilities."}
+              {t("avatar.pickPath")}
             </p>
             <div className="grid gap-3">
               {SPECIALIZATIONS.map((spec) => (
@@ -325,10 +320,10 @@ export default function Avatar() {
                   </div>
                   <div className="flex-1 text-left">
                     <p className="text-lg font-bold text-slate-800">
-                      {isEs ? spec.labelEs : spec.label}
+                      {t(`avatar.spec.${spec.key}`, { defaultValue: spec.label })}
                     </p>
                     <p className="text-sm text-slate-500">
-                      {isEs ? spec.descEs : spec.desc}
+                      {t(`avatar.specDesc.${spec.key}`, { defaultValue: spec.desc })}
                     </p>
                   </div>
                 </button>
@@ -340,14 +335,10 @@ export default function Avatar() {
             <CardContent className="py-5 text-center space-y-2">
               <p className="text-3xl">{"🔒"}</p>
               <p className="text-sm font-bold text-slate-600">
-                {isEs
-                  ? "Completa el Set 3 de STEM para desbloquear tu especialización."
-                  : "Finish STEM Set 3 to unlock your specialization."}
+                {t("avatar.lockedMessage")}
               </p>
               <p className="text-xs text-slate-400">
-                {isEs
-                  ? `Progreso: ${s.specialtyProgress.set3.current}/${s.specialtyProgress.set3.target}`
-                  : `Progress: ${s.specialtyProgress.set3.current}/${s.specialtyProgress.set3.target}`}
+                {t("avatar.progress")}: {s.specialtyProgress.set3.current}/{s.specialtyProgress.set3.target}
               </p>
             </CardContent>
           </Card>
