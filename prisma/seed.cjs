@@ -404,14 +404,14 @@ async function main() {
     where: { slug: "k2-stem-bounce-buds" },
     update: {
       title: "STEM-1: Module 3 — Bounce & Buds",
-      description: "Sort plants, parts, and needs with Buddy! 🌿🧫",
+      description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-bounce-buds",
       title: "STEM-1: Module 3 — Bounce & Buds",
-      description: "Sort plants, parts, and needs with Buddy! 🌿🧫",
+      description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
     },

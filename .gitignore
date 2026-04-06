@@ -46,3 +46,4 @@ unity-*/UserSettings/
 public/games/*/Build/*.js
 public/games/*/Build/*.data
 public/games/*/Build/*.wasm
+CLAUDE.local.md

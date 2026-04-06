@@ -1,6 +1,12 @@
-import { useState } from "react";
-import { LearningGameFrame } from "./shared/LearningGameFrame";
-import type { GameResult } from "./shared/GameShell";
+/**
+ * BuddyGardenSortGame — compatibility wrapper.
+ *
+ * The default export now points to the restored Bounce & Buds
+ * paddle-and-ball game.  Named exports (GARDEN_CARDS, scoreGardenPick)
+ * are kept for existing tests and any code that references them.
+ */
+
+// ── Data & scoring helpers (used by tests) ──────────────────────────────
 
 type Bucket = "need" | "part" | "not-helpful";
 
@@ -54,96 +60,6 @@ export function scoreGardenPick(
   };
 }
 
-export default function BuddyGardenSortGame({
-  onComplete,
-}: {
-  onComplete?: (result: GameResult) => void;
-}) {
-  const [index, setIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState(
-    "Read the clue and choose the best bucket.",
-  );
+// ── Default export: the restored Bounce & Buds game ─────────────────────
 
-  const item = GARDEN_CARDS[index];
-  const done = index >= GARDEN_CARDS.length;
-
-  function pick(bucket: Bucket) {
-    if (done) return;
-
-    const { correct, explanation } = scoreGardenPick(item, bucket);
-    const nextScore = correct ? score + 1 : score;
-
-    setScore(nextScore);
-    setFeedback(explanation);
-
-    const nextIndex = index + 1;
-    if (nextIndex >= GARDEN_CARDS.length) {
-      onComplete?.({
-        gameKey: "buddy_garden_sort",
-        score: nextScore,
-        total: GARDEN_CARDS.length,
-        streakMax: nextScore,
-        roundsCompleted: GARDEN_CARDS.length,
-      });
-    }
-
-    window.setTimeout(() => {
-      setIndex(nextIndex);
-      if (nextIndex < GARDEN_CARDS.length) {
-        setFeedback("Read the clue and choose the best bucket.");
-      }
-    }, 900);
-  }
-
-  return (
-    <LearningGameFrame
-      title="Buddy's Garden Sort"
-      objective="Sort each card into the right garden group."
-      vocabulary={["root", "leaf", "soil", "sunlight"]}
-      progressLabel={done ? "Complete" : `Card ${index + 1}/${GARDEN_CARDS.length}`}
-      feedback={feedback}
-    >
-      <div className="space-y-6 rounded-2xl border bg-white p-6">
-        {done ? (
-          <div className="rounded-xl bg-emerald-50 p-6 text-center">
-            <p className="text-lg font-bold text-emerald-900">
-              Garden sorting complete!
-            </p>
-            <p className="mt-2 text-sm text-emerald-800">
-              Great job sorting plant parts and plant needs.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-2xl bg-lime-50 p-6 text-center">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-                Clue
-              </p>
-              <p className="mt-2 text-2xl font-bold">{item.clue}</p>
-              <p className="mt-4 text-4xl font-black text-slate-900">
-                {item.label}
-              </p>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              {(Object.keys(LABELS) as Bucket[]).map((bucket) => (
-                <button
-                  key={bucket}
-                  onClick={() => pick(bucket)}
-                  className="rounded-2xl border bg-white px-4 py-6 text-lg font-bold shadow-sm transition hover:-translate-y-0.5"
-                >
-                  {LABELS[bucket]}
-                </button>
-              ))}
-            </div>
-
-            <div className="rounded-xl bg-slate-50 p-3 text-sm">
-              Score: {score} / {GARDEN_CARDS.length}
-            </div>
-          </>
-        )}
-      </div>
-    </LearningGameFrame>
-  );
-}
+export { default } from "./BounceBudsGame";
