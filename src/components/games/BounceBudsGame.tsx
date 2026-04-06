@@ -5,6 +5,10 @@
  * into the correct answer gate at the top. Each round shows a
  * biology/nature clue and three labeled gates (1 correct, 2 distractors).
  *
+ * The ball stays on the paddle until the player moves — giving K–2
+ * students time to read the clue and choose a target gate before
+ * the action starts.
+ *
  * Keyboard: ← → or A/D to move paddle
  * Mouse/Touch: pointer-follow
  */
@@ -28,7 +32,18 @@ interface BounceRound {
   theme: "plant-needs" | "plant-parts" | "tiny-living-things";
 }
 
-type RoundPhase = "ready" | "active" | "resolved" | "transition";
+/**
+ * Phase lifecycle per round:
+ *   ready → waiting → active → resolved → transition → (next ready | complete)
+ *
+ *   ready      – brief "Get Ready!" flash (≈1 s)
+ *   waiting    – clue & gates visible, ball on paddle, waiting for player input
+ *   active     – ball bouncing, physics running
+ *   resolved   – outcome shown, physics stopped
+ *   transition – brief fade before next round
+ *   complete   – game over, no further state changes
+ */
+type RoundPhase = "ready" | "waiting" | "active" | "resolved" | "transition" | "complete";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -46,12 +61,15 @@ const GATE_GAP = 16;
 const GATES_TOTAL_W = 3 * GATE_W + 2 * GATE_GAP;
 const GATE_START_X = (FIELD_W - GATES_TOTAL_W) / 2;
 
-const INITIAL_SPEED = 3.0;
-const SPEED_INCREMENT = 0.15;
+// ── Speed tuning (K–2 friendly) ──
+const INITIAL_SPEED = 2.0;        // px/frame — noticeably slower start
+const SPEED_INCREMENT = 0.08;     // gentle ramp per round
+const MAX_BOUNCE_ANGLE = 0.8;     // radians — softer paddle reflection
 const MAX_LIVES = 5;
 const ROUND_TIMEOUT_MS = 25_000;
-const READY_DELAY_MS = 1_400;
-const RESOLVE_DELAY_MS = 1_600;
+const READY_FLASH_MS = 1_000;     // "Get Ready!" overlay
+const AUTO_LAUNCH_MS = 8_000;     // safety auto-launch if no input
+const RESOLVE_DELAY_MS = 1_800;
 const TRANSITION_DELAY_MS = 400;
 const PADDLE_KB_SPEED = 8;
 
@@ -217,6 +235,10 @@ function BouncePlayfield({
   const sparkleCounter = useRef(0);
   const gateLabelsRef = useRef<string[]>([]);
   const finishedRef = useRef(false);
+  const phaseRef = useRef<RoundPhase>("ready");
+
+  // Keep phaseRef in sync so event handlers see the latest value
+  phaseRef.current = phase;
 
   const currentRound = roundIndex < ROUNDS.length ? ROUNDS[roundIndex] : null;
 
@@ -231,6 +253,13 @@ function BouncePlayfield({
     timerIds.current = [];
   }
 
+  // ── Stop all physics & timers (called before completion and unmount) ──
+  function haltEverything() {
+    cancelAnimationFrame(rafId.current);
+    clearAllTimers();
+    outcomeLock.current = true;
+  }
+
   // ── Direct DOM helpers ──
   function syncPaddle() {
     if (paddleElRef.current) {
@@ -243,13 +272,38 @@ function BouncePlayfield({
     }
   }
 
+  // ── Launch the ball (called on first player input during "waiting" phase) ──
+  function launchBall() {
+    if (phaseRef.current !== "waiting" || finishedRef.current) return;
+
+    outcomeLock.current = false;
+    const speed = INITIAL_SPEED + roundIndex * SPEED_INCREMENT;
+    const angle = (Math.random() - 0.5) * 0.6; // gentle initial angle
+    ball.current.vx = Math.sin(angle) * speed;
+    ball.current.vy = -Math.cos(angle) * speed;
+    setPhase("active");
+
+    // Round timeout
+    addTimer(() => {
+      if (!outcomeLock.current) {
+        resolveRef.current(false, "Time\u2019s up! Let\u2019s try the next one.");
+      }
+    }, ROUND_TIMEOUT_MS);
+  }
+
+  const launchRef = useRef(launchBall);
+  launchRef.current = launchBall;
+
   // ── Resolve a round outcome ──
-  // Defined as a plain function; a ref keeps the RAF loop in sync.
   function resolveRound(correct: boolean, message: string) {
-    if (outcomeLock.current) return;
+    if (outcomeLock.current || finishedRef.current) return;
     outcomeLock.current = true;
-    clearAllTimers();
     cancelAnimationFrame(rafId.current);
+    clearAllTimers();
+
+    // Stop the ball immediately
+    ball.current.vx = 0;
+    ball.current.vy = 0;
 
     const newScore = correct ? score + 1 : score;
     const newLives = correct ? lives : lives - 1;
@@ -275,21 +329,27 @@ function BouncePlayfield({
       addTimer(() => setSparkles([]), 900);
     }
 
+    // Transition → next round or game over
     addTimer(() => {
+      if (finishedRef.current) return;
       setPhase("transition");
+
       addTimer(() => {
+        if (finishedRef.current) return;
+
         const next = roundIndex + 1;
         if (next >= ROUNDS.length || newLives <= 0) {
-          if (!finishedRef.current) {
-            finishedRef.current = true;
-            onFinish({
-              gameKey: "buddy_garden_sort",
-              score: newScore,
-              total: ROUNDS.length,
-              streakMax: newMaxStreak,
-              roundsCompleted: Math.min(next, ROUNDS.length),
-            });
-          }
+          // ── Game complete ──
+          finishedRef.current = true;
+          haltEverything();
+          setPhase("complete");
+          onFinish({
+            gameKey: "buddy_garden_sort",
+            score: newScore,
+            total: ROUNDS.length,
+            streakMax: newMaxStreak,
+            roundsCompleted: Math.min(next, ROUNDS.length),
+          });
         } else {
           setRoundIndex(next);
           setPhase("ready");
@@ -303,7 +363,7 @@ function BouncePlayfield({
 
   // ── Round setup (runs when roundIndex changes) ──
   useEffect(() => {
-    if (roundIndex >= ROUNDS.length) return;
+    if (roundIndex >= ROUNDS.length || finishedRef.current) return;
 
     const r = ROUNDS[roundIndex];
     const labels = shuffleArray([r.correctLabel, ...r.distractors]);
@@ -311,7 +371,7 @@ function BouncePlayfield({
     setGateLabels(labels);
     setHitGateIdx(null);
     setFeedback(null);
-    outcomeLock.current = true; // prevent stale collisions during ready
+    outcomeLock.current = true; // prevent stale collisions during ready/waiting
 
     // Position ball on paddle center
     ball.current = {
@@ -324,21 +384,19 @@ function BouncePlayfield({
     syncBall();
     syncPaddle();
 
-    // Auto-launch after ready delay
+    // Phase 1: brief "Get Ready!" flash
+    // Phase 2: "waiting" — ball on paddle, player reads clue
     const readyTimer = addTimer(() => {
-      outcomeLock.current = false;
-      const speed = INITIAL_SPEED + roundIndex * SPEED_INCREMENT;
-      const angle = (Math.random() - 0.5) * 0.8;
-      ball.current.vx = Math.sin(angle) * speed;
-      ball.current.vy = -Math.cos(angle) * speed;
-      setPhase("active");
+      if (finishedRef.current) return;
+      setPhase("waiting");
 
+      // Safety auto-launch if the player doesn't interact
       addTimer(() => {
-        if (!outcomeLock.current) {
-          resolveRef.current(false, "Time\u2019s up! Let\u2019s try the next one.");
+        if (phaseRef.current === "waiting" && !finishedRef.current) {
+          launchRef.current();
         }
-      }, ROUND_TIMEOUT_MS);
-    }, READY_DELAY_MS);
+      }, AUTO_LAUNCH_MS);
+    }, READY_FLASH_MS);
 
     return () => clearTimeout(readyTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -351,6 +409,8 @@ function BouncePlayfield({
     const ranges = gateRanges();
 
     const loop = () => {
+      if (finishedRef.current) return;
+
       const b = ball.current;
       const px = paddleXRef.current;
 
@@ -367,13 +427,15 @@ function BouncePlayfield({
       b.x += b.vx;
       b.y += b.vy;
 
-      // Wall bounces (left / right)
+      // Wall bounces (left / right) — clamp angle to prevent near-horizontal chaos
       if (b.x - BALL_R <= 0) {
         b.x = BALL_R;
         b.vx = Math.abs(b.vx);
+        clampBallAngle(b);
       } else if (b.x + BALL_R >= FIELD_W) {
         b.x = FIELD_W - BALL_R;
         b.vx = -Math.abs(b.vx);
+        clampBallAngle(b);
       }
 
       // Gate / top-wall collision (ball moving upward)
@@ -406,10 +468,11 @@ function BouncePlayfield({
           // Hit gate divider or side margin — bounce back down
           b.y = GATE_H + BALL_R + 1;
           b.vy = Math.abs(b.vy);
+          clampBallAngle(b);
         }
       }
 
-      // Paddle collision
+      // Paddle collision — softer reflection
       if (
         b.vy > 0 &&
         b.y + BALL_R >= PADDLE_Y &&
@@ -419,7 +482,7 @@ function BouncePlayfield({
       ) {
         b.y = PADDLE_Y - BALL_R;
         const hitPos = (b.x - paddleXRef.current) / PADDLE_W; // 0..1
-        const angle = (hitPos - 0.5) * 1.2;
+        const angle = (hitPos - 0.5) * MAX_BOUNCE_ANGLE;
         const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
         b.vx = Math.sin(angle) * speed;
         b.vy = -Math.cos(angle) * speed;
@@ -444,7 +507,7 @@ function BouncePlayfield({
 
   // ── Paddle movement for non-active phases (keyboard still responsive) ──
   useEffect(() => {
-    if (phase === "active") return;
+    if (phase === "active" || phase === "complete") return;
     let id: number;
     const loop = () => {
       const k = keysDown.current;
@@ -473,6 +536,10 @@ function BouncePlayfield({
       if (["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(e.key)) {
         e.preventDefault();
         keysDown.current.add(e.key);
+        // Launch ball on first input during waiting phase
+        if (phaseRef.current === "waiting") {
+          launchRef.current();
+        }
       }
     };
     const onUp = (e: KeyboardEvent) => keysDown.current.delete(e.key);
@@ -488,6 +555,10 @@ function BouncePlayfield({
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     fieldRef.current?.setPointerCapture(e.pointerId);
     movePaddleToPointer(e);
+    // Launch ball on first tap/click during waiting phase
+    if (phaseRef.current === "waiting") {
+      launchRef.current();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -503,8 +574,7 @@ function BouncePlayfield({
   // ── Cleanup on unmount ──
   useEffect(
     () => () => {
-      cancelAnimationFrame(rafId.current);
-      clearAllTimers();
+      haltEverything();
     },
     [],
   );
@@ -516,7 +586,7 @@ function BouncePlayfield({
   return (
     <div className="space-y-3">
       {/* ── Clue Banner ── */}
-      {currentRound && (
+      {currentRound && phase !== "complete" && (
         <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-lime-50 border border-emerald-200 p-4 text-center shadow-sm">
           <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
             Round {roundIndex + 1} of {ROUNDS.length}
@@ -528,31 +598,33 @@ function BouncePlayfield({
       )}
 
       {/* ── HUD ── */}
-      <div className="flex items-center justify-between rounded-xl bg-white/80 border px-4 py-2 text-sm font-bold shadow-sm">
-        <div
-          className="flex items-center gap-0.5 text-lg"
-          aria-label={`${lives} lives remaining`}
-        >
-          {Array.from({ length: MAX_LIVES }, (_, i) => (
-            <span
-              key={i}
-              className={`transition-all duration-300 ${
-                i < lives ? "text-red-500 scale-100" : "text-gray-300 scale-75"
-              }`}
-            >
-              {i < lives ? "\u2665" : "\u2661"}
-            </span>
-          ))}
-        </div>
-        <div className="text-emerald-700 tabular-nums">
-          Score: {score}/{ROUNDS.length}
-        </div>
-        {streak >= 2 && (
-          <div className="streak-fire text-amber-600 tabular-nums">
-            {streak}x combo
+      {phase !== "complete" && (
+        <div className="flex items-center justify-between rounded-xl bg-white/80 border px-4 py-2 text-sm font-bold shadow-sm">
+          <div
+            className="flex items-center gap-0.5 text-lg"
+            aria-label={`${lives} lives remaining`}
+          >
+            {Array.from({ length: MAX_LIVES }, (_, i) => (
+              <span
+                key={i}
+                className={`transition-all duration-300 ${
+                  i < lives ? "text-red-500 scale-100" : "text-gray-300 scale-75"
+                }`}
+              >
+                {i < lives ? "\u2665" : "\u2661"}
+              </span>
+            ))}
           </div>
-        )}
-      </div>
+          <div className="text-emerald-700 tabular-nums">
+            Score: {score}/{ROUNDS.length}
+          </div>
+          {streak >= 2 && (
+            <div className="streak-fire text-amber-600 tabular-nums">
+              {streak}x combo
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Playfield (responsive wrapper) ── */}
       <div
@@ -614,7 +686,7 @@ function BouncePlayfield({
             <div
               ref={ballElRef}
               className={`absolute rounded-full shadow-md transition-opacity duration-200
-                ${phase === "transition" ? "opacity-0" : "opacity-100"}`}
+                ${phase === "transition" || phase === "complete" ? "opacity-0" : "opacity-100"}`}
               style={{
                 width: BALL_R * 2,
                 height: BALL_R * 2,
@@ -666,6 +738,17 @@ function BouncePlayfield({
               </div>
             )}
 
+            {/* ── Waiting overlay — ball on paddle, player reads clue ── */}
+            {phase === "waiting" && (
+              <div className="absolute inset-0 flex items-end justify-center pb-20 pointer-events-none">
+                <div className="slide-up-fade rounded-2xl bg-white/90 px-6 py-3 shadow-lg border border-emerald-200">
+                  <p className="text-base font-bold text-emerald-700 text-center">
+                    Read the clue, then move to bounce!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* ── Feedback overlay ── */}
             {feedback && phase === "resolved" && (
               <div
@@ -689,14 +772,37 @@ function BouncePlayfield({
       </div>
 
       {/* ── Controls hint ── */}
-      <p className="text-center text-xs text-slate-400">
-        {t("games.bounceBuds.controls", {
-          defaultValue:
-            "\u2190 \u2192 arrow keys or drag to move Buddy\u2019s paddle",
-        })}
-      </p>
+      {phase !== "complete" && (
+        <p className="text-center text-xs text-slate-400">
+          {t("games.bounceBuds.controls", {
+            defaultValue:
+              "\u2190 \u2192 arrow keys or drag to move Buddy\u2019s paddle",
+          })}
+        </p>
+      )}
     </div>
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Angle clamping — prevent near-horizontal chaos after wall bounces
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Ensure ball always has meaningful vertical speed (avoids endless horizontal bouncing). */
+function clampBallAngle(b: { vx: number; vy: number }) {
+  const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  if (speed === 0) return;
+  const angle = Math.atan2(b.vx, -b.vy); // angle from vertical-up
+  const maxAngle = 1.1; // ~63 degrees from vertical
+  if (Math.abs(angle) > maxAngle) {
+    const clamped = Math.sign(angle) * maxAngle;
+    const dir = b.vy < 0 ? -1 : 1; // preserve vertical direction
+    b.vx = Math.sin(clamped) * speed;
+    b.vy = dir * Math.cos(clamped) * speed * (dir < 0 ? 1 : -1);
+    // Ensure vertical direction didn't flip
+    if (dir < 0) b.vy = -Math.abs(Math.cos(clamped) * speed);
+    else b.vy = Math.abs(Math.cos(clamped) * speed);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

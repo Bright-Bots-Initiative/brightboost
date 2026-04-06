@@ -112,6 +112,137 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
   );
 }
 
+// ── Results screen (own component so hooks are never conditional) ──────────
+
+function GameResultsView({
+  result,
+  title,
+  personalBest,
+  onPlayAgain,
+  onComplete,
+}: {
+  result: GameResult;
+  title: string;
+  personalBest: ReturnType<typeof usePersonalBest>;
+  onPlayAgain: () => void;
+  onComplete: () => void;
+}) {
+  const { t } = useTranslation();
+  const pct = result.accuracy ?? 0;
+  const stars = result.starsEarned ?? 0;
+  const animatedScore = useCountUp(result.score, 1000);
+  const animatedPct = useCountUp(pct, 1200);
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-4">
+      <ActivityHeader title={title} visualKey="game" />
+      <div className="slide-up-fade relative overflow-hidden rounded-2xl shadow-xl">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50" />
+        {stars >= 3 && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {Array.from({ length: 12 }, (_, i) => (
+              <div
+                key={i}
+                className="absolute w-2 h-2 rounded-full bg-yellow-400/60"
+                style={{
+                  left: `${10 + Math.random() * 80}%`,
+                  top: `${10 + Math.random() * 80}%`,
+                  animation: `sparkle ${1.5 + Math.random()}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+        <div className="relative p-8 text-center space-y-6">
+          {/* Trophy */}
+          <div className="bounce-in">
+            <div className="text-6xl">
+              {stars >= 3 ? "🏆" : stars >= 2 ? "🌟" : stars >= 1 ? "⭐" : "💪"}
+            </div>
+          </div>
+          <h2 className="text-2xl font-extrabold text-amber-900 bounce-in" style={{ animationDelay: "200ms" }}>
+            {stars >= 3 ? t("games.shared.amazing") : stars >= 2 ? t("games.shared.greatJob") : stars >= 1 ? t("games.shared.goodWork") : t("games.shared.keepTrying")}
+          </h2>
+
+          {/* Stars */}
+          <div className="flex gap-3 justify-center relative">
+            {[0, 1, 2].map((i) => (
+              <AnimatedStar key={i} earned={i < stars} index={i} />
+            ))}
+          </div>
+
+          {/* Score cards */}
+          <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+              <p className="text-3xl font-extrabold text-indigo-600">{animatedScore}<span className="text-lg text-indigo-300">/{result.total}</span></p>
+              <p className="text-xs font-medium text-slate-500 mt-1">{t("games.shared.score")}</p>
+            </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+              <p className="text-3xl font-extrabold text-emerald-500">{animatedPct}%</p>
+              <p className="text-xs font-medium text-slate-500 mt-1">{t("games.shared.accuracy")}</p>
+            </div>
+          </div>
+
+          {/* Personal Best */}
+          {personalBest && result.score > personalBest.bestScore && (
+            <div className="bounce-in flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-300 rounded-xl shadow-md" style={{ animationDelay: "500ms" }}>
+              <Trophy className="w-5 h-5 text-yellow-600" />
+              <span className="text-sm font-bold text-yellow-800">{t("games.personalBest.newRecord", { defaultValue: "New Record!" })}</span>
+            </div>
+          )}
+          {personalBest && personalBest.bestScore > 0 && result.score <= personalBest.bestScore && (
+            <div className="text-xs text-slate-400">
+              {t("games.personalBest.personalBest", { defaultValue: "Personal Best" })}: {personalBest.bestScore}
+            </div>
+          )}
+
+          {/* First try / perfect badges */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            {result.firstTryClear && (
+              <span className="bounce-in inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200" style={{ animationDelay: "600ms" }}>
+                ✨ {t("games.shared.firstTry")}
+              </span>
+            )}
+            {pct === 100 && (
+              <span className="bounce-in inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200" style={{ animationDelay: "700ms" }}>
+                💯 {t("games.shared.perfectScore")}
+              </span>
+            )}
+          </div>
+
+          {/* Achievements */}
+          {result.achievements && result.achievements.length > 0 && (
+            <div className="flex flex-col gap-2 items-center">
+              {result.achievements.map((a, i) => (
+                <AchievementBadge key={a} name={a} index={i} />
+              ))}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 justify-center pt-2">
+            <Button
+              variant="outline"
+              className="rounded-xl hover:scale-105 active:scale-95 transition-transform"
+              onClick={onPlayAgain}
+            >
+              <RotateCcw className="w-4 h-4 mr-1" /> {t("games.shared.playAgain")}
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform"
+              onClick={onComplete}
+            >
+              <Home className="w-4 h-4 mr-1" /> {t("games.shared.finish")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function GameShell({
@@ -202,118 +333,14 @@ export default function GameShell({
   // ── Results ──────────────────────────────────────────────────────────
 
   if (phase === "results" && result) {
-    const pct = result.accuracy ?? 0;
-    const stars = result.starsEarned ?? 0;
-    const animatedScore = useCountUp(result.score, 1000);
-    const animatedPct = useCountUp(pct, 1200);
-
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
-        <ActivityHeader title={title} visualKey="game" />
-        <div className="slide-up-fade relative overflow-hidden rounded-2xl shadow-xl">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50" />
-          {stars >= 3 && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {Array.from({ length: 12 }, (_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full bg-yellow-400/60"
-                  style={{
-                    left: `${10 + Math.random() * 80}%`,
-                    top: `${10 + Math.random() * 80}%`,
-                    animation: `sparkle ${1.5 + Math.random()}s ease-in-out infinite`,
-                    animationDelay: `${Math.random() * 2}s`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          <div className="relative p-8 text-center space-y-6">
-            {/* Trophy */}
-            <div className="bounce-in">
-              <div className="text-6xl">
-                {stars >= 3 ? "🏆" : stars >= 2 ? "🌟" : stars >= 1 ? "⭐" : "💪"}
-              </div>
-            </div>
-            <h2 className="text-2xl font-extrabold text-amber-900 bounce-in" style={{ animationDelay: "200ms" }}>
-              {stars >= 3 ? t("games.shared.amazing") : stars >= 2 ? t("games.shared.greatJob") : stars >= 1 ? t("games.shared.goodWork") : t("games.shared.keepTrying")}
-            </h2>
-
-            {/* Stars */}
-            <div className="flex gap-3 justify-center relative">
-              {[0, 1, 2].map((i) => (
-                <AnimatedStar key={i} earned={i < stars} index={i} />
-              ))}
-            </div>
-
-            {/* Score cards */}
-            <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                <p className="text-3xl font-extrabold text-indigo-600">{animatedScore}<span className="text-lg text-indigo-300">/{result.total}</span></p>
-                <p className="text-xs font-medium text-slate-500 mt-1">{t("games.shared.score")}</p>
-              </div>
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                <p className="text-3xl font-extrabold text-emerald-500">{animatedPct}%</p>
-                <p className="text-xs font-medium text-slate-500 mt-1">{t("games.shared.accuracy")}</p>
-              </div>
-            </div>
-
-            {/* Personal Best */}
-            {personalBest && result.score > personalBest.bestScore && (
-              <div className="bounce-in flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-300 rounded-xl shadow-md" style={{ animationDelay: "500ms" }}>
-                <Trophy className="w-5 h-5 text-yellow-600" />
-                <span className="text-sm font-bold text-yellow-800">{t("games.personalBest.newRecord", { defaultValue: "New Record!" })}</span>
-              </div>
-            )}
-            {personalBest && personalBest.bestScore > 0 && result.score <= personalBest.bestScore && (
-              <div className="text-xs text-slate-400">
-                {t("games.personalBest.personalBest", { defaultValue: "Personal Best" })}: {personalBest.bestScore}
-              </div>
-            )}
-
-            {/* First try / perfect badges */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {result.firstTryClear && (
-                <span className="bounce-in inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200" style={{ animationDelay: "600ms" }}>
-                  ✨ {t("games.shared.firstTry")}
-                </span>
-              )}
-              {pct === 100 && (
-                <span className="bounce-in inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200" style={{ animationDelay: "700ms" }}>
-                  💯 {t("games.shared.perfectScore")}
-                </span>
-              )}
-            </div>
-
-            {/* Achievements */}
-            {result.achievements && result.achievements.length > 0 && (
-              <div className="flex flex-col gap-2 items-center">
-                {result.achievements.map((a, i) => (
-                  <AchievementBadge key={a} name={a} index={i} />
-                ))}
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-3 justify-center pt-2">
-              <Button
-                variant="outline"
-                className="rounded-xl hover:scale-105 active:scale-95 transition-transform"
-                onClick={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
-              >
-                <RotateCcw className="w-4 h-4 mr-1" /> {t("games.shared.playAgain")}
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform"
-                onClick={() => onComplete(result)}
-              >
-                <Home className="w-4 h-4 mr-1" /> {t("games.shared.finish")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <GameResultsView
+        result={result}
+        title={title}
+        personalBest={personalBest}
+        onPlayAgain={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
+        onComplete={() => onComplete(result)}
+      />
     );
   }
 
