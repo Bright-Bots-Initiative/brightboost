@@ -1,13 +1,13 @@
 # Bright Boost — Claude Code Project Brief
 
 > This file is read by Claude Code on every turn. Keep it current.
-> Last updated: 2026-04-06
+> Last updated: 2026-04-07
 
 ---
 
 ## Product
 
-Bright Boost is a bilingual (English/Spanish) K–8 STEM learning platform.
+Bright Boost is a multilingual (English/Spanish/Vietnamese/Chinese) K–8 STEM learning platform.
 Current rollout priority is **K–2**. Architecture and copy must support K–8.
 Long-term pathway emphasis: AI, quantum, and biotech.
 
@@ -222,7 +222,7 @@ Use this structure for every task:
 
 ```
 K–2 first, K–8 aware
-English + Spanish always
+English + Spanish always (also vi + zh-CN)
 Minimal diff over broad refactor
 Teacher + student flow consistency
 Educational clarity over flashy complexity
@@ -230,3 +230,101 @@ Preserve original game/module intent
 Trust current code over stale docs
 Flag conflicts, don't hide them
 ```
+
+---
+
+## Game Architecture
+
+### Set 1 — Foundation (4 K-2 STEM games)
+
+| Game | File | Game Key | Activity ID |
+|------|------|----------|-------------|
+| Bounce & Buds | `src/components/games/BounceBudsGame.tsx` | `buddy_garden_sort` | `bounce-buds` |
+| Gotcha Gears | `src/components/games/GotchaGearsGame.tsx` | `gotcha_gears_unity` | `gotcha-gears` |
+| Fix the Order (Lost Steps) | `src/components/games/BoostPathPlannerGame.tsx` | `boost_path_planner` | `lost-steps` |
+| Rhyme & Ride | `src/components/games/RhymeRideGame.tsx` | `rhymo_rhyme_rocket` | `rhyme-ride` |
+
+Additional K-2 modules (not in Set 1 gating):
+- Tank Trek: `src/components/games/TankTrekGame.tsx` (`tank_trek`)
+- Quantum Quest: `src/components/games/QuantumQuestGame.tsx` (`quantum_quest`)
+
+### Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
+
+| Game | File | Game Key | Activity ID | Strand |
+|------|------|----------|-------------|--------|
+| Maze Maps & Smart Paths | `src/components/games/MazeMapsGame.tsx` | `maze_maps` | `maze-maps` | AI |
+| Move, Measure & Improve | *(not yet implemented)* | `move_measure` | `move-measure` | Biotech |
+| Sky Shield Patterns | *(not yet implemented)* | `sky_shield` | `sky-shield` | Quantum |
+| Fast Lane Signals | *(not yet implemented)* | `fast_lane` | `fast-lane` | AI + Biotech |
+| Qualify, Tune, Race | *(not yet implemented)* | `qualify_tune_race` | `qualify-tune-race` | Capstone |
+
+### Set 3 — Mastery (placeholder, gates specialization)
+
+Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game components or seed data exist yet.
+
+### Progression
+
+- Each set has its own ID array in `src/constants/stemSets.ts`
+- Set 1 (4 games) → Set 2 (5 games) → Set 3 (5 games) → Archetype unlock
+- Set completion = all IDs in the set have `COMPLETED` progress records
+- Set 2 unlocks when all Set 1 IDs are completed
+- Set 3 completion gates specialization (AI / Quantum / Biotech archetype)
+- Game registry: `src/components/games/gameRegistry.ts`
+
+### Grade Bands
+
+- **K-2** (`k2`): default band, all current games target this
+- **Grades 3-5** (`g3_5`): infrastructure exists (ModuleFamily/ModuleVariant schema, API routes, seed data) but no game components are built yet
+- Band is set per-class via `Course.gradeBand` field
+- Teacher can switch band in class detail page
+- 5 module families with g3_5 content configs are seeded but need React implementations
+
+---
+
+## Removed Features
+
+### Build-a-Bot
+
+- **Removed from canon** on 2026-04-07
+- Was in **Set 1** as the 5th game (activity ID: `build-a-bot`)
+- All references stripped: constants, localized content, seed data, docs
+- Seed now auto-cleans up any existing Build-a-Bot activity data
+- **Set 1 now has 4 games** — a 5th replacement game is needed to restore the original 5-per-set structure
+- Completion logic updated to use each set's actual array length (not hardcoded 5)
+
+---
+
+## Current Audit Status
+
+**Date: 2026-04-07**
+
+### Set 2 Games Audit
+
+- Maze Maps & Smart Paths — ✅ Implemented, registered, seeded, tests pass
+- Move, Measure & Improve — ⚠️ Seeded in DB but no game component (falls through to ActivityPlayer unsupported fallback)
+- Sky Shield Patterns — ⚠️ Seeded in DB but no game component
+- Fast Lane Signals — ⚠️ Seeded in DB but no game component
+- Qualify, Tune, Race — ⚠️ Seeded in DB but no game component
+- Set 2 unlock gating: ✅ Works correctly (checks all Set 1 IDs completed)
+- Set 2 locked UI: ✅ Shows locked cards with message until Set 1 complete
+- Set 2 strand badges: ✅ Render on module cards
+
+### Grade 3-5 Upgrades Audit (Set 1)
+
+- Infrastructure: ✅ Schema (ModuleFamily, ModuleVariant, ClassModuleAssignment), API routes, seed data all present
+- Bounce & Buds 3-5 ("Data Dash: Sort & Discover"): ⚠️ Content config seeded, no game component
+- Gotcha Gears 3-5 ("Variable Quest: Fair Test Lab"): ⚠️ Content config seeded, no game component
+- Lost Steps 3-5 ("Bug Lab: Sequence & Debug"): ⚠️ Content config seeded, no game component
+- Rhyme & Ride 3-5 ("Motion Mission: Force Lab"): ⚠️ Content config seeded, no game component
+- Tank Trek 3-5 ("Design Under Pressure: Bridge Lab"): ⚠️ Content config seeded, no game component
+- Teacher band selector: ✅ Works in class detail page
+- Student visibility by band: ✅ API exists (`/api/student/assigned-modules`), no frontend consumer yet
+
+### Action Items
+
+- [ ] Build 4 remaining Set 2 game components (move_measure, sky_shield, fast_lane, qualify_tune_race)
+- [ ] Add a 5th game to Set 1 to replace Build-a-Bot (or promote Tank Trek / Quantum Quest)
+- [ ] Build g3_5 game variants for the 5 module families
+- [ ] Add student-facing UI for class-assigned modules (`/api/student/assigned-modules`)
+- [ ] Add teacher module assignment UI (catalog browse + assign/reorder)
+- [ ] Add i18n keys for Set 2 game content (currently using defaultValue fallbacks)
