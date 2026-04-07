@@ -64,8 +64,9 @@ function resolveField(t: any, field: unknown): string {
 }
 
 const FIELD_W = 560;
-const FIELD_H = 400;
-const GEAR_SIZE = 72;
+const FIELD_H = 420;
+const GEAR_H = 52;        // gear pill height
+const GEAR_MIN_W = 100;   // min pill width — ensures labels are readable
 
 // ── Falling-gear play field ───────────────────────────────────────────────
 
@@ -89,21 +90,21 @@ function GearField({
       {gears.map((g) => (
         <button
           key={g.id}
-          className={`absolute flex items-center justify-center rounded-2xl font-bold text-sm shadow-md transition-transform hover:scale-110 active:scale-90 cursor-pointer ${
+          className={`absolute flex items-center gap-1.5 rounded-full font-bold text-sm shadow-lg transition-transform hover:scale-110 active:scale-90 cursor-pointer px-3 py-1 whitespace-nowrap ${
             g.correct
-              ? "bg-gradient-to-br from-amber-400 to-orange-500 text-white border-2 border-amber-300"
-              : "bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700 border-2 border-slate-200"
+              ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white border-2 border-amber-300"
+              : "bg-gradient-to-r from-slate-200 to-slate-300 text-slate-800 border-2 border-slate-200"
           }`}
           style={{
-            width: GEAR_SIZE,
-            height: GEAR_SIZE,
-            left: `calc(${g.x}% - ${GEAR_SIZE / 2}px)`,
+            minWidth: GEAR_MIN_W,
+            height: GEAR_H,
+            left: `calc(${g.x}% - ${GEAR_MIN_W / 2}px)`,
             top: g.y,
           }}
           onClick={() => onCatch(g.id)}
         >
-          <span className="text-lg mr-1">{"⚙️"}</span>
-          <span className="truncate max-w-[48px]">{g.label}</span>
+          <span className="text-lg flex-shrink-0">{"⚙️"}</span>
+          <span>{g.label}</span>
         </button>
       ))}
     </div>
@@ -131,8 +132,9 @@ function GotchaGearsCore({
     }));
   }, [config, t]);
 
-  const baseSpeed = config?.settings?.speed ?? 1.2;
-  const speedRamp = config?.settings?.speedRamp ?? 0.15;
+  const baseSpeed = config?.settings?.speed ?? 0.55;
+  const speedRamp = config?.settings?.speedRamp ?? 0.04;
+  const maxSpeed = config?.settings?.maxSpeed ?? 1.4;
   const maxLives = config?.settings?.lives ?? 3;
 
   const [roundIdx, setRoundIdx] = useState(0);
@@ -152,14 +154,16 @@ function GotchaGearsCore({
   const spawnGears = useCallback(() => {
     if (!round) return;
     const labels = [round.correct, ...round.distractors].sort(() => Math.random() - 0.5);
-    const speed = baseSpeed + roundIdx * speedRamp;
+    const speed = Math.min(baseSpeed + roundIdx * speedRamp, maxSpeed);
+    // Spread gears evenly across the field with jitter
+    const slotWidth = 90 / labels.length; // percent-based slots
     const newGears: FallingGear[] = labels.map((label, i) => ({
       id: `${roundIdx}-${i}-${Date.now()}`,
       label,
       correct: label === round.correct,
-      x: 15 + (i * 70) / Math.max(labels.length - 1, 1) + (Math.random() * 10 - 5),
-      y: -GEAR_SIZE - Math.random() * 60,
-      speed: speed * (0.8 + Math.random() * 0.4),
+      x: 5 + slotWidth * i + slotWidth / 2 + (Math.random() * 6 - 3),
+      y: -GEAR_H - Math.random() * 50,
+      speed: speed * (0.85 + Math.random() * 0.3),
     }));
     setGears(newGears);
     setRoundComplete(false);
@@ -177,7 +181,7 @@ function GotchaGearsCore({
         let allGone = true;
         const next = prev.map((g) => {
           const ny = g.y + g.speed;
-          if (ny < FIELD_H + GEAR_SIZE) allGone = false;
+          if (ny < FIELD_H + GEAR_H) allGone = false;
           return { ...g, y: ny };
         });
         // If all gears fell off screen without being caught

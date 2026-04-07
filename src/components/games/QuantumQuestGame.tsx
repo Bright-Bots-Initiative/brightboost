@@ -128,6 +128,7 @@ const BUILTIN_CONFIG: QuantumQuestConfig = {
 
 const FIELD_W = 600;
 const FIELD_H = 380;
+const TARGET_PAD = 8; // safe padding from edges so targets never clip
 
 function TargetField({
   targets, onHit, sectorTheme, streak, hitEffects, slowActive,
@@ -139,6 +140,21 @@ function TargetField({
   hitEffects: { id: string; x: number; y: number; correct: boolean }[];
   slowActive: boolean;
 }) {
+  // Responsive scaling — same approach as Bounce & Buds
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? FIELD_W;
+      setScale(Math.min(w / FIELD_W, 1));
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   // Stable starfield
   const stars = useMemo(() =>
     Array.from({ length: 40 }, (_, i) => ({
@@ -152,73 +168,85 @@ function TargetField({
   []);
 
   return (
-    <div
-      className={`relative bg-gradient-to-b ${sectorTheme.bg} rounded-2xl overflow-hidden border-2 border-white/10 mx-auto select-none shadow-xl ${slowActive ? "ring-2 ring-cyan-400/50" : ""}`}
-      style={{ width: FIELD_W, height: FIELD_H, maxWidth: "100%" }}
-    >
-      {/* Starfield */}
-      {stars.map((s) => (
+    <div ref={wrapperRef} className="mx-auto" style={{ maxWidth: FIELD_W }}>
+      <div
+        className="relative overflow-hidden rounded-2xl border-2 border-white/10 shadow-xl"
+        style={{ height: FIELD_H * scale }}
+      >
         <div
-          key={s.id}
-          className="absolute rounded-full bg-white"
+          className={`absolute top-0 left-0 bg-gradient-to-b ${sectorTheme.bg} select-none ${slowActive ? "ring-2 ring-cyan-400/50" : ""}`}
           style={{
-            width: s.size, height: s.size,
-            left: `${s.x}%`, top: `${s.y}%`,
-            opacity: s.opacity,
-            animation: `sparkle ${s.twinkle}s ease-in-out infinite`,
-            animationDelay: `${s.id * 0.1}s`,
+            width: FIELD_W,
+            height: FIELD_H,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
           }}
-        />
-      ))}
+        >
+          {/* Starfield */}
+          {stars.map((s) => (
+            <div
+              key={s.id}
+              className="absolute rounded-full bg-white"
+              style={{
+                width: s.size, height: s.size,
+                left: `${s.x}%`, top: `${s.y}%`,
+                opacity: s.opacity,
+                animation: `sparkle ${s.twinkle}s ease-in-out infinite`,
+                animationDelay: `${s.id * 0.1}s`,
+              }}
+            />
+          ))}
 
-      {/* Hit effect bursts */}
-      {hitEffects.map((e) => (
-        <div
-          key={e.id}
-          className="absolute pointer-events-none hit-burst rounded-full"
-          style={{
-            left: e.x, top: e.y, width: 64, height: 64,
-            background: e.correct
-              ? "radial-gradient(circle, rgba(74,222,128,0.6), transparent)"
-              : "radial-gradient(circle, rgba(248,113,113,0.6), transparent)",
-          }}
-        />
-      ))}
+          {/* Hit effect bursts */}
+          {hitEffects.map((e) => (
+            <div
+              key={e.id}
+              className="absolute pointer-events-none hit-burst rounded-full"
+              style={{
+                left: e.x, top: e.y, width: 64, height: 64,
+                background: e.correct
+                  ? "radial-gradient(circle, rgba(74,222,128,0.6), transparent)"
+                  : "radial-gradient(circle, rgba(248,113,113,0.6), transparent)",
+              }}
+            />
+          ))}
 
-      {/* Targets */}
-      {targets.map((tgt) => {
-        const isIdle = !tgt.hit && !tgt.missed;
-        return (
-          <button
-            key={tgt.id}
-            className={`absolute flex items-center justify-center rounded-full font-extrabold transition-all duration-150 ${
-              tgt.hit
-                ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white scale-0 opacity-0"
-                : tgt.missed
-                  ? "bg-red-500/40 text-red-200 scale-75 opacity-30"
-                  : `bg-gradient-to-br ${sectorTheme.targetIdle} text-white shadow-lg ${sectorTheme.targetGlow} hover:scale-110 active:scale-90 cursor-pointer`
-            }`}
-            style={{
-              width: tgt.size, height: tgt.size,
-              fontSize: tgt.size > 60 ? 22 : 18,
-              left: Math.max(0, Math.min(tgt.x, FIELD_W - tgt.size)),
-              top: Math.max(0, Math.min(tgt.y, FIELD_H - tgt.size)),
-              transition: tgt.hit ? "all 0.3s ease-out" : "transform 0.1s",
-            }}
-            onClick={() => isIdle && onHit(tgt.id)}
-            disabled={!isIdle}
-          >
-            {tgt.value}
-          </button>
-        );
-      })}
+          {/* Targets */}
+          {targets.map((tgt) => {
+            const isIdle = !tgt.hit && !tgt.missed;
+            return (
+              <button
+                key={tgt.id}
+                className={`absolute flex items-center justify-center rounded-full font-extrabold transition-all duration-150 ${
+                  tgt.hit
+                    ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white scale-0 opacity-0"
+                    : tgt.missed
+                      ? "bg-red-500/40 text-red-200 scale-75 opacity-30"
+                      : `bg-gradient-to-br ${sectorTheme.targetIdle} text-white shadow-lg ${sectorTheme.targetGlow} hover:scale-110 active:scale-90 cursor-pointer`
+                }`}
+                style={{
+                  width: tgt.size, height: tgt.size,
+                  fontSize: tgt.size > 60 ? 22 : 18,
+                  left: tgt.x,
+                  top: tgt.y,
+                  transition: tgt.hit ? "all 0.3s ease-out" : "transform 0.1s",
+                }}
+                onClick={() => isIdle && onHit(tgt.id)}
+                disabled={!isIdle}
+              >
+                {tgt.value}
+              </button>
+            );
+          })}
 
-      {/* Streak fire overlay */}
-      {streak >= 3 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-extrabold streak-fire shadow-lg">
-          🔥 {streak}x STREAK
+          {/* Streak fire overlay */}
+          {streak >= 3 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-extrabold streak-fire shadow-lg">
+              🔥 {streak}x STREAK
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -326,15 +354,18 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
     if (!problem) return;
     const answers = [problem.correctAnswer, ...problem.decoys].sort(() => Math.random() - 0.5);
     const speed = (sector?.speed ?? 1) * (slowActive ? 0.25 : 0.5);
+    const tgtSize = 64 + Math.floor(Math.random() * 12);
+    const maxX = FIELD_W - tgtSize - TARGET_PAD;
+    const maxY = FIELD_H - tgtSize - TARGET_PAD;
     const newTargets: Target[] = answers.map((val, i) => ({
       id: `${problem.id}-${i}-${Date.now()}`,
       value: val, correct: val === problem.correctAnswer,
-      x: 60 + Math.random() * (FIELD_W - 180),
-      y: 40 + Math.random() * (FIELD_H - 140),
+      x: TARGET_PAD + Math.random() * (maxX - TARGET_PAD),
+      y: TARGET_PAD + Math.random() * (maxY - TARGET_PAD),
       dx: (Math.random() - 0.5) * speed * 2,
       dy: (Math.random() - 0.5) * speed * 2,
       hit: false, missed: false,
-      size: 64 + Math.floor(Math.random() * 12),
+      size: tgtSize,
     }));
     setTargets(newTargets);
   }, [problem, sector, slowActive]);
@@ -349,8 +380,13 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
         if (tgt.hit || tgt.missed) return tgt;
         let nx = tgt.x + tgt.dx, ny = tgt.y + tgt.dy;
         let ndx = tgt.dx, ndy = tgt.dy;
-        if (nx <= 0 || nx >= FIELD_W - tgt.size) ndx = -ndx;
-        if (ny <= 0 || ny >= FIELD_H - tgt.size) ndy = -ndy;
+        const minB = TARGET_PAD;
+        const maxX = FIELD_W - tgt.size - TARGET_PAD;
+        const maxY = FIELD_H - tgt.size - TARGET_PAD;
+        if (nx <= minB) { nx = minB; ndx = Math.abs(ndx); }
+        else if (nx >= maxX) { nx = maxX; ndx = -Math.abs(ndx); }
+        if (ny <= minB) { ny = minB; ndy = Math.abs(ndy); }
+        else if (ny >= maxY) { ny = maxY; ndy = -Math.abs(ndy); }
         return { ...tgt, x: nx, y: ny, dx: ndx, dy: ndy };
       }));
       animFrameRef.current = requestAnimationFrame(animate);
