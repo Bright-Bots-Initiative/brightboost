@@ -2,13 +2,14 @@
 // Canonical STEM set definitions and progression utilities
 
 // ---------------------------------------------------------------------------
-// Set 1 — Foundation (4 K-2 STEM games; Build-a-Bot removed from canon)
+// Set 1 — Foundation (5 K-2 STEM games)
 // ---------------------------------------------------------------------------
 export const STEM_SET_1_IDS = [
   "bounce-buds",
   "gotcha-gears",
   "lost-steps",
   "rhyme-ride",
+  "tank-trek",
 ] as const;
 
 export type StemSet1GameId = (typeof STEM_SET_1_IDS)[number];
@@ -18,6 +19,7 @@ export const STEM_SET_1_NAMES: Record<StemSet1GameId, string> = {
   "gotcha-gears": "Gotcha Gears",
   "lost-steps": "Fix the Order",
   "rhyme-ride": "Rhyme & Ride",
+  "tank-trek": "Tank Trek",
 };
 
 export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
@@ -25,6 +27,7 @@ export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
   "gotcha-gears": "Faster fire rate (\u00d70.90 cooldown)",
   "lost-steps": "Better shield regen (\u00d71.08)",
   "rhyme-ride": "Faster projectiles (\u00d71.10)",
+  "tank-trek": "Faster thrust (\u00d71.06) and rotation (\u00d71.08)",
 };
 
 // ---------------------------------------------------------------------------

@@ -679,9 +679,9 @@ async function main() {
   const tankGameContent = JSON.stringify({ gameKey: "tank_trek", chapters: [] });
   let tankGameAct = await prisma.activity.findFirst({ where: { lessonId: k2TankLesson.id, kind: INTERACT, order: 2 } });
   if (tankGameAct) {
-    await prisma.activity.update({ where: { id: tankGameAct.id }, data: { title: "Game: Tank Trek", content: tankGameContent } });
+    await prisma.activity.update({ where: { id: tankGameAct.id }, data: { id: "tank-trek", title: "Game: Tank Trek", content: tankGameContent } });
   } else {
-    await prisma.activity.create({ data: { title: "Game: Tank Trek", kind: INTERACT, order: 2, content: tankGameContent, Lesson: { connect: { id: k2TankLesson.id } } } });
+    await prisma.activity.create({ data: { id: "tank-trek", title: "Game: Tank Trek", kind: INTERACT, order: 2, content: tankGameContent, Lesson: { connect: { id: k2TankLesson.id } } } });
   }
   console.log("Seeded Tank Trek module + activities.");
 
@@ -727,9 +727,9 @@ async function main() {
   const quantumGameContent = JSON.stringify({ gameKey: "quantum_quest", sectors: [] });
   let quantumGameAct = await prisma.activity.findFirst({ where: { lessonId: k2QuantumLesson.id, kind: INTERACT, order: 2 } });
   if (quantumGameAct) {
-    await prisma.activity.update({ where: { id: quantumGameAct.id }, data: { title: "Game: Quantum Quest", content: quantumGameContent } });
+    await prisma.activity.update({ where: { id: quantumGameAct.id }, data: { id: "quantum-quest", title: "Game: Quantum Quest", content: quantumGameContent } });
   } else {
-    await prisma.activity.create({ data: { title: "Game: Quantum Quest", kind: INTERACT, order: 2, content: quantumGameContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
+    await prisma.activity.create({ data: { id: "quantum-quest", title: "Game: Quantum Quest", kind: INTERACT, order: 2, content: quantumGameContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
   }
   console.log("Seeded Quantum Quest module + activities.");
 

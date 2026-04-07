@@ -7,6 +7,12 @@ import RhymeRideGame from "./RhymeRideGame";
 import BounceBudsGame from "./BounceBudsGame";
 import GotchaGearsGame from "./GotchaGearsGame";
 import MazeMapsGame from "./MazeMapsGame";
+import MoveMeasureGame from "./MoveMeasureGame";
+import SkyShieldGame from "./SkyShieldGame";
+import FastLaneGame from "./FastLaneGame";
+import QualifyTuneRaceGame from "./QualifyTuneRaceGame";
+import TankTrekGame from "./TankTrekGame";
+import QuantumQuestGame from "./QuantumQuestGame";
 
 type GameProps = {
   config?: any;
@@ -24,9 +30,15 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   rhymo_rhyme_rocket: RhymeRideGame,          // "Rhyme & Ride" (lane-based redesign)
   buddy_garden_sort: BounceBudsGame,            // "Bounce & Buds" (restored paddle-ball game)
   gotcha_gears_unity: GotchaGearsGame,         // "Gotcha Gears" (now React)
+  tank_trek: TankTrekGame,                     // "Tank Trek" (Set 1)
+  quantum_quest: QuantumQuestGame,             // "Quantum Quest"
 
   // ── Set 2 keys ──
   maze_maps: MazeMapsGame,                      // "Maze Maps & Smart Paths" (Set 2)
+  move_measure: MoveMeasureGame,                // "Move, Measure & Improve" (Set 2)
+  sky_shield: SkyShieldGame,                    // "Sky Shield Patterns" (Set 2)
+  fast_lane: FastLaneGame,                      // "Fast Lane Signals" (Set 2)
+  qualify_tune_race: QualifyTuneRaceGame,       // "Qualify, Tune, Race" (Set 2)
 
   // ── Legacy / alias keys → same implementations ──
   sequence_drag_drop: BoostPathPlannerGame,

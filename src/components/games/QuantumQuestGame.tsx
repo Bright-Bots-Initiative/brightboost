@@ -38,8 +38,8 @@ interface QuantumQuestConfig {
 }
 
 interface QuantumQuestGameProps {
-  config: QuantumQuestConfig;
-  onComplete: (result?: GameResult) => void;
+  config?: QuantumQuestConfig;
+  onComplete?: (result: GameResult) => void;
 }
 
 interface Target {
@@ -594,7 +594,7 @@ export default function QuantumQuestGame({ config, onComplete }: QuantumQuestGam
   };
 
   return (
-    <GameShell gameKey="quantum_quest" title={t("games.quantumQuest.title")} briefing={briefing} onComplete={onComplete}>
+    <GameShell gameKey="quantum_quest" title={t("games.quantumQuest.title")} briefing={briefing} onComplete={onComplete ?? (() => {})}>
       {({ onFinish }) => <QuantumQuestCore config={gameConfig} onFinish={onFinish} />}
     </GameShell>
   );
