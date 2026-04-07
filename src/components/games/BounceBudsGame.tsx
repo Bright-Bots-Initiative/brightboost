@@ -5,12 +5,12 @@
  * into the correct answer gate at the top. Each round shows a
  * biology/nature clue and three labeled gates (1 correct, 2 distractors).
  *
- * The ball stays on the paddle until the player moves — giving K–2
- * students time to read the clue and choose a target gate before
- * the action starts.
+ * Pre-launch = aiming state: the ball sits on the paddle and follows
+ * it as the student positions. Launch is an explicit action (Space/Enter
+ * key or the on-screen Bounce button), so aiming is real on every platform.
  *
- * Keyboard: ← → or A/D to move paddle
- * Mouse/Touch: pointer-follow
+ * Keyboard: ← → or A/D to aim, Space/Enter to launch
+ * Mouse/Touch: drag to aim, tap Bounce button to launch
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -271,10 +271,20 @@ function BouncePlayfield({
       ballElRef.current.style.transform = `translate(${ball.current.x - BALL_R}px, ${ball.current.y - BALL_R}px)`;
     }
   }
+  /** During waiting phase, keep ball centered on paddle so aiming is real. */
+  function snapBallToPaddle() {
+    ball.current.x = paddleXRef.current + PADDLE_W / 2;
+    ball.current.y = PADDLE_Y - BALL_R - 4;
+    syncBall();
+  }
 
-  // ── Launch the ball (called on first player input during "waiting" phase) ──
+  // ── Launch the ball (explicit action: Space/Enter key or Launch button) ──
   function launchBall() {
     if (phaseRef.current !== "waiting" || finishedRef.current) return;
+
+    // Launch from current paddle position (aiming matters)
+    ball.current.x = paddleXRef.current + PADDLE_W / 2;
+    ball.current.y = PADDLE_Y - BALL_R - 4;
 
     outcomeLock.current = false;
     const speed = INITIAL_SPEED + roundIndex * SPEED_INCREMENT;
@@ -523,7 +533,11 @@ function BouncePlayfield({
         );
         moved = true;
       }
-      if (moved) syncPaddle();
+      if (moved) {
+        syncPaddle();
+        // Ball tracks paddle during aiming phase
+        if (phaseRef.current === "waiting") snapBallToPaddle();
+      }
       id = requestAnimationFrame(loop);
     };
     id = requestAnimationFrame(loop);
@@ -533,10 +547,14 @@ function BouncePlayfield({
   // ── Global keyboard listeners ──
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
+      // Movement keys — aim only, never launch
       if (["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(e.key)) {
         e.preventDefault();
         keysDown.current.add(e.key);
-        // Launch ball on first input during waiting phase
+      }
+      // Explicit launch keys
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
         if (phaseRef.current === "waiting") {
           launchRef.current();
         }
@@ -551,14 +569,10 @@ function BouncePlayfield({
     };
   }, []);
 
-  // ── Pointer input (mouse + touch) ──
+  // ── Pointer input (mouse + touch) — aim only, launch via button ──
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     fieldRef.current?.setPointerCapture(e.pointerId);
     movePaddleToPointer(e);
-    // Launch ball on first tap/click during waiting phase
-    if (phaseRef.current === "waiting") {
-      launchRef.current();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -569,6 +583,8 @@ function BouncePlayfield({
     const localX = ((e.clientX - rect.left) / rect.width) * FIELD_W;
     paddleXRef.current = clamp(localX - PADDLE_W / 2, 0, FIELD_W - PADDLE_W);
     syncPaddle();
+    // Ball tracks paddle during aiming phase
+    if (phaseRef.current === "waiting") snapBallToPaddle();
   }, []);
 
   // ── Cleanup on unmount ──
@@ -738,14 +754,21 @@ function BouncePlayfield({
               </div>
             )}
 
-            {/* ── Waiting overlay — ball on paddle, player reads clue ── */}
+            {/* ── Waiting overlay — aim then launch ── */}
             {phase === "waiting" && (
-              <div className="absolute inset-0 flex items-end justify-center pb-20 pointer-events-none">
-                <div className="slide-up-fade rounded-2xl bg-white/90 px-6 py-3 shadow-lg border border-emerald-200">
-                  <p className="text-base font-bold text-emerald-700 text-center">
-                    Read the clue, then move to bounce!
-                  </p>
-                </div>
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-16 pointer-events-none">
+                <p className="slide-up-fade text-sm font-bold text-emerald-800 mb-2 bg-white/80 px-3 py-1 rounded-full">
+                  Aim the paddle, then tap Bounce!
+                </p>
+                <button
+                  type="button"
+                  className="pointer-events-auto bounce-in rounded-2xl bg-gradient-to-r from-emerald-500 to-lime-500
+                    px-8 py-3 text-lg font-extrabold text-white shadow-lg
+                    active:scale-95 hover:from-emerald-600 hover:to-lime-600 transition-all"
+                  onClick={() => launchRef.current()}
+                >
+                  Bounce!
+                </button>
               </div>
             )}
 
@@ -776,7 +799,7 @@ function BouncePlayfield({
         <p className="text-center text-xs text-slate-400">
           {t("games.bounceBuds.controls", {
             defaultValue:
-              "\u2190 \u2192 arrow keys or drag to move Buddy\u2019s paddle",
+              "\u2190 \u2192 to aim \u2022 Space to bounce \u2022 or drag + tap Bounce",
           })}
         </p>
       )}
