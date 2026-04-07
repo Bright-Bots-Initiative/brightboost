@@ -556,7 +556,7 @@
     "locked": "已锁定",
     "set1Label": "第1套：基础",
     "set2Label": "第2套：探索",
-    "set2LockedMessage": "完成前5个STEM游戏，解锁下一套挑战。",
+    "set2LockedMessage": "完成第1套STEM游戏，解锁下一套挑战。",
     "detail": {
       "locked": "模块已锁定",
       "unlockPrompt": "去头像页面选择你的专长来解锁这个模块！",

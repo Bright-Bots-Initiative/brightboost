@@ -164,7 +164,7 @@ export default function Modules() {
               {set2Locked && (
                 <p className="text-sm text-slate-500 -mt-2 mb-4">
                   {t("modules.set2LockedMessage", {
-                    defaultValue: "Complete your first 5 STEM Games to unlock the next challenge set.",
+                    defaultValue: "Complete Set 1 STEM Games to unlock the next challenge set.",
                   })}
                 </p>
               )}
