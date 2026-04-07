@@ -341,7 +341,12 @@
     "resetting": "重置中...",
     "resetSuccess": "密码重置成功！你现在可以登录了。",
     "resetInvalid": "这个重置链接无效或已过期。",
-    "passwordMismatch": "两次输入的密码不一致"
+    "passwordMismatch": "两次输入的密码不一致",
+    "chooseLoginType": "选择登录方式",
+    "selectHowToLogin": "选择你想怎样登录",
+    "teacherLogin": "老师登录",
+    "studentLogin": "学生登录",
+    "backToHome": "返回首页"
   },
   "tutorial": {
     "welcome": "欢迎来到 BrightBoost！",
@@ -370,7 +375,8 @@
     "reset": "重置",
     "done": "完成",
     "replay": "重播",
-    "logOut": "退出登录"
+    "logOut": "退出登录",
+    "changeLanguage": "切换语言"
   },
   "teacher": {
     "nav": {
@@ -546,7 +552,19 @@
     "comingSoon": "即将推出！",
     "loadError": "加载模块失败，请稍后再试。",
     "noModules": "没有找到模块",
-    "noModulesDesc": "目前找不到学习模块，请稍后再来看看！"
+    "noModulesDesc": "目前找不到学习模块，请稍后再来看看！",
+    "detail": {
+      "locked": "模块已锁定",
+      "unlockPrompt": "去头像页面选择你的专长来解锁这个模块！",
+      "loadError": "无法加载这个模块，请再试一次！",
+      "loading": "正在加载模块...",
+      "loadingAria": "正在加载模块",
+      "story": "故事",
+      "game": "游戏",
+      "done": "完成",
+      "replay": "重玩",
+      "checkAvatarUpgrades": "查看头像升级"
+    }
   },
   "nav": {
     "learn": "学习",
@@ -1261,6 +1279,35 @@
   },
 
   "games": {
+    "learning": {
+      "wordsToKnow": "需要认识的词"
+    },
+    "boostPath": {
+      "title": "Boost的路线规划",
+      "level1": "到达太阳能充电器",
+      "level2": "找到帮手工具",
+      "level3": "送小电池",
+      "buildPlan": "制定一个计划帮助Boost到达目标。",
+      "tryNewPlan": "试试新计划。",
+      "addSteps": "先添加一些步骤吧。",
+      "allDone": "你做到了！Boost按照你的计划到达了目标。",
+      "niceJob": "做得好！那个计划有效。准备下一张地图吧。",
+      "crashed": "哎呀！Boost撞墙了。检查一下转弯再试试。",
+      "didntReach": "不错的尝试。Boost还没到达目标。",
+      "buildProgram": "编写程序",
+      "forward": "前进",
+      "turnLeft": "左转",
+      "turnRight": "右转",
+      "yourSteps": "你的步骤",
+      "noSteps": "还没有步骤",
+      "run": "运行",
+      "clear": "清除",
+      "levelLabel": "关卡",
+      "vocabPlan": "计划",
+      "vocabSequence": "顺序",
+      "vocabTurn": "转弯",
+      "vocabGoal": "目标"
+    },
     "shared": {
       "tips": "小贴士",
       "startMission": "开始任务",

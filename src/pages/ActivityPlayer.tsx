@@ -133,9 +133,8 @@ export default function ActivityPlayer() {
       const arch = getStudentArchetype(avatarData);
       if (!canAccessModule({ slug, archetype: arch })) {
         toast({
-          title: "Module Locked",
-          description:
-            "Choose your specialization on the avatar page to unlock this module!",
+          title: t("modules.detail.locked"),
+          description: t("modules.detail.unlockPrompt"),
           variant: "destructive",
         });
         navigate("/student/avatar", { replace: true });

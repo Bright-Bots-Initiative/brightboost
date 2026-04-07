@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { changeLanguage, SUPPORTED_LANGUAGES } from "@/i18n";
 
 const LanguageToggle = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [, setTick] = useState(0);
 
@@ -21,7 +21,7 @@ const LanguageToggle = () => {
       <button
         onClick={() => setOpen((o) => !o)}
         className="bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 font-medium"
-        aria-label="Change language"
+        aria-label={t("common.changeLanguage", { defaultValue: "Change language" })}
         aria-expanded={open}
       >
         {currentLabel}

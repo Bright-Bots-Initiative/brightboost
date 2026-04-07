@@ -341,7 +341,12 @@
     "resetting": "Restableciendo...",
     "resetSuccess": "¡Contraseña restablecida exitosamente! Ya puedes iniciar sesión.",
     "resetInvalid": "Este enlace de restablecimiento es inválido o ha expirado.",
-    "passwordMismatch": "Las contraseñas no coinciden"
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "chooseLoginType": "Elige cómo ingresar",
+    "selectHowToLogin": "Selecciona cómo quieres entrar",
+    "teacherLogin": "Ingreso de Maestro",
+    "studentLogin": "Ingreso de Estudiante",
+    "backToHome": "Volver al Inicio"
   },
   "tutorial": {
     "welcome": "¡Bienvenido a BrightBoost!",
@@ -370,7 +375,8 @@
     "reset": "Reiniciar",
     "done": "Listo",
     "replay": "Repetir",
-    "logOut": "Cerrar Sesión"
+    "logOut": "Cerrar Sesión",
+    "changeLanguage": "Cambiar idioma"
   },
   "teacher": {
     "nav": {
@@ -546,7 +552,19 @@
     "comingSoon": "¡Próximamente!",
     "loadError": "Error al cargar los módulos. Inténtalo de nuevo.",
     "noModules": "No se encontraron módulos",
-    "noModulesDesc": "No pudimos encontrar módulos de aprendizaje en este momento. ¡Vuelve más tarde!"
+    "noModulesDesc": "No pudimos encontrar módulos de aprendizaje en este momento. ¡Vuelve más tarde!",
+    "detail": {
+      "locked": "Módulo Bloqueado",
+      "unlockPrompt": "¡Elige tu especialización en la página de avatar para desbloquear este módulo!",
+      "loadError": "No pudimos cargar este módulo. ¡Inténtalo de nuevo!",
+      "loading": "Cargando detalles del módulo...",
+      "loadingAria": "Cargando detalles del módulo",
+      "story": "Historia",
+      "game": "Juego",
+      "done": "Listo",
+      "replay": "Repetir",
+      "checkAvatarUpgrades": "Ver Mejoras de Avatar"
+    }
   },
   "nav": {
     "learn": "Aprender",
@@ -1262,6 +1280,35 @@
   },
 
   "games": {
+    "learning": {
+      "wordsToKnow": "Palabras para aprender"
+    },
+    "boostPath": {
+      "title": "Planificador de Boost",
+      "level1": "Llega al cargador solar",
+      "level2": "Encuentra la herramienta",
+      "level3": "Entrega la batería pequeña",
+      "buildPlan": "Arma un plan para que Boost llegue a la meta.",
+      "tryNewPlan": "Intenta un plan nuevo.",
+      "addSteps": "Agrega pasos primero.",
+      "allDone": "¡Lo lograste! Boost siguió tu plan hasta la meta.",
+      "niceJob": "¡Buen trabajo! Ese plan funcionó. Prepárate para el siguiente mapa.",
+      "crashed": "¡Ups! Boost chocó con una pared. Revisa tus giros e inténtalo de nuevo.",
+      "didntReach": "Buen intento. Boost no llegó a la meta todavía.",
+      "buildProgram": "Arma el programa",
+      "forward": "Adelante",
+      "turnLeft": "Girar Izquierda",
+      "turnRight": "Girar Derecha",
+      "yourSteps": "Tus pasos",
+      "noSteps": "Sin pasos aún",
+      "run": "Ejecutar",
+      "clear": "Borrar",
+      "levelLabel": "Nivel",
+      "vocabPlan": "plan",
+      "vocabSequence": "secuencia",
+      "vocabTurn": "giro",
+      "vocabGoal": "meta"
+    },
     "shared": {
       "tips": "Consejos",
       "startMission": "Iniciar Misión",

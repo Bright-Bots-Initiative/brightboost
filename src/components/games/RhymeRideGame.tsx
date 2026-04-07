@@ -15,6 +15,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { cn } from "@/lib/utils";
+import { pickLocale } from "@/utils/localizedContent";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32,8 +33,7 @@ interface RhymeFamily {
 
 interface World {
   id: string;
-  name: string;
-  nameEs?: string;
+  names: Record<string, string>;
   theme: string;            // tailwind gradient stem
   icon: string;
   families: RhymeFamily[];
@@ -65,8 +65,7 @@ type Phase =
 const WORLDS: World[] = [
   {
     id: "ai-alley",
-    name: "AI Alley",
-    nameEs: "Callejón de IA",
+    names: { en: "AI Alley", es: "Callejón de IA", vi: "Ngõ AI", "zh-CN": "AI小巷" },
     theme: "from-blue-600 via-indigo-600 to-blue-700",
     icon: "🤖",
     families: [
@@ -77,8 +76,7 @@ const WORLDS: World[] = [
   },
   {
     id: "quantum-canyon",
-    name: "Quantum Canyon",
-    nameEs: "Cañón Cuántico",
+    names: { en: "Quantum Canyon", es: "Cañón Cuántico", vi: "Hẻm Lượng Tử", "zh-CN": "量子峡谷" },
     theme: "from-purple-600 via-violet-600 to-purple-700",
     icon: "🔮",
     families: [
@@ -89,8 +87,7 @@ const WORLDS: World[] = [
   },
   {
     id: "bio-garden",
-    name: "Bio Garden",
-    nameEs: "Jardín Bio",
+    names: { en: "Bio Garden", es: "Jardín Bio", vi: "Vườn Sinh Học", "zh-CN": "生物花园" },
     theme: "from-green-600 via-emerald-600 to-green-700",
     icon: "🌿",
     families: [
@@ -797,7 +794,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{world?.icon}</div>
         <h3 className="text-2xl font-extrabold text-slate-800">
-          {t("games.rhymeRide.worldComplete", { world: world?.name })}
+          {t("games.rhymeRide.worldComplete", { world: world ? pickLocale(world.names, world.names.en) : "" })}
         </h3>
         <div className="flex gap-4 justify-center">
           <div className="bg-white/80 rounded-xl px-4 py-3 shadow-sm">
@@ -814,7 +811,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
             className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
             onClick={advanceWorld}
           >
-            {"🚀"} {t("games.rhymeRide.nextWorld", { world: nextWorld.name })}
+            {"🚀"} {t("games.rhymeRide.nextWorld", { world: pickLocale(nextWorld.names, nextWorld.names.en) })}
           </button>
         ) : (
           <button
@@ -837,7 +834,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         <button
           onClick={() => setMuted((m) => !m)}
           className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
-          aria-label={muted ? "Unmute" : "Mute"}
+          aria-label={muted ? t("games.rhymeRide.soundOn") : t("games.rhymeRide.soundOff")}
         >
           {muted ? "🔇" : "🔊"} {muted ? t("games.rhymeRide.soundOff") : t("games.rhymeRide.soundOn")}
         </button>
@@ -852,7 +849,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         score={score}
         combo={combo}
         lives={lives}
-        worldName={world.name}
+        worldName={pickLocale(world.names, world.names.en)}
         worldIcon={world.icon}
         roundLabel={
           phase === "showdown" || phase === "showdownFeedback"

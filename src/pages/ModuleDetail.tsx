@@ -1,6 +1,7 @@
 // src/pages/ModuleDetail.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ import {
   canAccessModule,
   isSpecializationModuleSlug,
 } from "@/lib/moduleAccess";
+import { translateContentName } from "@/utils/localizedContent";
 
 export default function ModuleDetail() {
   const { slug } = useParams();
@@ -21,6 +23,7 @@ export default function ModuleDetail() {
   );
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!slug) return;
@@ -31,9 +34,8 @@ export default function ModuleDetail() {
         const arch = getStudentArchetype(avatarData);
         if (!canAccessModule({ slug, archetype: arch })) {
           toast({
-            title: "Module Locked",
-            description:
-              "Choose your specialization on the avatar page to unlock this module!",
+            title: t("modules.detail.locked"),
+            description: t("modules.detail.unlockPrompt"),
             variant: "destructive",
           });
           navigate("/student/avatar", { replace: true });
@@ -59,8 +61,8 @@ export default function ModuleDetail() {
       })
       .catch(() => {
         toast({
-          title: "Oops!",
-          description: "We couldn't load this module. Try again!",
+          title: t("common.oops", { defaultValue: "Oops!" }),
+          description: t("modules.detail.loadError"),
           variant: "destructive",
         });
       });
@@ -73,9 +75,9 @@ export default function ModuleDetail() {
         className="p-4 max-w-4xl mx-auto space-y-6"
         role="status"
         aria-busy="true"
-        aria-label="Loading module details"
+        aria-label={t("modules.detail.loadingAria")}
       >
-        <span className="sr-only">Loading module details...</span>
+        <span className="sr-only">{t("modules.detail.loading")}</span>
         <Skeleton className="h-8 w-1/2" />
         <Skeleton className="h-4 w-3/4" />
         <div className="space-y-6">
@@ -97,9 +99,9 @@ export default function ModuleDetail() {
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-brightboost-navy">
-        {module.title}
+        {translateContentName(module.title)}
       </h1>
-      <p className="text-sm text-gray-600 mb-6">{module.description}</p>
+      <p className="text-sm text-gray-600 mb-6">{translateContentName(module.description)}</p>
       <div className="space-y-3">
         {(() => {
           // Flatten units → lessons → activities into a single numbered list
@@ -115,7 +117,10 @@ export default function ModuleDetail() {
             const isCompleted = completedActivities.has(String(a.id));
             const imageKey = a.kind === "INFO" ? "type_story" : "type_game";
             const variant = a.kind === "INFO" ? "story" : "game";
-            const label = a.kind === "INFO" ? "Story" : "Game";
+            const label =
+              a.kind === "INFO"
+                ? t("modules.detail.story")
+                : t("modules.detail.game");
 
             return (
               <div
@@ -142,9 +147,11 @@ export default function ModuleDetail() {
                         className="h-10 w-10 mr-3"
                       />
                       <div className="flex flex-col items-start text-left">
-                        <span className="text-sm font-semibold">{a.title}</span>
+                        <span className="text-sm font-semibold">
+                          {translateContentName(a.title)}
+                        </span>
                         <span className="text-[10px] bg-white/50 px-1.5 rounded text-green-700 flex items-center gap-1">
-                          <Check className="h-3 w-3" /> Done
+                          <Check className="h-3 w-3" /> {t("modules.detail.done")}
                         </span>
                       </div>
                     </Button>
@@ -152,14 +159,14 @@ export default function ModuleDetail() {
                       size="sm"
                       variant="ghost"
                       className="text-xs text-gray-400 h-14 px-2"
-                      aria-label={`Replay ${a.title}`}
+                      aria-label={`${t("modules.detail.replay")} ${translateContentName(a.title)}`}
                       onClick={() =>
                         navigate(
                           `/student/modules/${slug}/lessons/${lessonId}/activities/${a.id}`,
                         )
                       }
                     >
-                      Replay
+                      {t("modules.detail.replay")}
                     </Button>
                   </>
                 ) : (
@@ -179,7 +186,7 @@ export default function ModuleDetail() {
                     />
                     <div className="flex flex-col items-start text-left">
                       <span className="text-sm font-semibold text-brightboost-navy">
-                        {a.title}
+                        {translateContentName(a.title)}
                       </span>
                       <span className="text-[10px] text-gray-500 uppercase tracking-wider">
                         {label}
@@ -193,7 +200,7 @@ export default function ModuleDetail() {
         })()}
       </div>
       <Button className="mt-8" onClick={() => navigate("/avatar")}>
-        Check Avatar Upgrades
+        {t("modules.detail.checkAvatarUpgrades")}
       </Button>
     </div>
   );

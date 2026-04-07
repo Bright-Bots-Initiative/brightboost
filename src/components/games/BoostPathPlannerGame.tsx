@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { LearningGameFrame } from "./shared/LearningGameFrame";
 import type { GameResult } from "./shared/GameShell";
 
@@ -6,7 +7,7 @@ type Dir = "N" | "E" | "S" | "W";
 type Cmd = "F" | "L" | "R";
 type Cell = { x: number; y: number };
 type Level = {
-  title: string;
+  titleKey: string;
   size: number;
   start: Cell;
   goal: Cell;
@@ -17,7 +18,7 @@ type Level = {
 
 const LEVELS: Level[] = [
   {
-    title: "Reach the solar charger",
+    titleKey: "games.boostPath.level1",
     size: 4,
     start: { x: 0, y: 3 },
     goal: { x: 3, y: 0 },
@@ -29,7 +30,7 @@ const LEVELS: Level[] = [
     maxSteps: 6,
   },
   {
-    title: "Find the helper tool",
+    titleKey: "games.boostPath.level2",
     size: 5,
     start: { x: 0, y: 4 },
     goal: { x: 4, y: 1 },
@@ -42,7 +43,7 @@ const LEVELS: Level[] = [
     maxSteps: 7,
   },
   {
-    title: "Deliver the tiny battery",
+    titleKey: "games.boostPath.level3",
     size: 5,
     start: { x: 0, y: 4 },
     goal: { x: 4, y: 0 },
@@ -76,7 +77,7 @@ function isBlocked(cell: Cell, size: number, walls: Cell[]) {
   return walls.some((wall) => sameCell(wall, cell));
 }
 
-export function runBoostProgram(level: Level, program: Cmd[]) {
+export function runBoostProgram(level: Pick<Level, "dir" | "start" | "goal" | "size" | "walls">, program: Cmd[]) {
   let dir = level.dir;
   let pos = { ...level.start };
 
@@ -110,11 +111,10 @@ export default function BoostPathPlannerGame({
 }: {
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const [levelIndex, setLevelIndex] = useState(0);
   const [program, setProgram] = useState<Cmd[]>([]);
-  const [feedback, setFeedback] = useState(
-    "Build a plan to help Boost reach the goal.",
-  );
+  const [feedbackKey, setFeedbackKey] = useState("games.boostPath.buildPlan");
   const [score, setScore] = useState(0);
   const level = LEVELS[levelIndex];
 
@@ -131,12 +131,12 @@ export default function BoostPathPlannerGame({
 
   function clearProgram() {
     setProgram([]);
-    setFeedback("Try a new plan.");
+    setFeedbackKey("games.boostPath.tryNewPlan");
   }
 
   function runProgram() {
     if (program.length === 0) {
-      setFeedback("Add some steps first.");
+      setFeedbackKey("games.boostPath.addSteps");
       return;
     }
 
@@ -145,9 +145,7 @@ export default function BoostPathPlannerGame({
       setScore(nextScore);
 
       if (levelIndex === LEVELS.length - 1) {
-        setFeedback(
-          "You did it! Boost followed your plan all the way to the goal.",
-        );
+        setFeedbackKey("games.boostPath.allDone");
         onComplete?.({
           gameKey: "boost_path_planner",
           score: nextScore,
@@ -156,9 +154,7 @@ export default function BoostPathPlannerGame({
           roundsCompleted: LEVELS.length,
         });
       } else {
-        setFeedback(
-          "Nice job! That plan worked. Get ready for the next map.",
-        );
+        setFeedbackKey("games.boostPath.niceJob");
         setLevelIndex((n) => n + 1);
         setProgram([]);
       }
@@ -166,22 +162,25 @@ export default function BoostPathPlannerGame({
     }
 
     if (result.crashed) {
-      setFeedback(
-        "Oops! Boost bumped into a wall. Check your turns and try again.",
-      );
+      setFeedbackKey("games.boostPath.crashed");
       return;
     }
 
-    setFeedback("Good try. Boost did not reach the goal yet.");
+    setFeedbackKey("games.boostPath.didntReach");
   }
 
   return (
     <LearningGameFrame
-      title="Boost's Path Planner"
-      objective={level.title}
-      vocabulary={["plan", "sequence", "turn", "goal"]}
-      progressLabel={`Level ${levelIndex + 1}/${LEVELS.length}`}
-      feedback={feedback}
+      title={t("games.boostPath.title")}
+      objective={t(level.titleKey)}
+      vocabulary={[
+        t("games.boostPath.vocabPlan"),
+        t("games.boostPath.vocabSequence"),
+        t("games.boostPath.vocabTurn"),
+        t("games.boostPath.vocabGoal"),
+      ]}
+      progressLabel={`${t("games.boostPath.levelLabel")} ${levelIndex + 1}/${LEVELS.length}`}
+      feedback={t(feedbackKey)}
     >
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">
         <div
@@ -219,35 +218,35 @@ export default function BoostPathPlannerGame({
 
         <div className="space-y-4 rounded-xl border p-4">
           <div>
-            <p className="mb-2 text-sm font-semibold">Build the program</p>
+            <p className="mb-2 text-sm font-semibold">{t("games.boostPath.buildProgram")}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 className="rounded-lg border px-3 py-2"
                 onClick={() => addCommand("F")}
               >
-                Forward
+                {t("games.boostPath.forward")}
               </button>
               <button
                 className="rounded-lg border px-3 py-2"
                 onClick={() => addCommand("L")}
               >
-                Turn Left
+                {t("games.boostPath.turnLeft")}
               </button>
               <button
                 className="rounded-lg border px-3 py-2"
                 onClick={() => addCommand("R")}
               >
-                Turn Right
+                {t("games.boostPath.turnRight")}
               </button>
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-semibold">Your steps</p>
+            <p className="mb-2 text-sm font-semibold">{t("games.boostPath.yourSteps")}</p>
             <div className="min-h-16 rounded-lg bg-slate-50 p-3 text-sm">
               {program.length
                 ? program.join(" \u2192 ")
-                : "No steps yet"}
+                : t("games.boostPath.noSteps")}
             </div>
           </div>
 
@@ -256,13 +255,13 @@ export default function BoostPathPlannerGame({
               className="rounded-lg bg-slate-900 px-4 py-2 text-white"
               onClick={runProgram}
             >
-              Run
+              {t("games.boostPath.run")}
             </button>
             <button
               className="rounded-lg border px-4 py-2"
               onClick={clearProgram}
             >
-              Clear
+              {t("games.boostPath.clear")}
             </button>
           </div>
         </div>

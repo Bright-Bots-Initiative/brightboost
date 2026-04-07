@@ -13,6 +13,7 @@ import {
   ArrowUp, ArrowLeft, ArrowRight, RotateCcw, Play, Trash2, ChevronRight,
   Lightbulb, Sparkles,
 } from "lucide-react";
+import { pickLocale } from "@/utils/localizedContent";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -23,8 +24,7 @@ type CellType = "floor" | "wall" | "goal" | "start" | "chip" | "switch" | "gate"
 
 interface TankTrekLevel {
   id: string;
-  name: string;
-  nameEs?: string;
+  names: Record<string, string>;
   cols: number;
   rows: number;
   grid: CellType[][];
@@ -33,16 +33,13 @@ interface TankTrekLevel {
   startDir: Dir;
   maxCommands?: number;
   par?: number;
-  storySnippet?: string;
-  storySnippetEs?: string;
-  hint?: string;
-  hintEs?: string;
+  storySnippets?: Record<string, string>;
+  hints?: Record<string, string>;
 }
 
 interface ChapterDef {
   id: string;
-  title: string;
-  titleEs?: string;
+  titles: Record<string, string>;
   theme: "lab" | "factory" | "core";
   levels: TankTrekLevel[];
 }
@@ -59,14 +56,14 @@ interface TankTrekGameProps {
 
 // ── Chapter Theme System ───────────────────────────────────────────────────
 
-const THEMES: Record<string, { wallGrad: string; floorGrad: string; goalGrad: string; chipGrad: string; accent: string; label: string; labelEs: string; icon: string }> = {
+const THEMES: Record<string, { wallGrad: string; floorGrad: string; goalGrad: string; chipGrad: string; accent: string; labels: Record<string, string>; icon: string }> = {
   lab: {
     wallGrad: "linear-gradient(135deg, #475569, #334155)",
     floorGrad: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
     goalGrad: "linear-gradient(135deg, #bbf7d0, #86efac)",
     chipGrad: "linear-gradient(135deg, #e9d5ff, #c4b5fd)",
     accent: "indigo",
-    label: "Training Lab", labelEs: "Laboratorio",
+    labels: { en: "Training Lab", es: "Laboratorio", vi: "Phòng thực hành", "zh-CN": "训练室" },
     icon: "🔬",
   },
   factory: {
@@ -75,7 +72,7 @@ const THEMES: Record<string, { wallGrad: string; floorGrad: string; goalGrad: st
     goalGrad: "linear-gradient(135deg, #86efac, #4ade80)",
     chipGrad: "linear-gradient(135deg, #bfdbfe, #93c5fd)",
     accent: "amber",
-    label: "Logic Factory", labelEs: "Fábrica Lógica",
+    labels: { en: "Logic Factory", es: "Fábrica Lógica", vi: "Nhà máy Logic", "zh-CN": "逻辑工厂" },
     icon: "⚙️",
   },
   core: {
@@ -84,7 +81,7 @@ const THEMES: Record<string, { wallGrad: string; floorGrad: string; goalGrad: st
     goalGrad: "linear-gradient(135deg, #a5f3fc, #67e8f9)",
     chipGrad: "linear-gradient(135deg, #fecaca, #fca5a5)",
     accent: "violet",
-    label: "Smart Maze Core", labelEs: "Núcleo Inteligente",
+    labels: { en: "Smart Maze Core", es: "Núcleo Inteligente", vi: "Lõi Mê Cung", "zh-CN": "智能迷宫核心" },
     icon: "🧠",
   },
 };
@@ -112,42 +109,42 @@ const BUILTIN_LEVELS: TankTrekConfig = {
   gameKey: "tank_trek",
   chapters: [
     {
-      id: "ch1", title: "Simple Pathfinding", titleEs: "Caminos Simples", theme: "lab",
+      id: "ch1", titles: { en: "Simple Pathfinding", es: "Caminos Simples", vi: "Tìm Đường Đơn Giản", "zh-CN": "简单寻路" }, theme: "lab",
       levels: [
-        { id: "1-1", name: "First Steps", nameEs: "Primeros Pasos", cols: 4, rows: 4, startRow: 3, startCol: 0, startDir: "N", par: 3,
-          storySnippet: "Bolt just powered on! Can you guide it to the green goal?", storySnippetEs: "¡Bolt acaba de encenderse! ¿Puedes guiarlo a la meta verde?",
-          hint: "Try: Forward, Forward, Forward", hintEs: "Intenta: Adelante, Adelante, Adelante",
+        { id: "1-1", names: { en: "First Steps", es: "Primeros Pasos", vi: "Bước Đầu Tiên", "zh-CN": "第一步" }, cols: 4, rows: 4, startRow: 3, startCol: 0, startDir: "N", par: 3,
+          storySnippets: { en: "Bolt just powered on! Can you guide it to the green goal?", es: "¡Bolt acaba de encenderse! ¿Puedes guiarlo a la meta verde?", vi: "Bolt vừa bật lên! Bạn có thể dẫn nó đến đích xanh không?", "zh-CN": "Bolt刚启动！你能引导它到达绿色目标吗？" },
+          hints: { en: "Try: Forward, Forward, Forward", es: "Intenta: Adelante, Adelante, Adelante", vi: "Thử: Tiến, Tiến, Tiến", "zh-CN": "试试：前进、前进、前进" },
           grid: [["floor","floor","floor","goal"],["wall","wall","wall","floor"],["floor","floor","floor","floor"],["start","floor","wall","wall"]] },
-        { id: "1-2", name: "Turn Right", nameEs: "Gira a la Derecha", cols: 4, rows: 4, startRow: 3, startCol: 0, startDir: "N", par: 5,
-          storySnippet: "Bolt learned to turn! The path curves right.", storySnippetEs: "¡Bolt aprendió a girar! El camino gira a la derecha.",
+        { id: "1-2", names: { en: "Turn Right", es: "Gira a la Derecha", vi: "Rẽ Phải", "zh-CN": "右转" }, cols: 4, rows: 4, startRow: 3, startCol: 0, startDir: "N", par: 5,
+          storySnippets: { en: "Bolt learned to turn! The path curves right.", es: "¡Bolt aprendió a girar! El camino gira a la derecha.", vi: "Bolt đã học rẽ! Đường cong sang phải.", "zh-CN": "Bolt学会转弯了！路向右弯。" },
           grid: [["wall","wall","wall","wall"],["goal","floor","wall","wall"],["floor","floor","wall","wall"],["start","floor","wall","wall"]] },
-        { id: "1-3", name: "Zig-Zag", nameEs: "Zigzag", cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "N", par: 8,
-          storySnippet: "A winding path! Spot the pattern: forward, turn, forward, turn...", storySnippetEs: "¡Un camino sinuoso! Encuentra el patrón: adelante, gira, adelante, gira...",
+        { id: "1-3", names: { en: "Zig-Zag", es: "Zigzag", vi: "Ngoằn Ngoèo", "zh-CN": "之字形" }, cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "N", par: 8,
+          storySnippets: { en: "A winding path! Spot the pattern: forward, turn, forward, turn...", es: "¡Un camino sinuoso! Encuentra el patrón: adelante, gira, adelante, gira...", vi: "Đường ngoằn ngoèo! Tìm quy luật: tiến, rẽ, tiến, rẽ...", "zh-CN": "弯弯曲曲的路！找到规律：前进、转弯、前进、转弯..." },
           grid: [["wall","wall","wall","wall","goal"],["wall","wall","wall","floor","floor"],["wall","wall","floor","floor","wall"],["wall","floor","floor","wall","wall"],["start","floor","wall","wall","wall"]] },
       ],
     },
     {
-      id: "ch2", title: "Obstacles & Collectibles", titleEs: "Obstáculos y Coleccionables", theme: "factory",
+      id: "ch2", titles: { en: "Obstacles & Collectibles", es: "Obstáculos y Coleccionables", vi: "Chướng Ngại và Vật Phẩm", "zh-CN": "障碍与收集品" }, theme: "factory",
       levels: [
-        { id: "2-1", name: "Data Chips", nameEs: "Chips de Datos", cols: 5, rows: 4, startRow: 3, startCol: 0, startDir: "E", par: 7,
-          storySnippet: "Grab the glowing data chips — Bolt needs them to learn!", storySnippetEs: "¡Recoge los chips brillantes — Bolt los necesita para aprender!",
+        { id: "2-1", names: { en: "Data Chips", es: "Chips de Datos", vi: "Chip Dữ Liệu", "zh-CN": "数据芯片" }, cols: 5, rows: 4, startRow: 3, startCol: 0, startDir: "E", par: 7,
+          storySnippets: { en: "Grab the glowing data chips — Bolt needs them to learn!", es: "¡Recoge los chips brillantes — Bolt los necesita para aprender!", vi: "Nhặt chip dữ liệu sáng — Bolt cần chúng để học!", "zh-CN": "抓住发光的数据芯片——Bolt需要它们来学习！" },
           grid: [["wall","wall","wall","wall","goal"],["wall","wall","wall","floor","floor"],["floor","chip","floor","chip","wall"],["start","floor","floor","floor","wall"]] },
-        { id: "2-2", name: "Two Paths", nameEs: "Dos Caminos", cols: 5, rows: 5, startRow: 4, startCol: 2, startDir: "N", par: 6,
-          storySnippet: "Two ways to go! Find the smartest path for more stars.", storySnippetEs: "¡Dos caminos! Encuentra el más inteligente para más estrellas.",
+        { id: "2-2", names: { en: "Two Paths", es: "Dos Caminos", vi: "Hai Con Đường", "zh-CN": "两条路" }, cols: 5, rows: 5, startRow: 4, startCol: 2, startDir: "N", par: 6,
+          storySnippets: { en: "Two ways to go! Find the smartest path for more stars.", es: "¡Dos caminos! Encuentra el más inteligente para más estrellas.", vi: "Hai đường đi! Tìm đường thông minh nhất để được nhiều sao.", "zh-CN": "两条路可走！找到最聪明的路得更多星星。" },
           grid: [["wall","floor","goal","floor","wall"],["wall","floor","wall","floor","wall"],["wall","floor","wall","floor","wall"],["wall","floor","chip","floor","wall"],["wall","floor","start","floor","wall"]] },
-        { id: "2-3", name: "Maze Runner", nameEs: "Corredor del Laberinto", cols: 6, rows: 5, startRow: 4, startCol: 0, startDir: "E", par: 12,
-          storySnippet: "A real maze! Think step-by-step before you run.", storySnippetEs: "¡Un laberinto real! Piensa paso a paso antes de ejecutar.",
+        { id: "2-3", names: { en: "Maze Runner", es: "Corredor del Laberinto", vi: "Chạy Mê Cung", "zh-CN": "迷宫跑者" }, cols: 6, rows: 5, startRow: 4, startCol: 0, startDir: "E", par: 12,
+          storySnippets: { en: "A real maze! Think step-by-step before you run.", es: "¡Un laberinto real! Piensa paso a paso antes de ejecutar.", vi: "Mê cung thật! Hãy nghĩ từng bước trước khi chạy.", "zh-CN": "真正的迷宫！跑之前先一步步想清楚。" },
           grid: [["wall","wall","wall","floor","floor","goal"],["floor","floor","wall","floor","wall","floor"],["floor","wall","chip","floor","wall","floor"],["floor","floor","floor","floor","floor","floor"],["start","floor","wall","wall","wall","wall"]] },
       ],
     },
     {
-      id: "ch3", title: "Pattern Thinking", titleEs: "Pensamiento de Patrones", theme: "core",
+      id: "ch3", titles: { en: "Pattern Thinking", es: "Pensamiento de Patrones", vi: "Tư Duy Mẫu", "zh-CN": "模式思维" }, theme: "core",
       levels: [
-        { id: "3-1", name: "Repeat Pattern", nameEs: "Patrón Repetido", cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "N", par: 8, maxCommands: 10,
-          storySnippet: "Teach Bolt the rule! This path repeats the same moves.", storySnippetEs: "¡Enséñale la regla a Bolt! Este camino repite los mismos movimientos.",
+        { id: "3-1", names: { en: "Repeat Pattern", es: "Patrón Repetido", vi: "Lặp Lại Mẫu", "zh-CN": "重复模式" }, cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "N", par: 8, maxCommands: 10,
+          storySnippets: { en: "Teach Bolt the rule! This path repeats the same moves.", es: "¡Enséñale la regla a Bolt! Este camino repite los mismos movimientos.", vi: "Dạy Bolt quy tắc! Đường này lặp lại các bước giống nhau.", "zh-CN": "教Bolt规则！这条路重复相同的动作。" },
           grid: [["wall","wall","wall","wall","goal"],["wall","wall","wall","floor","floor"],["wall","wall","floor","floor","wall"],["wall","floor","floor","wall","wall"],["start","floor","wall","wall","wall"]] },
-        { id: "3-2", name: "Smart Path", nameEs: "Camino Inteligente", cols: 6, rows: 6, startRow: 5, startCol: 0, startDir: "E", par: 10, maxCommands: 14,
-          storySnippet: "Guess what comes next! The smartest path uses fewer moves.", storySnippetEs: "¡Adivina qué sigue! El camino más inteligente usa menos movimientos.",
+        { id: "3-2", names: { en: "Smart Path", es: "Camino Inteligente", vi: "Đường Thông Minh", "zh-CN": "聪明路线" }, cols: 6, rows: 6, startRow: 5, startCol: 0, startDir: "E", par: 10, maxCommands: 14,
+          storySnippets: { en: "Guess what comes next! The smartest path uses fewer moves.", es: "¡Adivina qué sigue! El camino más inteligente usa menos movimientos.", vi: "Đoán xem tiếp theo là gì! Đường thông minh nhất dùng ít bước hơn.", "zh-CN": "猜猜接下来是什么！最聪明的路用最少的步数。" },
           grid: [["wall","wall","wall","wall","floor","goal"],["floor","floor","floor","wall","floor","wall"],["floor","wall","floor","chip","floor","wall"],["floor","wall","floor","wall","floor","wall"],["floor","floor","floor","wall","floor","floor"],["start","wall","wall","wall","wall","wall"]] },
       ],
     },
@@ -331,8 +328,7 @@ function LevelStrip({ total, current, stars }: { total: number; current: number;
 // ── Main Game Component ────────────────────────────────────────────────────
 
 function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: (result: GameResult) => void }) {
-  const { t, i18n } = useTranslation();
-  const isEs = (i18n.resolvedLanguage ?? i18n.language).startsWith("es");
+  const { t } = useTranslation();
   const allLevels = useMemo(() => config.chapters.flatMap((ch) => ch.levels), [config]);
   const chapterForLevel = useMemo(() => {
     const map: Record<number, ChapterDef> = {};
@@ -474,10 +470,10 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
 
   if (!level || !chapter) return null;
 
-  const levelName = isEs ? (level.nameEs ?? level.name) : level.name;
-  const snippet = isEs ? (level.storySnippetEs ?? level.storySnippet) : level.storySnippet;
-  const hintText = isEs ? (level.hintEs ?? level.hint) : level.hint;
-  const themeLabel = isEs ? theme.labelEs : theme.label;
+  const levelName = pickLocale(level.names, level.names.en);
+  const snippet = level.storySnippets ? pickLocale(level.storySnippets, level.storySnippets.en) : undefined;
+  const hintText = level.hints ? pickLocale(level.hints, level.hints.en) : undefined;
+  const themeLabel = pickLocale(theme.labels, theme.labels.en);
 
   return (
     <div className="space-y-4">
@@ -574,21 +570,26 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
 // ── Export ──────────────────────────────────────────────────────────────────
 
 export default function TankTrekGame({ config, onComplete }: TankTrekGameProps) {
-  const { t, i18n } = useTranslation();
-  const isEs = (i18n.resolvedLanguage ?? i18n.language).startsWith("es");
+  const { t } = useTranslation();
   const gameConfig = config?.chapters?.length ? config : BUILTIN_LEVELS;
 
   const briefing: MissionBriefing = {
-    title: isEs ? "¡Misión del Robot!" : "Robot Mission!",
-    story: isEs
-      ? "Bolt necesita TU ayuda para navegar por los laberintos. ¡Programa sus movimientos y guíalo hasta la meta!"
-      : "Bolt needs YOUR help to navigate the mazes. Program its moves and guide it to the goal!",
+    title: pickLocale({ en: "Robot Mission!", es: "¡Misión del Robot!", vi: "Nhiệm Vụ Robot!", "zh-CN": "机器人任务！" }, "Robot Mission!"),
+    story: pickLocale({
+      en: "Bolt needs YOUR help to navigate the mazes. Program its moves and guide it to the goal!",
+      es: "Bolt necesita TU ayuda para navegar por los laberintos. ¡Programa sus movimientos y guíalo hasta la meta!",
+      vi: "Bolt cần sự giúp đỡ của BẠN để đi qua mê cung. Lập trình các bước và dẫn nó đến đích!",
+      "zh-CN": "Bolt需要你的帮助来穿越迷宫。编排它的动作，引导它到达目标！",
+    }, "Bolt needs YOUR help to navigate the mazes. Program its moves and guide it to the goal!"),
     icon: "🤖",
-    chapterLabel: isEs ? "Tank Trek" : "Tank Trek",
+    chapterLabel: "Tank Trek",
     themeColor: "indigo",
-    tips: isEs
-      ? ["Planifica antes de ejecutar", "Menos movimientos = más estrellas", "¡Recoge los chips de datos!"]
-      : ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"],
+    tips: pickLocale({
+      en: ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"],
+      es: ["Planifica antes de ejecutar", "Menos movimientos = más estrellas", "¡Recoge los chips de datos!"],
+      vi: ["Lên kế hoạch trước khi chạy", "Ít bước hơn = nhiều sao hơn", "Thu thập chip dữ liệu!"],
+      "zh-CN": ["跑之前先计划", "步数越少 = 星星越多", "收集数据芯片！"],
+    }, ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"]),
   };
 
   return (

@@ -341,7 +341,12 @@
     "resetting": "Đang đặt lại...",
     "resetSuccess": "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay.",
     "resetInvalid": "Liên kết đặt lại không hợp lệ hoặc đã hết hạn.",
-    "passwordMismatch": "Mật khẩu không khớp"
+    "passwordMismatch": "Mật khẩu không khớp",
+    "chooseLoginType": "Chọn cách đăng nhập",
+    "selectHowToLogin": "Chọn cách con muốn đăng nhập",
+    "teacherLogin": "Đăng nhập Giáo viên",
+    "studentLogin": "Đăng nhập Học sinh",
+    "backToHome": "Về trang chủ"
   },
   "tutorial": {
     "welcome": "Chào mừng đến BrightBoost!",
@@ -370,7 +375,8 @@
     "reset": "Đặt lại",
     "done": "Xong",
     "replay": "Chơi lại",
-    "logOut": "Đăng xuất"
+    "logOut": "Đăng xuất",
+    "changeLanguage": "Đổi ngôn ngữ"
   },
   "teacher": {
     "nav": {
@@ -546,7 +552,19 @@
     "comingSoon": "Sắp ra mắt!",
     "loadError": "Không thể tải bài học. Vui lòng thử lại sau.",
     "noModules": "Không tìm thấy bài học",
-    "noModulesDesc": "Không tìm thấy bài học nào lúc này. Vui lòng quay lại sau!"
+    "noModulesDesc": "Không tìm thấy bài học nào lúc này. Vui lòng quay lại sau!",
+    "detail": {
+      "locked": "Bài học đã khóa",
+      "unlockPrompt": "Chọn chuyên ngành ở trang nhân vật để mở khóa bài học này!",
+      "loadError": "Không thể tải bài học. Hãy thử lại!",
+      "loading": "Đang tải bài học...",
+      "loadingAria": "Đang tải bài học",
+      "story": "Câu chuyện",
+      "game": "Trò chơi",
+      "done": "Xong",
+      "replay": "Chơi lại",
+      "checkAvatarUpgrades": "Xem nâng cấp nhân vật"
+    }
   },
   "nav": {
     "learn": "Học",
@@ -1261,6 +1279,35 @@
   },
 
   "games": {
+    "learning": {
+      "wordsToKnow": "Từ cần biết"
+    },
+    "boostPath": {
+      "title": "Bản Đồ Của Boost",
+      "level1": "Đến bộ sạc năng lượng mặt trời",
+      "level2": "Tìm dụng cụ hỗ trợ",
+      "level3": "Giao pin nhỏ",
+      "buildPlan": "Lập kế hoạch để giúp Boost đến đích.",
+      "tryNewPlan": "Thử một kế hoạch mới.",
+      "addSteps": "Thêm bước trước đã.",
+      "allDone": "Con làm được rồi! Boost đã đi theo kế hoạch của con đến đích.",
+      "niceJob": "Giỏi lắm! Kế hoạch đó hiệu quả. Sẵn sàng cho bản đồ tiếp theo.",
+      "crashed": "Ôi! Boost đâm vào tường. Kiểm tra lại các bước và thử lại nhé.",
+      "didntReach": "Cố gắng tốt. Boost chưa đến đích.",
+      "buildProgram": "Xây dựng chương trình",
+      "forward": "Tiến",
+      "turnLeft": "Rẽ trái",
+      "turnRight": "Rẽ phải",
+      "yourSteps": "Các bước của con",
+      "noSteps": "Chưa có bước nào",
+      "run": "Chạy",
+      "clear": "Xóa",
+      "levelLabel": "Cấp",
+      "vocabPlan": "kế hoạch",
+      "vocabSequence": "trình tự",
+      "vocabTurn": "rẽ",
+      "vocabGoal": "đích"
+    },
     "shared": {
       "tips": "Mẹo",
       "startMission": "Bắt đầu nhiệm vụ",

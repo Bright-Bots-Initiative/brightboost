@@ -9,14 +9,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { Zap, Star, ChevronRight, RotateCcw, Shield, Clock, Sparkles } from "lucide-react";
+import { pickLocale } from "@/utils/localizedContent";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface MathProblem {
   id: string;
-  prompt: string;
-  promptEs?: string;
+  prompts: Partial<Record<string, string>>;
   correctAnswer: number;
   decoys: number[];
   skillTag: string;
@@ -24,10 +24,8 @@ interface MathProblem {
 
 interface QQSector {
   id: string;
-  title: string;
-  titleEs?: string;
-  storyBeat?: string;
-  storyBeatEs?: string;
+  titles: Partial<Record<string, string>>;
+  storyBeats?: Partial<Record<string, string>>;
   problems: MathProblem[];
   speed: number;
   spawnRate: number;
@@ -85,42 +83,42 @@ const BUILTIN_CONFIG: QuantumQuestConfig = {
   gameKey: "quantum_quest",
   sectors: [
     {
-      id: "s1", title: "Star Harbor", titleEs: "Puerto Estelar", theme: "harbor",
-      storyBeat: "Welcome, Explorer! Count the stars to power your ship.", storyBeatEs: "¡Bienvenido! Cuenta las estrellas para dar energía a tu nave.",
+      id: "s1", titles: { en: "Star Harbor", es: "Puerto Estelar", vi: "Bến Sao", "zh-CN": "星港" }, theme: "harbor",
+      storyBeats: { en: "Welcome, Explorer! Count the stars to power your ship.", es: "¡Bienvenido! Cuenta las estrellas para dar energía a tu nave.", vi: "Chào nhà thám hiểm! Đếm các ngôi sao để tiếp năng lượng cho tàu.", "zh-CN": "欢迎，探险家！数星星来给飞船充能。" },
       speed: 1, spawnRate: 2.5,
       problems: [
-        { id: "s1-1", prompt: "How many? ⭐⭐⭐", promptEs: "¿Cuántas? ⭐⭐⭐", correctAnswer: 3, decoys: [2, 4, 5], skillTag: "counting" },
-        { id: "s1-2", prompt: "How many? 🌟🌟🌟🌟🌟", promptEs: "¿Cuántas? 🌟🌟🌟🌟🌟", correctAnswer: 5, decoys: [3, 4, 6], skillTag: "counting" },
-        { id: "s1-3", prompt: "Which is bigger: 3 or 7?", promptEs: "¿Cuál es mayor: 3 o 7?", correctAnswer: 7, decoys: [3, 5, 4], skillTag: "comparison" },
-        { id: "s1-4", prompt: "How many? 🚀🚀", promptEs: "¿Cuántos? 🚀🚀", correctAnswer: 2, decoys: [1, 3, 4], skillTag: "counting" },
-        { id: "s1-5", prompt: "Which is smaller: 9 or 4?", promptEs: "¿Cuál es menor: 9 o 4?", correctAnswer: 4, decoys: [9, 6, 5], skillTag: "comparison" },
+        { id: "s1-1", prompts: { en: "How many? ⭐⭐⭐", es: "¿Cuántas? ⭐⭐⭐", vi: "Bao nhiêu? ⭐⭐⭐", "zh-CN": "有几个？⭐⭐⭐" }, correctAnswer: 3, decoys: [2, 4, 5], skillTag: "counting" },
+        { id: "s1-2", prompts: { en: "How many? 🌟🌟🌟🌟🌟", es: "¿Cuántas? 🌟🌟🌟🌟🌟", vi: "Bao nhiêu? 🌟🌟🌟🌟🌟", "zh-CN": "有几个？🌟🌟🌟🌟🌟" }, correctAnswer: 5, decoys: [3, 4, 6], skillTag: "counting" },
+        { id: "s1-3", prompts: { en: "Which is bigger: 3 or 7?", es: "¿Cuál es mayor: 3 o 7?", vi: "Số nào lớn hơn: 3 hay 7?", "zh-CN": "哪个更大：3还是7？" }, correctAnswer: 7, decoys: [3, 5, 4], skillTag: "comparison" },
+        { id: "s1-4", prompts: { en: "How many? 🚀🚀", es: "¿Cuántos? 🚀🚀", vi: "Bao nhiêu? 🚀🚀", "zh-CN": "有几个？🚀🚀" }, correctAnswer: 2, decoys: [1, 3, 4], skillTag: "counting" },
+        { id: "s1-5", prompts: { en: "Which is smaller: 9 or 4?", es: "¿Cuál es menor: 9 o 4?", vi: "Số nào nhỏ hơn: 9 hay 4?", "zh-CN": "哪个更小：9还是4？" }, correctAnswer: 4, decoys: [9, 6, 5], skillTag: "comparison" },
       ],
     },
     {
-      id: "s2", title: "Nebula Stream", titleEs: "Corriente de Nebulosa", theme: "nebula",
-      storyBeat: "The nebula needs energy! Scan carefully and discover the right answers.", storyBeatEs: "¡La nebulosa necesita energía! Escanea con cuidado y descubre las respuestas.",
+      id: "s2", titles: { en: "Nebula Stream", es: "Corriente de Nebulosa", vi: "Dòng Tinh Vân", "zh-CN": "星云流" }, theme: "nebula",
+      storyBeats: { en: "The nebula needs energy! Scan carefully and discover the right answers.", es: "¡La nebulosa necesita energía! Escanea con cuidado y descubre las respuestas.", vi: "Tinh vân cần năng lượng! Quét kỹ và tìm câu trả lời đúng.", "zh-CN": "星云需要能量！仔细扫描，找到正确答案。" },
       speed: 2, spawnRate: 2,
       problems: [
-        { id: "s2-1", prompt: "2 + 3 = ?", correctAnswer: 5, decoys: [4, 6, 3], skillTag: "addition" },
-        { id: "s2-2", prompt: "4 + 1 = ?", correctAnswer: 5, decoys: [3, 6, 4], skillTag: "addition" },
-        { id: "s2-3", prompt: "3 + 3 = ?", correctAnswer: 6, decoys: [5, 7, 4], skillTag: "addition" },
-        { id: "s2-4", prompt: "5 + 2 = ?", correctAnswer: 7, decoys: [6, 8, 5], skillTag: "addition" },
-        { id: "s2-5", prompt: "1 + 6 = ?", correctAnswer: 7, decoys: [5, 8, 6], skillTag: "addition" },
-        { id: "s2-6", prompt: "4 + 4 = ?", correctAnswer: 8, decoys: [6, 7, 9], skillTag: "addition" },
+        { id: "s2-1", prompts: { en: "2 + 3 = ?" }, correctAnswer: 5, decoys: [4, 6, 3], skillTag: "addition" },
+        { id: "s2-2", prompts: { en: "4 + 1 = ?" }, correctAnswer: 5, decoys: [3, 6, 4], skillTag: "addition" },
+        { id: "s2-3", prompts: { en: "3 + 3 = ?" }, correctAnswer: 6, decoys: [5, 7, 4], skillTag: "addition" },
+        { id: "s2-4", prompts: { en: "5 + 2 = ?" }, correctAnswer: 7, decoys: [6, 8, 5], skillTag: "addition" },
+        { id: "s2-5", prompts: { en: "1 + 6 = ?" }, correctAnswer: 7, decoys: [5, 8, 6], skillTag: "addition" },
+        { id: "s2-6", prompts: { en: "4 + 4 = ?" }, correctAnswer: 8, decoys: [6, 7, 9], skillTag: "addition" },
       ],
     },
     {
-      id: "s3", title: "Quantum Gate", titleEs: "Puerta Cuántica", theme: "gate",
-      storyBeat: "Several possible paths until we check closely! Mixed challenges ahead.", storyBeatEs: "¡Varios caminos posibles hasta que miremos bien! Desafíos variados adelante.",
+      id: "s3", titles: { en: "Quantum Gate", es: "Puerta Cuántica", vi: "Cổng Lượng Tử", "zh-CN": "量子之门" }, theme: "gate",
+      storyBeats: { en: "Several possible paths until we check closely! Mixed challenges ahead.", es: "¡Varios caminos posibles hasta que miremos bien! Desafíos variados adelante.", vi: "Nhiều con đường cho đến khi kiểm tra kỹ! Thử thách hỗn hợp phía trước.", "zh-CN": "仔细检查才能找到正确的路！前方有混合挑战。" },
       speed: 3, spawnRate: 1.8,
       problems: [
-        { id: "s3-1", prompt: "5 - 2 = ?", correctAnswer: 3, decoys: [2, 4, 5], skillTag: "subtraction" },
-        { id: "s3-2", prompt: "8 - 3 = ?", correctAnswer: 5, decoys: [4, 6, 3], skillTag: "subtraction" },
-        { id: "s3-3", prompt: "6 + 4 = ?", correctAnswer: 10, decoys: [8, 9, 11], skillTag: "addition" },
-        { id: "s3-4", prompt: "What comes next: 2, 4, 6, ?", promptEs: "¿Qué sigue: 2, 4, 6, ?", correctAnswer: 8, decoys: [7, 9, 10], skillTag: "patterns" },
-        { id: "s3-5", prompt: "9 - 5 = ?", correctAnswer: 4, decoys: [3, 5, 6], skillTag: "subtraction" },
-        { id: "s3-6", prompt: "7 + 5 = ?", correctAnswer: 12, decoys: [10, 11, 13], skillTag: "addition" },
-        { id: "s3-7", prompt: "What comes next: 1, 3, 5, ?", promptEs: "¿Qué sigue: 1, 3, 5, ?", correctAnswer: 7, decoys: [6, 8, 9], skillTag: "patterns" },
+        { id: "s3-1", prompts: { en: "5 - 2 = ?" }, correctAnswer: 3, decoys: [2, 4, 5], skillTag: "subtraction" },
+        { id: "s3-2", prompts: { en: "8 - 3 = ?" }, correctAnswer: 5, decoys: [4, 6, 3], skillTag: "subtraction" },
+        { id: "s3-3", prompts: { en: "6 + 4 = ?" }, correctAnswer: 10, decoys: [8, 9, 11], skillTag: "addition" },
+        { id: "s3-4", prompts: { en: "What comes next: 2, 4, 6, ?", es: "¿Qué sigue: 2, 4, 6, ?", vi: "Số tiếp theo: 2, 4, 6, ?", "zh-CN": "下一个是：2, 4, 6, ?" }, correctAnswer: 8, decoys: [7, 9, 10], skillTag: "patterns" },
+        { id: "s3-5", prompts: { en: "9 - 5 = ?" }, correctAnswer: 4, decoys: [3, 5, 6], skillTag: "subtraction" },
+        { id: "s3-6", prompts: { en: "7 + 5 = ?" }, correctAnswer: 12, decoys: [10, 11, 13], skillTag: "addition" },
+        { id: "s3-7", prompts: { en: "What comes next: 1, 3, 5, ?", es: "¿Qué sigue: 1, 3, 5, ?", vi: "Số tiếp theo: 1, 3, 5, ?", "zh-CN": "下一个是：1, 3, 5, ?" }, correctAnswer: 7, decoys: [6, 8, 9], skillTag: "patterns" },
       ],
     },
   ],
@@ -295,8 +293,7 @@ function QQHud({
 // ── Core Game ──────────────────────────────────────────────────────────────
 
 function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; onFinish: (result: GameResult) => void }) {
-  const { t, i18n } = useTranslation();
-  const isEs = (i18n.resolvedLanguage ?? i18n.language).startsWith("es");
+  const { t } = useTranslation();
 
   const [sectorIdx, setSectorIdx] = useState(0);
   const [problemIdx, setProblemIdx] = useState(0);
@@ -484,7 +481,7 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
 
   // Sector complete
   if (sectorComplete && sector) {
-    const sectorTitle = isEs ? (sector.titleEs ?? sector.title) : sector.title;
+    const sectorTitle = pickLocale(sector.titles, sector.titles.en ?? "");
     return (
       <div className="text-center space-y-5 py-8 slide-up-fade">
         <div className="text-6xl bounce-in">{sectorTheme.icon}</div>
@@ -511,7 +508,7 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
   }
 
   if (!problem || !sector) return null;
-  const promptText = isEs ? (problem.promptEs ?? problem.prompt) : problem.prompt;
+  const promptText = pickLocale(problem.prompts, problem.prompts.en ?? "");
 
   return (
     <div className="space-y-3">
@@ -538,21 +535,26 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
 // ── Export ──────────────────────────────────────────────────────────────────
 
 export default function QuantumQuestGame({ config, onComplete }: QuantumQuestGameProps) {
-  const { t, i18n } = useTranslation();
-  const isEs = (i18n.resolvedLanguage ?? i18n.language).startsWith("es");
+  const { t } = useTranslation();
   const gameConfig = config?.sectors?.length ? config : BUILTIN_CONFIG;
 
   const briefing: MissionBriefing = {
-    title: isEs ? "¡Misión Cuántica!" : "Quantum Mission!",
-    story: isEs
-      ? "¡Explorador! Resuelve problemas de matemáticas y escanea las respuestas correctas flotando en el espacio."
-      : "Explorer! Solve math problems and scan the correct answers floating through space.",
+    title: pickLocale({ en: "Quantum Mission!", es: "¡Misión Cuántica!", vi: "Nhiệm Vụ Lượng Tử!", "zh-CN": "量子任务！" }, "Quantum Mission!"),
+    story: pickLocale({
+      en: "Explorer! Solve math problems and scan the correct answers floating through space.",
+      es: "¡Explorador! Resuelve problemas de matemáticas y escanea las respuestas correctas flotando en el espacio.",
+      vi: "Nhà thám hiểm! Giải toán và quét các câu trả lời đúng trôi nổi trong không gian.",
+      "zh-CN": "探险家！解决数学题，扫描漂浮在太空中的正确答案。",
+    }, "Explorer! Solve math problems and scan the correct answers floating through space."),
     icon: "🚀",
-    chapterLabel: isEs ? "Quantum Quest" : "Quantum Quest",
+    chapterLabel: pickLocale({ en: "Quantum Quest", es: "Quantum Quest", vi: "Quantum Quest", "zh-CN": "量子探索" }, "Quantum Quest"),
     themeColor: "violet",
-    tips: isEs
-      ? ["Toca la respuesta correcta", "¡Las rachas dan poderes!", "Usa poderes con cuidado"]
-      : ["Tap the correct answer", "Streaks unlock power-ups!", "Use power-ups wisely"],
+    tips: pickLocale({
+      en: ["Tap the correct answer", "Streaks unlock power-ups!", "Use power-ups wisely"],
+      es: ["Toca la respuesta correcta", "¡Las rachas dan poderes!", "Usa poderes con cuidado"],
+      vi: ["Chạm câu trả lời đúng", "Chuỗi đúng mở khóa sức mạnh!", "Dùng sức mạnh cẩn thận"],
+      "zh-CN": ["点击正确答案", "连续答对可解锁道具！", "谨慎使用道具"],
+    }, ["Tap the correct answer", "Streaks unlock power-ups!", "Use power-ups wisely"]),
   };
 
   return (

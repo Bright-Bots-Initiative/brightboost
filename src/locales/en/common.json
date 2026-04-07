@@ -341,7 +341,12 @@
     "resetting": "Resetting...",
     "resetSuccess": "Password reset successfully! You can now log in.",
     "resetInvalid": "This reset link is invalid or has expired.",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "chooseLoginType": "Choose Login Type",
+    "selectHowToLogin": "Select how you'd like to login",
+    "teacherLogin": "Teacher Login",
+    "studentLogin": "Student Login",
+    "backToHome": "Back to Home"
   },
   "tutorial": {
     "welcome": "Welcome to BrightBoost!",
@@ -370,7 +375,8 @@
     "reset": "Reset",
     "done": "Done",
     "replay": "Replay",
-    "logOut": "Log Out"
+    "logOut": "Log Out",
+    "changeLanguage": "Change language"
   },
   "teacher": {
     "nav": {
@@ -546,7 +552,19 @@
     "comingSoon": "Coming Soon!",
     "loadError": "Failed to load modules. Please try again later.",
     "noModules": "No Modules Found",
-    "noModulesDesc": "We couldn't find any learning modules at the moment. Please check back later!"
+    "noModulesDesc": "We couldn't find any learning modules at the moment. Please check back later!",
+    "detail": {
+      "locked": "Module Locked",
+      "unlockPrompt": "Choose your specialization on the avatar page to unlock this module!",
+      "loadError": "We couldn't load this module. Try again!",
+      "loading": "Loading module details...",
+      "loadingAria": "Loading module details",
+      "story": "Story",
+      "game": "Game",
+      "done": "Done",
+      "replay": "Replay",
+      "checkAvatarUpgrades": "Check Avatar Upgrades"
+    }
   },
   "nav": {
     "learn": "Learn",
@@ -1261,6 +1279,35 @@
   },
 
   "games": {
+    "learning": {
+      "wordsToKnow": "Words to know"
+    },
+    "boostPath": {
+      "title": "Boost's Path Planner",
+      "level1": "Reach the solar charger",
+      "level2": "Find the helper tool",
+      "level3": "Deliver the tiny battery",
+      "buildPlan": "Build a plan to help Boost reach the goal.",
+      "tryNewPlan": "Try a new plan.",
+      "addSteps": "Add some steps first.",
+      "allDone": "You did it! Boost followed your plan all the way to the goal.",
+      "niceJob": "Nice job! That plan worked. Get ready for the next map.",
+      "crashed": "Oops! Boost bumped into a wall. Check your turns and try again.",
+      "didntReach": "Good try. Boost did not reach the goal yet.",
+      "buildProgram": "Build the program",
+      "forward": "Forward",
+      "turnLeft": "Turn Left",
+      "turnRight": "Turn Right",
+      "yourSteps": "Your steps",
+      "noSteps": "No steps yet",
+      "run": "Run",
+      "clear": "Clear",
+      "levelLabel": "Level",
+      "vocabPlan": "plan",
+      "vocabSequence": "sequence",
+      "vocabTurn": "turn",
+      "vocabGoal": "goal"
+    },
     "shared": {
       "tips": "Tips",
       "startMission": "Start Mission",

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 type LearningGameFrameProps = {
   title: string;
@@ -17,6 +18,8 @@ export function LearningGameFrame({
   feedback,
   children,
 }: LearningGameFrameProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="mx-auto max-w-5xl rounded-2xl border bg-white p-4 shadow-sm">
       <div className="mb-4 rounded-xl border bg-slate-50 p-4">
@@ -26,7 +29,7 @@ export function LearningGameFrame({
             <p className="text-sm text-slate-700">{objective}</p>
             {vocabulary.length > 0 ? (
               <p className="mt-2 text-sm text-slate-600">
-                <span className="font-semibold">Words to know:</span>{" "}
+                <span className="font-semibold">{t("games.learning.wordsToKnow")}:</span>{" "}
                 {vocabulary.join(", ")}
               </p>
             ) : null}
