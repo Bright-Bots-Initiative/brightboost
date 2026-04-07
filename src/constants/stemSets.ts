@@ -2,14 +2,13 @@
 // Canonical STEM set definitions and progression utilities
 
 // ---------------------------------------------------------------------------
-// Set 1 — Foundation (5 K-2 STEM games)
+// Set 1 — Foundation (4 K-2 STEM games; Build-a-Bot removed from canon)
 // ---------------------------------------------------------------------------
 export const STEM_SET_1_IDS = [
   "bounce-buds",
   "gotcha-gears",
   "lost-steps",
   "rhyme-ride",
-  "build-a-bot",
 ] as const;
 
 export type StemSet1GameId = (typeof STEM_SET_1_IDS)[number];
@@ -19,7 +18,6 @@ export const STEM_SET_1_NAMES: Record<StemSet1GameId, string> = {
   "gotcha-gears": "Gotcha Gears",
   "lost-steps": "Fix the Order",
   "rhyme-ride": "Rhyme & Ride",
-  "build-a-bot": "Build a Bot",
 };
 
 export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
@@ -27,7 +25,6 @@ export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
   "gotcha-gears": "Faster fire rate (\u00d70.90 cooldown)",
   "lost-steps": "Better shield regen (\u00d71.08)",
   "rhyme-ride": "Faster projectiles (\u00d71.10)",
-  "build-a-bot": "Faster thrust (\u00d71.06) and rotation (\u00d71.08)",
 };
 
 // ---------------------------------------------------------------------------
@@ -83,7 +80,6 @@ export const STEM_SET_3_IDS = [
 // ---------------------------------------------------------------------------
 export const ALL_STEM_SETS = [STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_3_IDS] as const;
 export const TOTAL_SETS = 3;
-export const GAMES_PER_SET = 5;
 
 export const SET_LABELS = ["Set 1: Foundation", "Set 2: Exploration", "Set 3: Mastery"] as const;
 
@@ -99,16 +95,21 @@ export function countCompletedInSet(
   return completedIds.filter((id) => setIds.includes(id)).length;
 }
 
-/** Count how many full sets (all GAMES_PER_SET games) the player has completed. */
+/** A set is complete when all its IDs are completed. */
+function isSetComplete(completedIds: string[], setIds: readonly string[]): boolean {
+  return countCompletedInSet(completedIds, setIds) >= setIds.length;
+}
+
+/** Count how many full sets the player has completed. */
 export function countCompletedSets(completedIds: string[]): number {
   return ALL_STEM_SETS.filter(
-    (setIds) => countCompletedInSet(completedIds, setIds) >= GAMES_PER_SET,
+    (setIds) => isSetComplete(completedIds, setIds),
   ).length;
 }
 
 /** True when all Set 1 activities are completed. */
 export function isSet1Complete(completedIds: string[]): boolean {
-  return countCompletedInSet(completedIds, STEM_SET_1_IDS) >= GAMES_PER_SET;
+  return isSetComplete(completedIds, STEM_SET_1_IDS);
 }
 
 /** True when Set 2 is still locked (Set 1 not yet complete). */

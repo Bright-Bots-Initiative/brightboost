@@ -925,25 +925,13 @@ async function main() {
     });
   }
 
+  // Build-a-Bot removed from canon — clean up any existing activity
   const buildBot = await prisma.activity.findFirst({
     where: { lessonId: lesson.id, title: "Build a Bot" },
   });
   if (buildBot) {
-    await prisma.activity.update({
-      where: { id: buildBot.id },
-      data: { id: "build-a-bot", title: "Build a Bot", content: "Drag the parts to build a robot." },
-    });
-  } else {
-    await prisma.activity.create({
-      data: {
-        id: "build-a-bot",
-        title: "Build a Bot",
-        kind: INTERACT,
-        order: 2,
-        content: "Drag the parts to build a robot.",
-        Lesson: { connect: { id: lesson.id } },
-      },
-    });
+    await prisma.activity.delete({ where: { id: buildBot.id } }).catch(() => {});
+    console.log("Cleaned up removed Build-a-Bot activity.");
   }
   console.log("Seeded activities.");
 

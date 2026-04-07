@@ -12,7 +12,6 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Gotcha Gears": "Engranajes Gotcha",
     "Rhyme & Ride": "Rima y Viaje",
     "Fix the Order": "Ordena los Pasos",
-    "Build a Bot": "Construye un Robot",
     // Story activity names
     "Story: Meet Buddy": "Historia: Conoce a Buddy",
     "Story: Meet Rhymo": "Historia: Conoce a Rhymo",
@@ -51,7 +50,6 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Gotcha Gears": "Bánh Răng Gotcha",
     "Rhyme & Ride": "Vần và Đi",
     "Fix the Order": "Sắp Xếp Thứ Tự",
-    "Build a Bot": "Xây Dựng Robot",
     "Story: Meet Buddy": "Câu chuyện: Gặp Buddy",
     "Story: Meet Rhymo": "Câu chuyện: Gặp Rhymo",
     "Story: Meet Gearbot": "Câu chuyện: Gặp Gearbot",
@@ -78,7 +76,6 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Gotcha Gears": "齿轮大作战",
     "Rhyme & Ride": "韵律骑行",
     "Fix the Order": "排列顺序",
-    "Build a Bot": "制造机器人",
     "Story: Meet Buddy": "故事：认识Buddy",
     "Story: Meet Rhymo": "故事：认识Rhymo",
     "Story: Meet Gearbot": "故事：认识Gearbot",

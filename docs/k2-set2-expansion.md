@@ -17,7 +17,7 @@ Set 2 adds 5 new K-2 STEM modules that unlock after a student completes all 5 Se
 ## Gating Rules
 
 - **Set 1 complete** = all 5 Set 1 activity IDs have status `COMPLETED` in the Progress table
-- Set 1 IDs: `bounce-buds`, `gotcha-gears`, `lost-steps`, `rhyme-ride`, `build-a-bot`
+- Set 1 IDs: `bounce-buds`, `gotcha-gears`, `lost-steps`, `rhyme-ride`
 - Once Set 1 is complete, all 5 Set 2 modules unlock at once
 - No sequential lock inside Set 2
 - "Visited" is not "completed" - completion requires finishing the main challenge activity

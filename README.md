@@ -249,7 +249,6 @@ BrightBoost production runs on **Railway + Supabase**:
 ## 🗺 Roadmap
 
 - [ ] Upper-tier content for grades 3-5 and 6-8 with advanced technology pathways in AI, quantum, and biotech
-- [ ] Build-a-Bot interactive activity (scaffolded, not yet playable)
 - [ ] Real-time PvP matchmaking for Spacewar Arena
 - [ ] Donation-enabled website
 - [ ] Collegiate STEM principles integration (Nathan Frank collab)
