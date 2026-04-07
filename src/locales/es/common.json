@@ -553,6 +553,10 @@
     "loadError": "Error al cargar los módulos. Inténtalo de nuevo.",
     "noModules": "No se encontraron módulos",
     "noModulesDesc": "No pudimos encontrar módulos de aprendizaje en este momento. ¡Vuelve más tarde!",
+    "locked": "Bloqueado",
+    "set1Label": "Set 1: Fundamentos",
+    "set2Label": "Set 2: Exploración",
+    "set2LockedMessage": "Completa tus primeros 5 Juegos STEM para desbloquear el siguiente set.",
     "detail": {
       "locked": "Módulo Bloqueado",
       "unlockPrompt": "¡Elige tu especialización en la página de avatar para desbloquear este módulo!",

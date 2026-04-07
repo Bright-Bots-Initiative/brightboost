@@ -1,13 +1,16 @@
 /**
- * Centralized module-access logic for specialization-locked content.
+ * Centralized module-access logic for set-gated and specialization-locked content.
  *
  * Rules:
- * 1. Public/foundation modules (Quantum Quest, Lost Steps, etc.) are always accessible.
- * 2. Specialization modules (Quantum Explorers / stem-1-intro) are hidden until
+ * 1. Set 1 (Foundation) modules are always accessible.
+ * 2. Set 2 (Exploration) modules are locked until all Set 1 activities are complete.
+ *    Once unlocked, all 5 Set 2 modules are accessible at the same time.
+ * 3. Specialization modules (Quantum Explorers / stem-1-intro) are hidden until
  *    the student has chosen a specialization.
- * 3. Specialization choice is gated behind completing STEM Set 3
+ * 4. Specialization choice is gated behind completing STEM Set 3
  *    (enforced in Avatar.tsx + backend POST /avatar/select-archetype).
  */
+import { STEM_SET_2_MODULE_SLUGS, isSet2Locked } from "@/constants/stemSets";
 
 // ── Specialization-gated module slugs ────────────────────────────────────
 // Add future specialization-only modules here.
@@ -42,6 +45,19 @@ export function getStudentArchetype(avatarData: unknown): string | null {
 /** True when `slug` is a specialization-gated module (e.g. Quantum Explorers). */
 export function isSpecializationModuleSlug(slug: string): boolean {
   return SPECIALIZATION_MODULE_SLUGS.has(slug);
+}
+
+/** True when `slug` is a Set 2 module. */
+export function isSet2ModuleSlug(slug: string): boolean {
+  return (STEM_SET_2_MODULE_SLUGS as readonly string[]).includes(slug);
+}
+
+/**
+ * Whether Set 2 is currently locked for the student.
+ * Pass the list of completed activity IDs from their progress.
+ */
+export function checkSet2Locked(completedActivityIds: string[]): boolean {
+  return isSet2Locked(completedActivityIds);
 }
 
 /**

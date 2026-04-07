@@ -553,6 +553,10 @@
     "loadError": "Không thể tải bài học. Vui lòng thử lại sau.",
     "noModules": "Không tìm thấy bài học",
     "noModulesDesc": "Không tìm thấy bài học nào lúc này. Vui lòng quay lại sau!",
+    "locked": "Đã khóa",
+    "set1Label": "Bộ 1: Nền tảng",
+    "set2Label": "Bộ 2: Khám phá",
+    "set2LockedMessage": "Hoàn thành 5 Trò chơi STEM đầu tiên để mở khóa bộ tiếp theo.",
     "detail": {
       "locked": "Bài học đã khóa",
       "unlockPrompt": "Chọn chuyên ngành ở trang nhân vật để mở khóa bài học này!",

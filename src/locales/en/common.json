@@ -553,6 +553,10 @@
     "loadError": "Failed to load modules. Please try again later.",
     "noModules": "No Modules Found",
     "noModulesDesc": "We couldn't find any learning modules at the moment. Please check back later!",
+    "locked": "Locked",
+    "set1Label": "Set 1: Foundation",
+    "set2Label": "Set 2: Exploration",
+    "set2LockedMessage": "Complete your first 5 STEM Games to unlock the next challenge set.",
     "detail": {
       "locked": "Module Locked",
       "unlockPrompt": "Choose your specialization on the avatar page to unlock this module!",

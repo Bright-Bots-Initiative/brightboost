@@ -733,6 +733,150 @@ async function main() {
   }
   console.log("Seeded Quantum Quest module + activities.");
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SET 2 — Exploration (5 K-2 STEM modules, locked until Set 1 complete)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const set2Modules = [
+    {
+      slug: "k2-stem-maze-maps",
+      title: "Set 2: Maze Maps & Smart Paths",
+      description: "Plan the best path through the maze! 🗺️🤖",
+      activityId: "maze-maps",
+      gameKey: "maze_maps",
+      strand: "AI",
+      story: {
+        title: "Story: Maze Explorer",
+        slides: [
+          { id: "mm-s1", text: { en: "Welcome to the Maze Lab! Your robot needs to find the way out.", es: "¡Bienvenido al Laberinto! Tu robot necesita encontrar la salida." }, icon: "🗺️" },
+          { id: "mm-s2", text: { en: "Plan a path before you move. Think about which way is best!", es: "Planifica un camino antes de moverte. ¡Piensa cuál es el mejor camino!" }, icon: "🤔" },
+          { id: "mm-s3", text: { en: "Watch out for dead ends! A smart path avoids them.", es: "¡Cuidado con los callejones sin salida! Un camino inteligente los evita." }, icon: "⭐" },
+        ],
+        questions: [
+          { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 0 },
+        ],
+      },
+    },
+    {
+      slug: "k2-stem-move-measure",
+      title: "Set 2: Move, Measure & Improve",
+      description: "Move your body and measure how far you go! 🏃📏",
+      activityId: "move-measure",
+      gameKey: "move_measure",
+      strand: "Biotech",
+      story: {
+        title: "Story: Body Lab",
+        slides: [
+          { id: "mmi-s1", text: { en: "Your body is amazing! Let's see what it can do.", es: "¡Tu cuerpo es increíble! Veamos qué puede hacer." }, icon: "🏃" },
+          { id: "mmi-s2", text: { en: "We will measure how far, how fast, and how many times you can do something!", es: "¡Vamos a medir qué tan lejos, qué tan rápido y cuántas veces puedes hacer algo!" }, icon: "📏" },
+          { id: "mmi-s3", text: { en: "Try again to improve your score. Practice makes you stronger!", es: "Intenta de nuevo para mejorar tu puntaje. ¡La práctica te hace más fuerte!" }, icon: "💪" },
+        ],
+        questions: [
+          { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }], answerIndex: 0 },
+        ],
+      },
+    },
+    {
+      slug: "k2-stem-sky-shield",
+      title: "Set 2: Sky Shield Patterns",
+      description: "Find the pattern and protect the sky! 🛡️✨",
+      activityId: "sky-shield",
+      gameKey: "sky_shield",
+      strand: "Quantum",
+      story: {
+        title: "Story: Pattern Patrol",
+        slides: [
+          { id: "ss-s1", text: { en: "The sky needs your help! Strange patterns are appearing.", es: "¡El cielo necesita tu ayuda! Están apareciendo patrones extraños." }, icon: "🌌" },
+          { id: "ss-s2", text: { en: "Look at the rows and columns. Can you find the repeating pattern?", es: "Mira las filas y columnas. ¿Puedes encontrar el patrón que se repite?" }, icon: "🔍" },
+          { id: "ss-s3", text: { en: "When you spot the pattern, you can protect the sky with your shield!", es: "¡Cuando encuentres el patrón, puedes proteger el cielo con tu escudo!" }, icon: "🛡️" },
+        ],
+        questions: [
+          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }], answerIndex: 0 },
+        ],
+      },
+    },
+    {
+      slug: "k2-stem-fast-lane",
+      title: "Set 2: Fast Lane Signals",
+      description: "Read the signals and choose the safe lane! 🚦🏎️",
+      activityId: "fast-lane",
+      gameKey: "fast_lane",
+      strand: "AI + Biotech",
+      story: {
+        title: "Story: Signal School",
+        slides: [
+          { id: "fl-s1", text: { en: "Welcome to Signal School! Signals help us stay safe.", es: "¡Bienvenido a la Escuela de Señales! Las señales nos ayudan a estar seguros." }, icon: "🚦" },
+          { id: "fl-s2", text: { en: "Green means go, red means stop. But what about the tricky ones?", es: "Verde significa avanzar, rojo significa parar. ¿Pero qué pasa con las difíciles?" }, icon: "🤔" },
+          { id: "fl-s3", text: { en: "React quickly but safely! Pick the right lane before time runs out.", es: "¡Reacciona rápido pero con cuidado! Escoge el carril correcto antes de que se acabe el tiempo." }, icon: "⏱️" },
+        ],
+        questions: [
+          { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }], answerIndex: 0 },
+        ],
+      },
+    },
+    {
+      slug: "k2-stem-qualify-tune-race",
+      title: "Set 2: Qualify, Tune, Race",
+      description: "Test, change one thing, and race to win! 🏁🔧",
+      activityId: "qualify-tune-race",
+      gameKey: "qualify_tune_race",
+      strand: "Capstone",
+      story: {
+        title: "Story: Race Lab",
+        slides: [
+          { id: "qtr-s1", text: { en: "Welcome to the Race Lab! First, test how fast your car goes.", es: "¡Bienvenido al Laboratorio de Carreras! Primero, prueba qué tan rápido va tu carro." }, icon: "🏎️" },
+          { id: "qtr-s2", text: { en: "Now change ONE thing — wheels, engine, or weight — and try again!", es: "Ahora cambia UNA cosa — ruedas, motor o peso — ¡e intenta de nuevo!" }, icon: "🔧" },
+          { id: "qtr-s3", text: { en: "Did your change make it faster? That is how scientists work: test, change, improve!", es: "¿Tu cambio lo hizo más rápido? ¡Así trabajan los científicos: probar, cambiar, mejorar!" }, icon: "🧪" },
+        ],
+        questions: [
+          { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }], answerIndex: 0 },
+        ],
+      },
+    },
+  ];
+
+  for (const s2 of set2Modules) {
+    const mod = await prisma.module.upsert({
+      where: { slug: s2.slug },
+      update: { title: s2.title, description: s2.description, level: "K-2", published: true },
+      create: { slug: s2.slug, title: s2.title, description: s2.description, level: "K-2", published: true },
+    });
+
+    let s2Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id, title: "Unit 1" } });
+    if (!s2Unit) {
+      s2Unit = await prisma.unit.create({ data: { title: "Unit 1", order: 1, Module: { connect: { id: mod.id } }, teacher: { connect: { id: teacher.id } } } });
+    }
+
+    let s2Lesson = await prisma.lesson.findFirst({ where: { unitId: s2Unit.id, title: s2.title } });
+    if (!s2Lesson) {
+      s2Lesson = await prisma.lesson.create({ data: { title: s2.title, order: 1, Unit: { connect: { id: s2Unit.id } } } });
+    }
+
+    const storyContent = JSON.stringify({
+      type: "story_quiz",
+      slides: s2.story.slides,
+      questions: s2.story.questions,
+      review: { keyIdea: { en: s2.description }, vocab: [s2.strand.toLowerCase()] },
+    });
+
+    let storyAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, kind: INFO, order: 1 } });
+    if (storyAct) {
+      await prisma.activity.update({ where: { id: storyAct.id }, data: { title: s2.story.title, content: storyContent } });
+    } else {
+      await prisma.activity.create({ data: { title: s2.story.title, kind: INFO, order: 1, content: storyContent, Lesson: { connect: { id: s2Lesson.id } } } });
+    }
+
+    const gameContent = JSON.stringify({ gameKey: s2.gameKey });
+    let gameAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, kind: INTERACT, order: 2 } });
+    if (gameAct) {
+      await prisma.activity.update({ where: { id: gameAct.id }, data: { id: s2.activityId, title: `Game: ${s2.title.replace("Set 2: ", "")}`, content: gameContent } });
+    } else {
+      await prisma.activity.create({ data: { id: s2.activityId, title: `Game: ${s2.title.replace("Set 2: ", "")}`, kind: INTERACT, order: 2, content: gameContent, Lesson: { connect: { id: s2Lesson.id } } } });
+    }
+
+    console.log("Seeded Set 2 module:", s2.slug);
+  }
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },

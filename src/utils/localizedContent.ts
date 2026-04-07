@@ -40,6 +40,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
       "¡Rebota por la puerta correcta para responder pistas!",
     "Catch the right gear to solve AI thinking puzzles! ⚙️🤖":
       "¡Atrapa el engranaje correcto para resolver rompecabezas de IA! ⚙️🤖",
+    "Set 2: Maze Maps & Smart Paths": "Set 2: Mapas de Laberinto",
+    "Set 2: Move, Measure & Improve": "Set 2: Mueve, Mide y Mejora",
+    "Set 2: Sky Shield Patterns": "Set 2: Patrones del Cielo",
+    "Set 2: Fast Lane Signals": "Set 2: Señales de Carril Rápido",
+    "Set 2: Qualify, Tune, Race": "Set 2: Califica, Ajusta, Compite",
   },
   vi: {
     "Bounce & Buds": "Nảy và Bạn Bè",
@@ -62,6 +67,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
       "Nảy qua cổng đúng để trả lời câu đố!",
     "Catch the right gear to solve AI thinking puzzles! ⚙️🤖":
       "Bắt bánh răng đúng để giải câu đố AI! ⚙️🤖",
+    "Set 2: Maze Maps & Smart Paths": "Bộ 2: Bản Đồ Mê Cung",
+    "Set 2: Move, Measure & Improve": "Bộ 2: Đi, Đo và Cải Thiện",
+    "Set 2: Sky Shield Patterns": "Bộ 2: Mẫu Lá Chắn Bầu Trời",
+    "Set 2: Fast Lane Signals": "Bộ 2: Tín Hiệu Làn Nhanh",
+    "Set 2: Qualify, Tune, Race": "Bộ 2: Thử, Điều Chỉnh, Đua",
   },
   "zh-CN": {
     "Bounce & Buds": "弹跳小伙伴",
@@ -84,6 +94,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
       "弹进正确的门来回答线索！",
     "Catch the right gear to solve AI thinking puzzles! ⚙️🤖":
       "抓住正确的齿轮来解决AI思维谜题！⚙️🤖",
+    "Set 2: Maze Maps & Smart Paths": "第2套：迷宫地图",
+    "Set 2: Move, Measure & Improve": "第2套：动、量、进步",
+    "Set 2: Sky Shield Patterns": "第2套：天空护盾图案",
+    "Set 2: Fast Lane Signals": "第2套：快车道信号",
+    "Set 2: Qualify, Tune, Race": "第2套：测试、调整、比赛",
   },
 };
 

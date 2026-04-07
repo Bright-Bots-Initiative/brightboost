@@ -2,7 +2,7 @@
 // Canonical STEM set definitions and progression utilities
 
 // ---------------------------------------------------------------------------
-// Set 1 — Foundation (5 games, 4 playable + 1 in-dev for pilot)
+// Set 1 — Foundation (5 K-2 STEM games)
 // ---------------------------------------------------------------------------
 export const STEM_SET_1_IDS = [
   "bounce-buds",
@@ -31,18 +31,44 @@ export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Set 2 — Placeholder (coming soon)
+// Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
 // ---------------------------------------------------------------------------
 export const STEM_SET_2_IDS = [
-  "set2-game-1",
-  "set2-game-2",
-  "set2-game-3",
-  "set2-game-4",
-  "set2-game-5",
+  "maze-maps",
+  "move-measure",
+  "sky-shield",
+  "fast-lane",
+  "qualify-tune-race",
 ] as const;
 
+export type StemSet2GameId = (typeof STEM_SET_2_IDS)[number];
+
+export const STEM_SET_2_NAMES: Record<StemSet2GameId, string> = {
+  "maze-maps": "Maze Maps & Smart Paths",
+  "move-measure": "Move, Measure & Improve",
+  "sky-shield": "Sky Shield Patterns",
+  "fast-lane": "Fast Lane Signals",
+  "qualify-tune-race": "Qualify, Tune, Race",
+};
+
+export const STEM_SET_2_STRANDS: Record<StemSet2GameId, string> = {
+  "maze-maps": "AI",
+  "move-measure": "Biotech",
+  "sky-shield": "Quantum",
+  "fast-lane": "AI + Biotech",
+  "qualify-tune-race": "Capstone",
+};
+
+export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
+  "maze-maps": "Enhanced radar range (\u00d71.15)",
+  "move-measure": "HP regen boost (\u00d71.10)",
+  "sky-shield": "Shield duration (\u00d71.12)",
+  "fast-lane": "Dodge speed (\u00d71.08)",
+  "qualify-tune-race": "All stats (\u00d71.04)",
+};
+
 // ---------------------------------------------------------------------------
-// Set 3 — Placeholder (coming soon)
+// Set 3 — Mastery (placeholder, gates specialization)
 // ---------------------------------------------------------------------------
 export const STEM_SET_3_IDS = [
   "set3-game-1",
@@ -80,7 +106,31 @@ export function countCompletedSets(completedIds: string[]): number {
   ).length;
 }
 
+/** True when all Set 1 activities are completed. */
+export function isSet1Complete(completedIds: string[]): boolean {
+  return countCompletedInSet(completedIds, STEM_SET_1_IDS) >= GAMES_PER_SET;
+}
+
+/** True when Set 2 is still locked (Set 1 not yet complete). */
+export function isSet2Locked(completedIds: string[]): boolean {
+  return !isSet1Complete(completedIds);
+}
+
 /** Type guard: is this activity ID a Set 1 game? */
 export function isStemSet1Game(activityId: string): activityId is StemSet1GameId {
   return (STEM_SET_1_IDS as readonly string[]).includes(activityId);
 }
+
+/** Type guard: is this activity ID a Set 2 game? */
+export function isStemSet2Game(activityId: string): activityId is StemSet2GameId {
+  return (STEM_SET_2_IDS as readonly string[]).includes(activityId);
+}
+
+/** Module slugs for Set 2. */
+export const STEM_SET_2_MODULE_SLUGS = [
+  "k2-stem-maze-maps",
+  "k2-stem-move-measure",
+  "k2-stem-sky-shield",
+  "k2-stem-fast-lane",
+  "k2-stem-qualify-tune-race",
+] as const;
