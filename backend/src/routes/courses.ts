@@ -13,6 +13,7 @@ const router = Router();
 const createCourseSchema = z.object({
   name: z.string().min(1).max(200),
   defaultLanguage: z.enum(["en", "es"]).optional(),
+  gradeBand: z.enum(["k2", "g3_5"]).optional(),
 });
 
 const setupIconsSchema = z.object({
@@ -80,6 +81,7 @@ router.post(
         name: parsed.data.name,
         teacherId: req.user!.id,
         joinCode,
+        gradeBand: parsed.data.gradeBand || "k2",
         defaultLanguage: parsed.data.defaultLanguage || "en",
       },
     });
@@ -88,6 +90,7 @@ router.post(
       id: course.id,
       name: course.name,
       joinCode: course.joinCode,
+      gradeBand: course.gradeBand,
       enrollmentCount: 0,
       createdAt: course.createdAt,
     });
@@ -120,6 +123,7 @@ router.get(
       id: course.id,
       name: course.name,
       joinCode: course.joinCode,
+      gradeBand: course.gradeBand,
       enrollmentCount: course.enrollments.length,
       students: course.enrollments.map((e) => ({
         id: e.student.id,

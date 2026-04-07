@@ -946,6 +946,170 @@ async function main() {
     });
   }
   console.log("Seeded activities.");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Module Families & Variants (grade-banded content system)
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("Seeding module families and variants...");
+
+  const familyDefs = [
+    {
+      key: "sequencing",
+      title: "Sequencing & Debugging",
+      iconEmoji: "🔧",
+      k2: { title: "Boost's Lost Steps", subtitle: "Plan a path step by step!", moduleSlug: "k2-stem-sequencing" },
+      g3_5: {
+        title: "Bug Lab: Sequence & Debug",
+        subtitle: "Find the bug in the algorithm!",
+        contentConfig: {
+          theme: "lab",
+          reading: { wordCount: 250, topic: "algorithms, precise steps, debugging", vocabulary: ["algorithm", "sequence", "debug", "loop", "variable"] },
+          questions: { count: 5, types: ["ordering", "bug-identification", "cause-effect"] },
+          game: { rounds: 3, phases: ["reorder", "find-bug", "optimize"], mechanics: ["playback", "highlight-wrong-step", "path-preview", "hint-ladder"] },
+          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
+          ui: { tone: "mission-control", progressType: "ring" },
+        },
+      },
+    },
+    {
+      key: "motion",
+      title: "Forces & Motion",
+      iconEmoji: "🚀",
+      k2: { title: "Rhyme & Ride", subtitle: "Ride through worlds and catch rhymes!", moduleSlug: "k2-stem-rhyme-ride" },
+      g3_5: {
+        title: "Motion Mission: Force Lab",
+        subtitle: "Predict, test, and master forces!",
+        contentConfig: {
+          theme: "lab",
+          reading: { wordCount: 260, topic: "force, friction, mass, prediction", vocabulary: ["force", "friction", "mass", "acceleration", "prediction"] },
+          questions: { count: 5, types: ["prediction", "comparison", "variable-identification"] },
+          game: { rounds: 3, phases: ["predict", "test", "adjust-variables"], mechanics: ["force-slider", "surface-selector", "target-practice"] },
+          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
+          ui: { tone: "lab", progressType: "bar" },
+        },
+      },
+    },
+    {
+      key: "sorting",
+      title: "Sorting & Classification",
+      iconEmoji: "📊",
+      k2: { title: "Bounce & Buds", subtitle: "Bounce through the right gate!", moduleSlug: "k2-stem-bounce-buds" },
+      g3_5: {
+        title: "Data Dash: Sort & Discover",
+        subtitle: "Classify data and find hidden patterns!",
+        contentConfig: {
+          theme: "dashboard",
+          reading: { wordCount: 240, topic: "classification, organizing data, finding patterns", vocabulary: ["classify", "attribute", "pattern", "data", "graph"] },
+          questions: { count: 6, types: ["multi-attribute-sort", "hidden-rule", "chart-reading"] },
+          game: { rounds: 3, phases: ["sort-by-attribute", "infer-rule", "read-chart"], mechanics: ["drag-sort", "rule-builder", "bar-chart"] },
+          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
+          ui: { tone: "mission", progressType: "ring" },
+        },
+      },
+    },
+    {
+      key: "plant_variables",
+      title: "Plants & Fair Tests",
+      iconEmoji: "🌱",
+      k2: { title: "Gotcha Gears", subtitle: "Catch the right gear!", moduleSlug: "k2-stem-gotcha-gears" },
+      g3_5: {
+        title: "Variable Quest: Fair Test Lab",
+        subtitle: "Design experiments and test your ideas!",
+        contentConfig: {
+          theme: "lab",
+          reading: { wordCount: 270, topic: "fair tests, changing one variable, evidence-based conclusions", vocabulary: ["variable", "control", "hypothesis", "evidence", "conclusion"] },
+          questions: { count: 5, types: ["fair-test-check", "variable-identification", "conclusion-choice"] },
+          game: { rounds: 3, phases: ["setup-experiment", "observe-results", "evaluate-fairness"], mechanics: ["variable-lock", "lab-notebook", "sentence-stems"] },
+          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
+          ui: { tone: "lab", progressType: "bar" },
+        },
+      },
+    },
+    {
+      key: "bridge",
+      title: "Engineering & Design",
+      iconEmoji: "🏗️",
+      k2: { title: "Tank Trek", subtitle: "Guide a robot through mazes!", moduleSlug: "k2-stem-tank-trek" },
+      g3_5: {
+        title: "Design Under Pressure: Bridge Lab",
+        subtitle: "Build, test, and redesign structures!",
+        contentConfig: {
+          theme: "blueprint",
+          reading: { wordCount: 260, topic: "stability, triangles, constraints, redesign", vocabulary: ["stability", "triangle", "constraint", "load", "redesign"] },
+          questions: { count: 5, types: ["weak-point-identification", "material-choice", "design-comparison"] },
+          game: { rounds: 3, phases: ["build", "load-test", "redesign"], mechanics: ["weak-point-highlight", "starter-blueprint", "budget-constraint", "before-after-compare"] },
+          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
+          ui: { tone: "blueprint", progressType: "ring" },
+        },
+      },
+    },
+  ];
+
+  for (const fd of familyDefs) {
+    const family = await prisma.moduleFamily.upsert({
+      where: { key: fd.key },
+      create: { key: fd.key, title: fd.title, iconEmoji: fd.iconEmoji },
+      update: { title: fd.title, iconEmoji: fd.iconEmoji },
+    });
+
+    // K-2 variant (links to existing module)
+    await prisma.moduleVariant.upsert({
+      where: { familyId_band_version: { familyId: family.id, band: "k2", version: "1.0" } },
+      create: {
+        familyId: family.id,
+        band: "k2",
+        version: "1.0",
+        title: fd.k2.title,
+        subtitle: fd.k2.subtitle,
+        status: "active",
+        moduleSlug: fd.k2.moduleSlug,
+      },
+      update: { title: fd.k2.title, subtitle: fd.k2.subtitle, moduleSlug: fd.k2.moduleSlug },
+    });
+
+    // G3-5 variant (new upper-elementary content)
+    await prisma.moduleVariant.upsert({
+      where: { familyId_band_version: { familyId: family.id, band: "g3_5", version: "1.0" } },
+      create: {
+        familyId: family.id,
+        band: "g3_5",
+        version: "1.0",
+        title: fd.g3_5.title,
+        subtitle: fd.g3_5.subtitle,
+        status: "active",
+        contentConfig: fd.g3_5.contentConfig,
+      },
+      update: { title: fd.g3_5.title, subtitle: fd.g3_5.subtitle, contentConfig: fd.g3_5.contentConfig },
+    });
+
+    console.log(`  Seeded family "${fd.key}" with k2 + g3_5 variants`);
+  }
+
+  // Seed a demo g3_5 class if teacher exists
+  const demoClass = await prisma.course.upsert({
+    where: { joinCode: "UPPER35" },
+    create: {
+      name: "Grade 3-5 STEM Demo",
+      joinCode: "UPPER35",
+      teacherId: teacher.id,
+      gradeBand: "g3_5",
+    },
+    update: { gradeBand: "g3_5" },
+  });
+  console.log("Seeded demo g3_5 class:", demoClass.name);
+
+  // Auto-assign all g3_5 variants to the demo class
+  const g35Variants = await prisma.moduleVariant.findMany({ where: { band: "g3_5", status: "active" } });
+  for (let i = 0; i < g35Variants.length; i++) {
+    await prisma.classModuleAssignment.upsert({
+      where: { courseId_moduleVariantId: { courseId: demoClass.id, moduleVariantId: g35Variants[i].id } },
+      create: { courseId: demoClass.id, moduleVariantId: g35Variants[i].id, orderIndex: i },
+      update: { orderIndex: i },
+    });
+  }
+  console.log(`  Assigned ${g35Variants.length} g3_5 variants to demo class`);
+
+  console.log("Module families and variants seeded.");
 }
 
 main()

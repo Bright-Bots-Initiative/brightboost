@@ -33,6 +33,7 @@ interface CourseDetail {
   id: string;
   name: string;
   joinCode: string;
+  gradeBand?: string;
   enrollmentCount: number;
   students: { id: string; name: string; email: string; enrolledAt: string }[];
   createdAt: string;
@@ -412,6 +413,21 @@ const TeacherClassDetail: React.FC = () => {
               <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title={t("teacher.classDetail.copy")}>
                 {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>
+            </span>
+            <span className="flex items-center gap-1">
+              <select
+                value={course.gradeBand || "k2"}
+                onChange={async (e) => {
+                  try {
+                    await directApi.updateCourseBand(course.id, e.target.value);
+                    setCourse((prev: any) => prev ? { ...prev, gradeBand: e.target.value } : prev);
+                  } catch { /* ignore */ }
+                }}
+                className="text-xs bg-white border border-gray-200 rounded px-2 py-1 font-medium"
+              >
+                <option value="k2">{t("teacher.classDetail.bandK2", { defaultValue: "K-2" })}</option>
+                <option value="g3_5">{t("teacher.classDetail.bandG35", { defaultValue: "Grades 3-5" })}</option>
+              </select>
             </span>
           </div>
         </div>

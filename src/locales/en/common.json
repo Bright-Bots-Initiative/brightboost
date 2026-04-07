@@ -416,7 +416,10 @@
       "sessionTitle": "Session Title",
       "dueDate": "Due Date",
       "launching": "Launching...",
-      "launchSessionBtn": "Launch Session"
+      "launchSessionBtn": "Launch Session",
+      "bandK2": "K-2",
+      "bandG35": "Grades 3-5",
+      "copy": "Copy"
     },
     "icons": {
       "title": "K-2 Login Icons",

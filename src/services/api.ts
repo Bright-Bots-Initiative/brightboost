@@ -584,6 +584,56 @@ export const api = {
     return data?.bests ?? [];
   },
 
+  // ── Module Catalog & Assignments ──────────────────────────────────────
+
+  getModuleFamilies: async () => {
+    const res = await fetch(join(API_BASE, "/module-catalog/families"), { headers: getHeaders() });
+    return res.json();
+  },
+
+  getModuleVariants: async (band?: string) => {
+    const url = new URL(join(API_BASE, "/module-catalog/variants"), window.location.origin);
+    if (band) url.searchParams.append("band", band);
+    const res = await fetch(url.toString(), { headers: getHeaders() });
+    return res.json();
+  },
+
+  updateCourseBand: async (courseId: string, gradeBand: string) => {
+    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/band`), {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ gradeBand }),
+    });
+    return res.json();
+  },
+
+  getCourseAssignments: async (courseId: string) => {
+    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments`), { headers: getHeaders() });
+    return res.json();
+  },
+
+  assignModuleToClass: async (courseId: string, moduleVariantId: string, opts?: { orderIndex?: number; isLocked?: boolean }) => {
+    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments`), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ moduleVariantId, ...opts }),
+    });
+    return res.json();
+  },
+
+  removeModuleAssignment: async (courseId: string, assignmentId: string) => {
+    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments/${assignmentId}`), {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    return res.json();
+  },
+
+  getStudentAssignedModules: async () => {
+    const res = await fetch(join(API_BASE, "/student/assigned-modules"), { headers: getHeaders() });
+    return res.json();
+  },
+
   selectArchetype: async (archetype: string) => {
     const res = await fetch(join(API_BASE, "/avatar/select-archetype"), {
       method: "POST",
