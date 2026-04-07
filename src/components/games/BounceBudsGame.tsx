@@ -6,11 +6,12 @@
  * biology/nature clue and three labeled gates (1 correct, 2 distractors).
  *
  * Pre-launch = aiming state: the ball sits on the paddle and follows
- * it as the student positions. Launch is an explicit action (Space/Enter
- * key or the on-screen Bounce button), so aiming is real on every platform.
+ * it as the student positions. Launch happens when the player taps/clicks
+ * anywhere in the playfield (or presses Space/Enter). Dragging to aim
+ * does not launch — only a short tap does.
  *
  * Keyboard: ← → or A/D to aim, Space/Enter to launch
- * Mouse/Touch: drag to aim, tap Bounce button to launch
+ * Mouse/Touch: drag to aim, tap anywhere in playfield to launch
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -72,6 +73,7 @@ const AUTO_LAUNCH_MS = 8_000;     // safety auto-launch if no input
 const RESOLVE_DELAY_MS = 1_800;
 const TRANSITION_DELAY_MS = 400;
 const PADDLE_KB_SPEED = 8;
+const DRAG_THRESHOLD = 12;        // px — pointer travel below this = tap, above = drag
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Round Data — Buddy biology / life-science content for K–2
@@ -236,6 +238,9 @@ function BouncePlayfield({
   const gateLabelsRef = useRef<string[]>([]);
   const finishedRef = useRef(false);
   const phaseRef = useRef<RoundPhase>("ready");
+  // Pointer drag-vs-tap tracking
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const isDrag = useRef(false);
 
   // Keep phaseRef in sync so event handlers see the latest value
   phaseRef.current = phase;
@@ -569,22 +574,47 @@ function BouncePlayfield({
     };
   }, []);
 
-  // ── Pointer input (mouse + touch) — aim only, launch via button ──
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    fieldRef.current?.setPointerCapture(e.pointerId);
-    movePaddleToPointer(e);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ── Pointer input (mouse + touch) — drag = aim, tap = launch ──
 
-  const movePaddleToPointer = useCallback((e: React.PointerEvent) => {
+  /** Map a pointer event to paddle-space X and move paddle + docked ball. */
+  const aimToPointer = useCallback((e: React.PointerEvent) => {
     const el = fieldRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const localX = ((e.clientX - rect.left) / rect.width) * FIELD_W;
     paddleXRef.current = clamp(localX - PADDLE_W / 2, 0, FIELD_W - PADDLE_W);
     syncPaddle();
-    // Ball tracks paddle during aiming phase
     if (phaseRef.current === "waiting") snapBallToPaddle();
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    fieldRef.current?.setPointerCapture(e.pointerId);
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    isDrag.current = false;
+    aimToPointer(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    aimToPointer(e);
+    // Check if movement exceeds drag threshold
+    if (pointerStart.current && !isDrag.current) {
+      const dx = e.clientX - pointerStart.current.x;
+      const dy = e.clientY - pointerStart.current.y;
+      if (dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) {
+        isDrag.current = true;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handlePointerUp = useCallback((_e: React.PointerEvent) => {
+    // Tap (not drag) during waiting → launch
+    if (phaseRef.current === "waiting" && !isDrag.current) {
+      launchRef.current();
+    }
+    pointerStart.current = null;
+    isDrag.current = false;
   }, []);
 
   // ── Cleanup on unmount ──
@@ -663,7 +693,8 @@ function BouncePlayfield({
               touchAction: "none",
             }}
             onPointerDown={handlePointerDown}
-            onPointerMove={movePaddleToPointer}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
           >
             {/* Decorative grass strip */}
             <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-emerald-300/40 to-transparent" />
@@ -754,21 +785,12 @@ function BouncePlayfield({
               </div>
             )}
 
-            {/* ── Waiting overlay — aim then launch ── */}
+            {/* ── Waiting overlay — aim then tap anywhere to launch ── */}
             {phase === "waiting" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-16 pointer-events-none">
-                <p className="slide-up-fade text-sm font-bold text-emerald-800 mb-2 bg-white/80 px-3 py-1 rounded-full">
-                  Aim the paddle, then tap Bounce!
+              <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
+                <p className="slide-up-fade text-sm font-bold text-emerald-800 bg-white/80 px-4 py-1.5 rounded-full shadow">
+                  Drag to aim. Tap anywhere to bounce!
                 </p>
-                <button
-                  type="button"
-                  className="pointer-events-auto bounce-in rounded-2xl bg-gradient-to-r from-emerald-500 to-lime-500
-                    px-8 py-3 text-lg font-extrabold text-white shadow-lg
-                    active:scale-95 hover:from-emerald-600 hover:to-lime-600 transition-all"
-                  onClick={() => launchRef.current()}
-                >
-                  Bounce!
-                </button>
               </div>
             )}
 
@@ -799,7 +821,7 @@ function BouncePlayfield({
         <p className="text-center text-xs text-slate-400">
           {t("games.bounceBuds.controls", {
             defaultValue:
-              "\u2190 \u2192 to aim \u2022 Space to bounce \u2022 or drag + tap Bounce",
+              "\u2190 \u2192 to aim \u2022 Space to bounce \u2022 or drag to aim, tap to launch",
           })}
         </p>
       )}
