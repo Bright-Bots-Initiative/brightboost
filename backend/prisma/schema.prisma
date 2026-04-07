@@ -337,15 +337,17 @@ model Course {
   name            String
   joinCode        String   @unique @default(cuid())
   teacherId       String
+  gradeBand       String   @default("k2") // "k2" or "g3_5"
   defaultLanguage String   @default("en") // class-level language ("en" or "es")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  teacher              User                  @relation(fields: [teacherId], references: [id])
+  teacher              User                    @relation(fields: [teacherId], references: [id])
   enrollments          Enrollment[]
   assignments          Assignment[]
   pulseResponses       PulseResponse[]
   benchmarkAssignments BenchmarkAssignment[]
+  moduleAssignments    ClassModuleAssignment[]
 
   // Index for filtering courses by teacher
   @@index([teacherId])
@@ -615,4 +617,52 @@ model GamePersonalBest {
 
   @@unique([studentId, gameKey])
   @@index([studentId])
+}
+
+// -----------------------------------------------------------------------------
+// Module Families & Variants — grade-banded module content system
+// -----------------------------------------------------------------------------
+
+model ModuleFamily {
+  id       String @id @default(cuid())
+  key      String @unique // e.g. "sequencing", "motion", "sorting", "plant_variables", "bridge"
+  title    String // display name: "Sequencing & Debugging"
+  iconEmoji String @default("🔬")
+
+  variants ModuleVariant[]
+}
+
+model ModuleVariant {
+  id             String  @id @default(cuid())
+  familyId       String
+  band           String  // "k2" or "g3_5"
+  version        String  @default("1.0")
+  title          String  // "Bug Lab: Sequence & Debug"
+  subtitle       String? // "Find the bug in the code!"
+  status         String  @default("active") // "active", "draft", "archived"
+  moduleSlug     String? // link to existing Module.slug for backward compat
+  contentConfig  Json?   // reading, questions, game config, supports, UI metadata
+
+  family      ModuleFamily            @relation(fields: [familyId], references: [id])
+  assignments ClassModuleAssignment[]
+
+  @@unique([familyId, band, version])
+  @@index([band])
+  @@index([familyId])
+}
+
+model ClassModuleAssignment {
+  id              String    @id @default(cuid())
+  courseId         String
+  moduleVariantId String
+  orderIndex      Int       @default(0)
+  isLocked        Boolean   @default(false)
+  dueAt           DateTime?
+  assignedAt      DateTime  @default(now())
+
+  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  moduleVariant ModuleVariant @relation(fields: [moduleVariantId], references: [id])
+
+  @@unique([courseId, moduleVariantId])
+  @@index([courseId])
 }
