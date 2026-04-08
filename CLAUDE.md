@@ -7,8 +7,9 @@
 
 ## Product
 
-Bright Boost is a multilingual (English/Spanish/Vietnamese/Chinese) K–8 STEM learning platform.
-Current rollout priority is **K–2**. Architecture and copy must support K–8.
+Bright Boost is a multilingual (English/Spanish/Vietnamese/Chinese) K–8 STEM learning platform
+with a secondary-age program layer called **Pathways** (ages 14-17).
+Current rollout priority is **K–2**. Architecture and copy must support K–8 and Pathways.
 Long-term pathway emphasis: AI, quantum, and biotech.
 
 ### Core Users
@@ -16,7 +17,9 @@ Long-term pathway emphasis: AI, quantum, and biotech.
 | User | What they care about |
 |------|---------------------|
 | Students (K–2 first) | Fun, readable, clear instructions, gamified learning |
-| Teachers | Dashboard quality, evidence of progress, demo readiness |
+| Students (Pathways, 14-17) | Career-connected learning, cybersecurity, real skills |
+| Teachers (K–8) | Dashboard quality, evidence of progress, demo readiness |
+| Facilitators (Pathways) | Cohort management, learner progress, partner readiness |
 | School/community partners | Pilot readiness, measurable outcomes, bilingual access |
 
 ### Product Priorities (ranked)
@@ -283,14 +286,17 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 - ActivityPlayer injects `gradeBand` from student's enrolled course into game config
 - `useGradeBand()` hook (`src/hooks/useGradeBand.ts`) fetches student's class band
 
-### Test Accounts
+### Test Accounts (All)
 
-| Email | Password | Role | Grade Band | Set 1 Status |
-|-------|----------|------|------------|-------------|
-| teacher@school.com | password123 | Teacher | — | — |
-| student@test.com | password | Student | K-2 | Incomplete |
-| explorer@test.com | explore123 | Student | K-2 | All 5 complete (Set 2 unlocked) |
-| jordan@test.com | jordan123 | Student | 3-5 | Fresh (0 completions) |
+| Email | Password | Type | Role | Notes |
+|-------|----------|------|------|-------|
+| teacher@school.com | password123 | K-8 | Teacher | Demo class owner |
+| student@test.com | password | K-8 | Student | Incomplete Set 1 |
+| explorer@test.com | explore123 | K-8 | Student | Set 1 complete, Set 2 unlocked |
+| jordan@test.com | jordan123 | K-8 | Student | Grade 3-5 class, fresh |
+| facilitator@test.com | pathway123 | Pathways | Facilitator | ETO cohort manager |
+| marcus@test.com | marcus123 | Pathways | Student (Launch) | 3/7 Cyber Launch done |
+| aisha@test.com | aisha123 | Pathways | Student (Explorer) | Fresh, 0 completions |
 
 ---
 
@@ -309,7 +315,7 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 
 ## Current Audit Status
 
-**Date: 2026-04-07 (updated)**
+**Date: 2026-04-08**
 
 ### Set 1 Games (5 games)
 - Bounce & Buds — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
@@ -385,14 +391,6 @@ Bright Boost Pathways is a separate program experience for 14-17 year olds, runn
 - `src/components/pathways/PathwaysAbout.tsx` — public landing
 - `backend/src/routes/pathways.ts` — all Pathways API routes
 
-### Test Accounts (Pathways)
-
-| Email | Password | Role | Band | Progress |
-|-------|----------|------|------|----------|
-| facilitator@test.com | pathway123 | Facilitator | — | Manages ETO cohort |
-| marcus@test.com | marcus123 | Student | Launch (17) | 3/7 Cyber Launch completed |
-| aisha@test.com | aisha123 | Student | Explorer (15) | Fresh (0 completions) |
-
 ### Cohort
 - Name: "ETO Spring 2026 — Cyber Cohort"
 - Join code: `ETO2026`
@@ -404,3 +402,47 @@ Bright Boost Pathways is a separate program experience for 14-17 year olds, runn
 - Direct, empowering language for teens
 - Separate visual identity from K-2/K-8 experience
 - Same auth system, same Prisma DB, different routes and layout
+
+---
+
+## Authentication & Login Flow
+
+The app has a **unified login page** at `/login` (`src/pages/LoginSelection.tsx`) supporting two entry methods:
+
+### Email + Password Login
+- Works for: K-8 teachers, K-8 students with email, Pathways facilitators, Pathways students with email
+- POST `/api/login` → JWT token + user object
+- Post-login routing by `user.userType` + `user.role`:
+  - `k8` + `teacher` → `/teacher/dashboard`
+  - `k8` + `student` → `/student/dashboard`
+  - `pathways` + `teacher` → `/pathways/facilitator`
+  - `pathways` + `student` → `/pathways`
+- Logic lives in `src/contexts/AuthContext.tsx` redirect effect
+
+### Join Code Entry
+- Works for: K-8 class codes AND Pathways cohort codes
+- POST `/api/auth/lookup-code` → returns `{ type: "k8_class" | "pathways_cohort" }`
+- K-8 class code → redirects to `/class-login` (existing emoji picker flow)
+- Pathways cohort code → shows registration form (name, optional email, password, birth year)
+
+### Pathways Registration
+- POST `/api/auth/register-pathways` — creates user with `userType: "pathways"`, derives `ageBand` from `birthYear`
+- If no email provided, auto-generates `student_XXXXXX@brightboost.local`
+- Enrolls in cohort, returns JWT token
+
+### Returning Pathways Students
+- Students with email → use email login (Option A)
+- Students without email → enter cohort code → pick name from roster → enter password
+- GET `/api/auth/cohort-roster/:code` → list of enrolled student names
+- POST `/api/auth/pathways-code-login` → login with cohort code + userId + password
+
+### Token Storage
+- JWT stored in `localStorage` under `bb_access_token`
+- User object in `localStorage` under `user`
+- Token expiry: 7 days
+- Session validation on app load via `/api/get-progress`
+
+### Schema Sync Warning
+- Both `prisma/schema.prisma` (root) and `backend/prisma/schema.prisma` must be kept in sync
+- The backend Docker build generates Prisma client from the backend copy
+- If models are added to root but not backend → backend `tsc` fails → deployment breaks silently
