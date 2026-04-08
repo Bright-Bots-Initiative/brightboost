@@ -265,7 +265,7 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 ### Progression
 
 - Each set has its own ID array in `src/constants/stemSets.ts`
-- Set 1 (4 games) → Set 2 (5 games) → Set 3 (5 games) → Archetype unlock
+- Set 1 (5 games) → Set 2 (5 games) → Set 3 (5 games) → Archetype unlock
 - Set completion = all IDs in the set have `COMPLETED` progress records
 - Set 2 unlocks when all Set 1 IDs are completed
 - Set 3 completion gates specialization (AI / Quantum / Biotech archetype)
@@ -274,10 +274,20 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 ### Grade Bands
 
 - **K-2** (`k2`): default band, all current games target this
-- **Grades 3-5** (`g3_5`): infrastructure exists (ModuleFamily/ModuleVariant schema, API routes, seed data) but no game components are built yet
+- **Grades 3-5** (`g3_5`): content variants built for Bounce & Buds and Gotcha Gears. Content loaded via `gradeBandContent.ts` based on `config.gradeBand`. Other games fall back to K-2 content.
 - Band is set per-class via `Course.gradeBand` field
 - Teacher can switch band in class detail page
-- 5 module families with g3_5 content configs are seeded but need React implementations
+- ActivityPlayer injects `gradeBand` from student's enrolled course into game config
+- `useGradeBand()` hook (`src/hooks/useGradeBand.ts`) fetches student's class band
+
+### Test Accounts
+
+| Email | Password | Role | Grade Band | Set 1 Status |
+|-------|----------|------|------------|-------------|
+| teacher@school.com | password123 | Teacher | — | — |
+| student@test.com | password | Student | K-2 | Incomplete |
+| explorer@test.com | explore123 | Student | K-2 | All 5 complete (Set 2 unlocked) |
+| jordan@test.com | jordan123 | Student | 3-5 | Fresh (0 completions) |
 
 ---
 
@@ -296,35 +306,34 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 
 ## Current Audit Status
 
-**Date: 2026-04-07**
+**Date: 2026-04-07 (updated)**
 
-### Set 2 Games Audit
+### Set 1 Games (5 games)
+- Bounce & Buds — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
+- Gotcha Gears — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
+- Fix the Order (Lost Steps) — ✅ K-2, g3_5 content data defined (harder levels in gradeBandContent)
+- Rhyme & Ride — ✅ K-2, g3_5 word families defined in gradeBandContent
+- Tank Trek — ✅ K-2, g3_5 level data defined in gradeBandContent
 
+### Set 2 Games (5 games)
 - Maze Maps & Smart Paths — ✅ Implemented, registered, seeded, tests pass
-- Move, Measure & Improve — ⚠️ Seeded in DB but no game component (falls through to ActivityPlayer unsupported fallback)
-- Sky Shield Patterns — ⚠️ Seeded in DB but no game component
-- Fast Lane Signals — ⚠️ Seeded in DB but no game component
-- Qualify, Tune, Race — ⚠️ Seeded in DB but no game component
-- Set 2 unlock gating: ✅ Works correctly (checks all Set 1 IDs completed)
-- Set 2 locked UI: ✅ Shows locked cards with message until Set 1 complete
-- Set 2 strand badges: ✅ Render on module cards
+- Move, Measure & Improve — ✅ Implemented and registered
+- Sky Shield Patterns — ✅ Implemented and registered
+- Fast Lane Signals — ✅ Implemented and registered
+- Qualify, Tune, Race — ✅ Implemented and registered
 
-### Grade 3-5 Upgrades Audit (Set 1)
-
-- Infrastructure: ✅ Schema (ModuleFamily, ModuleVariant, ClassModuleAssignment), API routes, seed data all present
-- Bounce & Buds 3-5 ("Data Dash: Sort & Discover"): ⚠️ Content config seeded, no game component
-- Gotcha Gears 3-5 ("Variable Quest: Fair Test Lab"): ⚠️ Content config seeded, no game component
-- Lost Steps 3-5 ("Bug Lab: Sequence & Debug"): ⚠️ Content config seeded, no game component
-- Rhyme & Ride 3-5 ("Motion Mission: Force Lab"): ⚠️ Content config seeded, no game component
-- Tank Trek 3-5 ("Design Under Pressure: Bridge Lab"): ⚠️ Content config seeded, no game component
-- Teacher band selector: ✅ Works in class detail page
-- Student visibility by band: ✅ API exists (`/api/student/assigned-modules`), no frontend consumer yet
+### Grade 3-5 Content Pipeline
+- `gradeBandContent.ts` — ✅ Central content registry with K-2 and g3_5 variants
+- `useGradeBand()` hook — ✅ Fetches student's class band from API
+- ActivityPlayer — ✅ Injects `gradeBand` into game config
+- Backend — ✅ `/student/courses` returns `gradeBand` per course
+- Teacher band selector — ✅ Enabled (was previously disabled as "Coming Soon")
+- Jordan test student — ✅ Seeded in g3_5 class
 
 ### Action Items
-
-- [ ] Build 4 remaining Set 2 game components (move_measure, sky_shield, fast_lane, qualify_tune_race)
-- [ ] Add a 5th game to Set 1 to replace Build-a-Bot (or promote Tank Trek / Quantum Quest)
-- [ ] Build g3_5 game variants for the 5 module families
-- [ ] Add student-facing UI for class-assigned modules (`/api/student/assigned-modules`)
+- [ ] Wire gradeBandContent into RhymeRide and TankTrek game components (data exists, component wiring needed)
+- [ ] Wire gradeBandContent into BoostPathPlanner (data exists, component wiring needed)
+- [ ] Build g3_5 variants for Set 2 games (future sprint)
+- [ ] Add student-facing UI for class-assigned modules
 - [ ] Add teacher module assignment UI (catalog browse + assign/reorder)
-- [ ] Add i18n keys for Set 2 game content (currently using defaultValue fallbacks)
+- [ ] Add full es/vi/zh-CN translations for g3_5 content

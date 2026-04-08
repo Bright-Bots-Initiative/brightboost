@@ -19,19 +19,14 @@ import GameShell, {
   type GameResult,
   type MissionBriefing,
 } from "./shared/GameShell";
+import { getGradeBand, BOUNCE_BUDS_ROUNDS } from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface BounceRound {
-  clueText: string;
-  correctLabel: string;
-  distractors: string[];
-  hint?: string;
-  theme: "plant-needs" | "plant-parts" | "tiny-living-things";
-}
+// BounceRound type imported from gradeBandContent.ts
 
 /**
  * Phase lifecycle per round:
@@ -75,60 +70,7 @@ const TRANSITION_DELAY_MS = 400;
 const PADDLE_KB_SPEED = 8;
 const DRAG_THRESHOLD = 12;        // px — pointer travel below this = tap, above = drag
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Round Data — Buddy biology / life-science content for K–2
-// ═══════════════════════════════════════════════════════════════════════════
-
-const ROUNDS: BounceRound[] = [
-  {
-    clueText: "Which one helps a plant grow?",
-    correctLabel: "Water",
-    distractors: ["Rock", "Metal"],
-    theme: "plant-needs",
-  },
-  {
-    clueText: "Which part drinks water from the soil?",
-    correctLabel: "Root",
-    distractors: ["Cloud", "Button"],
-    theme: "plant-parts",
-  },
-  {
-    clueText: "Plants use this to make food!",
-    correctLabel: "Sunlight",
-    distractors: ["Wind", "Ice"],
-    theme: "plant-needs",
-  },
-  {
-    clueText: "This part helps make food for the plant.",
-    correctLabel: "Leaf",
-    distractors: ["Sand", "Coin"],
-    theme: "plant-parts",
-  },
-  {
-    clueText: "Roots grow in this!",
-    correctLabel: "Soil",
-    distractors: ["Glass", "Plastic"],
-    theme: "plant-needs",
-  },
-  {
-    clueText: "Which one is a tiny living helper?",
-    correctLabel: "Microbe",
-    distractors: ["Brick", "Wire"],
-    theme: "tiny-living-things",
-  },
-  {
-    clueText: "This part holds the plant up tall!",
-    correctLabel: "Stem",
-    distractors: ["Rope", "Tape"],
-    theme: "plant-parts",
-  },
-  {
-    clueText: "Every living thing is made of these!",
-    correctLabel: "Cell",
-    distractors: ["Pixel", "Dot"],
-    theme: "tiny-living-things",
-  },
-];
+// Round data now loaded from gradeBandContent.ts based on config.gradeBand
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Helpers
@@ -185,10 +127,14 @@ const BRIEFING: MissionBriefing = {
 
 function BouncePlayfield({
   onFinish,
+  config,
 }: {
   onFinish: (result: GameResult) => void;
+  config?: any;
 }) {
   const { t } = useTranslation();
+  const band = getGradeBand(config);
+  const ROUNDS = BOUNCE_BUDS_ROUNDS[band];
 
   // ── DOM refs ──
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -855,9 +801,10 @@ function clampBallAngle(b: { vx: number; vy: number }) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function BounceBudsGame({
+  config,
   onComplete,
 }: {
-  config?: unknown;
+  config?: any;
   onComplete?: (result: GameResult) => void;
 }) {
   return (
@@ -867,7 +814,7 @@ export default function BounceBudsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish }) => <BouncePlayfield onFinish={onFinish} />}
+      {({ onFinish }) => <BouncePlayfield onFinish={onFinish} config={config} />}
     </GameShell>
   );
 }

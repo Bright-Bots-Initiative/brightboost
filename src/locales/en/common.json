@@ -1317,7 +1317,11 @@
       "vocabPlan": "plan",
       "vocabSequence": "sequence",
       "vocabTurn": "turn",
-      "vocabGoal": "goal"
+      "vocabGoal": "goal",
+      "g35level1": "Navigate the algorithm maze",
+      "g35level2": "Debug the broken route",
+      "g35level3": "Optimize the path with obstacles",
+      "g35level4": "Collect all chips efficiently"
     },
     "shared": {
       "tips": "Tips",

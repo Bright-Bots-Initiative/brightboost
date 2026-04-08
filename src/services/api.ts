@@ -629,6 +629,11 @@ export const api = {
     return res.json();
   },
 
+  getStudentCourses: async () => {
+    const res = await fetch(join(API_BASE, "/student/courses"), { headers: getHeaders() });
+    return res.json().catch(() => []);
+  },
+
   getStudentAssignedModules: async () => {
     const res = await fetch(join(API_BASE, "/student/assigned-modules"), { headers: getHeaders() });
     return res.json();

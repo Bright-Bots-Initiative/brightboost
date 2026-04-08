@@ -43,17 +43,9 @@ interface FallingGear {
   speed: number; // px per frame
 }
 
-// ── Built-in content ──────────────────────────────────────────────────────
+// ── Built-in content (grade-band aware) ──────────────────────────────────
 
-const BUILTIN_ROUNDS: GearRound[] = [
-  { clueText: "I help a robot think and learn", correctLabel: "AI Brain", distractors: ["Hammer", "Paintbrush"], hint: "Think about what makes a robot smart!" },
-  { clueText: "I store information like a library", correctLabel: "Memory Chip", distractors: ["Wheel", "Speaker"], hint: "Where do computers keep things?" },
-  { clueText: "I tell the robot what to do step by step", correctLabel: "Program", distractors: ["Snack", "Balloon"], hint: "It's like a recipe for computers!" },
-  { clueText: "I help a robot see the world", correctLabel: "Camera Sensor", distractors: ["Pillow", "Crayon"], hint: "What do YOUR eyes do?" },
-  { clueText: "I protect the robot from mistakes", correctLabel: "Debug Tool", distractors: ["Umbrella", "Toy Car"], hint: "Finding and fixing errors!" },
-  { clueText: "I move the robot's arms and wheels", correctLabel: "Motor", distractors: ["Book", "Flower"], hint: "What makes things spin and move?" },
-  { clueText: "I let robots talk to each other", correctLabel: "Antenna", distractors: ["Spoon", "Hat"], hint: "Think about how signals travel!" },
-];
+import { getGradeBand, GOTCHA_GEARS_CONTENT } from "./gradeBandContent";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -123,11 +115,12 @@ function GotchaGearsCore({
   const { t } = useTranslation();
 
   const rounds = useMemo(() => {
-    const raw = config?.rounds?.length ? config.rounds : BUILTIN_ROUNDS;
-    return raw.map((r) => ({
+    const band = getGradeBand(config);
+    const raw = config?.rounds?.length ? config.rounds : GOTCHA_GEARS_CONTENT[band];
+    return raw.map((r: any) => ({
       clue: resolveField(t, r.clueText ?? r.clue),
       correct: resolveField(t, r.correctLabel ?? r.correctAnswer),
-      distractors: (r.distractors ?? []).map((d) => resolveField(t, d)),
+      distractors: (r.distractors ?? []).map((d: any) => resolveField(t, d)),
       hint: resolveField(t, r.hint),
     }));
   }, [config, t]);
@@ -337,7 +330,7 @@ export default function GotchaGearsGame({
   const { t } = useTranslation();
   const gameConfig: GotchaGearsConfig = config?.rounds?.length
     ? config
-    : { gameKey: "gotcha_gears_unity", rounds: BUILTIN_ROUNDS };
+    : { gameKey: "gotcha_gears_unity", rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)] };
 
   const briefing: MissionBriefing = {
     title: "Gear Grab!",

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
+import { useGradeBand } from "@/hooks/useGradeBand";
 import {
   getStudentArchetype,
   canAccessModule,
@@ -73,6 +74,7 @@ export default function ActivityPlayer() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const gradeBand = useGradeBand();
 
   const [loading, setLoading] = useState(true);
   const [module, setModule] = useState<any>(null);
@@ -607,9 +609,10 @@ export default function ActivityPlayer() {
     // Check registry first (covers new React games + old slug aliases)
     const RegistryGame = key ? GAME_COMPONENTS[key] : undefined;
     if (RegistryGame) {
+      const gameConfig = { ...content, gradeBand };
       return (
         <div className="p-6">
-          <RegistryGame config={content} onComplete={handleComplete} />
+          <RegistryGame config={gameConfig} onComplete={handleComplete} />
         </div>
       );
     }

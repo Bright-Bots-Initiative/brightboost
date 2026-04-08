@@ -205,6 +205,52 @@ async function main() {
     update: { level: 5, xp: 650, speed: 4, control: 3, focus: 3 },
   });
 
+  // Jordan — 9-year-old student in a grade 3-5 class
+  const jordanHash = await bcrypt.hash("jordan123", 10);
+  let jordan = await prisma.user.findUnique({ where: { email: "jordan@test.com" } });
+  if (!jordan) {
+    jordan = await prisma.user.create({
+      data: {
+        id: "jordan-g35",
+        name: "Jordan",
+        email: "jordan@test.com",
+        password: jordanHash,
+        role: "student",
+        grade: 4,
+        loginIcon: "🚀",
+        xp: 0,
+        level: "Explorer",
+        streak: 0,
+      },
+    });
+    console.log("Created Jordan (grade 3-5 student).");
+  } else {
+    jordan = await prisma.user.update({
+      where: { id: jordan.id },
+      data: { password: jordanHash, grade: 4 },
+    });
+  }
+
+  // Create a grade 3-5 class and enroll Jordan
+  const g35Class = await prisma.course.upsert({
+    where: { joinCode: "GRADE35" },
+    create: { name: "Grade 3-5 STEM", joinCode: "GRADE35", teacherId: teacher.id, gradeBand: "g3_5" },
+    update: { gradeBand: "g3_5" },
+  });
+  await prisma.enrollment.upsert({
+    where: { studentId_courseId: { studentId: jordan.id, courseId: g35Class.id } },
+    create: { studentId: jordan.id, courseId: g35Class.id },
+    update: {},
+  });
+  console.log("Enrolled Jordan in grade 3-5 class:", g35Class.name);
+
+  // Create avatar for Jordan
+  await prisma.avatar.upsert({
+    where: { studentId: jordan.id },
+    create: { studentId: jordan.id, level: 1, xp: 0, hp: 100, energy: 100 },
+    update: {},
+  });
+
   // 5. Seed Content
   console.log("Seeding modules...");
 
