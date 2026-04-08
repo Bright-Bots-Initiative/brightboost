@@ -1,6 +1,7 @@
 /**
  * Pathways About — public landing page for the Pathways program.
  */
+import { Link } from "react-router-dom";
 import { PATHWAY_TRACKS } from "@/constants/pathwayTracks";
 import { Shield, Rocket, DollarSign, Cpu, Film, Users, BarChart3, Award, ArrowRight } from "lucide-react";
 
@@ -24,9 +25,15 @@ export default function PathwaysAbout() {
             <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Pathways</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-2">Real pathways for real futures.</p>
-          <p className="text-slate-400 max-w-xl mx-auto">
+          <p className="text-slate-400 max-w-xl mx-auto mb-6">
             Career-connected learning for 14-17 year olds. Cybersecurity, entrepreneurship, financial literacy, tech, and creative media — delivered through cohort-based programs with facilitator support.
           </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
+          >
+            Log In or Join <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

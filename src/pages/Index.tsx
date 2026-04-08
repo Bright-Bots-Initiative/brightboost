@@ -55,10 +55,10 @@ const Index: React.FC = () => {
           {/* Primary CTAs */}
           <div className="space-y-3 flex flex-col items-center">
             <Link
-              to="/teacher/login"
+              to="/login"
               className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center text-lg hover:bg-opacity-90 hover:scale-105 transition-all w-64 ui-lift"
             >
-              {t("landing.imATeacher")}
+              {t("landing.logIn", { defaultValue: "Log In" })}
             </Link>
             <Link
               to="/class-login"
@@ -71,6 +71,16 @@ const Index: React.FC = () => {
               className="button-shadow rounded-xl px-6 py-3 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 hover:scale-105 transition-all w-56 ui-lift"
             >
               {t("landing.imNewHere")}
+            </Link>
+          </div>
+
+          {/* Pathways link */}
+          <div className="mt-4">
+            <Link
+              to="/pathways/about"
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium hover:underline transition-colors"
+            >
+              {t("landing.pathwaysLink", { defaultValue: "Ages 14-17? Check out Bright Boost Pathways →" })}
             </Link>
           </div>
 

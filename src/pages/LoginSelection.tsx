@@ -318,9 +318,12 @@ const LoginSelection: React.FC = () => {
           {t("auth.facilitatorNote", { defaultValue: "Teacher or facilitator? Use the email login above." })}
         </p>
 
-        <div className="text-center">
-          <Link to="/" className="text-sm text-indigo-600 hover:underline">
+        <div className="text-center space-y-2">
+          <Link to="/" className="block text-sm text-indigo-600 hover:underline">
             {t("auth.backToHome", { defaultValue: "Back to Home" })}
+          </Link>
+          <Link to="/pathways/about" className="block text-xs text-slate-400 hover:text-indigo-500">
+            {t("auth.pathwaysLink", { defaultValue: "Ages 14-17? Check out Bright Boost Pathways →" })}
           </Link>
         </div>
       </div>
