@@ -1230,6 +1230,125 @@ async function main() {
   console.log(`  Assigned ${g35Variants.length} g3_5 variants to demo class`);
 
   console.log("Module families and variants seeded.");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pathways — secondary-age (14-17) program layer
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("Seeding Pathways data...");
+
+  // Facilitator
+  const facilitatorHash = await bcrypt.hash("pathway123", 10);
+  let facilitator = await prisma.user.findUnique({ where: { email: "facilitator@test.com" } });
+  if (!facilitator) {
+    facilitator = await prisma.user.create({
+      data: {
+        name: "Coach Davis",
+        email: "facilitator@test.com",
+        password: facilitatorHash,
+        role: "teacher",
+        userType: "pathways",
+      },
+    });
+  } else {
+    facilitator = await prisma.user.update({
+      where: { id: facilitator.id },
+      data: { password: facilitatorHash, userType: "pathways" },
+    });
+  }
+  console.log("Seeded facilitator:", facilitator.email);
+
+  // Marcus — Launch band, partial progress
+  const marcusHash = await bcrypt.hash("marcus123", 10);
+  let marcus = await prisma.user.findUnique({ where: { email: "marcus@test.com" } });
+  if (!marcus) {
+    marcus = await prisma.user.create({
+      data: {
+        name: "Marcus",
+        email: "marcus@test.com",
+        password: marcusHash,
+        role: "student",
+        userType: "pathways",
+        ageBand: "launch",
+        birthYear: 2009,
+      },
+    });
+  } else {
+    marcus = await prisma.user.update({
+      where: { id: marcus.id },
+      data: { password: marcusHash, userType: "pathways", ageBand: "launch", birthYear: 2009 },
+    });
+  }
+  console.log("Seeded Marcus:", marcus.email);
+
+  // Aisha — Explorer band, fresh
+  const aishaHash = await bcrypt.hash("aisha123", 10);
+  let aisha = await prisma.user.findUnique({ where: { email: "aisha@test.com" } });
+  if (!aisha) {
+    aisha = await prisma.user.create({
+      data: {
+        name: "Aisha",
+        email: "aisha@test.com",
+        password: aishaHash,
+        role: "student",
+        userType: "pathways",
+        ageBand: "explorer",
+        birthYear: 2011,
+      },
+    });
+  } else {
+    aisha = await prisma.user.update({
+      where: { id: aisha.id },
+      data: { password: aishaHash, userType: "pathways", ageBand: "explorer", birthYear: 2011 },
+    });
+  }
+  console.log("Seeded Aisha:", aisha.email);
+
+  // Cohort
+  const cohort = await prisma.pathwayCohort.upsert({
+    where: { joinCode: "ETO2026" },
+    create: {
+      name: "ETO Spring 2026 — Cyber Cohort",
+      band: "launch",
+      sitePartner: "Escape The Odds",
+      facilitatorId: facilitator.id,
+      trackIds: ["cyber-launch"],
+      joinCode: "ETO2026",
+    },
+    update: { facilitatorId: facilitator.id },
+  });
+
+  // Enroll Marcus and Aisha
+  for (const u of [marcus, aisha]) {
+    await prisma.pathwayEnrollment.upsert({
+      where: { userId_cohortId: { userId: u.id, cohortId: cohort.id } },
+      create: { userId: u.id, cohortId: cohort.id },
+      update: {},
+    });
+  }
+
+  // Marcus's Cyber Launch milestones (partial progress)
+  const marcusMilestones = [
+    { moduleSlug: "cyber-foundations", status: "completed", score: 85, daysAgo: 7 },
+    { moduleSlug: "digital-safety-sim", status: "completed", score: 90, daysAgo: 5 },
+    { moduleSlug: "network-basics", status: "completed", score: 78, daysAgo: 3 },
+    { moduleSlug: "threat-detective", status: "in_progress", score: null, daysAgo: 1 },
+  ];
+
+  for (const m of marcusMilestones) {
+    await prisma.pathwayMilestone.upsert({
+      where: { userId_trackSlug_moduleSlug: { userId: marcus.id, trackSlug: "cyber-launch", moduleSlug: m.moduleSlug } },
+      create: {
+        userId: marcus.id,
+        trackSlug: "cyber-launch",
+        moduleSlug: m.moduleSlug,
+        status: m.status,
+        score: m.score,
+        completedAt: m.status === "completed" ? new Date(Date.now() - m.daysAgo * 86400000) : null,
+      },
+      update: { status: m.status, score: m.score },
+    });
+  }
+  console.log("Seeded Pathways cohort, enrollments, and milestones.");
 }
 
 main()

@@ -1,7 +1,7 @@
 # Bright Boost — Claude Code Project Brief
 
 > This file is read by Claude Code on every turn. Keep it current.
-> Last updated: 2026-04-07
+> Last updated: 2026-04-08
 
 ---
 
@@ -342,3 +342,65 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 - [ ] Add teacher module assignment UI (catalog browse + assign/reorder via existing CRUD routes)
 - [ ] Add es/vi/zh-CN translations for g3_5 game content in `gradeBandContent.ts`
 - [ ] Add es/vi/zh-CN translations for Set 2 game i18n keys (currently using `defaultValue` fallbacks)
+
+---
+
+## Pathways (Secondary-Age Program Layer)
+
+Bright Boost Pathways is a separate program experience for 14-17 year olds, running alongside the K-8 platform in the same codebase. It has its own routing, layout, data models, and visual design.
+
+### Architecture
+- **Bands**: Explorer (14-15) and Launch (16-17)
+- **Tracks**: 5 career-connected learning tracks, each with multiple modules
+- **Cohorts**: Facilitator-created groups of learners, with join codes
+- **Active track**: Cyber Launch (cybersecurity) — fully playable with 7 modules
+- **Coming soon**: Build Your Own Lane, Money Moves, Future Tech Lab, Creative Media Lab
+
+### Routes
+```
+/pathways/about         — public landing page (no auth)
+/pathways               — student home (authenticated)
+/pathways/tracks        — all tracks browse
+/pathways/tracks/:slug  — track detail + module list
+/pathways/tracks/:trackSlug/:moduleSlug — module player
+/pathways/profile       — learner profile + portfolio
+/pathways/facilitator   — facilitator dashboard + cohort management
+```
+
+### Data Models (additive to existing schema)
+- `PathwayCohort` — facilitator-created group with band, site partner, join code, active tracks
+- `PathwayEnrollment` — links users to cohorts (unique per user+cohort)
+- `PathwayMilestone` — per-user progress through track modules (unique per user+track+module)
+- `User` extended with: `userType` ("k8" | "pathways"), `ageBand` ("explorer" | "launch"), `birthYear`
+
+### Key Files
+- `src/constants/pathwayTracks.ts` — track + module registry
+- `src/components/pathways/PathwaysLayout.tsx` — dark-mode sidebar layout
+- `src/components/pathways/PathwaysHome.tsx` — student home
+- `src/components/pathways/TracksOverview.tsx` — all tracks browse
+- `src/components/pathways/TrackDetail.tsx` — module timeline
+- `src/components/pathways/ModulePlayer.tsx` — module wrapper
+- `src/components/pathways/modules/CyberLaunchModules.tsx` — 7 Cyber Launch modules
+- `src/components/pathways/FacilitatorDashboard.tsx` — cohort management
+- `src/components/pathways/PathwaysAbout.tsx` — public landing
+- `backend/src/routes/pathways.ts` — all Pathways API routes
+
+### Test Accounts (Pathways)
+
+| Email | Password | Role | Band | Progress |
+|-------|----------|------|------|----------|
+| facilitator@test.com | pathway123 | Facilitator | — | Manages ETO cohort |
+| marcus@test.com | marcus123 | Student | Launch (17) | 3/7 Cyber Launch completed |
+| aisha@test.com | aisha123 | Student | Explorer (15) | Fresh (0 completions) |
+
+### Cohort
+- Name: "ETO Spring 2026 — Cyber Cohort"
+- Join code: `ETO2026`
+- Site partner: Escape The Odds
+
+### Design Principles
+- Dark mode default (indigo/teal/slate palette)
+- No mascots, no cartoons — clean modern UI
+- Direct, empowering language for teens
+- Separate visual identity from K-2/K-8 experience
+- Same auth system, same Prisma DB, different routes and layout

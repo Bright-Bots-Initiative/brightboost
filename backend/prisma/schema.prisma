@@ -55,6 +55,11 @@ model User {
   streak    Int      @default(0)
   avatarUrl String?  @default("/robots/robot_default.png")
 
+  // Pathways (secondary-age program layer)
+  userType  String   @default("k8")   // "k8" | "pathways"
+  ageBand   String?                    // "explorer" (14-15) | "launch" (16-17)
+  birthYear Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -79,6 +84,11 @@ model User {
   facultyPosts      FacultyPost[]
   benchmarkAttempts  BenchmarkAttempt[]
   gamePersonalBests  GamePersonalBest[]
+
+  // Pathways Relations
+  pathwayCohorts      PathwayCohort[]
+  pathwayEnrollments  PathwayEnrollment[]
+  pathwayMilestones   PathwayMilestone[]
 }
 
 // -----------------------------------------------------------------------------
@@ -665,4 +675,56 @@ model ClassModuleAssignment {
 
   @@unique([courseId, moduleVariantId])
   @@index([courseId])
+}
+
+// -----------------------------------------------------------------------------
+// Pathways — secondary-age (14-17) program layer
+// -----------------------------------------------------------------------------
+
+model PathwayCohort {
+  id            String   @id @default(cuid())
+  name          String
+  band          String
+  sitePartner   String?
+  facilitatorId String
+  facilitator   User     @relation(fields: [facilitatorId], references: [id])
+  startDate     DateTime?
+  endDate       DateTime?
+  trackIds      String[]
+  joinCode      String   @unique
+  createdAt     DateTime @default(now())
+
+  enrollments   PathwayEnrollment[]
+
+  @@index([facilitatorId])
+}
+
+model PathwayEnrollment {
+  id         String        @id @default(cuid())
+  userId     String
+  cohortId   String
+  user       User          @relation(fields: [userId], references: [id])
+  cohort     PathwayCohort @relation(fields: [cohortId], references: [id])
+  enrolledAt DateTime      @default(now())
+  status     String        @default("active")
+
+  @@unique([userId, cohortId])
+  @@index([cohortId])
+}
+
+model PathwayMilestone {
+  id          String    @id @default(cuid())
+  userId      String
+  trackSlug   String
+  moduleSlug  String
+  status      String    @default("not_started")
+  score       Int?
+  completedAt DateTime?
+  artifacts   Json?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, trackSlug, moduleSlug])
+  @@index([userId])
 }

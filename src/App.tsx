@@ -47,6 +47,16 @@ import ForReviewers from "./pages/ForReviewers";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
 
+// Pathways (secondary-age program layer)
+import PathwaysLayout from "./components/pathways/PathwaysLayout";
+import PathwaysHome from "./components/pathways/PathwaysHome";
+import TracksOverview from "./components/pathways/TracksOverview";
+import TrackDetail from "./components/pathways/TrackDetail";
+import ModulePlayer from "./components/pathways/ModulePlayer";
+import PathwaysProfile from "./components/pathways/PathwaysProfile";
+import FacilitatorDashboard from "./components/pathways/FacilitatorDashboard";
+import PathwaysAbout from "./components/pathways/PathwaysAbout";
+
 // Import styles
 import "./App.css";
 
@@ -134,6 +144,19 @@ function App() {
                   path="arena"
                   element={<Navigate to="/student/play?tab=pvp" replace />}
                 />
+              </Route>
+
+              {/* Pathways: public landing page */}
+              <Route path="/pathways/about" element={<PathwaysAbout />} />
+
+              {/* Pathways: authenticated routes */}
+              <Route path="/pathways" element={<ProtectedRoute><PathwaysLayout /></ProtectedRoute>}>
+                <Route index element={<PathwaysHome />} />
+                <Route path="tracks" element={<TracksOverview />} />
+                <Route path="tracks/:trackSlug" element={<TrackDetail />} />
+                <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
+                <Route path="profile" element={<PathwaysProfile />} />
+                <Route path="facilitator" element={<FacilitatorDashboard />} />
               </Route>
 
               {/* Legacy Redirects for Flat Routes (if any external links exist) */}
