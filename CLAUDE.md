@@ -56,7 +56,7 @@ When repository information conflicts, resolve using this order:
 - React 18, TypeScript, Vite
 - Tailwind CSS, shadcn/ui, Framer Motion
 - React Router v6
-- i18next / react-i18next (bilingual)
+- i18next / react-i18next (en, es, vi, zh-CN)
 
 ### Backend
 - Node.js 20.x, Express, TypeScript
@@ -112,10 +112,13 @@ npx prisma generate
 - Prefer narrow, production-safe edits
 - Reuse existing components, hooks, utilities, and patterns
 
-### Bilingual / i18n
+### Multilingual / i18n
 - Never hardcode English strings in UI — use translation keys via `useTranslation()`
-- When adding new copy, add keys to both `en.json` and `es.json`
-- If Spanish translation is uncertain, add the English value with a `// TODO: translate` comment in the JSON
+- When adding new copy, add keys to `en.json` and `es.json` at minimum; also `vi.json` and `zh-CN.json` if possible
+- Locale files: `src/locales/{en,es,vi,zh-CN}/common.json`
+- If a translation is uncertain, add the English value with a `// TODO: translate` comment
+- Use `pickLocale()` from `src/utils/localizedContent.ts` for game content data (non-UI strings)
+- Use `translateContentName()` for database-sourced module/activity names
 
 ### Educational Intent
 - Do not replace Bright Boost's learning intent with generic gameplay
@@ -235,7 +238,7 @@ Flag conflicts, don't hide them
 
 ## Game Architecture
 
-### Set 1 — Foundation (4 K-2 STEM games)
+### Set 1 — Foundation (5 K-2 STEM games)
 
 | Game | File | Game Key | Activity ID |
 |------|------|----------|-------------|
@@ -243,20 +246,20 @@ Flag conflicts, don't hide them
 | Gotcha Gears | `src/components/games/GotchaGearsGame.tsx` | `gotcha_gears_unity` | `gotcha-gears` |
 | Fix the Order (Lost Steps) | `src/components/games/BoostPathPlannerGame.tsx` | `boost_path_planner` | `lost-steps` |
 | Rhyme & Ride | `src/components/games/RhymeRideGame.tsx` | `rhymo_rhyme_rocket` | `rhyme-ride` |
+| Tank Trek | `src/components/games/TankTrekGame.tsx` | `tank_trek` | `tank-trek` |
 
-Additional K-2 modules (not in Set 1 gating):
-- Tank Trek: `src/components/games/TankTrekGame.tsx` (`tank_trek`)
-- Quantum Quest: `src/components/games/QuantumQuestGame.tsx` (`quantum_quest`)
+Additional K-2 module (not in Set 1 gating):
+- Quantum Quest: `src/components/games/QuantumQuestGame.tsx` (`quantum_quest`, `quantum-quest`)
 
 ### Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
 
 | Game | File | Game Key | Activity ID | Strand |
 |------|------|----------|-------------|--------|
 | Maze Maps & Smart Paths | `src/components/games/MazeMapsGame.tsx` | `maze_maps` | `maze-maps` | AI |
-| Move, Measure & Improve | *(not yet implemented)* | `move_measure` | `move-measure` | Biotech |
-| Sky Shield Patterns | *(not yet implemented)* | `sky_shield` | `sky-shield` | Quantum |
-| Fast Lane Signals | *(not yet implemented)* | `fast_lane` | `fast-lane` | AI + Biotech |
-| Qualify, Tune, Race | *(not yet implemented)* | `qualify_tune_race` | `qualify-tune-race` | Capstone |
+| Move, Measure & Improve | `src/components/games/MoveMeasureGame.tsx` | `move_measure` | `move-measure` | Biotech |
+| Sky Shield Patterns | `src/components/games/SkyShieldGame.tsx` | `sky_shield` | `sky-shield` | Quantum |
+| Fast Lane Signals | `src/components/games/FastLaneGame.tsx` | `fast_lane` | `fast-lane` | AI + Biotech |
+| Qualify, Tune, Race | `src/components/games/QualifyTuneRaceGame.tsx` | `qualify_tune_race` | `qualify-tune-race` | Capstone |
 
 ### Set 3 — Mastery (placeholder, gates specialization)
 
@@ -299,8 +302,8 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 - Was in **Set 1** as the 5th game (activity ID: `build-a-bot`)
 - All references stripped: constants, localized content, seed data, docs
 - Seed now auto-cleans up any existing Build-a-Bot activity data
-- **Set 1 now has 4 games** — a 5th replacement game is needed to restore the original 5-per-set structure
-- Completion logic updated to use each set's actual array length (not hardcoded 5)
+- **Replaced by Tank Trek** as Set 1's 5th game — Set 1 is back to 5 games
+- Completion logic uses each set's actual array length (not hardcoded)
 
 ---
 
@@ -331,9 +334,11 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 - Jordan test student — ✅ Seeded in g3_5 class
 
 ### Action Items
-- [ ] Wire gradeBandContent into RhymeRide and TankTrek game components (data exists, component wiring needed)
-- [ ] Wire gradeBandContent into BoostPathPlanner (data exists, component wiring needed)
-- [ ] Build g3_5 variants for Set 2 games (future sprint)
-- [ ] Add student-facing UI for class-assigned modules
-- [ ] Add teacher module assignment UI (catalog browse + assign/reorder)
-- [ ] Add full es/vi/zh-CN translations for g3_5 content
+- [ ] Wire `gradeBandContent.ts` into RhymeRideGame component (g3_5 word family data exists, needs `getGradeBand(config)` integration)
+- [ ] Wire `gradeBandContent.ts` into TankTrekGame component (g3_5 level data exists, needs integration)
+- [ ] Wire `gradeBandContent.ts` into BoostPathPlannerGame component (g3_5 level data exists, needs integration)
+- [ ] Build g3_5 content variants for Set 2 games (future sprint)
+- [ ] Add student-facing "Assigned This Week" UI consuming `/api/student/assigned-modules`
+- [ ] Add teacher module assignment UI (catalog browse + assign/reorder via existing CRUD routes)
+- [ ] Add es/vi/zh-CN translations for g3_5 game content in `gradeBandContent.ts`
+- [ ] Add es/vi/zh-CN translations for Set 2 game i18n keys (currently using `defaultValue` fallbacks)
