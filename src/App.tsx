@@ -14,7 +14,7 @@ import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherSignup from "./pages/TeacherSignup";
-import StudentLogin from "./pages/StudentLogin";
+// StudentLogin replaced by LoginSelection at /student-login
 import StudentSignup from "./pages/StudentSignup";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -82,13 +82,16 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginSelection />} />
-              <Route path="/signup" element={<SignupSelection />} />
-              <Route path="/teacher/login" element={<TeacherLogin />} />
-              <Route path="/teacher/signup" element={<TeacherSignup />} />
-              <Route path="/student/login" element={<StudentLogin />} />
-              <Route path="/student/signup" element={<StudentSignup />} />
+              <Route path="/teacher-login" element={<TeacherLogin />} />
+              <Route path="/student-login" element={<LoginSelection />} />
               <Route path="/class-login" element={<StudentClassLogin />} />
+              {/* Legacy redirects for old login routes */}
+              <Route path="/login" element={<Navigate to="/student-login" replace />} />
+              <Route path="/teacher/login" element={<Navigate to="/teacher-login" replace />} />
+              <Route path="/student/login" element={<Navigate to="/student-login" replace />} />
+              <Route path="/signup" element={<SignupSelection />} />
+              <Route path="/teacher/signup" element={<TeacherSignup />} />
+              <Route path="/student/signup" element={<StudentSignup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/showcase" element={<ShowcaseMode isPublic />} />

@@ -249,7 +249,7 @@ const StudentSignup: React.FC = () => {
               <p className="text-sm text-brightboost-navy">
                 Already have an account?{" "}
                 <Link
-                  to="/student/login"
+                  to="/student-login"
                   className="text-brightboost-blue font-bold hover:underline transition-colors"
                 >
                   Log in

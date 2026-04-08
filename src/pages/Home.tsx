@@ -16,7 +16,7 @@ const Home: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/login"
+              to="/student-login"
               className="game-button bg-brightboost-blue hover:bg-brightboost-navy px-8 py-3 rounded-xl text-white font-bold text-lg shadow-lg transition-all ui-lift"
             >
               Login

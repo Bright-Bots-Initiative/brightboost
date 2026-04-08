@@ -55,22 +55,16 @@ const Index: React.FC = () => {
           {/* Primary CTAs */}
           <div className="space-y-3 flex flex-col items-center">
             <Link
-              to="/login"
+              to="/teacher-login"
               className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center text-lg hover:bg-opacity-90 hover:scale-105 transition-all w-64 ui-lift"
             >
-              {t("landing.logIn", { defaultValue: "Log In" })}
+              {t("landing.imATeacher")}
             </Link>
             <Link
-              to="/class-login"
+              to="/student-login"
               className="button-shadow rounded-xl px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-center text-lg hover:scale-105 transition-all w-64 ui-lift"
             >
               {t("landing.imAStudent")} 🎒
-            </Link>
-            <Link
-              to="/signup"
-              className="button-shadow rounded-xl px-6 py-3 bg-brightboost-lightblue text-brightboost-navy font-bold text-center hover:bg-opacity-90 hover:scale-105 transition-all w-56 ui-lift"
-            >
-              {t("landing.imNewHere")}
             </Link>
           </div>
 

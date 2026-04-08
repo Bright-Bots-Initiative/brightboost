@@ -29,7 +29,7 @@ export default function PathwaysAbout() {
             Career-connected learning for 14-17 year olds. Cybersecurity, entrepreneurship, financial literacy, tech, and creative media — delivered through cohort-based programs with facilitator support.
           </p>
           <Link
-            to="/login"
+            to="/student-login"
             className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
           >
             Log In or Join <ArrowRight className="w-4 h-4" />

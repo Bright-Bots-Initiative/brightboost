@@ -54,9 +54,9 @@ const TeacherLogin: React.FC = () => {
         <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link
-              to="/login"
+              to="/"
               className="text-brightboost-blue hover:text-brightboost-navy"
-              aria-label="Back to role selection"
+              aria-label="Back to home"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>

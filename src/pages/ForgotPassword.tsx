@@ -49,7 +49,7 @@ const ForgotPassword: React.FC = () => {
         <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link
-              to="/login"
+              to="/teacher-login"
               className="text-brightboost-blue hover:text-brightboost-navy"
               aria-label="Back to login"
             >
@@ -66,7 +66,7 @@ const ForgotPassword: React.FC = () => {
                 {t("auth.resetSent")}
               </p>
               <Link
-                to="/login"
+                to="/teacher-login"
                 className="block text-center text-brightboost-blue font-bold hover:underline text-sm"
               >
                 {t("auth.backToLogin")}
@@ -111,7 +111,7 @@ const ForgotPassword: React.FC = () => {
 
               <div className="mt-4 text-center">
                 <Link
-                  to="/login"
+                  to="/teacher-login"
                   className="text-sm text-brightboost-blue font-bold hover:underline"
                 >
                   {t("auth.backToLogin")}

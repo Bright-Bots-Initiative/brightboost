@@ -252,7 +252,7 @@ const LoginSelection: React.FC = () => {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-900">
-            {t("auth.chooseLoginType", { defaultValue: "Welcome to Bright Boost" })}
+            {t("auth.studentWelcome", { defaultValue: "Welcome, Student!" })}
           </h1>
           <p className="text-slate-500 mt-1 text-sm">
             {t("auth.selectHowToLogin", { defaultValue: "Sign in or join with a code" })}
@@ -279,7 +279,7 @@ const LoginSelection: React.FC = () => {
           <button type="submit" disabled={emailLoading}
             className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
             {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-            {emailLoading ? "Signing in..." : t("auth.teacherLogin", { defaultValue: "Log In" })}
+            {emailLoading ? "Signing in..." : t("auth.logInBtn", { defaultValue: "Log In" })}
           </button>
           <div className="text-center">
             <Link to="/forgot-password" className="text-xs text-indigo-600 hover:underline">
@@ -315,7 +315,7 @@ const LoginSelection: React.FC = () => {
         </form>
 
         <p className="text-center text-xs text-slate-400">
-          {t("auth.facilitatorNote", { defaultValue: "Teacher or facilitator? Use the email login above." })}
+          {t("auth.teacherNote", { defaultValue: "Teacher? Log in at" })} <Link to="/teacher-login" className="text-indigo-600 hover:underline">teacher login</Link>.
         </p>
 
         <div className="text-center space-y-2">

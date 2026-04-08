@@ -254,7 +254,7 @@ const ForReviewers: React.FC = () => {
                 {t("reviewers.ctaShowcase")}
               </Link>
               <Link
-                to="/teacher/login"
+                to="/teacher-login"
                 className="rounded-xl px-6 py-3 bg-white border-2 border-brightboost-blue text-brightboost-navy font-bold hover:bg-brightboost-lightblue/20 transition-colors"
               >
                 {t("reviewers.ctaTeacher")}

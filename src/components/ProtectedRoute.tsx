@@ -19,7 +19,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/student-login" replace />;
   }
 
   const normalizedUserRole = (user?.role || "").toLowerCase();

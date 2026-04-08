@@ -14,7 +14,7 @@ export default function PathwaysLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const shell = dark ? "bg-slate-950 text-slate-100" : "bg-white text-slate-900";

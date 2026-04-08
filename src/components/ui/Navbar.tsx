@@ -39,13 +39,13 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
           ) : (
             <div className="flex space-x-2">
               <Link
-                to="/teacher/login"
+                to="/teacher-login"
                 className="bg-blue-700 px-3 py-1 rounded hover:bg-blue-800 transition-colors"
               >
                 Teacher Login
               </Link>
               <Link
-                to="/student/login"
+                to="/student-login"
                 className="bg-purple-700 px-3 py-1 rounded hover:bg-purple-800 transition-colors"
               >
                 Student Login

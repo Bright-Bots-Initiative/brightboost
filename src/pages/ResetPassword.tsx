@@ -80,7 +80,7 @@ const ResetPassword: React.FC = () => {
         <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link
-              to="/login"
+              to="/teacher-login"
               className="text-brightboost-blue hover:text-brightboost-navy"
               aria-label="Back to login"
             >
@@ -97,7 +97,7 @@ const ResetPassword: React.FC = () => {
                 {t("auth.resetSuccess")}
               </p>
               <Link
-                to="/login"
+                to="/teacher-login"
                 className="block text-center text-brightboost-blue font-bold hover:underline text-sm"
               >
                 {t("auth.backToLogin")}
