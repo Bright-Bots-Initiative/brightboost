@@ -100,10 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (user && !isLoading && shouldRedirect) {
-      const byRole =
-        user.role === "TEACHER" || user.role === "teacher"
-          ? "/teacher/dashboard"
-          : "/student/dashboard";
+      // Route by userType first (pathways vs k8), then by role
+      const isPathways = (user as any).userType === "pathways";
+      const isTeacher = user.role === "TEACHER" || user.role === "teacher";
+      const byRole = isPathways
+        ? (isTeacher ? "/pathways/facilitator" : "/pathways")
+        : (isTeacher ? "/teacher/dashboard" : "/student/dashboard");
       const params = new URLSearchParams(location.search);
       const nextParam = params.get("next") || undefined;
       const target = nextPath ?? nextParam ?? byRole ?? "/";

@@ -223,6 +223,158 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
   }
 });
 
+// POST /auth/lookup-code — check if a code is a K-8 class or Pathways cohort
+router.post("/auth/lookup-code", async (req: Request, res: Response) => {
+  const { code } = req.body;
+  if (!code || typeof code !== "string") {
+    return res.status(400).json({ error: "Code is required" });
+  }
+
+  const upperCode = code.trim().toUpperCase();
+
+  // Check K-8 class first
+  const course = await prisma.course.findFirst({
+    where: { joinCode: { equals: upperCode, mode: "insensitive" } },
+    select: { id: true, name: true, joinCode: true },
+  });
+  if (course) {
+    return res.json({ type: "k8_class", id: course.id, name: course.name });
+  }
+
+  // Check Pathways cohort
+  const cohort = await prisma.pathwayCohort.findFirst({
+    where: { joinCode: { equals: upperCode, mode: "insensitive" } },
+    select: { id: true, name: true, band: true, joinCode: true },
+  });
+  if (cohort) {
+    return res.json({ type: "pathways_cohort", id: cohort.id, name: cohort.name, band: cohort.band });
+  }
+
+  return res.status(404).json({ error: "Invalid code. Please check and try again." });
+});
+
+// POST /auth/register-pathways — register a Pathways student via cohort code
+const registerPathwaysSchema = z.object({
+  cohortCode: z.string().min(1),
+  displayName: z.string().min(1).max(100),
+  email: z.string().email().optional().nullable(),
+  password: z.string().min(6).max(100),
+  birthYear: z.number().int().min(1990).max(2015),
+});
+
+router.post("/auth/register-pathways", async (req: Request, res: Response) => {
+  try {
+    const data = registerPathwaysSchema.parse(req.body);
+
+    // Look up cohort
+    const cohort = await prisma.pathwayCohort.findFirst({
+      where: { joinCode: { equals: data.cohortCode.trim().toUpperCase(), mode: "insensitive" } },
+    });
+    if (!cohort) {
+      return res.status(404).json({ error: "Invalid cohort code." });
+    }
+
+    // Generate placeholder email if not provided
+    const email = data.email || `student_${Math.random().toString(36).substring(2, 8)}@brightboost.local`;
+
+    // Check if email already exists
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: "An account with this email already exists. Try logging in instead." });
+    }
+
+    // Derive age band from birth year
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - data.birthYear;
+    let ageBand: string;
+    if (age >= 16) ageBand = "launch";
+    else ageBand = "explorer";
+
+    // Create user
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const user = await prisma.user.create({
+      data: {
+        name: data.displayName,
+        email,
+        password: hashedPassword,
+        role: "student",
+        userType: "pathways",
+        ageBand,
+        birthYear: data.birthYear,
+      },
+    });
+
+    // Enroll in cohort
+    await prisma.pathwayEnrollment.create({
+      data: { userId: user.id, cohortId: cohort.id },
+    });
+
+    await logAudit("PATHWAYS_REGISTER", user.id, { email, cohortId: cohort.id });
+
+    const token = generateToken(user);
+    const { password, ...userWithoutPassword } = user;
+
+    res.status(201).json({
+      user: userWithoutPassword,
+      token,
+      cohort: { id: cohort.id, name: cohort.name, band: cohort.band },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors[0]?.message ?? "Invalid input" });
+    }
+    console.error("Pathways registration error:", error);
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+// POST /auth/pathways-code-login — Pathways student login via cohort code + name + password
+router.post("/auth/pathways-code-login", async (req: Request, res: Response) => {
+  const { cohortCode, userId, password } = req.body;
+  if (!cohortCode || !userId || !password) {
+    return res.status(400).json({ error: "Code, user, and password required." });
+  }
+
+  const cohort = await prisma.pathwayCohort.findFirst({
+    where: { joinCode: { equals: cohortCode.trim().toUpperCase(), mode: "insensitive" } },
+  });
+  if (!cohort) return res.status(404).json({ error: "Invalid code." });
+
+  const enrollment = await prisma.pathwayEnrollment.findFirst({
+    where: { userId, cohortId: cohort.id },
+    include: { user: true },
+  });
+  if (!enrollment) return res.status(404).json({ error: "Not found in this cohort." });
+
+  if (!enrollment.user.password) return res.status(401).json({ error: "No password set." });
+
+  const isValid = await bcrypt.compare(password, enrollment.user.password);
+  if (!isValid) return res.status(401).json({ error: "Invalid password." });
+
+  const token = generateToken(enrollment.user);
+  const { password: _, ...userWithoutPassword } = enrollment.user;
+  res.json({ user: userWithoutPassword, token, cohort: { id: cohort.id, name: cohort.name, band: cohort.band } });
+});
+
+// GET /auth/cohort-roster/:code — list students in a Pathways cohort (for code-based login)
+router.get("/auth/cohort-roster/:code", async (req: Request, res: Response) => {
+  const cohort = await prisma.pathwayCohort.findFirst({
+    where: { joinCode: { equals: req.params.code.toUpperCase(), mode: "insensitive" } },
+    include: {
+      enrollments: {
+        where: { status: "active" },
+        include: { user: { select: { id: true, name: true } } },
+      },
+    },
+  });
+  if (!cohort) return res.status(404).json({ error: "Invalid code." });
+  res.json({
+    cohortId: cohort.id,
+    cohortName: cohort.name,
+    students: cohort.enrollments.map((e) => ({ id: e.user.id, name: e.user.name })),
+  });
+});
+
 // POST /forgot-password
 const forgotPasswordSchema = z.object({
   email: emailSchema,
