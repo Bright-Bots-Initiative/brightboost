@@ -426,7 +426,7 @@ const TeacherClassDetail: React.FC = () => {
                 className="text-xs bg-white border border-gray-200 rounded px-2 py-1 font-medium"
               >
                 <option value="k2">{t("teacher.classDetail.bandK2", { defaultValue: "K-2" })}</option>
-                <option value="g3_5">{t("teacher.classDetail.bandG35", { defaultValue: "Grades 3-5" })}</option>
+                <option value="g3_5" disabled>{t("teacher.classDetail.bandG35", { defaultValue: "Grades 3-5" })} ({t("modules.comingSoon", { defaultValue: "Coming Soon!" })})</option>
               </select>
             </span>
           </div>

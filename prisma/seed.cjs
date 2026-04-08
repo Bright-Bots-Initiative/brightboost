@@ -163,6 +163,48 @@ async function main() {
   }
   console.log("Seeded student:", student.email);
 
+  // Test Explorer — student with Set 1 fully completed (for Set 2 testing)
+  const explorerHash = await bcrypt.hash("explore123", 10);
+  let explorer = await prisma.user.findUnique({ where: { email: "explorer@test.com" } });
+  if (!explorer) {
+    explorer = await prisma.user.create({
+      data: {
+        id: "explorer-set2",
+        name: "Test Explorer",
+        email: "explorer@test.com",
+        password: explorerHash,
+        role: "student",
+        xp: 650,
+        level: "Explorer",
+        streak: 4,
+      },
+    });
+    console.log("Created Test Explorer student.");
+  } else {
+    explorer = await prisma.user.update({
+      where: { id: explorer.id },
+      data: { password: explorerHash, xp: 650, streak: 4 },
+    });
+  }
+
+  // Enroll explorer in teacher's class
+  const teacherCourse = await prisma.course.findFirst({ where: { teacherId: teacher.id } });
+  if (teacherCourse) {
+    await prisma.enrollment.upsert({
+      where: { studentId_courseId: { studentId: explorer.id, courseId: teacherCourse.id } },
+      create: { studentId: explorer.id, courseId: teacherCourse.id },
+      update: {},
+    });
+    console.log("Enrolled explorer in class:", teacherCourse.name);
+  }
+
+  // Create avatar for explorer
+  await prisma.avatar.upsert({
+    where: { studentId: explorer.id },
+    create: { studentId: explorer.id, level: 5, xp: 650, hp: 100, energy: 100, speed: 4, control: 3, focus: 3 },
+    update: { level: 5, xp: 650, speed: 4, control: 3, focus: 3 },
+  });
+
   // 5. Seed Content
   console.log("Seeding modules...");
 
@@ -732,6 +774,50 @@ async function main() {
     await prisma.activity.create({ data: { id: "quantum-quest", title: "Game: Quantum Quest", kind: INTERACT, order: 2, content: quantumGameContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
   }
   console.log("Seeded Quantum Quest module + activities.");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Test Explorer — Set 1 completion records
+  // ═══════════════════════════════════════════════════════════════════════════
+  const set1Activities = [
+    { activityId: "bounce-buds", moduleSlug: "k2-stem-bounce-buds", timeSpentS: 180, daysAgo: 5 },
+    { activityId: "gotcha-gears", moduleSlug: "k2-stem-gotcha-gears", timeSpentS: 210, daysAgo: 4 },
+    { activityId: "lost-steps", moduleSlug: "k2-stem-sequencing", timeSpentS: 150, daysAgo: 3 },
+    { activityId: "rhyme-ride", moduleSlug: "k2-stem-rhyme-ride", timeSpentS: 240, daysAgo: 2 },
+    { activityId: "tank-trek", moduleSlug: "k2-stem-tank-trek", timeSpentS: 195, daysAgo: 1 },
+  ];
+
+  for (const sa of set1Activities) {
+    const completedAt = new Date(Date.now() - sa.daysAgo * 86400000);
+    await prisma.progress.upsert({
+      where: { studentId_activityId: { studentId: explorer.id, activityId: sa.activityId } },
+      create: {
+        studentId: explorer.id,
+        activityId: sa.activityId,
+        moduleSlug: sa.moduleSlug,
+        status: "COMPLETED",
+        timeSpentS: sa.timeSpentS,
+      },
+      update: { status: "COMPLETED", timeSpentS: sa.timeSpentS },
+    });
+  }
+
+  // Game personal bests for explorer
+  const explorerBests = [
+    { gameKey: "buddy_garden_sort", bestScore: 45, lastScore: 45, bestStreak: 4, bestRoundsCompleted: 8 },
+    { gameKey: "gotcha_gears_unity", bestScore: 80, lastScore: 60, bestStreak: 3, bestRoundsCompleted: 7 },
+    { gameKey: "boost_path_planner", bestScore: 35, lastScore: 35, bestStreak: 2, bestRoundsCompleted: 3 },
+    { gameKey: "rhymo_rhyme_rocket", bestScore: 120, lastScore: 90, bestStreak: 5, bestRoundsCompleted: 15 },
+    { gameKey: "tank_trek", bestScore: 55, lastScore: 55, bestStreak: 3, bestRoundsCompleted: 7 },
+  ];
+
+  for (const gb of explorerBests) {
+    await prisma.gamePersonalBest.upsert({
+      where: { studentId_gameKey: { studentId: explorer.id, gameKey: gb.gameKey } },
+      create: { studentId: explorer.id, ...gb, playCount: 3 },
+      update: gb,
+    });
+  }
+  console.log("Seeded Test Explorer with Set 1 completion + personal bests.");
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SET 2 — Exploration (5 K-2 STEM modules, locked until Set 1 complete)

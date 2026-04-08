@@ -6,14 +6,18 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ModulesSkeleton } from "@/components/ModulesSkeleton";
-import { BookOpen, Lock } from "lucide-react";
+import { BookOpen, Lock, CheckCircle2, Clock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { translateContentName } from "@/utils/localizedContent";
 import { getStudentArchetype, canAccessModule, isSet2ModuleSlug, checkSet2Locked } from "@/lib/moduleAccess";
-import { STEM_SET_2_STRANDS, type StemSet2GameId } from "@/constants/stemSets";
+import {
+  STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_2_STRANDS,
+  countCompletedInSet, type StemSet2GameId,
+} from "@/constants/stemSets";
+import { useToast } from "@/hooks/use-toast";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-sequencing": "type_game",
@@ -48,7 +52,6 @@ const MODULE_ORDER: Record<string, number> = {
   "stem-1-intro": 30,
 };
 
-/** Map module slug → Set 2 activity ID for strand badge lookup. */
 const SLUG_TO_SET2_ID: Record<string, StemSet2GameId> = {
   "k2-stem-maze-maps": "maze-maps",
   "k2-stem-move-measure": "move-measure",
@@ -67,10 +70,13 @@ const STRAND_COLORS: Record<string, string> = {
 
 export default function Modules() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [modules, setModules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [set2Locked, setSet2Locked] = useState(true);
+  const [set1Done, setSet1Done] = useState(0);
+  const [set2Done, setSet2Done] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -83,15 +89,15 @@ export default function Modules() {
       .then(([data, avatarData, progressData]) => {
         const archetype = getStudentArchetype(avatarData);
 
-        // Compute completed activity IDs for Set gating
         const completedIds: string[] = (progressData?.progress ?? [])
           .filter((p: any) => p.status === "COMPLETED")
           .map((p: any) => String(p.activityId));
 
         const locked = checkSet2Locked(completedIds);
         setSet2Locked(locked);
+        setSet1Done(countCompletedInSet(completedIds, STEM_SET_1_IDS));
+        setSet2Done(countCompletedInSet(completedIds, STEM_SET_2_IDS));
 
-        // Hide specialization-gated modules entirely until unlocked
         const visible = (data as any[]).filter((m: any) =>
           canAccessModule({ slug: m.slug, archetype }),
         );
@@ -112,15 +118,49 @@ export default function Modules() {
       });
   }, []);
 
-  // Split into Set 1 and Set 2
   const set1Modules = modules.filter((m) => !isSet2ModuleSlug(m.slug));
   const set2Modules = modules.filter((m) => isSet2ModuleSlug(m.slug));
 
+  const handleLockedClick = () => {
+    toast({
+      title: t("modules.set2LockedToastTitle", { defaultValue: "Set 2 is Locked" }),
+      description: t("modules.set2LockedMessage", {
+        defaultValue: "Complete Set 1 STEM Games to unlock the next challenge set.",
+      }),
+    });
+  };
+
   return (
     <div className="p-4 space-y-4 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-brightboost-navy mb-6">
+      <h1 className="text-2xl font-bold text-brightboost-navy mb-2">
         {t("modules.title")}
       </h1>
+
+      {/* ── Set Progression Indicator ── */}
+      {!loading && !error && (
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <SetStep
+            label={t("modules.set1Label", { defaultValue: "Set 1" })}
+            done={set1Done}
+            total={STEM_SET_1_IDS.length}
+            status={set1Done >= STEM_SET_1_IDS.length ? "complete" : "active"}
+          />
+          <div className="w-8 h-0.5 bg-slate-200" />
+          <SetStep
+            label={t("modules.set2Label", { defaultValue: "Set 2" })}
+            done={set2Done}
+            total={STEM_SET_2_IDS.length}
+            status={set2Locked ? "locked" : set2Done >= STEM_SET_2_IDS.length ? "complete" : "active"}
+          />
+          <div className="w-8 h-0.5 bg-slate-200" />
+          <SetStep
+            label={t("modules.set3Label", { defaultValue: "Set 3" })}
+            done={0}
+            total={5}
+            status="coming"
+          />
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive" className="mb-6">
@@ -134,11 +174,14 @@ export default function Modules() {
         <ModulesSkeleton />
       ) : (
         <>
-          {/* Set 1: Foundation */}
+          {/* Set 1 */}
           {set1Modules.length > 0 && (
             <>
               <h2 className="text-lg font-bold text-brightboost-navy flex items-center gap-2">
                 {t("modules.set1Label", { defaultValue: "Set 1: Foundation" })}
+                {set1Done >= STEM_SET_1_IDS.length && (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                )}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {set1Modules.map((m) => (
@@ -148,7 +191,7 @@ export default function Modules() {
             </>
           )}
 
-          {/* Set 2: Exploration */}
+          {/* Set 2 */}
           {set2Modules.length > 0 && (
             <>
               <h2 className="text-lg font-bold text-brightboost-navy flex items-center gap-2 mt-8">
@@ -158,6 +201,9 @@ export default function Modules() {
                     <Lock className="h-3 w-3" />
                     {t("modules.locked", { defaultValue: "Locked" })}
                   </span>
+                )}
+                {!set2Locked && set2Done >= STEM_SET_2_IDS.length && (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
                 )}
               </h2>
 
@@ -181,12 +227,28 @@ export default function Modules() {
                       t={t}
                       locked={set2Locked}
                       strand={strand}
+                      onLockedClick={handleLockedClick}
                     />
                   );
                 })}
               </div>
             </>
           )}
+
+          {/* Set 3: Coming Soon */}
+          <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+            <div className="flex items-center justify-center gap-2 text-slate-400 mb-2">
+              <Lock className="h-5 w-5" />
+              <span className="text-lg font-bold">
+                {t("modules.set3ComingSoon", { defaultValue: "Set 3: Mastery — Coming Soon" })}
+              </span>
+            </div>
+            <p className="text-sm text-slate-400">
+              {t("modules.set3ComingSoonDesc", {
+                defaultValue: "New challenges are being built. Stay tuned!",
+              })}
+            </p>
+          </div>
 
           {set1Modules.length === 0 && set2Modules.length === 0 && !error && (
             <div className="text-center py-12 px-4 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
@@ -207,6 +269,50 @@ export default function Modules() {
   );
 }
 
+// ── Set Step Indicator ───────────────────────────────────────────────────
+
+function SetStep({
+  label,
+  done,
+  total,
+  status,
+}: {
+  label: string;
+  done: number;
+  total: number;
+  status: "complete" | "active" | "locked" | "coming";
+}) {
+  const ring = status === "complete"
+    ? "border-green-500 bg-green-50 text-green-700"
+    : status === "active"
+      ? "border-brightboost-blue bg-blue-50 text-brightboost-blue animate-pulse"
+      : "border-slate-200 bg-slate-50 text-slate-400";
+
+  const icon = status === "complete"
+    ? <CheckCircle2 className="h-5 w-5" />
+    : status === "active"
+      ? <span className="text-xs font-extrabold">{done}/{total}</span>
+      : status === "coming"
+        ? <Clock className="h-4 w-4" />
+        : <Lock className="h-4 w-4" />;
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${ring}`}>
+        {icon}
+      </div>
+      <div className="text-xs">
+        <p className={`font-bold ${status === "locked" || status === "coming" ? "text-slate-400" : "text-slate-700"}`}>
+          {label}
+        </p>
+        <p className="text-slate-400">
+          {status === "coming" ? "Soon" : `${done}/${total}`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Module Card Component ─────────────────────────────────────────────────
 
 function ModuleCard({
@@ -215,20 +321,23 @@ function ModuleCard({
   t,
   locked = false,
   strand,
+  onLockedClick,
 }: {
   module: any;
   navigate: (path: string) => void;
   t: (key: string, opts?: any) => string;
   locked?: boolean;
   strand?: string;
+  onLockedClick?: () => void;
 }) {
   return (
     <Card
       className={`transition flex flex-col h-full border-2 ${
         locked
-          ? "border-slate-200 opacity-70"
+          ? "border-slate-200 opacity-70 cursor-pointer"
           : "border-transparent hover:border-brightboost-blue/20 hover:shadow-lg"
       }`}
+      onClick={locked ? onLockedClick : undefined}
     >
       <div className="p-4 pb-0 relative">
         <ActivityThumb
@@ -265,13 +374,17 @@ function ModuleCard({
           {translateContentName(m.description ?? m.subtitle ?? "...")}
         </p>
         {locked ? (
-          <Button disabled className="w-full sm:w-auto opacity-50">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto opacity-60 pointer-events-none"
+            tabIndex={-1}
+          >
             <Lock className="h-4 w-4 mr-1" />
             {t("modules.locked", { defaultValue: "Locked" })}
           </Button>
         ) : (
           <Button
-            onClick={() => navigate(`/student/modules/${m.slug}`)}
+            onClick={(e) => { e.stopPropagation(); navigate(`/student/modules/${m.slug}`); }}
             className="w-full sm:w-auto"
             aria-label={`${t("modules.startLearning")} ${translateContentName(m.title)}`}
           >

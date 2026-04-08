@@ -560,6 +560,10 @@
     "set1Label": "Set 1: Foundation",
     "set2Label": "Set 2: Exploration",
     "set2LockedMessage": "Complete Set 1 STEM Games to unlock the next challenge set.",
+    "set2LockedToastTitle": "Set 2 is Locked",
+    "set3Label": "Set 3",
+    "set3ComingSoon": "Set 3: Mastery — Coming Soon",
+    "set3ComingSoonDesc": "New challenges are being built. Stay tuned!",
     "detail": {
       "locked": "Module Locked",
       "unlockPrompt": "Choose your specialization on the avatar page to unlock this module!",
