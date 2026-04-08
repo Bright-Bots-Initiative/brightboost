@@ -371,7 +371,7 @@ router.get("/auth/cohort-roster/:code", async (req: Request, res: Response) => {
   res.json({
     cohortId: cohort.id,
     cohortName: cohort.name,
-    students: cohort.enrollments.map((e) => ({ id: e.user.id, name: e.user.name })),
+    students: cohort.enrollments.map((e: any) => ({ id: e.user.id, name: e.user.name })),
   });
 });
 
