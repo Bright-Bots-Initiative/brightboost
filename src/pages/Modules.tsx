@@ -56,9 +56,9 @@ const MODULE_ORDER: Record<string, number> = {
 const SLUG_TO_SET1_ID: Record<string, StemSet1GameId> = {
   "k2-stem-bounce-buds": "bounce-buds",
   "k2-stem-gotcha-gears": "gotcha-gears",
-  "k2-stem-sequencing": "lost-steps",
   "k2-stem-rhyme-ride": "rhyme-ride",
   "k2-stem-tank-trek": "tank-trek",
+  "k2-stem-quantum-quest": "quantum-quest",
 };
 
 const SLUG_TO_SET2_ID: Record<string, StemSet2GameId> = {

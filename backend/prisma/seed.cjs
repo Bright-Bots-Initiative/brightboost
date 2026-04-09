@@ -776,8 +776,8 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   const k2QuantumModule = await prisma.module.upsert({
     where: { slug: "k2-stem-quantum-quest" },
-    update: { title: "Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
-    create: { slug: "k2-stem-quantum-quest", title: "Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
+    update: { title: "Quantum Quest", description: "Explore quantum puzzles in a space math adventure! 🚀✨", level: "K-2", published: true },
+    create: { slug: "k2-stem-quantum-quest", title: "Quantum Quest", description: "Explore quantum puzzles in a space math adventure! 🚀✨", level: "K-2", published: true },
   });
   console.log("Created module:", k2QuantumModule.slug);
 
@@ -825,9 +825,9 @@ async function main() {
   const set1Activities = [
     { activityId: "bounce-buds", moduleSlug: "k2-stem-bounce-buds", timeSpentS: 180, daysAgo: 5 },
     { activityId: "gotcha-gears", moduleSlug: "k2-stem-gotcha-gears", timeSpentS: 210, daysAgo: 4 },
-    { activityId: "lost-steps", moduleSlug: "k2-stem-sequencing", timeSpentS: 150, daysAgo: 3 },
-    { activityId: "rhyme-ride", moduleSlug: "k2-stem-rhyme-ride", timeSpentS: 240, daysAgo: 2 },
-    { activityId: "tank-trek", moduleSlug: "k2-stem-tank-trek", timeSpentS: 195, daysAgo: 1 },
+    { activityId: "rhyme-ride", moduleSlug: "k2-stem-rhyme-ride", timeSpentS: 240, daysAgo: 3 },
+    { activityId: "tank-trek", moduleSlug: "k2-stem-tank-trek", timeSpentS: 195, daysAgo: 2 },
+    { activityId: "quantum-quest", moduleSlug: "k2-stem-quantum-quest", timeSpentS: 220, daysAgo: 1 },
   ];
 
   for (const sa of set1Activities) {
@@ -878,9 +878,9 @@ async function main() {
       story: {
         title: "Story: Maze Explorer",
         slides: [
-          { id: "mm-s1", text: { en: "Welcome to the Maze Lab! Your robot needs to find the way out.", es: "¡Bienvenido al Laberinto! Tu robot necesita encontrar la salida." }, icon: "🗺️" },
-          { id: "mm-s2", text: { en: "Plan a path before you move. Think about which way is best!", es: "Planifica un camino antes de moverte. ¡Piensa cuál es el mejor camino!" }, icon: "🤔" },
-          { id: "mm-s3", text: { en: "Watch out for dead ends! A smart path avoids them.", es: "¡Cuidado con los callejones sin salida! Un camino inteligente los evita." }, icon: "⭐" },
+          { id: "mm-s1", text: { en: "Spark the helper bot is lost in the idea maze! Glowing orbs are scattered everywhere, but sneaky sweepers are patrolling the paths. Spark needs YOUR help to collect every orb and find the exit.", es: "¡Spark el robot ayudante está perdido en el laberinto de ideas! Hay esferas brillantes por todas partes, pero los barredores patrullan los caminos. ¡Spark necesita TU ayuda para recoger cada esfera y encontrar la salida!" }, icon: "🗺️" },
+          { id: "mm-s2", text: { en: "But here's the trick — Spark can't just run in! The sweepers move in patterns. Watch them carefully before you move. The smartest path isn't always the shortest one.", es: "Pero hay un truco — ¡Spark no puede solo correr! Los barredores se mueven en patrones. Obsérvalos antes de moverte. El camino más inteligente no siempre es el más corto." }, icon: "🤔" },
+          { id: "mm-s3", text: { en: "Ready? Guide Spark through the maze. Collect all the orbs. Avoid the sweepers. Think before you move!", es: "¿Listo? Guía a Spark por el laberinto. Recoge todas las esferas. Evita los barredores. ¡Piensa antes de moverte!" }, icon: "⭐" },
         ],
         questions: [
           { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 0 },
@@ -897,9 +897,9 @@ async function main() {
       story: {
         title: "Story: Body Lab",
         slides: [
-          { id: "mmi-s1", text: { en: "Your body is amazing! Let's see what it can do.", es: "¡Tu cuerpo es increíble! Veamos qué puede hacer." }, icon: "🏃" },
-          { id: "mmi-s2", text: { en: "We will measure how far, how fast, and how many times you can do something!", es: "¡Vamos a medir qué tan lejos, qué tan rápido y cuántas veces puedes hacer algo!" }, icon: "📏" },
-          { id: "mmi-s3", text: { en: "Try again to improve your score. Practice makes you stronger!", es: "Intenta de nuevo para mejorar tu puntaje. ¡La práctica te hace más fuerte!" }, icon: "💪" },
+          { id: "mmi-s1", text: { en: "Welcome to the Motion Lab! Today you're the scientist AND the athlete. You'll run, jump, and throw — then measure how you did.", es: "¡Bienvenido al Laboratorio de Movimiento! Hoy eres el científico Y el atleta. Correrás, saltarás y lanzarás — luego medirás cómo te fue." }, icon: "🏃" },
+          { id: "mmi-s2", text: { en: "But here's what makes a real scientist — after you measure, you get to IMPROVE. Pick one coaching tip, try again, and see if your numbers go up.", es: "Pero esto es lo que hace a un verdadero científico — después de medir, puedes MEJORAR. Elige un consejo, inténtalo de nuevo y mira si tus números suben." }, icon: "📏" },
+          { id: "mmi-s3", text: { en: "Ready to test your body and your brain? Let's go!", es: "¿Listo para probar tu cuerpo y tu cerebro? ¡Vamos!" }, icon: "💪" },
         ],
         questions: [
           { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }], answerIndex: 0 },
@@ -916,9 +916,9 @@ async function main() {
       story: {
         title: "Story: Pattern Patrol",
         slides: [
-          { id: "ss-s1", text: { en: "The sky needs your help! Strange patterns are appearing.", es: "¡El cielo necesita tu ayuda! Están apareciendo patrones extraños." }, icon: "🌌" },
-          { id: "ss-s2", text: { en: "Look at the rows and columns. Can you find the repeating pattern?", es: "Mira las filas y columnas. ¿Puedes encontrar el patrón que se repite?" }, icon: "🔍" },
-          { id: "ss-s3", text: { en: "When you spot the pattern, you can protect the sky with your shield!", es: "¡Cuando encuentres el patrón, puedes proteger el cielo con tu escudo!" }, icon: "🛡️" },
+          { id: "ss-s1", text: { en: "Light drops are falling from the sky over the garden! Some are safe, some are tricky. Your job: place the right shield in the right lane to protect the flowers below.", es: "¡Gotas de luz caen del cielo sobre el jardín! Algunas son seguras, otras son difíciles. Tu trabajo: coloca el escudo correcto en el carril correcto para proteger las flores." }, icon: "🌌" },
+          { id: "ss-s2", text: { en: "Watch carefully — the lights fall in patterns. Blue, gold, blue, gold... can you predict what's next? Some lights are mysteries — you'll need to SCAN them to find out what they are.", es: "Observa con cuidado — las luces caen en patrones. Azul, dorado, azul, dorado... ¿puedes predecir qué sigue? Algunas luces son misterios — necesitarás ESCANEARLAS para saber qué son." }, icon: "🔍" },
+          { id: "ss-s3", text: { en: "Remember: observe first, then choose. Let's protect the sky garden!", es: "Recuerda: primero observa, luego elige. ¡Protejamos el jardín del cielo!" }, icon: "🛡️" },
         ],
         questions: [
           { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }], answerIndex: 0 },
@@ -935,9 +935,9 @@ async function main() {
       story: {
         title: "Story: Signal School",
         slides: [
-          { id: "fl-s1", text: { en: "Welcome to Signal School! Signals help us stay safe.", es: "¡Bienvenido a la Escuela de Señales! Las señales nos ayudan a estar seguros." }, icon: "🚦" },
-          { id: "fl-s2", text: { en: "Green means go, red means stop. But what about the tricky ones?", es: "Verde significa avanzar, rojo significa parar. ¿Pero qué pasa con las difíciles?" }, icon: "🤔" },
-          { id: "fl-s3", text: { en: "React quickly but safely! Pick the right lane before time runs out.", es: "¡Reacciona rápido pero con cuidado! Escoge el carril correcto antes de que se acabe el tiempo." }, icon: "⏱️" },
+          { id: "fl-s1", text: { en: "You're driving the science delivery cart today! The lab needs these supplies FAST — but the road is full of obstacles. Cones, puddles, and blocked lanes are everywhere.", es: "¡Hoy conduces el carrito de entregas del laboratorio! El laboratorio necesita estos materiales RÁPIDO — pero el camino está lleno de obstáculos. Conos, charcos y carriles bloqueados por todas partes." }, icon: "🚦" },
+          { id: "fl-s2", text: { en: "Follow the road signals: green arrow means GO, yellow means GET READY, red X means AVOID. The safest driver wins — not the fastest!", es: "Sigue las señales del camino: flecha verde significa AVANZA, amarillo significa PREPÁRATE, X roja significa EVITA. ¡El conductor más seguro gana — no el más rápido!" }, icon: "🤔" },
+          { id: "fl-s3", text: { en: "Watch ahead, read the signs, and deliver those supplies safely. Let's roll!", es: "Mira adelante, lee las señales y entrega los materiales con seguridad. ¡Vamos!" }, icon: "⏱️" },
         ],
         questions: [
           { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }], answerIndex: 0 },
@@ -954,9 +954,9 @@ async function main() {
       story: {
         title: "Story: Race Lab",
         slides: [
-          { id: "qtr-s1", text: { en: "Welcome to the Race Lab! First, test how fast your car goes.", es: "¡Bienvenido al Laboratorio de Carreras! Primero, prueba qué tan rápido va tu carro." }, icon: "🏎️" },
-          { id: "qtr-s2", text: { en: "Now change ONE thing — wheels, engine, or weight — and try again!", es: "Ahora cambia UNA cosa — ruedas, motor o peso — ¡e intenta de nuevo!" }, icon: "🔧" },
-          { id: "qtr-s3", text: { en: "Did your change make it faster? That is how scientists work: test, change, improve!", es: "¿Tu cambio lo hizo más rápido? ¡Así trabajan los científicos: probar, cambiar, mejorar!" }, icon: "🧪" },
+          { id: "qtr-s1", text: { en: "Welcome to the engineering garage! Today you'll build, test, and improve your racer. But here's the rule: you can only change ONE thing at a time.", es: "¡Bienvenido al garaje de ingeniería! Hoy construirás, probarás y mejorarás tu corredor. Pero hay una regla: solo puedes cambiar UNA cosa a la vez." }, icon: "🏎️" },
+          { id: "qtr-s2", text: { en: "First, do a practice lap. Then look at your results — time, bumps, smoothness. Pick ONE upgrade: better tires, a speed boost, or steadier steering. Then race again!", es: "Primero, haz una vuelta de práctica. Luego mira tus resultados — tiempo, golpes, suavidad. Elige UNA mejora: mejores neumáticos, turbo de velocidad o dirección más estable. ¡Luego corre de nuevo!" }, icon: "🔧" },
+          { id: "qtr-s3", text: { en: "Real scientists test one change at a time. That's how you know what actually worked. Ready to qualify, tune, and race?", es: "Los científicos reales prueban un cambio a la vez. Así sabes qué realmente funcionó. ¿Listo para probar, ajustar y competir?" }, icon: "🧪" },
         ],
         questions: [
           { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }], answerIndex: 0 },

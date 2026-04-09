@@ -139,7 +139,7 @@ router.get(
     //
     // Each set tracks how many of its required activity IDs the student
     // has completed.  Set 3 completion gates specialization selection.
-    const STEM_SET_1 = ["bounce-buds", "gotcha-gears", "lost-steps", "rhyme-ride", "tank-trek"];
+    const STEM_SET_1 = ["bounce-buds", "gotcha-gears", "rhyme-ride", "tank-trek", "quantum-quest"];
     const STEM_SET_2 = ["maze-maps", "move-measure", "sky-shield", "fast-lane", "qualify-tune-race"];
     const STEM_SET_3 = ["set3-game-1", "set3-game-2", "set3-game-3", "set3-game-4", "set3-game-5"];
 

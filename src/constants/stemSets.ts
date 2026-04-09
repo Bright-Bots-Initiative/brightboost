@@ -7,9 +7,9 @@
 export const STEM_SET_1_IDS = [
   "bounce-buds",
   "gotcha-gears",
-  "lost-steps",
   "rhyme-ride",
   "tank-trek",
+  "quantum-quest",
 ] as const;
 
 export type StemSet1GameId = (typeof STEM_SET_1_IDS)[number];
@@ -17,30 +17,31 @@ export type StemSet1GameId = (typeof STEM_SET_1_IDS)[number];
 export const STEM_SET_1_NAMES: Record<StemSet1GameId, string> = {
   "bounce-buds": "Bounce & Buds",
   "gotcha-gears": "Gotcha Gears",
-  "lost-steps": "Fix the Order",
   "rhyme-ride": "Rhyme & Ride",
   "tank-trek": "Tank Trek",
+  "quantum-quest": "Quantum Quest",
 };
 
 export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
   "bounce-buds": "Reduced gravity pull (\u00d70.90)",
   "gotcha-gears": "Faster fire rate (\u00d70.90 cooldown)",
-  "lost-steps": "Better shield regen (\u00d71.08)",
   "rhyme-ride": "Faster projectiles (\u00d71.10)",
   "tank-trek": "Faster thrust (\u00d71.06) and rotation (\u00d71.08)",
+  "quantum-quest": "Better shield regen (\u00d71.08)",
 };
 
 export const STEM_SET_1_STRANDS: Record<StemSet1GameId, string> = {
   "bounce-buds": "Biotech",
   "gotcha-gears": "Quantum",
-  "lost-steps": "AI",
   "rhyme-ride": "AI + Biotech",
   "tank-trek": "Quantum + AI",
+  "quantum-quest": "Quantum",
 };
 
 /** Module slugs that should NOT appear in student-facing UI. */
 export const HIDDEN_MODULE_SLUGS = new Set([
-  "stem-1-intro", // Legacy "Quantum Explorers" — archived
+  "stem-1-intro",      // Legacy "Quantum Explorers" — archived
+  "k2-stem-sequencing", // "Fix the Order" / "Lost Steps" — removed from canon
 ]);
 
 // ---------------------------------------------------------------------------
