@@ -243,26 +243,23 @@ Flag conflicts, don't hide them
 
 ### Set 1 — Foundation (5 K-2 STEM games)
 
-| Game | File | Game Key | Activity ID |
-|------|------|----------|-------------|
-| Bounce & Buds | `src/components/games/BounceBudsGame.tsx` | `buddy_garden_sort` | `bounce-buds` |
-| Gotcha Gears | `src/components/games/GotchaGearsGame.tsx` | `gotcha_gears_unity` | `gotcha-gears` |
-| Fix the Order (Lost Steps) | `src/components/games/BoostPathPlannerGame.tsx` | `boost_path_planner` | `lost-steps` |
-| Rhyme & Ride | `src/components/games/RhymeRideGame.tsx` | `rhymo_rhyme_rocket` | `rhyme-ride` |
-| Tank Trek | `src/components/games/TankTrekGame.tsx` | `tank_trek` | `tank-trek` |
-
-Additional K-2 module (not in Set 1 gating):
-- Quantum Quest: `src/components/games/QuantumQuestGame.tsx` (`quantum_quest`, `quantum-quest`)
+| Game | File | Game Key | Activity ID | Strand |
+|------|------|----------|-------------|--------|
+| Bounce & Buds | `src/components/games/BounceBudsGame.tsx` | `buddy_garden_sort` | `bounce-buds` | Biotech |
+| Gotcha Gears | `src/components/games/GotchaGearsGame.tsx` | `gotcha_gears_unity` | `gotcha-gears` | Quantum |
+| Rhyme & Ride | `src/components/games/RhymeRideGame.tsx` | `rhymo_rhyme_rocket` | `rhyme-ride` | AI + Biotech |
+| Tank Trek | `src/components/games/TankTrekGame.tsx` | `tank_trek` | `tank-trek` | Quantum + AI |
+| Quantum Quest | `src/components/games/QuantumQuestGame.tsx` | `quantum_quest` | `quantum-quest` | Quantum |
 
 ### Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
 
 | Game | File | Game Key | Activity ID | Strand |
 |------|------|----------|-------------|--------|
-| Maze Maps & Smart Paths | `src/components/games/MazeMapsGame.tsx` | `maze_maps` | `maze-maps` | AI |
-| Move, Measure & Improve | `src/components/games/MoveMeasureGame.tsx` | `move_measure` | `move-measure` | Biotech |
-| Sky Shield Patterns | `src/components/games/SkyShieldGame.tsx` | `sky_shield` | `sky-shield` | Quantum |
-| Fast Lane Signals | `src/components/games/FastLaneGame.tsx` | `fast_lane` | `fast-lane` | AI + Biotech |
-| Qualify, Tune, Race | `src/components/games/QualifyTuneRaceGame.tsx` | `qualify_tune_race` | `qualify-tune-race` | Capstone |
+| Maze Maps | `src/components/games/MazeMapsGame.tsx` | `maze_maps` | `maze-maps` | AI |
+| Move & Measure | `src/components/games/MoveMeasureGame.tsx` | `move_measure` | `move-measure` | Biotech |
+| Sky Shield | `src/components/games/SkyShieldGame.tsx` | `sky_shield` | `sky-shield` | Quantum |
+| Fast Lane | `src/components/games/FastLaneGame.tsx` | `fast_lane` | `fast-lane` | AI + Biotech |
+| Qualify & Race | `src/components/games/QualifyTuneRaceGame.tsx` | `qualify_tune_race` | `qualify-tune-race` | Capstone |
 
 ### Set 3 — Mastery (placeholder, gates specialization)
 
@@ -303,36 +300,36 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 ## Removed Features
 
 ### Build-a-Bot
+- **Removed** 2026-04-07. Was Set 1's 5th game. Replaced by Tank Trek → then Quantum Quest.
 
-- **Removed from canon** on 2026-04-07
-- Was in **Set 1** as the 5th game (activity ID: `build-a-bot`)
-- All references stripped: constants, localized content, seed data, docs
-- Seed now auto-cleans up any existing Build-a-Bot activity data
-- **Replaced by Tank Trek** as Set 1's 5th game — Set 1 is back to 5 games
-- Completion logic uses each set's actual array length (not hardcoded)
+### Fix the Order (Lost Steps)
+- **Removed** 2026-04-09. Was Set 1 game (`lost-steps` / `k2-stem-sequencing` / `boost_path_planner`).
+- Added to `HIDDEN_MODULE_SLUGS`. Component still exists but hidden from students.
+- Quantum Quest promoted to fill the 5th Set 1 slot.
 
 ---
 
 ## Current Audit Status
 
-**Date: 2026-04-08**
+**Date: 2026-04-09**
 
 ### Set 1 Games (5 games) — with pathway strand labels
 - Bounce & Buds (Biotech) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
 - Gotcha Gears (Quantum) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
-- Fix the Order (AI) — ✅ K-2 + g3_5 levels via `gradeBandContent.ts` (wired into BoostPathPlannerGame)
 - Rhyme & Ride (AI + Biotech) — ✅ K-2 (g3_5 config.gradeBand available, word family integration pending)
 - Tank Trek (Quantum + AI) — ✅ K-2 + g3_5 chapters appended via `TANK_TREK_G35_LEVELS`
+- Quantum Quest (Quantum) — ✅ K-2 (promoted from standalone to Set 1's 5th game)
 
 ### Set 2 Games (5 games) — with pathway strand labels
-- Maze Maps (AI) — ✅ Implemented, registered, seeded, tests pass
-- Move & Measure (Biotech) — ✅ Implemented and registered
-- Sky Shield (Quantum) — ✅ Implemented and registered
-- Fast Lane (AI + Biotech) — ✅ Implemented and registered
-- Qualify & Race (Capstone) — ✅ Implemented and registered
+- Maze Maps (AI) — ✅ Implemented, registered, seeded with rich story slides
+- Move & Measure (Biotech) — ✅ Implemented, registered, rich story slides
+- Sky Shield (Quantum) — ✅ Implemented, registered, rich story slides
+- Fast Lane (AI + Biotech) — ✅ Implemented, registered, rich story slides
+- Qualify & Race (Capstone) — ✅ Implemented, registered, rich story slides
 
 ### Hidden/Archived Modules
-- `stem-1-intro` ("Quantum Explorers") — hidden via `HIDDEN_MODULE_SLUGS` in `stemSets.ts`
+- `stem-1-intro` ("Quantum Explorers") — hidden via `HIDDEN_MODULE_SLUGS`
+- `k2-stem-sequencing` ("Fix the Order") — hidden via `HIDDEN_MODULE_SLUGS`
 
 ### Grade 3-5 Content Pipeline
 - `gradeBandContent.ts` — ✅ Central content registry with K-2 and g3_5 variants
