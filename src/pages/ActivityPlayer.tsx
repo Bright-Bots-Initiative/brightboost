@@ -384,7 +384,10 @@ export default function ActivityPlayer() {
       ? content.questions
       : [];
 
-    if (content?.type !== "story_quiz" || slides.length === 0) {
+    // Quiz-only activity (story_quiz with slides=[] but questions present)
+    const isQuizOnly = content?.type === "story_quiz" && slides.length === 0 && questions.length > 0;
+
+    if (content?.type !== "story_quiz" || (slides.length === 0 && !isQuizOnly)) {
       // fallback display
       const text = resolveText(
         t,
@@ -417,7 +420,7 @@ export default function ActivityPlayer() {
       (q) => typeof answers[q.id] === "number",
     );
 
-    if (mode === "story") {
+    if (mode === "story" && !isQuizOnly) {
       return (
         <div className="p-6 max-w-3xl mx-auto space-y-4">
           <ActivityHeader
@@ -504,9 +507,15 @@ export default function ActivityPlayer() {
           subtitle={t("activityPlayer.quizSubtitle")}
         />
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setMode("story")}>
-            {t("activityPlayer.backToStory")}
-          </Button>
+          {isQuizOnly ? (
+            <Button variant="outline" onClick={() => navigate(`/student/modules/${slug}`)}>
+              {t("activityPlayer.back")}
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => setMode("story")}>
+              {t("activityPlayer.backToStory")}
+            </Button>
+          )}
         </div>
 
         <Card>

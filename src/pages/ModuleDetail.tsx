@@ -115,10 +115,12 @@ export default function ModuleDetail() {
           );
           return allActivities.map(({ a, lessonId }, idx) => {
             const isCompleted = completedActivities.has(String(a.id));
+            const isQuiz = a.title?.startsWith("Quiz:");
             const imageKey = a.kind === "INFO" ? "type_story" : "type_game";
             const variant = a.kind === "INFO" ? "story" : "game";
-            const label =
-              a.kind === "INFO"
+            const label = isQuiz
+              ? t("modules.detail.quiz", { defaultValue: "Quiz" })
+              : a.kind === "INFO"
                 ? t("modules.detail.story")
                 : t("modules.detail.game");
 
