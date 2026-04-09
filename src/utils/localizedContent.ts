@@ -118,7 +118,7 @@ export function pickLocale<T>(map: Partial<Record<string, T>>, fallback: T): T {
   return map[lang] ?? map.en ?? fallback;
 }
 
-export type LocalizedField = string | { i18nKey: string } | undefined | null;
+export type LocalizedField = string | { i18nKey: string } | Record<string, string> | undefined | null;
 
 export function resolveText(
   t: TFunction,
@@ -128,8 +128,15 @@ export function resolveText(
   if (typeof field === "string") {
     return field;
   }
-  if (field && typeof field === "object" && "i18nKey" in field) {
-    return t(field.i18nKey);
+  if (field && typeof field === "object") {
+    // i18n key reference: { i18nKey: "some.key" }
+    if ("i18nKey" in field) {
+      return t(field.i18nKey);
+    }
+    // Locale map: { en: "Hello", es: "Hola" }
+    if ("en" in field) {
+      return pickLocale(field as Record<string, string>, (field as any).en ?? fallback);
+    }
   }
   return fallback;
 }

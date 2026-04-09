@@ -399,8 +399,8 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     else if (phase === "celebration") {
       onFinish({
         gameKey: "maze_maps",
-        score,
-        total: 60, // max: 6 orbs × 10 pts
+        score: Math.min(score, 140),
+        total: 140, // 13 orbs × 10 pts + 10 exit ticket
         streakMax: Math.max(0, 6 - collisions),
         roundsCompleted: 3,
         hintsUsed,

@@ -262,7 +262,7 @@ export default function GameShell({
 
   const handleFinish = useCallback(
     (gameResult: GameResult) => {
-      const pct = gameResult.total > 0 ? (gameResult.score / gameResult.total) * 100 : 0;
+      const pct = gameResult.total > 0 ? Math.min(100, (gameResult.score / gameResult.total) * 100) : 0;
       const stars = pct >= starThresholds[2] ? 3 : pct >= starThresholds[1] ? 2 : pct >= starThresholds[0] ? 1 : 0;
       setResult({ ...gameResult, starsEarned: stars, accuracy: Math.round(pct) });
       setPhase("results");
