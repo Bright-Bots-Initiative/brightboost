@@ -317,32 +317,42 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 
 **Date: 2026-04-08**
 
-### Set 1 Games (5 games)
-- Bounce & Buds — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
-- Gotcha Gears — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
-- Fix the Order (Lost Steps) — ✅ K-2, g3_5 content data defined (harder levels in gradeBandContent)
-- Rhyme & Ride — ✅ K-2, g3_5 word families defined in gradeBandContent
-- Tank Trek — ✅ K-2, g3_5 level data defined in gradeBandContent
+### Set 1 Games (5 games) — with pathway strand labels
+- Bounce & Buds (Biotech) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
+- Gotcha Gears (Quantum) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
+- Fix the Order (AI) — ✅ K-2 + g3_5 levels via `gradeBandContent.ts` (wired into BoostPathPlannerGame)
+- Rhyme & Ride (AI + Biotech) — ✅ K-2 (g3_5 config.gradeBand available, word family integration pending)
+- Tank Trek (Quantum + AI) — ✅ K-2 + g3_5 chapters appended via `TANK_TREK_G35_LEVELS`
 
-### Set 2 Games (5 games)
-- Maze Maps & Smart Paths — ✅ Implemented, registered, seeded, tests pass
-- Move, Measure & Improve — ✅ Implemented and registered
-- Sky Shield Patterns — ✅ Implemented and registered
-- Fast Lane Signals — ✅ Implemented and registered
-- Qualify, Tune, Race — ✅ Implemented and registered
+### Set 2 Games (5 games) — with pathway strand labels
+- Maze Maps (AI) — ✅ Implemented, registered, seeded, tests pass
+- Move & Measure (Biotech) — ✅ Implemented and registered
+- Sky Shield (Quantum) — ✅ Implemented and registered
+- Fast Lane (AI + Biotech) — ✅ Implemented and registered
+- Qualify & Race (Capstone) — ✅ Implemented and registered
+
+### Hidden/Archived Modules
+- `stem-1-intro` ("Quantum Explorers") — hidden via `HIDDEN_MODULE_SLUGS` in `stemSets.ts`
 
 ### Grade 3-5 Content Pipeline
 - `gradeBandContent.ts` — ✅ Central content registry with K-2 and g3_5 variants
 - `useGradeBand()` hook — ✅ Fetches student's class band from API
 - ActivityPlayer — ✅ Injects `gradeBand` into game config
-- Backend — ✅ `/student/courses` returns `gradeBand` per course
-- Teacher band selector — ✅ Enabled (was previously disabled as "Coming Soon")
+- BounceBudsGame — ✅ Wired (reads gradeBand, loads g3_5 rounds)
+- GotchaGearsGame — ✅ Wired (reads gradeBand, loads g3_5 rounds)
+- BoostPathPlannerGame — ✅ Wired (uses BOOST_PATH_LEVELS[band])
+- TankTrekGame — ✅ Wired (appends g3_5 chapters)
+- RhymeRideGame — ⚠️ config.gradeBand available but word family integration pending
 - Jordan test student — ✅ Seeded in g3_5 class
 
+### Pathways Facilitator Resources
+- Program Overview — ✅ What is Pathways, bands, how it works, facilitation tips
+- Session Guide — ✅ 6-week pacing table for Cyber Launch
+- Printable Resources — ✅ Overview, discussion questions, progress tracker (with Print button)
+- Route: `/pathways/facilitator/resources`
+
 ### Action Items
-- [ ] Wire `gradeBandContent.ts` into RhymeRideGame component (g3_5 word family data exists, needs `getGradeBand(config)` integration)
-- [ ] Wire `gradeBandContent.ts` into TankTrekGame component (g3_5 level data exists, needs integration)
-- [ ] Wire `gradeBandContent.ts` into BoostPathPlannerGame component (g3_5 level data exists, needs integration)
+- [ ] Wire g3_5 word families into RhymeRideGame (data exists in gradeBandContent, game integration pending)
 - [ ] Build g3_5 content variants for Set 2 games (future sprint)
 - [ ] Add student-facing "Assigned This Week" UI consuming `/api/student/assigned-modules`
 - [ ] Add teacher module assignment UI (catalog browse + assign/reorder via existing CRUD routes)
