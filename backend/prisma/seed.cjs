@@ -886,6 +886,11 @@ async function main() {
           { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 0 },
         ],
       },
+      quiz: [
+        { id: "mmz-q1", prompt: { en: "Before moving through the maze, what should you do first?", es: "Antes de moverte en el laberinto, ¿qué debes hacer primero?" }, choices: [{ en: "Run as fast as you can", es: "Correr lo más rápido posible" }, { en: "Watch the sweeper's pattern", es: "Observar el patrón del barredor" }, { en: "Close your eyes and guess", es: "Cerrar los ojos y adivinar" }, { en: "Pick the shortest path", es: "Elegir el camino más corto" }], answerIndex: 1 },
+        { id: "mmz-q2", prompt: { en: "The sweeper moves left, right, left, right. What will it do next?", es: "El barredor se mueve izquierda, derecha, izquierda, derecha. ¿Qué hará después?" }, choices: [{ en: "Stop", es: "Parar" }, { en: "Move up", es: "Ir arriba" }, { en: "Move left", es: "Ir a la izquierda" }, { en: "Disappear", es: "Desaparecer" }], answerIndex: 2 },
+        { id: "mmz-q3", prompt: { en: "Which path is the smartest choice?", es: "¿Cuál camino es la opción más inteligente?" }, choices: [{ en: "The shortest path past a sweeper", es: "El camino más corto pasando un barredor" }, { en: "A longer path that avoids sweepers", es: "Un camino más largo que evita barredores" }, { en: "Standing still forever", es: "Quedarse quieto para siempre" }, { en: "The path with the most turns", es: "El camino con más giros" }], answerIndex: 1 },
+      ],
     },
     {
       slug: "k2-stem-move-measure",
@@ -905,6 +910,11 @@ async function main() {
           { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }], answerIndex: 0 },
         ],
       },
+      quiz: [
+        { id: "mmv-q1", prompt: { en: "After your first try, what should you do?", es: "Después de tu primer intento, ¿qué debes hacer?" }, choices: [{ en: "Give up", es: "Rendirse" }, { en: "Try the exact same thing again", es: "Intentar exactamente lo mismo" }, { en: "Look at your results and pick one thing to change", es: "Mirar tus resultados y elegir una cosa para cambiar" }, { en: "Change everything at once", es: "Cambiar todo a la vez" }], answerIndex: 2 },
+        { id: "mmv-q2", prompt: { en: "Which body part helps MOST with jumping?", es: "¿Qué parte del cuerpo ayuda MÁS a saltar?" }, choices: [{ en: "Your arms", es: "Tus brazos" }, { en: "Your legs", es: "Tus piernas" }, { en: "Your ears", es: "Tus orejas" }, { en: "Your neck", es: "Tu cuello" }], answerIndex: 1 },
+        { id: "mmv-q3", prompt: { en: "You threw 10 feet, then used the 'follow through' tip and threw 14 feet. What does this tell you?", es: "Lanzaste 10 pies, luego usaste el consejo 'seguir el movimiento' y lanzaste 14 pies. ¿Qué te dice esto?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "The tip helped you throw farther", es: "El consejo te ayudó a lanzar más lejos" }, { en: "You should try a different tip", es: "Deberías probar otro consejo" }, { en: "Throwing doesn't use your arms", es: "Lanzar no usa tus brazos" }], answerIndex: 1 },
+      ],
     },
     {
       slug: "k2-stem-sky-shield",
@@ -924,6 +934,11 @@ async function main() {
           { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }], answerIndex: 0 },
         ],
       },
+      quiz: [
+        { id: "ss-qz1", prompt: { en: "The pattern is blue, gold, blue, gold, blue, ___. What comes next?", es: "El patrón es azul, dorado, azul, dorado, azul, ___. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1 },
+        { id: "ss-qz2", prompt: { en: "You see a mystery light falling. What should you do?", es: "Ves una luz misteriosa cayendo. ¿Qué debes hacer?" }, choices: [{ en: "Guess which shield to use", es: "Adivinar qué escudo usar" }, { en: "Tap Scan to find out first", es: "Tocar Escanear para averiguar primero" }, { en: "Run away", es: "Huir" }, { en: "Ignore it", es: "Ignorarla" }], answerIndex: 1 },
+        { id: "ss-qz3", prompt: { en: "Why is it important to watch the pattern before acting?", es: "¿Por qué es importante observar el patrón antes de actuar?" }, choices: [{ en: "It wastes time", es: "Pierde tiempo" }, { en: "It helps you predict what's coming next", es: "Te ayuda a predecir qué viene después" }, { en: "It makes the game harder", es: "Hace el juego más difícil" }, { en: "Patterns don't matter", es: "Los patrones no importan" }], answerIndex: 1 },
+      ],
     },
     {
       slug: "k2-stem-fast-lane",
@@ -943,6 +958,11 @@ async function main() {
           { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }], answerIndex: 0 },
         ],
       },
+      quiz: [
+        { id: "fl-qz1", prompt: { en: "You see a yellow road sign ahead. What does it mean?", es: "Ves una señal amarilla adelante. ¿Qué significa?" }, choices: [{ en: "Speed up", es: "Acelerar" }, { en: "Stop immediately", es: "Parar inmediatamente" }, { en: "Get ready — something is about to change", es: "Prepárate — algo está a punto de cambiar" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 2 },
+        { id: "fl-qz2", prompt: { en: "Which is more important when driving the delivery cart?", es: "¿Qué es más importante al conducir el carrito de entregas?" }, choices: [{ en: "Going as fast as possible", es: "Ir lo más rápido posible" }, { en: "Getting there safely", es: "Llegar con seguridad" }, { en: "Crashing into every cone", es: "Chocarse con cada cono" }, { en: "Ignoring the signs", es: "Ignorar las señales" }], answerIndex: 1 },
+        { id: "fl-qz3", prompt: { en: "You see a boost pad in a lane with a red X sign. What should you do?", es: "Ves un impulso en un carril con señal X roja. ¿Qué debes hacer?" }, choices: [{ en: "Go for the boost", es: "Ir por el impulso" }, { en: "Avoid that lane — red X means danger", es: "Evitar ese carril — X roja significa peligro" }, { en: "Stop the cart", es: "Parar el carrito" }, { en: "Switch to a random lane", es: "Cambiar a un carril aleatorio" }], answerIndex: 1 },
+      ],
     },
     {
       slug: "k2-stem-qualify-tune-race",
@@ -962,6 +982,12 @@ async function main() {
           { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }], answerIndex: 0 },
         ],
       },
+      quiz: [
+        { id: "qtr-qz1", prompt: { en: "In the tuning screen, how many things should you change at a time?", es: "En la pantalla de ajuste, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "As many as possible", es: "Todas las posibles" }, { en: "Two", es: "Dos" }, { en: "One", es: "Una" }, { en: "None", es: "Ninguna" }], answerIndex: 2 },
+        { id: "qtr-qz2", prompt: { en: "Your first lap had 5 bumps. You added Grip Tires and your second lap had 2 bumps. What happened?", es: "Tu primera vuelta tuvo 5 golpes. Agregaste Neumáticos de Agarre y tu segunda vuelta tuvo 2 golpes. ¿Qué pasó?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "Grip Tires helped you bump less", es: "Los neumáticos de agarre te ayudaron a golpear menos" }, { en: "The track got easier", es: "La pista se hizo más fácil" }, { en: "Bumps don't matter", es: "Los golpes no importan" }], answerIndex: 1 },
+        { id: "qtr-qz3", prompt: { en: "Why do scientists test one change at a time?", es: "¿Por qué los científicos prueban un cambio a la vez?" }, choices: [{ en: "Because they're slow", es: "Porque son lentos" }, { en: "So they know which change made the difference", es: "Para saber qué cambio hizo la diferencia" }, { en: "Because two changes would break everything", es: "Porque dos cambios romperían todo" }, { en: "They don't — they change everything", es: "No lo hacen — cambian todo" }], answerIndex: 1 },
+        { id: "qtr-qz4", prompt: { en: "You chose Speed Boost but bumped more. What does this tell you?", es: "Elegiste Turbo de Velocidad pero golpeaste más. ¿Qué te dice esto?" }, choices: [{ en: "Speed Boost made it harder to control", es: "El Turbo hizo más difícil de controlar" }, { en: "Speed Boost doesn't work", es: "El Turbo no funciona" }, { en: "You should always pick Speed Boost", es: "Siempre debes elegir Turbo" }, { en: "Bumps help you go faster", es: "Los golpes te ayudan a ir más rápido" }], answerIndex: 0 },
+      ],
     },
   ];
 
@@ -972,16 +998,36 @@ async function main() {
       create: { slug: s2.slug, title: s2.title, description: s2.description, level: "K-2", published: true },
     });
 
-    let s2Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id, title: "Unit 1" } });
+    // Get or create unit — use first unit of this module (not by title, which may have changed)
+    let s2Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id }, orderBy: { order: "asc" } });
     if (!s2Unit) {
       s2Unit = await prisma.unit.create({ data: { title: "Unit 1", order: 1, Module: { connect: { id: mod.id } }, teacher: { connect: { id: teacher.id } } } });
     }
 
-    let s2Lesson = await prisma.lesson.findFirst({ where: { unitId: s2Unit.id, title: s2.title } });
+    // Get or create lesson — use first lesson of this unit
+    let s2Lesson = await prisma.lesson.findFirst({ where: { unitId: s2Unit.id }, orderBy: { order: "asc" } });
     if (!s2Lesson) {
       s2Lesson = await prisma.lesson.create({ data: { title: s2.title, order: 1, Unit: { connect: { id: s2Unit.id } } } });
     }
 
+    // Clean up duplicate lessons (from previous seed runs with different titles)
+    const allLessons = await prisma.lesson.findMany({ where: { unitId: s2Unit.id } });
+    for (const dup of allLessons) {
+      if (dup.id !== s2Lesson.id) {
+        await prisma.activity.deleteMany({ where: { lessonId: dup.id } });
+        await prisma.lesson.delete({ where: { id: dup.id } }).catch(() => {});
+      }
+    }
+
+    // Clean up duplicate activities within this lesson (keep only 3: story, game, quiz)
+    const existingActs = await prisma.activity.findMany({ where: { lessonId: s2Lesson.id }, orderBy: { order: "asc" } });
+    for (const act of existingActs) {
+      if (act.order > 3) {
+        await prisma.activity.delete({ where: { id: act.id } }).catch(() => {});
+      }
+    }
+
+    // Activity 1: Story (INFO)
     const storyContent = JSON.stringify({
       type: "story_quiz",
       slides: s2.story.slides,
@@ -996,15 +1042,29 @@ async function main() {
       await prisma.activity.create({ data: { title: s2.story.title, kind: INFO, order: 1, content: storyContent, Lesson: { connect: { id: s2Lesson.id } } } });
     }
 
+    // Activity 2: Game (INTERACT)
     const gameContent = JSON.stringify({ gameKey: s2.gameKey });
     let gameAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, kind: INTERACT, order: 2 } });
     if (gameAct) {
-      await prisma.activity.update({ where: { id: gameAct.id }, data: { id: s2.activityId, title: `Game: ${s2.title.replace("Set 2: ", "")}`, content: gameContent } });
+      await prisma.activity.update({ where: { id: gameAct.id }, data: { id: s2.activityId, title: `Game: ${s2.title}`, content: gameContent } });
     } else {
-      await prisma.activity.create({ data: { id: s2.activityId, title: `Game: ${s2.title.replace("Set 2: ", "")}`, kind: INTERACT, order: 2, content: gameContent, Lesson: { connect: { id: s2Lesson.id } } } });
+      await prisma.activity.create({ data: { id: s2.activityId, title: `Game: ${s2.title}`, kind: INTERACT, order: 2, content: gameContent, Lesson: { connect: { id: s2Lesson.id } } } });
     }
 
-    console.log("Seeded Set 2 module:", s2.slug);
+    // Activity 3: Quiz (INFO with quiz questions)
+    const quizContent = JSON.stringify({
+      type: "story_quiz",
+      slides: [],
+      questions: s2.quiz ?? [],
+    });
+    let quizAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, order: 3 } });
+    if (quizAct) {
+      await prisma.activity.update({ where: { id: quizAct.id }, data: { title: `Quiz: ${s2.title}`, kind: INFO, content: quizContent } });
+    } else {
+      await prisma.activity.create({ data: { title: `Quiz: ${s2.title}`, kind: INFO, order: 3, content: quizContent, Lesson: { connect: { id: s2Lesson.id } } } });
+    }
+
+    console.log("Seeded Set 2 module:", s2.slug, "(story + game + quiz)");
   }
 
   console.log("Seeding units...");
