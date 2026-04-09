@@ -274,14 +274,14 @@ async function main() {
   const k2SeqModule = await prisma.module.upsert({
     where: { slug: "k2-stem-sequencing" },
     update: {
-      title: "STEM-1: Module 1 — Boost’s Lost Steps",
+      title: "Fix the Order",
       description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-sequencing",
-      title: "STEM-1: Module 1 — Boost’s Lost Steps",
+      title: "Fix the Order",
       description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
       level: "K-2",
       published: true,
@@ -382,14 +382,14 @@ async function main() {
   const k2RhymeModule = await prisma.module.upsert({
     where: { slug: "k2-stem-rhyme-ride" },
     update: {
-      title: "STEM-1: Module 2 — Rhyme & Ride",
+      title: "Rhyme & Ride",
       description: "Ride through three worlds and catch the rhymes! 🎵🚲",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-rhyme-ride",
-      title: "STEM-1: Module 2 — Rhyme & Ride",
+      title: "Rhyme & Ride",
       description: "Ride through three worlds and catch the rhymes! 🎵🚲",
       level: "K-2",
       published: true,
@@ -489,14 +489,14 @@ async function main() {
   const k2BounceModule = await prisma.module.upsert({
     where: { slug: "k2-stem-bounce-buds" },
     update: {
-      title: "STEM-1: Module 3 — Bounce & Buds",
+      title: "Bounce & Buds",
       description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-bounce-buds",
-      title: "STEM-1: Module 3 — Bounce & Buds",
+      title: "Bounce & Buds",
       description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
@@ -597,14 +597,14 @@ async function main() {
   const k2GotchaModule = await prisma.module.upsert({
     where: { slug: "k2-stem-gotcha-gears" },
     update: {
-      title: "STEM-1: Module 4 — Gotcha Gears",
+      title: "Gotcha Gears",
       description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-gotcha-gears",
-      title: "STEM-1: Module 4 — Gotcha Gears",
+      title: "Gotcha Gears",
       description: "Catch the right gear to solve AI thinking puzzles! ⚙️🤖",
       level: "K-2",
       published: true,
@@ -728,8 +728,8 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   const k2TankModule = await prisma.module.upsert({
     where: { slug: "k2-stem-tank-trek" },
-    update: { title: "Module 4 — Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
-    create: { slug: "k2-stem-tank-trek", title: "Module 4 — Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
+    update: { title: "Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
+    create: { slug: "k2-stem-tank-trek", title: "Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
   });
   console.log("Created module:", k2TankModule.slug);
 
@@ -776,8 +776,8 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   const k2QuantumModule = await prisma.module.upsert({
     where: { slug: "k2-stem-quantum-quest" },
-    update: { title: "Module 5 — Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
-    create: { slug: "k2-stem-quantum-quest", title: "Module 5 — Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
+    update: { title: "Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
+    create: { slug: "k2-stem-quantum-quest", title: "Quantum Quest", description: "Space math adventure! 🚀✨", level: "K-2", published: true },
   });
   console.log("Created module:", k2QuantumModule.slug);
 
@@ -870,7 +870,7 @@ async function main() {
   const set2Modules = [
     {
       slug: "k2-stem-maze-maps",
-      title: "Set 2: Maze Maps & Smart Paths",
+      title: "Maze Maps",
       description: "Plan the best path through the maze! 🗺️🤖",
       activityId: "maze-maps",
       gameKey: "maze_maps",
@@ -889,7 +889,7 @@ async function main() {
     },
     {
       slug: "k2-stem-move-measure",
-      title: "Set 2: Move, Measure & Improve",
+      title: "Move & Measure",
       description: "Move your body and measure how far you go! 🏃📏",
       activityId: "move-measure",
       gameKey: "move_measure",
@@ -908,7 +908,7 @@ async function main() {
     },
     {
       slug: "k2-stem-sky-shield",
-      title: "Set 2: Sky Shield Patterns",
+      title: "Sky Shield",
       description: "Find the pattern and protect the sky! 🛡️✨",
       activityId: "sky-shield",
       gameKey: "sky_shield",
@@ -927,7 +927,7 @@ async function main() {
     },
     {
       slug: "k2-stem-fast-lane",
-      title: "Set 2: Fast Lane Signals",
+      title: "Fast Lane",
       description: "Read the signals and choose the safe lane! 🚦🏎️",
       activityId: "fast-lane",
       gameKey: "fast_lane",
@@ -946,7 +946,7 @@ async function main() {
     },
     {
       slug: "k2-stem-qualify-tune-race",
-      title: "Set 2: Qualify, Tune, Race",
+      title: "Qualify & Race",
       description: "Test, change one thing, and race to win! 🏁🔧",
       activityId: "qualify-tune-race",
       gameKey: "qualify_tune_race",

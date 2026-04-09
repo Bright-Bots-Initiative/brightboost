@@ -14,7 +14,7 @@ export default function PathwaysProfile() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((r) => r.json())
-      .then(setMilestones)
+      .then((data) => setMilestones(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 

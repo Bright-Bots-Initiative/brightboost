@@ -14,6 +14,7 @@ import {
   Lightbulb, Sparkles,
 } from "lucide-react";
 import { pickLocale } from "@/utils/localizedContent";
+import { getGradeBand, TANK_TREK_G35_LEVELS } from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -581,7 +582,11 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
 
 export default function TankTrekGame({ config, onComplete }: TankTrekGameProps) {
   const { t } = useTranslation();
-  const gameConfig = config?.chapters?.length ? config : BUILTIN_LEVELS;
+  const band = getGradeBand(config);
+  const defaultLevels = band === "g3_5"
+    ? { ...BUILTIN_LEVELS, chapters: [...BUILTIN_LEVELS.chapters, ...(TANK_TREK_G35_LEVELS.chapters as any)] }
+    : BUILTIN_LEVELS;
+  const gameConfig = config?.chapters?.length ? config : defaultLevels;
 
   const briefing: MissionBriefing = {
     title: pickLocale({ en: "Robot Mission!", es: "¡Misión del Robot!", vi: "Nhiệm Vụ Robot!", "zh-CN": "机器人任务！" }, "Robot Mission!"),

@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Compass, User, Users, LogOut, Moon, Sun } from "lucide-react";
+import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen } from "lucide-react";
 
 export default function PathwaysLayout() {
   const { user, logout } = useAuth();
@@ -40,7 +40,10 @@ export default function PathwaysLayout() {
           <SidebarLink to="/pathways/tracks" icon={<Compass className="w-4 h-4" />} label="Tracks" activeClass={navActive} idleClass={navIdle} />
           <SidebarLink to="/pathways/profile" icon={<User className="w-4 h-4" />} label="Profile" activeClass={navActive} idleClass={navIdle} />
           {isFacilitator && (
-            <SidebarLink to="/pathways/facilitator" icon={<Users className="w-4 h-4" />} label="Facilitator" activeClass={navActive} idleClass={navIdle} />
+            <>
+              <SidebarLink to="/pathways/facilitator" icon={<Users className="w-4 h-4" />} label="Dashboard" activeClass={navActive} idleClass={navIdle} />
+              <SidebarLink to="/pathways/facilitator/resources" icon={<BookOpen className="w-4 h-4" />} label="Resources" activeClass={navActive} idleClass={navIdle} />
+            </>
           )}
         </div>
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LearningGameFrame } from "./shared/LearningGameFrame";
 import type { GameResult } from "./shared/GameShell";
+import { getGradeBand, BOOST_PATH_LEVELS } from "./gradeBandContent";
 
 type Dir = "N" | "E" | "S" | "W";
 type Cmd = "F" | "L" | "R";
@@ -107,16 +108,20 @@ export function runBoostProgram(level: Pick<Level, "dir" | "start" | "goal" | "s
 }
 
 export default function BoostPathPlannerGame({
+  config,
   onComplete,
 }: {
+  config?: any;
   onComplete?: (result: GameResult) => void;
 }) {
   const { t } = useTranslation();
+  const band = getGradeBand(config);
+  const activeLevels = BOOST_PATH_LEVELS[band] ?? LEVELS;
   const [levelIndex, setLevelIndex] = useState(0);
   const [program, setProgram] = useState<Cmd[]>([]);
   const [feedbackKey, setFeedbackKey] = useState("games.boostPath.buildPlan");
   const [score, setScore] = useState(0);
-  const level = LEVELS[levelIndex];
+  const level = activeLevels[levelIndex];
 
   const result = useMemo(
     () => runBoostProgram(level, program),
@@ -144,14 +149,14 @@ export default function BoostPathPlannerGame({
       const nextScore = score + 1;
       setScore(nextScore);
 
-      if (levelIndex === LEVELS.length - 1) {
+      if (levelIndex === activeLevels.length - 1) {
         setFeedbackKey("games.boostPath.allDone");
         onComplete?.({
           gameKey: "boost_path_planner",
           score: nextScore,
-          total: LEVELS.length,
+          total: activeLevels.length,
           streakMax: nextScore,
-          roundsCompleted: LEVELS.length,
+          roundsCompleted: activeLevels.length,
         });
       } else {
         setFeedbackKey("games.boostPath.niceJob");
@@ -179,7 +184,7 @@ export default function BoostPathPlannerGame({
         t("games.boostPath.vocabTurn"),
         t("games.boostPath.vocabGoal"),
       ]}
-      progressLabel={`${t("games.boostPath.levelLabel")} ${levelIndex + 1}/${LEVELS.length}`}
+      progressLabel={`${t("games.boostPath.levelLabel")} ${levelIndex + 1}/${activeLevels.length}`}
       feedback={t(feedbackKey)}
     >
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">

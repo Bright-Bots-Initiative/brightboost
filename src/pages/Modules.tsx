@@ -14,8 +14,9 @@ import { ImageKey } from "@/theme/activityIllustrations";
 import { translateContentName } from "@/utils/localizedContent";
 import { getStudentArchetype, canAccessModule, isSet2ModuleSlug, checkSet2Locked } from "@/lib/moduleAccess";
 import {
-  STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_2_STRANDS,
-  countCompletedInSet, type StemSet2GameId,
+  STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_1_STRANDS, STEM_SET_2_STRANDS,
+  HIDDEN_MODULE_SLUGS, countCompletedInSet,
+  type StemSet1GameId, type StemSet2GameId,
 } from "@/constants/stemSets";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,6 +53,14 @@ const MODULE_ORDER: Record<string, number> = {
   "stem-1-intro": 30,
 };
 
+const SLUG_TO_SET1_ID: Record<string, StemSet1GameId> = {
+  "k2-stem-bounce-buds": "bounce-buds",
+  "k2-stem-gotcha-gears": "gotcha-gears",
+  "k2-stem-sequencing": "lost-steps",
+  "k2-stem-rhyme-ride": "rhyme-ride",
+  "k2-stem-tank-trek": "tank-trek",
+};
+
 const SLUG_TO_SET2_ID: Record<string, StemSet2GameId> = {
   "k2-stem-maze-maps": "maze-maps",
   "k2-stem-move-measure": "move-measure",
@@ -65,6 +74,7 @@ const STRAND_COLORS: Record<string, string> = {
   Biotech: "bg-green-100 text-green-800",
   Quantum: "bg-purple-100 text-purple-800",
   "AI + Biotech": "bg-teal-100 text-teal-800",
+  "Quantum + AI": "bg-indigo-100 text-indigo-800",
   Capstone: "bg-amber-100 text-amber-800",
 };
 
@@ -99,7 +109,7 @@ export default function Modules() {
         setSet2Done(countCompletedInSet(completedIds, STEM_SET_2_IDS));
 
         const visible = (data as any[]).filter((m: any) =>
-          canAccessModule({ slug: m.slug, archetype }),
+          canAccessModule({ slug: m.slug, archetype }) && !HIDDEN_MODULE_SLUGS.has(m.slug),
         );
 
         visible.sort(
@@ -184,9 +194,11 @@ export default function Modules() {
                 )}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {set1Modules.map((m) => (
-                  <ModuleCard key={m.id} module={m} navigate={navigate} t={t} />
-                ))}
+                {set1Modules.map((m) => {
+                  const set1Id = SLUG_TO_SET1_ID[m.slug];
+                  const strand = set1Id ? STEM_SET_1_STRANDS[set1Id] : undefined;
+                  return <ModuleCard key={m.id} module={m} navigate={navigate} t={t} strand={strand} />;
+                })}
               </div>
             </>
           )}

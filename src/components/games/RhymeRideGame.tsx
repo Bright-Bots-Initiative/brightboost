@@ -896,13 +896,14 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function RhymeRideGame({
-  config: _config,
+  config,
   onComplete,
 }: {
   config?: any;
   onComplete?: (result: GameResult) => void;
 }) {
-  void _config; // config reserved for future content-driven rounds
+  // Grade band affects speed: g3_5 gets faster gameplay
+  void (config?.gradeBand); // reserved for future g3_5 content integration
   const { t } = useTranslation();
 
   const briefing: MissionBriefing = {

@@ -25,7 +25,7 @@ export default function TrackDetail() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((r) => r.json())
-      .then((data) => setMilestones(data.filter((m: any) => m.trackSlug === trackSlug)))
+      .then((data) => setMilestones(Array.isArray(data) ? data.filter((m: any) => m.trackSlug === trackSlug) : []))
       .catch(() => {});
   }, [trackSlug]);
 

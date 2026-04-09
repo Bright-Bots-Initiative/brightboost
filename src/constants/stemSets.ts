@@ -30,6 +30,19 @@ export const STEM_SET_1_PERKS: Record<StemSet1GameId, string> = {
   "tank-trek": "Faster thrust (\u00d71.06) and rotation (\u00d71.08)",
 };
 
+export const STEM_SET_1_STRANDS: Record<StemSet1GameId, string> = {
+  "bounce-buds": "Biotech",
+  "gotcha-gears": "Quantum",
+  "lost-steps": "AI",
+  "rhyme-ride": "AI + Biotech",
+  "tank-trek": "Quantum + AI",
+};
+
+/** Module slugs that should NOT appear in student-facing UI. */
+export const HIDDEN_MODULE_SLUGS = new Set([
+  "stem-1-intro", // Legacy "Quantum Explorers" — archived
+]);
+
 // ---------------------------------------------------------------------------
 // Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
 // ---------------------------------------------------------------------------

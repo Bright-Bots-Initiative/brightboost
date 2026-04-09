@@ -56,6 +56,7 @@ import ModulePlayer from "./components/pathways/ModulePlayer";
 import PathwaysProfile from "./components/pathways/PathwaysProfile";
 import FacilitatorDashboard from "./components/pathways/FacilitatorDashboard";
 import PathwaysAbout from "./components/pathways/PathwaysAbout";
+import ProgramOverviewPage from "./components/pathways/facilitator/ProgramOverview";
 
 // Import styles
 import "./App.css";
@@ -160,6 +161,7 @@ function App() {
                 <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
                 <Route path="profile" element={<PathwaysProfile />} />
                 <Route path="facilitator" element={<FacilitatorDashboard />} />
+                <Route path="facilitator/resources" element={<ProgramOverviewPage />} />
               </Route>
 
               {/* Legacy Redirects for Flat Routes (if any external links exist) */}
