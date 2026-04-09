@@ -122,13 +122,12 @@ async function main() {
       },
     });
     console.log("Created teacher with bcrypt-hashed password.");
-  } else if (!teacher.password.startsWith("$2")) {
-    // Repair: existing teacher has plaintext password, upgrade to bcrypt
+  } else {
+    // Always refresh password hash on seed (ensures credentials match docs)
     teacher = await prisma.user.update({
       where: { id: teacher.id },
       data: { password: teacherPasswordHash },
     });
-    console.log("Repaired teacher password to bcrypt hash.");
   }
   console.log("Seeded teacher:", teacher.email);
 
@@ -153,13 +152,12 @@ async function main() {
       },
     });
     console.log("Created student with bcrypt-hashed password.");
-  } else if (!student.password.startsWith("$2")) {
-    // Repair: existing student has plaintext password, upgrade to bcrypt
+  } else {
+    // Always refresh password hash on seed
     student = await prisma.user.update({
       where: { id: student.id },
       data: { password: studentPasswordHash },
     });
-    console.log("Repaired student password to bcrypt hash.");
   }
   console.log("Seeded student:", student.email);
 

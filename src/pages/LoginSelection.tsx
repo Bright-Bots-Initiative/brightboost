@@ -6,7 +6,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, KeyRound, Loader2, ArrowRight, UserPlus } from "lucide-react";
+import { Mail, KeyRound, Loader2, UserPlus } from "lucide-react";
+import LoginCard, { LoginInput, LoginButton, LoginSection, LoginDivider } from "@/components/auth/LoginCard";
 
 const API = "/api";
 
@@ -248,86 +249,54 @@ const LoginSelection: React.FC = () => {
 
   // ── Main login page ──
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-900">
-            {t("auth.studentWelcome", { defaultValue: "Welcome, Student!" })}
-          </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            {t("auth.selectHowToLogin", { defaultValue: "Sign in or join with a code" })}
-          </p>
+    <LoginCard icon="🎒" title={t("auth.studentWelcome", { defaultValue: "Student Login" })} subtitle={t("auth.selectHowToLogin", { defaultValue: "Sign in with email or join with a code" })}>
+      {/* Email Login */}
+      <LoginSection>
+        <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+          <Mail className="w-4 h-4" />
+          {t("auth.emailLogin", { defaultValue: "Log in with Email" })}
         </div>
-
-        {/* Email Login */}
-        <form onSubmit={handleEmailLogin} className="rounded-xl border bg-white shadow-sm p-5 space-y-4">
-          <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
-            <Mail className="w-4 h-4" />
-            {t("auth.emailLogin", { defaultValue: "Log in with Email" })}
-          </div>
-          <input
-            type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Email address"
-          />
-          <input
-            type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Password"
-          />
+        <form onSubmit={handleEmailLogin} className="space-y-3">
+          <LoginInput type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" />
+          <LoginInput type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
           {emailError && <p className="text-red-600 text-xs">{emailError}</p>}
-          <button type="submit" disabled={emailLoading}
-            className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+          <LoginButton type="submit" loading={emailLoading} disabled={emailLoading}>
             {emailLoading ? "Signing in..." : t("auth.logInBtn", { defaultValue: "Log In" })}
-          </button>
-          <div className="text-center">
-            <Link to="/forgot-password" className="text-xs text-indigo-600 hover:underline">
-              {t("auth.forgotPassword", { defaultValue: "Forgot password?" })}
-            </Link>
-          </div>
+          </LoginButton>
         </form>
+      </LoginSection>
 
-        <div className="flex items-center gap-3 text-slate-400 text-xs">
-          <div className="flex-1 h-px bg-slate-200" />
-          <span>or</span>
-          <div className="flex-1 h-px bg-slate-200" />
+      <LoginDivider />
+
+      {/* Join Code */}
+      <LoginSection>
+        <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
+          <KeyRound className="w-4 h-4" />
+          {t("auth.joinWithCode", { defaultValue: "Join with a Code" })}
         </div>
-
-        {/* Join Code */}
-        <form onSubmit={handleCodeLookup} className="rounded-xl border bg-white shadow-sm p-5 space-y-4">
-          <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
-            <KeyRound className="w-4 h-4" />
-            {t("auth.joinWithCode", { defaultValue: "Join with a Code" })}
-          </div>
-          <input
+        <form onSubmit={handleCodeLookup} className="space-y-3">
+          <LoginInput
             type="text" required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-mono tracking-wider text-center uppercase focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Enter class or cohort code"
+            placeholder="Class code or cohort code"
             maxLength={10}
+            className="font-mono tracking-wider text-center uppercase"
           />
           {codeError && <p className="text-red-600 text-xs">{codeError}</p>}
-          <button type="submit" disabled={codeLoading}
-            className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-            {codeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+          <LoginButton type="submit" loading={codeLoading} disabled={codeLoading} className="bg-emerald-600 hover:bg-emerald-500">
             {codeLoading ? "Looking up..." : t("auth.joinButton", { defaultValue: "Join" })}
-          </button>
+          </LoginButton>
         </form>
+      </LoginSection>
 
-        <p className="text-center text-xs text-slate-400">
-          {t("auth.teacherNote", { defaultValue: "Teacher? Log in at" })} <Link to="/teacher-login" className="text-indigo-600 hover:underline">teacher login</Link>.
+      <div className="text-center space-y-2">
+        <p className="text-xs text-slate-400">
+          {t("auth.teacherNote", { defaultValue: "Teacher?" })} <Link to="/teacher-login" className="text-indigo-600 hover:underline">Log in here</Link>
         </p>
-
-        <div className="text-center space-y-2">
-          <Link to="/" className="block text-sm text-indigo-600 hover:underline">
-            {t("auth.backToHome", { defaultValue: "Back to Home" })}
-          </Link>
-          <Link to="/pathways/about" className="block text-xs text-slate-400 hover:text-indigo-500">
-            {t("auth.pathwaysLink", { defaultValue: "Ages 14-17? Check out Bright Boost Pathways →" })}
-          </Link>
-        </div>
+        <Link to="/pathways/about" className="block text-xs text-slate-400 hover:text-indigo-500">
+          {t("auth.pathwaysLink", { defaultValue: "Ages 14-17? Check out Bright Boost Pathways →" })}
+        </Link>
       </div>
-    </div>
+    </LoginCard>
   );
 };
 
