@@ -1069,6 +1069,7 @@ async function main() {
   // Module Families & Variants (grade-banded content system)
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("Seeding module families and variants...");
+  try {
 
   const familyDefs = [
     {
@@ -1228,12 +1229,16 @@ async function main() {
   console.log(`  Assigned ${g35Variants.length} g3_5 variants to demo class`);
 
   console.log("Module families and variants seeded.");
+  } catch (e) {
+    console.warn("Module families seed skipped (tables may not exist yet):", e.message);
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Pathways — secondary-age (14-17) program layer
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("Seeding Pathways data...");
 
+  try {
   // Facilitator
   const facilitatorHash = await bcrypt.hash("pathway123", 10);
   let facilitator = await prisma.user.findUnique({ where: { email: "facilitator@test.com" } });
@@ -1347,6 +1352,9 @@ async function main() {
     });
   }
   console.log("Seeded Pathways cohort, enrollments, and milestones.");
+  } catch (e) {
+    console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
+  }
 }
 
 main()
