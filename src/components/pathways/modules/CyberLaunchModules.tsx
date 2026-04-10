@@ -1631,9 +1631,9 @@ const MODULE_MAP: Record<string, React.FC<ModuleProps>> = {
   "digital-safety-sim": DigitalSafetySim,
   "network-basics": NetworkBasics,
   "threat-detective": ThreatDetective,
-  "cyber-career-map": CyberCareerMap,
+  "career-map": CyberCareerMap,
   "cisco-netacad-link": CiscoNetacadLink,
-  "cyber-capstone": CyberCapstone,
+  "capstone-security-plan": CyberCapstone,
 };
 
 export default function CyberLaunchModuleRouter({
