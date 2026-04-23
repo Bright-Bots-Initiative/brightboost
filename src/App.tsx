@@ -46,6 +46,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
+import ExperimentDashboard from "./components/admin/ExperimentDashboard";
 
 // Pathways (secondary-age program layer)
 import PathwaysLayout from "./components/pathways/PathwaysLayout";
@@ -149,6 +150,16 @@ function App() {
                   element={<Navigate to="/student/play?tab=pvp" replace />}
                 />
               </Route>
+
+              {/* Admin: internal A/B testing dashboard — teacher/facilitator only */}
+              <Route
+                path="/admin/experiments"
+                element={
+                  <ProtectedRoute requiredRole="teacher">
+                    <ExperimentDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Pathways: public landing page */}
               <Route path="/pathways/about" element={<PathwaysAbout />} />

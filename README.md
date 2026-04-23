@@ -178,6 +178,17 @@ Seeded by `prisma/seed.cjs`:
 | Teacher | `teacher@school.com` | `password123` |
 | Student | `student@test.com` | `password` |
 
+## 📝 Claude Code Prompt Log
+
+Every significant prompt used with Claude Code goes in `prompts/`. See `prompts/README.md` and `prompts/_template.md`.
+
+To enable the optional pre-commit nudge that reminds you to log prompts:
+
+```bash
+ln -sf ../../scripts/pre-commit-reminder.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
 ## 📁 Project Structure
 
 ```

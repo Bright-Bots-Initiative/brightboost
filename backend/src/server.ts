@@ -27,8 +27,10 @@ import studentStatsRouter from "./routes/studentStats";
 import feedbackRouter from "./routes/feedback";
 import benchmarkRouter from "./routes/benchmarks";
 import homeAccessRouter from "./routes/homeAccess";
+import experimentsRouter from "./routes/experiments";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
+import { notifySlack } from "./utils/slack";
 
 const app = express();
 
@@ -200,6 +202,7 @@ app.use("/api", studentStatsRouter);
 app.use("/api", feedbackRouter);
 app.use("/api", benchmarkRouter);
 app.use("/api", homeAccessRouter);
+app.use("/api", experimentsRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" }),
@@ -262,6 +265,11 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    const commit = process.env.RAILWAY_GIT_COMMIT_SHA?.slice(0, 7) ?? "unknown";
+    notifySlack(
+      "#deployments",
+      `🚀 Bright Boost deployed successfully — commit ${commit}`,
+    );
   });
 }
 

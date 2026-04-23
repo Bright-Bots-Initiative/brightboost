@@ -734,3 +734,55 @@ model PathwayMilestone {
   @@unique([userId, trackSlug, moduleSlug])
   @@index([userId])
 }
+
+// -----------------------------------------------------------------------------
+// A/B Testing — lightweight experiment framework for internal team use
+// -----------------------------------------------------------------------------
+
+model Experiment {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  name         String
+  hypothesis   String
+  metric       String
+  status       String    @default("draft") // draft | running | completed | archived
+  trafficSplit Int       @default(50)      // percentage assigned to "variant"
+  createdBy    String
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+  conclusion   String?
+
+  assignments ExperimentAssignment[]
+  events      ExperimentEvent[]
+
+  @@index([status])
+}
+
+model ExperimentAssignment {
+  id           String   @id @default(cuid())
+  experimentId String
+  userId       String
+  variant      String   // "control" | "variant"
+  assignedAt   DateTime @default(now())
+
+  experiment Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@unique([experimentId, userId])
+  @@index([experimentId, variant])
+}
+
+model ExperimentEvent {
+  id           String   @id @default(cuid())
+  experimentId String
+  userId       String
+  variant      String
+  eventName    String
+  eventValue   Float?
+  metadata     Json?
+  timestamp    DateTime @default(now())
+
+  experiment Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, eventName])
+  @@index([experimentId, variant])
+}

@@ -224,6 +224,26 @@ Use this structure for every task:
 
 ---
 
+## Prompt Writing Guide (for interns)
+
+Before writing a Claude Code prompt, check:
+
+1. **Did you read the relevant files first?** Don't ask Claude to fix something you haven't looked at.
+2. **Is your intent clear in one sentence?** If you can't say what you want in one sentence, break the task up.
+3. **Did you include context?** Reference specific file paths, function names, or error messages.
+4. **Did you specify what NOT to change?** Claude Code works best with constraints.
+5. **Did you include acceptance criteria?** How will you know it worked?
+
+After Claude Code runs:
+1. **Can you explain every line it wrote?** If not, don't ship it.
+2. **Did you run the tests?** `npm run lint && npm run test && npm run typecheck`
+3. **Did you test it in the browser?** Build output is not the same as working output.
+4. **Did you log the prompt?** Add it to `prompts/` if it was significant.
+
+Slack integration (deploy notifications, experiment lifecycle alerts, standup prompts) is **optional**. The app works fine without `SLACK_WEBHOOK_URL` set — notifications just silently no-op. See `.env.example` for the variable.
+
+---
+
 ## Bright Boost Defaults (quick reference)
 
 ```

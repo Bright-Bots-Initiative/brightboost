@@ -1415,6 +1415,38 @@ async function main() {
   } catch (e) {
     console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // A/B Testing — seed one example experiment so the dashboard isn't empty
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("Seeding A/B experiments...");
+  try {
+    const creator =
+      (await prisma.user.findUnique({ where: { email: "facilitator@test.com" } })) ||
+      (await prisma.user.findFirst({ where: { role: "teacher" } }));
+
+    if (creator) {
+      await prisma.experiment.upsert({
+        where: { slug: "game-difficulty-default" },
+        create: {
+          slug: "game-difficulty-default",
+          name: "Default Game Difficulty: Easy vs Medium",
+          hypothesis:
+            "Defaulting to Easy difficulty will increase game completion rate by 20% for K-2 students",
+          metric: "game_completion_rate",
+          status: "draft",
+          trafficSplit: 50,
+          createdBy: creator.id,
+        },
+        update: {},
+      });
+      console.log("Seeded example experiment.");
+    } else {
+      console.warn("No teacher user found — skipping experiment seed.");
+    }
+  } catch (e) {
+    console.warn("Experiment seed skipped (tables may not exist yet):", e.message);
+  }
 }
 
 main()
