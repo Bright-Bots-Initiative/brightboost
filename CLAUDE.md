@@ -224,6 +224,16 @@ Use this structure for every task:
 
 ---
 
+## Branch Workflow
+
+- `main` is protected — no direct pushes during summer program
+- All changes go through feature branches and pull requests
+- PR naming: `your-name/short-description`
+- Minimum 1 review from pod lead before merge
+- See CONTRIBUTING.md for full workflow
+
+---
+
 ## Prompt Writing Guide (for interns)
 
 Before writing a Claude Code prompt, check:
