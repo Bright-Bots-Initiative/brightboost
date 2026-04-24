@@ -1423,7 +1423,14 @@
       "exitWrongA": "Adiviné",
       "exitWrongB": "Deseé con fuerza",
       "celebTitle": "¡Probaste, mediste y mejoraste!",
-      "celebDesc": "Los científicos miden y comparan para aprender."
+      "celebDesc": "Los científicos miden y comparan para aprender.",
+      "whichBest": "¿En qué evento te fue mejor?",
+      "whichEnjoyed": "¿Qué evento disfrutaste más?",
+      "acedEvery": "¡Dominaste todos los eventos! 🏆",
+      "consistent": "¡Bien — fuiste constante en todos los eventos!",
+      "tiedBest": "¡Empataste tu mejor en {{first}} Y {{second}}!",
+      "enjoyAck": "¡Gran elección — todos tenemos un favorito!",
+      "perfectRun": "¡Ronda Perfecta!"
     },
     "skyShield": {
       "title": "Escudo del Cielo",

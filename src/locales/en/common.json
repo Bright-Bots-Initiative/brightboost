@@ -1433,7 +1433,14 @@
       "exitWrongA": "I guessed",
       "exitWrongB": "I wished really hard",
       "celebTitle": "You tested, measured, and improved!",
-      "celebDesc": "Great scientists measure and compare to learn."
+      "celebDesc": "Great scientists measure and compare to learn.",
+      "whichBest": "Which event went best?",
+      "whichEnjoyed": "Which event did you enjoy the most?",
+      "acedEvery": "You aced every event! 🏆",
+      "consistent": "Nice — you were consistent across every event!",
+      "tiedBest": "You tied your best in {{first}} AND {{second}}!",
+      "enjoyAck": "Great choice — everyone has a favorite!",
+      "perfectRun": "Perfect Run!"
     },
     "skyShield": {
       "title": "Sky Shield Patterns",

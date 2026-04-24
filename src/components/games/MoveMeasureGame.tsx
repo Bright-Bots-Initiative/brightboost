@@ -89,8 +89,8 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
   const [jDone, setJDone] = useState(false);
   const jRaf = useRef(0);
   const jDir = useRef(1);
-  // Toss
-  const [tVal, setTVal] = useState(50);
+  // Toss — starts at 0 (not perfect). Player has to slide to find the sweet spot.
+  const [tVal, setTVal] = useState(0);
   const [tDone, setTDone] = useState(false);
   // Improve
   const [selTip, setSelTip] = useState<number | null>(null);
@@ -144,12 +144,18 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
     const sc = tossScore(tVal);
     if (isRetry) { setImpScore(sc); const t = setTimeout(() => setPhase("exitTicket"), 1200); return () => clearTimeout(t); }
     setScores(p => ({ ...p, toss: sc }));
-    const t = setTimeout(() => { setTVal(50); setTDone(false); setPhase("compare"); }, 1200);
+    const t = setTimeout(() => { setTVal(0); setTDone(false); setPhase("compare"); }, 1200);
     return () => clearTimeout(t);
   }, [tDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Compare ──
-  const best = (Object.keys(scores) as EventKey[]).reduce((a, b) => scores[a] >= scores[b] ? a : b);
+  // ── Compare ── tie-aware: handles all-tied (including perfect runs) and two-way ties
+  const allEvents: EventKey[] = ["dash", "jump", "toss"];
+  const maxScore = Math.max(scores.dash, scores.jump, scores.toss);
+  const bestEvents = allEvents.filter((e) => scores[e] === maxScore);
+  const clearWinner: EventKey | null = bestEvents.length === 1 ? bestEvents[0] : null;
+  const allTied = bestEvents.length === 3;
+  const twoTied = bestEvents.length === 2;
+  const allPerfect = allTied && maxScore === 10;
 
   // ── Improve ──
   const tips = [
@@ -160,7 +166,7 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
 
   const pickTip = useCallback((i: number) => {
     setSelTip(i); setImpEvent(tips[i].ev);
-    setDashPos(0); setDashDone(false); setJLevel(0); setJHold(false); setJDone(false); setTVal(50); setTDone(false);
+    setDashPos(0); setDashDone(false); setJLevel(0); setJHold(false); setJDone(false); setTVal(0); setTDone(false);
     setTimeout(() => setPhase("retry"), 800);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -245,7 +251,6 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
           <input type="range" min={0} max={100} value={tVal} onChange={e => !tDone && setTVal(Number(e.target.value))} disabled={tDone} className="w-full h-3 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
           <div className="flex justify-between text-xs text-slate-400 font-bold">
             <span>{t("games.moveMeasure.low", { defaultValue: "Low" })}</span>
-            <span className="text-emerald-500">{t("games.moveMeasure.perfect", { defaultValue: "Perfect" })}</span>
             <span>{t("games.moveMeasure.high", { defaultValue: "High" })}</span>
           </div>
         </div>
@@ -255,32 +260,80 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
     );
   }
 
-  if (phase === "compare") return (
-    <div className="slide-up-fade text-center space-y-6 py-6">
-      <h3 className="text-2xl font-extrabold text-slate-800">📊 {t("games.moveMeasure.compareTitle", { defaultValue: "Compare Your Results" })}</h3>
-      <div className="flex justify-center gap-6">
-        {(["dash", "jump", "toss"] as const).map(ev => (
-          <div key={ev} className="flex flex-col items-center gap-2">
-            <span className="text-3xl">{ICONS[ev]}</span>
-            <div className="w-12 bg-slate-200 rounded-full overflow-hidden" style={{ height: 120 }}>
-              <div className="w-full bg-gradient-to-t from-emerald-400 to-emerald-300 rounded-full transition-all duration-700" style={{ height: `${scores[ev] * 10}%`, marginTop: `${100 - scores[ev] * 10}%` }} />
+  if (phase === "compare") {
+    // Preference question (any answer valid) when there's no single "best" to point to.
+    const preferenceMode = allTied || twoTied;
+    const tiedNames = twoTied ? bestEvents.map((e) => NAMES[e]).join(" AND ") : "";
+
+    return (
+      <div className="slide-up-fade text-center space-y-6 py-6">
+        <h3 className="text-2xl font-extrabold text-slate-800">📊 {t("games.moveMeasure.compareTitle", { defaultValue: "Compare Your Results" })}</h3>
+
+        {allPerfect && (
+          <p className="bounce-in text-xl font-extrabold text-emerald-700">
+            {t("games.moveMeasure.acedEvery", { defaultValue: "You aced every event! 🏆" })}
+          </p>
+        )}
+        {allTied && !allPerfect && (
+          <p className="bounce-in text-lg font-bold text-emerald-700">
+            {t("games.moveMeasure.consistent", { defaultValue: "Nice — you were consistent across every event!" })}
+          </p>
+        )}
+        {twoTied && (
+          <p className="bounce-in text-lg font-bold text-emerald-700">
+            {t("games.moveMeasure.tiedBest", { first: NAMES[bestEvents[0]], second: NAMES[bestEvents[1]], defaultValue: `You tied your best in ${tiedNames}!` })}
+          </p>
+        )}
+
+        <div className="flex justify-center gap-6">
+          {(["dash", "jump", "toss"] as const).map(ev => (
+            <div key={ev} className="flex flex-col items-center gap-2">
+              <span className="text-3xl">{ICONS[ev]}</span>
+              <div className="w-12 bg-slate-200 rounded-full overflow-hidden" style={{ height: 120 }}>
+                <div className="w-full bg-gradient-to-t from-emerald-400 to-emerald-300 rounded-full transition-all duration-700" style={{ height: `${scores[ev] * 10}%`, marginTop: `${100 - scores[ev] * 10}%` }} />
+              </div>
+              <span className="text-sm font-bold text-slate-700">{scores[ev]}/10</span>
+              <span className="text-xs text-slate-500">{NAMES[ev]}</span>
             </div>
-            <span className="text-sm font-bold text-slate-700">{scores[ev]}/10</span>
-            <span className="text-xs text-slate-500">{NAMES[ev]}</span>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <p className="text-lg font-bold text-slate-700">
+          {preferenceMode
+            ? t("games.moveMeasure.whichEnjoyed", { defaultValue: "Which event did you enjoy the most?" })
+            : t("games.moveMeasure.whichBest", { defaultValue: "Which event went best?" })}
+        </p>
+
+        <div className="flex justify-center gap-3 flex-wrap">
+          {(["dash", "jump", "toss"] as const).map(ev => {
+            const isPicked = cmpAns === ev;
+            const isCorrect = preferenceMode ? isPicked : isPicked && ev === clearWinner;
+            const isWrong = !preferenceMode && isPicked && ev !== clearWinner;
+            return (
+              <button
+                key={ev}
+                disabled={cmpAns !== null}
+                className={`px-6 py-3 rounded-2xl text-lg font-bold shadow transition-transform hover:scale-105 active:scale-95 min-w-[120px] ${isCorrect ? "bg-emerald-500 text-white" : isWrong ? "bg-red-300 text-white shake" : "bg-white border-2 border-slate-200 text-slate-700"}`}
+                onClick={() => { setCmpAns(ev); setTimeout(() => setPhase("improve"), 1200); }}
+              >
+                {ICONS[ev]} {NAMES[ev]}
+              </button>
+            );
+          })}
+        </div>
+
+        {cmpAns !== null && (
+          <p className={`bounce-in text-lg font-bold ${preferenceMode || cmpAns === clearWinner ? "text-emerald-600" : "text-amber-600"}`}>
+            {preferenceMode
+              ? t("games.moveMeasure.enjoyAck", { defaultValue: "Great choice — everyone has a favorite!" })
+              : cmpAns === clearWinner
+                ? t("games.moveMeasure.correct", { defaultValue: "Correct!" })
+                : t("games.moveMeasure.notQuite", { defaultValue: "Not quite — but good thinking!" })}
+          </p>
+        )}
       </div>
-      <p className="text-lg font-bold text-slate-700">{t("games.moveMeasure.whichBest", { defaultValue: "Which event went best?" })}</p>
-      <div className="flex justify-center gap-3 flex-wrap">
-        {(["dash", "jump", "toss"] as const).map(ev => (
-          <button key={ev} disabled={cmpAns !== null} className={`px-6 py-3 rounded-2xl text-lg font-bold shadow transition-transform hover:scale-105 active:scale-95 min-w-[120px] ${cmpAns === ev ? (ev === best ? "bg-emerald-500 text-white" : "bg-red-300 text-white shake") : "bg-white border-2 border-slate-200 text-slate-700"}`} onClick={() => { setCmpAns(ev); setTimeout(() => setPhase("improve"), 1200); }}>
-            {ICONS[ev]} {NAMES[ev]}
-          </button>
-        ))}
-      </div>
-      {cmpAns !== null && <p className={`bounce-in text-lg font-bold ${cmpAns === best ? "text-emerald-600" : "text-amber-600"}`}>{cmpAns === best ? t("games.moveMeasure.correct", { defaultValue: "Correct!" }) : t("games.moveMeasure.notQuite", { defaultValue: "Not quite — but good thinking!" })}</p>}
-    </div>
-  );
+    );
+  }
 
   if (phase === "improve") return (
     <div className="slide-up-fade text-center space-y-6 py-6">
@@ -333,7 +386,12 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
 
   if (phase === "celebration") return (
     <div className="slide-up-fade text-center space-y-6 py-8">
-      <div className="text-7xl bounce-in">🎉</div>
+      <div className="text-7xl bounce-in">{allPerfect ? "🏆" : "🎉"}</div>
+      {allPerfect && (
+        <p className="bounce-in text-sm font-extrabold uppercase tracking-widest text-amber-600" style={{ animationDelay: "100ms" }}>
+          {t("games.moveMeasure.perfectRun", { defaultValue: "Perfect Run!" })}
+        </p>
+      )}
       <h2 className="text-3xl font-extrabold text-emerald-800 bounce-in" style={{ animationDelay: "200ms" }}>{t("games.moveMeasure.celebTitle", { defaultValue: "You tested, measured, and improved!" })}</h2>
       <p className="text-lg text-slate-600 bounce-in" style={{ animationDelay: "400ms" }}>{t("games.moveMeasure.celebText", { defaultValue: "Great scientists always measure and try again." })}</p>
       <div className="flex justify-center gap-4 bounce-in" style={{ animationDelay: "600ms" }}>
