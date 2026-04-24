@@ -829,6 +829,7 @@
         "c1": "Hat 🎩",
         "c2": "Dog 🐶",
         "c3": "Cup ☕",
+        "c4": "Pen 🖊️",
         "hint": "It sounds like cat but goes on your head! 🎩"
       },
       "q2": {
@@ -836,6 +837,7 @@
         "c1": "Moon 🌙",
         "c2": "Run 🏃",
         "c3": "Star ⭐",
+        "c4": "Book 📕",
         "hint": "You do this with your legs really fast! 🏃"
       },
       "q3": {
@@ -843,6 +845,7 @@
         "c1": "Beginning 🔤",
         "c2": "End 🔚",
         "c3": "Middle 🔵",
+        "c4": "Everywhere 🌀",
         "hint": "Cat and hat both END with -at! 🔚"
       },
       "reviewKeyIdea": "Rhyming words sound the same at the end, like cat/hat and sun/run.",
@@ -858,6 +861,7 @@
         "c1": "Cells 🧫",
         "c2": "Rocks 🪨",
         "c3": "Cars 🚗",
+        "c4": "Clouds ☁️",
         "hint": "Cells are tiny building blocks. 🧫"
       },
       "q2": {
@@ -865,6 +869,7 @@
         "c1": "Tiny living helpers 🦠",
         "c2": "Big elephants 🐘",
         "c3": "Toys 🧸",
+        "c4": "Shiny stars ⭐",
         "hint": "Microbes are tiny and alive. 🦠"
       },
       "q3": {
@@ -872,6 +877,7 @@
         "c1": "Drink water 💧",
         "c2": "Fly ✈️",
         "c3": "Sing 🎵",
+        "c4": "Sleep 💤",
         "hint": "Roots take in water from the ground. 💧"
       },
       "reviewKeyIdea": "Cells and microbes are tiny parts of life. We read clues and test ideas like scientists!",
@@ -887,6 +893,7 @@
         "c1": "Fix a mistake 🛠️",
         "c2": "Take a nap 💤",
         "c3": "Eat lunch 🍕",
+        "c4": "Play a game 🎮",
         "hint": "Debug means to fix what went wrong! 🛠️"
       },
       "q2": {
@@ -894,6 +901,7 @@
         "c1": "Practice 🌟",
         "c2": "Skipping ⏭️",
         "c3": "Hiding 🙈",
+        "c4": "Guessing 🎲",
         "hint": "Practice makes progress! 🌟"
       },
       "q3": {
@@ -901,6 +909,7 @@
         "c1": "Rule 📜",
         "c2": "Nap 💤",
         "c3": "Snack 🍪",
+        "c4": "Joke 😂",
         "hint": "Rules tell us what to do step by step! 📜"
       },
       "reviewKeyIdea": "Robots use plans and rules. Debug means fix mistakes. Practice helps us learn!",

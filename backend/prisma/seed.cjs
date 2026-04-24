@@ -435,9 +435,9 @@ async function main() {
       { id: "s4", text: { i18nKey: "content.rhymo.s4" }, icon: "🏁", imageKey: "type_game" },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.rhymo.q1.prompt" }, choices: [{ i18nKey: "content.rhymo.q1.c1" }, { i18nKey: "content.rhymo.q1.c2" }, { i18nKey: "content.rhymo.q1.c3" }], answerIndex: 0, hint: { i18nKey: "content.rhymo.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.rhymo.q2.prompt" }, choices: [{ i18nKey: "content.rhymo.q2.c1" }, { i18nKey: "content.rhymo.q2.c2" }, { i18nKey: "content.rhymo.q2.c3" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.rhymo.q3.prompt" }, choices: [{ i18nKey: "content.rhymo.q3.c1" }, { i18nKey: "content.rhymo.q3.c2" }, { i18nKey: "content.rhymo.q3.c3" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q3.hint" } },
+      { id: "q1", prompt: { i18nKey: "content.rhymo.q1.prompt" }, choices: [{ i18nKey: "content.rhymo.q1.c1" }, { i18nKey: "content.rhymo.q1.c2" }, { i18nKey: "content.rhymo.q1.c3" }, { i18nKey: "content.rhymo.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.rhymo.q1.hint" } },
+      { id: "q2", prompt: { i18nKey: "content.rhymo.q2.prompt" }, choices: [{ i18nKey: "content.rhymo.q2.c1" }, { i18nKey: "content.rhymo.q2.c2" }, { i18nKey: "content.rhymo.q2.c3" }, { i18nKey: "content.rhymo.q2.c4" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q2.hint" } },
+      { id: "q3", prompt: { i18nKey: "content.rhymo.q3.prompt" }, choices: [{ i18nKey: "content.rhymo.q3.c1" }, { i18nKey: "content.rhymo.q3.c2" }, { i18nKey: "content.rhymo.q3.c3" }, { i18nKey: "content.rhymo.q3.c4" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q3.hint" } },
     ],
     review: { keyIdea: { i18nKey: "content.rhymo.reviewKeyIdea" }, vocab: ["rhyme", "sound", "end"] },
   });
@@ -542,9 +542,9 @@ async function main() {
       { id: "s4", text: { i18nKey: "content.buddy.s4" }, icon: "💻", imageKey: "type_game" },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.buddy.q1.prompt" }, choices: [{ i18nKey: "content.buddy.q1.c1" }, { i18nKey: "content.buddy.q1.c2" }, { i18nKey: "content.buddy.q1.c3" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.buddy.q2.prompt" }, choices: [{ i18nKey: "content.buddy.q2.c1" }, { i18nKey: "content.buddy.q2.c2" }, { i18nKey: "content.buddy.q2.c3" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.buddy.q3.prompt" }, choices: [{ i18nKey: "content.buddy.q3.c1" }, { i18nKey: "content.buddy.q3.c2" }, { i18nKey: "content.buddy.q3.c3" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q3.hint" } },
+      { id: "q1", prompt: { i18nKey: "content.buddy.q1.prompt" }, choices: [{ i18nKey: "content.buddy.q1.c1" }, { i18nKey: "content.buddy.q1.c2" }, { i18nKey: "content.buddy.q1.c3" }, { i18nKey: "content.buddy.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q1.hint" } },
+      { id: "q2", prompt: { i18nKey: "content.buddy.q2.prompt" }, choices: [{ i18nKey: "content.buddy.q2.c1" }, { i18nKey: "content.buddy.q2.c2" }, { i18nKey: "content.buddy.q2.c3" }, { i18nKey: "content.buddy.q2.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q2.hint" } },
+      { id: "q3", prompt: { i18nKey: "content.buddy.q3.prompt" }, choices: [{ i18nKey: "content.buddy.q3.c1" }, { i18nKey: "content.buddy.q3.c2" }, { i18nKey: "content.buddy.q3.c3" }, { i18nKey: "content.buddy.q3.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q3.hint" } },
     ],
     review: { keyIdea: { i18nKey: "content.buddy.reviewKeyIdea" }, vocab: ["cell", "microbe", "root"] },
   });
@@ -650,9 +650,9 @@ async function main() {
       { id: "s4", text: { i18nKey: "content.gearbot.s4" }, icon: "🌟", imageKey: "type_game" },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.gearbot.q1.prompt" }, choices: [{ i18nKey: "content.gearbot.q1.c1" }, { i18nKey: "content.gearbot.q1.c2" }, { i18nKey: "content.gearbot.q1.c3" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.gearbot.q2.prompt" }, choices: [{ i18nKey: "content.gearbot.q2.c1" }, { i18nKey: "content.gearbot.q2.c2" }, { i18nKey: "content.gearbot.q2.c3" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.gearbot.q3.prompt" }, choices: [{ i18nKey: "content.gearbot.q3.c1" }, { i18nKey: "content.gearbot.q3.c2" }, { i18nKey: "content.gearbot.q3.c3" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q3.hint" } },
+      { id: "q1", prompt: { i18nKey: "content.gearbot.q1.prompt" }, choices: [{ i18nKey: "content.gearbot.q1.c1" }, { i18nKey: "content.gearbot.q1.c2" }, { i18nKey: "content.gearbot.q1.c3" }, { i18nKey: "content.gearbot.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q1.hint" } },
+      { id: "q2", prompt: { i18nKey: "content.gearbot.q2.prompt" }, choices: [{ i18nKey: "content.gearbot.q2.c1" }, { i18nKey: "content.gearbot.q2.c2" }, { i18nKey: "content.gearbot.q2.c3" }, { i18nKey: "content.gearbot.q2.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q2.hint" } },
+      { id: "q3", prompt: { i18nKey: "content.gearbot.q3.prompt" }, choices: [{ i18nKey: "content.gearbot.q3.c1" }, { i18nKey: "content.gearbot.q3.c2" }, { i18nKey: "content.gearbot.q3.c3" }, { i18nKey: "content.gearbot.q3.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q3.hint" } },
     ],
     review: { keyIdea: { i18nKey: "content.gearbot.reviewKeyIdea" }, vocab: ["debug", "plan", "practice", "rule"] },
   });
@@ -751,7 +751,7 @@ async function main() {
       { id: "tt-s3", text: { en: "Plan carefully — fewer moves means more stars! Can you find the smartest path?", es: "Planifica con cuidado — ¡menos movimientos significan más estrellas! ¿Puedes encontrar el camino más inteligente?" }, icon: "⭐" },
     ],
     questions: [
-      { id: "tt-q1", prompt: { en: "What does Bolt need to move?", es: "¿Qué necesita Bolt para moverse?" }, choices: [{ en: "Commands from you", es: "Comandos tuyos" }, { en: "Magic", es: "Magia" }, { en: "Nothing", es: "Nada" }], answerIndex: 0 },
+      { id: "tt-q1", prompt: { en: "What does Bolt need to move?", es: "¿Qué necesita Bolt para moverse?" }, choices: [{ en: "Commands from you", es: "Comandos tuyos" }, { en: "Magic", es: "Magia" }, { en: "Nothing", es: "Nada" }, { en: "A remote control", es: "Un control remoto" }], answerIndex: 0 },
     ],
   });
 
@@ -799,7 +799,7 @@ async function main() {
       { id: "qq-s3", text: { en: "Get streaks for bonus points! But watch out for wrong answers — you only have 3 lives.", es: "¡Consigue rachas para puntos extra! Pero cuidado con las respuestas incorrectas — solo tienes 3 vidas." }, icon: "❤️" },
     ],
     questions: [
-      { id: "qq-q1", prompt: { en: "2 + 1 = ?", es: "2 + 1 = ?" }, choices: [{ en: "3", es: "3" }, { en: "4", es: "4" }, { en: "2", es: "2" }], answerIndex: 0 },
+      { id: "qq-q1", prompt: { en: "2 + 1 = ?", es: "2 + 1 = ?" }, choices: [{ en: "3", es: "3" }, { en: "4", es: "4" }, { en: "2", es: "2" }, { en: "5", es: "5" }], answerIndex: 0 },
     ],
   });
 
@@ -883,13 +883,13 @@ async function main() {
           { id: "mm-s3", text: { en: "Ready? Guide Spark through the maze. Collect all the orbs. Avoid the sweepers. Think before you move!", es: "¿Listo? Guía a Spark por el laberinto. Recoge todas las esferas. Evita los barredores. ¡Piensa antes de moverte!" }, icon: "⭐" },
         ],
         questions: [
-          { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 0 },
+          { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }, { en: "Ask for directions", es: "Pedir direcciones" }], answerIndex: 0 },
         ],
       },
       quiz: [
         { id: "mmz-q1", prompt: { en: "Before moving through the maze, what should you do first?", es: "Antes de moverte en el laberinto, ¿qué debes hacer primero?" }, choices: [{ en: "Run as fast as you can", es: "Correr lo más rápido posible" }, { en: "Watch the sweeper's pattern", es: "Observar el patrón del barredor" }, { en: "Close your eyes and guess", es: "Cerrar los ojos y adivinar" }, { en: "Pick the shortest path", es: "Elegir el camino más corto" }], answerIndex: 1 },
-        { id: "mmz-q2", prompt: { en: "The sweeper moves left, right, left, right. What will it do next?", es: "El barredor se mueve izquierda, derecha, izquierda, derecha. ¿Qué hará después?" }, choices: [{ en: "Stop", es: "Parar" }, { en: "Move up", es: "Ir arriba" }, { en: "Move left", es: "Ir a la izquierda" }, { en: "Disappear", es: "Desaparecer" }], answerIndex: 2 },
-        { id: "mmz-q3", prompt: { en: "Which path is the smartest choice?", es: "¿Cuál camino es la opción más inteligente?" }, choices: [{ en: "The shortest path past a sweeper", es: "El camino más corto pasando un barredor" }, { en: "A longer path that avoids sweepers", es: "Un camino más largo que evita barredores" }, { en: "Standing still forever", es: "Quedarse quieto para siempre" }, { en: "The path with the most turns", es: "El camino con más giros" }], answerIndex: 1 },
+        { id: "mmz-q2", prompt: { en: "A sweeper moves left, right, left, right. What does it do next?", es: "Un barredor se mueve izquierda, derecha, izquierda, derecha. ¿Qué hace después?" }, choices: [{ en: "Stop", es: "Parar" }, { en: "Move up", es: "Ir arriba" }, { en: "Move left", es: "Ir a la izquierda" }, { en: "Disappear", es: "Desaparecer" }], answerIndex: 2 },
+        { id: "mmz-q3", prompt: { en: "Which is the smartest path?", es: "¿Cuál es el camino más inteligente?" }, choices: [{ en: "The shortest path past a sweeper", es: "El camino más corto pasando un barredor" }, { en: "A longer path that avoids sweepers", es: "Un camino más largo que evita barredores" }, { en: "Standing still forever", es: "Quedarse quieto para siempre" }, { en: "The path with the most turns", es: "El camino con más giros" }], answerIndex: 1 },
       ],
     },
     {
@@ -907,13 +907,13 @@ async function main() {
           { id: "mmi-s3", text: { en: "Ready to test your body and your brain? Let's go!", es: "¿Listo para probar tu cuerpo y tu cerebro? ¡Vamos!" }, icon: "💪" },
         ],
         questions: [
-          { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }], answerIndex: 0 },
+          { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }, { en: "Just feel it", es: "Solo sentirlo" }], answerIndex: 0 },
         ],
       },
       quiz: [
-        { id: "mmv-q1", prompt: { en: "After your first try, what should you do?", es: "Después de tu primer intento, ¿qué debes hacer?" }, choices: [{ en: "Give up", es: "Rendirse" }, { en: "Try the exact same thing again", es: "Intentar exactamente lo mismo" }, { en: "Look at your results and pick one thing to change", es: "Mirar tus resultados y elegir una cosa para cambiar" }, { en: "Change everything at once", es: "Cambiar todo a la vez" }], answerIndex: 2 },
-        { id: "mmv-q2", prompt: { en: "Which body part helps MOST with jumping?", es: "¿Qué parte del cuerpo ayuda MÁS a saltar?" }, choices: [{ en: "Your arms", es: "Tus brazos" }, { en: "Your legs", es: "Tus piernas" }, { en: "Your ears", es: "Tus orejas" }, { en: "Your neck", es: "Tu cuello" }], answerIndex: 1 },
-        { id: "mmv-q3", prompt: { en: "You threw 10 feet, then used the 'follow through' tip and threw 14 feet. What does this tell you?", es: "Lanzaste 10 pies, luego usaste el consejo 'seguir el movimiento' y lanzaste 14 pies. ¿Qué te dice esto?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "The tip helped you throw farther", es: "El consejo te ayudó a lanzar más lejos" }, { en: "You should try a different tip", es: "Deberías probar otro consejo" }, { en: "Throwing doesn't use your arms", es: "Lanzar no usa tus brazos" }], answerIndex: 1 },
+        { id: "mmv-q1", prompt: { en: "What should you do after your first try?", es: "¿Qué debes hacer después de tu primer intento?" }, choices: [{ en: "Give up", es: "Rendirse" }, { en: "Try the exact same thing again", es: "Intentar exactamente lo mismo" }, { en: "Look at your results and pick one thing to change", es: "Mirar tus resultados y elegir una cosa para cambiar" }, { en: "Change everything at once", es: "Cambiar todo a la vez" }], answerIndex: 2 },
+        { id: "mmv-q2", prompt: { en: "Which body part helps the most with jumping?", es: "¿Qué parte del cuerpo ayuda más a saltar?" }, choices: [{ en: "Your arms", es: "Tus brazos" }, { en: "Your legs", es: "Tus piernas" }, { en: "Your ears", es: "Tus orejas" }, { en: "Your neck", es: "Tu cuello" }], answerIndex: 1 },
+        { id: "mmv-q3", prompt: { en: "You threw the ball 10 feet. Then you used a tip and threw it 14 feet. What happened?", es: "Lanzaste la pelota 10 pies. Luego usaste un consejo y la lanzaste 14 pies. ¿Qué pasó?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "The tip helped you throw farther", es: "El consejo te ayudó a lanzar más lejos" }, { en: "You should try a different tip", es: "Deberías probar otro consejo" }, { en: "Throwing doesn't use your arms", es: "Lanzar no usa tus brazos" }], answerIndex: 1 },
       ],
     },
     {
@@ -931,13 +931,13 @@ async function main() {
           { id: "ss-s3", text: { en: "Remember: observe first, then choose. Let's protect the sky garden!", es: "Recuerda: primero observa, luego elige. ¡Protejamos el jardín del cielo!" }, icon: "🛡️" },
         ],
         questions: [
-          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }], answerIndex: 0 },
+          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }, { en: "A loud sound", es: "Un sonido fuerte" }], answerIndex: 0 },
         ],
       },
       quiz: [
-        { id: "ss-qz1", prompt: { en: "The pattern is blue, gold, blue, gold, blue, ___. What comes next?", es: "El patrón es azul, dorado, azul, dorado, azul, ___. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1 },
-        { id: "ss-qz2", prompt: { en: "You see a mystery light falling. What should you do?", es: "Ves una luz misteriosa cayendo. ¿Qué debes hacer?" }, choices: [{ en: "Guess which shield to use", es: "Adivinar qué escudo usar" }, { en: "Tap Scan to find out first", es: "Tocar Escanear para averiguar primero" }, { en: "Run away", es: "Huir" }, { en: "Ignore it", es: "Ignorarla" }], answerIndex: 1 },
-        { id: "ss-qz3", prompt: { en: "Why is it important to watch the pattern before acting?", es: "¿Por qué es importante observar el patrón antes de actuar?" }, choices: [{ en: "It wastes time", es: "Pierde tiempo" }, { en: "It helps you predict what's coming next", es: "Te ayuda a predecir qué viene después" }, { en: "It makes the game harder", es: "Hace el juego más difícil" }, { en: "Patterns don't matter", es: "Los patrones no importan" }], answerIndex: 1 },
+        { id: "ss-qz1", prompt: { en: "The pattern is blue, gold, blue, gold, blue. What comes next?", es: "El patrón es azul, dorado, azul, dorado, azul. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1 },
+        { id: "ss-qz2", prompt: { en: "You see a mystery light. What should you do?", es: "Ves una luz misteriosa. ¿Qué debes hacer?" }, choices: [{ en: "Guess which shield to use", es: "Adivinar qué escudo usar" }, { en: "Tap Scan to find out first", es: "Tocar Escanear para averiguar primero" }, { en: "Run away", es: "Huir" }, { en: "Ignore it", es: "Ignorarla" }], answerIndex: 1 },
+        { id: "ss-qz3", prompt: { en: "Why should you watch the pattern before choosing?", es: "¿Por qué debes observar el patrón antes de elegir?" }, choices: [{ en: "It wastes time", es: "Pierde tiempo" }, { en: "It helps you predict what's coming next", es: "Te ayuda a predecir qué viene después" }, { en: "It makes the game harder", es: "Hace el juego más difícil" }, { en: "Patterns don't matter", es: "Los patrones no importan" }], answerIndex: 1 },
       ],
     },
     {
@@ -955,13 +955,13 @@ async function main() {
           { id: "fl-s3", text: { en: "Watch ahead, read the signs, and deliver those supplies safely. Let's roll!", es: "Mira adelante, lee las señales y entrega los materiales con seguridad. ¡Vamos!" }, icon: "⏱️" },
         ],
         questions: [
-          { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }], answerIndex: 0 },
+          { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }, { en: "Wait", es: "Esperar" }], answerIndex: 0 },
         ],
       },
       quiz: [
-        { id: "fl-qz1", prompt: { en: "You see a yellow road sign ahead. What does it mean?", es: "Ves una señal amarilla adelante. ¿Qué significa?" }, choices: [{ en: "Speed up", es: "Acelerar" }, { en: "Stop immediately", es: "Parar inmediatamente" }, { en: "Get ready — something is about to change", es: "Prepárate — algo está a punto de cambiar" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 2 },
-        { id: "fl-qz2", prompt: { en: "Which is more important when driving the delivery cart?", es: "¿Qué es más importante al conducir el carrito de entregas?" }, choices: [{ en: "Going as fast as possible", es: "Ir lo más rápido posible" }, { en: "Getting there safely", es: "Llegar con seguridad" }, { en: "Crashing into every cone", es: "Chocarse con cada cono" }, { en: "Ignoring the signs", es: "Ignorar las señales" }], answerIndex: 1 },
-        { id: "fl-qz3", prompt: { en: "You see a boost pad in a lane with a red X sign. What should you do?", es: "Ves un impulso en un carril con señal X roja. ¿Qué debes hacer?" }, choices: [{ en: "Go for the boost", es: "Ir por el impulso" }, { en: "Avoid that lane — red X means danger", es: "Evitar ese carril — X roja significa peligro" }, { en: "Stop the cart", es: "Parar el carrito" }, { en: "Switch to a random lane", es: "Cambiar a un carril aleatorio" }], answerIndex: 1 },
+        { id: "fl-qz1", prompt: { en: "You see a yellow road sign. What does it mean?", es: "Ves una señal amarilla. ¿Qué significa?" }, choices: [{ en: "Speed up", es: "Acelerar" }, { en: "Stop immediately", es: "Parar inmediatamente" }, { en: "Get ready — something is about to change", es: "Prepárate — algo está a punto de cambiar" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 2 },
+        { id: "fl-qz2", prompt: { en: "What matters most when driving the delivery cart?", es: "¿Qué es lo más importante al conducir el carrito de entregas?" }, choices: [{ en: "Going as fast as possible", es: "Ir lo más rápido posible" }, { en: "Getting there safely", es: "Llegar con seguridad" }, { en: "Crashing into every cone", es: "Chocarse con cada cono" }, { en: "Ignoring the signs", es: "Ignorar las señales" }], answerIndex: 1 },
+        { id: "fl-qz3", prompt: { en: "There's a boost pad in a lane with a red X. What should you do?", es: "Hay un impulso en un carril con una X roja. ¿Qué debes hacer?" }, choices: [{ en: "Go for the boost", es: "Ir por el impulso" }, { en: "Avoid that lane — red X means danger", es: "Evitar ese carril — X roja significa peligro" }, { en: "Stop the cart", es: "Parar el carrito" }, { en: "Switch to a random lane", es: "Cambiar a un carril aleatorio" }], answerIndex: 1 },
       ],
     },
     {
@@ -979,14 +979,14 @@ async function main() {
           { id: "qtr-s3", text: { en: "Real scientists test one change at a time. That's how you know what actually worked. Ready to qualify, tune, and race?", es: "Los científicos reales prueban un cambio a la vez. Así sabes qué realmente funcionó. ¿Listo para probar, ajustar y competir?" }, icon: "🧪" },
         ],
         questions: [
-          { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }], answerIndex: 0 },
+          { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }, { en: "Three", es: "Tres" }], answerIndex: 0 },
         ],
       },
       quiz: [
-        { id: "qtr-qz1", prompt: { en: "In the tuning screen, how many things should you change at a time?", es: "En la pantalla de ajuste, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "As many as possible", es: "Todas las posibles" }, { en: "Two", es: "Dos" }, { en: "One", es: "Una" }, { en: "None", es: "Ninguna" }], answerIndex: 2 },
+        { id: "qtr-qz1", prompt: { en: "How many things should you change at a time when tuning?", es: "¿Cuántas cosas debes cambiar a la vez al ajustar?" }, choices: [{ en: "As many as possible", es: "Todas las posibles" }, { en: "Two", es: "Dos" }, { en: "One", es: "Una" }, { en: "None", es: "Ninguna" }], answerIndex: 2 },
         { id: "qtr-qz2", prompt: { en: "Your first lap had 5 bumps. You added Grip Tires and your second lap had 2 bumps. What happened?", es: "Tu primera vuelta tuvo 5 golpes. Agregaste Neumáticos de Agarre y tu segunda vuelta tuvo 2 golpes. ¿Qué pasó?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "Grip Tires helped you bump less", es: "Los neumáticos de agarre te ayudaron a golpear menos" }, { en: "The track got easier", es: "La pista se hizo más fácil" }, { en: "Bumps don't matter", es: "Los golpes no importan" }], answerIndex: 1 },
-        { id: "qtr-qz3", prompt: { en: "Why do scientists test one change at a time?", es: "¿Por qué los científicos prueban un cambio a la vez?" }, choices: [{ en: "Because they're slow", es: "Porque son lentos" }, { en: "So they know which change made the difference", es: "Para saber qué cambio hizo la diferencia" }, { en: "Because two changes would break everything", es: "Porque dos cambios romperían todo" }, { en: "They don't — they change everything", es: "No lo hacen — cambian todo" }], answerIndex: 1 },
-        { id: "qtr-qz4", prompt: { en: "You chose Speed Boost but bumped more. What does this tell you?", es: "Elegiste Turbo de Velocidad pero golpeaste más. ¿Qué te dice esto?" }, choices: [{ en: "Speed Boost made it harder to control", es: "El Turbo hizo más difícil de controlar" }, { en: "Speed Boost doesn't work", es: "El Turbo no funciona" }, { en: "You should always pick Speed Boost", es: "Siempre debes elegir Turbo" }, { en: "Bumps help you go faster", es: "Los golpes te ayudan a ir más rápido" }], answerIndex: 0 },
+        { id: "qtr-qz3", prompt: { en: "Why do engineers change only one thing at a time?", es: "¿Por qué los ingenieros cambian solo una cosa a la vez?" }, choices: [{ en: "Because they're slow", es: "Porque son lentos" }, { en: "So they know which change made the difference", es: "Para saber qué cambio hizo la diferencia" }, { en: "Because two changes would break everything", es: "Porque dos cambios romperían todo" }, { en: "They don't — they change everything", es: "No lo hacen — cambian todo" }], answerIndex: 1 },
+        { id: "qtr-qz4", prompt: { en: "You picked Speed Boost but bumped into more walls. What does that tell you?", es: "Elegiste Turbo de Velocidad pero chocaste con más paredes. ¿Qué te dice eso?" }, choices: [{ en: "Speed Boost made it harder to control", es: "El Turbo hizo más difícil de controlar" }, { en: "Speed Boost doesn't work", es: "El Turbo no funciona" }, { en: "You should always pick Speed Boost", es: "Siempre debes elegir Turbo" }, { en: "Bumps help you go faster", es: "Los golpes te ayudan a ir más rápido" }], answerIndex: 0 },
       ],
     },
   ];

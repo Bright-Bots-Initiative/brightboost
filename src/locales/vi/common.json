@@ -822,6 +822,7 @@
         "c1": "Hat 🎩",
         "c2": "Dog 🐶",
         "c3": "Cup ☕",
+        "c4": "Pen 🖊️",
         "hint": "Nghe giống cat nhưng đội trên đầu! 🎩"
       },
       "q2": {
@@ -829,6 +830,7 @@
         "c1": "Moon 🌙",
         "c2": "Run 🏃",
         "c3": "Star ⭐",
+        "c4": "Book 📕",
         "hint": "Bạn làm điều này bằng chân rất nhanh! 🏃"
       },
       "q3": {
@@ -836,6 +838,7 @@
         "c1": "Đầu 🔤",
         "c2": "Cuối 🔚",
         "c3": "Giữa 🔵",
+        "c4": "Khắp nơi 🌀",
         "hint": "Cat và hat đều KẾT THÚC bằng -at! 🔚"
       },
       "reviewKeyIdea": "Những từ cùng vần nghe giống nhau ở cuối, như cat/hat và sun/run.",
@@ -851,6 +854,7 @@
         "c1": "Tế bào 🧫",
         "c2": "Đá 🪨",
         "c3": "Xe hơi 🚗",
+        "c4": "Mây ☁️",
         "hint": "Tế bào là những khối xây dựng tí hon. 🧫"
       },
       "q2": {
@@ -858,6 +862,7 @@
         "c1": "Người giúp đỡ tí hon 🦠",
         "c2": "Voi lớn 🐘",
         "c3": "Đồ chơi 🧸",
+        "c4": "Ngôi sao sáng ⭐",
         "hint": "Vi sinh vật rất nhỏ và sống. 🦠"
       },
       "q3": {
@@ -865,6 +870,7 @@
         "c1": "Uống nước 💧",
         "c2": "Bay ✈️",
         "c3": "Hát 🎵",
+        "c4": "Ngủ 💤",
         "hint": "Rễ hút nước từ đất. 💧"
       },
       "reviewKeyIdea": "Tế bào và vi sinh vật là những phần nhỏ xíu của sự sống. Chúng ta đọc manh mối và thử nghiệm như nhà khoa học!",
@@ -880,6 +886,7 @@
         "c1": "Sửa lỗi 🛠️",
         "c2": "Ngủ trưa 💤",
         "c3": "Ăn trưa 🍕",
+        "c4": "Chơi trò chơi 🎮",
         "hint": "Gỡ lỗi nghĩa là sửa những gì sai! 🛠️"
       },
       "q2": {
@@ -887,6 +894,7 @@
         "c1": "Luyện tập 🌟",
         "c2": "Bỏ qua ⏭️",
         "c3": "Trốn 🙈",
+        "c4": "Đoán mò 🎲",
         "hint": "Luyện tập giúp tiến bộ! 🌟"
       },
       "q3": {
@@ -894,6 +902,7 @@
         "c1": "Quy tắc 📜",
         "c2": "Giấc ngủ 💤",
         "c3": "Bữa ăn nhẹ 🍪",
+        "c4": "Câu chuyện cười 😂",
         "hint": "Quy tắc cho chúng ta biết phải làm gì từng bước! 📜"
       },
       "reviewKeyIdea": "Robot dùng kế hoạch và quy tắc. Gỡ lỗi nghĩa là sửa sai. Luyện tập giúp chúng ta học!",

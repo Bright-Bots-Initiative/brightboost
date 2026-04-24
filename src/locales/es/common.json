@@ -822,6 +822,7 @@
         "c1": "Pato 🦆",
         "c2": "Perro 🐕",
         "c3": "Mesa 🪑",
+        "c4": "Silla 🪑",
         "hint": "¡Suena como gato y nada en el agua! 🦆"
       },
       "q2": {
@@ -829,6 +830,7 @@
         "c1": "Luna 🌙",
         "c2": "Col 🥬",
         "c3": "Flor 🌸",
+        "c4": "Árbol 🌳",
         "hint": "¡Es una verdura verde que rima con sol! 🥬"
       },
       "q3": {
@@ -836,6 +838,7 @@
         "c1": "Inicio 🔤",
         "c2": "Final 🔚",
         "c3": "Medio 🔵",
+        "c4": "Todos lados 🌀",
         "hint": "¡Gato y pato terminan igual en -ato! 🔚"
       },
       "reviewKeyIdea": "Las palabras que riman suenan igual al final, como gato/pato y sol/col.",
@@ -851,6 +854,7 @@
         "c1": "Células 🧫",
         "c2": "Rocas 🪨",
         "c3": "Carros 🚗",
+        "c4": "Nubes ☁️",
         "hint": "Las células son bloques diminutos. 🧫"
       },
       "q2": {
@@ -858,6 +862,7 @@
         "c1": "Pequeños ayudantes vivos 🦠",
         "c2": "Elefantes grandes 🐘",
         "c3": "Juguetes 🧸",
+        "c4": "Estrellas brillantes ⭐",
         "hint": "Los microbios son diminutos y están vivos. 🦠"
       },
       "q3": {
@@ -865,6 +870,7 @@
         "c1": "Beber agua 💧",
         "c2": "Volar ✈️",
         "c3": "Cantar 🎵",
+        "c4": "Dormir 💤",
         "hint": "Las raíces toman agua del suelo. 💧"
       },
       "reviewKeyIdea": "Las células y los microbios son partes diminutas de la vida. ¡Leemos pistas y probamos ideas como científicos!",
@@ -880,6 +886,7 @@
         "c1": "Arreglar un error 🛠️",
         "c2": "Tomar una siesta 💤",
         "c3": "Comer pizza 🍕",
+        "c4": "Jugar un juego 🎮",
         "hint": "¡Depurar significa arreglar lo que salió mal! 🛠️"
       },
       "q2": {
@@ -887,6 +894,7 @@
         "c1": "Practicar 🌟",
         "c2": "Saltarse todo ⏭️",
         "c3": "Esconderse 🙈",
+        "c4": "Adivinar 🎲",
         "hint": "¡Practicar es progresar! 🌟"
       },
       "q3": {
@@ -894,6 +902,7 @@
         "c1": "Regla 📜",
         "c2": "Siesta 💤",
         "c3": "Merienda 🍪",
+        "c4": "Chiste 😂",
         "hint": "¡Las reglas nos dicen qué hacer paso a paso! 📜"
       },
       "reviewKeyIdea": "Los robots usan planes y reglas. Depurar significa arreglar errores. ¡La práctica nos ayuda a aprender!",
