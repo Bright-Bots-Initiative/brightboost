@@ -21,7 +21,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const MODULE_THUMBNAILS: Record<string, ImageKey> = {
-  "k2-stem-sequencing": "type_game",
   "k2-stem-rhyme-ride": "type_game",
   "k2-stem-bounce-buds": "type_game",
   "k2-stem-gotcha-gears": "type_game",
@@ -36,19 +35,20 @@ const MODULE_THUMBNAILS: Record<string, ImageKey> = {
 };
 
 const MODULE_ORDER: Record<string, number> = {
-  // Set 1
-  "k2-stem-sequencing": 1,
-  "k2-stem-rhyme-ride": 2,
-  "k2-stem-bounce-buds": 3,
-  "k2-stem-gotcha-gears": 4,
-  "k2-stem-tank-trek": 5,
-  "k2-stem-quantum-quest": 6,
+  // Set 1 (Foundation canonical public order)
+  "k2-stem-bounce-buds": 1,
+  "k2-stem-gotcha-gears": 2,
+  "k2-stem-rhyme-ride": 3,
+  "k2-stem-tank-trek": 4,
+  "k2-stem-quantum-quest": 5,
   // Set 2
   "k2-stem-maze-maps": 10,
   "k2-stem-move-measure": 11,
   "k2-stem-sky-shield": 12,
   "k2-stem-fast-lane": 13,
   "k2-stem-qualify-tune-race": 14,
+  // Legacy / hidden
+  "k2-stem-sequencing": 90,
   // Specialization modules come after public content
   "stem-1-intro": 30,
 };
