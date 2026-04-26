@@ -2,7 +2,7 @@
 
 ## Overview
 
-Set 2 adds 5 new K-2 STEM modules that unlock after a student completes all 5 Set 1 modules. Once unlocked, all 5 Set 2 modules are available simultaneously (no internal sequential gating).
+Set 2 adds 5 new K-2 STEM modules that unlock after a student completes all 5 canonical Set 1 modules. Once unlocked, all 5 Set 2 modules are available simultaneously (no internal sequential gating).
 
 ## Set 2 Modules
 
@@ -16,11 +16,12 @@ Set 2 adds 5 new K-2 STEM modules that unlock after a student completes all 5 Se
 
 ## Gating Rules
 
-- **Set 1 complete** = all 5 Set 1 activity IDs have status `COMPLETED` in the Progress table
-- Set 1 IDs: `bounce-buds`, `gotcha-gears`, `lost-steps`, `rhyme-ride`
+- **Set 1 complete** = all 5 canonical Set 1 activity IDs have status `COMPLETED` in the Progress table
+- Set 1 IDs: `bounce-buds`, `gotcha-gears`, `rhyme-ride`, `tank-trek`, `quantum-quest`
 - Once Set 1 is complete, all 5 Set 2 modules unlock at once
 - No sequential lock inside Set 2
 - "Visited" is not "completed" - completion requires finishing the main challenge activity
+- Legacy module note: `lost-steps` (`k2-stem-sequencing`) remains archived/hidden and is **not** counted for live Set 1 progression.
 
 ## Architecture
 
@@ -71,7 +72,7 @@ npx prisma db seed
 ## Follow-Up Items
 
 1. **Game implementations** — The 5 Set 2 game components need to be built. Currently they fall through to ActivityPlayer's "unsupported" fallback. Each needs a React game component registered in `gameRegistry.ts`.
-2. **Upper-elementary (g3-5) expansion** — The `gradeBand` field on Course and band-filtered module variants are designed but not yet implemented. Infrastructure is ready.
+2. **Upper-elementary (g3-5) expansion** — The `gradeBand` field on Course and band-filtered module variants are implemented and seeded for planning/demo use, but playable g3-5 React game implementations are still pending.
 3. **Analytics events** — Add `pack_2_locked_viewed`, `pack_2_unlocked`, `module_started`, `module_completed` events when an analytics system is adopted.
 4. **Teacher preview** — Allow teachers to preview Set 2 modules regardless of their own progress (role-based override).
 5. **Feature flag** — Wrap Set 2 behind `brightboost_k2_set2` flag once a flag system is added.

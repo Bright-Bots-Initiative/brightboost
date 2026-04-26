@@ -1133,18 +1133,18 @@ async function main() {
 
   const familyDefs = [
     {
-      key: "sequencing",
-      title: "Sequencing & Debugging",
-      iconEmoji: "🔧",
-      k2: { title: "Boost's Lost Steps", subtitle: "Plan a path step by step!", moduleSlug: "k2-stem-sequencing" },
+      key: "quantum_quest",
+      title: "Quantum Foundations",
+      iconEmoji: "⚛️",
+      k2: { title: "Quantum Quest", subtitle: "Explore quantum puzzles in a space math adventure!", moduleSlug: "k2-stem-quantum-quest" },
       g3_5: {
-        title: "Bug Lab: Sequence & Debug",
-        subtitle: "Find the bug in the algorithm!",
+        title: "Quantum Mission: Pattern Lab",
+        subtitle: "Model quantum patterns and test outcomes!",
         contentConfig: {
           theme: "lab",
-          reading: { wordCount: 250, topic: "algorithms, precise steps, debugging", vocabulary: ["algorithm", "sequence", "debug", "loop", "variable"] },
-          questions: { count: 5, types: ["ordering", "bug-identification", "cause-effect"] },
-          game: { rounds: 3, phases: ["reorder", "find-bug", "optimize"], mechanics: ["playback", "highlight-wrong-step", "path-preview", "hint-ladder"] },
+          reading: { wordCount: 270, topic: "probability, patterns, observation, and evidence", vocabulary: ["quantum", "pattern", "probability", "outcome", "evidence"] },
+          questions: { count: 5, types: ["pattern-identification", "prediction", "evidence-choice"] },
+          game: { rounds: 3, phases: ["observe", "predict", "test"], mechanics: ["state-toggle", "outcome-tracker", "pattern-matcher", "hint-ladder"] },
           supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
           ui: { tone: "mission-control", progressType: "ring" },
         },

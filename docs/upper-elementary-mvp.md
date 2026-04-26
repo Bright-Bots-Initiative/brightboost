@@ -41,13 +41,13 @@ ClassModuleAssignment (NEW)
 
 ### Module Families Seeded
 
-| Family Key | Title | K-2 Module | G3-5 Variant |
-|------------|-------|------------|--------------|
-| sequencing | Sequencing & Debugging | Boost's Lost Steps | Bug Lab: Sequence & Debug |
-| motion | Forces & Motion | Rhyme & Ride | Motion Mission: Force Lab |
-| sorting | Sorting & Classification | Bounce & Buds | Data Dash: Sort & Discover |
-| plant_variables | Plants & Fair Tests | Gotcha Gears | Variable Quest: Fair Test Lab |
-| bridge | Engineering & Design | Tank Trek | Design Under Pressure: Bridge Lab |
+| Family Key | Title | Canonical Set 1 Anchor | G3-5 Variant |
+|------------|-------|------------------------|--------------|
+| bounce_buds | Biotech Foundations | Bounce & Buds | Data Dash: Sort & Discover |
+| gotcha_gears | Logic & Decision Systems | Gotcha Gears | Variable Quest: Fair Test Lab |
+| rhyme_ride | Language + Pattern Systems | Rhyme & Ride | Motion Mission: Force Lab |
+| tank_trek | Robotics & Path Planning | Tank Trek | Design Under Pressure: Bridge Lab |
+| quantum_quest | Quantum Foundations | Quantum Quest | Quantum Mission: Pattern Lab |
 
 ### G3-5 Content Config Shape
 
@@ -122,9 +122,16 @@ npx prisma db seed
 # 5. Log in as student enrolled in g3_5 class → GET /api/student/assigned-modules
 ```
 
+## Canonical Set Alignment Notes
+
+- K-2 Set 1 canon is exactly 5 public Foundation games: Bounce & Buds, Gotcha Gears, Rhyme & Ride, Tank Trek, Quantum Quest.
+- `Boost's Lost Steps` (`lost-steps` / `k2-stem-sequencing`) is retained only as legacy/archived content and is not part of live canonical gating.
+- Grade 3-5 adaptation planning mirrors the canonical 5-game Set 1 families above.
+- The grade-band infrastructure is implemented and seed-ready, but full playable grade 3-5 React game experiences are not yet complete.
+
 ## Known Follow-Up Items
 
-1. **G3-5 game implementations** — The 5 g3_5 content configs describe game mechanics but the actual game components need to be built (Bug Lab, Force Lab, Data Dash, Variable Quest, Bridge Lab)
+1. **G3-5 game implementations** — The 5 g3_5 content configs describe game mechanics but the actual game components need to be built (Data Dash, Variable Quest, Motion Mission, Design Under Pressure, Quantum Mission)
 2. **Module assignment UI** — Teacher-facing UI for browsing catalog and assigning/reordering modules. Currently only the band selector is in the UI; assignment management is API-ready but needs a dedicated component.
 3. **Student assigned-modules view** — A student dashboard section that shows class-assigned modules. Currently the `/api/student/assigned-modules` endpoint exists but no frontend component consumes it.
 4. **Per-grade tuning** — The `g3_5` band is one shared profile. Future work: separate g3, g4, g5 difficulty curves.

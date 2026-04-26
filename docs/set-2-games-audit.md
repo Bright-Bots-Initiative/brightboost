@@ -1,5 +1,7 @@
 # Set 2 Games — Existing Architecture Audit
 
+> Canonical progression note: live K-2 Set 1 contains exactly 5 public games (`bounce-buds`, `gotcha-gears`, `rhyme-ride`, `tank-trek`, `quantum-quest`). `lost-steps` / `k2-stem-sequencing` is legacy/archived and not used for Set 2 unlock gating.
+
 ## 1. Unity Game Structure on Disk
 
 Four Unity projects exist at the repo root:
