@@ -10,6 +10,7 @@ vi.mock("../../services/api", () => ({
   api: {
     getModules: vi.fn(),
     getAvatar: vi.fn().mockResolvedValue(null),
+    getProgress: vi.fn().mockResolvedValue({ progress: [] }),
   },
 }));
 
@@ -52,7 +53,7 @@ describe("Modules Page", () => {
     expect(screen.getByTestId("modules-skeleton")).toBeDefined();
   });
 
-  it("renders K-2 modules after loading and filters others", async () => {
+  it("renders modules after loading and hides hidden slugs", async () => {
     const mockModules = [
       {
         id: 1,
@@ -67,13 +68,6 @@ describe("Modules Page", () => {
         subtitle: "Subtitle 2",
         slug: "module-2",
         level: "K-2",
-      },
-      {
-        id: 3,
-        title: "Module 3",
-        subtitle: "Advanced Module",
-        slug: "module-3",
-        level: "3-5",
       },
       {
         id: 4,
@@ -97,9 +91,8 @@ describe("Modules Page", () => {
 
     expect(screen.getByText("Module 1")).toBeDefined();
     expect(screen.getByText("Module 2")).toBeDefined();
-    expect(screen.queryByText("Module 3")).toBeNull(); // Should be filtered out (wrong level)
     expect(screen.queryByText("STEM Intro")).toBeNull(); // Should be filtered out (excluded slug)
-    expect(screen.getByLabelText("Start learning Module 1")).toBeDefined();
+    expect(screen.getByLabelText("Start Learning Module 1")).toBeDefined();
   });
 
   it("shows empty state when no modules found", async () => {
