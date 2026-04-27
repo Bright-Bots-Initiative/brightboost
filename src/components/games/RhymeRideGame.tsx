@@ -920,6 +920,10 @@ export default function RhymeRideGame({
       t("games.rhymeRide.tipCombos"),
       t("games.rhymeRide.tipShowdown"),
     ],
+    controlInstructions: {
+      keyboard: ["Use Tab to reach lane controls and Enter or Space to choose."],
+      buttons: ["Choose the word that rhymes with the target.", "Say the ending sounds out loud."],
+    },
   };
 
   return (

@@ -5,7 +5,7 @@
  * results screen with staggered star reveal, achievement toasts, and
  * score count-up.
  */
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
@@ -13,6 +13,8 @@ import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
 import { useReducedGameEffects } from "./useReducedGameEffects";
+import { ControlInstructions } from "./ControlInstructions";
+import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructions";
 import "./game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -37,6 +39,7 @@ export interface MissionBriefing {
   story: string;
   icon: string;
   tips?: string[];
+  controlInstructions?: ControlInstructionsModel;
   chapterLabel?: string;
   themeColor?: string; // tailwind color stem e.g. "indigo", "violet", "cyan"
 }
@@ -122,12 +125,14 @@ function GameResultsView({
   personalBest,
   onPlayAgain,
   onComplete,
+  headingRef,
 }: {
   result: GameResult;
   title: string;
   personalBest: ReturnType<typeof usePersonalBest>;
   onPlayAgain: () => void;
   onComplete: () => void;
+  headingRef: RefObject<HTMLHeadingElement>;
 }) {
   const { t } = useTranslation();
   const pct = result.accuracy ?? 0;
@@ -174,7 +179,12 @@ function GameResultsView({
               {stars >= 3 ? "🏆" : stars >= 2 ? "🌟" : stars >= 1 ? "⭐" : "💪"}
             </div>
           </div>
-          <h2 className="text-2xl font-extrabold text-amber-900 bounce-in" style={{ animationDelay: "200ms" }}>
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-2xl font-extrabold text-amber-900 bounce-in focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            style={{ animationDelay: "200ms" }}
+          >
             {stars >= 3 ? t("games.shared.amazing") : stars >= 2 ? t("games.shared.greatJob") : stars >= 1 ? t("games.shared.goodWork") : t("games.shared.keepTrying")}
           </h2>
 
@@ -272,6 +282,11 @@ export default function GameShell({
   );
   const [result, setResult] = useState<GameResult | null>(null);
   const { reducedEffects, source, setReducedEffects } = useReducedGameEffects();
+  const startButtonRef = useRef<HTMLButtonElement | null>(null);
+  const gameRegionRef = useRef<HTMLDivElement | null>(null);
+  const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const instructionsId = `${gameKey}-control-instructions`;
+  const activeInstructions = mergeControlInstructions(briefing?.controlInstructions);
 
   const handleFinish = useCallback(
     (gameResult: GameResult) => {
@@ -282,6 +297,22 @@ export default function GameShell({
     },
     [starThresholds],
   );
+
+  useEffect(() => {
+    if (phase === "briefing") {
+      startButtonRef.current?.focus();
+      return;
+    }
+
+    if (phase === "playing") {
+      gameRegionRef.current?.focus();
+      return;
+    }
+
+    if (phase === "results") {
+      resultsHeadingRef.current?.focus();
+    }
+  }, [phase]);
 
   // ── Briefing ─────────────────────────────────────────────────────────
 
@@ -332,6 +363,7 @@ export default function GameShell({
                 </ul>
               </div>
             )}
+            <ControlInstructions id={instructionsId} instructions={activeInstructions} className="max-w-xl mx-auto text-left" />
             {personalBest && personalBest.bestScore > 0 && (
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/50 shadow-sm text-sm">
                 <Trophy className="w-4 h-4 text-yellow-500" />
@@ -339,6 +371,7 @@ export default function GameShell({
               </div>
             )}
             <Button
+              ref={startButtonRef}
               size="lg"
               className={`bg-gradient-to-r from-${tc}-500 to-${tc}-600 hover:from-${tc}-600 hover:to-${tc}-700 text-lg px-10 py-6 rounded-2xl shadow-lg shadow-${tc}-500/25 transition-all hover:scale-105 active:scale-95`}
               onClick={() => setPhase("playing")}
@@ -368,6 +401,7 @@ export default function GameShell({
           result={result}
           title={title}
           personalBest={personalBest}
+          headingRef={resultsHeadingRef}
           onPlayAgain={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
           onComplete={() => onComplete(result)}
         />
@@ -388,7 +422,18 @@ export default function GameShell({
         source={source}
         onToggle={setReducedEffects}
       />
-      {children({ onFinish: handleFinish, reducedEffects })}
+      <div
+        ref={gameRegionRef}
+        role="region"
+        aria-label={`${title} game area`}
+        aria-describedby={instructionsId}
+        tabIndex={-1}
+      >
+        <div className="mb-4">
+          <ControlInstructions id={instructionsId} instructions={activeInstructions} />
+        </div>
+        {children({ onFinish: handleFinish, reducedEffects })}
+      </div>
     </div>
   );
 }
