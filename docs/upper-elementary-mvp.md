@@ -128,7 +128,10 @@ npx prisma db seed
 - `Boost's Lost Steps` (`lost-steps` / `k2-stem-sequencing`) is retained only as legacy/archived content and is not part of live canonical gating.
 - Set 2 canon is exactly 5 public Exploration games: Maze Maps & Smart Paths, Move, Measure & Improve, Sky Shield Patterns, Fast Lane Signals, Qualify, Tune, Race.
 - Grade 3-5 adaptation planning mirrors the canonical 5-game Set 1 families above.
-- The grade-band infrastructure is implemented and seed-ready, but full playable grade 3-5 React game experiences are not yet complete.
+- The grade-band infrastructure is implemented and seed-ready.
+- **First playable G3-5 module is now live:** `Data Dash: Sort & Discover` (`g35-data-dash-sort-discover`) as a concrete Module → Unit → Lesson → Activity experience.
+- Other G3-5 variants remain planning-only configs in `ModuleVariant.contentConfig` and are not yet playable React games.
+- Variant-native teacher assignment UI and full assigned-modules player flow remain future work.
 
 ## Localization Coverage Note
 
@@ -138,7 +141,7 @@ npx prisma db seed
 
 ## Known Follow-Up Items
 
-1. **G3-5 game implementations** — The 5 g3_5 content configs describe game mechanics but the actual game components need to be built (Data Dash, Variable Quest, Motion Mission, Design Under Pressure, Quantum Mission)
+1. **Remaining G3-5 game implementations** — Four variants are still planning/config-only and need playable React game components (Variable Quest, Motion Mission, Design Under Pressure, Quantum Mission). Data Dash is now playable as the first concrete G3-5 module.
 2. **Module assignment UI** — Teacher-facing UI for browsing catalog and assigning/reordering modules. Currently only the band selector is in the UI; assignment management is API-ready but needs a dedicated component.
 3. **Student assigned-modules view** — A student dashboard section that shows class-assigned modules. Currently the `/api/student/assigned-modules` endpoint exists but no frontend component consumes it.
 4. **Per-grade tuning** — The `g3_5` band is one shared profile. Future work: separate g3, g4, g5 difficulty curves.

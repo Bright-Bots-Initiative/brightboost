@@ -13,6 +13,7 @@ import FastLaneGame from "./FastLaneGame";
 import QualifyTuneRaceGame from "./QualifyTuneRaceGame";
 import TankTrekGame from "./TankTrekGame";
 import QuantumQuestGame from "./QuantumQuestGame";
+import DataDashSortDiscoverGame from "./DataDashSortDiscoverGame";
 
 type GameProps = {
   config?: any;
@@ -32,6 +33,7 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   gotcha_gears_unity: GotchaGearsGame,         // "Gotcha Gears" (now React)
   tank_trek: TankTrekGame,                     // "Tank Trek" (Set 1)
   quantum_quest: QuantumQuestGame,             // "Quantum Quest"
+  data_dash_sort_discover: DataDashSortDiscoverGame, // "Data Dash: Sort & Discover" (G3-5)
 
   // ── Set 2 keys ──
   maze_maps: MazeMapsGame,                      // "Maze Maps & Smart Paths" (Set 2)
