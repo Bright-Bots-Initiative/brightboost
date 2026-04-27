@@ -57,6 +57,43 @@ interface Target {
 
 type PowerUp = "slowTime" | "shield" | "reveal";
 
+export function buildQuantumQuestCompletionPayload(params: {
+  sectors: QQSector[];
+  totalCorrect: number;
+  totalAttempted: number;
+  maxStreak: number;
+  lives: number;
+  sectorsCleared: number;
+  powerUpsUsed: number;
+  t: (key: string) => string;
+}): GameResult {
+  const totalProblems = params.sectors.reduce((sum, sec) => sum + sec.problems.length, 0);
+  const accuracy = params.totalAttempted > 0 ? Math.round((params.totalCorrect / params.totalAttempted) * 100) : 0;
+  const achievements: string[] = [];
+  if (params.maxStreak >= 5) achievements.push(params.t("games.quantumQuest.achScanner"));
+  if (accuracy >= 90) achievements.push(params.t("games.quantumQuest.achPerfect"));
+  if (params.sectorsCleared === params.sectors.length) achievements.push(params.t("games.quantumQuest.achExplorer"));
+  if (params.maxStreak >= 3) achievements.push(params.t("games.quantumQuest.achFast"));
+  return {
+    gameKey: "quantum_quest",
+    score: params.totalCorrect,
+    total: totalProblems,
+    streakMax: params.maxStreak,
+    roundsCompleted: params.sectorsCleared,
+    accuracy,
+    levelReached: params.sectorsCleared,
+    hintsUsed: 0,
+    firstTryClear: params.lives >= 3 && params.sectorsCleared === params.sectors.length,
+    achievements,
+    gameSpecific: {
+      maxStreak: params.maxStreak,
+      totalAttempted: params.totalAttempted,
+      sectorsCleared: params.sectorsCleared,
+      powerUpsUsed: params.powerUpsUsed,
+    },
+  };
+}
+
 // ── Sector Themes ──────────────────────────────────────────────────────────
 
 const SECTOR_THEMES: Record<string, { bg: string; accent: string; targetIdle: string; targetGlow: string; label: string; icon: string }> = {
@@ -471,21 +508,16 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
   }, [sectorIdx, config.sectors.length]);
 
   const finishGame = useCallback(() => {
-    const totalProblems = config.sectors.reduce((s, sec) => s + sec.problems.length, 0);
-    const accuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
-    const achievements: string[] = [];
-    if (maxStreak >= 5) achievements.push(t("games.quantumQuest.achScanner"));
-    if (accuracy >= 90) achievements.push(t("games.quantumQuest.achPerfect"));
-    if (sectorsCleared === config.sectors.length) achievements.push(t("games.quantumQuest.achExplorer"));
-    if (maxStreak >= 3) achievements.push(t("games.quantumQuest.achFast"));
-
-    onFinish({
-      gameKey: "quantum_quest", score: totalCorrect, total: totalProblems,
-      streakMax: maxStreak, roundsCompleted: sectorsCleared, accuracy,
-      levelReached: sectorsCleared, hintsUsed: 0,
-      firstTryClear: lives >= 3 && sectorsCleared === config.sectors.length,
-      achievements, gameSpecific: { maxStreak, totalAttempted, sectorsCleared, powerUpsUsed },
-    });
+    onFinish(buildQuantumQuestCompletionPayload({
+      sectors: config.sectors,
+      totalCorrect,
+      totalAttempted,
+      maxStreak,
+      lives,
+      sectorsCleared,
+      powerUpsUsed,
+      t: (key) => t(key),
+    }));
   }, [config, totalCorrect, totalAttempted, maxStreak, lives, sectorsCleared, powerUpsUsed, onFinish, t]);
 
   const resetAll = useCallback(() => {

@@ -55,6 +55,25 @@ function resolveField(t: any, field: unknown): string {
   return resolveText(t, field as any, "");
 }
 
+export function calculateGotchaCatchScore(streak: number): number {
+  return 10 * (streak + 1);
+}
+
+export function buildGotchaCompletionPayload(params: {
+  score: number;
+  roundsLength: number;
+  maxStreak: number;
+  roundIdx: number;
+}): GameResult {
+  return {
+    gameKey: "gotcha_gears_unity",
+    score: params.score,
+    total: params.roundsLength,
+    streakMax: params.maxStreak,
+    roundsCompleted: params.roundIdx + 1,
+  };
+}
+
 const FIELD_W = 560;
 const FIELD_H = 420;
 const GEAR_H = 52;        // gear pill height
@@ -210,13 +229,7 @@ function GotchaGearsCore({
   }, [roundIdx, rounds.length]);
 
   const finishGame = useCallback(() => {
-    onFinish({
-      gameKey: "gotcha_gears_unity",
-      score,
-      total: rounds.length,
-      streakMax: maxStreak,
-      roundsCompleted: roundIdx + 1,
-    });
+    onFinish(buildGotchaCompletionPayload({ score, roundsLength: rounds.length, maxStreak, roundIdx }));
   }, [score, rounds.length, maxStreak, roundIdx, onFinish]);
 
   const handleCatch = useCallback(
@@ -228,7 +241,7 @@ function GotchaGearsCore({
         setGears([]);
         setRoundComplete(true);
         const ns = streak + 1;
-        setScore((s) => s + 10 * ns);
+        setScore((s) => s + calculateGotchaCatchScore(streak));
         setStreak(ns);
         setMaxStreak((m) => Math.max(m, ns));
         setFeedback({ text: ns > 1 ? `${t("games.gotchaGears.correct", { defaultValue: "Got it!" })} x${ns}` : t("games.gotchaGears.correct", { defaultValue: "Got it!" }), type: "correct" });

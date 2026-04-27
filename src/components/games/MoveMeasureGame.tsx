@@ -19,11 +19,33 @@ const IDEAL_TOSS = 50;
 const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎" };
 const NAMES: Record<string, string> = { dash: "Dash", jump: "Jump", toss: "Toss" };
 
-function zoneScore(pos: number, s: number, e: number): number {
+export function zoneScore(pos: number, s: number, e: number): number {
   const c = (s + e) / 2, hw = (e - s) / 2, d = Math.abs(pos - c);
   return d <= hw ? 10 : Math.max(0, Math.round(10 - (d - hw) * 20));
 }
-function tossScore(v: number) { return Math.max(0, Math.round(10 - Math.abs(v - IDEAL_TOSS) * 0.2)); }
+export function tossScore(v: number) { return Math.max(0, Math.round(10 - Math.abs(v - IDEAL_TOSS) * 0.2)); }
+
+export function buildMoveMeasureCompletionPayload(params: {
+  scores: Scores;
+  impEvent: EventKey | null;
+  impScore: number;
+  exitAns: string | null;
+}): GameResult {
+  const { scores, impEvent, impScore, exitAns } = params;
+  const base = scores.dash + scores.jump + scores.toss;
+  const bonus = impScore > (impEvent ? scores[impEvent] : 0) ? 5 : 0;
+  const eBonus = exitAns === "correct" ? 5 : 0;
+  const total = base + bonus + eBonus;
+  return {
+    gameKey: "move_measure",
+    score: total,
+    total: 40,
+    streakMax: 0,
+    roundsCompleted: 3,
+    accuracy: Math.round((total / 40) * 100),
+    gameSpecific: { dash: scores.dash, jump: scores.jump, toss: scores.toss, impEvent, impScore, exitCorrect: exitAns === "correct" },
+  };
+}
 
 const BRIEFING: MissionBriefing = {
   title: "Move, Measure & Improve",
@@ -185,11 +207,7 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
   // ── Celebration → finish ──
   useEffect(() => {
     if (phase !== "celebration") return;
-    const base = scores.dash + scores.jump + scores.toss;
-    const bonus = impScore > (impEvent ? scores[impEvent] : 0) ? 5 : 0;
-    const eBonus = exitAns === "correct" ? 5 : 0;
-    const total = base + bonus + eBonus;
-    const tm = setTimeout(() => onFinish({ gameKey: "move_measure", score: total, total: 40, streakMax: 0, roundsCompleted: 3, accuracy: Math.round((total / 40) * 100), gameSpecific: { dash: scores.dash, jump: scores.jump, toss: scores.toss, impEvent, impScore, exitCorrect: exitAns === "correct" } }), 2500);
+    const tm = setTimeout(() => onFinish(buildMoveMeasureCompletionPayload({ scores, impEvent, impScore, exitAns })), 2500);
     return () => clearTimeout(tm);
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
