@@ -71,9 +71,10 @@ npx prisma db seed
 
 ## Follow-Up Items
 
-1. **Game implementations** — The 5 Set 2 game components need to be built. Currently they fall through to ActivityPlayer's "unsupported" fallback. Each needs a React game component registered in `gameRegistry.ts`.
-2. **Upper-elementary (g3-5) expansion** — The `gradeBand` field on Course and band-filtered module variants are implemented and seeded for planning/demo use, but playable g3-5 React game implementations are still pending.
-3. **Analytics events** — Add `pack_2_locked_viewed`, `pack_2_unlocked`, `module_started`, `module_completed` events when an analytics system is adopted.
-4. **Teacher preview** — Allow teachers to preview Set 2 modules regardless of their own progress (role-based override).
-5. **Feature flag** — Wrap Set 2 behind `brightboost_k2_set2` flag once a flag system is added.
-6. **Set 3 activation** — Replace Set 3 placeholder IDs with real modules when ready.
+1. **Set 2 gameplay status** — All 5 Set 2 game keys (`maze_maps`, `move_measure`, `sky_shield`, `fast_lane`, `qualify_tune_race`) are implemented and registered in `src/components/games/gameRegistry.ts`; they should no longer hit the unsupported fallback for valid Set 2 content.
+2. **Localization gap for Set 2 story/quiz payloads** — Seeded Set 2 narrative and quiz blocks in `prisma/seed.cjs` / `backend/prisma/seed.cjs` currently include only `{ en, es }`. For `vi` and `zh-CN`, the app falls back to English via localized-content resolution at runtime.
+3. **Upper-elementary (g3-5) expansion** — The `gradeBand` field on Course and band-filtered module variants are implemented and seeded for planning/demo use, but playable g3-5 React game implementations are still pending.
+4. **Analytics events** — Add `pack_2_locked_viewed`, `pack_2_unlocked`, `module_started`, `module_completed` events when an analytics system is adopted.
+5. **Teacher preview** — Allow teachers to preview Set 2 modules regardless of their own progress (role-based override).
+6. **Feature flag** — Wrap Set 2 behind `brightboost_k2_set2` flag once a flag system is added.
+7. **Set 3 activation** — Replace Set 3 placeholder IDs with real modules when ready.

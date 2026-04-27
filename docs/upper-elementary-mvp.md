@@ -126,8 +126,15 @@ npx prisma db seed
 
 - K-2 Set 1 canon is exactly 5 public Foundation games: Bounce & Buds, Gotcha Gears, Rhyme & Ride, Tank Trek, Quantum Quest.
 - `Boost's Lost Steps` (`lost-steps` / `k2-stem-sequencing`) is retained only as legacy/archived content and is not part of live canonical gating.
+- Set 2 canon is exactly 5 public Exploration games: Maze Maps & Smart Paths, Move, Measure & Improve, Sky Shield Patterns, Fast Lane Signals, Qualify, Tune, Race.
 - Grade 3-5 adaptation planning mirrors the canonical 5-game Set 1 families above.
 - The grade-band infrastructure is implemented and seed-ready, but full playable grade 3-5 React game experiences are not yet complete.
+
+## Localization Coverage Note
+
+- Set 2 seed narrative/quiz content currently stores `{ en, es }` localized fields in both `prisma/seed.cjs` and `backend/prisma/seed.cjs`.
+- Vietnamese (`vi`) and Simplified Chinese (`zh-CN`) users currently receive English fallback for those Set 2 narrative/quiz strings at runtime.
+- TODO: complete editorial translation review for Set 2 narrative + quiz content in `vi` and `zh-CN` before claiming full parity.
 
 ## Known Follow-Up Items
 

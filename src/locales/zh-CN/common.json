@@ -1319,7 +1319,11 @@
       "vocabPlan": "计划",
       "vocabSequence": "顺序",
       "vocabTurn": "转弯",
-      "vocabGoal": "目标"
+      "vocabGoal": "目标",
+      "g35level1": "穿越算法迷宫",
+      "g35level2": "调试损坏的路线",
+      "g35level3": "在障碍中优化路径",
+      "g35level4": "高效收集所有芯片"
     },
     "shared": {
       "tips": "小贴士",
