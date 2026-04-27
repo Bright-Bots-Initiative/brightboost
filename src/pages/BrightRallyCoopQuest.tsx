@@ -12,8 +12,10 @@ const LEFT_X = 8;
 const RIGHT_X = 92;
 const BALL_RADIUS = 2;
 const BASE_PADDLE_HEIGHT = 20;
-const TARGET_RALLIES = 20;
+const TARGET_RALLIES = 18;
 const BASE_LIVES = 3;
+const BASE_BALL_SPEED = 38;
+const MAX_BALL_SPEED = 62;
 
 export type RallyUpgradeKey =
   | "softBounce"
@@ -31,12 +33,12 @@ export type RallyUpgrade = {
 
 export type RallyUpgradeConfig = {
   paddleHeight: number;
-  assistSlowdownFactor: number;
-  assistTriggerRally: number;
+  speedStabilityBoost: number;
   rhythmBonusMultiplier: number;
   pathPreviewEnabled: boolean;
   shieldSaves: number;
   meterPerReturn: number;
+  cpuWakeDelayMs: number;
 };
 
 export type BrightRallyResult = {
@@ -81,7 +83,7 @@ export function buildRallyUpgrades(completedActivityIds: string[]): RallyUpgrade
       id: "bounce-buds",
       key: "softBounce",
       title: "Soft Bounce",
-      description: "Bigger paddle hit window for friendlier returns.",
+      description: "Larger paddle zone so your team can return tricky shots.",
     });
   }
 
@@ -90,7 +92,7 @@ export function buildRallyUpgrades(completedActivityIds: string[]): RallyUpgrade
       id: "gotcha-gears",
       key: "gearTiming",
       title: "Gear Timing",
-      description: "After longer rallies, the ball briefly slows down.",
+      description: "When rallies get long, the ball calms down for easier timing.",
     });
   }
 
@@ -99,7 +101,7 @@ export function buildRallyUpgrades(completedActivityIds: string[]): RallyUpgrade
       id: "rhyme-ride",
       key: "rhythmRally",
       title: "Rhythm Rally",
-      description: "Consecutive teamwork gives a score bonus.",
+      description: "Steady team streaks earn extra points.",
     });
   }
 
@@ -108,7 +110,7 @@ export function buildRallyUpgrades(completedActivityIds: string[]): RallyUpgrade
       id: "tank-trek",
       key: "pathPreview",
       title: "Path Preview",
-      description: "Shows a subtle guide for where the ball is headed.",
+      description: "Shows where the ball is going next.",
     });
   }
 
@@ -117,7 +119,7 @@ export function buildRallyUpgrades(completedActivityIds: string[]): RallyUpgrade
       id: "quantum-quest",
       key: "teamShield",
       title: "Team Shield",
-      description: "One extra team save per match.",
+      description: "Blocks one miss so your team gets another chance.",
     });
   }
 
@@ -130,13 +132,53 @@ export function applyRallyUpgradeConfig(upgrades: RallyUpgrade[]): RallyUpgradeC
 
   return {
     paddleHeight: BASE_PADDLE_HEIGHT + (set.has("softBounce") ? 6 : 0),
-    assistSlowdownFactor: set.has("gearTiming") ? 0.8 : 1,
-    assistTriggerRally: set.has("gearTiming") ? 8 : Number.POSITIVE_INFINITY,
+    speedStabilityBoost: set.has("gearTiming") ? 0.92 : 1,
     rhythmBonusMultiplier: set.has("rhythmRally") ? 1.15 : 1,
     pathPreviewEnabled: set.has("pathPreview"),
     shieldSaves: set.has("teamShield") ? 1 : 0,
     meterPerReturn: 16 + Math.min(set2Count, 2),
+    cpuWakeDelayMs: set.has("gearTiming") ? 1400 : 1900,
   };
+}
+
+export function getDifficultySettings(rallyCount: number): {
+  speedMultiplier: number;
+  paddleSpeed: number;
+  maxVerticalSpeed: number;
+} {
+  if (rallyCount >= 15) {
+    return { speedMultiplier: 1.15, paddleSpeed: 90, maxVerticalSpeed: 38 };
+  }
+  if (rallyCount >= 10) {
+    return { speedMultiplier: 1.08, paddleSpeed: 86, maxVerticalSpeed: 36 };
+  }
+  if (rallyCount >= 5) {
+    return { speedMultiplier: 1.03, paddleSpeed: 84, maxVerticalSpeed: 34 };
+  }
+  return { speedMultiplier: 1, paddleSpeed: 82, maxVerticalSpeed: 32 };
+}
+
+export function shouldUseCpuHelper(input: {
+  now: number;
+  lastP2InputAt: number;
+  p2InputActive: boolean;
+  ballHeadingRight: boolean;
+  cpuWakeDelayMs: number;
+}): boolean {
+  return !input.p2InputActive &&
+    input.ballHeadingRight &&
+    input.now - input.lastP2InputAt > input.cpuWakeDelayMs;
+}
+
+export function getCpuHelperDirection(input: {
+  ballY: number;
+  paddleY: number;
+  ballX: number;
+}): number {
+  const reactionWindow = input.ballX > 60 ? 0.85 : input.ballX > 52 ? 0.65 : 0.35;
+  const delta = input.ballY - input.paddleY;
+  if (Math.abs(delta) < 1.2) return 0;
+  return clamp(Math.sign(delta) * reactionWindow, -0.9, 0.9);
 }
 
 export function buildBrightRallyResult(input: {
@@ -283,8 +325,8 @@ export default function BrightRallyCoopQuest() {
     setResult(null);
     boostTimerRef.current = 0;
     lastTimeRef.current = null;
-    ballVxRef.current = Math.random() > 0.5 ? 42 : -42;
-    ballVyRef.current = (Math.random() * 24) - 12;
+    ballVxRef.current = Math.random() > 0.5 ? BASE_BALL_SPEED : -BASE_BALL_SPEED;
+    ballVyRef.current = (Math.random() * 18) - 9;
   }, [config.shieldSaves]);
 
   const finishRound = useCallback((finalSnapshot: GameSnapshot) => {
@@ -302,7 +344,8 @@ export default function BrightRallyCoopQuest() {
 
   const step = useCallback((dt: number) => {
     const state = { ...snapshotRef.current };
-    const paddleSpeed = 82;
+    const difficulty = getDifficultySettings(state.rallyCount);
+    const paddleSpeed = difficulty.paddleSpeed;
     const isP1Up = keysRef.current.w || keysRef.current.W;
     const isP1Down = keysRef.current.s || keysRef.current.S;
     const isP2Up = keysRef.current.ArrowUp || keysRef.current.i || keysRef.current.I;
@@ -315,19 +358,26 @@ export default function BrightRallyCoopQuest() {
       lastP2InputRef.current = Date.now();
     }
 
-    if (!isP2Up && !isP2Down && touchDirRef.current.right === 0 && Date.now() - lastP2InputRef.current > 2200) {
-      const delta = state.ballY - state.rightY;
-      p2Dir = Math.abs(delta) < 2 ? 0 : Math.sign(delta) * 0.65;
+    const now = Date.now();
+    const p2InputActive = isP2Up || isP2Down || touchDirRef.current.right !== 0;
+    if (shouldUseCpuHelper({
+      now,
+      lastP2InputAt: lastP2InputRef.current,
+      p2InputActive,
+      ballHeadingRight: ballVxRef.current > 0,
+      cpuWakeDelayMs: config.cpuWakeDelayMs,
+    })) {
+      p2Dir = getCpuHelperDirection({ ballY: state.ballY, paddleY: state.rightY, ballX: state.ballX });
     }
 
     state.leftY = clamp(state.leftY + p1Dir * paddleSpeed * dt, config.paddleHeight / 2, COURT_HEIGHT - config.paddleHeight / 2);
     state.rightY = clamp(state.rightY + p2Dir * paddleSpeed * dt, config.paddleHeight / 2, COURT_HEIGHT - config.paddleHeight / 2);
 
-    const assistActive = boostTimerRef.current > 0 || state.currentStreak >= config.assistTriggerRally;
-    const speedFactor = assistActive ? config.assistSlowdownFactor : 1;
+    const assistActive = boostTimerRef.current > 0;
+    const speedFactor = assistActive ? config.speedStabilityBoost : 1;
 
-    state.ballX += ballVxRef.current * dt * speedFactor;
-    state.ballY += ballVyRef.current * dt * speedFactor;
+    state.ballX += ballVxRef.current * dt * difficulty.speedMultiplier * speedFactor;
+    state.ballY += ballVyRef.current * dt * difficulty.speedMultiplier * speedFactor;
 
     if (state.ballY <= BALL_RADIUS) {
       state.ballY = BALL_RADIUS;
@@ -345,9 +395,9 @@ export default function BrightRallyCoopQuest() {
       didPaddleHitBall(state.ballY, state.leftY, config.paddleHeight, hitPadding)
     ) {
       state.ballX = LEFT_X + BALL_RADIUS;
-      ballVxRef.current = Math.abs(ballVxRef.current) * 1.015;
+      ballVxRef.current = clamp(Math.abs(ballVxRef.current) * 1.01, BASE_BALL_SPEED, MAX_BALL_SPEED);
       const offset = (state.ballY - state.leftY) / (config.paddleHeight / 2);
-      ballVyRef.current = clamp(ballVyRef.current + offset * 14, -46, 46);
+      ballVyRef.current = clamp(ballVyRef.current + offset * 11, -difficulty.maxVerticalSpeed, difficulty.maxVerticalSpeed);
       state.rallyCount += 1;
       state.currentStreak += 1;
       state.bestStreak = Math.max(state.bestStreak, state.currentStreak);
@@ -360,9 +410,9 @@ export default function BrightRallyCoopQuest() {
       didPaddleHitBall(state.ballY, state.rightY, config.paddleHeight, hitPadding)
     ) {
       state.ballX = RIGHT_X - BALL_RADIUS;
-      ballVxRef.current = -Math.abs(ballVxRef.current) * 1.015;
+      ballVxRef.current = -clamp(Math.abs(ballVxRef.current) * 1.01, BASE_BALL_SPEED, MAX_BALL_SPEED);
       const offset = (state.ballY - state.rightY) / (config.paddleHeight / 2);
-      ballVyRef.current = clamp(ballVyRef.current + offset * 14, -46, 46);
+      ballVyRef.current = clamp(ballVyRef.current + offset * 11, -difficulty.maxVerticalSpeed, difficulty.maxVerticalSpeed);
       state.rallyCount += 1;
       state.currentStreak += 1;
       state.bestStreak = Math.max(state.bestStreak, state.currentStreak);
@@ -389,8 +439,8 @@ export default function BrightRallyCoopQuest() {
       }
       state.ballX = 50;
       state.ballY = 50;
-      ballVxRef.current = state.ballX < 50 ? 42 : Math.random() > 0.5 ? 42 : -42;
-      ballVyRef.current = (Math.random() * 24) - 12;
+      ballVxRef.current = Math.random() > 0.5 ? BASE_BALL_SPEED : -BASE_BALL_SPEED;
+      ballVyRef.current = (Math.random() * 16) - 8;
     }
 
     snapshotRef.current = state;
@@ -437,7 +487,11 @@ export default function BrightRallyCoopQuest() {
   }, [phase, step]);
 
   useEffect(() => {
+    const controlKeys = new Set([" ", "ArrowUp", "ArrowDown", "w", "W", "s", "S", "i", "I", "k", "K"]);
     const onKeyDown = (event: KeyboardEvent) => {
+      if (controlKeys.has(event.key)) {
+        event.preventDefault();
+      }
       keysRef.current[event.key] = true;
       if ((event.key === " " || event.key === "Enter") && phase !== "playing") {
         event.preventDefault();
@@ -476,6 +530,7 @@ export default function BrightRallyCoopQuest() {
   };
 
   const courtBallTrailX = clamp(snapshot.ballX + Math.sign(ballVxRef.current) * 10, 5, 95);
+  const hasBoostReady = snapshot.teamMeter >= 80;
 
   return (
     <section
@@ -520,6 +575,18 @@ export default function BrightRallyCoopQuest() {
               {t("brightRally.upgradesUnlocked", { defaultValue: "Upgrades unlocked" })}: {upgrades.length}
             </span>
           </div>
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+            {upgrades.length > 0 ? upgrades.map((upgrade) => (
+              <div key={upgrade.key} className="rounded-lg border border-blue-200 bg-white px-3 py-2">
+                <p className="font-semibold text-slate-900">{upgrade.title}</p>
+                <p className="text-xs text-slate-600">{upgrade.description}</p>
+              </div>
+            )) : (
+              <p className="rounded-lg border border-dashed border-blue-200 bg-white px-3 py-2 text-slate-700 sm:col-span-2">
+                {t("brightRally.upgradeHintFriendly", { defaultValue: "Complete STEM games to unlock boosts for your next team rally." })}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
@@ -533,9 +600,25 @@ export default function BrightRallyCoopQuest() {
             <div className="rounded-md bg-slate-100 p-2">{t("brightRally.hud.shields", { defaultValue: "Shield saves" })}: <strong>{snapshot.shieldSaves}</strong></div>
           </div>
 
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-700">
+            <span>{t("brightRally.meterTitle", { defaultValue: "Team Rally Meter" })}</span>
+            <span>{Math.round(snapshot.teamMeter)}%</span>
+          </div>
           <div className="mb-2 h-3 overflow-hidden rounded-full bg-slate-200" aria-label={t("brightRally.meterLabel", { defaultValue: "Team rally meter" })}>
             <div className="h-full bg-yellow-400 transition-all duration-150" style={{ width: `${Math.min(snapshot.teamMeter, 100)}%` }} />
           </div>
+          <p className={`mb-2 text-xs font-semibold ${boostTimerRef.current > 0 ? "text-emerald-700" : hasBoostReady ? "text-amber-700" : "text-slate-600"}`}>
+            {boostTimerRef.current > 0
+              ? t("brightRally.boost.active", { defaultValue: "Team Boost active! Ball control is steadier." })
+              : hasBoostReady
+                ? t("brightRally.boost.ready", { defaultValue: "Almost there! One more return triggers Team Boost." })
+                : t("brightRally.boost.filling", { defaultValue: "Work together to fill the meter and trigger Team Boost." })}
+          </p>
+          <p className="mb-2 text-xs text-slate-600">
+            {snapshot.currentStreak >= 6
+              ? t("brightRally.streak.hot", { defaultValue: "Hot streak! Great teamwork rhythm." })
+              : t("brightRally.streak.base", { defaultValue: "Build a longer streak for easier rhythm control." })}
+          </p>
 
           <div
             ref={gameRegionRef}
@@ -544,9 +627,13 @@ export default function BrightRallyCoopQuest() {
             aria-label={t("brightRally.courtLabel", { defaultValue: "Bright Rally court" })}
             className="relative h-[360px] rounded-xl border border-blue-300 bg-gradient-to-b from-blue-700 to-blue-900 outline-none"
           >
+            <div className="absolute inset-0 rounded-xl border border-white/20" />
             <div className="absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 bg-white/35" />
-            <div className="absolute left-[8%] top-0 h-full w-[2px] bg-white/20" />
-            <div className="absolute left-[92%] top-0 h-full w-[2px] bg-white/20" />
+            <div className="absolute left-[8%] top-0 h-full w-[2px] bg-white/25" />
+            <div className="absolute left-[92%] top-0 h-full w-[2px] bg-white/25" />
+            <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20" />
+            <div className="absolute left-[14%] top-2 text-[10px] font-semibold uppercase tracking-wide text-white/70">Team A</div>
+            <div className="absolute right-[14%] top-2 text-[10px] font-semibold uppercase tracking-wide text-white/70">Team B</div>
 
             {config.pathPreviewEnabled && !reducedEffects && (
               <div
@@ -578,15 +665,15 @@ export default function BrightRallyCoopQuest() {
             <div className="rounded-lg bg-blue-50 p-2">
               <p className="font-semibold text-blue-900">{t("brightRally.touch.player1", { defaultValue: "Player 1 touch" })}</p>
               <div className="mt-2 flex gap-2">
-                <button type="button" onPointerDown={() => { touchDirRef.current.left = -1; }} onPointerUp={() => { touchDirRef.current.left = 0; }} onPointerLeave={() => { touchDirRef.current.left = 0; }} className="flex-1 rounded-md bg-white px-3 py-2">⬆️</button>
-                <button type="button" onPointerDown={() => { touchDirRef.current.left = 1; }} onPointerUp={() => { touchDirRef.current.left = 0; }} onPointerLeave={() => { touchDirRef.current.left = 0; }} className="flex-1 rounded-md bg-white px-3 py-2">⬇️</button>
+                <button type="button" aria-label="Player 1 move up" onPointerDown={() => { touchDirRef.current.left = -1; }} onPointerUp={() => { touchDirRef.current.left = 0; }} onPointerLeave={() => { touchDirRef.current.left = 0; }} className="min-h-12 flex-1 rounded-md border border-blue-200 bg-white px-3 py-3 font-semibold text-slate-900">Up ⬆️</button>
+                <button type="button" aria-label="Player 1 move down" onPointerDown={() => { touchDirRef.current.left = 1; }} onPointerUp={() => { touchDirRef.current.left = 0; }} onPointerLeave={() => { touchDirRef.current.left = 0; }} className="min-h-12 flex-1 rounded-md border border-blue-200 bg-white px-3 py-3 font-semibold text-slate-900">Down ⬇️</button>
               </div>
             </div>
             <div className="rounded-lg bg-blue-50 p-2">
               <p className="font-semibold text-blue-900">{t("brightRally.touch.player2", { defaultValue: "Player 2 touch" })}</p>
               <div className="mt-2 flex gap-2">
-                <button type="button" onPointerDown={() => { touchDirRef.current.right = -1; lastP2InputRef.current = Date.now(); }} onPointerUp={() => { touchDirRef.current.right = 0; }} onPointerLeave={() => { touchDirRef.current.right = 0; }} className="flex-1 rounded-md bg-white px-3 py-2">⬆️</button>
-                <button type="button" onPointerDown={() => { touchDirRef.current.right = 1; lastP2InputRef.current = Date.now(); }} onPointerUp={() => { touchDirRef.current.right = 0; }} onPointerLeave={() => { touchDirRef.current.right = 0; }} className="flex-1 rounded-md bg-white px-3 py-2">⬇️</button>
+                <button type="button" aria-label="Player 2 move up" onPointerDown={() => { touchDirRef.current.right = -1; lastP2InputRef.current = Date.now(); }} onPointerUp={() => { touchDirRef.current.right = 0; }} onPointerLeave={() => { touchDirRef.current.right = 0; }} className="min-h-12 flex-1 rounded-md border border-blue-200 bg-white px-3 py-3 font-semibold text-slate-900">Up ⬆️</button>
+                <button type="button" aria-label="Player 2 move down" onPointerDown={() => { touchDirRef.current.right = 1; lastP2InputRef.current = Date.now(); }} onPointerUp={() => { touchDirRef.current.right = 0; }} onPointerLeave={() => { touchDirRef.current.right = 0; }} className="min-h-12 flex-1 rounded-md border border-blue-200 bg-white px-3 py-3 font-semibold text-slate-900">Down ⬇️</button>
               </div>
             </div>
           </div>

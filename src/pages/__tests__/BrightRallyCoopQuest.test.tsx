@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import BrightRallyCoopQuest, {
@@ -6,6 +6,9 @@ import BrightRallyCoopQuest, {
   buildBrightRallyResult,
   buildRallyUpgrades,
   calculateRallyScore,
+  getCpuHelperDirection,
+  getDifficultySettings,
+  shouldUseCpuHelper,
 } from "../BrightRallyCoopQuest";
 import PlayHub from "../PlayHub";
 import { api } from "@/services/api";
@@ -62,6 +65,35 @@ describe("BrightRallyCoopQuest", () => {
     const config = applyRallyUpgradeConfig(upgrades);
     expect(config.paddleHeight).toBeGreaterThan(20);
     expect(config.shieldSaves).toBe(1);
+    expect(config.cpuWakeDelayMs).toBeGreaterThanOrEqual(1400);
+  });
+
+  it("scales difficulty in a gradual deterministic curve", () => {
+    expect(getDifficultySettings(0)).toEqual({ speedMultiplier: 1, paddleSpeed: 82, maxVerticalSpeed: 32 });
+    expect(getDifficultySettings(6)).toEqual({ speedMultiplier: 1.03, paddleSpeed: 84, maxVerticalSpeed: 34 });
+    expect(getDifficultySettings(11)).toEqual({ speedMultiplier: 1.08, paddleSpeed: 86, maxVerticalSpeed: 36 });
+    expect(getDifficultySettings(16)).toEqual({ speedMultiplier: 1.15, paddleSpeed: 90, maxVerticalSpeed: 38 });
+  });
+
+  it("uses cpu helper fallback only after inactivity while ball moves right", () => {
+    expect(shouldUseCpuHelper({
+      now: 4000,
+      lastP2InputAt: 1000,
+      p2InputActive: false,
+      ballHeadingRight: true,
+      cpuWakeDelayMs: 1800,
+    })).toBe(true);
+
+    expect(shouldUseCpuHelper({
+      now: 2500,
+      lastP2InputAt: 1000,
+      p2InputActive: false,
+      ballHeadingRight: true,
+      cpuWakeDelayMs: 1800,
+    })).toBe(false);
+
+    expect(getCpuHelperDirection({ ballY: 60, paddleY: 50, ballX: 70 })).toBeGreaterThan(0);
+    expect(getCpuHelperDirection({ ballY: 49.3, paddleY: 50, ballX: 70 })).toBe(0);
   });
 
   it("builds result payload shape", () => {
@@ -106,6 +138,22 @@ describe("BrightRallyCoopQuest", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /start rally/i })).toBeInTheDocument();
     });
+  });
+
+  it("shows friendly unlock hint when no boost modules are completed", async () => {
+    (api.getProgress as any).mockResolvedValue([]);
+    render(<BrightRallyCoopQuest />);
+
+    expect(await screen.findByText(/complete stem games to unlock boosts/i)).toBeInTheDocument();
+  });
+
+  it("prevents default keyboard scrolling controls while playing", async () => {
+    render(<BrightRallyCoopQuest />);
+    fireEvent.click(screen.getByRole("button", { name: /start rally/i }));
+
+    const event = new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it("renders Bright Rally in PlayHub co-op tab", async () => {
