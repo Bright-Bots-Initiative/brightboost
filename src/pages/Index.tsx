@@ -22,13 +22,20 @@ const Index: React.FC = () => {
           {/* Hero */}
           <div className="text-center mb-8">
             <h1 className="text-5xl md:text-7xl font-extrabold text-brightboost-navy mb-3 drop-shadow-sm tracking-tight">
-              {t("landing.title")}
+              {t("landing.mainHeadline", {
+                defaultValue: "Free STEM Learning for Students, Teachers, Families, and Organizations",
+              })}
             </h1>
             <p className="text-xl md:text-2xl text-brightboost-navy font-semibold">
-              {t("landing.subtitle")}
+              {t("landing.mainSubheadline", {
+                defaultValue:
+                  "Bright Boost helps learners build confidence through gamified STEM lessons, adaptive challenges, and future-ready skills.",
+              })}
             </p>
             <p className="text-base md:text-lg text-brightboost-navy/70 mt-1 max-w-lg mx-auto">
-              {t("landing.tagline")}
+              {t("landing.mainSupportLine", {
+                defaultValue: "Join our first 1,000 users and help shape the future of Bright Boost.",
+              })}
             </p>
           </div>
 
@@ -52,8 +59,32 @@ const Index: React.FC = () => {
             ))}
           </div>
 
-          {/* Primary CTAs */}
+          {/* Main launch CTAs */}
           <div className="space-y-3 flex flex-col items-center">
+            <Link
+              to="/signup"
+              className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center text-lg hover:bg-opacity-90 hover:scale-105 transition-all w-72 ui-lift"
+            >
+              {t("landing.joinFreeCta", { defaultValue: "Join Bright Boost Free" })}
+            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 w-72 sm:w-auto">
+              <Link
+                to="/for-reviewers"
+                className="button-shadow rounded-xl px-5 py-3 bg-white/90 text-brightboost-navy font-bold text-center text-base hover:bg-white hover:scale-105 transition-all ui-lift border border-brightboost-lightblue"
+              >
+                {t("landing.giveFeedbackCta", { defaultValue: "Give Feedback" })}
+              </Link>
+              <a
+                href="mailto:partnerships@brightboost.org?subject=Donate%20to%20Keep%20Bright%20Boost%20Free"
+                className="button-shadow rounded-xl px-5 py-3 bg-brightboost-yellow text-brightboost-navy font-bold text-center text-base hover:opacity-90 hover:scale-105 transition-all ui-lift"
+              >
+                {t("landing.donateCta", { defaultValue: "Donate to Keep Bright Boost Free" })}
+              </a>
+            </div>
+          </div>
+
+          {/* Teacher / student entry points */}
+          <div className="space-y-3 flex flex-col items-center mt-5">
             <Link
               to="/teacher-login"
               className="button-shadow rounded-xl px-8 py-4 bg-brightboost-blue text-white font-bold text-center text-lg hover:bg-opacity-90 hover:scale-105 transition-all w-64 ui-lift"
