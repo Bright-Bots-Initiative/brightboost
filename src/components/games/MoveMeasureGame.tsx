@@ -432,7 +432,7 @@ function MoveMeasurePlayfield({ onFinish }: { onFinish: (r: GameResult) => void 
 export default function MoveMeasureGame({ onComplete }: { config?: unknown; onComplete?: (result: GameResult) => void }) {
   return (
     <GameShell gameKey="move_measure" title="Move, Measure & Improve" briefing={BRIEFING} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <MoveMeasurePlayfield onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <MoveMeasurePlayfield onFinish={onFinish} />}
     </GameShell>
   );
 }

@@ -86,6 +86,24 @@
 }
 .cmd-active { animation: cmd-active 0.35s ease-out; }
 
+/* ── Shared reduced-effects wrapper override ───────────────────────────── */
+[data-reduced-effects="true"] .star-pop,
+[data-reduced-effects="true"] .pulse-glow,
+[data-reduced-effects="true"] .hit-burst,
+[data-reduced-effects="true"] .shake,
+[data-reduced-effects="true"] .bounce-in,
+[data-reduced-effects="true"] .slide-up-fade,
+[data-reduced-effects="true"] .float-idle,
+[data-reduced-effects="true"] .count-flash,
+[data-reduced-effects="true"] .streak-fire,
+[data-reduced-effects="true"] .cmd-active {
+  animation: none !important;
+}
+
+[data-reduced-effects="true"] * {
+  transition-duration: 0.01ms !important;
+}
+
 /* ── Reduced motion ───────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .star-pop, .pulse-glow, .hit-burst, .shake, .bounce-in,

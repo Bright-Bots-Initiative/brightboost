@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQuantumQuestCompletionPayload } from "../QuantumQuestGame";
+import { buildQuantumQuestCompletionPayload, getQuantumQuestStarCount } from "../QuantumQuestGame";
 
 describe("Quantum Quest completion", () => {
   it("builds final payload with accuracy and achievements", () => {
@@ -29,5 +29,10 @@ describe("Quantum Quest completion", () => {
     });
     expect(payload.achievements).toContain("games.quantumQuest.achPerfect");
     expect(payload.achievements).toContain("games.quantumQuest.achExplorer");
+  });
+
+  it("reduces decorative starfield count when reduced effects is enabled", () => {
+    expect(getQuantumQuestStarCount(false)).toBe(40);
+    expect(getQuantumQuestStarCount(true)).toBe(12);
   });
 });

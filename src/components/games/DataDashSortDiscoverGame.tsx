@@ -234,7 +234,7 @@ export default function DataDashSortDiscoverGame({ onComplete }: GameProps) {
       briefing={BRIEFING}
       onComplete={(result) => onComplete?.(result)}
     >
-      {({ onFinish }) => <DataDashPlayfield onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <DataDashPlayfield onFinish={onFinish} />}
     </GameShell>
   );
 }

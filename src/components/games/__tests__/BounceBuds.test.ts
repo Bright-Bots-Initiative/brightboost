@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { shouldRenderBounceSparkles } from "../BounceBudsGame";
 
 /**
  * Bounce & Buds round data validation.
@@ -37,5 +38,10 @@ describe("BounceBuds game data", () => {
     expect(GAME_COMPONENTS.buddy_garden_sort).toBe(
       GAME_COMPONENTS.bounce_buds_unity,
     );
+  });
+
+  it("disables decorative sparkles in reduced-effects mode", () => {
+    expect(shouldRenderBounceSparkles(false)).toBe(true);
+    expect(shouldRenderBounceSparkles(true)).toBe(false);
   });
 });

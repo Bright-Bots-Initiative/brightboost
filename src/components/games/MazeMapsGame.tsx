@@ -661,7 +661,7 @@ export default function MazeMapsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish }) => <MazeMapsCore onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore onFinish={onFinish} />}
     </GameShell>
   );
 }

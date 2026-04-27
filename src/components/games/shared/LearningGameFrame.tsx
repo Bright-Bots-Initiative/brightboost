@@ -1,5 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
+import { useReducedGameEffects } from "./useReducedGameEffects";
 
 type LearningGameFrameProps = {
   title: string;
@@ -20,12 +22,21 @@ export function LearningGameFrame({
 }: LearningGameFrameProps) {
   const { t } = useTranslation();
   const titleId = `${title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").toLowerCase()}-title`;
+  const { reducedEffects, source, setReducedEffects } = useReducedGameEffects();
 
   return (
     <section
       className="mx-auto max-w-5xl rounded-2xl border bg-white p-4 shadow-sm"
       aria-labelledby={titleId}
+      data-reduced-effects={reducedEffects ? "true" : "false"}
     >
+      <div className="mb-2">
+        <ReducedEffectsToggle
+          reducedEffects={reducedEffects}
+          source={source}
+          onToggle={setReducedEffects}
+        />
+      </div>
       <div className="mb-4 rounded-xl border bg-slate-50 p-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>

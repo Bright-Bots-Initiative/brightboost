@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LearningGameFrame } from "../shared/LearningGameFrame";
 
@@ -7,6 +8,27 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("LearningGameFrame", () => {
+  it("shows a reduced-effects toggle with accessible description", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const user = userEvent.setup();
+
+    render(
+      <LearningGameFrame title="Game" objective="Obj">
+        <div>Body</div>
+      </LearningGameFrame>,
+    );
+
+    const toggle = screen.getByRole("button", { name: /reduced effects: off/i });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText(/reduces motion, particles, and visual intensity for smoother play/i)).toBeInTheDocument();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("announces progress and feedback with polite status regions", () => {
     render(
       <LearningGameFrame

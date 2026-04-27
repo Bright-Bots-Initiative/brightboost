@@ -355,7 +355,7 @@ export default function FastLaneGame({ onComplete }: {
 }) {
   return (
     <GameShell gameKey="fast_lane" title="Fast Lane Signals" briefing={BRIEFING} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <FastLaneCore onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <FastLaneCore onFinish={onFinish} />}
     </GameShell>
   );
 }

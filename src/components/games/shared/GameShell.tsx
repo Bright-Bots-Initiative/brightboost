@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
+import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
+import { useReducedGameEffects } from "./useReducedGameEffects";
 import "./game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -43,7 +45,7 @@ interface GameShellProps {
   gameKey: string;
   title: string;
   briefing?: MissionBriefing;
-  children: (props: { onFinish: (result: GameResult) => void }) => React.ReactNode;
+  children: (props: { onFinish: (result: GameResult) => void; reducedEffects: boolean }) => React.ReactNode;
   onComplete: (result: GameResult) => void;
   starThresholds?: [number, number, number];
 }
@@ -269,6 +271,7 @@ export default function GameShell({
     briefing ? "briefing" : "playing",
   );
   const [result, setResult] = useState<GameResult | null>(null);
+  const { reducedEffects, source, setReducedEffects } = useReducedGameEffects();
 
   const handleFinish = useCallback(
     (gameResult: GameResult) => {
@@ -285,8 +288,16 @@ export default function GameShell({
   if (phase === "briefing" && briefing) {
     const tc = briefing.themeColor ?? "indigo";
     return (
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div
+        className="max-w-2xl mx-auto space-y-4"
+        data-reduced-effects={reducedEffects ? "true" : "false"}
+      >
         <ActivityHeader title={title} visualKey="game" />
+        <ReducedEffectsToggle
+          reducedEffects={reducedEffects}
+          source={source}
+          onToggle={setReducedEffects}
+        />
         <div className="slide-up-fade relative overflow-hidden rounded-2xl shadow-xl border border-white/20">
           {/* Gradient background */}
           <div className={`absolute inset-0 bg-gradient-to-br from-${tc}-500/10 via-${tc}-400/5 to-purple-500/10`} />
@@ -344,22 +355,40 @@ export default function GameShell({
 
   if (phase === "results" && result) {
     return (
-      <GameResultsView
-        result={result}
-        title={title}
-        personalBest={personalBest}
-        onPlayAgain={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
-        onComplete={() => onComplete(result)}
-      />
+      <div
+        className="max-w-2xl mx-auto space-y-4"
+        data-reduced-effects={reducedEffects ? "true" : "false"}
+      >
+        <ReducedEffectsToggle
+          reducedEffects={reducedEffects}
+          source={source}
+          onToggle={setReducedEffects}
+        />
+        <GameResultsView
+          result={result}
+          title={title}
+          personalBest={personalBest}
+          onPlayAgain={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
+          onComplete={() => onComplete(result)}
+        />
+      </div>
     );
   }
 
   // ── Game Phase ───────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div
+      className="max-w-4xl mx-auto space-y-4"
+      data-reduced-effects={reducedEffects ? "true" : "false"}
+    >
       <ActivityHeader title={title} visualKey="game" />
-      {children({ onFinish: handleFinish })}
+      <ReducedEffectsToggle
+        reducedEffects={reducedEffects}
+        source={source}
+        onToggle={setReducedEffects}
+      />
+      {children({ onFinish: handleFinish, reducedEffects })}
     </div>
   );
 }

@@ -335,7 +335,7 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
 export default function SkyShieldGame({ onComplete }: { config?: unknown; onComplete?: (result: GameResult) => void }) {
   return (
     <GameShell gameKey="sky_shield" title="Sky Shield Patterns" briefing={BRIEFING} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <SkyShieldPlayfield onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <SkyShieldPlayfield onFinish={onFinish} />}
     </GameShell>
   );
 }

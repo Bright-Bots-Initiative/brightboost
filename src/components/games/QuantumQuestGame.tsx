@@ -166,9 +166,12 @@ const BUILTIN_CONFIG: QuantumQuestConfig = {
 const FIELD_W = 600;
 const FIELD_H = 380;
 const TARGET_PAD = 8; // safe padding from edges so targets never clip
+export function getQuantumQuestStarCount(reducedEffects: boolean) {
+  return reducedEffects ? 12 : 40;
+}
 
 function TargetField({
-  targets, onHit, sectorTheme, streak, hitEffects, slowActive,
+  targets, onHit, sectorTheme, streak, hitEffects, slowActive, reducedEffects,
 }: {
   targets: Target[];
   onHit: (id: string) => void;
@@ -176,6 +179,7 @@ function TargetField({
   streak: number;
   hitEffects: { id: string; x: number; y: number; correct: boolean }[];
   slowActive: boolean;
+  reducedEffects: boolean;
 }) {
   // Responsive scaling — same approach as Bounce & Buds
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -194,7 +198,7 @@ function TargetField({
 
   // Stable starfield
   const stars = useMemo(() =>
-    Array.from({ length: 40 }, (_, i) => ({
+    Array.from({ length: getQuantumQuestStarCount(reducedEffects) }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -202,7 +206,7 @@ function TargetField({
       opacity: Math.random() * 0.6 + 0.15,
       twinkle: 2 + Math.random() * 3,
     })),
-  []);
+  [reducedEffects]);
 
   return (
     <div ref={wrapperRef} className="mx-auto" style={{ maxWidth: FIELD_W }}>
@@ -220,7 +224,7 @@ function TargetField({
           }}
         >
           {/* Starfield */}
-          {stars.map((s) => (
+          {!reducedEffects && stars.map((s) => (
             <div
               key={s.id}
               className="absolute rounded-full bg-white"
@@ -235,7 +239,7 @@ function TargetField({
           ))}
 
           {/* Hit effect bursts */}
-          {hitEffects.map((e) => (
+          {!reducedEffects && hitEffects.map((e) => (
             <div
               key={e.id}
               className="absolute pointer-events-none hit-burst rounded-full"
@@ -278,7 +282,7 @@ function TargetField({
 
           {/* Streak fire overlay */}
           {streak >= 3 && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-extrabold streak-fire shadow-lg">
+            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm font-extrabold shadow-lg ${reducedEffects ? "" : "streak-fire"}`}>
               🔥 {streak}x STREAK
             </div>
           )}
@@ -357,7 +361,15 @@ function QQHud({
 
 // ── Core Game ──────────────────────────────────────────────────────────────
 
-function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; onFinish: (result: GameResult) => void }) {
+function QuantumQuestCore({
+  config,
+  onFinish,
+  reducedEffects,
+}: {
+  config: QuantumQuestConfig;
+  onFinish: (result: GameResult) => void;
+  reducedEffects: boolean;
+}) {
   const { t } = useTranslation();
 
   const [sectorIdx, setSectorIdx] = useState(0);
@@ -453,7 +465,9 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
     const tgt = targets.find((t) => t.id === targetId);
     if (!tgt || tgt.hit || tgt.missed) return;
     setTotalAttempted((a) => a + 1);
-    setHitEffects([{ id: targetId, x: tgt.x, y: tgt.y, correct: tgt.correct }]);
+    if (!reducedEffects) {
+      setHitEffects([{ id: targetId, x: tgt.x, y: tgt.y, correct: tgt.correct }]);
+    }
 
     if (tgt.correct) {
       setTargets((prev) => prev.map((t) => t.id === targetId ? { ...t, hit: true } : { ...t, missed: true }));
@@ -481,7 +495,7 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
         setFeedback({ text: t("games.quantumQuest.tryAgain"), type: "wrong" });
       }
     }
-  }, [targets, streak, advanceProblem, t, shieldActive]);
+  }, [targets, streak, advanceProblem, t, shieldActive, reducedEffects]);
 
   const usePower = useCallback((p: PowerUp) => {
     if (powerUps[p] <= 0) return;
@@ -587,7 +601,7 @@ function QuantumQuestCore({ config, onFinish }: { config: QuantumQuestConfig; on
       />
       <TargetField
         targets={targets} onHit={handleHit} sectorTheme={sectorTheme}
-        streak={streak} hitEffects={hitEffects} slowActive={slowActive}
+        streak={streak} hitEffects={hitEffects} slowActive={slowActive} reducedEffects={reducedEffects}
       />
       {feedback && (
         <div className={`text-center py-2 rounded-xl font-bold text-sm ${
@@ -627,7 +641,9 @@ export default function QuantumQuestGame({ config, onComplete }: QuantumQuestGam
 
   return (
     <GameShell gameKey="quantum_quest" title={t("games.quantumQuest.title")} briefing={briefing} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <QuantumQuestCore config={gameConfig} onFinish={onFinish} />}
+      {({ onFinish, reducedEffects }) => (
+        <QuantumQuestCore config={gameConfig} onFinish={onFinish} reducedEffects={reducedEffects} />
+      )}
     </GameShell>
   );
 }

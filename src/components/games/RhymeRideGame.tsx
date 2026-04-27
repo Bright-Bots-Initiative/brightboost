@@ -11,7 +11,7 @@
  * Touch:    tap the lane
  * Accessibility: reduced-motion mode, non-color cues, large targets
  */
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { cn } from "@/lib/utils";
@@ -336,12 +336,14 @@ function RhymeHUD({
 // Core game component
 // ═══════════════════════════════════════════════════════════════════════════
 
-function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void }) {
+function RhymeRideCore({
+  onFinish,
+  reducedEffects,
+}: {
+  onFinish: (result: GameResult) => void;
+  reducedEffects: boolean;
+}) {
   const { t } = useTranslation();
-  const prefersReducedMotion = useMemo(
-    () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
-    [],
-  );
 
   // ── State ──
   const [worldIdx, setWorldIdx] = useState(0);
@@ -863,7 +865,7 @@ function RhymeRideCore({ onFinish }: { onFinish: (result: GameResult) => void })
         cards={cards}
         onLaneTap={handleLaneTap}
         worldTheme={world.theme}
-        reducedMotion={prefersReducedMotion}
+        reducedMotion={reducedEffects}
         combo={combo}
       />
 
@@ -927,7 +929,9 @@ export default function RhymeRideGame({
       briefing={briefing}
       onComplete={onComplete!}
     >
-      {({ onFinish }) => <RhymeRideCore onFinish={onFinish} />}
+      {({ onFinish, reducedEffects }) => (
+        <RhymeRideCore onFinish={onFinish} reducedEffects={reducedEffects} />
+      )}
     </GameShell>
   );
 }
