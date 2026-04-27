@@ -26,12 +26,40 @@ const OBSTACLES: Obstacle[] = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-function laneX(lane: number) { return lane * LANE_W + LANE_W / 2; }
-function timeLabel(s: number) { return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow"; }
-function timeIcon(s: number) { return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢"; }
-function smoothLabel(s: number) { return s >= 70 ? "Smooth" : "Rough"; }
-function smoothIcon(s: number) { return s >= 70 ? "✨" : "💨"; }
-function arrow(a: number, b: number) { return b < a ? "⬇️" : b > a ? "⬆️" : "➡️"; }
+export function laneX(lane: number) { return lane * LANE_W + LANE_W / 2; }
+export function timeLabel(s: number) { return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow"; }
+export function timeIcon(s: number) { return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢"; }
+export function smoothLabel(s: number) { return s >= 70 ? "Smooth" : "Rough"; }
+export function smoothIcon(s: number) { return s >= 70 ? "✨" : "💨"; }
+export function arrow(a: number, b: number) { return b < a ? "⬇️" : b > a ? "⬆️" : "➡️"; }
+
+export function calculateQualifyTuneRaceScore(run1: RunResult | null, run2: RunResult | null, exitAnswer: string | null) {
+  if (!run1 || !run2) return { score: 0, total: 10 };
+  let s = 3;
+  if (run2.bumps < run1.bumps) s += 2;
+  if (run2.time < run1.time) s += 2;
+  if (run2.smoothness > run1.smoothness) s += 1;
+  if (exitAnswer === "one") s += 2;
+  return { score: Math.min(s, 10), total: 10 };
+}
+
+export function buildQualifyTuneRaceCompletionPayload(params: {
+  run1: RunResult | null;
+  run2: RunResult | null;
+  exitAnswer: string | null;
+  upgrade: Upgrade | null;
+}): GameResult {
+  const { score, total } = calculateQualifyTuneRaceScore(params.run1, params.run2, params.exitAnswer);
+  return {
+    gameKey: "qualify_tune_race",
+    score,
+    total,
+    streakMax: 1,
+    roundsCompleted: 2,
+    achievements: ["Big Challenge"],
+    gameSpecific: { upgrade: params.upgrade, run1: params.run1, run2: params.run2, exitCorrect: params.exitAnswer === "one" },
+  };
+}
 
 // ── Briefing ──────────────────────────────────────────────────────────────
 const BRIEFING: MissionBriefing = {
@@ -159,15 +187,10 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [steer]);
 
-  const computeScore = useCallback(() => {
-    if (!run1 || !run2) return { score: 0, total: 10 };
-    let s = 3;
-    if (run2.bumps < run1.bumps) s += 2;
-    if (run2.time < run1.time) s += 2;
-    if (run2.smoothness > run1.smoothness) s += 1;
-    if (exitAnswer === "one") s += 2;
-    return { score: Math.min(s, 10), total: 10 };
-  }, [run1, run2, exitAnswer]);
+  const computeScore = useCallback(
+    () => calculateQualifyTuneRaceScore(run1, run2, exitAnswer),
+    [run1, run2, exitAnswer],
+  );
 
   // ── Phase: intro ────────────────────────────────────────────────────
   if (phase === "intro") return (
@@ -448,10 +471,7 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
         </p>
       </div>
       <button onClick={() => {
-          const { score: s, total: tot } = computeScore();
-          onFinish({ gameKey: "qualify_tune_race", score: s, total: tot, streakMax: 1,
-            roundsCompleted: 2, achievements: ["Big Challenge"],
-            gameSpecific: { upgrade, run1, run2, exitCorrect: exitAnswer === "one" } });
+          onFinish(buildQualifyTuneRaceCompletionPayload({ run1, run2, exitAnswer, upgrade }));
         }}
         className="bounce-in px-10 py-5 text-xl font-bold rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform"
         style={{ animationDelay: "600ms" }}>

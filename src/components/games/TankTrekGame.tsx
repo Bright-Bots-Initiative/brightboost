@@ -104,6 +104,43 @@ const DIR_ROTATION: Record<Dir, number> = { N: 0, E: 90, S: 180, W: 270 };
 
 const CELL_SIZE = 56;
 
+export function computeTankStars(commandsLength: number, par?: number): number {
+  const baseline = par ?? commandsLength;
+  return commandsLength <= baseline ? 3 : commandsLength <= baseline + 2 ? 2 : 1;
+}
+
+export function applyTankCommand(dir: Dir, cmd: Command): Dir {
+  if (cmd === "LEFT") return TURN_LEFT[dir];
+  if (cmd === "RIGHT") return TURN_RIGHT[dir];
+  return dir;
+}
+
+export function buildTankTrekCompletionPayload(params: {
+  totalScore: number;
+  totalPossible: number;
+  levelsCleared: number;
+  retries: number;
+  totalChips: number;
+  hintsUsed: number;
+  allLevelsLength: number;
+  achievements: string[];
+}): GameResult {
+  return {
+    gameKey: "tank_trek",
+    score: params.totalScore,
+    total: params.totalPossible,
+    streakMax: params.levelsCleared,
+    roundsCompleted: params.levelsCleared,
+    starsEarned: Math.round(params.totalScore / Math.max(1, params.allLevelsLength)),
+    accuracy: params.totalPossible > 0 ? Math.round((params.totalScore / params.totalPossible) * 100) : 0,
+    levelReached: params.allLevelsLength,
+    hintsUsed: params.hintsUsed,
+    firstTryClear: params.retries === 0,
+    achievements: params.achievements,
+    gameSpecific: { totalChips: params.totalChips, retries: params.retries },
+  };
+}
+
 // ── Built-in Levels ────────────────────────────────────────────────────────
 
 const BUILTIN_LEVELS: TankTrekConfig = {
@@ -412,8 +449,7 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
       setActiveCommandIdx(i);
       const cmd = commands[i];
 
-      if (cmd === "LEFT") { d = TURN_LEFT[d]; setRobotDir(d); }
-      else if (cmd === "RIGHT") { d = TURN_RIGHT[d]; setRobotDir(d); }
+      if (cmd === "LEFT" || cmd === "RIGHT") { d = applyTankCommand(d, cmd); setRobotDir(d); }
       else {
         const [dr, dc] = DIR_DELTA[d];
         const nr = r + dr, nc = c + dc;
@@ -435,8 +471,7 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
     setActiveCommandIdx(-1);
 
     if (reachedGoal) {
-      const par = level.par ?? commands.length;
-      const stars = commands.length <= par ? 3 : commands.length <= par + 2 ? 2 : 1;
+      const stars = computeTankStars(commands.length, level.par);
       setStarsThisLevel(stars);
       setLevelStars((prev) => ({ ...prev, [levelIdx]: Math.max(prev[levelIdx] ?? 0, stars) }));
       setTotalScore((s) => s + stars);
@@ -465,15 +500,16 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
       if (totalChips > 0) achievements.push(t("games.tankTrek.achCollector"));
       if (totalScore >= totalPossible * 0.9) achievements.push(t("games.tankTrek.achMaster"));
       if (hintsUsed === 0) achievements.push(t("games.tankTrek.achNoHints"));
-      onFinish({
-        gameKey: "tank_trek", score: totalScore, total: totalPossible,
-        streakMax: levelsCleared, roundsCompleted: levelsCleared,
-        starsEarned: Math.round(totalScore / Math.max(1, allLevels.length)),
-        accuracy: totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0,
-        levelReached: allLevels.length, hintsUsed,
-        firstTryClear: retries === 0, achievements,
-        gameSpecific: { totalChips, retries },
-      });
+      onFinish(buildTankTrekCompletionPayload({
+        totalScore,
+        totalPossible,
+        levelsCleared,
+        retries,
+        totalChips,
+        hintsUsed,
+        allLevelsLength: allLevels.length,
+        achievements,
+      }));
     }
   }, [levelIdx, allLevels, totalScore, totalPossible, levelsCleared, retries, totalChips, hintsUsed, onFinish, t]);
 

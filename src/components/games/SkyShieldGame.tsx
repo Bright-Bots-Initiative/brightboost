@@ -14,7 +14,7 @@ import "./shared/game-effects.css";
 const LABELS = ["🔵", "🟡", "🩷"];
 const SHIELD_BG = ["bg-blue-500", "bg-yellow-500", "bg-pink-500"];
 const LANE_BG = ["bg-blue-400/20", "bg-yellow-400/20", "bg-pink-400/20"];
-const PT = { catch: 10, predict: 20, scan: 15 };
+export const PT = { catch: 10, predict: 20, scan: 15 };
 const PRACTICE_N = 5, PATTERN_N = 3, CHALLENGE_N = 10, MYSTERY_N = 2;
 
 type Phase = "intro" | "practice" | "pattern" | "scan" | "challenge" | "exitTicket" | "celebration";
@@ -31,12 +31,12 @@ const BRIEFING: MissionBriefing = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const rLane = () => Math.floor(Math.random() * 3);
-function mkPattern(): number[] {
+export function mkPattern(): number[] {
   const b = [0, 1, 2];
   for (let i = 2; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
   return [...b, ...b];
 }
-function mkChallenge(): Drop[] {
+export function mkChallenge(): Drop[] {
   const mi = new Set<number>();
   while (mi.size < MYSTERY_N) mi.add(2 + Math.floor(Math.random() * (CHALLENGE_N - 2)));
   const p = mkPattern();
@@ -45,6 +45,23 @@ function mkChallenge(): Drop[] {
     kind: mi.has(i) ? "mystery" as const : "normal" as const,
     ...(mi.has(i) ? { hiddenColor: Math.random() < 0.5 ? 0 : 1 } : {}),
   }));
+}
+
+export function buildSkyShieldCompletionPayload(params: {
+  score: number;
+  exitAns: number | null;
+  totalRounds: number;
+  maxStreak: number;
+  streak: number;
+}): GameResult {
+  const exitOk = params.exitAns === 1;
+  return {
+    gameKey: "sky_shield",
+    score: params.score + (exitOk ? PT.predict : 0),
+    total: (params.totalRounds + 1) * PT.predict,
+    streakMax: Math.max(params.maxStreak, exitOk ? params.streak + 1 : params.streak),
+    roundsCompleted: params.totalRounds + 1,
+  };
 }
 
 // ── Shared sub-components ─────────────────────────────────────────────────
@@ -295,16 +312,18 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
 
   // ── Phase: CELEBRATION ──────────────────────────────────────────────
   if (phase === "celebration") {
-    const exitOk = exitAns === 1;
-    const fs = score + (exitOk ? PT.predict : 0);
-    const ft = (total.current + 1) * PT.predict;
-    const fm = Math.max(maxStreak.current, exitOk ? streak + 1 : streak);
     return (
       <div className="slide-up-fade text-center space-y-6 py-8">
         <div className="text-7xl bounce-in">🛡️✨</div>
         <h2 className="text-2xl font-extrabold text-violet-900">{T("celebrationTitle", "Amazing Work!")}</h2>
         <p className="text-slate-600 max-w-md mx-auto">{T("celebrationMsg", "You watched, noticed the pattern, and chose the right shield!")}</p>
-        <BigBtn onClick={() => onFinish({ gameKey: "sky_shield", score: fs, total: ft, streakMax: fm, roundsCompleted: total.current + 1 })}
+        <BigBtn onClick={() => onFinish(buildSkyShieldCompletionPayload({
+          score,
+          exitAns,
+          totalRounds: total.current,
+          maxStreak: maxStreak.current,
+          streak,
+        }))}
           cls="bg-gradient-to-r from-emerald-500 to-emerald-600">{T("finish", "Finish")}</BigBtn>
       </div>
     );

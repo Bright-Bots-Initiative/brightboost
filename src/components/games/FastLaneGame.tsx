@@ -43,7 +43,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function generateLanes(allowCaution: boolean): [Signal, Signal, Signal] {
+export function generateLanes(allowCaution: boolean): [Signal, Signal, Signal] {
   const pool: Signal[] = allowCaution ? ["safe", "blocked", "caution"] : ["safe", "blocked"];
   const lanes: Signal[] = [];
   const safeIndex = Math.floor(Math.random() * 3);
@@ -51,7 +51,7 @@ function generateLanes(allowCaution: boolean): [Signal, Signal, Signal] {
   return shuffle(lanes) as [Signal, Signal, Signal];
 }
 
-function generateLookAhead(): LaneState {
+export function generateLookAhead(): LaneState {
   let current: [Signal, Signal, Signal], next: [Signal, Signal, Signal], attempts = 0;
   do {
     current = generateLanes(true); next = generateLanes(true); attempts++;
@@ -59,7 +59,7 @@ function generateLookAhead(): LaneState {
   return { current, next };
 }
 
-function bestLane(state: LaneState): number {
+export function bestLane(state: LaneState): number {
   const { current, next } = state;
   if (next) {
     const bothSafe = current.map((s, i) => (s === "safe" && next[i] === "safe" ? i : -1)).filter((i) => i >= 0);
@@ -73,10 +73,34 @@ function bestLane(state: LaneState): number {
   return cautionIdx >= 0 ? cautionIdx : 0;
 }
 
-function scorePick(signal: Signal, isBest: boolean): number {
+export function scorePick(signal: Signal, isBest: boolean): number {
   if (signal === "blocked") return 0;
   if (signal === "caution") return 5;
   return isBest ? 15 : 10;
+}
+
+export function buildFastLaneCompletionPayload(params: {
+  score: number;
+  maxStreak: number;
+  totalRounds: number;
+  correctCount: number;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}): GameResult {
+  const { score, maxStreak, totalRounds, correctCount, t } = params;
+  const total = Math.max(totalRounds * 15, 1);
+  return {
+    gameKey: "fast_lane",
+    score,
+    total,
+    streakMax: maxStreak,
+    roundsCompleted: totalRounds,
+    accuracy: totalRounds > 0 ? Math.round((correctCount / totalRounds) * 100) : 0,
+    firstTryClear: correctCount === totalRounds,
+    achievements: [
+      ...(maxStreak >= 5 ? [t("games.fastLane.achStreak", { defaultValue: "Signal Streak x5" })] : []),
+      ...(correctCount === totalRounds ? [t("games.fastLane.achPerfect", { defaultValue: "Perfect Driver" })] : []),
+    ],
+  };
 }
 
 // ── Shared lane display ───────────────────────────────────────────────────
@@ -196,17 +220,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
   }, [roundIndex, roundsForPhase, phase, advancePhase, setupRound]);
 
   const handleFinish = useCallback(() => {
-    const total = Math.max(totalRounds * 15, 1);
-    onFinish({
-      gameKey: "fast_lane", score, total, streakMax: maxStreak,
-      roundsCompleted: totalRounds,
-      accuracy: totalRounds > 0 ? Math.round((correctCount / totalRounds) * 100) : 0,
-      firstTryClear: correctCount === totalRounds,
-      achievements: [
-        ...(maxStreak >= 5 ? [t("games.fastLane.achStreak", { defaultValue: "Signal Streak x5" })] : []),
-        ...(correctCount === totalRounds ? [t("games.fastLane.achPerfect", { defaultValue: "Perfect Driver" })] : []),
-      ],
-    });
+    onFinish(buildFastLaneCompletionPayload({ score, maxStreak, totalRounds, correctCount, t }));
   }, [score, maxStreak, totalRounds, correctCount, onFinish, t]);
 
   // ── Intro ───────────────────────────────────────────────────────────────
