@@ -176,3 +176,11 @@ Shared game wrappers now include a reusable keyboard/control banner and safer, p
 
 - Add deeper game-by-game keyboard-path tests for complex in-round control surfaces.
 - Add axe-based integration checks for live game views and command-heavy mobile layouts.
+
+## 8) Bright Rally co-op prototype rollout (April 27, 2026)
+
+- `Play Hub` co-op tab now launches **Bright Rally: Pickleball Co-op Quest** instead of the placeholder.
+- Scope for this release is **local single-device co-op simulation** (no real-time online multiplayer yet).
+- Gameplay includes intro/instructions, rally play loop, team meter + boosts, and a results summary.
+- Learning-powered boosts are unlocked from completed canonical STEM activity IDs (Set 1).
+- Real-time co-op (invites/rooms/sync) remains future work.

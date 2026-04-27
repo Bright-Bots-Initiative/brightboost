@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SpacewarArena from "./SpacewarArena";
+import BrightRallyCoopQuest from "./BrightRallyCoopQuest";
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -41,15 +42,8 @@ export default function PlayHub() {
           <SpacewarArena />
         </TabsContent>
 
-        <TabsContent
-          value="coop"
-          className="flex-1 flex items-center justify-center bg-white rounded-xl border-2 border-dashed border-slate-200 min-h-[50vh]"
-        >
-          <div className="text-center p-8">
-            <span className="text-4xl block mb-2">🤝</span>
-            <h3 className="text-xl font-bold text-slate-700">{t("playHub.coopMode")}</h3>
-            <p className="text-slate-500">{t("playHub.coopComingSoon")}</p>
-          </div>
+        <TabsContent value="coop" className="flex-1 w-full">
+          <BrightRallyCoopQuest />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,0 +1,124 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { describe, expect, it, beforeEach, vi } from "vitest";
+import BrightRallyCoopQuest, {
+  applyRallyUpgradeConfig,
+  buildBrightRallyResult,
+  buildRallyUpgrades,
+  calculateRallyScore,
+} from "../BrightRallyCoopQuest";
+import PlayHub from "../PlayHub";
+import { api } from "@/services/api";
+
+vi.mock("@/services/api", () => ({
+  api: {
+    getAvatar: vi.fn(),
+    getProgress: vi.fn(),
+  },
+}));
+
+vi.mock("../SpacewarArena", () => ({
+  default: () => <div>Spacewar mock</div>,
+}));
+
+describe("BrightRallyCoopQuest", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    (api.getAvatar as any).mockResolvedValue({ archetype: "explorer" });
+    (api.getProgress as any).mockResolvedValue([
+      { activityId: "bounce-buds", status: "COMPLETED" },
+      { activityId: "gotcha-gears", status: "COMPLETED" },
+      { activityId: "rhyme-ride", status: "COMPLETED" },
+    ]);
+  });
+
+  it("calculates rally score deterministically", () => {
+    expect(
+      calculateRallyScore({
+        rallyCount: 12,
+        bestStreak: 6,
+        teamBoosts: 2,
+        rhythmBonusMultiplier: 1.15,
+      }),
+    ).toBe(235);
+  });
+
+  it("maps completed activity ids to upgrades", () => {
+    const upgrades = buildRallyUpgrades([
+      "bounce-buds",
+      "quantum-quest",
+      "something-else",
+    ]);
+    expect(upgrades.map((upgrade) => upgrade.key)).toEqual([
+      "softBounce",
+      "teamShield",
+    ]);
+
+    const config = applyRallyUpgradeConfig(upgrades);
+    expect(config.paddleHeight).toBeGreaterThan(20);
+    expect(config.shieldSaves).toBe(1);
+  });
+
+  it("builds result payload shape", () => {
+    const result = buildBrightRallyResult({
+      rallyCount: 20,
+      bestStreak: 9,
+      teamBoosts: 3,
+      livesRemaining: 2,
+      upgrades: buildRallyUpgrades(["tank-trek"]),
+    });
+
+    expect(result).toMatchObject({
+      rallyCount: 20,
+      bestStreak: 9,
+      teamBoosts: 3,
+      livesRemaining: 2,
+    });
+    expect(Array.isArray(result.modulesUsed)).toBe(true);
+  });
+
+  it("renders intro and instructions", async () => {
+    render(<BrightRallyCoopQuest />);
+
+    expect(screen.getByRole("heading", { name: /bright rally: pickleball co-op quest/i })).toBeInTheDocument();
+    expect(screen.getByText("How to play")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /start rally/i })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(api.getProgress).toHaveBeenCalled();
+    });
+
+    const wrapper = screen.getByRole("region", { name: /bright rally co-op game/i });
+    expect(wrapper).toHaveAttribute("data-reduced-effects", "false");
+  });
+
+  it("does not crash when progress or avatar fetch fails", async () => {
+    (api.getAvatar as any).mockRejectedValue(new Error("avatar down"));
+    (api.getProgress as any).mockRejectedValue(new Error("progress down"));
+
+    render(<BrightRallyCoopQuest />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /start rally/i })).toBeInTheDocument();
+    });
+  });
+
+  it("renders Bright Rally in PlayHub co-op tab", async () => {
+    render(
+      <MemoryRouter initialEntries={["/play?tab=coop"]}>
+        <Routes>
+          <Route path="/play" element={<PlayHub />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /bright rally: pickleball co-op quest/i })).toBeInTheDocument();
+    });
+  });
+});
