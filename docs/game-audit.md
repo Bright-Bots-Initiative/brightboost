@@ -131,3 +131,24 @@ Scoring scale: 1 (poor) to 5 (excellent). Scores are based on static code review
 4. Add automated a11y checks for game views (axe + keyboard path smoke tests).
 5. Add mobile snapshot tests for command-heavy games (Tank Trek / Qualify Tune Race).
 
+## 6) Reduced-effects mode rollout (April 27, 2026)
+
+A shared reduced-effects system is now implemented for React game wrappers.
+
+- Shared hook: `useReducedGameEffects` reads OS/browser `prefers-reduced-motion`, supports manual override, and persists selection in localStorage key `brightboost.reducedGameEffects`.
+- Shared UI: `ReducedEffectsToggle` appears in both `GameShell` and `LearningGameFrame` with accessible wording:
+  - **Label**: “Reduced effects”
+  - **Description**: “Reduces motion, particles, and visual intensity for smoother play.”
+- Shared DOM state: wrappers expose `data-reduced-effects="true|false"` so games inherit consistent animation reductions via shared CSS.
+- Shared CSS behavior: decorative animations (`sparkle`, `streak-fire`, shake/bounce/pulse, etc.) are reduced/disabled under reduced-effects mode while preserving core game feedback.
+
+### Priority game coverage delivered
+
+- **Bounce & Buds (`buddy_garden_sort`)**: decorative sparkle bursts are disabled in reduced-effects mode; scoring/physics unchanged.
+- **Quantum Quest (`quantum_quest`)**: decorative starfield and hit-burst effects are reduced/disabled; gameplay logic unchanged.
+- **Qualify, Tune, Race (`qualify_tune_race`)**: wobble/shake impact visuals are reduced in reduced-effects mode; collision/scoring unchanged.
+- **Rhyme & Ride (`rhymo_rhyme_rocket`)**: now consumes shared reduced-effects state rather than only system media query, keeping behavior consistent with manual toggle and persistence.
+
+### Light-touch inheritance checks
+
+Games already using shared wrappers (including Fast Lane, Sky Shield, Maze Maps, and Data Dash) inherit wrapper-level reduced-effects behavior via shared CSS without learning/scoring changes.

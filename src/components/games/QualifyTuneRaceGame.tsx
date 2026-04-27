@@ -88,7 +88,7 @@ function MetricCard({ icon, value, label, sub, color }: {
 // ═══════════════════════════════════════════════════════════════════════════
 // RacePlayfield
 // ═══════════════════════════════════════════════════════════════════════════
-function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
+function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult) => void; reducedEffects: boolean }) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("intro");
   const [carLane, setCarLane] = useState(1);
@@ -158,7 +158,9 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
         if (Math.abs(carX - laneX(obs.lane)) < bumpZone &&
             Math.abs(carY - (obs.y - scrollRef.current + TRACK_H - 100)) < bumpZone) {
           hitSet.current.add(i); bumpsRef.current += 1; setBumps(bumpsRef.current);
-          setWobble(true); setTimeout(() => setWobble(false), 400);
+          if (!reducedEffects) {
+            setWobble(true); setTimeout(() => setWobble(false), 400);
+          }
         }
       }
       if (scrollRef.current >= TRACK_LENGTH) { finishRef.current(); return; }
@@ -166,7 +168,7 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
     };
     rafId.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafId.current);
-  }, [phase, speedMult, bumpZone]);
+  }, [phase, speedMult, bumpZone, reducedEffects]);
 
   useEffect(() => () => cancelAnimationFrame(rafId.current), []);
 
@@ -186,11 +188,6 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [steer]);
-
-  const computeScore = useCallback(
-    () => calculateQualifyTuneRaceScore(run1, run2, exitAnswer),
-    [run1, run2, exitAnswer],
-  );
 
   // ── Phase: intro ────────────────────────────────────────────────────
   if (phase === "intro") return (
@@ -256,7 +253,7 @@ function RacePlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
                   </div>
                 );
               })}
-              <div className={`absolute transition-all duration-150 ease-out ${wobble ? "shake" : ""}`}
+              <div className={`absolute transition-all duration-150 ease-out ${wobble && !reducedEffects ? "shake" : ""}`}
                 style={{ left: laneX(carLane) - CAR_W / 2, top: TRACK_H - 100 - CAR_H / 2,
                   width: CAR_W, height: CAR_H, fontSize: 40, textAlign: "center", lineHeight: `${CAR_H}px` }}>
                 🏎️
@@ -492,7 +489,7 @@ export default function QualifyTuneRaceGame({ onComplete }: {
   return (
     <GameShell gameKey="qualify_tune_race" title="Qualify, Tune, Race"
       briefing={BRIEFING} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <RacePlayfield onFinish={onFinish} />}
+      {({ onFinish, reducedEffects }) => <RacePlayfield onFinish={onFinish} reducedEffects={reducedEffects} />}
     </GameShell>
   );
 }

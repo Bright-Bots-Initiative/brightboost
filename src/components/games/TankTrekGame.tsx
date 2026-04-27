@@ -645,7 +645,7 @@ export default function TankTrekGame({ config, onComplete }: TankTrekGameProps) 
 
   return (
     <GameShell gameKey="tank_trek" title={t("games.tankTrek.title")} briefing={briefing} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish }) => <TankTrekCore config={gameConfig} onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <TankTrekCore config={gameConfig} onFinish={onFinish} />}
     </GameShell>
   );
 }

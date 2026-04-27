@@ -88,6 +88,9 @@ function shuffleArray<T>(arr: T[]): T[] {
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
 }
+export function shouldRenderBounceSparkles(reducedEffects: boolean) {
+  return !reducedEffects;
+}
 
 /** Returns [left, right] pixel ranges for each of the three gates. */
 function gateRanges(): Array<{ left: number; right: number }> {
@@ -128,9 +131,11 @@ const BRIEFING: MissionBriefing = {
 function BouncePlayfield({
   onFinish,
   config,
+  reducedEffects,
 }: {
   onFinish: (result: GameResult) => void;
   config?: any;
+  reducedEffects: boolean;
 }) {
   const { t } = useTranslation();
   const band = getGradeBand(config);
@@ -278,7 +283,7 @@ function BouncePlayfield({
     setPhase("resolved");
     setFeedback({ text: message, correct });
 
-    if (correct) {
+    if (correct && shouldRenderBounceSparkles(reducedEffects)) {
       const bx = ball.current.x;
       const by = ball.current.y;
       const sp = Array.from({ length: 8 }, () => ({
@@ -611,7 +616,7 @@ function BouncePlayfield({
             Score: {score}/{ROUNDS.length}
           </div>
           {streak >= 2 && (
-            <div className="streak-fire text-amber-600 tabular-nums">
+            <div className={`${reducedEffects ? "" : "streak-fire"} text-amber-600 tabular-nums`}>
               {streak}x combo
             </div>
           )}
@@ -712,7 +717,7 @@ function BouncePlayfield({
             </div>
 
             {/* ── Sparkles ── */}
-            {sparkles.map((s) => (
+            {shouldRenderBounceSparkles(reducedEffects) && sparkles.map((s) => (
               <div
                 key={s.id}
                 className="absolute w-3 h-3 rounded-full bg-yellow-300 hit-burst pointer-events-none"
@@ -814,7 +819,9 @@ export default function BounceBudsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish }) => <BouncePlayfield onFinish={onFinish} config={config} />}
+      {({ onFinish, reducedEffects }) => (
+        <BouncePlayfield onFinish={onFinish} config={config} reducedEffects={reducedEffects} />
+      )}
     </GameShell>
   );
 }

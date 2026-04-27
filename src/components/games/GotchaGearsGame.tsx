@@ -361,7 +361,7 @@ export default function GotchaGearsGame({
       briefing={briefing}
       onComplete={onComplete!}
     >
-      {({ onFinish }) => (
+      {({ onFinish, reducedEffects: _reducedEffects }) => (
         <GotchaGearsCore config={gameConfig} onFinish={onFinish} />
       )}
     </GameShell>
