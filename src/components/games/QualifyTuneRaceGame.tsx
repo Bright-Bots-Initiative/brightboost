@@ -69,6 +69,10 @@ const BRIEFING: MissionBriefing = {
   tips: ["Drive carefully on the first run", "Pick ONE upgrade to test", "Compare your two runs!"],
   chapterLabel: "Race Lab",
   themeColor: "amber",
+  controlInstructions: {
+    keyboard: ["Use Tab to reach lane controls, then use Enter or Space to steer."],
+    buttons: ["Use lane controls or available buttons to steer.", "Test one change at a time."],
+  },
 };
 
 // ── Metric card (reused in results1) ──────────────────────────────────────

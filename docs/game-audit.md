@@ -152,3 +152,27 @@ A shared reduced-effects system is now implemented for React game wrappers.
 ### Light-touch inheritance checks
 
 Games already using shared wrappers (including Fast Lane, Sky Shield, Maze Maps, and Data Dash) inherit wrapper-level reduced-effects behavior via shared CSS without learning/scoring changes.
+
+## 7) Keyboard instructions + focus management rollout (April 27, 2026)
+
+Shared game wrappers now include a reusable keyboard/control banner and safer, predictable focus flow.
+
+- Added a shared `ControlInstructions` component and control-instruction model used across wrappers and priority games.
+- `GameShell` now supports control instructions in mission briefings and game view, with default fallback instructions when a game does not provide custom guidance.
+- `LearningGameFrame` now supports control instructions and links the game area to the instruction region for assistive technology context.
+- Focus behavior now follows a stable intro → game → results path:
+  - Intro/briefing focuses the primary Start action.
+  - Game start focuses the labeled game area region.
+  - Results focus the results heading without stealing focus during normal in-round feedback.
+- Initial priority game guidance covered in this rollout:
+  - Boost Path Planner
+  - Tank Trek
+  - Maze Maps
+  - Qualify, Tune, Race
+  - Rhyme & Ride
+  - Data Dash
+
+### Remaining future work
+
+- Add deeper game-by-game keyboard-path tests for complex in-round control surfaces.
+- Add axe-based integration checks for live game views and command-heavy mobile layouts.

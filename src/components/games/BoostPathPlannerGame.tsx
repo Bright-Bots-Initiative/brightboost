@@ -186,6 +186,12 @@ export default function BoostPathPlannerGame({
       ]}
       progressLabel={`${t("games.boostPath.levelLabel")} ${levelIndex + 1}/${activeLevels.length}`}
       feedback={t(feedbackKey)}
+      controlInstructions={{
+        keyboard: [
+          "Use Tab to move through cards and buttons. Use Enter or Space to choose.",
+        ],
+        buttons: ["Put steps in the correct order."],
+      }}
     >
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">
         <div

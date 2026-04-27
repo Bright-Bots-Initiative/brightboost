@@ -119,6 +119,10 @@ const BRIEFING: MissionBriefing = {
   ],
   chapterLabel: "AI Lab",
   themeColor: "cyan",
+  controlInstructions: {
+    keyboard: ["Use Tab to move to action buttons and Enter or Space to choose."],
+    buttons: ["Choose a move or wait action.", "Watch the pattern before moving."],
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

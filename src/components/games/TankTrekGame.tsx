@@ -641,6 +641,11 @@ export default function TankTrekGame({ config, onComplete }: TankTrekGameProps) 
       vi: ["Lên kế hoạch trước khi chạy", "Ít bước hơn = nhiều sao hơn", "Thu thập chip dữ liệu!"],
       "zh-CN": ["跑之前先计划", "步数越少 = 星星越多", "收集数据芯片！"],
     }, ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"]),
+ 
+    controlInstructions: {
+      keyboard: ["Use Tab to move through controls. Use Enter or Space to add commands."],
+      buttons: ["Choose Forward, Turn Left, or Turn Right to build a path.", "Use fewer moves when possible."],
+    },
   };
 
   return (

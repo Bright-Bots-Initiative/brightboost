@@ -80,6 +80,10 @@ const BRIEFING: MissionBriefing = {
   tips: ["Use one attribute per sort rule", "Look for what all cards in a group share", "Use chart counts as evidence"],
   chapterLabel: "Life Science Data",
   themeColor: "emerald",
+  controlInstructions: {
+    keyboard: ["Use Tab to select a card, then choose a bin or answer with Enter or Space."],
+    buttons: ["Select a card, then choose a bin or answer.", "Use attributes as evidence."],
+  },
 };
 
 function DataDashPlayfield({ onFinish }: { onFinish: (result: GameResult) => void }) {

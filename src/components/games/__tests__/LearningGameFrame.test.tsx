@@ -45,7 +45,7 @@ describe("LearningGameFrame", () => {
     expect(statuses).toHaveLength(2);
     expect(statuses[0]).toHaveAttribute("aria-live", "polite");
     expect(statuses[1]).toHaveAttribute("aria-live", "polite");
-    expect(screen.getByRole("region", { name: /rhymo's rhyme rocket/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /rhymo's rhyme rocket game area/i })).toBeInTheDocument();
   });
 
   it("renders words to know when vocabulary is provided", () => {
@@ -57,5 +57,24 @@ describe("LearningGameFrame", () => {
 
     expect(screen.getByText(/games\.learning\.wordsToKnow/i)).toBeInTheDocument();
     expect(screen.getByText(/rhyme, pattern/i)).toBeInTheDocument();
+  });
+
+  it("renders control instructions and links game area to instructions", () => {
+    render(
+      <LearningGameFrame
+        title="Game"
+        objective="Obj"
+        controlInstructions={{
+          keyboard: ["Use Tab to move through controls."],
+          buttons: ["Choose an answer button."],
+        }}
+      >
+        <div>Body</div>
+      </LearningGameFrame>,
+    );
+
+    expect(screen.getByRole("heading", { name: /how to play/i })).toBeInTheDocument();
+    expect(screen.getByText(/use tab to move through controls/i)).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /game game area/i })).toHaveAttribute("aria-describedby", "game-title-instructions");
   });
 });

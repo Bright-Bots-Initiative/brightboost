@@ -2,6 +2,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
 import { useReducedGameEffects } from "./useReducedGameEffects";
+import { ControlInstructions } from "./ControlInstructions";
+import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructions";
 
 type LearningGameFrameProps = {
   title: string;
@@ -9,6 +11,7 @@ type LearningGameFrameProps = {
   vocabulary?: string[];
   progressLabel?: string;
   feedback?: string;
+  controlInstructions?: ControlInstructionsModel;
   children: React.ReactNode;
 };
 
@@ -18,10 +21,13 @@ export function LearningGameFrame({
   vocabulary = [],
   progressLabel,
   feedback,
+  controlInstructions,
   children,
 }: LearningGameFrameProps) {
   const { t } = useTranslation();
   const titleId = `${title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").toLowerCase()}-title`;
+  const instructionRegionId = `${titleId}-instructions`;
+  const resolvedInstructions = mergeControlInstructions(controlInstructions);
   const { reducedEffects, source, setReducedEffects } = useReducedGameEffects();
 
   return (
@@ -61,7 +67,17 @@ export function LearningGameFrame({
         </div>
       </div>
 
-      <div>{children}</div>
+      <div className="space-y-4">
+        <ControlInstructions id={instructionRegionId} instructions={resolvedInstructions} />
+        <div
+          role="region"
+          aria-label={`${title} game area`}
+          aria-describedby={instructionRegionId}
+          tabIndex={-1}
+        >
+          {children}
+        </div>
+      </div>
 
       {feedback ? (
         <div
