@@ -641,9 +641,9 @@
   "playHub": {
     "title": "Play Hub",
     "spacewar": "Spacewar (vs CPU)",
-    "coopAdventure": "Co-op Adventure",
-    "coopMode": "Co-op Mode",
-    "coopComingSoon": "Team up with friends! Coming soon."
+    "coopAdventure": "Bright Rally Co-op",
+    "coopMode": "Bright Rally: Pickleball Co-op Quest",
+    "coopComingSoon": "Play Bright Rally together on one device."
   },
   "showcase": {
     "title": "Family STEAM Night",
@@ -1541,6 +1541,48 @@
       "AI": "Build smart robots and teach machines to think!",
       "QUANTUM": "Explore space math and unlock cosmic puzzles!",
       "BIOTECH": "Discover living things and grow amazing gardens!"
+    }
+  },
+  "brightRally": {
+    "title": "Bright Rally: Pickleball Co-op Quest",
+    "subtitle": "Team up on one device and keep the rally alive.",
+    "mission": "Mission Brief",
+    "intro": "Work together to return the ball, fill the team rally meter, and unlock Team Boost moments!",
+    "start": "Start Rally",
+    "restart": "Play Again",
+    "resultsTitle": "Rally Complete",
+    "upgradesUnlocked": "Upgrades unlocked",
+    "regionLabel": "Bright Rally co-op game",
+    "courtLabel": "Bright Rally court",
+    "meterLabel": "Team rally meter",
+    "prototypeNote": "Prototype note: local single-device co-op only in this version.",
+    "upgradeHint": "Complete STEM activities to unlock friendly team boosts.",
+    "controls": {
+      "p1": "Player 1: W / S",
+      "p2": "Player 2: Arrow Up / Arrow Down or I / K",
+      "start": "Press Space or Enter to start/restart.",
+      "touch": "Use the big Up/Down buttons on each side.",
+      "sr": "The game region is labeled Bright Rally court."
+    },
+    "hud": {
+      "rallies": "Rallies",
+      "streak": "Best streak",
+      "lives": "Hearts",
+      "boosts": "Team boosts",
+      "shields": "Shield saves"
+    },
+    "touch": {
+      "player1": "Player 1 touch",
+      "player2": "Player 2 touch"
+    },
+    "result": {
+      "rallies": "Rally count",
+      "streak": "Best streak",
+      "score": "Team score",
+      "boosts": "Team boosts",
+      "lives": "Lives left",
+      "modules": "Modules used",
+      "none": "None"
     }
   }
 }
