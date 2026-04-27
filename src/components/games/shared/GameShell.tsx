@@ -5,7 +5,7 @@
  * results screen with staggered star reveal, achievement toasts, and
  * score count-up.
  */
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
@@ -132,6 +132,16 @@ function GameResultsView({
   const stars = result.starsEarned ?? 0;
   const animatedScore = useCountUp(result.score, 1000);
   const animatedPct = useCountUp(pct, 1200);
+  const sparkleDots = useMemo(
+    () =>
+      Array.from({ length: 12 }, () => ({
+        left: `${10 + Math.random() * 80}%`,
+        top: `${10 + Math.random() * 80}%`,
+        duration: `${1.5 + Math.random()}s`,
+        delay: `${Math.random() * 2}s`,
+      })),
+    [],
+  );
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -141,15 +151,15 @@ function GameResultsView({
         <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50" />
         {stars >= 3 && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: 12 }, (_, i) => (
+            {sparkleDots.map((dot, i) => (
               <div
                 key={i}
                 className="absolute w-2 h-2 rounded-full bg-yellow-400/60"
                 style={{
-                  left: `${10 + Math.random() * 80}%`,
-                  top: `${10 + Math.random() * 80}%`,
-                  animation: `sparkle ${1.5 + Math.random()}s ease-in-out infinite`,
-                  animationDelay: `${Math.random() * 2}s`,
+                  left: dot.left,
+                  top: dot.top,
+                  animation: `sparkle ${dot.duration} ease-in-out infinite`,
+                  animationDelay: dot.delay,
                 }}
               />
             ))}

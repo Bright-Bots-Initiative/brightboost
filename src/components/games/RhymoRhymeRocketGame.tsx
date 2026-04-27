@@ -57,7 +57,7 @@ export default function RhymoRhymeRocketGame({
   );
 
   function choose(word: string) {
-    if (locked) return;
+    if (locked || !round) return;
 
     const isCorrect = word === round.answer;
     setLocked(true);
@@ -94,6 +94,22 @@ export default function RhymoRhymeRocketGame({
 
   const isLastDone = locked && roundIndex === RHYME_ROUNDS.length - 1;
 
+  if (!round) {
+    return (
+      <LearningGameFrame
+        title="Rhymo's Rhyme Rocket"
+        objective="Listen, look closely, and choose the rhyming word."
+        vocabulary={["rhyme", "sound", "word family"]}
+        progressLabel={`Round ${RHYME_ROUNDS.length}/${RHYME_ROUNDS.length}`}
+        feedback="Great listening! You completed Rhymo's Rhyme Rocket."
+      >
+        <div className="rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
+          Great listening! You completed Rhymo's Rhyme Rocket.
+        </div>
+      </LearningGameFrame>
+    );
+  }
+
   return (
     <LearningGameFrame
       title="Rhymo's Rhyme Rocket"
@@ -118,6 +134,7 @@ export default function RhymoRhymeRocketGame({
               key={choice}
               onClick={() => choose(choice)}
               disabled={locked}
+              aria-label={`Choose ${choice}`}
               className="rounded-2xl border bg-white px-4 py-6 text-2xl font-bold shadow-sm transition hover:-translate-y-0.5"
             >
               {choice}
