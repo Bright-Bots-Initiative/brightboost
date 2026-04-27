@@ -746,12 +746,14 @@ async function main() {
   const tankStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "tt-s1", text: { en: "Meet Bolt — a little robot who needs YOUR help to find the way!", es: "¡Conoce a Bolt, un pequeño robot que necesita TU ayuda para encontrar el camino!" }, icon: "🤖" },
-      { id: "tt-s2", text: { en: "You'll give Bolt commands: Forward, Turn Left, Turn Right. Then Bolt follows your plan!", es: "Le darás comandos a Bolt: Adelante, Girar Izquierda, Girar Derecha. ¡Entonces Bolt seguirá tu plan!" }, icon: "🧭" },
-      { id: "tt-s3", text: { en: "Plan carefully — fewer moves means more stars! Can you find the smartest path?", es: "Planifica con cuidado — ¡menos movimientos significan más estrellas! ¿Puedes encontrar el camino más inteligente?" }, icon: "⭐" },
+      { id: "tt-s1", text: { en: "Meet Bolt! Bolt listens to your code words to move safely through the maze.", es: "¡Conoce a Bolt! Bolt escucha tus palabras de código para moverse con seguridad por el laberinto." }, icon: "🤖" },
+      { id: "tt-s2", text: { en: "Use clear commands: Forward, Turn Left, Turn Right. Order matters!", es: "Usa comandos claros: Adelante, Girar Izquierda, Girar Derecha. ¡El orden importa!" }, icon: "🧭" },
+      { id: "tt-s3", text: { en: "Great robot coders test, fix, and try again. Short smart paths earn more stars!", es: "Los grandes programadores de robots prueban, corrigen e intentan otra vez. ¡Los caminos cortos e inteligentes ganan más estrellas!" }, icon: "⭐" },
     ],
     questions: [
-      { id: "tt-q1", prompt: { en: "What does Bolt need to move?", es: "¿Qué necesita Bolt para moverse?" }, choices: [{ en: "Commands from you", es: "Comandos tuyos" }, { en: "Magic", es: "Magia" }, { en: "Nothing", es: "Nada" }, { en: "A remote control", es: "Un control remoto" }], answerIndex: 0 },
+      { id: "tt-q1", prompt: { en: "Which command makes Bolt move ahead one space?", es: "¿Qué comando hace que Bolt avance un espacio?" }, choices: [{ en: "Forward", es: "Adelante" }, { en: "Turn Left", es: "Girar Izquierda" }, { en: "Turn Right", es: "Girar Derecha" }, { en: "Stop and spin", es: "Parar y girar" }], answerIndex: 0, hint: { en: "Forward means move ahead.", es: "Adelante significa moverse al frente." } },
+      { id: "tt-q2", prompt: { en: "Two paths reach the goal. Which is more efficient?", es: "Dos caminos llegan a la meta. ¿Cuál es más eficiente?" }, choices: [{ en: "The path with fewer commands", es: "El camino con menos comandos" }, { en: "The path with more turns", es: "El camino con más giros" }, { en: "The longest path", es: "El camino más largo" }, { en: "Any path is always equal", es: "Cualquier camino siempre es igual" }], answerIndex: 0, hint: { en: "Efficient means doing the job in fewer steps.", es: "Eficiente significa hacer el trabajo con menos pasos." } },
+      { id: "tt-q3", prompt: { en: "Bolt bumped a wall. What should you do next?", es: "Bolt chocó con una pared. ¿Qué debes hacer después?" }, choices: [{ en: "Change one command and test again", es: "Cambiar un comando y probar otra vez" }, { en: "Keep the same plan forever", es: "Seguir el mismo plan para siempre" }, { en: "Press random buttons", es: "Presionar botones al azar" }, { en: "Quit the mission", es: "Salir de la misión" }], answerIndex: 0, hint: { en: "Debugging means fixing and retesting.", es: "Depurar significa corregir y volver a probar." } },
     ],
   });
 
@@ -794,12 +796,14 @@ async function main() {
   const quantumStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "qq-s1", text: { en: "Welcome, Space Explorer! The stars need your math skills!", es: "¡Bienvenido, Explorador Espacial! ¡Las estrellas necesitan tus habilidades de matemáticas!" }, icon: "🚀" },
-      { id: "qq-s2", text: { en: "Solve math problems and tap the correct answer floating in space!", es: "¡Resuelve problemas de matemáticas y toca la respuesta correcta flotando en el espacio!" }, icon: "🌟" },
-      { id: "qq-s3", text: { en: "Get streaks for bonus points! But watch out for wrong answers — you only have 3 lives.", es: "¡Consigue rachas para puntos extra! Pero cuidado con las respuestas incorrectas — solo tienes 3 vidas." }, icon: "❤️" },
+      { id: "qq-s1", text: { en: "Welcome, Space Explorer! Your mission is to spot number patterns and true clues in the stars.", es: "¡Bienvenido, Explorador Espacial! Tu misión es encontrar patrones de números y pistas verdaderas en las estrellas." }, icon: "🚀" },
+      { id: "qq-s2", text: { en: "Look carefully at every choice. Use evidence: count, compare, and notice what repeats.", es: "Mira con atención cada opción. Usa evidencia: cuenta, compara y nota lo que se repite." }, icon: "🔍" },
+      { id: "qq-s3", text: { en: "Each correct answer builds your streak power. Careful thinking keeps your mission safe!", es: "Cada respuesta correcta aumenta tu racha. ¡Pensar con cuidado mantiene tu misión segura!" }, icon: "🌟" },
     ],
     questions: [
-      { id: "qq-q1", prompt: { en: "2 + 1 = ?", es: "2 + 1 = ?" }, choices: [{ en: "3", es: "3" }, { en: "4", es: "4" }, { en: "2", es: "2" }, { en: "5", es: "5" }], answerIndex: 0 },
+      { id: "qq-q1", prompt: { en: "Which pattern comes next: 2, 4, 6, __?", es: "¿Qué patrón sigue: 2, 4, 6, __?" }, choices: [{ en: "8", es: "8" }, { en: "7", es: "7" }, { en: "5", es: "5" }, { en: "10", es: "10" }], answerIndex: 0, hint: { en: "The pattern adds 2 each time.", es: "El patrón suma 2 cada vez." } },
+      { id: "qq-q2", prompt: { en: "You count 3 stars, then 2 more. How many stars now?", es: "Cuentas 3 estrellas y luego 2 más. ¿Cuántas estrellas hay ahora?" }, choices: [{ en: "4", es: "4" }, { en: "5", es: "5" }, { en: "6", es: "6" }, { en: "3", es: "3" }], answerIndex: 1, hint: { en: "Count on: 3, 4, 5.", es: "Cuenta hacia adelante: 3, 4, 5." } },
+      { id: "qq-q3", prompt: { en: "Which answer shows careful evidence?", es: "¿Qué respuesta muestra evidencia cuidadosa?" }, choices: [{ en: "Pick the biggest number quickly", es: "Elegir el número más grande rápido" }, { en: "Guess before you look", es: "Adivinar antes de mirar" }, { en: "Check the pattern, then choose", es: "Revisar el patrón y luego elegir" }, { en: "Tap any star", es: "Tocar cualquier estrella" }], answerIndex: 2, hint: { en: "Scientists observe first.", es: "Los científicos observan primero." } },
     ],
   });
 
@@ -926,18 +930,18 @@ async function main() {
       story: {
         title: "Story: Pattern Patrol",
         slides: [
-          { id: "ss-s1", text: { en: "Light drops are falling from the sky over the garden! Some are safe, some are tricky. Your job: place the right shield in the right lane to protect the flowers below.", es: "¡Gotas de luz caen del cielo sobre el jardín! Algunas son seguras, otras son difíciles. Tu trabajo: coloca el escudo correcto en el carril correcto para proteger las flores." }, icon: "🌌" },
-          { id: "ss-s2", text: { en: "Watch carefully — the lights fall in patterns. Blue, gold, blue, gold... can you predict what's next? Some lights are mysteries — you'll need to SCAN them to find out what they are.", es: "Observa con cuidado — las luces caen en patrones. Azul, dorado, azul, dorado... ¿puedes predecir qué sigue? Algunas luces son misterios — necesitarás ESCANEARLAS para saber qué son." }, icon: "🔍" },
-          { id: "ss-s3", text: { en: "Remember: observe first, then choose. Let's protect the sky garden!", es: "Recuerda: primero observa, luego elige. ¡Protejamos el jardín del cielo!" }, icon: "🛡️" },
+          { id: "ss-s1", text: { en: "Light drops are falling. Catch them in the right lane.", es: "Caen gotas de luz. Atrápalas en el carril correcto." }, icon: "🌌" },
+          { id: "ss-s2", text: { en: "Watch the pattern: blue, gold, blue, gold...", es: "Mira el patrón: azul, dorado, azul, dorado..." }, icon: "🔍" },
+          { id: "ss-s3", text: { en: "If a light is mystery, tap Scan first.", es: "Si una luz es misterio, toca Escanear primero." }, icon: "🛡️" },
         ],
         questions: [
-          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }, { en: "A loud sound", es: "Un sonido fuerte" }], answerIndex: 0 },
+          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }, { en: "A loud sound", es: "Un sonido fuerte" }], answerIndex: 0, hint: { en: "Look for what repeats.", es: "Busca lo que se repite." } },
         ],
       },
       quiz: [
-        { id: "ss-qz1", prompt: { en: "The pattern is blue, gold, blue, gold, blue. What comes next?", es: "El patrón es azul, dorado, azul, dorado, azul. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1 },
-        { id: "ss-qz2", prompt: { en: "You see a mystery light. What should you do?", es: "Ves una luz misteriosa. ¿Qué debes hacer?" }, choices: [{ en: "Guess which shield to use", es: "Adivinar qué escudo usar" }, { en: "Tap Scan to find out first", es: "Tocar Escanear para averiguar primero" }, { en: "Run away", es: "Huir" }, { en: "Ignore it", es: "Ignorarla" }], answerIndex: 1 },
-        { id: "ss-qz3", prompt: { en: "Why should you watch the pattern before choosing?", es: "¿Por qué debes observar el patrón antes de elegir?" }, choices: [{ en: "It wastes time", es: "Pierde tiempo" }, { en: "It helps you predict what's coming next", es: "Te ayuda a predecir qué viene después" }, { en: "It makes the game harder", es: "Hace el juego más difícil" }, { en: "Patterns don't matter", es: "Los patrones no importan" }], answerIndex: 1 },
+        { id: "ss-qz1", prompt: { en: "Blue, gold, blue, gold, blue. What comes next?", es: "Azul, dorado, azul, dorado, azul. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1, hint: { en: "Say the pattern out loud.", es: "Di el patrón en voz alta." } },
+        { id: "ss-qz2", prompt: { en: "You see a mystery light. What should you do?", es: "Ves una luz misteriosa. ¿Qué debes hacer?" }, choices: [{ en: "Guess fast", es: "Adivinar rápido" }, { en: "Tap Scan first", es: "Tocar Escanear primero" }, { en: "Run away", es: "Huir" }, { en: "Skip your turn", es: "Saltar tu turno" }], answerIndex: 1, hint: { en: "Scan helps you check before choosing.", es: "Escanear te ayuda a revisar antes de elegir." } },
+        { id: "ss-qz3", prompt: { en: "Why watch before you choose?", es: "¿Por qué mirar antes de elegir?" }, choices: [{ en: "To predict the next drop", es: "Para predecir la próxima gota" }, { en: "To make it harder", es: "Para hacerlo más difícil" }, { en: "Because patterns do not matter", es: "Porque los patrones no importan" }, { en: "To lose points", es: "Para perder puntos" }], answerIndex: 0, hint: { en: "Watching helps your brain plan.", es: "Mirar ayuda a tu cerebro a planear." } },
       ],
     },
     {

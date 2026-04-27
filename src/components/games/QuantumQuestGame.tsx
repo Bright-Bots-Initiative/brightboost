@@ -100,9 +100,9 @@ const BUILTIN_CONFIG: QuantumQuestConfig = {
       speed: 2, spawnRate: 2,
       problems: [
         { id: "s2-1", prompts: { en: "2 + 3 = ?" }, correctAnswer: 5, decoys: [4, 6, 3], skillTag: "addition" },
-        { id: "s2-2", prompts: { en: "4 + 1 = ?" }, correctAnswer: 5, decoys: [3, 6, 4], skillTag: "addition" },
+        { id: "s2-2", prompts: { en: "What comes next: 1, 2, 3, ?" }, correctAnswer: 4, decoys: [2, 5, 6], skillTag: "patterns" },
         { id: "s2-3", prompts: { en: "3 + 3 = ?" }, correctAnswer: 6, decoys: [5, 7, 4], skillTag: "addition" },
-        { id: "s2-4", prompts: { en: "5 + 2 = ?" }, correctAnswer: 7, decoys: [6, 8, 5], skillTag: "addition" },
+        { id: "s2-4", prompts: { en: "What comes next: 2, 4, 6, ?" }, correctAnswer: 8, decoys: [7, 9, 10], skillTag: "patterns" },
         { id: "s2-5", prompts: { en: "1 + 6 = ?" }, correctAnswer: 7, decoys: [5, 8, 6], skillTag: "addition" },
         { id: "s2-6", prompts: { en: "4 + 4 = ?" }, correctAnswer: 8, decoys: [6, 7, 9], skillTag: "addition" },
       ],
