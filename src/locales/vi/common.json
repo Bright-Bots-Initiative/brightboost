@@ -1319,7 +1319,11 @@
       "vocabPlan": "kế hoạch",
       "vocabSequence": "trình tự",
       "vocabTurn": "rẽ",
-      "vocabGoal": "đích"
+      "vocabGoal": "đích",
+      "g35level1": "Đi qua mê cung thuật toán",
+      "g35level2": "Sửa lỗi tuyến đường bị hỏng",
+      "g35level3": "Tối ưu đường đi có chướng ngại vật",
+      "g35level4": "Thu thập tất cả chip thật hiệu quả"
     },
     "shared": {
       "tips": "Mẹo",

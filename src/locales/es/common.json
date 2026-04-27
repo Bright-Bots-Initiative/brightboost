@@ -1320,7 +1320,11 @@
       "vocabPlan": "plan",
       "vocabSequence": "secuencia",
       "vocabTurn": "giro",
-      "vocabGoal": "meta"
+      "vocabGoal": "meta",
+      "g35level1": "Navega el laberinto del algoritmo",
+      "g35level2": "Depura la ruta dañada",
+      "g35level3": "Optimiza el camino con obstáculos",
+      "g35level4": "Recoge todos los chips con eficiencia"
     },
     "shared": {
       "tips": "Consejos",

@@ -42,11 +42,10 @@ The shared React component `src/components/unity/UnityWebGL.tsx`:
 2. Parses `activity.content` as JSON
 3. Routes by `activity.kind`:
    - `INFO` → Story slides + quiz questions
-   - `INTERACT` → Dispatches by `content.gameKey`:
-     - `sequence_drag_drop` → `SequenceDragDropGame` (pure React)
-     - `rhyme_ride_unity` → `RhymeRideUnityActivity`
-     - `bounce_buds_unity` → `BounceBudsUnityActivity`
-     - `gotcha_gears_unity` → `GotchaGearsUnityActivity`
+   - `INTERACT` → Dispatches by `content.gameKey` through `GAME_COMPONENTS` in `src/components/games/gameRegistry.ts`
+     - Set 1 keys include legacy Unity wrappers plus React implementations
+     - Set 2 keys are fully registered (`maze_maps`, `move_measure`, `sky_shield`, `fast_lane`, `qualify_tune_race`)
+     - Unknown keys still fall through to ActivityPlayer's unsupported fallback
 
 Each Unity wrapper:
 - Generates a `sessionId` via `crypto.randomUUID()`
@@ -90,11 +89,11 @@ Backend flow:
 
 ## 6. Localization
 
-- `react-i18next` with `en` and `es` bundles in `src/locales/{lang}/common.json`
-- `LocalizedField` type: `string | { en: string; es: string } | { i18nKey: string }`
-- `resolveText(t, field)` utility resolves any of these forms
-- Activity content uses `i18nKey` references for game round data
-- Unity games receive pre-resolved strings; localization happens React-side
+- `react-i18next` runtime bundles are present for `en`, `es`, `vi`, and `zh-CN` in `src/locales/{lang}/common.json`
+- Seeded Set 2 story/quiz payloads in `prisma/seed.cjs` and `backend/prisma/seed.cjs` currently provide only `{ en, es }` localized objects
+- `LocalizedField` type supports these localized object forms and `i18nKey` references
+- For `vi`/`zh-CN`, Set 2 story/quiz text falls back to English when a locale-specific value is unavailable
+- TODO: add reviewed human translations for Set 2 narrative + quiz blocks in Vietnamese and Simplified Chinese (avoid bulk machine translation commits)
 
 ## 7. UI / Gamification Conventions
 
