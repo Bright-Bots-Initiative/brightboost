@@ -1129,6 +1129,202 @@ async function main() {
   }
   console.log("Seeded activities.");
 
+
+  // ── Grade 3-5 first playable module: Data Dash: Sort & Discover ──
+  const g35DataDashModule = await prisma.module.upsert({
+    where: { slug: "g35-data-dash-sort-discover" },
+    update: {
+      title: "Data Dash: Sort & Discover",
+      description: "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
+      level: "G3-5",
+      published: true,
+    },
+    create: {
+      slug: "g35-data-dash-sort-discover",
+      title: "Data Dash: Sort & Discover",
+      description: "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
+      level: "G3-5",
+      published: true,
+    },
+  });
+  console.log("Created module:", g35DataDashModule.slug);
+
+  let g35DataDashUnit = await prisma.unit.findFirst({
+    where: { moduleId: g35DataDashModule.id, title: "Unit 1: Greenhouse Data Lab" },
+  });
+  if (!g35DataDashUnit) {
+    g35DataDashUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Greenhouse Data Lab",
+        order: 1,
+        Module: { connect: { id: g35DataDashModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
+  }
+
+  let g35DataDashLesson = await prisma.lesson.findFirst({
+    where: { unitId: g35DataDashUnit.id, title: "Lesson 1: Sort, Infer, Explain" },
+  });
+  if (!g35DataDashLesson) {
+    g35DataDashLesson = await prisma.lesson.create({
+      data: {
+        title: "Lesson 1: Sort, Infer, Explain",
+        order: 1,
+        Unit: { connect: { id: g35DataDashUnit.id } },
+      },
+    });
+  }
+
+  const dataDashStoryContent = JSON.stringify({
+    type: "story_quiz",
+    slides: [
+      {
+        id: "dd-s1",
+        text: {
+          en: "Mission Briefing: Greenhouse Data Drop. A science team sent plant cards from three beds. Your job is to organize the data and report what the patterns show.",
+          es: "Informe de misión: Entrega de datos del invernadero. Un equipo de ciencias envió tarjetas de plantas de tres camas. Tu trabajo es organizar los datos e informar qué patrones muestran.",
+        },
+        icon: "🛰️",
+      },
+      {
+        id: "dd-s2",
+        text: {
+          en: "How scientists classify: They group by shared attributes like sunlight need, water need, leaf type, seed type, or growth speed. One clear rule keeps the data fair.",
+          es: "Cómo clasifican los científicos: Agrupan por atributos compartidos como necesidad de luz solar, necesidad de agua, tipo de hoja, tipo de semilla o velocidad de crecimiento. Una regla clara mantiene los datos justos.",
+        },
+        icon: "🧪",
+      },
+      {
+        id: "dd-s3",
+        text: {
+          en: "Evidence first: A good claim uses observations and counts, not guesses. Chart bars and totals are evidence you can point to.",
+          es: "Evidencia primero: Una buena afirmación usa observaciones y conteos, no suposiciones. Las barras y los totales del gráfico son evidencia que puedes señalar.",
+        },
+        icon: "📌",
+      },
+      {
+        id: "dd-s4",
+        text: {
+          en: "From sort to pattern: Once cards are sorted, patterns become visible. Then you can explain what is common, what is different, and what to test next.",
+          es: "Del orden al patrón: Una vez ordenadas las tarjetas, los patrones se vuelven visibles. Luego puedes explicar qué es común, qué es diferente y qué probar después.",
+        },
+        icon: "📊",
+      },
+    ],
+    questions: [
+      {
+        id: "dd-q1",
+        prompt: { en: "Which choice is a classification rule (not just one observation)?", es: "¿Qué opción es una regla de clasificación (no solo una observación)?" },
+        choices: [
+          { en: "Group plants by seed type", es: "Agrupar plantas por tipo de semilla" },
+          { en: "This fern needs high water", es: "Este helecho necesita mucha agua" },
+          { en: "Plant bed A has three plants", es: "La cama de plantas A tiene tres plantas" }
+        ],
+        answerIndex: 0,
+        hint: { en: "A rule can be used on every card.", es: "Una regla puede usarse en cada tarjeta." }
+      },
+      {
+        id: "dd-q2",
+        prompt: { en: "If two cards both have cone seeds, what is true?", es: "Si dos tarjetas tienen semillas en cono, ¿qué es verdadero?" },
+        choices: [
+          { en: "They match on seed type", es: "Coinciden en tipo de semilla" },
+          { en: "They must be in the same plant bed", es: "Deben estar en la misma cama de plantas" },
+          { en: "They must need the same water", es: "Deben necesitar la misma agua" }
+        ],
+        answerIndex: 0,
+        hint: { en: "Look only at the named attribute.", es: "Mira solo el atributo nombrado." }
+      },
+      {
+        id: "dd-q3",
+        prompt: { en: "A chart shows full sunlight = 5, shade = 2, partial = 1. Which claim is best supported?", es: "Un gráfico muestra luz solar completa = 5, sombra = 2, parcial = 1. ¿Qué afirmación está mejor respaldada?" },
+        choices: [
+          { en: "Most plants need full sunlight", es: "La mayoría de las plantas necesitan luz solar completa" },
+          { en: "All plants need shade", es: "Todas las plantas necesitan sombra" },
+          { en: "No plants need partial sunlight", es: "Ninguna planta necesita luz solar parcial" }
+        ],
+        answerIndex: 0,
+        hint: { en: "Choose the claim that matches the largest count.", es: "Elige la afirmación que coincide con el mayor conteo." }
+      },
+      {
+        id: "dd-q4",
+        prompt: { en: "What is the strongest evidence for your claim?", es: "¿Cuál es la evidencia más fuerte para tu afirmación?" },
+        choices: [
+          { en: "The full-sun bar is tallest", es: "La barra de sol completo es la más alta" },
+          { en: "I like full-sun plants", es: "Me gustan las plantas de sol completo" },
+          { en: "My friend chose that answer", es: "Mi amigo eligió esa respuesta" }
+        ],
+        answerIndex: 0,
+        hint: { en: "Evidence comes from measured data.", es: "La evidencia proviene de datos medidos." }
+      },
+      {
+        id: "dd-q5",
+        prompt: { en: "Why is multi-attribute sorting useful?", es: "¿Por qué es útil clasificar por múltiples atributos?" },
+        choices: [
+          { en: "It helps find deeper patterns and better explanations", es: "Ayuda a encontrar patrones más profundos y mejores explicaciones" },
+          { en: "It makes data random", es: "Hace los datos aleatorios" },
+          { en: "It removes the need for evidence", es: "Elimina la necesidad de evidencia" }
+        ],
+        answerIndex: 0,
+        hint: { en: "More than one attribute can reveal hidden structure.", es: "Más de un atributo puede revelar estructura oculta." }
+      }
+    ],
+  });
+
+  const g35StoryActivity = await prisma.activity.findFirst({
+    where: { lessonId: g35DataDashLesson.id, kind: INFO, order: 1 },
+  });
+  if (g35StoryActivity) {
+    await prisma.activity.update({
+      where: { id: g35StoryActivity.id },
+      data: {
+        title: "Mission Briefing: Greenhouse Data Drop",
+        content: dataDashStoryContent,
+      },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Mission Briefing: Greenhouse Data Drop",
+        kind: INFO,
+        order: 1,
+        content: dataDashStoryContent,
+        Lesson: { connect: { id: g35DataDashLesson.id } },
+      },
+    });
+  }
+
+  const dataDashGameContent = JSON.stringify({
+    type: "game",
+    activityId: "data-dash-sort-discover",
+    gameKey: "data_dash_sort_discover",
+    title: "Data Dash: Sort & Discover",
+    rounds: 3,
+  });
+
+  const g35GameActivity = await prisma.activity.findFirst({
+    where: { lessonId: g35DataDashLesson.id, kind: INTERACT, order: 2 },
+  });
+  if (g35GameActivity) {
+    await prisma.activity.update({
+      where: { id: g35GameActivity.id },
+      data: {
+        title: "Data Dash: Sort & Discover",
+        content: dataDashGameContent,
+      },
+    });
+  } else {
+    await prisma.activity.create({
+      data: {
+        title: "Data Dash: Sort & Discover",
+        kind: INTERACT,
+        order: 2,
+        content: dataDashGameContent,
+        Lesson: { connect: { id: g35DataDashLesson.id } },
+      },
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // Module Families & Variants (grade-banded content system)
   // ═══════════════════════════════════════════════════════════════════════════
