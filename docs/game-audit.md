@@ -184,3 +184,27 @@ Shared game wrappers now include a reusable keyboard/control banner and safer, p
 - Gameplay includes intro/instructions, rally play loop, team meter + boosts, and a results summary.
 - Learning-powered boosts are unlocked from completed canonical STEM activity IDs (Set 1).
 - Real-time co-op (invites/rooms/sync) remains future work.
+
+## 9) Bright Rally polish pass (April 27, 2026)
+
+- Controls tuned for fairer rallies:
+  - gentler opening ball speed;
+  - capped acceleration and vertical deflection to reduce chaotic misses;
+  - explicit keyboard scroll prevention for rally keys.
+- Difficulty curve now ramps in stages by rally count (early easy → medium → challenge) instead of abrupt jumps.
+- CPU helper behavior for Player 2 is now intentional and deterministic when no right-side input is detected for a short window while the ball approaches.
+- Teamwork feedback upgraded:
+  - clearer Team Rally Meter percentage and near-ready messaging;
+  - stronger Team Boost active/ready/filling text;
+  - clearer streak status messaging.
+- Upgrade clarity improved with child-friendly descriptions and an explicit unlocked-boost list.
+- Friendly fallback shown when no boosts are unlocked: “Complete STEM games to unlock boosts...”.
+- Court visuals polished with cleaner pickleball-style court lines and team side labels while keeping Bright Boost classroom-safe styling.
+- Reduced-effects support and focus flow preserved.
+- Added deterministic test coverage for:
+  - difficulty progression helper;
+  - CPU-helper fallback decision logic;
+  - rally result payload shape;
+  - reduced-effects DOM state;
+  - progress-fetch failure resilience;
+  - Play Hub co-op tab Bright Rally rendering.
