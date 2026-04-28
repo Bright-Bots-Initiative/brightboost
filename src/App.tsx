@@ -21,6 +21,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginSelection from "./pages/LoginSelection";
 import SignupSelection from "./pages/SignupSelection";
 import Index from "./pages/Index";
+import HomeSectionRedirect from "./pages/HomeSectionRedirect";
+import AudiencePlaceholder from "./pages/AudiencePlaceholder";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
@@ -100,6 +102,12 @@ function App() {
               <Route path="/for-reviewers" element={<ForReviewers />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/feedback" element={<HomeSectionRedirect sectionId="feedback" />} />
+              <Route path="/donate" element={<HomeSectionRedirect sectionId="donation" />} />
+              <Route path="/students" element={<AudiencePlaceholder audience="Students" />} />
+              <Route path="/teachers" element={<AudiencePlaceholder audience="Teachers" />} />
+              <Route path="/parents" element={<AudiencePlaceholder audience="Parents" />} />
+              <Route path="/organizations" element={<AudiencePlaceholder audience="Organizations" />} />
 
               {/* Protected Teacher routes (nested) */}
               <Route
