@@ -208,3 +208,20 @@ Shared game wrappers now include a reusable keyboard/control banner and safer, p
   - reduced-effects DOM state;
   - progress-fetch failure resilience;
   - Play Hub co-op tab Bright Rally rendering.
+
+## 10) Spacewar PvP mission + recap layer (April 28, 2026)
+
+- Added a **React-side Duel Mission Card** to frame each Spacewar duel with a current goal, selected difficulty, active STEM loadout, and classroom-friendly strategy tip.
+- Added **STEM-powered Spacewar upgrade mapping** from canonical Set 1 activity IDs to explanatory ship upgrades (visual/meta layer only).
+- Added **Unity `unityMatchOver` recap wiring** in the React wrapper so PvP outcomes render a strategy recap without changing Unity gameplay logic.
+- Added optional **Classroom Reflection** prompts for post-match discussion.
+- Added **local-only Session Best / Best Duel Score** persistence via `localStorage`.
+- Scope remains wrapper-only: **no online multiplayer and no backend persistence/schema changes** in this increment.
+
+### Future TODOs
+
+- online PvP rooms
+- persistent PvP leaderboards
+- teacher-created PvP challenges
+- deeper Unity-side telemetry
+- richer archetype-specific upgrades
