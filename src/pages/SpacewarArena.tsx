@@ -1,5 +1,5 @@
 // src/pages/SpacewarArena.tsx
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
 import UnityWebGL from "../components/unity/UnityWebGL";
@@ -12,6 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { STEM_SET_1_IDS } from "../constants/stemSets";
+import {
+  buildSpacewarMatchRecap,
+  buildSpacewarMission,
+  buildSpacewarUpgrades,
+  persistBestSpacewarRecap,
+  readBestSpacewarRecap,
+  type Difficulty,
+  type SpacewarBestRecap,
+  type SpacewarMatchRecap,
+} from "./spacewarMeta";
 
 interface AvatarData {
   archetype?: string;
@@ -20,8 +30,6 @@ interface AvatarData {
   avatarUrl?: string;
   stem1Set1Completed?: string[];
 }
-
-type Difficulty = "easy" | "normal" | "hard";
 
 // Detect touch device
 const isTouchDevice = (): boolean => {
@@ -64,6 +72,10 @@ export default function SpacewarArena() {
   );
   const [isTouch] = useState(isTouchDevice);
   const unityInstanceRef = useRef<any>(null);
+  const recapHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  const [matchRecap, setMatchRecap] = useState<SpacewarMatchRecap | null>(null);
+  const [bestRecap, setBestRecap] = useState<SpacewarBestRecap | null>(() => readBestSpacewarRecap());
 
   // Gesture control state (mobile)
   const [rotate, setRotate] = useState(0); // -1..1 (negative = right, positive = left per WebBridge doc)
@@ -139,6 +151,12 @@ export default function SpacewarArena() {
     fetchAvatarAndProgress();
   }, []);
 
+  const upgrades = useMemo(
+    () => buildSpacewarUpgrades(avatarConfig?.stem1Set1Completed ?? []),
+    [avatarConfig?.stem1Set1Completed],
+  );
+  const mission = useMemo(() => buildSpacewarMission(difficulty, upgrades), [difficulty, upgrades]);
+
   const handleInstanceReady = useCallback(
     (instance: any) => {
       unityInstanceRef.current = instance;
@@ -186,6 +204,46 @@ export default function SpacewarArena() {
 
     return () => clearInterval(interval);
   }, [isTouch, rotate, thrust]);
+
+  useEffect(() => {
+    const handleMatchOver = (event: Event) => {
+      const detail = (event as CustomEvent)?.detail as {
+        winner?: number;
+        player1Score?: number;
+        player2Score?: number;
+        timestamp?: string;
+      };
+      if (!detail || typeof detail.player1Score !== "number" || typeof detail.player2Score !== "number") {
+        return;
+      }
+
+      const recap = buildSpacewarMatchRecap({
+        winner: detail.winner ?? 1,
+        player1Score: detail.player1Score,
+        player2Score: detail.player2Score,
+        timestamp: detail.timestamp,
+        difficulty,
+        activeUpgradeIds: upgrades.map((upgrade) => upgrade.id),
+      });
+
+      setMatchRecap(recap);
+      setBestRecap(persistBestSpacewarRecap(recap));
+    };
+
+    window.addEventListener("unityMatchOver", handleMatchOver as EventListener);
+    return () => {
+      window.removeEventListener("unityMatchOver", handleMatchOver as EventListener);
+    };
+  }, [difficulty, upgrades]);
+
+  useEffect(() => {
+    if (!matchRecap) return;
+    if (typeof window === "undefined" || !document.hasFocus()) return;
+
+    window.setTimeout(() => {
+      recapHeadingRef.current?.focus();
+    }, 0);
+  }, [matchRecap]);
 
   // Gesture handlers for mobile
   const handleGesturePointerDown = useCallback((e: React.PointerEvent) => {
@@ -280,7 +338,36 @@ export default function SpacewarArena() {
   }
 
   return (
-    <div className="flex flex-col h-[85vh] w-full">
+    <div className="flex flex-col h-[85vh] w-full gap-3">
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-4"
+        role="region"
+        aria-label={t("spacewar.mission.title", { defaultValue: "Duel Mission Card" })}
+      >
+        <h3 className="text-slate-900 font-semibold text-lg mb-2">
+          {t("spacewar.mission.title", { defaultValue: "Duel Mission Card" })}
+        </h3>
+        <div className="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <p>
+            <span className="font-medium">{t("spacewar.mission.goal", { defaultValue: "Mission Goal" })}: </span>
+            {mission.goal}
+          </p>
+          <p>
+            <span className="font-medium">{t("spacewar.medium", { defaultValue: "Difficulty" })}: </span>
+            {difficulty}
+          </p>
+          <p>
+            <span className="font-medium">{t("spacewar.loadout.title", { defaultValue: "Active STEM Ship Upgrades" })}: </span>
+            {upgrades.length > 0 ? upgrades.map((upgrade) => upgrade.title).join(", ") : "Base loadout"}
+          </p>
+          <p>
+            <span className="font-medium">{t("spacewar.tips", { defaultValue: "Strategy Tip" })}: </span>
+            {mission.strategyTip}
+          </p>
+        </div>
+        <p className="mt-2 text-xs text-slate-600">{mission.framing}</p>
+      </section>
+
       {/* Control bar */}
       <div className="flex items-center justify-between bg-slate-800 rounded-t-xl px-4 py-2">
         <h2 className="text-white font-semibold text-lg">{t("spacewar.title")}</h2>
@@ -409,6 +496,7 @@ export default function SpacewarArena() {
             onClick={handleRestart}
             size="sm"
             className="bg-orange-600 hover:bg-orange-700 text-white"
+            aria-label={t("spacewar.restart", { defaultValue: "Restart" })}
           >
             {t("spacewar.restart")}
           </Button>
@@ -449,6 +537,87 @@ export default function SpacewarArena() {
           </>
         )}
       </div>
+
+      {matchRecap && (
+        <section
+          role="region"
+          aria-live="polite"
+          aria-label={t("spacewar.recap.title", { defaultValue: "Strategy Recap" })}
+          className="rounded-xl border border-blue-200 bg-blue-50 p-4"
+        >
+          <h3
+            ref={recapHeadingRef}
+            tabIndex={-1}
+            className="text-blue-900 text-lg font-semibold"
+          >
+            {t("spacewar.recap.title", { defaultValue: "Strategy Recap" })}
+          </h3>
+          <div className="mt-2 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+            <p>
+              <span className="font-medium">{t("spacewar.recap.winner", { defaultValue: "Winner" })}: </span>
+              {matchRecap.winnerLabel}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.recap.finalScore", { defaultValue: "Final Score" })}: </span>
+              {matchRecap.player1Score} - {matchRecap.player2Score}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.medium", { defaultValue: "Difficulty" })}: </span>
+              {matchRecap.difficulty}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.recap.strategySkill", { defaultValue: "Strategy Skill" })}: </span>
+              {matchRecap.strategyLabel}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.loadout.title", { defaultValue: "Active STEM Ship Upgrades" })}: </span>
+              {upgrades.length ? upgrades.map((u) => u.title).join(", ") : "Base loadout"}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.recap.nextChallenge", { defaultValue: "Suggested Next Challenge" })}: </span>
+              {matchRecap.nextChallenge}
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-slate-600">{matchRecap.reflectionPrompt}</p>
+          {bestRecap && (
+            <p className="mt-2 text-xs text-blue-800 font-medium">
+              {t("spacewar.recap.best", { defaultValue: "Best Duel Score" })}: {bestRecap.player1Score} ({bestRecap.scoreMargin >= 0 ? "+" : ""}{bestRecap.scoreMargin})
+            </p>
+          )}
+          <div className="mt-3 flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => {
+                setMatchRecap(null);
+                handleRestart();
+              }}
+              aria-label="Play again duel"
+            >
+              Play Again
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRestart}
+              aria-label="Restart duel"
+            >
+              Restart
+            </Button>
+          </div>
+
+          <details className="mt-3 rounded-md bg-white p-3 border border-slate-200">
+            <summary className="cursor-pointer text-sm font-medium">
+              {t("spacewar.reflection.title", { defaultValue: "Classroom Reflection" })}
+            </summary>
+            <ul className="mt-2 list-disc list-inside text-sm text-slate-700 space-y-1">
+              <li>{t("spacewar.reflection.prompt1", { defaultValue: "What strategy helped you avoid the sun?" })}</li>
+              <li>{t("spacewar.reflection.prompt2", { defaultValue: "Did you rush, or did you plan your movement?" })}</li>
+              <li>{t("spacewar.reflection.prompt3", { defaultValue: "Which STEM boost helped most?" })}</li>
+              <li>{t("spacewar.reflection.prompt4", { defaultValue: "What would you try differently next match?" })}</li>
+            </ul>
+          </details>
+        </section>
+      )}
     </div>
   );
 }
