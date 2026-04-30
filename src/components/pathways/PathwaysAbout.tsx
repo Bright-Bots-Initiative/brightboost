@@ -4,6 +4,7 @@
 import { Link } from "react-router-dom";
 import { PATHWAY_TRACKS } from "@/constants/pathwayTracks";
 import { Shield, Rocket, DollarSign, Cpu, Film, Users, BarChart3, Award, ArrowRight } from "lucide-react";
+import LanguageToggle from "@/components/LanguageToggle";
 
 const ICONS: Record<string, React.ReactNode> = {
   Shield: <Shield className="w-6 h-6" />,
@@ -16,6 +17,10 @@ const ICONS: Record<string, React.ReactNode> = {
 export default function PathwaysAbout() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Language toggle — top-right, always visible */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageToggle variant="dark" />
+      </div>
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/50 to-cyan-900/30" />

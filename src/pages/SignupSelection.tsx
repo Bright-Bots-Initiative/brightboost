@@ -1,11 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 
 const SignupSelection: React.FC = () => {
   return (
     <GameBackground>
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 relative">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-brightboost-navy mb-2">
             Create an Account

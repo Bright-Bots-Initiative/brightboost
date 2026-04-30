@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 
@@ -46,6 +47,9 @@ const ForgotPassword: React.FC = () => {
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link

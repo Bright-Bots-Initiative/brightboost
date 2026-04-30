@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen } from "lucide-react";
+import LanguageToggle from "@/components/LanguageToggle";
 
 export default function PathwaysLayout() {
   const { user, logout } = useAuth();
@@ -48,6 +49,9 @@ export default function PathwaysLayout() {
         </div>
 
         <div className="p-3 border-t border-slate-800 space-y-2">
+          <div className="px-1">
+            <LanguageToggle variant={dark ? "dark" : "light"} />
+          </div>
           <button onClick={() => setDark((d) => !d)} className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs ${navIdle}`}>
             {dark ? <Sun className="w-3 h-3" /> : <Moon className="w-3 h-3" />}
             {dark ? "Light Mode" : "Dark Mode"}
@@ -66,6 +70,7 @@ export default function PathwaysLayout() {
             Pathways
           </p>
           <div className="flex items-center gap-3">
+            <LanguageToggle variant={dark ? "dark" : "light"} />
             <button onClick={() => setDark((d) => !d)} className="p-1.5">
               {dark ? <Sun className="w-4 h-4 text-slate-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>

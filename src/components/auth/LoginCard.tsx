@@ -3,6 +3,7 @@
  */
 import React from "react";
 import { Link } from "react-router-dom";
+import LanguageToggle from "@/components/LanguageToggle";
 
 export default function LoginCard({
   icon,
@@ -16,7 +17,10 @@ export default function LoginCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-100 via-sky-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-100 via-sky-50 to-white p-4 relative">
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageToggle />
+      </div>
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           {icon && <div className="text-4xl mb-2">{icon}</div>}

@@ -2,13 +2,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 import { useTranslation } from "react-i18next";
 
 const NotFound: React.FC = () => {
   const { t } = useTranslation();
   return (
     <GameBackground>
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="game-card p-8 w-full max-w-md text-center">
           <h1 className="text-6xl font-bold text-brightboost-navy mb-4">404</h1>
           <h2 className="text-2xl font-semibold text-brightboost-navy mb-6">
