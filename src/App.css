@@ -77,6 +77,26 @@ body {
   transform: translateY(4px);
 }
 
+@keyframes mascot-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.mascot-bob {
+  animation: mascot-bob 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-bob {
+    animation: none !important;
+  }
+}
+
 /* Print styles for teacher pages */
 @media print {
   /* Hide navigation, sidebars, and interactive controls */
