@@ -51,6 +51,38 @@ export type BrightRallyResult = {
   livesRemaining: number;
 };
 
+export type RallyMissionType = "reach_rallies" | "trigger_team_boost" | "finish_with_hearts" | "use_three_boosts" | "beat_best_streak";
+export type RallyNextUnlock = { activityId: string; boostLabel: string; activityLabel: string };
+export type BrightRallyBestRecap = { bestRallyCount: number; bestStreak: number; bestScore: number; updatedAt: string };
+export type BrightRallyMission = {
+  title: string;
+  goalLabel: string;
+  goalTarget: number;
+  missionType: RallyMissionType;
+  nextUnlockActivityId: string | null;
+  nextUnlockLabel: string;
+  teacherNote: string;
+};
+export type BrightRallyRecap = BrightRallyResult & { activeBoostLabels: string[]; teamworkSkill: string; nextGoal: string; bestRally: number; bestStreak: number };
+
+const BRIGHT_RALLY_BEST_KEY = "brightboost.brightRally.bestRecap";
+const SET_1_UNLOCKS: RallyNextUnlock[] = [
+  { activityId: "bounce-buds", boostLabel: "Soft Bounce", activityLabel: "Bounce & Buds" },
+  { activityId: "gotcha-gears", boostLabel: "Gear Timing", activityLabel: "Gotcha Gears" },
+  { activityId: "rhyme-ride", boostLabel: "Rhythm Rally", activityLabel: "Rhyme Ride" },
+  { activityId: "tank-trek", boostLabel: "Path Preview", activityLabel: "Tank Trek" },
+  { activityId: "quantum-quest", boostLabel: "Team Shield", activityLabel: "Quantum Quest" },
+];
+export const RALLY_UPGRADE_UNLOCK_LABELS: Record<RallyUpgradeKey, string> = { softBounce: "Bounce & Buds", gearTiming: "Gotcha Gears", rhythmRally: "Rhyme Ride", pathPreview: "Tank Trek", teamShield: "Quantum Quest" };
+export function getRallyUpgradeUnlockLabel(upgradeKey: RallyUpgradeKey): string { return RALLY_UPGRADE_UNLOCK_LABELS[upgradeKey] ?? "STEM Mission"; }
+export function getNextRallyUnlock(completedActivityIds: string[]): RallyNextUnlock | null { const done = new Set(completedActivityIds); return SET_1_UNLOCKS.find((it) => !done.has(it.activityId)) ?? null; }
+export function shouldUpdateBrightRallyBest(current: BrightRallyResult, previous: BrightRallyBestRecap | null): boolean { return !previous || current.rallyCount > previous.bestRallyCount || current.bestStreak > previous.bestStreak || current.teamScore > previous.bestScore; }
+export function readBrightRallyBest(): BrightRallyBestRecap | null { try { if (typeof window === "undefined" || !window.localStorage) return null; const raw = window.localStorage.getItem(BRIGHT_RALLY_BEST_KEY); if (!raw) return null; const p = JSON.parse(raw); if (typeof p.bestRallyCount !== "number" || typeof p.bestStreak !== "number" || typeof p.bestScore !== "number") return null; return p; } catch { return null; } }
+export function writeBrightRallyBest(recap: BrightRallyResult): BrightRallyBestRecap | null { try { if (typeof window === "undefined" || !window.localStorage) return null; const next = { bestRallyCount: recap.rallyCount, bestStreak: recap.bestStreak, bestScore: recap.teamScore, updatedAt: new Date().toISOString() }; window.localStorage.setItem(BRIGHT_RALLY_BEST_KEY, JSON.stringify(next)); return next; } catch { return null; } }
+export function buildBrightRallyMission(input: { completedActivityIds: string[]; upgrades: RallyUpgrade[]; bestRecap: BrightRallyBestRecap | null }): BrightRallyMission { const nextUnlock = getNextRallyUnlock(input.completedActivityIds); if ((input.bestRecap?.bestStreak ?? 0) >= 6) return { title: "Team Rally Mission", goalLabel: "Beat your best streak", goalTarget: (input.bestRecap?.bestStreak ?? 0) + 1, missionType: "beat_best_streak", nextUnlockActivityId: nextUnlock?.activityId ?? null, nextUnlockLabel: nextUnlock ? `Complete ${nextUnlock.activityLabel} to unlock ${nextUnlock.boostLabel}.` : "You unlocked all Foundation team boosts.", teacherNote: "Use timing, communication, and focus to keep the rally alive." }; return { title: "Team Rally Mission", goalLabel: input.upgrades.length >= 2 ? "Trigger a Team Boost" : "Reach rallies together", goalTarget: input.upgrades.length >= 2 ? 1 : 10, missionType: input.upgrades.length >= 2 ? "trigger_team_boost" : "reach_rallies", nextUnlockActivityId: nextUnlock?.activityId ?? null, nextUnlockLabel: nextUnlock ? `Complete ${nextUnlock.activityLabel} to unlock ${nextUnlock.boostLabel}.` : "You unlocked all Foundation team boosts.", teacherNote: "Use timing, communication, and focus to keep the rally alive." }; }
+export function buildBrightRallyRecap(input: { result: BrightRallyResult; upgrades: RallyUpgrade[]; mission: BrightRallyMission; bestRecap: BrightRallyBestRecap | null }): BrightRallyRecap { const teamworkSkill = input.result.bestStreak >= 10 ? "Team Rhythm" : input.result.teamBoosts >= 3 ? "Communication" : input.result.livesRemaining >= 2 ? "Recovery" : input.result.rallyCount < 6 ? "Focus" : "Timing"; return { ...input.result, activeBoostLabels: input.upgrades.map((u) => u.title), teamworkSkill, nextGoal: input.mission.nextUnlockLabel, bestRally: Math.max(input.result.rallyCount, input.bestRecap?.bestRallyCount ?? 0), bestStreak: Math.max(input.result.bestStreak, input.bestRecap?.bestStreak ?? 0) }; }
+export function buildBrightRallyReflectionPrompts(): string[] { return ["What helped your team keep the rally going?", "Which boost helped the most?", "What STEM module unlocked that boost?", "What will you complete next to help your team?"]; }
+
 export function didPaddleHitBall(
   ballY: number,
   paddleY: number,
@@ -253,6 +285,8 @@ export default function BrightRallyCoopQuest() {
   const [upgrades, setUpgrades] = useState<RallyUpgrade[]>([]);
   const [snapshot, setSnapshot] = useState<GameSnapshot>(defaultSnapshot);
   const [result, setResult] = useState<BrightRallyResult | null>(null);
+  const [bestRecap, setBestRecap] = useState<BrightRallyBestRecap | null>(null);
+  const [showReflection, setShowReflection] = useState(false);
 
   const instructions = useMemo(
     () => ({
@@ -287,6 +321,7 @@ export default function BrightRallyCoopQuest() {
   const lastP2InputRef = useRef(Date.now());
 
   useEffect(() => {
+    setBestRecap(readBrightRallyBest());
     const fetchProgress = async () => {
       try {
         await api.getAvatar().catch(() => null);
@@ -339,8 +374,13 @@ export default function BrightRallyCoopQuest() {
       rhythmBonusMultiplier: config.rhythmBonusMultiplier,
     });
     setResult(builtResult);
+    if (shouldUpdateBrightRallyBest(builtResult, bestRecap)) {
+      const updated = writeBrightRallyBest(builtResult);
+      if (updated) setBestRecap(updated);
+    }
+    setShowReflection(false);
     setPhase("results");
-  }, [config.rhythmBonusMultiplier, upgrades]);
+  }, [bestRecap, config.rhythmBonusMultiplier, upgrades]);
 
   const step = useCallback((dt: number) => {
     const state = { ...snapshotRef.current };
@@ -531,6 +571,8 @@ export default function BrightRallyCoopQuest() {
 
   const courtBallTrailX = clamp(snapshot.ballX + Math.sign(ballVxRef.current) * 10, 5, 95);
   const hasBoostReady = snapshot.teamMeter >= 80;
+  const mission = useMemo(() => buildBrightRallyMission({ completedActivityIds, upgrades, bestRecap }), [bestRecap, completedActivityIds, upgrades]);
+  const recap = useMemo(() => result ? buildBrightRallyRecap({ result, upgrades, mission, bestRecap }) : null, [bestRecap, mission, result, upgrades]);
 
   return (
     <section
@@ -557,11 +599,13 @@ export default function BrightRallyCoopQuest() {
       <ControlInstructions instructions={instructions} className="mb-4" />
 
       {phase === "intro" && (
-        <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-          <h3 className="text-lg font-semibold text-blue-950">{t("brightRally.mission", { defaultValue: "Mission Brief" })}</h3>
+        <div role="region" aria-label={t("brightRally.missionCard.title", { defaultValue: "Team Rally Mission" })} className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <h3 className="text-lg font-semibold text-blue-950">{t("brightRally.missionCard.title", { defaultValue: mission.title })}</h3>
           <p className="mt-2 text-sm text-slate-700">
-            {t("brightRally.intro", { defaultValue: "Work together to return the ball, fill the team rally meter, and unlock Team Boost moments!" })}
+            {t("brightRally.missionCard.goal", { defaultValue: "Today's Goal" })}: {mission.goalLabel} ({mission.goalTarget})
           </p>
+          <p className="mt-1 text-sm text-slate-700">{t("brightRally.missionCard.whyItMatters", { defaultValue: "Why it matters" })}: {mission.teacherNote}</p>
+          <p className="mt-1 text-sm text-slate-700">{t("brightRally.missionCard.nextUnlock", { defaultValue: "Next unlock" })}: {mission.nextUnlockLabel}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               ref={startButtonRef}
@@ -580,6 +624,7 @@ export default function BrightRallyCoopQuest() {
               <div key={upgrade.key} className="rounded-lg border border-blue-200 bg-white px-3 py-2">
                 <p className="font-semibold text-slate-900">{upgrade.title}</p>
                 <p className="text-xs text-slate-600">{upgrade.description}</p>
+                <p className="text-xs text-slate-500">Unlocked by: {getRallyUpgradeUnlockLabel(upgrade.key)}</p>
               </div>
             )) : (
               <p className="rounded-lg border border-dashed border-blue-200 bg-white px-3 py-2 text-slate-700 sm:col-span-2">
@@ -680,24 +725,22 @@ export default function BrightRallyCoopQuest() {
         </div>
       )}
 
-      {phase === "results" && result && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+      {phase === "results" && recap && (
+        <div role="region" aria-label={t("brightRally.recap.title", { defaultValue: "Rally Recap" })} className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
           <h3 ref={resultHeadingRef} tabIndex={-1} className="text-lg font-bold text-emerald-900 outline-none">
             {t("brightRally.resultsTitle", { defaultValue: "Rally Complete" })}
           </h3>
-          <p className="mt-2 text-sm text-slate-700">{result.encouragement}</p>
+          <p className="mt-2 text-sm text-slate-700">{recap.encouragement}</p>
 
           <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.rallies", { defaultValue: "Rally count" })}: <strong>{result.rallyCount}</strong></div>
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.streak", { defaultValue: "Best streak" })}: <strong>{result.bestStreak}</strong></div>
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.score", { defaultValue: "Team score" })}: <strong>{result.teamScore}</strong></div>
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.boosts", { defaultValue: "Team boosts" })}: <strong>{result.teamBoosts}</strong></div>
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.lives", { defaultValue: "Lives left" })}: <strong>{result.livesRemaining}</strong></div>
-            <div className="rounded-md bg-white p-2">{t("brightRally.result.modules", { defaultValue: "Modules used" })}: <strong>{result.modulesUsed.length || t("brightRally.result.none", { defaultValue: "None" })}</strong></div>
+            <div className="rounded-md bg-white p-2">{t("brightRally.result.rallies", { defaultValue: "Rally count" })}: <strong>{recap.rallyCount}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.result.streak", { defaultValue: "Best streak" })}: <strong>{recap.bestStreak}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.result.score", { defaultValue: "Team score" })}: <strong>{recap.teamScore}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.result.boosts", { defaultValue: "Team boosts" })}: <strong>{recap.teamBoosts}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.result.lives", { defaultValue: "Lives left" })}: <strong>{recap.livesRemaining}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.result.modules", { defaultValue: "Modules used" })}: <strong>{recap.modulesUsed.length || t("brightRally.result.none", { defaultValue: "None" })}</strong></div>
+            <div className="rounded-md bg-white p-2">{t("brightRally.recap.teamworkSkill", { defaultValue: "Teamwork skill" })}: <strong>{recap.teamworkSkill}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.recap.nextGoal", { defaultValue: "Next goal" })}: <strong>{recap.nextGoal}</strong></div><div className="rounded-md bg-white p-2">{t("brightRally.recap.bestRally", { defaultValue: "Best Rally" })}: <strong>{recap.bestRally}</strong></div>
           </div>
+          <button type="button" onClick={() => setShowReflection((v) => !v)} className="mt-3 rounded border border-emerald-300 bg-white px-3 py-1 text-sm">{showReflection ? t("brightRally.reflection.hide", { defaultValue: "Hide classroom reflection" }) : t("brightRally.reflection.show", { defaultValue: "Show classroom reflection" })}</button>
+          {showReflection && <div className="mt-2 rounded bg-white p-3"><p className="font-semibold">{t("brightRally.reflection.title", { defaultValue: "Classroom Reflection" })}</p><ul className="list-disc pl-5 text-sm">{buildBrightRallyReflectionPrompts().map((prompt) => <li key={prompt}>{prompt}</li>)}</ul></div>}
 
-          {result.modulesUsed.length > 0 && (
-            <p className="mt-3 text-xs text-slate-600">{result.modulesUsed.join(", ")}</p>
+          {recap.modulesUsed.length > 0 && (
+            <p className="mt-3 text-xs text-slate-600">{recap.modulesUsed.join(", ")}</p>
           )}
 
           <button

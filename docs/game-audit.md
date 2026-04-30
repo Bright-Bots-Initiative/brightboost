@@ -208,3 +208,10 @@ Shared game wrappers now include a reusable keyboard/control banner and safer, p
   - reduced-effects DOM state;
   - progress-fetch failure resilience;
   - Play Hub co-op tab Bright Rally rendering.
+
+## Bright Rally mission + recap classroom loop
+- Added a structured Mission Card in the intro phase with a deterministic mission goal, teacher note, active boost context, and next STEM unlock recommendation.
+- Added a stronger Rally Recap region after matches with teamwork-skill labeling, next-goal guidance, and local best rally/streak surfacing.
+- Added optional Teacher Reflection Mode (show/hide) with classroom prompts.
+- Added Set 1 next-unlock recommendation helper and local-only best recap persistence (`brightboost.brightRally.bestRecap`).
+- This remains local co-op only; no backend persistence and no online co-op were added.
