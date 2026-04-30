@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import GameBackground from "../components/GameBackground";
 import LanguageToggle from "../components/LanguageToggle";
 import { track } from "@/lib/analytics";
+import MascotHeroVisual from "@/components/home/MascotHeroVisual";
 
 const HOMEPAGE_TITLE = "Bright Boost — Free K-8 STEM Learning for Students, Teachers & Families";
 const HOMEPAGE_DESCRIPTION =
@@ -143,7 +144,7 @@ const Index: React.FC = () => {
           <section
             id="hero"
             aria-labelledby="hero-heading"
-            className="mx-auto max-w-6xl px-4 py-10 md:py-12 md:min-h-[520px] min-h-[560px] max-h-[600px] md:max-h-[540px]"
+            className="mx-auto max-w-6xl px-4 py-10 md:py-12 md:min-h-[500px] min-h-[620px] max-h-[660px] md:max-h-[540px]"
             style={{ background: "linear-gradient(180deg,#BFE5F7 0%,#DCEEFB 55%,#EAF6FD 100%)" }}
           >
             <div className="grid md:grid-cols-2 gap-6 items-center h-full">
@@ -195,26 +196,7 @@ const Index: React.FC = () => {
                 </p>
               </div>
 
-              <Card className="rounded-[22px] border-2 border-white/90 shadow-xl bg-white/95 p-0 md:rotate-[-2deg] motion-reduce:rotate-0">
-                <CardHeader className="border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2 mb-2" aria-hidden="true">
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-300" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-green-300" />
-                  </div>
-                  <CardTitle className="text-brightboost-navy text-lg">Student Dashboard Preview</CardTitle>
-                  <span className="inline-flex self-start rounded-full bg-[#FACC15] px-3 py-1 text-xs font-extrabold text-brightboost-navy">
-                    🎮 Always Free
-                  </span>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-3 pt-4">
-                  {["Build circuits", "Math mission", "Track streak", "Classroom mode"].map((tile) => (
-                    <div key={tile} className="rounded-[18px] bg-sky-50 border border-sky-100 p-3 text-sm text-brightboost-navy font-semibold">
-                      {tile}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+              <MascotHeroVisual />
             </div>
           </section>
 
