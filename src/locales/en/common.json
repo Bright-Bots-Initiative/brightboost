@@ -2,7 +2,7 @@
   "skipToContent": "Skip to content",
   "student": "Student",
   "dashboard": {
-    "loading": "Loading…",
+    "loading": "Loading\u2026",
     "stillLoading": "Still loading...",
     "errorPrefix": "Oops",
     "tryAgain": "Try Again",
@@ -58,7 +58,7 @@
     "upNext": "Up next:",
     "startActivity": "Start Activity",
     "browseModules": "Browse Modules",
-    "loadingActivities": "Loading your activities…",
+    "loadingActivities": "Loading your activities\u2026",
     "caughtUp": "You're all caught up. Pick a module to keep learning!",
     "goToModules": "Go to Modules",
     "play": "Play",
@@ -88,7 +88,7 @@
     "start": "Start",
     "joinClass": "Join a Class",
     "joinClassDesc": "Enter a join code from your teacher",
-    "joinClassWithCount": "{{count}} classes joined · Enter another code",
+    "joinClassWithCount": "{{count}} classes joined \u00b7 Enter another code",
     "quickCheckIn": "Quick Check-In",
     "allCheckInsDone": "All check-ins done!",
     "firstCheckInDone": "First check-in done",
@@ -168,8 +168,8 @@
     "confusedPlaceholder": "Anything unclear, broken, or missing...",
     "pilotLabel": "How interested are you in a pilot?",
     "pilotSelect": "Select one",
-    "pilotHigh": "Very interested — let's talk",
-    "pilotMedium": "Curious — I'd like to learn more",
+    "pilotHigh": "Very interested \u2014 let's talk",
+    "pilotMedium": "Curious \u2014 I'd like to learn more",
     "pilotLow": "Just exploring for now",
     "pilotNa": "Not applicable",
     "followUp": "I'd like someone to follow up with me",
@@ -190,7 +190,7 @@
     "status": "Status",
     "pastDue": "Past Due",
     "due": "Due",
-    "back": "⬅ Back to Dashboard",
+    "back": "\u2b05 Back to Dashboard",
     "nextModule": "Next Module",
     "noNextModule": "No next module assigned."
   },
@@ -252,7 +252,7 @@
     "demoTitle": "Demo Accounts",
     "demoTeacher": "Teacher",
     "demoStudent": "Student",
-    "demoPath": "Recommended path: Log in as teacher → Create a class → Open Showcase Mode → Log in as student → Join the class → Play a module.",
+    "demoPath": "Recommended path: Log in as teacher \u2192 Create a class \u2192 Open Showcase Mode \u2192 Log in as student \u2192 Join the class \u2192 Play a module.",
     "viewShowcase": "View Showcase Presentation",
     "forReviewers": "Evaluator Guide",
     "privacy": "Privacy Policy",
@@ -261,10 +261,10 @@
   "reviewers": {
     "backHome": "Back to Home",
     "title": "BrightBoost Evaluator Guide",
-    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost \u2014 a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
     "whatIs": {
       "title": "What is BrightBoost?",
-      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned in future releases.",
+      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content \u2014 turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned in future releases.",
       "feat1": "Game-Based Learning",
       "feat2": "Real-Time Progress",
       "feat3": "Classroom Management",
@@ -291,7 +291,7 @@
     },
     "students": {
       "title": "What Students Experience",
-      "item1": "Join a class with a simple code — early learners (K-2) use icon + PIN login, no passwords needed",
+      "item1": "Join a class with a simple code \u2014 early learners (K-2) use icon + PIN login, no passwords needed",
       "item2": "Play through sequencing, pattern, and problem-solving activities",
       "item3": "Earn XP, level up, and customize a robot avatar",
       "item4": "See personal goals and streaks on a kid-friendly dashboard",
@@ -311,7 +311,7 @@
     },
     "privacy": {
       "title": "Privacy & Trust",
-      "item1": "BrightBoost collects only learning progress data — no ads, no third-party tracking",
+      "item1": "BrightBoost collects only learning progress data \u2014 no ads, no third-party tracking",
       "item2": "COPPA-aware design: early learner accounts (K-2) don't require email or passwords",
       "item3": "All data can be exported or deleted at the end of a pilot",
       "item4": "Audit logging tracks login, signup, and password reset events"
@@ -549,9 +549,9 @@
       "catAssessment": "Assessment",
       "catSupplemental": "Supplemental",
       "catGeneral": "General",
-      "module1": "Module 1 — Rhyme & Ride",
-      "module2": "Module 2 — Bounce & Buds",
-      "module3": "Module 3 — Gotcha Gears"
+      "module1": "Module 1 \u2014 Rhyme & Ride",
+      "module2": "Module 2 \u2014 Bounce & Buds",
+      "module3": "Module 3 \u2014 Gotcha Gears"
     },
     "benchmark": {
       "title": "Benchmark Assessments",
@@ -619,9 +619,9 @@
       "checklistPrepareMaterials": "Prepare any physical materials needed",
       "checklistSetupDevices": "Set up devices/tablets for student access",
       "checklistShareJoinCode": "Share the class join code with any new students",
-      "module1": "Module 1 — Rhyme & Ride",
-      "module2": "Module 2 — Bounce & Buds",
-      "module3": "Module 3 — Gotcha Gears"
+      "module1": "Module 1 \u2014 Rhyme & Ride",
+      "module2": "Module 2 \u2014 Bounce & Buds",
+      "module3": "Module 3 \u2014 Gotcha Gears"
     },
     "pdHub": {
       "title": "Professional Development Hub",
@@ -683,9 +683,9 @@
       "send": "Send",
       "reply": "Reply",
       "loading": "Loading PD Hub...",
-      "module1": "Module 1 — Rhyme & Ride",
-      "module2": "Module 2 — Bounce & Buds",
-      "module3": "Module 3 — Gotcha Gears"
+      "module1": "Module 1 \u2014 Rhyme & Ride",
+      "module2": "Module 2 \u2014 Bounce & Buds",
+      "module3": "Module 3 \u2014 Gotcha Gears"
     }
   },
   "activity": {
@@ -699,8 +699,8 @@
     "completed": "Activity Completed!"
   },
   "game": {
-    "goal": "Goal: Put the steps in order (First → Next → Last)",
-    "tip": "Tip: Ask \"What has to happen before…?\"",
+    "goal": "Goal: Put the steps in order (First \u2192 Next \u2192 Last)",
+    "tip": "Tip: Ask \"What has to happen before\u2026?\"",
     "availableCards": "Available cards",
     "empty": "(Empty)",
     "reset": "Reset",
@@ -764,12 +764,12 @@
     "hyperspaceLabel": "Hyperspace (risky!)",
     "restartLabel": "Restart match",
     "tips": "Tips",
-    "tipSpeed": "Don't go too fast — you might fly into the sun!",
+    "tipSpeed": "Don't go too fast \u2014 you might fly into the sun!",
     "tipHyperspace": "Hyperspace moves you to a random spot (a little risky!)",
     "tipAim": "Aim a little ahead of where your opponent is going",
     "tipDifficulty": "Start on Easy to learn the controls, then try harder!",
     "gotIt": "Got it!",
-    "gestureHint": "Drag to steer + thrust • Tap to fire • Double-tap for hyperspace",
+    "gestureHint": "Drag to steer + thrust \u2022 Tap to fire \u2022 Double-tap for hyperspace",
     "mission": {
       "title": "Duel Mission Card",
       "goal": "Mission Goal"
@@ -829,7 +829,7 @@
     "set2LockedMessage": "Complete Set 1 STEM Games to unlock the next challenge set.",
     "set2LockedToastTitle": "Set 2 is Locked",
     "set3Label": "Set 3",
-    "set3ComingSoon": "Set 3: Mastery — Coming Soon",
+    "set3ComingSoon": "Set 3: Mastery \u2014 Coming Soon",
     "set3ComingSoonDesc": "New challenges are being built. Stay tuned!",
     "detail": {
       "locked": "Module Locked",
@@ -916,7 +916,7 @@
     "title": "Family STEAM Night",
     "preEyebrow": "Public Showcase",
     "preHeadline": "Family STEAM Showcase",
-    "preSubheadline": "A bilingual presentation of the BrightBoost K-2 launch — the first tier of our K-8 STEM learning platform, building strong foundations for advanced technology pathways.",
+    "preSubheadline": "A bilingual presentation of the BrightBoost K-2 launch \u2014 the first tier of our K-8 STEM learning platform, building strong foundations for advanced technology pathways.",
     "preWhatTitle": "What you'll see",
     "preWhat1": "Student learning modules and STEM activities",
     "preWhat2": "Real achievement data and confidence growth",
@@ -939,7 +939,7 @@
     "slide5Subtitle": "Continue learning at home",
     "slide6Title": "Thank You!",
     "slide6Subtitle": "Keep exploring with BrightBoost",
-    "pressEscToExit": "Press ESC to exit • Arrow keys to navigate",
+    "pressEscToExit": "Press ESC to exit \u2022 Arrow keys to navigate",
     "slideOf": "{{current}} of {{total}}",
     "takeHomeCards": "Print Take-Home Cards",
     "startShowcase": "Start Showcase",
@@ -955,7 +955,7 @@
     "complete": "Activity Complete!",
     "youEarned": "You earned",
     "points": "+{{count}} points",
-    "levelUp": "LEVEL UP! 🆙",
+    "levelUp": "LEVEL UP! \ud83c\udd99",
     "gettingStronger": "You are getting stronger!",
     "unlocked": "Unlocked {{count}} new ability!",
     "unlockedPlural": "Unlocked {{count}} new abilities!",
@@ -966,8 +966,8 @@
     "slideOf": "Slide {{current}} of {{total}}",
     "back": "Back",
     "next": "Next",
-    "prevSlide": "Previous Slide (←)",
-    "nextSlide": "Next Slide (→)",
+    "prevSlide": "Previous Slide (\u2190)",
+    "nextSlide": "Next Slide (\u2192)",
     "startQuiz": "Start Quiz",
     "backToStory": "Back to Story",
     "quizSubtitle": "Answer questions to complete the lesson!",
@@ -987,7 +987,7 @@
       "Tell someone nearby one cool thing you learned!",
       "Stretch your arms up high like a rocket!",
       "Look out the window and find something interesting!",
-      "Take 5 deep breaths — in through your nose, out through your mouth!"
+      "Take 5 deep breaths \u2014 in through your nose, out through your mouth!"
     ]
   },
   "gameInstructions": {
@@ -1042,7 +1042,7 @@
       "howToPlayLong": "How to Play",
       "step1": "Planning Phase: Read the clue and watch the gears appear",
       "step2": "Action Phase: Move your catcher to the right lane",
-      "step3": "Use ↑/↓ arrow keys (or W/S) or tap a lane",
+      "step3": "Use \u2191/\u2193 arrow keys (or W/S) or tap a lane",
       "step4": "Press CATCH or click when the gear reaches the catcher zone",
       "scoring": "Scoring",
       "score1": "Correct catch = +1 point",
@@ -1059,29 +1059,29 @@
     "boost": {
       "s1": "Hi! I am Boost.",
       "s2": "I want to bake a cake!",
-      "s3": "Oops… the steps are mixed up!",
+      "s3": "Oops\u2026 the steps are mixed up!",
       "s4": "A plan with steps is called an algorithm.",
       "s5": "Let's put the steps in the right order!",
       "q1": {
         "prompt": "What is Boost making?",
-        "c1": "A shoe 👞",
-        "c2": "A cake 🎂",
-        "c3": "A car 🚗",
-        "hint": "Look at the picture with the candles! 🎂"
+        "c1": "A shoe \ud83d\udc5e",
+        "c2": "A cake \ud83c\udf82",
+        "c3": "A car \ud83d\ude97",
+        "hint": "Look at the picture with the candles! \ud83c\udf82"
       },
       "q2": {
-        "prompt": "A plan with steps is called…",
-        "c1": "An algorithm 📜",
-        "c2": "Magic ✨",
-        "c3": "A nap 💤",
-        "hint": "It's a big word that starts with A... 📜"
+        "prompt": "A plan with steps is called\u2026",
+        "c1": "An algorithm \ud83d\udcdc",
+        "c2": "Magic \u2728",
+        "c3": "A nap \ud83d\udca4",
+        "hint": "It's a big word that starts with A... \ud83d\udcdc"
       },
       "q3": {
         "prompt": "What does debug mean?",
-        "c1": "Fix a mistake 🛠️",
-        "c2": "Make a mess 🙃",
-        "c3": "Eat snacks 🍪",
-        "hint": "When something is broken, we have to ___ it. 🛠️"
+        "c1": "Fix a mistake \ud83d\udee0\ufe0f",
+        "c2": "Make a mess \ud83d\ude43",
+        "c3": "Eat snacks \ud83c\udf6a",
+        "hint": "When something is broken, we have to ___ it. \ud83d\udee0\ufe0f"
       },
       "reviewKeyIdea": "An algorithm is steps in order. Debug means fix mistakes.",
       "reviewVocab": "step, order, debug"
@@ -1093,91 +1093,91 @@
       "s4": "Can you find the word that rhymes? Let's ride and find out!",
       "q1": {
         "prompt": "Which word rhymes with cat?",
-        "c1": "Hat 🎩",
-        "c2": "Dog 🐶",
-        "c3": "Cup ☕",
-        "c4": "Pen 🖊️",
-        "hint": "It sounds like cat but goes on your head! 🎩"
+        "c1": "Hat \ud83c\udfa9",
+        "c2": "Dog \ud83d\udc36",
+        "c3": "Cup \u2615",
+        "c4": "Pen \ud83d\udd8a\ufe0f",
+        "hint": "It sounds like cat but goes on your head! \ud83c\udfa9"
       },
       "q2": {
         "prompt": "Which word rhymes with sun?",
-        "c1": "Moon 🌙",
-        "c2": "Run 🏃",
-        "c3": "Star ⭐",
-        "c4": "Book 📕",
-        "hint": "You do this with your legs really fast! 🏃"
+        "c1": "Moon \ud83c\udf19",
+        "c2": "Run \ud83c\udfc3",
+        "c3": "Star \u2b50",
+        "c4": "Book \ud83d\udcd5",
+        "hint": "You do this with your legs really fast! \ud83c\udfc3"
       },
       "q3": {
-        "prompt": "Words that rhyme sound the same at the…",
-        "c1": "Beginning 🔤",
-        "c2": "End 🔚",
-        "c3": "Middle 🔵",
-        "c4": "Everywhere 🌀",
-        "hint": "Cat and hat both END with -at! 🔚"
+        "prompt": "Words that rhyme sound the same at the\u2026",
+        "c1": "Beginning \ud83d\udd24",
+        "c2": "End \ud83d\udd1a",
+        "c3": "Middle \ud83d\udd35",
+        "c4": "Everywhere \ud83c\udf00",
+        "hint": "Cat and hat both END with -at! \ud83d\udd1a"
       },
       "reviewKeyIdea": "Rhyming words sound the same at the end, like cat/hat and sun/run.",
       "reviewVocab": "rhyme, sound, end"
     },
     "buddy": {
-      "s1": "Hi! I'm Buddy. I'm a Bio Explorer! 🌿🔬",
-      "s2": "Living things are made of tiny parts called cells. 🧫",
-      "s3": "Tiny helpers called microbes live in soil and help plants. 🦠",
-      "s4": "We read clues and test ideas—like steps in code! ✅",
+      "s1": "Hi! I'm Buddy. I'm a Bio Explorer! \ud83c\udf3f\ud83d\udd2c",
+      "s2": "Living things are made of tiny parts called cells. \ud83e\uddeb",
+      "s3": "Tiny helpers called microbes live in soil and help plants. \ud83e\udda0",
+      "s4": "We read clues and test ideas\u2014like steps in code! \u2705",
       "q1": {
-        "prompt": "Tiny parts of living things are called…",
-        "c1": "Cells 🧫",
-        "c2": "Rocks 🪨",
-        "c3": "Cars 🚗",
-        "c4": "Clouds ☁️",
-        "hint": "Cells are tiny building blocks. 🧫"
+        "prompt": "Tiny parts of living things are called\u2026",
+        "c1": "Cells \ud83e\uddeb",
+        "c2": "Rocks \ud83e\udea8",
+        "c3": "Cars \ud83d\ude97",
+        "c4": "Clouds \u2601\ufe0f",
+        "hint": "Cells are tiny building blocks. \ud83e\uddeb"
       },
       "q2": {
-        "prompt": "Microbes are…",
-        "c1": "Tiny living helpers 🦠",
-        "c2": "Big elephants 🐘",
-        "c3": "Toys 🧸",
-        "c4": "Shiny stars ⭐",
-        "hint": "Microbes are tiny and alive. 🦠"
+        "prompt": "Microbes are\u2026",
+        "c1": "Tiny living helpers \ud83e\udda0",
+        "c2": "Big elephants \ud83d\udc18",
+        "c3": "Toys \ud83e\uddf8",
+        "c4": "Shiny stars \u2b50",
+        "hint": "Microbes are tiny and alive. \ud83e\udda0"
       },
       "q3": {
-        "prompt": "Roots help a plant…",
-        "c1": "Drink water 💧",
-        "c2": "Fly ✈️",
-        "c3": "Sing 🎵",
-        "c4": "Sleep 💤",
-        "hint": "Roots take in water from the ground. 💧"
+        "prompt": "Roots help a plant\u2026",
+        "c1": "Drink water \ud83d\udca7",
+        "c2": "Fly \u2708\ufe0f",
+        "c3": "Sing \ud83c\udfb5",
+        "c4": "Sleep \ud83d\udca4",
+        "hint": "Roots take in water from the ground. \ud83d\udca7"
       },
       "reviewKeyIdea": "Cells and microbes are tiny parts of life. We read clues and test ideas like scientists!",
       "reviewVocab": "cell, microbe, root"
     },
     "gearbot": {
-      "s1": "Hi! I'm Gearbot. I help robots think! ⚙️🤖",
-      "s2": "Robots need a plan to solve problems. 📝",
-      "s3": "When robots make mistakes, we debug—that means fix! 🛠️",
-      "s4": "Practice helps robots learn, just like you! 🌟",
+      "s1": "Hi! I'm Gearbot. I help robots think! \u2699\ufe0f\ud83e\udd16",
+      "s2": "Robots need a plan to solve problems. \ud83d\udcdd",
+      "s3": "When robots make mistakes, we debug\u2014that means fix! \ud83d\udee0\ufe0f",
+      "s4": "Practice helps robots learn, just like you! \ud83c\udf1f",
       "q1": {
         "prompt": "What does debug mean?",
-        "c1": "Fix a mistake 🛠️",
-        "c2": "Take a nap 💤",
-        "c3": "Eat lunch 🍕",
-        "c4": "Play a game 🎮",
-        "hint": "Debug means to fix what went wrong! 🛠️"
+        "c1": "Fix a mistake \ud83d\udee0\ufe0f",
+        "c2": "Take a nap \ud83d\udca4",
+        "c3": "Eat lunch \ud83c\udf55",
+        "c4": "Play a game \ud83c\udfae",
+        "hint": "Debug means to fix what went wrong! \ud83d\udee0\ufe0f"
       },
       "q2": {
         "prompt": "What helps robots learn?",
-        "c1": "Practice 🌟",
-        "c2": "Skipping ⏭️",
-        "c3": "Hiding 🙈",
-        "c4": "Guessing 🎲",
-        "hint": "Practice makes progress! 🌟"
+        "c1": "Practice \ud83c\udf1f",
+        "c2": "Skipping \u23ed\ufe0f",
+        "c3": "Hiding \ud83d\ude48",
+        "c4": "Guessing \ud83c\udfb2",
+        "hint": "Practice makes progress! \ud83c\udf1f"
       },
       "q3": {
-        "prompt": "A plan with steps is called a…",
-        "c1": "Rule 📜",
-        "c2": "Nap 💤",
-        "c3": "Snack 🍪",
-        "c4": "Joke 😂",
-        "hint": "Rules tell us what to do step by step! 📜"
+        "prompt": "A plan with steps is called a\u2026",
+        "c1": "Rule \ud83d\udcdc",
+        "c2": "Nap \ud83d\udca4",
+        "c3": "Snack \ud83c\udf6a",
+        "c4": "Joke \ud83d\ude02",
+        "hint": "Rules tell us what to do step by step! \ud83d\udcdc"
       },
       "reviewKeyIdea": "Robots use plans and rules. Debug means fix mistakes. Practice helps us learn!",
       "reviewVocab": "debug, plan, practice, rule"
@@ -1307,7 +1307,7 @@
         "hint": "A plan is steps in order."
       },
       "r5": {
-        "clue": "We look at clues to find an answer. That is called…",
+        "clue": "We look at clues to find an answer. That is called\u2026",
         "correct": "pattern",
         "d1": "luck",
         "d2": "magic",
@@ -1321,7 +1321,7 @@
         "hint": "Testing means trying to see if it works."
       },
       "r7": {
-        "clue": "We teach the robot by giving it…",
+        "clue": "We teach the robot by giving it\u2026",
         "correct": "data",
         "d1": "candy",
         "d2": "toys",
@@ -1447,7 +1447,7 @@
     "quantumQuest": {
       "title": "Quantum Quest",
       "correct": "Correct!",
-      "tryAgain": "Not quite — try another!",
+      "tryAgain": "Not quite \u2014 try another!",
       "shieldSaved": "Shield saved you!",
       "missionEnd": "Mission Complete!",
       "scoreLabel": "Score",
@@ -1495,7 +1495,7 @@
     },
     "moveMeasure": {
       "title": "Move, Measure & Improve",
-      "introDesc": "Test your body's superpowers! Dash, jump, and toss — then use data to improve.",
+      "introDesc": "Test your body's superpowers! Dash, jump, and toss \u2014 then use data to improve.",
       "letsGo": "Let's Go!",
       "dashTitle": "Dash!",
       "dashHint": "Tap when the marker hits the green zone!",
@@ -1518,10 +1518,10 @@
       "celebDesc": "Great scientists measure and compare to learn.",
       "whichBest": "Which event went best?",
       "whichEnjoyed": "Which event did you enjoy the most?",
-      "acedEvery": "You aced every event! 🏆",
-      "consistent": "Nice — you were consistent across every event!",
+      "acedEvery": "You aced every event! \ud83c\udfc6",
+      "consistent": "Nice \u2014 you were consistent across every event!",
       "tiedBest": "You tied your best in {{first}} AND {{second}}!",
-      "enjoyAck": "Great choice — everyone has a favorite!",
+      "enjoyAck": "Great choice \u2014 everyone has a favorite!",
       "perfectRun": "Perfect Run!"
     },
     "skyShield": {
@@ -1655,6 +1655,27 @@
       "lives": "Lives left",
       "modules": "Modules used",
       "none": "None"
+    },
+    "missionCard": {
+      "title": "Team Rally Mission",
+      "goal": "Today's Goal",
+      "whyItMatters": "Why it matters",
+      "nextUnlock": "Next unlock"
+    },
+    "recap": {
+      "title": "Rally Recap",
+      "teamworkSkill": "Teamwork skill",
+      "nextGoal": "Next goal",
+      "bestRally": "Best Rally"
+    },
+    "reflection": {
+      "title": "Classroom Reflection",
+      "show": "Show classroom reflection",
+      "hide": "Hide classroom reflection",
+      "prompt1": "What helped your team keep the rally going?",
+      "prompt2": "Which boost helped the most?",
+      "prompt3": "What STEM module unlocked that boost?",
+      "prompt4": "What will you complete next to help your team?"
     }
   }
 }
