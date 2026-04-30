@@ -769,7 +769,29 @@
     "tipAim": "Aim a little ahead of where your opponent is going",
     "tipDifficulty": "Start on Easy to learn the controls, then try harder!",
     "gotIt": "Got it!",
-    "gestureHint": "Drag to steer + thrust \u2022 Tap to fire \u2022 Double-tap for hyperspace"
+    "gestureHint": "Drag to steer + thrust \u2022 Tap to fire \u2022 Double-tap for hyperspace",
+    "mission": {
+      "title": "Duel Mission Card",
+      "goal": "Mission Goal"
+    },
+    "loadout": {
+      "title": "Active STEM Ship Upgrades"
+    },
+    "recap": {
+      "title": "Strategy Recap",
+      "winner": "Winner",
+      "finalScore": "Final Score",
+      "strategySkill": "Strategy Skill",
+      "nextChallenge": "Suggested Next Challenge",
+      "best": "Best Duel Score"
+    },
+    "reflection": {
+      "title": "Classroom Reflection",
+      "prompt1": "What strategy helped you avoid the sun?",
+      "prompt2": "Did you rush, or did you plan your movement?",
+      "prompt3": "Which STEM boost helped most?",
+      "prompt4": "What would you try differently next match?"
+    }
   },
   "impact": {
     "title": "Community Impact Dashboard",
