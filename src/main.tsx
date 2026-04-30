@@ -11,8 +11,4 @@ const renderApp = () => {
   );
 };
 
-if (import.meta.env.VITE_ENABLE_I18N === "true") {
-  import("./i18n").then(() => renderApp());
-} else {
-  renderApp();
-}
+import("./i18n").then(() => renderApp());
