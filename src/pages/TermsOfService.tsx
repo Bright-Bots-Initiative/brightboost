@@ -2,11 +2,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 
 const TermsOfService: React.FC = () => {
   return (
     <GameBackground>
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="game-card p-8 w-full max-w-2xl text-left">
           <h1 className="text-3xl font-bold text-brightboost-navy mb-2">
             Terms of Service

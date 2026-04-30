@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { signupStudent } from "../services/api";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
+import LanguageToggle from "../components/LanguageToggle";
 import { Input } from "../components/ui/input";
 import { PasswordInput } from "../components/ui/password-input";
 import { Button } from "../components/ui/button";
@@ -71,6 +72,9 @@ const StudentSignup: React.FC = () => {
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-4xl">
           <div className="text-center md:text-left flex-1">
             <h1 className="text-3xl md:text-4xl font-bold text-brightboost-navy mb-4">

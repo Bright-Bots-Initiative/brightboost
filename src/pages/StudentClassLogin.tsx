@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { API_BASE, join } from "../services/api";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 import {
   InputOTP,
   InputOTPGroup,
@@ -149,6 +150,9 @@ export default function StudentClassLogin() {
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="game-card p-8 w-full max-w-lg ui-sheen">
           {/* Step 1: Enter Class Code */}
           {step === "code" && (

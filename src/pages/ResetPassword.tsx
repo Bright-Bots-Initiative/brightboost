@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import GameBackground from "../components/GameBackground";
+import LanguageToggle from "../components/LanguageToggle";
 import { PasswordInput } from "../components/ui/password-input";
 import { Button } from "../components/ui/button";
 
@@ -58,6 +59,9 @@ const ResetPassword: React.FC = () => {
     return (
       <GameBackground>
         <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+          <div className="absolute top-4 right-4 z-20">
+            <LanguageToggle />
+          </div>
           <div className="game-card p-6 w-full max-w-md text-center">
             <p className="text-red-600 font-medium mb-4">
               {t("auth.resetInvalid")}
@@ -77,6 +81,9 @@ const ResetPassword: React.FC = () => {
   return (
     <GameBackground>
       <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+        <div className="absolute top-4 right-4 z-20">
+          <LanguageToggle />
+        </div>
         <div className="game-card p-6 w-full max-w-md ui-sheen ui-highlight">
           <div className="flex items-center gap-2 mb-4">
             <Link
