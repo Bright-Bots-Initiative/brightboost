@@ -91,6 +91,10 @@ body {
   animation: mascot-bob 4.5s ease-in-out infinite;
 }
 
+.mascot-flip {
+  transform: scaleX(-1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mascot-bob {
     animation: none !important;
