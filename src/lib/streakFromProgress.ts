@@ -91,7 +91,7 @@ export function computeStreakFromProgress(
   if (lastCompletedDayKey === todayKey || lastCompletedDayKey === yesterdayKey) {
     // Count backwards from last completed day
     const lastDate = new Date(lastCompletedDayKey + "T00:00:00");
-    let checkDate = new Date(lastDate);
+    const checkDate = new Date(lastDate);
 
     while (daySet.has(toLocalDayKey(checkDate))) {
       currentStreak++;

@@ -247,6 +247,7 @@ const TeacherClassDetail: React.FC = () => {
       newAssignments[s.id] = AVAILABLE_ICONS[i % AVAILABLE_ICONS.length];
     });
     setIconAssignments(newAssignments);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course]);
 
   const saveIcons = useCallback(async () => {

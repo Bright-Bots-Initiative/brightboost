@@ -519,6 +519,7 @@ function QuantumQuestCore({
     } else {
       finishGame();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectorIdx, config.sectors.length]);
 
   const finishGame = useCallback(() => {

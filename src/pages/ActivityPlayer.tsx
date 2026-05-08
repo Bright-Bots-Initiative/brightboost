@@ -142,6 +142,7 @@ export default function ActivityPlayer() {
         navigate("/student/avatar", { replace: true });
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useEffect(() => {

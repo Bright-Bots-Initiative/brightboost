@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import FloatingBadge from "./FloatingBadge";
 
-const MASCOT_SRC = "/robots/robot_default.png";
+const MASCOT_SRC = "/mascots/bright-bot-character.png";
 
 const MascotHeroVisual: React.FC = () => {
   const [mascotLoaded, setMascotLoaded] = useState(true);
@@ -34,6 +34,7 @@ const MascotHeroVisual: React.FC = () => {
           </div>
         )}
       </div>
+
 
       <FloatingBadge
         label="Always Free"
