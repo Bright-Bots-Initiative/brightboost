@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import FloatingBadge from "./FloatingBadge";
 
+const MASCOT_SRC = "/robots/robot_default.png";
+
 const MascotHeroVisual: React.FC = () => {
+  const [mascotLoaded, setMascotLoaded] = useState(true);
+
   return (
     <div className="relative flex items-center justify-center h-[250px] md:h-[320px] w-full">
       <div
@@ -11,12 +15,24 @@ const MascotHeroVisual: React.FC = () => {
       />
 
       <div className="relative z-10 mascot-bob">
-        <img
-          src="/robots/robot_explorer.png"
-          alt="Bright Boost mascot"
-          className="w-[180px] md:w-[250px]"
-          style={{ transform: "scaleX(-1)" }}
-        />
+        {mascotLoaded ? (
+          <div className="mascot-flip">
+            <img
+              src={MASCOT_SRC}
+              alt="Bright Boost mascot"
+              className="w-[180px] md:w-[250px] block"
+              onError={() => setMascotLoaded(false)}
+            />
+          </div>
+        ) : (
+          <div
+            role="img"
+            aria-label="Bright Boost mascot placeholder"
+            className="w-[180px] h-[180px] md:w-[250px] md:h-[250px] rounded-full bg-white/85 border-2 border-[#46B1E6]/30 flex items-center justify-center text-6xl md:text-7xl shadow-md"
+          >
+            🤖
+          </div>
+        )}
       </div>
 
       <FloatingBadge
