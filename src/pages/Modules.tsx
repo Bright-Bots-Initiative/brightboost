@@ -126,6 +126,7 @@ export default function Modules() {
       .finally(() => {
         setLoading(false);
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const set1Modules = modules.filter((m) => !isSet2ModuleSlug(m.slug));

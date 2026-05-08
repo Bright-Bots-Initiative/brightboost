@@ -263,9 +263,9 @@ router.post(
     // 4. Calculate Deltas
     let xpDelta = avatarAfter.xp - avatarBefore.xp;
     let levelDelta = avatarAfter.level - avatarBefore.level;
-    let energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
-    let hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
-    let newAbilitiesDelta = newAbilitiesFromUnlock;
+    const energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
+    const hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
+    const newAbilitiesDelta = newAbilitiesFromUnlock;
 
     // If avatar was backfilled, add backfilled XP to delta for accurate display
     if (wasBackfilled) {

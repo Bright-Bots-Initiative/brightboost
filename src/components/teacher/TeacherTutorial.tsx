@@ -22,13 +22,17 @@ function isTutorialDone(): boolean {
 function markTutorialDone(): void {
   try {
     localStorage.setItem(TUTORIAL_KEY, "true");
-  } catch {}
+  } catch {
+    // localStorage unavailable — tutorial completion will not persist
+  }
 }
 
 export function resetTutorial(): void {
   try {
     localStorage.removeItem(TUTORIAL_KEY);
-  } catch {}
+  } catch {
+    // localStorage unavailable — nothing to reset
+  }
 }
 
 export default function TeacherTutorial() {

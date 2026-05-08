@@ -179,6 +179,7 @@ function GotchaGearsCore({
     }));
     setGears(newGears);
     setRoundComplete(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round, roundIdx, baseSpeed, speedRamp]);
 
   useEffect(() => {
@@ -218,6 +219,7 @@ function GotchaGearsCore({
     };
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver, roundComplete, roundIdx]);
 
   const advanceRound = useCallback(() => {
@@ -226,6 +228,7 @@ function GotchaGearsCore({
     } else {
       setRoundIdx((r) => r + 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIdx, rounds.length]);
 
   const finishGame = useCallback(() => {

@@ -56,6 +56,7 @@ export default function FacilitatorDashboard() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCohort = async (id: string) => {

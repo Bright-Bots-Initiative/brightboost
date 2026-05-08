@@ -16,7 +16,9 @@ function getDefaultCollapsed(): boolean {
   try {
     const stored = localStorage.getItem(SIDEBAR_KEY);
     if (stored !== null) return stored === "true";
-  } catch {}
+  } catch {
+    // localStorage unavailable (private mode, SSR) — fall through to default
+  }
   // Default collapsed on tablet (<1024px)
   return window.innerWidth < 1024;
 }
@@ -40,7 +42,9 @@ const TeacherLayout: React.FC<{ children: React.ReactNode }> = ({
       const next = !prev;
       try {
         localStorage.setItem(SIDEBAR_KEY, String(next));
-      } catch {}
+      } catch {
+        // localStorage unavailable — preference will not persist
+      }
       return next;
     });
   }, []);

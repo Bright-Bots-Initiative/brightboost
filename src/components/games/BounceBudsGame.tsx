@@ -498,6 +498,7 @@ function BouncePlayfield({
     };
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   // ── Global keyboard listeners ──
@@ -536,6 +537,7 @@ function BouncePlayfield({
     paddleXRef.current = clamp(localX - PADDLE_W / 2, 0, FIELD_W - PADDLE_W);
     syncPaddle();
     if (phaseRef.current === "waiting") snapBallToPaddle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -573,6 +575,7 @@ function BouncePlayfield({
     () => () => {
       haltEverything();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

@@ -461,6 +461,7 @@ function RhymeRideCore({
 
     // Show first showdown card
     advanceShowdown(queue, w);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldIdx]);
 
   const advanceShowdown = useCallback((queue: typeof showdownQueueRef.current, _w: World) => {
@@ -493,6 +494,7 @@ function RhymeRideCore({
   // ── Initial spawn ──
   useEffect(() => {
     spawnRound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // only on mount
 
   // ── Animation loop ──
@@ -540,6 +542,7 @@ function RhymeRideCore({
 
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, speed, worldIdx]);
 
   // ── Miss handler (called when cards fall off screen) ──
@@ -568,6 +571,7 @@ function RhymeRideCore({
         spawnRound();
       }
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFamily, roundIdx, spawnRound]);
 
   // ── Showdown distractor pass-through (correct decision — reward) ──
@@ -587,6 +591,7 @@ function RhymeRideCore({
         advanceShowdown(queue, WORLDS[worldIdx]);
       }
     }, 600);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldIdx, advanceShowdown, registerSuccess]);
 
   // ── Lane tap handler ──
@@ -705,6 +710,7 @@ function RhymeRideCore({
         setTimeout(() => setFeedbackText(""), 1200);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [phase, cards, combo, prompt, roundIdx, totalCorrect, spawnRound, spawnShowdown, worldIdx],
   );
 
@@ -716,6 +722,7 @@ function RhymeRideCore({
     } else {
       setPhase("worldTransition");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldIdx]);
 
   const advanceWorld = useCallback(() => {

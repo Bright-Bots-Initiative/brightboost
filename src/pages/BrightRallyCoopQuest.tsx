@@ -594,7 +594,7 @@ export default function BrightRallyCoopQuest() {
       const isP2Down =
         keysRef.current.ArrowDown || keysRef.current.k || keysRef.current.K;
 
-      let p1Dir =
+      const p1Dir =
         (isP1Up ? -1 : 0) + (isP1Down ? 1 : 0) + touchDirRef.current.left;
       let p2Dir =
         (isP2Up ? -1 : 0) + (isP2Down ? 1 : 0) + touchDirRef.current.right;
