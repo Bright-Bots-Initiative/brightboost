@@ -124,6 +124,8 @@ app.use("/api", nocache);
 // 🛡️ Sentinel: Configure CORS securely
 // Only allow trusted origins in production to prevent unauthorized access
 const defaultAllowedOrigins = [
+  "https://brightboost.org",
+  "https://www.brightboost.org",
   "https://fe-production-3552.up.railway.app",
   "http://localhost:5173",
   "http://localhost:3000",
