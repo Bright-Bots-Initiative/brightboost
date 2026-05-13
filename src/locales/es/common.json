@@ -899,14 +899,14 @@
       },
       "q3": {
         "prompt": "Un plan con pasos se llama…",
-        "c1": "Regla 📜",
+        "c1": "Algoritmo 📜",
         "c2": "Siesta 💤",
         "c3": "Merienda 🍪",
         "c4": "Chiste 😂",
-        "hint": "¡Las reglas nos dicen qué hacer paso a paso! 📜"
+        "hint": "¡Un algoritmo son pasos a seguir en orden! 📜"
       },
-      "reviewKeyIdea": "Los robots usan planes y reglas. Depurar significa arreglar errores. ¡La práctica nos ayuda a aprender!",
-      "reviewVocab": "depurar, plan, practicar, regla"
+      "reviewKeyIdea": "Un algoritmo es un plan con pasos. Depurar significa arreglar errores. ¡La práctica nos ayuda a aprender!",
+      "reviewVocab": "depurar, plan, practicar, algoritmo"
     },
     "rhymeGame": {
       "r1": { "prompt": "gato", "correct": "pato", "d1": "mesa", "d2": "sol" },

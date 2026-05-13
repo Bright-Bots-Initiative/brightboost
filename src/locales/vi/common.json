@@ -899,14 +899,14 @@
       },
       "q3": {
         "prompt": "Một kế hoạch có các bước gọi là…",
-        "c1": "Quy tắc 📜",
+        "c1": "Thuật toán 📜",
         "c2": "Giấc ngủ 💤",
         "c3": "Bữa ăn nhẹ 🍪",
         "c4": "Câu chuyện cười 😂",
-        "hint": "Quy tắc cho chúng ta biết phải làm gì từng bước! 📜"
+        "hint": "Thuật toán là các bước thực hiện theo thứ tự! 📜"
       },
-      "reviewKeyIdea": "Robot dùng kế hoạch và quy tắc. Gỡ lỗi nghĩa là sửa sai. Luyện tập giúp chúng ta học!",
-      "reviewVocab": "gỡ lỗi, kế hoạch, luyện tập, quy tắc"
+      "reviewKeyIdea": "Thuật toán là một kế hoạch với các bước. Gỡ lỗi nghĩa là sửa sai. Luyện tập giúp chúng ta học!",
+      "reviewVocab": "gỡ lỗi, kế hoạch, luyện tập, thuật toán"
     },
     "rhymeGame": {
       "r1": { "prompt": "cat", "correct": "hat", "d1": "dog", "d2": "sun" },
