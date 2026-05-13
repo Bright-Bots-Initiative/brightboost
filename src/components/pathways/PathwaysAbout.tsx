@@ -3,7 +3,7 @@
  */
 import { Link } from "react-router-dom";
 import { PATHWAY_TRACKS } from "@/constants/pathwayTracks";
-import { Shield, Rocket, DollarSign, Cpu, Film, Users, BarChart3, Award, ArrowRight } from "lucide-react";
+import { Shield, Rocket, DollarSign, Cpu, Film, Users, BarChart3, Award, ArrowRight, Briefcase, FileText, Target } from "lucide-react";
 import LanguageToggle from "@/components/LanguageToggle";
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -30,8 +30,11 @@ export default function PathwaysAbout() {
             <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">Pathways</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-2">Real pathways for real futures.</p>
+          <p className="text-slate-400 max-w-xl mx-auto mb-2">
+            Career-connected learning for opportunity and justice-impacted youth ages 14-17.
+          </p>
           <p className="text-slate-400 max-w-xl mx-auto mb-6">
-            Career-connected learning for 14-17 year olds. Cybersecurity, entrepreneurship, financial literacy, tech, and creative media — delivered through cohort-based programs with facilitator support.
+            Cybersecurity, entrepreneurship, financial literacy, tech, and creative media — delivered through cohort-based programs with facilitator support.
           </p>
           <Link
             to="/student-login"
@@ -79,20 +82,59 @@ export default function PathwaysAbout() {
         </div>
       </div>
 
+      {/* What Outcomes Look Like */}
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        <h2 className="text-2xl font-bold text-center mb-2">What Outcomes Look Like</h2>
+        <p className="text-sm text-slate-400 text-center mb-10">Each learner leaves the program with concrete artifacts and a next-step plan, not just attendance.</p>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <Feature icon={<FileText className="w-5 h-5" />} title="Portfolio Artifacts" desc="Capstone security plan, career interest profile, and module completion records — concrete proof of skill." />
+          <Feature icon={<Award className="w-5 h-5" />} title="Certification Prep" desc="Direct on-ramps to Cisco NetAcad, ISC2 Certified in Cybersecurity (CC), and CompTIA Security+." />
+          <Feature icon={<Target className="w-5 h-5" />} title="Next-Step Plan" desc="Every learner ends with a concrete next action: a cert to pursue, an internship to apply for, or a credential pathway." />
+        </div>
+      </div>
+
+      {/* Delivery Models */}
+      <div className="bg-slate-900/50 border-y border-slate-800">
+        <div className="max-w-5xl mx-auto px-6 py-16">
+          <h2 className="text-2xl font-bold text-center mb-2">Delivery Models</h2>
+          <p className="text-sm text-slate-400 text-center mb-10">Built to fit how your program actually runs.</p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <Feature icon={<Briefcase className="w-5 h-5" />} title="Site-Led" desc="Your staff facilitate using our curriculum, dashboard, and resources. We provide training and support." />
+            <Feature icon={<Users className="w-5 h-5" />} title="Hybrid" desc="Shared delivery — your staff lead in-person sessions, we run virtual deep-dives and credential coaching." />
+            <Feature icon={<Award className="w-5 h-5" />} title="Full-Service" desc="We staff the cohort end-to-end. You provide the space, recruitment, and on-site relationships." />
+          </div>
+        </div>
+      </div>
+
       {/* For Partners */}
       <div className="max-w-5xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold text-center mb-2">For Program Partners</h2>
-        <p className="text-sm text-slate-400 text-center mb-10">Deliver Pathways in your community, school, or workforce program.</p>
+        <p className="text-sm text-slate-400 text-center mb-10">Built for correctional education, workforce development, community-based organizations, and alternative schools.</p>
 
         <div className="grid md:grid-cols-3 gap-6">
           <Feature icon={<Users className="w-5 h-5" />} title="Cohort Delivery" desc="Create cohorts, assign tracks, and manage enrollment with join codes." />
-          <Feature icon={<BarChart3 className="w-5 h-5" />} title="Facilitator Dashboard" desc="Track learner progress, completion rates, and engagement in real time." />
+          <Feature icon={<BarChart3 className="w-5 h-5" />} title="Facilitator Dashboard" desc="Track learner progress, completion rates, and engagement in real time. Export CSVs for reporting." />
           <Feature icon={<Award className="w-5 h-5" />} title="Credential Prep" desc="Cisco NetAcad integration, ISC2 CC pathway, and portfolio artifacts." />
+        </div>
+
+        <div className="mt-12 rounded-2xl border border-slate-800 bg-slate-900/40 p-6">
+          <h3 className="font-semibold text-slate-200 mb-2">Funding Fit</h3>
+          <p className="text-sm text-slate-400 mb-3">Pathways content and delivery is designed to align with common youth-serving funding streams:</p>
+          <ul className="grid sm:grid-cols-2 gap-2 text-sm text-slate-300">
+            <li>· WIOA Youth (Title I)</li>
+            <li>· Reentry Employment Opportunities (REO)</li>
+            <li>· Illinois Youth Investment Program</li>
+            <li>· Reaching Youth, Delivering Success (RYDS)</li>
+            <li>· Perkins V / CTE Programs of Study</li>
+            <li>· Local workforce board contracts</li>
+          </ul>
         </div>
 
         <div className="text-center mt-12">
           <a
-            href="mailto:partnerships@brightboost.org?subject=Pathways%20Pilot%20Interest"
+            href="mailto:nwalker@brightbotsint.com?subject=Pathways%20Pilot%20Interest"
             className="inline-flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors"
           >
             Request a Pilot <ArrowRight className="w-4 h-4" />
