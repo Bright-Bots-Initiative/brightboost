@@ -1,7 +1,7 @@
 # Bright Boost — Claude Code Project Brief
 
 > This file is read by Claude Code on every turn. Keep it current.
-> Last updated: 2026-04-08
+> Last updated: 2026-05-13
 
 ---
 
@@ -315,15 +315,19 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 
 ### Test Accounts (All)
 
+All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The seed runs find-or-create and **always refreshes the password hash on every seed run**, so plaintext values below match what to type in the login form.
+
 | Email | Password | Type | Role | Notes |
 |-------|----------|------|------|-------|
-| teacher@school.com | password123 | K-8 | Teacher | Demo class owner |
+| teacher@school.com | password123 | K-8 | Teacher (Ms. Frizzle) | Demo class owner |
 | student@test.com | password | K-8 | Student | Incomplete Set 1 |
 | explorer@test.com | explore123 | K-8 | Student | Set 1 complete, Set 2 unlocked |
 | jordan@test.com | jordan123 | K-8 | Student | Grade 3-5 class, fresh |
-| facilitator@test.com | pathway123 | Pathways | Facilitator | ETO cohort manager |
+| facilitator@test.com | pathway123 | Pathways | Facilitator (Coach Davis) | ETO cohort manager |
 | marcus@test.com | marcus123 | Pathways | Student (Launch) | 3/7 Cyber Launch done |
 | aisha@test.com | aisha123 | Pathways | Student (Explorer) | Fresh, 0 completions |
+
+Class code for emoji-picker login: **STARS1** (created by Ms. Frizzle's K-2 class seed).
 
 ---
 
@@ -341,7 +345,7 @@ Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game comp
 
 ## Current Audit Status
 
-**Date: 2026-04-09**
+**Date: 2026-05-13**
 
 ### Set 1 Games (5 games) — with pathway strand labels
 - Bounce & Buds (Biotech) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`

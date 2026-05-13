@@ -1219,7 +1219,8 @@ async function main() {
         choices: [
           { en: "Group plants by seed type", es: "Agrupar plantas por tipo de semilla" },
           { en: "This fern needs high water", es: "Este helecho necesita mucha agua" },
-          { en: "Plant bed A has three plants", es: "La cama de plantas A tiene tres plantas" }
+          { en: "Plant bed A has three plants", es: "La cama de plantas A tiene tres plantas" },
+          { en: "Card 4 has the prettiest flowers", es: "La tarjeta 4 tiene las flores más bonitas" }
         ],
         answerIndex: 0,
         hint: { en: "A rule can be used on every card.", es: "Una regla puede usarse en cada tarjeta." }
@@ -1230,7 +1231,8 @@ async function main() {
         choices: [
           { en: "They match on seed type", es: "Coinciden en tipo de semilla" },
           { en: "They must be in the same plant bed", es: "Deben estar en la misma cama de plantas" },
-          { en: "They must need the same water", es: "Deben necesitar la misma agua" }
+          { en: "They must need the same water", es: "Deben necesitar la misma agua" },
+          { en: "They must be the same color", es: "Deben ser del mismo color" }
         ],
         answerIndex: 0,
         hint: { en: "Look only at the named attribute.", es: "Mira solo el atributo nombrado." }
@@ -1241,7 +1243,8 @@ async function main() {
         choices: [
           { en: "Most plants need full sunlight", es: "La mayoría de las plantas necesitan luz solar completa" },
           { en: "All plants need shade", es: "Todas las plantas necesitan sombra" },
-          { en: "No plants need partial sunlight", es: "Ninguna planta necesita luz solar parcial" }
+          { en: "No plants need partial sunlight", es: "Ninguna planta necesita luz solar parcial" },
+          { en: "Plants prefer shade over sunlight", es: "Las plantas prefieren la sombra al sol" }
         ],
         answerIndex: 0,
         hint: { en: "Choose the claim that matches the largest count.", es: "Elige la afirmación que coincide con el mayor conteo." }
@@ -1252,7 +1255,8 @@ async function main() {
         choices: [
           { en: "The full-sun bar is tallest", es: "La barra de sol completo es la más alta" },
           { en: "I like full-sun plants", es: "Me gustan las plantas de sol completo" },
-          { en: "My friend chose that answer", es: "Mi amigo eligió esa respuesta" }
+          { en: "My friend chose that answer", es: "Mi amigo eligió esa respuesta" },
+          { en: "It just felt like the right answer", es: "Sentí que era la respuesta correcta" }
         ],
         answerIndex: 0,
         hint: { en: "Evidence comes from measured data.", es: "La evidencia proviene de datos medidos." }
@@ -1263,7 +1267,8 @@ async function main() {
         choices: [
           { en: "It helps find deeper patterns and better explanations", es: "Ayuda a encontrar patrones más profundos y mejores explicaciones" },
           { en: "It makes data random", es: "Hace los datos aleatorios" },
-          { en: "It removes the need for evidence", es: "Elimina la necesidad de evidencia" }
+          { en: "It removes the need for evidence", es: "Elimina la necesidad de evidencia" },
+          { en: "It makes sorting faster than using one attribute", es: "Hace que clasificar sea más rápido que usar un atributo" }
         ],
         answerIndex: 0,
         hint: { en: "More than one attribute can reveal hidden structure.", es: "Más de un atributo puede revelar estructura oculta." }

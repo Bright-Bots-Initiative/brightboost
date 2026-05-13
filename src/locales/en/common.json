@@ -1173,14 +1173,14 @@
       },
       "q3": {
         "prompt": "A plan with steps is called a\u2026",
-        "c1": "Rule \ud83d\udcdc",
+        "c1": "Algorithm \ud83d\udcdc",
         "c2": "Nap \ud83d\udca4",
         "c3": "Snack \ud83c\udf6a",
         "c4": "Joke \ud83d\ude02",
-        "hint": "Rules tell us what to do step by step! \ud83d\udcdc"
+        "hint": "An algorithm is steps to follow in order! \ud83d\udcdc"
       },
-      "reviewKeyIdea": "Robots use plans and rules. Debug means fix mistakes. Practice helps us learn!",
-      "reviewVocab": "debug, plan, practice, rule"
+      "reviewKeyIdea": "An algorithm is a plan with steps. Debug means fix mistakes. Practice helps us learn!",
+      "reviewVocab": "debug, plan, practice, algorithm"
     },
     "rhymeGame": {
       "r1": {
