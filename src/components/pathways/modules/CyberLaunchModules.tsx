@@ -119,11 +119,11 @@ const CYBER_SLIDES = [
   },
   {
     title: "Why It Matters",
-    body: "Data breaches cost businesses an average of $4.45 million per incident. Personal data — passwords, financial info, medical records — is constantly at risk. Critical infrastructure like power grids and hospitals depends on strong cyber defense.",
+    body: "Data breaches cost businesses an average of $4.45 million per incident (IBM Cost of a Data Breach Report, 2023). Personal data — passwords, financial info, medical records — is constantly at risk. Critical infrastructure like power grids and hospitals depends on strong cyber defense.",
   },
   {
     title: "Real Breaches",
-    body: "In 2017, a single breach exposed the personal data of 147 million people — names, Social Security numbers, birth dates. In 2020, a ransomware attack shut down a major hospital network, diverting emergency patients and delaying care for days.",
+    body: "In 2017, a single breach exposed the personal data of 147 million people — names, Social Security numbers, birth dates. In 2020, a ransomware attack shut down a major hospital network, diverting emergency patients and delaying care for days. Real incidents like these are why every organization now treats cybersecurity as a business risk, not just an IT problem.",
   },
   {
     title: "Who Works in Cyber?",
@@ -133,13 +133,27 @@ const CYBER_SLIDES = [
       { name: "Incident Responder", desc: "Investigates breaches and leads the recovery effort", pay: "$70K–$105K" },
       { name: "Security Engineer", desc: "Designs and builds security architecture and tools", pay: "$95K–$145K" },
       { name: "GRC Analyst", desc: "Manages governance, risk, and compliance frameworks", pay: "$65K–$100K" },
+      { name: "Digital Forensics", desc: "Recovers evidence from devices after breaches and crimes", pay: "$75K–$120K" },
+      { name: "Security Architect", desc: "Designs the overall security strategy for an organization", pay: "$120K–$180K" },
       { name: "CISO", desc: "Chief Information Security Officer — leads the entire security program", pay: "$150K–$250K" },
     ],
   },
   {
-    title: "The Opportunity",
-    body: "There are nearly 470,000 unfilled cybersecurity jobs in the U.S. alone. The field is growing 33% faster than average — and it rewards curiosity, problem-solving, and persistence over any single degree or background.",
+    title: "Many Ways In",
+    body: "You don't need a four-year degree to start a cyber career. People enter the field through bootcamps, free industry certifications (CompTIA Security+, ISC2 Certified in Cybersecurity), military service, IT help desk roles, and self-study with home labs. Employers care about what you can do, not just what's on your diploma.",
   },
+  {
+    title: "The Opportunity",
+    body: "The U.S. had roughly 470,000 unfilled cybersecurity job openings as of mid-2024 (NIST CyberSeek). The U.S. Bureau of Labor Statistics projects Information Security Analyst employment to grow about 33% from 2023 to 2033 — much faster than the average for all occupations. The field rewards curiosity, problem-solving, and persistence over any single background.",
+  },
+];
+
+const CYBER_SOURCES = [
+  { label: "NIST CyberSeek (job market data)", url: "https://www.cyberseek.org/" },
+  { label: "BLS Information Security Analysts", url: "https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm" },
+  { label: "ISC2 Certified in Cybersecurity (CC)", url: "https://www.isc2.org/Certifications/CC" },
+  { label: "CompTIA Security+", url: "https://www.comptia.org/certifications/security" },
+  { label: "NIST Cybersecurity Framework", url: "https://www.nist.gov/cyberframework" },
 ];
 
 const CYBER_QUIZ = [
@@ -272,6 +286,30 @@ export function CyberFoundations({ onComplete, onBack }: ModuleProps) {
           </PrimaryButton>
         )}
       </div>
+
+      {/* Sources — visible on every slide so claims are verifiable */}
+      <details className="mt-8 group">
+        <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-300 select-none">
+          Sources &amp; further reading
+        </summary>
+        <ul className="mt-2 space-y-1 pl-3 border-l border-slate-700">
+          {CYBER_SOURCES.map((s) => (
+            <li key={s.url} className="text-xs text-slate-400">
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-indigo-300 hover:underline"
+              >
+                {s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[10px] text-slate-600 mt-2 pl-3">
+          Job-market and salary figures cited above are point-in-time references; verify against current BLS/CyberSeek data before quoting in partner materials.
+        </p>
+      </details>
     </ModuleShell>
   );
 }
@@ -527,9 +565,10 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handlePwSubmit}>Submit</PrimaryButton>
           )}
           {pwSubmitted && (
-            <p className="text-xs text-teal-400">
-              Strong passwords use length, mixed case, numbers, and symbols.
-            </p>
+            <div className="text-xs text-teal-400 space-y-1">
+              <p>Modern NIST guidance (SP 800-63B): length beats complexity. A long passphrase like four random words is stronger than a short scramble — and you don't have to rotate passwords on a schedule if they aren't compromised.</p>
+              <p className="text-slate-500">A password manager lets you use a unique, long password for every account without memorizing them.</p>
+            </div>
           )}
         </div>
       )}
@@ -1186,6 +1225,20 @@ const CAREERS: CareerCard[] = [
     tags: ["Organized", "Policy-minded", "Strong communicator"],
   },
   {
+    role: "Digital Forensics",
+    what: "Recovers and analyzes evidence from devices after breaches, crimes, or insider incidents. Often works with law enforcement or legal teams.",
+    salary: "$75K–$120K",
+    education: "GIAC GCFE/GCFA cert, criminal justice or CS background, EnCase or FTK training",
+    tags: ["Patient", "Detail-obsessed", "Evidence-driven"],
+  },
+  {
+    role: "Security Architect",
+    what: "Designs the overall security strategy and reference architecture for an organization. Translates business risk into technical controls.",
+    salary: "$120K–$180K",
+    education: "10+ years experience, CISSP-ISSAP, deep network and cloud knowledge",
+    tags: ["Big-picture", "Designer", "Risk-aware"],
+  },
+  {
     role: "CISO",
     what: "Chief Information Security Officer. Leads the entire security program, sets strategy, and reports to the board.",
     salary: "$150K–$250K",
@@ -1209,12 +1262,14 @@ export function CyberCareerMap({ onComplete, onBack }: ModuleProps) {
   };
 
   const nextSteps: Record<string, string[]> = {
-    "Security Analyst": ["CompTIA Security+ certification", "SOC analyst internship", "Home lab practice"],
-    "Penetration Tester": ["TryHackMe / HackTheBox practice", "CEH or OSCP certification", "Bug bounty programs"],
-    "Incident Responder": ["SANS GCIH certification", "Volunteer for IT help desk", "Incident response simulations"],
-    "Security Engineer": ["AWS/Azure cloud certifications", "Learn Python scripting", "Open source security projects"],
-    "GRC Analyst": ["ISACA CISA certification", "Study compliance frameworks (NIST, ISO)", "Business writing courses"],
-    "CISO": ["Build broad security experience first", "MBA or security management degree", "Leadership and communication training"],
+    "Security Analyst": ["ISC2 Certified in Cybersecurity (CC) — free for first year", "CompTIA Security+ certification", "Home lab + SOC analyst internship"],
+    "Penetration Tester": ["TryHackMe / HackTheBox practice", "CEH or OSCP certification", "Bug bounty programs (HackerOne, Bugcrowd)"],
+    "Incident Responder": ["SANS GCIH certification", "IT help desk role to learn the environment", "Tabletop incident-response simulations"],
+    "Security Engineer": ["AWS/Azure cloud certifications", "Learn Python scripting", "Contribute to open-source security tooling"],
+    "GRC Analyst": ["ISACA CISA certification", "Study NIST CSF and ISO 27001 frameworks", "Build clear technical-writing samples"],
+    "Digital Forensics": ["SANS GCFE certification", "Practice with Autopsy / FTK Imager on test drives", "Learn chain-of-custody basics"],
+    "Security Architect": ["Earn CISSP first, then CISSP-ISSAP", "Get deep on cloud (AWS/Azure security)", "Study NIST 800-53 controls"],
+    "CISO": ["Build broad security experience first", "MBA or security management coursework", "Leadership and board-communication training"],
   };
 
   if (showSummary) {
@@ -1304,11 +1359,29 @@ export function CyberCareerMap({ onComplete, onBack }: ModuleProps) {
 // MODULE 6 — CiscoNetacadLink (External)
 // ═══════════════════════════════════════════════════════════════════════════
 
+const NETACAD_URL =
+  "https://www.cisco.com/site/us/en/learn/training-certifications/training/netacad/index.html";
+
+const RECOMMENDED_NETACAD_COURSES = [
+  {
+    name: "Introduction to Cybersecurity",
+    detail: "~15 hr, no prerequisites. Best starting point after this module.",
+  },
+  {
+    name: "Cybersecurity Essentials",
+    detail: "~30 hr, builds on the intro. Maps to CompTIA Security+ and Cisco CyberOps Associate.",
+  },
+  {
+    name: "CCNA (Introduction to Networks)",
+    detail: "Deeper networking foundation — useful for SOC, security engineering, and incident response roles.",
+  },
+];
+
 export function CiscoNetacadLink({ onComplete, onBack }: ModuleProps) {
   const [clicked, setClicked] = useState(false);
 
   const handleOpen = () => {
-    window.open("https://www.netacad.com/", "_blank", "noopener,noreferrer");
+    window.open(NETACAD_URL, "_blank", "noopener,noreferrer");
     setClicked(true);
     onComplete(100);
   };
@@ -1316,15 +1389,28 @@ export function CiscoNetacadLink({ onComplete, onBack }: ModuleProps) {
   return (
     <ModuleShell title="Cisco NetAcad" step={1} totalSteps={1} onBack={onBack}>
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Card className="max-w-md w-full text-center space-y-4 p-6">
-          {/* Cisco logo placeholder */}
-          <div className="w-16 h-16 mx-auto rounded-lg bg-slate-700 border border-slate-600 flex items-center justify-center">
-            <span className="text-2xl font-bold text-teal-400">C</span>
+        <Card className="max-w-md w-full space-y-4 p-6">
+          <div className="text-center space-y-3">
+            {/* Cisco logo placeholder */}
+            <div className="w-16 h-16 mx-auto rounded-lg bg-slate-700 border border-slate-600 flex items-center justify-center">
+              <span className="text-2xl font-bold text-teal-400">C</span>
+            </div>
+            <h2 className="text-lg font-semibold text-white">Cisco Networking Academy</h2>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Cisco NetAcad offers free, industry-recognized courses in networking, cybersecurity, and IT fundamentals. Build skills that employers actively look for.
+            </p>
           </div>
-          <h2 className="text-lg font-semibold text-white">Cisco Networking Academy</h2>
-          <p className="text-sm text-slate-400 leading-relaxed">
-            Cisco NetAcad offers free, industry-recognized courses in networking, cybersecurity, and IT fundamentals. Build skills that employers actively look for.
-          </p>
+
+          <div className="space-y-2 pt-2 border-t border-slate-700">
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Recommended after this module</p>
+            {RECOMMENDED_NETACAD_COURSES.map((c) => (
+              <div key={c.name} className="text-left">
+                <p className="text-sm font-medium text-slate-200">{c.name}</p>
+                <p className="text-xs text-slate-400">{c.detail}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="space-y-2">
             <button
               onClick={handleOpen}
@@ -1333,7 +1419,7 @@ export function CiscoNetacadLink({ onComplete, onBack }: ModuleProps) {
               Open Cisco NetAcad
             </button>
             {clicked && (
-              <p className="text-xs text-teal-400">
+              <p className="text-xs text-teal-400 text-center">
                 Link opened. Module complete.
               </p>
             )}

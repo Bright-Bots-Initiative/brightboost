@@ -3,7 +3,29 @@
  * Answers three questions: Who needs attention? How is the cohort doing? What do I do next?
  */
 import { useEffect, useState } from "react";
-import { Users, CheckCircle2, AlertTriangle, XCircle, Download, ChevronRight, ArrowLeft, StickyNote, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Users, CheckCircle2, AlertTriangle, XCircle, Download, ChevronRight, ArrowLeft, StickyNote, RefreshCw, BookOpen } from "lucide-react";
+
+const NOTES_STORAGE_KEY = "brightboost.pathways.facilitator.notes";
+
+function loadStoredNotes(): Record<string, string> {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return {};
+    const raw = window.localStorage.getItem(NOTES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistNotes(notes: Record<string, string>): void {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    window.localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  } catch {
+    // localStorage unavailable — notes will not persist across sessions
+  }
+}
 
 const BAND_LABELS: Record<string, string> = {
   explorer: "Explorer (14–15)",
@@ -42,7 +64,15 @@ export default function FacilitatorDashboard() {
   const [progress, setProgress] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLearner, setSelectedLearner] = useState<Learner | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState<Record<string, string>>(() => loadStoredNotes());
+
+  const updateNote = (learnerId: string, value: string) => {
+    setNotes((prev) => {
+      const next = { ...prev, [learnerId]: value };
+      persistNotes(next);
+      return next;
+    });
+  };
 
   const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
 
@@ -183,11 +213,11 @@ export default function FacilitatorDashboard() {
           </div>
           <textarea
             value={notes[selectedLearner.id] ?? ""}
-            onChange={(e) => setNotes((prev) => ({ ...prev, [selectedLearner.id]: e.target.value }))}
+            onChange={(e) => updateNote(selectedLearner.id, e.target.value)}
             placeholder="Add a private note about this learner..."
             className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 resize-none h-24 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
-          <p className="text-[10px] text-slate-600 mt-1">Notes are saved locally on this device.</p>
+          <p className="text-[10px] text-slate-600 mt-1">Notes are saved locally in this browser. Server-side persistence is on the roadmap.</p>
         </div>
       </div>
     );
@@ -219,6 +249,13 @@ export default function FacilitatorDashboard() {
               ))}
             </select>
           )}
+          <Link
+            to="/pathways/facilitator/resources"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 transition-colors"
+            title="Program overview, session guide, printables"
+          >
+            <BookOpen className="w-4 h-4" /> Resources
+          </Link>
           <button onClick={() => loadCohort(selectedCohort?.id)} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200" title="Refresh">
             <RefreshCw className="w-4 h-4" />
           </button>
