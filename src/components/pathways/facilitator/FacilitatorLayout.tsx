@@ -1,5 +1,5 @@
 /**
- * FacilitatorLayout — operational admin shell inside PathwaysLayout.
+ * FacilitatorLayout — operational admin shell, standalone.
  *
  * Visual identity is intentionally distinct from the student experience:
  *  - left sidebar nav (vs student bottom nav / colorful cards)
@@ -7,13 +7,17 @@
  *  - data-dense, table-forward content rather than tile-forward
  *  - neutral palette accents (slate + indigo) instead of track-color fills
  *
- * Mounts as a nested route under /pathways/facilitator so PathwaysLayout
- * still supplies the .dark wrapper and the parent shell.
+ * Mounted at /pathways/facilitator as a SIBLING of /pathways, not a child,
+ * so the student PathwaysLayout sidebar doesn't render on top. Provides its
+ * own `.dark` wrapper, brand header, theme toggle, language toggle, and
+ * sign-out — reading the same `bb_pathways_theme` localStorage key as
+ * PathwaysLayout so a facilitator's preference is shared across both sides.
  */
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import LanguageToggle from "@/components/LanguageToggle";
 import {
   LayoutDashboard,
   Users,
@@ -24,9 +28,22 @@ import {
   Settings as SettingsIcon,
   Shield,
   ChevronDown,
+  LogOut,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 const ACTIVE_COHORT_KEY = "bb_facilitator_active_cohort";
+const THEME_KEY = "bb_pathways_theme";
+
+function readStoredTheme(): "dark" | "light" {
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    return v === "light" ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
 
 interface CohortOption {
   id: string;
@@ -36,7 +53,10 @@ interface CohortOption {
 
 export default function FacilitatorLayout() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [theme, setTheme] = useState<"dark" | "light">(() => readStoredTheme());
+  const isDark = theme === "dark";
   const [cohorts, setCohorts] = useState<CohortOption[]>([]);
   const [activeCohortId, setActiveCohortId] = useState<string | null>(() => {
     try {
@@ -46,6 +66,19 @@ export default function FacilitatorLayout() {
     }
   });
   const [cohortMenuOpen, setCohortMenuOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* localStorage unavailable — preference will not persist */
+    }
+  }, [theme]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     fetch("/api/pathways/cohorts", {
@@ -78,7 +111,37 @@ export default function FacilitatorLayout() {
   const activeCohort = cohorts.find((c) => c.id === activeCohortId);
 
   return (
-    <div className="flex flex-col gap-6 -mt-2">
+    <div className={isDark ? "dark" : ""}>
+      <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
+        {/* Brand + global chrome (theme/language/logout) */}
+        <div className="flex items-center justify-between px-4 md:px-8 py-3 border-b bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-slate-500 font-medium">
+              {t("pathways.layout.eyebrow")}
+            </p>
+            <p className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-cyan-600 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">
+              {t("pathways.layout.brand")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <LanguageToggle variant={isDark ? "dark" : "light"} />
+            <button
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label={isDark ? t("pathways.common.lightMode") : t("pathways.common.darkMode")}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-slate-300" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              <LogOut className="w-3 h-3" /> {t("pathways.common.signOut")}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col gap-6">
       {/* Header bar with role + cohort selector */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-3 text-sm">
@@ -164,6 +227,8 @@ export default function FacilitatorLayout() {
               .then((data) => Array.isArray(data) && setCohorts(data.map((c: { id: string; name: string; status: string }) => ({ id: c.id, name: c.name, status: c.status }))))
               .catch(() => {});
           } }} />
+        </div>
+      </div>
         </div>
       </div>
     </div>
