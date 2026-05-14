@@ -65,28 +65,57 @@ export default function Dashboard() {
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   useEffect(() => {
+    // Hard 10s ceiling per request so a hung backend or missing migration
+    // surfaces as an error UI instead of an indefinite "Loading…" state.
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 10000);
+
+    const safeFetch = async (url: string) => {
+      const r = await fetch(url, { headers, signal: ac.signal });
+      const body = await r.json().catch(() => null);
+      if (!r.ok) {
+        throw new Error(
+          (body && (body.error || body.message)) || `${r.status} ${r.statusText}`,
+        );
+      }
+      return body;
+    };
+
     Promise.all([
-      fetch("/api/pathways/cohorts", { headers }).then((r) => r.json()),
-      fetch("/api/pathways/facilitator/reports/weekly", { headers }).then((r) => r.json()),
+      safeFetch("/api/pathways/cohorts"),
+      safeFetch("/api/pathways/facilitator/reports/weekly"),
     ])
       .then(([c, w]) => {
         setCohorts(Array.isArray(c) ? c : []);
-        // Guard against error responses (e.g. 401/403/500) being passed in as `weekly`.
-        // The view code below dereferences `weekly.inactiveLearners` / `weekly.recentActivity`,
-        // so we only accept payloads that actually look like a WeeklyReport.
+        // Guard against error responses being passed in as `weekly`. The view
+        // dereferences `weekly.inactiveLearners` / `weekly.recentActivity`, so
+        // we only accept payloads that actually look like a WeeklyReport.
         if (w && typeof w === "object" && Array.isArray(w.inactiveLearners) && Array.isArray(w.recentActivity)) {
           setWeekly(w as WeeklyReport);
         } else {
           setWeekly(null);
         }
+        setLoadError(null);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        const msg = err?.name === "AbortError" ? "timeout" : err?.message || "fetch failed";
+        setLoadError(msg);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeout);
+      ac.abort();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -114,8 +143,31 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Load error — keep the rest of the page rendering so navigation still works. */}
+      {loadError && (
+        <Card className="border-amber-300 dark:border-amber-800/40">
+          <CardBody className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
+                Couldn't load cohort data
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                {loadError}
+              </p>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-xs px-3 py-1.5 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              Retry
+            </button>
+          </CardBody>
+        </Card>
+      )}
+
       {/* Empty state */}
-      {cohorts.length === 0 && (
+      {!loadError && cohorts.length === 0 && (
         <Card className="text-center py-16">
           <CardBody>
             <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
