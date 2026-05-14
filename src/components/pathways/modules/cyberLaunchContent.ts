@@ -5,6 +5,8 @@
  * experience built around a 6-section flow:
  *
  *   1. Hook      — short scene/story that frames why the module matters
+ *                  (rendered to the student as "Why It Matters" — the schema
+ *                  field stays `hookCompleted` for backward compatibility)
  *   2. Reading   — substantive written content with sections + citations
  *   3. Lesson    — interactive walkthrough or guided scenes
  *   4. Practice  — low-stakes attempts with immediate feedback

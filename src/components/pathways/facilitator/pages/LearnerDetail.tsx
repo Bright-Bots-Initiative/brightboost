@@ -37,7 +37,7 @@ interface LearnerDetailData {
 }
 
 const SECTION_LABELS: Array<{ key: keyof Milestone; label: string }> = [
-  { key: "hookCompleted", label: "Hook" },
+  { key: "hookCompleted", label: "Why It Matters" },
   { key: "readingCompleted", label: "Read" },
   { key: "lessonCompleted", label: "Lesson" },
   { key: "practiceCompleted", label: "Practice" },
