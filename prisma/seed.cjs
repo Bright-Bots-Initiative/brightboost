@@ -1617,28 +1617,55 @@ async function main() {
     });
   }
 
-  // Marcus's Cyber Launch milestones (partial progress)
+  // Marcus's Cyber Launch milestones (partial progress).
+  // Section-level fields, homework responses, and time spent are filled in so
+  // Coach Davis's facilitator view shows real-looking work, not empty rows.
+  // upsert update block re-applies these every seed run — important when the
+  // section-progress migration lands on top of existing rows.
+  const MARCUS_HOMEWORK = {
+    "cyber-foundations":
+      "This week I counted 47 times cybersecurity affected my daily life. Most surprising: my game console asked for MFA when I tried to add a new payment method. I always thought MFA was just for banks. Three examples that stood out: (1) school portal asking for 2FA at every login, (2) a 'this site is not secure' warning on a free movie site I tried, (3) my mom getting a phishing text pretending to be Chase.",
+    "digital-safety-sim":
+      "My 5 most important accounts: school email, personal email, bank, Instagram, Discord. Audit results — only 2 had unique passwords (school, bank), only 1 had MFA (bank). Recovery emails were stale on 3 of them. Action plan this week: install Bitwarden, generate unique passwords for the other 3 accounts, turn on MFA on email first (because it's the recovery channel for everything else).",
+    "network-basics":
+      "Drew my home network on paper. Router: Netgear Nighthawk (don't know model #). 11 devices connected — 4 phones, 2 laptops, smart TV, gaming console, Ring doorbell, smart bulb x2. Riskiest device: the smart TV — bought it in 2019 and I can't remember it ever updating. One change: move the smart-home stuff to the guest WiFi so if any of them gets popped it can't see the main network.",
+  };
   const marcusMilestones = [
-    { moduleSlug: "cyber-foundations", status: "completed", score: 85, daysAgo: 7 },
-    { moduleSlug: "digital-safety-sim", status: "completed", score: 90, daysAgo: 5 },
-    { moduleSlug: "network-basics", status: "completed", score: 78, daysAgo: 3 },
-    { moduleSlug: "threat-detective", status: "in_progress", score: null, daysAgo: 1 },
+    { moduleSlug: "cyber-foundations", status: "completed", score: 85, daysAgo: 7, timeSpent: 62 },
+    { moduleSlug: "digital-safety-sim", status: "completed", score: 90, daysAgo: 5, timeSpent: 58 },
+    { moduleSlug: "network-basics", status: "completed", score: 78, daysAgo: 3, timeSpent: 65 },
+    { moduleSlug: "threat-detective", status: "in_progress", score: null, daysAgo: 1, timeSpent: 28 },
   ];
 
   for (const m of marcusMilestones) {
+    const isDone = m.status === "completed";
+    const isInProgress = m.status === "in_progress";
+    const fullFields = {
+      status: m.status,
+      score: m.score,
+      completedAt: isDone ? new Date(Date.now() - m.daysAgo * 86400000) : null,
+      hookCompleted: isDone || isInProgress,
+      readingCompleted: isDone || isInProgress,
+      lessonCompleted: isDone || isInProgress,
+      practiceCompleted: isDone,
+      homeworkSubmitted: isDone,
+      homeworkResponse: isDone ? MARCUS_HOMEWORK[m.moduleSlug] ?? null : null,
+      quizCompleted: isDone,
+      quizScore: isDone ? m.score : null,
+      timeSpentMinutes: m.timeSpent,
+    };
     await prisma.pathwayMilestone.upsert({
       where: { userId_trackSlug_moduleSlug: { userId: marcus.id, trackSlug: "cyber-launch", moduleSlug: m.moduleSlug } },
       create: {
         userId: marcus.id,
         trackSlug: "cyber-launch",
         moduleSlug: m.moduleSlug,
-        status: m.status,
-        score: m.score,
-        completedAt: m.status === "completed" ? new Date(Date.now() - m.daysAgo * 86400000) : null,
+        ...fullFields,
       },
-      update: { status: m.status, score: m.score },
+      update: fullFields,
     });
   }
+  console.log("Seeded Marcus partial Cyber Launch progress (3 completed with homework, 1 in progress)");
 
   // ── Ended cohort: ETO Fall 2025 Pilot — 3 fictional graduates ──
   const endedCohort = await prisma.pathwayCohort.upsert({
@@ -1690,20 +1717,34 @@ async function main() {
       create: { userId: gu.id, cohortId: endedCohort.id, status: "completed" },
       update: { status: "completed" },
     });
-    // Realistic completion milestones (each module completed during the Fall pilot)
+    // Realistic completion milestones (each module completed during the Fall pilot).
+    // Section-level fields filled in so the facilitator outcomes report shows
+    // 6-of-6 sections done per module, not "completed but 0 sections".
     for (let i = 0; i < moduleSlugs.length; i++) {
       const completedDate = new Date(2025, 9, 13 + i * 5); // Oct 13 + 5 days per module
+      const fullFields = {
+        status: "completed",
+        score: g.scores[i],
+        completedAt: completedDate,
+        hookCompleted: true,
+        readingCompleted: true,
+        lessonCompleted: true,
+        practiceCompleted: true,
+        homeworkSubmitted: true,
+        homeworkResponse: `(${g.name}'s ${moduleSlugs[i]} submission — pilot cohort archive)`,
+        quizCompleted: moduleSlugs[i] !== "capstone-security-plan",
+        quizScore: moduleSlugs[i] !== "capstone-security-plan" ? g.scores[i] : null,
+        timeSpentMinutes: 55 + ((i * 7) % 20),
+      };
       await prisma.pathwayMilestone.upsert({
         where: { userId_trackSlug_moduleSlug: { userId: gu.id, trackSlug: "cyber-launch", moduleSlug: moduleSlugs[i] } },
         create: {
           userId: gu.id,
           trackSlug: "cyber-launch",
           moduleSlug: moduleSlugs[i],
-          status: "completed",
-          score: g.scores[i],
-          completedAt: completedDate,
+          ...fullFields,
         },
-        update: { status: "completed", score: g.scores[i], completedAt: completedDate },
+        update: fullFields,
       });
     }
   }

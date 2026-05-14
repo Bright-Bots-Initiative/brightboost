@@ -640,7 +640,7 @@ export const WORKSHEETS: Worksheet[] = [
           <h2>Step 6 — Presentation Prep</h2>
           <p>You will present this in 3-5 minutes. Plan your structure.</p>
           <ol>
-            <li><strong>Hook</strong> (30 seconds) — Why should the business owner care? What's at stake?</li>
+            <li><strong>Opening</strong> (30 seconds) — Why should the business owner care? What's at stake?</li>
             <li><strong>Findings</strong> (90 seconds) — Top 3 risks, in plain language.</li>
             <li><strong>Recommendations</strong> (90 seconds) — What to do, in what order, what it costs.</li>
             <li><strong>Close</strong> (30 seconds) — One sentence on what success looks like in 30 days.</li>

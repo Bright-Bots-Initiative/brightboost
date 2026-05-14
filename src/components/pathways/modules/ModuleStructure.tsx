@@ -34,8 +34,10 @@ const TRACK_SLUG = "cyber-launch";
 const SECTIONS = ["hook", "reading", "lesson", "practice", "homework", "quiz"] as const;
 export type SectionKey = (typeof SECTIONS)[number];
 
+// Internal `hook` keys remain for schema/API consistency, but the student
+// never sees that word — it's relabeled as "Why It Matters" everywhere.
 const SECTION_META: Record<SectionKey, { label: string; icon: typeof BookOpen }> = {
-  hook: { label: "Hook", icon: Sparkles },
+  hook: { label: "Why It Matters", icon: Sparkles },
   reading: { label: "Read", icon: BookOpen },
   lesson: { label: "Lesson", icon: PlayCircle },
   practice: { label: "Practice", icon: Lightbulb },
