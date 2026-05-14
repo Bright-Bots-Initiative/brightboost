@@ -3,6 +3,9 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  // Use the `class` strategy so we can toggle dark mode via a `.dark` class
+  // on a Pathways-scoped wrapper instead of following the OS preference.
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {

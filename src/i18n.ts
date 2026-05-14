@@ -2,9 +2,15 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enCommon from "./locales/en/common.json";
 import esCommon from "./locales/es/common.json";
+import enPathways from "./locales/en/pathways.json";
+import esPathways from "./locales/es/pathways.json";
 
 // Lazy-loaded locales (vi, zh-CN) are fetched on demand below.
 // This keeps the main bundle lean for the common EN/ES case.
+// Pathways content is merged into the same `translation` namespace so
+// existing `useTranslation()` calls pick up `pathways.*` keys without
+// extra namespace wiring. Missing translations in vi/zh-CN fall through
+// to en via the fallbackLng config.
 
 const LANGUAGE_KEY = "preferredLanguage";
 
@@ -23,8 +29,8 @@ const initialLang = stored ? normalizeLocale(stored) : "en";
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: enCommon },
-    es: { translation: esCommon },
+    en: { translation: { ...enCommon, ...enPathways } },
+    es: { translation: { ...esCommon, ...esPathways } },
     // vi and zh-CN added lazily below
   },
   lng: initialLang,
