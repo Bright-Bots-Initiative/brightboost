@@ -1571,18 +1571,41 @@ async function main() {
   }
   console.log("Seeded Aisha:", aisha.email);
 
-  // Cohort
+  // ── Active cohort: ETO Spring 2026 ──
   const cohort = await prisma.pathwayCohort.upsert({
     where: { joinCode: "ETO2026" },
     create: {
       name: "ETO Spring 2026 — Cyber Cohort",
       band: "launch",
-      sitePartner: "Escape The Odds",
+      sitePartner: "Escape The Odds — South Side",
       facilitatorId: facilitator.id,
       trackIds: ["cyber-launch"],
       joinCode: "ETO2026",
+      status: "active",
+      description: "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
+      maxEnrollment: 12,
+      startDate: new Date("2026-03-02"),
+      endDate: new Date("2026-04-13"),
+      notes: [
+        { text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.", author: "Coach Davis", ts: new Date("2026-05-08").toISOString() },
+        { text: "Aisha needs more individual time on Network Basics.", author: "Coach Davis", ts: new Date("2026-05-10").toISOString() },
+        { text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.", author: "Coach Davis", ts: new Date("2026-05-12").toISOString() },
+      ],
     },
-    update: { facilitatorId: facilitator.id },
+    update: {
+      facilitatorId: facilitator.id,
+      status: "active",
+      description: "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
+      maxEnrollment: 12,
+      startDate: new Date("2026-03-02"),
+      endDate: new Date("2026-04-13"),
+      sitePartner: "Escape The Odds — South Side",
+      notes: [
+        { text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.", author: "Coach Davis", ts: new Date("2026-05-08").toISOString() },
+        { text: "Aisha needs more individual time on Network Basics.", author: "Coach Davis", ts: new Date("2026-05-10").toISOString() },
+        { text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.", author: "Coach Davis", ts: new Date("2026-05-12").toISOString() },
+      ],
+    },
   });
 
   // Enroll Marcus and Aisha
@@ -1616,7 +1639,96 @@ async function main() {
       update: { status: m.status, score: m.score },
     });
   }
-  console.log("Seeded Pathways cohort, enrollments, and milestones.");
+
+  // ── Ended cohort: ETO Fall 2025 Pilot — 3 fictional graduates ──
+  const endedCohort = await prisma.pathwayCohort.upsert({
+    where: { joinCode: "ETO2025F" },
+    create: {
+      name: "ETO Fall 2025 — Pilot Cohort",
+      band: "launch",
+      sitePartner: "Escape The Odds — West Side",
+      facilitatorId: facilitator.id,
+      trackIds: ["cyber-launch"],
+      joinCode: "ETO2025F",
+      status: "ended",
+      description: "First Bright Boost Pathways pilot. Six-week intensive Cyber Launch program. 3 of 4 enrolled graduated with completed capstones.",
+      maxEnrollment: 8,
+      startDate: new Date("2025-10-06"),
+      endDate: new Date("2025-11-17"),
+      notes: [
+        { text: "Strong inaugural cohort. All 3 graduates produced presentation-ready capstones. Two pursuing ISC2 CC now.", author: "Coach Davis", ts: new Date("2025-11-20").toISOString() },
+      ],
+    },
+    update: { facilitatorId: facilitator.id, status: "ended" },
+  });
+
+  // Fictional graduates of the Fall 2025 pilot
+  const graduates = [
+    { name: "Jasmine", email: "grad-jasmine@brightboost.local", scores: [88, 92, 81, 79, 85, 100, 90] },
+    { name: "DeShawn", email: "grad-deshawn@brightboost.local", scores: [82, 95, 87, 84, 91, 100, 95] },
+    { name: "Reina", email: "grad-reina@brightboost.local", scores: [76, 88, 92, 89, 78, 100, 87] },
+  ];
+  const moduleSlugs = ["cyber-foundations", "digital-safety-sim", "network-basics", "threat-detective", "career-map", "cisco-netacad-link", "capstone-security-plan"];
+  const gradHash = await bcrypt.hash("graduate", 10);
+  for (const g of graduates) {
+    let gu = await prisma.user.findUnique({ where: { email: g.email } });
+    if (!gu) {
+      gu = await prisma.user.create({
+        data: {
+          name: g.name,
+          email: g.email,
+          password: gradHash,
+          role: "student",
+          userType: "pathways",
+          ageBand: "launch",
+          birthYear: 2008,
+        },
+      });
+    }
+    await prisma.pathwayEnrollment.upsert({
+      where: { userId_cohortId: { userId: gu.id, cohortId: endedCohort.id } },
+      create: { userId: gu.id, cohortId: endedCohort.id, status: "completed" },
+      update: { status: "completed" },
+    });
+    // Realistic completion milestones (each module completed during the Fall pilot)
+    for (let i = 0; i < moduleSlugs.length; i++) {
+      const completedDate = new Date(2025, 9, 13 + i * 5); // Oct 13 + 5 days per module
+      await prisma.pathwayMilestone.upsert({
+        where: { userId_trackSlug_moduleSlug: { userId: gu.id, trackSlug: "cyber-launch", moduleSlug: moduleSlugs[i] } },
+        create: {
+          userId: gu.id,
+          trackSlug: "cyber-launch",
+          moduleSlug: moduleSlugs[i],
+          status: "completed",
+          score: g.scores[i],
+          completedAt: completedDate,
+        },
+        update: { status: "completed", score: g.scores[i], completedAt: completedDate },
+      });
+    }
+  }
+
+  // ── Draft cohort: ETO Summer 2026 — Planning ──
+  await prisma.pathwayCohort.upsert({
+    where: { joinCode: "ETO2026S" },
+    create: {
+      name: "ETO Summer 2026 — Planning",
+      band: "mixed",
+      sitePartner: "Escape The Odds — TBD",
+      facilitatorId: facilitator.id,
+      trackIds: ["cyber-launch"],
+      joinCode: "ETO2026S",
+      status: "draft",
+      description: "Planning cohort for the summer intensive — site partner and exact dates TBD. Recruiting begins June.",
+      maxEnrollment: 16,
+      startDate: new Date("2026-06-15"),
+      endDate: new Date("2026-07-27"),
+      notes: [],
+    },
+    update: { facilitatorId: facilitator.id, status: "draft" },
+  });
+
+  console.log("Seeded Pathways cohorts (3: active/ended/draft), enrollments, and milestones.");
   } catch (e) {
     console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
   }

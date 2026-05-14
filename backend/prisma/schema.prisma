@@ -692,11 +692,17 @@ model PathwayCohort {
   endDate       DateTime?
   trackIds      String[]
   joinCode      String   @unique
+  description   String?
+  maxEnrollment Int?     @default(25)
+  status        String   @default("draft")
+  notes         Json?
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   enrollments   PathwayEnrollment[]
 
   @@index([facilitatorId])
+  @@index([status])
 }
 
 model PathwayEnrollment {

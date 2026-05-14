@@ -20,7 +20,8 @@
       "startQuiz": "Start Quiz",
       "nextQuestion": "Next Question",
       "logInOrJoin": "Log In or Join",
-      "requestPilot": "Request a Pilot"
+      "requestPilot": "Request a Pilot",
+      "copy": "Copy"
     },
     "layout": {
       "eyebrow": "Bright Boost",
@@ -206,9 +207,283 @@
       },
       "band": {
         "explorer": "Explorer (14–15)",
-        "launch": "Launch (16–17)"
+        "launch": "Launch (16–17)",
+        "mixed": "Mixed bands"
       },
-      "resourcesTitle": "Program overview, session guide, printables"
+      "resourcesTitle": "Program overview, session guide, printables",
+      "adminTitle": "Facilitator Admin",
+      "roleBadge": "Facilitator",
+      "activeCohort": "Active",
+      "selectCohort": "Select a cohort",
+      "empty": {
+        "title": "No Cohorts Yet",
+        "subtitle": "Get started by creating your first cohort. You'll generate a join code and start enrolling learners right away.",
+        "cta": "Create Your First Cohort"
+      },
+      "nav": {
+        "dashboard": "Dashboard",
+        "cohorts": "Cohorts",
+        "tracks": "Tracks",
+        "learners": "Learners",
+        "reports": "Reports",
+        "resources": "Resources",
+        "settings": "Settings"
+      },
+      "dashboard": {
+        "activeCohortsTitle": "Active Cohorts",
+        "viewAllCohorts": "View all cohorts →",
+        "thisWeekTitle": "This Week at a Glance",
+        "quickActionsTitle": "Quick Actions",
+        "recentActivityTitle": "Recent Activity",
+        "viewFullReport": "View full report",
+        "joinCode": "Code",
+        "enrolled": "Enrolled",
+        "daysRemaining": "Days Left",
+        "openCohort": "Open Cohort",
+        "viewRoster": "View Roster",
+        "modulesCompleted": "Modules Completed",
+        "newEnrollments": "New Enrollments",
+        "needsFollowUp": "Needs Follow-Up",
+        "capstonesInProgress": "Capstones In Progress",
+        "actionCreateCohort": "Create New Cohort",
+        "actionCreateCohortSub": "Set up a new program with a fresh join code",
+        "actionAddLearner": "Add Learner",
+        "actionAddLearnerSub": "Enroll a learner into an existing cohort",
+        "actionWeeklyReport": "Export This Week's Report",
+        "actionWeeklyReportSub": "Download a CSV summary for partners",
+        "completedModule": "completed",
+        "startedModule": "started",
+        "aLearner": "A learner"
+      },
+      "cohorts": {
+        "title": "Cohorts",
+        "subtitle": "Every cohort you own, across sites and seasons.",
+        "newCohort": "New Cohort",
+        "searchPlaceholder": "Search by name or site…",
+        "filterStatus": "Filter by status",
+        "filterStatusAll": "All statuses",
+        "filterBand": "Filter by band",
+        "filterBandAll": "All bands",
+        "resultCount": "{{count}} shown",
+        "emptyAll": "You haven't created any cohorts yet.",
+        "emptyFiltered": "No cohorts match the current filters.",
+        "col": {
+          "name": "Name",
+          "site": "Site Partner",
+          "band": "Band",
+          "status": "Status",
+          "enrolled": "Enrolled",
+          "dates": "Dates"
+        }
+      },
+      "status_": {
+        "draft": "Draft",
+        "active": "Active",
+        "paused": "Paused",
+        "ended": "Ended",
+        "archived": "Archived"
+      },
+      "create": {
+        "backToCohorts": "Back to Cohorts",
+        "title": "Create a New Cohort",
+        "subtitle": "Set up the basics. You can fine-tune everything from the cohort detail page after.",
+        "fieldName": "Cohort Name",
+        "namePlaceholder": "e.g., \"ETO Fall 2026 — Cyber Cohort\"",
+        "fieldSite": "Site Partner",
+        "sitePlaceholder": "e.g., \"Escape The Odds — South Side\"",
+        "fieldBand": "Age Band",
+        "fieldStartDate": "Start Date",
+        "fieldEndDate": "End Date",
+        "fieldTracks": "Active Tracks",
+        "fieldMaxEnrollment": "Maximum Enrollment",
+        "fieldDescription": "Cohort Description (optional)",
+        "descriptionPlaceholder": "Context for facilitator notes…",
+        "cancel": "Cancel",
+        "createCohort": "Create Cohort",
+        "errorNameRequired": "Cohort name is required.",
+        "errorTrackRequired": "Select at least one track."
+      },
+      "detail": {
+        "notFound": "Cohort not found.",
+        "tabs": {
+          "overview": "Overview",
+          "roster": "Roster",
+          "modules": "Modules",
+          "calendar": "Calendar",
+          "notes": "Notes",
+          "settings": "Settings"
+        },
+        "overview": {
+          "enrolled": "Enrolled",
+          "completion": "Completion",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "joinCodeTitle": "Join Code",
+          "joinCodeHint": "Learners use this code to enroll themselves. Treat it like a temporary password — regenerate if it's been shared too widely.",
+          "copied": "Copied!",
+          "activeTracksTitle": "Active Tracks",
+          "descriptionTitle": "About this Cohort"
+        },
+        "roster": {
+          "addEmailPlaceholder": "learner@email.com",
+          "addLearner": "Add Learner",
+          "empty": "No learners enrolled yet. Share the join code or add by email above.",
+          "removeLearner": "Remove learner",
+          "confirmRemove": "Remove {{name}} from this cohort? Their progress will remain in the database but they will no longer appear on this roster.",
+          "col": {
+            "name": "Learner",
+            "completed": "Modules",
+            "lastActive": "Last Active"
+          }
+        },
+        "modules": {
+          "col": {
+            "module": "Module",
+            "completed": "Completed",
+            "inProgress": "In Progress",
+            "avgScore": "Avg Score"
+          }
+        },
+        "calendar": {
+          "title": "Session Schedule",
+          "hint": "Generated from cohort start date assuming weekly sessions. Override per-session in a future release.",
+          "empty": "Set a start and end date on the cohort to see a generated session calendar.",
+          "week": "Week"
+        },
+        "notes": {
+          "addNew": "Add a new note",
+          "placeholder": "What did you observe in today's session? Plans for next week?",
+          "save": "Save note",
+          "empty": "No notes yet. Use this space to track patterns, plans, and observations across sessions."
+        },
+        "settings": {
+          "lifecycleTitle": "Cohort Lifecycle",
+          "lifecycleHint": "Move the cohort between draft → active → paused → ended → archived.",
+          "start": "Start Cohort",
+          "pause": "Pause",
+          "end": "End Program",
+          "archive": "Archive",
+          "confirmArchive": "Archive this cohort? It will be hidden from default views but data is preserved.",
+          "joinCodeTitle": "Join Code Management",
+          "joinCodeHint": "If the current code has been shared too widely or is compromised, regenerate it. Existing enrolled learners are unaffected.",
+          "regenerateCode": "Regenerate Code",
+          "confirmRegen": "Generate a new join code? The current code will stop working immediately.",
+          "dataTitle": "Cohort Data",
+          "dataInfo": "ID: {{id}} • Created: {{created}}"
+        }
+      },
+      "tracks": {
+        "title": "Tracks",
+        "subtitle": "Catalog of available learning tracks. Active tracks can be assigned to cohorts.",
+        "requestCustom": "Request a Custom Track",
+        "modules": "modules",
+        "cohorts": "Cohorts",
+        "learners": "Learners",
+        "completions": "Completions",
+        "usedBy": "Used by:",
+        "preview": "Preview as Learner",
+        "customTitle": "Custom Track Builder",
+        "customRoadmap": "Coming Q3 2026",
+        "customBody": "Soon you'll be able to build custom tracks tailored to your site's needs. In the meantime, contact us to discuss adding content to the Pathways catalog.",
+        "contactUs": "Contact Us"
+      },
+      "learners": {
+        "title": "Learners",
+        "subtitle": "Every learner across every cohort you manage.",
+        "searchPlaceholder": "Search by name or email…",
+        "filterCohortAll": "All cohorts",
+        "filterStatusAll": "All statuses",
+        "statusActive": "Active",
+        "statusCompleted": "Completed",
+        "resultCount": "{{count}} learners shown",
+        "emptyAll": "No learners enrolled in any of your cohorts yet.",
+        "emptyFiltered": "No learners match the current filters.",
+        "col": {
+          "name": "Learner",
+          "cohorts": "Cohort(s)",
+          "band": "Band",
+          "completion": "Completion",
+          "lastActive": "Last Active",
+          "status": "Status"
+        }
+      },
+      "learnerDetail": {
+        "notFound": "Learner not found in your cohorts.",
+        "backToLearners": "Back to All Learners",
+        "band": "Band",
+        "modulesCompleted": "Modules Completed",
+        "inProgress": "In Progress",
+        "avgScore": "Average Score",
+        "cohorts": "Cohort Enrollments",
+        "enrolledOn": "Enrolled {{date}}",
+        "milestones": "Module Progress",
+        "noMilestones": "No module activity yet."
+      },
+      "reports": {
+        "title": "Reports",
+        "subtitle": "Funder-ready summaries. Pick a template and export.",
+        "windowDays": "Last {{days}} days",
+        "inactiveList": "Learners with no activity in this window:",
+        "cohortReportHint": "Per-cohort completion reports are surfaced from each cohort's detail page. Open a cohort → Overview to see its full report. (Cross-cohort outcome rollups live in the Outcomes report.)",
+        "types": {
+          "weekly": {
+            "label": "Weekly Activity",
+            "description": "What happened across all cohorts in the past 7 days."
+          },
+          "outcomes": {
+            "label": "Outcomes",
+            "description": "Aggregated outcomes for funder reporting."
+          },
+          "engagement": {
+            "label": "Engagement",
+            "description": "Login and activity patterns over the last 30 days."
+          },
+          "cohort": {
+            "label": "Cohort Completion",
+            "description": "End-of-program summary for a specific cohort."
+          }
+        },
+        "summary": {
+          "totalLearners": "Total Learners",
+          "modulesCompleted": "Modules Completed",
+          "capstones": "Capstones Produced",
+          "avgScore": "Avg Score"
+        },
+        "outcomes": {
+          "totalCohorts": "Total Cohorts",
+          "activeCohorts": "Active Cohorts",
+          "endedCohorts": "Ended Cohorts",
+          "totalEnrolled": "Total Enrolled",
+          "modulesCompleted": "Modules Completed",
+          "capstones": "Capstones Produced",
+          "cisco": "Cisco NetAcad Started",
+          "avgScore": "Average Score"
+        },
+        "engagement": {
+          "totalLearners": "Total Learners",
+          "active7": "Active in Last 7 Days",
+          "active30": "Active in Last 30 Days",
+          "dailyActivity": "Daily Activity (Last 30 Days)"
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "subtitle": "Defaults and preferences for how you run cohorts.",
+        "cohortDefaultsTitle": "Cohort Defaults",
+        "cohortDefaultsHint": "Used to prefill the Create Cohort form. You can always override per-cohort.",
+        "defaultBand": "Default Age Band",
+        "defaultMaxEnrollment": "Default Max Enrollment",
+        "notificationsTitle": "Notifications",
+        "notificationsHint": "Choose which events surface in the dashboard. Email/SMS notifications coming later.",
+        "notifyNewEnrollment": "New enrollment",
+        "notifyNewEnrollmentHint": "Highlight when a learner joins one of your cohorts.",
+        "notifyInactive": "Inactive learner",
+        "notifyInactiveHint": "Flag learners who haven't logged in for 5+ days.",
+        "notifyStatusChange": "Cohort status change",
+        "notifyStatusChangeHint": "Notify on draft → active → paused → ended transitions.",
+        "savePreferences": "Save Preferences",
+        "saved": "Saved."
+      }
     },
     "modules": {
       "foundations": {

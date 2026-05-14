@@ -20,7 +20,8 @@
       "startQuiz": "Comenzar Quiz",
       "nextQuestion": "Siguiente Pregunta",
       "logInOrJoin": "Inicia Sesión o Únete",
-      "requestPilot": "Solicitar un Piloto"
+      "requestPilot": "Solicitar un Piloto",
+      "copy": "Copiar"
     },
     "layout": {
       "eyebrow": "Bright Boost",
@@ -206,9 +207,276 @@
       },
       "band": {
         "explorer": "Explorador (14–15)",
-        "launch": "Lanzamiento (16–17)"
+        "launch": "Lanzamiento (16–17)",
+        "mixed": "Niveles mixtos"
       },
-      "resourcesTitle": "Resumen del programa, guía de sesiones, imprimibles"
+      "resourcesTitle": "Resumen del programa, guía de sesiones, imprimibles",
+      "adminTitle": "Administración del Facilitador",
+      "roleBadge": "Facilitador",
+      "activeCohort": "Activo",
+      "selectCohort": "Selecciona un grupo",
+      "empty": {
+        "title": "Aún no hay grupos",
+        "subtitle": "Empieza creando tu primer grupo. Generarás un código de acceso y podrás empezar a inscribir estudiantes de inmediato.",
+        "cta": "Crear Tu Primer Grupo"
+      },
+      "nav": {
+        "dashboard": "Panel",
+        "cohorts": "Grupos",
+        "tracks": "Rutas",
+        "learners": "Estudiantes",
+        "reports": "Reportes",
+        "resources": "Recursos",
+        "settings": "Ajustes"
+      },
+      "dashboard": {
+        "activeCohortsTitle": "Grupos Activos",
+        "viewAllCohorts": "Ver todos los grupos →",
+        "thisWeekTitle": "Esta Semana en un Vistazo",
+        "quickActionsTitle": "Acciones Rápidas",
+        "recentActivityTitle": "Actividad Reciente",
+        "viewFullReport": "Ver reporte completo",
+        "joinCode": "Código",
+        "enrolled": "Inscritos",
+        "daysRemaining": "Días Restantes",
+        "openCohort": "Abrir Grupo",
+        "viewRoster": "Ver Lista",
+        "modulesCompleted": "Módulos Completados",
+        "newEnrollments": "Nuevas Inscripciones",
+        "needsFollowUp": "Requiere Seguimiento",
+        "capstonesInProgress": "Proyectos Finales en Progreso",
+        "actionCreateCohort": "Crear Nuevo Grupo",
+        "actionCreateCohortSub": "Configura un nuevo programa con código de acceso nuevo",
+        "actionAddLearner": "Añadir Estudiante",
+        "actionAddLearnerSub": "Inscribe a un estudiante en un grupo existente",
+        "actionWeeklyReport": "Exportar Reporte Semanal",
+        "actionWeeklyReportSub": "Descarga un CSV resumen para socios",
+        "completedModule": "completó",
+        "startedModule": "empezó",
+        "aLearner": "Un estudiante"
+      },
+      "cohorts": {
+        "title": "Grupos",
+        "subtitle": "Cada grupo que diriges, a través de sitios y temporadas.",
+        "newCohort": "Nuevo Grupo",
+        "searchPlaceholder": "Buscar por nombre o sitio…",
+        "filterStatus": "Filtrar por estado",
+        "filterStatusAll": "Todos los estados",
+        "filterBand": "Filtrar por nivel",
+        "filterBandAll": "Todos los niveles",
+        "resultCount": "{{count}} mostrados",
+        "emptyAll": "Aún no has creado ningún grupo.",
+        "emptyFiltered": "Ningún grupo coincide con los filtros actuales.",
+        "col": {
+          "name": "Nombre",
+          "site": "Aliado",
+          "band": "Nivel",
+          "status": "Estado",
+          "enrolled": "Inscritos",
+          "dates": "Fechas"
+        }
+      },
+      "create": {
+        "backToCohorts": "Volver a Grupos",
+        "title": "Crear un Nuevo Grupo",
+        "subtitle": "Configura lo básico. Puedes ajustar todo lo demás desde la página del grupo después.",
+        "fieldName": "Nombre del Grupo",
+        "namePlaceholder": "ej., \"ETO Otoño 2026 — Cyber Cohort\"",
+        "fieldSite": "Organización Aliada",
+        "sitePlaceholder": "ej., \"Escape The Odds — South Side\"",
+        "fieldBand": "Rango de Edad",
+        "fieldStartDate": "Fecha de Inicio",
+        "fieldEndDate": "Fecha de Fin",
+        "fieldTracks": "Rutas Activas",
+        "fieldMaxEnrollment": "Inscripción Máxima",
+        "fieldDescription": "Descripción del Grupo (opcional)",
+        "descriptionPlaceholder": "Contexto para las notas del facilitador…",
+        "cancel": "Cancelar",
+        "createCohort": "Crear Grupo",
+        "errorNameRequired": "El nombre del grupo es requerido.",
+        "errorTrackRequired": "Selecciona al menos una ruta."
+      },
+      "detail": {
+        "notFound": "Grupo no encontrado.",
+        "tabs": {
+          "overview": "Resumen",
+          "roster": "Lista",
+          "modules": "Módulos",
+          "calendar": "Calendario",
+          "notes": "Notas",
+          "settings": "Ajustes"
+        },
+        "overview": {
+          "enrolled": "Inscritos",
+          "completion": "Completado",
+          "startDate": "Inicio",
+          "endDate": "Fin",
+          "joinCodeTitle": "Código de Acceso",
+          "joinCodeHint": "Los estudiantes usan este código para inscribirse. Trátalo como una contraseña temporal — regéneralo si se comparte demasiado.",
+          "copied": "¡Copiado!",
+          "activeTracksTitle": "Rutas Activas",
+          "descriptionTitle": "Acerca de este Grupo"
+        },
+        "roster": {
+          "addEmailPlaceholder": "estudiante@correo.com",
+          "addLearner": "Añadir Estudiante",
+          "empty": "Aún no hay estudiantes inscritos. Comparte el código o añade por correo arriba.",
+          "removeLearner": "Eliminar estudiante",
+          "confirmRemove": "¿Eliminar a {{name}} de este grupo? Su progreso permanecerá en la base de datos pero ya no aparecerá en esta lista.",
+          "col": {
+            "name": "Estudiante",
+            "completed": "Módulos",
+            "lastActive": "Última Actividad"
+          }
+        },
+        "modules": {
+          "col": {
+            "module": "Módulo",
+            "completed": "Completados",
+            "inProgress": "En Progreso",
+            "avgScore": "Puntaje Promedio"
+          }
+        },
+        "calendar": {
+          "title": "Horario de Sesiones",
+          "hint": "Generado a partir de la fecha de inicio asumiendo sesiones semanales. Sobrescritura por sesión en una versión futura.",
+          "empty": "Establece fecha de inicio y fin del grupo para ver un calendario de sesiones generado.",
+          "week": "Semana"
+        },
+        "notes": {
+          "addNew": "Añadir una nota",
+          "placeholder": "¿Qué observaste en la sesión de hoy? ¿Planes para la próxima semana?",
+          "save": "Guardar nota",
+          "empty": "Aún no hay notas. Usa este espacio para rastrear patrones, planes y observaciones entre sesiones."
+        },
+        "settings": {
+          "lifecycleTitle": "Ciclo de Vida del Grupo",
+          "lifecycleHint": "Mueve el grupo entre borrador → activo → pausado → terminado → archivado.",
+          "start": "Iniciar Grupo",
+          "pause": "Pausar",
+          "end": "Terminar Programa",
+          "archive": "Archivar",
+          "confirmArchive": "¿Archivar este grupo? Se ocultará de las vistas predeterminadas pero los datos se conservan.",
+          "joinCodeTitle": "Gestión del Código de Acceso",
+          "joinCodeHint": "Si el código actual se ha compartido demasiado o está comprometido, regenéralo. Los estudiantes ya inscritos no se ven afectados.",
+          "regenerateCode": "Regenerar Código",
+          "confirmRegen": "¿Generar un nuevo código? El código actual dejará de funcionar inmediatamente.",
+          "dataTitle": "Datos del Grupo",
+          "dataInfo": "ID: {{id}} • Creado: {{created}}"
+        }
+      },
+      "tracks": {
+        "title": "Rutas",
+        "subtitle": "Catálogo de rutas de aprendizaje disponibles. Las rutas activas pueden asignarse a grupos.",
+        "requestCustom": "Solicitar una Ruta Personalizada",
+        "modules": "módulos",
+        "cohorts": "Grupos",
+        "learners": "Estudiantes",
+        "completions": "Completados",
+        "usedBy": "Usado por:",
+        "preview": "Vista Previa como Estudiante",
+        "customTitle": "Constructor de Rutas Personalizadas",
+        "customRoadmap": "Próximamente Q3 2026",
+        "customBody": "Pronto podrás construir rutas personalizadas adaptadas a las necesidades de tu sitio. Mientras tanto, contáctanos para discutir agregar contenido al catálogo de Pathways.",
+        "contactUs": "Contáctanos"
+      },
+      "learners": {
+        "title": "Estudiantes",
+        "subtitle": "Cada estudiante a través de cada grupo que administras.",
+        "searchPlaceholder": "Buscar por nombre o correo…",
+        "filterCohortAll": "Todos los grupos",
+        "filterStatusAll": "Todos los estados",
+        "statusActive": "Activo",
+        "statusCompleted": "Completado",
+        "resultCount": "{{count}} estudiantes mostrados",
+        "emptyAll": "Aún no hay estudiantes inscritos en ninguno de tus grupos.",
+        "emptyFiltered": "Ningún estudiante coincide con los filtros actuales.",
+        "col": {
+          "name": "Estudiante",
+          "cohorts": "Grupo(s)",
+          "band": "Nivel",
+          "completion": "Completado",
+          "lastActive": "Última Actividad",
+          "status": "Estado"
+        }
+      },
+      "learnerDetail": {
+        "notFound": "Estudiante no encontrado en tus grupos.",
+        "backToLearners": "Volver a Todos los Estudiantes",
+        "band": "Nivel",
+        "modulesCompleted": "Módulos Completados",
+        "inProgress": "En Progreso",
+        "avgScore": "Puntaje Promedio",
+        "cohorts": "Inscripciones en Grupos",
+        "enrolledOn": "Inscrito {{date}}",
+        "milestones": "Progreso de Módulos",
+        "noMilestones": "Aún no hay actividad en módulos."
+      },
+      "reports": {
+        "title": "Reportes",
+        "subtitle": "Resúmenes listos para financiadores. Elige una plantilla y exporta.",
+        "windowDays": "Últimos {{days}} días",
+        "inactiveList": "Estudiantes sin actividad en esta ventana:",
+        "cohortReportHint": "Los reportes de finalización por grupo aparecen desde la página de detalle de cada grupo. Abre un grupo → Resumen para ver su reporte completo.",
+        "types": {
+          "weekly": {
+            "label": "Actividad Semanal",
+            "description": "Qué ocurrió en todos los grupos en los últimos 7 días."
+          },
+          "outcomes": {
+            "label": "Resultados",
+            "description": "Resultados agregados para reportes a financiadores."
+          },
+          "engagement": {
+            "label": "Participación",
+            "description": "Patrones de acceso y actividad en los últimos 30 días."
+          },
+          "cohort": {
+            "label": "Finalización de Grupo",
+            "description": "Resumen de fin de programa para un grupo específico."
+          }
+        },
+        "summary": {
+          "totalLearners": "Total Estudiantes",
+          "modulesCompleted": "Módulos Completados",
+          "capstones": "Proyectos Producidos",
+          "avgScore": "Puntaje Promedio"
+        },
+        "outcomes": {
+          "totalCohorts": "Total Grupos",
+          "activeCohorts": "Grupos Activos",
+          "endedCohorts": "Grupos Terminados",
+          "totalEnrolled": "Total Inscritos",
+          "modulesCompleted": "Módulos Completados",
+          "capstones": "Proyectos Producidos",
+          "cisco": "Cisco NetAcad Iniciado",
+          "avgScore": "Puntaje Promedio"
+        },
+        "engagement": {
+          "totalLearners": "Total Estudiantes",
+          "active7": "Activos en los Últimos 7 Días",
+          "active30": "Activos en los Últimos 30 Días",
+          "dailyActivity": "Actividad Diaria (Últimos 30 Días)"
+        }
+      },
+      "settings": {
+        "title": "Ajustes",
+        "subtitle": "Valores predeterminados y preferencias para cómo manejas los grupos.",
+        "cohortDefaultsTitle": "Predeterminados del Grupo",
+        "cohortDefaultsHint": "Usado para prellenar el formulario de Crear Grupo. Siempre puedes sobrescribir por grupo.",
+        "defaultBand": "Nivel Predeterminado",
+        "defaultMaxEnrollment": "Inscripción Máxima Predeterminada",
+        "notificationsTitle": "Notificaciones",
+        "notificationsHint": "Elige qué eventos aparecen en el panel. Notificaciones por correo/SMS más adelante.",
+        "notifyNewEnrollment": "Nueva inscripción",
+        "notifyNewEnrollmentHint": "Resalta cuando un estudiante se une a uno de tus grupos.",
+        "notifyInactive": "Estudiante inactivo",
+        "notifyInactiveHint": "Marca estudiantes que no han accedido en 5+ días.",
+        "notifyStatusChange": "Cambio de estado del grupo",
+        "notifyStatusChangeHint": "Notifica en transiciones borrador → activo → pausado → terminado.",
+        "savePreferences": "Guardar Preferencias",
+        "saved": "Guardado."
+      }
     },
     "modules": {
       "foundations": {
