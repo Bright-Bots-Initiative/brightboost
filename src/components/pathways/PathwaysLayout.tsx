@@ -1,10 +1,12 @@
 /**
  * Pathways Layout — mature shell for secondary-age (14-17) users.
  *
- * Theme: toggles a `.dark` class on the Pathways root <div> so Tailwind
- * `dark:` variants apply only inside Pathways. The K-8 surfaces stay
- * unaffected. Preference is persisted under `bb_pathways_theme` so it
- * survives reload.
+ * Theme: toggles a `.dark` class on an OUTER wrapper div so Tailwind's
+ * class strategy can resolve `dark:` variants on the descendants below.
+ * (Tailwind's selector is `.dark .dark\\:foo`, which requires `.dark` on
+ * an ancestor — putting both on the same element doesn't work.) The
+ * wrapper is Pathways-scoped, so K-8 surfaces stay unaffected.
+ * Preference is persisted under `bb_pathways_theme`.
  *
  * i18n: every label is keyed under `pathways.layout.*` and falls back
  * to English via i18n.ts fallbackLng.
@@ -51,9 +53,8 @@ export default function PathwaysLayout() {
   const isFacilitator = user?.role === "teacher";
 
   return (
-    <div
-      className={`${isDark ? "dark" : ""} min-h-screen flex bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors`}
-    >
+    <div className={isDark ? "dark" : ""}>
+      <div className="min-h-screen flex bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
       {/* Sidebar */}
       <nav className="hidden md:flex flex-col w-56 border-r shrink-0 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800">
@@ -131,6 +132,7 @@ export default function PathwaysLayout() {
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 }
