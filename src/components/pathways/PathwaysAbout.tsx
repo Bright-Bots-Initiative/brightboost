@@ -64,7 +64,8 @@ export default function PathwaysAbout() {
   const fundingItems = t("pathways.about.partners.funding", { returnObjects: true }) as string[];
 
   return (
-    <div className={`${isDark ? "dark" : ""} min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100`}>
+    <div className={isDark ? "dark" : ""}>
+      <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* Top controls — language + theme */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-3">
         <LanguageToggle variant={isDark ? "dark" : "light"} />
@@ -281,6 +282,7 @@ export default function PathwaysAbout() {
       {/* Footer */}
       <div className="border-t border-slate-200 dark:border-slate-800 py-8 text-center text-xs text-slate-500 dark:text-slate-600">
         {t("pathways.about.footer")}
+      </div>
       </div>
     </div>
   );
