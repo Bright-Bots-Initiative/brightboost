@@ -57,9 +57,18 @@ import TracksOverview from "./components/pathways/TracksOverview";
 import TrackDetail from "./components/pathways/TrackDetail";
 import ModulePlayer from "./components/pathways/ModulePlayer";
 import PathwaysProfile from "./components/pathways/PathwaysProfile";
-import FacilitatorDashboard from "./components/pathways/FacilitatorDashboard";
 import PathwaysAbout from "./components/pathways/PathwaysAbout";
 import ProgramOverviewPage from "./components/pathways/facilitator/ProgramOverview";
+import FacilitatorLayout from "./components/pathways/facilitator/FacilitatorLayout";
+import FacilitatorDashboardPage from "./components/pathways/facilitator/pages/Dashboard";
+import CohortsListPage from "./components/pathways/facilitator/pages/CohortsList";
+import CohortNewPage from "./components/pathways/facilitator/pages/CohortNew";
+import CohortDetailPage from "./components/pathways/facilitator/pages/CohortDetail";
+import FacilitatorTracksPage from "./components/pathways/facilitator/pages/Tracks";
+import FacilitatorLearnersPage from "./components/pathways/facilitator/pages/Learners";
+import FacilitatorLearnerDetailPage from "./components/pathways/facilitator/pages/LearnerDetail";
+import FacilitatorReportsPage from "./components/pathways/facilitator/pages/Reports";
+import FacilitatorSettingsPage from "./components/pathways/facilitator/pages/Settings";
 
 // Import styles
 import "./App.css";
@@ -179,8 +188,18 @@ function App() {
                 <Route path="tracks/:trackSlug" element={<TrackDetail />} />
                 <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
                 <Route path="profile" element={<PathwaysProfile />} />
-                <Route path="facilitator" element={<FacilitatorDashboard />} />
-                <Route path="facilitator/resources" element={<ProgramOverviewPage />} />
+                <Route path="facilitator" element={<FacilitatorLayout />}>
+                  <Route index element={<FacilitatorDashboardPage />} />
+                  <Route path="cohorts" element={<CohortsListPage />} />
+                  <Route path="cohorts/new" element={<CohortNewPage />} />
+                  <Route path="cohorts/:id" element={<CohortDetailPage />} />
+                  <Route path="tracks" element={<FacilitatorTracksPage />} />
+                  <Route path="learners" element={<FacilitatorLearnersPage />} />
+                  <Route path="learners/:userId" element={<FacilitatorLearnerDetailPage />} />
+                  <Route path="reports" element={<FacilitatorReportsPage />} />
+                  <Route path="resources" element={<ProgramOverviewPage />} />
+                  <Route path="settings" element={<FacilitatorSettingsPage />} />
+                </Route>
               </Route>
 
               {/* Legacy Redirects for Flat Routes (if any external links exist) */}

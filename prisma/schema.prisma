@@ -690,7 +690,7 @@ model ClassModuleAssignment {
 model PathwayCohort {
   id            String   @id @default(cuid())
   name          String
-  band          String   // "explorer" | "launch"
+  band          String   // "explorer" | "launch" | "mixed"
   sitePartner   String?
   facilitatorId String
   facilitator   User     @relation(fields: [facilitatorId], references: [id])
@@ -698,11 +698,17 @@ model PathwayCohort {
   endDate       DateTime?
   trackIds      String[] // which tracks are active for this cohort
   joinCode      String   @unique
+  description   String?
+  maxEnrollment Int?     @default(25)
+  status        String   @default("draft") // draft | active | paused | ended | archived
+  notes         Json?    // facilitator notes — array of { text, author, ts }
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   enrollments   PathwayEnrollment[]
 
   @@index([facilitatorId])
+  @@index([status])
 }
 
 model PathwayEnrollment {
