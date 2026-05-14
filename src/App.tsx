@@ -181,25 +181,31 @@ function App() {
               {/* Pathways: public landing page */}
               <Route path="/pathways/about" element={<PathwaysAbout />} />
 
-              {/* Pathways: authenticated routes */}
+              {/* Pathways: student authenticated routes */}
               <Route path="/pathways" element={<ProtectedRoute><PathwaysLayout /></ProtectedRoute>}>
                 <Route index element={<PathwaysHome />} />
                 <Route path="tracks" element={<TracksOverview />} />
                 <Route path="tracks/:trackSlug" element={<TrackDetail />} />
                 <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
                 <Route path="profile" element={<PathwaysProfile />} />
-                <Route path="facilitator" element={<FacilitatorLayout />}>
-                  <Route index element={<FacilitatorDashboardPage />} />
-                  <Route path="cohorts" element={<CohortsListPage />} />
-                  <Route path="cohorts/new" element={<CohortNewPage />} />
-                  <Route path="cohorts/:id" element={<CohortDetailPage />} />
-                  <Route path="tracks" element={<FacilitatorTracksPage />} />
-                  <Route path="learners" element={<FacilitatorLearnersPage />} />
-                  <Route path="learners/:userId" element={<FacilitatorLearnerDetailPage />} />
-                  <Route path="reports" element={<FacilitatorReportsPage />} />
-                  <Route path="resources" element={<ProgramOverviewPage />} />
-                  <Route path="settings" element={<FacilitatorSettingsPage />} />
-                </Route>
+              </Route>
+
+              {/* Pathways: facilitator routes — sibling of /pathways, owns its own
+                  layout shell so the student sidebar doesn't render on top. */}
+              <Route
+                path="/pathways/facilitator"
+                element={<ProtectedRoute requiredRole="teacher"><FacilitatorLayout /></ProtectedRoute>}
+              >
+                <Route index element={<FacilitatorDashboardPage />} />
+                <Route path="cohorts" element={<CohortsListPage />} />
+                <Route path="cohorts/new" element={<CohortNewPage />} />
+                <Route path="cohorts/:id" element={<CohortDetailPage />} />
+                <Route path="tracks" element={<FacilitatorTracksPage />} />
+                <Route path="learners" element={<FacilitatorLearnersPage />} />
+                <Route path="learners/:userId" element={<FacilitatorLearnerDetailPage />} />
+                <Route path="reports" element={<FacilitatorReportsPage />} />
+                <Route path="resources" element={<ProgramOverviewPage />} />
+                <Route path="settings" element={<FacilitatorSettingsPage />} />
               </Route>
 
               {/* Legacy Redirects for Flat Routes (if any external links exist) */}
