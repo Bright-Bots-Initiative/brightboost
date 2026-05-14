@@ -1,45 +1,26 @@
 /**
  * Cohorts list — full list of facilitator's cohorts with filter/search.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Users } from "lucide-react";
 import Card from "../shared/Card";
-import { StatusPill } from "../FacilitatorLayout";
-
-interface Cohort {
-  id: string;
-  name: string;
-  band: string;
-  sitePartner: string | null;
-  status: string;
-  startDate: string | null;
-  endDate: string | null;
-  updatedAt: string;
-  _count?: { enrollments: number };
-}
+import { StatusPill, useFacilitatorOutlet } from "../FacilitatorLayout";
 
 const STATUS_OPTIONS = ["all", "draft", "active", "paused", "ended", "archived"];
 const BAND_OPTIONS = ["all", "explorer", "launch", "mixed"];
 
 export default function CohortsList() {
   const { t } = useTranslation();
-  const [cohorts, setCohorts] = useState<Cohort[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Read cohorts from FacilitatorLayout's shared Outlet context — fetched
+  // once per session, so this list renders instantly when the user clicks
+  // back from another sidebar page.
+  const { cohorts, cohortsLoaded } = useFacilitatorOutlet();
+  const loading = !cohortsLoaded;
   const [statusFilter, setStatusFilter] = useState("all");
   const [bandFilter, setBandFilter] = useState("all");
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    fetch("/api/pathways/cohorts", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
-    })
-      .then((r) => r.json())
-      .then((data) => setCohorts(Array.isArray(data) ? data : []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
 
   const filtered = useMemo(() => {
     return cohorts.filter((c) => {
