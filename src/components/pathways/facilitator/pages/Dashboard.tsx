@@ -67,7 +67,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   useEffect(() => {
     Promise.all([
@@ -76,7 +76,14 @@ export default function Dashboard() {
     ])
       .then(([c, w]) => {
         setCohorts(Array.isArray(c) ? c : []);
-        setWeekly(w);
+        // Guard against error responses (e.g. 401/403/500) being passed in as `weekly`.
+        // The view code below dereferences `weekly.inactiveLearners` / `weekly.recentActivity`,
+        // so we only accept payloads that actually look like a WeeklyReport.
+        if (w && typeof w === "object" && Array.isArray(w.inactiveLearners) && Array.isArray(w.recentActivity)) {
+          setWeekly(w as WeeklyReport);
+        } else {
+          setWeekly(null);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));

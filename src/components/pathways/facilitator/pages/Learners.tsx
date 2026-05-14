@@ -30,7 +30,7 @@ export default function Learners() {
 
   useEffect(() => {
     fetch("/api/pathways/facilitator/learners", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => setLearners(Array.isArray(data) ? data : []))

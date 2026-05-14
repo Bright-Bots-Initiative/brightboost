@@ -35,7 +35,7 @@ export default function TrackDetail() {
 
   useEffect(() => {
     fetch("/api/pathways/student/milestones", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) =>
@@ -135,7 +135,7 @@ export default function TrackDetail() {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",
-                      Authorization: `Bearer ${localStorage.getItem("token")}`,
+                      Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
                     },
                     body: JSON.stringify({
                       trackSlug: track.slug,

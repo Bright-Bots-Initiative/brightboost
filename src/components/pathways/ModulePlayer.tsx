@@ -24,7 +24,7 @@ export default function ModulePlayer() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
         },
         body: JSON.stringify({ trackSlug, moduleSlug, status: "in_progress" }),
       }).catch(() => {});
@@ -38,7 +38,7 @@ export default function ModulePlayer() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
           },
           body: JSON.stringify({ trackSlug, moduleSlug, status: "completed", score }),
         });

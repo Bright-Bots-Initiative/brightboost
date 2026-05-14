@@ -49,7 +49,7 @@ export default function FacilitatorLayout() {
 
   useEffect(() => {
     fetch("/api/pathways/cohorts", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => {
@@ -158,7 +158,7 @@ export default function FacilitatorLayout() {
         <div className="flex-1 min-w-0">
           <Outlet context={{ activeCohortId, cohorts, refreshCohorts: () => {
             fetch("/api/pathways/cohorts", {
-              headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+              headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
             })
               .then((r) => r.json())
               .then((data) => Array.isArray(data) && setCohorts(data.map((c: { id: string; name: string; status: string }) => ({ id: c.id, name: c.name, status: c.status }))))

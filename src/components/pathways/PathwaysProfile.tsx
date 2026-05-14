@@ -13,7 +13,7 @@ export default function PathwaysProfile() {
 
   useEffect(() => {
     fetch("/api/pathways/student/milestones", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => setMilestones(Array.isArray(data) ? data : []))
