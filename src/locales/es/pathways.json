@@ -1,0 +1,394 @@
+{
+  "pathways": {
+    "common": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "continue": "Continuar",
+      "finish": "Finalizar",
+      "submit": "Enviar",
+      "loading": "Cargando…",
+      "comingSoon": "Próximamente",
+      "lightMode": "Modo Claro",
+      "darkMode": "Modo Oscuro",
+      "signOut": "Cerrar Sesión",
+      "refresh": "Actualizar",
+      "exportCsv": "Exportar CSV",
+      "sourcesHeading": "Fuentes y lecturas adicionales",
+      "correct": "Correcto.",
+      "incorrect": "Incorrecto. La respuesta es: {{answer}}",
+      "knowledgeCheck": "Comprobación de Conocimiento",
+      "startQuiz": "Comenzar Quiz",
+      "nextQuestion": "Siguiente Pregunta",
+      "logInOrJoin": "Inicia Sesión o Únete",
+      "requestPilot": "Solicitar un Piloto"
+    },
+    "layout": {
+      "eyebrow": "Bright Boost",
+      "brand": "Pathways",
+      "nav": {
+        "home": "Inicio",
+        "tracks": "Rutas",
+        "profile": "Perfil",
+        "dashboard": "Panel",
+        "resources": "Recursos",
+        "manage": "Gestionar"
+      }
+    },
+    "home": {
+      "explorerEyebrow": "Nivel Explorador",
+      "launchEyebrow": "Nivel Lanzamiento",
+      "explorerTitle": "Tu Camino Comienza Aquí",
+      "launchTitle": "Construye Tu Plan de Lanzamiento",
+      "stats": {
+        "completed": "Completados",
+        "inProgress": "En Progreso",
+        "streak": "Racha"
+      },
+      "sections": {
+        "yourTracks": "Tus Rutas",
+        "recentActivity": "Actividad Reciente"
+      },
+      "modulesProgress": "{{done}}/{{total}} módulos • {{pct}}%"
+    },
+    "about": {
+      "hero": {
+        "eyebrow": "Bright Boost",
+        "tagline": "Caminos reales para futuros reales.",
+        "sub1": "Aprendizaje conectado con carreras para jóvenes de 14 a 17 años con oportunidades de crecimiento y reintegración.",
+        "sub2": "Ciberseguridad, emprendimiento, educación financiera, tecnología y medios creativos — entregado a través de programas en grupo con apoyo de facilitadores."
+      },
+      "tracksSection": {
+        "title": "Cinco Rutas. Tú Eliges.",
+        "sub": "Cada ruta construye habilidades reales y conecta con carreras reales."
+      },
+      "bands": {
+        "explorerTitle": "Nivel Explorador (14-15 años)",
+        "explorerDesc": "Habilidades fundamentales, exposición y descubrimiento. Construye confianza con actividades prácticas y encuentra lo que te emociona.",
+        "launchTitle": "Nivel Lanzamiento (16-17 años)",
+        "launchDesc": "Preparación de credenciales, construcción de portafolio y planificación de carrera. Prepárate para lo que sigue — universidad, certificación o carrera."
+      },
+      "outcomes": {
+        "title": "Cómo Se Ven los Resultados",
+        "sub": "Cada estudiante sale del programa con artefactos concretos y un plan claro de siguientes pasos, no solo asistencia.",
+        "portfolioTitle": "Artefactos de Portafolio",
+        "portfolioDesc": "Plan de seguridad final, perfil de intereses de carrera y registros de finalización de módulos — prueba concreta de habilidad.",
+        "certTitle": "Preparación para Certificación",
+        "certDesc": "Rutas directas a Cisco NetAcad, ISC2 Certified in Cybersecurity (CC) y CompTIA Security+.",
+        "nextStepTitle": "Plan de Siguientes Pasos",
+        "nextStepDesc": "Cada estudiante termina con una acción concreta: una certificación que perseguir, una pasantía que solicitar o una ruta de credenciales."
+      },
+      "delivery": {
+        "title": "Modelos de Entrega",
+        "sub": "Diseñados para adaptarse a cómo funciona tu programa en la práctica.",
+        "siteLedTitle": "Liderado por el Sitio",
+        "siteLedDesc": "Tu personal facilita usando nuestro currículo, panel y recursos. Nosotros proporcionamos entrenamiento y apoyo.",
+        "hybridTitle": "Híbrido",
+        "hybridDesc": "Entrega compartida — tu personal lidera las sesiones presenciales, nosotros hacemos profundizaciones virtuales y coaching de credenciales.",
+        "fullServiceTitle": "Servicio Completo",
+        "fullServiceDesc": "Nosotros operamos el grupo de principio a fin. Tú proporcionas el espacio, el reclutamiento y las relaciones locales."
+      },
+      "partners": {
+        "title": "Para Organizaciones Aliadas",
+        "sub": "Diseñado para educación en centros correccionales, desarrollo de fuerza laboral, organizaciones comunitarias y escuelas alternativas.",
+        "cohortTitle": "Entrega por Grupos",
+        "cohortDesc": "Crea grupos, asigna rutas y gestiona la inscripción con códigos de acceso.",
+        "dashTitle": "Panel del Facilitador",
+        "dashDesc": "Sigue el progreso de los estudiantes, las tasas de finalización y la participación en tiempo real. Exporta CSVs para reportes.",
+        "credTitle": "Preparación de Credenciales",
+        "credDesc": "Integración con Cisco NetAcad, ruta hacia ISC2 CC y artefactos de portafolio.",
+        "fundingTitle": "Alineación con Financiamiento",
+        "fundingIntro": "El contenido y entrega de Pathways está diseñado para alinearse con fuentes comunes de financiamiento juvenil:",
+        "funding": [
+          "WIOA Youth (Título I)",
+          "Reentry Employment Opportunities (REO)",
+          "Illinois Youth Investment Program",
+          "Reaching Youth, Delivering Success (RYDS)",
+          "Perkins V / Programas CTE de Estudio",
+          "Contratos locales de fuerza laboral"
+        ]
+      },
+      "footer": "Bright Boost Pathways — Un programa de Bright Bots Initiative"
+    },
+    "tracks": {
+      "title": "Todas las Rutas",
+      "sub": "Elige tu camino. Construye habilidades reales.",
+      "modulesCount": "{{count}} módulos",
+      "start": "Comenzar",
+      "items": {
+        "cyber-launch": {
+          "name": "Cyber Launch",
+          "tagline": "Tu punto de entrada a carreras en ciberseguridad",
+          "description": "Seguridad digital, fundamentos de redes, conciencia de carrera y preparación para certificaciones. Empieza con cursos gratuitos de Cisco y avanza hacia ISC2 CC."
+        },
+        "build-your-own-lane": {
+          "name": "Construye Tu Propio Camino",
+          "tagline": "Propiedad, emprendimiento y oportunidad",
+          "description": "Mapeo de oportunidades, pensamiento centrado en el cliente, propuestas de valor y presentación de tu propio emprendimiento."
+        },
+        "money-moves": {
+          "name": "Movidas de Dinero",
+          "tagline": "Presupuestos, banca, crédito y poder económico",
+          "description": "Presupuesto, banca, crédito, precios, impuestos y movilidad económica."
+        },
+        "future-tech-lab": {
+          "name": "Laboratorio del Futuro",
+          "tagline": "IA, datos y resolución de problemas digitales",
+          "description": "Alfabetización en IA, resolución de problemas digitales, programación básica, retos de datos y exposición a rutas STEM."
+        },
+        "creative-media-lab": {
+          "name": "Laboratorio de Medios Creativos",
+          "tagline": "Cuenta tu historia. Construye tu plataforma.",
+          "description": "Narrativa digital, producción de medios, conceptos de audio/video y expresión basada en proyectos."
+        }
+      },
+      "modules": {
+        "cyber-foundations": { "name": "Fundamentos de Ciberseguridad", "description": "¿Qué es la ciberseguridad? ¿Por qué importa? ¿Quién trabaja en este campo?" },
+        "digital-safety-sim": { "name": "Simulación de Seguridad Digital", "description": "Simulación interactiva: detecta phishing, protege contraseñas, asegura una red." },
+        "network-basics": { "name": "Fundamentos de Redes", "description": "Cómo funciona internet: paquetes, protocolos y rutas." },
+        "threat-detective": { "name": "Detective de Amenazas", "description": "Analiza registros, encuentra la brecha y escribe un reporte de incidente." },
+        "career-map": { "name": "Mapa de Carreras Cibernéticas", "description": "Explora roles, salarios y rutas en ciberseguridad." },
+        "cisco-netacad-link": { "name": "Cisco Networking Academy", "description": "Cursos externos gratuitos para profundizar tus habilidades de redes y seguridad." },
+        "capstone-security-plan": { "name": "Proyecto Final: Mi Plan de Seguridad", "description": "Crea una evaluación de seguridad para un escenario real. Presenta tus hallazgos." }
+      }
+    },
+    "trackDetail": {
+      "notFound": "Ruta no encontrada.",
+      "backToTracks": "Volver a Rutas",
+      "allTracks": "Todas las Rutas",
+      "completedCount": "{{done}}/{{total}} completados",
+      "completedLabel": "Completado",
+      "inProgressLabel": "En Progreso"
+    },
+    "modulePlayer": {
+      "notFound": "Módulo no encontrado.",
+      "backToTracks": "Volver a Rutas",
+      "backToTrack": "Volver a {{trackName}}",
+      "moduleComplete": "Módulo Completado",
+      "finishedFmt": "{{moduleName}} — ¡terminado!",
+      "loading": "Cargando módulo…",
+      "backToTrackCta": "Volver a la Ruta"
+    },
+    "profile": {
+      "learner": "Estudiante",
+      "completed": "Completados",
+      "inProgress": "En Progreso",
+      "avgScore": "Puntaje Promedio",
+      "completedModules": "Módulos Completados",
+      "scoreFmt": "• Puntaje: {{score}}%"
+    },
+    "facilitator": {
+      "loading": "Cargando tu panel…",
+      "noGroups": "Aún No Hay Grupos",
+      "noGroupsDesc": "Crea un grupo para empezar a seguir el progreso de los estudiantes.",
+      "yourCohort": "Tu Grupo",
+      "learnersEnrolled": "{{count}} estudiantes inscritos",
+      "joinCodeLabel": "Código de acceso para nuevos estudiantes:",
+      "learnersHeading": "Estudiantes",
+      "moduleProgress": "Progreso de Módulos",
+      "modulesCompletedFmt": "{{done}} de {{total}} módulos completados",
+      "backToRoster": "Volver a la lista",
+      "noLearners": "Aún no hay estudiantes inscritos. Comparte el código de acceso arriba.",
+      "notes": {
+        "title": "Tus Notas",
+        "placeholder": "Añade una nota privada sobre este estudiante…",
+        "disclaimer": "Las notas se guardan localmente en este navegador. La persistencia en servidor está en el roadmap."
+      },
+      "status": {
+        "onTrack": "En Camino",
+        "needsCheckIn": "Necesita Seguimiento",
+        "notStarted": "No Empezó"
+      },
+      "module": {
+        "notStarted": "No empezado",
+        "inProgress": "En progreso",
+        "done": "Listo",
+        "doneScoreFmt": "Listo ({{score}}%)"
+      },
+      "band": {
+        "explorer": "Explorador (14–15)",
+        "launch": "Lanzamiento (16–17)"
+      },
+      "resourcesTitle": "Resumen del programa, guía de sesiones, imprimibles"
+    },
+    "modules": {
+      "foundations": {
+        "title": "Fundamentos de Ciberseguridad",
+        "slides": [
+          { "title": "¿Qué es la Ciberseguridad?", "body": "La ciberseguridad es la práctica de proteger sistemas, redes y datos contra ataques digitales. Cada dispositivo conectado a internet es un blanco potencial — y defenderlos es una prioridad global creciente." },
+          { "title": "Por Qué Importa", "body": "Las brechas de datos le cuestan a las empresas un promedio de $4.45 millones por incidente (Reporte IBM Cost of a Data Breach, 2023). Los datos personales — contraseñas, información financiera, historiales médicos — están constantemente en riesgo. Infraestructuras críticas como redes eléctricas y hospitales dependen de una fuerte defensa cibernética." },
+          { "title": "Brechas Reales", "body": "En 2017, una sola brecha expuso los datos personales de 147 millones de personas — nombres, números de seguridad social, fechas de nacimiento. En 2020, un ataque de ransomware cerró una red hospitalaria importante, desviando pacientes de emergencia y retrasando atención por días. Incidentes reales como estos son la razón por la que toda organización ahora trata la ciberseguridad como un riesgo de negocio, no solo un problema de TI." },
+          { "title": "¿Quién Trabaja en Ciber?" },
+          { "title": "Muchas Formas de Entrar", "body": "No necesitas un título universitario de cuatro años para empezar una carrera en ciber. Las personas entran al campo a través de bootcamps, certificaciones gratuitas de la industria (CompTIA Security+, ISC2 Certified in Cybersecurity), servicio militar, roles de mesa de ayuda de TI, y estudio autodidacta con laboratorios caseros. A los empleadores les importa lo que sabes hacer, no solo lo que dice tu diploma." },
+          { "title": "La Oportunidad", "body": "EE.UU. tenía aproximadamente 470,000 vacantes sin cubrir en ciberseguridad a mediados de 2024 (NIST CyberSeek). La Oficina de Estadísticas Laborales proyecta que el empleo de Analistas de Seguridad de la Información crecerá alrededor del 33% de 2023 a 2033 — mucho más rápido que el promedio de todas las ocupaciones. El campo premia la curiosidad, la resolución de problemas y la persistencia por encima de cualquier trasfondo." }
+        ],
+        "roles": [
+          { "name": "Analista de Seguridad", "desc": "Monitorea redes para amenazas e investiga alertas", "pay": "$75K–$110K" },
+          { "name": "Pen Tester (Probador de Penetración)", "desc": "Hackea sistemas legalmente para encontrar vulnerabilidades antes que los atacantes", "pay": "$85K–$130K" },
+          { "name": "Respondedor de Incidentes", "desc": "Investiga brechas y lidera el esfuerzo de recuperación", "pay": "$70K–$105K" },
+          { "name": "Ingeniero de Seguridad", "desc": "Diseña y construye arquitectura y herramientas de seguridad", "pay": "$95K–$145K" },
+          { "name": "Analista GRC", "desc": "Gestiona marcos de gobernanza, riesgo y cumplimiento", "pay": "$65K–$100K" },
+          { "name": "Forense Digital", "desc": "Recupera evidencia de dispositivos después de brechas y crímenes", "pay": "$75K–$120K" },
+          { "name": "Arquitecto de Seguridad", "desc": "Diseña la estrategia general de seguridad de una organización", "pay": "$120K–$180K" },
+          { "name": "CISO", "desc": "Director de Seguridad de la Información — lidera todo el programa de seguridad", "pay": "$150K–$250K" }
+        ],
+        "quiz": [
+          { "q": "¿Qué protege la ciberseguridad?", "opts": ["Solo contraseñas", "Sistemas, redes y datos", "Solo sitios web", "Solo hardware"] },
+          { "q": "¿Por qué crece la demanda de trabajadores de ciber?", "opts": ["Las empresas reducen presupuestos tecnológicos", "Los ataques están disminuyendo", "Las amenazas digitales aumentan y no hay suficientes defensores", "La ciberseguridad se está automatizando"] },
+          { "q": "¿Qué rol investiga las brechas?", "opts": ["Analista GRC", "CISO", "Respondedor de Incidentes", "Pen Tester"] }
+        ],
+        "sourcesDisclaimer": "Las cifras del mercado laboral y salarios citadas arriba son referencias puntuales; verifica contra datos actuales de BLS/CyberSeek antes de citar en materiales para socios."
+      },
+      "digitalSafety": {
+        "title": "Simulación de Seguridad Digital",
+        "phishingPrompt": "Identifica el correo de phishing, luego marca las señales de alerta.",
+        "tapFlags": "Marca las señales de alerta en este correo:",
+        "phishingCorrect": "¡Correcto! Detectaste el correo de phishing.",
+        "phishingWrong": "Casi — el primer correo era el intento de phishing.",
+        "phishingLabel": "PHISHING",
+        "fromLabel": "De: {{addr}}",
+        "passwordPrompt": "Califica cada contraseña como débil o fuerte.",
+        "ratingWeak": "débil",
+        "ratingStrong": "fuerte",
+        "socialPrompt": "Un llamador desconocido dice ser de soporte de TI y necesita tu contraseña para arreglar un problema. ¿Qué haces?",
+        "socialChoices": {
+          "give": "Dales la contraseña",
+          "hangup": "Cuelga inmediatamente",
+          "verify": "Cuelga y verifica por canales conocidos"
+        },
+        "wifiPrompt": "En una red Wi-Fi pública, ¿qué acciones son seguras?",
+        "wifiSafe": "Seguro",
+        "wifiUnsafe": "Riesgoso",
+        "breachPrompt": "Numera estos pasos de respuesta a una brecha en orden de PRIMERO a ÚLTIMO.",
+        "breachLabel": "Paso {{n}}"
+      },
+      "networkBasics": {
+        "title": "Fundamentos de Redes",
+        "completedMsg": "Marcador de posición del módulo — contenido próximamente. Marcado como completo para la demostración."
+      },
+      "threatDetective": {
+        "title": "Detective de Amenazas",
+        "completedMsg": "Marcador de posición del módulo — contenido próximamente. Marcado como completo para la demostración."
+      },
+      "careerMap": {
+        "title": "Mapa de Carreras Cibernéticas",
+        "completedMsg": "Marcador de posición del módulo — contenido próximamente. Marcado como completo para la demostración."
+      },
+      "ciscoNetacad": {
+        "title": "Cisco Networking Academy",
+        "completedMsg": "Marcador de posición del módulo — contenido próximamente. Marcado como completo para la demostración."
+      },
+      "capstone": {
+        "title": "Proyecto Final: Mi Plan de Seguridad",
+        "completedMsg": "Marcador de posición del módulo — contenido próximamente. Marcado como completo para la demostración."
+      }
+    },
+    "resources": {
+      "title": "Recursos del Facilitador",
+      "subtitle": "Todo lo que necesitas para dirigir un grupo de Cyber Launch sólido.",
+      "tabs": {
+        "overview": "Resumen del Programa",
+        "modules": "Guías de Módulos",
+        "sessions": "Guía de Sesiones",
+        "faqs": "Preguntas Frecuentes",
+        "worksheets": "Hojas de Trabajo",
+        "tips": "Consejos de Facilitación"
+      },
+      "overview": {
+        "whatIsTitle": "¿Qué es Bright Boost Pathways?",
+        "whatIsBody1": "Bright Boost Pathways es un programa de aprendizaje conectado con carreras para jóvenes de 14 a 17 años. Entrega módulos prácticos basados en proyectos a través de cinco rutas: ciberseguridad, emprendimiento, educación financiera, tecnología y medios creativos.",
+        "whatIsBody2": "El programa está diseñado para entregarse en entornos comunitarios, educación correccional, programas de fuerza laboral y escuelas alternativas — donde sea que los jóvenes necesiten habilidades reales y caminos reales hacia adelante.",
+        "bandsTitle": "Dos Niveles",
+        "explorerLabel": "Explorador (14-15 años)",
+        "explorerDesc": "Habilidades fundamentales, exposición y descubrimiento. Construye confianza con actividades prácticas.",
+        "launchLabel": "Lanzamiento (16-17 años)",
+        "launchDesc": "Preparación para credenciales, construcción de portafolio y planificación de carrera. Prepárate para lo que sigue.",
+        "howTitle": "Cómo Funciona",
+        "howSteps": ["Inscribirse en grupo", "Elegir rutas", "Completar módulos", "Ganar logros", "Construir proyecto final", "Siguientes pasos"],
+        "trackActiveTitle": "Ruta Cyber Launch (Activa)",
+        "talkingPointsTitle": "Puntos Clave de Conversación",
+        "talkingPoints": [
+          "Casi 470,000 empleos en ciberseguridad están abiertos en EE.UU. ahora mismo (NIST CyberSeek).",
+          "No necesitas un título de 4 años para empezar — certificaciones gratuitas como ISC2 Certified in Cybersecurity abren puertas reales.",
+          "Este programa construye habilidades reales que los estudiantes pueden poner en un currículum — no solo enriquecimiento.",
+          "Grandes empleadores — IBM, Apple, Amazon — han eliminado los requisitos de título para muchos roles tecnológicos."
+        ],
+        "newFacilitatorTitle": "Dónde Empezar como Facilitador Nuevo",
+        "newFacilitatorSteps": [
+          "Lee esta pestaña de Resumen del Programa de principio a fin.",
+          "Lee la Guía de Módulo para el Módulo 1 (Fundamentos de Ciberseguridad) — establece el tono para todo el programa.",
+          "Lee la pestaña de Consejos de Facilitación, especialmente \"Estableciendo el Tono el Primer Día\".",
+          "Imprime las hojas de trabajo que necesitarás para las semanas 1 y 2 con anticipación.",
+          "Crea tu propia cuenta de Cisco NetAcad para poder guiar a los estudiantes a través de ella.",
+          "Ten a la mano los contactos de apoyo de la organización aliada para referencias."
+        ]
+      },
+      "sessions": {
+        "pacingTitle": "Guía de Ritmo de 6 Semanas",
+        "pacingSub": "Combina el módulo de cada semana con la hoja de trabajo correspondiente para mejores resultados.",
+        "tableHead": { "week": "Semana", "focus": "Enfoque", "modules": "Módulos + Hojas de Trabajo", "notes": "Notas de Facilitación", "minutes": "Min" },
+        "variationsTitle": "Variaciones de Ritmo",
+        "structureTitle": "Cada Sesión — Estructura Sugerida"
+      },
+      "moduleGuides": {
+        "introTitle": "Guías Detalladas de Módulos",
+        "introSub": "Una guía completa por cada módulo de Cyber Launch. Haz clic en un módulo para expandir.",
+        "introBody": "Cada guía incluye lo que enseña el módulo, preguntas de discusión antes y después, puntos comunes de dificultad y cómo entrenar para superarlos, contexto del mundo real, vocabulario y señales de alerta a observar. Lee la guía del módulo de la próxima semana ANTES de la sesión.",
+        "blocks": {
+          "whatItTeaches": "Lo Que Enseña Este Módulo",
+          "whyItMatters": "Por Qué Importa",
+          "timeRequired": "Tiempo Requerido",
+          "whatToExpect": "Qué Esperar",
+          "facilitatorRole": "Rol del Facilitador",
+          "facilitatorBefore": "Antes de que empiecen",
+          "facilitatorDuring": "Mientras trabajan",
+          "facilitatorAfter": "Después de que terminen",
+          "discussionBefore": "Preguntas de Discusión — Antes",
+          "discussionAfter": "Preguntas de Discusión — Después",
+          "stickingPoints": "Puntos Comunes de Dificultad",
+          "extensions": "Actividades de Extensión",
+          "realWorld": "Conexión con el Mundo Real",
+          "vocabulary": "Vocabulario",
+          "redFlags": "Señales de Alerta / Cuándo Preocuparse"
+        }
+      },
+      "faqs": {
+        "title": "Preguntas Frecuentes",
+        "sub": "Preguntas reales de audiencias reales. Usa las respuestas como puntos de partida — hazlas tuyas.",
+        "categories": {
+          "youth": {
+            "label": "De los Jóvenes",
+            "description": "Preguntas reales que hacen los adolescentes. Respuestas que los facilitadores pueden usar palabra por palabra o adaptar a su voz."
+          },
+          "parents": {
+            "label": "De Padres / Tutores",
+            "description": "Preguntas que hacen los tutores antes de permitir que su adolescente se inscriba. Respóndelas con especificidad y calma."
+          },
+          "partners": {
+            "label": "De Organizaciones Aliadas",
+            "description": "Preguntas que hacen los aliados comunitarios y líderes de sitio antes de comprometerse a hospedar un grupo."
+          }
+        }
+      },
+      "worksheets": {
+        "title": "Hojas de Trabajo Imprimibles",
+        "sub": "Cada una se abre en una pestaña nueva como un documento listo para imprimir. Las notas del facilitador son visibles en pantalla pero se ocultan al imprimir.",
+        "body": "Las hojas de trabajo están diseñadas para emparejarse con módulos específicos. La pestaña de Guía de Sesiones muestra qué hoja corresponde a cada semana. Imprime antes de la sesión — los estudiantes que las llenan a mano retienen más que los que escriben en computadora.",
+        "printLabel": "Imprimir",
+        "worksheetLabel": "Hoja de Trabajo {{n}}",
+        "printTipsTitle": "Consejos de Impresión",
+        "printTips": [
+          "Las hojas de trabajo se abren en una pestaña nueva y activan el diálogo de impresión automáticamente.",
+          "Si el diálogo de impresión no se abre, presiona Ctrl/Cmd+P en la pestaña nueva.",
+          "Las notas del facilitador (en cajas cyan punteadas) se ocultan al imprimir.",
+          "Para impresión a doble cara, elige encuadernación \"Borde Largo\" en la configuración de tu impresora.",
+          "Si quieres un PDF limpio, elige \"Guardar como PDF\" en lugar de una impresora física."
+        ]
+      },
+      "tips": {
+        "title": "Consejos de Facilitación",
+        "sub": "Guía práctica para las situaciones que surgen en grupos reales.",
+        "intro": "Estos consejos fueron escritos por el personal del programa con aportes de facilitadores aliados. Son puntos de partida, no reglas estrictas. Adáptalos a tu grupo, tu sitio y tu propio estilo. Las secciones sensibles (práctica informada por el trauma, jóvenes impactados por el sistema de justicia) merecen revisión con el liderazgo clínico o de programa de tu organización aliada antes de aplicarse a gran escala."
+      }
+    }
+  }
+}
