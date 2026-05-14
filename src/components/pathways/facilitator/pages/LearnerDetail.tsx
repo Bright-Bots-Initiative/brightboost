@@ -4,9 +4,26 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, XCircle, FileText } from "lucide-react";
 import Card, { CardBody, CardHeader } from "../shared/Card";
 import { StatusPill } from "../FacilitatorLayout";
+
+interface Milestone {
+  moduleSlug: string;
+  trackSlug: string;
+  status: string;
+  score: number | null;
+  completedAt: string | null;
+  createdAt: string;
+  hookCompleted?: boolean;
+  readingCompleted?: boolean;
+  lessonCompleted?: boolean;
+  practiceCompleted?: boolean;
+  homeworkSubmitted?: boolean;
+  homeworkResponse?: string | null;
+  quizCompleted?: boolean;
+  quizScore?: number | null;
+}
 
 interface LearnerDetailData {
   user: { id: string; name: string | null; email: string | null; ageBand: string | null; birthYear: number | null };
@@ -16,7 +33,34 @@ interface LearnerDetailData {
     status: string;
     cohort: { id: string; name: string; status: string };
   }>;
-  milestones: Array<{ moduleSlug: string; trackSlug: string; status: string; score: number | null; completedAt: string | null; createdAt: string }>;
+  milestones: Milestone[];
+}
+
+const SECTION_LABELS: Array<{ key: keyof Milestone; label: string }> = [
+  { key: "hookCompleted", label: "Hook" },
+  { key: "readingCompleted", label: "Read" },
+  { key: "lessonCompleted", label: "Lesson" },
+  { key: "practiceCompleted", label: "Practice" },
+  { key: "homeworkSubmitted", label: "HW" },
+  { key: "quizCompleted", label: "Quiz" },
+];
+
+function SectionDots({ milestone }: { milestone: Milestone }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {SECTION_LABELS.map(({ key, label }) => {
+        const done = milestone[key] === true;
+        return (
+          <span
+            key={String(key)}
+            title={`${label}: ${done ? "complete" : "not yet"}`}
+            className={`w-2 h-2 rounded-full ${done ? "bg-emerald-500 dark:bg-emerald-400" : "bg-slate-300 dark:bg-slate-700"}`}
+            aria-label={`${label} ${done ? "complete" : "not complete"}`}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 export default function LearnerDetail() {
@@ -139,28 +183,41 @@ export default function LearnerDetail() {
               {t("pathways.facilitator.learnerDetail.noMilestones")}
             </p>
           ) : (
-            <ul className="space-y-1">
+            <ul className="space-y-2">
               {data.milestones.map((m, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 p-2 rounded text-sm"
+                  className="rounded-lg border border-slate-200 dark:border-slate-700/60 p-3"
                 >
-                  {m.status === "completed" ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
-                  ) : m.status === "in_progress" ? (
-                    <Clock className="w-4 h-4 text-indigo-700 dark:text-indigo-400 shrink-0" />
-                  ) : (
-                    <XCircle className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0" />
+                  <div className="flex items-center gap-3 text-sm">
+                    {m.status === "completed" ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
+                    ) : m.status === "in_progress" ? (
+                      <Clock className="w-4 h-4 text-indigo-700 dark:text-indigo-400 shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0" />
+                    )}
+                    <span className="flex-1 text-slate-800 dark:text-slate-300">
+                      {t(`pathways.tracks.modules.${m.moduleSlug}.name`, m.moduleSlug)}
+                    </span>
+                    <SectionDots milestone={m} />
+                    <span className="text-xs text-slate-600 dark:text-slate-500 w-12 text-right">
+                      {m.score !== null ? `${m.score}%` : ""}
+                    </span>
+                    <span className="text-xs text-slate-500 w-24 text-right">
+                      {m.completedAt ? new Date(m.completedAt).toLocaleDateString() : ""}
+                    </span>
+                  </div>
+                  {m.homeworkResponse && (
+                    <details className="mt-2 ml-7">
+                      <summary className="text-xs text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer inline-flex items-center gap-1">
+                        <FileText className="w-3 h-3" /> Homework submission
+                      </summary>
+                      <pre className="mt-2 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 rounded p-3 border border-slate-200 dark:border-slate-700/40 font-sans">
+{m.homeworkResponse}
+                      </pre>
+                    </details>
                   )}
-                  <span className="flex-1 text-slate-800 dark:text-slate-300">
-                    {t(`pathways.tracks.modules.${m.moduleSlug}.name`, m.moduleSlug)}
-                  </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-500">
-                    {m.score !== null ? `${m.score}%` : ""}
-                  </span>
-                  <span className="text-xs text-slate-500 w-24 text-right">
-                    {m.completedAt ? new Date(m.completedAt).toLocaleDateString() : ""}
-                  </span>
                 </li>
               ))}
             </ul>

@@ -729,6 +729,16 @@ model PathwayMilestone {
   artifacts   Json?
   createdAt   DateTime  @default(now())
 
+  hookCompleted     Boolean @default(false)
+  readingCompleted  Boolean @default(false)
+  lessonCompleted   Boolean @default(false)
+  practiceCompleted Boolean @default(false)
+  homeworkSubmitted Boolean @default(false)
+  homeworkResponse  String?
+  quizCompleted     Boolean @default(false)
+  quizScore         Int?
+  timeSpentMinutes  Int     @default(0)
+
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, trackSlug, moduleSlug])
