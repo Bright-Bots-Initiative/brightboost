@@ -3,9 +3,16 @@
  *
  * 7 self-contained modules for teens (14-17).
  * Each exports a named component accepting { onComplete, onBack }.
- * Dark, clean, modern UI — indigo/teal/slate palette.
+ * Light/dark aware via Tailwind `dark:` variants — inherits the `.dark`
+ * class scope from PathwaysLayout.
+ *
+ * i18n: Module 1 (CyberFoundations) slide/role/quiz content reads from
+ * the `pathways.modules.foundations.*` keys. Modules 2-7 are wired for
+ * UI chrome (titles, buttons) but interior scenario content remains in
+ * English — see docs/pathways-translation-status.md for the path forward.
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // ── Shared types & helpers ────────────────────────────────────────────────
 
@@ -17,9 +24,9 @@ interface ModuleProps {
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = Math.round((current / total) * 100);
   return (
-    <div className="w-full bg-slate-700 rounded h-1.5">
+    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded h-1.5">
       <div
-        className="bg-indigo-500 h-1.5 rounded transition-all duration-300"
+        className="bg-indigo-600 dark:bg-indigo-500 h-1.5 rounded transition-all duration-300"
         style={{ width: `${pct}%` }}
       />
     </div>
@@ -39,17 +46,18 @@ function ModuleShell({
   onBack: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 sm:p-6">
+    <div className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
       <div className="max-w-2xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className="text-sm text-slate-400 hover:text-white transition-colors"
+            className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
           >
-            &larr; Back
+            &larr; {t("pathways.common.back")}
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-500">
             {step}/{totalSteps}
           </span>
         </div>
@@ -75,10 +83,10 @@ function Card({
   const base =
     "border rounded-lg p-4 transition-all duration-200 " +
     (selected
-      ? "border-indigo-500 bg-indigo-900/40 shadow-lg shadow-indigo-500/10"
-      : "border-slate-700 bg-slate-800 shadow-lg");
+      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 shadow-lg shadow-indigo-500/10"
+      : "border-slate-200 bg-white dark:border-slate-200 dark:border-slate-700 dark:bg-white dark:bg-slate-800 shadow-sm");
   const interactive = onClick
-    ? " cursor-pointer hover:border-indigo-400 hover:bg-slate-750 active:scale-[0.98]"
+    ? " cursor-pointer hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-[0.98]"
     : "";
   return (
     <div className={`${base}${interactive} ${className}`} onClick={onClick}>
@@ -100,7 +108,7 @@ function PrimaryButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded-lg transition-colors"
+      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 dark:hover:bg-indigo-500 dark:disabled:bg-slate-700 dark:disabled:text-slate-500 text-white text-sm font-medium rounded-lg transition-colors"
     >
       {children}
     </button>
@@ -180,11 +188,17 @@ const CYBER_QUIZ = [
 ];
 
 export function CyberFoundations({ onComplete, onBack }: ModuleProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [quizIdx, setQuizIdx] = useState(0);
   const [quizScore, setQuizScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
+
+  // Read translated slide/role/quiz content via i18n with TS fallbacks.
+  const slides = t("pathways.modules.foundations.slides", { returnObjects: true }) as Array<{ title: string; body?: string }>;
+  const roles = t("pathways.modules.foundations.roles", { returnObjects: true }) as Array<{ name: string; desc: string; pay: string }>;
+  const quizItems = t("pathways.modules.foundations.quiz", { returnObjects: true }) as Array<{ q: string; opts: string[] }>;
 
   const totalSlides = CYBER_SLIDES.length;
   const inQuiz = step >= totalSlides;
@@ -214,61 +228,76 @@ export function CyberFoundations({ onComplete, onBack }: ModuleProps) {
   };
 
   const currentStep = step + 1;
-  const slide = !inQuiz ? CYBER_SLIDES[step] : null;
-  const quiz = inQuiz ? CYBER_QUIZ[quizIdx] : null;
+  const englishSlide = !inQuiz ? CYBER_SLIDES[step] : null;
+  const localizedSlide = !inQuiz ? slides?.[step] : null;
+  const englishQuiz = inQuiz ? CYBER_QUIZ[quizIdx] : null;
+  const localizedQuiz = inQuiz ? quizItems?.[quizIdx] : null;
+
+  const slideTitle = localizedSlide?.title ?? englishSlide?.title ?? "";
+  const slideBody = localizedSlide?.body ?? (englishSlide && "body" in englishSlide ? englishSlide.body : "");
+  const slideHasRoles = englishSlide && "roles" in englishSlide && Array.isArray(englishSlide.roles);
 
   return (
-    <ModuleShell title="Cyber Foundations" step={currentStep} totalSteps={totalSteps} onBack={onBack}>
-      {slide && !("roles" in slide && slide.roles) && (
+    <ModuleShell title={t("pathways.modules.foundations.title")} step={currentStep} totalSteps={totalSteps} onBack={onBack}>
+      {englishSlide && !slideHasRoles && (
         <Card className="mt-4 space-y-3">
-          <h2 className="text-lg font-semibold text-indigo-300">{slide.title}</h2>
-          <p className="text-sm text-slate-300 leading-relaxed">{slide.body}</p>
+          <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-700 dark:text-indigo-300">{slideTitle}</h2>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{slideBody}</p>
         </Card>
       )}
 
-      {slide && "roles" in slide && slide.roles && (
+      {englishSlide && slideHasRoles && (
         <div className="mt-4 space-y-3">
-          <h2 className="text-lg font-semibold text-indigo-300">{slide.title}</h2>
+          <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-700 dark:text-indigo-300">{slideTitle}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {slide.roles.map((r) => (
-              <Card key={r.name} className="space-y-1">
-                <p className="text-sm font-semibold text-white">{r.name}</p>
-                <p className="text-xs text-slate-400">{r.desc}</p>
-                <p className="text-xs text-teal-400 font-medium">{r.pay}</p>
-              </Card>
-            ))}
+            {englishSlide.roles!.map((r, i) => {
+              const lr = roles?.[i] ?? r;
+              return (
+                <Card key={r.name} className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{lr.name}</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-400">{lr.desc}</p>
+                  <p className="text-xs text-teal-700 dark:text-teal-400 font-medium">{lr.pay}</p>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {quiz && (
+      {englishQuiz && (
         <div className="mt-4 space-y-4">
           <Card className="space-y-1">
-            <p className="text-xs text-slate-500 uppercase tracking-wider">Knowledge Check</p>
-            <p className="text-sm font-medium text-white">{quiz.q}</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">
+              {t("pathways.common.knowledgeCheck")}
+            </p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              {localizedQuiz?.q ?? englishQuiz.q}
+            </p>
           </Card>
           <div className="space-y-2">
-            {quiz.opts.map((opt, i) => {
-              let border = "border-slate-700";
-              if (answered && i === quiz.ans) border = "border-teal-500";
-              else if (answered && i === selected && i !== quiz.ans) border = "border-red-500";
+            {englishQuiz.opts.map((opt, i) => {
+              let border = "border-slate-200 dark:border-slate-200 dark:border-slate-700";
+              if (answered && i === englishQuiz.ans) border = "border-teal-500";
+              else if (answered && i === selected && i !== englishQuiz.ans) border = "border-red-500";
               return (
                 <button
                   key={i}
                   onClick={() => handleAnswer(i)}
                   disabled={answered}
-                  className={`w-full text-left p-3 rounded-lg border ${border} bg-slate-800 text-sm text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-700 transition-colors ${
+                  className={`w-full text-left p-3 rounded-lg border ${border} bg-white dark:bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-300 dark:disabled:hover:border-slate-200 dark:border-slate-700 transition-colors ${
                     selected === i ? "ring-1 ring-indigo-500" : ""
                   }`}
                 >
-                  {opt}
+                  {localizedQuiz?.opts?.[i] ?? opt}
                 </button>
               );
             })}
           </div>
           {answered && (
-            <p className="text-xs text-slate-400">
-              {selected === quiz.ans ? "Correct." : `Incorrect. The answer is: ${quiz.opts[quiz.ans]}`}
+            <p className="text-xs text-slate-700 dark:text-slate-400">
+              {selected === englishQuiz.ans
+                ? t("pathways.common.correct")
+                : t("pathways.common.incorrect", { answer: localizedQuiz?.opts?.[englishQuiz.ans] ?? englishQuiz.opts[englishQuiz.ans] })}
             </p>
           )}
         </div>
@@ -277,37 +306,37 @@ export function CyberFoundations({ onComplete, onBack }: ModuleProps) {
       <div className="flex justify-end mt-6">
         {!inQuiz && (
           <PrimaryButton onClick={handleNext}>
-            {step < totalSlides - 1 ? "Next" : "Start Quiz"}
+            {step < totalSlides - 1 ? t("pathways.common.next") : t("pathways.common.startQuiz")}
           </PrimaryButton>
         )}
         {inQuiz && answered && (
           <PrimaryButton onClick={handleNext}>
-            {quizIdx < CYBER_QUIZ.length - 1 ? "Next Question" : "Finish"}
+            {quizIdx < CYBER_QUIZ.length - 1 ? t("pathways.common.nextQuestion") : t("pathways.common.finish")}
           </PrimaryButton>
         )}
       </div>
 
       {/* Sources — visible on every slide so claims are verifiable */}
       <details className="mt-8 group">
-        <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-300 select-none">
-          Sources &amp; further reading
+        <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 select-none">
+          {t("pathways.common.sourcesHeading")}
         </summary>
-        <ul className="mt-2 space-y-1 pl-3 border-l border-slate-700">
+        <ul className="mt-2 space-y-1 pl-3 border-l border-slate-200 dark:border-slate-200 dark:border-slate-700">
           {CYBER_SOURCES.map((s) => (
-            <li key={s.url} className="text-xs text-slate-400">
+            <li key={s.url} className="text-xs text-slate-700 dark:text-slate-400">
               <a
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-indigo-300 hover:underline"
+                className="hover:text-indigo-700 dark:hover:text-indigo-700 dark:text-indigo-300 hover:underline"
               >
                 {s.label}
               </a>
             </li>
           ))}
         </ul>
-        <p className="text-[10px] text-slate-600 mt-2 pl-3">
-          Job-market and salary figures cited above are point-in-time references; verify against current BLS/CyberSeek data before quoting in partner materials.
+        <p className="text-[10px] text-slate-500 dark:text-slate-600 mt-2 pl-3">
+          {t("pathways.modules.foundations.sourcesDisclaimer")}
         </p>
       </details>
     </ModuleShell>
@@ -476,7 +505,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
       {/* Scenario 1: Phishing */}
       {step === 0 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">Identify the phishing email, then tap the red flags.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Identify the phishing email, then tap the red flags.</p>
           <div className="space-y-3">
             {PHISH_EMAILS.map((email, i) => (
               <Card
@@ -488,11 +517,11 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
                 <div className="flex justify-between">
                   <p className="text-xs text-slate-500">From: {email.from}</p>
                   {phishSubmitted && email.isPhish && (
-                    <span className="text-xs text-red-400 font-medium">PHISHING</span>
+                    <span className="text-xs text-red-700 dark:text-red-400 font-medium">PHISHING</span>
                   )}
                 </div>
                 <p className="text-sm font-medium">{email.subject}</p>
-                <p className="text-xs text-slate-400">{email.body}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{email.body}</p>
               </Card>
             ))}
           </div>
@@ -512,7 +541,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
                   className={`w-full text-left p-2 rounded-lg border text-xs transition-colors ${
                     flagsFound.has(i)
                       ? "border-red-500 bg-red-900/20 text-red-300"
-                      : "border-slate-700 bg-slate-800 text-slate-400"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   {flag}
@@ -525,7 +554,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handlePhishSubmit}>Submit</PrimaryButton>
           )}
           {phishSubmitted && (
-            <p className="text-xs text-teal-400">
+            <p className="text-xs text-teal-700 dark:text-teal-400">
               {phishSelected === 0 ? "Correct! You spotted the phishing email." : "Not quite — the first email was the phishing attempt."}
             </p>
           )}
@@ -535,11 +564,11 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
       {/* Scenario 2: Passwords */}
       {step === 1 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">Rate each password as weak or strong.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Rate each password as weak or strong.</p>
           <div className="space-y-3">
             {PASSWORDS.map((p, i) => (
               <Card key={i} className="flex items-center justify-between">
-                <code className="text-sm text-slate-300 font-mono">{p.pw}</code>
+                <code className="text-sm text-slate-700 dark:text-slate-300 font-mono">{p.pw}</code>
                 <div className="flex gap-2">
                   {["weak", "strong"].map((rating) => (
                     <button
@@ -565,7 +594,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handlePwSubmit}>Submit</PrimaryButton>
           )}
           {pwSubmitted && (
-            <div className="text-xs text-teal-400 space-y-1">
+            <div className="text-xs text-teal-700 dark:text-teal-400 space-y-1">
               <p>Modern NIST guidance (SP 800-63B): length beats complexity. A long passphrase like four random words is stronger than a short scramble — and you don't have to rotate passwords on a schedule if they aren't compromised.</p>
               <p className="text-slate-500">A password manager lets you use a unique, long password for every account without memorizing them.</p>
             </div>
@@ -578,11 +607,11 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
         <div className="space-y-4 mt-4">
           <Card className="space-y-2">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Incoming Call</p>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
               "Hi, this is Mike from IT Support. We detected suspicious activity on your account. I need your password to reset it right now, or your account could be compromised."
             </p>
           </Card>
-          <p className="text-sm text-slate-400">What do you do?</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">What do you do?</p>
           <div className="grid grid-cols-2 gap-3">
             <Card
               onClick={() => !seChoice && handleSeChoice("comply")}
@@ -614,11 +643,11 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
       {/* Scenario 4: Public Wi-Fi */}
       {step === 3 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">You're on public Wi-Fi. Mark each action as safe or unsafe.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">You're on public Wi-Fi. Mark each action as safe or unsafe.</p>
           <div className="space-y-3">
             {WIFI_ACTIONS.map((a, i) => (
               <Card key={i} className="flex items-center justify-between">
-                <p className="text-sm text-slate-300">{a.action}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">{a.action}</p>
                 <div className="flex gap-2">
                   {[true, false].map((val) => (
                     <button
@@ -644,7 +673,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handleWifiSubmit}>Submit</PrimaryButton>
           )}
           {wifiSubmitted && (
-            <p className="text-xs text-teal-400">
+            <p className="text-xs text-teal-700 dark:text-teal-400">
               On public Wi-Fi: use a VPN, avoid banking and unencrypted logins.
             </p>
           )}
@@ -654,7 +683,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
       {/* Scenario 5: Breach Response */}
       {step === 4 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Your email was in a data breach. Order the response steps (tap in order):
           </p>
           <div className="space-y-2">
@@ -666,8 +695,8 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
                   onClick={() => toggleBreachItem(i)}
                   className={`w-full text-left p-3 rounded-lg border text-sm transition-colors flex items-center gap-3 ${
                     orderIdx >= 0
-                      ? "border-indigo-500 bg-indigo-900/20 text-white"
-                      : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                      ? "border-indigo-500 bg-indigo-900/20 text-slate-900 dark:text-white"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-500"
                   }`}
                 >
                   <span
@@ -686,7 +715,7 @@ export function DigitalSafetySim({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handleBreachSubmit}>Submit</PrimaryButton>
           )}
           {breachSubmitted && (
-            <p className="text-xs text-teal-400">
+            <p className="text-xs text-teal-700 dark:text-teal-400">
               The ideal order: change password, enable 2FA, check other accounts, then monitor.
             </p>
           )}
@@ -833,14 +862,14 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
     <ModuleShell title="Network Basics" step={currentStep} totalSteps={totalSteps} onBack={onBack}>
       {inSlides && (
         <Card className="mt-4 space-y-3">
-          <h2 className="text-lg font-semibold text-indigo-300">{NET_SLIDES[step].title}</h2>
-          <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{NET_SLIDES[step].body}</p>
+          <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300">{NET_SLIDES[step].title}</h2>
+          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">{NET_SLIDES[step].body}</p>
         </Card>
       )}
 
       {inTrace && (
         <div className="mt-4 space-y-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Trace the packet: click the network nodes in the correct order.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
@@ -848,7 +877,7 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
             {[3, 0, 4, 1, 2].map((id) => {
               const node = TRACE_NODES[id];
               const orderIdx = traceClicked.indexOf(id);
-              let borderColor = "border-slate-700";
+              let borderColor = "border-slate-200 dark:border-slate-700";
               if (traceSubmitted) {
                 const correctPos = traceClicked.indexOf(id);
                 borderColor = correctPos === id ? "border-teal-500" : "border-red-500";
@@ -858,7 +887,7 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
                 <button
                   key={id}
                   onClick={() => handleTraceClick(id)}
-                  className={`px-4 py-3 rounded-lg border ${borderColor} bg-slate-800 text-sm transition-colors hover:border-indigo-400 flex items-center gap-2`}
+                  className={`px-4 py-3 rounded-lg border ${borderColor} bg-white dark:bg-slate-800 text-sm transition-colors hover:border-indigo-400 flex items-center gap-2`}
                 >
                   {orderIdx >= 0 && (
                     <span className="w-5 h-5 rounded bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">
@@ -874,7 +903,7 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
             <PrimaryButton onClick={handleTraceSubmit}>Check Order</PrimaryButton>
           )}
           {traceSubmitted && (
-            <p className="text-xs text-teal-400">
+            <p className="text-xs text-teal-700 dark:text-teal-400">
               Correct path: Your Device &rarr; DNS Server &rarr; Web Server &rarr; Firewall &rarr; Your Device (Response)
             </p>
           )}
@@ -885,11 +914,11 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
         <div className="mt-4 space-y-4">
           <Card className="space-y-1">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Knowledge Check</p>
-            <p className="text-sm font-medium text-white">{NET_QUIZ[quizIdx].q}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{NET_QUIZ[quizIdx].q}</p>
           </Card>
           <div className="space-y-2">
             {NET_QUIZ[quizIdx].opts.map((opt, i) => {
-              let border = "border-slate-700";
+              let border = "border-slate-200 dark:border-slate-700";
               if (answered && i === NET_QUIZ[quizIdx].ans) border = "border-teal-500";
               else if (answered && i === selected) border = "border-red-500";
               return (
@@ -897,7 +926,7 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
                   key={i}
                   onClick={() => handleAnswer(i)}
                   disabled={answered}
-                  className={`w-full text-left p-3 rounded-lg border ${border} bg-slate-800 text-sm text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-700 transition-colors`}
+                  className={`w-full text-left p-3 rounded-lg border ${border} bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-200 dark:border-slate-700 transition-colors`}
                 >
                   {opt}
                 </button>
@@ -905,7 +934,7 @@ export function NetworkBasics({ onComplete, onBack }: ModuleProps) {
             })}
           </div>
           {answered && (
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               {selected === NET_QUIZ[quizIdx].ans ? "Correct." : `Incorrect. Answer: ${NET_QUIZ[quizIdx].opts[NET_QUIZ[quizIdx].ans]}`}
             </p>
           )}
@@ -1040,7 +1069,7 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
       {/* Phase 1: Log Analysis */}
       {phase === 0 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">Review the server logs. Select the suspicious entries.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Review the server logs. Select the suspicious entries.</p>
           <div className="space-y-2">
             {LOG_ENTRIES.map((entry, i) => (
               <button
@@ -1049,14 +1078,14 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
                 className={`w-full text-left p-3 rounded-lg border text-xs font-mono transition-colors ${
                   selectedLogs.has(i)
                     ? "border-red-500 bg-red-900/20 text-red-300"
-                    : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-500"
                 }`}
               >
                 <span className="text-slate-500">[{entry.time}]</span>{" "}
                 <span className="text-slate-500">{entry.ip}</span>{" "}
                 {entry.action}
                 {logsSubmitted && entry.suspicious && (
-                  <span className="ml-2 text-red-400">SUSPICIOUS</span>
+                  <span className="ml-2 text-red-700 dark:text-red-400">SUSPICIOUS</span>
                 )}
               </button>
             ))}
@@ -1079,11 +1108,11 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
             <p className="text-xs text-slate-500 uppercase tracking-wider">
               Question {qIdx + 1} of {LOG_QUESTIONS.length}
             </p>
-            <p className="text-sm font-medium text-white">{LOG_QUESTIONS[qIdx].q}</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">{LOG_QUESTIONS[qIdx].q}</p>
           </Card>
           <div className="space-y-2">
             {LOG_QUESTIONS[qIdx].opts.map((opt, i) => {
-              let border = "border-slate-700";
+              let border = "border-slate-200 dark:border-slate-700";
               if (qAnswered && i === LOG_QUESTIONS[qIdx].ans) border = "border-teal-500";
               else if (qAnswered && i === qSelected) border = "border-red-500";
               return (
@@ -1091,7 +1120,7 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
                   key={i}
                   onClick={() => handleAnswer(i)}
                   disabled={qAnswered}
-                  className={`w-full text-left p-3 rounded-lg border ${border} bg-slate-800 text-sm text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-700 transition-colors`}
+                  className={`w-full text-left p-3 rounded-lg border ${border} bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 hover:border-indigo-400 disabled:hover:border-slate-200 dark:border-slate-700 transition-colors`}
                 >
                   {opt}
                 </button>
@@ -1111,14 +1140,14 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
       {/* Phase 3: Incident Report */}
       {phase === 2 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">Complete the incident report.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Complete the incident report.</p>
           <Card className="space-y-4">
             <div>
               <label className="text-xs text-slate-500 block mb-1">Severity</label>
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value)}
-                className="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white"
+                className="w-full p-2 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white"
               >
                 <option value="">Select...</option>
                 {SEVERITY_OPTS.map((o) => (
@@ -1131,7 +1160,7 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
               <select
                 value={attackType}
                 onChange={(e) => setAttackType(e.target.value)}
-                className="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white"
+                className="w-full p-2 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white"
               >
                 <option value="">Select...</option>
                 {TYPE_OPTS.map((o) => (
@@ -1144,7 +1173,7 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
               <select
                 value={recAction}
                 onChange={(e) => setRecAction(e.target.value)}
-                className="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white"
+                className="w-full p-2 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white"
               >
                 <option value="">Select...</option>
                 {ACTION_OPTS.map((o) => (
@@ -1158,7 +1187,7 @@ export function ThreatDetective({ onComplete, onBack }: ModuleProps) {
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
                 placeholder="Describe the incident in 1-2 sentences..."
-                className="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white resize-none h-20"
+                className="w-full p-2 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white resize-none h-20"
               />
             </div>
           </Card>
@@ -1278,17 +1307,17 @@ export function CyberCareerMap({ onComplete, onBack }: ModuleProps) {
       <ModuleShell title="Cyber Career Map" step={2} totalSteps={2} onBack={() => setShowSummary(false)}>
         <div className="space-y-6 mt-4">
           <div>
-            <h2 className="text-lg font-semibold text-indigo-300 mb-3">Your Top Interests</h2>
+            <h2 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300 mb-3">Your Top Interests</h2>
             <div className="space-y-3">
               {picks.map((career) => (
                 <Card key={career.role} className="space-y-2">
-                  <p className="text-sm font-semibold text-white">{career.role}</p>
-                  <p className="text-xs text-teal-400">{career.salary}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{career.role}</p>
+                  <p className="text-xs text-teal-700 dark:text-teal-400">{career.salary}</p>
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Next Steps:</p>
                     <ul className="space-y-1">
                       {nextSteps[career.role]?.map((step) => (
-                        <li key={step} className="text-xs text-slate-400 flex items-start gap-2">
+                        <li key={step} className="text-xs text-slate-600 dark:text-slate-400 flex items-start gap-2">
                           <span className="text-indigo-400 mt-0.5">-</span> {step}
                         </li>
                       ))}
@@ -1311,7 +1340,7 @@ export function CyberCareerMap({ onComplete, onBack }: ModuleProps) {
   return (
     <ModuleShell title="Cyber Career Map" step={1} totalSteps={2} onBack={onBack}>
       <div className="space-y-4 mt-4">
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Explore the roles below. Star 1-3 that interest you most.
           <span className="text-indigo-400 ml-1">{starred.size}/3 selected</span>
         </p>
@@ -1324,19 +1353,19 @@ export function CyberCareerMap({ onComplete, onBack }: ModuleProps) {
               className="space-y-2"
             >
               <div className="flex items-start justify-between">
-                <p className="text-sm font-semibold text-white">{career.role}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{career.role}</p>
                 <span className={`text-lg ${starred.has(i) ? "text-yellow-400" : "text-slate-600"}`}>
                   {starred.has(i) ? "\u2605" : "\u2606"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">{career.what}</p>
-              <p className="text-xs text-teal-400 font-medium">{career.salary}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{career.what}</p>
+              <p className="text-xs text-teal-700 dark:text-teal-400 font-medium">{career.salary}</p>
               <p className="text-xs text-slate-500">{career.education}</p>
               <div className="flex flex-wrap gap-1">
                 {career.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 text-[10px] rounded bg-slate-700 text-slate-400 border border-slate-600"
+                    className="px-2 py-0.5 text-[10px] rounded bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-600"
                   >
                     {tag}
                   </span>
@@ -1393,20 +1422,20 @@ export function CiscoNetacadLink({ onComplete, onBack }: ModuleProps) {
           <div className="text-center space-y-3">
             {/* Cisco logo placeholder */}
             <div className="w-16 h-16 mx-auto rounded-lg bg-slate-700 border border-slate-600 flex items-center justify-center">
-              <span className="text-2xl font-bold text-teal-400">C</span>
+              <span className="text-2xl font-bold text-teal-700 dark:text-teal-400">C</span>
             </div>
-            <h2 className="text-lg font-semibold text-white">Cisco Networking Academy</h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cisco Networking Academy</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Cisco NetAcad offers free, industry-recognized courses in networking, cybersecurity, and IT fundamentals. Build skills that employers actively look for.
             </p>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-slate-700">
+          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Recommended after this module</p>
             {RECOMMENDED_NETACAD_COURSES.map((c) => (
               <div key={c.name} className="text-left">
                 <p className="text-sm font-medium text-slate-200">{c.name}</p>
-                <p className="text-xs text-slate-400">{c.detail}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{c.detail}</p>
               </div>
             ))}
           </div>
@@ -1419,7 +1448,7 @@ export function CiscoNetacadLink({ onComplete, onBack }: ModuleProps) {
               Open Cisco NetAcad
             </button>
             {clicked && (
-              <p className="text-xs text-teal-400 text-center">
+              <p className="text-xs text-teal-700 dark:text-teal-400 text-center">
                 Link opened. Module complete.
               </p>
             )}
@@ -1552,7 +1581,7 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
       {/* Step 1: Pick Business */}
       {step === 0 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             You're building a security plan. Pick a business to protect:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1566,8 +1595,8 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
                 <div className="w-10 h-10 mx-auto rounded-lg bg-slate-700 border border-slate-600 flex items-center justify-center">
                   <span className="text-lg font-bold text-indigo-400">{biz.icon}</span>
                 </div>
-                <p className="text-sm font-semibold text-white">{biz.name}</p>
-                <p className="text-xs text-slate-400">{biz.desc}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{biz.name}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{biz.desc}</p>
               </Card>
             ))}
           </div>
@@ -1577,7 +1606,7 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
       {/* Step 2: Pick Risks */}
       {step === 1 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Select the 3 biggest risks for {business?.name}:
             <span className="text-indigo-400 ml-1">{selectedRisks.size}/3</span>
           </p>
@@ -1600,7 +1629,7 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
                     <span className="text-white text-xs font-bold">{"\u2713"}</span>
                   )}
                 </div>
-                <span className="text-sm text-slate-300">{risk}</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{risk}</span>
               </Card>
             ))}
           </div>
@@ -1610,15 +1639,15 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
       {/* Step 3: Match Protections */}
       {step === 2 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">Match each risk to the best protection:</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Match each risk to the best protection:</p>
           <div className="space-y-3">
             {riskArr.map((riskIdx) => (
               <Card key={riskIdx} className="space-y-2">
-                <p className="text-sm font-medium text-red-400">{RISKS[riskIdx]}</p>
+                <p className="text-sm font-medium text-red-700 dark:text-red-400">{RISKS[riskIdx]}</p>
                 <select
                   value={protections[riskIdx] || ""}
                   onChange={(e) => setProtection(riskIdx, e.target.value)}
-                  className="w-full p-2 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white"
+                  className="w-full p-2 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white"
                 >
                   <option value="">Select protection...</option>
                   {PROTECTIONS.map((p) => (
@@ -1634,7 +1663,7 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
       {/* Step 4: Executive Summary */}
       {step === 3 && (
         <div className="space-y-4 mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Write a 3-sentence executive summary for your security plan:
           </p>
           <Card className="space-y-2">
@@ -1642,7 +1671,7 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
               value={summaryText}
               onChange={(e) => setSummaryText(e.target.value)}
               rows={6}
-              className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 text-sm text-white resize-none leading-relaxed"
+              className="w-full p-3 rounded-lg bg-white border border-slate-300 dark:bg-slate-700 dark:border-slate-600 text-sm text-slate-900 dark:text-white resize-none leading-relaxed"
             />
             <p className="text-xs text-slate-500">
               Use the sentence starters as a guide. Replace them with your analysis.
@@ -1655,14 +1684,14 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
       {step === 4 && (
         <div className="space-y-4 mt-4">
           <Card className="space-y-5 p-6">
-            <div className="border-b border-slate-700 pb-3">
+            <div className="border-b border-slate-200 dark:border-slate-700 pb-3">
               <p className="text-xs text-slate-500 uppercase tracking-wider">Security Plan</p>
-              <h2 className="text-lg font-bold text-white">{business?.name} Security Assessment</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{business?.name} Security Assessment</h2>
             </div>
 
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Business Profile</p>
-              <p className="text-sm text-slate-300">{business?.desc}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{business?.desc}</p>
             </div>
 
             <div>
@@ -1680,10 +1709,10 @@ export function CyberCapstone({ onComplete, onBack }: ModuleProps) {
 
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Executive Summary</p>
-              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{summaryText}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed">{summaryText}</p>
             </div>
 
-            <div className="border-t border-slate-700 pt-3">
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-3">
               <p className="text-xs text-slate-500">
                 Prepared by: Student &middot; BrightBoost Cyber Launch Track
               </p>

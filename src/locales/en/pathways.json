@@ -1,0 +1,394 @@
+{
+  "pathways": {
+    "common": {
+      "back": "Back",
+      "next": "Next",
+      "continue": "Continue",
+      "finish": "Finish",
+      "submit": "Submit",
+      "loading": "Loading…",
+      "comingSoon": "Coming Soon",
+      "lightMode": "Light Mode",
+      "darkMode": "Dark Mode",
+      "signOut": "Sign Out",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "sourcesHeading": "Sources & further reading",
+      "correct": "Correct.",
+      "incorrect": "Incorrect. The answer is: {{answer}}",
+      "knowledgeCheck": "Knowledge Check",
+      "startQuiz": "Start Quiz",
+      "nextQuestion": "Next Question",
+      "logInOrJoin": "Log In or Join",
+      "requestPilot": "Request a Pilot"
+    },
+    "layout": {
+      "eyebrow": "Bright Boost",
+      "brand": "Pathways",
+      "nav": {
+        "home": "Home",
+        "tracks": "Tracks",
+        "profile": "Profile",
+        "dashboard": "Dashboard",
+        "resources": "Resources",
+        "manage": "Manage"
+      }
+    },
+    "home": {
+      "explorerEyebrow": "Explorer Band",
+      "launchEyebrow": "Launch Band",
+      "explorerTitle": "Your Pathway Starts Here",
+      "launchTitle": "Build Your Launch Plan",
+      "stats": {
+        "completed": "Completed",
+        "inProgress": "In Progress",
+        "streak": "Streak"
+      },
+      "sections": {
+        "yourTracks": "Your Tracks",
+        "recentActivity": "Recent Activity"
+      },
+      "modulesProgress": "{{done}}/{{total}} modules • {{pct}}%"
+    },
+    "about": {
+      "hero": {
+        "eyebrow": "Bright Boost",
+        "tagline": "Real pathways for real futures.",
+        "sub1": "Career-connected learning for opportunity and justice-impacted youth ages 14-17.",
+        "sub2": "Cybersecurity, entrepreneurship, financial literacy, tech, and creative media — delivered through cohort-based programs with facilitator support."
+      },
+      "tracksSection": {
+        "title": "Five Tracks. Your Choice.",
+        "sub": "Each track builds real skills and connects to real careers."
+      },
+      "bands": {
+        "explorerTitle": "Explorer Band (Ages 14-15)",
+        "explorerDesc": "Foundation skills, exposure, and discovery. Build confidence with hands-on activities and find what excites you.",
+        "launchTitle": "Launch Band (Ages 16-17)",
+        "launchDesc": "Credential prep, portfolio building, and career planning. Get ready for what comes next — college, certification, or career."
+      },
+      "outcomes": {
+        "title": "What Outcomes Look Like",
+        "sub": "Each learner leaves the program with concrete artifacts and a next-step plan, not just attendance.",
+        "portfolioTitle": "Portfolio Artifacts",
+        "portfolioDesc": "Capstone security plan, career interest profile, and module completion records — concrete proof of skill.",
+        "certTitle": "Certification Prep",
+        "certDesc": "Direct on-ramps to Cisco NetAcad, ISC2 Certified in Cybersecurity (CC), and CompTIA Security+.",
+        "nextStepTitle": "Next-Step Plan",
+        "nextStepDesc": "Every learner ends with a concrete next action: a cert to pursue, an internship to apply for, or a credential pathway."
+      },
+      "delivery": {
+        "title": "Delivery Models",
+        "sub": "Built to fit how your program actually runs.",
+        "siteLedTitle": "Site-Led",
+        "siteLedDesc": "Your staff facilitate using our curriculum, dashboard, and resources. We provide training and support.",
+        "hybridTitle": "Hybrid",
+        "hybridDesc": "Shared delivery — your staff lead in-person sessions, we run virtual deep-dives and credential coaching.",
+        "fullServiceTitle": "Full-Service",
+        "fullServiceDesc": "We staff the cohort end-to-end. You provide the space, recruitment, and on-site relationships."
+      },
+      "partners": {
+        "title": "For Program Partners",
+        "sub": "Built for correctional education, workforce development, community-based organizations, and alternative schools.",
+        "cohortTitle": "Cohort Delivery",
+        "cohortDesc": "Create cohorts, assign tracks, and manage enrollment with join codes.",
+        "dashTitle": "Facilitator Dashboard",
+        "dashDesc": "Track learner progress, completion rates, and engagement in real time. Export CSVs for reporting.",
+        "credTitle": "Credential Prep",
+        "credDesc": "Cisco NetAcad integration, ISC2 CC pathway, and portfolio artifacts.",
+        "fundingTitle": "Funding Fit",
+        "fundingIntro": "Pathways content and delivery is designed to align with common youth-serving funding streams:",
+        "funding": [
+          "WIOA Youth (Title I)",
+          "Reentry Employment Opportunities (REO)",
+          "Illinois Youth Investment Program",
+          "Reaching Youth, Delivering Success (RYDS)",
+          "Perkins V / CTE Programs of Study",
+          "Local workforce board contracts"
+        ]
+      },
+      "footer": "Bright Boost Pathways — A program of Bright Bots Initiative"
+    },
+    "tracks": {
+      "title": "All Tracks",
+      "sub": "Choose your pathway. Build real skills.",
+      "modulesCount": "{{count}} modules",
+      "start": "Start",
+      "items": {
+        "cyber-launch": {
+          "name": "Cyber Launch",
+          "tagline": "Your entry point to cybersecurity careers",
+          "description": "Digital safety, networking basics, career awareness, and certification prep. Start with free Cisco coursework and build toward ISC2 CC eligibility."
+        },
+        "build-your-own-lane": {
+          "name": "Build Your Own Lane",
+          "tagline": "Ownership, entrepreneurship, and opportunity",
+          "description": "Opportunity mapping, customer thinking, value propositions, and pitching your own venture."
+        },
+        "money-moves": {
+          "name": "Money Moves",
+          "tagline": "Budgets, banking, credit, and economic power",
+          "description": "Budgeting, banking, credit, pricing, taxes, and economic mobility framing."
+        },
+        "future-tech-lab": {
+          "name": "Future Tech Lab",
+          "tagline": "AI, data, and digital problem-solving",
+          "description": "AI literacy, digital problem-solving, basic coding and data challenges, and STEM pathway exposure."
+        },
+        "creative-media-lab": {
+          "name": "Creative Media Lab",
+          "tagline": "Tell your story. Build your platform.",
+          "description": "Digital storytelling, media production, audio/video concepts, and project-based expression."
+        }
+      },
+      "modules": {
+        "cyber-foundations": { "name": "Cyber Foundations", "description": "What is cybersecurity? Why does it matter? Who works in this field?" },
+        "digital-safety-sim": { "name": "Digital Safety Sim", "description": "Interactive simulation: spot phishing, protect passwords, secure a network." },
+        "network-basics": { "name": "Network Basics", "description": "How the internet works: packets, protocols, and pathways." },
+        "threat-detective": { "name": "Threat Detective", "description": "Analyze logs, find the breach, write an incident report." },
+        "career-map": { "name": "Cyber Career Map", "description": "Explore cybersecurity roles, salaries, and pathways." },
+        "cisco-netacad-link": { "name": "Cisco Networking Academy", "description": "Free external coursework to deepen your networking and security skills." },
+        "capstone-security-plan": { "name": "Capstone: My Security Plan", "description": "Create a security assessment for a real scenario. Present your findings." }
+      }
+    },
+    "trackDetail": {
+      "notFound": "Track not found.",
+      "backToTracks": "Back to Tracks",
+      "allTracks": "All Tracks",
+      "completedCount": "{{done}}/{{total}} completed",
+      "completedLabel": "Completed",
+      "inProgressLabel": "In Progress"
+    },
+    "modulePlayer": {
+      "notFound": "Module not found.",
+      "backToTracks": "Back to Tracks",
+      "backToTrack": "Back to {{trackName}}",
+      "moduleComplete": "Module Complete",
+      "finishedFmt": "{{moduleName}} — finished!",
+      "loading": "Loading module…",
+      "backToTrackCta": "Back to Track"
+    },
+    "profile": {
+      "learner": "Learner",
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "avgScore": "Avg Score",
+      "completedModules": "Completed Modules",
+      "scoreFmt": "• Score: {{score}}%"
+    },
+    "facilitator": {
+      "loading": "Loading your dashboard…",
+      "noGroups": "No Groups Yet",
+      "noGroupsDesc": "Create a cohort to start tracking learner progress.",
+      "yourCohort": "Your Cohort",
+      "learnersEnrolled": "{{count}} learners enrolled",
+      "joinCodeLabel": "Join code for new learners:",
+      "learnersHeading": "Learners",
+      "moduleProgress": "Module Progress",
+      "modulesCompletedFmt": "{{done}} of {{total}} modules completed",
+      "backToRoster": "Back to roster",
+      "noLearners": "No learners enrolled yet. Share the join code above.",
+      "notes": {
+        "title": "Your Notes",
+        "placeholder": "Add a private note about this learner…",
+        "disclaimer": "Notes are saved locally in this browser. Server-side persistence is on the roadmap."
+      },
+      "status": {
+        "onTrack": "On Track",
+        "needsCheckIn": "Needs Check-In",
+        "notStarted": "Not Started"
+      },
+      "module": {
+        "notStarted": "Not started",
+        "inProgress": "In progress",
+        "done": "Done",
+        "doneScoreFmt": "Done ({{score}}%)"
+      },
+      "band": {
+        "explorer": "Explorer (14–15)",
+        "launch": "Launch (16–17)"
+      },
+      "resourcesTitle": "Program overview, session guide, printables"
+    },
+    "modules": {
+      "foundations": {
+        "title": "Cyber Foundations",
+        "slides": [
+          { "title": "What is Cybersecurity?", "body": "Cybersecurity is the practice of protecting systems, networks, and data from digital attacks. Every device connected to the internet is a potential target — and defending them is a growing global priority." },
+          { "title": "Why It Matters", "body": "Data breaches cost businesses an average of $4.45 million per incident (IBM Cost of a Data Breach Report, 2023). Personal data — passwords, financial info, medical records — is constantly at risk. Critical infrastructure like power grids and hospitals depends on strong cyber defense." },
+          { "title": "Real Breaches", "body": "In 2017, a single breach exposed the personal data of 147 million people — names, Social Security numbers, birth dates. In 2020, a ransomware attack shut down a major hospital network, diverting emergency patients and delaying care for days. Real incidents like these are why every organization now treats cybersecurity as a business risk, not just an IT problem." },
+          { "title": "Who Works in Cyber?" },
+          { "title": "Many Ways In", "body": "You don't need a four-year degree to start a cyber career. People enter the field through bootcamps, free industry certifications (CompTIA Security+, ISC2 Certified in Cybersecurity), military service, IT help desk roles, and self-study with home labs. Employers care about what you can do, not just what's on your diploma." },
+          { "title": "The Opportunity", "body": "The U.S. had roughly 470,000 unfilled cybersecurity job openings as of mid-2024 (NIST CyberSeek). The U.S. Bureau of Labor Statistics projects Information Security Analyst employment to grow about 33% from 2023 to 2033 — much faster than the average for all occupations. The field rewards curiosity, problem-solving, and persistence over any single background." }
+        ],
+        "roles": [
+          { "name": "Security Analyst", "desc": "Monitors networks for threats and investigates alerts", "pay": "$75K–$110K" },
+          { "name": "Penetration Tester", "desc": "Legally hacks systems to find vulnerabilities before attackers do", "pay": "$85K–$130K" },
+          { "name": "Incident Responder", "desc": "Investigates breaches and leads the recovery effort", "pay": "$70K–$105K" },
+          { "name": "Security Engineer", "desc": "Designs and builds security architecture and tools", "pay": "$95K–$145K" },
+          { "name": "GRC Analyst", "desc": "Manages governance, risk, and compliance frameworks", "pay": "$65K–$100K" },
+          { "name": "Digital Forensics", "desc": "Recovers evidence from devices after breaches and crimes", "pay": "$75K–$120K" },
+          { "name": "Security Architect", "desc": "Designs the overall security strategy for an organization", "pay": "$120K–$180K" },
+          { "name": "CISO", "desc": "Chief Information Security Officer — leads the entire security program", "pay": "$150K–$250K" }
+        ],
+        "quiz": [
+          { "q": "What does cybersecurity protect?", "opts": ["Only passwords", "Systems, networks, and data", "Just websites", "Hardware only"] },
+          { "q": "Why is demand for cyber workers growing?", "opts": ["Companies are reducing tech budgets", "Attacks are decreasing", "Digital threats are increasing and there aren't enough defenders", "Cybersecurity is being automated away"] },
+          { "q": "Which role investigates breaches?", "opts": ["GRC Analyst", "CISO", "Incident Responder", "Penetration Tester"] }
+        ],
+        "sourcesDisclaimer": "Job-market and salary figures cited above are point-in-time references; verify against current BLS/CyberSeek data before quoting in partner materials."
+      },
+      "digitalSafety": {
+        "title": "Digital Safety Sim",
+        "phishingPrompt": "Identify the phishing email, then tap the red flags.",
+        "tapFlags": "Tap the red flags in this email:",
+        "phishingCorrect": "Correct! You spotted the phishing email.",
+        "phishingWrong": "Not quite — the first email was the phishing attempt.",
+        "phishingLabel": "PHISHING",
+        "fromLabel": "From: {{addr}}",
+        "passwordPrompt": "Rate each password as weak or strong.",
+        "ratingWeak": "weak",
+        "ratingStrong": "strong",
+        "socialPrompt": "An unknown caller says they're from IT support and need your password to fix an issue. What do you do?",
+        "socialChoices": {
+          "give": "Give them the password",
+          "hangup": "Hang up immediately",
+          "verify": "Hang up and verify through known channels"
+        },
+        "wifiPrompt": "On a public Wi-Fi network, which actions are safe?",
+        "wifiSafe": "Safe",
+        "wifiUnsafe": "Risky",
+        "breachPrompt": "Number these breach-response steps in order from FIRST to LAST.",
+        "breachLabel": "Step {{n}}"
+      },
+      "networkBasics": {
+        "title": "Network Basics",
+        "completedMsg": "Module placeholder — content coming soon. Marked as complete for demo."
+      },
+      "threatDetective": {
+        "title": "Threat Detective",
+        "completedMsg": "Module placeholder — content coming soon. Marked as complete for demo."
+      },
+      "careerMap": {
+        "title": "Cyber Career Map",
+        "completedMsg": "Module placeholder — content coming soon. Marked as complete for demo."
+      },
+      "ciscoNetacad": {
+        "title": "Cisco Networking Academy",
+        "completedMsg": "Module placeholder — content coming soon. Marked as complete for demo."
+      },
+      "capstone": {
+        "title": "Capstone: My Security Plan",
+        "completedMsg": "Module placeholder — content coming soon. Marked as complete for demo."
+      }
+    },
+    "resources": {
+      "title": "Facilitator Resources",
+      "subtitle": "Everything you need to run a strong Cyber Launch cohort.",
+      "tabs": {
+        "overview": "Program Overview",
+        "modules": "Module Guides",
+        "sessions": "Session Guide",
+        "faqs": "FAQs",
+        "worksheets": "Worksheets",
+        "tips": "Facilitation Tips"
+      },
+      "overview": {
+        "whatIsTitle": "What is Bright Boost Pathways?",
+        "whatIsBody1": "Bright Boost Pathways is a career-connected learning program for youth ages 14-17. It delivers hands-on, project-based modules across five tracks: cybersecurity, entrepreneurship, financial literacy, technology, and creative media.",
+        "whatIsBody2": "The program is designed for delivery in community settings, correctional education, workforce programs, and alternative schools — anywhere young people need real skills and real pathways forward.",
+        "bandsTitle": "Two Bands",
+        "explorerLabel": "Explorer (Ages 14-15)",
+        "explorerDesc": "Foundation skills, exposure, and discovery. Build confidence with hands-on activities.",
+        "launchLabel": "Launch (Ages 16-17)",
+        "launchDesc": "Credential prep, portfolio building, and career planning. Get ready for what comes next.",
+        "howTitle": "How It Works",
+        "howSteps": ["Enroll in cohort", "Pick tracks", "Complete modules", "Earn milestones", "Build capstone", "Next steps"],
+        "trackActiveTitle": "Cyber Launch Track (Active)",
+        "talkingPointsTitle": "Key Talking Points",
+        "talkingPoints": [
+          "Nearly 470,000 cybersecurity jobs are open in the U.S. right now (NIST CyberSeek).",
+          "You don't need a 4-year degree to start — free industry certifications like ISC2 Certified in Cybersecurity open real doors.",
+          "This program builds real skills students can put on a resume — not just enrichment.",
+          "Major employers — IBM, Apple, Amazon — have dropped degree requirements for many tech roles."
+        ],
+        "newFacilitatorTitle": "Where to Start as a New Facilitator",
+        "newFacilitatorSteps": [
+          "Read this Program Overview tab end to end.",
+          "Read the Module Guide for Module 1 (Cyber Foundations) — it sets tone for the whole program.",
+          "Read the Facilitation Tips tab, especially \"Setting Tone Day One.\"",
+          "Print the worksheets you'll need for week 1 and 2 ahead of time.",
+          "Create your own Cisco NetAcad account so you can guide students through it.",
+          "Have the partner organization's support contacts handy for referrals."
+        ]
+      },
+      "sessions": {
+        "pacingTitle": "6-Week Pacing Guide",
+        "pacingSub": "Pair each week's module with the matching worksheet for stronger outcomes.",
+        "tableHead": { "week": "Week", "focus": "Focus", "modules": "Modules + Worksheets", "notes": "Facilitation Notes", "minutes": "Min" },
+        "variationsTitle": "Pacing Variations",
+        "structureTitle": "Each Session — Suggested Structure"
+      },
+      "moduleGuides": {
+        "introTitle": "Detailed Module Guides",
+        "introSub": "One full guide per Cyber Launch module. Click a module to expand.",
+        "introBody": "Each guide includes what the module teaches, discussion questions for before and after, common sticking points and how to coach through them, real-world context, vocabulary, and red flags to watch for. Read the guide for next week's module BEFORE the session.",
+        "blocks": {
+          "whatItTeaches": "What This Module Teaches",
+          "whyItMatters": "Why It Matters",
+          "timeRequired": "Time Required",
+          "whatToExpect": "What to Expect",
+          "facilitatorRole": "Facilitator Role",
+          "facilitatorBefore": "Before they start",
+          "facilitatorDuring": "While they're working",
+          "facilitatorAfter": "After they finish",
+          "discussionBefore": "Discussion Questions — Before",
+          "discussionAfter": "Discussion Questions — After",
+          "stickingPoints": "Common Sticking Points",
+          "extensions": "Extension Activities",
+          "realWorld": "Real-World Connection",
+          "vocabulary": "Vocabulary",
+          "redFlags": "Red Flags / When to Worry"
+        }
+      },
+      "faqs": {
+        "title": "Frequently Asked Questions",
+        "sub": "Real questions from real audiences. Use the answers as starting points — make them your own.",
+        "categories": {
+          "youth": {
+            "label": "From Youth",
+            "description": "Real questions teenagers ask. Answers facilitators can use word-for-word, or adapt to their voice."
+          },
+          "parents": {
+            "label": "From Parents / Guardians",
+            "description": "Questions guardians ask before letting their teen enroll. Answer them with calm specificity."
+          },
+          "partners": {
+            "label": "From Partner Organizations",
+            "description": "Questions community partners and site leaders ask before signing on to host a cohort."
+          }
+        }
+      },
+      "worksheets": {
+        "title": "Printable Worksheets",
+        "sub": "Each opens in a new tab as a print-ready document. Facilitator notes are visible on screen but hidden in print.",
+        "body": "Worksheets are designed to pair with specific modules. The Session Guide tab shows which worksheet matches each week. Print ahead of session — students who fill them out by hand retain more than those who type.",
+        "printLabel": "Print",
+        "worksheetLabel": "Worksheet {{n}}",
+        "printTipsTitle": "Print Tips",
+        "printTips": [
+          "Worksheets open in a new tab and auto-trigger the browser print dialog.",
+          "If the print dialog doesn't open, press Ctrl/Cmd+P in the new tab.",
+          "Facilitator notes (in dashed cyan boxes) are hidden when printing.",
+          "For double-sided printing, choose \"Long edge\" binding in your printer settings.",
+          "If you want a clean PDF, choose \"Save as PDF\" instead of a physical printer."
+        ]
+      },
+      "tips": {
+        "title": "Facilitation Tips",
+        "sub": "Practical guidance for the situations that arise in real cohorts.",
+        "intro": "These tips were written by program staff with input from partner facilitators. They are starting points, not strict rules. Adapt to your cohort, your site, and your own style. Sensitive sections (trauma-informed practice, justice-impacted youth) are worth reviewing with your partner organization's clinical or program leadership before applying at scale."
+      }
+    }
+  }
+}
