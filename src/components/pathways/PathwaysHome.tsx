@@ -16,7 +16,7 @@ export default function PathwaysHome() {
 
   useEffect(() => {
     fetch("/api/pathways/student/home", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then(setHomeData)

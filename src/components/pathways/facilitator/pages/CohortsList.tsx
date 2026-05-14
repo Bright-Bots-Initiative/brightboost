@@ -33,7 +33,7 @@ export default function CohortsList() {
 
   useEffect(() => {
     fetch("/api/pathways/cohorts", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => setCohorts(Array.isArray(data) ? data : []))

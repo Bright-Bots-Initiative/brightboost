@@ -31,7 +31,7 @@ export default function Tracks() {
 
   useEffect(() => {
     fetch("/api/pathways/facilitator/tracks", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => setUsage(data || {}))

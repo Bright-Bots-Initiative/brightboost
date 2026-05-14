@@ -29,7 +29,7 @@ export default function LearnerDetail() {
   useEffect(() => {
     if (!userId) return;
     fetch(`/api/pathways/facilitator/learners/${userId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then(setData)

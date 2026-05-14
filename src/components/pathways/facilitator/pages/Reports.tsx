@@ -55,7 +55,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+    const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
     Promise.all([
       fetch("/api/pathways/facilitator/reports/weekly", { headers: auth }).then((r) => r.json()),
       fetch("/api/pathways/facilitator/reports/outcomes", { headers: auth }).then((r) => r.json()),

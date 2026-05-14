@@ -83,7 +83,7 @@ export default function CohortDetail() {
   const [tab, setTab] = useState<TabKey>("overview");
   const [loading, setLoading] = useState(true);
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   const loadCohort = useCallback(async () => {
     if (!id) return;
@@ -329,7 +329,7 @@ function RosterTab({
   const [addError, setAddError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   const addLearner = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,7 +366,7 @@ function RosterTab({
 
   const exportCsv = () => {
     window.open(
-      `/api/pathways/facilitator/cohorts/${cohort.id}/export?token=${localStorage.getItem("token") ?? ""}`,
+      `/api/pathways/facilitator/cohorts/${cohort.id}/export?token=${localStorage.getItem("bb_access_token") ?? ""}`,
       "_blank",
     );
     // Note: query-string auth is a fallback for the download attribute. For full security,
@@ -611,7 +611,7 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
   const [submitting, setSubmitting] = useState(false);
   const notes = cohort.notes ?? [];
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -687,7 +687,7 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
 function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState<string | null>(null);
-  const auth = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   const action = async (path: string, key: string, confirmMsg?: string) => {
     if (confirmMsg && !window.confirm(confirmMsg)) return;

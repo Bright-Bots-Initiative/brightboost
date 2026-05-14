@@ -95,7 +95,7 @@ export default function FacilitatorDashboard() {
     });
   };
 
-  const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
   useEffect(() => {
     fetch("/api/pathways/cohorts", { headers })
