@@ -735,6 +735,19 @@ model PathwayMilestone {
   artifacts   Json?
   createdAt   DateTime  @default(now())
 
+  // Section-level progress for the Cyber Launch 6-section flow
+  // (hook, reading, lesson, practice, homework, quiz). Modules that don't
+  // use this flow leave the fields at their defaults.
+  hookCompleted     Boolean @default(false)
+  readingCompleted  Boolean @default(false)
+  lessonCompleted   Boolean @default(false)
+  practiceCompleted Boolean @default(false)
+  homeworkSubmitted Boolean @default(false)
+  homeworkResponse  String?
+  quizCompleted     Boolean @default(false)
+  quizScore         Int?
+  timeSpentMinutes  Int     @default(0)
+
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, trackSlug, moduleSlug])

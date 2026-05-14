@@ -262,6 +262,104 @@ router.get(
   },
 );
 
+// ── Section-level progress for the 6-section Cyber Launch flow ─────────────
+
+const SECTION_KEYS = [
+  "hook",
+  "reading",
+  "lesson",
+  "practice",
+  "homework",
+  "quiz",
+] as const;
+type SectionKey = (typeof SECTION_KEYS)[number];
+
+const sectionProgressSchema = z.object({
+  trackSlug: z.string().min(1),
+  moduleSlug: z.string().min(1),
+  section: z.enum(SECTION_KEYS),
+  completed: z.boolean(),
+  timeSpentMinutes: z.number().int().min(0).max(600).optional(),
+});
+
+const SECTION_COLUMN: Record<SectionKey, string> = {
+  hook: "hookCompleted",
+  reading: "readingCompleted",
+  lesson: "lessonCompleted",
+  practice: "practiceCompleted",
+  homework: "homeworkSubmitted",
+  quiz: "quizCompleted",
+};
+
+router.patch(
+  "/pathways/student/milestones/section",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = sectionProgressSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    const { trackSlug, moduleSlug, section, completed, timeSpentMinutes } = parsed.data;
+
+    const data: Record<string, unknown> = { [SECTION_COLUMN[section]]: completed };
+    if (timeSpentMinutes && timeSpentMinutes > 0) {
+      data.timeSpentMinutes = { increment: timeSpentMinutes };
+    }
+    // Bumping any section transitions the module out of "not_started".
+    if (completed) data.status = "in_progress";
+
+    const milestone = await prisma.pathwayMilestone.upsert({
+      where: {
+        userId_trackSlug_moduleSlug: { userId: req.user!.id, trackSlug, moduleSlug },
+      },
+      create: {
+        userId: req.user!.id,
+        trackSlug,
+        moduleSlug,
+        status: completed ? "in_progress" : "not_started",
+        [SECTION_COLUMN[section]]: completed,
+        timeSpentMinutes: timeSpentMinutes ?? 0,
+      },
+      update: data,
+    });
+    res.json(milestone);
+  },
+);
+
+const homeworkSchema = z.object({
+  trackSlug: z.string().min(1),
+  moduleSlug: z.string().min(1),
+  response: z.string().min(1).max(5000),
+});
+
+router.post(
+  "/pathways/student/milestones/homework",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = homeworkSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    const { trackSlug, moduleSlug, response } = parsed.data;
+
+    const milestone = await prisma.pathwayMilestone.upsert({
+      where: {
+        userId_trackSlug_moduleSlug: { userId: req.user!.id, trackSlug, moduleSlug },
+      },
+      create: {
+        userId: req.user!.id,
+        trackSlug,
+        moduleSlug,
+        status: "in_progress",
+        homeworkSubmitted: true,
+        homeworkResponse: response,
+      },
+      update: {
+        homeworkSubmitted: true,
+        homeworkResponse: response,
+        status: "in_progress",
+      },
+    });
+    res.json(milestone);
+  },
+);
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Facilitator: cohort lifecycle and operations
 // ═══════════════════════════════════════════════════════════════════════════
