@@ -28,20 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Card, { CardBody, CardHeader, StatTile } from "../shared/Card";
-import { StatusPill } from "../FacilitatorLayout";
-
-interface Cohort {
-  id: string;
-  name: string;
-  status: string;
-  sitePartner: string | null;
-  joinCode: string;
-  startDate: string | null;
-  endDate: string | null;
-  maxEnrollment: number | null;
-  trackIds: string[];
-  _count?: { enrollments: number };
-}
+import { StatusPill, useFacilitatorOutlet } from "../FacilitatorLayout";
 
 interface WeeklyReport {
   modulesCompleted: number;
@@ -62,40 +49,31 @@ interface WeeklyReport {
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  // Cohorts come from FacilitatorLayout's Outlet context — fetched once per
+  // session, so navigating back to the dashboard from another sidebar page
+  // doesn't re-hit /api/pathways/cohorts.
+  const { cohorts, cohortsLoaded } = useFacilitatorOutlet();
   const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [weeklyLoaded, setWeeklyLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
-
   useEffect(() => {
-    // Hard 10s ceiling per request so a hung backend or missing migration
-    // surfaces as an error UI instead of an indefinite "Loading…" state.
+    // Hard 10s ceiling so a hung backend surfaces as an error UI instead
+    // of an indefinite "Loading…" state.
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 10000);
+    const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
 
-    const safeFetch = async (url: string) => {
-      const r = await fetch(url, { headers, signal: ac.signal });
-      const body = await r.json().catch(() => null);
-      if (!r.ok) {
-        throw new Error(
-          (body && (body.error || body.message)) || `${r.status} ${r.statusText}`,
-        );
-      }
-      return body;
-    };
-
-    Promise.all([
-      safeFetch("/api/pathways/cohorts"),
-      safeFetch("/api/pathways/facilitator/reports/weekly"),
-    ])
-      .then(([c, w]) => {
-        setCohorts(Array.isArray(c) ? c : []);
-        // Guard against error responses being passed in as `weekly`. The view
-        // dereferences `weekly.inactiveLearners` / `weekly.recentActivity`, so
-        // we only accept payloads that actually look like a WeeklyReport.
+    fetch("/api/pathways/facilitator/reports/weekly", { headers, signal: ac.signal })
+      .then(async (r) => {
+        const body = await r.json().catch(() => null);
+        if (!r.ok) {
+          throw new Error((body && (body.error || body.message)) || `${r.status} ${r.statusText}`);
+        }
+        return body;
+      })
+      .then((w) => {
         if (w && typeof w === "object" && Array.isArray(w.inactiveLearners) && Array.isArray(w.recentActivity)) {
           setWeekly(w as WeeklyReport);
         } else {
@@ -104,21 +82,21 @@ export default function Dashboard() {
         setLoadError(null);
       })
       .catch((err) => {
-        const msg = err?.name === "AbortError" ? "timeout" : err?.message || "fetch failed";
-        setLoadError(msg);
+        if (err?.name === "AbortError") setLoadError("timeout");
+        else setLoadError(err?.message || "fetch failed");
       })
       .finally(() => {
         clearTimeout(timeout);
-        setLoading(false);
+        setWeeklyLoaded(true);
       });
 
     return () => {
       clearTimeout(timeout);
       ac.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loading = !cohortsLoaded || !weeklyLoaded;
   const activeCohorts = cohorts.filter((c) => c.status === "active");
 
   const copyCode = (code: string) => {
@@ -138,7 +116,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-600 dark:text-slate-400">{t("pathways.common.loading")}</div>;
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -427,6 +405,29 @@ export default function Dashboard() {
           </Card>
         </section>
       )}
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      <div>
+        <div className="h-6 w-48 mb-3 rounded bg-slate-200 dark:bg-slate-800" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-44" />
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="h-6 w-40 mb-3 rounded bg-slate-200 dark:bg-slate-800" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-24" />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -13,8 +13,8 @@
  * sign-out — reading the same `bb_pathways_theme` localStorage key as
  * PathwaysLayout so a facilitator's preference is shared across both sides.
  */
-import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { NavLink, Outlet, useNavigate, useOutletContext } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -45,10 +45,38 @@ function readStoredTheme(): "dark" | "light" {
   }
 }
 
-interface CohortOption {
+export interface FacilitatorCohort {
   id: string;
   name: string;
+  band: string;
+  sitePartner: string | null;
   status: string;
+  joinCode: string;
+  startDate: string | null;
+  endDate: string | null;
+  maxEnrollment: number | null;
+  trackIds: string[];
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { enrollments: number };
+}
+
+/**
+ * Shared facilitator data exposed via Outlet context. Pages should read
+ * cohorts from here instead of hitting `/api/pathways/cohorts` directly so
+ * navigating between sidebar items doesn't refetch on every click.
+ */
+export interface FacilitatorOutletContext {
+  activeCohortId: string | null;
+  setActiveCohortId: (id: string) => void;
+  cohorts: FacilitatorCohort[];
+  cohortsLoaded: boolean;
+  refreshCohorts: () => void;
+}
+
+export function useFacilitatorOutlet(): FacilitatorOutletContext {
+  return useOutletContext<FacilitatorOutletContext>();
 }
 
 export default function FacilitatorLayout() {
@@ -57,7 +85,8 @@ export default function FacilitatorLayout() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<"dark" | "light">(() => readStoredTheme());
   const isDark = theme === "dark";
-  const [cohorts, setCohorts] = useState<CohortOption[]>([]);
+  const [cohorts, setCohorts] = useState<FacilitatorCohort[]>([]);
+  const [cohortsLoaded, setCohortsLoaded] = useState(false);
   const [activeCohortId, setActiveCohortId] = useState<string | null>(() => {
     try {
       return localStorage.getItem(ACTIVE_COHORT_KEY);
@@ -80,25 +109,28 @@ export default function FacilitatorLayout() {
     navigate("/");
   };
 
-  useEffect(() => {
+  const refreshCohorts = useCallback(() => {
     fetch("/api/pathways/cohorts", {
       headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
     })
       .then((r) => r.json())
       .then((data) => {
-        const arr: CohortOption[] = Array.isArray(data)
-          ? data.map((c: { id: string; name: string; status: string }) => ({ id: c.id, name: c.name, status: c.status }))
-          : [];
+        const arr: FacilitatorCohort[] = Array.isArray(data) ? data : [];
         setCohorts(arr);
-        if (!activeCohortId && arr.length > 0) {
-          // Default to the first active cohort
+        setActiveCohortId((current) => {
+          if (current && arr.some((c) => c.id === current)) return current;
+          if (arr.length === 0) return null;
           const firstActive = arr.find((c) => c.status === "active") ?? arr[0];
-          setActiveCohortId(firstActive.id);
-        }
+          return firstActive.id;
+        });
       })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      .catch(() => {})
+      .finally(() => setCohortsLoaded(true));
   }, []);
+
+  useEffect(() => {
+    refreshCohorts();
+  }, [refreshCohorts]);
 
   useEffect(() => {
     try {
@@ -219,14 +251,17 @@ export default function FacilitatorLayout() {
 
         {/* Page content */}
         <div className="flex-1 min-w-0">
-          <Outlet context={{ activeCohortId, cohorts, refreshCohorts: () => {
-            fetch("/api/pathways/cohorts", {
-              headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
-            })
-              .then((r) => r.json())
-              .then((data) => Array.isArray(data) && setCohorts(data.map((c: { id: string; name: string; status: string }) => ({ id: c.id, name: c.name, status: c.status }))))
-              .catch(() => {});
-          } }} />
+          <Outlet
+            context={
+              {
+                activeCohortId,
+                setActiveCohortId,
+                cohorts,
+                cohortsLoaded,
+                refreshCohorts,
+              } satisfies FacilitatorOutletContext
+            }
+          />
         </div>
       </div>
         </div>
