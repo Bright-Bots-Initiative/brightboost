@@ -45,7 +45,7 @@ export default function PathwaysProfile() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatBlock
           icon={<CheckCircle2 className="w-5 h-5" />}
           iconColor="text-emerald-600 dark:text-emerald-400"
@@ -112,10 +112,10 @@ function StatBlock({
   label: string;
 }) {
   return (
-    <div className="p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 text-center shadow-sm">
+    <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 text-center shadow-sm">
       <div className={`flex justify-center mb-1 ${iconColor}`}>{icon}</div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{label}</p>
+      <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-tight">{label}</p>
     </div>
   );
 }

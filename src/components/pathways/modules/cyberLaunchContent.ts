@@ -30,11 +30,24 @@ export interface ReadingSection {
   paragraphs: string[];
   callout?: string;
   keyTerms?: Array<{ term: string; definition: string }>;
+  /**
+   * GRC Lens callout — a visually distinct amber block that surfaces the
+   * Governance/Risk/Compliance angle on the surrounding material. Appears
+   * after the paragraphs of the section it belongs to.
+   */
+  grcLens?: { title?: string; body: string };
 }
 
 export interface LessonScene {
   title: string;
   body: string;
+  /**
+   * Career Map roles flag this when the path into the role doesn't require
+   * a CS degree — paralegal, audit, business, communications backgrounds
+   * are common entry points. Surfaces as a small "Accessible Entry Path"
+   * chip next to the scene title.
+   */
+  accessibleEntry?: boolean;
   choice?: {
     prompt: string;
     options: Array<{ label: string; feedback: string }>;
@@ -116,6 +129,9 @@ const CYBER_FOUNDATIONS: ModuleContent = {
           { term: "CIA triad", definition: "Confidentiality, Integrity, Availability — the three classic goals of information security." },
           { term: "Authentication", definition: "Verifying that a person or system is who they claim to be." },
         ],
+        grcLens: {
+          body: "Every CIA Triad decision is a **GRC** decision. Companies don't just want security — they need to **prove it** to auditors, regulators, and their boards. That proof is what GRC (Governance, Risk, and Compliance) people produce.",
+        },
       },
       {
         heading: "Why the field is growing fast",
@@ -137,6 +153,9 @@ const CYBER_FOUNDATIONS: ModuleContent = {
           { term: "GRC", definition: "Governance, Risk, and Compliance — the policy, audit, and risk-management side of security." },
           { term: "Pen test", definition: "Penetration test — authorized attempt to break into a system to find weaknesses." },
         ],
+        grcLens: {
+          body: "**GRC roles are some of the most accessible entry points into cyber.** Many GRC professionals come from legal, business, or audit backgrounds — not computer science. GRC analyst median salary in the U.S. typically falls in the **$85K–$110K** range, comparable to technical roles.",
+        },
       },
       {
         heading: "The threats you'll hear about most",
@@ -343,6 +362,9 @@ const DIGITAL_SAFETY: ModuleContent = {
           "**Credential stuffing** is when an attacker takes a list of passwords leaked from one site and tries them on every other site. It works because most people reuse passwords. If your email/password combination has ever appeared in a breach, someone has tried it on a hundred other services.",
           "**MFA fatigue** is newer. An attacker who already has your password spams login attempts at 2 AM. The push notification keeps buzzing. Eventually, half-asleep, you tap Approve. They're in.",
         ],
+        grcLens: {
+          body: "Most companies are **legally required** to train employees on phishing. Compliance frameworks like **SOC 2**, **ISO 27001**, and the **HIPAA Security Rule** mandate annual security-awareness training. GRC analysts plan those trainings, document the rosters, and verify completion when an auditor asks.",
+        },
       },
       {
         heading: "Your defense layers",
@@ -354,6 +376,9 @@ const DIGITAL_SAFETY: ModuleContent = {
           "**Verify out-of-band.** If your bank texts you, don't tap the link. Open the bank's app or type the URL yourself. If your boss emails you urgently, message them on a separate channel before you act.",
         ],
         callout: "Length beats complexity. Uniqueness beats both. A password manager makes both possible.",
+        grcLens: {
+          body: "**NIST SP 800-63B** is the federal guideline for password rules. It's why your bank stopped forcing you to change your password every 90 days — research showed forced rotation made security **worse**, not better, because people picked weaker passwords. GRC people read these guidelines so companies don't have to guess.",
+        },
       },
       {
         heading: "When you slip up anyway",
@@ -570,6 +595,19 @@ const NETWORK_BASICS: ModuleContent = {
           "**VPNs** (Virtual Private Networks) create an encrypted tunnel between two endpoints. When you connect to your school's VPN, your laptop acts as if it were physically inside the school's network, even if you're at home. VPNs are how remote workers get safe access to internal systems.",
           "**IDS** (Intrusion Detection Systems) watch network traffic and raise alerts when something looks suspicious. **IPS** (Intrusion Prevention Systems) do the same thing but also block the traffic automatically. SOC analysts spend a lot of time reviewing IDS alerts.",
         ],
+        grcLens: {
+          body: "Firewall rules aren't just security best practice — they're often **legal requirements**. **PCI-DSS**, the standard for any business that handles credit cards, mandates specific firewall configurations. GRC teams audit those configs and produce the evidence regulators ask for.",
+        },
+      },
+      {
+        heading: "Logging — and how long to keep it",
+        paragraphs: [
+          "Every device on the network can produce logs — records of who connected, from where, when, and what they did. Most networks generate far more log data than any human could read in real time, which is why SIEM tools exist to collect and search across all of it.",
+          "But there's a second reason logs matter: **regulations require them**. If your company handles health data, payment data, or financial records, you don't get to choose whether to keep logs. You don't even get to choose how long.",
+        ],
+        grcLens: {
+          body: "Most regulations require logs to be **retained for years**. **HIPAA: 6 years.** **SOX: 7 years.** **PCI-DSS: 1 year minimum, with 3 months immediately accessible.** GRC people figure out what to log, where to store it, and how to prove the retention policy actually held when an auditor asks.",
+        },
       },
     ],
     citations: [
@@ -802,6 +840,9 @@ const THREAT_DETECTIVE: ModuleContent = {
           "**Post-Incident Activity** — writing the after-action report, updating playbooks, fixing the root cause so the same thing doesn't happen again.",
           "Most of an analyst's day is in the first two phases. The third is where adrenaline runs high. The fourth is where the real learning happens.",
         ],
+        grcLens: {
+          body: "Every breach triggers **compliance obligations**. Most U.S. states have breach-notification laws with hard deadlines — usually 30 to 60 days, sometimes as little as **72 hours** (GDPR in the EU; some state laws for specific data types). GRC people own those notification workflows and the legal-language drafting that goes with them. When the FBI shows up after a breach, they talk to **GRC and legal first** — because that's where the documentation lives.",
+        },
       },
     ],
     citations: [
@@ -1028,6 +1069,9 @@ const CAREER_MAP: ModuleContent = {
           "Salary ranges in the U.S. for entry-level cyber roles commonly fall in the $60,000–$80,000 band, with significant variation by city and specialization. Mid-level (two to five years of experience) commonly reaches $90,000–$130,000.",
         ],
         callout: "The experience paradox is real — but home labs, internships, and IT roles are how people get past it.",
+        grcLens: {
+          body: "Most cybersecurity job postings require some technical experience. But **GRC is the exception**. It's the most accessible entry point in the industry — paralegal, audit, business-analyst, and communications backgrounds all transfer in. **GRC pays as well as technical roles**, and the field is less crowded than 'SOC analyst' applicant pools.",
+        },
       },
       {
         heading: "Certifications that actually open doors",
@@ -1094,13 +1138,53 @@ const CAREER_MAP: ModuleContent = {
       },
       {
         title: "GRC Analyst",
-        body: "Day: read regulations, translate them into company policies, audit whether controls actually exist, advise leadership on risk. Salary band: ~$60K–$95K entry. Paths in: writing/communications backgrounds, paralegal experience, audit, ISC2 CC + a GRC-leaning track like ISACA's CSX.",
+        accessibleEntry: true,
+        body: "Day: read regulations, translate them into company policies, audit whether controls actually exist, advise leadership on risk. Salary band: ~$75K–$95K entry, $95K–$130K with experience. Paths in: writing/communications backgrounds, paralegal experience, audit, ISC2 CC + a GRC-leaning track like ISACA's CSX. **You do not need a CS degree.**",
         choice: {
           prompt: "Does this fit you?",
           options: [
             { label: "Yes — I'm a strong writer and I like translating tech", feedback: "Strong signal. GRC pays well and is less crowded than SOC-aspirant roles." },
             { label: "Maybe — I want to know how technical it is", feedback: "GRC is less hands-on-keyboard than SOC, but you still need to understand the controls you're auditing. Some technical depth is expected." },
             { label: "No — I want to be on the technical side", feedback: "Fair. Security engineering might be a better fit." },
+          ],
+        },
+      },
+      {
+        title: "Compliance Officer",
+        accessibleEntry: true,
+        body: "Day: own regulatory adherence — HIPAA, SOX, PCI-DSS, GDPR. Liaise with auditors, regulators, and legal counsel. Build the evidence binders that prove the company is doing what it claims. Salary band: ~$90K–$115K entry, $115K–$150K with experience. Paths in: law degree, MBA, internal-audit background; CISA, CISSP, or CRISC certifications.",
+        choice: {
+          prompt: "Does this fit you?",
+          options: [
+            { label: "Yes — I'm policy-minded and detail-oriented", feedback: "Strong signal. Compliance Officer is one of the higher-paid entry points and demand keeps growing as regulations expand." },
+            { label: "Maybe — I'd want to know how legal-heavy it is", feedback: "Fair concern. Some compliance work is very close to legal practice; some is more operational. Varies by company size and industry." },
+            { label: "No — I don't want to read regulations all day", feedback: "Useful self-knowledge. SOC or security engineering will feel more dynamic." },
+          ],
+        },
+      },
+      {
+        title: "IT Auditor",
+        accessibleEntry: true,
+        body: "Day: test security controls. Review logs, change-management processes, and access lists. Write audit reports that get read by leadership and regulators. Salary band: ~$75K–$100K entry, $100K–$135K with experience. Paths in: accounting, IT, or business degree; CPA, CISA, or CIA certifications.",
+        choice: {
+          prompt: "Does this fit you?",
+          options: [
+            { label: "Yes — I'm analytical and I enjoy investigation", feedback: "Strong signal. IT Audit is a path that values methodical thinkers. The CISA is the dominant credential — start there." },
+            { label: "Maybe — I want to know how varied the work is", feedback: "Auditors typically rotate across departments and topics, so variety is real. But the work cadence is project-based with deadlines around close-of-year." },
+            { label: "No — I don't want to write a lot of reports", feedback: "Fair. Audit is heavy on documentation. Look at SOC or DFIR instead." },
+          ],
+        },
+      },
+      {
+        title: "Risk Analyst",
+        accessibleEntry: true,
+        body: "Day: quantify organizational risk. Build risk matrices (likelihood × impact). Recommend which controls are worth the cost and which aren't. Brief executives. Salary band: ~$80K–$105K entry, $105K–$140K with experience. Paths in: math, finance, business, or IT background; CRISC or CISM certifications.",
+        choice: {
+          prompt: "Does this fit you?",
+          options: [
+            { label: "Yes — I'm comfortable with numbers and big-picture thinking", feedback: "Strong signal. Risk analysis blends technical understanding with decision support — a valuable mix." },
+            { label: "Maybe — I'm not sure how math-heavy it is", feedback: "Varies. Some risk work is qualitative (high/medium/low matrices). Some is quantitative (FAIR methodology, monetary loss estimates). Both exist." },
+            { label: "No — I want to be hands-on with systems", feedback: "Fair. Security engineering or SOC will give you more keyboard time." },
           ],
         },
       },
@@ -1239,6 +1323,9 @@ const NETACAD_BRIDGE: ModuleContent = {
           "There is no cost. There is no admissions process. You sign up, pick a course, and start learning at your own pace.",
         ],
         callout: "Free, self-paced, industry-recognized. Almost no other career path offers this combination.",
+        grcLens: {
+          body: "Cisco NetAcad teaches the **technical** foundations. For **GRC** roles — auditor, compliance, risk — also explore **ISACA's** free resources at isaca.org. ISACA owns the **CISA** (Certified Information Systems Auditor) certification and publishes entry-level material aimed at non-CS backgrounds. Pair NetAcad with ISACA's free CSX intro and you have the foundations for either path.",
+        },
       },
       {
         heading: "Recommended starting sequence",
@@ -1264,6 +1351,7 @@ const NETACAD_BRIDGE: ModuleContent = {
       "Cisco Networking Academy — https://www.netacad.com/",
       "Cisco CCST Cybersecurity — https://www.cisco.com/site/us/en/learn/training-certifications/certifications/cybersecurity/ccst-cybersecurity/index.html",
       "Cisco Packet Tracer — https://www.netacad.com/courses/packet-tracer",
+      "ISACA — https://www.isaca.org/",
     ],
   },
   lesson: {
@@ -1451,11 +1539,27 @@ const CYBER_CAPSTONE: ModuleContent = {
         ],
         callout: "Three changes the owner will actually make beats fifteen that look good in a report.",
       },
+      {
+        heading: "Compliance Considerations",
+        paragraphs: [
+          "Even tiny businesses have compliance obligations the owner may not know about. A barbershop that takes credit cards is subject to **PCI-DSS** — the standard for handling card data — even if they've never heard of it. A nonprofit that collects donor health information may touch **HIPAA**. A business with customers in California is subject to **CCPA**. A business with EU customers is subject to **GDPR**. A school program touches **FERPA**.",
+          "A good consultant doesn't lecture the owner on regulations they didn't sign up to understand. The consultant **finds out which ones apply**, names them in plain language, and folds them into the recommendations.",
+          "Your plan should answer three compliance questions, briefly:",
+          "**1. What laws or regulations apply to this business?** A short list — usually one to three. PCI-DSS is almost universal if they take cards. State-level breach notification almost always applies. Industry-specific ones (HIPAA, FERPA, GLBA) only if they touch that data.",
+          "**2. What records would they need to keep, and for how long?** This shapes recommendations. If logs need to be retained for years, you can't just say 'turn on logging.' You have to say where the logs go and how long they stay.",
+          "**3. What would they tell affected people if a breach happened tomorrow?** State breach-notification laws set deadlines (usually 30–60 days). The plan should at least name who would draft that notice and through what channel.",
+        ],
+        grcLens: {
+          body: "This is the **GRC half** of your security plan. Even at small business scale, the questions an auditor or regulator would ask shape what 'good' looks like. Folding compliance into the plan — instead of treating it as a separate document — is what real consultants do.",
+        },
+      },
     ],
     citations: [
       "CISA Cyber Essentials for Small Business — https://www.cisa.gov/cyber-essentials",
       "FCC Small Biz Cyber Planner — https://www.fcc.gov/cyberplanner",
       "NIST Small Business Cybersecurity Corner — https://www.nist.gov/itl/smallbusinesscyber",
+      "PCI Security Standards Council — https://www.pcisecuritystandards.org/",
+      "FTC Data Breach Response Guide — https://www.ftc.gov/business-guidance/resources/data-breach-response-guide-business",
     ],
   },
   lesson: {
@@ -1564,6 +1668,7 @@ const CYBER_CAPSTONE: ModuleContent = {
     prompt: "This is both your capstone submission and your real-world homework. Submit the executive summary of your security plan here. As a bonus, find a real small business in your community (with the owner's permission), have a 15-minute conversation about how they handle data, and add 3 observations to your submission.",
     instructions: [
       "Paste your one-page executive summary: 3 bullets of business context, 3 numbered recommendations with action + cost + effort, 'this week' action list.",
+      "Add a short 'Compliance Considerations' section: which laws or regulations apply (e.g., PCI-DSS if they take cards), what records they'd need to keep and for how long, and what they'd tell affected people if a breach happened tomorrow.",
       "(Optional bonus) Find a small business owner you know. Ask them 3 questions: How do they take payments? Where do they store customer info? What would worry them about a data leak?",
       "Add 3 observations from that conversation if you did it.",
     ],

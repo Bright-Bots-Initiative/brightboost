@@ -81,27 +81,27 @@ export default function PathwaysAbout() {
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-cyan-50 dark:from-indigo-900/50 dark:to-cyan-900/30" />
-        <div className="relative max-w-5xl mx-auto px-6 py-20 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-indigo-700 dark:text-indigo-300 font-medium mb-4">
+        <div className="relative max-w-5xl mx-auto px-5 sm:px-6 pt-20 sm:pt-20 pb-14 sm:pb-20 text-center">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-indigo-700 dark:text-indigo-300 font-medium mb-4">
             {t("pathways.about.hero.eyebrow")}
           </p>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-indigo-600 to-cyan-600 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">
               {t("pathways.layout.brand")}
             </span>
           </h1>
-          <p className="text-xl text-slate-800 dark:text-slate-300 max-w-2xl mx-auto mb-2">
+          <p className="text-lg sm:text-xl text-slate-800 dark:text-slate-300 max-w-2xl mx-auto mb-3">
             {t("pathways.about.hero.tagline")}
           </p>
-          <p className="text-slate-700 dark:text-slate-400 max-w-xl mx-auto mb-2">
+          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400 max-w-xl mx-auto mb-2">
             {t("pathways.about.hero.sub1")}
           </p>
-          <p className="text-slate-700 dark:text-slate-400 max-w-xl mx-auto mb-6">
+          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-400 max-w-xl mx-auto mb-6">
             {t("pathways.about.hero.sub2")}
           </p>
           <Link
             to="/student-login"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-medium rounded-lg transition-all"
           >
             {t("pathways.common.logInOrJoin")} <ArrowRight className="w-4 h-4" />
           </Link>
@@ -109,15 +109,15 @@ export default function PathwaysAbout() {
       </div>
 
       {/* Tracks */}
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <h2 className="text-2xl font-bold text-center mb-2 text-slate-900 dark:text-slate-100">
+      <div className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-slate-900 dark:text-slate-100">
           {t("pathways.about.tracksSection.title")}
         </h2>
-        <p className="text-sm text-slate-700 dark:text-slate-400 text-center mb-10">
+        <p className="text-sm text-slate-700 dark:text-slate-400 text-center mb-8 sm:mb-10">
           {t("pathways.about.tracksSection.sub")}
         </p>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PATHWAY_TRACKS.map((track) => {
             const name = t(`pathways.tracks.items.${track.slug}.name`, track.name);
             const tagline = t(`pathways.tracks.items.${track.slug}.tagline`, track.tagline);
@@ -152,7 +152,7 @@ export default function PathwaysAbout() {
 
       {/* Bands */}
       <div className="bg-slate-50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-5xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-8">
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-16 grid md:grid-cols-2 gap-4 sm:gap-8">
           <div className="p-6 rounded-xl border border-indigo-200 bg-indigo-50 dark:border-indigo-800/30 dark:bg-indigo-900/10">
             <h3 className="font-bold text-lg text-indigo-700 dark:text-indigo-300 mb-2">
               {t("pathways.about.bands.explorerTitle")}
@@ -173,7 +173,7 @@ export default function PathwaysAbout() {
       </div>
 
       {/* What Outcomes Look Like */}
-      <div className="max-w-5xl mx-auto px-6 py-16">
+      <div className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
         <h2 className="text-2xl font-bold text-center mb-2 text-slate-900 dark:text-slate-100">
           {t("pathways.about.outcomes.title")}
         </h2>
@@ -202,7 +202,7 @@ export default function PathwaysAbout() {
 
       {/* Delivery Models */}
       <div className="bg-slate-50 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-5xl mx-auto px-6 py-16">
+        <div className="max-w-5xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
           <h2 className="text-2xl font-bold text-center mb-2 text-slate-900 dark:text-slate-100">
             {t("pathways.about.delivery.title")}
           </h2>
@@ -272,7 +272,7 @@ export default function PathwaysAbout() {
         <div className="text-center mt-12">
           <a
             href="mailto:nwalker@brightbotsint.com?subject=Pathways%20Pilot%20Interest"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-8 py-3 min-h-[44px] bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-medium rounded-lg transition-all"
           >
             {t("pathways.common.requestPilot")} <ArrowRight className="w-4 h-4" />
           </a>

@@ -123,26 +123,26 @@ export default function PathwaysHome() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-600 p-8">
-        <div className="relative z-10">
-          <p className="text-sm text-indigo-200 font-medium uppercase tracking-wider mb-2">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-600 p-5 sm:p-8">
+        <div className="relative z-10 pr-16 sm:pr-0">
+          <p className="text-xs sm:text-sm text-indigo-200 font-medium uppercase tracking-wider mb-2">
             {band === "launch"
               ? t("pathways.home.launchEyebrow")
               : t("pathways.home.explorerEyebrow")}
           </p>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             {band === "launch"
               ? t("pathways.home.launchTitle")
               : t("pathways.home.explorerTitle")}
           </h1>
           {cohort && (
-            <p className="text-indigo-100 text-sm">
+            <p className="text-indigo-100 text-xs sm:text-sm">
               {cohort.cohortName}
               {cohort.sitePartner && ` • ${cohort.sitePartner}`}
             </p>
           )}
         </div>
-        <div className="absolute top-0 right-0 w-48 h-48 opacity-10">
+        <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 opacity-10">
           <Shield className="w-full h-full" />
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function PathwaysHome() {
       <NextTaskCard task={nextTask} />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label={t("pathways.home.stats.completed")} value={completed} />
         <StatCard label={t("pathways.home.stats.inProgress")} value={inProgress} />
         <StatCard label={t("pathways.home.stats.streak")} value={homeData?.user?.streak ?? 0} />
@@ -252,9 +252,9 @@ export default function PathwaysHome() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 text-center shadow-sm">
-      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{label}</p>
+    <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 text-center shadow-sm">
+      <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-tight">{label}</p>
     </div>
   );
 }

@@ -411,51 +411,97 @@ function RosterTab({
           </div>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              <tr>
-                <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.name")}</th>
-                <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.completed")}</th>
-                <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.lastActive")}</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-              {cohort.enrollments.map((e) => {
-                const lp = progress?.learners.find((l) => l.id === e.user.id);
-                return (
-                  <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="px-5 py-3">
-                      <Link
-                        to={`/pathways/facilitator/learners/${e.user.id}`}
-                        className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
-                      >
-                        {e.user.name ?? e.user.email}
-                      </Link>
-                      <p className="text-xs text-slate-600 dark:text-slate-500">{e.user.email}</p>
-                    </td>
-                    <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
-                      {lp?.completedCount ?? 0}<span className="text-slate-500">/7</span>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-slate-600 dark:text-slate-500">
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {cohort.enrollments.map((e) => {
+              const lp = progress?.learners.find((l) => l.id === e.user.id);
+              return (
+                <div
+                  key={e.id}
+                  className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      to={`/pathways/facilitator/learners/${e.user.id}`}
+                      className="font-semibold text-slate-900 dark:text-slate-100 truncate flex-1 min-w-0"
+                    >
+                      {e.user.name ?? e.user.email}
+                    </Link>
+                    <button
+                      onClick={() => removeLearner(e.user.id, e.user.name)}
+                      aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
+                      className="shrink-0 p-2 -m-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-slate-500 hover:text-red-700 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {e.user.name && e.user.email && (
+                    <p className="text-xs text-slate-600 dark:text-slate-500 truncate">{e.user.email}</p>
+                  )}
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-slate-700 dark:text-slate-300">
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">
+                        {lp?.completedCount ?? 0}
+                      </span>
+                      <span className="text-slate-500">/7 modules</span>
+                    </span>
+                    <span className="text-slate-600 dark:text-slate-500">
                       {lp?.lastActive ? new Date(lp.lastActive).toLocaleDateString() : "—"}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => removeLearner(e.user.id, e.user.name)}
-                        aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
-                        className="p-1.5 rounded text-slate-500 hover:text-red-700 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                <tr>
+                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.name")}</th>
+                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.completed")}</th>
+                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.lastActive")}</th>
+                  <th className="px-5 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
+                {cohort.enrollments.map((e) => {
+                  const lp = progress?.learners.find((l) => l.id === e.user.id);
+                  return (
+                    <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="px-5 py-3">
+                        <Link
+                          to={`/pathways/facilitator/learners/${e.user.id}`}
+                          className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
+                        >
+                          {e.user.name ?? e.user.email}
+                        </Link>
+                        <p className="text-xs text-slate-600 dark:text-slate-500">{e.user.email}</p>
+                      </td>
+                      <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
+                        {lp?.completedCount ?? 0}<span className="text-slate-500">/7</span>
+                      </td>
+                      <td className="px-5 py-3 text-xs text-slate-600 dark:text-slate-500">
+                        {lp?.lastActive ? new Date(lp.lastActive).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => removeLearner(e.user.id, e.user.name)}
+                          aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
+                          className="p-1.5 rounded text-slate-500 hover:text-red-700 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+        </>
       )}
     </div>
   );
@@ -477,65 +523,114 @@ function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProg
   const { t } = useTranslation();
   const enrolled = cohort.enrollments.length;
 
+  const rows = CYBER_MODULE_SLUGS.map((slug, i) => {
+    let completed = 0;
+    let inProgress = 0;
+    let scoreSum = 0;
+    let scoreCount = 0;
+    for (const l of progress?.learners ?? []) {
+      const m = l.milestones.find((ms) => ms.moduleSlug === slug);
+      if (m?.status === "completed") {
+        completed++;
+        if (m.score !== null) {
+          scoreSum += m.score;
+          scoreCount++;
+        }
+      } else if (m?.status === "in_progress") {
+        inProgress++;
+      }
+    }
+    const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : null;
+    const completionPct = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
+    return { slug, i, completed, inProgress, avgScore, completionPct };
+  });
+
   return (
-    <Card className="overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
-          <tr>
-            <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.module")}</th>
-            <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.completed")}</th>
-            <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.inProgress")}</th>
-            <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.avgScore")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-          {CYBER_MODULE_SLUGS.map((slug, i) => {
-            let completed = 0;
-            let inProgress = 0;
-            let scoreSum = 0;
-            let scoreCount = 0;
-            for (const l of progress?.learners ?? []) {
-              const m = l.milestones.find((ms) => ms.moduleSlug === slug);
-              if (m?.status === "completed") {
-                completed++;
-                if (m.score !== null) {
-                  scoreSum += m.score;
-                  scoreCount++;
-                }
-              } else if (m?.status === "in_progress") {
-                inProgress++;
-              }
-            }
-            const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : null;
-            const completionPct = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
-            return (
-              <tr key={slug}>
+    <>
+      {/* Mobile: card list */}
+      <div className="md:hidden space-y-2">
+        {rows.map((r) => (
+          <div
+            key={r.slug}
+            className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className="w-6 h-6 shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                {r.i + 1}
+              </span>
+              <span className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                {t(`pathways.tracks.modules.${r.slug}.name`, r.slug)}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                  {t("pathways.facilitator.detail.modules.col.completed")}
+                </p>
+                <p className="text-slate-900 dark:text-slate-100 font-semibold">
+                  {r.completed}/{enrolled}
+                  <span className="text-slate-500 font-normal"> ({r.completionPct}%)</span>
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                  {t("pathways.facilitator.detail.modules.col.inProgress")}
+                </p>
+                <p className="text-slate-700 dark:text-slate-300">{r.inProgress}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                  {t("pathways.facilitator.detail.modules.col.avgScore")}
+                </p>
+                <p className="text-slate-700 dark:text-slate-300">
+                  {r.avgScore !== null ? `${r.avgScore}%` : "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <Card className="hidden md:block overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <tr>
+              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.module")}</th>
+              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.completed")}</th>
+              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.inProgress")}</th>
+              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.avgScore")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
+            {rows.map((r) => (
+              <tr key={r.slug}>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-center">
-                      {i + 1}
+                      {r.i + 1}
                     </span>
                     <span className="font-medium text-slate-900 dark:text-slate-100">
-                      {t(`pathways.tracks.modules.${slug}.name`, slug)}
+                      {t(`pathways.tracks.modules.${r.slug}.name`, r.slug)}
                     </span>
                   </div>
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-900 dark:text-slate-100 font-medium">{completed}/{enrolled}</span>
-                    <span className="text-xs text-slate-500">({completionPct}%)</span>
+                    <span className="text-slate-900 dark:text-slate-100 font-medium">{r.completed}/{enrolled}</span>
+                    <span className="text-xs text-slate-500">({r.completionPct}%)</span>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-slate-700 dark:text-slate-300">{inProgress}</td>
+                <td className="px-5 py-3 text-slate-700 dark:text-slate-300">{r.inProgress}</td>
                 <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
-                  {avgScore !== null ? `${avgScore}%` : "—"}
+                  {r.avgScore !== null ? `${r.avgScore}%` : "—"}
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </Card>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+    </>
   );
 }
 

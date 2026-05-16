@@ -305,7 +305,7 @@ function MobileSidebarItem({ to, label, end }: { to: string; label: string; end?
       to={to}
       end={end}
       className={({ isActive }) =>
-        `whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+        `inline-flex items-center whitespace-nowrap px-3 min-h-[40px] rounded-lg text-sm font-medium transition-colors ${
           isActive
             ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-600/20 dark:text-indigo-300"
             : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50"
