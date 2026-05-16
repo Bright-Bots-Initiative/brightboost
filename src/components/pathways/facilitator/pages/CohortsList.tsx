@@ -113,50 +113,85 @@ export default function CohortsList() {
           </div>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800/80">
-                <tr className="text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.name")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.site")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.band")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.status")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.enrolled")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.dates")}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
-                {filtered.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <td className="px-5 py-3">
-                      <Link
-                        to={`/pathways/facilitator/cohorts/${c.id}`}
-                        className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
-                      >
-                        {c.name}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-slate-700 dark:text-slate-400">{c.sitePartner ?? "—"}</td>
-                    <td className="px-5 py-3 text-slate-700 dark:text-slate-400 capitalize">{c.band}</td>
-                    <td className="px-5 py-3"><StatusPill status={c.status} /></td>
-                    <td className="px-5 py-3 text-slate-700 dark:text-slate-300 font-medium">
-                      {c._count?.enrollments ?? 0}
-                    </td>
-                    <td className="px-5 py-3 text-xs text-slate-600 dark:text-slate-500">
-                      {c.startDate ? new Date(c.startDate).toLocaleDateString() : "—"}
-                      {" → "}
-                      {c.endDate ? new Date(c.endDate).toLocaleDateString() : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-2">
+            {filtered.map((c) => (
+              <Link
+                key={c.id}
+                to={`/pathways/facilitator/cohorts/${c.id}`}
+                className="block rounded-xl border bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 p-4 active:scale-[0.99] transition-transform"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 min-w-0 truncate">
+                    {c.name}
+                  </p>
+                  <StatusPill status={c.status} />
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-700 dark:text-slate-400">
+                  <span className="capitalize">{c.band}</span>
+                  <span>{c._count?.enrollments ?? 0} enrolled</span>
+                </div>
+                {c.sitePartner && (
+                  <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-500 truncate">
+                    {c.sitePartner}
+                  </p>
+                )}
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {c.startDate ? new Date(c.startDate).toLocaleDateString() : "—"}
+                  {" → "}
+                  {c.endDate ? new Date(c.endDate).toLocaleDateString() : "—"}
+                </p>
+              </Link>
+            ))}
           </div>
-        </Card>
+
+          {/* Desktop: table */}
+          <Card className="hidden md:block overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-800/80">
+                  <tr className="text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.name")}</th>
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.site")}</th>
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.band")}</th>
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.status")}</th>
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.enrolled")}</th>
+                    <th className="px-5 py-3">{t("pathways.facilitator.cohorts.col.dates")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
+                  {filtered.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="px-5 py-3">
+                        <Link
+                          to={`/pathways/facilitator/cohorts/${c.id}`}
+                          className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
+                        >
+                          {c.name}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-3 text-slate-700 dark:text-slate-400">{c.sitePartner ?? "—"}</td>
+                      <td className="px-5 py-3 text-slate-700 dark:text-slate-400 capitalize">{c.band}</td>
+                      <td className="px-5 py-3"><StatusPill status={c.status} /></td>
+                      <td className="px-5 py-3 text-slate-700 dark:text-slate-300 font-medium">
+                        {c._count?.enrollments ?? 0}
+                      </td>
+                      <td className="px-5 py-3 text-xs text-slate-600 dark:text-slate-500">
+                        {c.startDate ? new Date(c.startDate).toLocaleDateString() : "—"}
+                        {" → "}
+                        {c.endDate ? new Date(c.endDate).toLocaleDateString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
       )}
     </div>
   );

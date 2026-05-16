@@ -26,6 +26,7 @@ import {
   Check,
   ChevronRight,
   ArrowLeft,
+  ShieldCheck,
 } from "lucide-react";
 import type { ModuleContent, ReadingSection, LessonScene, PracticeItem } from "./cyberLaunchContent";
 
@@ -151,7 +152,7 @@ export default function ModuleStructure({
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            className="flex items-center gap-1 px-2 py-2 min-h-[44px] text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
@@ -330,7 +331,7 @@ function NextButton({ label = "Next →", onClick }: { label?: string; onClick: 
     <div className="flex justify-end pt-2">
       <button
         onClick={onClick}
-        className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
+        className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-medium transition-all"
       >
         {label}
       </button>
@@ -442,6 +443,19 @@ function ReadingSectionBlock({ section }: { section: ReadingSection }) {
           {section.callout}
         </blockquote>
       )}
+      {section.grcLens && (
+        <div className="mt-4 border-l-4 border-amber-500 bg-amber-50 dark:bg-amber-950/30 p-3 sm:p-4 rounded-r-lg">
+          <div className="flex items-center gap-2 mb-1.5">
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200">
+              {section.grcLens.title ?? "GRC Lens"}
+            </span>
+          </div>
+          <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
+            {renderInline(section.grcLens.body)}
+          </p>
+        </div>
+      )}
       {section.keyTerms && section.keyTerms.length > 0 && (
         <div className="mt-3 rounded-lg bg-slate-100 dark:bg-slate-800/60 p-3">
           <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Key terms</p>
@@ -480,25 +494,25 @@ function LessonSectionView({
       <SectionHeader icon={PlayCircle} title="Lesson" estMinutes={lesson.estMinutes} subtitle={lesson.intro} />
       <div className="text-xs text-slate-500">Scene {sceneIdx + 1} of {totalScenes}</div>
       <LessonSceneView scene={lesson.scenes[sceneIdx]} />
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-2 gap-3">
         <button
           onClick={() => setSceneIdx((i) => Math.max(0, i - 1))}
           disabled={sceneIdx === 0}
-          className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 disabled:opacity-40"
+          className="px-3 py-3 sm:py-2 min-h-[44px] text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 disabled:opacity-40"
         >
           ← Previous
         </button>
         {onLast ? (
           <button
             onClick={onContinue}
-            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium"
+            className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-medium transition-all"
           >
             {done ? "Continue →" : "Finish lesson →"}
           </button>
         ) : (
           <button
             onClick={() => setSceneIdx((i) => Math.min(totalScenes - 1, i + 1))}
-            className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium"
+            className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-medium transition-all"
           >
             Next scene →
           </button>
@@ -519,7 +533,15 @@ function LessonSceneView({ scene }: { scene: LessonScene }) {
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/40">
-      <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{scene.title}</h3>
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <h3 className="font-bold text-slate-900 dark:text-slate-100">{scene.title}</h3>
+        {scene.accessibleEntry && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+            <ShieldCheck className="w-3 h-3" />
+            Accessible Entry Path
+          </span>
+        )}
+      </div>
       <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed">{scene.body}</p>
       {scene.choice && (
         <div className="mt-4 space-y-2">
@@ -672,6 +694,15 @@ function HomeworkSectionView({
       <textarea
         value={response}
         onChange={(e) => setResponse(e.target.value)}
+        onFocus={(e) => {
+          // On mobile the soft keyboard hides the input — bring it back into view.
+          if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
+            setTimeout(
+              () => e.currentTarget?.scrollIntoView({ behavior: "smooth", block: "center" }),
+              150,
+            );
+          }
+        }}
         placeholder={homework.placeholder}
         rows={isCapstone ? 12 : 8}
         className="w-full rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -689,7 +720,7 @@ function HomeworkSectionView({
         <button
           onClick={onSubmit}
           disabled={submitting || response.trim().length === 0}
-          className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700 text-white text-sm font-medium transition-colors"
+          className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] disabled:bg-slate-300 disabled:text-slate-500 disabled:active:scale-100 dark:disabled:bg-slate-700 text-white text-sm font-medium transition-all"
         >
           {submitting ? "Submitting…" : isCapstone ? "Submit capstone →" : "Submit homework →"}
         </button>

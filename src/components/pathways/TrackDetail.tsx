@@ -74,7 +74,7 @@ export default function TrackDetail() {
       {/* Back */}
       <button
         onClick={() => navigate("/pathways/tracks")}
-        className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+        className="flex items-center gap-2 -ml-2 px-2 py-2 min-h-[44px] text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
       >
         <ArrowLeft className="w-4 h-4" /> {t("pathways.trackDetail.allTracks")}
       </button>
