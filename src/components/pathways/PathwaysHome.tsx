@@ -19,6 +19,9 @@ import {
   type NextTaskMilestone,
   type NextTaskEnrollment,
 } from "./NextTaskCard";
+import GamificationStrip from "./gamification/GamificationStrip";
+import DailyGoalsCard from "./gamification/DailyGoalsCard";
+import { useGamification } from "./gamification/useGamification";
 
 interface HomeData {
   user?: { name?: string | null; ageBand?: string | null; userType?: string | null; streak?: number };
@@ -38,6 +41,7 @@ export default function PathwaysHome() {
   const [homeData, setHomeData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { state: gamification, goals, loading: gamLoading } = useGamification();
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +150,12 @@ export default function PathwaysHome() {
           <Shield className="w-full h-full" />
         </div>
       </div>
+
+      {/* Gamification: level, streak, badges pinned above everything else */}
+      <GamificationStrip state={gamification} loading={gamLoading} />
+
+      {/* Today's goals — light, achievable */}
+      <DailyGoalsCard goals={goals} />
 
       {/* Next Task — the single most important thing on the page */}
       <NextTaskCard task={nextTask} />

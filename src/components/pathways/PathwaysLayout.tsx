@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen } from "lucide-react";
 import LanguageToggle from "@/components/LanguageToggle";
+import { CelebrationProvider } from "./gamification/CelebrationContext";
 
 const THEME_KEY = "bb_pathways_theme";
 
@@ -53,6 +54,7 @@ export default function PathwaysLayout() {
   const isFacilitator = user?.role === "teacher";
 
   return (
+    <CelebrationProvider>
     <div className={isDark ? "dark" : ""}>
       <div className="min-h-screen flex bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
       {/* Sidebar */}
@@ -134,6 +136,7 @@ export default function PathwaysLayout() {
       </main>
       </div>
     </div>
+    </CelebrationProvider>
   );
 }
 

@@ -4,9 +4,35 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, CheckCircle2, Clock, XCircle, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, XCircle, FileText, Flame, Trophy } from "lucide-react";
 import Card, { CardBody, CardHeader } from "../shared/Card";
 import { StatusPill } from "../FacilitatorLayout";
+
+interface LearnerGamification {
+  state: {
+    totalXp: number;
+    currentLevel: number;
+    levelTier: { tier: string; color: string };
+    xpProgress: { current: number; needed: number };
+    currentStreak: number;
+    longestStreak: number;
+    lastActiveDate: string | null;
+  };
+  badges: Array<{
+    slug: string;
+    name: string;
+    description: string;
+    icon: string;
+    earnedAt: string;
+  }>;
+  recentEvents: Array<{
+    id: string;
+    amount: number;
+    source: string;
+    sourceRefId: string | null;
+    createdAt: string;
+  }>;
+}
 
 interface Milestone {
   moduleSlug: string;
@@ -68,17 +94,21 @@ export default function LearnerDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [data, setData] = useState<LearnerDetailData | null>(null);
+  const [gam, setGam] = useState<LearnerGamification | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`/api/pathways/facilitator/learners/${userId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
-    })
+    const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+    fetch(`/api/pathways/facilitator/learners/${userId}`, { headers: auth })
       .then((r) => r.json())
       .then(setData)
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetch(`/api/pathways/facilitator/learners/${userId}/gamification`, { headers: auth })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((g) => setGam(g))
+      .catch(() => {});
   }, [userId]);
 
   if (loading) return <div className="text-center py-20 text-slate-600 dark:text-slate-400">{t("pathways.common.loading")}</div>;
@@ -142,6 +172,101 @@ export default function LearnerDetail() {
           icon={<CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-400" />}
         />
       </div>
+
+      {gam && (
+        <Card>
+          <CardHeader>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-200">
+              Engagement
+            </h3>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Level
+                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {gam.state.currentLevel}
+                </p>
+                <p className="text-[10px] text-slate-500">{gam.state.levelTier.tier}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Total XP
+                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 font-mono">
+                  {gam.state.totalXp.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Streak
+                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <Flame
+                    className={`w-4 h-4 ${gam.state.currentStreak > 0 ? "text-orange-500" : "text-slate-400"}`}
+                  />
+                  {gam.state.currentStreak}
+                </p>
+                <p className="text-[10px] text-slate-500">best {gam.state.longestStreak}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Badges
+                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                  {gam.badges.length}
+                </p>
+              </div>
+            </div>
+
+            {gam.badges.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                  Earned badges
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {gam.badges.map((b) => (
+                    <span
+                      key={b.slug}
+                      title={`${b.description} · earned ${new Date(b.earnedAt).toLocaleDateString()}`}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-[11px] font-medium"
+                    >
+                      <span aria-hidden>{b.icon}</span> {b.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gam.recentEvents.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                  Recent XP (last {gam.recentEvents.length})
+                </p>
+                <ul className="text-xs space-y-1">
+                  {gam.recentEvents.slice(0, 10).map((e) => (
+                    <li
+                      key={e.id}
+                      className="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300"
+                    >
+                      <span className="truncate">
+                        +{e.amount} · {e.source}
+                        {e.sourceRefId ? ` · ${e.sourceRefId}` : ""}
+                      </span>
+                      <span className="text-slate-500 shrink-0">
+                        {new Date(e.createdAt).toLocaleDateString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -34,7 +34,7 @@ import {
 import Card, { CardBody, CardHeader, StatTile } from "../shared/Card";
 import { StatusPill } from "../FacilitatorLayout";
 
-type TabKey = "overview" | "roster" | "modules" | "calendar" | "notes" | "settings";
+type TabKey = "overview" | "roster" | "modules" | "engagement" | "calendar" | "notes" | "settings";
 
 interface Cohort {
   id: string;
@@ -132,6 +132,7 @@ export default function CohortDetail() {
     { key: "overview", label: t("pathways.facilitator.detail.tabs.overview") },
     { key: "roster", label: t("pathways.facilitator.detail.tabs.roster") },
     { key: "modules", label: t("pathways.facilitator.detail.tabs.modules") },
+    { key: "engagement", label: t("pathways.facilitator.detail.tabs.engagement", "Engagement") },
     { key: "calendar", label: t("pathways.facilitator.detail.tabs.calendar") },
     { key: "notes", label: t("pathways.facilitator.detail.tabs.notes") },
     { key: "settings", label: t("pathways.facilitator.detail.tabs.settings") },
@@ -185,9 +186,229 @@ export default function CohortDetail() {
       {tab === "overview" && <OverviewTab cohort={cohort} progress={progress} />}
       {tab === "roster" && <RosterTab cohort={cohort} progress={progress} onReload={loadCohort} />}
       {tab === "modules" && <ModulesTab cohort={cohort} progress={progress} />}
+      {tab === "engagement" && <EngagementTab cohortId={cohort.id} progress={progress} />}
       {tab === "calendar" && <CalendarTab cohort={cohort} />}
       {tab === "notes" && <NotesTab cohort={cohort} onReload={loadCohort} />}
       {tab === "settings" && <SettingsTab cohort={cohort} onReload={loadCohort} />}
+    </div>
+  );
+}
+
+// ─── Engagement Tab ─────────────────────────────────────────────────────
+
+interface CohortEngagement {
+  enrolled: number;
+  avgLevel: number;
+  totalXp: number;
+  topBadge: { slug: string; name: string; count: number } | null;
+  streakBuckets: {
+    zero: number;
+    oneToThree: number;
+    fourToSeven: number;
+    eightToFourteen: number;
+    fifteenPlus: number;
+  };
+  dailyGoalRateToday: { complete: number; total: number };
+  topByXpThisWeek: Array<{ userId: string; name: string | null; email: string | null; xp: number }>;
+}
+
+function EngagementTab({
+  cohortId,
+  progress,
+}: {
+  cohortId: string;
+  progress: CohortProgress | null;
+}) {
+  const [data, setData] = useState<CohortEngagement | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/pathways/facilitator/cohorts/${cohortId}/gamification`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .finally(() => setLoading(false));
+  }, [cohortId]);
+
+  if (loading) {
+    return (
+      <Card>
+        <div className="px-5 py-12 text-center text-sm text-slate-600 dark:text-slate-400">
+          Loading engagement…
+        </div>
+      </Card>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Card>
+        <div className="px-5 py-12 text-center text-sm text-slate-600 dark:text-slate-400">
+          Couldn't load engagement data.
+        </div>
+      </Card>
+    );
+  }
+
+  const dgPct =
+    data.dailyGoalRateToday.total > 0
+      ? Math.round((data.dailyGoalRateToday.complete / data.dailyGoalRateToday.total) * 100)
+      : 0;
+
+  // Surface basic intervention alerts client-side from existing progress data
+  // (avoids a separate endpoint for v1). "Stale" = no lastActive in 5+ days.
+  const fiveDaysAgo = Date.now() - 5 * 24 * 60 * 60 * 1000;
+  const staleLearners = (progress?.learners ?? []).filter((l) =>
+    l.lastActive ? new Date(l.lastActive).getTime() < fiveDaysAgo : false,
+  );
+
+  return (
+    <div className="space-y-5">
+      {/* Top-line metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <MetricCell label="Avg Level" value={data.avgLevel} />
+        <MetricCell label="Total XP" value={data.totalXp.toLocaleString()} />
+        <MetricCell
+          label="Daily goal · today"
+          value={`${data.dailyGoalRateToday.complete}/${data.dailyGoalRateToday.total}`}
+          secondary={`${dgPct}%`}
+        />
+        <MetricCell
+          label="Top badge"
+          value={data.topBadge?.name ?? "—"}
+          secondary={data.topBadge ? `${data.topBadge.count} earned` : undefined}
+        />
+      </div>
+
+      {/* Streak distribution */}
+      <Card>
+        <div className="px-4 sm:px-5 py-4">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Streak distribution
+          </p>
+          <div className="space-y-2">
+            <StreakBar label="No streak" value={data.streakBuckets.zero} total={data.enrolled} color="bg-slate-400" />
+            <StreakBar label="1–3 days" value={data.streakBuckets.oneToThree} total={data.enrolled} color="bg-amber-400" />
+            <StreakBar label="4–7 days" value={data.streakBuckets.fourToSeven} total={data.enrolled} color="bg-orange-500" />
+            <StreakBar label="8–14 days" value={data.streakBuckets.eightToFourteen} total={data.enrolled} color="bg-indigo-500" />
+            <StreakBar label="15+ days" value={data.streakBuckets.fifteenPlus} total={data.enrolled} color="bg-emerald-500" />
+          </div>
+        </div>
+      </Card>
+
+      {/* Top 10 by XP this week */}
+      <Card>
+        <div className="px-4 sm:px-5 py-4">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Top XP this week
+          </p>
+          {data.topByXpThisWeek.length === 0 ? (
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              No XP awarded yet this week.
+            </p>
+          ) : (
+            <ol className="space-y-1.5">
+              {data.topByXpThisWeek.map((row, i) => (
+                <li
+                  key={row.userId}
+                  className="flex items-center gap-3 text-sm"
+                >
+                  <span className="w-6 text-right text-slate-500 font-mono">#{i + 1}</span>
+                  <Link
+                    to={`/pathways/facilitator/learners/${row.userId}`}
+                    className="flex-1 min-w-0 truncate text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+                  >
+                    {row.name ?? row.email ?? "—"}
+                  </Link>
+                  <span className="font-mono text-indigo-700 dark:text-indigo-300 shrink-0">
+                    +{row.xp.toLocaleString()} XP
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </Card>
+
+      {/* Lightweight intervention list */}
+      {staleLearners.length > 0 && (
+        <Card>
+          <div className="px-4 sm:px-5 py-4">
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-2">
+              ⚠ Consider reaching out
+            </p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+              These learners haven't been active in 5+ days.
+            </p>
+            <ul className="space-y-1.5">
+              {staleLearners.map((l) => (
+                <li key={l.id} className="text-sm">
+                  <Link
+                    to={`/pathways/facilitator/learners/${l.id}`}
+                    className="text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+                  >
+                    {l.name ?? "—"}
+                  </Link>
+                  <span className="text-xs text-slate-500 ml-2">
+                    last active{" "}
+                    {l.lastActive ? new Date(l.lastActive).toLocaleDateString() : "never"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function MetricCell({
+  label,
+  value,
+  secondary,
+}: {
+  label: string;
+  value: string | number;
+  secondary?: string;
+}) {
+  return (
+    <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 shadow-sm">
+      <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+        {label}
+      </p>
+      <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mt-1 truncate">
+        {value}
+      </p>
+      {secondary && (
+        <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">{secondary}</p>
+      )}
+    </div>
+  );
+}
+
+function StreakBar({
+  label,
+  value,
+  total,
+  color,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+}) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <span className="w-20 text-xs text-slate-600 dark:text-slate-400 shrink-0">{label}</span>
+      <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-mono text-slate-700 dark:text-slate-300 w-10 text-right shrink-0">
+        {value}
+      </span>
     </div>
   );
 }

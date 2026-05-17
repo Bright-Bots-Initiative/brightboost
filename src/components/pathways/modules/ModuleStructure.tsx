@@ -15,6 +15,7 @@
  * a render-prop so the existing per-module scenarios/scoring keep working.
  */
 import { useMemo, useRef, useState } from "react";
+import { useCelebrate } from "../gamification/CelebrationContext";
 import {
   BookOpen,
   GraduationCap,
@@ -87,13 +88,66 @@ function authHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-/** Best-effort POST; failures are non-fatal — UI optimistic, server eventually consistent. */
-function persistSection(moduleSlug: string, section: SectionKey, completed: boolean) {
+interface GamificationSideEffects {
+  award: { newLevel?: number; leveledUp?: boolean; tier?: { tier: string; color: string } } | null;
+  badges: Array<{ slug: string; name: string; description: string; icon: string }>;
+  moduleCompleted: boolean;
+}
+
+type Celebrate = (
+  events:
+    | { type: "level"; newLevel: number; tier: string }
+    | { type: "badge"; slug: string; name: string; description: string; icon: string }
+    | Array<
+        | { type: "level"; newLevel: number; tier: string }
+        | { type: "badge"; slug: string; name: string; description: string; icon: string }
+      >,
+) => void;
+
+function emitFromGamification(payload: GamificationSideEffects | undefined, celebrate: Celebrate) {
+  if (!payload) return;
+  const events: Array<
+    | { type: "level"; newLevel: number; tier: string }
+    | { type: "badge"; slug: string; name: string; description: string; icon: string }
+  > = [];
+  if (payload.award?.leveledUp && payload.award.newLevel && payload.award.tier) {
+    events.push({
+      type: "level",
+      newLevel: payload.award.newLevel,
+      tier: payload.award.tier.tier,
+    });
+  }
+  for (const b of payload.badges) {
+    events.push({
+      type: "badge",
+      slug: b.slug,
+      name: b.name,
+      description: b.description,
+      icon: b.icon,
+    });
+  }
+  if (events.length > 0) celebrate(events);
+}
+
+/**
+ * Best-effort PATCH; failures are non-fatal. When the server responds with
+ * gamification side-effects (level-up or badges) we hand them to the
+ * celebration context for the overlay.
+ */
+function persistSection(
+  moduleSlug: string,
+  section: SectionKey,
+  completed: boolean,
+  celebrate: Celebrate,
+) {
   fetch("/api/pathways/student/milestones/section", {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({ trackSlug: TRACK_SLUG, moduleSlug, section, completed }),
-  }).catch(() => {});
+  })
+    .then((r) => r.json())
+    .then((body) => emitFromGamification(body?.gamification, celebrate))
+    .catch(() => {});
 }
 
 export default function ModuleStructure({
@@ -111,6 +165,7 @@ export default function ModuleStructure({
   const [currentIdx, setCurrentIdx] = useState(0);
   const [progress, setProgress] = useState<SectionProgress>({ ...ZERO_PROGRESS, ...initialProgress });
   const current = sections[currentIdx];
+  const { celebrate } = useCelebrate();
 
   // Quiz unlocks only after the first five sections are complete (or the
   // skip-quiz capstone reaches its final section).
@@ -120,7 +175,7 @@ export default function ModuleStructure({
   const markCompleted = (section: SectionKey) => {
     setProgress((p) => {
       if (p[section]) return p; // idempotent
-      persistSection(content.slug, section, true);
+      persistSection(content.slug, section, true, celebrate);
       return { ...p, [section]: true };
     });
   };
@@ -652,6 +707,7 @@ function HomeworkSectionView({
   const [submitting, setSubmitting] = useState(false);
   const [submittedOk, setSubmittedOk] = useState(done);
   const [error, setError] = useState<string | null>(null);
+  const { celebrate } = useCelebrate();
 
   const onSubmit = async () => {
     setSubmitting(true);
@@ -668,6 +724,7 @@ function HomeworkSectionView({
           (body && (body.error || body.message)) || `${res.status} ${res.statusText}`,
         );
       }
+      emitFromGamification(body?.gamification, celebrate);
       setSubmittedOk(true);
       onContinue();
     } catch (err) {

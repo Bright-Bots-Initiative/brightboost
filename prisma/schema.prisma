@@ -92,6 +92,10 @@ model User {
   pathwayEnrollments  PathwayEnrollment[]
   pathwayMilestones   PathwayMilestone[]
   pathwayLabAttempts  PathwayLabAttempt[]
+  pathwayXpEvents     PathwayXpEvent[]
+  pathwayGamification PathwayGamification?
+  pathwayBadges       PathwayBadge[]
+  pathwayDailyGoals   PathwayDailyGoal[]
 }
 
 // -----------------------------------------------------------------------------
@@ -774,6 +778,76 @@ model PathwayLabAttempt {
 
   @@index([userId, labSlug])
   @@index([userId])
+}
+
+// ─── Gamification 1.5 ────────────────────────────────────────────────────────
+// Append-only log of every XP grant; source of truth for analytics and for
+// reconstructing the cached state in PathwayGamification when needed. Source
+// is a closed enum encoded as a string for forward-compat with new triggers.
+model PathwayXpEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int      // positive only — we never deduct XP
+  source      String   // "section" | "quiz" | "homework" | "module_complete" | "lab_complete" | "lab_high_score" | "daily_goal" | "streak_bonus" | "badge_earned"
+  sourceRefId String?  // module slug, lab slug, badge slug, etc.
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, source])
+  @@index([userId, source, sourceRefId])
+}
+
+// Cached per-user gamification state. Updated atomically alongside every
+// XP event so home page reads don't need to scan the event log.
+model PathwayGamification {
+  userId                    String    @id
+  totalXp                   Int       @default(0)
+  currentLevel              Int       @default(1)
+  currentStreak             Int       @default(0)
+  longestStreak             Int       @default(0)
+  lastActiveDate            DateTime?
+  streakFreezesAvailable    Int       @default(1)
+  streakFreezesUsedThisWeek Int       @default(0)
+  lastFreezeRefresh         DateTime?
+  updatedAt                 DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Badges a user has earned. Unique per (user, slug) — idempotent.
+model PathwayBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  slug      String   // "cyber_curious" | "phishing_hunter" | ...
+  earnedAt  DateTime @default(now())
+  metadata  Json?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, slug])
+  @@index([userId, earnedAt])
+}
+
+// Per-day goal sheet. Goals payload is a small JSON array; allComplete and
+// bonusAwarded are denormalized so we can scan facilitator dashboards without
+// parsing JSON.
+model PathwayDailyGoal {
+  id           String   @id @default(cuid())
+  userId       String
+  date         DateTime @db.Date
+  goals        Json     // [{slug, label, target, current, completed}]
+  allComplete  Boolean  @default(false)
+  bonusAwarded Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 // -----------------------------------------------------------------------------
