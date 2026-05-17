@@ -91,6 +91,7 @@ model User {
   pathwayCohorts      PathwayCohort[]      // facilitator's cohorts
   pathwayEnrollments  PathwayEnrollment[]
   pathwayMilestones   PathwayMilestone[]
+  pathwayLabAttempts  PathwayLabAttempt[]
 }
 
 // -----------------------------------------------------------------------------
@@ -751,6 +752,27 @@ model PathwayMilestone {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, trackSlug, moduleSlug])
+  @@index([userId])
+}
+
+// Sandbox lab attempts (Password Strength Lab, Phishing Showdown, etc.).
+// Independent of PathwayMilestone so labs can live outside any module and
+// students can attempt the same lab many times. `output` is the portfolio
+// artifact (e.g., Red Flag Field Guide, personal password policy).
+model PathwayLabAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  labSlug     String   // "password-strength" | "phishing-showdown" | ...
+  mode        String?  // optional sub-mode (e.g., phishing "training" | "timed" | "boss")
+  score       Int      @default(0)
+  hintsUsed   Int      @default(0)
+  output      Json?    // portfolio artifact data
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, labSlug])
   @@index([userId])
 }
 
