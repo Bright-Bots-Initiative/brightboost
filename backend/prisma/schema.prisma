@@ -89,6 +89,7 @@ model User {
   pathwayCohorts      PathwayCohort[]
   pathwayEnrollments  PathwayEnrollment[]
   pathwayMilestones   PathwayMilestone[]
+  pathwayLabAttempts  PathwayLabAttempt[]
 }
 
 // -----------------------------------------------------------------------------
@@ -742,6 +743,23 @@ model PathwayMilestone {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, trackSlug, moduleSlug])
+  @@index([userId])
+}
+
+model PathwayLabAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  labSlug     String
+  mode        String?
+  score       Int      @default(0)
+  hintsUsed   Int      @default(0)
+  output      Json?
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, labSlug])
   @@index([userId])
 }
 

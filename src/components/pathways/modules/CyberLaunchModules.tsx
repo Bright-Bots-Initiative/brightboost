@@ -16,8 +16,11 @@
  */
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Beaker, KeyRound, Mail } from "lucide-react";
 import ModuleStructure from "./ModuleStructure";
 import { CYBER_LAUNCH_CONTENT } from "./cyberLaunchContent";
+import PasswordStrengthLab from "../labs/PasswordStrengthLab";
+import PhishingShowdown from "../labs/PhishingShowdown";
 
 interface ModuleProps {
   onComplete: (score: number) => void;
@@ -406,7 +409,89 @@ export function CyberFoundations(props: ModuleProps) {
 }
 
 export function DigitalSafetySim(props: ModuleProps) {
-  return moduleFor("digital-safety-sim", props);
+  // Digital Safety also hosts the two sandbox labs (Password Strength Lab and
+  // Phishing Showdown). The labs are available from a header launcher in the
+  // module shell; opening a lab swaps the module body until the student exits.
+  const [activeLab, setActiveLab] = useState<null | "password" | "phishing">(null);
+
+  if (activeLab === "password") {
+    return <PasswordStrengthLab onExit={() => setActiveLab(null)} />;
+  }
+  if (activeLab === "phishing") {
+    return <PhishingShowdown onExit={() => setActiveLab(null)} />;
+  }
+
+  const content = CYBER_LAUNCH_CONTENT["digital-safety-sim"];
+  return (
+    <div className="space-y-4">
+      <DigitalSafetyLabLauncher onOpen={setActiveLab} />
+      <ModuleStructure
+        content={content}
+        onBack={props.onBack}
+        onComplete={props.onComplete}
+        renderQuiz={({ onQuizComplete }) => (
+          <StandaloneQuiz
+            questions={QUIZ_BY_SLUG["digital-safety-sim"]}
+            onComplete={onQuizComplete}
+          />
+        )}
+      />
+    </div>
+  );
+}
+
+function DigitalSafetyLabLauncher({
+  onOpen,
+}: {
+  onOpen: (lab: "password" | "phishing") => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-950/20 p-4 sm:p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Beaker className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+        <div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Sandbox Labs</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Hands-on practice. Try once or replay anytime — your best result is saved.
+          </p>
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <button
+          onClick={() => onOpen("password")}
+          className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-600 active:scale-[0.99] transition-all text-left"
+        >
+          <span className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-600/30 dark:text-indigo-300 flex items-center justify-center shrink-0">
+            <KeyRound className="w-5 h-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Password Strength Lab
+            </span>
+            <span className="block text-[11px] text-slate-600 dark:text-slate-400">
+              ~8 min · Build your password policy
+            </span>
+          </span>
+        </button>
+        <button
+          onClick={() => onOpen("phishing")}
+          className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-600 active:scale-[0.99] transition-all text-left"
+        >
+          <span className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-600/30 dark:text-indigo-300 flex items-center justify-center shrink-0">
+            <Mail className="w-5 h-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Phishing Showdown
+            </span>
+            <span className="block text-[11px] text-slate-600 dark:text-slate-400">
+              ~12 min · 3 modes · Earn your Red Flag Field Guide
+            </span>
+          </span>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function NetworkBasics(props: ModuleProps) {

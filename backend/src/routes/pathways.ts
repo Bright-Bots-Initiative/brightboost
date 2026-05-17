@@ -3,6 +3,7 @@
  * Handles cohorts, enrollment, milestones, and facilitator data.
  */
 import { Router, Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
 import { z } from "zod";
@@ -357,6 +358,60 @@ router.post(
       },
     });
     res.json(milestone);
+  },
+);
+
+// ─── Sandbox lab attempts ──────────────────────────────────────────────────
+// Labs live outside the module 6-section flow; a student can attempt the
+// same lab many times and the highest-score attempt is what we surface back.
+// `output` is the portfolio artifact (e.g., Red Flag Field Guide).
+
+const labAttemptSchema = z.object({
+  labSlug: z.string().min(1).max(64),
+  mode: z.string().min(1).max(64).optional(),
+  score: z.number().int().min(0).max(10000),
+  hintsUsed: z.number().int().min(0).max(20).optional(),
+  output: z.unknown().optional(),
+});
+
+router.post(
+  "/pathways/student/labs/attempt",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = labAttemptSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    const { labSlug, mode, score, hintsUsed, output } = parsed.data;
+
+    const attempt = await prisma.pathwayLabAttempt.create({
+      data: {
+        userId: req.user!.id,
+        labSlug,
+        mode: mode ?? null,
+        score,
+        hintsUsed: hintsUsed ?? 0,
+        // Prisma's Json type uses a sentinel (`Prisma.JsonNull`) rather than
+        // bare null when the column is nullable; pass that when the client
+        // omits an artifact.
+        output:
+          output === undefined
+            ? Prisma.JsonNull
+            : (output as Prisma.InputJsonValue),
+      },
+    });
+    res.json(attempt);
+  },
+);
+
+router.get(
+  "/pathways/student/labs",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const attempts = await prisma.pathwayLabAttempt.findMany({
+      where: { userId: req.user!.id },
+      orderBy: { completedAt: "desc" },
+      take: 50,
+    });
+    res.json(attempts);
   },
 );
 
