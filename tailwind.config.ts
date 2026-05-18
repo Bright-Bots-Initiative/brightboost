@@ -59,11 +59,16 @@ const config: Config = {
         "float-delay": "float 8s ease-in-out infinite 1s",
         "float-slow": "float 10s ease-in-out infinite 2s",
         "spin-slow": "spin 8s linear infinite",
+        pop: "pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
       keyframes: {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },
+        },
+        pop: {
+          "0%": { transform: "scale(0.8)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
     },

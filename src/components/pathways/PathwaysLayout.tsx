@@ -15,8 +15,9 @@ import { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen } from "lucide-react";
+import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen, Flag } from "lucide-react";
 import LanguageToggle from "@/components/LanguageToggle";
+import { CelebrationProvider } from "./gamification/CelebrationContext";
 
 const THEME_KEY = "bb_pathways_theme";
 
@@ -53,6 +54,7 @@ export default function PathwaysLayout() {
   const isFacilitator = user?.role === "teacher";
 
   return (
+    <CelebrationProvider>
     <div className={isDark ? "dark" : ""}>
       <div className="min-h-screen flex bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
       {/* Sidebar */}
@@ -69,6 +71,7 @@ export default function PathwaysLayout() {
         <div className="flex-1 py-4 space-y-1 px-2">
           <SidebarLink to="/pathways" icon={<Home className="w-4 h-4" />} label={t("pathways.layout.nav.home")} end />
           <SidebarLink to="/pathways/tracks" icon={<Compass className="w-4 h-4" />} label={t("pathways.layout.nav.tracks")} />
+          <SidebarLink to="/pathways/challenges" icon={<Flag className="w-4 h-4" />} label={t("pathways.layout.nav.challenges", "Challenges")} />
           <SidebarLink to="/pathways/profile" icon={<User className="w-4 h-4" />} label={t("pathways.layout.nav.profile")} />
           {isFacilitator && (
             <>
@@ -126,6 +129,7 @@ export default function PathwaysLayout() {
         <div className="md:hidden fixed bottom-0 inset-x-0 flex items-center justify-around py-2 border-t bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800">
           <MobileNavLink to="/pathways" icon={<Home className="w-5 h-5" />} label={t("pathways.layout.nav.home")} end />
           <MobileNavLink to="/pathways/tracks" icon={<Compass className="w-5 h-5" />} label={t("pathways.layout.nav.tracks")} />
+          <MobileNavLink to="/pathways/challenges" icon={<Flag className="w-5 h-5" />} label={t("pathways.layout.nav.challenges", "Flags")} />
           <MobileNavLink to="/pathways/profile" icon={<User className="w-5 h-5" />} label={t("pathways.layout.nav.profile")} />
           {isFacilitator && (
             <MobileNavLink to="/pathways/facilitator" icon={<Users className="w-5 h-5" />} label={t("pathways.layout.nav.manage")} />
@@ -134,6 +138,7 @@ export default function PathwaysLayout() {
       </main>
       </div>
     </div>
+    </CelebrationProvider>
   );
 }
 

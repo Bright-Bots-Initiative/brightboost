@@ -13,6 +13,7 @@
 import { useState, useCallback, ReactNode } from "react";
 import { ArrowLeft, Clock, ListChecks, Sparkles } from "lucide-react";
 import EthicsFraming from "./EthicsFraming";
+import { useCelebrate } from "../gamification/CelebrationContext";
 
 export interface LabBriefing {
   /** Lab title shown in the header. */
@@ -54,18 +55,61 @@ function authHeader(): Record<string, string> {
 export default function LabShell({ briefing, onExit, children }: LabShellProps) {
   const [ethicsAcked, setEthicsAcked] = useState(false);
   const [briefed, setBriefed] = useState(false);
+  const { celebrate } = useCelebrate();
 
-  const recordAttempt = useCallback(async (payload: LabAttemptPayload) => {
-    try {
-      await fetch("/api/pathways/student/labs/attempt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader() },
-        body: JSON.stringify(payload),
-      });
-    } catch {
-      /* attempts are persisted best-effort; UI stays optimistic */
-    }
-  }, []);
+  const recordAttempt = useCallback(
+    async (payload: LabAttemptPayload) => {
+      try {
+        const res = await fetch("/api/pathways/student/labs/attempt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify(payload),
+        });
+        const body = await res.json().catch(() => null);
+        const gam = body?.gamification as
+          | {
+              award: {
+                leveledUp?: boolean;
+                newLevel?: number;
+                tier?: { tier: string; color: string };
+              } | null;
+              badges: Array<{
+                slug: string;
+                name: string;
+                description: string;
+                icon: string;
+              }>;
+            }
+          | undefined;
+        if (gam) {
+          const events: Array<
+            | { type: "level"; newLevel: number; tier: string }
+            | {
+                type: "badge";
+                slug: string;
+                name: string;
+                description: string;
+                icon: string;
+              }
+          > = [];
+          if (gam.award?.leveledUp && gam.award.newLevel && gam.award.tier) {
+            events.push({
+              type: "level",
+              newLevel: gam.award.newLevel,
+              tier: gam.award.tier.tier,
+            });
+          }
+          for (const b of gam.badges) {
+            events.push({ type: "badge", ...b });
+          }
+          if (events.length > 0) celebrate(events);
+        }
+      } catch {
+        /* attempts are persisted best-effort; UI stays optimistic */
+      }
+    },
+    [celebrate],
+  );
 
   // Gate 1: Ethics framing (once per browser).
   if (!ethicsAcked) {

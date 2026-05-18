@@ -7,6 +7,25 @@ import { Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
 import { z } from "zod";
+import {
+  XP_AWARDS,
+  awardXp,
+  awardXpOnce,
+  awardBadge,
+  recordActivity,
+  updateDailyGoalProgress,
+  getOrCreateDailyGoals,
+  getLevelTier,
+  xpToNextLevel,
+  summarizeCohortGamification,
+  BADGES,
+  type BadgeAwardResult,
+} from "../services/gamification";
+import {
+  getServerChallenge,
+  flagsMatch,
+  CTF_CHALLENGES_SERVER,
+} from "../data/ctfChallenges";
 
 const router = Router();
 
@@ -299,20 +318,24 @@ router.patch(
     const parsed = sectionProgressSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
     const { trackSlug, moduleSlug, section, completed, timeSpentMinutes } = parsed.data;
+    const userId = req.user!.id;
+
+    // Read-before-write so we can detect the false→true transition that
+    // earns XP. Without the prior state we'd repeatedly award on every PATCH.
+    const before = await prisma.pathwayMilestone.findUnique({
+      where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
+    });
 
     const data: Record<string, unknown> = { [SECTION_COLUMN[section]]: completed };
     if (timeSpentMinutes && timeSpentMinutes > 0) {
       data.timeSpentMinutes = { increment: timeSpentMinutes };
     }
-    // Bumping any section transitions the module out of "not_started".
     if (completed) data.status = "in_progress";
 
     const milestone = await prisma.pathwayMilestone.upsert({
-      where: {
-        userId_trackSlug_moduleSlug: { userId: req.user!.id, trackSlug, moduleSlug },
-      },
+      where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
       create: {
-        userId: req.user!.id,
+        userId,
         trackSlug,
         moduleSlug,
         status: completed ? "in_progress" : "not_started",
@@ -321,9 +344,67 @@ router.patch(
       },
       update: data,
     });
-    res.json(milestone);
+
+    // Gamification: only award XP when the section is *transitioning* from
+    // incomplete → complete (idempotent against double-PATCH from clients).
+    const wasComplete = before ? (before as Record<string, unknown>)[SECTION_COLUMN[section]] === true : false;
+    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+
+    if (completed && !wasComplete) {
+      const xpSource = section === "quiz" ? "quiz" : "section";
+      const xpAmount = section === "quiz" ? XP_AWARDS.QUIZ_COMPLETE : XP_AWARDS.SECTION_COMPLETE;
+      sideEffects.award = await awardXp(userId, xpAmount, xpSource, moduleSlug, { section });
+      await updateDailyGoalProgress(userId, "section");
+
+      // Reader badge — all reading sections complete in some module.
+      if (section === "reading") {
+        const b = await awardBadge(userId, "reader", { moduleSlug });
+        if (b) sideEffects.badges.push(b);
+      }
+
+      // Quiz completed marks the module as fully done (capstones skip quiz
+      // and complete via homework — handled in the homework route).
+      // Check if all six section flags are true and the module hasn't been
+      // marked completed yet — then award MODULE_COMPLETE + cyber_curious.
+      const after = await prisma.pathwayMilestone.findUnique({
+        where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
+      });
+      if (
+        after &&
+        after.hookCompleted &&
+        after.readingCompleted &&
+        after.lessonCompleted &&
+        after.practiceCompleted &&
+        after.homeworkSubmitted &&
+        after.quizCompleted &&
+        after.status !== "completed"
+      ) {
+        await prisma.pathwayMilestone.update({
+          where: { id: after.id },
+          data: { status: "completed", completedAt: new Date() },
+        });
+        const onceModule = await awardXpOnce(
+          userId,
+          XP_AWARDS.MODULE_COMPLETE,
+          "module_complete",
+          moduleSlug,
+        );
+        if (onceModule) sideEffects.moduleCompleted = true;
+        const curious = await awardBadge(userId, "cyber_curious", { moduleSlug });
+        if (curious) sideEffects.badges.push(curious);
+      }
+    }
+
+    await recordActivity(userId);
+    res.json({ ...milestone, gamification: sideEffects });
   },
 );
+
+interface GamificationSideEffects {
+  award: Awaited<ReturnType<typeof awardXp>> | null;
+  badges: BadgeAwardResult[];
+  moduleCompleted: boolean;
+}
 
 const homeworkSchema = z.object({
   trackSlug: z.string().min(1),
@@ -338,13 +419,17 @@ router.post(
     const parsed = homeworkSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
     const { trackSlug, moduleSlug, response } = parsed.data;
+    const userId = req.user!.id;
+
+    const before = await prisma.pathwayMilestone.findUnique({
+      where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
+    });
+    const wasSubmitted = before?.homeworkSubmitted ?? false;
 
     const milestone = await prisma.pathwayMilestone.upsert({
-      where: {
-        userId_trackSlug_moduleSlug: { userId: req.user!.id, trackSlug, moduleSlug },
-      },
+      where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
       create: {
-        userId: req.user!.id,
+        userId,
         trackSlug,
         moduleSlug,
         status: "in_progress",
@@ -357,7 +442,40 @@ router.post(
         status: "in_progress",
       },
     });
-    res.json(milestone);
+
+    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+    if (!wasSubmitted) {
+      sideEffects.award = await awardXp(
+        userId,
+        XP_AWARDS.HOMEWORK_SUBMITTED,
+        "homework",
+        moduleSlug,
+      );
+      await updateDailyGoalProgress(userId, "section");
+
+      // Capstone has no quiz — its homework submission is the module finish
+      // line. Mark complete + award capstone_creator + cyber_curious here.
+      if (moduleSlug === "capstone-security-plan") {
+        await prisma.pathwayMilestone.update({
+          where: { id: milestone.id },
+          data: { status: "completed", completedAt: new Date() },
+        });
+        const moduleOnce = await awardXpOnce(
+          userId,
+          XP_AWARDS.MODULE_COMPLETE,
+          "module_complete",
+          moduleSlug,
+        );
+        if (moduleOnce) sideEffects.moduleCompleted = true;
+        const capstone = await awardBadge(userId, "capstone_creator", { moduleSlug });
+        if (capstone) sideEffects.badges.push(capstone);
+        const curious = await awardBadge(userId, "cyber_curious", { moduleSlug });
+        if (curious) sideEffects.badges.push(curious);
+      }
+    }
+
+    await recordActivity(userId);
+    res.json({ ...milestone, gamification: sideEffects });
   },
 );
 
@@ -381,24 +499,70 @@ router.post(
     const parsed = labAttemptSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
     const { labSlug, mode, score, hintsUsed, output } = parsed.data;
+    const userId = req.user!.id;
+
+    // Check personal best before insert so we can detect "new high score".
+    const prevBest = await prisma.pathwayLabAttempt.findFirst({
+      where: { userId, labSlug },
+      orderBy: { score: "desc" },
+      select: { score: true },
+    });
+    const isNewBest = prevBest === null || score > prevBest.score;
 
     const attempt = await prisma.pathwayLabAttempt.create({
       data: {
-        userId: req.user!.id,
+        userId,
         labSlug,
         mode: mode ?? null,
         score,
         hintsUsed: hintsUsed ?? 0,
-        // Prisma's Json type uses a sentinel (`Prisma.JsonNull`) rather than
-        // bare null when the column is nullable; pass that when the client
-        // omits an artifact.
         output:
           output === undefined
             ? Prisma.JsonNull
             : (output as Prisma.InputJsonValue),
       },
     });
-    res.json(attempt);
+
+    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+
+    // LAB_COMPLETE: once per (user, lab) — awardXpOnce keyed on the lab slug.
+    sideEffects.award = await awardXpOnce(
+      userId,
+      XP_AWARDS.LAB_COMPLETE,
+      "lab_complete",
+      labSlug,
+      { firstScore: score },
+    );
+
+    // LAB_HIGH_SCORE: fires repeatedly, each time the student beats prior best.
+    if (isNewBest && prevBest !== null) {
+      const hs = await awardXp(userId, XP_AWARDS.LAB_HIGH_SCORE, "lab_high_score", labSlug, {
+        prev: prevBest.score,
+        next: score,
+      });
+      // Surface the most-recent award if we didn't already (first-time path
+      // would have returned a non-null awardXpOnce above).
+      if (!sideEffects.award) sideEffects.award = hs;
+    }
+
+    await updateDailyGoalProgress(userId, "lab");
+
+    // Skill badges.
+    if (labSlug === "password-strength") {
+      const b = await awardBadge(userId, "password_pro");
+      if (b) sideEffects.badges.push(b);
+    }
+    if (labSlug === "phishing-showdown" && score >= 90) {
+      const b = await awardBadge(userId, "phishing_hunter", { score, mode });
+      if (b) sideEffects.badges.push(b);
+    }
+    if ((hintsUsed ?? 0) === 0 && score > 0) {
+      const b = await awardBadge(userId, "sandbox_survivor", { labSlug });
+      if (b) sideEffects.badges.push(b);
+    }
+
+    await recordActivity(userId);
+    res.json({ ...attempt, gamification: sideEffects });
   },
 );
 
@@ -412,6 +576,371 @@ router.get(
       take: 50,
     });
     res.json(attempts);
+  },
+);
+
+// ─── Gamification (student) ────────────────────────────────────────────────
+
+router.get(
+  "/pathways/gamification/me",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const state = await prisma.pathwayGamification.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
+    });
+    const recentBadges = await prisma.pathwayBadge.findMany({
+      where: { userId },
+      orderBy: { earnedAt: "desc" },
+      take: 6,
+    });
+    const totalBadges = await prisma.pathwayBadge.count({ where: { userId } });
+    res.json({
+      totalXp: state.totalXp,
+      currentLevel: state.currentLevel,
+      levelTier: getLevelTier(state.currentLevel),
+      xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+      currentStreak: state.currentStreak,
+      longestStreak: state.longestStreak,
+      streakFreezesAvailable: state.streakFreezesAvailable,
+      lastActiveDate: state.lastActiveDate,
+      badgesEarned: totalBadges,
+      recentBadges: recentBadges.map((b) => ({
+        slug: b.slug,
+        name: BADGES[b.slug]?.name ?? b.slug,
+        description: BADGES[b.slug]?.description ?? "",
+        icon: BADGES[b.slug]?.icon ?? "★",
+        earnedAt: b.earnedAt,
+      })),
+    });
+  },
+);
+
+router.get(
+  "/pathways/gamification/me/badges",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const earned = await prisma.pathwayBadge.findMany({
+      where: { userId },
+      orderBy: { earnedAt: "desc" },
+    });
+    const earnedMap = new Map(earned.map((b) => [b.slug, b]));
+    const catalog = Object.entries(BADGES).map(([slug, def]) => ({
+      slug,
+      name: def.name,
+      description: def.description,
+      icon: def.icon,
+      xp: def.xp,
+      earnedAt: earnedMap.get(slug)?.earnedAt ?? null,
+    }));
+    res.json(catalog);
+  },
+);
+
+router.get(
+  "/pathways/gamification/me/daily-goals",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const goals = await getOrCreateDailyGoals(req.user!.id);
+    res.json(goals);
+  },
+);
+
+router.get(
+  "/pathways/gamification/me/level",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const state = await prisma.pathwayGamification.upsert({
+      where: { userId: req.user!.id },
+      create: { userId: req.user!.id },
+      update: {},
+    });
+    res.json({
+      currentLevel: state.currentLevel,
+      tier: getLevelTier(state.currentLevel),
+      totalXp: state.totalXp,
+      xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+    });
+  },
+);
+
+router.get(
+  "/pathways/gamification/me/events",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const events = await prisma.pathwayXpEvent.findMany({
+      where: { userId: req.user!.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    res.json(events);
+  },
+);
+
+router.post(
+  "/pathways/gamification/me/activity",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const result = await recordActivity(req.user!.id);
+    res.json(result);
+  },
+);
+
+// ─── CTF Challenges 2.0 ───────────────────────────────────────────────────
+// Challenge content lives client-side; this server validates flags,
+// awards XP/badges, and tracks hint usage. Solo only for 2.0 — team
+// endpoints are stubbed.
+
+router.get(
+  "/pathways/challenges",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const [solves, attempts] = await Promise.all([
+      prisma.pathwayCtfSolve.findMany({
+        where: { userId },
+        select: { challengeSlug: true, solvedAt: true, hintsUsed: true },
+      }),
+      prisma.pathwayCtfAttempt.findMany({
+        where: { userId },
+        select: { challengeSlug: true, hintsUsed: true },
+      }),
+    ]);
+    const solveMap = new Map(solves.map((s) => [s.challengeSlug, s]));
+    // Per-challenge "highest hints used so far" — clients display this so
+    // students can resume where they left off.
+    const hintsBySlug = new Map<string, number>();
+    for (const a of attempts) {
+      const cur = hintsBySlug.get(a.challengeSlug) ?? 0;
+      if (a.hintsUsed > cur) hintsBySlug.set(a.challengeSlug, a.hintsUsed);
+    }
+    res.json({
+      totalSolved: solves.length,
+      totalAttempts: attempts.length,
+      solveMap: Object.fromEntries(
+        Array.from(solveMap.entries()).map(([slug, s]) => [
+          slug,
+          { solvedAt: s.solvedAt, hintsUsed: s.hintsUsed },
+        ]),
+      ),
+      hintsBySlug: Object.fromEntries(hintsBySlug),
+    });
+  },
+);
+
+const submitSchema = z.object({
+  submittedFlag: z.string().min(1).max(500),
+  teamId: z.string().optional(),
+});
+
+router.post(
+  "/pathways/challenges/:slug/submit",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = submitSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    const userId = req.user!.id;
+    const slug = req.params.slug;
+    const { submittedFlag, teamId } = parsed.data;
+
+    const challenge = getServerChallenge(slug);
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    const isCorrect = flagsMatch(submittedFlag, challenge.flag);
+
+    // Record attempt (regardless of correctness — analytics + replay).
+    await prisma.pathwayCtfAttempt.create({
+      data: {
+        userId,
+        challengeSlug: slug,
+        submittedFlag,
+        isCorrect,
+        teamId: teamId ?? null,
+      },
+    });
+
+    if (!isCorrect) {
+      return res.json({
+        correct: false,
+        message: "Not quite — try again.",
+      });
+    }
+
+    // Was this user's first correct solve for this challenge?
+    const existingSolve = await prisma.pathwayCtfSolve.findUnique({
+      where: { userId_challengeSlug: { userId, challengeSlug: slug } },
+    });
+    if (existingSolve) {
+      // Replay encouraged — no double XP, but acknowledge the work.
+      await recordActivity(userId);
+      return res.json({
+        correct: true,
+        message: "You've already solved this. Nice replay!",
+        alreadySolved: true,
+      });
+    }
+
+    // Aggregate attempts + max hint usage for this user/challenge.
+    const userAttempts = await prisma.pathwayCtfAttempt.findMany({
+      where: { userId, challengeSlug: slug },
+      select: { hintsUsed: true },
+    });
+    const hintsUsed = userAttempts.reduce(
+      (max, a) => Math.max(max, a.hintsUsed),
+      0,
+    );
+
+    await prisma.pathwayCtfSolve.create({
+      data: {
+        userId,
+        challengeSlug: slug,
+        category: challenge.category,
+        difficulty: challenge.difficulty,
+        hintsUsed,
+        totalAttempts: userAttempts.length,
+        teamId: teamId ?? null,
+      },
+    });
+
+    // XP + daily-goal tick (CTF counts toward "try 1 lab or quiz").
+    const xpAward = await awardXp(userId, challenge.xpReward, "ctf_solve", slug, {
+      category: challenge.category,
+      difficulty: challenge.difficulty,
+      hintsUsed,
+      totalAttempts: userAttempts.length,
+    });
+    await updateDailyGoalProgress(userId, "lab");
+    await recordActivity(userId);
+
+    // Badge logic (idempotent — awardBadge is unique-keyed).
+    const newBadges: BadgeAwardResult[] = [];
+
+    const totalSolves = await prisma.pathwayCtfSolve.count({ where: { userId } });
+    if (totalSolves === 1) {
+      const b = await awardBadge(userId, "first_flag");
+      if (b) newBadges.push(b);
+    }
+    if (totalSolves >= 5) {
+      const b = await awardBadge(userId, "flag_hunter");
+      if (b) newBadges.push(b);
+    }
+    if (totalSolves >= 15) {
+      const b = await awardBadge(userId, "flag_legend");
+      if (b) newBadges.push(b);
+    }
+
+    // Category-clear: 6 in a single category.
+    const categorySolveCount = await prisma.pathwayCtfSolve.count({
+      where: { userId, category: challenge.category },
+    });
+    if (categorySolveCount >= 6) {
+      const mastery = `${challenge.category}_master` as
+        | "cryptography_master"
+        | "web_master"
+        | "forensics_master"
+        | "networks_master";
+      const b = await awardBadge(userId, mastery);
+      if (b) newBadges.push(b);
+    }
+
+    // Cyber generalist: at least one in each of the four categories.
+    const groups = await prisma.pathwayCtfSolve.groupBy({
+      by: ["category"],
+      where: { userId },
+    });
+    if (groups.length >= 4) {
+      const b = await awardBadge(userId, "cyber_generalist");
+      if (b) newBadges.push(b);
+    }
+
+    res.json({
+      correct: true,
+      message: "Flag captured!",
+      xpAwarded: challenge.xpReward,
+      hintsUsed,
+      totalAttempts: userAttempts.length,
+      gamification: {
+        award: {
+          leveledUp: xpAward.leveledUp,
+          newLevel: xpAward.newLevel,
+          tier: xpAward.tier,
+        },
+        badges: newBadges,
+        moduleCompleted: false,
+      },
+    });
+  },
+);
+
+router.post(
+  "/pathways/challenges/:slug/hint",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const slug = req.params.slug;
+    const challenge = getServerChallenge(slug);
+    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+
+    // Already solved? Hints stay available for replay support.
+    // Highest hints previously used by this user on this challenge.
+    const last = await prisma.pathwayCtfAttempt.findFirst({
+      where: { userId, challengeSlug: slug },
+      orderBy: { hintsUsed: "desc" },
+      select: { hintsUsed: true },
+    });
+    const currentHints = last?.hintsUsed ?? 0;
+    if (currentHints >= 3) {
+      return res.json({ hint: null, hintsUsed: 3, hintsRemaining: 0, hintsExhausted: true });
+    }
+
+    const newCount = currentHints + 1;
+    const hint = challenge.hints[newCount - 1];
+
+    // Record a "hint" attempt so the new max-hints-used floor is captured.
+    await prisma.pathwayCtfAttempt.create({
+      data: {
+        userId,
+        challengeSlug: slug,
+        submittedFlag: "",
+        isCorrect: false,
+        hintsUsed: newCount,
+      },
+    });
+
+    res.json({
+      hint,
+      hintsUsed: newCount,
+      hintsRemaining: 3 - newCount,
+    });
+  },
+);
+
+// Team stubs — wired in 2.1. Schema exists so we can persist progress
+// once the UI ships; these endpoints return 501 for now.
+router.post(
+  "/pathways/teams",
+  requireAuth,
+  async (_req: Request, res: Response) => {
+    res
+      .status(501)
+      .json({ error: "Team mode is launching in the next update. Solo play is fully supported." });
+  },
+);
+router.post(
+  "/pathways/teams/join",
+  requireAuth,
+  async (_req: Request, res: Response) => {
+    res.status(501).json({ error: "Team mode is launching in the next update." });
+  },
+);
+router.get(
+  "/pathways/teams/me",
+  requireAuth,
+  async (_req: Request, res: Response) => {
+    res.json({ team: null });
   },
 );
 
@@ -734,6 +1263,173 @@ router.get(
     });
 
     res.json({ user, enrollments, milestones });
+  },
+);
+
+// ─── Facilitator: gamification visibility ─────────────────────────────────
+
+router.get(
+  "/pathways/facilitator/cohorts/:id/gamification",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const cohort = await ownedCohort(req.params.id, req.user!.id);
+    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
+
+    const enrollments = await prisma.pathwayEnrollment.findMany({
+      where: { cohortId: cohort.id },
+      select: { userId: true },
+    });
+    const summary = await summarizeCohortGamification(
+      enrollments.map((e) => e.userId),
+    );
+    res.json(summary);
+  },
+);
+
+router.get(
+  "/pathways/facilitator/cohorts/:id/challenges",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const cohort = await ownedCohort(req.params.id, req.user!.id);
+    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
+
+    const enrollments = await prisma.pathwayEnrollment.findMany({
+      where: { cohortId: cohort.id },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+    const userIds = enrollments.map((e) => e.userId);
+
+    if (userIds.length === 0) {
+      return res.json({
+        totalFlags: 0,
+        perStudent: [],
+        mostAttempted: null,
+        averageHintsPerSolve: 0,
+      });
+    }
+
+    const [solves, attempts] = await Promise.all([
+      prisma.pathwayCtfSolve.findMany({
+        where: { userId: { in: userIds } },
+        select: {
+          userId: true,
+          challengeSlug: true,
+          category: true,
+          hintsUsed: true,
+        },
+      }),
+      prisma.pathwayCtfAttempt.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, challengeSlug: true, isCorrect: true },
+      }),
+    ]);
+
+    // Per-student breakdown.
+    const perStudent = enrollments.map((e) => {
+      const userSolves = solves.filter((s) => s.userId === e.userId);
+      const byCategory = {
+        cryptography: 0,
+        web: 0,
+        forensics: 0,
+        networks: 0,
+      } as Record<string, number>;
+      for (const s of userSolves) {
+        byCategory[s.category] = (byCategory[s.category] ?? 0) + 1;
+      }
+      const userAttempts = attempts.filter((a) => a.userId === e.userId).length;
+      return {
+        userId: e.userId,
+        name: e.user.name,
+        email: e.user.email,
+        totalFlags: userSolves.length,
+        attempts: userAttempts,
+        byCategory,
+      };
+    });
+
+    // Most-attempted challenge in cohort.
+    const attemptCounts = new Map<string, number>();
+    for (const a of attempts) {
+      attemptCounts.set(
+        a.challengeSlug,
+        (attemptCounts.get(a.challengeSlug) ?? 0) + 1,
+      );
+    }
+    let mostAttempted: { slug: string; attempts: number } | null = null;
+    for (const [slug, count] of attemptCounts) {
+      if (!mostAttempted || count > mostAttempted.attempts) {
+        mostAttempted = { slug, attempts: count };
+      }
+    }
+
+    const averageHintsPerSolve =
+      solves.length === 0
+        ? 0
+        : Math.round(
+            (solves.reduce((sum, s) => sum + s.hintsUsed, 0) / solves.length) * 10,
+          ) / 10;
+
+    res.json({
+      totalFlags: solves.length,
+      perStudent,
+      mostAttempted,
+      averageHintsPerSolve,
+      challengeCatalogSize: CTF_CHALLENGES_SERVER.length,
+    });
+  },
+);
+
+router.get(
+  "/pathways/facilitator/learners/:userId/gamification",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    // Verify the learner is in one of this facilitator's cohorts.
+    const cohorts = await prisma.pathwayCohort.findMany({
+      where: { facilitatorId: req.user!.id },
+      select: { id: true },
+    });
+    const cohortIds = cohorts.map((c) => c.id);
+    const ok = await prisma.pathwayEnrollment.findFirst({
+      where: { userId: req.params.userId, cohortId: { in: cohortIds } },
+      select: { id: true },
+    });
+    if (!ok) return res.status(404).json({ error: "Learner not found in your cohorts" });
+
+    const userId = req.params.userId;
+    const state = await prisma.pathwayGamification.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
+    });
+    const badges = await prisma.pathwayBadge.findMany({
+      where: { userId },
+      orderBy: { earnedAt: "desc" },
+    });
+    const recentEvents = await prisma.pathwayXpEvent.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    res.json({
+      state: {
+        ...state,
+        levelTier: getLevelTier(state.currentLevel),
+        xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+      },
+      badges: badges.map((b) => ({
+        slug: b.slug,
+        name: BADGES[b.slug]?.name ?? b.slug,
+        description: BADGES[b.slug]?.description ?? "",
+        icon: BADGES[b.slug]?.icon ?? "★",
+        earnedAt: b.earnedAt,
+      })),
+      recentEvents,
+    });
   },
 );
 

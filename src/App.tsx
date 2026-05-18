@@ -55,6 +55,8 @@ import PathwaysLayout from "./components/pathways/PathwaysLayout";
 import PathwaysHome from "./components/pathways/PathwaysHome";
 import TracksOverview from "./components/pathways/TracksOverview";
 import TrackDetail from "./components/pathways/TrackDetail";
+import ChallengesPage from "./components/pathways/challenges/ChallengesPage";
+import ChallengePage from "./components/pathways/challenges/ChallengePage";
 import ModulePlayer from "./components/pathways/ModulePlayer";
 import PathwaysProfile from "./components/pathways/PathwaysProfile";
 import PathwaysAbout from "./components/pathways/PathwaysAbout";
@@ -187,6 +189,8 @@ function App() {
                 <Route path="tracks" element={<TracksOverview />} />
                 <Route path="tracks/:trackSlug" element={<TrackDetail />} />
                 <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
+                <Route path="challenges" element={<ChallengesPage />} />
+                <Route path="challenges/:slug" element={<ChallengePage />} />
                 <Route path="profile" element={<PathwaysProfile />} />
               </Route>
 
