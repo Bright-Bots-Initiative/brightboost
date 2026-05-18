@@ -705,7 +705,9 @@ model PathwayCohort {
   status        String   @default("draft")
   notes         Json?
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // @default(now()) lets `prisma db push` (the predeploy.sh fallback when
+  // `migrate deploy` errors P3005) add this column to non-empty tables.
+  updatedAt     DateTime @default(now()) @updatedAt
 
   enrollments   PathwayEnrollment[]
   ctfTeams      PathwayCtfTeam[]
