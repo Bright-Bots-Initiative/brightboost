@@ -212,6 +212,21 @@ interface CohortEngagement {
   topByXpThisWeek: Array<{ userId: string; name: string | null; email: string | null; xp: number }>;
 }
 
+interface CohortChallenges {
+  totalFlags: number;
+  averageHintsPerSolve: number;
+  mostAttempted: { slug: string; attempts: number } | null;
+  challengeCatalogSize?: number;
+  perStudent: Array<{
+    userId: string;
+    name: string | null;
+    email: string | null;
+    totalFlags: number;
+    attempts: number;
+    byCategory: Record<string, number>;
+  }>;
+}
+
 function EngagementTab({
   cohortId,
   progress,
@@ -221,6 +236,7 @@ function EngagementTab({
 }) {
   const [data, setData] = useState<CohortEngagement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subTab, setSubTab] = useState<"overview" | "challenges">("overview");
 
   useEffect(() => {
     fetch(`/api/pathways/facilitator/cohorts/${cohortId}/gamification`, {
@@ -251,6 +267,40 @@ function EngagementTab({
     );
   }
 
+  const SubTabBar = (
+    <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/40 p-1 text-sm">
+      <button
+        onClick={() => setSubTab("overview")}
+        className={`px-3 py-1.5 rounded-md min-h-[36px] font-medium transition-colors ${
+          subTab === "overview"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+        }`}
+      >
+        Overview
+      </button>
+      <button
+        onClick={() => setSubTab("challenges")}
+        className={`px-3 py-1.5 rounded-md min-h-[36px] font-medium transition-colors ${
+          subTab === "challenges"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+        }`}
+      >
+        Challenges
+      </button>
+    </div>
+  );
+
+  if (subTab === "challenges") {
+    return (
+      <div className="space-y-4">
+        {SubTabBar}
+        <EngagementChallengesPanel cohortId={cohortId} />
+      </div>
+    );
+  }
+
   const dgPct =
     data.dailyGoalRateToday.total > 0
       ? Math.round((data.dailyGoalRateToday.complete / data.dailyGoalRateToday.total) * 100)
@@ -265,6 +315,7 @@ function EngagementTab({
 
   return (
     <div className="space-y-5">
+      {SubTabBar}
       {/* Top-line metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <MetricCell label="Avg Level" value={data.avgLevel} />
@@ -361,6 +412,160 @@ function EngagementTab({
         </Card>
       )}
     </div>
+  );
+}
+
+function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
+  const [data, setData] = useState<CohortChallenges | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/pathways/facilitator/cohorts/${cohortId}/challenges`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .finally(() => setLoading(false));
+  }, [cohortId]);
+
+  if (loading) {
+    return (
+      <Card>
+        <div className="px-5 py-12 text-center text-sm text-slate-600 dark:text-slate-400">
+          Loading challenges…
+        </div>
+      </Card>
+    );
+  }
+  if (!data) {
+    return (
+      <Card>
+        <div className="px-5 py-12 text-center text-sm text-slate-600 dark:text-slate-400">
+          Couldn't load CTF data.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Top-line */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+        <MetricCell label="Total flags" value={data.totalFlags} />
+        <MetricCell
+          label="Avg hints / solve"
+          value={data.averageHintsPerSolve.toFixed(1)}
+          secondary={data.averageHintsPerSolve > 2 ? "high — consider group instruction" : undefined}
+        />
+        <MetricCell
+          label="Most attempted"
+          value={data.mostAttempted?.slug ?? "—"}
+          secondary={data.mostAttempted ? `${data.mostAttempted.attempts} attempts` : undefined}
+        />
+      </div>
+
+      {/* Per-student flag breakdown */}
+      <Card>
+        <div className="px-4 sm:px-5 py-4">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Per-student flags
+          </p>
+          {data.perStudent.length === 0 ? (
+            <p className="text-xs text-slate-600 dark:text-slate-400">No learners enrolled.</p>
+          ) : (
+            <>
+              {/* Mobile: card list */}
+              <div className="md:hidden space-y-2">
+                {data.perStudent.map((s) => (
+                  <Link
+                    key={s.userId}
+                    to={`/pathways/facilitator/learners/${s.userId}`}
+                    className="block rounded-lg border bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700/40 p-3 active:scale-[0.99] transition-transform"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {s.name ?? s.email ?? "—"}
+                      </p>
+                      <span className="font-mono text-xs shrink-0 text-emerald-700 dark:text-emerald-400 font-semibold">
+                        {s.totalFlags}/{data.challengeCatalogSize ?? 24}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-1 text-[10px] text-slate-600 dark:text-slate-400">
+                      <CatBadge label="crypto" n={s.byCategory.cryptography ?? 0} />
+                      <CatBadge label="web" n={s.byCategory.web ?? 0} />
+                      <CatBadge label="forensics" n={s.byCategory.forensics ?? 0} />
+                      <CatBadge label="networks" n={s.byCategory.networks ?? 0} />
+                      <span className="ml-auto text-slate-500">{s.attempts} attempts</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <table className="hidden md:table w-full text-sm">
+                <thead className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 text-left border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="py-2 pr-3">Learner</th>
+                    <th className="py-2 px-2 text-right">Flags</th>
+                    <th className="py-2 px-2 text-right">Crypto</th>
+                    <th className="py-2 px-2 text-right">Web</th>
+                    <th className="py-2 px-2 text-right">Forensics</th>
+                    <th className="py-2 px-2 text-right">Networks</th>
+                    <th className="py-2 pl-2 text-right">Attempts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {data.perStudent.map((s) => (
+                    <tr key={s.userId} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                      <td className="py-2 pr-3">
+                        <Link
+                          to={`/pathways/facilitator/learners/${s.userId}`}
+                          className="text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+                        >
+                          {s.name ?? s.email ?? "—"}
+                        </Link>
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
+                        {s.totalFlags}/{data.challengeCatalogSize ?? 24}
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">
+                        {s.byCategory.cryptography ?? 0}
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">
+                        {s.byCategory.web ?? 0}
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">
+                        {s.byCategory.forensics ?? 0}
+                      </td>
+                      <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">
+                        {s.byCategory.networks ?? 0}
+                      </td>
+                      <td className="py-2 pl-2 text-right text-slate-500 dark:text-slate-500">
+                        {s.attempts}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function CatBadge({ label, n }: { label: string; n: number }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
+        n > 0
+          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500"
+      }`}
+    >
+      {label} <span className="font-mono">{n}</span>
+    </span>
   );
 }
 

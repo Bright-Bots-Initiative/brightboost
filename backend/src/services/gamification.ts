@@ -130,6 +130,55 @@ export const BADGES: Record<string, BadgeDef> = {
     xp: 200,
     icon: "🏆",
   },
+  // CTF (Phase 2.0)
+  first_flag: {
+    name: "First Flag",
+    description: "Solved your first CTF challenge",
+    xp: 50,
+    icon: "🚩",
+  },
+  flag_hunter: {
+    name: "Flag Hunter",
+    description: "Solved 5 CTF challenges",
+    xp: 100,
+    icon: "🏹",
+  },
+  flag_legend: {
+    name: "Flag Legend",
+    description: "Solved 15 CTF challenges",
+    xp: 250,
+    icon: "👑",
+  },
+  cryptography_master: {
+    name: "Cryptography Master",
+    description: "Solved all 6 cryptography challenges",
+    xp: 150,
+    icon: "🔐",
+  },
+  web_master: {
+    name: "Web Master",
+    description: "Solved all 6 web security challenges",
+    xp: 150,
+    icon: "🕸",
+  },
+  forensics_master: {
+    name: "Forensics Master",
+    description: "Solved all 6 forensics challenges",
+    xp: 150,
+    icon: "🔍",
+  },
+  networks_master: {
+    name: "Networks Master",
+    description: "Solved all 6 networks challenges",
+    xp: 150,
+    icon: "🌐",
+  },
+  cyber_generalist: {
+    name: "Cyber Generalist",
+    description: "Solved at least one challenge in every category",
+    xp: 200,
+    icon: "🎖",
+  },
 };
 
 export type BadgeSlug = keyof typeof BADGES;

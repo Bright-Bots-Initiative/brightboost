@@ -94,6 +94,9 @@ model User {
   pathwayGamification PathwayGamification?
   pathwayBadges       PathwayBadge[]
   pathwayDailyGoals   PathwayDailyGoal[]
+  pathwayCtfAttempts  PathwayCtfAttempt[]
+  pathwayCtfSolves    PathwayCtfSolve[]
+  pathwayCtfTeams     PathwayCtfTeamMember[]
 }
 
 // -----------------------------------------------------------------------------
@@ -705,6 +708,7 @@ model PathwayCohort {
   updatedAt     DateTime @updatedAt
 
   enrollments   PathwayEnrollment[]
+  ctfTeams      PathwayCtfTeam[]
 
   @@index([facilitatorId])
   @@index([status])
@@ -825,6 +829,70 @@ model PathwayDailyGoal {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+model PathwayCtfAttempt {
+  id            String   @id @default(cuid())
+  userId        String
+  challengeSlug String
+  submittedFlag String
+  isCorrect     Boolean  @default(false)
+  hintsUsed     Int      @default(0)
+  timeSpentSec  Int      @default(0)
+  teamId        String?
+  submittedAt   DateTime @default(now())
+
+  user User             @relation(fields: [userId], references: [id])
+  team PathwayCtfTeam?  @relation(fields: [teamId], references: [id])
+
+  @@index([userId, challengeSlug])
+  @@index([userId, isCorrect])
+  @@index([teamId, challengeSlug])
+}
+
+model PathwayCtfSolve {
+  id            String   @id @default(cuid())
+  userId        String
+  challengeSlug String
+  category      String
+  difficulty    String
+  solvedAt      DateTime @default(now())
+  hintsUsed     Int      @default(0)
+  totalAttempts Int      @default(1)
+  teamId        String?
+
+  user User             @relation(fields: [userId], references: [id])
+  team PathwayCtfTeam?  @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, challengeSlug])
+  @@index([userId, solvedAt])
+  @@index([category])
+}
+
+model PathwayCtfTeam {
+  id         String   @id @default(cuid())
+  name       String
+  cohortId   String?
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+
+  cohort   PathwayCohort?         @relation(fields: [cohortId], references: [id])
+  members  PathwayCtfTeamMember[]
+  attempts PathwayCtfAttempt[]
+  solves   PathwayCtfSolve[]
+}
+
+model PathwayCtfTeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String
+  joinedAt DateTime @default(now())
+
+  team PathwayCtfTeam @relation(fields: [teamId], references: [id])
+  user User           @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
 }
 
 // -----------------------------------------------------------------------------
