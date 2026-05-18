@@ -29,6 +29,55 @@ import {
 
 const router = Router();
 
+/**
+ * Race a Prisma promise against a server-side timeout. Without this, a hung
+ * connection (e.g., from a failed migration leaving the pool exhausted) can
+ * keep an Express request open until the client times out — which surfaces
+ * as a "hanging" dashboard for the student.
+ */
+function withTimeout<T>(p: Promise<T>, ms = 5000, label = "db"): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label}_timeout_${ms}ms`)), ms),
+    ),
+  ]);
+}
+
+/** Safe defaults for a brand-new student whose gamification rows haven't been
+ *  created yet — also the fallback shape we return when the table is missing
+ *  in prod so the dashboard always renders. */
+const DEFAULT_GAMIFICATION_ME = {
+  totalXp: 0,
+  currentLevel: 1,
+  levelTier: { tier: "Recruit", color: "slate" },
+  xpProgress: { current: 0, needed: 50 },
+  currentStreak: 0,
+  longestStreak: 0,
+  streakFreezesAvailable: 1,
+  lastActiveDate: null as string | null,
+  badgesEarned: 0,
+  recentBadges: [] as Array<{
+    slug: string;
+    name: string;
+    description: string;
+    icon: string;
+    earnedAt: Date;
+  }>,
+} as const;
+
+const DEFAULT_DAILY_GOALS = {
+  id: "ephemeral",
+  date: new Date().toISOString().slice(0, 10),
+  goals: [
+    { slug: "complete_section", label: "Complete 1 section", target: 1, current: 0, completed: false },
+    { slug: "earn_xp", label: "Earn 50 XP", target: 50, current: 0, completed: false },
+    { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1, current: 0, completed: false },
+  ],
+  allComplete: false,
+  bonusAwarded: false,
+} as const;
+
 // ── Validation ──────────────────────────────────────────────────────────
 
 const createCohortSchema = z.object({
@@ -201,33 +250,54 @@ router.get(
   "/pathways/student/home",
   requireAuth,
   async (req: Request, res: Response) => {
-    const enrollments = await prisma.pathwayEnrollment.findMany({
-      where: { userId: req.user!.id, status: "active" },
-      include: { cohort: true },
-    });
+    const userId = req.user!.id;
+    try {
+      // Run the three queries in parallel and bounded by a server-side
+      // timeout. A single hanging connection (e.g., from a partly-failed
+      // migration) used to leave this handler open until the client gave up.
+      const [enrollments, milestones, user] = await withTimeout(
+        Promise.all([
+          prisma.pathwayEnrollment.findMany({
+            where: { userId, status: "active" },
+            include: { cohort: true },
+          }),
+          prisma.pathwayMilestone.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+          }),
+          prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true, ageBand: true, userType: true },
+          }),
+        ]),
+        5000,
+        "student_home",
+      );
 
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: { userId: req.user!.id },
-      orderBy: { createdAt: "desc" },
-    });
-
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      select: { name: true, ageBand: true, userType: true },
-    });
-
-    res.json({
-      user,
-      enrollments: enrollments.map((e) => ({
-        cohortId: e.cohort.id,
-        cohortName: e.cohort.name,
-        band: e.cohort.band,
-        trackIds: e.cohort.trackIds,
-        sitePartner: e.cohort.sitePartner,
-      })),
-      milestones,
-      recentActivity: milestones.slice(0, 5),
-    });
+      res.json({
+        user,
+        enrollments: enrollments.map((e) => ({
+          cohortId: e.cohort.id,
+          cohortName: e.cohort.name,
+          band: e.cohort.band,
+          trackIds: e.cohort.trackIds,
+          sitePartner: e.cohort.sitePartner,
+        })),
+        milestones,
+        recentActivity: milestones.slice(0, 5),
+      });
+    } catch (err) {
+      // Never leave the request hanging — return a usable empty payload so
+      // the dashboard can still render. Surface the cause in logs for ops.
+      console.error("[pathways/student/home] failed:", err);
+      res.status(200).json({
+        user: null,
+        enrollments: [],
+        milestones: [],
+        recentActivity: [],
+        degraded: true,
+      });
+    }
   },
 );
 
@@ -586,35 +656,49 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const state = await prisma.pathwayGamification.upsert({
-      where: { userId },
-      create: { userId },
-      update: {},
-    });
-    const recentBadges = await prisma.pathwayBadge.findMany({
-      where: { userId },
-      orderBy: { earnedAt: "desc" },
-      take: 6,
-    });
-    const totalBadges = await prisma.pathwayBadge.count({ where: { userId } });
-    res.json({
-      totalXp: state.totalXp,
-      currentLevel: state.currentLevel,
-      levelTier: getLevelTier(state.currentLevel),
-      xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
-      currentStreak: state.currentStreak,
-      longestStreak: state.longestStreak,
-      streakFreezesAvailable: state.streakFreezesAvailable,
-      lastActiveDate: state.lastActiveDate,
-      badgesEarned: totalBadges,
-      recentBadges: recentBadges.map((b) => ({
-        slug: b.slug,
-        name: BADGES[b.slug]?.name ?? b.slug,
-        description: BADGES[b.slug]?.description ?? "",
-        icon: BADGES[b.slug]?.icon ?? "★",
-        earnedAt: b.earnedAt,
-      })),
-    });
+    try {
+      const [state, recentBadges, totalBadges] = await withTimeout(
+        Promise.all([
+          prisma.pathwayGamification.upsert({
+            where: { userId },
+            create: { userId },
+            update: {},
+          }),
+          prisma.pathwayBadge.findMany({
+            where: { userId },
+            orderBy: { earnedAt: "desc" },
+            take: 6,
+          }),
+          prisma.pathwayBadge.count({ where: { userId } }),
+        ]),
+        5000,
+        "gamification_me",
+      );
+      res.json({
+        totalXp: state.totalXp,
+        currentLevel: state.currentLevel,
+        levelTier: getLevelTier(state.currentLevel),
+        xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+        currentStreak: state.currentStreak,
+        longestStreak: state.longestStreak,
+        streakFreezesAvailable: state.streakFreezesAvailable,
+        lastActiveDate: state.lastActiveDate,
+        badgesEarned: totalBadges,
+        recentBadges: recentBadges.map((b) => ({
+          slug: b.slug,
+          name: BADGES[b.slug]?.name ?? b.slug,
+          description: BADGES[b.slug]?.description ?? "",
+          icon: BADGES[b.slug]?.icon ?? "★",
+          earnedAt: b.earnedAt,
+        })),
+      });
+    } catch (err) {
+      // The gamification tables may not exist yet (e.g., migration pending).
+      // Return defaults so the dashboard renders Level 1 / 0 XP / no badges
+      // instead of hanging the student's home page.
+      console.error("[pathways/gamification/me] failed:", err);
+      res.status(200).json({ ...DEFAULT_GAMIFICATION_ME, degraded: true });
+    }
   },
 );
 
@@ -623,20 +707,39 @@ router.get(
   requireAuth,
   async (req: Request, res: Response) => {
     const userId = req.user!.id;
-    const earned = await prisma.pathwayBadge.findMany({
-      where: { userId },
-      orderBy: { earnedAt: "desc" },
-    });
-    const earnedMap = new Map(earned.map((b) => [b.slug, b]));
-    const catalog = Object.entries(BADGES).map(([slug, def]) => ({
-      slug,
-      name: def.name,
-      description: def.description,
-      icon: def.icon,
-      xp: def.xp,
-      earnedAt: earnedMap.get(slug)?.earnedAt ?? null,
-    }));
-    res.json(catalog);
+    try {
+      const earned = await withTimeout(
+        prisma.pathwayBadge.findMany({
+          where: { userId },
+          orderBy: { earnedAt: "desc" },
+        }),
+        5000,
+        "badges",
+      );
+      const earnedMap = new Map(earned.map((b) => [b.slug, b]));
+      const catalog = Object.entries(BADGES).map(([slug, def]) => ({
+        slug,
+        name: def.name,
+        description: def.description,
+        icon: def.icon,
+        xp: def.xp,
+        earnedAt: earnedMap.get(slug)?.earnedAt ?? null,
+      }));
+      res.json(catalog);
+    } catch (err) {
+      console.error("[pathways/gamification/me/badges] failed:", err);
+      // Catalog with everything locked — the profile still renders.
+      res.status(200).json(
+        Object.entries(BADGES).map(([slug, def]) => ({
+          slug,
+          name: def.name,
+          description: def.description,
+          icon: def.icon,
+          xp: def.xp,
+          earnedAt: null,
+        })),
+      );
+    }
   },
 );
 
@@ -644,8 +747,19 @@ router.get(
   "/pathways/gamification/me/daily-goals",
   requireAuth,
   async (req: Request, res: Response) => {
-    const goals = await getOrCreateDailyGoals(req.user!.id);
-    res.json(goals);
+    try {
+      const goals = await withTimeout(
+        getOrCreateDailyGoals(req.user!.id),
+        5000,
+        "daily_goals",
+      );
+      res.json(goals);
+    } catch (err) {
+      console.error("[pathways/gamification/me/daily-goals] failed:", err);
+      // Ephemeral default goals so the home card still renders. Real progress
+      // resumes when the DB recovers / migration finishes.
+      res.status(200).json({ ...DEFAULT_DAILY_GOALS, degraded: true });
+    }
   },
 );
 
@@ -653,17 +767,32 @@ router.get(
   "/pathways/gamification/me/level",
   requireAuth,
   async (req: Request, res: Response) => {
-    const state = await prisma.pathwayGamification.upsert({
-      where: { userId: req.user!.id },
-      create: { userId: req.user!.id },
-      update: {},
-    });
-    res.json({
-      currentLevel: state.currentLevel,
-      tier: getLevelTier(state.currentLevel),
-      totalXp: state.totalXp,
-      xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
-    });
+    try {
+      const state = await withTimeout(
+        prisma.pathwayGamification.upsert({
+          where: { userId: req.user!.id },
+          create: { userId: req.user!.id },
+          update: {},
+        }),
+        5000,
+        "level",
+      );
+      res.json({
+        currentLevel: state.currentLevel,
+        tier: getLevelTier(state.currentLevel),
+        totalXp: state.totalXp,
+        xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+      });
+    } catch (err) {
+      console.error("[pathways/gamification/me/level] failed:", err);
+      res.status(200).json({
+        currentLevel: 1,
+        tier: { tier: "Recruit", color: "slate" },
+        totalXp: 0,
+        xpProgress: { current: 0, needed: 50 },
+        degraded: true,
+      });
+    }
   },
 );
 
@@ -671,12 +800,21 @@ router.get(
   "/pathways/gamification/me/events",
   requireAuth,
   async (req: Request, res: Response) => {
-    const events = await prisma.pathwayXpEvent.findMany({
-      where: { userId: req.user!.id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    });
-    res.json(events);
+    try {
+      const events = await withTimeout(
+        prisma.pathwayXpEvent.findMany({
+          where: { userId: req.user!.id },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        }),
+        5000,
+        "events",
+      );
+      res.json(events);
+    } catch (err) {
+      console.error("[pathways/gamification/me/events] failed:", err);
+      res.status(200).json([]);
+    }
   },
 );
 
@@ -684,8 +822,18 @@ router.post(
   "/pathways/gamification/me/activity",
   requireAuth,
   async (req: Request, res: Response) => {
-    const result = await recordActivity(req.user!.id);
-    res.json(result);
+    try {
+      const result = await withTimeout(
+        recordActivity(req.user!.id),
+        5000,
+        "activity",
+      );
+      res.json(result);
+    } catch (err) {
+      // Activity ticks are best-effort; never block the client on them.
+      console.error("[pathways/gamification/me/activity] failed:", err);
+      res.status(200).json({ streak: 0, longestStreak: 0, freezeUsed: false, degraded: true });
+    }
   },
 );
 

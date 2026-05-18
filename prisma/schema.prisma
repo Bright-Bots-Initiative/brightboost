@@ -711,7 +711,11 @@ model PathwayCohort {
   status        String   @default("draft") // draft | active | paused | ended | archived
   notes         Json?    // facilitator notes — array of { text, author, ts }
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // `@default(now())` is here so `prisma db push` (the production fallback
+  // when `migrate deploy` errors P3005) can add the column to tables that
+  // already have rows. Migrations apply `DEFAULT CURRENT_TIMESTAMP` to the
+  // SQL column either way.
+  updatedAt     DateTime @default(now()) @updatedAt
 
   enrollments   PathwayEnrollment[]
   ctfTeams      PathwayCtfTeam[]
