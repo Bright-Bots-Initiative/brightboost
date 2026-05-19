@@ -33,4 +33,14 @@ npx prisma generate --schema "$SCHEMA"
 echo "predeploy: running seed from $SEED_FILE"
 node "$SEED_FILE" || echo "predeploy: seed had warnings (non-fatal)"
 
+# One-time gamification backfill — gated by RUN_GAMIFICATION_BACKFILL=true.
+# The script is idempotent (XP events keyed by source+sourceRefId, badges
+# upserted via unique constraint) so leaving the env var on across deploys
+# is safe; clearing it after the first successful run avoids needless work.
+if [ "$RUN_GAMIFICATION_BACKFILL" = "true" ]; then
+  echo "predeploy: running gamification backfill"
+  node scripts/backfill-gamification.cjs || \
+    echo "predeploy: backfill had warnings (non-fatal)"
+fi
+
 echo "predeploy: done"
