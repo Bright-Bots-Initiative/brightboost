@@ -179,6 +179,31 @@ export const BADGES: Record<string, BadgeDef> = {
     xp: 200,
     icon: "🎖",
   },
+  // Onboarding + glossary (Phase 2.1)
+  getting_started: {
+    name: "Getting Started",
+    description: "Completed Cyber Skills 101",
+    xp: 30,
+    icon: "🌱",
+  },
+  word_collector: {
+    name: "Word Collector",
+    description: "Viewed 25 glossary terms",
+    xp: 30,
+    icon: "📘",
+  },
+  vocab_builder: {
+    name: "Vocabulary Builder",
+    description: "Viewed 50 glossary terms",
+    xp: 60,
+    icon: "📚",
+  },
+  cyber_linguist: {
+    name: "Cyber Linguist",
+    description: "Viewed 100 glossary terms",
+    xp: 150,
+    icon: "🗣",
+  },
 };
 
 export type BadgeSlug = keyof typeof BADGES;

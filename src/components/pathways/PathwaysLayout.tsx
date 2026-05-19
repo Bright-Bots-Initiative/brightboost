@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen, Flag } from "lucide-react";
+import { Home, Compass, User, Users, LogOut, Moon, Sun, BookOpen, Flag, Library } from "lucide-react";
 import LanguageToggle from "@/components/LanguageToggle";
 import { CelebrationProvider } from "./gamification/CelebrationContext";
 
@@ -72,6 +72,7 @@ export default function PathwaysLayout() {
           <SidebarLink to="/pathways" icon={<Home className="w-4 h-4" />} label={t("pathways.layout.nav.home")} end />
           <SidebarLink to="/pathways/tracks" icon={<Compass className="w-4 h-4" />} label={t("pathways.layout.nav.tracks")} />
           <SidebarLink to="/pathways/challenges" icon={<Flag className="w-4 h-4" />} label={t("pathways.layout.nav.challenges", "Challenges")} />
+          <SidebarLink to="/pathways/glossary" icon={<Library className="w-4 h-4" />} label={t("pathways.layout.nav.glossary", "Glossary")} />
           <SidebarLink to="/pathways/profile" icon={<User className="w-4 h-4" />} label={t("pathways.layout.nav.profile")} />
           {isFacilitator && (
             <>

@@ -71,7 +71,31 @@ interface CohortProgress {
     completedCount: number;
     totalModules: number;
     lastActive: string | null;
+    onboardingStatus?: "completed" | "in_progress" | "not_started";
   }>;
+}
+
+function OnboardingDot({ status }: { status?: "completed" | "in_progress" | "not_started" }) {
+  const s = status ?? "not_started";
+  const cls =
+    s === "completed"
+      ? "bg-emerald-500"
+      : s === "in_progress"
+        ? "bg-amber-400"
+        : "bg-slate-300 dark:bg-slate-600";
+  const label =
+    s === "completed"
+      ? "Onboarding complete"
+      : s === "in_progress"
+        ? "Onboarding in progress"
+        : "Onboarding not started";
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={`inline-block w-2 h-2 rounded-full ${cls}`}
+    />
+  );
 }
 
 export default function CohortDetail() {
@@ -848,12 +872,15 @@ function RosterTab({
                   className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <Link
-                      to={`/pathways/facilitator/learners/${e.user.id}`}
-                      className="font-semibold text-slate-900 dark:text-slate-100 truncate flex-1 min-w-0"
-                    >
-                      {e.user.name ?? e.user.email}
-                    </Link>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <OnboardingDot status={lp?.onboardingStatus} />
+                      <Link
+                        to={`/pathways/facilitator/learners/${e.user.id}`}
+                        className="font-semibold text-slate-900 dark:text-slate-100 truncate"
+                      >
+                        {e.user.name ?? e.user.email}
+                      </Link>
+                    </div>
                     <button
                       onClick={() => removeLearner(e.user.id, e.user.name)}
                       aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
@@ -898,13 +925,16 @@ function RosterTab({
                   return (
                     <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                       <td className="px-5 py-3">
-                        <Link
-                          to={`/pathways/facilitator/learners/${e.user.id}`}
-                          className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
-                        >
-                          {e.user.name ?? e.user.email}
-                        </Link>
-                        <p className="text-xs text-slate-600 dark:text-slate-500">{e.user.email}</p>
+                        <div className="flex items-center gap-2">
+                          <OnboardingDot status={lp?.onboardingStatus} />
+                          <Link
+                            to={`/pathways/facilitator/learners/${e.user.id}`}
+                            className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300"
+                          >
+                            {e.user.name ?? e.user.email}
+                          </Link>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-500 ml-4">{e.user.email}</p>
                       </td>
                       <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
                         {lp?.completedCount ?? 0}<span className="text-slate-500">/7</span>

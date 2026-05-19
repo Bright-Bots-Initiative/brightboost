@@ -120,8 +120,8 @@ const CYBER_FOUNDATIONS: ModuleContent = {
       {
         heading: "What cybersecurity actually is",
         paragraphs: [
-          "**Cybersecurity** is the practice of protecting digital systems, networks, and data from people who shouldn't have access. That's the short version. The longer version is that cybersecurity professionals work to keep four things true about every important system: it stays private when it should, it stays accurate, it stays available, and only the right people get to use it.",
-          "Those four properties are sometimes called the **CIA triad** plus authentication: **Confidentiality** (only authorized people see the data), **Integrity** (the data hasn't been tampered with), **Availability** (the system is there when you need it), and **Authentication** (the system can prove who you are). Almost every defense you'll learn about maps back to one of these four.",
+          "[[cybersecurity|**Cybersecurity**]] is the practice of protecting digital systems, networks, and data from people who shouldn't have access. That's the short version. The longer version is that cybersecurity professionals work to keep four things true about every important system: it stays private when it should, it stays accurate, it stays available, and only the right people get to use it.",
+          "Those four properties are sometimes called the [[cia-triad|**CIA triad**]] plus authentication: **Confidentiality** (only authorized people see the data), **Integrity** (the data hasn't been tampered with), **Availability** (the system is there when you need it), and [[authentication|**Authentication**]] (the system can prove who you are). Almost every defense you'll learn about maps back to one of these four.",
           "You already use cybersecurity every day without thinking about it. The password on your phone is confidentiality. The little lock icon next to a website's URL is integrity and authentication. When TikTok keeps working through a holiday weekend, that's availability — and there's a team behind it keeping it that way.",
         ],
         callout: "Almost every defense you'll learn maps back to one of four ideas: Confidentiality, Integrity, Availability, Authentication.",
@@ -130,7 +130,7 @@ const CYBER_FOUNDATIONS: ModuleContent = {
           { term: "Authentication", definition: "Verifying that a person or system is who they claim to be." },
         ],
         grcLens: {
-          body: "Every CIA Triad decision is a **GRC** decision. Companies don't just want security — they need to **prove it** to auditors, regulators, and their boards. That proof is what GRC (Governance, Risk, and Compliance) people produce.",
+          body: "Every CIA Triad decision is a [[grc|**GRC**]] decision. Companies don't just want security — they need to **prove it** to [[audit|auditors]], regulators, and their boards. That proof is what GRC (Governance, Risk, and [[compliance|Compliance]]) people produce.",
         },
       },
       {
@@ -160,9 +160,9 @@ const CYBER_FOUNDATIONS: ModuleContent = {
       {
         heading: "The threats you'll hear about most",
         paragraphs: [
-          "**Phishing** is the single most common starting point for a successful attack. An email or text pretends to be from a bank, a delivery service, or a coworker, and tries to get the target to click a link or hand over a password. Industry breach reports consistently put the share of breaches that started with phishing or social engineering above 70%.",
-          "**Ransomware** locks up a victim's files and demands payment for the decryption key. The 2017 WannaCry attack shut down hospitals across the UK. The 2021 Colonial Pipeline attack disrupted fuel supply across the U.S. East Coast for several days.",
-          "**Insider threats** include both malicious employees and well-meaning ones who click the wrong link. **Data breaches** like Equifax in 2017 and Target in 2013 lose huge volumes of personal data at once, often because of a single missed update or a stolen vendor login.",
+          "[[phishing|**Phishing**]] is the single most common starting point for a successful attack. An email or text pretends to be from a bank, a delivery service, or a coworker, and tries to get the target to click a link or hand over a password. Industry breach reports consistently put the share of breaches that started with phishing or social engineering above 70%.",
+          "[[ransomware|**Ransomware**]] locks up a victim's files and demands payment for the decryption key. The 2017 WannaCry attack shut down hospitals across the UK. The 2021 Colonial Pipeline attack disrupted fuel supply across the U.S. East Coast for several days.",
+          "**Insider threats** include both malicious employees and well-meaning ones who click the wrong link. Data [[breach|**breaches**]] like Equifax in 2017 and Target in 2013 lose huge volumes of personal data at once, often because of a single missed update or a stolen vendor login.",
         ],
         callout: "Most breaches start with a person, not a machine. Defending people is most of the job.",
       },
@@ -345,7 +345,7 @@ const DIGITAL_SAFETY: ModuleContent = {
         heading: "How attackers actually think",
         paragraphs: [
           "When you picture a hacker, you probably picture someone typing furiously, breaking through a firewall. That's a movie. The real version is more boring and a lot more effective.",
-          "Real attackers don't usually break in. They get invited in. Their main tool is **social engineering** — the art of manipulating people into giving up information or access. It works because humans are predictable. We trust messages that look familiar, we respond to urgency, we want to help, and we don't want to look stupid.",
+          "Real attackers don't usually break in. They get invited in. Their main tool is [[social-engineering|**social engineering**]] — the art of manipulating people into giving up information or access. It works because humans are predictable. We trust messages that look familiar, we respond to urgency, we want to help, and we don't want to look stupid.",
           "An attacker who can get one person on the inside to click one link almost always gets further than one who tries to brute-force their way through the technical defenses.",
         ],
         callout: "Most attacks don't break in. They get invited in.",
@@ -356,9 +356,9 @@ const DIGITAL_SAFETY: ModuleContent = {
       {
         heading: "The big five attacks aimed at you",
         paragraphs: [
-          "**Phishing** is a fake message — usually email — that tries to get you to click, log in, or pay. Industry breach reports consistently find that the majority of breaches involve a human element, and phishing is the most common entry point.",
-          "**Smishing** is the same idea, by text message. People tend to be less skeptical of texts than email, which makes smishing more dangerous, not less.",
-          "**Vishing** is phone-based. A caller claims to be from the IRS, your bank, or your school's tech support. The urgency feels real because it's a live human voice on the other end.",
+          "[[phishing|**Phishing**]] is a fake message — usually email — that tries to get you to click, log in, or pay. Industry breach reports consistently find that the majority of breaches involve a human element, and phishing is the most common entry point.",
+          "[[smishing|**Smishing**]] is the same idea, by text message. People tend to be less skeptical of texts than email, which makes smishing more dangerous, not less.",
+          "[[vishing|**Vishing**]] is phone-based. A caller claims to be from the IRS, your bank, or your school's tech support. The urgency feels real because it's a live human voice on the other end.",
           "**Credential stuffing** is when an attacker takes a list of passwords leaked from one site and tries them on every other site. It works because most people reuse passwords. If your email/password combination has ever appeared in a breach, someone has tried it on a hundred other services.",
           "**MFA fatigue** is newer. An attacker who already has your password spams login attempts at 2 AM. The push notification keeps buzzing. Eventually, half-asleep, you tap Approve. They're in.",
         ],
@@ -370,8 +370,8 @@ const DIGITAL_SAFETY: ModuleContent = {
         heading: "Your defense layers",
         paragraphs: [
           "**Long, unique passwords on every account.** The current NIST guidance (SP 800-63B) is that length beats complexity — a 16-character passphrase is stronger and easier to remember than 'P@ssw0rd1!'. The most important rule is uniqueness: never reuse passwords across accounts that matter.",
-          "**Use a password manager.** You cannot keep track of 80 unique passwords in your head. Free options that work well: Bitwarden, KeePassXC, and the password manager built into your browser. Pick one and start with your most important accounts.",
-          "**Turn on multi-factor authentication everywhere it's offered.** Especially for email — your email is the recovery channel for everything else. An attacker who controls your email can reset most of your other passwords.",
+          "**Use a [[password-manager|password manager]].** You cannot keep track of 80 unique passwords in your head. Free options that work well: Bitwarden, KeePassXC, and the password manager built into your browser. Pick one and start with your most important accounts.",
+          "**Turn on [[mfa|multi-factor authentication]] everywhere it's offered.** Especially for email — your email is the recovery channel for everything else. An attacker who controls your email can reset most of your other passwords.",
           "**Develop a healthy skepticism.** If a message feels urgent — 'act now,' 'verify immediately,' 'your account will be closed' — that urgency is the attack. Real institutions don't demand instant action through unverified links.",
           "**Verify out-of-band.** If your bank texts you, don't tap the link. Open the bank's app or type the URL yourself. If your boss emails you urgently, message them on a separate channel before you act.",
         ],
@@ -566,9 +566,9 @@ const NETWORK_BASICS: ModuleContent = {
       {
         heading: "How data actually travels",
         paragraphs: [
-          "When you tap that video, your phone doesn't send 'play this video' as one big message. It breaks the request into **packets** — small numbered envelopes — and sends them out one at a time. Each packet has a header (where it's going, where it came from, what number it is in the sequence) and a payload (the actual data).",
-          "Each device on a network has an **IP address** — a numeric label like 192.168.1.42 or an IPv6 equivalent. IP addresses work like street addresses for the internet. Without them, packets wouldn't know where to go.",
-          "But you don't type IP addresses. You type tiktok.com. That's what **DNS** (the Domain Name System) is for. DNS is the internet's phone book: it translates human-readable names into the IP addresses computers actually use. Most of the time you never notice DNS — until it breaks, and then nothing works.",
+          "When you tap that video, your phone doesn't send 'play this video' as one big message. It breaks the request into [[packet|**packets**]] — small numbered envelopes — and sends them out one at a time. Each packet has a header (where it's going, where it came from, what number it is in the sequence) and a payload (the actual data).",
+          "Each device on a network has an [[ip-address|**IP address**]] — a numeric label like 192.168.1.42 or an IPv6 equivalent. IP addresses work like street addresses for the internet. Without them, packets wouldn't know where to go.",
+          "But you don't type IP addresses. You type tiktok.com. That's what [[dns|**DNS**]] (the Domain Name System) is for. DNS is the internet's phone book: it translates human-readable names into the IP addresses computers actually use. Most of the time you never notice DNS — until it breaks, and then nothing works.",
           "All of this happens according to **protocols** — agreed-upon rules. **TCP** is the protocol that makes sure packets arrive in order and complete (your TikTok video can't have missing frames). **UDP** is faster but doesn't guarantee delivery (good for live video calls where 'now' beats 'perfect'). **HTTP** and **HTTPS** are the protocols that web traffic rides on top of TCP.",
         ],
         callout: "Packets, addresses, names, rules. Almost every network problem is one of these four things misbehaving.",
@@ -583,7 +583,7 @@ const NETWORK_BASICS: ModuleContent = {
         heading: "HTTP vs HTTPS — and why the lock matters",
         paragraphs: [
           "**HTTP** is the original protocol for the web. It's plain text. Anyone who can see the network traffic — your roommate on the same WiFi, the coffee shop's router operator, an attacker who set up a fake hotspot — can read everything you send and receive.",
-          "**HTTPS** is HTTP wrapped in **TLS** (Transport Layer Security), which encrypts the traffic. That's what the lock icon in your browser means. With HTTPS, even someone watching the network can see that you talked to a server, but not what you said.",
+          "[[http-https|**HTTPS**]] is HTTP wrapped in **TLS** (Transport Layer Security), which [[encryption|encrypts]] the traffic. That's what the lock icon in your browser means. With HTTPS, even someone watching the network can see that you talked to a server, but not what you said.",
           "This is why every login page should be HTTPS. If you ever see a site asking for a password over plain HTTP, walk away. Modern browsers will mark those sites with 'Not Secure.'",
         ],
         callout: "The 'S' in HTTPS is the difference between a postcard and a sealed envelope.",
@@ -591,8 +591,8 @@ const NETWORK_BASICS: ModuleContent = {
       {
         heading: "Network security devices",
         paragraphs: [
-          "**Firewalls** are filters that decide which traffic gets through. A firewall sits between your network and the rest of the internet and enforces rules: this kind of traffic to that destination is allowed, this other kind is blocked. Almost every business network has firewalls.",
-          "**VPNs** (Virtual Private Networks) create an encrypted tunnel between two endpoints. When you connect to your school's VPN, your laptop acts as if it were physically inside the school's network, even if you're at home. VPNs are how remote workers get safe access to internal systems.",
+          "[[firewall|**Firewalls**]] are filters that decide which traffic gets through. A firewall sits between your network and the rest of the internet and enforces rules: this kind of traffic to that destination is allowed, this other kind is blocked. Almost every business network has firewalls.",
+          "[[vpn|**VPNs**]] (Virtual Private Networks) create an encrypted tunnel between two endpoints. When you connect to your school's VPN, your laptop acts as if it were physically inside the school's network, even if you're at home. VPNs are how remote workers get safe access to internal systems.",
           "**IDS** (Intrusion Detection Systems) watch network traffic and raise alerts when something looks suspicious. **IPS** (Intrusion Prevention Systems) do the same thing but also block the traffic automatically. SOC analysts spend a lot of time reviewing IDS alerts.",
         ],
         grcLens: {
@@ -799,7 +799,7 @@ const THREAT_DETECTIVE: ModuleContent = {
       {
         heading: "What threat detection actually looks like",
         paragraphs: [
-          "Inside almost every medium or large company is a **Security Operations Center**. It might be a physical room with screens, or a virtual team scattered across time zones — either way, the job is the same: watch the systems, find the bad activity, raise the alarm.",
+          "Inside almost every medium or large company is a [[soc|**Security Operations Center**]]. It might be a physical room with screens, or a virtual team scattered across time zones — either way, the job is the same: watch the systems, find the bad activity, raise the alarm.",
           "SOCs are organized in tiers. **Tier 1** triages alerts as they come in — most are false positives, some get escalated. **Tier 2** investigates the escalations. **Tier 3** handles the hard cases and contributes to detection engineering. Getting hired into Tier 1 is a common entry point into the field.",
           "The challenge isn't a lack of data. The challenge is too much data. A typical SOC sees thousands to millions of events per day. The job is **signal versus noise** — separating what matters from what doesn't, fast.",
         ],
@@ -808,9 +808,9 @@ const THREAT_DETECTIVE: ModuleContent = {
       {
         heading: "Reading the logs",
         paragraphs: [
-          "Almost every defense generates **logs** — records of what happened, when, and who or what was involved. Logs come from authentication systems, firewalls, applications, endpoints, cloud services, and more.",
+          "Almost every defense generates [[log|**logs**]] — records of what happened, when, and who or what was involved. Logs come from authentication systems, firewalls, applications, endpoints, cloud services, and more.",
           "A typical log line looks like: '2026-05-14 03:47:12 user=jchen action=login src_ip=185.94.111.23 result=success geo=RO ua=Mozilla/5.0...'. Timestamp, user, action, source IP, outcome, sometimes geography, sometimes user-agent. Once you can read this pattern, you can read most logs.",
-          "Logs are useful as a stream (watching events in real time) and as history (searching back for evidence of an incident). SIEM (Security Information and Event Management) tools collect logs from many sources, normalize them, and let analysts query and correlate across them.",
+          "Logs are useful as a stream (watching events in real time) and as history (searching back for evidence of an incident). [[siem|SIEM]] (Security Information and Event Management) tools collect logs from many sources, normalize them, and let analysts query and correlate across them.",
         ],
         keyTerms: [
           { term: "SIEM", definition: "Security Information and Event Management — central system that collects, correlates, and lets analysts query security logs." },

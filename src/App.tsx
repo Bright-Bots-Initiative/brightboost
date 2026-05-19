@@ -57,6 +57,12 @@ import TracksOverview from "./components/pathways/TracksOverview";
 import TrackDetail from "./components/pathways/TrackDetail";
 import ChallengesPage from "./components/pathways/challenges/ChallengesPage";
 import ChallengePage from "./components/pathways/challenges/ChallengePage";
+import WelcomeAvatarStep from "./components/pathways/onboarding/WelcomeAvatarStep";
+import WelcomeSkillsStep from "./components/pathways/onboarding/WelcomeSkillsStep";
+import WelcomeMissionStep from "./components/pathways/onboarding/WelcomeMissionStep";
+import WelcomeGoalsStep from "./components/pathways/onboarding/WelcomeGoalsStep";
+import WelcomeCompleteStep from "./components/pathways/onboarding/WelcomeCompleteStep";
+import GlossaryPage from "./components/pathways/glossary/GlossaryPage";
 import ModulePlayer from "./components/pathways/ModulePlayer";
 import PathwaysProfile from "./components/pathways/PathwaysProfile";
 import PathwaysAbout from "./components/pathways/PathwaysAbout";
@@ -183,6 +189,15 @@ function App() {
               {/* Pathways: public landing page */}
               <Route path="/pathways/about" element={<PathwaysAbout />} />
 
+              {/* Pathways: Cyber Skills 101 welcome flow — rendered OUTSIDE
+                  PathwaysLayout so it has its own minimal chrome. Each step
+                  is its own URL so users can bookmark/resume. */}
+              <Route path="/pathways/welcome" element={<ProtectedRoute><WelcomeAvatarStep /></ProtectedRoute>} />
+              <Route path="/pathways/welcome/skills" element={<ProtectedRoute><WelcomeSkillsStep /></ProtectedRoute>} />
+              <Route path="/pathways/welcome/mission" element={<ProtectedRoute><WelcomeMissionStep /></ProtectedRoute>} />
+              <Route path="/pathways/welcome/goals" element={<ProtectedRoute><WelcomeGoalsStep /></ProtectedRoute>} />
+              <Route path="/pathways/welcome/complete" element={<ProtectedRoute><WelcomeCompleteStep /></ProtectedRoute>} />
+
               {/* Pathways: student authenticated routes */}
               <Route path="/pathways" element={<ProtectedRoute><PathwaysLayout /></ProtectedRoute>}>
                 <Route index element={<PathwaysHome />} />
@@ -191,6 +206,7 @@ function App() {
                 <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
                 <Route path="challenges" element={<ChallengesPage />} />
                 <Route path="challenges/:slug" element={<ChallengePage />} />
+                <Route path="glossary" element={<GlossaryPage />} />
                 <Route path="profile" element={<PathwaysProfile />} />
               </Route>
 

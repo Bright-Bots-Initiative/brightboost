@@ -7,10 +7,14 @@
  * the portfolio surface.
  */
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { CheckCircle2, Clock, Star, Flame, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, Star, Flame, Trophy, BookOpen, GraduationCap } from "lucide-react";
 import { useGamification } from "./gamification/useGamification";
+import { useOnboarding } from "./onboarding/useOnboarding";
+import { AvatarBadge } from "./onboarding/avatars";
+import { GLOSSARY } from "@/data/glossary";
 
 interface BadgeCatalogEntry {
   slug: string;
@@ -71,9 +75,11 @@ export default function PathwaysProfile() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { state } = useGamification();
+  const { state: onboarding } = useOnboarding();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [badges, setBadges] = useState<BadgeCatalogEntry[]>([]);
   const [events, setEvents] = useState<XpEvent[]>([]);
+  const [vocabSeen, setVocabSeen] = useState<number>(0);
 
   useEffect(() => {
     fetch("/api/pathways/student/milestones", { headers: authHeader() })
@@ -87,6 +93,10 @@ export default function PathwaysProfile() {
     fetch("/api/pathways/gamification/me/events", { headers: authHeader() })
       .then((r) => r.json())
       .then((data) => setEvents(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    fetch("/api/pathways/glossary/me/stats", { headers: authHeader() })
+      .then((r) => r.json())
+      .then((data) => setVocabSeen(data?.totalViewed ?? 0))
       .catch(() => {});
   }, []);
 
@@ -112,9 +122,13 @@ export default function PathwaysProfile() {
       {/* Profile Header */}
       <div className="rounded-2xl border bg-white border-slate-200 dark:bg-slate-800/80 dark:border-slate-700 p-5 sm:p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-100 dark:bg-indigo-600/20 flex items-center justify-center text-xl sm:text-2xl text-indigo-700 dark:text-indigo-300 font-bold shrink-0">
-            {user?.name?.[0]?.toUpperCase() ?? "?"}
-          </div>
+          {onboarding?.avatarSlug ? (
+            <AvatarBadge slug={onboarding.avatarSlug} size="lg" />
+          ) : (
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-100 dark:bg-indigo-600/20 flex items-center justify-center text-xl sm:text-2xl text-indigo-700 dark:text-indigo-300 font-bold shrink-0">
+              {user?.name?.[0]?.toUpperCase() ?? "?"}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
               {user?.name ?? t("pathways.profile.learner")}
@@ -174,6 +188,62 @@ export default function PathwaysProfile() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Mission statement (from onboarding) */}
+      {onboarding?.missionStatement && (
+        <div className="rounded-xl border-l-4 border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 p-3 sm:p-4">
+          <p className="text-[10px] uppercase tracking-widest text-indigo-700 dark:text-indigo-300 font-semibold">
+            Your mission
+          </p>
+          <p className="text-sm text-slate-800 dark:text-slate-200 italic mt-1">
+            &ldquo;{onboarding.missionStatement}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {/* Vocab progress + Re-do Skills 101 */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Vocabulary
+            </p>
+          </div>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">
+            {vocabSeen}
+            <span className="text-base font-normal text-slate-500 dark:text-slate-400">
+              {" "}
+              / {GLOSSARY.length}
+            </span>
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">terms learned</p>
+          <Link
+            to="/pathways/glossary"
+            className="mt-2 inline-block text-xs text-indigo-700 dark:text-indigo-300 hover:underline"
+          >
+            Browse the glossary →
+          </Link>
+        </div>
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Cyber Skills 101
+            </p>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+            Need a refresher on screenshots, file paths, or how to ask a good
+            question? You can revisit the welcome tour anytime.
+          </p>
+          <Link
+            to="/pathways/welcome/skills"
+            className="mt-2 inline-block text-xs text-indigo-700 dark:text-indigo-300 hover:underline"
+          >
+            Re-do Skills 101 →
+          </Link>
+        </div>
       </div>
 
       {/* Counters */}
