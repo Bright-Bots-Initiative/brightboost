@@ -20,6 +20,7 @@ import {
   Clock,
   ListChecks,
   Users,
+  HelpCircle,
 } from "lucide-react";
 import {
   getChallengeBySlug,
@@ -30,8 +31,11 @@ import {
 import EthicsFraming from "../labs/EthicsFraming";
 import { useCelebrate } from "../gamification/CelebrationContext";
 import { useChallenges } from "./useChallenges";
+import { useOnboarding } from "../onboarding/useOnboarding";
 import Toolbox from "./Toolbox";
 import ScratchPad from "./ScratchPad";
+import MobileToolbox from "./MobileToolbox";
+import ToolboxIntro from "./ToolboxIntro";
 
 const DIFFICULTY_BG: Record<CtfDifficulty, string> = {
   easy: "bg-emerald-600",
@@ -70,6 +74,7 @@ export default function ChallengePage() {
   const challenge = useMemo(() => (slug ? getChallengeBySlug(slug) : undefined), [slug]);
   const { progress, refresh } = useChallenges();
   const { celebrate } = useCelebrate();
+  const { state: onboarding, patch: patchOnboarding } = useOnboarding();
 
   const [ethicsAcked, setEthicsAcked] = useState(false);
   const [submittedFlag, setSubmittedFlag] = useState("");
@@ -80,6 +85,29 @@ export default function ChallengePage() {
   const [hintError, setHintError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [teamMode, setTeamMode] = useState<"solo" | "team">("solo");
+  // Toolbox intro: shown automatically the first time the student finishes
+  // ethics framing, and re-openable via the help icon on the Toolbox header.
+  const [toolboxIntroOpen, setToolboxIntroOpen] = useState(false);
+  const [toolboxIntroForcedOpen, setToolboxIntroForcedOpen] = useState(false);
+
+  // Open the toolbox intro after ethics is acked, but only if the user
+  // hasn't seen it before. `toolboxIntroSeen` lives on PathwayOnboarding.
+  useEffect(() => {
+    if (!ethicsAcked) return;
+    if (onboarding && onboarding.toolboxIntroSeen === false) {
+      setToolboxIntroOpen(true);
+    }
+  }, [ethicsAcked, onboarding]);
+
+  const dismissToolboxIntro = async () => {
+    setToolboxIntroOpen(false);
+    setToolboxIntroForcedOpen(false);
+    // Persist the first-time dismissal so it doesn't reappear next visit.
+    // No-op when the user opened it via the help icon (already seen).
+    if (onboarding && onboarding.toolboxIntroSeen === false) {
+      await patchOnboarding({ toolboxIntroSeen: true });
+    }
+  };
 
   // Pre-fill any hints the student has already revealed (via highest
   // hintsUsed for this slug on the server).
@@ -206,7 +234,9 @@ export default function ChallengePage() {
   };
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
+    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+      {/* MAIN COLUMN — challenge content */}
+      <div className="flex-1 min-w-0 space-y-5">
       {/* Header */}
       <div>
         <Link
@@ -297,10 +327,6 @@ export default function ChallengePage() {
         </h2>
         <p className="text-sm text-slate-800 dark:text-slate-200">{challenge.prompt}</p>
       </div>
-
-      {/* Toolbox — category-appropriate calculators and references.
-          Collapsed by default so it doesn't steal focus from the scenario. */}
-      <Toolbox category={challenge.category} />
 
       {/* Materials */}
       <div className="space-y-3">
@@ -413,9 +439,47 @@ export default function ChallengePage() {
         )}
       </div>
 
-      {/* Scratch pad — auto-saves to sessionStorage per challenge slug.
-          Sits at the bottom so students can take notes throughout. */}
-      <ScratchPad challengeSlug={challenge.slug} />
+      </div>{/* /MAIN COLUMN */}
+
+      {/* RIGHT SIDEBAR — sticky on desktop, hidden on mobile (drawer below).
+          Internal overflow so the sidebar itself scrolls when tools +
+          scratch pad exceed the viewport height. */}
+      <aside className="hidden lg:block w-80 flex-shrink-0">
+        <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto space-y-4 pr-1">
+          <Toolbox
+            category={challenge.category}
+            defaultExpanded
+            headerSlot={
+              <button
+                type="button"
+                onClick={() => {
+                  setToolboxIntroForcedOpen(true);
+                  setToolboxIntroOpen(true);
+                }}
+                aria-label="What is the toolbox?"
+                className="p-1 -m-1 text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            }
+          />
+          <ScratchPad challengeSlug={challenge.slug} defaultExpanded />
+        </div>
+      </aside>
+
+      {/* MOBILE — floating button + bottom-sheet drawer. Hidden on lg+. */}
+      <MobileToolbox
+        category={challenge.category}
+        challengeSlug={challenge.slug}
+      />
+
+      {/* One-time intro on first CTF visit; re-openable via help icon */}
+      {toolboxIntroOpen && (
+        <ToolboxIntro
+          showClose={toolboxIntroForcedOpen}
+          onAcknowledge={() => void dismissToolboxIntro()}
+        />
+      )}
     </div>
   );
 }

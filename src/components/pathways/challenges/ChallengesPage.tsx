@@ -7,7 +7,7 @@
  * if we want a strict ladder later, the `Lock` import is ready.
  */
 import { Link } from "react-router-dom";
-import { Flag, Trophy, Lock } from "lucide-react";
+import { Flag, Trophy, Lock, Wrench } from "lucide-react";
 import { CATEGORIES, type CtfDifficulty } from "@/constants/ctfChallenges";
 import { useChallenges, type DisplayChallenge } from "./useChallenges";
 
@@ -64,6 +64,63 @@ export default function ChallengesPage() {
           <span className="inline-flex items-center gap-1.5">
             <Trophy className="w-4 h-4" /> {progress?.totalAttempts ?? 0} attempts
           </span>
+        </div>
+      </div>
+
+      {/* How challenges work — brief intro above the category ladders.
+          Helps first-time visitors understand the toolbox + scratch pad
+          are part of the experience, not optional extras. */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <div className="bg-indigo-600 rounded-lg p-2 shrink-0">
+            <Wrench className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+              How CTF Challenges Work
+            </h3>
+            <p className="text-slate-700 dark:text-slate-300 text-sm mt-1 leading-relaxed">
+              Each challenge gives you a puzzle and a set of tools to solve
+              it. The skill isn't memorizing — it's pattern recognition and
+              tool selection. Use the toolbox (right side on desktop, 🔧
+              button on mobile), take notes in the scratch pad, and reveal
+              hints if you get stuck.
+            </p>
+            <details className="mt-3 group">
+              <summary className="text-sm text-indigo-700 dark:text-indigo-300 cursor-pointer hover:text-indigo-900 dark:hover:text-indigo-200 list-none">
+                <span className="inline-flex items-center gap-1">
+                  Where to start
+                  <span className="group-open:rotate-90 transition-transform">
+                    →
+                  </span>
+                </span>
+              </summary>
+              <div className="text-sm text-slate-600 dark:text-slate-400 mt-2 space-y-1.5">
+                <p>
+                  ·{" "}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    New to CTFs?
+                  </strong>{" "}
+                  Start with any Easy challenge in Cryptography or Web.
+                </p>
+                <p>
+                  ·{" "}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    Want a challenge?
+                  </strong>{" "}
+                  Try a Hard one after solving three or four Easys.
+                </p>
+                <p>
+                  ·{" "}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    Going for badges?
+                  </strong>{" "}
+                  Solve one challenge in each category to earn Cyber
+                  Generalist.
+                </p>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
 

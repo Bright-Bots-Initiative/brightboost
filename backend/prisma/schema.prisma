@@ -912,6 +912,8 @@ model PathwayOnboarding {
 
   avatarSlug        String?
 
+  toolboxIntroSeen  Boolean  @default(false)
+
   user User @relation(fields: [userId], references: [id])
 }
 

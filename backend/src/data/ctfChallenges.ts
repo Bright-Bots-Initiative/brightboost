@@ -40,7 +40,7 @@ export const CTF_CHALLENGES_SERVER: CtfServerChallenge[] = [
     category: "cryptography",
     difficulty: "easy",
     flag: "ifireversethesewordsthentheflagisstoredcode",
-    xpReward: 10,
+    xpReward: 5,
     hints: [
       "Try reading the message right to left.",
       "Reverse the entire string character by character.",
@@ -50,9 +50,9 @@ export const CTF_CHALLENGES_SERVER: CtfServerChallenge[] = [
   {
     slug: "base64-buddy",
     category: "cryptography",
-    difficulty: "medium",
+    difficulty: "easy",
     flag: "theflagissilverlining",
-    xpReward: 25,
+    xpReward: 10,
     hints: [
       "This is base64-encoded text. Most browsers can decode it via DevTools.",
       "Open browser DevTools console and try: atob('VGhlZmxhZ2lzc2lsdmVybGluaW5n')",
@@ -62,13 +62,25 @@ export const CTF_CHALLENGES_SERVER: CtfServerChallenge[] = [
   {
     slug: "hex-hunt",
     category: "cryptography",
-    difficulty: "medium",
+    difficulty: "easy",
     flag: "the flag is cipherspace.",
-    xpReward: 25,
+    xpReward: 10,
     hints: [
       "Hex pairs (two characters at a time) represent ASCII codes.",
       "Try a hex-to-ASCII converter. Browser DevTools: parseInt('74', 16) = 116, then String.fromCharCode(116) = 't'.",
       "The decoded text begins with 'the flag is…'",
+    ],
+  },
+  {
+    slug: "layered-mystery",
+    category: "cryptography",
+    difficulty: "hard",
+    flag: "theflagisdeeplyhidden",
+    xpReward: 50,
+    hints: [
+      "Start by base64-decoding the message. The result will still look scrambled.",
+      "Then reverse the string. It'll look like a single Caesar cipher.",
+      "Finally, Caesar-decode with the toolbox set to shift = 7.",
     ],
   },
   {
@@ -147,9 +159,9 @@ export const CTF_CHALLENGES_SERVER: CtfServerChallenge[] = [
   {
     slug: "form-field-sleuth",
     category: "web",
-    difficulty: "hard",
+    difficulty: "medium",
     flag: "hidden_field_treasure",
-    xpReward: 50,
+    xpReward: 25,
     hints: [
       "Look for input fields with type='hidden'.",
       "There are two hidden fields. One is for CSRF protection; the other contains the flag.",
@@ -281,9 +293,9 @@ export const CTF_CHALLENGES_SERVER: CtfServerChallenge[] = [
   {
     slug: "firewall-find",
     category: "networks",
-    difficulty: "medium",
+    difficulty: "easy",
     flag: "10.0.5.0/24",
-    xpReward: 25,
+    xpReward: 10,
     hints: [
       "Look for ALLOW rules with port 22 (SSH).",
       "Rule 1 specifies the source subnet for SSH access.",

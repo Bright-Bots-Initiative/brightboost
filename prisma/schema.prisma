@@ -947,6 +947,11 @@ model PathwayOnboarding {
 
   avatarSlug        String?  // "explorer" | "analyst" | "guardian" | ...
 
+  // Phase 2.2 — set to true after the student sees the CTF toolbox intro
+  // screen. Lets us show the one-time tour the first time someone opens
+  // a challenge.
+  toolboxIntroSeen  Boolean  @default(false)
+
   user User @relation(fields: [userId], references: [id])
 }
 

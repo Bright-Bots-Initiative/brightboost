@@ -99,13 +99,13 @@ export const CRYPTOGRAPHY_CHALLENGES: CtfChallenge[] = [
     ],
     skills: ["observation", "string manipulation"],
     estimatedMinutes: 3,
-    xpReward: 10,
+    xpReward: 5,
     beforeYouStart: ["Ability to read text carefully"],
   },
   {
     slug: "base64-buddy",
     category: "cryptography",
-    difficulty: "medium",
+    difficulty: "easy",
     title: "Base64 Buddy",
     description:
       "Base64 is everywhere on the web — emails, images, tokens. Time to decode some.",
@@ -128,7 +128,7 @@ export const CRYPTOGRAPHY_CHALLENGES: CtfChallenge[] = [
     ],
     skills: ["encoding awareness", "browser DevTools"],
     estimatedMinutes: 8,
-    xpReward: 25,
+    xpReward: 10,
     beforeYouStart: [
       "Knowing how to open browser DevTools (F12 in most browsers)",
     ],
@@ -136,7 +136,7 @@ export const CRYPTOGRAPHY_CHALLENGES: CtfChallenge[] = [
   {
     slug: "hex-hunt",
     category: "cryptography",
-    difficulty: "medium",
+    difficulty: "easy",
     title: "Hex Hunt",
     description:
       "Hexadecimal is how computers represent data. Today, you're the human decoder.",
@@ -159,9 +159,46 @@ export const CRYPTOGRAPHY_CHALLENGES: CtfChallenge[] = [
     ],
     skills: ["hex understanding", "ASCII"],
     estimatedMinutes: 10,
-    xpReward: 25,
+    xpReward: 10,
     beforeYouStart: [
       "Understanding that computers store text as numbers (ASCII codes)",
+    ],
+  },
+  {
+    slug: "layered-mystery",
+    category: "cryptography",
+    difficulty: "hard",
+    title: "Layered Mystery",
+    description: "Sometimes secrets hide behind multiple walls.",
+    scenario:
+      "A message was wrapped in three layers of encoding before being passed on. Peel them off one at a time using the toolbox.",
+    prompt:
+      "Decode this message. The flag is the final readable text. You'll need to chain three tools.",
+    materials: [
+      {
+        type: "code",
+        content: "dWxra3BvZnN3bGxrenBuaHNtbG9h",
+        caption: "Triple-encoded message",
+      },
+      {
+        type: "text",
+        content:
+          "The sender applied these steps in order to ENCODE:\n  1. Caesar cipher (shift +7)\n  2. Reverse the string\n  3. Base64 encode\n\nTo DECODE, undo them in reverse: base64 first, then reverse, then Caesar shift back by 7.",
+      },
+    ],
+    flag: "theflagisdeeplyhidden",
+    flagFormat: "all lowercase, no spaces",
+    hints: [
+      "Start by base64-decoding the message. The result will still look scrambled.",
+      "Then reverse the string. It'll look like a single Caesar cipher.",
+      "Finally, Caesar-decode with the toolbox set to shift = 7.",
+    ],
+    skills: ["multi-step decoding", "tool chaining"],
+    estimatedMinutes: 15,
+    xpReward: 50,
+    beforeYouStart: [
+      "Comfort with the Base64, Reverse, and Caesar tools individually",
+      "Patience to undo encodings in the right order",
     ],
   },
   {
@@ -380,7 +417,7 @@ URL pattern: https://example.com/files/[directory]/[file]`,
   {
     slug: "form-field-sleuth",
     category: "web",
-    difficulty: "hard",
+    difficulty: "medium",
     title: "Form Field Sleuth",
     description:
       "Forms have visible fields and invisible ones. The flag is in the latter.",
@@ -416,7 +453,7 @@ URL pattern: https://example.com/files/[directory]/[file]`,
     ],
     skills: ["form inspection", "HTML", "hidden field discovery"],
     estimatedMinutes: 8,
-    xpReward: 50,
+    xpReward: 25,
     beforeYouStart: [
       "Understanding HTML forms have input fields with names and values",
     ],
@@ -846,7 +883,7 @@ mysteriousdomain.example.        NS     ns1.example.com.`,
   {
     slug: "firewall-find",
     category: "networks",
-    difficulty: "medium",
+    difficulty: "easy",
     title: "Firewall Find",
     description:
       "Firewall rules decide what gets through. Reading them well is half the battle.",
@@ -877,7 +914,7 @@ mysteriousdomain.example.        NS     ns1.example.com.`,
     ],
     skills: ["firewall rules", "CIDR notation", "rule order"],
     estimatedMinutes: 8,
-    xpReward: 25,
+    xpReward: 10,
     beforeYouStart: [
       "Knowing what a subnet looks like in CIDR notation (e.g., 10.0.0.0/24)",
     ],
