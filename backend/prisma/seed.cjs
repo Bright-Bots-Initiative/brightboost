@@ -1770,6 +1770,71 @@ async function main() {
   });
 
   console.log("Seeded Pathways cohorts (3: active/ended/draft), enrollments, and milestones.");
+
+  // ─── Onboarding seed for demo accounts ───────────────────────────────────
+  // Marcus and Coach Davis show up to demos as already-onboarded so the
+  // welcome flow doesn't re-trigger every time the DB is re-seeded. Aisha
+  // is intentionally LEFT OUT — she's the "fresh-user" demo and should
+  // walk through the welcome flow when someone hits her account.
+  console.log("Seeding Pathways onboarding for demo accounts...");
+  const onboardingDemoData = [
+    {
+      email: "marcus@test.com",
+      avatarSlug: "analyst",
+      missionStatement:
+        "I want to build a real career in cybersecurity and help my community stay safe online.",
+      dailyGoalLevel: "medium",
+    },
+    {
+      email: "facilitator@test.com",
+      avatarSlug: "guardian",
+      missionStatement:
+        "I want to help my students see themselves in this work and build real pathways forward.",
+      dailyGoalLevel: "heavy",
+    },
+  ];
+
+  for (const data of onboardingDemoData) {
+    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!user) {
+      console.log(`  Skipping ${data.email} — user not found`);
+      continue;
+    }
+    const payload = {
+      avatarChosen: true,
+      avatarSlug: data.avatarSlug,
+      skillsTourViewed: true,
+      skillsTourSkipped: false,
+      missionStatement: data.missionStatement,
+      dailyGoalLevel: data.dailyGoalLevel,
+      completedAt: new Date(),
+    };
+    await prisma.pathwayOnboarding.upsert({
+      where: { userId: user.id },
+      update: payload,
+      create: { userId: user.id, ...payload },
+    });
+    console.log(`  Seeded onboarding for ${data.email}: ${data.avatarSlug}`);
+  }
+
+  // Award the Getting Started badge so those accounts reflect the
+  // completed-onboarding state in their badge collection. XP for the
+  // badge will be picked up by the gamification backfill (which runs
+  // after this seed in predeploy.sh).
+  for (const { email } of onboardingDemoData) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) continue;
+    await prisma.pathwayBadge.upsert({
+      where: { userId_slug: { userId: user.id, slug: "getting_started" } },
+      update: {},
+      create: {
+        userId: user.id,
+        slug: "getting_started",
+        metadata: { backfilled: true, source: "seed" },
+      },
+    });
+  }
+  console.log("  Awarded Getting Started badge to demo accounts");
   } catch (e) {
     console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
   }
