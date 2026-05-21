@@ -18,6 +18,7 @@ export interface OnboardingState {
   missionStatement: string | null;
   dailyGoalLevel: "light" | "medium" | "heavy" | null;
   avatarSlug: string | null;
+  toolboxIntroSeen?: boolean;
 }
 
 export interface OnboardingPatch {
@@ -27,6 +28,7 @@ export interface OnboardingPatch {
   missionStatement?: string;
   dailyGoalLevel?: "light" | "medium" | "heavy";
   avatarSlug?: string;
+  toolboxIntroSeen?: boolean;
   completed?: boolean;
 }
 

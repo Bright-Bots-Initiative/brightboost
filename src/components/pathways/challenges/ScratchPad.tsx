@@ -14,12 +14,20 @@ import { Edit3, ChevronDown, ChevronUp } from "lucide-react";
 
 interface ScratchPadProps {
   challengeSlug: string;
+  defaultExpanded?: boolean;
+  /** If true, omit the collapsible header chrome. Used inside the mobile
+   *  drawer where the drawer's tab provides the wrapper. */
+  hideHeader?: boolean;
 }
 
-export default function ScratchPad({ challengeSlug }: ScratchPadProps) {
+export default function ScratchPad({
+  challengeSlug,
+  defaultExpanded = true,
+  hideHeader = false,
+}: ScratchPadProps) {
   const storageKey = `ctf-scratch-${challengeSlug}`;
   const [content, setContent] = useState("");
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   // Hydrate from sessionStorage when the slug changes.
   useEffect(() => {
@@ -40,6 +48,25 @@ export default function ScratchPad({ challengeSlug }: ScratchPadProps) {
          lives in component state for the lifetime of the page. */
     }
   };
+
+  const body = (
+    <>
+      <textarea
+        value={content}
+        onChange={(e) => handleChange(e.target.value)}
+        placeholder="Work it out here. Notes, attempts, decoded letters, anything…"
+        spellCheck={false}
+        className="w-full min-h-[150px] p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm resize-y focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+      />
+      <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-2">
+        Saved locally in your browser — clears when you close the tab.
+      </p>
+    </>
+  );
+
+  if (hideHeader) {
+    return <div>{body}</div>;
+  }
 
   return (
     <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
@@ -65,20 +92,7 @@ export default function ScratchPad({ challengeSlug }: ScratchPadProps) {
         )}
       </button>
 
-      {expanded && (
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          <textarea
-            value={content}
-            onChange={(e) => handleChange(e.target.value)}
-            placeholder="Work it out here. Notes, attempts, decoded letters, anything…"
-            spellCheck={false}
-            className="w-full min-h-[150px] p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm resize-y focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-2">
-            Saved locally in your browser — clears when you close the tab.
-          </p>
-        </div>
-      )}
+      {expanded && <div className="px-3 sm:px-4 pb-3 sm:pb-4">{body}</div>}
     </div>
   );
 }

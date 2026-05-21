@@ -1122,6 +1122,7 @@ const onboardingPatchSchema = z.object({
   missionStatement: z.string().max(280).optional(),
   dailyGoalLevel: z.enum(["light", "medium", "heavy"]).optional(),
   avatarSlug: z.string().min(1).max(32).optional(),
+  toolboxIntroSeen: z.boolean().optional(),
   completed: z.boolean().optional(),
 });
 

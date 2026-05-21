@@ -23,20 +23,47 @@ import type { CtfCategory } from "@/constants/ctfChallenges";
 
 interface ToolboxProps {
   category: CtfCategory;
+  /** Initial expand state for the collapsible chrome. Ignored when hideHeader=true. */
+  defaultExpanded?: boolean;
+  /** If true, render only the tools — no header, no collapse. Used inside the
+   *  mobile drawer where the drawer tabs already provide the collapse UX. */
+  hideHeader?: boolean;
+  /** Optional click target rendered next to the header (e.g. "What is the toolbox?"). */
+  headerSlot?: React.ReactNode;
 }
 
-export default function Toolbox({ category }: ToolboxProps) {
-  const [expanded, setExpanded] = useState(false);
+function CategoryTools({ category }: { category: CtfCategory }) {
+  if (category === "cryptography") return <CryptographyTools />;
+  if (category === "web") return <WebTools />;
+  if (category === "forensics") return <ForensicsTools />;
+  return <NetworkTools />;
+}
+
+export default function Toolbox({
+  category,
+  defaultExpanded = false,
+  hideHeader = false,
+  headerSlot,
+}: ToolboxProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+
+  if (hideHeader) {
+    return (
+      <div className="space-y-3 sm:space-y-4">
+        <CategoryTools category={category} />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50 rounded-xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        aria-expanded={expanded}
-        className="w-full flex items-center justify-between p-3 sm:p-4 text-left hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40"
-      >
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center justify-between p-3 sm:p-4">
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="flex items-center gap-2 min-w-0 flex-1 text-left hover:opacity-80"
+        >
           <Wrench className="w-4 h-4 text-indigo-700 dark:text-indigo-300 shrink-0" />
           <span className="font-semibold text-slate-900 dark:text-slate-100">
             Toolbox
@@ -44,20 +71,18 @@ export default function Toolbox({ category }: ToolboxProps) {
           <span className="text-xs text-indigo-700/80 dark:text-indigo-300/70 hidden sm:inline">
             tools for this challenge
           </span>
-        </div>
-        {expanded ? (
-          <ChevronUp className="w-4 h-4 text-indigo-700 dark:text-indigo-300" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-indigo-700 dark:text-indigo-300" />
-        )}
-      </button>
+          {expanded ? (
+            <ChevronUp className="ml-auto w-4 h-4 text-indigo-700 dark:text-indigo-300" />
+          ) : (
+            <ChevronDown className="ml-auto w-4 h-4 text-indigo-700 dark:text-indigo-300" />
+          )}
+        </button>
+        {headerSlot && <div className="ml-2 shrink-0">{headerSlot}</div>}
+      </div>
 
       {expanded && (
         <div className="p-3 sm:p-4 pt-0 space-y-3 sm:space-y-4">
-          {category === "cryptography" && <CryptographyTools />}
-          {category === "web" && <WebTools />}
-          {category === "forensics" && <ForensicsTools />}
-          {category === "networks" && <NetworkTools />}
+          <CategoryTools category={category} />
         </div>
       )}
     </div>
