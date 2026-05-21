@@ -51,7 +51,7 @@ export const CRYPTOGRAPHY_CHALLENGES: CtfChallenge[] = [
     materials: [
       {
         type: "code",
-        content: "WKHIODJLVDXWXPQOHDIHV",
+        content: "WKHIODJLVDXWXPQOHDYHV",
         caption: "Encoded message — shift each letter back to find the flag",
       },
       {

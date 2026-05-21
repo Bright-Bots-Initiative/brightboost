@@ -30,6 +30,8 @@ import {
 import EthicsFraming from "../labs/EthicsFraming";
 import { useCelebrate } from "../gamification/CelebrationContext";
 import { useChallenges } from "./useChallenges";
+import Toolbox from "./Toolbox";
+import ScratchPad from "./ScratchPad";
 
 const DIFFICULTY_BG: Record<CtfDifficulty, string> = {
   easy: "bg-emerald-600",
@@ -74,6 +76,8 @@ export default function ChallengePage() {
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [hintsRevealed, setHintsRevealed] = useState<string[]>([]);
   const [hintRemaining, setHintRemaining] = useState(3);
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintError, setHintError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [teamMode, setTeamMode] = useState<"solo" | "team">("solo");
 
@@ -157,7 +161,9 @@ export default function ChallengePage() {
   };
 
   const revealNextHint = async () => {
-    if (hintRemaining <= 0) return;
+    if (hintLoading || hintRemaining <= 0) return;
+    setHintLoading(true);
+    setHintError(null);
     try {
       const res = await fetch(
         `/api/pathways/challenges/${encodeURIComponent(challenge.slug)}/hint`,
@@ -166,14 +172,36 @@ export default function ChallengePage() {
           headers: { "Content-Type": "application/json", ...authHeader() },
         },
       );
-      const body = (await res.json().catch(() => null)) as HintResponse | null;
-      if (!body) return;
+      const body = (await res.json().catch(() => null)) as
+        | (HintResponse & { error?: string })
+        | null;
+      if (!res.ok) {
+        // Server returned a non-2xx; surface its error or a fallback.
+        setHintError(body?.error ?? `Couldn't load hint (${res.status})`);
+        return;
+      }
+      if (!body) {
+        setHintError("Couldn't load hint — empty response.");
+        return;
+      }
       if (body.hint) {
         setHintsRevealed((prev) => [...prev, body.hint!]);
         setHintRemaining(body.hintsRemaining);
+        return;
       }
-    } catch {
-      // Best effort; surface nothing to the user on network blip.
+      // No `hint` field on a 2xx — typically the "hints exhausted" reply.
+      if (body.hintsExhausted || body.hintsRemaining === 0) {
+        setHintRemaining(0);
+        return;
+      }
+      setHintError("Unexpected response from the hint service. Try again.");
+    } catch (err) {
+      // Network errors used to be swallowed silently — surface them now so
+      // facilitators (and we) can see when the hint route is unreachable.
+      console.error("[ctf/hint] failed:", err);
+      setHintError("Network error — check your connection and try again.");
+    } finally {
+      setHintLoading(false);
     }
   };
 
@@ -270,6 +298,10 @@ export default function ChallengePage() {
         <p className="text-sm text-slate-800 dark:text-slate-200">{challenge.prompt}</p>
       </div>
 
+      {/* Toolbox — category-appropriate calculators and references.
+          Collapsed by default so it doesn't steal focus from the scenario. */}
+      <Toolbox category={challenge.category} />
+
       {/* Materials */}
       <div className="space-y-3">
         {challenge.materials.map((m, i) => (
@@ -296,10 +328,19 @@ export default function ChallengePage() {
         {hintRemaining > 0 && (
           <button
             onClick={revealNextHint}
-            className="text-sm text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-dashed border-amber-400 dark:border-amber-700"
+            disabled={hintLoading}
+            className="text-sm text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 disabled:opacity-60 disabled:cursor-wait inline-flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg border border-dashed border-amber-400 dark:border-amber-700 active:scale-[0.98] transition-all"
           >
-            💡 Reveal next hint ({hintRemaining} remaining)
+            💡{" "}
+            {hintLoading
+              ? "Loading…"
+              : `Reveal next hint (${hintRemaining} remaining)`}
           </button>
+        )}
+        {hintError && (
+          <p className="text-xs text-rose-700 dark:text-rose-400" role="alert">
+            {hintError}
+          </p>
         )}
         {hintRemaining === 0 && hintsRevealed.length === 3 && (
           <p className="text-xs text-slate-500 dark:text-slate-500">
@@ -371,6 +412,10 @@ export default function ChallengePage() {
           </div>
         )}
       </div>
+
+      {/* Scratch pad — auto-saves to sessionStorage per challenge slug.
+          Sits at the bottom so students can take notes throughout. */}
+      <ScratchPad challengeSlug={challenge.slug} />
     </div>
   );
 }
