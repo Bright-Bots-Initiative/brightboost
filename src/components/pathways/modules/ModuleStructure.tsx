@@ -16,6 +16,7 @@
  */
 import { useMemo, useRef, useState } from "react";
 import { useCelebrate } from "../gamification/CelebrationContext";
+import GlossaryTerm from "../glossary/GlossaryTerm";
 import {
   BookOpen,
   GraduationCap,
@@ -403,15 +404,33 @@ function LockedNotice() {
   );
 }
 
-/** Render a paragraph string with **bold** markers turned into <strong>. Plain-text only — no markdown. */
+/**
+ * Render a paragraph string with two kinds of inline markers:
+ *  - `**bold**`        → <strong>bold</strong>
+ *  - `[[term|label]]`  → <GlossaryTerm term="term">label</GlossaryTerm>
+ *
+ * The regex captures both shapes in the SAME split so order is preserved.
+ * Text outside markers passes through as plain <span>.
+ */
 function renderInline(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|\[\[[a-z0-9-]+\|[^\]]+\]\])/g);
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
         <strong key={i} className="font-semibold text-slate-900 dark:text-slate-100">
           {part.slice(2, -2)}
         </strong>
+      );
+    }
+    if (part.startsWith("[[") && part.endsWith("]]")) {
+      const inner = part.slice(2, -2);
+      const pipe = inner.indexOf("|");
+      const slug = inner.slice(0, pipe);
+      const label = inner.slice(pipe + 1);
+      return (
+        <GlossaryTerm key={i} term={slug}>
+          {label}
+        </GlossaryTerm>
       );
     }
     return <span key={i}>{part}</span>;

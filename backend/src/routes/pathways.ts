@@ -194,14 +194,34 @@ router.get(
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
 
     const userIds = cohort.enrollments.map((e) => e.user.id);
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: { userId: { in: userIds } },
-    });
+    const [milestones, onboardings] = await Promise.all([
+      prisma.pathwayMilestone.findMany({
+        where: { userId: { in: userIds } },
+      }),
+      prisma.pathwayOnboarding.findMany({
+        where: { userId: { in: userIds } },
+        select: {
+          userId: true,
+          completedAt: true,
+          avatarChosen: true,
+          skillsTourViewed: true,
+        },
+      }),
+    ]);
+    const onboardingByUser = new Map(onboardings.map((o) => [o.userId, o]));
 
     const learners = cohort.enrollments.map((e) => {
       const userMilestones = milestones.filter((m) => m.userId === e.user.id);
       const completed = userMilestones.filter((m) => m.status === "completed").length;
       const total = userMilestones.length;
+      const ob = onboardingByUser.get(e.user.id);
+      // "completed" if completedAt set; "in_progress" if any flag is true but
+      // not completed; "not_started" otherwise. Facilitators use this to spot
+      // students who skipped Skills 101.
+      let onboardingStatus: "completed" | "in_progress" | "not_started" = "not_started";
+      if (ob?.completedAt) onboardingStatus = "completed";
+      else if (ob && (ob.avatarChosen || ob.skillsTourViewed)) onboardingStatus = "in_progress";
+
       return {
         ...e.user,
         milestones: userMilestones,
@@ -211,6 +231,7 @@ router.get(
           const d = m.completedAt ?? m.createdAt;
           return !latest || d > latest ? d : latest;
         }, null),
+        onboardingStatus,
       };
     });
 
@@ -1089,6 +1110,162 @@ router.get(
   requireAuth,
   async (_req: Request, res: Response) => {
     res.json({ team: null });
+  },
+);
+
+// ─── Onboarding (Cyber Skills 101) ─────────────────────────────────────────
+
+const onboardingPatchSchema = z.object({
+  avatarChosen: z.boolean().optional(),
+  skillsTourViewed: z.boolean().optional(),
+  skillsTourSkipped: z.boolean().optional(),
+  missionStatement: z.string().max(280).optional(),
+  dailyGoalLevel: z.enum(["light", "medium", "heavy"]).optional(),
+  avatarSlug: z.string().min(1).max(32).optional(),
+  completed: z.boolean().optional(),
+});
+
+router.get(
+  "/pathways/onboarding/me",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const row = await withTimeout(
+        prisma.pathwayOnboarding.upsert({
+          where: { userId: req.user!.id },
+          create: { userId: req.user!.id },
+          update: {},
+        }),
+        5000,
+        "onboarding_me",
+      );
+      res.json(row);
+    } catch (err) {
+      console.error("[pathways/onboarding/me] failed:", err);
+      // Fallback: pretend the user hasn't started yet so the welcome flow
+      // still renders for them; persistence resumes when the DB recovers.
+      res.status(200).json({
+        userId: req.user!.id,
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        avatarChosen: false,
+        skillsTourViewed: false,
+        skillsTourSkipped: false,
+        missionStatement: null,
+        dailyGoalLevel: null,
+        avatarSlug: null,
+        degraded: true,
+      });
+    }
+  },
+);
+
+router.patch(
+  "/pathways/onboarding/me",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = onboardingPatchSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+    const userId = req.user!.id;
+    const { completed, ...patch } = parsed.data;
+
+    try {
+      const before = await prisma.pathwayOnboarding.findUnique({ where: { userId } });
+      const data: Record<string, unknown> = { ...patch };
+      let justCompleted = false;
+      if (completed && !before?.completedAt) {
+        data.completedAt = new Date();
+        justCompleted = true;
+      }
+
+      const row = await prisma.pathwayOnboarding.upsert({
+        where: { userId },
+        create: { userId, ...data },
+        update: data,
+      });
+
+      // Award getting_started on first completion. The badge itself is
+      // unique-keyed so re-calling this endpoint is safe.
+      let badgeAwarded = null;
+      if (justCompleted) {
+        badgeAwarded = await awardBadge(userId, "getting_started");
+      }
+
+      res.json({ onboarding: row, badgeAwarded });
+    } catch (err) {
+      console.error("[pathways/onboarding/me PATCH] failed:", err);
+      res.status(500).json({ error: "failed_to_save" });
+    }
+  },
+);
+
+// ─── Glossary ──────────────────────────────────────────────────────────────
+
+const glossaryViewSchema = z.object({
+  termSlug: z.string().min(1).max(64),
+});
+
+router.post(
+  "/pathways/glossary/view",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const parsed = glossaryViewSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+    const userId = req.user!.id;
+    const termSlug = parsed.data.termSlug;
+
+    try {
+      const existing = await prisma.pathwayGlossaryView.findUnique({
+        where: { userId_termSlug: { userId, termSlug } },
+      });
+      if (existing) {
+        return res.json({ alreadyViewed: true });
+      }
+
+      await prisma.pathwayGlossaryView.create({
+        data: { userId, termSlug },
+      });
+
+      const totalViewed = await prisma.pathwayGlossaryView.count({
+        where: { userId },
+      });
+
+      let badgeAwarded: BadgeAwardResult | null = null;
+      if (totalViewed === 25) badgeAwarded = await awardBadge(userId, "word_collector");
+      if (totalViewed === 50) badgeAwarded = await awardBadge(userId, "vocab_builder");
+      if (totalViewed === 100) badgeAwarded = await awardBadge(userId, "cyber_linguist");
+
+      res.json({ alreadyViewed: false, totalViewed, badgeAwarded });
+    } catch (err) {
+      console.error("[pathways/glossary/view] failed:", err);
+      // Non-fatal — tracking glossary views shouldn't break the page that
+      // hosts the tooltip.
+      res.status(200).json({ alreadyViewed: false, degraded: true });
+    }
+  },
+);
+
+router.get(
+  "/pathways/glossary/me/stats",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const views = await prisma.pathwayGlossaryView.findMany({
+        where: { userId: req.user!.id },
+        select: { termSlug: true, viewedAt: true },
+      });
+      res.json({
+        totalViewed: views.length,
+        viewedSlugs: views.map((v) => v.termSlug),
+      });
+    } catch (err) {
+      console.error("[pathways/glossary/me/stats] failed:", err);
+      res.status(200).json({ totalViewed: 0, viewedSlugs: [] });
+    }
   },
 );
 

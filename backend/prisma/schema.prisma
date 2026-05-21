@@ -97,6 +97,8 @@ model User {
   pathwayCtfAttempts  PathwayCtfAttempt[]
   pathwayCtfSolves    PathwayCtfSolve[]
   pathwayCtfTeams     PathwayCtfTeamMember[]
+  pathwayOnboarding   PathwayOnboarding?
+  pathwayGlossaryViews PathwayGlossaryView[]
 }
 
 // -----------------------------------------------------------------------------
@@ -895,6 +897,34 @@ model PathwayCtfTeamMember {
   user User           @relation(fields: [userId], references: [id])
 
   @@unique([teamId, userId])
+}
+
+model PathwayOnboarding {
+  userId            String   @id
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+
+  avatarChosen      Boolean  @default(false)
+  skillsTourViewed  Boolean  @default(false)
+  skillsTourSkipped Boolean  @default(false)
+  missionStatement  String?
+  dailyGoalLevel    String?
+
+  avatarSlug        String?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PathwayGlossaryView {
+  id       String   @id @default(cuid())
+  userId   String
+  termSlug String
+  viewedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, termSlug])
+  @@index([userId])
 }
 
 // -----------------------------------------------------------------------------

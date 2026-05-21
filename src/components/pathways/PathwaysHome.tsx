@@ -22,6 +22,7 @@ import {
 import GamificationStrip from "./gamification/GamificationStrip";
 import DailyGoalsCard from "./gamification/DailyGoalsCard";
 import { useGamification } from "./gamification/useGamification";
+import { useOnboarding } from "./onboarding/useOnboarding";
 
 interface HomeData {
   user?: { name?: string | null; ageBand?: string | null; userType?: string | null; streak?: number };
@@ -42,6 +43,17 @@ export default function PathwaysHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { state: gamification, goals, loading: gamLoading } = useGamification();
+  const { state: onboarding, loading: onboardingLoading } = useOnboarding();
+
+  // First-visit redirect: if the user has never completed onboarding, send
+  // them into the Cyber Skills 101 welcome flow. Wait for both the
+  // onboarding fetch AND the home data so we don't flash content.
+  useEffect(() => {
+    if (onboardingLoading || loading) return;
+    if (onboarding && !onboarding.completedAt && !onboarding.skillsTourViewed && !onboarding.avatarChosen) {
+      navigate("/pathways/welcome", { replace: true });
+    }
+  }, [onboardingLoading, loading, onboarding, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,6 +165,19 @@ export default function PathwaysHome() {
 
       {/* Gamification: level, streak, badges pinned above everything else */}
       <GamificationStrip state={gamification} loading={gamLoading} />
+
+      {/* Mission statement (set during Cyber Skills 101). Acts as the
+          student's own framing — surfaced on home as a quiet reminder. */}
+      {onboarding?.missionStatement && (
+        <div className="rounded-xl border-l-4 border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 p-3 sm:p-4">
+          <p className="text-[10px] uppercase tracking-widest text-indigo-700 dark:text-indigo-300 font-semibold">
+            Your mission
+          </p>
+          <p className="text-sm text-slate-800 dark:text-slate-200 italic mt-1">
+            &ldquo;{onboarding.missionStatement}&rdquo;
+          </p>
+        </div>
+      )}
 
       {/* Today's goals — light, achievable */}
       <DailyGoalsCard goals={goals} />

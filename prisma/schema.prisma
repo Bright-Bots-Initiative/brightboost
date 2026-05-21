@@ -99,6 +99,8 @@ model User {
   pathwayCtfAttempts  PathwayCtfAttempt[]
   pathwayCtfSolves    PathwayCtfSolve[]
   pathwayCtfTeams     PathwayCtfTeamMember[]
+  pathwayOnboarding   PathwayOnboarding?
+  pathwayGlossaryViews PathwayGlossaryView[]
 }
 
 // -----------------------------------------------------------------------------
@@ -927,6 +929,38 @@ model PathwayCtfTeamMember {
   user User           @relation(fields: [userId], references: [id])
 
   @@unique([teamId, userId])
+}
+
+// ─── Cyber Skills 101 onboarding (Phase 2.1) ─────────────────────────────────
+// One row per user; created when the welcome flow starts, completedAt set when
+// they finish all 4 steps. The four step booleans let us resume mid-flow.
+model PathwayOnboarding {
+  userId            String   @id
+  startedAt         DateTime @default(now())
+  completedAt       DateTime?
+
+  avatarChosen      Boolean  @default(false)
+  skillsTourViewed  Boolean  @default(false)
+  skillsTourSkipped Boolean  @default(false)
+  missionStatement  String?
+  dailyGoalLevel    String?  // "light" | "medium" | "heavy"
+
+  avatarSlug        String?  // "explorer" | "analyst" | "guardian" | ...
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// First-view-only log of glossary terms; drives the vocab-builder badge chain.
+model PathwayGlossaryView {
+  id       String   @id @default(cuid())
+  userId   String
+  termSlug String   // "mfa" | "phishing" | ...
+  viewedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, termSlug])
+  @@index([userId])
 }
 
 // -----------------------------------------------------------------------------
