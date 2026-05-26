@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { findTerm } from "@/data/glossary";
 
 interface GlossaryTermProps {
@@ -70,6 +71,7 @@ async function trackViewOnce(slug: string) {
 }
 
 export default function GlossaryTerm({ term, children }: GlossaryTermProps) {
+  const { t } = useTranslation();
   const entry = findTerm(term);
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -129,12 +131,22 @@ export default function GlossaryTerm({ term, children }: GlossaryTermProps) {
     // Soft-fail: render the inner text unstyled so a typo in the term slug
     // doesn't break the surrounding paragraph.
     if (typeof console !== "undefined") {
-      console.warn(`GlossaryTerm: unknown slug "${term}"`);
+      console.warn(t("pathways.glossary.term.unknownSlug", { slug: term }));
     }
     return <span>{children ?? term}</span>;
   }
 
-  const label = children ?? entry.term;
+  const termLabel = t(`pathways.glossary.terms.${entry.slug}.term`);
+  const shortDef = t(`pathways.glossary.terms.${entry.slug}.shortDef`);
+  const longDefKey = `pathways.glossary.terms.${entry.slug}.longDef`;
+  const longDef = t(longDefKey, { defaultValue: "" });
+  const examplesKey = `pathways.glossary.terms.${entry.slug}.examples`;
+  const rawExamples = t(examplesKey, {
+    returnObjects: true,
+    defaultValue: [] as string[],
+  });
+  const examples = Array.isArray(rawExamples) ? (rawExamples as string[]) : [];
+  const label = children ?? termLabel;
 
   return (
     <>
@@ -181,23 +193,23 @@ export default function GlossaryTerm({ term, children }: GlossaryTermProps) {
             className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-3 text-left"
           >
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {entry.term}
+              {termLabel}
             </p>
             <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">
-              {entry.shortDef}
+              {shortDef}
             </p>
-            {entry.longDef && (
+            {longDef && (
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed">
-                {entry.longDef}
+                {longDef}
               </p>
             )}
-            {entry.examples && entry.examples.length > 0 && (
+            {examples.length > 0 && (
               <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-1">
-                  Examples
+                  {t("pathways.glossary.term.examplesHeading")}
                 </p>
                 <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-0.5">
-                  {entry.examples.map((ex, i) => (
+                  {examples.map((ex, i) => (
                     <li key={i} className="flex gap-1">
                       <span className="text-slate-400">·</span>
                       <span>{ex}</span>

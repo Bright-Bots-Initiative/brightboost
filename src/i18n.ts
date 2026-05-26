@@ -38,16 +38,36 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
-// Lazy-load vi and zh-CN bundles when first needed
+// Lazy-load vi and zh-CN bundles when first needed.
+// Both common.json and pathways.json are merged into the single `translation`
+// namespace so existing `useTranslation()` callers see all keys.
 async function ensureLocaleLoaded(lng: string) {
   if (i18n.hasResourceBundle(lng, "translation")) return;
   try {
     if (lng === "vi") {
-      const mod = await import("./locales/vi/common.json");
-      i18n.addResourceBundle("vi", "translation", mod.default, true, true);
+      const [common, pathways] = await Promise.all([
+        import("./locales/vi/common.json"),
+        import("./locales/vi/pathways.json"),
+      ]);
+      i18n.addResourceBundle(
+        "vi",
+        "translation",
+        { ...common.default, ...pathways.default },
+        true,
+        true,
+      );
     } else if (lng === "zh-CN") {
-      const mod = await import("./locales/zh-CN/common.json");
-      i18n.addResourceBundle("zh-CN", "translation", mod.default, true, true);
+      const [common, pathways] = await Promise.all([
+        import("./locales/zh-CN/common.json"),
+        import("./locales/zh-CN/pathways.json"),
+      ]);
+      i18n.addResourceBundle(
+        "zh-CN",
+        "translation",
+        { ...common.default, ...pathways.default },
+        true,
+        true,
+      );
     }
   } catch (e) {
     console.warn(`Failed to load locale ${lng}:`, e);

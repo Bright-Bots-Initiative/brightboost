@@ -16,6 +16,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface LevelUpCelebration {
   type: "level";
@@ -92,11 +93,13 @@ function CelebrationOverlay({
   onDismiss: () => void;
   reducedMotion: boolean;
 }) {
+  const { t } = useTranslation();
+
   // Auto-dismiss after 4s so the queue keeps moving even if the student
   // taps away from the device.
   useEffect(() => {
-    const t = setTimeout(onDismiss, 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(timer);
   }, [onDismiss]);
 
   const animateClass = reducedMotion ? "" : "animate-pop";
@@ -116,9 +119,11 @@ function CelebrationOverlay({
               🎉
             </div>
             <p className="text-xs uppercase tracking-widest text-white/80 font-semibold">
-              Level Up!
+              {t("pathways.celebration.levelUpEyebrow")}
             </p>
-            <p className="text-3xl font-bold text-white mt-2">Level {event.newLevel}</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {t("pathways.celebration.levelLabel", { n: event.newLevel })}
+            </p>
             <p className="text-white/90 text-base mt-1">{event.tier}</p>
           </>
         ) : (
@@ -127,7 +132,7 @@ function CelebrationOverlay({
               {event.icon || "🏆"}
             </div>
             <p className="text-xs uppercase tracking-widest text-white/80 font-semibold">
-              Badge Earned
+              {t("pathways.celebration.badgeEyebrow")}
             </p>
             <p className="text-2xl font-bold text-white mt-2">{event.name}</p>
             <p className="text-white/80 text-sm mt-2">{event.description}</p>
@@ -137,7 +142,7 @@ function CelebrationOverlay({
           onClick={onDismiss}
           className="mt-5 sm:mt-6 px-6 py-2 min-h-[44px] rounded-lg bg-white/20 hover:bg-white/30 active:scale-[0.98] text-white text-sm font-semibold transition-all"
         >
-          Nice
+          {t("pathways.celebration.dismiss")}
         </button>
       </div>
     </div>

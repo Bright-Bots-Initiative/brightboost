@@ -7,6 +7,7 @@
  * it. Re-openable via the help icon on the Toolbox header.
  */
 import { Wrench, Edit3, Lightbulb, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ToolboxIntroProps {
   onAcknowledge: () => void;
@@ -20,18 +21,19 @@ export default function ToolboxIntro({
   onAcknowledge,
   showClose,
 }: ToolboxIntroProps) {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl">
         <div className="flex items-start justify-between px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-            Meet Your Toolbox
+            {t("pathways.challenges.toolboxIntro.heading")}
           </h2>
           {showClose && (
             <button
               type="button"
               onClick={onAcknowledge}
-              aria-label="Close"
+              aria-label={t("pathways.challenges.toolboxIntro.close")}
               className="p-1 -m-1 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
             >
               <X className="w-5 h-5" />
@@ -40,46 +42,33 @@ export default function ToolboxIntro({
         </div>
 
         <div className="px-5 sm:px-6 py-5 space-y-4 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
-          <p>
-            Real cybersecurity professionals don't memorize ciphers or compute
-            hex by hand. They use tools — and so will you.
-          </p>
+          <p>{t("pathways.challenges.toolboxIntro.intro")}</p>
 
           <IntroBlock
             Icon={Wrench}
             tint="indigo"
-            title="Toolbox"
-            body={
-              <>
-                Every challenge has tools designed for it — cipher decoders,
-                hex converters, port references, network calculators, and
-                more. They live in a panel on the right (on mobile, tap the{" "}
-                <span className="inline-flex items-center gap-0.5 align-baseline">
-                  <Wrench className="w-3 h-3" /> Tools
-                </span>{" "}
-                button in the bottom corner).
-              </>
-            }
+            title={t("pathways.challenges.toolboxIntro.toolboxTitle")}
+            body={t("pathways.challenges.toolboxIntro.toolboxBody", {
+              toolsButton: t("pathways.challenges.toolboxIntro.toolsButton"),
+            })}
           />
 
           <IntroBlock
             Icon={Edit3}
             tint="emerald"
-            title="Scratch Pad"
-            body="A notepad for your work. Notes, attempts, partial answers — anything. Auto-saves while you work. It sits right below the Toolbox."
+            title={t("pathways.challenges.toolboxIntro.scratchPadTitle")}
+            body={t("pathways.challenges.toolboxIntro.scratchPadBody")}
           />
 
           <IntroBlock
             Icon={Lightbulb}
             tint="amber"
-            title="Hints"
-            body="Stuck? Every challenge has 3 progressive hints. Using them doesn't cost you any XP — it just helps your facilitator see where group instruction might help."
+            title={t("pathways.challenges.toolboxIntro.hintsTitle")}
+            body={t("pathways.challenges.toolboxIntro.hintsBody")}
           />
 
           <p className="text-center text-slate-600 dark:text-slate-400 italic text-xs sm:text-sm pt-2">
-            The challenge isn't to do everything in your head.
-            <br />
-            The challenge is to recognize problems and use the right tool.
+            {t("pathways.challenges.toolboxIntro.outro")}
           </p>
         </div>
 
@@ -89,7 +78,7 @@ export default function ToolboxIntro({
             onClick={onAcknowledge}
             className="w-full px-5 py-3 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-semibold transition-all"
           >
-            Got it — let's solve some puzzles
+            {t("pathways.challenges.toolboxIntro.ackCta")}
           </button>
         </div>
       </div>

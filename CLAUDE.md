@@ -118,10 +118,12 @@ npx prisma generate
 ### Multilingual / i18n
 - Never hardcode English strings in UI — use translation keys via `useTranslation()`
 - When adding new copy, add keys to `en.json` and `es.json` at minimum; also `vi.json` and `zh-CN.json` if possible
-- Locale files: `src/locales/{en,es,vi,zh-CN}/common.json`
+- Locale files: `src/locales/{en,es,vi,zh-CN}/{common,pathways}.json` (one `translation` namespace, two files merged at boot — see `docs/i18n.md`)
 - If a translation is uncertain, add the English value with a `// TODO: translate` comment
 - Use `pickLocale()` from `src/utils/localizedContent.ts` for game content data (non-UI strings)
 - Use `translateContentName()` for database-sourced module/activity names
+- Glossary content lives in `pathways.glossary.terms.<slug>.*` (locale JSON); `src/data/glossary.ts` holds slug + category only
+- Full architecture, deferred component backlog, and intern-ready tickets: `docs/i18n.md`
 
 ### Educational Intent
 - Do not replace Bright Boost's learning intent with generic gameplay

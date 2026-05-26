@@ -12,6 +12,7 @@
  */
 import { useState, useCallback, ReactNode } from "react";
 import { ArrowLeft, Clock, ListChecks, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import EthicsFraming from "./EthicsFraming";
 import { useCelebrate } from "../gamification/CelebrationContext";
 
@@ -53,6 +54,7 @@ function authHeader(): Record<string, string> {
 }
 
 export default function LabShell({ briefing, onExit, children }: LabShellProps) {
+  const { t } = useTranslation();
   const [ethicsAcked, setEthicsAcked] = useState(false);
   const [briefed, setBriefed] = useState(false);
   const { celebrate } = useCelebrate();
@@ -125,12 +127,12 @@ export default function LabShell({ briefing, onExit, children }: LabShellProps) 
             onClick={onExit}
             className="flex items-center gap-1 px-2 py-2 min-h-[44px] text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {t("pathways.labs.shell.backToTrack")}
           </button>
 
           <div>
             <p className="text-xs uppercase tracking-widest text-amber-700 dark:text-amber-400 font-semibold mb-1">
-              Lab
+              {t("pathways.labs.shell.labLabel")}
             </p>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               {briefing.title}
@@ -142,22 +144,22 @@ export default function LabShell({ briefing, onExit, children }: LabShellProps) 
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Before You Start
+                {t("pathways.labs.shell.beforeYouStart")}
               </p>
             </div>
 
             <div>
               <p className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                <Clock className="w-3 h-3" /> Time
+                <Clock className="w-3 h-3" /> {t("pathways.labs.shell.timeLabel")}
               </p>
               <p className="text-sm text-slate-800 dark:text-slate-200">
-                ~{briefing.estMinutes} minutes
+                {t("pathways.labs.shell.timeValue", { minutes: briefing.estMinutes })}
               </p>
             </div>
 
             <div>
               <p className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                <ListChecks className="w-3 h-3" /> Assumes you know
+                <ListChecks className="w-3 h-3" /> {t("pathways.labs.shell.assumesLabel")}
               </p>
               <ul className="text-sm text-slate-800 dark:text-slate-200 space-y-1 pl-1">
                 {briefing.assumes.map((a, i) => (
@@ -171,7 +173,7 @@ export default function LabShell({ briefing, onExit, children }: LabShellProps) 
 
             <div>
               <p className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
-                You'll produce
+                {t("pathways.labs.shell.outputLabel")}
               </p>
               <p className="text-sm text-slate-800 dark:text-slate-200">
                 {briefing.outputDescription}
@@ -184,7 +186,7 @@ export default function LabShell({ briefing, onExit, children }: LabShellProps) 
               onClick={() => setBriefed(true)}
               className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-semibold transition-all"
             >
-              Start lab →
+              {t("pathways.labs.shell.startCta")}
             </button>
           </div>
         </div>
