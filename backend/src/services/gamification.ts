@@ -560,11 +560,49 @@ export interface DailyGoalItem {
   completed: boolean;
 }
 
-const DEFAULT_GOALS: DailyGoalItem[] = [
-  { slug: "complete_section", label: "Complete 1 section", target: 1, current: 0, completed: false },
-  { slug: "earn_xp", label: "Earn 50 XP", target: 50, current: 0, completed: false },
-  { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1, current: 0, completed: false },
-];
+export type DailyGoalLevel = "light" | "medium" | "heavy";
+
+/**
+ * Returns the target shape for a given daily-goal preference. Light has
+ * 2 goals (lower XP, no lab), medium has 3 (the original defaults), heavy
+ * has 3 with higher targets (2 sections, 100 XP).
+ *
+ * NOTE: keep the slugs stable (`complete_section`, `earn_xp`,
+ * `try_lab_or_quiz`) — `updateDailyGoalProgress` matches on those slugs
+ * to credit progress. Labels can vary per level.
+ *
+ * NOTE: prisma/seed.cjs mirrors this function. If you change the shapes
+ * here, mirror the change there too (small enough to duplicate).
+ */
+export function getDailyGoalTargets(
+  level: DailyGoalLevel | null | undefined,
+): Array<Omit<DailyGoalItem, "current" | "completed">> {
+  const effective: DailyGoalLevel = level ?? "medium";
+  if (effective === "light") {
+    return [
+      { slug: "complete_section", label: "Complete 1 section", target: 1 },
+      { slug: "earn_xp", label: "Earn 30 XP", target: 30 },
+    ];
+  }
+  if (effective === "heavy") {
+    return [
+      { slug: "complete_section", label: "Complete 2 sections", target: 2 },
+      { slug: "earn_xp", label: "Earn 100 XP", target: 100 },
+      { slug: "try_lab_or_quiz", label: "Try 1 lab or challenge", target: 1 },
+    ];
+  }
+  return [
+    { slug: "complete_section", label: "Complete 1 section", target: 1 },
+    { slug: "earn_xp", label: "Earn 50 XP", target: 50 },
+    { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1 },
+  ];
+}
+
+function expandTargets(
+  targets: ReturnType<typeof getDailyGoalTargets>,
+): DailyGoalItem[] {
+  return targets.map((t) => ({ ...t, current: 0, completed: false }));
+}
 
 export async function getOrCreateDailyGoals(userId: string) {
   const today = toUtcDate(new Date());
@@ -572,11 +610,23 @@ export async function getOrCreateDailyGoals(userId: string) {
     where: { userId_date: { userId, date: today } },
   });
   if (found) return found;
+
+  // Honour the student's Cyber Skills 101 daily-goal preference if it's
+  // been set. Missing onboarding row or `null` level falls through to
+  // medium (the historical default).
+  const onboarding = await prisma.pathwayOnboarding.findUnique({
+    where: { userId },
+    select: { dailyGoalLevel: true },
+  });
+  const targets = getDailyGoalTargets(
+    onboarding?.dailyGoalLevel as DailyGoalLevel | null,
+  );
+
   return prisma.pathwayDailyGoal.create({
     data: {
       userId,
       date: today,
-      goals: DEFAULT_GOALS as unknown as Prisma.InputJsonValue,
+      goals: expandTargets(targets) as unknown as Prisma.InputJsonValue,
     },
   });
 }
