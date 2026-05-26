@@ -1637,6 +1637,16 @@ async function main() {
     { moduleSlug: "threat-detective", status: "in_progress", score: null, daysAgo: 1, timeSpent: 28 },
   ];
 
+  // Clear any drifted Cyber Launch milestone state before re-seeding the
+  // canonical 4 rows. Without this, live demo usage that touches modules
+  // outside the seed array accumulates rows that the upsert-only loop
+  // never cleans up — Marcus drifted from "3 done + 1 in flight" to
+  // "1 done + 5 in flight" over the past two weeks. (See diagnostic
+  // finding M4.) Scope is bounded to Marcus's Cyber Launch track only.
+  await prisma.pathwayMilestone.deleteMany({
+    where: { userId: marcus.id, trackSlug: "cyber-launch" },
+  });
+
   for (const m of marcusMilestones) {
     const isDone = m.status === "completed";
     const isInProgress = m.status === "in_progress";
@@ -1654,15 +1664,13 @@ async function main() {
       quizScore: isDone ? m.score : null,
       timeSpentMinutes: m.timeSpent,
     };
-    await prisma.pathwayMilestone.upsert({
-      where: { userId_trackSlug_moduleSlug: { userId: marcus.id, trackSlug: "cyber-launch", moduleSlug: m.moduleSlug } },
-      create: {
+    await prisma.pathwayMilestone.create({
+      data: {
         userId: marcus.id,
         trackSlug: "cyber-launch",
         moduleSlug: m.moduleSlug,
         ...fullFields,
       },
-      update: fullFields,
     });
   }
   console.log("Seeded Marcus partial Cyber Launch progress (3 completed with homework, 1 in progress)");
@@ -1784,6 +1792,10 @@ async function main() {
       missionStatement:
         "I want to build a real career in cybersecurity and help my community stay safe online.",
       dailyGoalLevel: "medium",
+      // Demo intent: every fresh demo should see the toolbox intro fire on
+      // first CTF visit. Live sessions used to leave this `true`, breaking
+      // the demo story on the next showing. (Diagnostic finding L3.)
+      toolboxIntroSeen: false,
     },
     {
       email: "facilitator@test.com",
@@ -1791,6 +1803,7 @@ async function main() {
       missionStatement:
         "I want to help my students see themselves in this work and build real pathways forward.",
       dailyGoalLevel: "heavy",
+      toolboxIntroSeen: false,
     },
   ];
 
@@ -1807,6 +1820,7 @@ async function main() {
       skillsTourSkipped: false,
       missionStatement: data.missionStatement,
       dailyGoalLevel: data.dailyGoalLevel,
+      toolboxIntroSeen: data.toolboxIntroSeen,
       completedAt: new Date(),
     };
     await prisma.pathwayOnboarding.upsert({
@@ -1835,6 +1849,66 @@ async function main() {
     });
   }
   console.log("  Awarded Getting Started badge to demo accounts");
+
+  // ─── Daily goals for today (demo accounts) ──────────────────────────────
+  // Without a row for "today", the home page goal card briefly renders an
+  // empty/skeleton state until the lazy server-side creation fires. Pre-
+  // seeding here means demos always open to a fully-rendered goal card.
+  // Aisha is intentionally LEFT OUT — she's the fresh-user demo and
+  // should hit the lazy creation path so we can show that flow.
+  //
+  // NOTE: this mirrors getDailyGoalTargets() in
+  // backend/src/services/gamification.ts. Keep slugs (`complete_section`,
+  // `earn_xp`, `try_lab_or_quiz`) stable — updateDailyGoalProgress() keys
+  // off them at runtime to credit progress.
+  function getDailyGoalTargets(level) {
+    const effective = level || "medium";
+    if (effective === "light") {
+      return [
+        { slug: "complete_section", label: "Complete 1 section", target: 1 },
+        { slug: "earn_xp", label: "Earn 30 XP", target: 30 },
+      ];
+    }
+    if (effective === "heavy") {
+      return [
+        { slug: "complete_section", label: "Complete 2 sections", target: 2 },
+        { slug: "earn_xp", label: "Earn 100 XP", target: 100 },
+        { slug: "try_lab_or_quiz", label: "Try 1 lab or challenge", target: 1 },
+      ];
+    }
+    return [
+      { slug: "complete_section", label: "Complete 1 section", target: 1 },
+      { slug: "earn_xp", label: "Earn 50 XP", target: 50 },
+      { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1 },
+    ];
+  }
+
+  const todayUtc = new Date();
+  todayUtc.setUTCHours(0, 0, 0, 0);
+
+  for (const data of onboardingDemoData) {
+    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    if (!user) continue;
+    const goals = getDailyGoalTargets(data.dailyGoalLevel).map((t) => ({
+      ...t,
+      current: 0,
+      completed: false,
+    }));
+    await prisma.pathwayDailyGoal.upsert({
+      where: { userId_date: { userId: user.id, date: todayUtc } },
+      // Don't clobber progress someone already accrued today; just ensure
+      // a row exists with the right shape.
+      update: {},
+      create: {
+        userId: user.id,
+        date: todayUtc,
+        goals,
+        allComplete: false,
+        bonusAwarded: false,
+      },
+    });
+  }
+  console.log("  Seeded daily goals for demo accounts (today, by goal level)");
   } catch (e) {
     console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
   }
