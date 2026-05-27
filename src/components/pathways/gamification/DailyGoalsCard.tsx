@@ -6,11 +6,13 @@
  * good day, not a comparison against peers.
  */
 import { Check, Target } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { DailyGoalsPayload } from "./useGamification";
 
 const BONUS_XP = 25;
 
 export default function DailyGoalsCard({ goals }: { goals: DailyGoalsPayload | null }) {
+  const { t } = useTranslation();
   if (!goals) {
     return (
       <div className="rounded-xl bg-slate-100 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 p-3 sm:p-4 h-[140px] animate-pulse" />
@@ -23,12 +25,12 @@ export default function DailyGoalsCard({ goals }: { goals: DailyGoalsPayload | n
         <div className="flex items-center gap-2 min-w-0">
           <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Today's Goals
+            {t("pathways.dailyGoals.heading")}
           </h3>
         </div>
         {goals.allComplete && (
           <span className="shrink-0 text-[10px] sm:text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-semibold">
-            +{BONUS_XP} XP bonus ✓
+            {t("pathways.dailyGoals.bonus", { xp: BONUS_XP })}
           </span>
         )}
       </div>

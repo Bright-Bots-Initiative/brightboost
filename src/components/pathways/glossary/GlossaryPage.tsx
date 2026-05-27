@@ -10,9 +10,10 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   GLOSSARY,
-  CATEGORY_META,
+  CATEGORY_ORDER,
   type GlossaryCategory,
 } from "@/data/glossary";
 
@@ -27,6 +28,7 @@ function authHeader(): Record<string, string> {
 }
 
 export default function GlossaryPage() {
+  const { t } = useTranslation();
   const [viewed, setViewed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -53,9 +55,9 @@ export default function GlossaryPage() {
 
   const byCategory = useMemo(() => {
     const map = new Map<GlossaryCategory, typeof GLOSSARY>();
-    for (const term of GLOSSARY) {
-      if (!map.has(term.category)) map.set(term.category, []);
-      map.get(term.category)!.push(term);
+    for (const entry of GLOSSARY) {
+      if (!map.has(entry.category)) map.set(entry.category, []);
+      map.get(entry.category)!.push(entry);
     }
     return map;
   }, []);
@@ -70,11 +72,12 @@ export default function GlossaryPage() {
       <div className="rounded-2xl bg-gradient-to-br from-indigo-700 to-purple-700 p-5 sm:p-6">
         <div className="flex items-center gap-3">
           <BookOpen className="w-6 h-6 text-white shrink-0" />
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Glossary</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">
+            {t("pathways.glossary.page.title")}
+          </h1>
         </div>
         <p className="text-white/80 text-sm mt-2">
-          Every term you'll see across Pathways, with plain-language definitions.
-          Open a term anywhere in the platform and we'll mark it viewed here.
+          {t("pathways.glossary.page.subtitle")}
         </p>
         {!loading && (
           <div className="mt-4">
@@ -84,7 +87,9 @@ export default function GlossaryPage() {
                   {totalViewed}
                   <span className="text-white/60 text-lg font-normal"> / {totalTerms}</span>
                 </p>
-                <p className="text-xs text-white/80">terms learned</p>
+                <p className="text-xs text-white/80">
+                  {t("pathways.glossary.page.progressFooter")}
+                </p>
               </div>
               <p className="text-white/80 text-sm font-mono">{pct}%</p>
             </div>
@@ -98,29 +103,30 @@ export default function GlossaryPage() {
         )}
       </div>
 
-      {/* Categories */}
-      {Array.from(byCategory.entries()).map(([cat, terms]) => {
-        const meta = CATEGORY_META[cat];
-        const seen = terms.filter((t) => viewed.has(t.slug)).length;
+      {/* Categories — rendered in CATEGORY_ORDER */}
+      {CATEGORY_ORDER.map((cat) => {
+        const terms = byCategory.get(cat);
+        if (!terms || terms.length === 0) return null;
+        const seen = terms.filter((entry) => viewed.has(entry.slug)).length;
         return (
           <section key={cat}>
             <div className="flex items-baseline justify-between mb-2 gap-3">
               <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-                {meta.label}
+                {t(`pathways.glossary.categories.${cat}.label`)}
               </h2>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                 {seen}/{terms.length}
               </span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-              {meta.description}
+              {t(`pathways.glossary.categories.${cat}.description`)}
             </p>
             <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
-              {terms.map((t) => {
-                const isSeen = viewed.has(t.slug);
+              {terms.map((entry) => {
+                const isSeen = viewed.has(entry.slug);
                 return (
                   <div
-                    key={t.slug}
+                    key={entry.slug}
                     className={`rounded-xl border p-3 sm:p-4 ${
                       isSeen
                         ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-800/40"
@@ -136,7 +142,7 @@ export default function GlossaryPage() {
                               : "text-slate-900 dark:text-slate-100"
                           }`}
                         >
-                          {t.term}
+                          {t(`pathways.glossary.terms.${entry.slug}.term`)}
                         </p>
                         <p
                           className={`text-xs mt-1 leading-relaxed ${
@@ -145,13 +151,13 @@ export default function GlossaryPage() {
                               : "text-slate-700 dark:text-slate-300"
                           }`}
                         >
-                          {t.shortDef}
+                          {t(`pathways.glossary.terms.${entry.slug}.shortDef`)}
                         </p>
                       </div>
                       {isSeen && (
                         <CheckCircle2
                           className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
-                          aria-label="viewed"
+                          aria-label={t("pathways.glossary.page.seenLabel")}
                         />
                       )}
                     </div>

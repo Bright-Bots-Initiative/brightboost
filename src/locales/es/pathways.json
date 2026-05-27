@@ -143,13 +143,34 @@
         }
       },
       "modules": {
-        "cyber-foundations": { "name": "Fundamentos de Ciberseguridad", "description": "¿Qué es la ciberseguridad? ¿Por qué importa? ¿Quién trabaja en este campo?" },
-        "digital-safety-sim": { "name": "Simulación de Seguridad Digital", "description": "Simulación interactiva: detecta phishing, protege contraseñas, asegura una red." },
-        "network-basics": { "name": "Fundamentos de Redes", "description": "Cómo funciona internet: paquetes, protocolos y rutas." },
-        "threat-detective": { "name": "Detective de Amenazas", "description": "Analiza registros, encuentra la brecha y escribe un reporte de incidente." },
-        "career-map": { "name": "Mapa de Carreras Cibernéticas", "description": "Explora roles, salarios y rutas en ciberseguridad." },
-        "cisco-netacad-link": { "name": "Cisco Networking Academy", "description": "Cursos externos gratuitos para profundizar tus habilidades de redes y seguridad." },
-        "capstone-security-plan": { "name": "Proyecto Final: Mi Plan de Seguridad", "description": "Crea una evaluación de seguridad para un escenario real. Presenta tus hallazgos." }
+        "cyber-foundations": {
+          "name": "Fundamentos de Ciberseguridad",
+          "description": "¿Qué es la ciberseguridad? ¿Por qué importa? ¿Quién trabaja en este campo?"
+        },
+        "digital-safety-sim": {
+          "name": "Simulación de Seguridad Digital",
+          "description": "Simulación interactiva: detecta phishing, protege contraseñas, asegura una red."
+        },
+        "network-basics": {
+          "name": "Fundamentos de Redes",
+          "description": "Cómo funciona internet: paquetes, protocolos y rutas."
+        },
+        "threat-detective": {
+          "name": "Detective de Amenazas",
+          "description": "Analiza registros, encuentra la brecha y escribe un reporte de incidente."
+        },
+        "career-map": {
+          "name": "Mapa de Carreras Cibernéticas",
+          "description": "Explora roles, salarios y rutas en ciberseguridad."
+        },
+        "cisco-netacad-link": {
+          "name": "Cisco Networking Academy",
+          "description": "Cursos externos gratuitos para profundizar tus habilidades de redes y seguridad."
+        },
+        "capstone-security-plan": {
+          "name": "Proyecto Final: Mi Plan de Seguridad",
+          "description": "Crea una evaluación de seguridad para un escenario real. Presenta tus hallazgos."
+        }
       }
     },
     "trackDetail": {
@@ -482,27 +503,100 @@
       "foundations": {
         "title": "Fundamentos de Ciberseguridad",
         "slides": [
-          { "title": "¿Qué es la Ciberseguridad?", "body": "La ciberseguridad es la práctica de proteger sistemas, redes y datos contra ataques digitales. Cada dispositivo conectado a internet es un blanco potencial — y defenderlos es una prioridad global creciente." },
-          { "title": "Por Qué Importa", "body": "Las brechas de datos le cuestan a las empresas un promedio de $4.45 millones por incidente (Reporte IBM Cost of a Data Breach, 2023). Los datos personales — contraseñas, información financiera, historiales médicos — están constantemente en riesgo. Infraestructuras críticas como redes eléctricas y hospitales dependen de una fuerte defensa cibernética." },
-          { "title": "Brechas Reales", "body": "En 2017, una sola brecha expuso los datos personales de 147 millones de personas — nombres, números de seguridad social, fechas de nacimiento. En 2020, un ataque de ransomware cerró una red hospitalaria importante, desviando pacientes de emergencia y retrasando atención por días. Incidentes reales como estos son la razón por la que toda organización ahora trata la ciberseguridad como un riesgo de negocio, no solo un problema de TI." },
-          { "title": "¿Quién Trabaja en Ciber?" },
-          { "title": "Muchas Formas de Entrar", "body": "No necesitas un título universitario de cuatro años para empezar una carrera en ciber. Las personas entran al campo a través de bootcamps, certificaciones gratuitas de la industria (CompTIA Security+, ISC2 Certified in Cybersecurity), servicio militar, roles de mesa de ayuda de TI, y estudio autodidacta con laboratorios caseros. A los empleadores les importa lo que sabes hacer, no solo lo que dice tu diploma." },
-          { "title": "La Oportunidad", "body": "EE.UU. tenía aproximadamente 470,000 vacantes sin cubrir en ciberseguridad a mediados de 2024 (NIST CyberSeek). La Oficina de Estadísticas Laborales proyecta que el empleo de Analistas de Seguridad de la Información crecerá alrededor del 33% de 2023 a 2033 — mucho más rápido que el promedio de todas las ocupaciones. El campo premia la curiosidad, la resolución de problemas y la persistencia por encima de cualquier trasfondo." }
+          {
+            "title": "¿Qué es la Ciberseguridad?",
+            "body": "La ciberseguridad es la práctica de proteger sistemas, redes y datos contra ataques digitales. Cada dispositivo conectado a internet es un blanco potencial — y defenderlos es una prioridad global creciente."
+          },
+          {
+            "title": "Por Qué Importa",
+            "body": "Las brechas de datos le cuestan a las empresas un promedio de $4.45 millones por incidente (Reporte IBM Cost of a Data Breach, 2023). Los datos personales — contraseñas, información financiera, historiales médicos — están constantemente en riesgo. Infraestructuras críticas como redes eléctricas y hospitales dependen de una fuerte defensa cibernética."
+          },
+          {
+            "title": "Brechas Reales",
+            "body": "En 2017, una sola brecha expuso los datos personales de 147 millones de personas — nombres, números de seguridad social, fechas de nacimiento. En 2020, un ataque de ransomware cerró una red hospitalaria importante, desviando pacientes de emergencia y retrasando atención por días. Incidentes reales como estos son la razón por la que toda organización ahora trata la ciberseguridad como un riesgo de negocio, no solo un problema de TI."
+          },
+          {
+            "title": "¿Quién Trabaja en Ciber?"
+          },
+          {
+            "title": "Muchas Formas de Entrar",
+            "body": "No necesitas un título universitario de cuatro años para empezar una carrera en ciber. Las personas entran al campo a través de bootcamps, certificaciones gratuitas de la industria (CompTIA Security+, ISC2 Certified in Cybersecurity), servicio militar, roles de mesa de ayuda de TI, y estudio autodidacta con laboratorios caseros. A los empleadores les importa lo que sabes hacer, no solo lo que dice tu diploma."
+          },
+          {
+            "title": "La Oportunidad",
+            "body": "EE.UU. tenía aproximadamente 470,000 vacantes sin cubrir en ciberseguridad a mediados de 2024 (NIST CyberSeek). La Oficina de Estadísticas Laborales proyecta que el empleo de Analistas de Seguridad de la Información crecerá alrededor del 33% de 2023 a 2033 — mucho más rápido que el promedio de todas las ocupaciones. El campo premia la curiosidad, la resolución de problemas y la persistencia por encima de cualquier trasfondo."
+          }
         ],
         "roles": [
-          { "name": "Analista de Seguridad", "desc": "Monitorea redes para amenazas e investiga alertas", "pay": "$75K–$110K" },
-          { "name": "Pen Tester (Probador de Penetración)", "desc": "Hackea sistemas legalmente para encontrar vulnerabilidades antes que los atacantes", "pay": "$85K–$130K" },
-          { "name": "Respondedor de Incidentes", "desc": "Investiga brechas y lidera el esfuerzo de recuperación", "pay": "$70K–$105K" },
-          { "name": "Ingeniero de Seguridad", "desc": "Diseña y construye arquitectura y herramientas de seguridad", "pay": "$95K–$145K" },
-          { "name": "Analista GRC", "desc": "Gestiona marcos de gobernanza, riesgo y cumplimiento", "pay": "$65K–$100K" },
-          { "name": "Forense Digital", "desc": "Recupera evidencia de dispositivos después de brechas y crímenes", "pay": "$75K–$120K" },
-          { "name": "Arquitecto de Seguridad", "desc": "Diseña la estrategia general de seguridad de una organización", "pay": "$120K–$180K" },
-          { "name": "CISO", "desc": "Director de Seguridad de la Información — lidera todo el programa de seguridad", "pay": "$150K–$250K" }
+          {
+            "name": "Analista de Seguridad",
+            "desc": "Monitorea redes para amenazas e investiga alertas",
+            "pay": "$75K–$110K"
+          },
+          {
+            "name": "Pen Tester (Probador de Penetración)",
+            "desc": "Hackea sistemas legalmente para encontrar vulnerabilidades antes que los atacantes",
+            "pay": "$85K–$130K"
+          },
+          {
+            "name": "Respondedor de Incidentes",
+            "desc": "Investiga brechas y lidera el esfuerzo de recuperación",
+            "pay": "$70K–$105K"
+          },
+          {
+            "name": "Ingeniero de Seguridad",
+            "desc": "Diseña y construye arquitectura y herramientas de seguridad",
+            "pay": "$95K–$145K"
+          },
+          {
+            "name": "Analista GRC",
+            "desc": "Gestiona marcos de gobernanza, riesgo y cumplimiento",
+            "pay": "$65K–$100K"
+          },
+          {
+            "name": "Forense Digital",
+            "desc": "Recupera evidencia de dispositivos después de brechas y crímenes",
+            "pay": "$75K–$120K"
+          },
+          {
+            "name": "Arquitecto de Seguridad",
+            "desc": "Diseña la estrategia general de seguridad de una organización",
+            "pay": "$120K–$180K"
+          },
+          {
+            "name": "CISO",
+            "desc": "Director de Seguridad de la Información — lidera todo el programa de seguridad",
+            "pay": "$150K–$250K"
+          }
         ],
         "quiz": [
-          { "q": "¿Qué protege la ciberseguridad?", "opts": ["Solo contraseñas", "Sistemas, redes y datos", "Solo sitios web", "Solo hardware"] },
-          { "q": "¿Por qué crece la demanda de trabajadores de ciber?", "opts": ["Las empresas reducen presupuestos tecnológicos", "Los ataques están disminuyendo", "Las amenazas digitales aumentan y no hay suficientes defensores", "La ciberseguridad se está automatizando"] },
-          { "q": "¿Qué rol investiga las brechas?", "opts": ["Analista GRC", "CISO", "Respondedor de Incidentes", "Pen Tester"] }
+          {
+            "q": "¿Qué protege la ciberseguridad?",
+            "opts": [
+              "Solo contraseñas",
+              "Sistemas, redes y datos",
+              "Solo sitios web",
+              "Solo hardware"
+            ]
+          },
+          {
+            "q": "¿Por qué crece la demanda de trabajadores de ciber?",
+            "opts": [
+              "Las empresas reducen presupuestos tecnológicos",
+              "Los ataques están disminuyendo",
+              "Las amenazas digitales aumentan y no hay suficientes defensores",
+              "La ciberseguridad se está automatizando"
+            ]
+          },
+          {
+            "q": "¿Qué rol investiga las brechas?",
+            "opts": [
+              "Analista GRC",
+              "CISO",
+              "Respondedor de Incidentes",
+              "Pen Tester"
+            ]
+          }
         ],
         "sourcesDisclaimer": "Las cifras del mercado laboral y salarios citadas arriba son referencias puntuales; verifica contra datos actuales de BLS/CyberSeek antes de citar en materiales para socios."
       },
@@ -571,7 +665,14 @@
         "launchLabel": "Lanzamiento (16-17 años)",
         "launchDesc": "Preparación para credenciales, construcción de portafolio y planificación de carrera. Prepárate para lo que sigue.",
         "howTitle": "Cómo Funciona",
-        "howSteps": ["Inscribirse en grupo", "Elegir rutas", "Completar módulos", "Ganar logros", "Construir proyecto final", "Siguientes pasos"],
+        "howSteps": [
+          "Inscribirse en grupo",
+          "Elegir rutas",
+          "Completar módulos",
+          "Ganar logros",
+          "Construir proyecto final",
+          "Siguientes pasos"
+        ],
         "trackActiveTitle": "Ruta Cyber Launch (Activa)",
         "talkingPointsTitle": "Puntos Clave de Conversación",
         "talkingPoints": [
@@ -593,7 +694,13 @@
       "sessions": {
         "pacingTitle": "Guía de Ritmo de 6 Semanas",
         "pacingSub": "Combina el módulo de cada semana con la hoja de trabajo correspondiente para mejores resultados.",
-        "tableHead": { "week": "Semana", "focus": "Enfoque", "modules": "Módulos + Hojas de Trabajo", "notes": "Notas de Facilitación", "minutes": "Min" },
+        "tableHead": {
+          "week": "Semana",
+          "focus": "Enfoque",
+          "modules": "Módulos + Hojas de Trabajo",
+          "notes": "Notas de Facilitación",
+          "minutes": "Min"
+        },
         "variationsTitle": "Variaciones de Ritmo",
         "structureTitle": "Cada Sesión — Estructura Sugerida"
       },
@@ -656,6 +763,305 @@
         "title": "Consejos de Facilitación",
         "sub": "Guía práctica para las situaciones que surgen en grupos reales.",
         "intro": "Estos consejos fueron escritos por el personal del programa con aportes de facilitadores aliados. Son puntos de partida, no reglas estrictas. Adáptalos a tu grupo, tu sitio y tu propio estilo. Las secciones sensibles (práctica informada por el trauma, jóvenes impactados por el sistema de justicia) merecen revisión con el liderazgo clínico o de programa de tu organización aliada antes de aplicarse a gran escala."
+      }
+    },
+    "gamification": {
+      "level": "Level {{n}}",
+      "xpProgress": "{{current}}/{{needed}} XP",
+      "streak": "Streak",
+      "streakDayPlural": "{{count}} days",
+      "streakFreezeOne": "{{count}} freeze",
+      "streakFreezePlural": "{{count}} freezes",
+      "bestStreak": "best: {{count}}",
+      "badges": "Badges",
+      "streakDayOne": "{{count}} day"
+    },
+    "dailyGoals": {
+      "heading": "Today's Goals",
+      "bonus": "+{{xp}} XP bonus ✓"
+    },
+    "celebration": {
+      "levelUpEyebrow": "Level Up!",
+      "levelLabel": "Level {{n}}",
+      "badgeEyebrow": "Badge Earned",
+      "dismiss": "Nice"
+    },
+    "labs": {
+      "shell": {
+        "backToTrack": "Back",
+        "labLabel": "Lab",
+        "beforeYouStart": "Before You Start",
+        "timeLabel": "Time",
+        "timeValue": "~{{minutes}} minutes",
+        "assumesLabel": "Assumes you know",
+        "outputLabel": "You'll produce",
+        "startCta": "Start lab →"
+      },
+      "ethics": {
+        "eyebrow": "Before You Start",
+        "title": "Ethics & Authorization",
+        "body": "Everything you do in this lab runs in our sandbox — there are no real targets and no real victims. The skills are real. Using them on systems you don't have permission to test is illegal, no matter how curious you are. We're training defenders, not attackers.",
+        "rules": {
+          "one": "Only test systems you own or have written permission to test.",
+          "two": "Never share credentials or attack tools casually — context matters.",
+          "three": "If in doubt, ask a facilitator."
+        },
+        "ackCta": "I understand — start the lab"
+      }
+    },
+    "challenges": {
+      "toolboxIntro": {
+        "heading": "Meet Your Toolbox",
+        "close": "Close",
+        "intro": "Real cybersecurity professionals don't memorize ciphers or compute hex by hand. They use tools — and so will you.",
+        "toolboxTitle": "Toolbox",
+        "toolboxBody": "Every challenge has tools designed for it — cipher decoders, hex converters, port references, network calculators, and more. They live in a panel on the right (on mobile, tap the {{toolsButton}} button in the bottom corner).",
+        "toolsButton": "Tools",
+        "scratchPadTitle": "Scratch Pad",
+        "scratchPadBody": "A notepad for your work. Notes, attempts, partial answers — anything. Auto-saves while you work. It sits right below the Toolbox.",
+        "hintsTitle": "Hints",
+        "hintsBody": "Stuck? Every challenge has 3 progressive hints. Using them doesn't cost you any XP — it just helps your facilitator see where group instruction might help.",
+        "outro": "The challenge isn't to do everything in your head. The challenge is to recognize problems and use the right tool.",
+        "ackCta": "Got it — let's solve some puzzles"
+      }
+    },
+    "onboarding": {
+      "layout": {
+        "stepLabel": "Step {{current}} of {{total}}",
+        "stepCurrentAria": "Step {{n}} (current)",
+        "stepDoneAria": "Step {{n}} (done)",
+        "stepDefaultAria": "Step {{n}}",
+        "skipToDashboard": "Skip to dashboard",
+        "back": "Back",
+        "continue": "Continue →"
+      }
+    },
+    "glossary": {
+      "page": {
+        "title": "Glossary",
+        "subtitle": "Every term you'll see across Pathways, with plain-language definitions. Open a term anywhere in the platform and we'll mark it viewed here.",
+        "progressFooter": "terms learned",
+        "seenLabel": "viewed"
+      },
+      "term": {
+        "unknownSlug": "Unknown glossary slug \"{{slug}}\"",
+        "examplesHeading": "Examples"
+      },
+      "categories": {
+        "foundations": {
+          "label": "Foundations",
+          "description": "Core ideas every cyber person uses every day."
+        },
+        "identity": {
+          "label": "Identity & Access",
+          "description": "How systems decide who you are and what you can do."
+        },
+        "networks": {
+          "label": "Networks",
+          "description": "How data moves between devices, and how attackers try to listen in."
+        },
+        "threats": {
+          "label": "Threats",
+          "description": "Specific attacks you'll learn to recognize and defend against."
+        },
+        "grc": {
+          "label": "GRC",
+          "description": "Governance, risk, and compliance — the rules-and-policies side of cyber."
+        },
+        "tools": {
+          "label": "Tools",
+          "description": "Concepts and systems analysts and engineers work with day to day."
+        }
+      },
+      "terms": {
+        "cybersecurity": {
+          "term": "cybersecurity",
+          "shortDef": "The practice of protecting computers, networks, and data from attacks."
+        },
+        "cia-triad": {
+          "term": "CIA Triad",
+          "shortDef": "The three goals of security: Confidentiality, Integrity, Availability."
+        },
+        "threat": {
+          "term": "threat",
+          "shortDef": "Anything that could harm a system or its data."
+        },
+        "vulnerability": {
+          "term": "vulnerability",
+          "shortDef": "A weakness in a system that an attacker could exploit."
+        },
+        "risk": {
+          "term": "risk",
+          "shortDef": "The chance that something bad happens, multiplied by how bad it would be."
+        },
+        "exploit": {
+          "term": "exploit",
+          "shortDef": "A method or tool that uses a vulnerability to attack a system."
+        },
+        "patch": {
+          "term": "patch",
+          "shortDef": "A fix released by software makers to close a vulnerability."
+        },
+        "mfa": {
+          "term": "MFA",
+          "shortDef": "Multi-Factor Authentication — using two or more things to prove who you are.",
+          "longDef": "Examples: a password PLUS a code from your phone, or a password PLUS a fingerprint.",
+          "examples": [
+            "Bank login asking for a text code",
+            "Snapchat asking for a code from an authenticator app"
+          ]
+        },
+        "2fa": {
+          "term": "2FA",
+          "shortDef": "Two-Factor Authentication — same as MFA but specifically two factors."
+        },
+        "authentication": {
+          "term": "authentication",
+          "shortDef": "Proving you are who you claim to be."
+        },
+        "authorization": {
+          "term": "authorization",
+          "shortDef": "Deciding what you're allowed to do once we know who you are."
+        },
+        "password-manager": {
+          "term": "password manager",
+          "shortDef": "An app that stores all your passwords safely so you don't have to remember them.",
+          "longDef": "We recommend Bitwarden — free and trustworthy."
+        },
+        "ip-address": {
+          "term": "IP address",
+          "shortDef": "A number that identifies a device on a network. Like a street address for computers.",
+          "examples": [
+            "192.168.1.1",
+            "8.8.8.8"
+          ]
+        },
+        "dns": {
+          "term": "DNS",
+          "shortDef": "Domain Name System — translates website names (google.com) into IP addresses computers can use."
+        },
+        "packet": {
+          "term": "packet",
+          "shortDef": "A small piece of data that travels across a network. Like a digital envelope."
+        },
+        "firewall": {
+          "term": "firewall",
+          "shortDef": "A digital gate that decides what traffic is allowed in and out of a network."
+        },
+        "vpn": {
+          "term": "VPN",
+          "shortDef": "Virtual Private Network — a secure tunnel for your internet traffic."
+        },
+        "http-https": {
+          "term": "HTTP vs HTTPS",
+          "shortDef": "HTTP sends data in plain text. HTTPS encrypts it. The S means secure."
+        },
+        "port": {
+          "term": "port",
+          "shortDef": "A numbered \"door\" on a computer where different services run. Like apartment numbers in a building.",
+          "examples": [
+            "Port 80 = web (HTTP)",
+            "Port 443 = secure web (HTTPS)",
+            "Port 22 = SSH"
+          ]
+        },
+        "phishing": {
+          "term": "phishing",
+          "shortDef": "A fake message (email, text, call) trying to trick you into giving up info or clicking a bad link.",
+          "examples": [
+            "Fake \"your account is locked\" email",
+            "Text from \"FedEx\" about a delivery"
+          ]
+        },
+        "smishing": {
+          "term": "smishing",
+          "shortDef": "Phishing via SMS text message."
+        },
+        "vishing": {
+          "term": "vishing",
+          "shortDef": "Phishing via voice call. The attacker calls and impersonates someone."
+        },
+        "ransomware": {
+          "term": "ransomware",
+          "shortDef": "Malware that locks your files until you pay the attacker."
+        },
+        "malware": {
+          "term": "malware",
+          "shortDef": "Any software designed to harm or steal from a computer. Short for \"malicious software\"."
+        },
+        "social-engineering": {
+          "term": "social engineering",
+          "shortDef": "Tricking people instead of hacking computers. Pretending to be IT support to get a password is social engineering."
+        },
+        "breach": {
+          "term": "breach",
+          "shortDef": "When attackers successfully access data they shouldn't have."
+        },
+        "ddos": {
+          "term": "DDoS",
+          "shortDef": "Distributed Denial of Service — overwhelming a server with traffic to take it offline."
+        },
+        "grc": {
+          "term": "GRC",
+          "shortDef": "Governance, Risk, and Compliance — the rules-and-rules-following side of cybersecurity.",
+          "longDef": "GRC professionals make sure organizations follow laws, manage risks, and have policies that work. Most accessible entry path in cyber."
+        },
+        "governance": {
+          "term": "governance",
+          "shortDef": "The rules and decision-making structure for how an organization handles security."
+        },
+        "compliance": {
+          "term": "compliance",
+          "shortDef": "Proving you follow specific rules — laws, industry standards, internal policies."
+        },
+        "audit": {
+          "term": "audit",
+          "shortDef": "A formal review to check if security controls actually work."
+        },
+        "hipaa": {
+          "term": "HIPAA",
+          "shortDef": "US law protecting health information. Applies to doctors, hospitals, insurance."
+        },
+        "pci-dss": {
+          "term": "PCI-DSS",
+          "shortDef": "Rules for any business that handles credit card payments."
+        },
+        "gdpr": {
+          "term": "GDPR",
+          "shortDef": "European law protecting personal data. Applies to anyone serving EU residents."
+        },
+        "nist-csf": {
+          "term": "NIST CSF",
+          "shortDef": "A US government framework: Identify, Protect, Detect, Respond, Recover."
+        },
+        "control": {
+          "term": "control",
+          "shortDef": "A specific measure put in place to reduce risk. Examples: passwords, firewalls, training."
+        },
+        "log": {
+          "term": "log",
+          "shortDef": "A record of what happened on a system — who logged in, what they did, when."
+        },
+        "soc": {
+          "term": "SOC",
+          "shortDef": "Security Operations Center — the team that watches for and responds to attacks."
+        },
+        "siem": {
+          "term": "SIEM",
+          "shortDef": "A system that collects logs from across an organization to spot attacks."
+        },
+        "sandbox": {
+          "term": "sandbox",
+          "shortDef": "A safe, isolated environment where you can test things without affecting real systems."
+        },
+        "encryption": {
+          "term": "encryption",
+          "shortDef": "Scrambling data so only someone with the right key can read it."
+        },
+        "hash": {
+          "term": "hash",
+          "shortDef": "A one-way scramble. You can hash a password, but you can't un-hash it back."
+        }
       }
     }
   }

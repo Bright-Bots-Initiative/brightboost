@@ -6,6 +6,7 @@
  * never blocks the rest of the home page.
  */
 import { Flame, Trophy, Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { GamificationState } from "./useGamification";
 
 export default function GamificationStrip({
@@ -15,6 +16,7 @@ export default function GamificationStrip({
   state: GamificationState | null;
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   if (loading || !state) {
     return (
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -41,7 +43,7 @@ export default function GamificationStrip({
       {/* Level + XP bar */}
       <div className="rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-3 sm:p-4 shadow-sm">
         <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-          Level {state.currentLevel}
+          {t("pathways.gamification.level", { n: state.currentLevel })}
         </p>
         <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5 truncate">
           {state.levelTier.tier}
@@ -53,14 +55,17 @@ export default function GamificationStrip({
           />
         </div>
         <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1 font-mono">
-          {state.xpProgress.current}/{state.xpProgress.needed} XP
+          {t("pathways.gamification.xpProgress", {
+            current: state.xpProgress.current,
+            needed: state.xpProgress.needed,
+          })}
         </p>
       </div>
 
       {/* Streak */}
       <div className="rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-3 sm:p-4 shadow-sm">
         <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-          Streak
+          {t("pathways.gamification.streak")}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <Flame
@@ -71,19 +76,30 @@ export default function GamificationStrip({
             }`}
           />
           <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
-            {state.currentStreak} {state.currentStreak === 1 ? "day" : "days"}
+            {t(
+              state.currentStreak === 1
+                ? "pathways.gamification.streakDayOne"
+                : "pathways.gamification.streakDayPlural",
+              { count: state.currentStreak },
+            )}
           </span>
         </div>
         {state.streakFreezesAvailable > 0 && (
           <p className="mt-1.5 sm:mt-2 inline-flex items-center gap-1 text-[10px] text-cyan-700 dark:text-cyan-300">
             <Shield className="w-3 h-3" />
-            {state.streakFreezesAvailable} freeze
-            {state.streakFreezesAvailable > 1 ? "s" : ""}
+            {t(
+              state.streakFreezesAvailable === 1
+                ? "pathways.gamification.streakFreezeOne"
+                : "pathways.gamification.streakFreezePlural",
+              { count: state.streakFreezesAvailable },
+            )}
           </p>
         )}
         {state.longestStreak > state.currentStreak && (
           <p className="mt-1 text-[10px] text-slate-500">
-            best: {state.longestStreak}
+            {t("pathways.gamification.bestStreak", {
+              count: state.longestStreak,
+            })}
           </p>
         )}
       </div>
@@ -91,7 +107,7 @@ export default function GamificationStrip({
       {/* Badges */}
       <div className="rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-3 sm:p-4 shadow-sm">
         <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-          Badges
+          {t("pathways.gamification.badges")}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0" />
