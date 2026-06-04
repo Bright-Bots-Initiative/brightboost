@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { signupTeacher } from "../services/api";
+import { track } from "../lib/analytics";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import LanguageToggle from "../components/LanguageToggle";
@@ -38,6 +39,11 @@ const TeacherSignup: React.FC = () => {
 
       // Auto login after successful signup
       if (response && response.token) {
+        track({
+          kind: "account_registered",
+          role: "teacher",
+          signup_method: "email",
+        });
         login(response.token, response.user);
       } else {
         console.error("Invalid response format:", response);

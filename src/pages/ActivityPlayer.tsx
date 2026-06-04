@@ -27,6 +27,7 @@ import {
   resolveText,
   resolveChoiceList,
 } from "@/utils/localizedContent";
+import { track } from "@/lib/analytics";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { ImageKey } from "@/theme/activityIllustrations";
@@ -179,6 +180,13 @@ export default function ActivityPlayer() {
         setActivity(found);
         const parsed = safeJsonParse(found.content || "");
         setContent(parsed);
+        track({
+          kind: "game_started",
+          game_id: parsed?.gameKey || String(found.id),
+          module_slug: String(slug),
+          activity_id: String(found.id),
+          grade_band: gradeBand,
+        });
         // reset INFO local state
         setSlideIndex(0);
         setMode("story");
@@ -217,13 +225,23 @@ export default function ActivityPlayer() {
     roundsCompleted?: number;
   }) => {
     if (!slug || !lessonId || !activityId) return;
+    const timeSpentS = getTimeSpentS();
     try {
       const res = await api.completeActivity({
         moduleSlug: slug,
         lessonId: String(lessonId),
         activityId: String(activityId),
-        timeSpentS: getTimeSpentS(),
+        timeSpentS,
         result,
+      });
+      track({
+        kind: "game_completed",
+        game_id: result?.gameKey || content?.gameKey || String(activityId),
+        module_slug: String(slug),
+        activity_id: String(activityId),
+        score: result?.score,
+        time_spent_seconds: timeSpentS,
+        grade_band: gradeBand,
       });
       setCompletionData(res);
       toast({
