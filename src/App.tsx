@@ -49,6 +49,7 @@ import ForReviewers from "./pages/ForReviewers";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
 import ExperimentDashboard from "./components/admin/ExperimentDashboard";
+import AdminMetrics from "./pages/AdminMetrics";
 
 // Pathways (secondary-age program layer)
 import PathwaysLayout from "./components/pathways/PathwaysLayout";
@@ -182,6 +183,16 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="teacher">
                     <ExperimentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin: K-8 scoreboard — admin role only */}
+              <Route
+                path="/admin/metrics"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminMetrics />
                   </ProtectedRoute>
                 }
               />

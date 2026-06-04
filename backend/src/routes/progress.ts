@@ -23,6 +23,7 @@ import {
   slugSchema,
 } from "../validation/schemas";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
+import { trackServer } from "../services/analytics";
 import { GameError } from "../utils/errors";
 
 const router = Router();
@@ -183,6 +184,17 @@ router.post(
         },
       });
     }
+
+    // Server-side mirror of game_completed — fires once per (student, activity)
+    // because we only reach this branch on first-time completion (idempotent
+    // re-completions short-circuit earlier).
+    trackServer(studentId, "game_completed", {
+      module_slug: moduleSlug,
+      activity_id: activityId,
+      game_id: result?.gameKey || activityId,
+      score: result?.score,
+      time_spent_seconds: timeSpentS || 0,
+    });
 
     // 3. Apply Rewards & Check Unlocks
     let avatarAfter: any = avatarBefore;

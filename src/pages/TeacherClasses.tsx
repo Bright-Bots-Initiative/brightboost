@@ -4,6 +4,7 @@ import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Plus, Users, Copy, Check, Zap, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useApi, ApiError } from "../services/api";
+import { track } from "../lib/analytics";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +67,11 @@ const ClassesPage: React.FC = () => {
     try {
       const course = await api.post("/teacher/courses", {
         name: newName.trim(),
+      });
+      track({
+        kind: "class_created",
+        class_id: course.id,
+        grade_band: course.gradeBand,
       });
       setCourses((prev) => [course, ...prev]);
       setNewName("");

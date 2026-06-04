@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { authLimiter } from "../utils/security";
 import { logAudit } from "../utils/audit";
+import { trackServer } from "../services/analytics";
 import { generateToken } from "../utils/token";
 import { nameSchema, safeString, emailSchema } from "../validation/schemas";
 import { sendPasswordResetEmail } from "../utils/mail";
@@ -83,6 +84,11 @@ router.post(
         role: user.role,
       });
 
+      trackServer(user.id, "account_registered", {
+        role: "student",
+        signup_method: "email",
+      });
+
       const token = generateToken(user);
       const { password, ...userWithoutPassword } = user;
 
@@ -134,6 +140,11 @@ router.post(
       await logAudit("USER_SIGNUP", user.id, {
         email: user.email,
         role: user.role,
+      });
+
+      trackServer(user.id, "account_registered", {
+        role: "teacher",
+        signup_method: "email",
       });
 
       const token = generateToken(user);
@@ -205,6 +216,8 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
 
     // 🛡️ Sentinel: Audit Log
     await logAudit("USER_LOGIN", user.id, { email: user.email, ip: req.ip });
+
+    trackServer(user.id, "login", { role: user.role });
 
     const token = generateToken(user);
     const { password, ...userWithoutPassword } = user;
@@ -310,6 +323,11 @@ router.post("/auth/register-pathways", async (req: Request, res: Response) => {
     });
 
     await logAudit("PATHWAYS_REGISTER", user.id, { email, cohortId: cohort.id });
+
+    trackServer(user.id, "account_registered", {
+      role: "student",
+      signup_method: "cohort_code",
+    });
 
     const token = generateToken(user);
     const { password, ...userWithoutPassword } = user;

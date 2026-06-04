@@ -28,11 +28,13 @@ import feedbackRouter from "./routes/feedback";
 import benchmarkRouter from "./routes/benchmarks";
 import homeAccessRouter from "./routes/homeAccess";
 import experimentsRouter from "./routes/experiments";
+import adminMetricsRouter from "./routes/adminMetrics";
 // TEMPORARY — remove after Slack webhook verification is confirmed working.
 import slackTestRouter from "./routes/slack-test";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 import { notifySlack } from "./utils/slack";
+import { shutdownAnalytics } from "./services/analytics";
 
 const app = express();
 
@@ -209,6 +211,7 @@ app.use("/api", feedbackRouter);
 app.use("/api", benchmarkRouter);
 app.use("/api", homeAccessRouter);
 app.use("/api", experimentsRouter);
+app.use("/api", adminMetricsRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
   res.status(200).json({ status: "ok" }),
@@ -266,6 +269,15 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
   process.exit(1);
 });
+
+// Flush queued PostHog events on graceful shutdown so trailing captures land.
+async function gracefulShutdown(signal: string) {
+  console.log(`[server] ${signal} received — flushing analytics`);
+  await shutdownAnalytics();
+  process.exit(0);
+}
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 if (process.env.NODE_ENV !== "test") {

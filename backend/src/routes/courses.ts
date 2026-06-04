@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
+import { trackServer } from "../services/analytics";
 import { z } from "zod";
 
 const router = Router();
@@ -84,6 +85,11 @@ router.post(
         gradeBand: parsed.data.gradeBand || "k2",
         defaultLanguage: parsed.data.defaultLanguage || "en",
       },
+    });
+
+    trackServer(req.user!.id, "class_created", {
+      class_id: course.id,
+      grade_band: course.gradeBand,
     });
 
     res.status(201).json({
@@ -248,6 +254,11 @@ router.post(
         studentId: req.user!.id,
         courseId: course.id,
       },
+    });
+
+    trackServer(req.user!.id, "student_joined_class", {
+      class_id: course.id,
+      join_method: "class_code",
     });
 
     res.status(201).json({

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { signupStudent } from "../services/api";
+import { track } from "../lib/analytics";
 import GameBackground from "../components/GameBackground";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import LanguageToggle from "../components/LanguageToggle";
@@ -49,6 +50,11 @@ const StudentSignup: React.FC = () => {
 
       // Auto login after successful signup
       if (response && response.token) {
+        track({
+          kind: "account_registered",
+          role: "student",
+          signup_method: "email",
+        });
         login(response.token, response.user);
       } else {
         console.error("Invalid response format:", response);

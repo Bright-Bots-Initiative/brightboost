@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, KeyRound, Loader2, UserPlus } from "lucide-react";
 import LoginCard, { LoginInput, LoginButton, LoginSection, LoginDivider } from "@/components/auth/LoginCard";
+import { track } from "@/lib/analytics";
 
 const API = "/api";
 
@@ -119,6 +120,13 @@ const LoginSelection: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
+      // Pathways students sign up via a cohort code, not email; the role is
+      // always 'student' for this flow.
+      track({
+        kind: "account_registered",
+        role: "student",
+        signup_method: "cohort_code",
+      });
       login(data.token, data.user, "/pathways");
     } catch (err: any) {
       setRegError(err.message || "Registration failed");

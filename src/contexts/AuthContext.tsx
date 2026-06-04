@@ -8,6 +8,12 @@ import React, {
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { join } from "../services/api";
+import {
+  identifyUser,
+  resetAnalytics,
+  track,
+  type AnalyticsRole,
+} from "../lib/analytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
@@ -40,6 +46,16 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
+
+function normalizeAnalyticsRole(role: string): AnalyticsRole {
+  const r = role.toLowerCase();
+  if (r === "teacher") return "teacher";
+  if (r === "student") return "student";
+  if (r === "parent") return "parent";
+  if (r === "admin") return "admin";
+  // Default conservatively rather than leaking an unknown role label.
+  return "student";
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -92,6 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (token) localStorage.setItem("bb_access_token", token);
     localStorage.setItem("user", JSON.stringify(userData));
 
+    // Analytics: identify + fire `login` for every successful auth (signup
+    // pages also call this; they additionally fire `account_registered`).
+    const role = normalizeAnalyticsRole(userData.role);
+    identifyUser(userData.id, role);
+    track({ kind: "login", role });
+
     setToken(token || null);
     setUser(userData);
     setNextPath(next);
@@ -120,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.removeItem("user");
     setToken(null);
     setUser(null);
+    resetAnalytics();
     navigate("/");
   }, [navigate]);
 
