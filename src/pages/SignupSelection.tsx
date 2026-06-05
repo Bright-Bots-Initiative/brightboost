@@ -12,6 +12,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { KeyRound } from "lucide-react";
 import LoginCard from "@/components/auth/LoginCard";
 import { track } from "@/lib/analytics";
 
@@ -84,6 +85,23 @@ const SignupSelection: React.FC = () => {
             </p>
           </Link>
         ))}
+      </div>
+
+      {/* Class-code alternative — students with a code from their teacher
+          don't need a self-signup. Surfacing it here reduces confusion. */}
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 flex items-center gap-3">
+        <KeyRound className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-700">
+            {t("signupSelection.classCodeNote")}
+          </p>
+          <Link
+            to="/class-login"
+            className="text-sm font-semibold text-emerald-700 hover:underline"
+          >
+            {t("signupSelection.classCodeLink")} →
+          </Link>
+        </div>
       </div>
 
       <div className="text-center">
