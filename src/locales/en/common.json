@@ -346,7 +346,11 @@
     "selectHowToLogin": "Select how you'd like to login",
     "teacherLogin": "Teacher Login",
     "studentLogin": "Student Login",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create an account",
+    "signUpFree": "Sign up free",
+    "signupCtaSubtitle": "It's free \u2014 get started in under a minute."
   },
   "tutorial": {
     "welcome": "Welcome to BrightBoost!",
@@ -1677,5 +1681,21 @@
       "prompt3": "What STEM module unlocked that boost?",
       "prompt4": "What will you complete next to help your team?"
     }
+  },
+  "signupSelection": {
+    "title": "Create your account",
+    "subtitle": "Pick what fits you best.",
+    "teacherCard": {
+      "heading": "I'm a Teacher",
+      "blurb": "Bring K-8 STEM learning into your classroom.",
+      "cta": "Sign up as a Teacher"
+    },
+    "studentCard": {
+      "heading": "I'm a Student",
+      "blurb": "Play STEM missions and track your progress.",
+      "cta": "Sign up as a Student"
+    },
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in"
   }
 }

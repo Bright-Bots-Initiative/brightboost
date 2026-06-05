@@ -296,6 +296,24 @@ const LoginSelection: React.FC = () => {
         </form>
       </LoginSection>
 
+      {/* New users — make the signup path obvious */}
+      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-center">
+        <p className="text-sm text-slate-700">
+          {t("auth.noAccount", { defaultValue: "Don't have an account?" })}
+        </p>
+        <Link
+          to="/signup"
+          className="mt-2 inline-flex items-center justify-center w-full px-4 py-3 min-h-[44px] rounded-lg bg-white border-2 border-indigo-500 text-indigo-700 font-semibold text-sm hover:bg-indigo-100 active:scale-[0.99] transition-all"
+        >
+          {t("auth.signUpFree", { defaultValue: "Sign up free" })}
+        </Link>
+        <p className="text-xs text-slate-500 mt-2">
+          {t("auth.signupCtaSubtitle", {
+            defaultValue: "It's free — get started in under a minute.",
+          })}
+        </p>
+      </div>
+
       <div className="text-center space-y-2">
         <p className="text-xs text-slate-400">
           {t("auth.teacherNote", { defaultValue: "Teacher?" })} <Link to="/teacher-login" className="text-indigo-600 hover:underline">Log in here</Link>
