@@ -178,6 +178,16 @@ const Index: React.FC = () => {
                   </Link>
                 </div>
 
+                <p className="mt-3 text-sm text-brightboost-navy">
+                  New to Bright Boost?{" "}
+                  <Link
+                    to="/signup"
+                    className="font-bold text-brightboost-blue underline underline-offset-2 hover:text-brightboost-blue/80"
+                  >
+                    Sign up free →
+                  </Link>
+                </p>
+
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
                   {secondaryLinks.map((item) => (
                     <Link

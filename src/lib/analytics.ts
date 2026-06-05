@@ -68,7 +68,8 @@ export type AnalyticsEvent =
       time_spent_seconds?: number;
       quiz_score?: number;
       grade_band?: string;
-    };
+    }
+  | { kind: "signup_role_selected"; role: "teacher" | "student" };
 
 let initialized = false;
 
