@@ -25,7 +25,27 @@ POSTHOG_KEY=phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 POSTHOG_HOST=https://us.i.posthog.com
 ```
 
-When unset, both shims (`src/lib/analytics.ts` and `backend/src/services/analytics.ts`) silently no-op so local dev runs fine without the key. The first call logs a single info-level message so the absence is obvious.
+When unset, the backend shim (`backend/src/services/analytics.ts`) silently no-ops at runtime and prints one info log so the absence is obvious. The frontend shim (`src/lib/analytics.ts`) prints a **warning** with a Railway/Dockerfile pointer when the key is missing — silent prod failures are the #1 thing that hides itself.
+
+### Why the frontend env vars require a Docker rebuild
+
+Vite **inlines `VITE_*` variables at BUILD time, not runtime**. That means:
+
+1. The frontend env vars (`VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`) must be present when `npm run build` runs inside the Docker image — not just at container start.
+2. `Dockerfile.frontend` declares them as `ARG` so Railway forwards the service env vars into the build context. If you add a new `VITE_*` variable, add a matching `ARG` + `ENV` line in `Dockerfile.frontend`, OR Vite will substitute `undefined`.
+3. After changing a `VITE_*` env var on Railway, you must trigger a **clean rebuild** (the docker layer cache may otherwise keep an old bundle with the old/missing key).
+
+The backend Dockerfile reads `process.env.POSTHOG_KEY` at runtime, so backend env vars take effect on the next container start — no rebuild required.
+
+### Verifying the key reached the bundle
+
+```bash
+# Local build with a probe key, then grep the dist output:
+VITE_POSTHOG_KEY=phc_probe_xyz npm run build
+grep -rl "phc_probe_xyz" dist/   # should print at least one chunk path
+```
+
+If the grep finds nothing, the build isn't inlining the variable — check Dockerfile.frontend's ARG list and the Railway service variables.
 
 ## Privacy rules (COPPA-conscious)
 
@@ -142,6 +162,20 @@ gamesStarted:
 gamesCompleted:
 completionRate:
 ```
+
+## Triage runbook — "PostHog events aren't firing in production"
+
+Work through the layers in order — most of these failures fail silently, so don't trust any single signal.
+
+1. **Bundle inlining (most common).** Open DevTools → Console on the live site. If you see:
+   - `[analytics] DISABLED — VITE_POSTHOG_KEY is not present in the built bundle` → the key didn't make it into the build. Check `Dockerfile.frontend` declares `ARG VITE_POSTHOG_KEY` (and `_HOST`), confirm Railway's **frontend** service has the variable set (it must be a Railway **service** variable so it's available as a build arg), then trigger a clean rebuild from Railway (the docker layer cache may otherwise reuse the previous bundle).
+   - `[analytics] Initializing PostHog → https://us.i.posthog.com` followed by `[analytics] PostHog ready` → init is working; move to step 2.
+   - Initializing line but no "ready" line within a second → posthog-js failed to load. Network tab → look for blocked posthog.js requests (ad blockers / CSP / region typo).
+2. **Region/host.** PostHog projects are pinned to a region. US project ↔ `https://us.i.posthog.com`, EU project ↔ `https://eu.i.posthog.com`. Events sent to the wrong region succeed silently and vanish. Check the PostHog project URL (us.posthog.com vs eu.posthog.com).
+3. **Network.** Network tab → filter `posthog`. Fire an event (sign up, complete a module). Expected: POSTs returning 200. 401/403 = wrong project key. 4xx to a host you don't recognize = region/host wrong.
+4. **Project mismatch.** Confirm the PostHog project you're viewing matches the API key in Railway. Each PostHog project has its own `phc_*` key. The team has more than one PostHog project? Easy to look at the wrong one.
+5. **Idempotency trap for `game_completed`.** The server-side mirror fires once per `(studentId, activityId)`. Re-completing an already-completed activity skips the event — by design. Use a fresh activity on a fresh account for the test.
+6. **Backend events.** The backend reads `process.env.POSTHOG_KEY` at runtime, not build time — set it on the Railway **backend** service. Check backend logs for the `[analytics]` info line at startup. If you see `[analytics] No POSTHOG_KEY set …`, the backend env var is missing.
 
 ## Where the code lives
 

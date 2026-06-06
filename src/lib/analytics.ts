@@ -80,12 +80,24 @@ function disabled(): boolean {
 export function initAnalytics(): void {
   if (initialized) return;
   if (!POSTHOG_KEY) {
-    // Single info-level message so the absence is obvious in local dev.
-    console.info(
-      "[analytics] No PostHog key set — analytics disabled (this is fine in local dev)",
+    // Use warn (not info) so prod consoles surface the disabled state
+    // clearly — silent no-ops are the #1 PostHog-not-firing failure mode.
+    // The message names the env var so the cause is obvious to operators.
+    console.warn(
+      "[analytics] DISABLED — VITE_POSTHOG_KEY is not present in the built bundle. " +
+        "If you expect analytics to work here: confirm Railway has VITE_POSTHOG_KEY set " +
+        "on the FRONTEND service and that Dockerfile.frontend forwards it as a build ARG, " +
+        "then trigger a clean rebuild (Vite inlines VITE_* at build time, not runtime).",
     );
     return;
   }
+
+  // Surface a single distinguishable line at init so a prod operator can
+  // tell the difference between "no key" and "key present, loading":
+  //   - missing key: [analytics] DISABLED — ...
+  //   - present:     [analytics] Initializing PostHog → <host>
+  //   - loaded:      [analytics] PostHog ready (events will flow)
+  console.info(`[analytics] Initializing PostHog → ${POSTHOG_HOST}`);
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
@@ -103,6 +115,7 @@ export function initAnalytics(): void {
     persistence: "localStorage",
     loaded: () => {
       initialized = true;
+      console.info("[analytics] PostHog ready (events will flow)");
     },
   });
 }
