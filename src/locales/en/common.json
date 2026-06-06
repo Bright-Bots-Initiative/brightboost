@@ -1696,6 +1696,81 @@
       "cta": "Sign up as a Student"
     },
     "haveAccount": "Already have an account?",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "classCodeNote": "Have a class code from your teacher?",
+    "classCodeLink": "Join your class"
+  },
+  "teacherSignup": {
+    "pageTitle": "Sign up as a teacher",
+    "heading": "Let's get you set up",
+    "subtitle": "It only takes a minute. You'll be ready to invite your class right after.",
+    "fields": {
+      "name": "Your name",
+      "namePlaceholder": "Ms. Frizzle",
+      "email": "School email",
+      "emailPlaceholder": "you@school.edu",
+      "emailHelp": "We'll send class updates and account notifications here.",
+      "password": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Type your password again"
+    },
+    "errors": {
+      "mismatch": "These don't match \u2014 try retyping.",
+      "emailInvalid": "That doesn't look like a valid email address.",
+      "passwordTooShort": "Use at least 8 characters.",
+      "generic": "We couldn't create your account. Please try again."
+    },
+    "terms": {
+      "prefix": "I agree to the",
+      "tos": "Terms of Service",
+      "and": "and",
+      "privacy": "Privacy Policy"
+    },
+    "submit": "Create my teacher account",
+    "submitting": "Creating your account\u2026",
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "trust": "We protect student data carefully. Email is for account-only use."
+  },
+  "studentSignup": {
+    "pageTitle": "Sign up as a student",
+    "heading": "Welcome to Bright Boost!",
+    "subtitle": "Let's set up your account so you can start playing.",
+    "fields": {
+      "name": "What's your name?",
+      "namePlaceholder": "First name is fine",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "emailHelp": "Ask a grown-up if you need help with this one.",
+      "password": "Make a password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPassword": "Type it again",
+      "confirmPasswordPlaceholder": "So we know you remember it"
+    },
+    "requirements": {
+      "length": "At least 8 characters",
+      "upper": "One BIG letter (A, B, C)",
+      "lower": "One small letter (a, b, c)",
+      "number": "One number (1, 2, 3)"
+    },
+    "errors": {
+      "mismatch": "Those don't match \u2014 try again.",
+      "emailInvalid": "That doesn't look like an email.",
+      "passwordTooShort": "Make it at least 8 characters.",
+      "generic": "We couldn't sign you up. Try again in a moment."
+    },
+    "terms": {
+      "prefix": "I agree to the",
+      "tos": "Terms of Service",
+      "and": "and",
+      "privacy": "Privacy Policy"
+    },
+    "submit": "Create my account",
+    "submitting": "Setting up your account\u2026",
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "haveCode": "Have a class code from your teacher?",
+    "joinClass": "Join your class"
   }
 }
