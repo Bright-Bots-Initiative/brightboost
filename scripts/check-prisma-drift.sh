@@ -24,16 +24,25 @@ if [ ! -f "$BACKEND_SCHEMA" ]; then
   exit 1
 fi
 
-# Strip comments, generator/datasource blocks, and blank lines to isolate models
+# Strip comments, generator/datasource blocks, and blank lines to isolate
+# model + enum content.
+#
+# The previous version only stripped full-line // comments anchored at
+# column 0. Inline comments (`field String  // "a" | "b"`) and indented
+# comment lines inside model bodies still flowed through and reported as
+# drift, which is what bit the schema sync after the gamification + CTF
+# work added a lot of `// enum-string` documentation to the root schema.
+# The expected behavior — and what the docblock has always claimed — is
+# that comments are not load-bearing for sync.
 strip_non_model() {
-  sed '/^\/\//d' "$1" \
-    | awk '
-      /^generator /  { skip=1 }
-      /^datasource / { skip=1 }
-      skip && /^}/   { skip=0; next }
-      skip           { next }
-                     { print }
-    ' \
+  awk '
+    /^generator /  { skip=1 }
+    /^datasource / { skip=1 }
+    skip && /^}/   { skip=0; next }
+    skip           { next }
+                   { print }
+  ' "$1" \
+    | sed -E 's|[[:space:]]*//.*$||' \
     | sed '/^[[:space:]]*$/d'
 }
 
