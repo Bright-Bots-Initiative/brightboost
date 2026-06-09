@@ -7,12 +7,10 @@ vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: "en" },
-  }),
-}));
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 // Mock dnd-kit to avoid JSDOM issues and focus on game logic
 vi.mock("@dnd-kit/core", async () => {

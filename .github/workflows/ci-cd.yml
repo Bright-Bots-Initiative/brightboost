@@ -12,6 +12,30 @@ env:
   CYPRESS_BASE_URL: http://localhost:5173
 
 jobs:
+  # Independent build verification. Runs in parallel with build-and-test so an
+  # unrelated red check (e.g., a flaky Cypress install, a schema-drift hiccup,
+  # a single broken unit test) can never again silently hide whether the
+  # production bundle actually compiles. This is the "does it compile" signal
+  # that interns rely on — they should always be able to read it directly.
+  build-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:

@@ -13,17 +13,12 @@ vi.mock("../../contexts/AuthContext", () => ({
   ),
 }));
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => (key === "skipToContent" ? "Skip to content" : key),
-    i18n: {
-      on: vi.fn(),
-      off: vi.fn(),
-      changeLanguage: vi.fn().mockResolvedValue(undefined),
-      resolvedLanguage: "en",
-    },
-  }),
-}));
+// Resolve i18n keys against en/common.json — assertions match real
+// English text the components render.
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 vi.mock("../../components/BottomNav", () => ({
   default: () => <div data-testid="bottom-nav">BottomNav</div>,

@@ -4,6 +4,13 @@ import { HomeAccessCard } from "../HomeAccessCard";
 
 // Mock i18n
 vi.mock("react-i18next", () => ({
+  // Stubs required because the component chain calls
+  // `.use(initReactI18next)` somewhere; vitest needs every
+  // referenced export present on the mock or the whole file
+  // fails to load.
+  initReactI18next: { type: "3rdParty" as const, init: () => {} },
+  I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
+  Trans: ({ children }: { children: React.ReactNode }) => children,
   useTranslation: () => ({
     t: (key: string, opts?: any) => opts?.defaultValue || key,
   }),

@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import GameShell from "../shared/GameShell";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 vi.mock("@/components/activities/ActivityHeader", () => ({
   default: ({ title }: { title: string }) => <div>{title}</div>,

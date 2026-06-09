@@ -3,6 +3,14 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import BottomNav from "../BottomNav";
 
+// BottomNav was internationalized after these tests were written. The
+// enMock helper resolves keys against the real en/common.json so the
+// rendered labels match the English text the tests assert on.
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
+
 // Mock lucide-react icons
 vi.mock("lucide-react", () => ({
   BookOpen: () => <div data-testid="icon-book" />,

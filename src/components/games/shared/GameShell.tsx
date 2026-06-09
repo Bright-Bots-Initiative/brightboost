@@ -14,7 +14,7 @@ import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
 import { useReducedGameEffects } from "./useReducedGameEffects";
 import { ControlInstructions } from "./ControlInstructions";
-import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructions";
+import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructionsData";
 import "./game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
