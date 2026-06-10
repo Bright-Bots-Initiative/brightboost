@@ -1,4 +1,4 @@
-import { type ControlInstructionsModel } from "./controlInstructions";
+import { type ControlInstructionsModel } from "./controlInstructionsData";
 
 type ControlInstructionsProps = {
   id?: string;

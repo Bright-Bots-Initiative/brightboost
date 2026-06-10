@@ -30,11 +30,10 @@ vi.mock("@/components/activities/ActivityHeader", () => ({
 }));
 
 // Mock react-i18next
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 // Mock crypto.randomUUID
 const mockSessionId = "test-session-bounce-123";

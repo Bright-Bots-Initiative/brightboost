@@ -3,9 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { LearningGameFrame } from "../shared/LearningGameFrame";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
-}));
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 describe("LearningGameFrame", () => {
   it("shows a reduced-effects toggle with accessible description", async () => {
@@ -55,7 +56,8 @@ describe("LearningGameFrame", () => {
       </LearningGameFrame>,
     );
 
-    expect(screen.getByText(/games\.learning\.wordsToKnow/i)).toBeInTheDocument();
+    // enMock resolves the key against en/common.json — "Words to know".
+    expect(screen.getByText(/words to know/i)).toBeInTheDocument();
     expect(screen.getByText(/rhyme, pattern/i)).toBeInTheDocument();
   });
 

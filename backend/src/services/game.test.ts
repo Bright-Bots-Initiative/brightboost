@@ -37,9 +37,13 @@ describe("checkUnlocks", () => {
     // Mock progress count to trigger level up (e.g., 10 items / 2 = level 6)
     prismaMock.progress.count.mockResolvedValue(10);
 
+    // SPECIALIZED + archetype="AI" is required to unlock abilities. Explorer
+    // (stage=GENERAL, archetype=null) avatars don't get abilities by design —
+    // they're "discovery" avatars until the user picks a specialty.
     prismaMock.avatar.findUnique.mockResolvedValue({
       id: avatarId,
       studentId,
+      stage: "SPECIALIZED",
       archetype: "AI",
       level: 1,
     });
@@ -54,8 +58,14 @@ describe("checkUnlocks", () => {
     // Simulate no existing unlocks for the optimized implementation
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
-    // Mock update return value because checkUnlocks uses it
-    const updatedAvatar = { id: avatarId, level: 6 };
+    // The updated avatar carries SPECIALIZED forward so the unlock gate in
+    // checkUnlocks still evaluates true after the avatar.update call.
+    const updatedAvatar = {
+      id: avatarId,
+      stage: "SPECIALIZED",
+      archetype: "AI",
+      level: 6,
+    };
     prismaMock.avatar.update.mockResolvedValue(updatedAvatar);
 
     const result = await checkUnlocks(studentId);
@@ -91,6 +101,7 @@ describe("checkUnlocks", () => {
     prismaMock.avatar.findUnique.mockResolvedValue({
       id: avatarId,
       studentId,
+      stage: "SPECIALIZED",
       archetype: "AI",
       level: 1,
     });
@@ -106,8 +117,13 @@ describe("checkUnlocks", () => {
       { abilityId: "ab-1" },
     ]);
 
-    // Mock update return value
-    prismaMock.avatar.update.mockResolvedValue({ id: avatarId, level: 6 });
+    // Mock update return value — SPECIALIZED + archetype propagate forward.
+    prismaMock.avatar.update.mockResolvedValue({
+      id: avatarId,
+      stage: "SPECIALIZED",
+      archetype: "AI",
+      level: 6,
+    });
 
     const result = await checkUnlocks(studentId);
 
@@ -119,6 +135,45 @@ describe("checkUnlocks", () => {
     });
 
     expect(result?.newAbilitiesCount).toBe(1);
+  });
+
+  it("should level up but NOT unlock abilities for Explorer (GENERAL) avatars", async () => {
+    // Regression test for the Pathways arc change: Explorer/GENERAL avatars
+    // are "discovery" mode — they level up from progress but do not earn
+    // abilities until the user picks an archetype (SPECIALIZED stage).
+    const studentId = "student-1";
+    const avatarId = "avatar-1";
+
+    prismaMock.progress.count.mockResolvedValue(10);
+
+    prismaMock.avatar.findUnique.mockResolvedValue({
+      id: avatarId,
+      studentId,
+      stage: "GENERAL",
+      archetype: null,
+      level: 1,
+    });
+
+    prismaMock.avatar.update.mockResolvedValue({
+      id: avatarId,
+      stage: "GENERAL",
+      archetype: null,
+      level: 6,
+    });
+
+    const result = await checkUnlocks(studentId);
+
+    // Level-up still happens — Explorers gain XP and levels.
+    expect(prismaMock.avatar.update).toHaveBeenCalledWith({
+      where: { id: avatarId },
+      data: { level: 6, xp: { increment: 100 } },
+    });
+
+    // But abilities are NOT queried or unlocked — that's the gate.
+    expect(prismaMock.ability.findMany).not.toHaveBeenCalled();
+    expect(prismaMock.unlockedAbility.createMany).not.toHaveBeenCalled();
+
+    expect(result?.newAbilitiesCount).toBe(0);
   });
 
   it("should not update if avatar not found", async () => {
@@ -162,6 +217,7 @@ describe("checkUnlocks", () => {
     const preloadedAvatar = {
       id: "avatar-1",
       studentId,
+      stage: "SPECIALIZED",
       archetype: "AI",
       level: 1,
       xp: 0,
@@ -178,7 +234,8 @@ describe("checkUnlocks", () => {
     prismaMock.ability.findMany.mockResolvedValue(abilities);
     prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 
-    // Mock update
+    // Mock update — keeps SPECIALIZED + archetype so the ability-unlock
+    // branch still runs after level-up.
     prismaMock.avatar.update.mockResolvedValue({
       ...preloadedAvatar,
       level: 6,

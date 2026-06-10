@@ -16,12 +16,14 @@ vi.mock("../unity/UnityWebGL", () => ({
   },
 }));
 
-// Mock react-i18next
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+// Mock react-i18next with the real English locale so tests can assert on
+// user-visible strings ("Gotcha Gears") instead of i18n keys. The import
+// is deferred inside the factory because vi.mock is hoisted above
+// top-level imports.
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 // Mock crypto.randomUUID
 const mockSessionId = "test-session-123";

@@ -1,17 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import Stem1QuestCard from "../Stem1QuestCard";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
-// Mock i18next
-import React from "react";
-import { useTranslation } from "react-i18next";
-
-// Correctly mock the module
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
 
 describe("Stem1QuestCard", () => {
   it("renders correctly with given props", () => {
@@ -24,6 +18,8 @@ describe("Stem1QuestCard", () => {
     render(<Stem1QuestCard quest={quest} showConnector={true} />);
 
     expect(screen.getByText("Test Quest")).toBeInTheDocument();
-    expect(screen.getByText("stem1.status: In Progress")).toBeInTheDocument();
+    // Card renders "<Status>: In Progress" — the localized "Status" label
+    // comes from en/common.json (`stem1.status`). Match the full string.
+    expect(screen.getByText("Status: In Progress")).toBeInTheDocument();
   });
 });

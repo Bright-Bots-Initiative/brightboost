@@ -254,8 +254,24 @@ if (!frontendServed) {
   });
 }
 
-// Global error-handling middleware (must be after all routes)
+// Global error-handling middleware (must be after all routes).
+//
+// Honors err.status / err.statusCode when present — this is the standard
+// express convention used by body-parser (entity.too.large → 413), CORS,
+// and most upstream middleware. Returning 500 for everything was hiding
+// the real status from clients (and from tests) for these built-in errors.
+//
+// 4xx errors get their genuine status; everything else falls back to 500
+// with the generic body so we don't leak internals on unexpected throws.
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  const errAny = err as Error & { status?: number; statusCode?: number };
+  const status = errAny.status ?? errAny.statusCode ?? 500;
+  if (status >= 400 && status < 500) {
+    // Known client-side error type — pass the real status through, but
+    // keep the message minimal (express body-parser sets .type for these;
+    // it's enough for clients to see the status code).
+    return res.status(status).json({ error: err.message });
+  }
   console.error("Unhandled error:", err.message);
   res.status(500).json({ error: "Internal server error" });
 });
