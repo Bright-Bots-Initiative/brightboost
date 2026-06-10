@@ -212,8 +212,8 @@ const Index: React.FC = () => {
 
           <section id="early-access" aria-labelledby="early-access-heading" className="mx-auto max-w-6xl px-4 py-14">
             <h2 id="early-access-heading" className="text-2xl font-extrabold text-brightboost-navy">Early Access Goal</h2>
-            <Card className="mt-4 rounded-[18px] border-2 border-white/80 bg-white/85">
-              <CardContent className="pt-1 text-brightboost-navy font-semibold">
+            <Card className="mt-4 rounded-[18px] border-2 border-[#46B1E6]/20">
+              <CardContent className="text-brightboost-navy font-semibold">
                 Join our first 1,000 users
               </CardContent>
             </Card>
