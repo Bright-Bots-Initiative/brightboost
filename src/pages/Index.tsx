@@ -144,10 +144,16 @@ const Index: React.FC = () => {
           <section
             id="hero"
             aria-labelledby="hero-heading"
-            className="mx-auto max-w-6xl px-4 py-10 md:py-12 md:min-h-[500px] min-h-[620px] max-h-[660px] md:max-h-[540px]"
+            // No max-height here: the mobile single-column stack (pill +
+            // heading + copy + CTAs + signup line + secondary links +
+            // early-access pill + mascot) is taller than any fixed clamp,
+            // and overflow:visible made the excess render ON TOP of the
+            // next section. Content sizes itself; md:min-h keeps the
+            // desktop hero from looking shallow.
+            className="mx-auto max-w-6xl px-4 py-10 md:py-12 md:min-h-[500px]"
             style={{ background: "linear-gradient(180deg,#BFE5F7 0%,#DCEEFB 55%,#EAF6FD 100%)" }}
           >
-            <div className="grid md:grid-cols-2 gap-6 items-center h-full">
+            <div className="grid md:grid-cols-2 gap-6 items-center">
               <div>
                 <p className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs uppercase tracking-[0.15em] bg-white text-brightboost-navy font-bold">
                   <span className="w-2 h-2 rounded-full bg-brightboost-green" aria-hidden="true" />
@@ -212,9 +218,24 @@ const Index: React.FC = () => {
 
           <section id="early-access" aria-labelledby="early-access-heading" className="mx-auto max-w-6xl px-4 py-14">
             <h2 id="early-access-heading" className="text-2xl font-extrabold text-brightboost-navy">Early Access Goal</h2>
-            <Card className="mt-4 rounded-[18px] border-2 border-white/80 bg-white/85">
-              <CardContent className="pt-1 text-brightboost-navy font-semibold">
-                Join our first 1,000 users
+            <Card className="mt-4 rounded-[18px] border-2 border-[#46B1E6]/20">
+              <CardContent>
+                <p className="inline-flex items-center gap-2 rounded-full bg-[#69D681]/20 px-3 py-1 text-xs font-bold text-brightboost-navy">
+                  🌱 Early access
+                </p>
+                <p className="mt-3 text-lg font-extrabold text-brightboost-navy">
+                  Join our first 1,000 users
+                </p>
+                <p className="mt-1 text-sm font-medium text-brightboost-navy/80 max-w-xl">
+                  Free for teachers, students, and families — help shape Bright
+                  Boost while your class gets early access to every game.
+                </p>
+                <Link
+                  to="/signup"
+                  className="mt-4 inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-[12px] font-extrabold bg-brightboost-navy text-white text-sm hover:brightness-110 active:translate-y-[2px] button-shadow"
+                >
+                  Sign up free →
+                </Link>
               </CardContent>
             </Card>
           </section>
