@@ -17,6 +17,13 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+// Spy on the funnel events — PvP joined the game_started/game_completed
+// funnel in the mobile-upgrade pass.
+const trackSpy = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/analytics", () => ({
+  track: trackSpy,
+}));
+
 vi.mock("../../components/unity/UnityWebGL", () => ({
   default: ({ onInstanceReady }: any) => {
     onInstanceReady?.({ SendMessage: vi.fn() });
@@ -133,5 +140,64 @@ describe("SpacewarArena", () => {
     const summary = await screen.findByText(/classroom reflection/i);
     fireEvent.click(summary);
     expect(screen.getByText(/what strategy helped you avoid the sun/i)).toBeInTheDocument();
+  });
+
+  it("fires game_started on mount and game_completed on match over (PvP joins the funnel)", async () => {
+    render(<SpacewarArena />);
+    await screen.findByTestId("unity-webgl");
+
+    expect(trackSpy).toHaveBeenCalledWith({
+      kind: "game_started",
+      game_id: "spacewar_pvp",
+    });
+
+    window.dispatchEvent(new CustomEvent("unityMatchOver", {
+      detail: { winner: 1, player1Score: 7, player2Score: 4 },
+    }));
+
+    await screen.findByRole("heading", { name: /strategy recap/i });
+    expect(trackSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "game_completed",
+        game_id: "spacewar_pvp",
+        score: 7,
+      }),
+    );
+  });
+
+  it("celebrates a player win before the recap analysis", async () => {
+    render(<SpacewarArena />);
+    await screen.findByTestId("unity-webgl");
+
+    window.dispatchEvent(new CustomEvent("unityMatchOver", {
+      detail: { winner: 1, player1Score: 5, player2Score: 1 },
+    }));
+
+    expect(await screen.findByText(/you won the duel/i)).toBeInTheDocument();
+  });
+
+  it("shows the first-run gesture coach on touch devices and remembers dismissal", async () => {
+    // Simulate a touch device: pointer:coarse matches.
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    const { unmount } = render(<SpacewarArena />);
+    await screen.findByTestId("unity-webgl");
+
+    expect(screen.getByText(/touch controls/i)).toBeInTheDocument();
+    expect(screen.getByText(/double-tap for hyperspace/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /got it/i }));
+    expect(screen.queryByText(/double-tap for hyperspace escape/i)).not.toBeInTheDocument();
+    expect(localStorage.getItem("bb_spacewar_gestures_seen_v1")).toBe("1");
+
+    // Second visit: the flag suppresses the coach entirely.
+    unmount();
+    render(<SpacewarArena />);
+    await screen.findByTestId("unity-webgl");
+    expect(screen.queryByText(/touch controls/i)).not.toBeInTheDocument();
   });
 });
