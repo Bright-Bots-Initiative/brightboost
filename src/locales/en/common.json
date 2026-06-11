@@ -776,10 +776,19 @@
     "gestureHint": "Drag to steer + thrust \u2022 Tap to fire \u2022 Double-tap for hyperspace",
     "mission": {
       "title": "Duel Mission Card",
-      "goal": "Mission Goal"
+      "goal": "Mission Goal",
+      "more": "Mission details"
     },
     "loadout": {
-      "title": "Active STEM Ship Upgrades"
+      "title": "Active STEM Ship Upgrades",
+      "count": "{{count}} upgrades active",
+      "base": "Base loadout"
+    },
+    "coach": {
+      "title": "Touch Controls",
+      "drag": "Drag left/right to steer, drag up to thrust",
+      "tap": "Tap anywhere to fire",
+      "doubleTap": "Double-tap for hyperspace escape!"
     },
     "recap": {
       "title": "Strategy Recap",
@@ -787,7 +796,10 @@
       "finalScore": "Final Score",
       "strategySkill": "Strategy Skill",
       "nextChallenge": "Suggested Next Challenge",
-      "best": "Best Duel Score"
+      "best": "Best Duel Score",
+      "youWon": "🏆 You won the duel!",
+      "goodDuel": "💪 Great duel — rematch?",
+      "playAgain": "Play Again"
     },
     "reflection": {
       "title": "Classroom Reflection",

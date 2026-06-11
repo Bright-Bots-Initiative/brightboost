@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
+import { track } from "@/lib/analytics";
 import UnityWebGL from "../components/unity/UnityWebGL";
 import {
   Dialog,
@@ -77,6 +78,27 @@ export default function SpacewarArena() {
   const [matchRecap, setMatchRecap] = useState<SpacewarMatchRecap | null>(null);
   const [bestRecap, setBestRecap] = useState<SpacewarBestRecap | null>(() => readBestSpacewarRecap());
 
+  // First-run gesture coach (touch devices only). One-time per browser —
+  // the drag/tap/double-tap gestures are invisible affordances, and the
+  // old single-line hint at the bottom of the canvas wasn't enough for a
+  // first-time player on a phone.
+  const [showGestureCoach, setShowGestureCoach] = useState<boolean>(() => {
+    try {
+      return isTouchDevice() && !localStorage.getItem("bb_spacewar_gestures_seen_v1");
+    } catch {
+      return false;
+    }
+  });
+  const dismissGestureCoach = useCallback(() => {
+    setShowGestureCoach(false);
+    try {
+      localStorage.setItem("bb_spacewar_gestures_seen_v1", "1");
+    } catch {
+      /* private mode — coach will just show again next visit */
+    }
+  }, []);
+  const matchStartMsRef = useRef(Date.now());
+
   // Gesture control state (mobile)
   const [rotate, setRotate] = useState(0); // -1..1 (negative = right, positive = left per WebBridge doc)
   const [thrust, setThrust] = useState(false);
@@ -149,6 +171,13 @@ export default function SpacewarArena() {
     };
 
     fetchAvatarAndProgress();
+  }, []);
+
+  // PvP was the one game surface outside ActivityPlayer's analytics —
+  // wire it into the same funnel so PostHog sees duel engagement.
+  useEffect(() => {
+    track({ kind: "game_started", game_id: "spacewar_pvp" });
+    matchStartMsRef.current = Date.now();
   }, []);
 
   const upgrades = useMemo(
@@ -225,6 +254,17 @@ export default function SpacewarArena() {
         difficulty,
         activeUpgradeIds: upgrades.map((upgrade) => upgrade.id),
       });
+
+      track({
+        kind: "game_completed",
+        game_id: "spacewar_pvp",
+        score: detail.player1Score,
+        time_spent_seconds: Math.max(
+          1,
+          Math.round((Date.now() - matchStartMsRef.current) / 1000),
+        ),
+      });
+      matchStartMsRef.current = Date.now();
 
       setMatchRecap(recap);
       setBestRecap(persistBestSpacewarRecap(recap));
@@ -339,41 +379,56 @@ export default function SpacewarArena() {
 
   return (
     <div className="flex flex-col h-[85vh] w-full gap-3">
+      {/* Mission card — compact on mobile. The goal stays visible (it's the
+          one line a kid needs before playing); upgrades/tips/framing live in
+          a details expander so the canvas isn't pushed below the fold. */}
       <section
-        className="rounded-xl border border-slate-200 bg-white p-4"
+        className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4"
         role="region"
         aria-label={t("spacewar.mission.title", { defaultValue: "Duel Mission Card" })}
       >
-        <h3 className="text-slate-900 font-semibold text-lg mb-2">
-          {t("spacewar.mission.title", { defaultValue: "Duel Mission Card" })}
-        </h3>
-        <div className="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-          <p>
-            <span className="font-medium">{t("spacewar.mission.goal", { defaultValue: "Mission Goal" })}: </span>
-            {mission.goal}
-          </p>
-          <p>
-            <span className="font-medium">{t("spacewar.medium", { defaultValue: "Difficulty" })}: </span>
-            {difficulty}
-          </p>
-          <p>
-            <span className="font-medium">{t("spacewar.loadout.title", { defaultValue: "Active STEM Ship Upgrades" })}: </span>
-            {upgrades.length > 0 ? upgrades.map((upgrade) => upgrade.title).join(", ") : "Base loadout"}
-          </p>
-          <p>
-            <span className="font-medium">{t("spacewar.tips", { defaultValue: "Strategy Tip" })}: </span>
-            {mission.strategyTip}
-          </p>
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <h3 className="text-slate-900 font-semibold text-base sm:text-lg">
+            {t("spacewar.mission.title", { defaultValue: "Duel Mission Card" })}
+          </h3>
+          {upgrades.length > 0 && (
+            <span className="text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-2.5 py-1">
+              🚀 {t("spacewar.loadout.count", { defaultValue: "{{count}} upgrades active", count: upgrades.length })}
+            </span>
+          )}
         </div>
-        <p className="mt-2 text-xs text-slate-600">{mission.framing}</p>
+        <p className="mt-1 text-sm text-slate-700">
+          <span className="font-medium">{t("spacewar.mission.goal", { defaultValue: "Mission Goal" })}: </span>
+          {mission.goal}
+        </p>
+        <details className="mt-2">
+          <summary className="cursor-pointer select-none text-xs font-semibold text-slate-500 min-h-[32px] flex items-center">
+            {t("spacewar.mission.more", { defaultValue: "Mission details" })}
+          </summary>
+          <div className="grid gap-2 text-sm text-slate-700 md:grid-cols-2 pt-2">
+            <p>
+              <span className="font-medium">{t("spacewar.loadout.title", { defaultValue: "Active STEM Ship Upgrades" })}: </span>
+              {upgrades.length > 0
+                ? upgrades.map((upgrade) => upgrade.title).join(", ")
+                : t("spacewar.loadout.base", { defaultValue: "Base loadout" })}
+            </p>
+            <p>
+              <span className="font-medium">{t("spacewar.tips", { defaultValue: "Strategy Tip" })}: </span>
+              {mission.strategyTip}
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-slate-600">{mission.framing}</p>
+        </details>
       </section>
 
-      {/* Control bar */}
-      <div className="flex items-center justify-between bg-slate-800 rounded-t-xl px-4 py-2">
-        <h2 className="text-white font-semibold text-lg">{t("spacewar.title")}</h2>
-        <div className="flex items-center gap-3">
+      {/* Control bar — wraps into rows on phones (the old single
+          justify-between row crushed at 375px); every control is a 44px+
+          tap target. */}
+      <div className="flex flex-wrap items-center gap-2 bg-slate-800 rounded-xl px-3 sm:px-4 py-2">
+        <h2 className="text-white font-semibold text-base sm:text-lg mr-auto">{t("spacewar.title")}</h2>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* Difficulty selector — kid-friendly buttons */}
-          <div className="flex gap-1" role="radiogroup" aria-label={t("spacewar.controls")}>
+          <div className="flex gap-1.5 flex-1 sm:flex-none" role="radiogroup" aria-label={t("spacewar.controls")}>
             {([
               { value: "easy" as Difficulty, emoji: "🐣", label: t("spacewar.easy") },
               { value: "normal" as Difficulty, emoji: "🎮", label: t("spacewar.medium") },
@@ -384,7 +439,7 @@ export default function SpacewarArena() {
                 role="radio"
                 aria-checked={difficulty === opt.value}
                 onClick={() => handleDifficultyChange(opt.value)}
-                className={`px-2.5 py-1 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 sm:flex-none min-h-[44px] px-3 rounded-lg text-sm font-medium transition-all ${
                   difficulty === opt.value
                     ? "bg-blue-500 text-white shadow-md scale-105"
                     : "bg-slate-700 text-slate-300 hover:bg-slate-600"
@@ -398,7 +453,7 @@ export default function SpacewarArena() {
           {/* How to Play button */}
           <Dialog open={showHelp} onOpenChange={setShowHelp}>
             <DialogTrigger asChild>
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" className="min-h-[44px]">
                 {t("spacewar.howToPlay")}
               </Button>
             </DialogTrigger>
@@ -495,7 +550,7 @@ export default function SpacewarArena() {
           <Button
             onClick={handleRestart}
             size="sm"
-            className="bg-orange-600 hover:bg-orange-700 text-white"
+            className="min-h-[44px] bg-orange-600 hover:bg-orange-700 text-white"
             aria-label={t("spacewar.restart", { defaultValue: "Restart" })}
           >
             {t("spacewar.restart")}
@@ -534,6 +589,40 @@ export default function SpacewarArena() {
                 {t("spacewar.gestureHint")}
               </p>
             </div>
+
+            {/* First-run gesture coach — the drag/tap/double-tap controls
+                are invisible affordances; a first-time phone player needs
+                them SHOWN once. One-time per browser (localStorage flag). */}
+            {showGestureCoach && (
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                <div className="w-full max-w-xs rounded-2xl bg-slate-900 border border-slate-700 p-5 space-y-4 text-white shadow-2xl">
+                  <h3 className="text-lg font-extrabold text-center">
+                    {t("spacewar.coach.title", { defaultValue: "Touch Controls" })}
+                  </h3>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex items-center gap-3">
+                      <span className="text-2xl w-9 text-center" aria-hidden>👆</span>
+                      <span>{t("spacewar.coach.drag", { defaultValue: "Drag left/right to steer, drag up to thrust" })}</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-2xl w-9 text-center" aria-hidden>⚡</span>
+                      <span>{t("spacewar.coach.tap", { defaultValue: "Tap anywhere to fire" })}</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="text-2xl w-9 text-center" aria-hidden>✨</span>
+                      <span>{t("spacewar.coach.doubleTap", { defaultValue: "Double-tap for hyperspace escape!" })}</span>
+                    </li>
+                  </ul>
+                  <Button
+                    variant="primary"
+                    className="w-full min-h-[44px]"
+                    onClick={dismissGestureCoach}
+                  >
+                    {t("spacewar.gotIt", { defaultValue: "Got it!" })}
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -543,8 +632,14 @@ export default function SpacewarArena() {
           role="region"
           aria-live="polite"
           aria-label={t("spacewar.recap.title", { defaultValue: "Strategy Recap" })}
-          className="rounded-xl border border-blue-200 bg-blue-50 p-4"
+          className="rounded-xl border border-blue-200 bg-blue-50 p-3 sm:p-4"
         >
+          {/* Win/lose moment first — celebrate before analyzing. */}
+          <p className="text-center text-2xl font-extrabold mb-2 bounce-in">
+            {matchRecap.winner === 1
+              ? t("spacewar.recap.youWon", { defaultValue: "🏆 You won the duel!" })
+              : t("spacewar.recap.goodDuel", { defaultValue: "💪 Great duel — rematch?" })}
+          </p>
           <h3
             ref={recapHeadingRef}
             tabIndex={-1}
@@ -571,7 +666,9 @@ export default function SpacewarArena() {
             </p>
             <p>
               <span className="font-medium">{t("spacewar.loadout.title", { defaultValue: "Active STEM Ship Upgrades" })}: </span>
-              {upgrades.length ? upgrades.map((u) => u.title).join(", ") : "Base loadout"}
+              {upgrades.length
+                ? upgrades.map((u) => u.title).join(", ")
+                : t("spacewar.loadout.base", { defaultValue: "Base loadout" })}
             </p>
             <p>
               <span className="font-medium">{t("spacewar.recap.nextChallenge", { defaultValue: "Suggested Next Challenge" })}: </span>
@@ -587,21 +684,21 @@ export default function SpacewarArena() {
           <div className="mt-3 flex gap-2">
             <Button
               size="sm"
+              className="min-h-[44px] flex-1 sm:flex-none px-6"
               onClick={() => {
                 setMatchRecap(null);
                 handleRestart();
               }}
-              aria-label="Play again duel"
             >
-              Play Again
+              {t("spacewar.recap.playAgain", { defaultValue: "Play Again" })}
             </Button>
             <Button
               size="sm"
               variant="outline"
+              className="min-h-[44px]"
               onClick={handleRestart}
-              aria-label="Restart duel"
             >
-              Restart
+              {t("spacewar.restart")}
             </Button>
           </div>
 
