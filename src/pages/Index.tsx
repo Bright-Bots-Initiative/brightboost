@@ -184,6 +184,16 @@ const Index: React.FC = () => {
                   </Link>
                 </div>
 
+                {/* Curiosity path — distinct from the intent paths above.
+                    Full-width below the pair so the 375px hero stays a
+                    two-row CTA stack, not a button wall. */}
+                <Link
+                  to="/try"
+                  className={`${chunkyPrimary} mt-3 inline-flex w-full sm:w-auto items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500`}
+                >
+                  ▶ Try a game — no signup
+                </Link>
+
                 <p className="mt-3 text-sm text-brightboost-navy">
                   New to Bright Boost?{" "}
                   <Link

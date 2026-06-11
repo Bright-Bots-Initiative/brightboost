@@ -21,6 +21,12 @@ export function usePersonalBest(gameKey: string): PersonalBest | null {
       setPb(cache.get(gameKey)!);
       return;
     }
+    // Anonymous visitors (e.g. the public /try demo) can't have personal
+    // bests — skip the authenticated fetch entirely so public surfaces
+    // stay free of 401s. GameShell hides its PB chips when pb is null.
+    if (!localStorage.getItem("bb_access_token")) {
+      return;
+    }
     let cancelled = false;
     api.getGamePersonalBests().then((bests) => {
       if (cancelled) return;
