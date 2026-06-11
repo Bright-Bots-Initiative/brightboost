@@ -106,9 +106,35 @@ const DIR_ROTATION: Record<Dir, number> = { N: 0, E: 90, S: 180, W: 270 };
 
 const CELL_SIZE = 56;
 
-export function computeTankStars(commandsLength: number, par?: number): number {
-  const baseline = par ?? commandsLength;
-  return commandsLength <= baseline ? 3 : commandsLength <= baseline + 2 ? 2 : 1;
+/**
+ * Per-level star rating.
+ *
+ * STAR SEMANTICS (the contract):
+ *   3 stars — optimal or near-optimal: forward moves ≤ par
+ *   2 stars — solid play: forward moves ≤ par + 2
+ *   1 star  — completed the level (completing always earns ≥1 star)
+ *
+ * `forwardMoves` counts ONLY "FWD" commands. Turns are free — par values
+ * across all chapters (K-2 + G3-5) are authored as footstep counts, the
+ * number of cells the robot travels on the shortest path. Counting turns
+ * against par was the bug that made 3 stars mathematically impossible on
+ * every level whose optimal route includes turning (i.e., all but the
+ * first): optimal play on the /try demo scored 5/9 → 55% → 1 star at the
+ * exact moment we ask for the signup.
+ *
+ * A missing par is a content-authoring error: the fallback awards 3 stars
+ * (never punishes the player for our mistake) and logs loudly so it gets
+ * fixed rather than silently shipping a fake-generous rating.
+ */
+export function computeTankStars(forwardMoves: number, par?: number): number {
+  if (par === undefined) {
+    console.warn(
+      "[TankTrek] level is missing `par` — defaulting to 3 stars. " +
+        "Author a par (shortest-path forward-move count) for this level.",
+    );
+    return 3;
+  }
+  return forwardMoves <= par ? 3 : forwardMoves <= par + 2 ? 2 : 1;
 }
 
 export function applyTankCommand(dir: Dir, cmd: Command): Dir {
@@ -473,7 +499,10 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
     setActiveCommandIdx(-1);
 
     if (reachedGoal) {
-      const stars = computeTankStars(commands.length, level.par);
+      // Stars rate route efficiency: only forward moves count against par
+      // (turns are free thinking). See computeTankStars for the contract.
+      const forwardMoves = commands.filter((c) => c === "FWD").length;
+      const stars = computeTankStars(forwardMoves, level.par);
       setStarsThisLevel(stars);
       setLevelStars((prev) => ({ ...prev, [levelIdx]: Math.max(prev[levelIdx] ?? 0, stars) }));
       setTotalScore((s) => s + stars);
