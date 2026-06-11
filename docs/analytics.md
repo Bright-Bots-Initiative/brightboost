@@ -69,8 +69,22 @@ The comment block at the top of `src/lib/analytics.ts` enforces the same rules i
 | `student_joined_class` | Student joins via class code | `class_id`, `join_method` | client + server |
 | `game_started` | Activity/game opens | `game_id`, `module_slug`, `activity_id`, `grade_band` | client only |
 | `game_completed` | Activity/game finishes (first time per student) | `game_id`, `module_slug`, `activity_id`, `score`, `time_spent_seconds`, `grade_band` | client + server |
+| `demo_page_viewed` | Public `/try` route mounts | `source` | client only |
+| `demo_game_started` | First interaction inside the demo game area (the Start Mission tap in practice) | `game_id` | client only |
+| `demo_game_completed` | Demo game finished (GameShell results → Finish) | `game_id`, `score`, `stars`, `time_spent_seconds` | client only |
+| `demo_replayed` | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id` | client only |
+| `demo_signup_cta_clicked` | Conversion CTA tapped on `/try` | `placement` (`results` \| `hero_teacher_whisper`) | client only |
 
 `grade_band` values: `k2`, `g3_5`, `g6_8` (whatever the student's class is set to).
+
+### Demo-funnel privacy note
+
+`/try` visitors are anonymous by design — no `identifyUser()` call fires on
+the demo path. PostHog assigns an anonymous ID and automatically stitches
+the demo session to the real identity if the visitor later signs up (when
+`identifyUser()` fires post-registration). That's what makes the
+demo → signup funnel measurable end-to-end without collecting anything
+about the visitor.
 
 ### Client-only vs. client+server
 
@@ -121,6 +135,11 @@ These steps happen in the PostHog dashboard, not in code. Do them once per envir
    - Funnel (teachers): `account_registered` (`role=teacher`) → `class_created` → `student_joined_class`.
    - Trend: `game_started` count by `game_id` (most-played).
    - Trend: completion rate = `game_completed` / `game_started`.
+   - **Demo funnel (the homepage growth lever):** `demo_page_viewed` →
+     `demo_game_started` → `demo_game_completed` → `demo_signup_cta_clicked`
+     → `account_registered`. The headline acquisition number is
+     `$pageview` (on `/`) → `account_registered`; this funnel diagnoses
+     WHERE the demo path leaks.
 2. **Retention cohort**: weekly retention on `login`.
 3. **Dashboard**: pin all of the above on a single "K-8 Funnel" dashboard so reviewers see them at a glance.
 4. **Session replay**: keep on. Confirm the masking config in `src/lib/analytics.ts` is taking effect by skimming a recording — all text and inputs should be solid blocks.

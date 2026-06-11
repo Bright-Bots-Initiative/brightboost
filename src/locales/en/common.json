@@ -1772,5 +1772,14 @@
     "logIn": "Log in",
     "haveCode": "Have a class code from your teacher?",
     "joinClass": "Join your class"
+  },
+  "tryDemo": {
+    "tagline": "A real Bright Boost game \u2014 no signup needed",
+    "resultsHeading": "You did it!",
+    "resultsPitch": "Sign up free to save your stars and unlock 9 more games.",
+    "signupCta": "Sign up free \u2192",
+    "playAgain": "Play again",
+    "teacherWhisper": "Teacher?",
+    "teacherWhisperCta": "Set up your class in under 2 minutes"
   }
 }

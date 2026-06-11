@@ -46,6 +46,7 @@ import StudentClassLogin from "./pages/StudentClassLogin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
+import TryDemo from "./pages/TryDemo";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
 import ExperimentDashboard from "./components/admin/ExperimentDashboard";
@@ -117,6 +118,10 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/showcase" element={<ShowcaseMode isPublic />} />
+              {/* Public zero-signup playable demo — the homepage growth
+                  lever from docs/audits/k8-engagement-audit.md Part 3.
+                  Must stay outside any auth-gated layout. */}
+              <Route path="/try" element={<TryDemo />} />
               <Route path="/for-reviewers" element={<ForReviewers />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />

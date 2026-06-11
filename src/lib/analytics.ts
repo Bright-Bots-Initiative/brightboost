@@ -69,7 +69,23 @@ export type AnalyticsEvent =
       quiz_score?: number;
       grade_band?: string;
     }
-  | { kind: "signup_role_selected"; role: "teacher" | "student" };
+  | { kind: "signup_role_selected"; role: "teacher" | "student" }
+  // Public /try demo funnel (anonymous visitors — no identify call; PostHog
+  // stitches the anonymous session to the user on later signup)
+  | { kind: "demo_page_viewed"; source: "direct" }
+  | { kind: "demo_game_started"; game_id: string }
+  | {
+      kind: "demo_game_completed";
+      game_id: string;
+      score: number;
+      stars: number;
+      time_spent_seconds: number;
+    }
+  | { kind: "demo_replayed"; game_id: string }
+  | {
+      kind: "demo_signup_cta_clicked";
+      placement: "results" | "hero_teacher_whisper";
+    };
 
 let initialized = false;
 

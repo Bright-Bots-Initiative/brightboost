@@ -45,7 +45,9 @@ interface ChapterDef {
   levels: TankTrekLevel[];
 }
 
-interface TankTrekConfig {
+// Exported so external mounts (e.g. the public /try demo) can type their
+// hardcoded level configs against the real contract.
+export interface TankTrekConfig {
   gameKey: "tank_trek";
   chapters: ChapterDef[];
 }
