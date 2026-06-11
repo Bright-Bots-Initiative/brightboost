@@ -166,7 +166,14 @@ export const TANK_TREK_G35_LEVELS = {
         {
           id: "g35-2-1",
           names: { en: "Chip Collector", es: "Colector de Chips", vi: "Thu Thập Chip", "zh-CN": "芯片收集者" },
-          cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "E" as const, par: 10, maxCommands: 12,
+          // Solver-derived (see TankTrekSolvability.test.ts): collecting both
+          // chips + reaching the goal takes a minimum of 20 commands
+          // (12 forwards + 8 turns). The original maxCommands: 12 made the
+          // level's own stated objective impossible. Cap = 25 (~1.25× the
+          // optimal, matching the chapter's optimal-to-cap ratio); par = 12
+          // = optimal full-route forwards, so chip collectors — the point of
+          // the level — earn 3 stars.
+          cols: 5, rows: 5, startRow: 4, startCol: 0, startDir: "E" as const, par: 12, maxCommands: 25,
           storySnippets: { en: "Collect all data chips AND reach the goal in minimum moves!", es: "¡Recoge todos los chips Y llega a la meta con el mínimo de movimientos!", vi: "Thu thập tất cả chip DÀ đến đích với ít bước nhất!", "zh-CN": "收集所有芯片并用最少步数到达目标！" },
           hints: { en: "Plan to collect chips along the way, not as detours", es: "Planifica recoger chips en el camino, no como desvíos", vi: "Lên kế hoạch nhặt chip dọc đường, không đi vòng", "zh-CN": "计划沿途收集芯片，不要绕路" },
           grid: [["wall","wall","wall","floor","goal"],["floor","chip","wall","floor","floor"],["floor","floor","floor","floor","wall"],["wall","floor","wall","chip","floor"],["start","floor","floor","wall","wall"]],

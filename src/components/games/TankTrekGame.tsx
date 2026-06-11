@@ -171,7 +171,10 @@ export function buildTankTrekCompletionPayload(params: {
 
 // ── Built-in Levels ────────────────────────────────────────────────────────
 
-const BUILTIN_LEVELS: TankTrekConfig = {
+// Exported for the solvability guard test (src/components/games/__tests__)
+// which programmatically proves every level is completable within its
+// maxCommands cap and that 3 stars is reachable. Not used outside tests.
+export const BUILTIN_LEVELS: TankTrekConfig = {
   gameKey: "tank_trek",
   chapters: [
     {
