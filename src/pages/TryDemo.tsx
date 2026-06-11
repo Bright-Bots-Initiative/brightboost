@@ -38,7 +38,9 @@ const DEMO_GAME_ID = "tank_trek_demo";
  * Move"). Hardcoded so the route has zero data dependencies. Multilingual
  * fields follow the game's own content shape.
  */
-const DEMO_CONFIG: TankTrekConfig = {
+// Exported for the Tank Trek solvability guard test — the demo levels are
+// copies of chapter 1 and could drift; the guard keeps them honest too.
+export const DEMO_CONFIG: TankTrekConfig = {
   gameKey: "tank_trek",
   chapters: [
     {
