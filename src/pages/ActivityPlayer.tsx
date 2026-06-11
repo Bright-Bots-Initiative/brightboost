@@ -418,15 +418,22 @@ export default function ActivityPlayer() {
           <ActivityHeader title={activity.title} visualKey="story" />
           <Card>
             <CardContent className="p-6 space-y-4">
-              <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
+              {/* Reading-comfort treatment for legacy free-text activities:
+                  larger size, relaxed leading, capped line length. */}
+              <div className="text-lg leading-relaxed max-w-prose text-gray-700 whitespace-pre-wrap">
+                {text}
+              </div>
               <div className="flex gap-2">
                 <Button
                   onClick={() => navigate(`/student/modules/${slug}`)}
                   variant="outline"
+                  className="min-h-[44px]"
                 >
-                  Back
+                  {t("activityPlayer.back")}
                 </Button>
-                <Button onClick={() => handleComplete()}>{t("activityPlayer.markComplete")}</Button>
+                <Button className="min-h-[44px] px-6" onClick={() => handleComplete()}>
+                  {t("activityPlayer.markComplete")}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -450,10 +457,32 @@ export default function ActivityPlayer() {
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
+              className="min-h-[44px]"
               onClick={() => navigate(`/student/modules/${slug}`)}
             >
-              Back
+              {t("activityPlayer.back")}
             </Button>
+          </div>
+
+          {/* Visual progress dots — pre-readers can't parse "Slide 2 of 5",
+              but they can see filled vs hollow dots. Mirrors the dot pattern
+              used by the Pathways welcome flow. */}
+          <div
+            className="flex items-center justify-center gap-1.5"
+            aria-hidden="true"
+          >
+            {slides.map((s, i) => (
+              <span
+                key={s.id ?? i}
+                className={`rounded-full transition-all duration-300 ${
+                  i === slideIndex
+                    ? "w-6 h-2.5 bg-brightboost-blue"
+                    : i < slideIndex
+                      ? "w-2.5 h-2.5 bg-brightboost-green"
+                      : "w-2.5 h-2.5 bg-slate-200"
+                }`}
+              />
+            ))}
           </div>
 
           <Card>
@@ -470,7 +499,11 @@ export default function ActivityPlayer() {
                 </div>
               ) : null}
 
-              <div className="text-xl font-semibold">
+              {/* text-2xl + relaxed leading: comfortable for developing
+                  readers (K-2 band reads this surface most). Slides are
+                  authored as 1-3 short sentences, so the larger size never
+                  produces a text wall. */}
+              <div className="text-2xl font-semibold leading-relaxed max-w-prose">
                 {resolveText(t, current?.text)}
               </div>
             </CardContent>
@@ -484,6 +517,7 @@ export default function ActivityPlayer() {
                   disabled={slideIndex === 0}
                   onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
                   aria-label={t("activityPlayer.prevSlide")}
+                  className="min-h-[44px] px-5"
                 >
                   {t("activityPlayer.back")}
                 </Button>
@@ -501,8 +535,9 @@ export default function ActivityPlayer() {
                       setSlideIndex((i) => Math.min(slides.length - 1, i + 1))
                     }
                     aria-label={t("activityPlayer.nextSlide")}
+                    className="min-h-[44px] px-6"
                   >
-                    {t("activityPlayer.next")}
+                    {t("activityPlayer.next")} <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -510,7 +545,12 @@ export default function ActivityPlayer() {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <Button onClick={() => setMode("quiz")}>{t("activityPlayer.startQuiz")}</Button>
+              <Button
+                onClick={() => setMode("quiz")}
+                className="min-h-[44px] px-6"
+              >
+                {t("activityPlayer.startQuiz")} <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             )}
           </div>
         </div>
@@ -544,7 +584,7 @@ export default function ActivityPlayer() {
               const promptId = `question-prompt-${q.id}`;
               return (
                 <div key={q.id} className="space-y-2">
-                  <div className="font-semibold" id={promptId}>
+                  <div className="font-semibold text-lg" id={promptId}>
                     {resolveText(t, q.prompt)}
                     {isWrong && (
                       <span className="text-red-500 ml-2 text-sm">
@@ -567,7 +607,10 @@ export default function ActivityPlayer() {
                             key={origIdx}
                             variant={selected ? "default" : "outline"}
                             aria-pressed={selected}
-                            className={`justify-start ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
+                            // h-auto + whitespace-normal: choices wrap instead
+                            // of clipping; min-h-[44px] + py-3 keeps every
+                            // choice a comfortable K-2 tap target.
+                            className={`justify-start text-left h-auto min-h-[44px] py-3 whitespace-normal ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                             onClick={() => {
                               setAnswers((prev) => ({ ...prev, [q.id]: origIdx }));
                               if (isWrong) {
@@ -592,19 +635,13 @@ export default function ActivityPlayer() {
               );
             })}
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setAnswers({});
-                  setSubmitted(false);
-                  setIncorrectIds([]);
-                }}
-              >
-                {t("activityPlayer.reset")}
-              </Button>
+            {/* Submit is the hero action; Reset is demoted to ghost so a
+                K-2 student doesn't accidentally wipe all answers reaching
+                for the primary button. */}
+            <div className="flex gap-2 items-center">
               <Button
                 disabled={!allAnswered}
+                className="min-h-[44px] px-6 flex-1 sm:flex-none"
                 onClick={() => {
                   const incorrect = questions.filter(
                     (q) => answers[q.id] !== q.answerIndex,
@@ -622,6 +659,17 @@ export default function ActivityPlayer() {
                 }}
               >
                 {t("activityPlayer.submit")}
+              </Button>
+              <Button
+                variant="ghost"
+                className="min-h-[44px] text-slate-500"
+                onClick={() => {
+                  setAnswers({});
+                  setSubmitted(false);
+                  setIncorrectIds([]);
+                }}
+              >
+                {t("activityPlayer.reset")}
               </Button>
             </div>
           </CardContent>
@@ -673,16 +721,21 @@ export default function ActivityPlayer() {
         <Card>
           <CardContent className="p-6 space-y-4">
             {/* Show text content if available */}
-            <div className="text-gray-700 whitespace-pre-wrap">{text}</div>
+            <div className="text-lg leading-relaxed max-w-prose text-gray-700 whitespace-pre-wrap">
+              {text}
+            </div>
 
             <div className="flex gap-2">
               <Button
                 onClick={() => navigate(`/student/modules/${slug}`)}
                 variant="outline"
+                className="min-h-[44px]"
               >
-                Back
+                {t("activityPlayer.back")}
               </Button>
-              <Button onClick={() => handleComplete()}>{t("activityPlayer.markComplete")}</Button>
+              <Button className="min-h-[44px] px-6" onClick={() => handleComplete()}>
+                {t("activityPlayer.markComplete")}
+              </Button>
             </div>
           </CardContent>
         </Card>
