@@ -1434,7 +1434,7 @@
       "reset": "Reset",
       "hintBtn": "Hint",
       "level": "Level",
-      "movesOrLess": "moves or less",
+      "movesOrLess": "steps or less",
       "hitWall": "Oops! Bolt bumped a wall. Try a different path!",
       "didntReach": "Bolt didn't reach the goal yet. Add more commands!",
       "perfect": "Perfect path! Bolt is impressed!",
@@ -1446,7 +1446,10 @@
       "achFirstTry": "First Try Fixer",
       "achCollector": "Chip Collector",
       "achMaster": "Maze Master",
-      "achNoHints": "Smart Planner"
+      "achNoHints": "Smart Planner",
+      "stepsLabel": "Steps",
+      "turnsFree": "Turns are free!",
+      "doneInSteps": "{{count}} steps!"
     },
     "quantumQuest": {
       "title": "Quantum Quest",

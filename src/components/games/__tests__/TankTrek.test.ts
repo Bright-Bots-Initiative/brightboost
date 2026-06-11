@@ -3,6 +3,7 @@ import {
   applyTankCommand,
   buildTankTrekCompletionPayload,
   computeTankStars,
+  countForwardSteps,
 } from "../TankTrekGame";
 
 describe("Tank Trek helpers", () => {
@@ -52,6 +53,20 @@ describe("Tank Trek helpers", () => {
     const totalPossible = 3 * 3;
     const pct = (totalScore / totalPossible) * 100;
     expect(pct).toBeGreaterThanOrEqual(90);
+  });
+
+  it("SINGLE SOURCE OF TRUTH: the live step counter and the star rating both derive from countForwardSteps", () => {
+    // The number a kid watches while planning must be the number that
+    // rates them. Both the CommandPanel counter and the run-loop star
+    // call use countForwardSteps — this pins the shared function's
+    // behavior and its parity with the star result.
+    const optimalFirstTurn = ["RIGHT", "FWD", "LEFT", "FWD", "FWD", "RIGHT", "FWD"] as const;
+    expect(countForwardSteps(optimalFirstTurn)).toBe(4); // what the counter shows
+    expect(computeTankStars(countForwardSteps(optimalFirstTurn), 4)).toBe(3); // what the stars say
+
+    expect(countForwardSteps([])).toBe(0);
+    expect(countForwardSteps(["LEFT", "RIGHT", "LEFT"])).toBe(0); // turns are free
+    expect(countForwardSteps(["FWD", "FWD"])).toBe(2);
   });
 
   it("missing par fails loud (console.warn) and defaults to 3 stars, never a silent 1-star ceiling", () => {

@@ -23,11 +23,13 @@ describe("LearningGameFrame", () => {
       </LearningGameFrame>,
     );
 
-    const toggle = screen.getByRole("button", { name: /reduced effects: off/i });
+    // Compact On/Off toggle beside a visible label; the explanation moved
+    // to an sr-only aria-describedby so the control stays one line on mobile.
+    const toggle = screen.getByRole("button", { name: /^off$/i });
     expect(toggle).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText(/reduces motion, particles, and visual intensity for smoother play/i)).toBeInTheDocument();
+    expect(toggle).toHaveAccessibleDescription(/reduces motion, particles, and visual intensity/i);
     await user.click(toggle);
-    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /^on$/i })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("announces progress and feedback with polite status regions", () => {

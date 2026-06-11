@@ -108,6 +108,80 @@ describe("Tank Trek level solvability guard", () => {
     },
   );
 
+  // ── Hint honesty guard ────────────────────────────────────────────────
+  //
+  // Some hints spell out an exact command sequence ("Right, Forward,
+  // Left, ..."). Those shipped wrong once: "Forward, Turn Right, ..." on
+  // First Turn walked Bolt straight into the wall ahead of the start.
+  // Any hint that parses as a command list must SIMULATE to the goal
+  // without a wall hit. Prose hints ("Think about the whole path") don't
+  // parse and are skipped — this guards only explicit sequences (en).
+
+  type Cmd = "FWD" | "LEFT" | "RIGHT";
+  const WORD_TO_CMD: Record<string, Cmd> = {
+    forward: "FWD",
+    left: "LEFT",
+    right: "RIGHT",
+  };
+
+  function parseHintSequence(hint: string): Cmd[] | null {
+    const parts = hint.split(",").map((p) => p.trim().toLowerCase());
+    if (parts.length < 3) return null; // too short to be a program listing
+    const cmds: Cmd[] = [];
+    for (const part of parts) {
+      // Accept "forward", "turn right", "right", etc.
+      const word = part.replace(/^turn\s+/, "").replace(/[^a-z]/g, "");
+      const cmd = WORD_TO_CMD[word];
+      if (!cmd) return null; // any non-command token → prose, skip
+      cmds.push(cmd);
+    }
+    return cmds;
+  }
+
+  function simulate(level: SolvableLevel, cmds: Cmd[]): "goal" | "wall" | "incomplete" {
+    const DELTA: Record<string, [number, number]> = { N: [-1, 0], E: [0, 1], S: [1, 0], W: [0, -1] };
+    const L: Record<string, string> = { N: "W", W: "S", S: "E", E: "N" };
+    const R: Record<string, string> = { N: "E", E: "S", S: "W", W: "N" };
+    let r = level.startRow, c = level.startCol, d: string = level.startDir;
+    let reachedGoal = level.grid[r][c] === "goal";
+    for (const cmd of cmds) {
+      if (cmd === "LEFT") d = L[d];
+      else if (cmd === "RIGHT") d = R[d];
+      else {
+        const [dr, dc] = DELTA[d];
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr >= level.rows || nc < 0 || nc >= level.cols || level.grid[nr][nc] === "wall") {
+          return "wall";
+        }
+        r = nr; c = nc;
+        if (level.grid[r][c] === "goal") reachedGoal = true;
+      }
+    }
+    return reachedGoal ? "goal" : "incomplete";
+  }
+
+  it("every command-list hint simulates to the goal (no wall hits, no dead ends)", () => {
+    let validated = 0;
+    for (const { catalog, level } of entries) {
+      const hint = (level as unknown as { hints?: Record<string, string> }).hints?.en;
+      if (!hint) continue;
+      const cmds = parseHintSequence(hint);
+      if (!cmds) continue; // prose hint — not a program promise
+      const outcome = simulate(level, cmds);
+      expect(
+        outcome,
+        `${catalog}/${level.id}: the hint "${hint}" ${
+          outcome === "wall" ? "walks into a wall" : "does not reach the goal"
+        } — hints that list commands must be real solutions`,
+      ).toBe("goal");
+      validated++;
+    }
+    // The rewritten First Turn / Turn Left / Zig-Zag hints (builtin + demo
+    // mirrors) must be among the validated set — if parsing regresses and
+    // skips them all, this guard would silently pass; pin the floor.
+    expect(validated).toBeGreaterThanOrEqual(5);
+  });
+
   it("prints the proof table (informational)", () => {
     const rows = entries.map(({ catalog, level }) => {
       const goal = solveTankLevel(level, "goal");
