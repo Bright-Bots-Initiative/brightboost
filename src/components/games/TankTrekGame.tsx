@@ -143,6 +143,20 @@ export function applyTankCommand(dir: Dir, cmd: Command): Dir {
   return dir;
 }
 
+/**
+ * SINGLE SOURCE OF TRUTH for the player-visible "steps" number.
+ *
+ * Steps = forward moves only; turns are free (see computeTankStars).
+ * Both the live step counter in the plan strip AND the star computation
+ * derive from this one function — if they ever counted separately, the
+ * number a kid watches while planning could drift from the number that
+ * decides their stars. (That exact incoherence shipped once: the par
+ * badge said "4 moves" while the optimal run visibly took 7 taps.)
+ */
+export function countForwardSteps(commands: readonly Command[]): number {
+  return commands.filter((c) => c === "FWD").length;
+}
+
 export function buildTankTrekCompletionPayload(params: {
   totalScore: number;
   totalPossible: number;
@@ -186,14 +200,20 @@ export const BUILTIN_LEVELS: TankTrekConfig = {
           hints: { en: "Tap Forward two times!", es: "¡Toca Adelante dos veces!", vi: "Nhấn Tiến hai lần!", "zh-CN": "点两次前进！" },
           grid: [["wall","goal","wall"],["wall","floor","wall"],["wall","start","wall"]] },
         // Level 2: one right turn
+        // Snippet + hint rewritten to match the actual maze: a wall sits
+        // directly ahead of the start, so the route begins with a TURN and
+        // zigzags (4 steps + 3 turns). The hint is the solver-verified
+        // optimal program — TankTrekSolvability.test.ts simulates it.
         { id: "1-2", names: { en: "First Turn", es: "Primer Giro", vi: "Rẽ Đầu Tiên", "zh-CN": "第一次转弯" }, cols: 3, rows: 3, startRow: 2, startCol: 0, startDir: "N", par: 4,
-          storySnippets: { en: "The path turns! Go forward, then turn right and go forward again.", es: "¡El camino gira! Avanza, gira a la derecha y avanza de nuevo.", vi: "Đường rẽ! Tiến lên, rẽ phải rồi tiến tiếp.", "zh-CN": "路转弯了！先前进，然后右转再前进。" },
-          hints: { en: "Forward, Turn Right, Forward, Forward", es: "Adelante, Girar Derecha, Adelante, Adelante", vi: "Tiến, Rẽ phải, Tiến, Tiến", "zh-CN": "前进、右转、前进、前进" },
+          storySnippets: { en: "The path zigzags! Turn first, then plan your steps to the goal.", es: "¡El camino zigzaguea! Gira primero y planea tus pasos hasta la meta.", vi: "Đường đi ngoằn ngoèo! Rẽ trước, rồi lên kế hoạch các bước đến đích.", "zh-CN": "路是之字形的！先转弯，再计划走到目标的步数。" },
+          hints: { en: "Right, Forward, Left, Forward, Forward, Right, Forward", es: "Derecha, Adelante, Izquierda, Adelante, Adelante, Derecha, Adelante", vi: "Phải, Tiến, Trái, Tiến, Tiến, Phải, Tiến", "zh-CN": "右转、前进、左转、前进、前进、右转、前进" },
           grid: [["wall","floor","goal"],["wall","floor","floor"],["start","floor","wall"]] },
         // Level 3: gentle L-shape with left turn
         { id: "1-3", names: { en: "Turn Left", es: "Gira Izquierda", vi: "Rẽ Trái", "zh-CN": "左转" }, cols: 3, rows: 3, startRow: 2, startCol: 2, startDir: "N", par: 4,
           storySnippets: { en: "Now try turning left! The goal is on the other side.", es: "¡Ahora gira a la izquierda! La meta está al otro lado.", vi: "Bây giờ thử rẽ trái! Đích ở bên kia.", "zh-CN": "现在试试左转！目标在另一边。" },
-          hints: { en: "Forward, Turn Left, Forward, Forward", es: "Adelante, Girar Izquierda, Adelante, Adelante", vi: "Tiến, Rẽ trái, Tiến, Tiến", "zh-CN": "前进、左转、前进、前进" },
+          // Hint rewritten: the old "Forward, Turn Left, ..." hit the wall
+          // directly ahead of the start. Solver-verified optimal program.
+          hints: { en: "Left, Forward, Right, Forward, Forward, Left, Forward", es: "Izquierda, Adelante, Derecha, Adelante, Adelante, Izquierda, Adelante", vi: "Trái, Tiến, Phải, Tiến, Tiến, Trái, Tiến", "zh-CN": "左转、前进、右转、前进、前进、左转、前进" },
           grid: [["goal","floor","wall"],["floor","floor","wall"],["wall","floor","start"]] },
       ],
     },
@@ -203,7 +223,9 @@ export const BUILTIN_LEVELS: TankTrekConfig = {
         // Level 4: short zig-zag on a small grid
         { id: "2-1", names: { en: "Zig-Zag", es: "Zigzag", vi: "Ngoằn Ngoèo", "zh-CN": "之字形" }, cols: 3, rows: 4, startRow: 3, startCol: 0, startDir: "N", par: 6,
           storySnippets: { en: "A wiggly path! Go forward, turn, forward, turn...", es: "¡Un camino en zigzag! Adelante, gira, adelante, gira...", vi: "Đường ngoằn ngoèo! Tiến, rẽ, tiến, rẽ...", "zh-CN": "弯弯的路！前进、转弯、前进、转弯..." },
-          hints: { en: "Forward, Right, Forward, Left, Forward, Forward", es: "Adelante, Derecha, Adelante, Izquierda, Adelante, Adelante", vi: "Tiến, Phải, Tiến, Trái, Tiến, Tiến", "zh-CN": "前进、右转、前进、左转、前进、前进" },
+          // Hint rewritten: the old 6-command sequence walked into a wall
+          // two moves from the goal. Solver-verified optimal program.
+          hints: { en: "Forward, Right, Forward, Left, Forward, Right, Forward, Left, Forward", es: "Adelante, Derecha, Adelante, Izquierda, Adelante, Derecha, Adelante, Izquierda, Adelante", vi: "Tiến, Phải, Tiến, Trái, Tiến, Phải, Tiến, Trái, Tiến", "zh-CN": "前进、右转、前进、左转、前进、右转、前进、左转、前进" },
           grid: [["wall","wall","goal"],["wall","floor","floor"],["floor","floor","wall"],["start","wall","wall"]] },
         // Level 5: grab a chip on the way
         { id: "2-2", names: { en: "Grab a Chip!", es: "¡Agarra un Chip!", vi: "Nhặt Chip!", "zh-CN": "抓芯片！" }, cols: 3, rows: 4, startRow: 3, startCol: 0, startDir: "E", par: 5,
@@ -365,6 +387,19 @@ function CommandPanel({
         )}
       </div>
 
+      {/* Live step counter + the counting rule, in the kid's face while
+          they plan. Steps derive from countForwardSteps — the SAME function
+          the star computation uses, so the number they watch is the number
+          that rates them. */}
+      <div className="flex items-center justify-center gap-3 text-sm">
+        <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-3 py-1">
+          🦶 {t("games.tankTrek.stepsLabel")}: {countForwardSteps(commands)}
+        </span>
+        <span className="text-slate-500 font-medium">
+          {t("games.tankTrek.turnsFree")}
+        </span>
+      </div>
+
       <div className="flex gap-2 justify-center">
         <Button variant="outline" className="rounded-xl" onClick={onClear} disabled={running || commands.length === 0}>
           <Trash2 className="w-4 h-4 mr-1" /> {t("games.tankTrek.clear")}
@@ -430,6 +465,7 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
   const [feedback, setFeedback] = useState<{ text: string; success: boolean } | null>(null);
   const [levelComplete, setLevelComplete] = useState(false);
   const [starsThisLevel, setStarsThisLevel] = useState(0);
+  const [stepsThisLevel, setStepsThisLevel] = useState(0);
   const [levelStars, setLevelStars] = useState<Record<number, number>>({});
 
   const [totalScore, setTotalScore] = useState(0);
@@ -503,8 +539,11 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
 
     if (reachedGoal) {
       // Stars rate route efficiency: only forward moves count against par
-      // (turns are free thinking). See computeTankStars for the contract.
-      const forwardMoves = commands.filter((c) => c === "FWD").length;
+      // (turns are free thinking). countForwardSteps is the same function
+      // backing the live step counter in the plan strip — one number,
+      // one source. See computeTankStars for the star contract.
+      const forwardMoves = countForwardSteps(commands);
+      setStepsThisLevel(forwardMoves);
       const stars = computeTankStars(forwardMoves, level.par);
       setStarsThisLevel(stars);
       setLevelStars((prev) => ({ ...prev, [levelIdx]: Math.max(prev[levelIdx] ?? 0, stars) }));
@@ -592,7 +631,8 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
         />
       </div>
 
-      {/* Feedback banner */}
+      {/* Feedback banner — echoes the same step count the kid watched
+          while planning, so label, counter, and result all agree. */}
       {feedback && (
         <div className={`text-center py-3 px-4 rounded-xl font-bold text-sm ${
           feedback.success
@@ -601,7 +641,12 @@ function TankTrekCore({ config, onFinish }: { config: TankTrekConfig; onFinish: 
         }`}>
           {feedback.text}
           {levelComplete && (
-            <span className="ml-2">{"⭐".repeat(starsThisLevel)}</span>
+            <>
+              <span className="ml-2">
+                {t("games.tankTrek.doneInSteps", { count: stepsThisLevel })}
+              </span>
+              <span className="ml-2">{"⭐".repeat(starsThisLevel)}</span>
+            </>
           )}
         </div>
       )}
@@ -670,20 +715,31 @@ export default function TankTrekGame({ config, onComplete }: TankTrekGameProps) 
     chapterLabel: "Tank Trek",
     themeColor: "indigo",
     tips: pickLocale({
-      en: ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"],
-      es: ["Planifica antes de ejecutar", "Menos movimientos = más estrellas", "¡Recoge los chips de datos!"],
-      vi: ["Lên kế hoạch trước khi chạy", "Ít bước hơn = nhiều sao hơn", "Thu thập chip dữ liệu!"],
-      "zh-CN": ["跑之前先计划", "步数越少 = 星星越多", "收集数据芯片！"],
-    }, ["Plan before you run", "Fewer moves = more stars", "Collect the data chips!"]),
- 
+      en: ["Plan before you run", "Fewer steps = more stars — turns are free!", "Collect the data chips!"],
+      es: ["Planifica antes de ejecutar", "Menos pasos = más estrellas — ¡los giros son gratis!", "¡Recoge los chips de datos!"],
+      vi: ["Lên kế hoạch trước khi chạy", "Ít bước hơn = nhiều sao hơn — rẽ không tính!", "Thu thập chip dữ liệu!"],
+      "zh-CN": ["跑之前先计划", "步数越少 = 星星越多——转弯不算！", "收集数据芯片！"],
+    }, ["Plan before you run", "Fewer steps = more stars — turns are free!", "Collect the data chips!"]),
+
     controlInstructions: {
       keyboard: ["Use Tab to move through controls. Use Enter or Space to add commands."],
-      buttons: ["Choose Forward, Turn Left, or Turn Right to build a path.", "Use fewer moves when possible."],
+      buttons: ["Choose Forward, Turn Left, or Turn Right to build a path.", "Use fewer steps when possible — turns are free."],
     },
   };
 
+  // Tank Trek's score unit IS stars (sum of per-level stars), so the
+  // personal-best chip renders in the units a kid earns: "⭐ 16/21".
+  const maxStars =
+    gameConfig.chapters.reduce((n, ch) => n + ch.levels.length, 0) * 3;
+
   return (
-    <GameShell gameKey="tank_trek" title={t("games.tankTrek.title")} briefing={briefing} onComplete={onComplete ?? (() => {})}>
+    <GameShell
+      gameKey="tank_trek"
+      title={t("games.tankTrek.title")}
+      briefing={briefing}
+      onComplete={onComplete ?? (() => {})}
+      formatBest={(best) => `⭐ ${best.bestScore}/${maxStars}`}
+    >
       {({ onFinish, reducedEffects: _reducedEffects }) => <TankTrekCore config={gameConfig} onFinish={onFinish} />}
     </GameShell>
   );

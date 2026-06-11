@@ -44,12 +44,17 @@ describe("GameShell reduced effects integration", () => {
       </GameShell>,
     );
 
-    expect(screen.getByRole("button", { name: /reduced effects: off/i })).toBeInTheDocument();
+    // The toggle is now a compact On/Off button beside a visible label,
+    // with aria-pressed carrying state and an aria-describedby description.
+    const toggle = screen.getByRole("button", { name: /^off$/i });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    expect(toggle).toHaveAccessibleDescription(/reduces motion/i);
     const shell = screen.getByRole("button", { name: "child-off" }).closest("[data-reduced-effects]");
     expect(shell).toHaveAttribute("data-reduced-effects", "false");
 
-    await user.click(screen.getByRole("button", { name: /reduced effects: off/i }));
+    await user.click(toggle);
     expect(screen.getByRole("button", { name: "child-on" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^on$/i })).toHaveAttribute("aria-pressed", "true");
     expect(shell).toHaveAttribute("data-reduced-effects", "true");
   });
 });

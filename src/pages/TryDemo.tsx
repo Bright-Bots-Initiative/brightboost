@@ -34,6 +34,45 @@ import { track } from "@/lib/analytics";
 const DEMO_GAME_ID = "tank_trek_demo";
 
 /**
+ * Anonymous, demo-local best — localStorage only, never sent anywhere.
+ * The key is VERSIONED: v2 marks the post-#605 star semantics. Any value
+ * written under an older scheme is simply ignored (losing an anonymous
+ * demo best is fine; displaying a stale one in dead units is not — that's
+ * how "High Score: 55" happened on the logged-in path).
+ */
+const DEMO_BEST_KEY = "bb_try_demo_best_v2";
+
+interface DemoBest {
+  stars: number;
+}
+
+export function readDemoBest(): DemoBest | null {
+  try {
+    const raw = localStorage.getItem(DEMO_BEST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DemoBest;
+    return typeof parsed?.stars === "number" &&
+      parsed.stars >= 0 &&
+      parsed.stars <= 3
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeDemoBest(stars: number) {
+  try {
+    const existing = readDemoBest();
+    if (!existing || stars > existing.stars) {
+      localStorage.setItem(DEMO_BEST_KEY, JSON.stringify({ stars }));
+    }
+  } catch {
+    /* private-mode storage failures are fine — the best is a nicety */
+  }
+}
+
+/**
  * Three short, winnable levels (mirrors Tank Trek chapter 1 "Learning to
  * Move"). Hardcoded so the route has zero data dependencies. Multilingual
  * fields follow the game's own content shape.
@@ -79,17 +118,20 @@ export const DEMO_CONFIG: TankTrekConfig = {
           id: "demo-2",
           names: { en: "First Turn", es: "Primer Giro", vi: "Rẽ Đầu Tiên", "zh-CN": "第一次转弯" },
           cols: 3, rows: 3, startRow: 2, startCol: 0, startDir: "N", par: 4,
+          // Mirrors builtin 1-2's corrected copy: a wall sits directly
+          // ahead of the start, so the route begins with a turn. The hint
+          // is the solver-verified optimal program.
           storySnippets: {
-            en: "The path turns! Go forward, then turn right and go forward again.",
-            es: "¡El camino gira! Avanza, gira a la derecha y avanza de nuevo.",
-            vi: "Đường rẽ! Tiến lên, rẽ phải rồi tiến tiếp.",
-            "zh-CN": "路转弯了！先前进，然后右转再前进。",
+            en: "The path zigzags! Turn first, then plan your steps to the goal.",
+            es: "¡El camino zigzaguea! Gira primero y planea tus pasos hasta la meta.",
+            vi: "Đường đi ngoằn ngoèo! Rẽ trước, rồi lên kế hoạch các bước đến đích.",
+            "zh-CN": "路是之字形的！先转弯，再计划走到目标的步数。",
           },
           hints: {
-            en: "Forward, Turn Right, Forward, Forward",
-            es: "Adelante, Girar Derecha, Adelante, Adelante",
-            vi: "Tiến, Rẽ phải, Tiến, Tiến",
-            "zh-CN": "前进、右转、前进、前进",
+            en: "Right, Forward, Left, Forward, Forward, Right, Forward",
+            es: "Derecha, Adelante, Izquierda, Adelante, Adelante, Derecha, Adelante",
+            vi: "Phải, Tiến, Trái, Tiến, Tiến, Phải, Tiến",
+            "zh-CN": "右转、前进、左转、前进、前进、右转、前进",
           },
           grid: [
             ["wall", "floor", "goal"],
@@ -107,11 +149,13 @@ export const DEMO_CONFIG: TankTrekConfig = {
             vi: "Bây giờ thử rẽ trái! Đích ở bên kia.",
             "zh-CN": "现在试试左转！目标在另一边。",
           },
+          // Mirrors builtin 1-3's corrected hint (old one walked into the
+          // wall directly ahead of the start). Solver-verified.
           hints: {
-            en: "Forward, Turn Left, Forward, Forward",
-            es: "Adelante, Girar Izquierda, Adelante, Adelante",
-            vi: "Tiến, Rẽ trái, Tiến, Tiến",
-            "zh-CN": "前进、左转、前进、前进",
+            en: "Left, Forward, Right, Forward, Forward, Left, Forward",
+            es: "Izquierda, Adelante, Derecha, Adelante, Adelante, Izquierda, Adelante",
+            vi: "Trái, Tiến, Phải, Tiến, Tiến, Trái, Tiến",
+            "zh-CN": "左转、前进、右转、前进、前进、左转、前进",
           },
           grid: [
             ["goal", "floor", "wall"],
@@ -179,6 +223,7 @@ export default function TryDemo() {
         Math.round((Date.now() - startMsRef.current) / 1000),
       ),
     });
+    writeDemoBest(result.starsEarned ?? 0);
     setFinished(result);
   }, []);
 
@@ -230,6 +275,17 @@ export default function TryDemo() {
                   defaultValue: "You did it!",
                 })}
               </h1>
+              {(() => {
+                const best = readDemoBest();
+                return best && best.stars > stars ? (
+                  <p className="text-xs font-semibold text-brightboost-navy/60">
+                    {t("tryDemo.bestStars", {
+                      defaultValue: "Your best: {{stars}}",
+                      stars: "⭐".repeat(best.stars),
+                    })}
+                  </p>
+                ) : null;
+              })()}
               <p className="text-sm font-medium text-brightboost-navy/80">
                 {t("tryDemo.resultsPitch", {
                   defaultValue:

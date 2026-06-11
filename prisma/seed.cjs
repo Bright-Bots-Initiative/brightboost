@@ -855,7 +855,7 @@ async function main() {
     { gameKey: "gotcha_gears_unity", bestScore: 80, lastScore: 60, bestStreak: 3, bestRoundsCompleted: 7 },
     { gameKey: "boost_path_planner", bestScore: 35, lastScore: 35, bestStreak: 2, bestRoundsCompleted: 3 },
     { gameKey: "rhymo_rhyme_rocket", bestScore: 120, lastScore: 90, bestStreak: 5, bestRoundsCompleted: 15 },
-    { gameKey: "tank_trek", bestScore: 55, lastScore: 55, bestStreak: 3, bestRoundsCompleted: 7 },
+    { gameKey: "tank_trek", bestScore: 16, lastScore: 14, bestStreak: 3, bestRoundsCompleted: 7 }, // star-sum units (7 levels x 3 max = 21); the old 55 was fabricated and unearnable
   ];
 
   for (const gb of explorerBests) {

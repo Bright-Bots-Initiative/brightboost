@@ -51,6 +51,14 @@ interface GameShellProps {
   children: (props: { onFinish: (result: GameResult) => void; reducedEffects: boolean }) => React.ReactNode;
   onComplete: (result: GameResult) => void;
   starThresholds?: [number, number, number];
+  /**
+   * Format the persisted personal best for display. Each game's `score` is
+   * in its own unit (Tank Trek: a star-sum; Rhyme & Ride: points), and raw
+   * numbers like "High Score: 55" mean nothing to a 7-year-old. Games pass
+   * a formatter that renders kid-readable units (e.g. "⭐ 16/21"); without
+   * one the chip falls back to the raw score.
+   */
+  formatBest?: (best: { bestScore: number; bestStreak: number }) => string;
 }
 
 // ── Animated star with stagger ─────────────────────────────────────────────
@@ -274,6 +282,7 @@ export default function GameShell({
   children,
   onComplete,
   starThresholds = [30, 60, 90],
+  formatBest,
 }: GameShellProps) {
   const { t } = useTranslation();
   const personalBest = usePersonalBest(gameKey);
@@ -332,7 +341,9 @@ export default function GameShell({
         <div className="slide-up-fade relative overflow-hidden rounded-2xl shadow-xl border border-white/20">
           {/* Gradient background */}
           <div className={`absolute inset-0 bg-gradient-to-br from-${tc}-500/10 via-${tc}-400/5 to-purple-500/10`} />
-          <div className="relative p-8 text-center space-y-5">
+          {/* Tighter on mobile (p-5/space-y-4) — the p-8 band read as dead
+              space under the Start button on phones. */}
+          <div className="relative p-5 sm:p-8 text-center space-y-4 sm:space-y-5">
             {/* Chapter badge */}
             {briefing.chapterLabel && (
               <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold bg-${tc}-100 text-${tc}-700 tracking-wide uppercase`}>
@@ -367,7 +378,12 @@ export default function GameShell({
             {personalBest && personalBest.bestScore > 0 && (
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/50 shadow-sm text-sm">
                 <Trophy className="w-4 h-4 text-yellow-500" />
-                <span className="font-bold text-slate-600">{t("games.personalBest.highScore", { defaultValue: "High Score" })}: {personalBest.bestScore}</span>
+                <span className="font-bold text-slate-600">
+                  {t("games.personalBest.best", { defaultValue: "Best" })}:{" "}
+                  {formatBest
+                    ? formatBest(personalBest)
+                    : personalBest.bestScore}
+                </span>
               </div>
             )}
             <Button
@@ -429,9 +445,18 @@ export default function GameShell({
         aria-describedby={instructionsId}
         tabIndex={-1}
       >
-        <div className="mb-4">
-          <ControlInstructions id={instructionsId} instructions={activeInstructions} />
-        </div>
+        {/* In-game How-to-play is COLLAPSED by default — the player already
+            saw the full version on the briefing screen, and the expanded
+            block pushed the maze/controls below the fold on phones. Native
+            <details> keeps it keyboard- and screen-reader-accessible. */}
+        <details className="mb-3 rounded-xl border border-slate-200 bg-white/70 px-3 py-2">
+          <summary className="cursor-pointer select-none text-sm font-semibold text-slate-600 min-h-[32px] flex items-center gap-1">
+            ❓ {t("games.shared.howToPlay", { defaultValue: "How to play" })}
+          </summary>
+          <div className="pt-2">
+            <ControlInstructions id={instructionsId} instructions={activeInstructions} />
+          </div>
+        </details>
         {children({ onFinish: handleFinish, reducedEffects })}
       </div>
     </div>

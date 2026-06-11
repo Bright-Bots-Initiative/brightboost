@@ -9,7 +9,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import TryDemo from "../TryDemo";
+import TryDemo, { readDemoBest, writeDemoBest } from "../TryDemo";
 
 // Resolve i18n keys against en/common.json so assertions match real text.
 vi.mock("react-i18next", async () => {
@@ -86,5 +86,38 @@ describe("TryDemo (public /try route)", () => {
     expect(
       screen.getByRole("button", { name: /start mission/i }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("demo-local best (versioned, anonymous, defensive)", () => {
+  const KEY = "bb_try_demo_best_v2";
+
+  beforeEach(() => {
+    localStorage.removeItem(KEY);
+  });
+
+  it("ignores junk and out-of-range values instead of displaying them", () => {
+    localStorage.setItem(KEY, "not json{");
+    expect(readDemoBest()).toBeNull();
+    localStorage.setItem(KEY, JSON.stringify({ stars: 55 })); // stale-era nonsense
+    expect(readDemoBest()).toBeNull();
+    localStorage.setItem(KEY, JSON.stringify({ stars: -1 }));
+    expect(readDemoBest()).toBeNull();
+    localStorage.setItem(KEY, JSON.stringify({ score: 55 })); // wrong shape
+    expect(readDemoBest()).toBeNull();
+  });
+
+  it("only ever improves — a worse run never overwrites the best", () => {
+    writeDemoBest(2);
+    expect(readDemoBest()).toEqual({ stars: 2 });
+    writeDemoBest(1);
+    expect(readDemoBest()).toEqual({ stars: 2 });
+    writeDemoBest(3);
+    expect(readDemoBest()).toEqual({ stars: 3 });
+  });
+
+  it("old unversioned keys are simply invisible (version bump = clean slate)", () => {
+    localStorage.setItem("bb_try_demo_best", JSON.stringify({ stars: 3 }));
+    expect(readDemoBest()).toBeNull(); // v2 reader never touches v1 junk
   });
 });
