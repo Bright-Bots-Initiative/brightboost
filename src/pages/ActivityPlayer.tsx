@@ -1,5 +1,5 @@
 // src/pages/ActivityPlayer.tsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { useGradeBand } from "@/hooks/useGradeBand";
+import { applyG35StoryOverrides } from "@/components/games/gradeBandContent";
 import {
   getStudentArchetype,
   canAccessModule,
@@ -82,9 +83,17 @@ export default function ActivityPlayer() {
   const [activity, setActivity] = useState<any>(null);
   const [content, setContent] = useState<any>(null);
 
+  // Band-aware view of the activity content. Applied at render time (not
+  // parse time) because useGradeBand resolves async — the first paint may
+  // still be on the k2 default. K-2 content passes through unchanged.
+  const bandedContent = useMemo(
+    () => applyG35StoryOverrides(content, slug, gradeBand),
+    [content, slug, gradeBand],
+  );
+
   const slides: StorySlide[] =
-    activity?.kind === "INFO" && Array.isArray(content?.slides)
-      ? content.slides
+    activity?.kind === "INFO" && Array.isArray(bandedContent?.slides)
+      ? bandedContent.slides
       : [];
 
   // INFO state
@@ -193,13 +202,6 @@ export default function ActivityPlayer() {
         setAnswers({});
         setSubmitted(false);
         setIncorrectIds([]);
-        // Build shuffled choice order for each quiz question
-        const qs: StoryQuestion[] = Array.isArray(parsed?.questions) ? parsed.questions : [];
-        const sMap: Record<string, number[]> = {};
-        for (const q of qs) {
-          sMap[q.id] = shuffledIndices(q.choices.length);
-        }
-        setShuffleMap(sMap);
       })
       .catch(() => {
         toast({
@@ -211,6 +213,19 @@ export default function ActivityPlayer() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, lessonId, activityId]); // avoid accidental reruns
+
+  // (Re)build the shuffled choice order whenever the band-resolved question
+  // set changes — the grade band may resolve after the activity loads.
+  useEffect(() => {
+    const qs: StoryQuestion[] = Array.isArray(bandedContent?.questions)
+      ? bandedContent.questions
+      : [];
+    const sMap: Record<string, number[]> = {};
+    for (const q of qs) {
+      sMap[q.id] = shuffledIndices(q.choices.length);
+    }
+    setShuffleMap(sMap);
+  }, [bandedContent]);
 
   const getTimeSpentS = () => {
     const ms = Date.now() - startMsRef.current;
@@ -399,14 +414,14 @@ export default function ActivityPlayer() {
   // INFO: story + quiz
   if (activity.kind === "INFO") {
     // slides is already defined at top level
-    const questions: StoryQuestion[] = Array.isArray(content?.questions)
-      ? content.questions
+    const questions: StoryQuestion[] = Array.isArray(bandedContent?.questions)
+      ? bandedContent.questions
       : [];
 
     // Quiz-only activity (story_quiz with slides=[] but questions present)
-    const isQuizOnly = content?.type === "story_quiz" && slides.length === 0 && questions.length > 0;
+    const isQuizOnly = bandedContent?.type === "story_quiz" && slides.length === 0 && questions.length > 0;
 
-    if (content?.type !== "story_quiz" || (slides.length === 0 && !isQuizOnly)) {
+    if (bandedContent?.type !== "story_quiz" || (slides.length === 0 && !isQuizOnly)) {
       // fallback display
       const text = resolveText(
         t,
