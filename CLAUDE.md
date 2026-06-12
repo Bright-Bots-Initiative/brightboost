@@ -375,8 +375,12 @@ Class code for emoji-picker login: **STARS1** (created by Ms. Frizzle's K-2 clas
 - GotchaGearsGame — ✅ Wired (reads gradeBand, loads g3_5 rounds)
 - BoostPathPlannerGame — ✅ Wired (uses BOOST_PATH_LEVELS[band])
 - TankTrekGame — ✅ Wired (appends g3_5 chapters)
-- RhymeRideGame — ⚠️ config.gradeBand available but word family integration pending
+- RhymeRideGame — ✅ Wired (band-switched worlds: -tion/-ment/-ight/-ound/-ence/-ain, 1.25× speed)
+- QuantumQuestGame — ✅ Wired (g3_5 sectors: multiplication/division/fractions/order-of-ops)
+- Set 1 story-quizzes — ✅ Banded via `G35_STORY_QUIZZES` + `applyG35StoryOverrides` (render-time, in ActivityPlayer)
+- Teacher class creation — ✅ Captures grade band (selector in create dialog)
 - Jordan test student — ✅ Seeded in g3_5 class
+- Full audit + backlog briefs: `docs/audits/g35-first-set-audit.md`
 
 ### Pathways Facilitator Resources
 - Program Overview — ✅ What is Pathways, bands, how it works, facilitation tips
@@ -385,8 +389,7 @@ Class code for emoji-picker login: **STARS1** (created by Ms. Frizzle's K-2 clas
 - Route: `/pathways/facilitator/resources`
 
 ### Action Items
-- [ ] Wire g3_5 word families into RhymeRideGame (data exists in gradeBandContent, game integration pending)
-- [ ] Build g3_5 content variants for Set 2 games (future sprint)
+- [ ] Build g3_5 content variants for Set 2 games (future sprint — brief in docs/audits/g35-first-set-audit.md)
 - [ ] Add student-facing "Assigned This Week" UI consuming `/api/student/assigned-modules`
 - [ ] Add teacher module assignment UI (catalog browse + assign/reorder via existing CRUD routes)
 - [ ] Add es/vi/zh-CN translations for g3_5 game content in `gradeBandContent.ts`

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { Zap, Star, ChevronRight, RotateCcw, Shield, Clock, Sparkles } from "lucide-react";
 import { pickLocale } from "@/utils/localizedContent";
+import { getGradeBand, QUANTUM_QUEST_G35_SECTORS } from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -617,9 +618,22 @@ function QuantumQuestCore({
 
 // ── Export ──────────────────────────────────────────────────────────────────
 
+/**
+ * Sector resolution order: explicit sectors from the activity config win;
+ * otherwise the built-in set for the student's grade band.
+ */
+export function resolveQuantumQuestSectors(config?: QuantumQuestConfig & { gradeBand?: string }): QQSector[] {
+  if (config?.sectors?.length) return config.sectors;
+  if (getGradeBand(config) === "g3_5") return QUANTUM_QUEST_G35_SECTORS;
+  return BUILTIN_CONFIG.sectors;
+}
+
 export default function QuantumQuestGame({ config, onComplete }: QuantumQuestGameProps) {
   const { t } = useTranslation();
-  const gameConfig = config?.sectors?.length ? config : BUILTIN_CONFIG;
+  const gameConfig: QuantumQuestConfig = {
+    gameKey: "quantum_quest",
+    sectors: resolveQuantumQuestSectors(config),
+  };
 
   const briefing: MissionBriefing = {
     title: pickLocale({ en: "Quantum Mission!", es: "¡Misión Cuántica!", vi: "Nhiệm Vụ Lượng Tử!", "zh-CN": "量子任务！" }, "Quantum Mission!"),

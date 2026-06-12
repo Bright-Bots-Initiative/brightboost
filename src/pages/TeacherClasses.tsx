@@ -39,6 +39,7 @@ const ClassesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newBand, setNewBand] = useState<"k2" | "g3_5">("k2");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -67,6 +68,7 @@ const ClassesPage: React.FC = () => {
     try {
       const course = await api.post("/teacher/courses", {
         name: newName.trim(),
+        gradeBand: newBand,
       });
       track({
         kind: "class_created",
@@ -75,6 +77,7 @@ const ClassesPage: React.FC = () => {
       });
       setCourses((prev) => [course, ...prev]);
       setNewName("");
+      setNewBand("k2");
       setCreateOpen(false);
     } catch {
       // toast handled by useApi
@@ -235,6 +238,23 @@ const ClassesPage: React.FC = () => {
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
                 placeholder={t("teacher.classes.classNamePlaceholder")}
               />
+            </div>
+            <div className="mb-4">
+              <label
+                htmlFor="classGradeBand"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t("teacher.classes.gradeBandLabel", { defaultValue: "Grade Band" })}
+              </label>
+              <select
+                id="classGradeBand"
+                value={newBand}
+                onChange={(e) => setNewBand(e.target.value as "k2" | "g3_5")}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue bg-white"
+              >
+                <option value="k2">{t("teacher.classes.bandK2", { defaultValue: "K-2" })}</option>
+                <option value="g3_5">{t("teacher.classes.bandG35", { defaultValue: "Grades 3-5" })}</option>
+              </select>
             </div>
             <DialogFooter>
               <button

@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { cn } from "@/lib/utils";
 import { pickLocale } from "@/utils/localizedContent";
+import { getGradeBand, RHYME_FAMILIES, type GradeBand } from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -97,6 +98,57 @@ const WORLDS: World[] = [
     ],
   },
 ];
+
+// ── Grade 3-5 worlds ────────────────────────────────────────────────────
+// Same three world shells, but the families come from the banded word
+// data in gradeBandContent (suffix/ending patterns instead of CVC rimes).
+
+const G35_PRESENTATION: Record<string, { id: string; color: string; icon: string }> = {
+  "-tion": { id: "tion", color: "bg-blue-400", icon: "🛰️" },
+  "-ment": { id: "ment", color: "bg-cyan-400", icon: "⚙️" },
+  "-ight": { id: "ight", color: "bg-purple-400", icon: "💡" },
+  "-ound": { id: "ound", color: "bg-fuchsia-400", icon: "🔊" },
+  "-ence": { id: "ence", color: "bg-green-400", icon: "🧪" },
+  "-ain": { id: "ain", color: "bg-teal-400", icon: "🌧️" },
+};
+
+function g35Family(pattern: string): RhymeFamily {
+  const data = RHYME_FAMILIES.g3_5.find((f) => f.pattern === pattern);
+  const look = G35_PRESENTATION[pattern];
+  if (!data || !look) {
+    throw new Error(`Missing g3_5 rhyme family for pattern "${pattern}"`);
+  }
+  return { ...look, pattern, words: data.words, distractors: data.distractors };
+}
+
+const G35_WORLDS: World[] = [
+  {
+    id: "ai-alley",
+    names: { en: "AI Alley", es: "Callejón de IA", vi: "Ngõ AI", "zh-CN": "AI小巷" },
+    theme: "from-blue-600 via-indigo-600 to-blue-700",
+    icon: "🤖",
+    families: [g35Family("-tion"), g35Family("-ment")],
+  },
+  {
+    id: "quantum-canyon",
+    names: { en: "Quantum Canyon", es: "Cañón Cuántico", vi: "Hẻm Lượng Tử", "zh-CN": "量子峡谷" },
+    theme: "from-purple-600 via-violet-600 to-purple-700",
+    icon: "🔮",
+    families: [g35Family("-ight"), g35Family("-ound")],
+  },
+  {
+    id: "bio-garden",
+    names: { en: "Bio Garden", es: "Jardín Bio", vi: "Vườn Sinh Học", "zh-CN": "生物花园" },
+    theme: "from-green-600 via-emerald-600 to-green-700",
+    icon: "🌿",
+    families: [g35Family("-ence"), g35Family("-ain")],
+  },
+];
+
+/** Exported for the band-integrity test. */
+export function getWorldsForBand(band: GradeBand): World[] {
+  return band === "g3_5" ? G35_WORLDS : WORLDS;
+}
 
 const ROUNDS_PER_WORLD = 6;
 const SHOWDOWN_EVERY = 5;         // bonus showdown round after N correct
@@ -267,6 +319,7 @@ function LaneField({
 
 function RhymeHUD({
   prompt,
+  promptLabel,
   familyPattern,
   familyColor,
   familyIcon,
@@ -278,6 +331,7 @@ function RhymeHUD({
   roundLabel,
 }: {
   prompt: string;
+  promptLabel: string;
   familyPattern: string;
   familyColor: string;
   familyIcon: string;
@@ -288,14 +342,13 @@ function RhymeHUD({
   worldIcon: string;
   roundLabel: string;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="space-y-2 max-w-[480px] mx-auto">
       {/* Prompt chip */}
       <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-5 py-3 rounded-xl font-extrabold text-xl text-center shadow-lg border border-white/10 flex items-center justify-center gap-3">
         <span className="text-2xl">{familyIcon}</span>
         <span>
-          {t("games.rhymeRide.whichRhymes")} <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
+          {promptLabel} <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
         </span>
         <span className={cn("px-2 py-0.5 rounded-full text-sm font-bold border", familyColor.replace("bg-", "border-"), "bg-white text-slate-700")}>
           {familyPattern}
@@ -339,9 +392,15 @@ function RhymeHUD({
 function RhymeRideCore({
   onFinish,
   reducedEffects,
+  worlds,
+  speedMultiplier,
+  promptLabel,
 }: {
   onFinish: (result: GameResult) => void;
   reducedEffects: boolean;
+  worlds: World[];
+  speedMultiplier: number;
+  promptLabel: string;
 }) {
   const { t } = useTranslation();
 
@@ -370,8 +429,8 @@ function RhymeRideCore({
   const animRef = useRef<number>(0);
   const cardIdRef = useRef(0);
 
-  const world = WORLDS[worldIdx];
-  const speed = BASE_SPEED + worldIdx * SPEED_RAMP;
+  const world = worlds[worldIdx];
+  const speed = (BASE_SPEED + worldIdx * SPEED_RAMP) * speedMultiplier;
 
   /**
    * Shared helper: register a successful decision (correct tap OR correct pass).
@@ -390,7 +449,7 @@ function RhymeRideCore({
   // ── Spawn a round ──
   const spawnRound = useCallback(
     (family?: RhymeFamily) => {
-      const w = WORLDS[worldIdx];
+      const w = worlds[worldIdx];
       if (!w) return;
 
       // Pick family: from missed queue, or cycle through world families
@@ -437,7 +496,7 @@ function RhymeRideCore({
       setCards(newCards);
       setPhase("playing");
     },
-    [worldIdx, familyIdx],
+    [worlds, worldIdx, familyIdx],
   );
 
   // ── Spawn showdown round (rapid-fire single cards) ──
@@ -445,7 +504,7 @@ function RhymeRideCore({
   const [, setShowdownPrompt] = useState("");
 
   const spawnShowdown = useCallback(() => {
-    const w = WORLDS[worldIdx];
+    const w = worlds[worldIdx];
     if (!w) return;
 
     const queue: { word: string; correct: boolean; family: RhymeFamily }[] = [];
@@ -462,7 +521,7 @@ function RhymeRideCore({
     // Show first showdown card
     advanceShowdown(queue, w);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [worldIdx]);
+  }, [worlds, worldIdx]);
 
   const advanceShowdown = useCallback((queue: typeof showdownQueueRef.current, _w: World) => {
     void _w;
@@ -588,7 +647,7 @@ function RhymeRideCore({
         setPhase("worldTransition");
       } else {
         setPhase("showdown");
-        advanceShowdown(queue, WORLDS[worldIdx]);
+        advanceShowdown(queue, worlds[worldIdx]);
       }
     }, 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -631,7 +690,7 @@ function RhymeRideCore({
             setPhase("worldTransition");
           } else {
             setPhase("showdown");
-            advanceShowdown(queue, WORLDS[worldIdx]);
+            advanceShowdown(queue, worlds[worldIdx]);
           }
         }, 600);
         return;
@@ -716,14 +775,14 @@ function RhymeRideCore({
 
   // ── World end ──
   const handleWorldEnd = useCallback(() => {
-    if (worldIdx + 1 >= WORLDS.length) {
+    if (worldIdx + 1 >= worlds.length) {
       // All worlds done — finish
       finishGame();
     } else {
       setPhase("worldTransition");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [worldIdx]);
+  }, [worlds, worldIdx]);
 
   const advanceWorld = useCallback(() => {
     setWorldIdx((w) => w + 1);
@@ -733,22 +792,22 @@ function RhymeRideCore({
     setPhase("playing");
     // Spawn will happen via effect
     setTimeout(() => {
-      const nextWorld = WORLDS[worldIdx + 1];
+      const nextWorld = worlds[worldIdx + 1];
       if (nextWorld) {
         spawnRound(nextWorld.families[0]);
       }
     }, 100);
-  }, [worldIdx, spawnRound]);
+  }, [worlds, worldIdx, spawnRound]);
 
   const finishGame = useCallback(() => {
     onFinish({
       gameKey: "rhymo_rhyme_rocket",
       score,
-      total: totalRounds || ROUNDS_PER_WORLD * WORLDS.length,
+      total: totalRounds || ROUNDS_PER_WORLD * worlds.length,
       streakMax: maxStreak,
       roundsCompleted: totalRounds,
     });
-  }, [score, totalRounds, maxStreak, onFinish]);
+  }, [worlds, score, totalRounds, maxStreak, onFinish]);
 
   // ── Keyboard handler ──
   useEffect(() => {
@@ -798,7 +857,7 @@ function RhymeRideCore({
 
   // World transition
   if (phase === "worldTransition") {
-    const nextWorld = WORLDS[worldIdx + 1];
+    const nextWorld = worlds[worldIdx + 1];
     return (
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{world?.icon}</div>
@@ -852,6 +911,7 @@ function RhymeRideCore({
       {/* HUD */}
       <RhymeHUD
         prompt={prompt}
+        promptLabel={promptLabel}
         familyPattern={currentFamily.pattern}
         familyColor={currentFamily.color}
         familyIcon={currentFamily.icon}
@@ -911,9 +971,17 @@ export default function RhymeRideGame({
   config?: any;
   onComplete?: (result: GameResult) => void;
 }) {
-  // Grade band affects speed: g3_5 gets faster gameplay
-  void (config?.gradeBand); // reserved for future g3_5 content integration
   const { t } = useTranslation();
+  const band = getGradeBand(config);
+  const worlds = getWorldsForBand(band);
+  // g3_5 plays the same mechanic ~25% faster with a tighter reflex window.
+  const speedMultiplier = band === "g3_5" ? 1.25 : 1;
+  // g3_5 families are ending patterns (-tion, -ment), not strict rhymes,
+  // so the round prompt asks for the pattern instead of the rhyme.
+  const promptLabel =
+    band === "g3_5"
+      ? t("games.rhymeRide.whichEndsLike", { defaultValue: "Which word ends like" })
+      : t("games.rhymeRide.whichRhymes");
 
   const briefing: MissionBriefing = {
     title: t("games.rhymeRide.briefingTitle"),
@@ -941,7 +1009,13 @@ export default function RhymeRideGame({
       onComplete={onComplete!}
     >
       {({ onFinish, reducedEffects }) => (
-        <RhymeRideCore onFinish={onFinish} reducedEffects={reducedEffects} />
+        <RhymeRideCore
+          onFinish={onFinish}
+          reducedEffects={reducedEffects}
+          worlds={worlds}
+          speedMultiplier={speedMultiplier}
+          promptLabel={promptLabel}
+        />
       )}
     </GameShell>
   );
