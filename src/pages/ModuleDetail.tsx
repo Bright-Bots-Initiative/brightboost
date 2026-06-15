@@ -14,6 +14,7 @@ import {
   isSpecializationModuleSlug,
 } from "@/lib/moduleAccess";
 import { translateContentName } from "@/utils/localizedContent";
+import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 
 export default function ModuleDetail() {
   const { slug } = useParams();
@@ -27,6 +28,14 @@ export default function ModuleDetail() {
 
   useEffect(() => {
     if (!slug) return;
+
+    // Removed/archived modules (e.g. "Fix the Order" / lost-steps) are
+    // filtered from the module list but were still reachable by direct URL.
+    // Block the route too so a dead module can't be opened.
+    if (HIDDEN_MODULE_SLUGS.has(slug)) {
+      navigate("/student/modules", { replace: true });
+      return;
+    }
 
     // Guard: if the module requires specialization, check archetype first
     if (isSpecializationModuleSlug(slug)) {

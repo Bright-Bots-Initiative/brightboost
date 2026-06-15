@@ -232,19 +232,19 @@ export default function BoostPathPlannerGame({
             <p className="mb-2 text-sm font-semibold">{t("games.boostPath.buildProgram")}</p>
             <div className="flex flex-wrap gap-2">
               <button
-                className="rounded-lg border px-3 py-2"
+                className="rounded-lg border bg-white px-3 py-2 text-slate-900 hover:bg-slate-100"
                 onClick={() => addCommand("F")}
               >
                 {t("games.boostPath.forward")}
               </button>
               <button
-                className="rounded-lg border px-3 py-2"
+                className="rounded-lg border bg-white px-3 py-2 text-slate-900 hover:bg-slate-100"
                 onClick={() => addCommand("L")}
               >
                 {t("games.boostPath.turnLeft")}
               </button>
               <button
-                className="rounded-lg border px-3 py-2"
+                className="rounded-lg border bg-white px-3 py-2 text-slate-900 hover:bg-slate-100"
                 onClick={() => addCommand("R")}
               >
                 {t("games.boostPath.turnRight")}
@@ -269,7 +269,7 @@ export default function BoostPathPlannerGame({
               {t("games.boostPath.run")}
             </button>
             <button
-              className="rounded-lg border px-4 py-2"
+              className="rounded-lg border bg-white px-4 py-2 text-slate-900 hover:bg-slate-100"
               onClick={clearProgram}
             >
               {t("games.boostPath.clear")}
