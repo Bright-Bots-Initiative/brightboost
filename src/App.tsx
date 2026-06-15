@@ -47,6 +47,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
+import PlanDetail from "./pages/PlanDetail";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
 import ExperimentDashboard from "./components/admin/ExperimentDashboard";
@@ -123,6 +124,9 @@ function App() {
                   Must stay outside any auth-gated layout. */}
               <Route path="/try" element={<TryDemo />} />
               <Route path="/for-reviewers" element={<ForReviewers />} />
+              {/* Free Access Plans detail pages — reached from the homepage
+                  "Learn more" buttons. Public, persona-routed CTAs. */}
+              <Route path="/plans/:plan" element={<PlanDetail />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/feedback" element={<HomeSectionRedirect sectionId="feedback" />} />

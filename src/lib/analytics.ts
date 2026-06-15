@@ -85,7 +85,10 @@ export type AnalyticsEvent =
   | {
       kind: "demo_signup_cta_clicked";
       placement: "results" | "hero_teacher_whisper";
-    };
+    }
+  // Free Access Plans detail pages (/plans/:plan)
+  | { kind: "plan_page_viewed"; plan: string }
+  | { kind: "plan_cta_clicked"; plan: string; cta: string };
 
 let initialized = false;
 
