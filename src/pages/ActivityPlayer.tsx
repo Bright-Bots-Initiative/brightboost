@@ -15,6 +15,7 @@ import {
   canAccessModule,
   isSpecializationModuleSlug,
 } from "@/lib/moduleAccess";
+import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
   Dialog,
@@ -157,6 +158,14 @@ export default function ActivityPlayer() {
 
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
+
+    // Removed/archived modules (e.g. lost-steps / "Fix the Order") are hidden
+    // from the module list but were still reachable by direct URL — block the
+    // activity route too so they can't open into a broken half-state.
+    if (HIDDEN_MODULE_SLUGS.has(slug)) {
+      navigate("/student/modules", { replace: true });
+      return;
+    }
 
     setLoading(true);
     // clear stale content to avoid "half-loaded" UI when rate-limited
