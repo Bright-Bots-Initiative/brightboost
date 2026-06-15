@@ -41,7 +41,7 @@ export const STEM_SET_1_STRANDS: Record<StemSet1GameId, string> = {
 /** Module slugs that should NOT appear in student-facing UI. */
 export const HIDDEN_MODULE_SLUGS = new Set([
   "stem-1-intro",      // Legacy "Quantum Explorers" — archived
-  "k2-stem-sequencing", // "Fix the Order" / "Lost Steps" — removed from canon
+  "k2-stem-sequencing", // "Fix the Order" / "Lost Steps" — fully deleted (component + seed gone); kept as a defensive route guard for stale direct links
 ]);
 
 // ---------------------------------------------------------------------------

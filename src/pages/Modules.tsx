@@ -47,8 +47,6 @@ const MODULE_ORDER: Record<string, number> = {
   "k2-stem-sky-shield": 12,
   "k2-stem-fast-lane": 13,
   "k2-stem-qualify-tune-race": 14,
-  // Legacy / hidden
-  "k2-stem-sequencing": 90,
   // Specialization modules come after public content
   "stem-1-intro": 30,
 };

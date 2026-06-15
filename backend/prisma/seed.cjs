@@ -270,114 +270,6 @@ async function main() {
   });
   console.log("Created module:", module.slug);
 
-  // --- STEM-1 (K–2) Game #1: Boost’s Lost Steps ---
-  const k2SeqModule = await prisma.module.upsert({
-    where: { slug: "k2-stem-sequencing" },
-    update: {
-      title: "Fix the Order",
-      description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
-      level: "K-2",
-      published: true,
-    },
-    create: {
-      slug: "k2-stem-sequencing",
-      title: "Fix the Order",
-      description: "Help Boost find the way! Plan a path step by step. 🤖🗺️⭐",
-      level: "K-2",
-      published: true,
-    },
-  });
-  console.log("Created module:", k2SeqModule.slug);
-
-  let k2SeqUnit = await prisma.unit.findFirst({
-    where: { moduleId: k2SeqModule.id, title: "Unit 1: Step Power" },
-  });
-  if (!k2SeqUnit) {
-    k2SeqUnit = await prisma.unit.create({
-      data: {
-        title: "Unit 1: Step Power",
-        order: 1,
-        Module: { connect: { id: k2SeqModule.id } },
-        teacher: { connect: { id: teacher.id } },
-      },
-    });
-  }
-  console.log("Created unit:", k2SeqUnit.title);
-
-  let k2SeqLesson = await prisma.lesson.findFirst({
-    where: { unitId: k2SeqUnit.id, title: "Lost Steps" },
-  });
-  if (!k2SeqLesson) {
-    k2SeqLesson = await prisma.lesson.create({
-      data: {
-        title: "Lost Steps",
-        order: 1,
-        Unit: { connect: { id: k2SeqUnit.id } },
-      },
-    });
-  }
-  console.log("Created lesson:", k2SeqLesson.title);
-
-  const INFO = ActivityKind ? ActivityKind.INFO : "INFO";
-  const INTERACT = ActivityKind ? ActivityKind.INTERACT : "INTERACT";
-
-  const storyContent = JSON.stringify({
-    type: "story_quiz",
-    slides: [
-      { id: "bpp-s1", text: { en: "Boost is a little helper robot in the Bright Lab. Today, Boost has one job: carry a tiny battery to the charging station.", es: "Boost es un pequeño robot ayudante en el Laboratorio Brillante. Hoy, Boost tiene un trabajo: llevar una pequeña batería a la estación de carga." }, icon: "🤖" },
-      { id: "bpp-s2", text: { en: "Boost cannot just rush forward. Boost has to look, think, and put the steps in the right order.", es: "Boost no puede apresurarse. Boost tiene que mirar, pensar y poner los pasos en el orden correcto." }, icon: "🧠" },
-      { id: "bpp-s3", text: { en: "When we help Boost turn and move the right way, we are practicing sequencing. Sequencing means putting steps in order.", es: "Cuando ayudamos a Boost a girar y moverse correctamente, estamos practicando la secuenciación. Secuenciar significa poner los pasos en orden." }, icon: "📋" },
-    ],
-    questions: [
-      { id: "bpp-q1", prompt: { en: "What is Boost trying to do?", es: "¿Qué intenta hacer Boost?" }, choices: [{ en: "Reach the charging station", es: "Llegar a la estación de carga" }, { en: "Go to sleep", es: "Irse a dormir" }, { en: "Paint the wall", es: "Pintar la pared" }], answerIndex: 0, hint: { en: "Read the first slide again — what is Boost's job today?", es: "Lee la primera diapositiva de nuevo — ¿cuál es el trabajo de Boost hoy?" } },
-      { id: "bpp-q2", prompt: { en: "What should Boost do first?", es: "¿Qué debe hacer Boost primero?" }, choices: [{ en: "Make a plan", es: "Hacer un plan" }, { en: "Guess fast", es: "Adivinar rápido" }, { en: "Spin in circles", es: "Girar en círculos" }], answerIndex: 0, hint: { en: "Boost has to look and think before moving.", es: "Boost tiene que mirar y pensar antes de moverse." } },
-      { id: "bpp-q3", prompt: { en: "What does sequencing mean?", es: "¿Qué significa secuenciar?" }, choices: [{ en: "Putting steps in order", es: "Poner los pasos en orden" }, { en: "Jumping over walls", es: "Saltar sobre paredes" }, { en: "Moving as fast as possible", es: "Moverse lo más rápido posible" }], answerIndex: 0, hint: { en: "The last slide explains what sequencing means.", es: "La última diapositiva explica qué significa secuenciar." } },
-    ],
-  });
-  const storyAct = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, kind: INFO, order: 1 },
-  });
-  if (storyAct) {
-    await prisma.activity.update({
-      where: { id: storyAct.id },
-      data: { title: "Story: Meet Boost the Careful Planner", content: storyContent },
-    });
-  } else {
-    await prisma.activity.create({
-      data: {
-        title: "Story: Meet Boost the Careful Planner",
-        kind: INFO,
-        order: 1,
-        content: storyContent,
-        Lesson: { connect: { id: k2SeqLesson.id } },
-      },
-    });
-  }
-
-  // gameKey: boost_path_planner (old alias: sequence_drag_drop still works via registry)
-  const gameContent = JSON.stringify({ gameKey: "boost_path_planner" });
-  const gameAct = await prisma.activity.findFirst({
-    where: { lessonId: k2SeqLesson.id, kind: INTERACT, order: 2 },
-  });
-  if (gameAct) {
-    await prisma.activity.update({
-      where: { id: gameAct.id },
-      data: { id: "lost-steps", title: "Game: Boost's Lost Steps", content: gameContent },
-    });
-  } else {
-    await prisma.activity.create({
-      data: {
-        id: "lost-steps",
-        title: "Game: Boost's Lost Steps",
-        kind: INTERACT,
-        order: 2,
-        content: gameContent,
-        Lesson: { connect: { id: k2SeqLesson.id } },
-      },
-    });
-  }
-  console.log("Seeded module: k2-stem-sequencing");
-
   // --- STEM-1 (K–2) Game #2: Rhyme & Ride ---
   const k2RhymeModule = await prisma.module.upsert({
     where: { slug: "k2-stem-rhyme-ride" },
@@ -853,7 +745,6 @@ async function main() {
   const explorerBests = [
     { gameKey: "buddy_garden_sort", bestScore: 45, lastScore: 45, bestStreak: 4, bestRoundsCompleted: 8 },
     { gameKey: "gotcha_gears_unity", bestScore: 80, lastScore: 60, bestStreak: 3, bestRoundsCompleted: 7 },
-    { gameKey: "boost_path_planner", bestScore: 35, lastScore: 35, bestStreak: 2, bestRoundsCompleted: 3 },
     { gameKey: "rhymo_rhyme_rocket", bestScore: 120, lastScore: 90, bestStreak: 5, bestRoundsCompleted: 15 },
     { gameKey: "tank_trek", bestScore: 16, lastScore: 14, bestStreak: 3, bestRoundsCompleted: 7 }, // star-sum units (7 levels x 3 max = 21); the old 55 was fabricated and unearnable
   ];

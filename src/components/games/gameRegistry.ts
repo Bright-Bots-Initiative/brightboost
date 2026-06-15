@@ -2,7 +2,6 @@ import type { ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
 
 // Lazy-loaded game components
-import BoostPathPlannerGame from "./BoostPathPlannerGame";
 import RhymeRideGame from "./RhymeRideGame";
 import BounceBudsGame from "./BounceBudsGame";
 import GotchaGearsGame from "./GotchaGearsGame";
@@ -27,7 +26,6 @@ type GameProps = {
  */
 export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   // ── Primary keys (current canonical names) ──
-  boost_path_planner: BoostPathPlannerGame,   // "Boost's Lost Steps"
   rhymo_rhyme_rocket: RhymeRideGame,          // "Rhyme & Ride" (lane-based redesign)
   buddy_garden_sort: BounceBudsGame,            // "Bounce & Buds" (restored paddle-ball game)
   gotcha_gears_unity: GotchaGearsGame,         // "Gotcha Gears" (now React)
@@ -43,7 +41,6 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   qualify_tune_race: QualifyTuneRaceGame,       // "Qualify, Tune, Race" (Set 2)
 
   // ── Legacy / alias keys → same implementations ──
-  sequence_drag_drop: BoostPathPlannerGame,
   rhyme_ride_unity: RhymeRideGame,
   bounce_buds_unity: BounceBudsGame,
 };

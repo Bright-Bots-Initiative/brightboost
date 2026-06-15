@@ -44,32 +44,6 @@ export const GOTCHA_GEARS_CONTENT: Record<GradeBand, GearRoundContent[]> = {
   ],
 };
 
-// ── Boost Path Planner (Lost Steps) content ─────────────────────────────
-
-export interface PathLevel {
-  titleKey: string;
-  size: number;
-  start: { x: number; y: number };
-  goal: { x: number; y: number };
-  dir: "N" | "E" | "S" | "W";
-  walls: { x: number; y: number }[];
-  maxSteps: number;
-}
-
-export const BOOST_PATH_LEVELS: Record<GradeBand, PathLevel[]> = {
-  k2: [
-    { titleKey: "games.boostPath.level1", size: 3, start: { x: 0, y: 2 }, goal: { x: 2, y: 0 }, dir: "N", walls: [], maxSteps: 4 },
-    { titleKey: "games.boostPath.level2", size: 3, start: { x: 0, y: 2 }, goal: { x: 2, y: 0 }, dir: "N", walls: [{ x: 1, y: 1 }], maxSteps: 6 },
-    { titleKey: "games.boostPath.level3", size: 4, start: { x: 0, y: 3 }, goal: { x: 3, y: 0 }, dir: "N", walls: [{ x: 1, y: 2 }, { x: 2, y: 1 }], maxSteps: 8 },
-  ],
-  g3_5: [
-    { titleKey: "games.boostPath.g35level1", size: 4, start: { x: 0, y: 3 }, goal: { x: 3, y: 0 }, dir: "E", walls: [{ x: 1, y: 1 }, { x: 2, y: 2 }], maxSteps: 7 },
-    { titleKey: "games.boostPath.g35level2", size: 5, start: { x: 0, y: 4 }, goal: { x: 4, y: 0 }, dir: "N", walls: [{ x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 1 }], maxSteps: 10 },
-    { titleKey: "games.boostPath.g35level3", size: 5, start: { x: 0, y: 4 }, goal: { x: 4, y: 0 }, dir: "E", walls: [{ x: 1, y: 3 }, { x: 2, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 2 }], maxSteps: 12 },
-    { titleKey: "games.boostPath.g35level4", size: 6, start: { x: 0, y: 5 }, goal: { x: 5, y: 0 }, dir: "N", walls: [{ x: 1, y: 3 }, { x: 2, y: 1 }, { x: 3, y: 4 }, { x: 4, y: 2 }, { x: 4, y: 1 }], maxSteps: 14 },
-  ],
-};
-
 // ── Bounce & Buds content ───────────────────────────────────────────────
 
 export interface BounceRoundContent {
