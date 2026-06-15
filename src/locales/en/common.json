@@ -227,6 +227,7 @@
     "hiName": "Hi, {{name}}!",
     "go": "Go!",
     "backToHome": "Back to Home",
+    "loadingClass": "Finding your class…",
     "error": {
       "typeCode": "Type your class code!",
       "noStudents": "No students set up yet. Ask your teacher!",

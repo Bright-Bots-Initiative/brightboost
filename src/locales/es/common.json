@@ -227,6 +227,7 @@
     "hiName": "¡Hola, {{name}}!",
     "go": "¡Vamos!",
     "backToHome": "Volver al inicio",
+    "loadingClass": "Buscando tu clase…",
     "error": {
       "typeCode": "¡Escribe tu código de clase!",
       "noStudents": "¡No hay estudiantes listos todavía. Pregúntale a tu profe!",

@@ -227,6 +227,7 @@
     "hiName": "Chào, {{name}}!",
     "go": "Đi thôi!",
     "backToHome": "Về trang chủ",
+    "loadingClass": "Đang tìm lớp của con…",
     "error": {
       "typeCode": "Nhập mã lớp của con!",
       "noStudents": "Chưa có học sinh nào. Hỏi cô giáo nhé!",

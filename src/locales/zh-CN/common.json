@@ -227,6 +227,7 @@
     "hiName": "你好，{{name}}！",
     "go": "出发！",
     "backToHome": "回到首页",
+    "loadingClass": "正在查找你的班级…",
     "error": {
       "typeCode": "请输入你的班级代码！",
       "noStudents": "还没有设置学生，问问你的老师！",
