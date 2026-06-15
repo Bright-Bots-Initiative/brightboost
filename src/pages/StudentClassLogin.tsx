@@ -1,6 +1,6 @@
 // src/pages/StudentClassLogin.tsx
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { API_BASE, join } from "../services/api";
@@ -71,24 +71,33 @@ const LAST_CLASS_CODE_KEY = "bb_last_class_code";
 export default function StudentClassLogin() {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  // A class code may arrive from the unified login (/student-login) as
+  // `?code=STARS1`. If present, the student already typed it there — consume
+  // it here instead of asking for the code a second time.
+  const urlCode = (searchParams.get("code") || "").toUpperCase().trim();
   const [step, setStep] = useState<Step>("code");
   const [classCode, setClassCode] = useState(
-    () => localStorage.getItem(LAST_CLASS_CODE_KEY) || "",
+    () => urlCode || localStorage.getItem(LAST_CLASS_CODE_KEY) || "",
   );
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<ClassInfo["students"][0] | null>(null);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // True while we auto-resolve a code passed in via ?code= — shows a spinner
+  // instead of the code form so the student isn't re-prompted.
+  const [bootstrapping, setBootstrapping] = useState(() => urlCode.length >= 3);
 
   // Clear error when step changes
   useEffect(() => {
     setError("");
   }, [step]);
 
-  // Step 1: Enter class code
-  const handleCodeSubmit = async () => {
-    const code = classCode.toUpperCase().trim();
+  // Step 1: Resolve a class code → advance to the icon picker. Shared by the
+  // manual form (handleCodeSubmit) and the auto-advance effect below.
+  const lookupClass = async (rawCode: string) => {
+    const code = rawCode.toUpperCase().trim();
     if (code.length < 3) {
       setError(t("classLogin.error.typeCode"));
       return;
@@ -110,6 +119,19 @@ export default function StudentClassLogin() {
       setLoading(false);
     }
   };
+
+  const handleCodeSubmit = () => lookupClass(classCode);
+
+  // Arrived from /student-login with a class code already entered? Resolve it
+  // immediately and skip the redundant code screen, landing straight on the
+  // icon picker. On failure, fall back to the code step with an inline error
+  // (the code stays pre-filled) — never a dead end.
+  useEffect(() => {
+    if (urlCode.length >= 3) {
+      lookupClass(urlCode).finally(() => setBootstrapping(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Step 2: Pick icon → auto-advance to PIN or login
   const handleIconSelect = (student: ClassInfo["students"][0]) => {
@@ -154,8 +176,18 @@ export default function StudentClassLogin() {
           <LanguageToggle />
         </div>
         <div className="game-card p-8 w-full max-w-lg ui-sheen">
+          {/* Auto-resolving a code passed in from the unified login */}
+          {bootstrapping && step === "code" && (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-brightboost-blue" />
+              <p className="text-sm text-gray-500">
+                {t("classLogin.loadingClass")}
+              </p>
+            </div>
+          )}
+
           {/* Step 1: Enter Class Code */}
-          {step === "code" && (
+          {step === "code" && !bootstrapping && (
             <div className="text-center space-y-6">
               <div>
                 <span className="text-5xl mb-2 block">🏫</span>
