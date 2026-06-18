@@ -157,6 +157,41 @@ Or use the shortcut:
 npm run db:init
 ```
 
+### Troubleshooting database setup
+
+The setup blockers the team has actually hit. Every fix below is **local only** — never run a `migrate` command (especially `reset`) against production.
+
+**`P3009` — "migrate found failed migrations in the target database"**
+
+A migration was interrupted partway through on your local DB (Ctrl-C, a dropped connection, a transient hiccup), so it's recorded as "failed" and blocks every later migration. The migration itself is fine — this is local DB state, not a code problem.
+
+```bash
+# Fresh setup (simplest): wipes your LOCAL database, re-runs all migrations + seed
+npx prisma migrate reset
+
+# If you have local data to keep: mark the stuck migration rolled-back, then re-apply
+npx prisma migrate resolve --rolled-back <migration_name>
+npx prisma migrate deploy
+```
+
+⚠️ `migrate reset` is **local only** — never run it (or any `migrate` command) against production.
+⚠️ Don't edit the committed migration file — it's applied fine everywhere else. The fix is your local DB state. Run from the repo root (where your dev `DATABASE_URL` points).
+
+**`P1001` — "Can't reach database server at `host:5432`"**
+
+Either the database isn't running, or your `DATABASE_URL` still has the placeholder values from `.env.example` (a literal `user:pass@host`, or port `5432`, in the error is the giveaway). The Docker Postgres listens on **port 5435**, not 5432.
+
+```bash
+# 1. Bring the DB container up
+docker compose -f docker-compose-pg.yml up -d
+
+# 2. Put the REAL local values in backend/.env (must match docker-compose-pg.yml)
+DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+```
+
+**Docker won't cooperate?** A plain local Postgres is a fine fallback — install Postgres, create a `brightboost` database, and point `DATABASE_URL` / `DIRECT_URL` at it (any port, as long as the URL matches). Then run `npm run db:init`.
+
 ### Run Locally
 
 ```bash
