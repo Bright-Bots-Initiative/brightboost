@@ -20,13 +20,15 @@ vi.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-// TODO(green-ci-recovery): AvatarPicker now calls `useAuth` and the tests
-// render the component without an AuthProvider — all three fail with
-// "useAuth must be used within an AuthProvider". The fix is mechanical
-// (wrap render in <AuthProvider> + matching mock) but requires verifying
-// what the picker actually reads from the auth context. Quarantined here
-// rather than papered over so the next person sees the real assertion
-// surface, not a passing-but-meaningless test.
+// TODO(orphan-cleanup): AvatarPicker is not rendered anywhere in the app —
+// only this test and AvatarPicker.stories.tsx reference it. These unit tests
+// are stale in two ways: (1) the component now calls useAuth() so it needs an
+// AuthContext provider, and (2) they mock @/components/ui/avatar's AvatarImage
+// and assert an old S3 presigned-upload flow, but the component now renders
+// SafeAvatarImage and POSTs to /user/avatar/upload. The *stories* were given
+// an AuthContext decorator so CI's build-and-test is green; these unit tests
+// stay skipped pending a decision on whether to delete the orphaned component
+// or wire it back into the app (flagged for confirmation, not deleted here).
 describe.skip("AvatarPicker", () => {
   let originalImage: typeof Image;
 
