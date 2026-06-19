@@ -124,18 +124,22 @@ cd backend && npm install && cd ..
 
 ### Environment Setup
 
-Copy `.env.example` to `.env` and fill in:
+> **📖 [SETUP.md](SETUP.md) is the canonical, end-to-end setup guide (Mac + Windows + troubleshooting).** The summary below is a quick reference.
+
+Copy `.env.example` to `.env` at the repo root and fill in:
 
 ```env
-# Frontend
-VITE_API_BASE=http://localhost:3000        # Backend API URL
+# Frontend API base — relative /api, proxied to the backend by Vite (not a bare host).
+VITE_API_BASE=/api
 
-# Backend (in /backend/.env)
-DATABASE_URL=postgresql://user:pass@host:5432/brightboost
-DIRECT_URL=postgresql://user:pass@host:5432/brightboost
-SESSION_SECRET=your-jwt-secret             # Required — signs auth tokens
+# Database — local Docker Postgres on port 5435 (see docker-compose-pg.yml)
+DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+SESSION_SECRET=local-dev-secret            # signs auth tokens (any string locally)
 PORT=3000
 ```
+
+The backend API server reads its DB credentials from `backend/.env` — copy `backend/.env.example` to `backend/.env`. See [SETUP.md](SETUP.md) for why and how.
 
 For local development with Docker Compose:
 
@@ -144,18 +148,18 @@ docker compose -f docker-compose-pg.yml up -d
 # Uses postgres:latest on localhost:5435, user: postgres, pass: brightboostpass
 ```
 
-### Seed the Database
+### Set Up the Database
 
 ```bash
-npx prisma migrate deploy --schema prisma/schema.prisma
+# From a fresh clone, use `db push` to create the schema directly, then seed.
+npx prisma db push --schema prisma/schema.prisma
+npx prisma generate
 npx prisma db seed
 ```
 
-Or use the shortcut:
-
-```bash
-npm run db:init
-```
+> ⚠️ `npm run db:init` (and `prisma migrate deploy`) currently **fail from a clean
+> database** because of a migration-baseline bug (#646) — several tables (Avatar, etc.)
+> never get created. Use `prisma db push` until #646 is fixed. Full details: [SETUP.md](SETUP.md).
 
 ### Troubleshooting database setup
 
