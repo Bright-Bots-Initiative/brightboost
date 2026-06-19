@@ -1,5 +1,11 @@
 # Bright Boost – Back-End
 
+> ⚠️ **STALE — do not follow for setup.** This page describes a retired AWS Lambda /
+> Aurora architecture (`func start`, port 7071, SAM). The real backend is an Express
+> server run with `ts-node` (port 3000); production is Railway + Supabase.
+> **Use [SETUP.md](../SETUP.md) for local dev and [DEPLOYMENT.md](../DEPLOYMENT.md) for production.**
+> Kept only for historical context.
+
 ## Overview
 
 AWS Lambda (Node 18) with JWT authentication, Prisma ORM, and AWS Aurora PostgreSQL. The backend provides API endpoints for both teacher and student user roles, supporting the educational platform's core functionality.
