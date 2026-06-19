@@ -1,5 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import AvatarPicker from "./AvatarPicker";
+import { AuthContext } from "../contexts/AuthContext";
+
+// AvatarPicker calls useAuth() (for updateUser after an upload), so it must render
+// inside an AuthContext provider. Supply a minimal stub value rather than the real
+// <AuthProvider>, which would also pull in the router and a session-check fetch.
+const mockAuthValue = {
+  user: null,
+  token: null,
+  login: () => {},
+  logout: () => {},
+  updateUser: () => {},
+  isAuthenticated: false,
+  isLoading: false,
+};
 
 const meta: Meta<typeof AvatarPicker> = {
   title: "Components/AvatarPicker",
@@ -8,6 +22,13 @@ const meta: Meta<typeof AvatarPicker> = {
     layout: "centered",
   },
   tags: ["autodocs"],
+  decorators: [
+    (Story) => (
+      <AuthContext.Provider value={mockAuthValue}>
+        <Story />
+      </AuthContext.Provider>
+    ),
+  ],
   argTypes: {
     onAvatarChange: { action: "avatar-changed" },
     currentAvatarUrl: {
