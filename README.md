@@ -161,6 +161,23 @@ npm run db:init
 
 The setup blockers the team has actually hit. Every fix below is **local only** — never run a `migrate` command (especially `reset`) against production.
 
+**`P3018` / "relation does not exist" during migrate (e.g. `relation "Avatar" does not exist`)**
+
+Known issue: the migration history is currently incomplete and **can't build the database from scratch** (tracked in #646). On a fresh setup, `migrate reset` / `migrate deploy` / `migrate resolve` — and `npm run db:init`, which uses `migrate deploy` — will all hit this and fail. It's a repo bug, not your machine.
+
+**Use `db push` for local setup instead** — it builds every table directly from `schema.prisma`, bypassing the migration history:
+
+```bash
+# from the repo ROOT, with your Docker Postgres running (docker compose -f docker-compose-pg.yml up -d)
+npx prisma db push --schema prisma/schema.prisma
+npx prisma db seed
+```
+
+This gives you a correct, fully-seeded local database. It records no migration history, which is fine for local development.
+
+⚠️ `db push` is **local-dev only** — never run it against production (it can drop/alter columns to force-match the schema).
+Until #646 lands, prefer `db push` + seed over `npm run db:init` (or any `migrate` command) for a fresh local DB — including the `P3009` fix below, whose `migrate reset` won't succeed from scratch yet.
+
 **`P3009` — "migrate found failed migrations in the target database"**
 
 A migration was interrupted partway through on your local DB (Ctrl-C, a dropped connection, a transient hiccup), so it's recorded as "failed" and blocks every later migration. The migration itself is fine — this is local DB state, not a code problem.
