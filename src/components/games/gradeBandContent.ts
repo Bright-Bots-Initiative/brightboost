@@ -370,3 +370,61 @@ export function applyG35StoryOverrides(
   if (!override) return content;
   return { ...content, slides: override.slides, questions: override.questions };
 }
+
+
+// ── Maze Maps g3-5 sectors ──────────────────────────────────────────
+// 
+// 
+
+export interface SweepConfig {
+  id: string;
+  loop: [number, number][];
+  startIndex: number;
+}
+
+export interface MazeMapConfig {
+  id: string;
+  rows: number;
+  cols: number;
+  start: [number, number];
+  goal: [number, number];
+  walls: [number, number][];
+  orbs: [number, number][];
+  safePads: [number, number][];
+  sweepers: SweepConfig[];
+}
+
+export const MAPS_G3_5: Record<string, MazeMapConfig> = {
+  tutorial: {
+    id: "tutorial", rows: 6, cols: 6,
+    start: [5, 0], goal: [0, 5],
+    walls: [[0, 0], [1, 0], [1, 1], [4, 1], [0, 3], [1, 3], [2, 3], [4, 3], [4, 4]],
+    orbs: [[2, 1], [5, 3], [2, 4]],
+    safePads: [],
+    sweepers: [],
+  },
+  guided: {
+    id: "guided", rows: 6, cols: 6,
+    start: [5, 0], goal: [5, 5],
+    walls: [[0, 1], [0, 2], [1, 1], [1, 2],[3, 2], [4, 2], [4, 4], [5, 4]],
+    orbs: [[2, 0], [2, 3], [3, 5]],
+    safePads: [[1, 3]],
+    sweepers: [
+      { id: "s1", loop: [[3, 3], [3, 2], [2, 2], [2, 3], [3, 3]], startIndex: 0 },
+      { id: "s2", loop: [[0, 4], [1, 4], [2, 4], [3, 4], [2, 4], [1, 4], [0, 4]], startIndex: 0 },
+    ],
+  },
+  main: {
+    id: "main", rows: 7, cols: 7,
+    start: [6, 0], goal: [5, 3],
+    walls: [[3, 1], [3, 2], [3, 3], [3, 4], [4, 2], [5, 2]],
+    orbs: [[3, 0], [1, 3], [3, 6], [5, 5]],
+    safePads: [[2, 1], [0, 6]],
+    sweepers: [
+      { id: "s1", loop: [[5, 1], [5, 0], [4, 0], [4, 1], [5, 1]], startIndex: 0 },
+      { id: "s2", loop: [[0, 2], [1, 2], [2, 2], [2, 3], [1, 3], [0, 3], [0, 2]], startIndex: 0 },
+      { id: "s3", loop: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [0, 5]], startIndex: 0 },
+      { id: "s4", loop: [[6, 6], [6, 5], [5, 5], [5, 6], [6, 6]], startIndex: 0 },
+    ],
+  },
+};
