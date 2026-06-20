@@ -1,5 +1,9 @@
 # BrightBoost Technical Quickstart
 
+> ⚠️ **[SETUP.md](SETUP.md) is the canonical, end-to-end setup guide (Mac + Windows + troubleshooting).**
+> This quickstart is kept as supplementary reference (Prisma schema notes, password-reset, command list).
+> If anything here disagrees with SETUP.md, SETUP.md wins.
+
 ## Prerequisites
 
 - Node.js 20+
@@ -17,10 +21,10 @@ cp .env.example .env
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/brightboost` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:brightboostpass@localhost:5435/brightboost` |
 | `DIRECT_URL` | Direct PostgreSQL URL (bypasses connection pooler) | Same as DATABASE_URL for local dev |
-| `JWT_SECRET` | Secret for signing auth tokens | Any random string (32+ chars) |
-| `VITE_API_BASE` | Frontend API base URL | `http://localhost:3000/api` (local dev) |
+| `SESSION_SECRET` | Secret for signing JWT auth tokens (the backend reads `SESSION_SECRET`, not `JWT_SECRET`) | Any random string locally; required in prod |
+| `VITE_API_BASE` | Frontend API base path | `/api` (proxied to the backend by Vite) |
 
 ### Optional Variables
 
@@ -45,17 +49,18 @@ cd backend && npm install && cd ..
 
 ### 2. Start the database
 
-Using Docker Compose:
+Using Docker Compose (the compose file is `docker-compose-pg.yml`, Postgres on host port **5435**):
 ```bash
-docker compose up -d db
+docker compose -f docker-compose-pg.yml up -d
 ```
 
 Or connect to an existing PostgreSQL instance via `DATABASE_URL`.
 
-### 3. Run migrations and seed
+### 3. Create the schema and seed
 
 ```bash
-npx prisma migrate deploy --schema prisma/schema.prisma
+# Use db push from a clean DB — `prisma migrate deploy` fails from scratch (#646).
+npx prisma db push --schema prisma/schema.prisma
 npx prisma db seed
 ```
 

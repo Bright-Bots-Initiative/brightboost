@@ -124,18 +124,22 @@ cd backend && npm install && cd ..
 
 ### Environment Setup
 
-Copy `.env.example` to `.env` and fill in:
+> **📖 [SETUP.md](SETUP.md) is the canonical, end-to-end setup guide (Mac + Windows + troubleshooting).** The summary below is a quick reference.
+
+Copy `.env.example` to `.env` at the repo root and fill in:
 
 ```env
-# Frontend
-VITE_API_BASE=http://localhost:3000        # Backend API URL
+# Frontend API base — relative /api, proxied to the backend by Vite (not a bare host).
+VITE_API_BASE=/api
 
-# Backend (in /backend/.env)
-DATABASE_URL=postgresql://user:pass@host:5432/brightboost
-DIRECT_URL=postgresql://user:pass@host:5432/brightboost
-SESSION_SECRET=your-jwt-secret             # Required — signs auth tokens
+# Database — local Docker Postgres on port 5435 (see docker-compose-pg.yml)
+DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+SESSION_SECRET=local-dev-secret            # signs auth tokens (any string locally)
 PORT=3000
 ```
+
+The backend API server reads its DB credentials from `backend/.env` — copy `backend/.env.example` to `backend/.env`. See [SETUP.md](SETUP.md) for why and how.
 
 For local development with Docker Compose:
 
@@ -144,18 +148,70 @@ docker compose -f docker-compose-pg.yml up -d
 # Uses postgres:latest on localhost:5435, user: postgres, pass: brightboostpass
 ```
 
-### Seed the Database
+### Set Up the Database
 
 ```bash
-npx prisma migrate deploy --schema prisma/schema.prisma
+# From a fresh clone, use `db push` to create the schema directly, then seed.
+npx prisma db push --schema prisma/schema.prisma
+npx prisma generate
 npx prisma db seed
 ```
 
-Or use the shortcut:
+> ⚠️ `npm run db:init` (and `prisma migrate deploy`) currently **fail from a clean
+> database** because of a migration-baseline bug (#646) — several tables (Avatar, etc.)
+> never get created. Use `prisma db push` until #646 is fixed. Full details: [SETUP.md](SETUP.md).
+
+### Troubleshooting database setup
+
+The setup blockers the team has actually hit. Every fix below is **local only** — never run a `migrate` command (especially `reset`) against production.
+
+**`P3018` / "relation does not exist" during migrate (e.g. `relation "Avatar" does not exist`)**
+
+Known issue: the migration history is currently incomplete and **can't build the database from scratch** (tracked in #646). On a fresh setup, `migrate reset` / `migrate deploy` / `migrate resolve` — and `npm run db:init`, which uses `migrate deploy` — will all hit this and fail. It's a repo bug, not your machine.
+
+**Use `db push` for local setup instead** — it builds every table directly from `schema.prisma`, bypassing the migration history:
 
 ```bash
-npm run db:init
+# from the repo ROOT, with your Docker Postgres running (docker compose -f docker-compose-pg.yml up -d)
+npx prisma db push --schema prisma/schema.prisma
+npx prisma db seed
 ```
+
+This gives you a correct, fully-seeded local database. It records no migration history, which is fine for local development.
+
+⚠️ `db push` is **local-dev only** — never run it against production (it can drop/alter columns to force-match the schema).
+Until #646 lands, prefer `db push` + seed over `npm run db:init` (or any `migrate` command) for a fresh local DB — including the `P3009` fix below, whose `migrate reset` won't succeed from scratch yet.
+
+**`P3009` — "migrate found failed migrations in the target database"**
+
+A migration was interrupted partway through on your local DB (Ctrl-C, a dropped connection, a transient hiccup), so it's recorded as "failed" and blocks every later migration. The migration itself is fine — this is local DB state, not a code problem.
+
+```bash
+# Fresh setup (simplest): wipes your LOCAL database, re-runs all migrations + seed
+npx prisma migrate reset
+
+# If you have local data to keep: mark the stuck migration rolled-back, then re-apply
+npx prisma migrate resolve --rolled-back <migration_name>
+npx prisma migrate deploy
+```
+
+⚠️ `migrate reset` is **local only** — never run it (or any `migrate` command) against production.
+⚠️ Don't edit the committed migration file — it's applied fine everywhere else. The fix is your local DB state. Run from the repo root (where your dev `DATABASE_URL` points).
+
+**`P1001` — "Can't reach database server at `host:5432`"**
+
+Either the database isn't running, or your `DATABASE_URL` still has the placeholder values from `.env.example` (a literal `user:pass@host`, or port `5432`, in the error is the giveaway). The Docker Postgres listens on **port 5435**, not 5432.
+
+```bash
+# 1. Bring the DB container up
+docker compose -f docker-compose-pg.yml up -d
+
+# 2. Put the REAL local values in backend/.env (must match docker-compose-pg.yml)
+DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
+```
+
+**Docker won't cooperate?** A plain local Postgres is a fine fallback — install Postgres, create a `brightboost` database, and point `DATABASE_URL` / `DIRECT_URL` at it (any port, as long as the URL matches). Then run `npm run db:init`.
 
 ### Run Locally
 
