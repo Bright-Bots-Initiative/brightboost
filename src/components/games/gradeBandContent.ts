@@ -407,7 +407,7 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     id: "guided", rows: 6, cols: 6,
     start: [5, 0], goal: [5, 5],
     walls: [[0, 1], [0, 2], [1, 1], [1, 2],[3, 2], [4, 2], [4, 4], [5, 4]],
-    orbs: [[2, 0], [2, 3], [3, 5]],
+    orbs: [[2, 0], [2, 3], [3, 5], [5, 2]],
     safePads: [[1, 3]],
     sweepers: [
       { id: "s1", loop: [[3, 3], [3, 2], [2, 2], [2, 3], [3, 3]], startIndex: 0 },
@@ -418,11 +418,11 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     id: "main", rows: 7, cols: 7,
     start: [6, 0], goal: [5, 3],
     walls: [[3, 1], [3, 2], [3, 3], [3, 4], [4, 2], [5, 2]],
-    orbs: [[3, 0], [1, 3], [3, 6], [5, 5]],
+    orbs: [[3, 0], [1, 3], [2, 6], [4, 4], [6, 2], [5, 6]],
     safePads: [[2, 1], [0, 6]],
     sweepers: [
       { id: "s1", loop: [[5, 1], [5, 0], [4, 0], [4, 1], [5, 1]], startIndex: 0 },
-      { id: "s2", loop: [[0, 2], [1, 2], [2, 2], [2, 3], [1, 3], [0, 3], [0, 2]], startIndex: 0 },
+      { id: "s2", loop: [[1, 2], [2, 2], [2, 3], [1, 3], [1, 2]], startIndex: 0 },
       { id: "s3", loop: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [0, 5]], startIndex: 0 },
       { id: "s4", loop: [[6, 6], [6, 5], [5, 5], [5, 6], [6, 6]], startIndex: 0 },
     ],

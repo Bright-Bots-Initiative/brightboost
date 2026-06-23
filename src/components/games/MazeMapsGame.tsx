@@ -53,7 +53,7 @@ const MAX_COLLISIONS_FOR_HINT = 2;
 // Map Data (build-in maps for K2)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MAPS: Record<string, MazeMapConfig> = {
+export const MAPS_k2: Record<string, MazeMapConfig> = {
   tutorial: {
     id: "tutorial", rows: 4, cols: 4,
     start: [3, 0], goal: [0, 3],
@@ -667,7 +667,7 @@ export default function MazeMapsGame({
 }) 
 {
     const band = getGradeBand(config);
-    const maps = band === "g3_5" ? MAPS_G3_5 : MAPS;
+    const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
 
   return (
     <GameShell
