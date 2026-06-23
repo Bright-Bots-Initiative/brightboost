@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
+import { pickLocale } from "@/utils/localizedContent";
 
 // ── Constants & Types ─────────────────────────────────────────────────────
 const LABELS = ["🔵", "🟡", "🩷"];
@@ -21,10 +22,14 @@ type Phase = "intro" | "practice" | "pattern" | "scan" | "challenge" | "exitTick
 interface Drop { lane: number; kind: "normal" | "mystery"; hiddenColor?: number }
 
 const BRIEFING: MissionBriefing = {
-  title: "Sky Shield Patterns",
-  story: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+  title: pickLocale({ en: "Sky Shield Patterns", es: "Patrones del Cielo", vi: "Mẫu Lá Chắn Bầu Trời", "zh-CN": "天空护盾图案" }, "Sky Shield Patterns"),
+  story: pickLocale({
+    en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+  }, "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land."),
   icon: "🛡️",
-  tips: ["Watch which lane the light falls in", "Look for repeating patterns", "Scan mystery lights before choosing"],
+  tips: pickLocale({
+    en: ["Watch which lane the light falls in", "Look for repeating patterns", "Scan mystery lights before choosing"],
+  }, ["Watch which lane the light falls in", "Look for repeating patterns", "Scan mystery lights before choosing"]),
   chapterLabel: "Pattern Lab",
   themeColor: "violet",
 };

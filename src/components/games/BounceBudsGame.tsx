@@ -21,6 +21,7 @@ import GameShell, {
 } from "./shared/GameShell";
 import { getGradeBand, BOUNCE_BUDS_ROUNDS } from "./gradeBandContent";
 import "./shared/game-effects.css";
+import { pickLocale, resolveText } from "@/utils/localizedContent";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -111,15 +112,14 @@ const GATE_STYLES = [
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BRIEFING: MissionBriefing = {
-  title: "Bounce & Buds",
-  story:
-    "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!",
+  title: pickLocale({ en: "Bounce & Buds", es: "Rebota y Amigos", vi: "Nảy và Bạn Bè", "zh-CN": "弹跳小伙伴" }, "Bounce & Buds"),
+  story: pickLocale({
+    en: "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!"
+  }, "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!"),
   icon: "🌿",
-  tips: [
-    "Read the clue at the top",
-    "Move the paddle left and right to aim",
-    "Bounce the ball into the correct gate!",
-  ],
+  tips: pickLocale({
+    en: ["Read the clue at the top", "Move the paddle left and right to aim", "Bounce the ball into the correct gate!",]
+  }, ["Read the clue at the top", "Move the paddle left and right to aim", "Bounce the ball into the correct gate!",]),
   chapterLabel: "Life Science",
   themeColor: "emerald",
 };
@@ -332,7 +332,7 @@ function BouncePlayfield({
     if (roundIndex >= ROUNDS.length || finishedRef.current) return;
 
     const r = ROUNDS[roundIndex];
-    const labels = shuffleArray([r.correctLabel, ...r.distractors]);
+    const labels = shuffleArray([resolveText(t, r.correctLabel), ...pickLocale(r.distractors, r.distractors.en)]);
     gateLabelsRef.current = labels;
     setGateLabels(labels);
     setHitGateIdx(null);
@@ -417,7 +417,7 @@ function BouncePlayfield({
         if (hitGate >= 0) {
           const label = gateLabelsRef.current[hitGate];
           const round = ROUNDS[roundIndex];
-          const isCorrect = label === round?.correctLabel;
+          const isCorrect = label === resolveText(t, round?.correctLabel);
           b.vx = 0;
           b.vy = 0;
           setHitGateIdx(hitGate);
@@ -427,7 +427,7 @@ function BouncePlayfield({
           } else {
             resolveRef.current(
               false,
-              `Almost! The answer was \u201c${round?.correctLabel}\u201d.`,
+              `Almost! The answer was \u201c${resolveText(t, round?.correctLabel)}\u201d.`,
             );
           }
         } else {
@@ -592,7 +592,7 @@ function BouncePlayfield({
             Round {roundIndex + 1} of {ROUNDS.length}
           </p>
           <p className="mt-1 text-xl font-extrabold text-slate-900 md:text-2xl leading-snug">
-            {currentRound.clueText}
+            {resolveText(t, currentRound.clueText)}
           </p>
         </div>
       )}
@@ -743,7 +743,7 @@ function BouncePlayfield({
             {phase === "waiting" && (
               <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
                 <p className="slide-up-fade text-sm font-bold text-emerald-800 bg-white/80 px-4 py-1.5 rounded-full shadow">
-                  Drag to aim. Tap anywhere to bounce!
+                  { pickLocale({ en: "Drag to aim. Tap anywhere to bounce!" }, "Drag to aim. Tap anywhere to bounce!") }
                 </p>
               </div>
             )}

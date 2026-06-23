@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
-import { resolveText } from "@/utils/localizedContent";
+import { pickLocale, resolveText } from "@/utils/localizedContent";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -349,12 +349,16 @@ export default function GotchaGearsGame({
     : { gameKey: "gotcha_gears_unity", rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)] };
 
   const briefing: MissionBriefing = {
-    title: "Gear Grab!",
-    story: "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
+    title: pickLocale({ en: "Gear Grab!" }, "Gear Grab!"),
+    story: pickLocale({
+      en: "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
+    }, "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground."),
     icon: "⚙️",
     chapterLabel: "Gotcha Gears",
     themeColor: "amber",
-    tips: ["Read the clue carefully", "Tap the correct gear", "Streaks earn bonus points!"],
+    tips: pickLocale({
+      en: ["Read the clue carefully", "Tap the correct gear", "Streaks earn bonus points!"]
+    }, ["Read the clue carefully", "Tap the correct gear", "Streaks earn bonus points!"])
   };
 
   return (

@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
+import { pickLocale } from "@/utils/localizedContent";
 
 // ── Types & constants ────────────────────────────────────────────────────
 type Phase = "intro" | "dash" | "jump" | "toss" | "compare" | "improve" | "retry" | "exitTicket" | "celebration";
@@ -48,10 +49,14 @@ export function buildMoveMeasureCompletionPayload(params: {
 }
 
 const BRIEFING: MissionBriefing = {
-  title: "Move, Measure & Improve",
-  story: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+  title: pickLocale({ en: "Move, Measure & Improve", es: "Mueve, Mide y Mejora", vi: "Đi, Đo và Cải Thiện", "zh-CN": "动、量、进步" }, "Move, Measure & Improve"),
+  story: pickLocale({
+    en: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+  }, "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better."),
   icon: "🏃",
-  tips: ["Tap at the right moment", "Watch the green zone", "Try again to improve!"],
+  tips: pickLocale({
+    en: ["Tap at the right moment", "Watch the green zone", "Try again to improve!"],
+  }, ["Tap at the right moment", "Watch the green zone", "Try again to improve!"]),
   chapterLabel: "Body Lab",
   themeColor: "emerald",
 };

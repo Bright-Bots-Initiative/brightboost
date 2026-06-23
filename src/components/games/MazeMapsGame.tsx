@@ -14,6 +14,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
+import { pickLocale } from "@/utils/localizedContent";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -109,19 +110,24 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BRIEFING: MissionBriefing = {
-  title: "Maze Maps & Smart Paths",
-  story: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+  title: pickLocale({ en: "Maze Maps & Smart Paths", es: "Mapas de Laberinto", vi: "Bản Đồ Mê Cung", "zh-CN": "迷宫地图" }, "Maze Maps & Smart Paths"),
+  story: pickLocale({ 
+    en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+  }, "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze."),
   icon: "🗺️",
-  tips: [
-    "Move one step at a time",
-    "Watch the Sweepers before you move",
-    "Safe Pads protect you from Sweepers",
-  ],
+  tips: pickLocale({
+    en: ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"],
+  }, ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"]),
   chapterLabel: "AI Lab",
   themeColor: "cyan",
   controlInstructions: {
-    keyboard: ["Use Tab to move to action buttons and Enter or Space to choose."],
-    buttons: ["Choose a move or wait action.", "Watch the pattern before moving."],
+    keyboard: [pickLocale({
+      en: "Use Tab to move to action buttons and Enter or Space to choose.",
+    }, "Use Tab to move to action buttons and Enter or Space to choose."),
+  ],
+    buttons: pickLocale({
+      en: ["Choose a move or wait action.", "Watch the pattern before moving."],
+    }, ["Choose a move or wait action.", "Watch the pattern before moving."]),
   },
 };
 
