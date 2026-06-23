@@ -274,7 +274,7 @@ function MazeMapsCore({
     const indices: Record<string, number> = {};
     m.sweepers.forEach((s) => { indices[s.id] = s.startIndex; });
     setSweeperIndices(indices);
-  }, []);
+  }, [maps]);
 
   // Init on phase change
   useEffect(() => {
@@ -446,7 +446,7 @@ function MazeMapsCore({
       setWatchCycles((c) => c + 1);
     }, 800);
     return () => clearInterval(watchTimerRef.current);
-  }, [phase]);
+  }, [phase, maps]);
 
   // ── Render ──
 
