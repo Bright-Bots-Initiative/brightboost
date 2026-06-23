@@ -276,7 +276,6 @@ brightboost/
 ├── dist/games/spacewar/        # Built Spacewar WebGL assets
 ├── cypress/                    # E2E tests
 ├── public/                     # Static assets
-├── vercel.json                 # Vercel deployment config
 └── package.json
 ```
 

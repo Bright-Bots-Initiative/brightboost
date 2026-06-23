@@ -1,16 +1,16 @@
-# Deployment: Vercel (FE) + Railway (BE) + Supabase (DB)
+# Deployment: Railway (FE + BE) + Supabase (DB)
 
 This guide provides instructions for deploying the BrightBoost application stack.
 
 ## Architecture
 
-- **Frontend**: React (Vite) hosted on Vercel.
+- **Frontend**: React (Vite) build served on Railway (nginx via `Dockerfile.frontend`, or Express with `SERVE_FRONTEND=true`).
 - **Backend**: Node.js (Express) hosted on Railway.
 - **Database**: PostgreSQL hosted on Supabase.
 
 ## Prerequisites
 
-- Accounts on [Vercel](https://vercel.com), [Railway](https://railway.app), and [Supabase](https://supabase.com).
+- Accounts on [Railway](https://railway.app) and [Supabase](https://supabase.com).
 - GitHub repository with the codebase.
 
 ## 1. Database (Supabase)
@@ -38,17 +38,15 @@ This guide provides instructions for deploying the BrightBoost application stack
     - `NODE_ENV`: `production`
     - _For local dev, `DIRECT_URL` can equal `DATABASE_URL` (both point at your local Postgres)._
 
-## 3. Frontend (Vercel)
+## 3. Frontend (Railway)
 
-1.  Create a new project on Vercel.
-2.  Import the GitHub repo.
-3.  Configure the project:
-    - **Framework Preset**: Vite
-    - **Root Directory**: `.` (default)
-    - **Build Command**: `npm run build`
-    - **Output Directory**: `dist`
-4.  Set Environment Variables:
-    - `VITE_AWS_API_URL`: The URL of your deployed Railway backend (e.g., `https://brightboost-backend.up.railway.app`). **Important:** Do not add a trailing slash.
+1.  Create a second Railway service from the same GitHub repo (the frontend).
+2.  Configure the service to build from `Dockerfile.frontend` (Vite build served by nginx).
+3.  Set Build/Service Variables:
+    - `VITE_API_BASE`: `/api` (default) — keeps API calls same-origin. The nginx config (`docs/nginx.conf`) proxies `/api/` → `${BACKEND_URL}/api/`.
+    - `BACKEND_URL`: The URL of your deployed Railway backend (e.g., `https://brightboost-backend.up.railway.app`). **Important:** Do not add a trailing slash.
+
+    _Note: `VITE_*` vars are inlined at build time, so they must be present in Railway's service variables when the image builds (see `Dockerfile.frontend`)._
 
 ## 4. Database Initialization
 
@@ -76,4 +74,4 @@ After deploying, you need to initialize the database schema and seed it.
 ## Troubleshooting
 
 - **Prisma Errors**: Ensure your `DATABASE_URL` is correct and the database is reachable. If you see connection limit errors, consider using the Supabase Transaction pooler (port 6543) for the app, but keep using Session pooler (port 5432) for migrations.
-- **CORS Issues**: If the frontend cannot talk to the backend, check the browser console. You might need to configure CORS in `backend/src/server.ts` to accept requests from your Vercel domain.
+- **CORS Issues**: If the frontend cannot talk to the backend, check the browser console. With same-origin `/api` (nginx proxy) you should not hit CORS; if you serve the frontend from a different origin, configure CORS in `backend/src/server.ts` to accept requests from your frontend domain.
