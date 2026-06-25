@@ -300,4 +300,48 @@ describe("Creations routes", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  describe("POST /api/creations/:id/encourage", () => {
+    it("lets the owning teacher boost a creation", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        courseId: COURSE,
+      });
+      prismaMock.course.findFirst.mockResolvedValue({ id: COURSE });
+      prismaMock.creation.update.mockResolvedValue({ encouragements: 3 });
+
+      const res = await request(app)
+        .post("/api/creations/creation-1/encourage")
+        .set(asTeacher(TEACHER))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.encouragements).toBe(3);
+    });
+
+    it("forbids a kid from boosting (adults only)", async () => {
+      const res = await request(app)
+        .post("/api/creations/creation-1/encourage")
+        .set(asStudent(KID))
+        .send({});
+
+      expect(res.status).toBe(403);
+      expect(prismaMock.creation.update).not.toHaveBeenCalled();
+    });
+
+    it("forbids a teacher who does not own the group", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        courseId: COURSE,
+      });
+      prismaMock.course.findFirst.mockResolvedValue(null); // not their course
+
+      const res = await request(app)
+        .post("/api/creations/creation-1/encourage")
+        .set(asTeacher("teacher-2"))
+        .send({});
+
+      expect(res.status).toBe(403);
+    });
+  });
 });

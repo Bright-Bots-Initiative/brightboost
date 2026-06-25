@@ -89,6 +89,7 @@ type CreationDTO = {
   type: string;
   title: string | null;
   status: string;
+  encouragements: number;
   authorId: string;
   authorName: string;
   createdAt: Date;
@@ -101,6 +102,7 @@ function toDTO(c: {
   type: string;
   title: string | null;
   status: string;
+  encouragements?: number;
   authorId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -112,6 +114,7 @@ function toDTO(c: {
     type: c.type,
     title: c.title,
     status: c.status,
+    encouragements: c.encouragements ?? 0,
     authorId: c.authorId,
     authorName: firstName(c.author?.name),
     createdAt: c.createdAt,
@@ -298,6 +301,47 @@ router.get(
 
     // Single-get includes content so the creation can actually be played.
     return res.json({ ...toDTO(creation), content: creation.content });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// POST /creations/:id/encourage — adult-only, text-free "give a boost".
+// Teachers/parents (teacher role) or admins, scoped to their group. No kid
+// reactions in Phase 0, so this is the only write a non-author can make.
+// ---------------------------------------------------------------------------
+
+router.post(
+  "/creations/:id/encourage",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    if (req.user!.role !== "teacher" && req.user!.role !== "admin") {
+      return res.status(403).json({ error: "only adults can encourage" });
+    }
+
+    const creation = await prisma.creation.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, courseId: true },
+    });
+    if (!creation) {
+      return res.status(404).json({ error: "creation not found" });
+    }
+
+    const member = await isGroupMember(
+      req.user!.id,
+      req.user!.role,
+      creation.courseId,
+    );
+    if (!member) {
+      return res.status(403).json({ error: "not a member of this group" });
+    }
+
+    const updated = await prisma.creation.update({
+      where: { id: creation.id },
+      data: { encouragements: { increment: 1 } },
+      select: { encouragements: true },
+    });
+
+    return res.json({ encouragements: updated.encouragements });
   },
 );
 

@@ -438,12 +438,20 @@ const TeacherClassDetail: React.FC = () => {
             </span>
           </div>
         </div>
-        <button
-          onClick={openLaunchWizard}
-          className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue whitespace-nowrap"
-        >
-          {t("teacher.classDetail.launchSession")}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/teacher/classes/${id}/gallery`}
+            className="px-4 py-2 bg-white text-brightboost-blue border border-brightboost-blue rounded-md hover:bg-brightboost-blue/5 transition-colors whitespace-nowrap"
+          >
+            {t("gallery.linkLabel")}
+          </Link>
+          <button
+            onClick={openLaunchWizard}
+            className="px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue whitespace-nowrap"
+          >
+            {t("teacher.classDetail.launchSession")}
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}

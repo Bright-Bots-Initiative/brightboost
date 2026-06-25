@@ -1045,6 +1045,9 @@ model Creation {
   title     String?
   content   Json           // artifact payload / challenge config (validated per type)
   status    CreationStatus @default(IN_PROGRESS)
+  // Adult-only, text-free encouragement count ("give a boost"). No kid-to-kid
+  // reactions in Phase 0.
+  encouragements Int       @default(0)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 

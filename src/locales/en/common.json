@@ -1841,5 +1841,20 @@
   "challengePlayer": {
     "loading": "Loading challenge...",
     "notFound": "This challenge isn't available."
+  },
+  "gallery": {
+    "pageTitle": "Group Gallery",
+    "linkLabel": "Gallery",
+    "backToClass": "Back to class",
+    "makeChallenge": "Make a Challenge",
+    "noGroups": "Join a group to see the gallery.",
+    "empty": "Nothing shared yet. Be the first to make something!",
+    "loading": "Loading...",
+    "error": "Could not load the gallery.",
+    "untitled": "Untitled",
+    "by": "by {{name}}",
+    "boosts": "Boosts",
+    "giveBoost": "Give a boost ⭐",
+    "play": "Play"
   }
 }

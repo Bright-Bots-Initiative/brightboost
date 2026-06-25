@@ -1579,5 +1579,20 @@
   "challengePlayer": {
     "loading": "Cargando desafío...",
     "notFound": "Este desafío no está disponible."
+  },
+  "gallery": {
+    "pageTitle": "Galería del grupo",
+    "linkLabel": "Galería",
+    "backToClass": "Volver a la clase",
+    "makeChallenge": "Crear un desafío",
+    "noGroups": "Únete a un grupo para ver la galería.",
+    "empty": "Aún no hay nada compartido. ¡Sé el primero en crear algo!",
+    "loading": "Cargando...",
+    "error": "No se pudo cargar la galería.",
+    "untitled": "Sin título",
+    "by": "por {{name}}",
+    "boosts": "Ánimos",
+    "giveBoost": "Dar ánimo ⭐",
+    "play": "Jugar"
   }
 }

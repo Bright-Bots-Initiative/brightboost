@@ -30,6 +30,8 @@ import PlayHub from "./pages/PlayHub";
 import ActivityPlayer from "./pages/ActivityPlayer";
 import CreateChallenge from "./pages/CreateChallenge";
 import ChallengePlayer from "./pages/ChallengePlayer";
+import StudentGallery from "./pages/StudentGallery";
+import TeacherGallery from "./pages/TeacherGallery";
 import StudentLayout from "./layouts/StudentLayout";
 import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
 import TeacherClasses from "./pages/TeacherClasses";
@@ -151,6 +153,7 @@ function App() {
                 <Route path="dashboard" element={<TeacherDashboard />} />
                 <Route path="classes" element={<TeacherClasses />} />
                 <Route path="classes/:id" element={<TeacherClassDetail />} />
+                <Route path="classes/:id/gallery" element={<TeacherGallery />} />
                 <Route path="students" element={<TeacherStudentRoster />} />
                 <Route path="prep/:slug" element={<TeacherModulePrep />} />
                 <Route path="resources" element={<TeacherResources />} />
@@ -182,6 +185,7 @@ function App() {
                 <Route path="play" element={<PlayHub />} />
                 <Route path="create-challenge" element={<CreateChallenge />} />
                 <Route path="challenge/:id" element={<ChallengePlayer />} />
+                <Route path="gallery" element={<StudentGallery />} />
                 <Route path="settings" element={<StudentSettings />} />
                 <Route path="benchmark/:assignmentId" element={<StudentBenchmark />} />
                 <Route
