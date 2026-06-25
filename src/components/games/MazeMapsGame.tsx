@@ -401,6 +401,14 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     else if (phase === "main") setPhase("exitTicket");
     else if (phase === "exitTicket") setPhase("celebration");
     else if (phase === "celebration") {
+      // Design note: Maze Maps intentionally has NO star rating and no
+      // partial-score gating. The skill here is orb-collection + sweeper-
+      // pattern-reading, not par/efficiency, so completion is all-or-nothing
+      // and "played well" is signaled by collisions → `firstTryClear` +
+      // the "Perfect Explorer" achievement (not stars). Contrast TankTrek's
+      // `computeTankStars`, where the skill IS minimal forward-moves.
+      // Deliberate, not unfinished — don't add stars here without revisiting
+      // the game's intent. (Asked-and-answered 3x: founder, triage, Olivia.)
       onFinish({
         gameKey: "maze_maps",
         score: Math.min(score, 140),
