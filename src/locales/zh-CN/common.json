@@ -1442,5 +1442,12 @@
       "QUANTUM": "探索太空数学，解开宇宙谜题！",
       "BIOTECH": "发现生物世界，种出神奇花园！"
     }
+  },
+  "creations": {
+    "status": {
+      "inProgress": "Still working",
+      "shared": "Shared • still working",
+      "complete": "Done"
+    }
   }
 }

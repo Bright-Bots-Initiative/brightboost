@@ -1544,5 +1544,12 @@
       "QUANTUM": "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!",
       "BIOTECH": "¡Descubre seres vivos y cultiva jardines asombrosos!"
     }
+  },
+  "creations": {
+    "status": {
+      "inProgress": "En proceso",
+      "shared": "Compartido • en proceso",
+      "complete": "Hecho"
+    }
   }
 }

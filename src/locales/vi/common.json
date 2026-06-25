@@ -1443,5 +1443,12 @@
       "QUANTUM": "Khám phá toán không gian và giải mã câu đố vũ trụ!",
       "BIOTECH": "Khám phá sinh vật sống và trồng những khu vườn tuyệt vời!"
     }
+  },
+  "creations": {
+    "status": {
+      "inProgress": "Still working",
+      "shared": "Shared • still working",
+      "complete": "Done"
+    }
   }
 }

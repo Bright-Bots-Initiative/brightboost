@@ -1801,5 +1801,12 @@
     "playAgain": "Play again",
     "teacherWhisper": "Teacher?",
     "teacherWhisperCta": "Set up your class in under 2 minutes"
+  },
+  "creations": {
+    "status": {
+      "inProgress": "Still working",
+      "shared": "Shared • still working",
+      "complete": "Done"
+    }
   }
 }

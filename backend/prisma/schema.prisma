@@ -76,6 +76,7 @@ model User {
   pulseResponses  PulseResponse[]
   feedbacks       Feedback[]
   resetTokens     PasswordResetToken[]
+  creations       Creation[]    // Phase 0 — kid-authored creations
 
   // Teacher Enablement Relations
   prepChecklists    TeacherPrepChecklist[]
@@ -368,6 +369,7 @@ model Course {
   pulseResponses       PulseResponse[]
   benchmarkAssignments BenchmarkAssignment[]
   moduleAssignments    ClassModuleAssignment[]
+  creations            Creation[]              // Phase 0 — group-scoped creations
 
   // Index for filtering courses by teacher
   @@index([teacherId])
@@ -979,4 +981,38 @@ model ExperimentEvent {
 
   @@index([experimentId, eventName])
   @@index([experimentId, variant])
+}
+
+// -----------------------------------------------------------------------------
+// Phase 0 — Creative loop: kid-authored creations (the "make something" model)
+// -----------------------------------------------------------------------------
+// A Creation is a kid-made artifact scoped to a single group (Course — class or
+// home). Foundation for the authorable game (content = challenge config) and the
+// group gallery. Visibility is group-scoped only; `SHARED` is the kid-initiated
+// "viewable while still in progress" state.
+
+enum CreationStatus {
+  IN_PROGRESS // private draft, author-only
+  SHARED      // kid chose to share an unfinished work to the group gallery
+  COMPLETE    // finished and visible to the group gallery
+}
+
+model Creation {
+  id        String         @id @default(cuid())
+  authorId  String         // the kid (User) who made it
+  courseId  String         // group scope (class or home Course)
+  type      String         // "data_dash_challenge" | ... (closed allowlist in code)
+  title     String?
+  content   Json           // artifact payload / challenge config (validated per type)
+  status    CreationStatus @default(IN_PROGRESS)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Gallery read: group + visible-status filter
+  @@index([courseId, status])
+  // Author's own list
+  @@index([authorId])
 }
