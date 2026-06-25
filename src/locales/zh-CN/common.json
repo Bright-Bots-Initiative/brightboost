@@ -1459,5 +1459,23 @@
       "shared": "Shared • still working",
       "complete": "Done"
     }
+  },
+  "createChallenge": {
+    "pageTitle": "Make a Challenge",
+    "intro": "Pick plants, choose a sorting rule and a hidden rule. Then share it for your group to play.",
+    "chooseGroup": "Which group?",
+    "noGroups": "Join a class or home group first, then you can make a challenge.",
+    "pickPlants": "Pick your plants (at least {{min}})",
+    "sortRuleLabel": "Sorting rule",
+    "hiddenRuleLabel": "Hidden rule to guess",
+    "titlePrefix": "Sort by",
+    "valid": "Looks good — your challenge can be solved!",
+    "save": "Share challenge",
+    "saving": "Sharing...",
+    "saveError": "Could not share. Try again."
+  },
+  "challengePlayer": {
+    "loading": "Loading challenge...",
+    "notFound": "This challenge isn't available."
   }
 }

@@ -262,4 +262,43 @@ router.get(
   },
 );
 
+// ---------------------------------------------------------------------------
+// GET /creations/:id — single creation WITH content (to play it). Group-scoped.
+// ---------------------------------------------------------------------------
+
+router.get(
+  "/creations/:id",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const creation = await prisma.creation.findUnique({
+      where: { id: req.params.id },
+      include: { author: { select: { name: true } } },
+    });
+    if (!creation) {
+      return res.status(404).json({ error: "creation not found" });
+    }
+
+    const member = await isGroupMember(
+      req.user!.id,
+      req.user!.role,
+      creation.courseId,
+    );
+    if (!member) {
+      return res.status(403).json({ error: "not a member of this group" });
+    }
+
+    // Visible only if shared/complete to the group, or the requester is author.
+    const visible =
+      creation.status === "SHARED" ||
+      creation.status === "COMPLETE" ||
+      creation.authorId === req.user!.id;
+    if (!visible) {
+      return res.status(403).json({ error: "creation is not shared" });
+    }
+
+    // Single-get includes content so the creation can actually be played.
+    return res.json({ ...toDTO(creation), content: creation.content });
+  },
+);
+
 export default router;

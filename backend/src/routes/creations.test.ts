@@ -45,6 +45,14 @@ function asTeacher(id: string) {
   return { "x-user-id": id, "x-role": "teacher" } as Record<string, string>;
 }
 
+// A solvable, unambiguous Data Dash challenge (see dataDashChallenge.test.ts).
+const validChallenge = {
+  v: 1,
+  cardIds: ["bean", "fern", "pine", "moss"],
+  sortRule: "waterNeed",
+  inferRule: "growthSpeed",
+};
+
 const dbCreation = {
   id: "creation-1",
   authorId: KID,
@@ -52,7 +60,7 @@ const dbCreation = {
   type: "data_dash_challenge",
   title: "My plant sort",
   status: "IN_PROGRESS",
-  content: { hello: "world" },
+  content: validChallenge,
   createdAt: new Date("2026-06-25"),
   updatedAt: new Date("2026-06-25"),
   author: { name: "Ada Lovelace" },
@@ -76,7 +84,7 @@ describe("Creations routes", () => {
           courseId: COURSE,
           type: "data_dash_challenge",
           title: "My plant sort",
-          content: { hello: "world" },
+          content: validChallenge,
         });
 
       expect(res.status).toBe(201);
@@ -105,6 +113,23 @@ describe("Creations routes", () => {
         .send({ courseId: COURSE, type: "free_text_blog", content: {} });
 
       expect(res.status).toBe(400);
+    });
+
+    it("rejects an unsolvable challenge at save (422)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "data_dash_challenge",
+          // Too few cards — fails the solvability guard.
+          content: { v: 1, cardIds: ["bean"], sortRule: "waterNeed", inferRule: "growthSpeed" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
     });
 
     it("forbids a teacher from authoring a creation (403)", async () => {
@@ -209,6 +234,70 @@ describe("Creations routes", () => {
         .set(asStudent(KID));
 
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe("GET /api/creations/:id", () => {
+    it("returns a shared creation WITH content to a group member", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        ...dbCreation,
+        status: "SHARED",
+      });
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(OTHER_KID));
+
+      expect(res.status).toBe(200);
+      expect(res.body.content).toEqual(validChallenge); // playable payload
+      expect(res.body.authorName).toBe("Ada");
+    });
+
+    it("lets the author fetch their own unshared draft", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue(dbCreation); // IN_PROGRESS
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(KID));
+
+      expect(res.status).toBe(200);
+    });
+
+    it("hides an unshared draft from another group member (403)", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue(dbCreation); // IN_PROGRESS, author KID
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(OTHER_KID));
+
+      expect(res.status).toBe(403);
+    });
+
+    it("forbids a non-member (403)", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        ...dbCreation,
+        status: "SHARED",
+      });
+      prismaMock.enrollment.findUnique.mockResolvedValue(null);
+
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(OTHER_KID));
+
+      expect(res.status).toBe(403);
+    });
+
+    it("404s for a missing creation", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue(null);
+
+      const res = await request(app)
+        .get("/api/creations/nope")
+        .set(asStudent(KID));
+
+      expect(res.status).toBe(404);
     });
   });
 });

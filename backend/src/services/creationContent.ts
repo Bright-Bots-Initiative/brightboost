@@ -11,6 +11,8 @@
 // actually partition the chosen cards and every chart question must have a
 // correct answer) — see the marked extension point below.
 
+import { validateDataDashChallenge } from "./dataDashChallenge";
+
 export const CREATION_TYPES = ["data_dash_challenge"] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
@@ -47,12 +49,10 @@ export function validateCreationContent(
 
   switch (type) {
     case "data_dash_challenge":
-      // STEP 4 EXTENSION POINT: replace this minimal guard with the full
-      // Data Dash solvability check (rule partitions cards; every chart
-      // question has a correct answer; question stems are from the locked
-      // template set). Until then, only a non-empty object is accepted so the
-      // model + CRUD can be reviewed without the authoring UI.
-      return { ok: true };
+      // Full solvability + unambiguity guard. Structured-only (no free text):
+      // the chart question is derived at play time, so there is nothing to
+      // moderate — only to verify the challenge is actually winnable.
+      return validateDataDashChallenge(content);
 
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.

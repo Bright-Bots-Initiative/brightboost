@@ -1561,5 +1561,23 @@
       "shared": "Compartido • en proceso",
       "complete": "Hecho"
     }
+  },
+  "createChallenge": {
+    "pageTitle": "Crea un desafío",
+    "intro": "Elige plantas, una regla para ordenar y una regla secreta. Luego compártelo para que tu grupo juegue.",
+    "chooseGroup": "¿Qué grupo?",
+    "noGroups": "Únete primero a una clase o grupo en casa para poder crear un desafío.",
+    "pickPlants": "Elige tus plantas (al menos {{min}})",
+    "sortRuleLabel": "Regla para ordenar",
+    "hiddenRuleLabel": "Regla secreta para adivinar",
+    "titlePrefix": "Ordenar por",
+    "valid": "¡Muy bien! Tu desafío se puede resolver.",
+    "save": "Compartir desafío",
+    "saving": "Compartiendo...",
+    "saveError": "No se pudo compartir. Inténtalo de nuevo."
+  },
+  "challengePlayer": {
+    "loading": "Cargando desafío...",
+    "notFound": "Este desafío no está disponible."
   }
 }

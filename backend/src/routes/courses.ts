@@ -289,7 +289,7 @@ router.get(
     const enrollments = await prisma.enrollment.findMany({
       where: { studentId: req.user!.id },
       include: {
-        course: { select: { id: true, name: true, gradeBand: true } },
+        course: { select: { id: true, name: true, gradeBand: true, kind: true } },
       },
     });
 
@@ -298,6 +298,7 @@ router.get(
         courseId: e.course.id,
         courseName: e.course.name,
         gradeBand: e.course.gradeBand,
+        kind: e.course.kind,
         enrolledAt: e.enrolledAt,
       })),
     );

@@ -28,6 +28,8 @@ import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
 import PlayHub from "./pages/PlayHub";
 import ActivityPlayer from "./pages/ActivityPlayer";
+import CreateChallenge from "./pages/CreateChallenge";
+import ChallengePlayer from "./pages/ChallengePlayer";
 import StudentLayout from "./layouts/StudentLayout";
 import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
 import TeacherClasses from "./pages/TeacherClasses";
@@ -178,6 +180,8 @@ function App() {
                 <Route path="join" element={<JoinClass />} />
                 <Route path="avatar" element={<Avatar />} />
                 <Route path="play" element={<PlayHub />} />
+                <Route path="create-challenge" element={<CreateChallenge />} />
+                <Route path="challenge/:id" element={<ChallengePlayer />} />
                 <Route path="settings" element={<StudentSettings />} />
                 <Route path="benchmark/:assignmentId" element={<StudentBenchmark />} />
                 <Route
