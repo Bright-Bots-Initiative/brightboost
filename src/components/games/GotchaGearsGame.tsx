@@ -348,6 +348,7 @@ export default function GotchaGearsGame({
     ? config
     : { gameKey: "gotcha_gears_unity", rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)] };
 
+  // TODO: add translations for the story, tips in briefing
   const briefing: MissionBriefing = {
     title: pickLocale({ en: "Gear Grab!" }, "Gear Grab!"),
     story: pickLocale({

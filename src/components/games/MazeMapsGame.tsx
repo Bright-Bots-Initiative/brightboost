@@ -109,6 +109,7 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
 // Briefing
 // ═══════════════════════════════════════════════════════════════════════════
 
+// TODO: add translations for the story, tips, control instructions in the briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Maze Maps & Smart Paths", es: "Mapas de Laberinto", vi: "Bản Đồ Mê Cung", "zh-CN": "迷宫地图" }, "Maze Maps & Smart Paths"),
   story: pickLocale({ 

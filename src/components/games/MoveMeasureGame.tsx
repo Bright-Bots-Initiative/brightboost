@@ -48,6 +48,7 @@ export function buildMoveMeasureCompletionPayload(params: {
   };
 }
 
+// TODO: add translations for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Move, Measure & Improve", es: "Mueve, Mide y Mejora", vi: "Đi, Đo và Cải Thiện", "zh-CN": "动、量、进步" }, "Move, Measure & Improve"),
   story: pickLocale({

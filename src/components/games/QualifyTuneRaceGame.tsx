@@ -63,6 +63,7 @@ export function buildQualifyTuneRaceCompletionPayload(params: {
 }
 
 // ── Briefing ──────────────────────────────────────────────────────────────
+// TODO: add translation for the story, tips, control instructions in briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Qualify, Tune, Race", es: "Califica, Ajusta, Compite", vi: "Thử, Điều Chỉnh, Đua", "zh-CN": "测试、调整、比赛" }, "Qualify, Tune, Race"),
   story: pickLocale({

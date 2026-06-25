@@ -21,6 +21,7 @@ const PRACTICE_N = 5, PATTERN_N = 3, CHALLENGE_N = 10, MYSTERY_N = 2;
 type Phase = "intro" | "practice" | "pattern" | "scan" | "challenge" | "exitTicket" | "celebration";
 interface Drop { lane: number; kind: "normal" | "mystery"; hiddenColor?: number }
 
+// TODO: add translations for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Sky Shield Patterns", es: "Patrones del Cielo", vi: "Mẫu Lá Chắn Bầu Trời", "zh-CN": "天空护盾图案" }, "Sky Shield Patterns"),
   story: pickLocale({

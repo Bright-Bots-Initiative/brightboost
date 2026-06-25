@@ -26,6 +26,7 @@ const SIGNAL_COLORS: Record<Signal, string> = {
 const LANE_LABELS = ["A", "B", "C"];
 const PHASE_ORDER: GamePhase[] = ["practice", "signals", "lookAhead", "challenge", "exitTicket", "celebration"];
 
+// TODO: add translations for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Fast Lane Signals", es: "Señales de Carril Rápido", vi: "Tín Hiệu Làn Nhanh", "zh-CN": "快车道信号" }, "Fast Lane Signals"),
   story: pickLocale({

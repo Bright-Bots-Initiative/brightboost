@@ -22,6 +22,7 @@ export interface GearRoundContent {
   hint?: Record<string, string>;
 }
 
+// TODO: add translations
 export const GOTCHA_GEARS_CONTENT: Record<GradeBand, GearRoundContent[]> = {
   k2: [
     { clueText: { en: "I help a robot think and learn" }, 
@@ -139,6 +140,7 @@ export interface BounceRoundContent {
   theme: Record<string, string>;
 }
 
+// TODO: add translations
 export const BOUNCE_BUDS_ROUNDS: Record<GradeBand, BounceRoundContent[]> = {
   k2: [
     { clueText: { en: "Which one helps a plant grow?" }, 

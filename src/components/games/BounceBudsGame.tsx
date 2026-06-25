@@ -111,6 +111,7 @@ const GATE_STYLES = [
 // Briefing (used by GameShell)
 // ═══════════════════════════════════════════════════════════════════════════
 
+// TODO: add translation for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
   title: pickLocale({ en: "Bounce & Buds", es: "Rebota y Amigos", vi: "Nảy và Bạn Bè", "zh-CN": "弹跳小伙伴" }, "Bounce & Buds"),
   story: pickLocale({
@@ -743,6 +744,7 @@ function BouncePlayfield({
             {phase === "waiting" && (
               <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
                 <p className="slide-up-fade text-sm font-bold text-emerald-800 bg-white/80 px-4 py-1.5 rounded-full shadow">
+                  { /* TODO: add translations for coach string */ }
                   { pickLocale({ en: "Drag to aim. Tap anywhere to bounce!" }, "Drag to aim. Tap anywhere to bounce!") }
                 </p>
               </div>
