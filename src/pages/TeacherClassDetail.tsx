@@ -34,6 +34,7 @@ interface CourseDetail {
   name: string;
   joinCode: string;
   gradeBand?: string;
+  kind?: "class" | "home";
   enrollmentCount: number;
   students: { id: string; name: string; email: string; enrolledAt: string }[];
   createdAt: string;
@@ -410,7 +411,12 @@ const TeacherClassDetail: React.FC = () => {
               {t("teacher.classDetail.students", { count: course.enrollmentCount })}
             </span>
             <span className="flex items-center font-mono bg-gray-100 px-2 py-1 rounded text-xs">
-              {t("teacher.classDetail.joinCode")} <strong className="ml-1 text-base">{course.joinCode}</strong>
+              {t(
+                course.kind === "home"
+                  ? "teacher.classes.familyCode"
+                  : "teacher.classDetail.joinCode",
+              )}{" "}
+              <strong className="ml-1 text-base">{course.joinCode}</strong>
               <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title={t("teacher.classDetail.copy")}>
                 {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </button>

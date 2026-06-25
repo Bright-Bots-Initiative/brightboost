@@ -1051,7 +1051,17 @@
       "createClass": "创建班级",
       "deleteClass": "删除",
       "deleteTitle": "删除班级",
-      "deleteConfirm": "确定要删除「{{name}}」吗？所有学生将被移除，所有课程将被删除。此操作无法撤销。"
+      "deleteConfirm": "确定要删除「{{name}}」吗？所有学生将被移除，所有课程将被删除。此操作无法撤销。",
+      "children": "{{count}} children",
+      "familyCode": "Family Code:",
+      "groupTypeLabel": "Group type",
+      "groupTypeClass": "Class",
+      "groupTypeHome": "Home",
+      "createTitleHome": "Create a home group",
+      "createDescHome": "Give your home group a name. Your child joins using the generated code.",
+      "classNameHome": "Home group name",
+      "classNamePlaceholderHome": "e.g. The Garcia Kids",
+      "createGroupHome": "Create Home Group"
     },
 
     "classDetail": {

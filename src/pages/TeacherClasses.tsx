@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Plus, Users, Copy, Check, Zap, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useApi, ApiError } from "../services/api";
 import { track } from "../lib/analytics";
 import {
@@ -28,6 +28,7 @@ interface CourseListItem {
   id: string;
   name: string;
   joinCode: string;
+  kind?: "class" | "home";
   enrollmentCount: number;
   createdAt: string;
 }
@@ -37,9 +38,12 @@ const ClassesPage: React.FC = () => {
   const api = useApi();
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newBand, setNewBand] = useState<"k2" | "g3_5">("k2");
+  // "class" = teacher class, "home" = parent home group (same Course machinery).
+  const [newKind, setNewKind] = useState<"class" | "home">("class");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -62,6 +66,17 @@ const ClassesPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api]);
 
+  // Parents arriving from signup (?create=home) land straight in the
+  // home-group create flow. Clear the param so back/refresh doesn't reopen it.
+  useEffect(() => {
+    if (searchParams.get("create") === "home") {
+      setNewKind("home");
+      setCreateOpen(true);
+      searchParams.delete("create");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setCreating(true);
@@ -69,15 +84,18 @@ const ClassesPage: React.FC = () => {
       const course = await api.post("/teacher/courses", {
         name: newName.trim(),
         gradeBand: newBand,
+        kind: newKind,
       });
       track({
         kind: "class_created",
         class_id: course.id,
         grade_band: course.gradeBand,
+        group_kind: newKind,
       });
       setCourses((prev) => [course, ...prev]);
       setNewName("");
       setNewBand("k2");
+      setNewKind("class");
       setCreateOpen(false);
     } catch {
       // toast handled by useApi
@@ -85,6 +103,8 @@ const ClassesPage: React.FC = () => {
       setCreating(false);
     }
   };
+
+  const isHome = newKind === "home";
 
   const copyCode = (code: string, courseId: string) => {
     navigator.clipboard.writeText(code);
@@ -168,10 +188,20 @@ const ClassesPage: React.FC = () => {
                   <div className="flex items-center space-x-6 mt-2 text-sm text-gray-600">
                     <span className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {t("teacher.classes.students", { count: c.enrollmentCount })}
+                      {t(
+                        c.kind === "home"
+                          ? "teacher.classes.children"
+                          : "teacher.classes.students",
+                        { count: c.enrollmentCount },
+                      )}
                     </span>
                     <span className="flex items-center font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                      {t("teacher.classes.joinCode")} <strong className="ml-1">{c.joinCode}</strong>
+                      {t(
+                        c.kind === "home"
+                          ? "teacher.classes.familyCode"
+                          : "teacher.classes.joinCode",
+                      )}{" "}
+                      <strong className="ml-1">{c.joinCode}</strong>
                       <button
                         onClick={() => copyCode(c.joinCode, c.id)}
                         className="ml-1 text-brightboost-blue hover:text-brightboost-navy"
@@ -211,9 +241,11 @@ const ClassesPage: React.FC = () => {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("teacher.classes.createTitle")}</DialogTitle>
+            <DialogTitle>
+              {t(isHome ? "teacher.classes.createTitleHome" : "teacher.classes.createTitle")}
+            </DialogTitle>
             <DialogDescription>
-              {t("teacher.classes.createDesc")}
+              {t(isHome ? "teacher.classes.createDescHome" : "teacher.classes.createDesc")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -224,11 +256,37 @@ const ClassesPage: React.FC = () => {
             className="space-y-4"
           >
             <div>
+              <span className="block text-sm font-medium text-gray-700 mb-1">
+                {t("teacher.classes.groupTypeLabel")}
+              </span>
+              <div className="flex gap-2" role="group">
+                {(["class", "home"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setNewKind(k)}
+                    aria-pressed={newKind === k}
+                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                      newKind === k
+                        ? "border-brightboost-blue bg-brightboost-blue text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {t(
+                      k === "home"
+                        ? "teacher.classes.groupTypeHome"
+                        : "teacher.classes.groupTypeClass",
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label
                 htmlFor="className"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("teacher.classes.className")}
+                {t(isHome ? "teacher.classes.classNameHome" : "teacher.classes.className")}
               </label>
               <input
                 id="className"
@@ -236,7 +294,11 @@ const ClassesPage: React.FC = () => {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
-                placeholder={t("teacher.classes.classNamePlaceholder")}
+                placeholder={t(
+                  isHome
+                    ? "teacher.classes.classNamePlaceholderHome"
+                    : "teacher.classes.classNamePlaceholder",
+                )}
               />
             </div>
             <div className="mb-4">
@@ -269,7 +331,9 @@ const ClassesPage: React.FC = () => {
                 disabled={!newName.trim() || creating}
                 className="px-4 py-2 text-sm text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50"
               >
-                {creating ? t("teacher.classes.creating") : t("teacher.classes.createClass")}
+                {creating
+                  ? t("teacher.classes.creating")
+                  : t(isHome ? "teacher.classes.createGroupHome" : "teacher.classes.createClass")}
               </button>
             </DialogFooter>
           </form>

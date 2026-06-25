@@ -483,7 +483,17 @@
       "createClass": "Create Class",
       "deleteClass": "Delete",
       "deleteTitle": "Delete Class",
-      "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? All students will be unenrolled and all sessions will be removed. This cannot be undone."
+      "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? All students will be unenrolled and all sessions will be removed. This cannot be undone.",
+      "children": "{{count}} children",
+      "familyCode": "Family Code:",
+      "groupTypeLabel": "Group type",
+      "groupTypeClass": "Class",
+      "groupTypeHome": "Home",
+      "createTitleHome": "Create a home group",
+      "createDescHome": "Give your home group a name. Your child joins using the generated code.",
+      "classNameHome": "Home group name",
+      "classNamePlaceholderHome": "e.g. The Garcia Kids",
+      "createGroupHome": "Create Home Group"
     },
     "classDetail": {
       "students": "{{count}} students",
@@ -1709,6 +1719,11 @@
       "heading": "I'm a Teacher",
       "blurb": "Bring K-8 STEM learning into your classroom.",
       "cta": "Sign up as a Teacher"
+    },
+    "parentCard": {
+      "heading": "I'm a Parent",
+      "blurb": "Set up a home group and learn together with your child.",
+      "cta": "Sign up & start at home"
     },
     "studentCard": {
       "heading": "I'm a Student",

@@ -1051,7 +1051,17 @@
       "createClass": "Tạo lớp",
       "deleteClass": "Xóa",
       "deleteTitle": "Xóa lớp",
-      "deleteConfirm": "Bạn có chắc muốn xóa \"{{name}}\"? Tất cả học sinh sẽ bị hủy đăng ký và tất cả buổi học sẽ bị xóa. Không thể hoàn tác."
+      "deleteConfirm": "Bạn có chắc muốn xóa \"{{name}}\"? Tất cả học sinh sẽ bị hủy đăng ký và tất cả buổi học sẽ bị xóa. Không thể hoàn tác.",
+      "children": "{{count}} children",
+      "familyCode": "Family Code:",
+      "groupTypeLabel": "Group type",
+      "groupTypeClass": "Class",
+      "groupTypeHome": "Home",
+      "createTitleHome": "Create a home group",
+      "createDescHome": "Give your home group a name. Your child joins using the generated code.",
+      "classNameHome": "Home group name",
+      "classNamePlaceholderHome": "e.g. The Garcia Kids",
+      "createGroupHome": "Create Home Group"
     },
 
     "classDetail": {

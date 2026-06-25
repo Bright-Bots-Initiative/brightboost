@@ -359,6 +359,7 @@ model Course {
   joinCode        String   @unique @default(cuid())
   teacherId       String
   gradeBand       String   @default("k2") // "k2" or "g3_5"
+  kind            String   @default("class") // "class" (teacher) or "home" (parent home group)
   defaultLanguage String   @default("en") // class-level language ("en" or "es")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

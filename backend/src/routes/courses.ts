@@ -15,6 +15,9 @@ const createCourseSchema = z.object({
   name: z.string().min(1).max(200),
   defaultLanguage: z.enum(["en", "es"]).optional(),
   gradeBand: z.enum(["k2", "g3_5"]).optional(),
+  // "class" = teacher class (default), "home" = parent home group. A parent is
+  // a teacher whose group is a home group — no separate role.
+  kind: z.enum(["class", "home"]).optional(),
 });
 
 const setupIconsSchema = z.object({
@@ -52,6 +55,7 @@ router.get(
       id: c.id,
       name: c.name,
       joinCode: c.joinCode,
+      kind: c.kind,
       enrollmentCount: c._count.enrollments,
       createdAt: c.createdAt,
     }));
@@ -83,6 +87,7 @@ router.post(
         teacherId: req.user!.id,
         joinCode,
         gradeBand: parsed.data.gradeBand || "k2",
+        kind: parsed.data.kind || "class",
         defaultLanguage: parsed.data.defaultLanguage || "en",
       },
     });
@@ -90,6 +95,7 @@ router.post(
     trackServer(req.user!.id, "class_created", {
       class_id: course.id,
       grade_band: course.gradeBand,
+      group_kind: course.kind,
     });
 
     res.status(201).json({
@@ -97,6 +103,7 @@ router.post(
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
+      kind: course.kind,
       enrollmentCount: 0,
       createdAt: course.createdAt,
     });
@@ -130,6 +137,7 @@ router.get(
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
+      kind: course.kind,
       enrollmentCount: course.enrollments.length,
       students: course.enrollments.map((e) => ({
         id: e.student.id,

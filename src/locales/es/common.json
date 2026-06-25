@@ -1055,7 +1055,17 @@
       "createClass": "Crear Clase",
       "deleteClass": "Eliminar",
       "deleteTitle": "Eliminar Clase",
-      "deleteConfirm": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Todos los estudiantes serán dados de baja y todas las sesiones serán eliminadas. Esta acción no se puede deshacer."
+      "deleteConfirm": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Todos los estudiantes serán dados de baja y todas las sesiones serán eliminadas. Esta acción no se puede deshacer.",
+      "children": "{{count}} niños",
+      "familyCode": "Código familiar:",
+      "groupTypeLabel": "Tipo de grupo",
+      "groupTypeClass": "Clase",
+      "groupTypeHome": "Casa",
+      "createTitleHome": "Crear un grupo en casa",
+      "createDescHome": "Dale un nombre a tu grupo en casa. Tu hijo se une con el código generado.",
+      "classNameHome": "Nombre del grupo en casa",
+      "classNamePlaceholderHome": "p. ej. Los niños García",
+      "createGroupHome": "Crear grupo en casa"
     },
 
     "classDetail": {
