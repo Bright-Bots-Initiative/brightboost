@@ -48,6 +48,7 @@ type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "ex
 
 const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
+const playPhases = new Set(["tutorial", "guided", "main"]);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Map Data (build-in maps for K2)
@@ -430,11 +431,11 @@ function MazeMapsCore({
 
   // Auto-advance on level complete
   useEffect(() => {
-    if (levelComplete) {
+    if (levelComplete && playPhases.has(phase)) {
       const t = setTimeout(advancePhase, 1500);
       return () => clearTimeout(t);
     }
-  }, [levelComplete, advancePhase]);
+  }, [levelComplete, phase, advancePhase]);
 
   // ── Watch Pattern phase: auto-cycle sweeper ──
   const watchTimerRef = useRef<ReturnType<typeof setInterval>>();
