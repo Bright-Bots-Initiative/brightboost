@@ -376,8 +376,20 @@ export function applyG35StoryOverrides(
 // 
 // 
 
+interface SweeperStyle {
+  color: string;
+  icon: string;
+  label: string;
+}
+
+const SWEEPER_STYLES: Record<string, SweeperStyle> = {
+  loop: { icon: "🔴", color: "text-red-500", label: "Loop Sweeper" },
+  linear: { icon: "🟢", color: "text-blue-500", label: "Line Sweeper" },
+};
+
 export interface SweepConfig {
   id: string;
+  type: keyof typeof SWEEPER_STYLES;
   loop: [number, number][];
   startIndex: number;
 }
@@ -403,6 +415,7 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     safePads: [],
     sweepers: [],
   },
+
   guided: {
     id: "guided", rows: 6, cols: 6,
     start: [5, 0], goal: [5, 5],
@@ -410,10 +423,11 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     orbs: [[2, 0], [2, 3], [3, 5], [5, 2]],
     safePads: [[1, 3]],
     sweepers: [
-      { id: "s1", loop: [[3, 3], [3, 2], [2, 2], [2, 3], [3, 3]], startIndex: 0 },
-      { id: "s2", loop: [[0, 4], [1, 4], [2, 4], [3, 4], [2, 4], [1, 4], [0, 4]], startIndex: 0 },
+      { id: "s1", type: "loop", loop: [[3, 3], [3, 2], [2, 2], [2, 3], [3, 3]], startIndex: 0 },
+      { id: "s2", type: "linear", loop: [[0, 4], [1, 4], [2, 4], [3, 4], [2, 4], [1, 4], [0, 4]], startIndex: 0 },
     ],
   },
+  
   main: {
     id: "main", rows: 7, cols: 7,
     start: [6, 0], goal: [5, 3],
@@ -421,10 +435,12 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     orbs: [[3, 0], [1, 3], [2, 6], [4, 4], [6, 2], [5, 6]],
     safePads: [[2, 1], [0, 6]],
     sweepers: [
-      { id: "s1", loop: [[5, 1], [5, 0], [4, 0], [4, 1], [5, 1]], startIndex: 0 },
-      { id: "s2", loop: [[1, 2], [2, 2], [2, 3], [1, 3], [1, 2]], startIndex: 0 },
-      { id: "s3", loop: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [0, 5]], startIndex: 0 },
-      { id: "s4", loop: [[6, 6], [6, 5], [5, 5], [5, 6], [6, 6]], startIndex: 0 },
+      { id: "s1", type: "loop", loop: [[5, 1], [5, 0], [4, 0], [4, 1], [5, 1]], startIndex: 0 },
+      { id: "s2", type: "loop", loop: [[1, 2], [2, 2], [2, 3], [1, 3], [1, 2]], startIndex: 0 },
+      { id: "s3", type: "linear", 
+        loop: [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [0, 5]], 
+        startIndex: 0 },
+      { id: "s4", type: "loop", loop: [[6, 6], [6, 5], [5, 5], [5, 6], [6, 6]], startIndex: 0 },
     ],
   },
 };
