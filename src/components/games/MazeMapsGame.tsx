@@ -13,6 +13,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
+import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -49,10 +50,10 @@ const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Map Data
+// Map Data (build-in maps for K2)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MAPS: Record<string, MazeMapConfig> = {
+export const MAPS_k2: Record<string, MazeMapConfig> = {
   tutorial: {
     id: "tutorial", rows: 4, cols: 4,
     start: [3, 0], goal: [0, 3],
@@ -231,7 +232,12 @@ function MazeControls({ onMove, disabled }: { onMove: (dir: Dir) => void; disabl
 // Core Game Component
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) {
+function MazeMapsCore({ 
+    maps, 
+    onFinish }: { 
+        maps: Record<string, MazeMapConfig>, 
+        onFinish: (result: GameResult) => void 
+    }) {
   const { t } = useTranslation();
 
   const [phase, setPhase] = useState<GamePhase>("intro");
@@ -251,11 +257,11 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
   const [levelComplete, setLevelComplete] = useState(false);
   const [animating, setAnimating] = useState(false);
 
-  const map = MAPS[mapKey];
+  const map = maps[mapKey];
 
   // ── Initialize map ──
   const initMap = useCallback((key: string) => {
-    const m = MAPS[key];
+    const m = maps[key];
     setMapKey(key);
     setPlayerPos([...m.start]);
     setCheckpoint([...m.start]);
@@ -268,7 +274,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     const indices: Record<string, number> = {};
     m.sweepers.forEach((s) => { indices[s.id] = s.startIndex; });
     setSweeperIndices(indices);
-  }, []);
+  }, [maps]);
 
   // Init on phase change
   useEffect(() => {
@@ -439,7 +445,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     watchTimerRef.current = setInterval(() => {
       setSweeperIndices((prev) => {
         const next: Record<string, number> = {};
-        MAPS.guided.sweepers.forEach((s) => {
+        maps.guided.sweepers.forEach((s) => {
           const idx = (prev[s.id] ?? s.startIndex) + 1;
           next[s.id] = idx % (s.loop.length - 1);
         });
@@ -448,7 +454,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
       setWatchCycles((c) => c + 1);
     }, 800);
     return () => clearInterval(watchTimerRef.current);
-  }, [phase]);
+  }, [phase, maps]);
 
   // ── Render ──
 
@@ -486,8 +492,8 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
           </p>
         </div>
         <MazeBoard
-          map={MAPS.guided}
-          playerPos={MAPS.guided.start}
+          map={maps.guided}
+          playerPos={maps.guided.start}
           collectedOrbs={new Set()}
           sweeperPositions={sweeperPositions}
         />
@@ -661,11 +667,16 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function MazeMapsGame({
-  onComplete,
+    config,
+    onComplete,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
-}) {
+}) 
+{
+    const band = getGradeBand(config);
+    const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
+
   return (
     <GameShell
       gameKey="maze_maps"
@@ -673,7 +684,7 @@ export default function MazeMapsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore maps={maps} onFinish={onFinish} />}
     </GameShell>
   );
 }
