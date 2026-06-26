@@ -431,10 +431,13 @@ function MazeMapsCore({
 
   // Auto-advance on level complete
   useEffect(() => {
-    if (levelComplete && playPhases.has(phase)) {
-      const t = setTimeout(advancePhase, 1500);
-      return () => clearTimeout(t);
-    }
+    if (!levelComplete) return;
+    if (!playPhases.has(phase)) return;
+    const t = setTimeout(() => {
+      advancePhase();
+      setLevelComplete(false);
+    }, 1500);
+    return () => clearTimeout(t);
   }, [levelComplete, phase, advancePhase]);
 
   // ── Watch Pattern phase: auto-cycle sweeper ──
