@@ -125,6 +125,35 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
   );
 }
 
+
+// ── In Game Progress HUD ────────────────────────────────────────────
+
+export function ProgressHUD({step, totalLevels}: {step:number, totalLevels: number}) {
+  return (
+    <div 
+      className = "flex items-center justify-center gap-1.5"
+      aria-hidden="true"
+    >
+      {Array.from({ length: totalLevels}).map((_, i) => {
+        const n = i + 1;
+        return (
+          <span 
+            key = {n}
+            className={`rounded-full transition-all duration-300 ${
+              i === step
+              ? "w-6 h-2.5 bg-brightboost-blue"
+              : i < step
+                ? "w-2.5 h-2.5 bg-brightboost-green"
+                : "w-2.5 h-2.5 bg-slate-200" 
+            }`}
+          />
+        );
+
+      })}
+      </div>
+  )
+}
+
 // ── Results screen (own component so hooks are never conditional) ──────────
 
 function GameResultsView({
