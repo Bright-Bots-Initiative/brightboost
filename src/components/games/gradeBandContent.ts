@@ -16,31 +16,92 @@ export function getGradeBand(config?: any): GradeBand {
 // ── Gotcha Gears content ────────────────────────────────────────────────
 
 export interface GearRoundContent {
-  clueText: string;
-  correctLabel: string;
-  distractors: string[];
-  hint?: string;
+  clueText: Record<string, string>;
+  correctLabel: Record<string, string>;
+  distractors: Record<string,string[]>;
+  hint?: Record<string, string>;
 }
 
+// TODO: add translations
 export const GOTCHA_GEARS_CONTENT: Record<GradeBand, GearRoundContent[]> = {
   k2: [
-    { clueText: "I help a robot think and learn", correctLabel: "AI Brain", distractors: ["Hammer", "Paintbrush"], hint: "Think about what makes a robot smart!" },
-    { clueText: "I store information like a library", correctLabel: "Memory Chip", distractors: ["Wheel", "Speaker"], hint: "Where do computers keep things?" },
-    { clueText: "I tell the robot what to do step by step", correctLabel: "Program", distractors: ["Snack", "Balloon"], hint: "It's like a recipe for computers!" },
-    { clueText: "I help a robot see the world", correctLabel: "Camera Sensor", distractors: ["Pillow", "Crayon"], hint: "What do YOUR eyes do?" },
-    { clueText: "I protect the robot from mistakes", correctLabel: "Debug Tool", distractors: ["Umbrella", "Toy Car"], hint: "Finding and fixing errors!" },
-    { clueText: "I move the robot's arms and wheels", correctLabel: "Motor", distractors: ["Book", "Flower"], hint: "What makes things spin and move?" },
-    { clueText: "I let robots talk to each other", correctLabel: "Antenna", distractors: ["Spoon", "Hat"], hint: "Think about how signals travel!" },
+    { clueText: { en: "I help a robot think and learn" }, 
+      correctLabel: { en: "AI Brain" }, 
+      distractors: { en: ["Hammer", "Paintbrush"] }, 
+      hint: { en: "Think about what makes a robot smart!" }
+    },
+    { clueText: { en: "I store information like a library" },
+      correctLabel: { en: "Memory Chip" }, 
+      distractors: { en: ["Wheel", "Speaker"] }, 
+      hint: { en: "Where do computers keep things?" }
+    },
+    { clueText: { en: "I tell the robot what to do step by step" }, 
+      correctLabel: { en: "Program" }, 
+      distractors: { en: ["Snack", "Balloon"] }, 
+      hint: {en: "It's like a recipe for computers!" }
+    },
+    { clueText: { en: "I help a robot see the world" }, 
+      correctLabel: { en: "Camera Sensor" }, 
+      distractors: { en: ["Pillow", "Crayon"] }, 
+      hint: { en: "What do YOUR eyes do?" }
+    },
+    { clueText: { en: "I protect the robot from mistakes" }, 
+      correctLabel: { en: "Debug Tool" }, 
+      distractors: { en: ["Umbrella", "Toy Car"] }, 
+      hint: { en: "Finding and fixing errors!" }
+    },
+    { clueText: { en: "I move the robot's arms and wheels" }, 
+      correctLabel: { en: "Motor" }, 
+      distractors: { en: ["Book", "Flower"] }, 
+      hint: { en: "What makes things spin and move?" }
+    },
+    { clueText: { en: "I let robots talk to each other" }, 
+      correctLabel: { en: "Antenna" }, 
+      distractors: { en: ["Spoon", "Hat"] }, 
+      hint: { en: "Think about how signals travel!" }
+    },
   ],
   g3_5: [
-    { clueText: "I process data to make decisions", correctLabel: "CPU", distractors: ["Battery", "Speaker", "Fan"], hint: "The brain of a computer!" },
-    { clueText: "I store data even when power is off", correctLabel: "Hard Drive", distractors: ["Screen", "Keyboard", "Mouse"], hint: "Where do files live permanently?" },
-    { clueText: "I detect changes in temperature, light, or motion", correctLabel: "Sensor", distractors: ["Printer", "Charger", "Cable"], hint: "How do robots know what's around them?" },
-    { clueText: "I convert electrical signals into movement", correctLabel: "Actuator", distractors: ["Microphone", "Filter", "Lens"], hint: "What turns signals into action?" },
-    { clueText: "I repeat a set of instructions until a condition is met", correctLabel: "Loop", distractors: ["Variable", "Comment", "Import"], hint: "Think about doing something over and over!" },
-    { clueText: "I protect a system by checking inputs before processing", correctLabel: "Validation", distractors: ["Encryption", "Compression", "Rendering"], hint: "Making sure data is correct before using it!" },
-    { clueText: "I allow two systems to communicate using a shared protocol", correctLabel: "API", distractors: ["URL", "DNS", "RAM"], hint: "A bridge between programs!" },
-    { clueText: "I find and fix errors in code by testing step by step", correctLabel: "Debugging", distractors: ["Compiling", "Deploying", "Formatting"], hint: "Like being a code detective!" },
+    { clueText: { en: "I process data to make decisions" }, 
+      correctLabel: { en: "CPU" }, 
+      distractors: { en: ["Battery", "Speaker", "Fan"] }, 
+      hint: { en: "The brain of a computer!" }
+    },
+    { clueText: { en: "I store data even when power is off" }, 
+      correctLabel: { en: "Hard Drive" }, 
+      distractors: { en: ["Screen", "Keyboard", "Mouse"] }, 
+      hint: { en: "Where do files live permanently?" }
+    },
+    { clueText: { en: "I detect changes in temperature, light, or motion" }, 
+      correctLabel: { en: "Sensor" }, 
+      distractors: { en: ["Printer", "Charger", "Cable"] }, 
+      hint: { en: "How do robots know what's around them?" }
+    },
+    { clueText: { en: "I convert electrical signals into movement" }, 
+      correctLabel: { en: "Actuator" }, 
+      distractors: { en: ["Microphone", "Filter", "Lens"] }, 
+      hint: { en: "What turns signals into action?" }
+    },
+    { clueText: { en: "I repeat a set of instructions until a condition is met" }, 
+      correctLabel: { en: "Loop" }, 
+      distractors: { en: ["Variable", "Comment", "Import"] }, 
+      hint: { en: "Think about doing something over and over!" }
+    },
+    { clueText: { en: "I protect a system by checking inputs before processing" }, 
+      correctLabel: { en: "Validation" }, 
+      distractors: { en: ["Encryption", "Compression", "Rendering"] }, 
+      hint: { en: "Making sure data is correct before using it!" }
+    },
+    { clueText: { en: "I allow two systems to communicate using a shared protocol" }, 
+      correctLabel: { en: "API" }, 
+      distractors: { en: ["URL", "DNS", "RAM"] }, 
+      hint: { en: "A bridge between programs!" }
+    },
+    { clueText: { en: "I find and fix errors in code by testing step by step" }, 
+      correctLabel: { en: "Debugging" }, 
+      distractors: { en: ["Compiling", "Deploying", "Formatting"] }, 
+      hint: { en: "Like being a code detective!" }
+    },
   ],
 };
 
@@ -73,33 +134,102 @@ export const BOOST_PATH_LEVELS: Record<GradeBand, PathLevel[]> = {
 // ── Bounce & Buds content ───────────────────────────────────────────────
 
 export interface BounceRoundContent {
-  clueText: string;
-  correctLabel: string;
-  distractors: string[];
-  theme: string;
+  clueText: Record<string, string>;
+  correctLabel: Record<string, string>;
+  distractors: Record<string, string[]>;
+  theme: Record<string, string>;
 }
 
+// TODO: add translations
 export const BOUNCE_BUDS_ROUNDS: Record<GradeBand, BounceRoundContent[]> = {
   k2: [
-    { clueText: "Which one helps a plant grow?", correctLabel: "Water", distractors: ["Rock", "Metal"], theme: "plant-needs" },
-    { clueText: "Which part drinks water from the soil?", correctLabel: "Root", distractors: ["Cloud", "Button"], theme: "plant-parts" },
-    { clueText: "Plants use this to make food!", correctLabel: "Sunlight", distractors: ["Wind", "Ice"], theme: "plant-needs" },
-    { clueText: "This part helps make food for the plant.", correctLabel: "Leaf", distractors: ["Sand", "Coin"], theme: "plant-parts" },
-    { clueText: "Roots grow in this!", correctLabel: "Soil", distractors: ["Glass", "Plastic"], theme: "plant-needs" },
-    { clueText: "Which one is a tiny living helper?", correctLabel: "Microbe", distractors: ["Brick", "Wire"], theme: "tiny-living-things" },
-    { clueText: "This part holds the plant up tall!", correctLabel: "Stem", distractors: ["Rope", "Tape"], theme: "plant-parts" },
-    { clueText: "Every living thing is made of these!", correctLabel: "Cell", distractors: ["Pixel", "Dot"], theme: "tiny-living-things" },
+    { clueText: { en: "Which one helps a plant grow?" }, 
+      correctLabel: { en: "Water" }, 
+      distractors: { en: ["Rock", "Metal"] }, 
+      theme: { en: "plant-needs" }
+    },
+    { clueText: { en: "Which part drinks water from the soil?" }, 
+      correctLabel: { en: "Root" }, 
+      distractors: { en: ["Cloud", "Button"] }, 
+      theme: { en: "plant-parts" }
+    },
+    { clueText: { en: "Plants use this to make food!" }, 
+      correctLabel: { en: "Sunlight" }, 
+      distractors: { en: ["Wind", "Ice"] }, 
+      theme: { en: "plant-needs" }
+    },
+    { clueText: { en: "This part helps make food for the plant." }, 
+      correctLabel: { en: "Leaf" }, 
+      distractors: { en: ["Sand", "Coin"] }, 
+      theme: { en: "plant-parts" }
+    },
+    { clueText: { en: "Roots grow in this!" }, 
+      correctLabel: { en: "Soil" }, 
+      distractors: { en: ["Glass", "Plastic"] }, 
+      theme: { en: "plant-needs" }
+    },
+    { clueText: { en: "Which one is a tiny living helper?" }, 
+      correctLabel: { en: "Microbe" }, 
+      distractors: { en: ["Brick", "Wire"] }, 
+      theme: { en: "tiny-living-things" }
+    },
+    { clueText: { en: "This part holds the plant up tall!" }, 
+      correctLabel: { en: "Stem" }, 
+      distractors: { en: ["Rope", "Tape"] }, 
+      theme: { en: "plant-parts" }
+    },
+    { clueText: { en: "Every living thing is made of these!" }, 
+      correctLabel: { en: "Cell" }, 
+      distractors: { en: ["Pixel", "Dot"] }, 
+      theme: { en: "tiny-living-things" }
+    },
   ],
   g3_5: [
-    { clueText: "Which process converts sunlight into energy for plants?", correctLabel: "Photosynthesis", distractors: ["Evaporation", "Combustion", "Erosion"], theme: "plant-science" },
-    { clueText: "What gas do plants absorb from the air?", correctLabel: "Carbon Dioxide", distractors: ["Oxygen", "Nitrogen", "Helium"], theme: "plant-science" },
-    { clueText: "Which part of a plant carries water from roots to leaves?", correctLabel: "Xylem", distractors: ["Petal", "Seed", "Bark"], theme: "plant-parts" },
-    { clueText: "What do plants release into the air as a byproduct?", correctLabel: "Oxygen", distractors: ["Carbon Dioxide", "Methane", "Smoke"], theme: "plant-science" },
-    { clueText: "Which organism breaks down dead plants and returns nutrients to soil?", correctLabel: "Decomposer", distractors: ["Predator", "Pollinator", "Parasite"], theme: "ecosystems" },
-    { clueText: "What is the green pigment in leaves called?", correctLabel: "Chlorophyll", distractors: ["Melanin", "Keratin", "Cellulose"], theme: "plant-science" },
-    { clueText: "Which variable would you change in a plant growth experiment?", correctLabel: "Amount of water", distractors: ["Type of ruler", "Color of pot", "Day of week"], theme: "fair-test" },
-    { clueText: "A fair test changes only ONE variable. What stays the same?", correctLabel: "Controlled variables", distractors: ["All variables", "The hypothesis", "The conclusion"], theme: "fair-test" },
-    { clueText: "Plants compete for sunlight. What happens to a plant in shade?", correctLabel: "It grows taller to reach light", distractors: ["It turns blue", "It stops growing roots", "It makes more seeds"], theme: "ecosystems" },
+    { clueText: { en: "Which process converts sunlight into energy for plants?" }, 
+      correctLabel: { en: "Photosynthesis" }, 
+      distractors: { en: ["Evaporation", "Combustion", "Erosion"] }, 
+      theme: { en: "plant-science" }
+    },
+    { clueText: { en: "What gas do plants absorb from the air?" }, 
+      correctLabel: { en: "Carbon Dioxide" }, 
+      distractors: { en: ["Oxygen", "Nitrogen", "Helium"] }, 
+      theme: { en: "plant-science" }
+    },
+    { clueText: { en: "Which part of a plant carries water from roots to leaves?" }, 
+      correctLabel: { en: "Xylem" }, 
+      distractors: { en: ["Petal", "Seed", "Bark"] }, 
+      theme: { en: "plant-parts" }
+    },
+    { clueText: { en: "What do plants release into the air as a byproduct?" }, 
+      correctLabel: { en: "Oxygen" }, 
+      distractors: { en: ["Carbon Dioxide", "Methane", "Smoke"] }, 
+      theme: { en: "plant-science" }
+    },
+    { clueText: { en: "Which organism breaks down dead plants and returns nutrients to soil?" }, 
+      correctLabel: { en: "Decomposer" }, 
+      distractors: { en: ["Predator", "Pollinator", "Parasite"] }, 
+      theme: { en: "ecosystems" }
+    },
+    { clueText: { en: "What is the green pigment in leaves called?" }, 
+      correctLabel: { en: "Chlorophyll" }, 
+      distractors: { en: ["Melanin", "Keratin", "Cellulose"] }, 
+      theme: { en: "plant-science" }
+    },
+    { clueText: { en: "Which variable would you change in a plant growth experiment?" }, 
+      correctLabel: { en: "Amount of water" }, 
+      distractors: { en: ["Type of ruler", "Color of pot", "Day of week"] }, 
+      theme: { en: "fair-test" }
+    },
+    { clueText: { en: "A fair test changes only ONE variable. What stays the same?" }, 
+      correctLabel: { en: "Controlled variables" }, 
+      distractors: { en: ["All variables", "The hypothesis", "The conclusion"] }, 
+      theme: { en: "fair-test" }
+    },
+    { clueText: { en: "Plants compete for sunlight. What happens to a plant in shade?" }, 
+      correctLabel: { en: "It grows taller to reach light" }, 
+      distractors: { en: ["It turns blue", "It stops growing roots", "It makes more seeds"] }, 
+      theme: { en: "ecosystems" }
+    },
   ],
 };
 
