@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
+import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy, Flame } from "lucide-react";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
@@ -16,6 +16,7 @@ import { useReducedGameEffects } from "./useReducedGameEffects";
 import { ControlInstructions } from "./ControlInstructions";
 import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructionsData";
 import "./game-effects.css";
+
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -127,31 +128,90 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
 
 
 // ── In Game Progress HUD ────────────────────────────────────────────
-
-export function ProgressHUD({step, totalLevels}: {step:number, totalLevels: number}) {
+export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: number,}){
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+    }
+    const handleResize = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  const minLeftPx = 4;
+  const maxLeftPx = containerWidth - 8;
+  const progress = step / (totalLevels - 1);
+  const desiredLeftPx = progress * containerWidth;
+  const clampedLeftPx = Math.min(Math.max(desiredLeftPx, minLeftPx), maxLeftPx);
+  
   return (
-    <div 
-      className = "flex items-center justify-center gap-1.5"
-      aria-hidden="true"
-    >
+    <div
+      ref={containerRef}
+      className="relative h-[10px] rounded-full"
+      style={{
+        background: "#FF8C00",
+        padding: "2px",
+      }}
+      >
+       {/*Streak bar body*/}    
+        <div
+        className="w-full h-full rounded-full"
+        style={{
+          backgroundColor: "#94a3b8", // use a dark gray instead
+          padding: "1px",
+        }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-300 ease-in-out"
+            style={{
+              width: `${progress * 100}%`,
+              background:"#FF8C00",
+            }}
+            />
+        </div>
+
+    {/*Dots for each Level*/}
       {Array.from({ length: totalLevels}).map((_, i) => {
-        const n = i + 1;
+        const dotPos = (i / (totalLevels - 1)) * containerWidth;
+        // const n = i + 1;
         return (
           <span 
-            key = {n}
-            className={`rounded-full transition-all duration-300 ${
+            key = {i}
+            className={`absolute rounded-full transition-all duration-300 ${
               i === step
-              ? "w-6 h-2.5 bg-brightboost-blue"
+              ? "w-2.5 h-2.5 bg-red-500"
               : i < step
-                ? "w-2.5 h-2.5 bg-brightboost-green"
+                ? "w-2.5 h-2.5 bg-red-500" //make red when hit
                 : "w-2.5 h-2.5 bg-slate-200" 
             }`}
+            style={{
+            left: dotPos,
+            top: "50%",
+            transform:"translate(-50%, -50%)",
+            }}
           />
         );
-
       })}
+
+      {/*Flame slider icon */}
+      <div 
+        className="absolute z-20"
+        style={{
+          left: clampedLeftPx,
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <Flame className="w-5 h-5 text-red-500 fill-orange-300 drop-shadow-md" />
       </div>
-  )
+  </div>
+  );
 }
 
 // ── Results screen (own component so hooks are never conditional) ──────────
