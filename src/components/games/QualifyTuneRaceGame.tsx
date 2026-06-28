@@ -232,7 +232,7 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
           )}
         </div>
         {/*current progress bar*/}
-        <div className="h-3 bg-slate-200 rounded-full overflow-hidden"> 
+        <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto"> 
           {/* <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-100 rounded-full"
             style={{ width: `${progress * 100}%` }} /> */}
           <ProgressHUD step={step} totalLevels={LEVELS} />
@@ -295,10 +295,11 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
   // ── Phase: results1 ─────────────────────────────────────────────────
   if (phase === "results1" && run1) return (
     <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+      <ProgressHUD step={1} totalLevels={LEVELS} />      
       <h2 className="text-2xl font-extrabold text-amber-900">
         {t("games.qualifyTuneRace.qualifyResults", { defaultValue: "Qualifying Results" })}
       </h2>
-      <ProgressHUD step={1} totalLevels={LEVELS} />
+
       <div className="grid grid-cols-3 gap-3">
         <MetricCard icon={timeIcon(run1.time)} value={`${run1.time}s`}
           label={`⏱️ ${t("games.qualifyTuneRace.time", { defaultValue: "Time" })}`}
@@ -333,11 +334,12 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
         desc: t("games.qualifyTuneRace.steeringDesc", { defaultValue: "Smoother, more predictable turns" }) },
     ];
     return (
-      <div className="slide-up-fade text-center space-y-6 py-6 max-w-lg mx-auto">
+      <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+        <ProgressHUD step={step} totalLevels={LEVELS} />
         <h2 className="text-2xl font-extrabold text-amber-900">
           {t("games.qualifyTuneRace.tuneTitle", { defaultValue: "Pick ONE Upgrade" })}
         </h2>
-        <ProgressHUD step={step} totalLevels={LEVELS} />
+
         <p className="text-base text-slate-600">
           {t("games.qualifyTuneRace.tuneHint", { defaultValue: "Change only one thing — that's how scientists test!" })}
         </p>
@@ -378,11 +380,13 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
       { label: t("games.qualifyTuneRace.smoothness", { defaultValue: "Smoothness" }), icon: "🌊", v1: run1.smoothness, v2: run2.smoothness, unit: "", lb: false },
     ];
     return (
+
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+        <ProgressHUD step={2} totalLevels={LEVELS} />              
         <h2 className="text-2xl font-extrabold text-amber-900">
           {t("games.qualifyTuneRace.compareTitle", { defaultValue: "Run 1 vs Run 2" })}
         </h2>
-        <ProgressHUD step={step} totalLevels={LEVELS} />
+
         <div className="space-y-3">
           {metrics.map((m) => {
             const better = m.lb ? m.v2 < m.v1 : m.v2 > m.v1;
@@ -425,10 +429,11 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
     const answered = exitAnswer !== null, correct = exitAnswer === "one";
     return (
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+      <ProgressHUD step={2} totalLevels={LEVELS} />        
         <h2 className="text-2xl font-extrabold text-amber-900">
           {t("games.qualifyTuneRace.exitQuestion", { defaultValue: "To make a fair test, how many things should you change?" })}
         </h2>
-        <ProgressHUD step={step} totalLevels={LEVELS} />
+   
         <div className="grid gap-3">
           {opts.map((o) => {
             const isSel = exitAnswer === o.key, isCorr = o.key === "one";

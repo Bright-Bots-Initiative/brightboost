@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy, Flame } from "lucide-react";
+import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy, Flame, Check } from "lucide-react";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
@@ -153,18 +153,18 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
   return (
     <div
       ref={containerRef}
-      className="relative h-[10px] rounded-full"
+      className="relative h-[30px] rounded-full"
       style={{
         background: "#FF8C00",
-        padding: "2px",
+        padding: "3px",
       }}
       >
        {/*Streak bar body*/}    
         <div
         className="w-full h-full rounded-full"
         style={{
-          backgroundColor: "#94a3b8", // use a dark gray instead
-          padding: "1px",
+          backgroundColor: "#fed7aa", // use a dark gray instead
+          padding: "2px",
         }}
         >
           <div
@@ -178,26 +178,32 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
 
     {/*Dots for each Level*/}
       {Array.from({ length: totalLevels}).map((_, i) => {
-        const dotPos = (i / (totalLevels - 1)) * containerWidth;
+        const dotPos = (minLeftPx + 11) + (i / (totalLevels - 1)) * (maxLeftPx - (minLeftPx + 18));
         // const n = i + 1;
         return (
           <span 
             key = {i}
-            className={`absolute rounded-full transition-all duration-300 ${
+            className={`absolute rounded-full ${
               i === step
-              ? "w-2.5 h-2.5 bg-red-500"
+              ? "w-5 h-5"
               : i < step
-                ? "w-2.5 h-2.5 bg-red-500" //make red when hit
-                : "w-2.5 h-2.5 bg-slate-200" 
+                ? "w-5 h-5 bg-red-500" //make red when hit
+                : "w-5 h-5 bg-white" 
             }`}
             style={{
             left: dotPos,
             top: "50%",
             transform:"translate(-50%, -50%)",
             }}
-          />
-        );
-      })}
+          >
+          {i < step && (
+            <span className="text-white font-bold">
+            <Check className="w-5 h-4.5" />
+            </span>
+          )}
+        </span>
+       );
+    })}
 
       {/*Flame slider icon */}
       <div 
@@ -208,7 +214,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
           transform: "translate(-50%, -50%)",
         }}
       >
-        <Flame className="w-5 h-5 text-red-500 fill-orange-300 drop-shadow-md" />
+        <Flame className="w-10 h-10 text-red-500 fill-orange-300 drop-shadow-md" />
       </div>
   </div>
   );
