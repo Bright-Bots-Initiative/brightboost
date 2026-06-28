@@ -146,7 +146,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
   
   const minLeftPx = 4;
   const maxLeftPx = containerWidth - 8;
-  const progress = step / (totalLevels - 1);
+  const progress = step / (totalLevels);
   const desiredLeftPx = progress * containerWidth;
   const clampedLeftPx = Math.min(Math.max(desiredLeftPx, minLeftPx), maxLeftPx);
   
@@ -163,7 +163,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
         <div
         className="w-full h-full rounded-full"
         style={{
-          backgroundColor: "#fed7aa", // use a dark gray instead
+          backgroundColor: "#fed7aa",
           padding: "2px",
         }}
         >
@@ -178,8 +178,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
 
     {/*Dots for each Level*/}
       {Array.from({ length: totalLevels}).map((_, i) => {
-        const dotPos = (minLeftPx + 11) + (i / (totalLevels - 1)) * (maxLeftPx - (minLeftPx + 18));
-        // const n = i + 1;
+        const dotPos = (minLeftPx + 11) + (i / (totalLevels)) * (maxLeftPx - (minLeftPx + 18));
         return (
           <span 
             key = {i}
@@ -187,7 +186,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
               i === step
               ? "w-5 h-5"
               : i < step
-                ? "w-5 h-5 bg-red-500" //make red when hit
+                ? "w-5 h-5 bg-red-500"
                 : "w-5 h-5 bg-white" 
             }`}
             style={{

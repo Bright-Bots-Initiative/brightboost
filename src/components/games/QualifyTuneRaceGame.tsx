@@ -17,7 +17,7 @@ interface Obstacle { lane: number; y: number }
 const TRACK_W = 360, TRACK_H = 480, LANE_W = TRACK_W / 3;
 const CAR_W = 48, CAR_H = 64, CONE_SIZE = 36;
 const SCROLL_SPEED = 2.5, TRACK_LENGTH = 3200, BUMP_ZONE = 28;
-const LEVELS = 3; // Account for +1 offset
+const LEVELS = 2;
 
 const OBSTACLES: Obstacle[] = [
   { lane: 1, y: 300 }, { lane: 0, y: 600 }, { lane: 2, y: 900 },
@@ -214,7 +214,6 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
 
   // ── Phase: qualify / race ───────────────────────────────────────────
   if (phase === "qualify" || phase === "race") {
-    //const progress = Math.min(scrollY / TRACK_LENGTH, 1);
     const isRacePhase = phase === "race";
     return (
       <div className="space-y-3">
@@ -231,10 +230,7 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
             </span>
           )}
         </div>
-        {/*current progress bar*/}
         <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto"> 
-          {/* <div className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-100 rounded-full"
-            style={{ width: `${progress * 100}%` }} /> */}
           <ProgressHUD step={step} totalLevels={LEVELS} />
         </div>
         <div ref={wrapperRef} className="mx-auto select-none" style={{ maxWidth: TRACK_W }}>

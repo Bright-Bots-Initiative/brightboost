@@ -12,7 +12,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
+import GameShell, { ProgressHUD, type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -47,6 +47,7 @@ type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "ex
 
 const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
+const LEVELS = 3;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Map Data
@@ -506,6 +507,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     ];
     return (
       <div className="text-center space-y-6 py-8 slide-up-fade max-w-lg mx-auto">
+        <ProgressHUD step={3} totalLevels={LEVELS}/>
         <div className="text-5xl">🤔</div>
         <h3 className="text-xl font-extrabold text-cyan-800">
           {t("games.mazeMaps.exitQuestion", { defaultValue: "Which path is smartest?" })}
@@ -616,6 +618,9 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
           </span>
         )}
       </div>
+      <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+          <ProgressHUD step={phase === "tutorial" ? 0 : phase === "guided" ? 1 : 2} totalLevels={LEVELS}/>
+        </div>
 
       {/* Board */}
       <MazeBoard
