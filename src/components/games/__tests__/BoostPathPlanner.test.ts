@@ -67,4 +67,20 @@ describe("runBoostProgram", () => {
     const result = runBoostProgram(LEVEL_1, ["R", "F"]);
     expect(result.crashed).toBe(true);
   });
+
+  it("reports failedAt = the index of the colliding step (the bug)", () => {
+    // ["F"] collides immediately at index 0 (wall at (1,3)).
+    expect(runBoostProgram(LEVEL_1, ["F"]).failedAt).toBe(0);
+    // ["R","F"] turns, then collides out of bounds on the second command.
+    expect(runBoostProgram(LEVEL_1, ["R", "F"]).failedAt).toBe(1);
+  });
+
+  it("reports failedAt = null when there is no collision", () => {
+    // Reaches the goal — no bug.
+    expect(
+      runBoostProgram(LEVEL_1, ["L", "F", "F", "F", "R", "F", "F", "F"]).failedAt,
+    ).toBeNull();
+    // Runs cleanly but stops short — still no collision.
+    expect(runBoostProgram(LEVEL_1, ["L", "F"]).failedAt).toBeNull();
+  });
 });
