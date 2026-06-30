@@ -151,6 +151,99 @@ router.get(
 );
 
 // ---------------------------------------------------------------------------
+// Teacher: "ready for a nudge" — learners who could use some encouragement.
+//
+// Derived purely from Progress (no new signal, no schema): a learner shows up
+// when they have an activity that has sat IN_PROGRESS longer than a threshold
+// (?staleDays=, default 3). This is intentionally framed as gentle
+// encouragement — never "stuck"/"behind". Names come from the teacher's own
+// roster (no email); this endpoint is teacher-and-owner only.
+// ---------------------------------------------------------------------------
+
+router.get(
+  "/teacher/courses/:courseId/attention",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const course = await prisma.course.findFirst({
+      where: { id: req.params.courseId, teacherId: req.user!.id },
+      select: { id: true },
+    });
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Bounded so a bad query can't ask for "0 days" (everyone) or an absurd
+    // window. Default 3 days.
+    const rawDays = Number(req.query.staleDays);
+    const staleDays =
+      Number.isFinite(rawDays) && rawDays >= 1 && rawDays <= 60
+        ? Math.floor(rawDays)
+        : 3;
+    const cutoff = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000);
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId: course.id },
+      select: { studentId: true },
+    });
+    const studentIds = enrollments.map((e) => e.studentId);
+    if (studentIds.length === 0) {
+      return res.json({ staleDays, students: [] });
+    }
+
+    // Oldest-first so the first row kept per student is their most stale one.
+    const stale = await prisma.progress.findMany({
+      where: {
+        studentId: { in: studentIds },
+        status: "IN_PROGRESS",
+        updatedAt: { lt: cutoff },
+      },
+      select: {
+        studentId: true,
+        moduleSlug: true,
+        activityId: true,
+        updatedAt: true,
+        User: { select: { name: true } },
+      },
+      orderBy: { updatedAt: "asc" },
+    });
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const byStudent = new Map<
+      string,
+      {
+        studentId: string;
+        studentName: string;
+        moduleSlug: string;
+        activityId: string;
+        lastActiveAt: Date;
+        daysSinceActive: number;
+        inProgressCount: number;
+      }
+    >();
+    for (const p of stale) {
+      const existing = byStudent.get(p.studentId);
+      if (existing) {
+        existing.inProgressCount += 1;
+        continue;
+      }
+      byStudent.set(p.studentId, {
+        studentId: p.studentId,
+        studentName: p.User?.name ?? "",
+        moduleSlug: p.moduleSlug,
+        activityId: p.activityId,
+        lastActiveAt: p.updatedAt,
+        daysSinceActive: Math.floor((now - p.updatedAt.getTime()) / dayMs),
+        inProgressCount: 1,
+      });
+    }
+
+    res.json({ staleDays, students: [...byStudent.values()] });
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Teacher: update course
 // ---------------------------------------------------------------------------
 

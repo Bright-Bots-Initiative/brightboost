@@ -1114,7 +1114,18 @@
       "courseNotFound": "Curso no encontrado",
       "failedLoad": "Error al cargar detalles del curso",
       "notFound": "Esta clase ya no existe. Es posible que haya sido eliminada.",
-      "backToClasses": "Volver a Clases"
+      "backToClasses": "Volver a Clases",
+      "attention": {
+        "title": "Listos para un empujoncito",
+        "desc": "Estos estudiantes llevan un rato en la misma actividad. Un poco de ánimo hace mucho.",
+        "empty": "¡Todos avanzan bien — no hace falta ningún empujoncito por ahora! 🎉",
+        "lastActive": "Última actividad hace {{count}}+ días",
+        "more": "+{{count}} más en progreso"
+      },
+      "made": {
+        "title": "Lo que han creado",
+        "empty": "Aún no se ha compartido ninguna creación."
+      }
     },
 
     "resources": {

@@ -541,7 +541,18 @@
       "courseNotFound": "Course not found",
       "failedLoad": "Failed to load course details",
       "notFound": "This class no longer exists. It may have been deleted.",
-      "backToClasses": "Back to Classes"
+      "backToClasses": "Back to Classes",
+      "attention": {
+        "title": "Ready for a nudge",
+        "desc": "These learners have been on the same activity for a while. A little encouragement goes a long way.",
+        "empty": "Everyone's moving along nicely — no nudges needed right now. 🎉",
+        "lastActive": "Last active {{count}}+ days ago",
+        "more": "+{{count}} more in progress"
+      },
+      "made": {
+        "title": "What they've made",
+        "empty": "No creations shared yet."
+      }
     },
     "resources": {
       "title": "Resource Hub",

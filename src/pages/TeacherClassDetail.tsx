@@ -14,8 +14,13 @@ import {
   Smile,
   ClipboardCheck,
   Loader2,
+  Sparkles,
+  Palette,
 } from "lucide-react";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
+import CreationStatusChip, {
+  type CreationStatus,
+} from "@/components/creations/CreationStatusChip";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +43,34 @@ interface CourseDetail {
   enrollmentCount: number;
   students: { id: string; name: string; email: string; enrolledAt: string }[];
   createdAt: string;
+}
+
+// Phase 0 — "ready for a nudge": gentle, encouragement-first reframe derived
+// from Progress (see GET /teacher/courses/:id/attention). Never "stuck"/"behind".
+interface AttentionStudent {
+  studentId: string;
+  studentName: string;
+  moduleSlug: string;
+  activityId: string;
+  lastActiveAt: string;
+  daysSinceActive: number;
+  inProgressCount: number;
+}
+
+interface AttentionReport {
+  staleDays: number;
+  students: AttentionStudent[];
+}
+
+// Phase 0 — recent-creation strip ("what they've made"), from GET /creations.
+interface RecentCreation {
+  id: string;
+  type: string;
+  title: string | null;
+  status: CreationStatus;
+  encouragements: number;
+  authorId: string;
+  authorName: string;
 }
 
 interface AssignmentWithStats {
@@ -151,6 +184,10 @@ const TeacherClassDetail: React.FC = () => {
   // Assignments with stats
   const [assignments, setAssignments] = useState<AssignmentWithStats[]>([]);
 
+  // Encouragement-first reframe: who's ready for a nudge + what they've made
+  const [attention, setAttention] = useState<AttentionReport | null>(null);
+  const [creations, setCreations] = useState<RecentCreation[]>([]);
+
   // Pulse summary
   const [pulse, setPulse] = useState<PulseSummary | null>(null);
 
@@ -193,13 +230,15 @@ const TeacherClassDetail: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
-        const [courseData, assignmentData, pulseData, benchmarkData, templateData, growthData] = await Promise.all([
+        const [courseData, assignmentData, pulseData, benchmarkData, templateData, growthData, attentionData, creationData] = await Promise.all([
           api.get(`/teacher/courses/${id}`),
           api.get(`/teacher/courses/${id}/assignments`),
           api.get(`/teacher/courses/${id}/pulse/summary`),
           api.get(`/teacher/courses/${id}/benchmarks`).catch(() => []),
           api.get(`/teacher/benchmark-templates`).catch(() => []),
           api.get(`/teacher/courses/${id}/benchmarks/growth`).catch(() => null),
+          api.get(`/teacher/courses/${id}/attention`).catch(() => null),
+          api.get(`/creations?courseId=${id}`).catch(() => []),
         ]);
         setCourse(courseData);
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
@@ -207,6 +246,8 @@ const TeacherClassDetail: React.FC = () => {
         setBenchmarks(Array.isArray(benchmarkData) ? benchmarkData : []);
         setBenchmarkTemplates(Array.isArray(templateData) ? templateData : []);
         setGrowth(growthData);
+        setAttention(attentionData);
+        setCreations(Array.isArray(creationData) ? creationData : []);
       } catch (err) {
         const is404 = (err instanceof ApiError && err.status === 404) ||
           (err instanceof Error && (/404/.test(err.message) || /not found/i.test(err.message)));
@@ -454,7 +495,90 @@ const TeacherClassDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Encouragement-first reframe (Phase 0): who's ready for a nudge and
+          what they've made lead the page; the completion/benchmark widgets are
+          kept below, de-emphasized. */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-brightboost-navy mb-1 flex items-center">
+          <Sparkles className="w-5 h-5 mr-2 text-amber-500" />
+          {t("teacher.classDetail.attention.title")}
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          {t("teacher.classDetail.attention.desc")}
+        </p>
+        {!attention || attention.students.length === 0 ? (
+          <p className="text-sm text-gray-600">
+            {t("teacher.classDetail.attention.empty")}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {attention.students.map((s) => (
+              <li
+                key={s.studentId}
+                className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100"
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-slate-700">{s.studentName}</span>
+                  <span className="text-xs text-amber-700">
+                    {t("teacher.classDetail.attention.lastActive", { count: s.daysSinceActive })}
+                  </span>
+                  {s.inProgressCount > 1 && (
+                    <span className="text-xs text-amber-600">
+                      {t("teacher.classDetail.attention.more", { count: s.inProgressCount - 1 })}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* What they've made — recent creations strip (links to the full gallery) */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-brightboost-navy flex items-center">
+            <Palette className="w-5 h-5 mr-2 text-brightboost-blue" />
+            {t("teacher.classDetail.made.title")}
+          </h2>
+          <Link
+            to={`/teacher/classes/${id}/gallery`}
+            className="text-sm text-brightboost-blue hover:underline whitespace-nowrap"
+          >
+            {t("gallery.linkLabel")}
+          </Link>
+        </div>
+        {creations.length === 0 ? (
+          <p className="text-sm text-gray-500">{t("teacher.classDetail.made.empty")}</p>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {creations.slice(0, 8).map((c) => (
+              <div
+                key={c.id}
+                className="min-w-[170px] rounded-lg border border-gray-200 p-3 flex flex-col gap-1"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-brightboost-navy truncate">
+                    {c.title || t("gallery.untitled")}
+                  </span>
+                  <CreationStatusChip status={c.status} />
+                </div>
+                <span className="text-xs text-gray-500 truncate">
+                  {t("gallery.by", { name: c.authorName })}
+                </span>
+                <span
+                  className="text-xs text-amber-700 mt-1"
+                  aria-label={t("gallery.boosts")}
+                >
+                  ⭐ {c.encouragements}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Summary Cards (completion/confidence) — de-emphasized, below the reframe */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">

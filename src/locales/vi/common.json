@@ -1110,7 +1110,18 @@
       "courseNotFound": "Không tìm thấy khóa học",
       "failedLoad": "Không thể tải chi tiết khóa học",
       "notFound": "Lớp này không còn tồn tại. Có thể đã bị xóa.",
-      "backToClasses": "Quay lại Lớp học"
+      "backToClasses": "Quay lại Lớp học",
+      "attention": {
+        "title": "Ready for a nudge",
+        "desc": "These learners have been on the same activity for a while. A little encouragement goes a long way.",
+        "empty": "Everyone's moving along nicely — no nudges needed right now. 🎉",
+        "lastActive": "Last active {{count}}+ days ago",
+        "more": "+{{count}} more in progress"
+      },
+      "made": {
+        "title": "What they've made",
+        "empty": "No creations shared yet."
+      }
     },
 
     "resources": {

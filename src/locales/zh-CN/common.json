@@ -1110,7 +1110,18 @@
       "courseNotFound": "找不到课程",
       "failedLoad": "加载课程详情失败",
       "notFound": "这个班级已不存在，可能已被删除。",
-      "backToClasses": "返回班级列表"
+      "backToClasses": "返回班级列表",
+      "attention": {
+        "title": "Ready for a nudge",
+        "desc": "These learners have been on the same activity for a while. A little encouragement goes a long way.",
+        "empty": "Everyone's moving along nicely — no nudges needed right now. 🎉",
+        "lastActive": "Last active {{count}}+ days ago",
+        "more": "+{{count}} more in progress"
+      },
+      "made": {
+        "title": "What they've made",
+        "empty": "No creations shared yet."
+      }
     },
 
     "resources": {
