@@ -49,9 +49,18 @@ export interface DataDashChallenge {
 
 export type ChartQuestion = { prompt: string; choices: string[]; answerIndex: number };
 
-const POOL: Record<string, DataCard> = Object.fromEntries(
-  DATA_DASH_CARDS.map((c) => [c.id, c]),
-);
+// Lazily built so this module can be imported before DataDashSortDiscoverGame
+// has finished evaluating. The two modules import from each other (the game
+// pulls in resolveChallenge; this file pulls in DATA_DASH_CARDS), so touching
+// DATA_DASH_CARDS at module-eval time would read it before initialization.
+// Deferring to first call sidesteps that circular-init order entirely.
+let _pool: Record<string, DataCard> | null = null;
+function pool(): Record<string, DataCard> {
+  if (!_pool) {
+    _pool = Object.fromEntries(DATA_DASH_CARDS.map((c) => [c.id, c]));
+  }
+  return _pool;
+}
 
 function distinctValues(cards: DataCard[], attr: Attr): number {
   return new Set(cards.map((c) => c[attr])).size;
@@ -93,11 +102,11 @@ export function validateDataDashChallenge(
   if (!Array.isArray(cardIds)) return { ok: false, error: "cardIds must be an array" };
   if (cardIds.length < MIN_CARDS) return { ok: false, error: `pick at least ${MIN_CARDS} plants` };
   if (new Set(cardIds).size !== cardIds.length) return { ok: false, error: "duplicate plant" };
-  if (cardIds.some((id) => !(id in POOL))) return { ok: false, error: "unknown plant" };
+  if (cardIds.some((id) => !(id in pool()))) return { ok: false, error: "unknown plant" };
   if (!sortRule || !SORT_RULE_KEYS.includes(sortRule)) return { ok: false, error: "invalid sort rule" };
   if (!inferRule || !INFER_RULE_OPTIONS.includes(inferRule)) return { ok: false, error: "invalid hidden rule" };
 
-  const cards = cardIds.map((id) => POOL[id]);
+  const cards = cardIds.map((id) => pool()[id]);
 
   if (distinctValues(cards, sortRule as Attr) < 2)
     return { ok: false, error: "all plants share the same sort value — pick a rule that splits them" };
@@ -144,12 +153,15 @@ export interface ResolvedChallenge {
 }
 
 // Default (unauthored) challenge — preserves the game's original behavior.
-const DEFAULT_RESOLVED: ResolvedChallenge = {
-  cards: DATA_DASH_CARDS,
-  sortRule: "sunlightNeed",
-  inferRule: "seedType",
-  inferOptions: ["sunlightNeed", "waterNeed", "seedType", "growthSpeed"],
-  chartQuestions: [
+// A function (not a const) so it reads DATA_DASH_CARDS at call time, after both
+// modules in the import cycle have finished evaluating. See pool() above.
+function defaultResolved(): ResolvedChallenge {
+  return {
+    cards: DATA_DASH_CARDS,
+    sortRule: "sunlightNeed",
+    inferRule: "seedType",
+    inferOptions: ["sunlightNeed", "waterNeed", "seedType", "growthSpeed"],
+    chartQuestions: [
     {
       prompt: "Which claim is best supported by the chart?",
       choices: ["Most plants need full sunlight.", "Most plants need shade.", "All plants need partial sunlight."],
@@ -160,8 +172,9 @@ const DEFAULT_RESOLVED: ResolvedChallenge = {
       choices: ["The full-sun bar is tallest.", "Fern has frond leaves.", "Plant bed A has three cards."],
       answerIndex: 0,
     },
-  ],
-};
+    ],
+  };
+}
 
 /**
  * Resolve a (possibly authored) challenge from a game config into the data the
@@ -173,9 +186,9 @@ export function resolveChallenge(config: unknown): ResolvedChallenge {
     | DataDashChallenge
     | undefined;
   if (!challenge || !validateDataDashChallenge(challenge).ok) {
-    return DEFAULT_RESOLVED;
+    return defaultResolved();
   }
-  const cards = challenge.cardIds.map((id) => POOL[id]);
+  const cards = challenge.cardIds.map((id) => pool()[id]);
   return {
     cards,
     sortRule: challenge.sortRule,
