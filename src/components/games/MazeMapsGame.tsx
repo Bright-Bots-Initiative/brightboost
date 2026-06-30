@@ -12,8 +12,10 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import GameShell, { ProgressHUD, type GameResult, type MissionBriefing } from "./shared/GameShell";
+import GameShell, { type GameResult, type MissionBriefing, ProgressHUD } from "./shared/GameShell";
+import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
+import { pickLocale } from "@/utils/localizedContent";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -50,10 +52,10 @@ const MAX_COLLISIONS_FOR_HINT = 2;
 const LEVELS = 3;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Map Data
+// Map Data (build-in maps for K2)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const MAPS: Record<string, MazeMapConfig> = {
+export const MAPS_k2: Record<string, MazeMapConfig> = {
   tutorial: {
     id: "tutorial", rows: 4, cols: 4,
     start: [3, 0], goal: [0, 3],
@@ -109,20 +111,26 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
 // Briefing
 // ═══════════════════════════════════════════════════════════════════════════
 
+// TODO: add translations for the story, tips, control instructions in the briefing
 const BRIEFING: MissionBriefing = {
-  title: "Maze Maps & Smart Paths",
-  story: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+  title: pickLocale({ en: "Maze Maps & Smart Paths", es: "Mapas de Laberinto", vi: "Bản Đồ Mê Cung", "zh-CN": "迷宫地图" }, "Maze Maps & Smart Paths"),
+  story: pickLocale({ 
+    en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+  }, "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze."),
   icon: "🗺️",
-  tips: [
-    "Move one step at a time",
-    "Watch the Sweepers before you move",
-    "Safe Pads protect you from Sweepers",
-  ],
+  tips: pickLocale({
+    en: ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"],
+  }, ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"]),
   chapterLabel: "AI Lab",
   themeColor: "cyan",
   controlInstructions: {
-    keyboard: ["Use Tab to move to action buttons and Enter or Space to choose."],
-    buttons: ["Choose a move or wait action.", "Watch the pattern before moving."],
+    keyboard: [pickLocale({
+      en: "Use Tab to move to action buttons and Enter or Space to choose.",
+    }, "Use Tab to move to action buttons and Enter or Space to choose."),
+  ],
+    buttons: pickLocale({
+      en: ["Choose a move or wait action.", "Watch the pattern before moving."],
+    }, ["Choose a move or wait action.", "Watch the pattern before moving."]),
   },
 };
 
@@ -232,7 +240,12 @@ function MazeControls({ onMove, disabled }: { onMove: (dir: Dir) => void; disabl
 // Core Game Component
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) {
+function MazeMapsCore({ 
+    maps, 
+    onFinish }: { 
+        maps: Record<string, MazeMapConfig>, 
+        onFinish: (result: GameResult) => void 
+    }) {
   const { t } = useTranslation();
 
   const [phase, setPhase] = useState<GamePhase>("intro");
@@ -252,11 +265,11 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
   const [levelComplete, setLevelComplete] = useState(false);
   const [animating, setAnimating] = useState(false);
 
-  const map = MAPS[mapKey];
+  const map = maps[mapKey];
 
   // ── Initialize map ──
   const initMap = useCallback((key: string) => {
-    const m = MAPS[key];
+    const m = maps[key];
     setMapKey(key);
     setPlayerPos([...m.start]);
     setCheckpoint([...m.start]);
@@ -269,7 +282,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     const indices: Record<string, number> = {};
     m.sweepers.forEach((s) => { indices[s.id] = s.startIndex; });
     setSweeperIndices(indices);
-  }, []);
+  }, [maps]);
 
   // Init on phase change
   useEffect(() => {
@@ -402,6 +415,14 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     else if (phase === "main") setPhase("exitTicket");
     else if (phase === "exitTicket") setPhase("celebration");
     else if (phase === "celebration") {
+      // Design note: Maze Maps intentionally has NO star rating and no
+      // partial-score gating. The skill here is orb-collection + sweeper-
+      // pattern-reading, not par/efficiency, so completion is all-or-nothing
+      // and "played well" is signaled by collisions → `firstTryClear` +
+      // the "Perfect Explorer" achievement (not stars). Contrast TankTrek's
+      // `computeTankStars`, where the skill IS minimal forward-moves.
+      // Deliberate, not unfinished — don't add stars here without revisiting
+      // the game's intent. (Asked-and-answered 3x: founder, triage, Olivia.)
       onFinish({
         gameKey: "maze_maps",
         score: Math.min(score, 140),
@@ -432,7 +453,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
     watchTimerRef.current = setInterval(() => {
       setSweeperIndices((prev) => {
         const next: Record<string, number> = {};
-        MAPS.guided.sweepers.forEach((s) => {
+        maps.guided.sweepers.forEach((s) => {
           const idx = (prev[s.id] ?? s.startIndex) + 1;
           next[s.id] = idx % (s.loop.length - 1);
         });
@@ -441,7 +462,7 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
       setWatchCycles((c) => c + 1);
     }, 800);
     return () => clearInterval(watchTimerRef.current);
-  }, [phase]);
+  }, [phase, maps]);
 
   // ── Render ──
 
@@ -479,8 +500,8 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
           </p>
         </div>
         <MazeBoard
-          map={MAPS.guided}
-          playerPos={MAPS.guided.start}
+          map={maps.guided}
+          playerPos={maps.guided.start}
           collectedOrbs={new Set()}
           sweeperPositions={sweeperPositions}
         />
@@ -658,11 +679,16 @@ function MazeMapsCore({ onFinish }: { onFinish: (result: GameResult) => void }) 
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function MazeMapsGame({
-  onComplete,
+    config,
+    onComplete,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
-}) {
+}) 
+{
+    const band = getGradeBand(config);
+    const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
+
   return (
     <GameShell
       gameKey="maze_maps"
@@ -670,7 +696,7 @@ export default function MazeMapsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore maps={maps} onFinish={onFinish} />}
     </GameShell>
   );
 }
