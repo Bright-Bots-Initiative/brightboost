@@ -6,6 +6,8 @@
 
 BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered learning pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard — with grades 3-5 and 6-8 planned in future releases. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
 
+> **Design philosophy:** Bright Boost is built on the *Lifelong Kindergarten* creative-learning model — kids as **creators, not consumers**, moving through the creative spiral (Imagine → Create → Play → Share → Reflect), with a *supported* low floor for K–2 that opens up in later grades. Canonical principles: [`docs/design-principles.md`](docs/design-principles.md).
+
 ## ✅ Current Working Features
 
 ### 👩‍🏫 Teacher Dashboard
