@@ -3,6 +3,8 @@
 The gamification system increases engagement and retention by introducing game-like elements into the learning experience.  
 Users earn XP, badges, streaks, and levels through actions that reinforce positive behaviors.
 
+> **Design context:** These mechanics serve the canonical [design principles](design-principles.md) — they should reinforce *making and iterating*, not become the goal. Per principle 5 ("measure creation, not completion"), treat signals like things built, iterations, and shares — not XP/badges — as the primary measure of learning.
+
 ---
 
 ## Core Concepts

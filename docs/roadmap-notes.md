@@ -2,6 +2,8 @@
 
 > Design and roadmap notes — directional thinking grounded in the codebase, not commitments.
 
+> **Canonical design principles:** [`design-principles.md`](design-principles.md). This roadmap doc is the *strategic / directional* source — where notes like the creator-substrate thread below explore how we get there. `design-principles.md` is the *canonical* statement of the principles those notes build toward (creators-not-consumers, the creative spiral, structured-early / open-later).
+
 ## Maze Maps as a creator-substrate — implications for Set 3 (2026-06-25)
 
 **Context.** Maze Maps is currently a closed-content game: hand-authored `MazeMapConfig` literals, a fixed phase machine (tutorial/guided/main), a single correct path, and completion-gated full marks (finishing = 140/140 for everyone). It asks players to respond and complete, not to create — useful to be explicit about, since a long-term goal is moving some experiences toward kids/teachers making things, not only consuming them. (Note: the absence of a star/partial-score system here is intentional — Maze Maps is orb-collection + pattern-reading, not a par/efficiency puzzle like Tank Trek. See the design comment in `src/components/games/MazeMapsGame.tsx`.)

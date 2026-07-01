@@ -33,6 +33,20 @@ Long-term pathway emphasis: AI, quantum, and biotech.
 
 ---
 
+## Design Principles (canonical — see `docs/design-principles.md`)
+Bright Boost is built on the *Lifelong Kindergarten* creative-learning model. Every activity should:
+- **Creators, not consumers** — kids make/author something with many valid solutions, not just respond (match/pick/choose); a kid should walk away with something they made.
+- **Creative spiral as the spine** — Imagine → Create → Play → Share → Reflect, as visible UI moments.
+- **Low floor, high ceiling, wide walls — by grade/level** — K–2 is more structured/scaffolded (a *supported* low floor, never a blank void); later grades and higher levels open up toward more open-ended creation. Structure early, openness later.
+- **Playground, not playpen** — safe experimentation and "breaking" things; mascot/adult is curious, never corrective.
+- **Measure creation, not completion** — things built, iterations, shares, remixes; not completion/badges.
+- **Adult as guide** — Catalyst / Connector / Consultant / Collaborator, not proctor.
+- **Screen use, not screen time; localizable + culturally grounded from day one.**
+
+New activities are checked against these (and the review checklist) before building. Full articulation: `docs/design-principles.md`.
+
+---
+
 ## Source of Truth Order
 
 When repository information conflicts, resolve using this order:
