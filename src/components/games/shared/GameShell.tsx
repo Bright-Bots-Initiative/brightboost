@@ -149,9 +149,8 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
   const dotRadius = 10;
   const dotStart = minLeftPx + dotRadius; 
   const dotEnd = maxLeftPx - dotRadius;
-  const getPos = (index: number) => (dotStart) + (index / (totalLevels - 1)) * (dotEnd - dotStart);
   const innerWidth = containerWidth - 10;
-  
+  const getPos = (index: number) => (dotStart) + (index / (totalLevels - 1)) * (dotEnd - dotStart);
   return (
     <div
       ref={containerRef}
