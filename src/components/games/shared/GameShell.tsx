@@ -145,10 +145,12 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
   }, []);
   
   const minLeftPx = 4;
-  const maxLeftPx = containerWidth - 8;
-  const progress = step / (totalLevels);
-  const desiredLeftPx = progress * containerWidth;
-  const clampedLeftPx = Math.min(Math.max(desiredLeftPx, minLeftPx), maxLeftPx);
+  const maxLeftPx = containerWidth - 4;
+  const dotRadius = 10;
+  const dotStart = minLeftPx + dotRadius; 
+  const dotEnd = maxLeftPx - dotRadius;
+  const getPos = (index: number) => (dotStart) + (index / (totalLevels - 1)) * (dotEnd - dotStart);
+  const innerWidth = containerWidth - 10;
   
   return (
     <div
@@ -168,9 +170,9 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
         }}
         >
           <div
-            className="h-full rounded-full transition-all duration-300 ease-in-out"
+            className="h-full rounded-full"
             style={{
-              width: `${progress * 100}%`,
+              width: `${getPos(step) / innerWidth * 100}%`,
               background:"#FF8C00",
             }}
             />
@@ -178,7 +180,6 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
 
     {/*Dots for each Level*/}
       {Array.from({ length: totalLevels}).map((_, i) => {
-        const dotPos = (minLeftPx + 11) + (i / (totalLevels)) * (maxLeftPx - (minLeftPx + 18));
         return (
           <span 
             key = {i}
@@ -190,7 +191,7 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
                 : "w-5 h-5 bg-white" 
             }`}
             style={{
-            left: dotPos,
+            left: getPos(i),
             top: "50%",
             transform:"translate(-50%, -50%)",
             }}
@@ -208,8 +209,8 @@ export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: num
       <div 
         className="absolute z-20"
         style={{
-          left: clampedLeftPx,
-          top: "50%",
+          left: getPos(step),
+          top: "35%",
           transform: "translate(-50%, -50%)",
         }}
       >

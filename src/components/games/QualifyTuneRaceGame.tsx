@@ -17,7 +17,7 @@ interface Obstacle { lane: number; y: number }
 const TRACK_W = 360, TRACK_H = 480, LANE_W = TRACK_W / 3;
 const CAR_W = 48, CAR_H = 64, CONE_SIZE = 36;
 const SCROLL_SPEED = 2.5, TRACK_LENGTH = 3200, BUMP_ZONE = 28;
-const LEVELS = 2;
+const LEVELS = 3; // 2 levels, but +1 offset
 
 const OBSTACLES: Obstacle[] = [
   { lane: 1, y: 300 }, { lane: 0, y: 600 }, { lane: 2, y: 900 },

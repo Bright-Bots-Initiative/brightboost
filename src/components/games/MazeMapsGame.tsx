@@ -47,7 +47,7 @@ type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "ex
 
 const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
-const LEVELS = 3;
+const LEVELS = 4; // 3, but +1 offset
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Map Data
