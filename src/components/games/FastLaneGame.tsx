@@ -9,6 +9,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
+import { pickLocale } from "@/utils/localizedContent";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Signal = "safe" | "blocked" | "caution";
@@ -25,11 +26,16 @@ const SIGNAL_COLORS: Record<Signal, string> = {
 const LANE_LABELS = ["A", "B", "C"];
 const PHASE_ORDER: GamePhase[] = ["practice", "signals", "lookAhead", "challenge", "exitTicket", "celebration"];
 
+// TODO: add translations for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
-  title: "Fast Lane Signals",
-  story: "Deliver the science supplies safely! Read the road signals and choose the best lane.",
+  title: pickLocale({ en: "Fast Lane Signals", es: "Señales de Carril Rápido", vi: "Tín Hiệu Làn Nhanh", "zh-CN": "快车道信号" }, "Fast Lane Signals"),
+  story: pickLocale({
+    en: "Deliver the science supplies safely! Read the road signals and choose the best lane.",
+  }, "Deliver the science supplies safely! Read the road signals and choose the best lane."),
   icon: "\uD83D\uDEA6",
-  tips: ["Green means safe", "Red means blocked", "Yellow means watch out \u2014 it might close!"],
+  tips: pickLocale({
+    en: ["Green means safe", "Red means blocked", "Yellow means watch out \u2014 it might close!"],
+  }, ["Green means safe", "Red means blocked", "Yellow means watch out \u2014 it might close!"]),
   chapterLabel: "Signal School",
   themeColor: "blue",
 };
