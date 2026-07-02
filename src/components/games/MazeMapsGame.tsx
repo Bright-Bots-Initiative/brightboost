@@ -25,6 +25,7 @@ type Dir = "up" | "down" | "left" | "right" | "wait";
 
 interface SweepConfig {
   id: string;
+  type: keyof typeof SWEEPER_STYLES;
   loop: [number, number][];
   startIndex: number;
 }
@@ -49,7 +50,19 @@ type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "ex
 
 const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
+const playPhases = new Set(["tutorial", "guided", "main"]);
 const LEVELS = 4; // 3, but +1 offset
+
+interface SweeperStyle {
+  color: string;
+  icon: string;
+  label: string;
+}
+
+const SWEEPER_STYLES: Record<string, SweeperStyle> = {
+  loop: { icon: "🔴", color: "text-red-500", label: "Loop Sweeper" },
+  linear: { icon: "🟢", color: "text-blue-500", label: "Line Sweeper" },
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Map Data (build-in maps for K2)
@@ -71,7 +84,7 @@ export const MAPS_k2: Record<string, MazeMapConfig> = {
     orbs: [[0, 2], [2, 0], [4, 3], [3, 1]],
     safePads: [[2, 2]],
     sweepers: [
-      { id: "s1", loop: [[1, 3], [1, 4], [2, 4], [2, 3], [1, 3]], startIndex: 0 },
+      { id: "s1", type: "loop", loop: [[1, 3], [1, 4], [2, 4], [2, 3], [1, 3]], startIndex: 0 },
     ],
   },
   main: {
@@ -81,8 +94,8 @@ export const MAPS_k2: Record<string, MazeMapConfig> = {
     orbs: [[0, 2], [1, 5], [2, 0], [4, 6], [5, 3], [6, 5]],
     safePads: [[3, 3], [1, 4]],
     sweepers: [
-      { id: "s1", loop: [[2, 2], [2, 3], [3, 3], [3, 2], [2, 2]], startIndex: 0 },
-      { id: "s2", loop: [[4, 4], [4, 5], [5, 5], [5, 4], [4, 4]], startIndex: 0 },
+      { id: "s1", type: "loop", loop: [[2, 2], [2, 3], [3, 3], [3, 2], [2, 2]], startIndex: 0 },
+      { id: "s2", type: "loop", loop: [[4, 4], [4, 5], [5, 5], [5, 4], [4, 4]], startIndex: 0 },
     ],
   },
 };
@@ -201,12 +214,29 @@ function MazeBoard({
       ))}
 
       {/* Sweepers */}
-      {Object.entries(sweeperPositions).map(([id, [sr, sc]]) => (
-        <div key={id} className="absolute flex items-center justify-center z-10 transition-all duration-200"
-          style={{ left: sc * CELL, top: sr * CELL, width: CELL, height: CELL }}>
-          <span className="text-2xl">🔴</span>
+      {Object.entries(sweeperPositions).map(([id, [sr, sc]]) => {
+      const sweeper = map.sweepers.find((s) => s.id === id);
+      const style =
+        SWEEPER_STYLES[sweeper?.type as keyof typeof SWEEPER_STYLES]
+        ?? {
+          icon: "⚫",
+          color: "text-black",
+          label: "Unknown Sweeper",
+        };
+
+      return (
+        <div
+        key={id}
+        className="absolute flex items-center justify-center z-10 transition-all duration-200"
+        style={{left: sc * CELL, top: sr * CELL, width: CELL, height: CELL,}}
+        title={style.label}
+        >
+        <span className={`text-2xl ${style.color}`}>
+            {style.icon}
+        </span>
         </div>
-      ))}
+      );
+      })}
 
       {/* Player */}
       <div className="absolute flex items-center justify-center z-20 transition-all duration-200"
@@ -438,11 +468,14 @@ function MazeMapsCore({
 
   // Auto-advance on level complete
   useEffect(() => {
-    if (levelComplete) {
-      const t = setTimeout(advancePhase, 1500);
-      return () => clearTimeout(t);
-    }
-  }, [levelComplete, advancePhase]);
+    if (!levelComplete) return;
+    if (!playPhases.has(phase)) return;
+    const t = setTimeout(() => {
+      advancePhase();
+      setLevelComplete(false);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [levelComplete, phase, advancePhase]);
 
   // ── Watch Pattern phase: auto-cycle sweeper ──
   const watchTimerRef = useRef<ReturnType<typeof setInterval>>();
