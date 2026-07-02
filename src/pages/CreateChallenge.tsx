@@ -46,7 +46,6 @@ export default function CreateChallenge() {
         if (list[0]) setCourseId(list[0].courseId);
       })
       .catch(() => setGroups([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api]);
 
   const challenge: DataDashChallenge = { v: 1, cardIds, sortRule, inferRule };
