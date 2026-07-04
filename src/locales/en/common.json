@@ -483,7 +483,17 @@
       "createClass": "Create Class",
       "deleteClass": "Delete",
       "deleteTitle": "Delete Class",
-      "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? All students will be unenrolled and all sessions will be removed. This cannot be undone."
+      "deleteConfirm": "Are you sure you want to delete \"{{name}}\"? All students will be unenrolled and all sessions will be removed. This cannot be undone.",
+      "children": "{{count}} children",
+      "familyCode": "Family Code:",
+      "groupTypeLabel": "Group type",
+      "groupTypeClass": "Class",
+      "groupTypeHome": "Home",
+      "createTitleHome": "Create a home group",
+      "createDescHome": "Give your home group a name. Your child joins using the generated code.",
+      "classNameHome": "Home group name",
+      "classNamePlaceholderHome": "e.g. The Garcia Kids",
+      "createGroupHome": "Create Home Group"
     },
     "classDetail": {
       "students": "{{count}} students",
@@ -531,7 +541,18 @@
       "courseNotFound": "Course not found",
       "failedLoad": "Failed to load course details",
       "notFound": "This class no longer exists. It may have been deleted.",
-      "backToClasses": "Back to Classes"
+      "backToClasses": "Back to Classes",
+      "attention": {
+        "title": "Ready for a nudge",
+        "desc": "These learners have been on the same activity for a while. A little encouragement goes a long way.",
+        "empty": "Everyone's moving along nicely — no nudges needed right now. 🎉",
+        "lastActive": "Last active {{count}}+ days ago",
+        "more": "+{{count}} more in progress"
+      },
+      "made": {
+        "title": "What they've made",
+        "empty": "No creations shared yet."
+      }
     },
     "resources": {
       "title": "Resource Hub",
@@ -1407,6 +1428,12 @@
       "niceJob": "Nice job! That plan worked. Get ready for the next map.",
       "crashed": "Oops! Boost bumped into a wall. Check your turns and try again.",
       "didntReach": "Good try. Boost did not reach the goal yet.",
+      "foundBug": "Found a bug at step {{step}}! Tap that step to fix it, then run again.",
+      "notYet": "Not at the goal yet — change a step and run again. Every try is good debugging!",
+      "solvedFirstTry": "Nailed it on the first try! 🎉",
+      "debuggedIn": "Debugged it in {{count}} tries! 🐛 → ✅",
+      "tries": "Debug tries: {{count}}",
+      "removeStep": "Remove step {{step}}",
       "buildProgram": "Build the program",
       "forward": "Forward",
       "turnLeft": "Turn Left",
@@ -1710,6 +1737,11 @@
       "blurb": "Bring K-8 STEM learning into your classroom.",
       "cta": "Sign up as a Teacher"
     },
+    "parentCard": {
+      "heading": "I'm a Parent",
+      "blurb": "Set up a home group and learn together with your child.",
+      "cta": "Sign up & start at home"
+    },
     "studentCard": {
       "heading": "I'm a Student",
       "blurb": "Play STEM missions and track your progress.",
@@ -1801,5 +1833,45 @@
     "playAgain": "Play again",
     "teacherWhisper": "Teacher?",
     "teacherWhisperCta": "Set up your class in under 2 minutes"
+  },
+  "creations": {
+    "status": {
+      "inProgress": "Still working",
+      "shared": "Shared • still working",
+      "complete": "Done"
+    }
+  },
+  "createChallenge": {
+    "pageTitle": "Make a Challenge",
+    "intro": "Pick plants, choose a sorting rule and a hidden rule. Then share it for your group to play.",
+    "chooseGroup": "Which group?",
+    "noGroups": "Join a class or home group first, then you can make a challenge.",
+    "pickPlants": "Pick your plants (at least {{min}})",
+    "sortRuleLabel": "Sorting rule",
+    "hiddenRuleLabel": "Hidden rule to guess",
+    "titlePrefix": "Sort by",
+    "valid": "Looks good — your challenge can be solved!",
+    "save": "Share challenge",
+    "saving": "Sharing...",
+    "saveError": "Could not share. Try again."
+  },
+  "challengePlayer": {
+    "loading": "Loading challenge...",
+    "notFound": "This challenge isn't available."
+  },
+  "gallery": {
+    "pageTitle": "Group Gallery",
+    "linkLabel": "Gallery",
+    "backToClass": "Back to class",
+    "makeChallenge": "Make a Challenge",
+    "noGroups": "Join a group to see the gallery.",
+    "empty": "Nothing shared yet. Be the first to make something!",
+    "loading": "Loading...",
+    "error": "Could not load the gallery.",
+    "untitled": "Untitled",
+    "by": "by {{name}}",
+    "boosts": "Boosts",
+    "giveBoost": "Give a boost ⭐",
+    "play": "Play"
   }
 }
