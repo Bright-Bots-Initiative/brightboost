@@ -12,7 +12,7 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
+import GameShell, { type GameResult, type MissionBriefing, ProgressHUD } from "./shared/GameShell";
 import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
@@ -51,6 +51,7 @@ type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "ex
 const CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
 const playPhases = new Set(["tutorial", "guided", "main"]);
+const LEVELS = 4; // 3, but +1 offset
 
 interface SweeperStyle {
   color: string;
@@ -560,6 +561,7 @@ function MazeMapsCore({
     ];
     return (
       <div className="text-center space-y-6 py-8 slide-up-fade max-w-lg mx-auto">
+        <ProgressHUD step={3} totalLevels={LEVELS}/>
         <div className="text-5xl">🤔</div>
         <h3 className="text-xl font-extrabold text-cyan-800">
           {t("games.mazeMaps.exitQuestion", { defaultValue: "Which path is smartest?" })}
@@ -670,6 +672,9 @@ function MazeMapsCore({
           </span>
         )}
       </div>
+      <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
+          <ProgressHUD step={phase === "tutorial" ? 0 : phase === "guided" ? 1 : 2} totalLevels={LEVELS}/>
+        </div>
 
       {/* Board */}
       <MazeBoard
