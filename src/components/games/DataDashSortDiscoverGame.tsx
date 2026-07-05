@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 type GameProps = {
   config?: any;
   onComplete?: (result: GameResult) => void;
+  secondaryAction?: { label: string; icon?: React.ReactNode; onClick: () => void };
 };
 
 export type DataCard = {
@@ -226,7 +227,7 @@ function DataDashPlayfield({
   );
 }
 
-export default function DataDashSortDiscoverGame({ config, onComplete }: GameProps) {
+export default function DataDashSortDiscoverGame({ config, onComplete, secondaryAction }: GameProps) {
   // Authored challenges arrive via config.challenge; otherwise fall back to the
   // original seeded challenge (resolveChallenge handles the default).
   const challenge = resolveChallenge(config);
@@ -236,6 +237,7 @@ export default function DataDashSortDiscoverGame({ config, onComplete }: GamePro
       title="Data Dash: Sort & Discover"
       briefing={BRIEFING}
       onComplete={(result) => onComplete?.(result)}
+      secondaryAction={secondaryAction}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (
         <DataDashPlayfield challenge={challenge} onFinish={onFinish} />
