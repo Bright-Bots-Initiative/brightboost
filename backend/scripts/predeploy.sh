@@ -1,6 +1,22 @@
 #!/usr/bin/env sh
 set -e
 
+# ── DIRECT_URL guard ─────────────────────────────────────────────────────────
+# 2026-07 incident (#646 → PR #685): DIRECT_URL was never set on Railway, so
+# every 'prisma migrate deploy' failed and the then-tolerant block below let
+# the app boot anyway. Prod ran with no _prisma_migrations table and the
+# resulting schema drift had to be healed by hand. Prisma migrate needs the
+# DIRECT / session-pooler connection (Supabase port 5432) — the transaction
+# pooler (6543/pgbouncer) hangs Prisma's schema engine. Fail loudly and early.
+if [ -z "$DIRECT_URL" ]; then
+  echo "=========================================================================="
+  echo "predeploy: FATAL — DIRECT_URL is not set."
+  echo "predeploy: prisma migrate requires the direct (session-pooler, port 5432)"
+  echo "predeploy: connection. Set DIRECT_URL on the Railway service, then redeploy."
+  echo "=========================================================================="
+  exit 1
+fi
+
 SCHEMA="prisma/schema.prisma"
 ROOT_SCHEMA="../prisma/schema.prisma"
 SEED_FILE="prisma/seed.cjs"
@@ -25,26 +41,15 @@ if npx prisma migrate deploy --schema "$SCHEMA"; then
 else
   rc=$?
   echo "=========================================================================="
-  echo "predeploy: WARNING — 'prisma migrate deploy' FAILED (exit $rc)."
+  echo "predeploy: FATAL — 'prisma migrate deploy' failed (exit $rc)."
   echo "predeploy:"
-  echo "predeploy:   Known migration-baseline bug (#646): the committed migration"
-  echo "predeploy:   history can't build the schema from scratch, so 'migrate"
-  echo "predeploy:   deploy' fails on this deploy path until #646 lands."
-  echo "predeploy:"
-  echo "predeploy:   The previous 'db push --accept-data-loss' fallback has been"
-  echo "predeploy:   INTENTIONALLY REMOVED. We do NOT force-sync production —"
-  echo "predeploy:   that risked SILENTLY DROPPING DATA to match schema.prisma."
-  echo "predeploy:"
-  echo "predeploy:   The app will start on its EXISTING schema (correct for a"
-  echo "predeploy:   code-only deploy). A deploy that REQUIRES a schema change must"
-  echo "predeploy:   wait for the #646 baseline fix or a deliberate manual migration"
-  echo "predeploy:   — nothing will be applied automatically here."
+  echo "predeploy:   Hard-failing the deploy (#650 decision, enabled by the #646"
+  echo "predeploy:   baseline): booting on a stale schema hides failed migrations —"
+  echo "predeploy:   that is exactly how the 2026-07 prod drift incident happened"
+  echo "predeploy:   (tolerated failures, no _prisma_migrations, manual heal in"
+  echo "predeploy:   PR #685). Fix the migration (or the DB state) and redeploy."
   echo "=========================================================================="
-  # Intentionally do NOT exit non-zero: a code-only deploy must still boot the app
-  # on the existing (already-correct) schema. Removing the destructive
-  # 'db push --accept-data-loss' fallback is an interim safety measure for the
-  # #646 migration-baseline bug. Once #646 lands, this path should use clean
-  # 'migrate deploy' and may reinstate a hard non-zero exit on failure. See #646.
+  exit "$rc"
 fi
 
 echo "predeploy: prisma generate"
