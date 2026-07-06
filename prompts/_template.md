@@ -2,7 +2,7 @@
 
 **Author:** [your name]
 **Date:** [YYYY-MM-DD]
-**Ticket:** [ticket-626 / issue #623]
+**Ticket:** [ticket-623 / issue #623]
 **Pod:** [Build / Experience]
 
 ## Intent

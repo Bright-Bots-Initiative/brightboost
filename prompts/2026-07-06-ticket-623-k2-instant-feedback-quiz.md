@@ -1,8 +1,8 @@
-# Ticket 626 — K-2 instant-feedback quiz
+# Ticket 623 — K-2 instant-feedback quiz
 
 **Author:** Jack
 **Date:** 2026-07-06
-**Ticket:** ticket-626 / Issue #623
+**Ticket:** ticket-623 / Issue #623
 **Pod:** Experience
 
 ## Intent
@@ -11,7 +11,7 @@ Ship a one-question-at-a-time instant-feedback quiz for K-2 students on every `s
 
 ## Prompt
 
-I worked from the ticket spec in `.cursor/ticket-626/` and drove the work in Cursor in a few passes:
+I worked from the ticket spec in `.cursor/ticket-623/` and drove the work in Cursor in a few passes:
 
 ```
 First I had Cursor read the ticket rules and overview, then implement the feature in parts —
@@ -35,7 +35,7 @@ one prompt log at the end of the ticket, written in my voice.
 
 ## What worked
 
-- Keeping tests in `tests/ticket-626/` during development, then one migration into the repo before the PR
+- Keeping tests in `tests/ticket-623/` during development, then one migration into the repo before the PR
 - Stub Cypress with API intercepts so I didn't need Docker for every e2e run
 - The ticket spec's blast-radius list made review straightforward
 

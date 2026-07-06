@@ -12,7 +12,7 @@ One markdown file per ticket:
 
 `YYYY-MM-DD-ticket-{id}-short-description.md`
 
-Example: `2026-07-06-ticket-626-k2-instant-feedback-quiz.md`
+Example: `2026-07-06-ticket-623-k2-instant-feedback-quiz.md`
 
 Use the template in `prompts/_template.md`.
 

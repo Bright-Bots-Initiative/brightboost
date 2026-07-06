@@ -198,7 +198,7 @@ describe("k2 instant-feedback quiz", () => {
         cy.log(
           `Live stack unavailable (POST /api/login → ${resp.status}). ` +
             "Start Docker Postgres (docker-compose-pg.yml), run prisma db push + seed, " +
-            "restart backend :3000, then re-run npm run test:ticket-626:e2e:live.",
+            "restart backend :3000, then re-run npm run test:ticket-623:e2e:live.",
         );
         this.skip();
       }
