@@ -1,32 +1,23 @@
-# Prompt log
+# Claude Code Prompt Log
 
-How we capture what we asked Cursor (or Claude Code) to do on significant work — so the team can learn from each other.
-
-## When to log
-
-**Once per ticket, at the end** — when the feature is done and you're opening the PR. Not per commit, not per session.
+Every significant Claude Code prompt used on this project gets logged here.
+This is how we learn from each other and improve our prompting skills.
 
 ## Format
 
-One markdown file per ticket:
+Each prompt is a markdown file named: `YYYY-MM-DD-short-description.md`
 
-`YYYY-MM-DD-ticket-{id}-short-description.md`
-
-Example: `2026-07-06-ticket-623-k2-instant-feedback-quiz.md`
+## Template
 
 Use the template in `prompts/_template.md`.
 
-## What to include
+## What counts as "significant"?
 
-Write in **your** voice (first person). Summarize how you directed the work across the ticket:
-
-- What you were trying to ship
-- The main prompts / directions you gave (paraphrased is fine)
-- What shipped, what you had to fix by hand
-- What you'd do differently
+- Anything that produced a commit
+- Anything that took more than one prompt round-trip to get right
+- Anything surprising (whether it worked well or went sideways)
 
 ## What to skip
 
 - Trivial one-liners (`rename this var`, `fix this typo`)
-- Exploratory questions that never changed code
-- Multiple files for the same ticket
+- Purely exploratory questions that didn't change any code

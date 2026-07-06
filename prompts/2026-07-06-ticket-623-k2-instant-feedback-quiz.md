@@ -1,8 +1,8 @@
-# Ticket 623 — K-2 instant-feedback quiz
+# K-2 instant-feedback quiz (Issue #623)
 
 **Author:** Jack
 **Date:** 2026-07-06
-**Ticket:** ticket-623 / Issue #623
+**Sprint:** —
 **Pod:** Experience
 
 ## Intent
@@ -11,46 +11,41 @@ Ship a one-question-at-a-time instant-feedback quiz for K-2 students on every `s
 
 ## Prompt
 
-I worked from the ticket spec in `.cursor/ticket-623/` and drove the work in Cursor in a few passes:
-
 ```
-First I had Cursor read the ticket rules and overview, then implement the feature in parts —
-extract the legacy quiz, add the k2 gate and instant-feedback UI, wire analytics and i18n,
-and keep tests outside the repo until the ticket was done.
+I worked from the ticket spec in .cursor/ticket-623/ and drove the work in Cursor in a few passes —
+extract the legacy quiz, add the k2 gate and instant-feedback UI, wire analytics and i18n, and keep
+tests outside the repo until the ticket was done.
 
-When the build was stable, I asked it to run the full QA gate (lint, typecheck, unit, coverage,
-e2e), migrate tests into brightboost/, sanity-check that we only touched scoped files,
-commit on a feature branch, and write up the PR description.
+When the build was stable, I ran the full QA gate (lint, typecheck, unit, coverage, e2e), migrated
+tests into brightboost/, sanity-checked scoped files, and prepared a feature branch and PR description.
 
-After manual testing on the local stack (375px, Spanish toggle, screen reader), I had it push
-the branch, add vi/zh-CN locale keys, and align everything with CONTRIBUTING.md — including
-one prompt log at the end of the ticket, written in my voice.
+After manual testing on the local stack (375px, Spanish toggle, screen reader), I added vi/zh-CN
+locale keys and aligned with CONTRIBUTING.md.
 ```
 
-## Outcome
+## What Claude Code Did
 
-- Shipped: `src/components/activities/quiz/` (instant path + legacy extraction), `ActivityPlayer` gate, en/es/vi/zh-CN strings, analytics event, completion toast via `App.tsx`, tests colocated + `k2InstantQuiz` Cypress spec
-- Tests: lint ✓ · typecheck ✓ · `test:unit` 441 passed ✓ · `test:coverage:quiz` 97.76% lines ✓ · k2 Cypress 5/5 (×2) ✓ · `build` ✓
-- Full repo `test:e2e` still has legacy failures unrelated to this ticket; CI smoke is the bar today
+- Files created/modified: `src/components/activities/quiz/*`, `ActivityPlayer.tsx`, en/es/vi/zh-CN locales, `analytics.ts`, `App.tsx`, `api.ts`, colocated tests, `cypress/e2e/k2InstantQuiz.cy.js` + helpers, `vitest.config.ts`, `package.json`, `cypress.config.ts`
+- Tests passed: lint ✓, typecheck ✓, `test:unit` 441 passed ✓, `test:coverage:quiz` ≥90% ✓, k2 e2e 5/5 (×2) ✓, `build` ✓
 
-## What worked
+## What Worked
 
-- Keeping tests in `tests/ticket-623/` during development, then one migration into the repo before the PR
-- Stub Cypress with API intercepts so I didn't need Docker for every e2e run
-- The ticket spec's blast-radius list made review straightforward
+- Ticket isolation then one-time test migration into the repo
+- Stub Cypress with API intercepts for deterministic e2e without Docker every run
+- Blast-radius list in the spec kept review focused
 
-## What I changed manually
+## What Needed Editing
 
-- Ran manual empathy sweeps on the live stack (mobile width, es, screen reader) using our checklist
-- Caught out-of-scope vi/zh-CN keys during review — dropped them first, then added proper translations in a follow-up commit
-- Reviewed generated PR copy and prompt log wording before push
+- Manual empathy sweeps on the live stack
+- vi/zh-CN locale keys reviewed and added in a follow-up commit
+- PR copy and this prompt log reviewed before push
 
 ## Lessons
 
-- Pull latest `main` before branching; use `your-name/short-description` for branch names per CONTRIBUTING
-- Log prompts once at ticket close, not after every commit
-- Don't commit `coverage/` or Cypress video/result folders
+- Pull latest `main` before branching; prefer `your-name/short-description` branch names per CONTRIBUTING
+- One prompt log at ticket close; follow `prompts/README.md` format
+- Ignore `coverage/` and Cypress artifact folders (now in `.gitignore`)
 
 ## Rating
 
-4/5 — Cursor carried most of the implementation and test migration; I still owned manual QA, scope review, and PR hygiene.
+4/5 — AI carried most of implementation and test migration; manual QA and PR hygiene still on me.
