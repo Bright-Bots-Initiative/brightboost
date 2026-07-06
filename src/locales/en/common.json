@@ -1017,6 +1017,30 @@
     "submit": "Submit",
     "almost": "Almost!",
     "checkHints": "Check the hints and try again!",
+    "questionOf": "Question {{current}} of {{total}}",
+    "feedback": {
+      "answerIs": "The answer is:",
+      "seeResults": "See how I did!",
+      "correctCheers": [
+        "You got it! 🎉",
+        "Great job!",
+        "Amazing!",
+        "Super smart!",
+        "Way to go!"
+      ],
+      "incorrectGentle": [
+        "Good try!",
+        "Nice thinking!",
+        "So close!",
+        "Keep going, you've got this!"
+      ]
+    },
+    "summary": {
+      "title": "Quiz done! 🌟",
+      "scoreLine": "You got {{score}} of {{total}} right!",
+      "perfect": "Perfect! Every single one!",
+      "finish": "Finish"
+    },
     "markComplete": "Mark Complete",
     "unsupported": "Unsupported activity type",
     "breakTitle": "Time for a Break!",

@@ -15,6 +15,7 @@ export default defineConfig({
       openMode: 0,
     },
     env: {
+      LIVE_STACK: process.env.CYPRESS_LIVE_STACK ?? "0",
       VITE_API_BASE: process.env.VITE_API_BASE,
       ALLOW_DEV_HEADERS: process.env.CYPRESS_ALLOW_DEV_HEADERS ?? "0",
       STUDENT_ID: process.env.CYPRESS_STUDENT_ID,

@@ -21,6 +21,7 @@
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
     "test:unit": "vitest run --project unit",
+    "test:coverage:quiz": "vitest run --project unit --coverage",
     "test:e2e": "cypress run",
     "test:watch": "vitest",
     "test:db": "node scripts/dbHealth.js",

@@ -564,7 +564,13 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(
+        extractErrorMessage(body) || `Request failed: ${res.status}`,
+      );
+    }
+    return body;
   },
 
   getAvatar: async () => {
