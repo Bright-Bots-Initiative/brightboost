@@ -65,9 +65,9 @@ fixed. (Verified failing on open PRs #662, #663.)
 
 ### Schema sync: root vs backend copy
 `prisma/schema.prisma` (root, dual generators) and `backend/prisma/schema.prisma` must be kept in sync.
-The backend **Docker build** generates its Prisma client from the backend-local copy
-(`backend/Dockerfile`), while predeploy/scripts prefer the root schema — so a model added only to root
-makes the backend Docker build's `tsc` fail and breaks deployment silently.
+The backend **Docker build** generates its Prisma client from the **root** schema
+(`backend/Dockerfile:16-17`), as do predeploy and the backend `db:*` scripts — the backend-local copy is
+a sync mirror; keep it matching so local backend workflows and deploys see the same models.
 
 ### Test accounts (seeded by `prisma/seed.cjs`)
 Seed is find-or-create and **always refreshes password hashes**, so these plaintext values always work:
