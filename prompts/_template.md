@@ -1,31 +1,41 @@
-# [Title]
+# [Ticket title — short description]
 
-**Author:** [name]
+**Author:** [your name]
 **Date:** [YYYY-MM-DD]
-**Sprint:** [1/2/3]
-**Pod:** [Build/Experience]
+**Ticket:** [ticket-626 / issue #623]
+**Pod:** [Build / Experience]
 
 ## Intent
-What were you trying to accomplish?
+
+What I was trying to accomplish on this ticket.
 
 ## Prompt
+
+How I directed the work in Cursor (summarize the main prompts across the ticket — paraphrased, in my own words):
+
 ```
-[paste the actual prompt you gave Claude Code]
+[Example: I asked Cursor to build the K-2 instant-feedback quiz from the ticket spec,
+keep the g3_5 legacy path unchanged, and add tests before we migrated everything into the repo.]
 ```
 
-## What Claude Code Did
-- Files created/modified: [list]
-- Tests passed: [yes/no]
-- Build clean: [yes/no]
+## Outcome
 
-## What Worked
-[what was good about the output]
+- Shipped: [brief list]
+- Tests: lint / typecheck / unit / e2e — [pass/fail notes]
+- Build: [yes/no]
 
-## What Needed Editing
-[what you had to fix manually after]
+## What worked
+
+[What Cursor got right or saved time on]
+
+## What I changed manually
+
+[What I edited, reverted, or decided myself after generation]
 
 ## Lessons
-[what you'd do differently next time]
+
+[What I'd do differently next time]
 
 ## Rating
-[1-5 stars: how useful was AI for this task vs doing it manually?]
+
+[1–5: how useful was AI for this ticket vs doing it manually?]
