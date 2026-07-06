@@ -47,3 +47,9 @@ public/games/*/Build/*.js
 public/games/*/Build/*.data
 public/games/*/Build/*.wasm
 CLAUDE.local.md
+
+# Test & Cypress artifacts (local only)
+coverage/
+cypress/videos/
+cypress/screenshots/
+cypress/results/
