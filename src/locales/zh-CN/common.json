@@ -703,6 +703,30 @@
     "submit": "提交",
     "almost": "差一点！",
     "checkHints": "看看提示再试试！",
+    "questionOf": "第 {{current}} 题，共 {{total}} 题",
+    "feedback": {
+      "answerIs": "答案是：",
+      "seeResults": "看看我做得怎么样！",
+      "correctCheers": [
+        "答对了！🎉",
+        "做得好！",
+        "太棒了！",
+        "超级聪明！",
+        "继续加油！"
+      ],
+      "incorrectGentle": [
+        "再试一次！",
+        "想得不错！",
+        "差一点！",
+        "继续加油，你可以的！"
+      ]
+    },
+    "summary": {
+      "title": "测验完成！🌟",
+      "scoreLine": "你答对了 {{score}} / {{total}} 题！",
+      "perfect": "完美！全部答对！",
+      "finish": "完成"
+    },
     "markComplete": "标记完成",
     "unsupported": "不支持的活动类型",
     "breakTitle": "休息一下吧！",
