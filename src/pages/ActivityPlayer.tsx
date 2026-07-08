@@ -156,6 +156,8 @@ export default function ActivityPlayer() {
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
 
+    let cancelled = false;
+
     // Removed/archived modules (e.g. lost-steps / "Fix the Order") are hidden
     // from the module list but were still reachable by direct URL — block the
     // activity route too so they can't open into a broken half-state.
@@ -173,6 +175,7 @@ export default function ActivityPlayer() {
     api
       .getModule(slug)
       .then((m) => {
+        if (cancelled) return;
         setModule(m);
         // locate activity
         const targetLessonId = String(lessonId);
@@ -202,22 +205,31 @@ export default function ActivityPlayer() {
           activity_id: String(found.id),
           grade_band: gradeBand,
         });
-        // reset INFO local state
+        // reset INFO local state (replay must start a fresh quiz session)
         setSlideIndex(0);
         setMode("story");
         setAnswers({});
         setSubmitted(false);
         setIncorrectIds([]);
+        setCompletionData(null);
+        setShowBreak(false);
         setQuizVariant(null);
       })
       .catch(() => {
+        if (cancelled) return;
         toast({
           title: t("common.oops"),
           description: t("activity.loadError"),
           variant: "destructive",
         });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, lessonId, activityId]); // avoid accidental reruns
 
@@ -250,10 +262,21 @@ export default function ActivityPlayer() {
     infoQuestions.length > 0;
 
   useLayoutEffect(() => {
-    if ((mode === "quiz" || isQuizOnly) && infoQuestions.length > 0) {
+    if (
+      (mode === "quiz" || isQuizOnly) &&
+      infoQuestions.length > 0 &&
+      quizVariant === null
+    ) {
       freezeQuizVariant();
     }
-  }, [mode, isQuizOnly, infoQuestions.length, freezeQuizVariant]);
+  }, [
+    mode,
+    isQuizOnly,
+    infoQuestions.length,
+    freezeQuizVariant,
+    quizVariant,
+    activityId,
+  ]);
 
   const getTimeSpentS = () => {
     const ms = Date.now() - startMsRef.current;

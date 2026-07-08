@@ -257,4 +257,72 @@ describe("ActivityPlayer quiz variant gate", () => {
     });
     expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
   });
+
+  it("keeps instant variant on replay after activity remount", async () => {
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "k2" }]);
+
+    const first = renderPlayer();
+    await enterQuizFromStory();
+    await waitFor(() => {
+      expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
+    });
+    first.unmount();
+
+    renderPlayer();
+    await enterQuizFromStory();
+    await waitFor(() => {
+      expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+  });
+
+  it("re-freezes instant variant when quiz-only activity reload completes after variant reset", async () => {
+    let resolveLateModule: ((value: typeof mockModule) => void) | undefined;
+    vi.mocked(api.getModule).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLateModule = resolve;
+        }),
+    );
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "k2" }]);
+
+    renderPlayer("a-2");
+
+    resolveLateModule?.({
+      ...mockModule,
+      units: [
+        {
+          lessons: [
+            {
+              id: "l-1",
+              activities: [mockQuizOnlyActivity],
+            },
+          ],
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+  });
+
+  it("g3_5 keeps legacy variant on replay after activity remount", async () => {
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "g3_5" }]);
+
+    const first = renderPlayer();
+    await enterQuizFromStory();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+    });
+    first.unmount();
+
+    renderPlayer();
+    await enterQuizFromStory();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("instant-quiz")).not.toBeInTheDocument();
+  });
 });
