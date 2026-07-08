@@ -11,7 +11,7 @@ import { pickLocale } from "@/utils/localizedContent";
 import { getGradeBand, type GradeBand } from "./gradeBandContent";
 
 // ── Types & constants ────────────────────────────────────────────────────
-type Phase = "intro" | "dash" | "jump" | "toss" | "compare" | "improve" | "retry" | "exitTicket" | "celebration";
+type Phase = "intro" | "predict" | "dash" | "jump" | "toss" | "compare" | "eventCompare" | "improve" | "retry" | "exitTicket" | "celebration";
 interface Scores { dash: number; jump: number; toss: number }
 type EventKey = keyof Scores;
 
@@ -20,6 +20,7 @@ const GZ_JUMP = { s: 0.6, e: 0.8 };
 const IDEAL_TOSS = 50;
 const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎" };
 const NAMES: Record<string, string> = { dash: "Dash", jump: "Jump", toss: "Toss" };
+const EVENT_ORDER: EventKey[] = ["dash", "jump", "toss"];
 
 const BAND_CONFIG = {
   k2: {
@@ -27,12 +28,14 @@ const BAND_CONFIG = {
     showDecimals: false,
     compareMeasurements: false,
     decimalPlaces: 0,
+    enablePredict: false,
   },
   g3_5: {
     showScore: false,
     showDecimals: true,
     compareMeasurements: true,
     decimalPlaces: 1,
+    enablePredict: true,
   },
 } as const;
 
@@ -164,9 +167,34 @@ function MoveMeasurePlayfield({
     toss: 0,
   });
 
-function getMeasurement(ev: EventKey) {
+  const [predictions, setPredictions] = useState<Record<EventKey, number>>({
+    dash: 0,
+    jump: 0,
+    toss: 0,
+  });
+
+  const [eventIndex, setEventIndex] = useState(0);
+  const currentEvent = EVENT_ORDER[eventIndex];
+
+  const goToNextPhase = () => {
+    const nextIndex = eventIndex + 1;
+
+    if (nextIndex < EVENT_ORDER.length) {
+      setEventIndex(nextIndex);
+      if (config.enablePredict) {
+        setPhase("predict");
+      }
+      else {
+        setPhase(EVENT_ORDER[nextIndex]);
+      }
+    } else {
+      setPhase("compare");
+    }
+  };
+
+  function getMeasurement(ev: EventKey) {
     return measurements[ev];
-}
+  }
 
   // ── Dash anim ──
   useEffect(() => {
@@ -189,7 +217,13 @@ function getMeasurement(ev: EventKey) {
     }));
     if (isRetry) { setImpScore(sc); const t = setTimeout(() => setPhase("exitTicket"), 1200); return () => clearTimeout(t); }
     setScores(p => ({ ...p, dash: sc }));
-    const t = setTimeout(() => { setDashPos(0); setDashDone(false); setPhase("jump"); }, 1200);
+    const t = setTimeout(() => { 
+        if (config.enablePredict) {
+            setPhase("eventCompare");
+        } else {
+            goToNextPhase();
+        } 
+    }, 1200);
     return () => clearTimeout(t);
   }, [dashDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -214,7 +248,13 @@ function getMeasurement(ev: EventKey) {
     }));
     if (isRetry) { setImpScore(sc); const t = setTimeout(() => setPhase("exitTicket"), 1200); return () => clearTimeout(t); }
     setScores(p => ({ ...p, jump: sc }));
-    const t = setTimeout(() => { setJLevel(0); setJHold(false); setJDone(false); setPhase("toss"); }, 1200);
+    const t = setTimeout(() => { 
+        if (config.enablePredict) {
+            setPhase("eventCompare");
+        } else {
+            goToNextPhase();
+        } 
+    }, 1200);
     return () => clearTimeout(t);
   }, [jDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -231,7 +271,13 @@ function getMeasurement(ev: EventKey) {
     }));
     if (isRetry) { setImpScore(sc); const t = setTimeout(() => setPhase("exitTicket"), 1200); return () => clearTimeout(t); }
     setScores(p => ({ ...p, toss: sc }));
-    const t = setTimeout(() => { setTVal(0); setTDone(false); setPhase("compare"); }, 1200);
+    const t = setTimeout(() => { 
+        if (config.enablePredict) {
+            setPhase("eventCompare");
+        } else {
+            goToNextPhase();
+        }
+    }, 1200);
     return () => clearTimeout(t);
   }, [tDone]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -289,16 +335,121 @@ function getMeasurement(ev: EventKey) {
   // RENDER
   // ════════════════════════════════════════════════════════════════════════
 
-  if (phase === "intro") return (
+if (phase === "intro") {
+  return (
     <div className="slide-up-fade text-center space-y-6 py-8">
       <div className="text-7xl float-idle">🏃</div>
-      <h2 className="text-3xl font-extrabold text-emerald-800">{t("games.moveMeasure.title", { defaultValue: "Move, Measure & Improve" })}</h2>
-      <p className="text-lg text-slate-600 max-w-md mx-auto">{t("games.moveMeasure.introText", { defaultValue: "Complete 3 events, compare your scores, then improve one!" })}</p>
-      <button className="bounce-in bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xl font-bold px-10 py-4 rounded-2xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform" onClick={() => setPhase("dash")}>
-        {t("games.moveMeasure.letsGo", { defaultValue: "Let's Go!" })}
+
+      <h2 className="text-3xl font-extrabold text-emerald-800">
+        {t("games.moveMeasure.title", {
+          defaultValue: "Move, Measure & Improve",
+        })}
+      </h2>
+
+      <p className="text-lg text-slate-600 max-w-md mx-auto">
+        {t("games.moveMeasure.introText", {
+          defaultValue:
+            "Complete 3 events, compare your scores, then improve one!",
+        })}
+      </p>
+
+      <button
+        className="bounce-in bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xl font-bold px-10 py-4 rounded-2xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform"
+        onClick={() => {
+          setEventIndex(0);
+          if (config.enablePredict){
+            setPhase("predict");
+          }
+          else {
+            setPhase(EVENT_ORDER[0]);
+          }
+        }}
+      >
+        {t("games.moveMeasure.letsGo", {
+          defaultValue: "Let's Go!",
+        })}
       </button>
     </div>
   );
+}
+
+  if (phase === "predict") {
+  const range = {
+    dash: { min: 3, max: 6 },
+    jump: { min: 0.8, max: 2 },
+    toss: { min: 0, max: 20 },
+  }[currentEvent];
+
+  const value =
+    predictions[currentEvent] ?? range.min;
+
+  const setValue = (v: number) => {
+    setPredictions((p) => ({
+      ...p,
+      [currentEvent]: v,
+    }));
+  };
+
+  return (
+    <div className="slide-up-fade text-center space-y-6 py-6">
+      <h3 className="text-2xl font-extrabold text-slate-800">
+        🔮 {t("games.moveMeasure.predictTitle", {
+          defaultValue: "Make a Prediction",
+        })}
+      </h3>
+
+      <p className="text-base text-slate-600">
+        {t("games.moveMeasure.predictText", {
+          defaultValue: "Before you try, predict your result!",
+        })}
+      </p>
+
+      {/* Event label */}
+      <div className="text-lg font-bold text-emerald-700">
+        {ICONS[currentEvent]} {NAMES[currentEvent]}
+      </div>
+
+      {/* Slider */}
+      <div className="max-w-sm mx-auto space-y-4">
+        <input
+          type="range"
+          min={range.min}
+          max={range.max}
+          step={0.1}
+          value={value}
+          onChange={(e) => setValue(Number(e.target.value))}
+          className="w-full h-3 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+        />
+
+        <div className="flex justify-between text-xs text-slate-400 font-bold">
+          <span>{t("games.moveMeasure.low", { defaultValue: "Low" })}</span>
+          <span>{t("games.moveMeasure.high", { defaultValue: "High" })}</span>
+        </div>
+      </div>
+
+      {/* Prediction display */}
+      <p className="text-xl font-bold text-slate-700">
+        {t("games.moveMeasure.yourPrediction", {
+          defaultValue: "Your prediction:",
+        })}{" "}
+        {value.toFixed(1)} m
+      </p>
+
+      {/* Hint */}
+      <p className="text-sm text-slate-500">
+        You will compare your prediction with your actual result after the activity.
+      </p>
+
+      {/* Start button */}
+      <BigBtn
+        gradient="from-emerald-500 to-emerald-600"
+        onClick={() => setPhase(currentEvent)}
+      >
+        {t("games.moveMeasure.start", { defaultValue: "Start!" })}
+      </BigBtn>
+    </div>
+  );
+}
 
   if (phase === "dash" || (isRetry && impEvent === "dash")) {
     const sc = dashDone ? zoneScore(dashPos, GZ_DASH.s, GZ_DASH.e) : null;
@@ -382,6 +533,59 @@ function getMeasurement(ev: EventKey) {
     );
   }
 
+/* Compare prediction and actual result for g3-5 students */
+if (phase === "eventCompare") {
+
+    const prediction = predictions[currentEvent];
+    const actual = measurements[currentEvent];
+    const diff = Math.abs(prediction - actual);
+
+    return (
+        <div className="slide-up-fade text-center space-y-6 py-6">
+
+            <h3 className="text-2xl font-extrabold">
+                {ICONS[currentEvent]} {NAMES[currentEvent]}
+            </h3>
+
+            <div className="flex justify-center gap-10">
+
+                <div>
+                    <p className="text-xs">Prediction</p>
+                    <p className="text-3xl font-bold">
+                        {prediction.toFixed(1)} m
+                    </p>
+                </div>
+
+                <div className="text-2xl self-center">
+                    →
+                </div>
+
+                <div>
+                    <p className="text-xs">Actual</p>
+                    <p className="text-3xl font-bold">
+                        {actual.toFixed(1)} m
+                    </p>
+                </div>
+
+            </div>
+
+            <p className="text-lg">
+                Difference: {diff.toFixed(1)} m
+            </p>
+
+            <BigBtn
+                gradient="from-emerald-500 to-emerald-600"
+                onClick={goToNextPhase}
+            >
+                Continue
+            </BigBtn>
+
+        </div>
+    );
+}
+
+
+
 if (phase === "compare") {
   const preferenceMode = allTied || twoTied;
   const tiedNames = twoTied ? bestEvents.map((e) => NAMES[e]).join(" AND ") : "";
@@ -442,10 +646,21 @@ if (phase === "compare") {
 
               {/* Measurement (Grade 3–5 focus) */}
               {config.compareMeasurements && (
-                <span className="text-xs text-slate-500">
-                  {measurement.toFixed(config.decimalPlaces)} m
-                </span>
-              )}
+                <div className="text-xs text-slate-500 text-center space-y-1">
+                    <div>
+                    Predicted: {predictions[ev].toFixed(config.decimalPlaces)} m
+                    </div>
+
+                    <div>
+                    Actual: {measurement.toFixed(config.decimalPlaces)} m
+                    </div>
+
+                <div className="font-semibold text-emerald-700">
+                Difference:{" "}
+                {Math.abs(measurement - predictions[ev]).toFixed(config.decimalPlaces)} m
+                </div>
+            </div>
+            )}
 
               <span className="text-xs text-slate-500">
                 {NAMES[ev]}
