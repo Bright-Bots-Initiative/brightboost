@@ -55,6 +55,12 @@ Before approving a PR, reviewers check:
 - **Experience Pod Lead:** Catarina Lucas Herrera — reviews all Experience Pod PRs
 - **Cross-pod PRs:** Both leads review
 
+## Labels, Priority & Delegation
+
+How we label issues (Pod / Size / Audience / Topic / State + the `P0`/`P1`/`P2` priority axis),
+how leads hand out tickets, and how to team up on someone else's ticket are canonical in
+[`docs/team-workflow.md`](docs/team-workflow.md).
+
 ## Getting Help
 
 Stuck? Post in `#help` on Slack before spinning your wheels for more than 30 minutes.

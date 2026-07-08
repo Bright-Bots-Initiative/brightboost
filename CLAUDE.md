@@ -101,6 +101,7 @@ class) — on a fresh DB there is no K-2 class code. Works on long-lived demo DB
 - Branches: `your-name/short-description`. Conventional commits (`feat:`/`fix:`/`docs:`/...).
 - Log significant Claude Code prompts in `prompts/`. Intern guide: `docs/prompting-guide.md`.
 - Full workflow: `CONTRIBUTING.md` (pod leads: Alice Lin — Build, Catarina Lucas Herrera — Experience).
+- Labels, priority (`P0`/`P1`/`P2`) & delegation: canonical in `docs/team-workflow.md`.
 
 ### Code style
 - Functional React components + hooks only; TypeScript strict, no `any` unless commented.
@@ -141,6 +142,13 @@ New activities are checked against these (and the review checklist) before build
 
 ---
 
+## Team workflow (canonical — see `docs/team-workflow.md`)
+Label taxonomy (five axes: Pod / Size / Audience / Topic / State) plus the priority axis
+(`P0 — now` / `P1 — this week` / `P2 — when free`), lead delegation, and the team-up protocol
+for collaborating on someone else's ticket. Full framework: `docs/team-workflow.md`.
+
+---
+
 ## Source of truth
 
 When repository information conflicts, resolve in this order:
@@ -149,6 +157,7 @@ When repository information conflicts, resolve in this order:
 
 Pointers, not copies:
 - `docs/design-principles.md` — **canonical** design principles (merged #664).
+- `docs/team-workflow.md` — **canonical** label taxonomy, priority axis, delegation & team-up protocol.
 - `docs/roadmap-notes.md` — strategic/directional notes (not commitments).
 - `docs/i18n.md` — i18n architecture, deferred-component backlog, intern tickets.
 - `docs/audits/g35-first-set-audit.md` — grade 3-5 audit + Set 2 variant briefs.
