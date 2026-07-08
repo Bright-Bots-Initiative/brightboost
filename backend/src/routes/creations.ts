@@ -4,6 +4,7 @@ import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
 import {
   CREATION_TYPES,
+  deriveCreationTitle,
   validateCreationContent,
   type CreationType,
 } from "../services/creationContent";
@@ -135,7 +136,7 @@ router.post(
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
-    const { courseId, type, title, content } = parsed.data;
+    const { courseId, type, content } = parsed.data;
 
     // Author must belong to the group they are publishing into.
     const enrolled = await prisma.enrollment.findUnique({
@@ -153,12 +154,14 @@ router.post(
       return res.status(422).json({ error: check.error });
     }
 
+    const derivedTitle = deriveCreationTitle(type as CreationType, content);
+
     const creation = await prisma.creation.create({
       data: {
         authorId: req.user!.id,
         courseId,
         type,
-        title: title ?? null,
+        title: derivedTitle ?? null,
         content: content as object,
         // status defaults to IN_PROGRESS (private draft) at the DB layer.
       },
@@ -185,7 +188,7 @@ router.patch(
 
     const existing = await prisma.creation.findUnique({
       where: { id: req.params.id },
-      select: { id: true, authorId: true, type: true },
+      select: { id: true, authorId: true, type: true, content: true },
     });
     if (!existing) {
       return res.status(404).json({ error: "creation not found" });
@@ -201,7 +204,8 @@ router.patch(
       status?: "IN_PROGRESS" | "SHARED" | "COMPLETE";
     } = {};
 
-    if (parsed.data.title !== undefined) data.title = parsed.data.title;
+    let effectiveContent = undefined;
+
     if (parsed.data.status !== undefined) data.status = parsed.data.status;
     if (parsed.data.content !== undefined) {
       const check = validateCreationContent(
@@ -211,7 +215,20 @@ router.patch(
       if (!check.ok) {
         return res.status(422).json({ error: check.error });
       }
-      data.content = parsed.data.content as object;
+
+      effectiveContent = parsed.data.content as object;
+      data.content = effectiveContent;
+    }
+
+    const derivedTitle = deriveCreationTitle(
+      existing.type as CreationType,
+      effectiveContent ?? existing.content,
+    );
+
+    if (derivedTitle !== null) {
+      data.title = derivedTitle;
+    } else {
+      data.title = null;
     }
 
     const updated = await prisma.creation.update({

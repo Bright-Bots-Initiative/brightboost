@@ -140,6 +140,33 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(403);
     });
+
+    it("replaces a crafted title with the derived title on create", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue({
+        ...dbCreation,
+        title: "Sort by Water need",
+      });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "data_dash_challenge",
+          title: "this should be ignored",
+          content: validChallenge,
+        });
+
+        expect(res.status).toBe(201);
+        expect(prismaMock.creation.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Sort by Water need",
+            })
+          })
+        )
+    })
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -189,6 +216,36 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("replaces a crafted title with the derived title on update", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        authorId: KID,
+        type: "data_dash_challenge",
+        content: validChallenge,
+      });
+      prismaMock.creation.update.mockResolvedValue({
+        ...dbCreation,
+        title: "Sort by Water need",
+      });
+
+      const res = await request(app)
+        .patch("/api/creations/creation-1")
+        .set(asStudent(KID))
+        .send({
+          title: "this should be ignored",
+          content: validChallenge,
+        });
+
+        expect(res.status).toBe(200);
+        expect(prismaMock.creation.update).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Sort by Water need",
+            })
+          })
+        )
+    })
   });
 
   describe("GET /api/creations?courseId=", () => {

@@ -16,6 +16,12 @@ import { validateDataDashChallenge } from "./dataDashChallenge";
 export const CREATION_TYPES = ["data_dash_challenge"] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
+const dataDashSortRuleLabels: Record<string, string> = {
+  sunlightNeed: "Sunlight need",
+  waterNeed: "Water need",
+  leafType: "Leaf type",
+}
+
 export function isCreationType(value: unknown): value is CreationType {
   return (
     typeof value === "string" &&
@@ -57,5 +63,27 @@ export function validateCreationContent(
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.
       return { ok: false, error: `unsupported creation type: ${type}` };
+  }
+}
+
+export function deriveCreationTitle(
+  type: CreationType,
+  content: unknown,
+): string | null {
+  if (!isPlainObject(content)) return null;
+
+  switch(type) {
+    case "data_dash_challenge": {
+      const challenge = content as {
+        sortRule?: string;
+      };
+
+      const label = dataDashSortRuleLabels[challenge.sortRule ?? ""]
+      
+      return label ? `Sort by ${label}` : null;
+    }
+
+    default: 
+      return null;
   }
 }
