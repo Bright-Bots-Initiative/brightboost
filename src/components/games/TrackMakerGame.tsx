@@ -277,15 +277,17 @@ function TrackMakerCore({ onFinish, reducedEffects, band, fixedTrack }: CoreProp
     let cancelled = false;
     (async () => {
       try {
-        const courses = (await api.get("/student/courses")) as
-          | { id: string }[]
-          | { courses?: { id: string }[] };
-        const list = Array.isArray(courses) ? courses : (courses.courses ?? []);
+        // GET /student/courses returns enrollment rows shaped
+        // { courseId, courseName, gradeBand, ... } — the id field is courseId.
+        const courses = (await api.get("/student/courses")) as {
+          courseId: string;
+        }[];
+        const list = Array.isArray(courses) ? courses : [];
         if (!cancelled && list.length > 0) {
-          setCourseId(list[0].id);
+          setCourseId(list[0].courseId);
           try {
             const creations = (await api.get(
-              `/creations?courseId=${list[0].id}`,
+              `/creations?courseId=${list[0].courseId}`,
             )) as { type: string; title: string | null }[];
             if (!cancelled) {
               setExistingTitles(
