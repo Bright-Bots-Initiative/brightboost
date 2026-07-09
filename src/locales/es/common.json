@@ -1619,7 +1619,8 @@
   },
   "challengePlayer": {
     "loading": "Cargando desafío...",
-    "notFound": "Este desafío no está disponible."
+    "notFound": "Este desafío no está disponible.",
+    "viewMyGallery": "Ver mi galería"
   },
   "gallery": {
     "pageTitle": "Galería del grupo",

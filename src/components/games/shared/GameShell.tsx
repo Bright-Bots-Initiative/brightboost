@@ -60,6 +60,7 @@ interface GameShellProps {
    * one the chip falls back to the raw score.
    */
   formatBest?: (best: { bestScore: number; bestStreak: number }) => string;
+  secondaryAction?: { label: string; icon?: React.ReactNode; onClick: () => void };
 }
 
 // ── Animated star with stagger ─────────────────────────────────────────────
@@ -228,6 +229,7 @@ function GameResultsView({
   onPlayAgain,
   onComplete,
   headingRef,
+  secondaryAction,
 }: {
   result: GameResult;
   title: string;
@@ -235,6 +237,7 @@ function GameResultsView({
   onPlayAgain: () => void;
   onComplete: () => void;
   headingRef: RefObject<HTMLHeadingElement>;
+  secondaryAction?: { label: string; icon?: React.ReactNode; onClick: () => void };
 }) {
   const { t } = useTranslation();
   const pct = result.accuracy ?? 0;
@@ -346,7 +349,7 @@ function GameResultsView({
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 justify-center pt-2">
+          <div className="flex gap-3 justify-center pt-2 flex-wrap">
             <Button
               variant="outline"
               className="rounded-xl hover:scale-105 active:scale-95 transition-transform"
@@ -354,6 +357,16 @@ function GameResultsView({
             >
               <RotateCcw className="w-4 h-4 mr-1" /> {t("games.shared.playAgain")}
             </Button>
+            {secondaryAction && (
+              <Button
+                variant="outline"
+                className="rounded-xl hover:scale-105 active:scale-95 transition-transform"
+                onClick={secondaryAction.onClick}
+              >
+                {secondaryAction.icon}
+                {secondaryAction.label}
+              </Button>
+            )}
             <Button
               className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-transform"
               onClick={onComplete}
@@ -377,6 +390,7 @@ export default function GameShell({
   onComplete,
   starThresholds = [30, 60, 90],
   formatBest,
+  secondaryAction,
 }: GameShellProps) {
   const { t } = useTranslation();
   const personalBest = usePersonalBest(gameKey);
@@ -514,6 +528,7 @@ export default function GameShell({
           headingRef={resultsHeadingRef}
           onPlayAgain={() => { setResult(null); setPhase(briefing ? "briefing" : "playing"); }}
           onComplete={() => onComplete(result)}
+          secondaryAction={secondaryAction}
         />
       </div>
     );
