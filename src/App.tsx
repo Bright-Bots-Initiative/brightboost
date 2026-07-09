@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
 
 // Import pages
 import TeacherLogin from "./pages/TeacherLogin";
@@ -273,6 +274,7 @@ function App() {
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <Toaster />
 
             {import.meta.env.VITE_APP_VERSION ? (
               <div className="fixed right-2 bottom-2 opacity-60 text-xs pointer-events-none">

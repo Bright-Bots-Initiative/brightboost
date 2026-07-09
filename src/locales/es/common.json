@@ -703,6 +703,30 @@
     "submit": "Enviar",
     "almost": "¡Casi!",
     "checkHints": "¡Revisa las pistas e inténtalo de nuevo!",
+    "questionOf": "Pregunta {{current}} de {{total}}",
+    "feedback": {
+      "answerIs": "La respuesta es:",
+      "seeResults": "¡Ver cómo me fue!",
+      "correctCheers": [
+        "¡Lo lograste! 🎉",
+        "¡Muy bien!",
+        "¡Increíble!",
+        "¡Súper inteligente!",
+        "¡Así se hace!"
+      ],
+      "incorrectGentle": [
+        "¡Buen intento!",
+        "¡Bien pensado!",
+        "¡Casi!",
+        "¡Sigue así, tú puedes!"
+      ]
+    },
+    "summary": {
+      "title": "¡Cuestionario terminado! 🌟",
+      "scoreLine": "¡Acertaste {{score}} de {{total}}!",
+      "perfect": "¡Perfecto! ¡Todas correctas!",
+      "finish": "Terminar"
+    },
     "markComplete": "Marcar Completado",
     "unsupported": "Tipo de actividad no soportado",
     "breakTitle": "¡Hora de un Descanso!",

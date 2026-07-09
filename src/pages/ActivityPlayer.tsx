@@ -1,5 +1,5 @@
 // src/pages/ActivityPlayer.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -27,10 +27,12 @@ import { useTranslation } from "react-i18next";
 import {
   LocalizedField,
   resolveText,
-  resolveChoiceList,
 } from "@/utils/localizedContent";
 import { track } from "@/lib/analytics";
 import ActivityHeader from "@/components/activities/ActivityHeader";
+import LegacyListQuiz from "@/components/activities/quiz/LegacyListQuiz";
+import K2InstantFeedbackQuiz from "@/components/activities/quiz/K2InstantFeedbackQuiz";
+import type { QuizVariant } from "@/components/activities/quiz/types";
 import { ACTIVITY_VISUAL_TOKENS } from "@/theme/activityVisualTokens";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
@@ -39,19 +41,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { QuizQuestion as StoryQuestion } from "@/components/activities/quiz/types";
 
 type StorySlide = {
   id: string;
   text: LocalizedField;
   icon?: string;
   imageKey?: ImageKey;
-};
-type StoryQuestion = {
-  id: string;
-  prompt: LocalizedField;
-  choices: LocalizedField[];
-  answerIndex: number;
-  hint?: LocalizedField;
 };
 
 function safeJsonParse(raw: string): any {
@@ -107,6 +103,7 @@ export default function ActivityPlayer() {
   const [showBreak, setShowBreak] = useState(false);
   // Per-question shuffled choice order: questionId → shuffled array of original indices
   const [shuffleMap, setShuffleMap] = useState<Record<string, number[]>>({});
+  const [quizVariant, setQuizVariant] = useState<QuizVariant | null>(null);
 
   const breakSuggestions = t("activityPlayer.breakSuggestions", { returnObjects: true }) as string[];
 
@@ -159,6 +156,8 @@ export default function ActivityPlayer() {
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
 
+    let cancelled = false;
+
     // Removed/archived modules (e.g. lost-steps / "Fix the Order") are hidden
     // from the module list but were still reachable by direct URL — block the
     // activity route too so they can't open into a broken half-state.
@@ -176,6 +175,7 @@ export default function ActivityPlayer() {
     api
       .getModule(slug)
       .then((m) => {
+        if (cancelled) return;
         setModule(m);
         // locate activity
         const targetLessonId = String(lessonId);
@@ -205,21 +205,31 @@ export default function ActivityPlayer() {
           activity_id: String(found.id),
           grade_band: gradeBand,
         });
-        // reset INFO local state
+        // reset INFO local state (replay must start a fresh quiz session)
         setSlideIndex(0);
         setMode("story");
         setAnswers({});
         setSubmitted(false);
         setIncorrectIds([]);
+        setCompletionData(null);
+        setShowBreak(false);
+        setQuizVariant(null);
       })
       .catch(() => {
+        if (cancelled) return;
         toast({
           title: t("common.oops"),
           description: t("activity.loadError"),
           variant: "destructive",
         });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, lessonId, activityId]); // avoid accidental reruns
 
@@ -236,6 +246,38 @@ export default function ActivityPlayer() {
     setShuffleMap(sMap);
   }, [bandedContent]);
 
+  const freezeQuizVariant = useCallback(() => {
+    setQuizVariant((v) => v ?? (gradeBand === "k2" ? "instant" : "legacy"));
+  }, [gradeBand]);
+
+  const infoQuestions: StoryQuestion[] =
+    activity?.kind === "INFO" && Array.isArray(bandedContent?.questions)
+      ? bandedContent.questions
+      : [];
+
+  const isQuizOnly =
+    activity?.kind === "INFO" &&
+    bandedContent?.type === "story_quiz" &&
+    slides.length === 0 &&
+    infoQuestions.length > 0;
+
+  useLayoutEffect(() => {
+    if (
+      (mode === "quiz" || isQuizOnly) &&
+      infoQuestions.length > 0 &&
+      quizVariant === null
+    ) {
+      freezeQuizVariant();
+    }
+  }, [
+    mode,
+    isQuizOnly,
+    infoQuestions.length,
+    freezeQuizVariant,
+    quizVariant,
+    activityId,
+  ]);
+
   const getTimeSpentS = () => {
     const ms = Date.now() - startMsRef.current;
     return Math.max(1, Math.round(ms / 1000));
@@ -247,8 +289,8 @@ export default function ActivityPlayer() {
     total?: number;
     streakMax?: number;
     roundsCompleted?: number;
-  }) => {
-    if (!slug || !lessonId || !activityId) return;
+  }): Promise<boolean> => {
+    if (!slug || !lessonId || !activityId) return false;
     const timeSpentS = getTimeSpentS();
     try {
       const res = await api.completeActivity({
@@ -279,12 +321,14 @@ export default function ActivityPlayer() {
       if (count > 0 && count % 3 === 0) {
         setShowBreak(true);
       }
+      return true;
     } catch {
       toast({
         title: t("common.oops"),
         description: t("activity.saveError"),
         variant: "destructive",
       });
+      return false;
     }
   };
 
@@ -422,13 +466,7 @@ export default function ActivityPlayer() {
 
   // INFO: story + quiz
   if (activity.kind === "INFO") {
-    // slides is already defined at top level
-    const questions: StoryQuestion[] = Array.isArray(bandedContent?.questions)
-      ? bandedContent.questions
-      : [];
-
-    // Quiz-only activity (story_quiz with slides=[] but questions present)
-    const isQuizOnly = bandedContent?.type === "story_quiz" && slides.length === 0 && questions.length > 0;
+    const questions = infoQuestions;
 
     if (bandedContent?.type !== "story_quiz" || (slides.length === 0 && !isQuizOnly)) {
       // fallback display
@@ -466,9 +504,6 @@ export default function ActivityPlayer() {
     }
 
     const current = slides[slideIndex];
-    const allAnswered = questions.every(
-      (q) => typeof answers[q.id] === "number",
-    );
 
     if (mode === "story" && !isQuizOnly) {
       return (
@@ -570,7 +605,10 @@ export default function ActivityPlayer() {
               </Tooltip>
             ) : (
               <Button
-                onClick={() => setMode("quiz")}
+                onClick={() => {
+                  freezeQuizVariant();
+                  setMode("quiz");
+                }}
                 className="min-h-[44px] px-6"
               >
                 {t("activityPlayer.startQuiz")} <ArrowRight className="w-4 h-4 ml-1" />
@@ -582,123 +620,52 @@ export default function ActivityPlayer() {
     }
 
     // Quiz
-    return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
-        <ActivityHeader
-          title={activity.title}
-          visualKey="quiz"
-          subtitle={t("activityPlayer.quizSubtitle")}
-        />
-        <div className="flex items-center justify-between">
-          {isQuizOnly ? (
-            <Button variant="outline" onClick={() => navigate(`/student/modules/${slug}`)}>
-              {t("activityPlayer.back")}
-            </Button>
-          ) : (
-            <Button variant="outline" onClick={() => setMode("story")}>
-              {t("activityPlayer.backToStory")}
-            </Button>
-          )}
+    if (questions.length === 0) {
+      return (
+        <div className="p-6 max-w-3xl mx-auto space-y-4">
+          <ActivityHeader
+            title={activity.title}
+            visualKey="quiz"
+            subtitle={t("activityPlayer.quizSubtitle")}
+          />
         </div>
+      );
+    }
 
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            {questions.map((q) => {
-              const isWrong = submitted && incorrectIds.includes(q.id);
-              const promptId = `question-prompt-${q.id}`;
-              return (
-                <div key={q.id} className="space-y-2">
-                  <div className="font-semibold text-lg" id={promptId}>
-                    {resolveText(t, q.prompt)}
-                    {isWrong && (
-                      <span className="text-red-500 ml-2 text-sm">
-                        {t("activityPlayer.tryAgain")}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    className="grid gap-2"
-                    role="group"
-                    aria-labelledby={promptId}
-                  >
-                    {(() => {
-                      const resolved = resolveChoiceList(t, q.choices);
-                      const order = shuffleMap[q.id] ?? q.choices.map((_, i) => i);
-                      return order.map((origIdx) => {
-                        const selected = answers[q.id] === origIdx;
-                        return (
-                          <Button
-                            key={origIdx}
-                            variant={selected ? "default" : "outline"}
-                            aria-pressed={selected}
-                            // h-auto + whitespace-normal: choices wrap instead
-                            // of clipping; min-h-[44px] + py-3 keeps every
-                            // choice a comfortable K-2 tap target.
-                            className={`justify-start text-left h-auto min-h-[44px] py-3 whitespace-normal ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
-                            onClick={() => {
-                              setAnswers((prev) => ({ ...prev, [q.id]: origIdx }));
-                              if (isWrong) {
-                                setIncorrectIds((prev) =>
-                                  prev.filter((id) => id !== q.id),
-                                );
-                              }
-                            }}
-                          >
-                            {resolved[origIdx]}
-                          </Button>
-                        );
-                      });
-                    })()}
-                  </div>
-                  {isWrong && q.hint && (
-                    <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded border border-blue-100 animate-in fade-in">
-                      💡 {resolveText(t, q.hint)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+    if (quizVariant === null) {
+      return null;
+    }
 
-            {/* Submit is the hero action; Reset is demoted to ghost so a
-                K-2 student doesn't accidentally wipe all answers reaching
-                for the primary button. */}
-            <div className="flex gap-2 items-center">
-              <Button
-                disabled={!allAnswered}
-                className="min-h-[44px] px-6 flex-1 sm:flex-none"
-                onClick={() => {
-                  const incorrect = questions.filter(
-                    (q) => answers[q.id] !== q.answerIndex,
-                  );
-                  if (incorrect.length === 0) {
-                    handleComplete();
-                    return;
-                  }
-                  setSubmitted(true);
-                  setIncorrectIds(incorrect.map((q) => q.id));
-                  toast({
-                    title: t("activityPlayer.almost"),
-                    description: t("activityPlayer.checkHints"),
-                  });
-                }}
-              >
-                {t("activityPlayer.submit")}
-              </Button>
-              <Button
-                variant="ghost"
-                className="min-h-[44px] text-slate-500"
-                onClick={() => {
-                  setAnswers({});
-                  setSubmitted(false);
-                  setIncorrectIds([]);
-                }}
-              >
-                {t("activityPlayer.reset")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    if (quizVariant === "instant") {
+      return (
+        <K2InstantFeedbackQuiz
+          title={activity.title}
+          questions={questions}
+          shuffleMap={shuffleMap}
+          onComplete={(score) =>
+            handleComplete({ score, total: questions.length })
+          }
+          trackContext={{ moduleSlug: slug, activityId, gradeBand }}
+        />
+      );
+    }
+
+    return (
+      <LegacyListQuiz
+        title={activity.title}
+        questions={questions}
+        shuffleMap={shuffleMap}
+        answers={answers}
+        submitted={submitted}
+        incorrectIds={incorrectIds}
+        setAnswers={setAnswers}
+        setSubmitted={setSubmitted}
+        setIncorrectIds={setIncorrectIds}
+        onComplete={() => handleComplete()}
+        isQuizOnly={isQuizOnly}
+        onBackToStory={() => setMode("story")}
+        onBackToModule={() => navigate(`/student/modules/${slug}`)}
+      />
     );
   }
 

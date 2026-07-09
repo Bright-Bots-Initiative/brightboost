@@ -703,6 +703,30 @@
     "submit": "Nộp",
     "almost": "Gần đúng rồi!",
     "checkHints": "Xem gợi ý và thử lại!",
+    "questionOf": "Câu hỏi {{current}} / {{total}}",
+    "feedback": {
+      "answerIs": "Đáp án là:",
+      "seeResults": "Xem kết quả của con!",
+      "correctCheers": [
+        "Con làm đúng rồi! 🎉",
+        "Giỏi lắm!",
+        "Tuyệt vời!",
+        "Thông minh quá!",
+        "Xuất sắc!"
+      ],
+      "incorrectGentle": [
+        "Cố gắng lắm rồi!",
+        "Con nghĩ hay đấy!",
+        "Gần đúng rồi!",
+        "Tiếp tục nhé, con làm được!"
+      ]
+    },
+    "summary": {
+      "title": "Xong bài kiểm tra! 🌟",
+      "scoreLine": "Con trả lời đúng {{score}} / {{total}} câu!",
+      "perfect": "Hoàn hảo! Đúng hết!",
+      "finish": "Hoàn thành"
+    },
     "markComplete": "Đánh dấu hoàn thành",
     "unsupported": "Loại hoạt động không được hỗ trợ",
     "breakTitle": "Giờ nghỉ giải lao!",

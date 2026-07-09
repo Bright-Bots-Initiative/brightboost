@@ -74,6 +74,16 @@ export type AnalyticsEvent =
       quiz_score?: number;
       grade_band?: string;
     }
+  | {
+      kind: "quiz_question_answered";
+      module_slug?: string;
+      activity_id?: string;
+      grade_band?: string;
+      question_id: string;
+      question_index: number;
+      correct: boolean;
+      quiz_variant: "instant";
+    }
   | { kind: "signup_role_selected"; role: "teacher" | "student" | "parent" }
   // Public /try demo funnel (anonymous visitors — no identify call; PostHog
   // stitches the anonymous session to the user on later signup)

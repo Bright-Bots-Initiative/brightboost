@@ -17,5 +17,16 @@ export default defineConfig({
     environmentOptions: {
       jsdom: {},
     },
+    coverage: {
+      provider: "v8",
+      include: ["src/components/activities/quiz/**"],
+      exclude: ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/types.ts"],
+      thresholds: {
+        lines: 90,
+        branches: 90,
+        functions: 90,
+        statements: 90,
+      },
+    },
   },
 });
