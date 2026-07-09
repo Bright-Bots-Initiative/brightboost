@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
+import { resolveChallenge, type ResolvedChallenge } from "./dataDashAuthoring";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -86,46 +87,41 @@ const BRIEFING: MissionBriefing = {
   },
 };
 
-function DataDashPlayfield({ onFinish }: { onFinish: (result: GameResult) => void }) {
+function DataDashPlayfield({
+  challenge,
+  onFinish,
+}: {
+  challenge: ResolvedChallenge;
+  onFinish: (result: GameResult) => void;
+}) {
+  // Cards/rules come from the resolved challenge (authored or default).
+  const { cards, sortRule: rule, inferRule, inferOptions, chartQuestions } = challenge;
+  const inferAttr = inferRule as keyof DataCard;
+
   const [phase, setPhase] = useState<"sort" | "infer" | "chart">("sort");
-  const [rule] = useState<SortRuleKey>("sunlightNeed");
   const [assignments, setAssignments] = useState<Record<string, string>>({});
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [sortResult, setSortResult] = useState<{ correct: number; total: number } | null>(null);
 
-  const inferRule: SortRuleKey = "seedType" as unknown as SortRuleKey;
-  const inferOptions = ["sunlightNeed", "waterNeed", "seedType", "growthSpeed"];
   const [inferChoice, setInferChoice] = useState<string | null>(null);
 
-  const chartQuestions = [
-    {
-      prompt: "Which claim is best supported by the chart?",
-      choices: ["Most plants need full sunlight.", "Most plants need shade.", "All plants need partial sunlight."],
-      answerIndex: 0,
-    },
-    {
-      prompt: "What evidence best supports your claim?",
-      choices: ["The full-sun bar is tallest.", "Fern has frond leaves.", "Plant bed A has three cards."],
-      answerIndex: 0,
-    },
-  ];
   const [chartAnswers, setChartAnswers] = useState<Record<number, number>>({});
 
-  const chartData = useMemo(() => buildChartCounts(DATA_DASH_CARDS, rule), [rule]);
+  const chartData = useMemo(() => buildChartCounts(cards, rule), [cards, rule]);
 
-  const allSorted = DATA_DASH_CARDS.every((card) => Boolean(assignments[card.id]));
+  const allSorted = cards.every((card) => Boolean(assignments[card.id]));
 
   const groupedForInfer = useMemo(() => {
-    const groups = ["pod", "cone", "spore"].map((label) => ({
+    const labels = [...new Set(cards.map((card) => String(card[inferAttr])))];
+    return labels.map((label) => ({
       label,
-      cards: DATA_DASH_CARDS.filter((card) => card.seedType === label),
+      cards: cards.filter((card) => String(card[inferAttr]) === label),
     }));
-    return groups;
-  }, []);
+  }, [cards, inferAttr]);
 
   const submitSort = () => {
-    const result = evaluateSortAssignment(DATA_DASH_CARDS, assignments, rule);
+    const result = evaluateSortAssignment(cards, assignments, rule);
     setSortResult(result);
     setPhase("infer");
   };
@@ -134,7 +130,7 @@ function DataDashPlayfield({ onFinish }: { onFinish: (result: GameResult) => voi
     const chartCorrect = chartQuestions.filter((q, i) => checkChartAnswer(q.answerIndex, chartAnswers[i] ?? null)).length;
     const payload = buildCompletionPayload({
       sortCorrect: sortResult?.correct ?? 0,
-      sortTotal: sortResult?.total ?? DATA_DASH_CARDS.length,
+      sortTotal: sortResult?.total ?? cards.length,
       inferredRuleCorrect: inferChoice === inferRule,
       chartCorrect,
       chartTotal: chartQuestions.length,
@@ -156,7 +152,7 @@ function DataDashPlayfield({ onFinish }: { onFinish: (result: GameResult) => voi
             <>
               <p className="text-sm text-slate-600">Rule: Sort all cards by <strong>{SORT_RULES[rule].label}</strong>.</p>
               <div className="grid md:grid-cols-2 gap-3">
-                {DATA_DASH_CARDS.map((card) => (
+                {cards.map((card) => (
                   <button key={card.id} className={`border rounded-lg p-2 text-left ${selectedCard === card.id ? "border-emerald-500" : "border-slate-200"}`} onClick={() => setSelectedCard(card.id)}>
                     <div className="font-semibold">{card.name}</div>
                     <div className="text-xs text-slate-500">Bed {card.plantBed} • Sun: {card.sunlightNeed} • Water: {card.waterNeed} • Leaf: {card.leafType} • Seed: {card.seedType} • Growth: {card.growthSpeed}</div>
@@ -230,7 +226,10 @@ function DataDashPlayfield({ onFinish }: { onFinish: (result: GameResult) => voi
   );
 }
 
-export default function DataDashSortDiscoverGame({ onComplete }: GameProps) {
+export default function DataDashSortDiscoverGame({ config, onComplete }: GameProps) {
+  // Authored challenges arrive via config.challenge; otherwise fall back to the
+  // original seeded challenge (resolveChallenge handles the default).
+  const challenge = resolveChallenge(config);
   return (
     <GameShell
       gameKey="data_dash_sort_discover"
@@ -238,7 +237,9 @@ export default function DataDashSortDiscoverGame({ onComplete }: GameProps) {
       briefing={BRIEFING}
       onComplete={(result) => onComplete?.(result)}
     >
-      {({ onFinish, reducedEffects: _reducedEffects }) => <DataDashPlayfield onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => (
+        <DataDashPlayfield challenge={challenge} onFinish={onFinish} />
+      )}
     </GameShell>
   );
 }

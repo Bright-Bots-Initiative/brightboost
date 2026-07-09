@@ -46,7 +46,12 @@ export type AnalyticsEvent =
   // Funnel events (see docs/analytics.md)
   | { kind: "account_registered"; role: AnalyticsRole; signup_method: SignupMethod }
   | { kind: "login"; role: AnalyticsRole }
-  | { kind: "class_created"; class_id: string; grade_band?: string }
+  | {
+      kind: "class_created";
+      class_id: string;
+      grade_band?: string;
+      group_kind?: "class" | "home";
+    }
   | {
       kind: "student_joined_class";
       class_id: string;
@@ -69,7 +74,7 @@ export type AnalyticsEvent =
       quiz_score?: number;
       grade_band?: string;
     }
-  | { kind: "signup_role_selected"; role: "teacher" | "student" }
+  | { kind: "signup_role_selected"; role: "teacher" | "student" | "parent" }
   // Public /try demo funnel (anonymous visitors — no identify call; PostHog
   // stitches the anonymous session to the user on later signup)
   | { kind: "demo_page_viewed"; source: "direct" }

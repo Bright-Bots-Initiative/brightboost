@@ -1,6 +1,6 @@
 // src/pages/TeacherSignup.tsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -26,6 +26,10 @@ const MIN_PASSWORD_LENGTH = 8;
 const TeacherSignup: React.FC = () => {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  // Parents arrive via /teacher/signup?intent=home and should land on the
+  // home-group create flow instead of the default teacher dashboard.
+  const isHomeIntent = searchParams.get("intent") === "home";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,10 +81,14 @@ const TeacherSignup: React.FC = () => {
       if (response && response.token) {
         track({
           kind: "account_registered",
-          role: "teacher",
+          role: isHomeIntent ? "parent" : "teacher",
           signup_method: "email",
         });
-        login(response.token, response.user);
+        login(
+          response.token,
+          response.user,
+          isHomeIntent ? "/teacher/classes?create=home" : undefined,
+        );
       } else {
         setErrors({ form: t("teacherSignup.errors.generic") });
       }

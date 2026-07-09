@@ -1,35 +1,129 @@
 # Bright Boost — Claude Code Project Brief
 
-> This file is read by Claude Code on every turn. Keep it current.
-> Last updated: 2026-05-13
+> Read by Claude Code on every turn. Keep it current; every stale line misleads a future session.
+> Last verified against code: 2026-07-01
 
 ---
 
-## Product
+## What this is
 
-Bright Boost is a multilingual (English/Spanish/Vietnamese/Chinese) K–8 STEM learning platform
-with a secondary-age program layer called **Pathways** (ages 14-17).
-Current rollout priority is **K–2**. Architecture and copy must support K–8 and Pathways.
-Long-term pathway emphasis: AI, quantum, and biotech.
+Bright Boost is a multilingual (English/Spanish/Vietnamese/Chinese) K–8 STEM learning platform with a
+secondary-age program layer, **Pathways** (ages 14–17, cybersecurity-first). Current rollout priority is
+**K–2**; architecture and copy must support K–8 and Pathways. Long-term strand emphasis: AI, quantum, biotech.
 
-### Core Users
+Ranked product priorities: (1) K–2 usability/readability, (2) teacher-dashboard quality and progress
+evidence, (3) EN/ES consistency, (4) gamified learning that stays educational and measurable,
+(5) pilot/demo readiness for schools and partners, (6) minimal regression risk in every change.
 
-| User | What they care about |
-|------|---------------------|
-| Students (K–2 first) | Fun, readable, clear instructions, gamified learning |
-| Students (Pathways, 14-17) | Career-connected learning, cybersecurity, real skills |
-| Teachers (K–8) | Dashboard quality, evidence of progress, demo readiness |
-| Facilitators (Pathways) | Cohort management, learner progress, partner readiness |
-| School/community partners | Pilot readiness, measurable outcomes, bilingual access |
+---
 
-### Product Priorities (ranked)
+## Commands (verified 2026-07-01)
 
-1. K–2 usability and readability
-2. Teacher dashboard quality and progress evidence
-3. Bilingual English/Spanish consistency
-4. Gamified learning that stays educational, structured, measurable
-5. Pilot/demo readiness for schools and partners
-6. Clean, minimal regression risk in every change
+```bash
+npm install                    # root; backend deps are separate: cd backend && npm install
+npm run dev                    # vite on http://localhost:5173 (strictPort; proxies /api -> localhost:3000)
+cd backend && npm run dev      # ts-node src/server.ts on port 3000; needs DATABASE_URL + DIRECT_URL in backend/.env
+npm run lint                   # eslint, zero-warnings policy (~25s)
+npm run typecheck              # tsc --noEmit — FRONTEND ONLY (src/); backend: cd backend && npm run typecheck
+npm run test                   # vitest run --mode=ci: unit project (jsdom, incl. backend tests) + storybook
+                               #   browser project (needs playwright chromium) — ~1 min total
+npm run test:unit              # unit project only (no browser needed) — the light/fast option
+npm run test:e2e               # cypress run (needs the app running); cy:open for interactive
+npm run storybook              # storybook dev on port 6006
+npm run db:init                # prisma migrate deploy (ROOT schema) + seed — read Migrations gotcha first
+npx prisma generate            # root schema dual-generates BOTH clients (frontend + backend)
+```
+
+Traps:
+- `npm run start` runs a **build**, not a server (deploy artifact; misleading name).
+- Root `npm run typecheck` gives false confidence for backend changes — backend TS errors only surface
+  via `cd backend && npm run typecheck` (this is the schema-drift failure mode below).
+- `npm run test` fails without playwright browsers installed; fall back to `test:unit`.
+
+Node: **20.x** (`package.json` engines + `.nvmrc`). `frontend/CONTRIBUTING.md` still says Node 18 — stale.
+
+---
+
+## Environment gotchas (these burn sessions)
+
+### CI: `db-check` is red on every PR — expected
+The `db-check` job (`.github/workflows/ci-cd.yml`: postgres service → `prisma migrate deploy` →
+`npm run test:db`) **fails on every PR** until the migration-baseline bug **#646** lands, because the
+committed migration history cannot build the schema from scratch (~13 tables incl. Avatar never CREATEd).
+A red db-check is not a signal about your change. **Never make db-check a required check** until #646 is
+fixed. (Verified failing on open PRs #662, #663.)
+
+### Migrations: two trees, broken history — do not "fix" ad hoc
+- Migrations exist in BOTH `prisma/migrations/` (root) and `backend/prisma/migrations/`. The **root
+  schema/migrations are authoritative for deploys**: `backend/scripts/predeploy.sh` and backend
+  `db:migrate`/`db:generate` prefer `../prisma/schema.prisma`. The two trees are supposed to stay in
+  sync but are **currently diverged** (root has 24 migration dirs, backend 14) pending #646.
+- `prisma migrate dev` / `migrate deploy` against a **fresh** DB fails at the known-broken history.
+  Don't patch the history ad hoc — that's #646's job. `predeploy.sh` deliberately tolerates the failure
+  and boots on the existing schema; the old `db push --accept-data-loss` fallback was intentionally
+  removed (it risked silent data loss). See the comments in `backend/scripts/predeploy.sh`.
+
+### Schema sync: root vs backend copy
+`prisma/schema.prisma` (root, dual generators) and `backend/prisma/schema.prisma` must be kept in sync.
+The backend **Docker build** generates its Prisma client from the **root** schema
+(`backend/Dockerfile:16-17`), as do predeploy and the backend `db:*` scripts — the backend-local copy is
+a sync mirror; keep it matching so local backend workflows and deploys see the same models.
+
+### Test accounts (seeded by `prisma/seed.cjs`)
+Seed is find-or-create and **always refreshes password hashes**, so these plaintext values always work:
+
+| Email | Password | Role | Notes |
+|-------|----------|------|-------|
+| teacher@school.com | password123 | K-8 Teacher (Ms. Frizzle) | Demo class owner |
+| student@test.com | password | K-8 Student | Incomplete Set 1 |
+| explorer@test.com | explore123 | K-8 Student | Set 1 complete, Set 2 unlocked |
+| jordan@test.com | jordan123 | K-8 Student | Grade 3-5 class (`GRADE35`), fresh |
+| facilitator@test.com | pathway123 | Pathways Facilitator (Coach Davis) | ETO cohort manager |
+| marcus@test.com | marcus123 | Pathways Student (Launch) | 3/7 Cyber Launch done |
+| aisha@test.com | aisha123 | Pathways Student (Explorer) | Fresh, 0 completions |
+
+Class join codes seeded: `GRADE35` and `UPPER35` (both grade 3-5). Pathways cohort code: `ETO2026`
+("ETO Spring 2026 — Cyber Cohort", partner "Escape The Odds — South Side"; ended pilot: `ETO2025F`).
+⚠️ **Conflict, flagged:** `SETUP.md`/`docs/intern-credentials.md` say K-2 emoji login uses class code
+`STARS1`, but the current seed does **not** create it (it only reuses the teacher's pre-existing first
+class) — on a fresh DB there is no K-2 class code. Works on long-lived demo DBs where STARS1 already exists.
+
+### Misc
+- Slack notifications are optional — without `SLACK_WEBHOOK_URL` they silently no-op (`backend/src/utils/slack.ts`).
+- Docker postgres (docker-compose-pg.yml) runs on port **5435**.
+
+---
+
+## Conventions
+
+- `main` is protected: no direct pushes, **1 approving review** (pod lead or Nathaniel; authors can't
+  approve their own PR; cross-pod PRs get both leads), **linear history** — squash merge preferred.
+- Branches: `your-name/short-description`. Conventional commits (`feat:`/`fix:`/`docs:`/...).
+- Log significant Claude Code prompts in `prompts/`. Intern guide: `docs/prompting-guide.md`.
+- Full workflow: `CONTRIBUTING.md` (pod leads: Alice Lin — Build, Catarina Lucas Herrera — Experience).
+
+### Code style
+- Functional React components + hooks only; TypeScript strict, no `any` unless commented.
+- **Minimal diff over broad refactor, always.** Match adjacent files' patterns before inventing new ones.
+  Reuse existing components/hooks/utils. No architecture changes unless the task requires it.
+
+### i18n (never hardcode UI English)
+- UI strings via `useTranslation()` keys. New copy goes to `en.json` + `es.json` at minimum (also
+  `vi`/`zh-CN` when possible); uncertain translations get English + `// TODO: translate`.
+- Locale files: `src/locales/{en,es,vi,zh-CN}/{common,pathways}.json` — one `translation` namespace,
+  merged at boot. Architecture + backlog: `docs/i18n.md`.
+- Game/content data (non-UI): `pickLocale()` from `src/utils/localizedContent.ts`. DB-sourced
+  module/activity names: `translateContentName()`. Glossary content lives in locale JSON under
+  `pathways.glossary.terms.<slug>.*`; `src/data/glossary.ts` holds slug + category only.
+
+### Educational intent & K-2 bar
+- Preserve each game's learning goal, pacing, and instructional clarity — never swap in generic gameplay.
+- K–2: simple vocabulary, large tap targets, clear visual hierarchy; readability beats visual complexity.
+- Keep teacher and student flows consistent with existing app patterns.
+
+### Definition of "good"
+K–2 clarity ✓ educational intent intact ✓ bilingual keys (not hardcoded) ✓ teacher-demo-ready ✓
+small diff, existing patterns ✓.
 
 ---
 
@@ -47,462 +141,135 @@ New activities are checked against these (and the review checklist) before build
 
 ---
 
-## Source of Truth Order
+## Source of truth
 
-When repository information conflicts, resolve using this order:
+When repository information conflicts, resolve in this order:
+1. **Actual code** (imports, runtime behavior) → 2. **package.json** → 3. **prisma/schema.prisma** →
+4. **Root README.md** → 5. **Current passing tests** → 6. **Docs in active use** → 7. **Legacy docs**.
 
-1. **Actual code** — imports, runtime behavior, component trees
-2. **package.json** — scripts, engines, dependencies
-3. **prisma/schema.prisma** — data model
-4. **Root README.md**
-5. **Current passing tests**
-6. **Other docs** in active use
-7. **Legacy docs** — only if code proves they are still active
+Pointers, not copies:
+- `docs/design-principles.md` — **canonical** design principles (merged #664).
+- `docs/roadmap-notes.md` — strategic/directional notes (not commitments).
+- `docs/i18n.md` — i18n architecture, deferred-component backlog, intern tickets.
+- `docs/audits/g35-first-set-audit.md` — grade 3-5 audit + Set 2 variant briefs.
 
-### Known Conflicts
-
-- `package.json` declares Node 20.x; `frontend/CONTRIBUTING.md` may reference Node 18.
-- `backend/README.md` may reference AWS Lambda/Aurora — this is stale. Production is Railway/Supabase.
-- If you find a new conflict, **flag it explicitly** in your response. Do not silently choose one side.
-
----
-
-## Tech Stack
-
-### Frontend
-- React 18, TypeScript, Vite
-- Tailwind CSS, shadcn/ui, Framer Motion
-- React Router v6
-- i18next / react-i18next (en, es, vi, zh-CN)
-
-### Backend
-- Node.js 20.x, Express, TypeScript
-- Prisma ORM → PostgreSQL / Supabase
-
-### Infrastructure
-- Hosting: Railway
-- DB: Supabase (PostgreSQL)
-
-### Testing & Quality
-- Vitest (unit)
-- Cypress (e2e)
-- Storybook (component dev)
-- ESLint + Prettier
+Known conflicts (flag new ones explicitly — never silently pick a side):
+- `frontend/CONTRIBUTING.md` says Node 18; truth is Node 20 (engines + `.nvmrc`).
+- `backend/README.md` describes retired AWS Lambda/Aurora and self-flags as stale; production is
+  **Railway + Supabase (PostgreSQL)**.
+- `STARS1` class code: in docs, not in seed (see Test accounts above).
 
 ---
 
-## Commands
+## Tech stack
 
-```bash
-# Install
-npm install
-
-# Dev servers
-npm run dev                # frontend
-cd backend && npm run dev  # backend
-
-# Quality
-npm run lint
-npm run test
-npm run typecheck
-npm run storybook
-
-# Database
-npm run db:init
-npx prisma migrate dev
-npx prisma generate
-```
+React 18 + TypeScript + Vite · Tailwind + shadcn/ui + Framer Motion · React Router v6 ·
+i18next (en/es/vi/zh-CN) · Node 20 Express + Prisma → Supabase PostgreSQL · Hosted on Railway ·
+Vitest / Cypress / Storybook / ESLint + Prettier.
 
 ---
 
-## Repo Rules
+## Game architecture (K-8)
 
-### Code Style
-- Functional React components and hooks only — no class components
-- Follow existing folder conventions and patterns before inventing new ones
-- TypeScript strict mode — no `any` unless absolutely necessary and commented
+Registry: `src/components/games/gameRegistry.ts`. Set ID arrays + `HIDDEN_MODULE_SLUGS` + completion
+logic (`isSetComplete`, Set 2 unlocks when all Set 1 IDs have `COMPLETED` records):
+`src/constants/stemSets.ts`. All 10 games below are implemented, registered, and seeded with story slides.
 
-### Change Philosophy
-- **Minimal diff over broad refactor** — always
-- Do not rewrite unrelated files
-- Do not change architecture unless the task explicitly requires it
-- Prefer narrow, production-safe edits
-- Reuse existing components, hooks, utilities, and patterns
+### Set 1 — Foundation
+| Game | File (src/components/games/) | Game key | Activity ID | Strand | g3_5 |
+|------|------------------------------|----------|-------------|--------|------|
+| Bounce & Buds | BounceBudsGame.tsx | `buddy_garden_sort` | `bounce-buds` | Biotech | ✅ |
+| Gotcha Gears | GotchaGearsGame.tsx | `gotcha_gears_unity` | `gotcha-gears` | Quantum | ✅ |
+| Rhyme & Ride | RhymeRideGame.tsx | `rhymo_rhyme_rocket` | `rhyme-ride` | AI + Biotech | ✅ (banded worlds, 1.25×) |
+| Tank Trek | TankTrekGame.tsx | `tank_trek` | `tank-trek` | Quantum + AI | ✅ (appended chapters) |
+| Quantum Quest | QuantumQuestGame.tsx | `quantum_quest` | `quantum-quest` | Quantum | ✅ (g3_5 math sectors) |
 
-### Multilingual / i18n
-- Never hardcode English strings in UI — use translation keys via `useTranslation()`
-- When adding new copy, add keys to `en.json` and `es.json` at minimum; also `vi.json` and `zh-CN.json` if possible
-- Locale files: `src/locales/{en,es,vi,zh-CN}/{common,pathways}.json` (one `translation` namespace, two files merged at boot — see `docs/i18n.md`)
-- If a translation is uncertain, add the English value with a `// TODO: translate` comment
-- Use `pickLocale()` from `src/utils/localizedContent.ts` for game content data (non-UI strings)
-- Use `translateContentName()` for database-sourced module/activity names
-- Glossary content lives in `pathways.glossary.terms.<slug>.*` (locale JSON); `src/data/glossary.ts` holds slug + category only
-- Full architecture, deferred component backlog, and intern-ready tickets: `docs/i18n.md`
+### Set 2 — Exploration (unlocks after Set 1)
+| Game | File | Game key | Activity ID | Strand | g3_5 |
+|------|------|----------|-------------|--------|------|
+| Maze Maps | MazeMapsGame.tsx | `maze_maps` | `maze-maps` | AI | ✅ (#654) |
+| Move & Measure | MoveMeasureGame.tsx | `move_measure` | `move-measure` | Biotech | K-2 only |
+| Sky Shield | SkyShieldGame.tsx | `sky_shield` | `sky-shield` | Quantum | K-2 only |
+| Fast Lane | FastLaneGame.tsx | `fast_lane` | `fast-lane` | AI + Biotech | K-2 only |
+| Qualify & Race | QualifyTuneRaceGame.tsx | `qualify_tune_race` | `qualify-tune-race` | Capstone | K-2 only |
 
-### Educational Intent
-- Do not replace Bright Boost's learning intent with generic gameplay
-- Preserve the educational objective, pacing, readability, and instructional clarity
-- If recreating older game concepts in React, keep the original learning goal and feel intact
-- K–2 content must use simple vocabulary, large tap targets, clear visual hierarchy
+### Set 3 — Mastery
+Placeholder IDs only (`set3-game-1`..`set3-game-5`); no components or seed data. Specialization
+(AI/Quantum/Biotech archetype) gating on Set 3 is planned, **not implemented**.
 
-### UX Consistency
-- Keep teacher and student flows consistent with existing app patterns
-- Maintain onboarding and instruction clarity inside games/activities
-- Prioritize readability for K–2 over visual complexity
+### Grade bands
+- `Course.gradeBand`: `k2` (default) | `g3_5`; teacher sets it at class creation and in class detail.
+- Content variants live in `src/components/games/gradeBandContent.ts` (central registry; K-2 + g3_5).
+  Games read the band from config; ActivityPlayer injects it from the student's enrolled course and
+  applies Set 1 story-quiz overrides at render time (`applyG35StoryOverrides`).
+  `useGradeBand()` (`src/hooks/useGradeBand.ts`) fetches the student's class band.
 
----
-
-## Workflow — How to Execute Every Task
-
-### Before Coding
-1. **Inspect** — Read relevant files, adjacent components, services, tests, translation files, and route patterns
-2. **Explain current behavior** — What does the app do right now?
-3. **Explain proposed approach** — What will you change and why?
-4. **Identify risks and assumptions** — What could break? What are you guessing about?
-
-### When Coding
-1. Make the smallest viable change
-2. Match existing patterns — check adjacent files first
-3. Avoid unrelated refactors
-4. Add translation keys, not hardcoded strings
-5. Preserve educational intent
-
-### Before Finishing
-1. Run `npm run lint`, `npm run test`, `npm run typecheck` when possible
-2. List every file changed
-3. Summarize what changed and why it fits Bright Boost
-4. Note any follow-up work or risks
+### Removed / hidden (don't resurrect)
+- **Build-a-Bot** — removed 2026-04-07 (files fully deleted); Tank Trek → Quantum Quest replaced it.
+- **Fix the Order / Lost Steps** (`k2-stem-sequencing`, keys `boost_path_planner` + `sequence_drag_drop`) —
+  hidden 2026-04-09 via `HIDDEN_MODULE_SLUGS`; component `BoostPathPlannerGame.tsx` still exists.
+- `stem-1-intro` ("Quantum Explorers") — hidden via `HIDDEN_MODULE_SLUGS`.
 
 ---
 
-## Task Spec Template
+## Pathways (secondary program, ages 14-17)
 
-Use this structure for every task:
+Same codebase/auth/DB as K-8; separate routes, dark-mode layout, own visual identity (indigo/teal/slate,
+no mascots, direct empowering language for teens).
 
-```
-## Intent
-[One sentence: what needs to be built/fixed]
-
-## Context
-[Why this matters for Bright Boost, who it affects, where it sits in the product]
-
-## Relevant Areas
-[Likely files, routes, components, services, schema, or tests]
-
-## Current Behavior
-[What the app does now]
-
-## Desired Behavior
-[What it should do after the change]
-
-## Acceptance Tests
-- [ ] specific behavior 1
-- [ ] specific behavior 2
-- [ ] specific behavior 3
-
-## Edge Cases
-- edge case 1
-- edge case 2
-
-## Constraints
-- Preserve bilingual support
-- Keep K–2 readability
-- Avoid unrelated regressions
-- Match current code patterns
-- Do not change architecture unless necessary
-```
+- **Bands:** Explorer (14-15), Launch (16-17). **Tracks:** 5 in `src/constants/pathwayTracks.ts` —
+  Cyber Launch is active with 7 modules (`src/components/pathways/modules/CyberLaunchModules.tsx`);
+  Build Your Own Lane / Money Moves / Future Tech Lab / Creative Media Lab are `coming_soon`.
+- **Models** (additive): `PathwayCohort` (join code, band, site partner, active tracks),
+  `PathwayEnrollment` (unique user+cohort), `PathwayMilestone` (unique user+track+module);
+  `User.userType` ("k8"|"pathways"), `User.ageBand`, `User.birthYear`.
+- **Routes:** `/pathways/about` (public) · `/pathways` (student home) · `/pathways/tracks[/:slug]` ·
+  `/pathways/tracks/:trackSlug/:moduleSlug` · `/pathways/profile` · `/pathways/facilitator` ·
+  `/pathways/facilitator/resources` (program overview, 6-week session guide, printable worksheets).
+- **Layout/UI:** `src/components/pathways/` (PathwaysLayout, PathwaysHome, TracksOverview, TrackDetail,
+  ModulePlayer, FacilitatorDashboard, PathwaysAbout). **API:** `backend/src/routes/pathways.ts`.
 
 ---
 
-## Quality Definition
+## Authentication & login
 
-"Good" for Bright Boost means ALL of these, not just clean code:
-
-- ✅ K–2 clarity — simple words, large UI, clear flow
-- ✅ Educational intent preserved — learning goal intact
-- ✅ Bilingual consistency — both languages work, keys not hardcoded
-- ✅ Teacher demo readiness — dashboards show real progress
-- ✅ Minimal regression risk — small diff, existing patterns reused
-- ✅ Matches existing conventions — not a new architecture opinion
-
----
-
-## Anti-Patterns — Never Do These
-
-- ❌ Silently choose one side of a doc conflict without flagging it
-- ❌ Hardcode English strings in JSX
-- ❌ Broad refactor when a narrow fix works
-- ❌ Replace educational game logic with generic gameplay
-- ❌ Introduce new architectural patterns without being asked
-- ❌ Assume AWS/Lambda/Aurora docs are current
-- ❌ Skip inspecting adjacent files before writing code
-- ❌ Optimize for code elegance at the expense of K–2 usability
+Unified login page `src/pages/LoginSelection.tsx` at **`/student-login`** (`/login` redirects there):
+- **Email + password:** POST `/api/login` → JWT. Redirect by `userType`+`role`
+  (`src/contexts/AuthContext.tsx`): k8 teacher → `/teacher/dashboard`; k8 student → `/student/dashboard`;
+  pathways teacher → `/pathways/facilitator`; pathways student → `/pathways`.
+- **Join code:** POST `/api/auth/lookup-code` → `k8_class` (→ `/class-login` emoji-picker flow) or
+  `pathways_cohort` (→ registration form).
+- **Pathways registration:** POST `/api/auth/register-pathways` (derives `ageBand` from `birthYear`;
+  auto-generates `student_XXXXXX@brightboost.local` if no email; enrolls in cohort).
+- **Returning no-email Pathways students:** GET `/api/auth/cohort-roster/:code` → pick name →
+  POST `/api/auth/pathways-code-login`.
+- **Tokens:** JWT in localStorage `bb_access_token` (7-day expiry), user object under `user`;
+  session validated on load via `/api/get-progress`. Auth routes: `backend/src/routes/auth.ts`.
 
 ---
 
-## Branch Workflow
+## Workflow for every task
 
-- `main` is protected — no direct pushes during summer program
-- All changes go through feature branches and pull requests
-- PR naming: `your-name/short-description`
-- Minimum 1 review from pod lead before merge
-- See CONTRIBUTING.md for full workflow
+1. **Before coding:** read the relevant files + adjacent components, tests, and locale files; state
+   current behavior, proposed change, and risks/assumptions.
+2. **While coding:** smallest viable change; match adjacent patterns; translation keys, not literals;
+   preserve educational intent.
+3. **Before finishing:** run `npm run lint && npm run test && npm run typecheck` (plus backend
+   typecheck if backend changed); list every file changed; note follow-ups and risks.
 
----
-
-## Prompt Writing Guide (for interns)
-
-Before writing a Claude Code prompt, check:
-
-1. **Did you read the relevant files first?** Don't ask Claude to fix something you haven't looked at.
-2. **Is your intent clear in one sentence?** If you can't say what you want in one sentence, break the task up.
-3. **Did you include context?** Reference specific file paths, function names, or error messages.
-4. **Did you specify what NOT to change?** Claude Code works best with constraints.
-5. **Did you include acceptance criteria?** How will you know it worked?
-
-After Claude Code runs:
-1. **Can you explain every line it wrote?** If not, don't ship it.
-2. **Did you run the tests?** `npm run lint && npm run test && npm run typecheck`
-3. **Did you test it in the browser?** Build output is not the same as working output.
-4. **Did you log the prompt?** Add it to `prompts/` if it was significant.
-
-Slack integration (deploy notifications, experiment lifecycle alerts, standup prompts) is **optional**. The app works fine without `SLACK_WEBHOOK_URL` set — notifications just silently no-op. See `.env.example` for the variable.
+Anti-patterns: silently resolving doc conflicts · hardcoded English in JSX · broad refactors for narrow
+fixes · replacing educational logic with generic gameplay · new architectural patterns unasked ·
+trusting AWS-era docs · coding before reading adjacent files.
 
 ---
 
-## Bright Boost Defaults (quick reference)
+## Open work (verified 2026-07-01)
 
-```
-K–2 first, K–8 aware
-English + Spanish always (also vi + zh-CN)
-Minimal diff over broad refactor
-Teacher + student flow consistency
-Educational clarity over flashy complexity
-Preserve original game/module intent
-Trust current code over stale docs
-Flag conflicts, don't hide them
-```
-
----
-
-## Game Architecture
-
-### Set 1 — Foundation (5 K-2 STEM games)
-
-| Game | File | Game Key | Activity ID | Strand |
-|------|------|----------|-------------|--------|
-| Bounce & Buds | `src/components/games/BounceBudsGame.tsx` | `buddy_garden_sort` | `bounce-buds` | Biotech |
-| Gotcha Gears | `src/components/games/GotchaGearsGame.tsx` | `gotcha_gears_unity` | `gotcha-gears` | Quantum |
-| Rhyme & Ride | `src/components/games/RhymeRideGame.tsx` | `rhymo_rhyme_rocket` | `rhyme-ride` | AI + Biotech |
-| Tank Trek | `src/components/games/TankTrekGame.tsx` | `tank_trek` | `tank-trek` | Quantum + AI |
-| Quantum Quest | `src/components/games/QuantumQuestGame.tsx` | `quantum_quest` | `quantum-quest` | Quantum |
-
-### Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
-
-| Game | File | Game Key | Activity ID | Strand |
-|------|------|----------|-------------|--------|
-| Maze Maps | `src/components/games/MazeMapsGame.tsx` | `maze_maps` | `maze-maps` | AI |
-| Move & Measure | `src/components/games/MoveMeasureGame.tsx` | `move_measure` | `move-measure` | Biotech |
-| Sky Shield | `src/components/games/SkyShieldGame.tsx` | `sky_shield` | `sky-shield` | Quantum |
-| Fast Lane | `src/components/games/FastLaneGame.tsx` | `fast_lane` | `fast-lane` | AI + Biotech |
-| Qualify & Race | `src/components/games/QualifyTuneRaceGame.tsx` | `qualify_tune_race` | `qualify-tune-race` | Capstone |
-
-### Set 3 — Mastery (placeholder, gates specialization)
-
-Status: placeholder IDs only (`set3-game-1` through `set3-game-5`). No game components or seed data exist yet.
-
-### Progression
-
-- Each set has its own ID array in `src/constants/stemSets.ts`
-- Set 1 (5 games) → Set 2 (5 games) → Set 3 (5 games) → Archetype unlock
-- Set completion = all IDs in the set have `COMPLETED` progress records
-- Set 2 unlocks when all Set 1 IDs are completed
-- Set 3 completion gates specialization (AI / Quantum / Biotech archetype)
-- Game registry: `src/components/games/gameRegistry.ts`
-
-### Grade Bands
-
-- **K-2** (`k2`): default band, all current games target this
-- **Grades 3-5** (`g3_5`): content variants built for Bounce & Buds and Gotcha Gears. Content loaded via `gradeBandContent.ts` based on `config.gradeBand`. Other games fall back to K-2 content.
-- Band is set per-class via `Course.gradeBand` field
-- Teacher can switch band in class detail page
-- ActivityPlayer injects `gradeBand` from student's enrolled course into game config
-- `useGradeBand()` hook (`src/hooks/useGradeBand.ts`) fetches student's class band
-
-### Test Accounts (All)
-
-All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The seed runs find-or-create and **always refreshes the password hash on every seed run**, so plaintext values below match what to type in the login form.
-
-| Email | Password | Type | Role | Notes |
-|-------|----------|------|------|-------|
-| teacher@school.com | password123 | K-8 | Teacher (Ms. Frizzle) | Demo class owner |
-| student@test.com | password | K-8 | Student | Incomplete Set 1 |
-| explorer@test.com | explore123 | K-8 | Student | Set 1 complete, Set 2 unlocked |
-| jordan@test.com | jordan123 | K-8 | Student | Grade 3-5 class, fresh |
-| facilitator@test.com | pathway123 | Pathways | Facilitator (Coach Davis) | ETO cohort manager |
-| marcus@test.com | marcus123 | Pathways | Student (Launch) | 3/7 Cyber Launch done |
-| aisha@test.com | aisha123 | Pathways | Student (Explorer) | Fresh, 0 completions |
-
-Class code for emoji-picker login: **STARS1** (created by Ms. Frizzle's K-2 class seed).
-
----
-
-## Removed Features
-
-### Build-a-Bot
-- **Removed** 2026-04-07. Was Set 1's 5th game. Replaced by Tank Trek → then Quantum Quest.
-
-### Fix the Order (Lost Steps)
-- **Removed** 2026-04-09. Was Set 1 game (`lost-steps` / `k2-stem-sequencing` / `boost_path_planner`).
-- Added to `HIDDEN_MODULE_SLUGS`. Component still exists but hidden from students.
-- Quantum Quest promoted to fill the 5th Set 1 slot.
-
----
-
-## Current Audit Status
-
-**Date: 2026-05-13**
-
-### Set 1 Games (5 games) — with pathway strand labels
-- Bounce & Buds (Biotech) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
-- Gotcha Gears (Quantum) — ✅ K-2 + g3_5 content via `gradeBandContent.ts`
-- Rhyme & Ride (AI + Biotech) — ✅ K-2 (g3_5 config.gradeBand available, word family integration pending)
-- Tank Trek (Quantum + AI) — ✅ K-2 + g3_5 chapters appended via `TANK_TREK_G35_LEVELS`
-- Quantum Quest (Quantum) — ✅ K-2 (promoted from standalone to Set 1's 5th game)
-
-### Set 2 Games (5 games) — with pathway strand labels
-- Maze Maps (AI) — ✅ Implemented, registered, seeded with rich story slides
-- Move & Measure (Biotech) — ✅ Implemented, registered, rich story slides
-- Sky Shield (Quantum) — ✅ Implemented, registered, rich story slides
-- Fast Lane (AI + Biotech) — ✅ Implemented, registered, rich story slides
-- Qualify & Race (Capstone) — ✅ Implemented, registered, rich story slides
-
-### Hidden/Archived Modules
-- `stem-1-intro` ("Quantum Explorers") — hidden via `HIDDEN_MODULE_SLUGS`
-- `k2-stem-sequencing` ("Fix the Order") — hidden via `HIDDEN_MODULE_SLUGS`
-
-### Grade 3-5 Content Pipeline
-- `gradeBandContent.ts` — ✅ Central content registry with K-2 and g3_5 variants
-- `useGradeBand()` hook — ✅ Fetches student's class band from API
-- ActivityPlayer — ✅ Injects `gradeBand` into game config
-- BounceBudsGame — ✅ Wired (reads gradeBand, loads g3_5 rounds)
-- GotchaGearsGame — ✅ Wired (reads gradeBand, loads g3_5 rounds)
-- BoostPathPlannerGame — ✅ Wired (uses BOOST_PATH_LEVELS[band])
-- TankTrekGame — ✅ Wired (appends g3_5 chapters)
-- RhymeRideGame — ✅ Wired (band-switched worlds: -tion/-ment/-ight/-ound/-ence/-ain, 1.25× speed)
-- QuantumQuestGame — ✅ Wired (g3_5 sectors: multiplication/division/fractions/order-of-ops)
-- Set 1 story-quizzes — ✅ Banded via `G35_STORY_QUIZZES` + `applyG35StoryOverrides` (render-time, in ActivityPlayer)
-- Teacher class creation — ✅ Captures grade band (selector in create dialog)
-- Jordan test student — ✅ Seeded in g3_5 class
-- Full audit + backlog briefs: `docs/audits/g35-first-set-audit.md`
-
-### Pathways Facilitator Resources
-- Program Overview — ✅ What is Pathways, bands, how it works, facilitation tips
-- Session Guide — ✅ 6-week pacing table for Cyber Launch
-- Printable Resources — ✅ Overview, discussion questions, progress tracker (with Print button)
-- Route: `/pathways/facilitator/resources`
-
-### Action Items
-- [ ] Build g3_5 content variants for Set 2 games (future sprint — brief in docs/audits/g35-first-set-audit.md)
-- [ ] Add student-facing "Assigned This Week" UI consuming `/api/student/assigned-modules`
-- [ ] Add teacher module assignment UI (catalog browse + assign/reorder via existing CRUD routes)
-- [ ] Add es/vi/zh-CN translations for g3_5 game content in `gradeBandContent.ts`
-- [ ] Add es/vi/zh-CN translations for Set 2 game i18n keys (currently using `defaultValue` fallbacks)
-
----
-
-## Pathways (Secondary-Age Program Layer)
-
-Bright Boost Pathways is a separate program experience for 14-17 year olds, running alongside the K-8 platform in the same codebase. It has its own routing, layout, data models, and visual design.
-
-### Architecture
-- **Bands**: Explorer (14-15) and Launch (16-17)
-- **Tracks**: 5 career-connected learning tracks, each with multiple modules
-- **Cohorts**: Facilitator-created groups of learners, with join codes
-- **Active track**: Cyber Launch (cybersecurity) — fully playable with 7 modules
-- **Coming soon**: Build Your Own Lane, Money Moves, Future Tech Lab, Creative Media Lab
-
-### Routes
-```
-/pathways/about         — public landing page (no auth)
-/pathways               — student home (authenticated)
-/pathways/tracks        — all tracks browse
-/pathways/tracks/:slug  — track detail + module list
-/pathways/tracks/:trackSlug/:moduleSlug — module player
-/pathways/profile       — learner profile + portfolio
-/pathways/facilitator   — facilitator dashboard + cohort management
-```
-
-### Data Models (additive to existing schema)
-- `PathwayCohort` — facilitator-created group with band, site partner, join code, active tracks
-- `PathwayEnrollment` — links users to cohorts (unique per user+cohort)
-- `PathwayMilestone` — per-user progress through track modules (unique per user+track+module)
-- `User` extended with: `userType` ("k8" | "pathways"), `ageBand` ("explorer" | "launch"), `birthYear`
-
-### Key Files
-- `src/constants/pathwayTracks.ts` — track + module registry
-- `src/components/pathways/PathwaysLayout.tsx` — dark-mode sidebar layout
-- `src/components/pathways/PathwaysHome.tsx` — student home
-- `src/components/pathways/TracksOverview.tsx` — all tracks browse
-- `src/components/pathways/TrackDetail.tsx` — module timeline
-- `src/components/pathways/ModulePlayer.tsx` — module wrapper
-- `src/components/pathways/modules/CyberLaunchModules.tsx` — 7 Cyber Launch modules
-- `src/components/pathways/FacilitatorDashboard.tsx` — cohort management
-- `src/components/pathways/PathwaysAbout.tsx` — public landing
-- `backend/src/routes/pathways.ts` — all Pathways API routes
-
-### Cohort
-- Name: "ETO Spring 2026 — Cyber Cohort"
-- Join code: `ETO2026`
-- Site partner: Escape The Odds
-
-### Design Principles
-- Dark mode default (indigo/teal/slate palette)
-- No mascots, no cartoons — clean modern UI
-- Direct, empowering language for teens
-- Separate visual identity from K-2/K-8 experience
-- Same auth system, same Prisma DB, different routes and layout
-
----
-
-## Authentication & Login Flow
-
-The app has a **unified login page** at `/login` (`src/pages/LoginSelection.tsx`) supporting two entry methods:
-
-### Email + Password Login
-- Works for: K-8 teachers, K-8 students with email, Pathways facilitators, Pathways students with email
-- POST `/api/login` → JWT token + user object
-- Post-login routing by `user.userType` + `user.role`:
-  - `k8` + `teacher` → `/teacher/dashboard`
-  - `k8` + `student` → `/student/dashboard`
-  - `pathways` + `teacher` → `/pathways/facilitator`
-  - `pathways` + `student` → `/pathways`
-- Logic lives in `src/contexts/AuthContext.tsx` redirect effect
-
-### Join Code Entry
-- Works for: K-8 class codes AND Pathways cohort codes
-- POST `/api/auth/lookup-code` → returns `{ type: "k8_class" | "pathways_cohort" }`
-- K-8 class code → redirects to `/class-login` (existing emoji picker flow)
-- Pathways cohort code → shows registration form (name, optional email, password, birth year)
-
-### Pathways Registration
-- POST `/api/auth/register-pathways` — creates user with `userType: "pathways"`, derives `ageBand` from `birthYear`
-- If no email provided, auto-generates `student_XXXXXX@brightboost.local`
-- Enrolls in cohort, returns JWT token
-
-### Returning Pathways Students
-- Students with email → use email login (Option A)
-- Students without email → enter cohort code → pick name from roster → enter password
-- GET `/api/auth/cohort-roster/:code` → list of enrolled student names
-- POST `/api/auth/pathways-code-login` → login with cohort code + userId + password
-
-### Token Storage
-- JWT stored in `localStorage` under `bb_access_token`
-- User object in `localStorage` under `user`
-- Token expiry: 7 days
-- Session validation on app load via `/api/get-progress`
-
-### Schema Sync Warning
-- Both `prisma/schema.prisma` (root) and `backend/prisma/schema.prisma` must be kept in sync
-- The backend Docker build generates Prisma client from the backend copy
-- If models are added to root but not backend → backend `tsc` fails → deployment breaks silently
+- Set 2 g3_5 content variants — briefs in `docs/audits/g35-first-set-audit.md`.
+- Student "Assigned This Week" UI — API `/api/student/assigned-modules` exists; no UI consumes it yet.
+- Teacher module-assignment UI — CRUD routes exist; UI is a known gap (see comment in `PlanDetail.tsx`).
+- es/vi/zh-CN translations: g3_5 content in `gradeBandContent.ts` (TODOs in file) and Set 2 games
+  (currently `defaultValue` fallbacks).
+- #646 migration baseline (unblocks db-check + fresh-DB installs).
+- PR #663 (creative loop: Creation model, authoring, gallery, game reframes) is **in flight — not on
+  `main`**; don't describe those features as existing until it merges.

@@ -27,6 +27,7 @@ import studentStatsRouter from "./routes/studentStats";
 import feedbackRouter from "./routes/feedback";
 import benchmarkRouter from "./routes/benchmarks";
 import homeAccessRouter from "./routes/homeAccess";
+import creationsRouter from "./routes/creations";
 import experimentsRouter from "./routes/experiments";
 import adminMetricsRouter from "./routes/adminMetrics";
 // TEMPORARY — remove after Slack webhook verification is confirmed working.
@@ -210,6 +211,7 @@ app.use("/api", studentStatsRouter);
 app.use("/api", feedbackRouter);
 app.use("/api", benchmarkRouter);
 app.use("/api", homeAccessRouter);
+app.use("/api", creationsRouter);
 app.use("/api", experimentsRouter);
 app.use("/api", adminMetricsRouter);
 

@@ -1055,7 +1055,17 @@
       "createClass": "Crear Clase",
       "deleteClass": "Eliminar",
       "deleteTitle": "Eliminar Clase",
-      "deleteConfirm": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Todos los estudiantes serán dados de baja y todas las sesiones serán eliminadas. Esta acción no se puede deshacer."
+      "deleteConfirm": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Todos los estudiantes serán dados de baja y todas las sesiones serán eliminadas. Esta acción no se puede deshacer.",
+      "children": "{{count}} niños",
+      "familyCode": "Código familiar:",
+      "groupTypeLabel": "Tipo de grupo",
+      "groupTypeClass": "Clase",
+      "groupTypeHome": "Casa",
+      "createTitleHome": "Crear un grupo en casa",
+      "createDescHome": "Dale un nombre a tu grupo en casa. Tu hijo se une con el código generado.",
+      "classNameHome": "Nombre del grupo en casa",
+      "classNamePlaceholderHome": "p. ej. Los niños García",
+      "createGroupHome": "Crear grupo en casa"
     },
 
     "classDetail": {
@@ -1104,7 +1114,18 @@
       "courseNotFound": "Curso no encontrado",
       "failedLoad": "Error al cargar detalles del curso",
       "notFound": "Esta clase ya no existe. Es posible que haya sido eliminada.",
-      "backToClasses": "Volver a Clases"
+      "backToClasses": "Volver a Clases",
+      "attention": {
+        "title": "Listos para un empujoncito",
+        "desc": "Estos estudiantes llevan un rato en la misma actividad. Un poco de ánimo hace mucho.",
+        "empty": "¡Todos avanzan bien — no hace falta ningún empujoncito por ahora! 🎉",
+        "lastActive": "Última actividad hace {{count}}+ días",
+        "more": "+{{count}} más en progreso"
+      },
+      "made": {
+        "title": "Lo que han creado",
+        "empty": "Aún no se ha compartido ninguna creación."
+      }
     },
 
     "resources": {
@@ -1312,6 +1333,12 @@
       "niceJob": "¡Buen trabajo! Ese plan funcionó. Prepárate para el siguiente mapa.",
       "crashed": "¡Ups! Boost chocó con una pared. Revisa tus giros e inténtalo de nuevo.",
       "didntReach": "Buen intento. Boost no llegó a la meta todavía.",
+      "foundBug": "¡Encontraste un error en el paso {{step}}! Tócalo para arreglarlo y vuelve a ejecutar.",
+      "notYet": "Todavía no llegas a la meta — cambia un paso y vuelve a ejecutar. ¡Cada intento es buena depuración!",
+      "solvedFirstTry": "¡Lo lograste al primer intento! 🎉",
+      "debuggedIn": "¡Lo depuraste en {{count}} intentos! 🐛 → ✅",
+      "tries": "Intentos de depuración: {{count}}",
+      "removeStep": "Quitar el paso {{step}}",
       "buildProgram": "Arma el programa",
       "forward": "Adelante",
       "turnLeft": "Girar Izquierda",
@@ -1544,5 +1571,45 @@
       "QUANTUM": "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!",
       "BIOTECH": "¡Descubre seres vivos y cultiva jardines asombrosos!"
     }
+  },
+  "creations": {
+    "status": {
+      "inProgress": "En proceso",
+      "shared": "Compartido • en proceso",
+      "complete": "Hecho"
+    }
+  },
+  "createChallenge": {
+    "pageTitle": "Crea un desafío",
+    "intro": "Elige plantas, una regla para ordenar y una regla secreta. Luego compártelo para que tu grupo juegue.",
+    "chooseGroup": "¿Qué grupo?",
+    "noGroups": "Únete primero a una clase o grupo en casa para poder crear un desafío.",
+    "pickPlants": "Elige tus plantas (al menos {{min}})",
+    "sortRuleLabel": "Regla para ordenar",
+    "hiddenRuleLabel": "Regla secreta para adivinar",
+    "titlePrefix": "Ordenar por",
+    "valid": "¡Muy bien! Tu desafío se puede resolver.",
+    "save": "Compartir desafío",
+    "saving": "Compartiendo...",
+    "saveError": "No se pudo compartir. Inténtalo de nuevo."
+  },
+  "challengePlayer": {
+    "loading": "Cargando desafío...",
+    "notFound": "Este desafío no está disponible."
+  },
+  "gallery": {
+    "pageTitle": "Galería del grupo",
+    "linkLabel": "Galería",
+    "backToClass": "Volver a la clase",
+    "makeChallenge": "Crear un desafío",
+    "noGroups": "Únete a un grupo para ver la galería.",
+    "empty": "Aún no hay nada compartido. ¡Sé el primero en crear algo!",
+    "loading": "Cargando...",
+    "error": "No se pudo cargar la galería.",
+    "untitled": "Sin título",
+    "by": "por {{name}}",
+    "boosts": "Ánimos",
+    "giveBoost": "Dar ánimo ⭐",
+    "play": "Jugar"
   }
 }

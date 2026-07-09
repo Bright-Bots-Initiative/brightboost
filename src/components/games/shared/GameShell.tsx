@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy } from "lucide-react";
+import { Star, ArrowRight, RotateCcw, Home, Sparkles, ChevronRight, Award, Trophy, Flame, Check } from "lucide-react";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
@@ -16,6 +16,7 @@ import { useReducedGameEffects } from "./useReducedGameEffects";
 import { ControlInstructions } from "./ControlInstructions";
 import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructionsData";
 import "./game-effects.css";
+
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -122,6 +123,99 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
         <p className="text-[10px] text-purple-500">Achievement Unlocked!</p>
       </div>
     </div>
+  );
+}
+
+
+// ── In Game Progress HUD ────────────────────────────────────────────
+export function ProgressHUD({step, totalLevels}: {step: number, totalLevels: number,}){
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+    }
+    const handleResize = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  const minLeftPx = 4;
+  const maxLeftPx = containerWidth - 4;
+  const dotRadius = 10;
+  const dotStart = minLeftPx + dotRadius; 
+  const dotEnd = maxLeftPx - dotRadius;
+  const innerWidth = containerWidth - 10;
+  const getPos = (index: number) => (dotStart) + (index / (totalLevels - 1)) * (dotEnd - dotStart);
+  return (
+    <div
+      ref={containerRef}
+      className="relative h-[30px] rounded-full"
+      style={{
+        background: "#FF8C00",
+        padding: "3px",
+      }}
+      >
+       {/*Streak bar body*/}    
+        <div
+        className="w-full h-full rounded-full"
+        style={{
+          backgroundColor: "#fed7aa",
+          padding: "2px",
+        }}
+        >
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${getPos(step) / innerWidth * 100}%`,
+              background:"#FF8C00",
+            }}
+            />
+        </div>
+
+    {/*Dots for each Level*/}
+      {Array.from({ length: totalLevels}).map((_, i) => {
+        return (
+          <span 
+            key = {i}
+            className={`absolute rounded-full ${
+              i === step
+              ? "w-5 h-5"
+              : i < step
+                ? "w-5 h-5 bg-red-500"
+                : "w-5 h-5 bg-white" 
+            }`}
+            style={{
+            left: getPos(i),
+            top: "50%",
+            transform:"translate(-50%, -50%)",
+            }}
+          >
+          {i < step && (
+            <span className="text-white font-bold">
+            <Check className="w-5 h-4.5" />
+            </span>
+          )}
+        </span>
+       );
+    })}
+
+      {/*Flame slider icon */}
+      <div 
+        className="absolute z-20"
+        style={{
+          left: getPos(step),
+          top: "35%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <Flame className="w-10 h-10 text-red-500 fill-orange-300 drop-shadow-md" />
+      </div>
+  </div>
   );
 }
 

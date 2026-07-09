@@ -17,7 +17,9 @@ import LoginCard from "@/components/auth/LoginCard";
 import { track } from "@/lib/analytics";
 
 interface RoleOption {
-  role: "teacher" | "student";
+  // The analytics signal for the chosen path. A parent reuses the teacher
+  // account type — `role` here is the funnel label, not a distinct auth role.
+  role: "teacher" | "student" | "parent";
   to: string;
   emoji: string;
   headingKey: string;
@@ -35,6 +37,17 @@ const OPTIONS: RoleOption[] = [
     blurbKey: "signupSelection.teacherCard.blurb",
     ctaKey: "signupSelection.teacherCard.cta",
     accent: "from-sky-500 to-indigo-600",
+  },
+  {
+    // Parent / at-home: same teacher signup endpoint, lands on a home-group
+    // create flow (intent=home → /teacher/classes?create=home after signup).
+    role: "parent",
+    to: "/teacher/signup?intent=home",
+    emoji: "🏡",
+    headingKey: "signupSelection.parentCard.heading",
+    blurbKey: "signupSelection.parentCard.blurb",
+    ctaKey: "signupSelection.parentCard.cta",
+    accent: "from-emerald-500 to-teal-600",
   },
   {
     role: "student",

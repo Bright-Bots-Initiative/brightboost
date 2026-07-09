@@ -15,6 +15,9 @@ const createCourseSchema = z.object({
   name: z.string().min(1).max(200),
   defaultLanguage: z.enum(["en", "es"]).optional(),
   gradeBand: z.enum(["k2", "g3_5"]).optional(),
+  // "class" = teacher class (default), "home" = parent home group. A parent is
+  // a teacher whose group is a home group — no separate role.
+  kind: z.enum(["class", "home"]).optional(),
 });
 
 const setupIconsSchema = z.object({
@@ -52,6 +55,7 @@ router.get(
       id: c.id,
       name: c.name,
       joinCode: c.joinCode,
+      kind: c.kind,
       enrollmentCount: c._count.enrollments,
       createdAt: c.createdAt,
     }));
@@ -83,6 +87,7 @@ router.post(
         teacherId: req.user!.id,
         joinCode,
         gradeBand: parsed.data.gradeBand || "k2",
+        kind: parsed.data.kind || "class",
         defaultLanguage: parsed.data.defaultLanguage || "en",
       },
     });
@@ -90,6 +95,7 @@ router.post(
     trackServer(req.user!.id, "class_created", {
       class_id: course.id,
       grade_band: course.gradeBand,
+      group_kind: course.kind,
     });
 
     res.status(201).json({
@@ -97,6 +103,7 @@ router.post(
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
+      kind: course.kind,
       enrollmentCount: 0,
       createdAt: course.createdAt,
     });
@@ -130,6 +137,7 @@ router.get(
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
+      kind: course.kind,
       enrollmentCount: course.enrollments.length,
       students: course.enrollments.map((e) => ({
         id: e.student.id,
@@ -139,6 +147,99 @@ router.get(
       })),
       createdAt: course.createdAt,
     });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Teacher: "ready for a nudge" — learners who could use some encouragement.
+//
+// Derived purely from Progress (no new signal, no schema): a learner shows up
+// when they have an activity that has sat IN_PROGRESS longer than a threshold
+// (?staleDays=, default 3). This is intentionally framed as gentle
+// encouragement — never "stuck"/"behind". Names come from the teacher's own
+// roster (no email); this endpoint is teacher-and-owner only.
+// ---------------------------------------------------------------------------
+
+router.get(
+  "/teacher/courses/:courseId/attention",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const course = await prisma.course.findFirst({
+      where: { id: req.params.courseId, teacherId: req.user!.id },
+      select: { id: true },
+    });
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    // Bounded so a bad query can't ask for "0 days" (everyone) or an absurd
+    // window. Default 3 days.
+    const rawDays = Number(req.query.staleDays);
+    const staleDays =
+      Number.isFinite(rawDays) && rawDays >= 1 && rawDays <= 60
+        ? Math.floor(rawDays)
+        : 3;
+    const cutoff = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000);
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId: course.id },
+      select: { studentId: true },
+    });
+    const studentIds = enrollments.map((e) => e.studentId);
+    if (studentIds.length === 0) {
+      return res.json({ staleDays, students: [] });
+    }
+
+    // Oldest-first so the first row kept per student is their most stale one.
+    const stale = await prisma.progress.findMany({
+      where: {
+        studentId: { in: studentIds },
+        status: "IN_PROGRESS",
+        updatedAt: { lt: cutoff },
+      },
+      select: {
+        studentId: true,
+        moduleSlug: true,
+        activityId: true,
+        updatedAt: true,
+        User: { select: { name: true } },
+      },
+      orderBy: { updatedAt: "asc" },
+    });
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const byStudent = new Map<
+      string,
+      {
+        studentId: string;
+        studentName: string;
+        moduleSlug: string;
+        activityId: string;
+        lastActiveAt: Date;
+        daysSinceActive: number;
+        inProgressCount: number;
+      }
+    >();
+    for (const p of stale) {
+      const existing = byStudent.get(p.studentId);
+      if (existing) {
+        existing.inProgressCount += 1;
+        continue;
+      }
+      byStudent.set(p.studentId, {
+        studentId: p.studentId,
+        studentName: p.User?.name ?? "",
+        moduleSlug: p.moduleSlug,
+        activityId: p.activityId,
+        lastActiveAt: p.updatedAt,
+        daysSinceActive: Math.floor((now - p.updatedAt.getTime()) / dayMs),
+        inProgressCount: 1,
+      });
+    }
+
+    res.json({ staleDays, students: [...byStudent.values()] });
   },
 );
 
@@ -281,7 +382,7 @@ router.get(
     const enrollments = await prisma.enrollment.findMany({
       where: { studentId: req.user!.id },
       include: {
-        course: { select: { id: true, name: true, gradeBand: true } },
+        course: { select: { id: true, name: true, gradeBand: true, kind: true } },
       },
     });
 
@@ -290,6 +391,7 @@ router.get(
         courseId: e.course.id,
         courseName: e.course.name,
         gradeBand: e.course.gradeBand,
+        kind: e.course.kind,
         enrolledAt: e.enrolledAt,
       })),
     );
