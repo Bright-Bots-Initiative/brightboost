@@ -3,12 +3,12 @@
  *
  * Phases: intro → dash → jump → toss → compare → improve → retry → exitTicket → celebration
  */
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
-import { getGradeBand, type GradeBand } from "./gradeBandContent";
+import { getGradeBand, BAND_CONFIG, type GradeBand } from "./gradeBandContent";
 
 // ── Types & constants ────────────────────────────────────────────────────
 type Phase = "intro" | "predict" | "dash" | "jump" | "toss" | "compare" | "eventCompare" | "improve" | "retry" | "exitTicket" | "celebration";
@@ -22,38 +22,21 @@ const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎"
 const NAMES: Record<string, string> = { dash: "Dash", jump: "Jump", toss: "Toss" };
 const EVENT_ORDER: EventKey[] = ["dash", "jump", "toss"];
 
-const BAND_CONFIG = {
-  k2: {
-    showScore: true,
-    showDecimals: false,
-    compareMeasurements: false,
-    decimalPlaces: 0,
-    enablePredict: false,
-  },
-  g3_5: {
-    showScore: false,
-    showDecimals: true,
-    compareMeasurements: true,
-    decimalPlaces: 1,
-    enablePredict: true,
-  },
-} as const;
-
 export function zoneScore(pos: number, s: number, e: number): number {
   const c = (s + e) / 2, hw = (e - s) / 2, d = Math.abs(pos - c);
   return d <= hw ? 10 : Math.max(0, Math.round(10 - (d - hw) * 20));
 }
 export function tossScore(v: number) { return Math.max(0, Math.round(10 - Math.abs(v - IDEAL_TOSS) * 0.2)); }
 
-function dashMeasurement(pos: number) {
+export function dashMeasurement(pos: number) {
   return 3 + pos * 3;
 }
 
-function jumpMeasurement(level: number) {
+export function jumpMeasurement(level: number) {
   return 0.8 + level * 1.2;
 }
 
-function tossMeasurement(value: number) {
+export function tossMeasurement(value: number) {
   return value * 0.2;
 }
 
@@ -143,6 +126,9 @@ function MoveMeasurePlayfield({
   const [impScore, setImpScore] = useState(0);
   const [cmpAns, setCmpAns] = useState<string | null>(null);
   const [exitAns, setExitAns] = useState<string | null>(null);
+  const [diffCorrect, setDiffCorrect] = useState(false);
+  const [diffFeedback, setDiffFeedback] = useState("");
+  
 
   // Dash
   const [dashPos, setDashPos] = useState(0);
@@ -177,6 +163,8 @@ function MoveMeasurePlayfield({
   const currentEvent = EVENT_ORDER[eventIndex];
 
   const goToNextPhase = () => {
+    setDiffCorrect(false);
+    setDiffFeedback("");
     const nextIndex = eventIndex + 1;
 
     if (nextIndex < EVENT_ORDER.length) {
@@ -289,6 +277,27 @@ function MoveMeasurePlayfield({
   const allTied = bestEvents.length === 3;
   const twoTied = bestEvents.length === 2;
   const allPerfect = allTied && maxScore === 10;
+
+  // ── Event Compare ──
+  const prediction = predictions[currentEvent];
+  const actual = measurements[currentEvent];
+  const correct = Number(Math.abs(prediction - actual).toFixed(1));
+
+  const choices = useMemo(() => {
+    const distractors =
+      correct === 0
+        ? [0.1, 0.2]
+        : [
+            Number((correct + 0.2).toFixed(1)),
+            Number(Math.max(0, correct - 0.2).toFixed(1)),
+            ];
+
+    return [
+        correct,
+        ...distractors,
+    ].sort(() => Math.random() - 0.5);
+
+    }, [correct]);
 
   // ── Improve ──
   const tips = [
@@ -535,53 +544,99 @@ if (phase === "intro") {
 
 /* Compare prediction and actual result for g3-5 students */
 if (phase === "eventCompare") {
+  return (
+    <div className="slide-up-fade text-center space-y-6 py-6">
 
-    const prediction = predictions[currentEvent];
-    const actual = measurements[currentEvent];
-    const diff = Math.abs(prediction - actual);
+      <h3 className="text-2xl font-extrabold">
+        {ICONS[currentEvent]} {NAMES[currentEvent]}
+      </h3>
 
-    return (
-        <div className="slide-up-fade text-center space-y-6 py-6">
-
-            <h3 className="text-2xl font-extrabold">
-                {ICONS[currentEvent]} {NAMES[currentEvent]}
-            </h3>
-
-            <div className="flex justify-center gap-10">
-
-                <div>
-                    <p className="text-xs">Prediction</p>
-                    <p className="text-3xl font-bold">
-                        {prediction.toFixed(1)} m
-                    </p>
-                </div>
-
-                <div className="text-2xl self-center">
-                    →
-                </div>
-
-                <div>
-                    <p className="text-xs">Actual</p>
-                    <p className="text-3xl font-bold">
-                        {actual.toFixed(1)} m
-                    </p>
-                </div>
-
-            </div>
-
-            <p className="text-lg">
-                Difference: {diff.toFixed(1)} m
-            </p>
-
-            <BigBtn
-                gradient="from-emerald-500 to-emerald-600"
-                onClick={goToNextPhase}
-            >
-                Continue
-            </BigBtn>
-
+      <div className="flex justify-center gap-10">
+        <div>
+          <p className="text-xs">Prediction</p>
+          <p className="text-3xl font-bold">
+            {prediction.toFixed(1)} m
+          </p>
         </div>
-    );
+
+        <div className="text-2xl self-center">→</div>
+
+        <div>
+          <p className="text-xs">Actual</p>
+          <p className="text-3xl font-bold">
+            {actual.toFixed(1)} m
+          </p>
+        </div>
+      </div>
+
+      <p className="text-lg font-bold text-slate-700">
+        How far off was your prediction?
+      </p>
+
+      <div className="flex justify-center gap-3 flex-wrap">
+        {choices.map((choice) => {
+          const correctChoice = choice === correct;
+
+          return (
+            <button
+              key={choice}
+              disabled={diffCorrect}
+              className={`px-6 py-3 rounded-2xl text-lg font-bold shadow transition-transform hover:scale-105 active:scale-95 min-w-[100px]
+                ${
+                  diffCorrect
+                    ? correctChoice
+                      ? "bg-emerald-500 text-white"
+                      : "bg-slate-100 text-slate-400"
+                    : "bg-white border-2 border-slate-200 text-slate-700"
+                }`}
+              onClick={() => {
+                if (choice === correct) {
+                  setDiffCorrect(true);
+                  setDiffFeedback(
+                    t("games.moveMeasure.diffCorrect", {
+                      defaultValue:
+                        "Nice! You calculated the difference correctly.",
+                    })
+                  );
+                } else {
+                  setDiffFeedback(
+                    t("games.moveMeasure.diffTryAgain", {
+                      defaultValue: "Not quite. Try again!",
+                    })
+                  );
+                }
+              }}
+            >
+              {choice.toFixed(1)} m
+            </button>
+          );
+        })}
+      </div>
+
+      {diffFeedback && (
+        <p
+          className={`bounce-in text-lg font-bold ${
+            diffCorrect ? "text-emerald-600" : "text-amber-600"
+          }`}
+        >
+          {diffFeedback}
+        </p>
+      )}
+
+      {diffCorrect && (
+        <BigBtn
+          gradient="from-emerald-500 to-emerald-600"
+          onClick={() => {
+            setDiffCorrect(false);
+            setDiffFeedback("");
+            goToNextPhase();
+          }}
+        >
+          Continue
+        </BigBtn>
+      )}
+    </div>
+  );
 }
 
 
