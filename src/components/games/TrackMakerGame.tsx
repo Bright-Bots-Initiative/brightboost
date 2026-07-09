@@ -202,19 +202,25 @@ interface CoreProps {
   onFinish: (result: GameResult) => void;
   reducedEffects: boolean;
   band: "k2" | "g3_5";
+  /** Peer-ride mode: ride a classmate's saved track — no editing, no saving,
+   *  and never touching the local builder draft. */
+  fixedTrack?: RaceTrackContent | null;
 }
 
-function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
+function TrackMakerCore({ onFinish, reducedEffects, band, fixedTrack }: CoreProps) {
   const { t } = useTranslation();
   const api = useApi();
+  const rideOnly = !!fixedTrack;
 
   // Build state
-  const draft = useMemo(loadDraft, []);
-  const [screen, setScreen] = useState<Screen>(draft ? "build" : "imagine");
-  const [pieces, setPieces] = useState<TrackPiece[]>(
-    draft?.pieces ?? starterTrack(),
+  const draft = useMemo(() => (rideOnly ? null : loadDraft()), [rideOnly]);
+  const [screen, setScreen] = useState<Screen>(
+    rideOnly || draft ? "build" : "imagine",
   );
-  const [name, setName] = useState<string>(draft?.name ?? "");
+  const [pieces, setPieces] = useState<TrackPiece[]>(
+    fixedTrack?.pieces ?? draft?.pieces ?? starterTrack(),
+  );
+  const [name, setName] = useState<string>(fixedTrack?.name ?? draft?.name ?? "");
   const [tool, setTool] = useState<PieceType | "erase">("straight");
   const [ridesCompleted, setRidesCompleted] = useState(
     draft?.ridesCompleted ?? 0,
@@ -234,7 +240,7 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
   const [announce, setAnnounce] = useState<PieceType[]>([]);
   const [showIdeas, setShowIdeas] = useState(false);
   const [pendingPattern, setPendingPattern] = useState<string | null>(null);
-  const [showNamePicker, setShowNamePicker] = useState(!draft);
+  const [showNamePicker, setShowNamePicker] = useState(!draft && !rideOnly);
   const [reflect, setReflect] = useState<ReflectPrompt | null>(null);
   const [targetJustMet, setTargetJustMet] = useState<string | null>(null);
 
@@ -267,6 +273,7 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
 
   // ── Group context (for saving to the gallery) ──
   useEffect(() => {
+    if (rideOnly) return;
     let cancelled = false;
     (async () => {
       try {
@@ -306,6 +313,7 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
   latestRef.current = { name, pieces, creationId, ridesCompleted };
 
   const persistLocal = useCallback(() => {
+    if (rideOnly) return; // a peer's track must never clobber my own draft
     const s = latestRef.current;
     persistDraft({
       name: s.name,
@@ -313,13 +321,14 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
       creationId: s.creationId,
       ridesCompleted: s.ridesCompleted,
     });
-  }, []);
+  }, [rideOnly]);
 
   useEffect(() => {
     persistLocal();
   }, [pieces, name, creationId, ridesCompleted, persistLocal]);
   // Autosave on navigate-away (unmount): local always; server if rideable.
   useEffect(() => {
+    if (rideOnly) return;
     return () => {
       persistLocal();
       void saveToServerRef.current?.();
@@ -425,7 +434,7 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
       if (walk.at) setHintCell(walk.at);
       return;
     }
-    void saveToServer();
+    if (!rideOnly) void saveToServer();
     setRidePath(walk.path);
     rideRef.current = initialRideState();
     setRideSnap(rideRef.current);
@@ -435,7 +444,13 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
     pausedUntilRef.current = 0;
     lastTsRef.current = 0;
     setScreen("ride");
-  }, [grid, pieces, saveToServer]);
+  }, [grid, pieces, rideOnly, saveToServer]);
+
+  // Peer-ride mode goes straight to riding — the whole visit is the ride.
+  useEffect(() => {
+    if (rideOnly) startRide();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rideOnly]);
 
   const finishRide = useCallback(() => {
     const state = rideRef.current;
@@ -444,11 +459,14 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
     const after = before + 1;
     setRidesCompleted(after);
 
-    // Unlock announcements (one completed ride per unlock; spin-outs never gate)
-    const fresh = newlyUnlocked(before, after);
-    if (fresh.length > 0) {
-      setAnnounce((q) => [...q, ...fresh]);
-      fresh.forEach((p) => newPieceCandidatesRef.current.add(p));
+    // Unlock announcements (one completed ride per unlock; spin-outs never
+    // gate). Peer rides don't earn builder unlocks — those are for making.
+    if (!rideOnly) {
+      const fresh = newlyUnlocked(before, after);
+      if (fresh.length > 0) {
+        setAnnounce((q) => [...q, ...fresh]);
+        fresh.forEach((p) => newPieceCandidatesRef.current.add(p));
+      }
     }
 
     // Clean streak (client-only feel-good stat, never a ranking)
@@ -493,7 +511,7 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
         newPieceRidden,
       }),
     );
-  }, [pieces.length, ridePath, ridesCompleted, targetsMet]);
+  }, [pieces.length, ridePath, ridesCompleted, rideOnly, targetsMet]);
 
   useEffect(() => {
     if (screen !== "ride" || !ridePath) return;
@@ -757,16 +775,18 @@ function TrackMakerCore({ onFinish, reducedEffects, band }: CoreProps) {
                 </p>
               )}
               <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReflect(null);
-                    setScreen("build");
-                  }}
-                  className="min-h-12 rounded-full bg-green-600 text-white font-bold text-lg active:scale-95 touch-manipulation"
-                >
-                  {t("games.trackMaker.ride.tweak", { defaultValue: "Tweak my track 🔧" })}
-                </button>
+                {!rideOnly && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReflect(null);
+                      setScreen("build");
+                    }}
+                    className="min-h-12 rounded-full bg-green-600 text-white font-bold text-lg active:scale-95 touch-manipulation"
+                  >
+                    {t("games.trackMaker.ride.tweak", { defaultValue: "Tweak my track 🔧" })}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -1171,11 +1191,22 @@ function NamePicker({
 export default function TrackMakerGame({
   config,
   onComplete,
+  secondaryAction,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
+  secondaryAction?: { label: string; icon?: React.ReactNode; onClick: () => void };
 }) {
   const band = getGradeBand(config);
+  const { t } = useTranslation();
+  // Peer-ride mode (ChallengePlayer passes the saved track as config.raceTrack).
+  const rawTrack = (config as { raceTrack?: unknown } | undefined)?.raceTrack;
+  const fixedTrack = useMemo(() => {
+    if (rawTrack === undefined || rawTrack === null) return null;
+    const v = validateRaceTrackContent(rawTrack);
+    return v.ok ? v.content : null;
+  }, [rawTrack]);
+  const badPeerTrack = rawTrack !== undefined && rawTrack !== null && !fixedTrack;
   const briefing = useMemo(
     () => ({
       title: pickLocale(
@@ -1212,6 +1243,17 @@ export default function TrackMakerGame({
     }),
     [],
   );
+  if (badPeerTrack) {
+    // Server-side validation makes this unreachable in practice, but a peer
+    // ride must degrade kindly, never crash.
+    return (
+      <div className="p-6 text-center text-slate-600">
+        {t("games.trackMaker.rideOnly.notRideable", {
+          defaultValue: "This track can't be ridden right now. Try another one!",
+        })}
+      </div>
+    );
+  }
   return (
     <GameShell
       gameKey="track_maker"
@@ -1219,12 +1261,14 @@ export default function TrackMakerGame({
       briefing={briefing}
       onComplete={onComplete ?? (() => {})}
       formatBest={(b) => `⭐ ${b.bestScore}/6`}
+      secondaryAction={secondaryAction}
     >
       {({ onFinish, reducedEffects }) => (
         <TrackMakerCore
           onFinish={onFinish}
           reducedEffects={reducedEffects}
           band={band}
+          fixedTrack={fixedTrack}
         />
       )}
     </GameShell>

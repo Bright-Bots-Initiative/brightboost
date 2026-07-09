@@ -66,6 +66,18 @@ const dbCreation = {
   author: { name: "Ada Lovelace" },
 };
 
+// A minimal rideable race_track (see raceTrack.test.ts).
+const validTrack = {
+  v: 1,
+  name: "Super Loop",
+  grid: { w: 8, h: 8 },
+  pieces: [
+    { x: 1, y: 3, type: "start", rot: 0 },
+    { x: 2, y: 3, type: "straight", rot: 0 },
+    { x: 3, y: 3, type: "finish", rot: 0 },
+  ],
+};
+
 describe("Creations routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -167,6 +179,69 @@ describe("Creations routes", () => {
           })
         )
     })
+
+    // ── race_track (Set 3 · Boost Track Builder) ──
+
+    it("lets an enrolled kid save a rideable race_track (201)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue({
+        ...dbCreation,
+        type: "race_track",
+        title: "Super Loop",
+        content: validTrack,
+      });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({ courseId: COURSE, type: "race_track", content: validTrack });
+
+      expect(res.status).toBe(201);
+      // Title is server-derived from the kid's chosen name in content.
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ title: "Super Loop" }),
+        }),
+      );
+    });
+
+    it("rejects race_track content with unknown keys (422 — strict parse, #668 closed)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "race_track",
+          content: { ...validTrack, smuggled: "extra key" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a race_track that is not rideable start→finish (422)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "race_track",
+          content: {
+            ...validTrack,
+            pieces: [
+              { x: 1, y: 3, type: "start", rot: 0 },
+              { x: 6, y: 6, type: "finish", rot: 0 },
+            ],
+          },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -273,6 +348,30 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
+    });
+
+    it("ships content ONLY for race_track items (thumbnail payload)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.findMany.mockResolvedValue([
+        dbCreation,
+        {
+          ...dbCreation,
+          id: "creation-2",
+          type: "race_track",
+          title: "Super Loop",
+          content: validTrack,
+        },
+      ]);
+
+      const res = await request(app)
+        .get(`/api/creations?courseId=${COURSE}`)
+        .set(asStudent(KID));
+
+      expect(res.status).toBe(200);
+      const dash = res.body.find((c: { id: string }) => c.id === "creation-1");
+      const track = res.body.find((c: { id: string }) => c.id === "creation-2");
+      expect(dash.content).toBeUndefined(); // other types stay lean
+      expect(track.content).toEqual(validTrack); // card can draw the thumbnail
     });
 
     it("forbids a non-member (403)", async () => {

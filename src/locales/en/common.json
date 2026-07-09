@@ -1440,6 +1440,87 @@
     "learning": {
       "wordsToKnow": "Words to know"
     },
+    "trackMaker": {
+      "imagine": {
+        "prompt": "What kind of track will you build — loopy, zoomy, twisty?",
+        "hint": "Build a track for Boost's motorcycle, then ride it!",
+        "start": "Start building!"
+      },
+      "build": {
+        "unnamed": "My Track",
+        "renameAria": "Track name — tap to change",
+        "save": "Save",
+        "saved": "Saved ✓",
+        "savedLocal": "Saved on this device ✓",
+        "gridAria": "Track building grid",
+        "cellPieceAria": "{{piece}} — tap to turn it",
+        "cellEmptyAria": "Empty spot — tap to place a piece",
+        "brokenHint": "The road ends at the glowing spot — connect it!",
+        "ride": "Ride! 🏍️",
+        "share": "Share to gallery ✨",
+        "sharedNote": "In the gallery! ✨",
+        "done": "Done for now"
+      },
+      "piece": {
+        "start": "Start",
+        "straight": "Straight",
+        "gentleCurve": "Gentle curve",
+        "sharpCurve": "Sharp curve",
+        "boost": "Boost pad",
+        "finish": "Finish flag",
+        "erase": "Eraser"
+      },
+      "unlock": {
+        "sharpCurve": "You earned the Sharp Curve! 🎉",
+        "boost": "You earned the Boost Pad! 🎉",
+        "tryIt": "Tap to try it!"
+      },
+      "ideas": {
+        "open": "Show me ideas 📖",
+        "title": "Track ideas 📖",
+        "use": "Build from this",
+        "confirm": "Replace my track?",
+        "close": "Keep my track"
+      },
+      "target": {
+        "twoCurves": "Try this: can you build a track with 2 curves the bike survives?",
+        "useBoost": "Try this: can you use a boost pad and still finish the ride?",
+        "eightPieces": "Try this: can you build a track with 8 or more pieces?",
+        "twoCurvesMet": "Two curves and you made it — that was a try-this idea! ⭐",
+        "useBoostMet": "You used a boost and finished — that was a try-this idea! ⭐",
+        "eightPiecesMet": "Eight pieces built and ridden — that was a try-this idea! ⭐"
+      },
+      "ride": {
+        "lean": "leaning",
+        "zoom": "zooming",
+        "sharpAhead": "Sharp curve ahead!",
+        "curveAhead": "Curve ahead",
+        "holdButton": "HOLD to lean 🏍️",
+        "holdToLean": "Hold to lean into curves",
+        "wobble": "Wobbly! Just made it!",
+        "spinOut": "Whoa — too fast for that curve! Boost is okay. Try holding LEAN before the turn.",
+        "finished": "You finished your track!",
+        "tweak": "Tweak my track 🔧",
+        "again": "Ride again 🏍️",
+        "done": "Done for now"
+      },
+      "reflect": {
+        "newPiece": "Your new piece changed the ride! Where else could it go?",
+        "spinOuts": "You spun out {{count}} times and still finished! Which curve was trickiest?",
+        "oneSpin": "One wipeout, one comeback! What would you change about that curve?",
+        "boost": "That boost made Boost ZOOM! What happens if you move it somewhere else?",
+        "clean": "A clean ride the whole way! What would make your track even more exciting?",
+        "proud": "What part of your track are you most proud of?"
+      },
+      "name": {
+        "title": "Name your track!",
+        "keep": "That's it!",
+        "later": "Later"
+      },
+      "rideOnly": {
+        "notRideable": "This track can't be ridden right now. Try another one!"
+      }
+    },
     "boostPath": {
       "title": "Boost's Path Planner",
       "level1": "Reach the solar charger",
@@ -1897,6 +1978,7 @@
     "by": "by {{name}}",
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
-    "play": "Play"
+    "play": "Play",
+    "ride": "Ride"
   }
 }

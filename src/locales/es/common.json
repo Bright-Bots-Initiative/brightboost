@@ -1345,6 +1345,87 @@
     "learning": {
       "wordsToKnow": "Palabras para aprender"
     },
+    "trackMaker": {
+      "imagine": {
+        "prompt": "¿Qué clase de pista vas a construir — con rulos, rápida, zigzagueante?",
+        "hint": "¡Construye una pista para la moto de Boost y luego móntala!",
+        "start": "¡A construir!"
+      },
+      "build": {
+        "unnamed": "Mi Pista",
+        "renameAria": "Nombre de la pista — toca para cambiarlo",
+        "save": "Guardar",
+        "saved": "Guardado ✓",
+        "savedLocal": "Guardado en este dispositivo ✓",
+        "gridAria": "Cuadrícula para construir la pista",
+        "cellPieceAria": "{{piece}} — toca para girarla",
+        "cellEmptyAria": "Espacio vacío — toca para colocar una pieza",
+        "brokenHint": "El camino termina en el punto que brilla — ¡conéctalo!",
+        "ride": "¡A rodar! 🏍️",
+        "share": "Compartir en la galería ✨",
+        "sharedNote": "¡En la galería! ✨",
+        "done": "Por ahora, listo"
+      },
+      "piece": {
+        "start": "Salida",
+        "straight": "Recta",
+        "gentleCurve": "Curva suave",
+        "sharpCurve": "Curva cerrada",
+        "boost": "Acelerador",
+        "finish": "Bandera de meta",
+        "erase": "Borrador"
+      },
+      "unlock": {
+        "sharpCurve": "¡Ganaste la Curva Cerrada! 🎉",
+        "boost": "¡Ganaste el Acelerador! 🎉",
+        "tryIt": "¡Toca para probarla!"
+      },
+      "ideas": {
+        "open": "Muéstrame ideas 📖",
+        "title": "Ideas de pistas 📖",
+        "use": "Construir desde esta",
+        "confirm": "¿Reemplazar mi pista?",
+        "close": "Conservar mi pista"
+      },
+      "target": {
+        "twoCurves": "Prueba esto: ¿puedes construir una pista con 2 curvas que la moto supere?",
+        "useBoost": "Prueba esto: ¿puedes usar un acelerador y aun así llegar a la meta?",
+        "eightPieces": "Prueba esto: ¿puedes construir una pista con 8 piezas o más?",
+        "twoCurvesMet": "Dos curvas y lo lograste — ¡era una de las ideas! ⭐",
+        "useBoostMet": "Usaste un acelerador y terminaste — ¡era una de las ideas! ⭐",
+        "eightPiecesMet": "Ocho piezas construidas y recorridas — ¡era una de las ideas! ⭐"
+      },
+      "ride": {
+        "lean": "inclinando",
+        "zoom": "a toda velocidad",
+        "sharpAhead": "¡Curva cerrada adelante!",
+        "curveAhead": "Curva adelante",
+        "holdButton": "MANTÉN para inclinar 🏍️",
+        "holdToLean": "Mantén presionado para inclinarte en las curvas",
+        "wobble": "¡Tambaleo! ¡Por poquito!",
+        "spinOut": "¡Uy — demasiado rápido para esa curva! Boost está bien. Intenta mantener INCLINAR antes del giro.",
+        "finished": "¡Terminaste tu pista!",
+        "tweak": "Ajustar mi pista 🔧",
+        "again": "Rodar otra vez 🏍️",
+        "done": "Por ahora, listo"
+      },
+      "reflect": {
+        "newPiece": "¡Tu pieza nueva cambió el paseo! ¿En qué otro lugar podría ir?",
+        "spinOuts": "¡Diste {{count}} trompos y aun así terminaste! ¿Cuál curva fue la más difícil?",
+        "oneSpin": "¡Un trompo y una remontada! ¿Qué cambiarías de esa curva?",
+        "boost": "¡Ese acelerador hizo a Boost VOLAR! ¿Qué pasa si lo mueves a otro lugar?",
+        "clean": "¡Un paseo limpio de principio a fin! ¿Qué haría tu pista aún más emocionante?",
+        "proud": "¿De qué parte de tu pista estás más orgulloso?"
+      },
+      "name": {
+        "title": "¡Ponle nombre a tu pista!",
+        "keep": "¡Ese es!",
+        "later": "Después"
+      },
+      "rideOnly": {
+        "notRideable": "Esta pista no se puede recorrer ahora. ¡Prueba otra!"
+      }
+    },
     "boostPath": {
       "title": "Planificador de Boost",
       "level1": "Llega al cargador solar",
@@ -1635,6 +1716,7 @@
     "by": "por {{name}}",
     "boosts": "Ánimos",
     "giveBoost": "Dar ánimo ⭐",
-    "play": "Jugar"
+    "play": "Jugar",
+    "ride": "Montar"
   }
 }

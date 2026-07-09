@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useApi } from "../../services/api";
 import CreationStatusChip, { type CreationStatus } from "./CreationStatusChip";
+import { trackToPolylinePoints } from "../games/trackMakerModel";
 
 // Phase 0 — group-scoped gallery of kid creations. Read path is GET
 // /creations?courseId= (server enforces group membership + visibility: shared/
@@ -17,7 +18,60 @@ type GalleryCreation = {
   encouragements: number;
   authorId: string;
   authorName: string;
+  /** Present for race_track only (the list endpoint ships the small track
+   *  layout so the card can draw its thumbnail). */
+  content?: unknown;
 };
+
+/** Playable creation types share the /student/challenge/:id player route. */
+const PLAYABLE_TYPES = new Set(["data_dash_challenge", "race_track"]);
+
+/**
+ * Mini track thumbnail for race_track cards. Any malformed/missing content
+ * yields no points, so we fall back to 🏍️ — the card must NEVER crash on a
+ * race_track creation, whatever its content looks like.
+ */
+function RaceTrackThumb({ content }: { content: unknown }) {
+  let points = "";
+  try {
+    const c = content as {
+      grid?: { w?: number; h?: number };
+      pieces?: unknown[];
+    } | null;
+    if (
+      c &&
+      typeof c.grid?.w === "number" &&
+      typeof c.grid?.h === "number" &&
+      Array.isArray(c.pieces)
+    ) {
+      points = trackToPolylinePoints(
+        c as Parameters<typeof trackToPolylinePoints>[0],
+        48,
+      );
+    }
+  } catch {
+    points = "";
+  }
+  if (!points) {
+    return (
+      <span className="text-2xl" aria-hidden>
+        🏍️
+      </span>
+    );
+  }
+  return (
+    <svg viewBox="0 0 48 48" className="w-12 h-12" aria-hidden>
+      <polyline
+        points={points}
+        fill="none"
+        stroke="#475569"
+        strokeWidth={5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function GroupGallery({
   courseId,
@@ -72,9 +126,12 @@ export default function GroupGallery({
           className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col gap-2"
         >
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-brightboost-navy">
-              {c.title || t("gallery.untitled")}
-            </h3>
+            <div className="flex items-center gap-2 min-w-0">
+              {c.type === "race_track" && <RaceTrackThumb content={c.content} />}
+              <h3 className="font-semibold text-brightboost-navy">
+                {c.title || t("gallery.untitled")}
+              </h3>
+            </div>
             <CreationStatusChip status={c.status} />
           </div>
           <p className="text-xs text-gray-500">
@@ -92,12 +149,14 @@ export default function GroupGallery({
               >
                 {t("gallery.giveBoost")}
               </button>
-            ) : c.type === "data_dash_challenge" ? (
+            ) : PLAYABLE_TYPES.has(c.type) ? (
               <Link
                 to={`/student/challenge/${c.id}`}
                 className="px-3 py-1.5 text-sm rounded-md bg-brightboost-blue text-white font-semibold hover:bg-brightboost-navy"
               >
-                {t("gallery.play")}
+                {c.type === "race_track"
+                  ? t("gallery.ride", { defaultValue: "Ride" })
+                  : t("gallery.play")}
               </Link>
             ) : null}
           </div>
