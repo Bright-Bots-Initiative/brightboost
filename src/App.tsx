@@ -52,6 +52,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
+import Waterworks from "./pages/Waterworks";
 import PlanDetail from "./pages/PlanDetail";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
@@ -128,6 +129,11 @@ function App() {
                   lever from docs/audits/k8-engagement-audit.md Part 3.
                   Must stay outside any auth-gated layout. */}
               <Route path="/try" element={<TryDemo />} />
+              {/* 石犀工坊 · Waterworks — standalone showcase. Public, no
+                  auth, deliberately linked from NOTHING (direct URL only);
+                  device-local persistence, zero backend. Placement (#676)
+                  decided later. See docs/games/waterworks-design.md. */}
+              <Route path="/waterworks" element={<Waterworks />} />
               <Route path="/for-reviewers" element={<ForReviewers />} />
               {/* Free Access Plans detail pages — reached from the homepage
                   "Learn more" buttons. Public, persona-routed CTAs. */}

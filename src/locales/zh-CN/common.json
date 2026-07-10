@@ -1515,6 +1515,148 @@
     "saving": "Sharing...",
     "saveError": "Could not share. Try again."
   },
+  "waterworks": {
+    "shell": {
+      "credit": "灵感来自成都两千三百年历史的都江堰"
+    },
+    "title": {
+      "tagline": "你想造什么？",
+      "pickLevel": "选择难度",
+      "bandK2": "K–2 · 引导",
+      "bandG35": "3–5 年级",
+      "bandG68": "6–8 年级 · 自由",
+      "resume": "继续造我的河"
+    },
+    "gallery": {
+      "title": "我的水利工坊",
+      "back": "返回",
+      "create": "造新河",
+      "openAria": "打开{{name}}",
+      "empty": "还没有河——快来造一条吧！"
+    },
+    "build": {
+      "defaultName": "我的河",
+      "renameAria": "河的名字——点一下改名",
+      "save": "保存",
+      "saved": "已保存 ✓",
+      "savedLocalOff": "这台设备存满了——离开页面前你的河还在。",
+      "levels": "关卡",
+      "boardAria": "造河板",
+      "cellAria": "第{{r}}行第{{c}}列：{{what}}",
+      "flow": "放水啦！💧",
+      "rain": "下雨",
+      "rainOn": "🌧️ 下雨：开",
+      "clear": "清空",
+      "caption": "💧放水 · 🌧️暴雨考验",
+      "swipeHint": "左右滑动看更多",
+      "swipeHintDismiss": "关闭滑动提示"
+    },
+    "part": {
+      "channel": "水渠",
+      "gate": "水闸",
+      "fishmouth": "鱼嘴",
+      "sandweir": "飞沙堰",
+      "bottleneck": "宝瓶口",
+      "field": "农田",
+      "erase": "擦除",
+      "land": "空地"
+    },
+    "hint": {
+      "channel": "沿着小路把水送过去。",
+      "gate": "点它开或关，关上就挡住水。",
+      "fishmouth": "把河分两股——从它往上、往下各造一条水渠。",
+      "sandweir": "让多余的水安全地流走。",
+      "bottleneck": "让水流变小，农田就不会被淹。",
+      "field": "有水变绿，水太多变深蓝。",
+      "erase": "🧽 点零件把它擦掉。"
+    },
+    "target": {
+      "k2Water1": "试试看：能让水浇到农田吗？在水渠末端放一块🌱！",
+      "k2Water2": "试试看：一次放水能浇到两块农田吗？",
+      "k2RainSafe": "试试看：打开下雨——能让每块农田都保持绿色吗？",
+      "g35Water3": "试试看：一次放水浇到三块农田——鱼嘴能帮上忙！",
+      "g35RainZeroFlood": "试试看：下雨时一块农田都不被淹。",
+      "g35HousesDry": "试试看：下雨时让每座房子都不进水。",
+      "g68Storm": "试试看：设计一条暴雨也影响不了的河。",
+      "dismiss": "关闭建议",
+      "met": "你做到啦——这正是\"试试看\"里的点子！⭐"
+    },
+    "unlock": {
+      "fishmouth": "你赢得了鱼嘴！——把河分成两条吧！",
+      "gate": "你赢得了水闸！——开关水流！",
+      "sandweir": "洪水让你明白李冰为什么造它！你赢得了飞沙堰！",
+      "bottleneck": "还有宝瓶口！——它让水流变小，农田就不会被淹。",
+      "tryIt": "点一下试试！"
+    },
+    "wonder": {
+      "stormInvite": "你的河还没遇到过洪水……要不要试试下雨？🌧️",
+      "flood": "哎呀——水漫出来了！怎样才能挡住它呢？",
+      "clean": "{{count}}块农田都绿了，还没有洪水！怎样让你的河更棒？",
+      "next": "接下来你想试试什么？",
+      "dry": "这次农田还是干的。水怎样才能流到那里？",
+      "favorite": "你最喜欢你的河的哪个部分？",
+      "newPart": {
+        "fishmouth": "你的新鱼嘴把河分开了！水还能流去哪里？",
+        "gate": "你的新水闸改变了水流！关上它会怎样？",
+        "sandweir": "你的飞沙堰把多余的水送走了！它帮上忙了吗？",
+        "bottleneck": "你的宝瓶口让水流变小了！它保护了哪块农田？"
+      }
+    },
+    "reflect": {
+      "keepBuilding": "继续造"
+    },
+    "name": {
+      "title": "给你的河起个名字！",
+      "placeholder": "我的河",
+      "save": "保存！",
+      "later": "以后再说"
+    },
+    "patterns": {
+      "open": "给我看看点子 📖",
+      "title": "河的点子 📖",
+      "use": "照这个造",
+      "confirm": "替换我的河？",
+      "close": "保留我的河"
+    },
+    "pattern": {
+      "splitRiver": "两条河",
+      "safeFarm": "平安农田",
+      "stormProofVillage": "防洪村"
+    },
+    "help": {
+      "button": "怎么玩",
+      "title": "怎么玩",
+      "step1": "点一个零件，再点土地，就造好啦。",
+      "step2": "按绿色的\"放水啦！\"，水就流起来。",
+      "step3": "试试\"下雨\"——你的河还好用吗？",
+      "partsTitle": "这些零件做什么",
+      "note": "怎么造都可以——造好就放水看看！🌊",
+      "go": "开始造！"
+    },
+    "heritage": {
+      "learnMore": "了解它的故事！📜",
+      "learnMoreAria": "了解真正的{{part}}",
+      "whatLabel": "真实的它：",
+      "builtLabel": "李冰的妙想：",
+      "riverLabel": "在你的河里：",
+      "close": "真棒！",
+      "fishmouth": {
+        "what": "在都江堰，一座像鱼嘴一样的长石堤立在岷江中间。",
+        "built": "两千三百年前，李冰用它把一条汹涌的大河分成两条温顺的河——不筑坝，全靠巧妙的形状。",
+        "river": "在你的河里，鱼嘴把水分成两路——在它的上面和下面挖水渠吧！"
+      },
+      "sandweir": {
+        "what": "飞沙堰是一道矮矮的溢流堰，洪水和泥沙会从它上面翻过去流走。",
+        "built": "李冰把它修得刚刚好：平时水安静地流过，发洪水时多余的水安全地溢走。",
+        "river": "在你的河里，飞沙堰把多余的水排走——洪水来时看它冒出的💦！"
+      },
+      "bottleneck": {
+        "what": "宝瓶口是李冰的队伍在整座石山上凿出的窄窄的口子。",
+        "built": "他们用火烧热岩石、再用水浇凉，让山石裂开——整整花了八年，那时可没有炸药！",
+        "river": "在你的河里，宝瓶口只放温和的水流过去，农田喝饱水也不会被淹。"
+      }
+    }
+  },
   "challengePlayer": {
     "loading": "Loading challenge...",
     "notFound": "This challenge isn't available."

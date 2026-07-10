@@ -66,6 +66,7 @@ export interface SeenFlags {
   help?: boolean;
   placedArrow?: boolean;
   flowArrow?: boolean;
+  swipeHint?: boolean;
 }
 
 // ── snapshot / restore ──────────────────────────────────────────────────────

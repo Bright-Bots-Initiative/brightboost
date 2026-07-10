@@ -152,6 +152,8 @@ export default function WaterworksGame() {
   const [showNameCard, setShowNameCard] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [saveNote, setSaveNote] = useState<"saved" | "local" | null>(null);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const boardScrollRef = useRef<HTMLDivElement | null>(null);
 
   const unlocked = unlockedParts(band, progress);
   const newPartCandidatesRef = useRef<Set<PartType>>(new Set());
@@ -458,6 +460,27 @@ export default function WaterworksGame() {
 
   const target = currentTarget(band, progress, lastRun, dismissedTargets);
 
+  // Phone cold-open (a primary pitch path): when the board overflows a
+  // narrow viewport, start scrolled to the source + starter channel (the
+  // water's origin must be the first thing seen) and show a one-time swipe
+  // hint until the child scrolls or dismisses it.
+  useEffect(() => {
+    if (screen !== "build") return;
+    const el = boardScrollRef.current;
+    if (!el) return;
+    el.scrollLeft = 0; // sources live in column 0 — anchor the story there
+    if (el.scrollWidth > el.clientWidth + 8 && !seen.swipeHint) {
+      setShowSwipeHint(true);
+      const dismiss = () => {
+        setShowSwipeHint(false);
+        markSeen({ swipeHint: true });
+      };
+      el.addEventListener("scroll", dismiss, { once: true });
+      return () => el.removeEventListener("scroll", dismiss);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
   // ── Screens ───────────────────────────────────────────────────────────────
 
   if (screen === "title") {
@@ -720,7 +743,22 @@ export default function WaterworksGame() {
                   defaultValue: "Tap a part, then tap the land to place it.",
                 })}
           </p>
-          <div className="w-full overflow-x-auto">
+          <div className="w-full overflow-x-auto relative" ref={boardScrollRef}>
+            {showSwipeHint && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSwipeHint(false);
+                  markSeen({ swipeHint: true });
+                }}
+                className="absolute right-2 top-2 z-10 min-h-11 px-4 rounded-full bg-[#3a2e22]/80 text-white font-extrabold text-sm shadow-lg touch-manipulation"
+                aria-label={t("waterworks.build.swipeHintDismiss", {
+                  defaultValue: "Dismiss swipe hint",
+                })}
+              >
+                ⇆ {t("waterworks.build.swipeHint", { defaultValue: "Swipe to see more" })}
+              </button>
+            )}
             <div
               className={`relative grid gap-[3px] rounded-2xl bg-[#d9c79f] p-1.5 mx-auto ${
                 raining ? "ww-raining" : ""
@@ -751,10 +789,9 @@ export default function WaterworksGame() {
                         defaultValue: "Row {{r}}, column {{c}}: {{what}}",
                         r: r + 1,
                         c: c + 1,
-                        what:
-                          cell.type === "land"
-                            ? t("waterworks.part.land", { defaultValue: "open land" })
-                            : cell.type,
+                        what: t(`waterworks.part.${cell.type}`, {
+                          defaultValue: cell.type === "land" ? "open land" : cell.type,
+                        }),
                       })}
                     >
                       {icon}

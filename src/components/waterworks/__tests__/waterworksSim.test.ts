@@ -237,6 +237,26 @@ describe("unlock ladder", () => {
     expect(newlyUnlockedParts("k2", p2, p2)).toEqual([]);
   });
 
+  it("BAND-SWITCH ISOLATION: visiting the Open band never leaks its full palette back into Guided", () => {
+    // A kid with one earned unlock hops k2 → g68 → k2. The Open band's
+    // everything-unlocked palette is BAND-derived, not progress-derived, so
+    // returning to Guided must show exactly the earned set — nothing more.
+    const earned = advanceProgress(FRESH_PROGRESS, {
+      fieldsWatered: 1,
+      fieldsFloodedEver: 0,
+      housesFloodedEver: 0,
+      anyFlood: false,
+    });
+    expect(unlockedParts("g68", earned)).toHaveLength(6); // Open: everything
+    const backInGuided = unlockedParts("k2", earned); // same progress object
+    expect(backInGuided).toEqual(["channel", "field", "fishmouth"]);
+    expect(backInGuided).not.toContain("sandweir"); // un-earned stays locked
+    expect(backInGuided).not.toContain("bottleneck");
+    expect(backInGuided).not.toContain("gate");
+    // and the earned unlock genuinely persists across the round trip
+    expect(backInGuided).toContain("fishmouth");
+  });
+
   it("REACHABILITY: Shíxī invites the storm after 3 floodless Guided runs", () => {
     let p: Progress = FRESH_PROGRESS;
     const cleanRun = {

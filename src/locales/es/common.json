@@ -1617,6 +1617,148 @@
     "saving": "Compartiendo...",
     "saveError": "No se pudo compartir. Inténtalo de nuevo."
   },
+  "waterworks": {
+    "shell": {
+      "credit": "Inspirado en las obras hidráulicas de Dujiangyan (Chengdu), con 2300 años de historia"
+    },
+    "title": {
+      "tagline": "¿Qué vas a construir?",
+      "pickLevel": "Elige tu nivel",
+      "bandK2": "K–2 · Guiado",
+      "bandG35": "Grados 3–5",
+      "bandG68": "Grados 6–8 · Libre",
+      "resume": "Seguir construyendo mi río"
+    },
+    "gallery": {
+      "title": "Mi Taller de Aguas",
+      "back": "Volver",
+      "create": "Río nuevo",
+      "openAria": "Abrir {{name}}",
+      "empty": "Aún no hay ríos — ¡construye uno!"
+    },
+    "build": {
+      "defaultName": "Río Nuevo",
+      "renameAria": "Nombre del río — toca para cambiarlo",
+      "save": "Guardar",
+      "saved": "Guardado ✓",
+      "savedLocalOff": "Este dispositivo está lleno — tu río se conserva hasta que salgas de la página.",
+      "levels": "Niveles",
+      "boardAria": "Tablero para construir el río",
+      "cellAria": "Fila {{r}}, columna {{c}}: {{what}}",
+      "flow": "¡Suelta el agua! 💧",
+      "rain": "Lluvia",
+      "rainOn": "🌧️ Lluvia: SÍ",
+      "clear": "Limpiar",
+      "caption": "💧 suelta el agua · 🌧️ prueba de tormenta",
+      "swipeHint": "Desliza para ver más",
+      "swipeHintDismiss": "Cerrar la pista de deslizar"
+    },
+    "part": {
+      "channel": "Canal 水渠",
+      "gate": "Compuerta 水闸",
+      "fishmouth": "Boca de Pez 鱼嘴",
+      "sandweir": "Vertedero de Arena 飞沙堰",
+      "bottleneck": "Cuello de Botella 宝瓶口",
+      "field": "Campo 农田",
+      "erase": "Borrar",
+      "land": "tierra libre"
+    },
+    "hint": {
+      "channel": "Lleva el agua por el camino.",
+      "gate": "Tócala para abrir o cerrar. Cerrada, detiene el agua.",
+      "fishmouth": "Divide el río — construye canales hacia ARRIBA y hacia ABAJO desde ella.",
+      "sandweir": "Deja escapar el agua sobrante sin peligro.",
+      "bottleneck": "Aprieta el flujo para que los campos no se inunden.",
+      "field": "Se pone verde con agua, oscuro si se inunda.",
+      "erase": "🧽 Toca una pieza para borrarla."
+    },
+    "target": {
+      "k2Water1": "Prueba esto: ¿puedes regar un campo? ¡Pon un 🌱 al final de tu canal!",
+      "k2Water2": "Prueba esto: ¿puedes regar 2 campos en una sola pasada?",
+      "k2RainSafe": "Prueba esto: activa la Lluvia — ¿puedes mantener verde cada campo?",
+      "g35Water3": "Prueba esto: riega 3 campos en una pasada — ¡la Boca de Pez ayuda!",
+      "g35RainZeroFlood": "Prueba esto: supera la Lluvia sin ningún campo inundado.",
+      "g35HousesDry": "Prueba esto: mantén seca cada casa durante la Lluvia.",
+      "g68Storm": "Prueba esto: diseña un río al que la tormenta no le cambie nada.",
+      "dismiss": "Descartar sugerencia",
+      "met": "¡Lo lograste — era una de las ideas de \"prueba esto\"! ⭐"
+    },
+    "unlock": {
+      "fishmouth": "¡Ganaste la Boca de Pez! 鱼嘴 — ¡divide tu río en dos!",
+      "gate": "¡Ganaste la Compuerta! 水闸 — ¡abre y cierra el flujo!",
+      "sandweir": "¡La inundación te mostró por qué Li Bing construyó esto! ¡Ganaste el Vertedero de Arena! 飞沙堰",
+      "bottleneck": "¡Y el Cuello de Botella! 宝瓶口 — aprieta el flujo para que los campos no se ahoguen.",
+      "tryIt": "¡Toca para probarlo!"
+    },
+    "wonder": {
+      "stormInvite": "Tu río nunca ha visto una inundación… ¿quieres probar la Lluvia? 🌧️",
+      "flood": "¡Uy — el agua se fue por todas partes! ¿Qué podría detenerla?",
+      "clean": "¡{{count}} campos verdes y ninguna inundación! ¿Qué haría tu río aún mejor?",
+      "next": "¿Qué te gustaría probar ahora?",
+      "dry": "Esta vez los campos quedaron secos. ¿Cómo podría llegarles el agua?",
+      "favorite": "¿Cuál es tu parte favorita de tu río?",
+      "newPart": {
+        "fishmouth": "¡Tu nueva Boca de Pez dividió el río! ¿A dónde más podría ir el agua?",
+        "gate": "¡Tu nueva Compuerta cambió el flujo! ¿Qué pasa si la cierras?",
+        "sandweir": "¡Tu Vertedero de Arena dejó escapar el agua sobrante! ¿Te ayudó?",
+        "bottleneck": "¡Tu Cuello de Botella apretó el flujo! ¿Qué campo protegió?"
+      }
+    },
+    "reflect": {
+      "keepBuilding": "Seguir construyendo"
+    },
+    "name": {
+      "title": "¡Ponle nombre a tu río!",
+      "placeholder": "Río Nuevo",
+      "save": "¡Guardar!",
+      "later": "Después"
+    },
+    "patterns": {
+      "open": "Muéstrame ideas 📖",
+      "title": "Ideas de ríos 📖",
+      "use": "Construir desde esta",
+      "confirm": "¿Reemplazar mi río?",
+      "close": "Conservar mi río"
+    },
+    "pattern": {
+      "splitRiver": "El Río Dividido",
+      "safeFarm": "La Granja Segura",
+      "stormProofVillage": "La Aldea Antitormentas"
+    },
+    "help": {
+      "button": "Cómo jugar",
+      "title": "Cómo jugar",
+      "step1": "Toca una pieza y luego toca la tierra para construirla.",
+      "step2": "Pulsa el botón verde \"¡Suelta el agua!\" para que corra el agua.",
+      "step3": "Prueba la \"Lluvia\" — ¿tu río sigue funcionando?",
+      "partsTitle": "Qué hace cada pieza",
+      "note": "No hay forma incorrecta — ¡construye y mira qué pasa! 🌊",
+      "go": "¡A construir!"
+    },
+    "heritage": {
+      "learnMore": "¡Conoce su historia! 📜",
+      "learnMoreAria": "Conoce el {{part}} de verdad",
+      "whatLabel": "Lo real: ",
+      "builtLabel": "La idea de Li Bing: ",
+      "riverLabel": "En TU río: ",
+      "close": "¡Genial!",
+      "fishmouth": {
+        "what": "En Dujiangyan, una larga isla de piedra con forma de boca de pez se alza en medio del río Min.",
+        "built": "Li Bing la construyó hace 2300 años para dividir un río bravo en dos más tranquilos — sin represa, solo con una forma ingeniosa.",
+        "river": "En tu río, la Boca de Pez divide el agua en dos — ¡cava canales por arriba y por abajo!"
+      },
+      "sandweir": {
+        "what": "El Vertedero de Arena es un aliviadero bajito por donde escapan el agua de las crecidas y la arena.",
+        "built": "Li Bing lo hizo justo a la altura correcta: el agua normal pasa de largo, pero la crecida se derrama sin peligro.",
+        "river": "En tu río, el Vertedero deja escapar el agua sobrante — ¡mira el 💦 cuando llega una inundación!"
+      },
+      "bottleneck": {
+        "what": "El Cuello de Botella es una abertura estrecha que el equipo de Li Bing cortó a través de una montaña de roca.",
+        "built": "Tardaron 8 años calentando la roca con fuego y enfriándola con agua para agrietarla — ¡no existían los explosivos!",
+        "river": "En tu río, el Cuello de Botella deja pasar solo un flujo suave, para que tus campos beban sin ahogarse."
+      }
+    }
+  },
   "challengePlayer": {
     "loading": "Cargando desafío...",
     "notFound": "Este desafío no está disponible.",

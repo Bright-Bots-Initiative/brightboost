@@ -1516,6 +1516,148 @@
     "saving": "Sharing...",
     "saveError": "Could not share. Try again."
   },
+  "waterworks": {
+    "shell": {
+      "credit": "Inspired by the 2,300-year-old Dujiangyan waterworks of Chengdu"
+    },
+    "title": {
+      "tagline": "What will you build?",
+      "pickLevel": "Pick your level",
+      "bandK2": "K–2 · Guided",
+      "bandG35": "Grades 3–5",
+      "bandG68": "Grades 6–8 · Open",
+      "resume": "Keep building my river"
+    },
+    "gallery": {
+      "title": "My Waterworks",
+      "back": "Back",
+      "create": "New river",
+      "openAria": "Open {{name}}",
+      "empty": "No rivers yet — build one!"
+    },
+    "build": {
+      "defaultName": "New River",
+      "renameAria": "River name — tap to change",
+      "save": "Save",
+      "saved": "Saved ✓",
+      "savedLocalOff": "This device is full — your river stays until you leave the page.",
+      "levels": "Levels",
+      "boardAria": "River building board",
+      "cellAria": "Row {{r}}, column {{c}}: {{what}}",
+      "flow": "Let it flow! 💧",
+      "rain": "Rain",
+      "rainOn": "🌧️ Rain: ON",
+      "clear": "Clear",
+      "caption": "💧 run the water · 🌧️ storm test",
+      "swipeHint": "Swipe to see more",
+      "swipeHintDismiss": "Dismiss swipe hint"
+    },
+    "part": {
+      "channel": "Channel 水渠",
+      "gate": "Gate 水闸",
+      "fishmouth": "Fish Mouth 鱼嘴",
+      "sandweir": "Flying Sand Weir 飞沙堰",
+      "bottleneck": "Bottle-Neck 宝瓶口",
+      "field": "Field 农田",
+      "erase": "Erase",
+      "land": "open land"
+    },
+    "hint": {
+      "channel": "Carries water along the path.",
+      "gate": "Tap it to open or close. Closed blocks water.",
+      "fishmouth": "Splits the river — build channels up AND down from it.",
+      "sandweir": "Lets extra water spill away safely.",
+      "bottleneck": "Squeezes the flow so fields don't flood.",
+      "field": "Turns green when watered, dark when flooded.",
+      "erase": "🧽 Tap a part to rub it out."
+    },
+    "target": {
+      "k2Water1": "Try this: can you water a field? Put a 🌱 at the end of your channel!",
+      "k2Water2": "Try this: can you water 2 fields in one run?",
+      "k2RainSafe": "Try this: turn on Rain — can you keep every field green?",
+      "g35Water3": "Try this: water 3 fields in one run — the Fish Mouth helps!",
+      "g35RainZeroFlood": "Try this: survive the Rain with zero flooded fields.",
+      "g35HousesDry": "Try this: keep every house dry in the Rain.",
+      "g68Storm": "Try this: design a river where the storm changes nothing.",
+      "dismiss": "Dismiss suggestion",
+      "met": "You did it — that was one of the try-this ideas! ⭐"
+    },
+    "unlock": {
+      "fishmouth": "You earned the Fish Mouth! 鱼嘴 — split your river two ways!",
+      "gate": "You earned the Gate! 水闸 — open and close the flow!",
+      "sandweir": "The flood showed you why Li Bing built this! You earned the Flying Sand Weir! 飞沙堰",
+      "bottleneck": "And the Bottle-Neck! 宝瓶口 — it squeezes the flow so fields don't drown.",
+      "tryIt": "Tap to try it!"
+    },
+    "wonder": {
+      "stormInvite": "Your river has never seen a flood… want to try Rain? 🌧️",
+      "flood": "Whoa — the water went everywhere! What could keep it out?",
+      "clean": "{{count}} green fields and no floods! What would make your river even better?",
+      "next": "What would you try next?",
+      "dry": "The fields stayed dry this time. How could the water reach them?",
+      "favorite": "What's your favorite part of your river?",
+      "newPart": {
+        "fishmouth": "Your new Fish Mouth split the river! Where else could the water go?",
+        "gate": "Your new Gate changed the flow! What happens if you close it?",
+        "sandweir": "Your Flying Sand Weir spilled the extra water away! Did it help?",
+        "bottleneck": "Your Bottle-Neck squeezed the flow! Which field did it protect?"
+      }
+    },
+    "reflect": {
+      "keepBuilding": "Keep building"
+    },
+    "name": {
+      "title": "Name your river!",
+      "placeholder": "New River",
+      "save": "Save it!",
+      "later": "Later"
+    },
+    "patterns": {
+      "open": "Show me ideas 📖",
+      "title": "River ideas 📖",
+      "use": "Build from this",
+      "confirm": "Replace my river?",
+      "close": "Keep my river"
+    },
+    "pattern": {
+      "splitRiver": "The Split River",
+      "safeFarm": "The Safe Farm",
+      "stormProofVillage": "The Storm-Proof Village"
+    },
+    "help": {
+      "button": "How to play",
+      "title": "How to play",
+      "step1": "Tap a part, then tap the land to build it.",
+      "step2": "Press the green \"Let it flow!\" to run the water.",
+      "step3": "Try \"Rain\" — does your river still work?",
+      "partsTitle": "What the parts do",
+      "note": "There's no wrong way — just build and watch! 🌊",
+      "go": "Let's build!"
+    },
+    "heritage": {
+      "learnMore": "Learn more about it! 📜",
+      "learnMoreAria": "Learn about the real {{part}}",
+      "whatLabel": "The real thing: ",
+      "builtLabel": "Li Bing's idea: ",
+      "riverLabel": "In YOUR river: ",
+      "close": "Cool!",
+      "fishmouth": {
+        "what": "At Dujiangyan, a long stone island shaped like a fish's mouth sits in the middle of the Min River.",
+        "built": "Li Bing built it 2,300 years ago to split one wild river into two calmer ones — no dam, just clever shape.",
+        "river": "In your river, the Fish Mouth splits the water two ways — dig channels above and below it!"
+      },
+      "sandweir": {
+        "what": "The Flying Sand Weir is a low spillway that lets floodwater and sand escape over its edge.",
+        "built": "Li Bing made it just low enough: normal water flows past, but flood water spills safely away.",
+        "river": "In your river, the Sand Weir spills extra water off the map — watch the 💦 when a flood hits it!"
+      },
+      "bottleneck": {
+        "what": "The Bottle-Neck is a narrow gap Li Bing's team cut through a whole mountain of rock.",
+        "built": "It took 8 years of heating the rock with fire and cooling it with water to crack it open — no explosives existed!",
+        "river": "In your river, the Bottle-Neck lets only a gentle flow through, so your fields drink without drowning."
+      }
+    }
+  },
   "challengePlayer": {
     "loading": "Loading challenge...",
     "notFound": "This challenge isn't available."
