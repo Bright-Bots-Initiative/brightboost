@@ -65,10 +65,13 @@ Each tick (order matters):
 |---|---|---|
 | First field watered | **鱼嘴 Fish Mouth** | "You earned the Fish Mouth! 鱼嘴 — split your river two ways!" |
 | 2+ fields watered in one run | **水闸 Gate** | "You earned the Gate! 水闸" |
-| First **Rain** run finishes (flood likely — that's the lesson) | **飞沙堰 Sand Weir** + **宝瓶口 Bottle-Neck** (two queued announces) | "The storm showed you why Li Bing built this! 飞沙堰" |
+| **First flood, however caused** (any field or house floods during any run — Rain not required) | **飞沙堰 Sand Weir** + **宝瓶口 Bottle-Neck** (two queued announces) | "The flood showed you why Li Bing built this! 飞沙堰" |
 
 The flood-first-then-tools beat is deliberate: the child *feels the problem* before receiving the
-2,300-year-old solution. Each announce card includes **"Learn more"** → the part's heritage card (§7).
+2,300-year-old solution. **Reachability guarantee:** if no flood has occurred by the end of the
+child's **3rd run**, Shíxī's run-end wondering question becomes a gentle storm invitation
+("Your river has never seen a flood… want to try Rain? 🌧️") so every kid can reach the beat.
+Each announce card includes **"Learn more"** → the part's heritage card (§7).
 
 **Pattern book ("Show me ideas 📖"):** 3–4 browsable example river shapes (e.g. *The Split River*
 两条河, *The Safe Farm* 平安农田, *The Storm-Proof Village* 防洪村) rendered as mini-thumbnails;
@@ -140,15 +143,25 @@ separate follow-up), and the page root carries a Chinese-capable system font sta
 | Screen use, not screen time | ✅ build–test–revise loop |
 | Localizable from day one | ✅ EN/ES/zh-CN real (zh first-class), vi placeholder; all via shared locale files + `t()` |
 
-**Open questions (for approval):**
-1. **Unlock ladder** (§4) — approve the *flood-first-then-protectors* beat and the 3-step ladder?
-2. **Run-end flow** — Reflect card after every run with "Keep building" only; Save lives in the top
-   bar (plus gallery ＋). OK to fully separate (prototype had name+save on the run-end card)?
-3. **Houses** — keep the three fixed houses (protect-the-village stakes) as in the prototype?
-4. **Gallery delete** — v1 ships rename + overwrite but **no delete** (matches Creations' no-hard-delete
-   stance; avoids K-2 accidental loss). OK, or add long-press delete with confirm?
-5. **Sound** — none in v1 (not in the leads' spec). Confirm.
-6. zh-CN native review is scheduled by you before any external share — acknowledged in §7.
+**Decisions (approved 2026-07-09):**
+1. **Unlock ladder approved, amended:** the 飞沙堰+宝瓶口 unlock triggers on the **first flood
+   however caused** (not Rain specifically); if no flood by ~run 3, Shíxī gently invites the storm —
+   the beat must be reachable by every kid (§4).
+2. **Reflect/Save fully separated:** run-end card is the wondering question only; **no save-nag**
+   (autosave covers safety).
+3. **Houses:** fixed, all bands — protect-the-village is the authentic stake.
+4. **No gallery delete in v1** (see fast-follows).
+5. **No sound in v1** (see fast-follows).
+6. zh-CN native/heritage review happens before any external share — acknowledged in §7.
+
+**Named fast-follows (not in v1):**
+- **Gallery delete (pre-classroom REQUIREMENT):** long-press/⋯ delete with a kid-safe confirm must
+  ship **before classroom use** — shared devices will accumulate rivers. v1's quota-degradation path
+  (graceful in-memory fallback, unit-tested) is the stopgap.
+- **Water audio (delight):** gentle flowing-water / rain sound with a mute toggle.
+- **Placeable houses (future-only):** kid-placed villages; deliberately out of scope for v1.
+- **Global `document.documentElement.lang` fix in `changeLanguage()`** (app-wide; this page ships a
+  page-scoped effect).
 
 ---
 *Build order after approval: Phase B (sim engine + storage, unit-tested; components) → C (route,
