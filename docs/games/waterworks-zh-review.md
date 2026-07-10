@@ -132,4 +132,6 @@
 | heritage.bottleneck.river | In your river, the Bottle-Neck lets only a gentle flow through, so your fields drink without drowning. | 在你的河里，宝瓶口只放温和的水流过去，农田喝饱水也不会被淹。 | |
 
 ---
-**Review status: PENDING.** Once reviewed, record the reviewer + date here and clear the ⚠️ rows.
+**Review status:** the ⚠️-flagged rows were native-reviewed on 2026-07-09 (founder-coordinated).
+A **full pass over every row** (including unflagged strings) before any external promotion is
+tracked as a follow-up; record that reviewer + date here when done.
