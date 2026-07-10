@@ -1,0 +1,88 @@
+/* Echo Avenue — motion signatures + stage effects.
+   Every sound has a DISTINCT motion (silent-mode duty, design §7).
+   All animation sits behind the prefers-reduced-motion guard at the bottom. */
+
+@keyframes ea-stride {
+  0% { transform: translateX(0); }
+  40% { transform: translateX(14px) translateY(-4px); }
+  100% { transform: translateX(0); }
+}
+@keyframes ea-bounce {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  35% { transform: translateY(-18px) scaleY(1.05); }
+  70% { transform: translateY(0) scaleY(0.92); }
+}
+@keyframes ea-armSnap {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-10deg) scale(1.06); }
+  60% { transform: rotate(8deg); }
+}
+@keyframes ea-nod {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px) rotate(3deg); }
+}
+@keyframes ea-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes ea-sparkleTurn {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(-180deg) scale(1.12); }
+  100% { transform: rotate(-360deg) scale(1); }
+}
+@keyframes ea-glide {
+  0% { transform: translateX(0) skewX(0deg); }
+  50% { transform: translateX(20px) skewX(-8deg); }
+  100% { transform: translateX(0) skewX(0deg); }
+}
+@keyframes ea-sway {
+  0%, 100% { transform: rotate(0deg); }
+  33% { transform: rotate(-6deg); }
+  66% { transform: rotate(6deg); }
+}
+
+.ea-motion-stride { animation: ea-stride 0.4s ease-out; }
+.ea-motion-bounce { animation: ea-bounce 0.45s ease-out; }
+.ea-motion-armSnap { animation: ea-armSnap 0.35s ease-out; }
+.ea-motion-nod { animation: ea-nod 0.3s ease-out; }
+.ea-motion-spin { animation: ea-spin 0.45s ease-out; }
+.ea-motion-sparkleTurn { animation: ea-sparkleTurn 0.5s ease-out; }
+.ea-motion-glide { animation: ea-glide 0.45s ease-out; }
+.ea-motion-sway { animation: ea-sway 0.5s ease-in-out; }
+
+/* pulse-lane light flash (silent-mode duty: color = sound identity) */
+@keyframes ea-lightflash {
+  0% { box-shadow: 0 0 0 0 var(--ea-light, #fff); opacity: 1; }
+  100% { box-shadow: 0 0 26px 10px transparent; opacity: 0.9; }
+}
+.ea-light-flash { animation: ea-lightflash 0.35s ease-out; }
+
+/* trail glyphs drift up and fade */
+@keyframes ea-trail {
+  0% { transform: translateY(0); opacity: 0.95; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+.ea-trail { animation: ea-trail 0.9s ease-out forwards; }
+
+/* beat pulse for the lane dots */
+@keyframes ea-beat {
+  0% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.ea-beat-now { animation: ea-beat 0.25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ea-motion-stride,
+  .ea-motion-bounce,
+  .ea-motion-armSnap,
+  .ea-motion-nod,
+  .ea-motion-spin,
+  .ea-motion-sparkleTurn,
+  .ea-motion-glide,
+  .ea-motion-sway,
+  .ea-light-flash,
+  .ea-trail,
+  .ea-beat-now {
+    animation: none;
+  }
+}
