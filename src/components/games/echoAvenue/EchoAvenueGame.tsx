@@ -56,6 +56,7 @@ import {
   type EchoBand,
   type EchoProgress,
   type Performer,
+  type SoundDuetContent,
   type SoundId,
 } from "./echoAvenueModel";
 import { getEchoAudio, type EchoAudio } from "./echoAvenueAudio";
@@ -140,6 +141,9 @@ export interface EchoStudioCoreProps {
   onFinish: (result: GameResult) => void;
   reducedEffects: boolean;
   band: EchoBand;
+  /** Peer watch mode: a classmate's saved duet — replay only, no editing,
+   *  no saving, and never touching the maker's own draft. */
+  fixedDuet?: SoundDuetContent | null;
   /** test seam — production uses the real singleton */
   audioFactory?: () => EchoAudio;
 }
@@ -148,20 +152,24 @@ export function EchoStudioCore({
   onFinish,
   reducedEffects,
   band,
+  fixedDuet = null,
   audioFactory = getEchoAudio,
 }: EchoStudioCoreProps) {
+  const watchOnly = !!fixedDuet;
   const { t } = useTranslation();
   const api = useApi();
   const cfg = BAND_CONFIG[band];
 
-  const draft = useMemo(loadDraft, []);
+  const draft = useMemo(() => (watchOnly ? null : loadDraft()), [watchOnly]);
   const [screen, setScreen] = useState<"title" | "studio">("title");
   const [mood, setMood] = useState<Mood>("together");
   const [calmMode, setCalmMode] = useState(false);
   const [muted, setMuted] = useState(false);
   const [masterVol, setMasterVol] = useState(0.9);
 
-  const [layers, setLayers] = useState<DuetLayers>(draft?.layers ?? EMPTY_LAYERS);
+  const [layers, setLayers] = useState<DuetLayers>(
+    fixedDuet?.layers ?? draft?.layers ?? EMPTY_LAYERS,
+  );
   const [progress, setProgress] = useState<EchoProgress>(
     draft?.progress ?? FRESH_ECHO_PROGRESS,
   );
@@ -322,6 +330,7 @@ export function EchoStudioCore({
 
   // ── group context (save mirrors Track Builder; graceful until Phase 5) ──
   useEffect(() => {
+    if (watchOnly) return;
     let cancelled = false;
     (async () => {
       try {
@@ -356,12 +365,13 @@ export function EchoStudioCore({
   const coverPoseRef = useRef(coverPose);
   coverPoseRef.current = coverPose;
   const persistDraft = useCallback(() => {
+    if (watchOnly) return; // a peer's duet must never clobber my own draft
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(latestRef.current));
     } catch {
       /* quota: in-memory state still stands */
     }
-  }, []);
+  }, [watchOnly]);
   useEffect(() => {
     persistDraft();
   }, [layers, name, progress, creationId, persistDraft]);
@@ -376,12 +386,17 @@ export function EchoStudioCore({
   // ── actions ──
   const enterStudio = useCallback(() => {
     titleInteraction(); // Start is itself a title interaction (idempotent)
-    if (layersRef.current.lead.length === 0 && layersRef.current.partner.length === 0) {
+    if (
+      !watchOnly &&
+      layersRef.current.lead.length === 0 &&
+      layersRef.current.partner.length === 0
+    ) {
       setLayers(MOOD_SEEDS[mood]); // starter pulse: the canvas is never blank
     }
+    if (watchOnly) setWatching(true); // a peer visit IS the watch
     setScreen("studio");
     startPump();
-  }, [mood, startPump, titleInteraction]);
+  }, [mood, startPump, titleInteraction, watchOnly]);
 
   const previewMood = useCallback(
     (m: Mood) => {
@@ -556,7 +571,8 @@ export function EchoStudioCore({
     galleryTitles,
   );
 
-  // ── Title / Imagine screen ──
+  // ── Title / Imagine screen (peer watch gets name + Watch — the required
+  //    user gesture that satisfies never-autoplay + wakes the engine) ──
   if (screen === "title") {
     return (
       <div
@@ -568,12 +584,15 @@ export function EchoStudioCore({
           <PartnerFigure motion={null} />
         </div>
         <h2 className="text-2xl font-extrabold text-slate-800">
-          {t("echoAvenue.title.prompt", {
-            defaultValue: "What will your duet sound like?",
-          })}
+          {watchOnly
+            ? fixedDuet!.name
+            : t("echoAvenue.title.prompt", {
+                defaultValue: "What will your duet sound like?",
+              })}
         </h2>
         <div className="flex flex-wrap justify-center gap-2">
-          {(["together", "echo", "space"] as Mood[]).map((m) => (
+          {!watchOnly &&
+            (["together", "echo", "space"] as Mood[]).map((m) => (
             <button
               key={m}
               type="button"
@@ -588,8 +607,8 @@ export function EchoStudioCore({
                 : m === "echo"
                   ? t("echoAvenue.title.moodEcho", { defaultValue: "🔁 Echo" })
                   : t("echoAvenue.title.moodSpace", { defaultValue: "🌙 Space" })}
-            </button>
-          ))}
+              </button>
+            ))}
         </div>
 
         {/* Sensory controls BEFORE Start (held-firm #3) */}
@@ -631,7 +650,9 @@ export function EchoStudioCore({
           onClick={enterStudio}
           className="min-h-14 px-10 rounded-full bg-green-600 text-white text-xl font-extrabold shadow-lg active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-4 focus-visible:outline-green-300"
         >
-          {t("echoAvenue.title.start", { defaultValue: "Open the studio!" })}
+          {watchOnly
+            ? t("echoAvenue.title.watch", { defaultValue: "▶ Watch the duet" })
+            : t("echoAvenue.title.start", { defaultValue: "Open the studio!" })}
         </button>
         {draft && (
           <p className="text-sm text-slate-500 font-semibold">
@@ -699,22 +720,35 @@ export function EchoStudioCore({
       </div>
 
       {watching ? (
-        /* Watch the Take — controls hidden; the two source-specified exits */
+        /* Watch the Take — controls hidden. Makers get the two source-
+           specified exits; peers get a single Done (their visit IS the watch). */
         <div className="flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => setWatching(false)}
-            className="min-h-12 px-8 rounded-full bg-amber-500 text-white font-extrabold active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-          >
-            {t("echoAvenue.watch.joinIn", { defaultValue: "🎤 Join in!" })}
-          </button>
-          <button
-            type="button"
-            onClick={() => setWatching(false)}
-            className="min-h-12 px-8 rounded-full bg-white border-2 border-slate-300 font-extrabold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
-          >
-            {t("echoAvenue.watch.changeLayer", { defaultValue: "🔁 Change a layer" })}
-          </button>
+          {watchOnly ? (
+            <button
+              type="button"
+              onClick={done}
+              className="min-h-12 px-8 rounded-full bg-white border-2 border-slate-300 font-extrabold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
+            >
+              {t("echoAvenue.watch.doneWatching", { defaultValue: "Done watching" })}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setWatching(false)}
+                className="min-h-12 px-8 rounded-full bg-amber-500 text-white font-extrabold active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              >
+                {t("echoAvenue.watch.joinIn", { defaultValue: "🎤 Join in!" })}
+              </button>
+              <button
+                type="button"
+                onClick={() => setWatching(false)}
+                className="min-h-12 px-8 rounded-full bg-white border-2 border-slate-300 font-extrabold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
+              >
+                {t("echoAvenue.watch.changeLayer", { defaultValue: "🔁 Change a layer" })}
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <>
@@ -1021,12 +1055,56 @@ function Overlay({ children }: { children: React.ReactNode }) {
 export default function EchoAvenueGame({
   config,
   onComplete,
+  secondaryAction,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
+  secondaryAction?: { label: string; icon?: React.ReactNode; onClick: () => void };
 }) {
+  const { t } = useTranslation();
   const band: EchoBand =
     (config as { gradeBand?: string } | undefined)?.gradeBand === "g3_5" ? "g35" : "k2";
+
+  // Peer watch mode (ChallengePlayer passes the saved duet as config.soundDuet).
+  const rawDuet = (config as { soundDuet?: unknown } | undefined)?.soundDuet;
+  const fixedDuet =
+    rawDuet && typeof rawDuet === "object" && Array.isArray((rawDuet as SoundDuetContent).layers?.lead)
+      ? (rawDuet as SoundDuetContent)
+      : null;
+  if (rawDuet !== undefined && rawDuet !== null && !fixedDuet) {
+    // Server validation makes this unreachable; degrade kindly, never crash.
+    return (
+      <div className="p-6 text-center text-slate-600">
+        {t("echoAvenue.watch.notAvailable", {
+          defaultValue: "This duet can't play right now. Try another one!",
+        })}
+      </div>
+    );
+  }
+  if (fixedDuet) {
+    // Watching a classmate is for fun — no GameShell results screen, so a
+    // peer visit never ends on a score/star card (nothing to grade).
+    return (
+      <div className="flex flex-col items-center gap-3 py-4">
+        <EchoStudioCore
+          onFinish={(result) => onComplete?.(result)}
+          reducedEffects={false}
+          band={fixedDuet.band === "g35" ? "g35" : "k2"}
+          fixedDuet={fixedDuet}
+        />
+        {secondaryAction && (
+          <button
+            type="button"
+            onClick={secondaryAction.onClick}
+            className="min-h-11 px-5 rounded-full bg-white border-2 border-slate-300 font-bold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 inline-flex items-center"
+          >
+            {secondaryAction.icon}
+            {secondaryAction.label}
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <GameShell
       gameKey="echo_avenue"
@@ -1035,6 +1113,7 @@ export default function EchoAvenueGame({
         "Echo Avenue",
       )}
       onComplete={onComplete ?? (() => {})}
+      secondaryAction={secondaryAction}
     >
       {({ onFinish, reducedEffects }) => (
         <EchoStudioCore onFinish={onFinish} reducedEffects={reducedEffects} band={band} />

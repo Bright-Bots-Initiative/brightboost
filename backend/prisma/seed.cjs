@@ -1071,6 +1071,114 @@ async function main() {
     console.log("Seeded Set 2 module:", s2.slug, "(story + game + quiz)");
   }
 
+  // ---------------------------------------------------------------------
+  // SET 3 — Mastery (slot 3: Echo Avenue, GATED from students via
+  // HIDDEN_MODULE_SLUGS in src/constants/stemSets.ts — seeded + published
+  // so ungating is a one-line frontend change). See #676.
+  // ---------------------------------------------------------------------
+  const set3Modules = [
+    {
+      slug: "k2-stem-echo-avenue",
+      title: "Echo Avenue",
+      description: "Make a two-performer sound-and-motion duet! 🎙️🕺",
+      activityId: "echo-avenue",
+      gameKey: "echo_avenue",
+      strand: "AI",
+      story: {
+        title: "Story: The Quiet Street",
+        slides: [
+          { id: "ea-s1", text: { en: "Echo Avenue used to be the loudest street in town — every step, clap, and chime made the whole block dance. But lately it's gone quiet. The stage is empty!", es: "La Avenida del Eco era la calle más ruidosa de la ciudad: cada paso, palmada y campanada hacía bailar a toda la cuadra. ¡Pero últimamente está en silencio. El escenario está vacío!" }, icon: "🎙️" },
+          { id: "ea-s2", text: { en: "Two performers are waiting for a director — that's YOU. Every pad you tap makes a move AND a sound at the same time. Record a phrase, and it loops around and around.", es: "Dos artistas esperan a su director: ¡ese eres TÚ! Cada botón que tocas hace un movimiento Y un sonido a la vez. Graba una frase y se repetirá una y otra vez." }, icon: "🕺" },
+          { id: "ea-s3", text: { en: "There's no wrong beat on Echo Avenue. Layer your two performers, leave quiet spaces, let them answer each other — and share your duet when YOU decide it's ready!", es: "En la Avenida del Eco no hay ritmo equivocado. Combina a tus dos artistas, deja espacios de silencio, haz que se respondan — ¡y comparte tu dúo cuando TÚ decidas que está listo!" }, icon: "⭐" },
+        ],
+        questions: [
+          { id: "ea-q1", prompt: { en: "What happens when you tap a pad on Echo Avenue?", es: "¿Qué pasa cuando tocas un botón en la Avenida del Eco?" }, choices: [{ en: "A performer moves and sounds at the same time", es: "Un artista se mueve y suena a la vez" }, { en: "You lose a point", es: "Pierdes un punto" }, { en: "Nothing happens", es: "No pasa nada" }, { en: "The game ends", es: "El juego termina" }], answerIndex: 0 },
+        ],
+      },
+      quiz: [
+        { id: "eaz-q1", prompt: { en: "Your loop plays the same phrase again and again. What is that called?", es: "Tu bucle toca la misma frase una y otra vez. ¿Cómo se llama eso?" }, choices: [{ en: "A repeating pattern", es: "Un patrón que se repite" }, { en: "A mistake", es: "Un error" }, { en: "A race", es: "Una carrera" }, { en: "A test", es: "una prueba" }], answerIndex: 0 },
+        { id: "eaz-q2", prompt: { en: "One performer plays, then the other answers in the quiet spaces. What did you make?", es: "Un artista toca y el otro responde en los espacios de silencio. ¿Qué creaste?" }, choices: [{ en: "Call-and-response", es: "Llamada y respuesta" }, { en: "A traffic jam", es: "Un atasco" }, { en: "A countdown", es: "Una cuenta regresiva" }, { en: "An echo error", es: "Un error de eco" }], answerIndex: 0 },
+        { id: "eaz-q3", prompt: { en: "When is your duet finished?", es: "¿Cuándo está terminado tu dúo?" }, choices: [{ en: "When YOU decide it's ready", es: "Cuando TÚ decides que está listo" }, { en: "When the timer runs out", es: "Cuando se acaba el tiempo" }, { en: "When you get all the beats right", es: "Cuando aciertas todos los ritmos" }, { en: "When the game says so", es: "Cuando el juego lo dice" }], answerIndex: 0 },
+      ],
+    },
+  ];
+
+  for (const s3 of set3Modules) {
+    const mod = await prisma.module.upsert({
+      where: { slug: s3.slug },
+      update: { title: s3.title, description: s3.description, level: "K-2", published: true },
+      create: { slug: s3.slug, title: s3.title, description: s3.description, level: "K-2", published: true },
+    });
+
+    // Get or create unit — use first unit of this module (not by title, which may have changed)
+    let s3Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id }, orderBy: { order: "asc" } });
+    if (!s3Unit) {
+      s3Unit = await prisma.unit.create({ data: { title: "Unit 1", order: 1, Module: { connect: { id: mod.id } }, teacher: { connect: { id: teacher.id } } } });
+    }
+
+    // Get or create lesson — use first lesson of this unit
+    let s3Lesson = await prisma.lesson.findFirst({ where: { unitId: s3Unit.id }, orderBy: { order: "asc" } });
+    if (!s3Lesson) {
+      s3Lesson = await prisma.lesson.create({ data: { title: s3.title, order: 1, Unit: { connect: { id: s3Unit.id } } } });
+    }
+
+    // Clean up duplicate lessons (from previous seed runs with different titles)
+    const allS3Lessons = await prisma.lesson.findMany({ where: { unitId: s3Unit.id } });
+    for (const dup of allS3Lessons) {
+      if (dup.id !== s3Lesson.id) {
+        await prisma.activity.deleteMany({ where: { lessonId: dup.id } });
+        await prisma.lesson.delete({ where: { id: dup.id } }).catch(() => {});
+      }
+    }
+
+    // Clean up duplicate activities within this lesson (keep only 3: story, game, quiz)
+    const existingS3Acts = await prisma.activity.findMany({ where: { lessonId: s3Lesson.id }, orderBy: { order: "asc" } });
+    for (const act of existingS3Acts) {
+      if (act.order > 3) {
+        await prisma.activity.delete({ where: { id: act.id } }).catch(() => {});
+      }
+    }
+
+    // Activity 1: Story (INFO)
+    const s3StoryContent = JSON.stringify({
+      type: "story_quiz",
+      slides: s3.story.slides,
+      questions: s3.story.questions,
+      review: { keyIdea: { en: s3.description }, vocab: [s3.strand.toLowerCase()] },
+    });
+
+    let s3StoryAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, kind: INFO, order: 1 } });
+    if (s3StoryAct) {
+      await prisma.activity.update({ where: { id: s3StoryAct.id }, data: { title: s3.story.title, content: s3StoryContent } });
+    } else {
+      await prisma.activity.create({ data: { title: s3.story.title, kind: INFO, order: 1, content: s3StoryContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    // Activity 2: Game (INTERACT)
+    const s3GameContent = JSON.stringify({ gameKey: s3.gameKey });
+    let s3GameAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, kind: INTERACT, order: 2 } });
+    if (s3GameAct) {
+      await prisma.activity.update({ where: { id: s3GameAct.id }, data: { id: s3.activityId, title: `Game: ${s3.title}`, content: s3GameContent } });
+    } else {
+      await prisma.activity.create({ data: { id: s3.activityId, title: `Game: ${s3.title}`, kind: INTERACT, order: 2, content: s3GameContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    // Activity 3: Quiz (INFO with quiz questions)
+    const s3QuizContent = JSON.stringify({
+      type: "story_quiz",
+      slides: [],
+      questions: s3.quiz ?? [],
+    });
+    let s3QuizAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, order: 3 } });
+    if (s3QuizAct) {
+      await prisma.activity.update({ where: { id: s3QuizAct.id }, data: { title: `Quiz: ${s3.title}`, kind: INFO, content: s3QuizContent } });
+    } else {
+      await prisma.activity.create({ data: { title: `Quiz: ${s3.title}`, kind: INFO, order: 3, content: s3QuizContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    console.log("Seeded Set 3 module:", s3.slug, "(story + game + quiz — gated)");
+  }
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },

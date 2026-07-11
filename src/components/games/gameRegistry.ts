@@ -14,6 +14,7 @@ import QualifyTuneRaceGame from "./QualifyTuneRaceGame";
 import TankTrekGame from "./TankTrekGame";
 import QuantumQuestGame from "./QuantumQuestGame";
 import DataDashSortDiscoverGame from "./DataDashSortDiscoverGame";
+import EchoAvenueGame from "./echoAvenue/EchoAvenueGame";
 
 type GameProps = {
   config?: any;
@@ -41,6 +42,9 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   sky_shield: SkyShieldGame,                    // "Sky Shield Patterns" (Set 2)
   fast_lane: FastLaneGame,                      // "Fast Lane Signals" (Set 2)
   qualify_tune_race: QualifyTuneRaceGame,       // "Qualify, Tune, Race" (Set 2)
+
+  // ── Set 3 keys ──
+  echo_avenue: EchoAvenueGame,                  // "Echo Avenue" (Set 3 slot 3, gated)
 
   // ── Legacy / alias keys → same implementations ──
   sequence_drag_drop: BoostPathPlannerGame,
