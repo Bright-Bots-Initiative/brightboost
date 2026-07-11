@@ -57,8 +57,9 @@ remains a live instrument: tap, hear, see, layer.
 ## 4. Spike verdict + the hardware-sensitivity hedge (delta layer)
 
 The Phase 1 latency spike (`/dev/echo-spike`, kept in-tree as the **audio regression harness**)
-passed on founder hardware: **est. audible ≈13 ms** (+ ~30–45 ms touch input), **feels live**;
-loop ran with **0 underruns**, worst pump gap 34 ms.
+passed on founder hardware: **iPhone est. audible ≈13 ms** (+ ~30–45 ms touch input), **feels
+live**; loop ran with **0 underruns over 158 s**, worst pump gap 34 ms; **desktop sub-ms tap
+deltas**. Final QA (2026-07-11) confirmed the feel holds **in the real studio**, not just the spike.
 
 **Hedge:** live-tap feel is **device-dependent**. Mitigations, in order: (a) **quantization is the
 shock absorber** — taps snap to the grid, so replay is always musical even when the live monitor
@@ -134,7 +135,8 @@ full name, email, score, rank, play count, or public reaction count.
 
 **Silent mode is first-class:** the replay must be watchable and expressive with audio off (muted
 classroom tablets are a primary environment) — distinct motions, pulse lights, and trails carry the
-structure. This gets its own QA pass.
+structure. **Muted-run QA passed (founder, 2026-07-11): the replay is readable with audio off —
+call-and-response and rests legible; the shelf tick-strip fix was not needed.**
 
 ## 9. What we measure
 
