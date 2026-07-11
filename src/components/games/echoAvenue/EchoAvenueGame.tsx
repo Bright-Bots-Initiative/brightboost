@@ -26,6 +26,8 @@ import { useApi } from "@/services/api";
 import "./echoAvenue.css";
 import {
   BAND_CONFIG,
+  COVER_POSES,
+  COVER_POSE_ICONS,
   ECHO_TOKENS_FIRST,
   ECHO_TOKENS_SECOND,
   EMPTY_LAYERS,
@@ -49,6 +51,7 @@ import {
   summarizeTake,
   tokenName,
   unlockedSounds,
+  type CoverPose,
   type DuetLayers,
   type EchoBand,
   type EchoProgress,
@@ -177,6 +180,7 @@ export function EchoStudioCore({
   const [showNaming, setShowNaming] = useState(false);
   const [tokenFirst, setTokenFirst] = useState(ECHO_TOKENS_FIRST[0]);
   const [tokenSecond, setTokenSecond] = useState(ECHO_TOKENS_SECOND[0]);
+  const [coverPose, setCoverPose] = useState<CoverPose>("sideBySide");
 
   const [motionNow, setMotionNow] = useState<Record<Performer, string | null>>({
     lead: null,
@@ -349,6 +353,8 @@ export function EchoStudioCore({
   // draft autosave (navigate-away safety)
   const latestRef = useRef({ name, band, layers, progress, creationId });
   latestRef.current = { name, band, layers, progress, creationId };
+  const coverPoseRef = useRef(coverPose);
+  coverPoseRef.current = coverPose;
   const persistDraft = useCallback(() => {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(latestRef.current));
@@ -454,7 +460,13 @@ export function EchoStudioCore({
       setShowNaming(true);
       return;
     }
-    const content = buildDuetContent(duetName, band, latestRef.current.layers, []);
+    const content = buildDuetContent(
+      duetName,
+      band,
+      latestRef.current.layers,
+      [],
+      coverPoseRef.current,
+    );
     if (!courseId) {
       setSaveNote("local");
       return;
@@ -687,14 +699,23 @@ export function EchoStudioCore({
       </div>
 
       {watching ? (
-        /* Watch the Take — controls hidden; the performance carries itself */
-        <button
-          type="button"
-          onClick={() => setWatching(false)}
-          className="min-h-12 px-8 rounded-full bg-white border-2 border-slate-300 font-extrabold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
-        >
-          {t("echoAvenue.watch.done", { defaultValue: "Done watching" })}
-        </button>
+        /* Watch the Take — controls hidden; the two source-specified exits */
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setWatching(false)}
+            className="min-h-12 px-8 rounded-full bg-amber-500 text-white font-extrabold active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            {t("echoAvenue.watch.joinIn", { defaultValue: "🎤 Join in!" })}
+          </button>
+          <button
+            type="button"
+            onClick={() => setWatching(false)}
+            className="min-h-12 px-8 rounded-full bg-white border-2 border-slate-300 font-extrabold text-slate-700 active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500"
+          >
+            {t("echoAvenue.watch.changeLayer", { defaultValue: "🔁 Change a layer" })}
+          </button>
+        </div>
       ) : (
         <>
           {/* Performer tabs + layer mix */}
@@ -875,7 +896,7 @@ export function EchoStudioCore({
             onClick={() => setWonder(null)}
             className="min-h-12 px-8 rounded-full bg-orange-500 text-white font-extrabold text-lg active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
-            {t("echoAvenue.reflect.keepMaking", { defaultValue: "Keep making" })}
+            {t("echoAvenue.reflect.backToStudio", { defaultValue: "Back to my studio" })}
           </button>
         </Overlay>
       )}
@@ -897,6 +918,28 @@ export function EchoStudioCore({
               })}
             </p>
           )}
+          {/* Cover pose — chosen at share time (source §Share) */}
+          <p className="text-sm font-bold text-slate-600">
+            {t("echoAvenue.name.poseTitle", { defaultValue: "Pick a cover pose" })}
+          </p>
+          <div className="flex justify-center gap-2">
+            {COVER_POSES.map((pose) => (
+              <button
+                key={pose}
+                type="button"
+                onClick={() => setCoverPose(pose)}
+                aria-pressed={coverPose === pose}
+                aria-label={t(`echoAvenue.pose.${pose}`, { defaultValue: pose })}
+                className={`min-w-14 min-h-12 px-3 rounded-2xl border-2 text-2xl active:scale-95 touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-500 ${
+                  coverPose === pose
+                    ? "border-sky-500 bg-sky-50"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                {COVER_POSE_ICONS[pose]}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap justify-center gap-2">
             {ECHO_TOKENS_FIRST.map((tok) => (
               <button

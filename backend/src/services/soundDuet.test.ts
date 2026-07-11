@@ -19,6 +19,7 @@ const valid = () => ({
     partner: [{ t: 2, soundId: "clap" }],
   },
   spots: ["tunnel"],
+  coverPose: "sideBySide",
 });
 
 describe("validateSoundDuet — schema", () => {
@@ -93,6 +94,11 @@ describe("validateSoundDuet — validity guard", () => {
     expect(validateSoundDuet(c).ok).toBe(false);
   });
 
+  it("rejects an unknown cover pose", () => {
+    expect(validateSoundDuet({ ...valid(), coverPose: "tPose" }).ok).toBe(false);
+    expect(validateSoundDuet({ ...valid(), coverPose: undefined }).ok).toBe(false);
+  });
+
   it("rejects spot lists over the two-spot cap and unknown spots", () => {
     expect(
       validateSoundDuet({ ...valid(), spots: ["tunnel", "puddle", "tunnel"] }).ok,
@@ -113,6 +119,7 @@ describe("payload-size cap (defense-in-depth)", () => {
         partner: Array.from({ length: 64 }, (_, i) => ({ t: i % 16, soundId: "twinkle" as const })),
       },
       spots: ["tunnel", "puddle"],
+      coverPose: "backToBack",
     };
     expect(JSON.stringify(maxed).length).toBeLessThan(MAX_DUET_PAYLOAD_CHARS);
     expect(validateSoundDuet(maxed)).toEqual({ ok: true });

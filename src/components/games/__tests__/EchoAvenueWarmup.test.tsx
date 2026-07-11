@@ -129,9 +129,10 @@ describe("EchoStudioCore — pre-warm sequencing", () => {
       />,
     );
     fireEvent.click(screen.getByText("Open the studio!"));
+    // Source-reconciled K-2 opening: Step + Clap pads first
     expect(screen.getByLabelText("step")).toBeTruthy();
-    expect(screen.getByLabelText("chime")).toBeTruthy();
-    expect(screen.queryByLabelText("clap")).toBeNull(); // locked until first phrase
+    expect(screen.getByLabelText("clap")).toBeTruthy();
+    expect(screen.queryByLabelText("chime")).toBeNull(); // locked until first phrase
     const partnerTab = screen.getByRole("button", { name: /Partner \(0\)/ });
     expect(partnerTab.hasAttribute("disabled")).toBe(true);
   });

@@ -1,132 +1,173 @@
 # Echo Avenue — live two-performer sound-and-motion studio (design doc)
 
-> Status: **approved design, build in progress.** Externally designed, founder-reviewed; this file is
-> the repo transcription of that design with the founder-review rulings applied. Lands against #676
-> (Set 3 "Mastery"), slot **`set3-game-3`**. Bar: `docs/design-principles.md`.
-> Provenance: inspired by classic side-scrolling two-player cooperation patterns (see the
-> transformation table, §2). All characters, sounds, names, and art are original.
+> Status: **source-reconciled** — this file now carries the externally authored, founder-reviewed
+> design (reconciled against the original commission document on 2026-07-11), with the founder
+> rulings and hardware-test additions kept as the clearly-marked delta layer (§11). Where the earlier
+> repo transcription had drifted from the source, the source won (K–2 opening pads, Watch-the-Take
+> actions, Reflect wording, cover pose at share) — and the code was aligned in the same commit.
+> Lands against #676 (Set 3 "Mastery"), slot **`set3-game-3`**. Bar: `docs/design-principles.md`.
 
-## 1. Concept (one paragraph)
+## 1. Concept
 
-The child taps large action pads; each tap makes one of two original performers **move and sound at
-the same instant** — step, clap, turn, bounce, chime, whoosh. Taps record into a repeating pulse
-loop: the Lead's take loops while the child overdubs the Partner, creating call-and-response,
-overlaps, and rests. Replay ("Watch the Take"), revise a layer, name it from structured tokens,
-share the audiovisual duet to the group gallery. **No scores, stars, timers, verdicts, win/lose, or
-correct rhythms anywhere.** Creation and feedback are simultaneous — a live instrument, not a batch
-simulation.
+**Echo Avenue** is a live sound-and-motion studio in a side-scrolling neighborhood. Tapping a large
+action pad makes one of two original Bright Boost performers move and sound at the same instant —
+step, clap, turn, bounce, chime, or whoosh. The Lead's take repeats while the child overdubs the
+Partner, creating call-and-response, overlaps, and pauses. The child replays, revises, names, and
+shares the resulting audiovisual duet. There are no enemies, scores, stars, timers, leaderboards,
+win/lose state, or correct rhythms; **the child decides when it is ready.**
 
-## 2. Transformation table (classic pattern → Echo Avenue)
+**Theme-free litmus line:** *Kids improvise and layer a live two-performer sound-and-motion loop,
+experience every choice immediately, and save the resulting performance for others to experience.*
 
-| Classic two-player side-scroller pattern | Echo Avenue |
-|---|---|
-| Two characters advance through a level | Two performers hold a stage; **the loop advances, not a level** |
-| Timing judged: mistimed input = failure | **No judgment**: every tap lands (quantized); a "miss" cannot exist |
-| Players compete or race | Lead and Partner **cooperate by construction** — the child is both |
-| Progress = distance/score | Progress = **a made thing** (the duet) that persists and is shared |
-| Sound reacts to gameplay | **Sound IS the gameplay**; motion and sound are one gesture |
-| Levels authored by designers | The **phrase is authored by the child**; two curated sound spots are the only stagecraft |
+## 2. Provenance (trimmed) + transformation table
 
-## 3. Spike verdict + the hardware-sensitivity hedge (REQUIRED reading)
+Inspired by **classic side-scrolling two-player cooperation patterns** — the kinetic interaction
+DNA, not any protected expression or combat premise. That general DNA transforms as follows:
 
-The Phase 1 latency spike (`/dev/echo-spike`, kept in-tree as the **audio regression harness** for
-the whole build) passed on founder hardware: **est. audible ≈13 ms** (+ ~30–45 ms touch input),
-**feels live**; loop ran with **0 underruns**, worst pump gap 34 ms.
+| Reference DNA | Echo Avenue translation |
+| --- | --- |
+| Continuous side-view action stage | A freely explorable, bidirectional performance canvas — no forced march, encounter gates, or stage clear |
+| Two-character cooperation | Lead + Partner overdub; distinct original silhouettes, not twins/siblings or red/blue counterparts |
+| Action buttons used alone or together | Movement-sound gestures that form phrases and harmonies |
+| Chained actions and positioning | Call-and-response, simultaneous beats, pauses, and movement patterns |
+| Responsive scenery | Curated sound spots such as a tunnel echo or puddle percussion |
+| Enemies, damage, stage clear, score, timer | None; the child chooses when the take is ready |
 
-**Hedge:** live-tap feel is **device-dependent** (Bluetooth audio, cheap Android tablets, and
-throttled browsers can add 100 ms+). Mitigations, in order: (a) **quantization is the shock
-absorber** — taps snap to the grid, so replay is always musical even when the live monitor lags;
-(b) the studio **pre-warms the AudioContext on the Start screen's first interaction** so the engine
-wake (~1 s) is never paid by the child's first musical tap; (c) a **budget-device spike is a
-required gate before any classroom pilot** (not before build). If budget hardware fails the feel
-test, the K–2 mode leans further into quantized playback-first interaction.
+**Original-IP boundary:** no third-party names, characters, story, moves, costumes, enemies,
+weapons, stages, audiovisual assets, logos, combat aesthetics, health-bar HUD, combo notation, or
+"for fans of" comparisons anywhere. All child-facing expression is original Bright Boost work.
+Final naming and logo require launch-market trademark, app-store, and domain clearance.
 
-## 4. The engine (specified to unit-test precision)
+## 3. Differentiation case
 
-- **Cycle model:** K–2 Guided = **4 pulses** @ 100 BPM (0.6 s/pulse), snap grid = **half-pulse**
-  (8 subdivisions/cycle); 3–5 = **8 pulses**, half-pulse snap (16 subdivisions). Grades 6–8 is a
-  **documented future mode** (finer grids, swing, longer cycles) — designed, not built in v1.
-- **Events:** `{ t: subdivision index (integer), soundId, performer: "lead" | "partner" }` — integer
-  grid positions, never float seconds, so persistence is exact and drift-impossible.
-- **Quantization as scaffold:** raw tap time → nearest subdivision, **wrapping at the cycle
-  boundary** (a tap a hair before the loop point lands on beat 1, not beat 9). Strength is
-  band-configurable. There is no unquantized mode in v1.
-- **Layers:** Lead and Partner record independently; re-record replaces one layer only; mute per
-  layer; layer independence is a tested invariant.
-- **Scheduling:** the spike's lookahead pattern (25 ms pump, ~120 ms horizon, all events scheduled
-  on the AudioContext clock). Pure scheduling math (`pulsesToSchedule`, `eventTime`) is
-  unit-tested against a mocked clock.
-- **Synth voices:** every sound is a WebAudio node graph — **zero audio assets, zero licensing
-  surface**. Eight sounds in four families (steps / hands / bells / air), loudness-normalized.
-  Every sound is paired with a **motion + pulse-light + trail signature** (see §7, silent mode).
-- **Sound spots:** exactly **two** curated stage spots (tunnel echo, puddle percussion) that color a
-  performer's sound while passing — deliberately capped at two to resist level-builder drift.
+| Activity | Creative medium | Core verb | STEM lens | Feedback relationship |
+| --- | --- | --- | --- | --- |
+| Boost Track Builder | Spatial piece construction | Build → ride | Speed, curves, cause/effect | Build, then test |
+| Machine game | Logical instruction construction | Program → watch | Sequencing, loops, debugging | Program, then execute |
+| Waterworks | Systems construction | Route → storm-test | Flow, protection, tradeoffs | Build, then simulate |
+| Data Dash authoring | Structured challenge authoring | Author → challenge | Categories and sorting | Compose, then peer-play |
+| **Echo Avenue** | **Live audiovisual performance** | **Improvise → layer → listen** | **Rhythm fractions, ratios, repetition, and acoustics** | **Creation and feedback happen simultaneously** |
 
-## 5. Bands, unlock ladder (fast pacing — a founder-review flag), targets
+The three-axis difference is explicit: the **medium** is live performance, the **verb** is
+improvise/overdub, and the **lens** is rhythmic subdivision, cycles, rests, meter, ratios,
+synchronization, and acoustics. There is no board, route, quiz, command list, editable note grid,
+move-card timeline, or "Run" button. Saved data may be structured, but the child's interface
+remains a live instrument: tap, hear, see, layer.
 
-| Band | Cycle | Palette at start | Ladder |
-|---|---|---|---|
-| 🐣 K–2 Guided | 4 pulses | **2 sounds** (step + chime), Lead only | First recorded phrase → **Partner + clap + whoosh** (announced). First layered phrase → **a sound spot + stomp + twinkle** (announced). **~6 sounds within the first session.** |
-| 🌱 3–5 | 8 pulses | all 8 sounds, both performers | Sound spots announced on first layered phrase |
-| 🚀 6–8 | future mode (documented, not built) | — | — |
+## 4. Spike verdict + the hardware-sensitivity hedge (delta layer)
 
-Unlocks respond to **making** (phrases recorded, layers made) — never to accuracy, and prompts are
-ignorable at zero cost (tested: ignoring every suggestion still unlocks everything by making).
-Soft targets are dismissible wonderings ("what would a rest sound like?"), never requirements.
+The Phase 1 latency spike (`/dev/echo-spike`, kept in-tree as the **audio regression harness**)
+passed on founder hardware: **est. audible ≈13 ms** (+ ~30–45 ms touch input), **feels live**;
+loop ran with **0 underruns**, worst pump gap 34 ms.
 
-## 6. Founder-review rulings (all applied)
+**Hedge:** live-tap feel is **device-dependent**. Mitigations, in order: (a) **quantization is the
+shock absorber** — taps snap to the grid, so replay is always musical even when the live monitor
+lags; (b) the studio **pre-warms the AudioContext on the Start screen's first interaction** so the
+engine wake is never paid by the child's first musical tap; (c) a **budget-device spike is a
+required gate before any classroom pilot** (not before build).
 
-1. **Solo overdub guaranteed** (one child is both performers); same-device duet later; **no online co-op**.
-2. **Peer remix deferred** past first release.
-3. **Two** curated sound spots, no more.
-4. **Completion wiring mirrors Boost Track Builder exactly** — standard `GameShell`/`completeActivity`,
-   flat participation-shaped `score/total`, **zero verdict UI in-game**. No new completion policy.
-5. **6–8 is documented future intent** (this table), not built.
-6. Gallery follows the existing creation-gallery pattern (group-scoped, read-only, **never
-   autoplay**, first-name-only).
-7. Slot **`set3-game-3`** (slot 2 stays reserved for the machine game in design).
-8. **K–2 unlock pacing opens the palette fast** (§5) — review flag honored.
-9. **Silent-mode is first-class** (§7) — review flag honored.
-10. **AudioContext pre-warms on the Start screen's first interaction** — the engine wake is never
-    paid by the child's first musical tap (tested in Phase 4).
-11. The **spike route stays** through the build as the audio regression harness.
+## 5. The engine (specified to unit-test precision)
 
-## 7. Silent mode is first-class (not fallback)
+- **Cycle model:** K–2 Guided = **4 pulses** @ 100 BPM, half-pulse snap (8 subdivisions);
+  3–5 = **8 pulses** (16 subdivisions). 6–8 is a documented future mode (§7).
+- **Events:** integer subdivision indices, never float seconds — persistence is exact, drift
+  impossible by construction.
+- **Quantization as scaffold:** "gentle automatic alignment keeps taps musical" — nearest
+  subdivision with cycle-boundary wrap; band-configurable strength; no unquantized mode in v1.
+- **Layers:** Lead/Partner record independently; re-record replaces one layer; per-layer volume;
+  layer independence is a tested invariant.
+- **Scheduling:** the spike's lookahead pattern (25 ms pump, ~120 ms horizon, AudioContext clock).
+- **Sounds:** *(founder constraint — supersedes the source's "curated sample" wording)* every sound
+  is **synthesized** from WebAudio primitives — zero audio assets, zero licensing surface — and
+  loudness-normalized. Eight sounds in four families (steps / hands / bells / air), each paired
+  with a distinct motion + pulse-light + trail signature (§8 silent mode).
+- **Sound spots:** exactly **two** (tunnel echo, puddle percussion) — environmental interaction
+  without level-builder drift.
 
-Muted classroom tablets are a primary environment. Every sound has a **distinct motion + pulse-light
-+ trail signature** (step = stride + ground ripple; clap = arm snap + white flash; chime = spin +
-rising sparkle; whoosh = glide + streak; …), and Watch-the-Take must be **watchable and expressive
-with audio off** — the duet's structure (call-and-response, overlap, rest) must read visually.
-This gets its own QA pass in Phase 6 and its own manual-QA step.
+## 6. Creative Learning Spiral (exact UI moments, per source)
 
-## 8. Persistence, safety, accessibility
+| Stage | Exact UI moment |
+| --- | --- |
+| **Imagine** | An icon-led prompt asks, "What will your duo sound like — bouncy, smooth, or surprising?" The child can preview **Together**, **Echo**, and **Space**. Pause/Mute and reduced-sensory controls appear **before Start**; then a gentle starter pulse prevents a blank canvas. |
+| **Create** | Large icon pads with motion previews. Every tap immediately moves the performer, sounds its voice, and (while recording) lands on the repeating pulse. The Partner arrives for a second live overdub while the first continues. Either layer can be re-recorded independently. |
+| **Play / experience** | **Watch the Take** hides the controls and performs the complete routine, with pulse lights and motion trails that make its structure readable without sound. The child can choose **Join In** to improvise over it or **Change a Layer** to loop back to Create. No result or grade appears. |
+| **Share** | The child chooses a structured title **and a cover pose**, then shares to the group. Private autosaves stay `IN_PROGRESS`; the ready-to-share action sets `COMPLETE` (sharing unfinished work would be a separate intentional `SHARED` choice). The gallery card offers **Watch / Listen** and never autoplays. |
+| **Reflect** | After the replay, the mascot asks exactly ONE context-aware wondering question ("Where did your performers answer each other?" / "Where did quiet make the next sound stand out?" / a first-used new sound). The only action is **Back to my studio**; reflection is never graded or published. |
 
-- **`Creation` type `"sound_duet"`** (zero schema changes): `{ v, name, band, pulses, layers:
-  { lead: Event[], partner: Event[] }, spots }` — strict-parsed with zod `.strict()` at every level
-  (#668 divergence cited in code), validity guard (≥1 event, events in bounds, sound ids in the
-  allowlist, per-layer event caps, payload-size cap).
-- **Kid-safety:** titles from approved localized token pools only (no free text); no mic, no camera,
-  no recording of the child — taps move the character, never capture the kid; no autoplay anywhere.
-- **Accessibility floor (testable subset):** one-pointer operation; keyboard operable with visible
-  focus; **≥64 px action pads**, ≥44 px everything else; `touch-action: manipulation`; no
-  multitouch/drag/hold; `prefers-reduced-motion` guard on all animation; master + per-layer volume;
-  loudness-normalized synthesis.
-- **i18n:** every string keyed in the shared locale files; EN + ES real; zh-CN on selected surfaces
-  (title tokens, mascot lines); vi placeholder. **Title-token pools are localized per language**
-  (curated per-locale word pools), not word-by-word translations.
+Naming and reflection are deliberately separate moments. The current title stays visible in the
+studio, saving updates the same creation (never copies), and leaving preserves the draft.
 
-## 9. Spiral mapping
+## 7. Banding and scaffolding
 
-| Stage | Moment |
-|---|---|
-| **Imagine** | Mood previews (Together / Echo / Space) on the title screen; pause/mute + reduced-sensory controls surfaced **before** Start; a starter pulse so the canvas is never blank |
-| **Create** | Tap pads — the performer moves and sounds NOW; record a Lead take, overdub the Partner |
-| **Play** | The loop **is** playback — creation and feedback are simultaneous; Watch-the-Take replays the duet full-stage |
-| **Share** | Token-based naming → save-in-place → group gallery (cover pose card, Watch/Listen, no autoplay) |
-| **Reflect** | Mascot asks ONE context-aware wondering question (call-and-response heard / rests used / a new sound first used) — a separate moment from naming |
+| | K–2 Guided | Grades 3–5 | Grades 6–8 Open *(future mode — documented, not built)* |
+| --- | --- | --- | --- |
+| **Supported start** | Four-pulse cycle, steady starter pulse, Lead on stage, two sounds, one tap input | Eight-pulse cycle, both performers, four sound families | Choice of cycle and meter; open two-performer studio |
+| **Create controls** | Two 64px+ icon pads; no dragging, swiping, required reading, or precision timing | Four pads per performer; re-record, mute, balance layers | Live effects, meter changes, syncopation, layered ratio experiments |
+| **Rhythm support** | Gentle automatic alignment; icon pulse ring; rests happen naturally | Optional subdivision overlay and call-and-response guides | Optional 2:3 / 3:4 views, swing, acoustic comparisons |
+| **Examples** | Animated icon grooves: Together, Echo, Space | Call-and-response, steady/varied, long/short phrases | Polyrhythm, syncopation, texture |
+| **Openness** | Constrained palette opens through exploration | Broad palette, free overdubbing | Full palette, adjustable sound properties |
 
-## 10. Measure creation, not completion
+**K–2 opening sequence (source-reconciled):** a soft four-pulse example establishes the floor. The
+child uses one input — **tap** — on icon-first **Step** and **Clap** pads. A first phrase brings in
+the **Partner** plus **Chime / Whoosh** with an animated announcement; a first layered phrase
+reveals the **tunnel-echo sound spot** plus **Stomp / Twinkle** (~6 sounds within the first
+session — the fast-pacing review flag). Optional prompts ("Can one friend answer the other?" /
+"What happens if one pulse stays quiet?") are ignorable at zero cost. **Unlocks respond to making,
+never accuracy.**
 
-Iteration signals only: takes recorded, layers replaced, return-to-edit, sound families explored,
-shares. **No scores, stars, timers, verdicts, streaks, or leaderboards.** The completion payload is
-participation-shaped (mirrors Track Builder) and drives XP only; nothing in-game displays it.
+**Accessibility floor:** every sound has a distinct motion, icon, and pulse-light pattern. Core
+creation works with one pointer or keyboard; no multitouch, dragging, holding, simultaneous
+presses, or rapid tapping. Accessible names, visible focus, high contrast, lossless pause/restart.
+Loudness normalized; master/layer volume and reduced-motion controls independent. Audio is curated
+and nonverbal — **no microphone, camera, voice, motion capture, or biometric data**; prompts move
+the **character**, never the child. All strings use localization keys (EN/ES authored from day one,
+selected zh-CN, repo-standard fallbacks).
+
+## 8. What the child walks away with
+
+A named, replayable **audiovisual duet**: two live-recorded performer layers; the child's timing,
+rests, overlaps, and call-and-response choices; curated movement/sound selections; a structured
+title, chosen mood, and **cover pose**. Timing makes artifacts meaningfully different — a sparse
+echo, a together-pattern, a dense tunnel texture. The gallery is read-only and group-scoped:
+approved-token titles only, first-name-only labels, **Watch / Listen**, never autoplay — never a
+full name, email, score, rank, play count, or public reaction count.
+
+**Silent mode is first-class:** the replay must be watchable and expressive with audio off (muted
+classroom tablets are a primary environment) — distinct motions, pulse lights, and trails carry the
+structure. This gets its own QA pass.
+
+## 9. What we measure
+
+Creation and iteration only: new drafts and saved duets; live takes recorded and layers replaced;
+return-to-edit after watching; distinct sound/movement families explored; explicit shares; partner
+remixes if that later feature is approved. Do **not** measure or display accuracy, "correct"
+rhythm, speed, time-to-finish, score, stars, completion, rankings, streaks, public reactions, or
+child comparisons. The Creation record supports save/share counts; take/layer signals need later
+instrumentation (game telemetry is not persisted — see #672). Retain aggregate creation events,
+never a child-linked stream of raw tap timing; deleting a creation deletes its replay payload.
+
+## 10. Working-name proposals (from source)
+
+1. **Echo Avenue** — selected; communicates the place and the call-and-response mechanic.
+2. Kinetic Chorus. 3. Soundwalk Studio.
+Working proposals, not trademark clearance (see §2 boundary note).
+
+## 11. Founder rulings + hardware additions (the delta layer)
+
+Replacing the source's open questions Q1–Q7:
+
+1. **Q1 collaboration:** solo overdub guaranteed; same-device duet later; **no online co-op**.
+2. **Q2 peer remix:** deferred past first release (creator-opt-in + facilitator-disableable when it comes).
+3. **Q3 scenery:** **two** curated sound spots.
+4. **Q4 scoreless frame:** completion wiring mirrors Boost Track Builder (standard shell, flat
+   participation score, zero verdict UI in-game); the set-wide creation-shaped-finish question is
+   now tracked as **#693** (leads-level decision).
+5. **Q5 grades 6–8:** documented future mode (§7 column); build K–2 Guided + 3–5 only.
+6. **Q6 gallery encouragement:** follows the **existing** gallery pattern (adult-only curated
+   encouragement, existing visible counter) — no Echo-specific fork.
+7. **Q7 placement:** slot **`set3-game-3`** (slot 1 = Track Builder #691; slot 2 reserved for the
+   machine game; Waterworks placement deferred per #692).
+
+Hardware-test additions: the §4 hedge; AudioContext pre-warm on Start-screen first interaction
+(tested); the `/dev/echo-spike` route stays through the build as the audio regression harness.
+Sounds synthesized, not sampled (supersedes the source's wording, §5).

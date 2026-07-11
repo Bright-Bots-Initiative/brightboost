@@ -185,8 +185,11 @@ export const FRESH_ECHO_PROGRESS: EchoProgress = {
   soundsUsed: [],
 };
 
-export const K2_START_SOUNDS: SoundId[] = ["step", "chime"];
-const K2_UNLOCK_1: SoundId[] = ["clap", "whoosh"]; // first phrase
+// Source-reconciled K-2 opening: Step + Clap pads first; the first phrase
+// brings the Partner plus Chime/Whoosh; the first layered phrase reveals the
+// sound spot plus Stomp/Twinkle (design doc §7).
+export const K2_START_SOUNDS: SoundId[] = ["step", "clap"];
+const K2_UNLOCK_1: SoundId[] = ["chime", "whoosh"]; // first phrase
 const K2_UNLOCK_2: SoundId[] = ["stomp", "twinkle"]; // first layered phrase
 
 export function unlockedSounds(band: EchoBand, p: EchoProgress): SoundId[] {
@@ -357,6 +360,16 @@ export function buildEchoAvenueResult(s: EchoSessionSummary): GameResult {
 
 // ── Persisted content shape (validated server-side in soundDuet.ts) ─────────
 
+/** The gallery card's cover pose — chosen at share time (design doc §6). */
+export const COVER_POSES = ["sideBySide", "highFive", "backToBack"] as const;
+export type CoverPose = (typeof COVER_POSES)[number];
+
+export const COVER_POSE_ICONS: Record<CoverPose, string> = {
+  sideBySide: "🧍🧍",
+  highFive: "🙌",
+  backToBack: "🔄",
+};
+
 export interface SoundDuetContent {
   v: 1;
   name: string;
@@ -364,6 +377,7 @@ export interface SoundDuetContent {
   pulses: number;
   layers: DuetLayers;
   spots: ("tunnel" | "puddle")[];
+  coverPose: CoverPose;
 }
 
 export function buildDuetContent(
@@ -371,6 +385,7 @@ export function buildDuetContent(
   band: EchoBand,
   layers: DuetLayers,
   spots: ("tunnel" | "puddle")[],
+  coverPose: CoverPose = "sideBySide",
 ): SoundDuetContent {
-  return { v: 1, name, band, pulses: BAND_CONFIG[band].pulses, layers, spots };
+  return { v: 1, name, band, pulses: BAND_CONFIG[band].pulses, layers, spots, coverPose };
 }

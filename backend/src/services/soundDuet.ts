@@ -56,6 +56,7 @@ const soundDuetSchema = z
       })
       .strict(),
     spots: z.array(z.enum(["tunnel", "puddle"])).max(2),
+    coverPose: z.enum(["sideBySide", "highFive", "backToBack"]),
   })
   .strict();
 

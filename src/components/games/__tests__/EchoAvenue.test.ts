@@ -151,7 +151,7 @@ describe("unlock ladder", () => {
 
   it("newlyUnlockedSounds reports each unlock exactly once (the announce beat)", () => {
     const p1 = advanceEchoProgress(FRESH_ECHO_PROGRESS, summarizeTake(take(1, 0)));
-    expect(newlyUnlockedSounds("k2", FRESH_ECHO_PROGRESS, p1)).toEqual(["clap", "whoosh"]);
+    expect(newlyUnlockedSounds("k2", FRESH_ECHO_PROGRESS, p1)).toEqual(["chime", "whoosh"]);
     expect(newlyUnlockedSounds("k2", p1, p1)).toEqual([]);
   });
 });
@@ -262,6 +262,7 @@ describe("buildDuetContent", () => {
   it("derives pulses from the band (the validator cross-checks this)", () => {
     const c = buildDuetContent("Sunny Echo", "k2", EMPTY_LAYERS, ["tunnel"]);
     expect(c.pulses).toBe(4);
+    expect(c.coverPose).toBe("sideBySide"); // default pose until the child picks
     expect(buildDuetContent("X", "g35", EMPTY_LAYERS, []).pulses).toBe(8);
   });
 });
