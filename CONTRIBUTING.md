@@ -51,9 +51,13 @@ Before approving a PR, reviewers check:
 
 ## Pod Leads
 
-- **Build Pod Lead:** Alice Lin — reviews all Build Pod PRs
-- **Experience Pod Lead:** Catarina Lucas Herrera — reviews all Experience Pod PRs
+- **Build Pod Lead:** Alice (@alitlin) — reviews all Build Pod PRs
+- **Experience Pod Lead:** Catarina (@Cat-a-rina) — reviews all Experience Pod PRs
 - **Cross-pod PRs:** Both leads review
+
+> **Contribution note:** repo surfaces are for code — schedules, travel,
+> availability, and contact channels live in Slack, never in docs, issues,
+> or PRs.
 
 ## Labels, Priority & Delegation
 
