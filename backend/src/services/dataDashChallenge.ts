@@ -100,6 +100,13 @@ export function validateDataDashChallenge(content: unknown): ContentValidation {
   if (!c || typeof c !== "object") {
     return { ok: false, error: "challenge must be an object" };
   }
+
+  const allowedKeys = new Set(["v", "cardIds", "sortRule", "inferRule"]);
+  const extraKeys = Object.keys(c).filter((key) => !allowedKeys.has(key));
+  if(extraKeys.length > 0) {
+    return { ok: false, error: "unexpected field(s)" };
+  }
+
   if (c.v !== 1) {
     return { ok: false, error: "unsupported challenge version" };
   }

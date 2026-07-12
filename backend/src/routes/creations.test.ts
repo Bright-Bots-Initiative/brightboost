@@ -167,6 +167,22 @@ describe("Creations routes", () => {
           })
         )
     })
+
+    it("rejects a challenge with unexpected extra keys (422)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "data_dash_challenge",
+          content: { ...validChallenge, surprise: "not allowed" },
+        });
+
+        expect(res.status).toBe(422);
+        expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    })
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -245,6 +261,25 @@ describe("Creations routes", () => {
             })
           })
         )
+    })
+
+    it("rejects unexpected extra keys on update (422)", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        authorId: KID,
+        type: "data_dash_challenge",
+        content: validChallenge,
+      });
+
+      const res = await request(app)
+        .patch("/api/creations/creation-1")
+        .set(asStudent(KID))
+        .send({
+          content: { ...validChallenge, surprise: "not allowed" },
+        })
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.update).not.toHaveBeenCalled();
     })
   });
 
@@ -356,6 +391,23 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("does not return unexpected content keys", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        ...dbCreation,
+        status: "SHARED",
+        content: { ...validChallenge, surprise: "not shared" }
+      });
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(OTHER_KID));
+
+      expect(res.status).toBe(200);
+      expect(res.body.content).toEqual(validChallenge);
+      expect(res.body.content).not.toHaveProperty("surprise");
+    })
   });
 
   describe("POST /api/creations/:id/encourage", () => {

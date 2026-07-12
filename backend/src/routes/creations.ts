@@ -316,8 +316,20 @@ router.get(
       return res.status(403).json({ error: "creation is not shared" });
     }
 
+    const safeContent =
+      typeof creation.content === "object" &&
+      creation.content !== null &&
+      !Array.isArray(creation.content)
+        ? {
+          v: creation.content.v,
+          cardIds: creation.content.cardIds,
+          sortRule: creation.content.sortRule,
+          inferRule: creation.content.inferRule,
+        }
+        : creation.content;
+
     // Single-get includes content so the creation can actually be played.
-    return res.json({ ...toDTO(creation), content: creation.content });
+    return res.json({ ...toDTO(creation), content: safeContent });
   },
 );
 
