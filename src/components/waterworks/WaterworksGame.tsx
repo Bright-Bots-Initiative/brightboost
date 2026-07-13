@@ -1026,7 +1026,7 @@ export default function WaterworksGame() {
           </div>
 
           {/* Build-action row (leads' layout: doing lives together) */}
-          <div className="ww-actions relative grid justify-center gap-2 w-full">
+          <div className="ww-actions grid justify-center gap-2 w-full">
             <button
               type="button"
               onClick={runFlow}
