@@ -18,9 +18,11 @@ import {
   TICK_MS,
   advanceProgress,
   applyPattern,
+  completeMetTargets,
   currentTarget,
   freshGrid,
   newlyUnlockedParts,
+  patternIsAvailable,
   pickWonder,
   shouldInviteStorm,
   simulateTick,
@@ -80,11 +82,23 @@ function cellVisual(cell: Cell): { bg: string; icon: string } {
       };
     case "gate":
       if (!cell.gateOpen) return { bg: "#b7895a", icon: "🚧" };
-      return { bg: cell.water > 0 ? WATER_COLORS[cell.water] : "#b7ccd6", icon: "🚪" };
+      return {
+        bg: cell.water > 0 ? WATER_COLORS[cell.water] : "#b7ccd6",
+        icon: "🚪",
+      };
     default: {
       const icon =
-        cell.type === "fishmouth" ? "🐟" : cell.type === "sandweir" ? "⛲" : cell.type === "bottleneck" ? "🍾" : "";
-      return { bg: cell.water > 0 ? WATER_COLORS[cell.water] : "#b7ccd6", icon };
+        cell.type === "fishmouth"
+          ? "🐟"
+          : cell.type === "sandweir"
+            ? "⛲"
+            : cell.type === "bottleneck"
+              ? "🍾"
+              : "";
+      return {
+        bg: cell.water > 0 ? WATER_COLORS[cell.water] : "#b7ccd6",
+        icon,
+      };
     }
   }
 }
@@ -116,12 +130,30 @@ function thumbColor(t: string): string {
 
 type Screen = "title" | "build" | "gallery";
 
+function upsertRiver(list: SavedRiver[], river: SavedRiver): SavedRiver[] {
+  const next = list.slice();
+  const index = next.findIndex((entry) => entry.id === river.id);
+  if (index >= 0) next[index] = river;
+  else next.push(river);
+  return next;
+}
+
+function mergeGallery(
+  persisted: SavedRiver[],
+  volatile: SavedRiver[],
+): SavedRiver[] {
+  return volatile.reduce(upsertRiver, persisted);
+}
+
 export default function WaterworksGame() {
   const { t } = useTranslation();
 
   // ---- persistent-ish state, restored from the on-device draft ----
   const initialDraft = useMemo(loadDraft, []);
-  const [screen, setScreen] = useState<Screen>(initialDraft ? "build" : "title");
+  const [screen, setScreen] = useState<Screen>(
+    initialDraft ? "build" : "title",
+  );
+  const [hasActiveBuild, setHasActiveBuild] = useState(!!initialDraft);
   const [band, setBand] = useState<Band>(initialDraft?.band ?? "k2");
   const [grid, setGrid] = useState<Cell[][]>(() =>
     initialDraft ? restoreCells(initialDraft.cells) : freshGrid("k2"),
@@ -129,7 +161,9 @@ export default function WaterworksGame() {
   const [progress, setProgress] = useState<Progress>(
     initialDraft?.progress ?? FRESH_PROGRESS,
   );
-  const [currentId, setCurrentId] = useState<string | null>(initialDraft?.id ?? null);
+  const [currentId, setCurrentId] = useState<string | null>(
+    initialDraft?.id ?? null,
+  );
   const [name, setName] = useState<string>(initialDraft?.name ?? "");
   const [gallery, setGallery] = useState<SavedRiver[]>(() => loadGallery());
   const [seen, setSeen] = useState<SeenFlags>(() => loadSeen());
@@ -139,7 +173,9 @@ export default function WaterworksGame() {
   const [raining, setRaining] = useState(false);
   const [running, setRunning] = useState(false);
   const [lastRun, setLastRun] = useState<RunStats | null>(null);
-  const [dismissedTargets, setDismissedTargets] = useState<Set<string>>(new Set());
+  const [dismissedTargets, setDismissedTargets] = useState<Set<string>>(
+    new Set(),
+  );
 
   // ---- overlays ----
   const [wonder, setWonder] = useState<WonderPrompt | null>(null);
@@ -151,9 +187,17 @@ export default function WaterworksGame() {
   const [pendingPattern, setPendingPattern] = useState<string | null>(null);
   const [showNameCard, setShowNameCard] = useState(false);
   const [nameInput, setNameInput] = useState("");
-  const [saveNote, setSaveNote] = useState<"saved" | "local" | null>(null);
+  const [saveNote, setSaveNote] = useState<"saved" | "local" | "draft" | null>(
+    null,
+  );
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [boardViewRevision, setBoardViewRevision] = useState(0);
   const boardScrollRef = useRef<HTMLDivElement | null>(null);
+  const hasActiveBuildRef = useRef(!!initialDraft);
+  const galleryOriginRef = useRef<"title" | "build">(
+    initialDraft ? "build" : "title",
+  );
+  const volatileGalleryRef = useRef<SavedRiver[]>([]);
 
   const unlocked = unlockedParts(band, progress);
   const newPartCandidatesRef = useRef<Set<PartType>>(new Set());
@@ -161,9 +205,13 @@ export default function WaterworksGame() {
   // ---- draft autosave: on every meaningful change + on unmount ----
   const latestRef = useRef({ grid, name, band, progress, currentId });
   latestRef.current = { grid, name, band, progress, currentId };
+  const structuralGridKey = useMemo(
+    () => JSON.stringify(snapshotCells(grid)),
+    [grid],
+  );
   const persistDraft = useCallback(() => {
     const s = latestRef.current;
-    saveDraft({
+    return saveDraft({
       id: s.currentId,
       name: s.name,
       band: s.band,
@@ -172,9 +220,24 @@ export default function WaterworksGame() {
     });
   }, []);
   useEffect(() => {
-    persistDraft();
-  }, [grid, name, band, progress, currentId, persistDraft]);
-  useEffect(() => () => persistDraft(), [persistDraft]);
+    if (screen === "build" && hasActiveBuild && !persistDraft())
+      setSaveNote((note) => (note === "local" ? note : "draft"));
+  }, [
+    structuralGridKey,
+    name,
+    band,
+    progress,
+    currentId,
+    persistDraft,
+    screen,
+    hasActiveBuild,
+  ]);
+  useEffect(
+    () => () => {
+      if (hasActiveBuildRef.current) persistDraft();
+    },
+    [persistDraft],
+  );
 
   useEffect(() => {
     if (!saveNote) return;
@@ -195,29 +258,47 @@ export default function WaterworksGame() {
   }, []);
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-  const markSeen = useCallback(
-    (patch: SeenFlags) => {
-      setSeen((prev) => {
-        const next = { ...prev, ...patch };
-        saveSeen(next);
-        return next;
-      });
-    },
-    [],
-  );
+  const markSeen = useCallback((patch: SeenFlags) => {
+    setSeen((prev) => {
+      const next = { ...prev, ...patch };
+      saveSeen(next);
+      return next;
+    });
+  }, []);
 
   const finishRun = useCallback(
-    (finalGrid: Cell[][], floodedFields: Set<string>, floodedHouses: Set<string>) => {
+    (
+      finalGrid: Cell[][],
+      floodedFields: Set<string>,
+      floodedHouses: Set<string>,
+      stormTested: boolean,
+    ) => {
       const stats: RunStats = {
         fieldsWatered: finalGrid
           .flat()
           .filter((cell) => cell.type === "field" && cell.watered).length,
+        fieldsPlaced: finalGrid.flat().filter((cell) => cell.type === "field")
+          .length,
         fieldsFloodedEver: floodedFields.size,
         housesFloodedEver: floodedHouses.size,
+        stormTested,
+        fishmouthUsed: finalGrid
+          .flat()
+          .some((cell) => cell.type === "fishmouth" && cell.water > 0),
         anyFlood: floodedFields.size > 0 || floodedHouses.size > 0,
       };
       const before = latestRef.current.progress;
-      const after = advanceProgress(before, stats);
+      // The unlock ladder and storm-invite counter belong only to Guided.
+      // Playing an older band must never silently pre-unlock K–2 parts.
+      const ladderAfter =
+        band === "k2" ? advanceProgress(before, stats) : before;
+
+      // Evaluate the suggestion that was visible BEFORE this run, then store
+      // completion so a later experiment cannot make the achieved target
+      // reappear.
+      const suggested = currentTarget(band, before, lastRun, dismissedTargets);
+      const metSuggested = !!suggested && suggested.met(ladderAfter, stats);
+      const after = completeMetTargets(band, ladderAfter, stats);
       setProgress(after);
       setLastRun(stats);
 
@@ -231,7 +312,11 @@ export default function WaterworksGame() {
       // A just-unlocked part ridden by water for the first time?
       let newPartUsed: PartType | undefined;
       for (const part of newPartCandidatesRef.current) {
-        if (finalGrid.some((row) => row.some((cell) => cell.type === part))) {
+        if (
+          finalGrid.some((row) =>
+            row.some((cell) => cell.type === part && cell.water > 0),
+          )
+        ) {
           newPartUsed = part;
           newPartCandidatesRef.current.delete(part);
           break;
@@ -239,8 +324,10 @@ export default function WaterworksGame() {
       }
 
       // Did this run meet the target we were suggesting? (celebrate, softly)
-      const suggested = currentTarget(band, before, lastRun, dismissedTargets);
-      setTargetJustMet(!!suggested && suggested.met(after, stats));
+      setTargetJustMet(metSuggested);
+
+      // The first-run flow arrow is consumed only by a completed Guided run.
+      if (band === "k2") markSeen({ flowArrow: true });
 
       // Reflect — ONE wondering question; a separate beat from save/naming.
       setWonder(
@@ -251,14 +338,14 @@ export default function WaterworksGame() {
         }),
       );
     },
-    [band, dismissedTargets, lastRun],
+    [band, dismissedTargets, lastRun, markSeen],
   );
 
   const runFlow = useCallback(() => {
     if (runningRef.current) return;
     runningRef.current = true;
     setRunning(true);
-    if (!seen.flowArrow) markSeen({ flowArrow: true });
+    const stormTested = raining;
 
     // reset water, then tick on a fixed clock
     let g = gridRef.current.map((row) =>
@@ -288,24 +375,33 @@ export default function WaterworksGame() {
         for (let r = 0; r < g.length; r++)
           for (let c = 0; c < g[r].length; c++) {
             const cell = g[r][c];
-            if (cell.flooded && cell.type === "field") floodedFields.add(`${r},${c}`);
-            if (cell.flooded && cell.type === "house") floodedHouses.add(`${r},${c}`);
+            if (cell.flooded && cell.type === "field")
+              floodedFields.add(`${r},${c}`);
+            if (cell.flooded && cell.type === "house")
+              floodedHouses.add(`${r},${c}`);
           }
         setGrid(g);
         tick++;
       }
       if (tick >= TICKS_PER_RUN) {
         stopFlow();
-        finishRun(g, floodedFields, floodedHouses);
+        finishRun(g, floodedFields, floodedHouses, stormTested);
         return;
       }
       rafRef.current = requestAnimationFrame(frame);
     };
     rafRef.current = requestAnimationFrame(frame);
-  }, [finishRun, markSeen, raining, seen.flowArrow, stopFlow]);
+  }, [finishRun, raining, stopFlow]);
 
   // ── Save model (design §5): save-in-place, autosave, dup guard ────────────
-  const refreshGallery = useCallback(() => setGallery(loadGallery()), []);
+  const currentGallery = useCallback(
+    () => mergeGallery(loadGallery(), volatileGalleryRef.current),
+    [],
+  );
+  const refreshGallery = useCallback(
+    () => setGallery(currentGallery()),
+    [currentGallery],
+  );
 
   const persistRiver = useCallback(
     (riverName: string): boolean => {
@@ -319,24 +415,31 @@ export default function WaterworksGame() {
         savedAt: Date.now(),
       };
       const ok = saveRiver(river);
+      if (ok) {
+        volatileGalleryRef.current = volatileGalleryRef.current.filter(
+          (entry) => entry.id !== id,
+        );
+      } else {
+        volatileGalleryRef.current = upsertRiver(
+          volatileGalleryRef.current,
+          river,
+        );
+      }
+      // Keep callback reads coherent before React flushes these updates.
+      // Navigation may persist the draft in the same event as this save.
+      latestRef.current = { ...s, currentId: id, name: riverName };
       setCurrentId(id);
       setName(riverName);
-      if (ok) refreshGallery();
-      else
-        setGallery((prev) => {
-          const idx = prev.findIndex((entry) => entry.id === id);
-          const next = prev.slice();
-          if (idx >= 0) next[idx] = river;
-          else next.push(river);
-          return next; // quota: keep the in-memory copy, tell the child gently
-        });
+      refreshGallery();
       setSaveNote(ok ? "saved" : "local");
       return ok;
     },
     [refreshGallery],
   );
 
-  const defaultName = t("waterworks.build.defaultName", { defaultValue: "New River" });
+  const defaultName = t("waterworks.build.defaultName", {
+    defaultValue: "New River",
+  });
 
   const onSaveTap = useCallback(() => {
     if (!latestRef.current.name) {
@@ -349,9 +452,11 @@ export default function WaterworksGame() {
 
   const confirmName = useCallback(() => {
     const base = nameInput.trim() || defaultName;
-    persistRiver(uniqueName(base, loadGallery(), latestRef.current.currentId));
+    persistRiver(
+      uniqueName(base, currentGallery(), latestRef.current.currentId),
+    );
     setShowNameCard(false);
-  }, [defaultName, nameInput, persistRiver]);
+  }, [currentGallery, defaultName, nameInput, persistRiver]);
 
   /** "Nothing is lost": before anything replaces the working build, an
    *  unnamed-but-meaningful river is quietly saved under a default name. */
@@ -362,23 +467,36 @@ export default function WaterworksGame() {
       return;
     }
     const meaningful =
-      JSON.stringify(snapshotCells(s.grid)) !== JSON.stringify(snapshotCells(freshGrid(s.band)));
-    if (meaningful) persistRiver(uniqueName(defaultName, loadGallery(), null));
-  }, [defaultName, persistRiver]);
+      JSON.stringify(snapshotCells(s.grid)) !==
+      JSON.stringify(snapshotCells(freshGrid(s.band)));
+    if (meaningful)
+      persistRiver(uniqueName(defaultName, currentGallery(), null));
+  }, [currentGallery, defaultName, persistRiver]);
+
+  const activateBuild = useCallback(() => {
+    hasActiveBuildRef.current = true;
+    setHasActiveBuild(true);
+    setBoardViewRevision((value) => value + 1);
+  }, []);
 
   // ── Navigation (autosave on every navigate-away) ──────────────────────────
   const goTitle = useCallback(() => {
     stopFlow();
-    persistDraft();
+    if (hasActiveBuildRef.current) persistDraft();
     setScreen("title");
   }, [persistDraft, stopFlow]);
 
   const goGallery = useCallback(() => {
     stopFlow();
-    persistDraft();
+    galleryOriginRef.current = screen === "build" ? "build" : "title";
+    if (screen === "build" && hasActiveBuildRef.current) {
+      // Gallery entries are explicit shares. Navigation protects the working
+      // draft but must not silently publish or overwrite a saved river.
+      persistDraft();
+    }
     refreshGallery();
     setScreen("gallery");
-  }, [persistDraft, refreshGallery, stopFlow]);
+  }, [persistDraft, refreshGallery, screen, stopFlow]);
 
   const startBand = useCallback(
     (nextBand: Band) => {
@@ -390,14 +508,27 @@ export default function WaterworksGame() {
       setRaining(false);
       setLastRun(null);
       setTool("channel");
+      newPartCandidatesRef.current.clear();
+      activateBuild();
       setScreen("build");
       if (!seen.help) setShowHelp(true);
     },
-    [quietSaveIfMeaningful, seen.help],
+    [activateBuild, quietSaveIfMeaningful, seen.help],
   );
 
   const openRiver = useCallback(
     (river: SavedRiver) => {
+      // A card can represent an older explicit save of the river that is
+      // still active in the working draft. Return to the live draft rather
+      // than replacing it with that stale card snapshot.
+      if (
+        hasActiveBuildRef.current &&
+        river.id === latestRef.current.currentId
+      ) {
+        activateBuild();
+        setScreen("build");
+        return;
+      }
       quietSaveIfMeaningful();
       setBand(river.band);
       setGrid(restoreCells(river.cells));
@@ -405,9 +536,12 @@ export default function WaterworksGame() {
       setName(river.name);
       setRaining(false);
       setLastRun(null);
+      setTool("channel");
+      newPartCandidatesRef.current.clear();
+      activateBuild();
       setScreen("build");
     },
-    [quietSaveIfMeaningful],
+    [activateBuild, quietSaveIfMeaningful],
   );
 
   const createFresh = useCallback(() => {
@@ -417,21 +551,38 @@ export default function WaterworksGame() {
     setName("");
     setRaining(false);
     setLastRun(null);
+    setTool("channel");
+    newPartCandidatesRef.current.clear();
+    activateBuild();
     setScreen("build");
-  }, [band, quietSaveIfMeaningful]);
+  }, [activateBuild, band, quietSaveIfMeaningful]);
 
   // ── Build actions ─────────────────────────────────────────────────────────
   const onCellTap = useCallback(
     (r: number, c: number) => {
       if (runningRef.current) return;
-      setGrid((prev) => tapCell(prev, r, c, tool));
-      if (!seen.placedArrow) markSeen({ placedArrow: true });
+      const allowed = unlockedParts(band, latestRef.current.progress);
+      const safeTool =
+        tool === "erase" || allowed.includes(tool) ? tool : "channel";
+      if (safeTool !== tool) setTool(safeTool);
+      const before = gridRef.current;
+      const after = tapCell(before, r, c, safeTool);
+      if (after === before) return;
+      setGrid(after);
+      if (band === "k2" && !seen.placedArrow) markSeen({ placedArrow: true });
     },
-    [markSeen, seen.placedArrow, tool],
+    [band, markSeen, seen.placedArrow, tool],
   );
 
   const applyPatternById = useCallback(
     (pattern: RiverPattern) => {
+      if (
+        !patternIsAvailable(
+          pattern,
+          unlockedParts(band, latestRef.current.progress),
+        )
+      )
+        return;
       setGrid(applyPattern(band, pattern));
       setPendingPattern(null);
       setShowPatterns(false);
@@ -469,17 +620,31 @@ export default function WaterworksGame() {
     const el = boardScrollRef.current;
     if (!el) return;
     el.scrollLeft = 0; // sources live in column 0 — anchor the story there
-    if (el.scrollWidth > el.clientWidth + 8 && !seen.swipeHint) {
-      setShowSwipeHint(true);
-      const dismiss = () => {
-        setShowSwipeHint(false);
-        markSeen({ swipeHint: true });
-      };
-      el.addEventListener("scroll", dismiss, { once: true });
-      return () => el.removeEventListener("scroll", dismiss);
+  }, [boardViewRevision, screen]);
+
+  useEffect(() => {
+    if (screen !== "build") return;
+    const el = boardScrollRef.current;
+    if (!el) return;
+    if (seen.swipeHint) {
+      setShowSwipeHint(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen]);
+    const syncHint = () => {
+      setShowSwipeHint(el.scrollWidth > el.clientWidth + 8);
+    };
+    const dismiss = () => {
+      setShowSwipeHint(false);
+      markSeen({ swipeHint: true });
+    };
+    syncHint();
+    el.addEventListener("scroll", dismiss, { once: true });
+    window.addEventListener("resize", syncHint);
+    return () => {
+      el.removeEventListener("scroll", dismiss);
+      window.removeEventListener("resize", syncHint);
+    };
+  }, [boardViewRevision, markSeen, screen, seen.swipeHint]);
 
   // ── Screens ───────────────────────────────────────────────────────────────
 
@@ -490,7 +655,9 @@ export default function WaterworksGame() {
           🦏
         </div>
         <h2 className="text-2xl font-extrabold text-[#3a2e22]">
-          {t("waterworks.title.tagline", { defaultValue: "What will you build?" })}
+          {t("waterworks.title.tagline", {
+            defaultValue: "What will you build?",
+          })}
         </h2>
         <p className="text-[#7d6c52] font-bold">
           {t("waterworks.title.pickLevel", { defaultValue: "Pick your level" })}
@@ -515,7 +682,10 @@ export default function WaterworksGame() {
             onClick={() => startBand("g68")}
             className="min-h-14 rounded-2xl bg-[#4a6fa5] text-white text-xl font-extrabold shadow-[0_5px_0_#34527d] active:translate-y-1 active:shadow-none touch-manipulation"
           >
-            🚀 {t("waterworks.title.bandG68", { defaultValue: "Grades 6–8 · Open" })}
+            🚀{" "}
+            {t("waterworks.title.bandG68", {
+              defaultValue: "Grades 6–8 · Open",
+            })}
           </button>
         </div>
         <button
@@ -525,13 +695,18 @@ export default function WaterworksGame() {
         >
           {t("waterworks.gallery.title", { defaultValue: "My Waterworks" })}
         </button>
-        {initialDraft && screen === "title" && (
+        {hasActiveBuild && (
           <button
             type="button"
-            onClick={() => setScreen("build")}
+            onClick={() => {
+              setBoardViewRevision((value) => value + 1);
+              setScreen("build");
+            }}
             className="min-h-11 px-6 rounded-full border-2 border-[#e1d0a6] bg-[#fbf4e3] text-[#3a2e22] font-bold active:scale-95 touch-manipulation"
           >
-            {t("waterworks.title.resume", { defaultValue: "Keep building my river" })}
+            {t("waterworks.title.resume", {
+              defaultValue: "Keep building my river",
+            })}
           </button>
         )}
       </div>
@@ -546,18 +721,18 @@ export default function WaterworksGame() {
         </h2>
         <button
           type="button"
-          onClick={() => setScreen("build")}
+          onClick={() => setScreen(galleryOriginRef.current)}
           className="min-h-11 px-6 rounded-full bg-white text-[#3a2e22] font-bold shadow active:scale-95 touch-manipulation"
         >
           {t("waterworks.gallery.back", { defaultValue: "Back" })}
         </button>
-        <div className="flex flex-wrap justify-center gap-4 max-w-4xl">
+        <div className="ww-gallery-grid grid grid-cols-2 gap-3 w-full max-w-4xl">
           {/* Create (+) lives IN the gallery so starting fresh never routes
               through Levels (the leads' layout note). */}
           <button
             type="button"
             onClick={createFresh}
-            className="w-40 min-h-32 rounded-2xl border-4 border-dashed border-[#d9c79f] bg-white/60 flex flex-col items-center justify-center gap-1 text-[#7d6c52] font-extrabold active:scale-95 touch-manipulation"
+            className="w-full min-h-32 rounded-2xl border-4 border-dashed border-[#d9c79f] bg-white/60 flex flex-col items-center justify-center gap-1 text-[#7d6c52] font-extrabold active:scale-95 touch-manipulation"
           >
             <span className="text-4xl" aria-hidden>
               ＋
@@ -569,7 +744,7 @@ export default function WaterworksGame() {
               key={river.id}
               type="button"
               onClick={() => openRiver(river)}
-              className="w-40 rounded-2xl bg-white p-2 shadow-[0_4px_0_#0002] active:translate-y-0.5 touch-manipulation"
+              className="w-full min-w-0 rounded-2xl bg-white p-2 shadow-[0_4px_0_#0002] active:translate-y-0.5 touch-manipulation"
               aria-label={t("waterworks.gallery.openAria", {
                 defaultValue: "Open {{name}}",
                 name: river.name,
@@ -577,7 +752,9 @@ export default function WaterworksGame() {
             >
               <div
                 className="grid gap-px rounded-lg overflow-hidden bg-[#d9c79f] p-0.5"
-                style={{ gridTemplateColumns: `repeat(${river.cells[0]?.length ?? 14}, 1fr)` }}
+                style={{
+                  gridTemplateColumns: `repeat(${river.cells[0]?.length ?? 14}, 1fr)`,
+                }}
                 aria-hidden
               >
                 {river.cells.flat().map((cell, i) => (
@@ -596,7 +773,9 @@ export default function WaterworksGame() {
         </div>
         {gallery.length === 0 && (
           <p className="text-[#8a795d] font-bold text-lg">
-            {t("waterworks.gallery.empty", { defaultValue: "No rivers yet — build one!" })}
+            {t("waterworks.gallery.empty", {
+              defaultValue: "No rivers yet — build one!",
+            })}
           </p>
         )}
       </div>
@@ -608,26 +787,29 @@ export default function WaterworksGame() {
     name || t("waterworks.build.defaultName", { defaultValue: "New River" });
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full px-2 pb-6">
+    <div className="ww-build flex flex-col items-center gap-3 w-full px-2 pb-6">
       {/* Top bar: title chip + grouped navigation (leads' layout note) */}
-      <div className="w-full max-w-5xl flex flex-wrap items-center gap-2">
+      <div className="ww-topbar w-full max-w-5xl flex flex-wrap items-center gap-2">
         <button
           type="button"
+          disabled={running}
           onClick={() => {
             setNameInput(name);
             setShowNameCard(true);
           }}
-          className="min-h-11 px-4 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+          className="ww-river-name min-h-11 min-w-0 px-4 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
           aria-label={t("waterworks.build.renameAria", {
             defaultValue: "River name — tap to change",
           })}
         >
-          🏷️ {displayName}
+          <span aria-hidden>🏷️</span>
+          <span className="truncate">{displayName}</span>
         </button>
         <button
           type="button"
+          disabled={running}
           onClick={onSaveTap}
-          className="min-h-11 px-4 rounded-full bg-teal-600 text-white font-bold shadow active:scale-95 touch-manipulation"
+          className="ww-save min-h-11 px-4 rounded-full bg-teal-600 text-white font-bold shadow active:scale-95 touch-manipulation disabled:opacity-50"
         >
           {t("waterworks.build.save", { defaultValue: "Save" })}
         </button>
@@ -635,30 +817,39 @@ export default function WaterworksGame() {
           <span className="text-sm text-[#6a5836] font-bold" role="status">
             {saveNote === "saved"
               ? t("waterworks.build.saved", { defaultValue: "Saved ✓" })
-              : t("waterworks.build.savedLocalOff", {
-                  defaultValue: "This device is full — your river stays until you leave the page.",
-                })}
+              : saveNote === "local"
+                ? t("waterworks.build.savedLocalOff", {
+                    defaultValue:
+                      "This device is full — your river stays until you leave the page.",
+                  })
+                : t("waterworks.build.draftUnavailable", {
+                    defaultValue:
+                      "Autosave is unavailable — keep this tab open so your river isn't lost.",
+                  })}
           </span>
         )}
-        <div className="ml-auto flex gap-2">
+        <div className="ww-build-nav ml-auto grid gap-2">
           <button
             type="button"
+            disabled={running}
             onClick={goGallery}
-            className="min-h-11 px-4 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+            className="min-h-11 px-3 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
           >
             {t("waterworks.gallery.title", { defaultValue: "My Waterworks" })}
           </button>
           <button
             type="button"
+            disabled={running}
             onClick={goTitle}
-            className="min-h-11 px-4 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+            className="min-h-11 px-3 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
           >
             🏠 {t("waterworks.build.levels", { defaultValue: "Levels" })}
           </button>
           <button
             type="button"
+            disabled={running}
             onClick={() => setShowHelp(true)}
-            className="min-h-11 px-4 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+            className="min-h-11 px-3 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
           >
             ❓ {t("waterworks.help.button", { defaultValue: "How to play" })}
           </button>
@@ -666,7 +857,7 @@ export default function WaterworksGame() {
       </div>
 
       {/* Soft target — a dismissible suggestion, never a requirement */}
-      {band !== "g68" && target && (
+      {target && (
         <div
           className="w-full max-w-5xl flex items-center gap-2 rounded-2xl border-2 border-[#f0dca5] bg-[#fff7e0] px-3 py-2 text-[#6a5836] font-bold"
           role="status"
@@ -676,47 +867,65 @@ export default function WaterworksGame() {
           </span>
           <span className="flex-1">
             {t(`waterworks.target.${target.id}`, {
-              defaultValue: "Can you water a field? Put a 🌱 at the end of your channel!",
+              defaultValue:
+                "Can you water a field? Put a 🌱 at the end of your channel!",
             })}
           </span>
           <button
             type="button"
+            disabled={running}
             onClick={() =>
               setDismissedTargets((prev) => new Set([...prev, target.id]))
             }
-            className="min-w-11 min-h-11 rounded-full text-[#a08c62] font-extrabold active:scale-95 touch-manipulation"
-            aria-label={t("waterworks.target.dismiss", { defaultValue: "Dismiss suggestion" })}
+            className="min-w-11 min-h-11 rounded-full text-[#a08c62] font-extrabold active:scale-95 touch-manipulation disabled:opacity-50"
+            aria-label={t("waterworks.target.dismiss", {
+              defaultValue: "Dismiss suggestion",
+            })}
           >
             ✕
           </button>
         </div>
       )}
 
-      <div className="w-full max-w-5xl flex flex-col md:flex-row gap-3 items-stretch md:items-start">
+      <div className="ww-workspace w-full max-w-5xl flex flex-col md:flex-row gap-3 items-stretch md:items-start">
         {/* Palette */}
-        <div className="flex md:flex-col flex-row flex-wrap gap-2 justify-center relative">
+        <div
+          className="ww-palette flex md:flex-col flex-row gap-2 justify-start md:justify-center relative"
+          role="toolbar"
+          aria-label={t("waterworks.build.paletteAria", {
+            defaultValue: "River parts",
+          })}
+        >
           {unlocked.map((part) => (
             <button
               key={part}
               type="button"
+              disabled={running}
               onClick={() => setTool(part)}
               aria-pressed={tool === part}
-              className={`flex items-center gap-2 min-h-12 min-w-11 px-3 rounded-2xl border-[3px] shadow-[0_3px_0_#0002] font-extrabold text-sm active:translate-y-0.5 touch-manipulation ${
-                tool === part ? "border-orange-400 bg-orange-50" : "border-transparent bg-white"
+              className={`shrink-0 flex items-center gap-2 min-h-12 min-w-11 px-3 rounded-2xl border-[3px] shadow-[0_3px_0_#0002] font-extrabold text-sm active:translate-y-0.5 touch-manipulation disabled:opacity-50 ${
+                tool === part
+                  ? "border-orange-400 bg-orange-50"
+                  : "border-transparent bg-white"
               }`}
             >
               <span className="text-2xl" aria-hidden>
                 {PART_ICON[part]}
               </span>
-              <span className="text-left leading-tight text-[#3a2e22]">{partLabel(part)}</span>
+              <span className="text-left leading-tight text-[#3a2e22]">
+                {partLabel(part)}
+              </span>
             </button>
           ))}
           <button
             type="button"
+            disabled={running}
             onClick={() => setTool("erase")}
             aria-pressed={tool === "erase"}
-            className={`flex items-center gap-2 min-h-12 px-3 rounded-2xl border-[3px] shadow-[0_3px_0_#0002] font-extrabold text-sm active:translate-y-0.5 touch-manipulation ${
-              tool === "erase" ? "border-orange-400 bg-orange-50" : "border-transparent bg-white"
+            className={`shrink-0 flex items-center gap-2 min-h-12 px-3 rounded-2xl border-[3px] shadow-[0_3px_0_#0002] font-extrabold text-sm active:translate-y-0.5 touch-manipulation disabled:opacity-50 ${
+              tool === "erase"
+                ? "border-orange-400 bg-orange-50"
+                : "border-transparent bg-white"
             }`}
           >
             <span className="text-2xl" aria-hidden>
@@ -728,7 +937,10 @@ export default function WaterworksGame() {
           </button>
           {/* Tutorial arrow 1: palette → land (first Guided visit only) */}
           {band === "k2" && !seen.placedArrow && (
-            <div className="ww-arrow absolute -right-8 top-6 text-4xl hidden md:block" aria-hidden>
+            <div
+              className="ww-arrow absolute -right-8 top-6 text-4xl hidden md:block"
+              aria-hidden
+            >
               👉
             </div>
           )}
@@ -736,14 +948,22 @@ export default function WaterworksGame() {
 
         {/* Board */}
         <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-          <p className="text-sm text-[#6f6048] font-bold bg-white/70 rounded-full px-4 py-1" role="status">
+          <p
+            className="ww-hint max-w-full text-sm text-[#6f6048] font-bold bg-white/70 rounded-2xl px-4 py-2"
+            role="status"
+          >
             {tool === "erase"
-              ? t("waterworks.hint.erase", { defaultValue: "🧽 Tap a part to rub it out." })
+              ? t("waterworks.hint.erase", {
+                  defaultValue: "🧽 Tap a part to rub it out.",
+                })
               : t(`waterworks.hint.${tool}`, {
                   defaultValue: "Tap a part, then tap the land to place it.",
                 })}
           </p>
-          <div className="w-full overflow-x-auto relative" ref={boardScrollRef}>
+          <div
+            className="ww-board-scroll w-full overflow-x-auto relative"
+            ref={boardScrollRef}
+          >
             {showSwipeHint && (
               <button
                 type="button"
@@ -756,19 +976,18 @@ export default function WaterworksGame() {
                   defaultValue: "Dismiss swipe hint",
                 })}
               >
-                ⇆ {t("waterworks.build.swipeHint", { defaultValue: "Swipe to see more" })}
+                ⇆{" "}
+                {t("waterworks.build.swipeHint", {
+                  defaultValue: "Swipe to see more",
+                })}
               </button>
             )}
             <div
-              className={`relative grid gap-[3px] rounded-2xl bg-[#d9c79f] p-1.5 mx-auto ${
+              className={`ww-board relative grid gap-[3px] rounded-2xl bg-[#d9c79f] p-1.5 ${
                 raining ? "ww-raining" : ""
               } ${running ? "ww-flowing" : ""}`}
-              style={{
-                gridTemplateColumns: `repeat(14, minmax(0, 1fr))`,
-                minWidth: "560px",
-                maxWidth: "820px",
-              }}
               role="group"
+              aria-busy={running}
               aria-label={t("waterworks.build.boardAria", {
                 defaultValue: "River building board",
               })}
@@ -780,9 +999,12 @@ export default function WaterworksGame() {
                     <button
                       key={`${r}-${c}`}
                       type="button"
+                      disabled={running}
                       onClick={() => onCellTap(r, c)}
-                      className={`relative aspect-square rounded-md text-lg leading-none touch-manipulation ${
-                        cell.water >= 4 || cell.type === "source" ? "ww-shimmer" : ""
+                      className={`ww-cell relative aspect-square rounded-md text-lg leading-none touch-manipulation disabled:cursor-wait ${
+                        cell.water >= 4 || cell.type === "source"
+                          ? "ww-shimmer"
+                          : ""
                       } ${cell.draining ? "ww-drip" : ""}`}
                       style={{ background: bg }}
                       aria-label={t("waterworks.build.cellAria", {
@@ -790,7 +1012,8 @@ export default function WaterworksGame() {
                         r: r + 1,
                         c: c + 1,
                         what: t(`waterworks.part.${cell.type}`, {
-                          defaultValue: cell.type === "land" ? "open land" : cell.type,
+                          defaultValue:
+                            cell.type === "land" ? "open land" : cell.type,
                         }),
                       })}
                     >
@@ -803,20 +1026,21 @@ export default function WaterworksGame() {
           </div>
 
           {/* Build-action row (leads' layout: doing lives together) */}
-          <div className="relative flex flex-wrap justify-center gap-2">
+          <div className="ww-actions relative grid justify-center gap-2 w-full">
             <button
               type="button"
               onClick={runFlow}
               disabled={running}
-              className="min-h-14 px-8 rounded-2xl bg-teal-500 text-white text-xl font-extrabold shadow-[0_5px_0_#1d8a7d] active:translate-y-1 active:shadow-none disabled:opacity-60 touch-manipulation"
+              className="ww-flow-action min-h-14 px-8 rounded-2xl bg-teal-500 text-white text-xl font-extrabold shadow-[0_5px_0_#1d8a7d] active:translate-y-1 active:shadow-none disabled:opacity-60 touch-manipulation"
             >
               {t("waterworks.build.flow", { defaultValue: "Let it flow! 💧" })}
             </button>
             <button
               type="button"
+              disabled={running}
               onClick={() => setRaining((v) => !v)}
               aria-pressed={raining}
-              className={`min-h-11 px-5 rounded-full font-extrabold shadow active:scale-95 touch-manipulation ${
+              className={`min-h-11 px-5 rounded-full font-extrabold shadow active:scale-95 touch-manipulation disabled:opacity-50 ${
                 raining ? "bg-[#4a6fa5] text-white" : "bg-white text-[#3a2e22]"
               }`}
             >
@@ -826,23 +1050,30 @@ export default function WaterworksGame() {
             </button>
             <button
               type="button"
+              disabled={running}
               onClick={() => {
                 if (!running) setGrid(freshGrid(band));
               }}
-              className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+              className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
             >
               {t("waterworks.build.clear", { defaultValue: "Clear" })}
             </button>
             <button
               type="button"
+              disabled={running}
               onClick={() => setShowPatterns(true)}
-              className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation"
+              className="ww-pattern-action min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95 touch-manipulation disabled:opacity-50"
             >
-              {t("waterworks.patterns.open", { defaultValue: "Show me ideas 📖" })}
+              {t("waterworks.patterns.open", {
+                defaultValue: "Show me ideas 📖",
+              })}
             </button>
             {/* Tutorial arrow 2: → Let it flow (until the first run) */}
             {band === "k2" && seen.placedArrow && !seen.flowArrow && (
-              <div className="ww-arrow absolute -top-9 left-8 text-4xl" aria-hidden>
+              <div
+                className="ww-arrow absolute -top-9 left-8 text-4xl"
+                aria-hidden
+              >
                 👇
               </div>
             )}
@@ -858,7 +1089,7 @@ export default function WaterworksGame() {
       {/* ── Overlays ── */}
 
       {/* Unlock announce (before Reflect): scaffolding must announce itself */}
-      {announceQueue.length > 0 && !wonder && (
+      {announceQueue.length > 0 && (
         <Overlay>
           <div className="text-5xl" aria-hidden>
             🎉
@@ -899,7 +1130,7 @@ export default function WaterworksGame() {
       )}
 
       {/* Reflect: Shíxī's ONE wondering question — no save-nag by design */}
-      {wonder && (
+      {wonder && announceQueue.length === 0 && (
         <Overlay>
           <div className="flex items-start gap-3 text-left w-full">
             <div className="text-5xl" aria-hidden>
@@ -915,7 +1146,8 @@ export default function WaterworksGame() {
           {targetJustMet && (
             <p className="text-green-700 font-bold" role="status">
               {t("waterworks.target.met", {
-                defaultValue: "You did it — that was one of the try-this ideas! ⭐",
+                defaultValue:
+                  "You did it — that was one of the try-this ideas! ⭐",
               })}
             </p>
           )}
@@ -924,7 +1156,9 @@ export default function WaterworksGame() {
             onClick={() => setWonder(null)}
             className="min-h-12 px-8 rounded-full bg-orange-500 text-white font-extrabold text-lg active:scale-95 touch-manipulation"
           >
-            {t("waterworks.reflect.keepBuilding", { defaultValue: "Keep building" })}
+            {t("waterworks.reflect.keepBuilding", {
+              defaultValue: "Keep building",
+            })}
           </button>
         </Overlay>
       )}
@@ -943,7 +1177,9 @@ export default function WaterworksGame() {
             placeholder={t("waterworks.name.placeholder", {
               defaultValue: "New River",
             })}
-            aria-label={t("waterworks.name.title", { defaultValue: "Name your river!" })}
+            aria-label={t("waterworks.name.title", {
+              defaultValue: "Name your river!",
+            })}
           />
           <div className="flex gap-2">
             <button
@@ -971,46 +1207,62 @@ export default function WaterworksGame() {
             {t("waterworks.patterns.title", { defaultValue: "River ideas 📖" })}
           </h3>
           <div className="flex flex-col gap-2 w-full">
-            {PATTERN_BOOK.map((pattern) => (
-              <div
-                key={pattern.id}
-                className="flex items-center gap-3 rounded-2xl border-2 border-[#e1d0a6] bg-white p-2"
-              >
+            {PATTERN_BOOK.map((pattern) => {
+              const available = patternIsAvailable(pattern, unlocked);
+              return (
                 <div
-                  className="grid gap-px bg-[#d9c79f] p-0.5 rounded w-24 shrink-0"
-                  style={{ gridTemplateColumns: "repeat(14, 1fr)" }}
-                  aria-hidden
+                  key={pattern.id}
+                  className="ww-pattern-row items-center gap-3 rounded-2xl border-2 border-[#e1d0a6] bg-white p-2"
                 >
-                  {snapshotCells(applyPattern("g68", pattern))
-                    .flat()
-                    .map((cell, i) => (
-                      <i
-                        key={i}
-                        className="block aspect-square"
-                        style={{ background: thumbColor(cell.t) }}
-                      />
-                    ))}
+                  <div
+                    className="ww-pattern-thumb grid gap-px bg-[#d9c79f] p-0.5 rounded w-24 shrink-0"
+                    style={{ gridTemplateColumns: "repeat(14, 1fr)" }}
+                    aria-hidden
+                  >
+                    {snapshotCells(applyPattern("g68", pattern))
+                      .flat()
+                      .map((cell, i) => (
+                        <i
+                          key={i}
+                          className="block aspect-square"
+                          style={{ background: thumbColor(cell.t) }}
+                        />
+                      ))}
+                  </div>
+                  <span className="min-w-0 font-extrabold text-[#3a2e22] text-sm">
+                    {t(`waterworks.pattern.${pattern.id}`, {
+                      defaultValue: pattern.id,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={!available}
+                    onClick={() =>
+                      pendingPattern === pattern.id
+                        ? applyPatternById(pattern)
+                        : setPendingPattern(pattern.id)
+                    }
+                    className={`ww-pattern-use min-h-11 px-4 rounded-full font-bold text-white active:scale-95 touch-manipulation disabled:bg-slate-400 disabled:opacity-80 ${
+                      pendingPattern === pattern.id
+                        ? "bg-amber-500"
+                        : "bg-teal-600"
+                    }`}
+                  >
+                    {!available
+                      ? t("waterworks.patterns.locked", {
+                          defaultValue: "🔒 Unlock these parts first",
+                        })
+                      : pendingPattern === pattern.id
+                        ? t("waterworks.patterns.confirm", {
+                            defaultValue: "Replace my river?",
+                          })
+                        : t("waterworks.patterns.use", {
+                            defaultValue: "Build from this",
+                          })}
+                  </button>
                 </div>
-                <span className="flex-1 font-extrabold text-[#3a2e22] text-sm">
-                  {t(`waterworks.pattern.${pattern.id}`, { defaultValue: pattern.id })}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    pendingPattern === pattern.id
-                      ? applyPatternById(pattern)
-                      : setPendingPattern(pattern.id)
-                  }
-                  className={`min-h-11 px-4 rounded-full font-bold text-white active:scale-95 touch-manipulation ${
-                    pendingPattern === pattern.id ? "bg-amber-500" : "bg-teal-600"
-                  }`}
-                >
-                  {pendingPattern === pattern.id
-                    ? t("waterworks.patterns.confirm", { defaultValue: "Replace my river?" })
-                    : t("waterworks.patterns.use", { defaultValue: "Build from this" })}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <button
             type="button"
@@ -1058,22 +1310,31 @@ export default function WaterworksGame() {
           </div>
           <div className="flex flex-col gap-1.5 w-full text-left">
             <h4 className="font-extrabold text-[#3a2e22]">
-              {t("waterworks.help.partsTitle", { defaultValue: "What the parts do" })}
+              {t("waterworks.help.partsTitle", {
+                defaultValue: "What the parts do",
+              })}
             </h4>
             {(
-              ["channel", "gate", "fishmouth", "sandweir", "bottleneck", "field"] as PartType[]
+              [
+                "channel",
+                "gate",
+                "fishmouth",
+                "sandweir",
+                "bottleneck",
+                "field",
+              ] as PartType[]
             ).map((part) => (
               <div
                 key={part}
-                className="flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 text-sm shadow"
+                className="ww-help-part items-center gap-2 bg-white rounded-xl px-3 py-2 text-sm shadow"
               >
                 <span className="text-xl w-7 text-center" aria-hidden>
                   {PART_ICON[part]}
                 </span>
-                <span className="font-extrabold text-[#3a2e22] w-36 shrink-0 leading-tight">
+                <span className="ww-help-part-name min-w-0 font-extrabold text-[#3a2e22] leading-tight">
                   {partLabel(part)}
                 </span>
-                <span className="flex-1 text-[#55483a] font-semibold">
+                <span className="ww-help-part-description min-w-0 text-[#55483a] font-semibold">
                   {t(`waterworks.hint.${part}`, { defaultValue: "…" })}
                 </span>
                 {HERITAGE_PARTS.includes(part) && (
@@ -1122,21 +1383,33 @@ export default function WaterworksGame() {
           <div className="flex flex-col gap-2 w-full text-left text-[#3a2e22]">
             <p className="bg-white rounded-2xl p-3 font-semibold shadow">
               <span className="font-extrabold">
-                {t("waterworks.heritage.whatLabel", { defaultValue: "The real thing: " })}
+                {t("waterworks.heritage.whatLabel", {
+                  defaultValue: "The real thing: ",
+                })}
               </span>
-              {t(`waterworks.heritage.${heritagePart}.what`, { defaultValue: "…" })}
+              {t(`waterworks.heritage.${heritagePart}.what`, {
+                defaultValue: "…",
+              })}
             </p>
             <p className="bg-white rounded-2xl p-3 font-semibold shadow">
               <span className="font-extrabold">
-                {t("waterworks.heritage.builtLabel", { defaultValue: "Li Bing's idea: " })}
+                {t("waterworks.heritage.builtLabel", {
+                  defaultValue: "Li Bing's idea: ",
+                })}
               </span>
-              {t(`waterworks.heritage.${heritagePart}.built`, { defaultValue: "…" })}
+              {t(`waterworks.heritage.${heritagePart}.built`, {
+                defaultValue: "…",
+              })}
             </p>
             <p className="bg-white rounded-2xl p-3 font-semibold shadow">
               <span className="font-extrabold">
-                {t("waterworks.heritage.riverLabel", { defaultValue: "In YOUR river: " })}
+                {t("waterworks.heritage.riverLabel", {
+                  defaultValue: "In YOUR river: ",
+                })}
               </span>
-              {t(`waterworks.heritage.${heritagePart}.river`, { defaultValue: "…" })}
+              {t(`waterworks.heritage.${heritagePart}.river`, {
+                defaultValue: "…",
+              })}
             </p>
           </div>
           <button
@@ -1152,13 +1425,21 @@ export default function WaterworksGame() {
   );
 }
 
-function Overlay({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+function Overlay({
+  children,
+  wide,
+}: {
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
   return (
-    <div className="fixed inset-0 z-40 bg-slate-900/50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="ww-overlay fixed inset-0 z-40 bg-slate-900/50 flex items-center justify-center overflow-y-auto">
       <div
-        className={`ww-pop bg-[#fbf4e3] rounded-3xl p-5 w-full ${
+        className={`ww-dialog ww-pop bg-[#fbf4e3] rounded-3xl p-5 w-full ${
           wide ? "max-w-lg" : "max-w-sm"
-        } flex flex-col items-center gap-3 text-center shadow-2xl max-h-[90vh] overflow-y-auto`}
+        } flex flex-col items-center gap-3 text-center shadow-2xl overflow-y-auto`}
+        role="dialog"
+        aria-modal="true"
       >
         {children}
       </div>

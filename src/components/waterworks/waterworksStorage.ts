@@ -14,8 +14,8 @@
  * Save-in-place contract (the leads' bug findings): every build has a stable
  * local id; saving again UPSERTS that entry — renaming never forks a copy.
  */
-import type { Band, Cell, CellType } from "./waterworksSim";
-import { blankCell, COLS, ROWS } from "./waterworksSim";
+import type { Band, Cell, CellType, Progress } from "./waterworksSim";
+import { blankCell, COLS, HOUSES, ROWS, SOURCE_ROWS } from "./waterworksSim";
 
 export const GALLERY_KEY = "waterworks:gallery:v1";
 export const DRAFT_KEY = "waterworks:draft:v1";
@@ -54,12 +54,7 @@ export interface DraftState {
   name: string; // "" until named ("New River / 新河" shown in UI)
   band: Band;
   cells: SavedCell[][];
-  progress: {
-    anyFieldWateredEver: boolean;
-    twoFieldsInOneRun: boolean;
-    floodSeenEver: boolean;
-    runsCompleted: number;
-  };
+  progress: Progress;
 }
 
 export interface SeenFlags {
@@ -74,7 +69,9 @@ export interface SeenFlags {
 export function snapshotCells(grid: Cell[][]): SavedCell[][] {
   return grid.map((row) =>
     row.map((cell) =>
-      cell.type === "gate" ? { t: cell.type, g: cell.gateOpen } : { t: cell.type },
+      cell.type === "gate"
+        ? { t: cell.type, g: cell.gateOpen }
+        : { t: cell.type },
     ),
   );
 }
@@ -92,13 +89,26 @@ const CELL_TYPES = new Set<CellType>([
 ]);
 
 export function restoreCells(cells: SavedCell[][]): Cell[][] {
-  return cells.map((row) =>
+  const restored = cells.map((row) =>
     row.map((saved) => {
-      const cell = blankCell(CELL_TYPES.has(saved?.t) ? saved.t : "land");
+      const savedType = CELL_TYPES.has(saved?.t) ? saved.t : "land";
+      // Sources and houses are structural landmarks, not placeable parts.
+      // Normalize them below so a corrupt local entry cannot move or multiply
+      // either landmark.
+      const cell = blankCell(
+        savedType === "source" || savedType === "house" ? "land" : savedType,
+      );
       if (cell.type === "gate") cell.gateOpen = saved.g !== false;
       return cell;
     }),
   );
+  for (const r of SOURCE_ROWS) restored[r][0] = blankCell("source");
+  for (const [r, c] of HOUSES) restored[r][c] = blankCell("house");
+  return restored;
+}
+
+function isBand(value: unknown): value is Band {
+  return value === "k2" || value === "g35" || value === "g68";
 }
 
 function isValidCells(value: unknown): value is SavedCell[][] {
@@ -121,6 +131,9 @@ function isValidRiver(value: unknown): value is SavedRiver {
     typeof river.id === "string" &&
     river.id.length > 0 &&
     typeof river.name === "string" &&
+    isBand(river.band) &&
+    Number.isFinite(river.savedAt) &&
+    river.savedAt >= 0 &&
     isValidCells(river.cells)
   );
 }
@@ -128,7 +141,9 @@ function isValidRiver(value: unknown): value is SavedRiver {
 // ── Gallery ─────────────────────────────────────────────────────────────────
 
 /** Corrupt entries are SKIPPED (never crash); a corrupt blob reads empty. */
-export function loadGallery(storage: StorageLike | null = defaultStorage()): SavedRiver[] {
+export function loadGallery(
+  storage: StorageLike | null = defaultStorage(),
+): SavedRiver[] {
   if (!storage) return [];
   try {
     const raw = storage.getItem(GALLERY_KEY);
@@ -175,10 +190,13 @@ export function uniqueName(
       .filter((river) => river.id !== excludeId)
       .map((river) => river.name.trim().toLowerCase()),
   );
-  const trimmed = base.trim().slice(0, 24);
+  const truncate = (value: string, max: number) =>
+    Array.from(value).slice(0, max).join("");
+  const trimmed = truncate(base.trim(), 24);
   if (!trimmed || !taken.has(trimmed.toLowerCase())) return trimmed;
-  for (let n = 2; n < 100; n++) {
-    const candidate = `${trimmed} ${n}`.slice(0, 24);
+  for (let n = 2; n < 10_000; n++) {
+    const suffix = ` ${n}`;
+    const candidate = `${truncate(trimmed, 24 - Array.from(suffix).length)}${suffix}`;
     if (!taken.has(candidate.toLowerCase())) return candidate;
   }
   return trimmed;
@@ -190,16 +208,22 @@ export function newRiverId(): string {
 
 // ── Draft (autosave-on-navigate: nothing is ever lost) ─────────────────────
 
-export function loadDraft(storage: StorageLike | null = defaultStorage()): DraftState | null {
+export function loadDraft(
+  storage: StorageLike | null = defaultStorage(),
+): DraftState | null {
   if (!storage) return null;
   try {
     const raw = storage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as DraftState;
     if (!isValidCells(parsed?.cells)) return null;
-    if (parsed.band !== "k2" && parsed.band !== "g35" && parsed.band !== "g68") return null;
+    if (!isBand(parsed.band)) return null;
+    const runsCompleted = Number(parsed.progress?.runsCompleted);
     return {
-      id: typeof parsed.id === "string" ? parsed.id : null,
+      id:
+        typeof parsed.id === "string" && parsed.id.length > 0
+          ? parsed.id
+          : null,
       name: typeof parsed.name === "string" ? parsed.name : "",
       band: parsed.band,
       cells: parsed.cells,
@@ -207,7 +231,15 @@ export function loadDraft(storage: StorageLike | null = defaultStorage()): Draft
         anyFieldWateredEver: !!parsed.progress?.anyFieldWateredEver,
         twoFieldsInOneRun: !!parsed.progress?.twoFieldsInOneRun,
         floodSeenEver: !!parsed.progress?.floodSeenEver,
-        runsCompleted: Number(parsed.progress?.runsCompleted) || 0,
+        runsCompleted:
+          Number.isFinite(runsCompleted) && runsCompleted > 0
+            ? Math.floor(runsCompleted)
+            : 0,
+        completedTargetIds: Array.isArray(parsed.progress?.completedTargetIds)
+          ? parsed.progress.completedTargetIds.filter(
+              (id): id is string => typeof id === "string",
+            )
+          : [],
       },
     };
   } catch {
@@ -230,11 +262,29 @@ export function saveDraft(
 
 // ── First-run flags (tutorial arrows, help auto-open) ──────────────────────
 
-export function loadSeen(storage: StorageLike | null = defaultStorage()): SeenFlags {
+export function loadSeen(
+  storage: StorageLike | null = defaultStorage(),
+): SeenFlags {
   if (!storage) return {};
   try {
     const raw = storage.getItem(SEEN_KEY);
-    return raw ? ((JSON.parse(raw) as SeenFlags) ?? {}) : {};
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {};
+    const value = parsed as Record<string, unknown>;
+    return {
+      ...(typeof value.help === "boolean" ? { help: value.help } : {}),
+      ...(typeof value.placedArrow === "boolean"
+        ? { placedArrow: value.placedArrow }
+        : {}),
+      ...(typeof value.flowArrow === "boolean"
+        ? { flowArrow: value.flowArrow }
+        : {}),
+      ...(typeof value.swipeHint === "boolean"
+        ? { swipeHint: value.swipeHint }
+        : {}),
+    };
   } catch {
     return {};
   }

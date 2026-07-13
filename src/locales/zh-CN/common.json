@@ -1540,6 +1540,7 @@
       "save": "保存",
       "saved": "已保存 ✓",
       "savedLocalOff": "这台设备存满了——离开页面前你的河还在。",
+      "draftUnavailable": "自动保存不可用——请保持此页面打开，以免丢失你的河。",
       "levels": "关卡",
       "boardAria": "造河板",
       "cellAria": "第{{r}}行第{{c}}列：{{what}}",
@@ -1549,7 +1550,8 @@
       "clear": "清空",
       "caption": "💧放水 · 🌧️暴雨考验",
       "swipeHint": "左右滑动看更多",
-      "swipeHintDismiss": "关闭滑动提示"
+      "swipeHintDismiss": "关闭滑动提示",
+      "paletteAria": "河流部件"
     },
     "part": {
       "channel": "水渠",
@@ -1615,6 +1617,7 @@
       "open": "给我看看点子 📖",
       "title": "河的点子 📖",
       "use": "照这个造",
+      "locked": "🔒 请先解锁这些部件",
       "confirm": "替换我的河？",
       "close": "保留我的河"
     },

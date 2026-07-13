@@ -7,9 +7,11 @@ import {
   advanceProgress,
   applyPattern,
   blankCell,
+  completeMetTargets,
   currentTarget,
   freshGrid,
   newlyUnlockedParts,
+  patternIsAvailable,
   pickWonder,
   shouldInviteStorm,
   simulateRun,
@@ -18,12 +20,26 @@ import {
   unlockedParts,
   type Cell,
   type Progress,
+  type RunStats,
 } from "../waterworksSim";
 
 function tick(grid: Cell[][], n: number, raining = false): Cell[][] {
   let g = grid;
   for (let i = 0; i < n; i++) g = simulateTick(g, raining);
   return g;
+}
+
+function stats(overrides: Partial<RunStats> = {}): RunStats {
+  return {
+    fieldsWatered: 0,
+    fieldsPlaced: 0,
+    fieldsFloodedEver: 0,
+    housesFloodedEver: 0,
+    stormTested: false,
+    fishmouthUsed: false,
+    anyFlood: false,
+    ...overrides,
+  };
 }
 
 // ── Grid construction ───────────────────────────────────────────────────────
@@ -190,50 +206,60 @@ describe("unlock ladder", () => {
   });
 
   it("first watered field → 鱼嘴; two fields in one run → 水闸", () => {
-    const p1 = advanceProgress(FRESH_PROGRESS, {
-      fieldsWatered: 1,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    });
+    const p1 = advanceProgress(
+      FRESH_PROGRESS,
+      stats({
+        fieldsWatered: 1,
+        fieldsPlaced: 1,
+      }),
+    );
     expect(unlockedParts("k2", p1)).toContain("fishmouth");
     expect(unlockedParts("k2", p1)).not.toContain("gate");
-    const p2 = advanceProgress(p1, {
-      fieldsWatered: 2,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    });
+    const p2 = advanceProgress(
+      p1,
+      stats({
+        fieldsWatered: 2,
+        fieldsPlaced: 2,
+      }),
+    );
     expect(unlockedParts("k2", p2)).toContain("gate");
   });
 
   it("AMENDED TRIGGER: the protectors unlock on the first flood HOWEVER caused (a dry house-flood counts)", () => {
-    const dryHouseFlood = advanceProgress(FRESH_PROGRESS, {
-      fieldsWatered: 0,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 1,
-      anyFlood: true, // no rain involved
-    });
+    const dryHouseFlood = advanceProgress(
+      FRESH_PROGRESS,
+      stats({
+        housesFloodedEver: 1,
+        anyFlood: true, // no rain involved
+      }),
+    );
     const parts = unlockedParts("k2", dryHouseFlood);
     expect(parts).toContain("sandweir");
     expect(parts).toContain("bottleneck");
   });
 
   it("newlyUnlockedParts reports each unlock exactly once (the announce beat)", () => {
-    const p1 = advanceProgress(FRESH_PROGRESS, {
-      fieldsWatered: 1,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    });
+    const p1 = advanceProgress(
+      FRESH_PROGRESS,
+      stats({
+        fieldsWatered: 1,
+        fieldsPlaced: 1,
+      }),
+    );
     expect(newlyUnlockedParts("k2", FRESH_PROGRESS, p1)).toEqual(["fishmouth"]);
-    const p2 = advanceProgress(p1, {
-      fieldsWatered: 1,
-      fieldsFloodedEver: 1,
-      housesFloodedEver: 0,
-      anyFlood: true,
-    });
-    expect(newlyUnlockedParts("k2", p1, p2)).toEqual(["sandweir", "bottleneck"]);
+    const p2 = advanceProgress(
+      p1,
+      stats({
+        fieldsWatered: 1,
+        fieldsPlaced: 1,
+        fieldsFloodedEver: 1,
+        anyFlood: true,
+      }),
+    );
+    expect(newlyUnlockedParts("k2", p1, p2)).toEqual([
+      "sandweir",
+      "bottleneck",
+    ]);
     expect(newlyUnlockedParts("k2", p2, p2)).toEqual([]);
   });
 
@@ -241,12 +267,13 @@ describe("unlock ladder", () => {
     // A kid with one earned unlock hops k2 → g68 → k2. The Open band's
     // everything-unlocked palette is BAND-derived, not progress-derived, so
     // returning to Guided must show exactly the earned set — nothing more.
-    const earned = advanceProgress(FRESH_PROGRESS, {
-      fieldsWatered: 1,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    });
+    const earned = advanceProgress(
+      FRESH_PROGRESS,
+      stats({
+        fieldsWatered: 1,
+        fieldsPlaced: 1,
+      }),
+    );
     expect(unlockedParts("g68", earned)).toHaveLength(6); // Open: everything
     const backInGuided = unlockedParts("k2", earned); // same progress object
     expect(backInGuided).toEqual(["channel", "field", "fishmouth"]);
@@ -259,12 +286,10 @@ describe("unlock ladder", () => {
 
   it("REACHABILITY: Shíxī invites the storm after 3 floodless Guided runs", () => {
     let p: Progress = FRESH_PROGRESS;
-    const cleanRun = {
+    const cleanRun = stats({
       fieldsWatered: 1,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    };
+      fieldsPlaced: 1,
+    });
     for (let i = 0; i < 3; i++) {
       expect(shouldInviteStorm("k2", p)).toBe(false);
       p = advanceProgress(p, cleanRun);
@@ -279,24 +304,33 @@ describe("unlock ladder", () => {
 // ── Shíxī's wondering question ──────────────────────────────────────────────
 
 describe("pickWonder", () => {
-  const base = { fieldsWatered: 1, fieldsFloodedEver: 0, housesFloodedEver: 0, anyFlood: false };
+  const base = stats({ fieldsWatered: 1, fieldsPlaced: 1 });
 
   it("storm invitation outranks everything (reachability)", () => {
     expect(
-      pickWonder({ stats: { ...base, anyFlood: true }, newPartUsed: "fishmouth", inviteStorm: true }).key,
+      pickWonder({
+        stats: { ...base, anyFlood: true },
+        newPartUsed: "fishmouth",
+        inviteStorm: true,
+      }).key,
     ).toBe("waterworks.wonder.stormInvite");
   });
 
   it("a just-unlocked part used for the first time outranks the flood question", () => {
     expect(
-      pickWonder({ stats: { ...base, anyFlood: true }, newPartUsed: "sandweir", inviteStorm: false }).key,
+      pickWonder({
+        stats: { ...base, anyFlood: true },
+        newPartUsed: "sandweir",
+        inviteStorm: false,
+      }).key,
     ).toBe("waterworks.wonder.newPart.sandweir");
   });
 
   it("flood → the flood wondering; clean → clean/next; dry → dry/favorite", () => {
-    expect(pickWonder({ stats: { ...base, anyFlood: true }, inviteStorm: false }).key).toBe(
-      "waterworks.wonder.flood",
-    );
+    expect(
+      pickWonder({ stats: { ...base, anyFlood: true }, inviteStorm: false })
+        .key,
+    ).toBe("waterworks.wonder.flood");
     expect(pickWonder({ stats: base, inviteStorm: false }, () => 0.1).key).toBe(
       "waterworks.wonder.clean",
     );
@@ -316,18 +350,52 @@ describe("currentTarget", () => {
   it("suggests the first unmet, undismissed target for the band", () => {
     const t = currentTarget("k2", FRESH_PROGRESS, null, new Set());
     expect(t?.id).toBe("k2Water1");
-    const dismissed = currentTarget("k2", FRESH_PROGRESS, null, new Set(["k2Water1"]));
+    const dismissed = currentTarget(
+      "k2",
+      FRESH_PROGRESS,
+      null,
+      new Set(["k2Water1"]),
+    );
     expect(dismissed?.id).toBe("k2Water2"); // dismissible, never a requirement
   });
 
   it("advances as progress meets targets", () => {
-    const p = advanceProgress(FRESH_PROGRESS, {
-      fieldsWatered: 2,
-      fieldsFloodedEver: 0,
-      housesFloodedEver: 0,
-      anyFlood: false,
-    });
+    const p = advanceProgress(
+      FRESH_PROGRESS,
+      stats({
+        fieldsWatered: 2,
+        fieldsPlaced: 2,
+      }),
+    );
     expect(currentTarget("k2", p, null, new Set())?.id).toBe("k2RainSafe");
+  });
+
+  it("never credits Rain goals on a dry run or Fish Mouth goals without water reaching one", () => {
+    const dry = stats({ fieldsWatered: 3, fieldsPlaced: 3 });
+    let progress = completeMetTargets("g35", FRESH_PROGRESS, dry);
+    expect(progress.completedTargetIds).toEqual([]);
+
+    const rainyWithoutFishMouth = stats({
+      fieldsWatered: 3,
+      fieldsPlaced: 3,
+      stormTested: true,
+    });
+    progress = completeMetTargets("g35", FRESH_PROGRESS, rainyWithoutFishMouth);
+    expect(progress.completedTargetIds).not.toContain("g35Water3");
+  });
+
+  it("stores achieved targets so a later run cannot make them reappear", () => {
+    const successfulStorm = stats({
+      fieldsWatered: 3,
+      fieldsPlaced: 3,
+      stormTested: true,
+      fishmouthUsed: true,
+    });
+    const progress = completeMetTargets("g35", FRESH_PROGRESS, successfulStorm);
+    expect(progress.completedTargetIds).toEqual(
+      expect.arrayContaining(["g35Water3", "g35RainZeroFlood", "g35HousesDry"]),
+    );
+    expect(currentTarget("g35", progress, stats(), new Set())).toBeNull();
   });
 });
 
@@ -337,8 +405,14 @@ describe("pattern book", () => {
   it("GUARD: every pattern waters at least one field on a dry run", () => {
     for (const pattern of PATTERN_BOOK) {
       const { stats } = simulateRun(applyPattern("g68", pattern), false);
-      expect(stats.fieldsWatered, `pattern "${pattern.id}" must water a field`).toBeGreaterThanOrEqual(1);
-      expect(stats.anyFlood, `pattern "${pattern.id}" must not flood on a dry run`).toBe(false);
+      expect(
+        stats.fieldsWatered,
+        `pattern "${pattern.id}" must water a field`,
+      ).toBeGreaterThanOrEqual(1);
+      expect(
+        stats.anyFlood,
+        `pattern "${pattern.id}" must not flood on a dry run`,
+      ).toBe(false);
     }
   });
 
@@ -346,7 +420,10 @@ describe("pattern book", () => {
     for (const id of ["safeFarm", "stormProofVillage"]) {
       const pattern = PATTERN_BOOK.find((p) => p.id === id)!;
       const { stats } = simulateRun(applyPattern("g68", pattern), true);
-      expect(stats.fieldsFloodedEver, `"${id}" fields must stay safe in rain`).toBe(0);
+      expect(
+        stats.fieldsFloodedEver,
+        `"${id}" fields must stay safe in rain`,
+      ).toBe(0);
       expect(stats.fieldsWatered).toBeGreaterThanOrEqual(1);
     }
   });
@@ -362,6 +439,17 @@ describe("pattern book", () => {
       const g = applyPattern("k2", pattern);
       for (const r of SOURCE_ROWS) expect(g[r][0].type).toBe("source");
       for (const [r, c] of HOUSES) expect(g[r][c].type).toBe("house");
+    }
+  });
+
+  it("marks Guided patterns unavailable until every required part is unlocked", () => {
+    for (const pattern of PATTERN_BOOK) {
+      expect(
+        patternIsAvailable(pattern, unlockedParts("k2", FRESH_PROGRESS)),
+      ).toBe(false);
+      expect(
+        patternIsAvailable(pattern, unlockedParts("g35", FRESH_PROGRESS)),
+      ).toBe(true);
     }
   });
 });

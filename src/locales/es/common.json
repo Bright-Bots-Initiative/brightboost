@@ -1642,6 +1642,7 @@
       "save": "Guardar",
       "saved": "Guardado ✓",
       "savedLocalOff": "Este dispositivo está lleno — tu río se conserva hasta que salgas de la página.",
+      "draftUnavailable": "El guardado automático no está disponible — mantén esta pestaña abierta para no perder tu río.",
       "levels": "Niveles",
       "boardAria": "Tablero para construir el río",
       "cellAria": "Fila {{r}}, columna {{c}}: {{what}}",
@@ -1651,7 +1652,8 @@
       "clear": "Limpiar",
       "caption": "💧 suelta el agua · 🌧️ prueba de tormenta",
       "swipeHint": "Desliza para ver más",
-      "swipeHintDismiss": "Cerrar la pista de deslizar"
+      "swipeHintDismiss": "Cerrar la pista de deslizar",
+      "paletteAria": "Piezas del río"
     },
     "part": {
       "channel": "Canal 水渠",
@@ -1717,6 +1719,7 @@
       "open": "Muéstrame ideas 📖",
       "title": "Ideas de ríos 📖",
       "use": "Construir desde esta",
+      "locked": "🔒 Desbloquea estas piezas primero",
       "confirm": "¿Reemplazar mi río?",
       "close": "Conservar mi río"
     },

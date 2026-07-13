@@ -30,7 +30,8 @@ export default function Waterworks() {
   useEffect(() => {
     const prior = document.documentElement.lang;
     const apply = () => {
-      document.documentElement.lang = i18n.resolvedLanguage || i18n.language || "en";
+      document.documentElement.lang =
+        i18n.resolvedLanguage || i18n.language || "en";
     };
     apply();
     i18n.on("languageChanged", apply);
@@ -42,17 +43,17 @@ export default function Waterworks() {
 
   return (
     <div
-      className="min-h-screen text-[#3a2e22]"
+      className="ww-page min-h-screen text-[#3a2e22]"
       style={{
         fontFamily: FONT_STACK,
         background: "radial-gradient(circle at 30% 10%, #fdf3dc, #f3e6c4)",
       }}
     >
-      <header className="flex items-center gap-3 px-4 py-3 max-w-5xl mx-auto">
+      <header className="ww-shell-header flex items-center gap-3 px-4 py-3 max-w-5xl mx-auto">
         <span className="text-4xl" aria-hidden>
           🦏
         </span>
-        <div className="flex-1 min-w-0">
+        <div className="ww-shell-title flex-1 min-w-0">
           <h1 className="text-xl font-black leading-tight tracking-wide">
             石犀工坊 · Waterworks
           </h1>
@@ -63,7 +64,9 @@ export default function Waterworks() {
             })}
           </p>
         </div>
-        <LanguageToggle />
+        <div className="ww-language">
+          <LanguageToggle />
+        </div>
       </header>
       <main>
         <WaterworksGame />

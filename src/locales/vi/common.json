@@ -1541,6 +1541,7 @@
       "save": "Save",
       "saved": "Saved ✓",
       "savedLocalOff": "This device is full — your river stays until you leave the page.",
+      "draftUnavailable": "Autosave is unavailable — keep this tab open so your river isn't lost.",
       "levels": "Levels",
       "boardAria": "River building board",
       "cellAria": "Row {{r}}, column {{c}}: {{what}}",
@@ -1550,7 +1551,8 @@
       "clear": "Clear",
       "caption": "💧 run the water · 🌧️ storm test",
       "swipeHint": "Swipe to see more",
-      "swipeHintDismiss": "Dismiss swipe hint"
+      "swipeHintDismiss": "Dismiss swipe hint",
+      "paletteAria": "River parts"
     },
     "part": {
       "channel": "Channel 水渠",
@@ -1616,6 +1618,7 @@
       "open": "Show me ideas 📖",
       "title": "River ideas 📖",
       "use": "Build from this",
+      "locked": "🔒 Unlock these parts first",
       "confirm": "Replace my river?",
       "close": "Keep my river"
     },

@@ -105,7 +105,12 @@ export type Tool = PartType | "erase";
  * (erase to remove it) · tapping a cell that already holds the selected part
  * removes it · otherwise the selected part is placed.
  */
-export function tapCell(grid: Cell[][], r: number, c: number, tool: Tool): Cell[][] {
+export function tapCell(
+  grid: Cell[][],
+  r: number,
+  c: number,
+  tool: Tool,
+): Cell[][] {
   const cell = grid[r]?.[c];
   if (!cell) return grid;
   if (cell.type === "source" || cell.type === "house") return grid;
@@ -194,8 +199,10 @@ export function simulateTick(grid: Cell[][], raining: boolean): Cell[][] {
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++) {
         const cell = grid[r][c];
-        if (cell.type === "field") next[r][c] = Math.min(MAX_WATER, next[r][c] + 2);
-        else if (isConductor(cell)) next[r][c] = Math.min(MAX_WATER, next[r][c] + 1);
+        if (cell.type === "field")
+          next[r][c] = Math.min(MAX_WATER, next[r][c] + 2);
+        else if (isConductor(cell))
+          next[r][c] = Math.min(MAX_WATER, next[r][c] + 1);
       }
   }
 
@@ -243,7 +250,13 @@ export function simulateTick(grid: Cell[][], raining: boolean): Cell[][] {
     ] as const) {
       const nr = r + dr;
       const nc = c + dc;
-      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && out[nr][nc].water >= MAX_WATER)
+      if (
+        nr >= 0 &&
+        nr < ROWS &&
+        nc >= 0 &&
+        nc < COLS &&
+        out[nr][nc].water >= MAX_WATER
+      )
         flooded = true;
     }
     out[r][c] = { ...out[r][c], flooded };
@@ -268,8 +281,14 @@ export function resetWater(grid: Cell[][]): Cell[][] {
 
 export interface RunStats {
   fieldsWatered: number;
+  /** Number of fields on the board, used by "keep every field green" goals. */
+  fieldsPlaced: number;
   fieldsFloodedEver: number;
   housesFloodedEver: number;
+  /** Whether Rain was enabled for this run. Storm goals must never pass on a dry run. */
+  stormTested: boolean;
+  /** True only when water actually reached a Fish Mouth during the run. */
+  fishmouthUsed: boolean;
   /** any field or house flooded at any tick — the unlock trigger ("first
    *  flood however caused") */
   anyFlood: boolean;
@@ -288,19 +307,27 @@ export function simulateRun(
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++) {
         const cell = g[r][c];
-        if (cell.type === "field" && cell.flooded) floodedFields.add(`${r},${c}`);
-        if (cell.type === "house" && cell.flooded) floodedHouses.add(`${r},${c}`);
+        if (cell.type === "field" && cell.flooded)
+          floodedFields.add(`${r},${c}`);
+        if (cell.type === "house" && cell.flooded)
+          floodedHouses.add(`${r},${c}`);
       }
   }
   const fieldsWatered = g
     .flat()
     .filter((cell) => cell.type === "field" && cell.watered).length;
+  const fieldsPlaced = g.flat().filter((cell) => cell.type === "field").length;
   return {
     grid: g,
     stats: {
       fieldsWatered,
+      fieldsPlaced,
       fieldsFloodedEver: floodedFields.size,
       housesFloodedEver: floodedHouses.size,
+      stormTested: raining,
+      fishmouthUsed: g
+        .flat()
+        .some((cell) => cell.type === "fishmouth" && cell.water > 0),
       anyFlood: floodedFields.size > 0 || floodedHouses.size > 0,
     },
   };
@@ -316,6 +343,8 @@ export interface Progress {
   /** a flood happened, HOWEVER caused (Rain not required) */
   floodSeenEver: boolean;
   runsCompleted: number;
+  /** Soft suggestions already achieved. Completion never regresses after a later run. */
+  completedTargetIds: string[];
 }
 
 export const FRESH_PROGRESS: Progress = {
@@ -323,6 +352,7 @@ export const FRESH_PROGRESS: Progress = {
   twoFieldsInOneRun: false,
   floodSeenEver: false,
   runsCompleted: 0,
+  completedTargetIds: [],
 };
 
 export const GUIDED_BASE: PartType[] = ["channel", "field"];
@@ -333,7 +363,13 @@ export function advanceProgress(p: Progress, run: RunStats): Progress {
     twoFieldsInOneRun: p.twoFieldsInOneRun || run.fieldsWatered >= 2,
     floodSeenEver: p.floodSeenEver || run.anyFlood,
     runsCompleted: p.runsCompleted + 1,
+    completedTargetIds: [...p.completedTargetIds],
   };
+}
+
+export function completeTarget(p: Progress, targetId: string): Progress {
+  if (p.completedTargetIds.includes(targetId)) return p;
+  return { ...p, completedTargetIds: [...p.completedTargetIds, targetId] };
 }
 
 /** Guided unlock ladder: 鱼嘴 (first watered field) → 水闸 (2 fields, one
@@ -349,7 +385,11 @@ export function unlockedParts(band: Band, p: Progress): PartType[] {
 
 /** Which parts just unlocked between two progress states — drives the
  *  announce beat (each one announces itself; silent unlocks are forbidden). */
-export function newlyUnlockedParts(band: Band, before: Progress, after: Progress): PartType[] {
+export function newlyUnlockedParts(
+  band: Band,
+  before: Progress,
+  after: Progress,
+): PartType[] {
   const prev = new Set(unlockedParts(band, before));
   return unlockedParts(band, after).filter((part) => !prev.has(part));
 }
@@ -385,11 +425,15 @@ export function pickWonder(
   rand: () => number = Math.random,
 ): WonderPrompt {
   if (ctx.inviteStorm) return { key: "waterworks.wonder.stormInvite" };
-  if (ctx.newPartUsed) return { key: `waterworks.wonder.newPart.${ctx.newPartUsed}` };
+  if (ctx.newPartUsed)
+    return { key: `waterworks.wonder.newPart.${ctx.newPartUsed}` };
   if (ctx.stats.anyFlood) return { key: "waterworks.wonder.flood" };
   if (ctx.stats.fieldsWatered >= 1) {
     return rand() < 0.5
-      ? { key: "waterworks.wonder.clean", params: { count: ctx.stats.fieldsWatered } }
+      ? {
+          key: "waterworks.wonder.clean",
+          params: { count: ctx.stats.fieldsWatered },
+        }
       : { key: "waterworks.wonder.next" };
   }
   return rand() < 0.5
@@ -411,31 +455,78 @@ export const SOFT_TARGETS: SoftTarget[] = [
   {
     id: "k2RainSafe",
     band: "k2",
-    met: (p, last) => p.floodSeenEver && !!last && last.fieldsWatered >= 1 && !last.anyFlood,
+    met: (_p, last) =>
+      !!last &&
+      last.stormTested &&
+      last.fieldsPlaced > 0 &&
+      last.fieldsWatered === last.fieldsPlaced &&
+      !last.anyFlood,
   },
-  { id: "g35Water3", band: "g35", met: (_p, last) => !!last && last.fieldsWatered >= 3 },
+  {
+    id: "g35Water3",
+    band: "g35",
+    met: (_p, last) => !!last && last.fieldsWatered >= 3 && last.fishmouthUsed,
+  },
   {
     id: "g35RainZeroFlood",
     band: "g35",
-    met: (_p, last) => !!last && last.fieldsWatered >= 1 && last.fieldsFloodedEver === 0,
+    met: (_p, last) =>
+      !!last && last.stormTested && last.fieldsWatered >= 1 && !last.anyFlood,
   },
   {
     id: "g35HousesDry",
     band: "g35",
-    met: (_p, last) => !!last && last.fieldsWatered >= 1 && last.housesFloodedEver === 0,
+    met: (_p, last) =>
+      !!last &&
+      last.stormTested &&
+      last.fieldsWatered >= 1 &&
+      last.housesFloodedEver === 0,
   },
-  { id: "g68Storm", band: "g68", met: (_p, last) => !!last && last.fieldsWatered >= 2 && !last.anyFlood },
+  {
+    id: "g68Storm",
+    band: "g68",
+    met: (_p, last) =>
+      !!last &&
+      last.stormTested &&
+      last.fieldsPlaced > 0 &&
+      last.fieldsWatered === last.fieldsPlaced &&
+      !last.anyFlood,
+  },
 ];
+
+function targetAlreadyCompleted(targetId: string, p: Progress): boolean {
+  if (p.completedTargetIds.includes(targetId)) return true;
+  // Backward-compatible with drafts created before target IDs were stored.
+  if (targetId === "k2Water1") return p.anyFieldWateredEver;
+  if (targetId === "k2Water2") return p.twoFieldsInOneRun;
+  return false;
+}
+
+/** Store every suggestion genuinely achieved by this run. This makes soft
+ * target progress monotonic even when one ambitious build satisfies more
+ * than one idea at once. */
+export function completeMetTargets(
+  band: Band,
+  p: Progress,
+  stats: RunStats,
+): Progress {
+  return SOFT_TARGETS.filter(
+    (target) => target.band === band && target.met(p, stats),
+  ).reduce((next, target) => completeTarget(next, target.id), p);
+}
 
 export function currentTarget(
   band: Band,
   p: Progress,
-  last: RunStats | null,
+  _last: RunStats | null,
   dismissed: ReadonlySet<string>,
 ): SoftTarget | null {
   return (
     SOFT_TARGETS.find(
-      (target) => target.band === band && !dismissed.has(target.id) && !target.met(p, last),
+      (target) =>
+        target.band === band &&
+        !dismissed.has(target.id) &&
+        !targetAlreadyCompleted(target.id, p),
     ) ?? null
   );
 }
@@ -452,6 +543,16 @@ export interface RiverPattern {
   id: string;
   /** locale-keyed names resolve via waterworks.pattern.<id> */
   parts: TrackedPart[];
+}
+
+/** Guided patterns may be previewed at any time, but cannot inject parts the
+ * child has not earned yet. */
+export function patternIsAvailable(
+  pattern: RiverPattern,
+  availableParts: readonly PartType[],
+): boolean {
+  const available = new Set(availableParts);
+  return pattern.parts.every((part) => available.has(part.type));
 }
 
 export const PATTERN_BOOK: RiverPattern[] = [

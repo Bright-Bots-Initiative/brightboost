@@ -26,6 +26,7 @@
 | build.save | Save | 保存 | |
 | build.saved | Saved ✓ | 已保存 ✓ | |
 | build.savedLocalOff | This device is full — your river stays until you leave the page. | 这台设备存满了——离开页面前你的河还在。 | ⚠️ phrasing of quota message for kids |
+| build.draftUnavailable | Autosave is unavailable — keep this tab open so your river isn't lost. | 自动保存不可用——请保持此页面打开，以免丢失你的河。 | ⚠️ phrasing of storage warning for kids |
 | build.levels | Levels | 关卡 | |
 | build.boardAria | River building board | 造河板 | ⚠️ coinage; screen-reader only |
 | build.cellAria | Row {{r}}, column {{c}}: {{what}} | 第{{r}}行第{{c}}列：{{what}} | |
@@ -36,6 +37,7 @@
 | build.caption | 💧 run the water · 🌧️ storm test | 💧放水 · 🌧️暴雨考验 | |
 | build.swipeHint | Swipe to see more | 左右滑动看更多 | |
 | build.swipeHintDismiss | Dismiss swipe hint | 关闭滑动提示 | |
+| build.paletteAria | River parts | 河流部件 | screen-reader only |
 | name.title | Name your river! | 给你的河起个名字！ | |
 | name.placeholder | New River | 我的河 | |
 | name.save | Save it! | 保存！ | |
@@ -105,6 +107,7 @@
 | patterns.open | Show me ideas 📖 | 给我看看点子 📖 | |
 | patterns.title | River ideas 📖 | 河的点子 📖 | |
 | patterns.use | Build from this | 照这个造 | |
+| patterns.locked | Unlock these parts first | 请先解锁这些部件 | |
 | patterns.confirm | Replace my river? | 替换我的河？ | |
 | patterns.close | Keep my river | 保留我的河 | |
 | pattern.splitRiver | The Split River | 两条河 | |

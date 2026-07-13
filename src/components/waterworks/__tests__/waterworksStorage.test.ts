@@ -9,6 +9,7 @@ import {
   restoreCells,
   saveDraft,
   saveRiver,
+  saveSeen,
   snapshotCells,
   uniqueName,
   type SavedRiver,
@@ -68,6 +69,17 @@ describe("snapshot / restore", () => {
     cells[0][0] = { t: "volcano" as never };
     expect(restoreCells(cells)[0][0].type).toBe("land");
   });
+
+  it("normalizes fixed sources and houses even when a local snapshot moved them", () => {
+    const cells = snapshotCells(freshGrid("k2"));
+    cells[0][0] = { t: "source" };
+    cells[3][0] = { t: "field" };
+    cells[1][10] = { t: "channel" };
+    const restored = restoreCells(cells);
+    expect(restored[0][0].type).toBe("land");
+    expect(restored[3][0].type).toBe("source");
+    expect(restored[1][10].type).toBe("house");
+  });
 });
 
 describe("gallery — resilience (design §5)", () => {
@@ -79,11 +91,29 @@ describe("gallery — resilience (design §5)", () => {
   it("a corrupt ENTRY is skipped; valid neighbors survive", () => {
     const good = river("a", "Good River");
     const s = fakeStorage({
-      [GALLERY_KEY]: JSON.stringify([good, { junk: true }, null, 42, { id: "b" }]),
+      [GALLERY_KEY]: JSON.stringify([
+        good,
+        { junk: true },
+        null,
+        42,
+        { id: "b" },
+      ]),
     });
     const loaded = loadGallery(s);
     expect(loaded).toHaveLength(1);
     expect(loaded[0].id).toBe("a");
+  });
+
+  it("skips entries with an invalid band or timestamp", () => {
+    const good = river("a", "Good River");
+    const s = fakeStorage({
+      [GALLERY_KEY]: JSON.stringify([
+        good,
+        { ...good, id: "bad-band", band: "k9" },
+        { ...good, id: "bad-time", savedAt: "yesterday" },
+      ]),
+    });
+    expect(loadGallery(s).map((entry) => entry.id)).toEqual(["a"]);
   });
 
   it("QUOTA DEGRADATION is graceful: saveRiver returns false and never throws", () => {
@@ -103,7 +133,9 @@ describe("gallery — save-in-place (the leads' fork bug, fixed)", () => {
   it("saving the same id twice UPSERTS — rename never forks a new copy", () => {
     const s = fakeStorage();
     expect(saveRiver(river("a", "小河"), s)).toBe(true);
-    expect(saveRiver({ ...river("a", "小河 improved"), savedAt: 2 }, s)).toBe(true);
+    expect(saveRiver({ ...river("a", "小河 improved"), savedAt: 2 }, s)).toBe(
+      true,
+    );
     const gallery = loadGallery(s);
     expect(gallery).toHaveLength(1);
     expect(gallery[0].name).toBe("小河 improved");
@@ -132,6 +164,13 @@ describe("uniqueName — duplicate guard", () => {
   it("a build renaming to its OWN current name is not a duplicate", () => {
     expect(uniqueName("小河", gallery, "a")).toBe("小河");
   });
+
+  it("reserves room for a suffix when a duplicate name is already 24 characters", () => {
+    const maxName = "abcdefghijklmnopqrstuvwx";
+    const result = uniqueName(maxName, [river("max", maxName)]);
+    expect(result).toBe("abcdefghijklmnopqrstuv 2");
+    expect(Array.from(result)).toHaveLength(24);
+  });
 });
 
 describe("draft — autosave-on-navigate", () => {
@@ -148,6 +187,7 @@ describe("draft — autosave-on-navigate", () => {
           twoFieldsInOneRun: false,
           floodSeenEver: true,
           runsCompleted: 4,
+          completedTargetIds: ["k2Water1"],
         },
       },
       s,
@@ -157,13 +197,16 @@ describe("draft — autosave-on-navigate", () => {
     expect(draft?.band).toBe("k2");
     expect(draft?.progress.floodSeenEver).toBe(true);
     expect(draft?.progress.runsCompleted).toBe(4);
+    expect(draft?.progress.completedTargetIds).toEqual(["k2Water1"]);
     expect(draft?.id).toBeNull();
   });
 
   it("rejects a corrupt or wrong-shape draft as null (fresh start, no crash)", () => {
     expect(loadDraft(fakeStorage({ [DRAFT_KEY]: "]]]" }))).toBeNull();
     expect(
-      loadDraft(fakeStorage({ [DRAFT_KEY]: JSON.stringify({ band: "k9", cells: [] }) })),
+      loadDraft(
+        fakeStorage({ [DRAFT_KEY]: JSON.stringify({ band: "k9", cells: [] }) }),
+      ),
     ).toBeNull();
   });
 });
@@ -171,7 +214,8 @@ describe("draft — autosave-on-navigate", () => {
 describe("seen flags", () => {
   it("corrupt flags read as empty; saving never throws on a full device", () => {
     expect(loadSeen(fakeStorage({ "waterworks:seen:v1": "{bad" }))).toEqual({});
+    expect(loadSeen(fakeStorage({ "waterworks:seen:v1": "5" }))).toEqual({});
     const s = fullStorage();
-    expect(() => loadSeen(s)).not.toThrow();
+    expect(() => saveSeen({ help: true }, s)).not.toThrow();
   });
 });
