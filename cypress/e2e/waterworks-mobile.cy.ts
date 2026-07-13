@@ -41,10 +41,14 @@ function expectNoDocumentOverflow() {
   cy.document().then((doc) => {
     const root = doc.documentElement;
     const body = doc.body;
+    // clientWidth excludes the vertical scrollbar in desktop Chrome. Compare
+    // against the CSS viewport so a 15px scrollbar is not misreported as
+    // horizontal overflow at the 320px mobile breakpoint.
+    const viewportWidth = doc.defaultView?.innerWidth ?? root.clientWidth;
     expect(root.scrollWidth, "document width").to.be.at.most(
-      root.clientWidth + 1,
+      viewportWidth + 1,
     );
-    expect(body.scrollWidth, "body width").to.be.at.most(root.clientWidth + 1);
+    expect(body.scrollWidth, "body width").to.be.at.most(viewportWidth + 1);
   });
 }
 
