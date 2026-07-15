@@ -28,6 +28,17 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8",
+      // V8 coverage .tmp writes fail with ENOENT when the repo path contains
+      // spaces (Windows local clones under "Programming Projects/…"). CI paths
+      // have no spaces — keep the default ./coverage there (G-207).
+      ...( /\s/.test(__dirname)
+        ? {
+            reportsDirectory: path.join(
+              process.env.TEMP || process.env.TMP || "/tmp",
+              "brightboost-vitest-coverage",
+            ),
+          }
+        : {}),
       include: [
         "src/components/activities/quiz/**",
         "cypress/support/**/*.ts",
