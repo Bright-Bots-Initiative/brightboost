@@ -6,8 +6,12 @@ import path from "path";
 // Repo paths with spaces (Windows "Programming Projects/…") break V8 coverage
 // .tmp writes. Use a per-process reports dir under os.tmpdir() so concurrent
 // runs don't share/clean each other's coverage/.tmp (G-207).
+// Spec §14.3 / G-007: CI (no spaces) keeps default ./coverage + parallel files —
+// these overrides must not change CI behavior.
 const pathHasSpaces = /\s/.test(__dirname);
-const runningCoverage = process.argv.some((a) => a.includes("coverage"));
+const runningCoverage = process.argv.some(
+  (arg) => arg === "--coverage" || arg.startsWith("--coverage."),
+);
 const coverageDirOverride = pathHasSpaces
   ? {
       reportsDirectory: path.join(
