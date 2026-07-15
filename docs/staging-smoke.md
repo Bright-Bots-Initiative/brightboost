@@ -6,13 +6,13 @@ This repo includes a minimal Cypress smoke test that verifies:
 - The live AWS API is reachable
 - Optional: a guarded checkpoint POST works with dev headers enabled
 
-Secrets required (GitHub repository secrets):
+Secrets / env required (see `docs/ci.md` for the full table):
 
-- CYPRESS_SWA_URL: SWA site URL (e.g., https://example.azurestaticapps.net)
-- VITE_API_BASE: AWS API base (e.g., https://4gjaltqo31.execute-api.us-east-1.amazonaws.com)
+- `CYPRESS_SWA_URL`: deployed staging / SWA URL (e.g. `https://brightboost-staging.up.railway.app`)
+- `VITE_API_BASE`: API base (same host as SWA in the Railway single-service setup)
 - Optional:
-  - CYPRESS_ALLOW_DEV_HEADERS=1 to enable the POST checkpoint test
-  - CYPRESS_STUDENT_ID and CYPRESS_LESSON_ID (optional; lessonId auto-fetched)
+  - `CYPRESS_ALLOW_DEV_HEADERS=1` to enable the POST checkpoint test
+  - `CYPRESS_STUDENT_ID` and `CYPRESS_LESSON_ID` (optional; lessonId auto-fetched)
 
 Run locally (spec lives at `cypress/e2e/staging/smoke.cy.ts`):
 
