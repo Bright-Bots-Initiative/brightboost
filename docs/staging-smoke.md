@@ -2,8 +2,8 @@
 
 This repo includes a minimal Cypress smoke test that verifies:
 
-- The deployed SWA site loads
-- The live AWS API is reachable
+- The deployed staging / SWA site loads
+- The live API is reachable (`VITE_API_BASE`)
 - Optional: a guarded checkpoint POST works with dev headers enabled
 
 Secrets / env required (see `docs/ci.md` for the full table):
