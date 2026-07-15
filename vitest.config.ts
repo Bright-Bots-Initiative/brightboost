@@ -1,6 +1,21 @@
+import { tmpdir } from "node:os";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
+
+// Repo paths with spaces (Windows "Programming Projects/…") break V8 coverage
+// .tmp writes. Use a per-process reports dir under os.tmpdir() so concurrent
+// runs don't share/clean each other's coverage/.tmp (G-207).
+const pathHasSpaces = /\s/.test(__dirname);
+const runningCoverage = process.argv.some((a) => a.includes("coverage"));
+const coverageDirOverride = pathHasSpaces
+  ? {
+      reportsDirectory: path.join(
+        tmpdir(),
+        `brightboost-vitest-coverage-${process.pid}`,
+      ),
+    }
+  : {};
 
 export default defineConfig({
   plugins: [react()],
@@ -26,19 +41,12 @@ export default defineConfig({
       "**/.{idea,git,cache,output,temp}/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
     ],
+    // Serialize file runs during coverage on spaced paths — reduces ENOENT
+    // races writing/reading coverage/.tmp (vitest#9758). Leave unit fast otherwise.
+    ...(pathHasSpaces && runningCoverage ? { fileParallelism: false } : {}),
     coverage: {
       provider: "v8",
-      // V8 coverage .tmp writes fail with ENOENT when the repo path contains
-      // spaces (Windows local clones under "Programming Projects/…"). CI paths
-      // have no spaces — keep the default ./coverage there (G-207).
-      ...( /\s/.test(__dirname)
-        ? {
-            reportsDirectory: path.join(
-              process.env.TEMP || process.env.TMP || "/tmp",
-              "brightboost-vitest-coverage",
-            ),
-          }
-        : {}),
+      ...coverageDirOverride,
       include: [
         "src/components/activities/quiz/**",
         "cypress/support/**/*.ts",

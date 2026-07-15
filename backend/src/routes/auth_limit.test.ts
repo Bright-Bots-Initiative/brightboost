@@ -2,12 +2,15 @@ import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import app from "../server";
 
-// Mock Prisma to avoid DB calls
+// Mock Prisma to avoid DB calls (include auditLog — login path calls logAudit)
 vi.mock("../utils/prisma", () => ({
   default: {
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: "audit-test" }),
     },
   },
 }));
