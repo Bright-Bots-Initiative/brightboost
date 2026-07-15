@@ -14,11 +14,16 @@ Secrets required (GitHub repository secrets):
   - CYPRESS_ALLOW_DEV_HEADERS=1 to enable the POST checkpoint test
   - CYPRESS_STUDENT_ID and CYPRESS_LESSON_ID (optional; lessonId auto-fetched)
 
-Run locally:
-CYPRESS_SWA_URL=https://<swa-url> VITE_API_BASE=https://4gjaltqo31.execute-api.us-east-1.amazonaws.com npm run cy:open
+Run locally (spec lives at `cypress/e2e/staging/smoke.cy.ts`):
+
+```bash
+CYPRESS_SWA_URL=https://<swa-url> VITE_API_BASE=https://<api-base> npm run test:e2e:staging
+```
+
+Missing required env throws via `requireEnv` (never a silent pass). See `docs/ci.md`.
 
 Notes:
 
-- Base URL is read from CYPRESS_SWA_URL in cypress.config.ts
-- Cypress picks up both CYPRESS\_\* and process env vars
-- On failure, CI uploads screenshots/videos as artifacts
+- Base URL is read from `CYPRESS_SWA_URL` in `cypress.config.ts` when set; otherwise defaults to `http://localhost:5173` (boot Vite for collection even when tests will throw)
+- Cypress picks up both `CYPRESS_*` and process env vars
+- Artifact upload from CI is out of scope for #677 (#671/#648)
