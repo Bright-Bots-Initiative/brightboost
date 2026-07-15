@@ -23,7 +23,9 @@ dist-ssr
 *.sw?
 
 *storybook.log
-.env
+.env*
+!.env.example
+!backend/.env.example
 .aws-sam
 storybook-static/
 storybook-static/
