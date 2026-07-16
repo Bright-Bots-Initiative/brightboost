@@ -26,8 +26,9 @@
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | Yes | Supabase Postgres connection string (pooled) |
-| `DIRECT_URL` | Yes | Supabase direct connection string |
-| `RUN_SEED` | No | Optional deploy-time seed gate; only exact `true` runs seed |
+| `DIRECT_URL` | Yes | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
+| `RUN_SEED` | No | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip) |
+| `RUN_GAMIFICATION_BACKFILL` | No | Existing sibling gate; same exact `"true"` convention as `RUN_SEED` |
 | `SESSION_SECRET` | Yes | JWT signing secret — must NOT be the default |
 | `NODE_ENV` | Yes | `production` |
 | `PORT` | Auto | Railway sets this automatically |
@@ -42,26 +43,26 @@
 
 ## RUN_SEED Runbook (Production)
 
-`predeploy.sh` treats seeding as opt-in:
+`predeploy.sh` treats seeding as opt-in (same shape as `RUN_GAMIFICATION_BACKFILL`):
 
-- Only `RUN_SEED=true` runs `node ../prisma/seed.cjs`.
-- Unset (or any value other than exact `true`) skips seeding.
+- Only the exact string `RUN_SEED=true` runs the seed (`node "$SEED_FILE"`, typically `../prisma/seed.cjs`).
+- Unset (the default) skips seeding.
+- Values like `1`, `yes`, or `TRUE` do **not** enable the seed — exact `"true"` only (same rule as `RUN_GAMIFICATION_BACKFILL`).
 
-This mirrors the existing `RUN_GAMIFICATION_BACKFILL=true` convention: explicit string match, no truthy shortcuts.
-
-Use `RUN_SEED` only when bootstrapping a fresh/empty production database.
+Use `RUN_SEED` only when bootstrapping a fresh/empty production database — essentially never otherwise.
 
 1. Set `RUN_SEED=true` on the Railway backend service.
 2. Trigger a deploy.
-3. Verify deploy logs include the seed run path.
+3. Confirm logs include: `predeploy: RUN_SEED=true — running seed from …`
 4. Clear `RUN_SEED` immediately after the successful bootstrap.
-5. Trigger (or observe) the next deploy and verify logs show the skip path.
+5. Trigger (or observe) the next deploy and confirm logs include:  
+   `predeploy: skipping seed (RUN_SEED not set — see docs/deploy.md, issue #651)`
 
 Warnings:
 
-- The seed fixture rewrites demo-account password hashes when those users already exist.
-- In non-production environments, seed cleanup behavior can wipe/reset data.
-- Do not set `RUN_SEED=true` against a populated production database unless that data mutation is explicitly intended.
+- The seed find-or-creates demo accounts **and refreshes their password hashes** on every run (`prisma/seed.cjs` — "Always refresh password hash on seed").
+- When `NODE_ENV !== "production"`, seed cleanup can wipe/reset data.
+- Do not set `RUN_SEED=true` against a populated production database unless you intend both.
 
 Local dev and CI are unchanged: neither path calls `predeploy.sh`; contributors should continue running seed directly (`npm run seed`) when needed. If we add a future DB-backed CI job, it should call seed directly and must not route through `predeploy.sh`.
 

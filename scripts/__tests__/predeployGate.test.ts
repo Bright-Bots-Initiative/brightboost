@@ -269,6 +269,8 @@ describe("predeploy RUN_SEED gate", () => {
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
+      // Else branch still runs (mandatory skip log — G-103); only exact "true" enables.
+      expect(result.stdout).toContain(SKIP_LINE);
     });
   });
 
@@ -325,6 +327,7 @@ describe("predeploy RUN_SEED gate", () => {
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
+      expect(result.stdout).toContain(SKIP_LINE);
       expect(hasBackfillCall(result.calls)).toBe(true);
     });
   });
