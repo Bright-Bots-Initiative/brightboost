@@ -103,6 +103,15 @@ const validMoveMeasure = validByKey.move_measure as {
   exitCorrect: boolean;
 };
 
+/** A2-01 inventoried gameKeys (remember.md) — T2-1-02 must cover each. */
+const A2_01_KEYS = [
+  "move_measure",
+  "quantum_quest",
+  "tank_trek",
+  "qualify_tune_race",
+  "boost_path_planner",
+] as const satisfies readonly RegisteredGameKey[];
+
 const REGISTRY_KEYS = Object.keys(GAME_SPECIFIC_SCHEMAS) as RegisteredGameKey[];
 
 /** Isolate each request under the test gameActionLimiter (5/IP). */
@@ -174,9 +183,12 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
-  it.each(REGISTRY_KEYS)(
+  it.each(A2_01_KEYS)(
     "T2-1-02 / AC-1: round-trip Progress.gameSpecific deep-equals what was sent for %s",
     async (gameKey) => {
+      // Guard: registry must still include every A2-01 sender (inventory is authoritative).
+      expect(REGISTRY_KEYS).toContain(gameKey);
+
       const payload = validByKey[gameKey];
       const expected = GAME_SPECIFIC_SCHEMAS[gameKey].parse(payload);
 
@@ -210,6 +222,10 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       expect(res.body.progress).not.toHaveProperty("gameSpecific");
     },
   );
+
+  it("T2-1-02: registry keys equal the A2-01 inventory (no missing/extra senders)", () => {
+    expect([...REGISTRY_KEYS].sort()).toEqual([...A2_01_KEYS].sort());
+  });
 
   it("T2-1-03 / E-1: POST without gameSpecific → 200, column null (omitted on create), no error", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
@@ -457,7 +473,8 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(body).toContain("move_measure");
   });
 
-  it("E-11: deeply nested gameSpecific is rejected (schemas allow only bounded primitives)", async () => {
+  it("E-11: deeply nested value in a primitive field is rejected (bounded primitives only)", async () => {
+    // Distinct from E-5 (unknown key): nest inside an allowlisted field that must be a number.
     const res = await completeActivity({
       moduleSlug: "test-module",
       lessonId: "lesson-1",
@@ -467,7 +484,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
         gameKey: "move_measure",
         gameSpecific: {
           ...validMoveMeasure,
-          nested: { deeper: { still: true } },
+          dash: { deeper: { still: 1 } },
         },
       },
     });
