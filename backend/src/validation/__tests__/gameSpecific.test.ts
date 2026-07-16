@@ -233,7 +233,10 @@ describe("R-4/R-5 guard bite (local loose copy)", () => {
       );
     }
     const prodSource = readFileSync(moduleSourcePath, "utf8");
+    // Full R-5 set (overview.md §14.2 + T1-1-03)
     expect(prodSource).not.toMatch(/z\.any\b/);
+    expect(prodSource).not.toMatch(/z\.record\b/);
+    expect(prodSource).not.toMatch(/z\.unknown\b/);
     expect(prodSource).not.toContain(".passthrough(");
   });
 });
