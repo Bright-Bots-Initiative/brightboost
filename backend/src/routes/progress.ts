@@ -117,6 +117,19 @@ router.post(
 
     const parse = completeActivitySchema.safeParse(req.body);
     if (!parse.success) {
+      // §5.9.2: deploy-bug signal — gameSpecific sent for a key with no registry entry.
+      // Must run on the 400 path; schema rejects before a successful parse reaches re-parse.
+      const bodyResult = req.body?.result;
+      if (
+        bodyResult?.gameSpecific !== undefined &&
+        typeof bodyResult?.gameKey === "string" &&
+        bodyResult.gameKey.length > 0 &&
+        !isRegisteredGameKey(bodyResult.gameKey)
+      ) {
+        console.warn(
+          `[complete-activity] Unregistered gameKey "${bodyResult.gameKey}" (no gameSpecific registry entry)`,
+        );
+      }
       return res.status(400).json({ error: parse.error.flatten() });
     }
 
@@ -129,18 +142,6 @@ router.post(
       isRegisteredGameKey(result.gameKey)
         ? GAME_SPECIFIC_SCHEMAS[result.gameKey].parse(result.gameSpecific)
         : undefined;
-
-    // §5.9.2: no happy-path logging. Only warn when gameSpecific was sent for an
-    // unregistered key (schema should 400 first; this is defense-in-depth).
-    if (
-      result?.gameSpecific !== undefined &&
-      result.gameKey &&
-      !isRegisteredGameKey(result.gameKey)
-    ) {
-      console.warn(
-        `[complete-activity] Unregistered gameKey "${result.gameKey}" (no gameSpecific registry entry)`,
-      );
-    }
 
     // 0. Fetch Existing Progress and Activity concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency

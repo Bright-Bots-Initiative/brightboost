@@ -279,6 +279,29 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(JSON.stringify(res.body)).not.toContain("smuggle");
   });
 
+  it("C2-04 / §5.9.2: warns on unregistered gameKey when gameSpecific is sent (400 path)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: {
+        gameKey: "not_a_registered_game",
+        gameSpecific: validMoveMeasure,
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[complete-activity] Unregistered gameKey "not_a_registered_game" (no gameSpecific registry entry)',
+    );
+    expect(JSON.stringify(res.body)).not.toContain("dash");
+    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
   it("C2-04 / §5.9.2: unregistered gameKey without gameSpecific does not warn (happy path)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     prismaMock.progress.findUnique.mockResolvedValue(null);
