@@ -350,8 +350,10 @@ describe("predeploy incident regression", () => {
 
       expect(result.code).toBe(1);
       expect(result.stdout).toContain("predeploy: FATAL — DIRECT_URL is not set.");
-      expect(hasSeedCall(result.calls)).toBe(false);
+      // Before the gate (§5.8): no migrate, generate, or seed.
       expect(hasMigrateCall(result.calls)).toBe(false);
+      expect(hasGenerateCall(result.calls)).toBe(false);
+      expect(hasSeedCall(result.calls)).toBe(false);
     });
   });
 
@@ -366,7 +368,7 @@ describe("predeploy incident regression", () => {
       // Stub exits 88; script must propagate rc via exit "$rc" (T2-1-04).
       expect(result.code).toBe(88);
       expect(result.stdout).toContain(
-        "predeploy: FATAL — 'prisma migrate deploy' failed",
+        "predeploy: FATAL — 'prisma migrate deploy' failed (exit 88).",
       );
       expect(hasMigrateCall(result.calls)).toBe(true);
       expect(hasGenerateCall(result.calls)).toBe(false);
