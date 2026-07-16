@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  GAME_SPECIFIC_MAX_BYTES,
+  GAME_SPECIFIC_SCHEMAS,
+  isRegisteredGameKey,
+} from "./gameSpecific";
 
 // 🛡️ Sentinel: Shared validation schemas for consistent security
 
@@ -67,13 +72,68 @@ export const completeActivitySchema = z.object({
   lessonId: z.string().max(100).optional().nullable(),
   activityId: z.string().min(1, "Activity ID required").max(100),
   timeSpentS: timeSpentSchema.optional().default(0),
-  result: z.object({
-    gameKey: z.string().max(50).optional(),
-    score: z.number().int().nonnegative().max(10000).optional(),
-    total: z.number().int().nonnegative().max(10000).optional(),
-    streakMax: z.number().int().nonnegative().max(10000).optional(),
-    roundsCompleted: z.number().int().nonnegative().max(1000).optional(),
-  }).optional(),
+  result: z
+    .object({
+      gameKey: z.string().max(50).optional(),
+      score: z.number().int().nonnegative().max(10000).optional(),
+      total: z.number().int().nonnegative().max(10000).optional(),
+      streakMax: z.number().int().nonnegative().max(10000).optional(),
+      roundsCompleted: z.number().int().nonnegative().max(1000).optional(),
+      // Declared so zod does not strip it; shape enforced by superRefine.
+      gameSpecific: z.unknown().optional(),
+    })
+    .superRefine((val, ctx) => {
+      if (val.gameSpecific === undefined) return;
+
+      if (!val.gameKey) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["gameSpecific"],
+          message: "gameSpecific requires gameKey",
+        });
+        return;
+      }
+
+      if (!isRegisteredGameKey(val.gameKey)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["gameSpecific"],
+          message: `gameSpecific not accepted for gameKey "${val.gameKey}"`,
+        });
+        return;
+      }
+
+      let serialized: string;
+      try {
+        serialized = JSON.stringify(val.gameSpecific);
+      } catch {
+        ctx.addIssue({
+          code: "custom",
+          path: ["gameSpecific"],
+          message: "gameSpecific failed validation for this game",
+        });
+        return;
+      }
+
+      if (serialized.length > GAME_SPECIFIC_MAX_BYTES) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["gameSpecific"],
+          message: "gameSpecific failed validation for this game",
+        });
+        return;
+      }
+
+      const parsed = GAME_SPECIFIC_SCHEMAS[val.gameKey].safeParse(val.gameSpecific);
+      if (!parsed.success) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["gameSpecific"],
+          message: "gameSpecific failed validation for this game",
+        });
+      }
+    })
+    .optional(),
 });
 
 export const selectArchetypeSchema = z.object({
