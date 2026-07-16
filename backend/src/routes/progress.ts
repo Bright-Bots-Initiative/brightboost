@@ -32,6 +32,12 @@ import { GameError } from "../utils/errors";
 
 const router = Router();
 
+/** v1 stores gameSpecific but must not expose it on any response (§5.5 / §7). */
+function publicProgress<T extends { gameSpecific?: unknown }>(row: T) {
+  const { gameSpecific: _omit, ...rest } = row;
+  return rest;
+}
+
 // Get progress for a student (MVP)
 router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
@@ -164,7 +170,7 @@ router.post(
       if (wasBackfilled) {
         return res.json({
           message: "Already completed (avatar backfilled)",
-          progress: existing,
+          progress: publicProgress(existing),
           reward: {
             xpDelta: backfilledXp,
             levelDelta: avatarBefore.level - 1, // Delta from level 1
@@ -179,7 +185,7 @@ router.post(
       // Normal idempotent return with 0 rewards
       return res.json({
         message: "Already completed",
-        progress: existing,
+        progress: publicProgress(existing),
         reward: {
           xpDelta: 0,
           levelDelta: 0,
@@ -366,7 +372,7 @@ router.post(
     }
 
     res.json({
-      progress: finalProgress,
+      progress: publicProgress(finalProgress),
       reward: {
         xpDelta,
         levelDelta,
