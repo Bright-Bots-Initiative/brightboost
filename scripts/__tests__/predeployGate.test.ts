@@ -8,7 +8,6 @@ import {
   rm,
   writeFile,
   chmod,
-  copyFile,
 } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -22,13 +21,14 @@ type RunResult = {
 };
 
 const repoRoot = join(process.cwd());
-const sourcePredeployScript = join(repoRoot, "backend", "scripts", "predeploy.sh");
+/** Real script under test — §13.2 / C1-03 (not a sandbox copy). */
+const realPredeployScript = join(repoRoot, "backend", "scripts", "predeploy.sh");
+
 type Harness = {
   root: string;
   binDir: string;
   callLog: string;
   backendCwd: string;
-  predeployScript: string;
 };
 
 const shellExecutable =
@@ -46,17 +46,30 @@ async function makeStub(scriptPath: string, body: string) {
   await makeExecutable(scriptPath);
 }
 
+function buildChildEnv(
+  overrides: Record<string, string | undefined>,
+): Record<string, string> {
+  const childEnv: Record<string, string | undefined> = { ...process.env };
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === undefined) {
+      delete childEnv[key];
+    } else {
+      childEnv[key] = value;
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(childEnv).filter((entry): entry is [string, string] => entry[1] !== undefined),
+  );
+}
+
 function runPredeploy(
   harness: Harness,
   env: Record<string, string | undefined>,
 ): Promise<RunResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(shellExecutable, [harness.predeployScript], {
+    const child = spawn(shellExecutable, [realPredeployScript], {
       cwd: harness.backendCwd,
-      env: {
-        ...process.env,
-        ...env,
-      },
+      env: buildChildEnv(env),
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -92,16 +105,14 @@ async function setupHarness(): Promise<Harness> {
   tempDirs.push(root);
 
   const binDir = join(root, "bin");
-  const backendScriptsDir = join(root, "backend", "scripts");
+  const backendCwd = join(root, "backend");
   const rootPrismaDir = join(root, "prisma");
   await mkdir(binDir, { recursive: true });
-  await mkdir(backendScriptsDir, { recursive: true });
+  await mkdir(backendCwd, { recursive: true });
   await mkdir(rootPrismaDir, { recursive: true });
-  const predeployScript = join(backendScriptsDir, "predeploy.sh");
-  await copyFile(sourcePredeployScript, predeployScript);
-  await makeExecutable(predeployScript);
 
-  // Ensure script path probing resolves against sandbox, not real repo.
+  // Path probes are cwd-relative (`../prisma/…` from backend/). Fake them so
+  // resolution never touches the real repo tree (C1-02 / overview.md §13.2).
   await writeFile(join(rootPrismaDir, "schema.prisma"), "generator client {}\n", "utf8");
   await writeFile(join(rootPrismaDir, "seed.cjs"), "console.log('sandbox seed');\n", "utf8");
 
@@ -136,8 +147,7 @@ exit 0
     root,
     binDir,
     callLog,
-    backendCwd: join(root, "backend"),
-    predeployScript,
+    backendCwd,
   };
 }
 
@@ -159,6 +169,11 @@ async function withHarness<T>(fn: (harness: Harness) => Promise<T>): Promise<T> 
   }
 }
 
+/**
+ * Controlled env per §13.2 / C1-03.
+ * `undefined` values are deleted so the child sees a true unset (E-1),
+ * not a leaked value from the parent process.env.
+ */
 function stubEnv(
   harness: Harness,
   extra: Record<string, string | undefined> = {},
@@ -167,6 +182,10 @@ function stubEnv(
     DIRECT_URL: "stub",
     STUB_CALL_LOG: harness.callLog,
     PATH: `${harness.binDir}:${process.env.PATH ?? ""}`,
+    RUN_SEED: undefined,
+    RUN_GAMIFICATION_BACKFILL: undefined,
+    STUB_FAIL_MIGRATE: undefined,
+    STUB_FAIL_SEED: undefined,
     ...extra,
   };
 }
