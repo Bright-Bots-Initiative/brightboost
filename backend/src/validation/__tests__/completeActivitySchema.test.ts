@@ -32,8 +32,10 @@ describe("completeActivitySchema gameSpecific", () => {
     });
     expect(parsed.success).toBe(false);
     if (!parsed.success) {
-      const paths = parsed.error.issues.map((i) => i.path.join("."));
-      expect(paths.some((p) => p.includes("gameSpecific"))).toBe(true);
+      // Spec refers to the keyed issue under `gameSpecific`; Zod may include
+      // the parent `result` segment depending on where the superRefine lives.
+      const paths = parsed.error.issues.map((i) => i.path);
+      expect(paths.some((p) => p[p.length - 1] === "gameSpecific")).toBe(true);
     }
   });
 
@@ -59,14 +61,31 @@ describe("completeActivitySchema gameSpecific", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("E-6: array/string/number gameSpecific fails", () => {
-    for (const bad of [[1, 2], "nope", 42]) {
-      const parsed = completeActivitySchema.safeParse({
+  it("E-6: array gameSpecific fails", () => {
+    expect(
+      completeActivitySchema.safeParse({
         ...base,
-        result: { gameKey: "move_measure", gameSpecific: bad },
-      });
-      expect(parsed.success, String(bad)).toBe(false);
-    }
+        result: { gameKey: "move_measure", gameSpecific: [1, 2] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("E-6: string gameSpecific fails", () => {
+    expect(
+      completeActivitySchema.safeParse({
+        ...base,
+        result: { gameKey: "move_measure", gameSpecific: "nope" },
+      }).success,
+    ).toBe(false);
+  });
+
+  it("E-6: number gameSpecific fails", () => {
+    expect(
+      completeActivitySchema.safeParse({
+        ...base,
+        result: { gameKey: "move_measure", gameSpecific: 42 },
+      }).success,
+    ).toBe(false);
   });
 
   it("E-9: explicit null gameSpecific fails", () => {
