@@ -332,6 +332,9 @@ describe("predeploy RUN_SEED gate", () => {
 
 /** #646 / #650 / PR #685 — hard-fail paths must still run before the seed gate (G-002). */
 describe("predeploy incident regression", () => {
+  // covered-by: E-9 — fresh prod DB + RUN_SEED unset = empty content; runbook is the mitigation (§5.6/§5.8)
+  // covered-by: E-10 — do not add set -u (would make unset RUN_SEED fatal); verified A1-02 / B1-06
+  // covered-by: E-11 — local/CI do not call predeploy.sh; verified A1-04 (§3.3)
   afterEach(async () => {
     while (tempDirs.length > 0) {
       const dir = tempDirs.pop();
