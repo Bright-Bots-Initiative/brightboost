@@ -63,7 +63,7 @@ const FIELD_BOUNDS: Array<{
   { key: "tank_trek", field: "totalChips", max: 10000 },
   { key: "tank_trek", field: "retries", max: 10000 },
   { key: "boost_path_planner", field: "attempts", max: 10000 },
-  { key: "qualify_tune_race", field: "time", max: 300, nest: "run1" },
+  { key: "qualify_tune_race", field: "time", max: 86400, nest: "run1" },
   { key: "qualify_tune_race", field: "bumps", max: 10, nest: "run1" },
   { key: "qualify_tune_race", field: "smoothness", max: 100, nest: "run1" },
 ];

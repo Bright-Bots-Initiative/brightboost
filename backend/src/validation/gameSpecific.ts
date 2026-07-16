@@ -7,7 +7,9 @@ const smallInt = (max: number) => z.number().int().nonnegative().max(max);
 
 const runResultSchema = z
   .object({
-    time: z.number().min(0).max(300),
+    // Wall-clock seconds from QualifyTuneRaceGame (performance.now), not scroll-time.
+    // Cap matches timeSpentSchema (24h) so AFK/tab-switch mid-lap cannot 400 a completion (§5.3.5).
+    time: z.number().min(0).max(86400),
     bumps: z.number().int().nonnegative().max(10),
     smoothness: z.number().int().nonnegative().max(100),
   })
