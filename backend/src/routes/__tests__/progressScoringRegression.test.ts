@@ -186,25 +186,6 @@ function completeActivity(body: Record<string, unknown>) {
     .send(body);
 }
 
-/** Outcome slice for §14.5 / AC-4 — full response body minus nothing scoring-relevant. */
-function outcomeSlice(body: {
-  progress: unknown;
-  reward: unknown;
-  avatar: unknown;
-  personalBest: unknown;
-  isNewHighScore: unknown;
-  isNewBestStreak: unknown;
-}) {
-  return {
-    progress: body.progress,
-    reward: body.reward,
-    avatar: body.avatar,
-    personalBest: body.personalBest,
-    isNewHighScore: body.isNewHighScore,
-    isNewBestStreak: body.isNewBestStreak,
-  };
-}
-
 function setupFirstCompletionMocks(progressRow: Record<string, unknown> = PROGRESS_ROW) {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
@@ -231,7 +212,8 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     const res = await completeActivity(FIXED_BODY);
 
     expect(res.status).toBe(200);
-    expect(outcomeSlice(res.body)).toEqual(SCORING_BASELINE);
+    // §14.5 / T3-1-01: exact response body (progress + XP/reward + streak/GPB flags)
+    expect(res.body).toEqual(SCORING_BASELINE);
     expect(prismaMock.avatar.update.mock.calls[0][0].data).toEqual(
       EXPECTED_AVATAR_UPDATE,
     );
@@ -244,7 +226,7 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     const res = await completeActivity(FIXED_BODY);
 
     expect(res.status).toBe(200);
-    expect(outcomeSlice(res.body)).toEqual(SCORING_BASELINE);
+    expect(res.body).toEqual(SCORING_BASELINE);
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
@@ -252,7 +234,7 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     // Run A: without gameSpecific
     const without = await completeActivity(FIXED_BODY);
     expect(without.status).toBe(200);
-    const withoutOutcome = outcomeSlice(without.body);
+    expect(without.body).toEqual(SCORING_BASELINE);
     const withoutAvatarUpdate = prismaMock.avatar.update.mock.calls[0][0].data;
     const withoutGpbCreate = prismaMock.gamePersonalBest.create.mock.calls[0][0].data;
 
@@ -269,9 +251,9 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     });
     expect(withGs.status).toBe(200);
 
-    // §14.5: telemetry must not perturb scoring by so much as a point
-    expect(outcomeSlice(withGs.body)).toEqual(withoutOutcome);
-    expect(outcomeSlice(withGs.body)).toEqual(SCORING_BASELINE);
+    // §14.5: telemetry must not perturb scoring / response body by so much as a point
+    expect(withGs.body).toEqual(without.body);
+    expect(withGs.body).toEqual(SCORING_BASELINE);
     expect(withGs.body.progress).not.toHaveProperty("gameSpecific");
 
     expect(prismaMock.avatar.update.mock.calls[0][0].data).toEqual(
@@ -335,6 +317,12 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     expect(res.body.personalBest).toBeNull();
     expect(res.body.isNewHighScore).toBe(false);
     expect(res.body.isNewBestStreak).toBe(false);
+    // Scoring write path still ran before the GPB catch
+    expect(prismaMock.avatar.update).toHaveBeenCalled();
+    expect(prismaMock.avatar.update.mock.calls[0][0].data).toEqual(
+      EXPECTED_AVATAR_UPDATE,
+    );
+    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith(
       "[complete-activity] Failed to upsert GamePersonalBest:",
       expect.any(Error),
