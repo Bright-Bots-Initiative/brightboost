@@ -65,9 +65,10 @@ function buildChildEnv(
 function runPredeploy(
   harness: Harness,
   env: Record<string, string | undefined>,
+  scriptPath: string = realPredeployScript,
 ): Promise<RunResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(shellExecutable, [realPredeployScript], {
+    const child = spawn(shellExecutable, [scriptPath], {
       cwd: harness.backendCwd,
       env: buildChildEnv(env),
       stdio: ["ignore", "pipe", "pipe"],
@@ -325,6 +326,61 @@ describe("predeploy RUN_SEED gate", () => {
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
       expect(hasBackfillCall(result.calls)).toBe(true);
+    });
+  });
+});
+
+/** #646 / #650 / PR #685 — hard-fail paths must still run before the seed gate (G-002). */
+describe("predeploy incident regression", () => {
+  afterEach(async () => {
+    while (tempDirs.length > 0) {
+      const dir = tempDirs.pop();
+      if (dir) {
+        await rm(dir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("E-6: hard-fails when DIRECT_URL is unset", async () => {
+    await withHarness(async (harness) => {
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { DIRECT_URL: undefined }),
+      );
+
+      expect(result.code).toBe(1);
+      expect(result.stdout).toContain("predeploy: FATAL — DIRECT_URL is not set.");
+      expect(hasSeedCall(result.calls)).toBe(false);
+      expect(hasMigrateCall(result.calls)).toBe(false);
+    });
+  });
+
+  it("E-7: hard-fails when migrate deploy fails", async () => {
+    await withHarness(async (harness) => {
+      // RUN_SEED=true so a softened migrate that continued would seed and fail loudly.
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { STUB_FAIL_MIGRATE: "true", RUN_SEED: "true" }),
+      );
+
+      // Stub exits 88; script must propagate rc via exit "$rc" (T2-1-04).
+      expect(result.code).toBe(88);
+      expect(result.stdout).toContain(
+        "predeploy: FATAL — 'prisma migrate deploy' failed",
+      );
+      expect(hasMigrateCall(result.calls)).toBe(true);
+      expect(hasGenerateCall(result.calls)).toBe(false);
+      expect(hasSeedCall(result.calls)).toBe(false);
+    });
+  });
+
+  it("T2-1-03: prisma generate runs when migrate succeeds", async () => {
+    await withHarness(async (harness) => {
+      const result = await runPredeploy(harness, stubEnv(harness));
+
+      expect(result.code).toBe(0);
+      expect(hasMigrateCall(result.calls)).toBe(true);
+      expect(hasGenerateCall(result.calls)).toBe(true);
     });
   });
 });
