@@ -409,7 +409,7 @@ if (phase === "intro") {
 
       <p className="text-base text-slate-600">
         {t("games.moveMeasure.predictText", {
-          defaultValue: "Before you try, predict your result!",
+          defaultValue: "Before you try, predict where you think you'll land!",
         })}
       </p>
 
