@@ -33,6 +33,17 @@ router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const progress = await prisma.progress.findMany({
     where: { studentId },
+    // Keep v1 contract stable for #672: persist only, do not expose gameSpecific.
+    select: {
+      id: true,
+      studentId: true,
+      moduleSlug: true,
+      lessonId: true,
+      activityId: true,
+      status: true,
+      timeSpentS: true,
+      updatedAt: true,
+    },
   });
   res.json(progress);
 });
