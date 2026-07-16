@@ -110,7 +110,7 @@ export const completeActivitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           path: ["gameSpecific"],
-          message: "gameSpecific failed validation for this game",
+          message: `gameSpecific failed validation for gameKey "${val.gameKey}"`,
         });
         return;
       }
@@ -119,7 +119,7 @@ export const completeActivitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           path: ["gameSpecific"],
-          message: "gameSpecific failed validation for this game",
+          message: `gameSpecific failed validation for gameKey "${val.gameKey}"`,
         });
         return;
       }
@@ -129,7 +129,7 @@ export const completeActivitySchema = z.object({
         ctx.addIssue({
           code: "custom",
           path: ["gameSpecific"],
-          message: "gameSpecific failed validation for this game",
+          message: `gameSpecific failed validation for gameKey "${val.gameKey}"`,
         });
       }
     })
