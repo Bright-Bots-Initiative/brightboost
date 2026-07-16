@@ -119,6 +119,8 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     const createArg = prismaMock.progress.create.mock.calls[0][0];
     const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
     expect(createArg.data.gameSpecific).toEqual(expected);
+    // §5.5 / §7: persist only — do not surface gameSpecific on the wire.
+    expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
   it("E-3: when gameSpecific is absent, update omits the field (preserves stored value)", async () => {
