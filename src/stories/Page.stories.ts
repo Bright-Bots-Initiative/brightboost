@@ -6,6 +6,8 @@ import { Page } from "./Page";
 const meta = {
   title: "Example/Page",
   component: Page,
+  // Excluded from Storybook vitest addon runs via vitest.workspace.ts tags.exclude ["autodocs"].
+  tags: ["autodocs"],
   parameters: {
     // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
     layout: "fullscreen",

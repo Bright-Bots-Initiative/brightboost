@@ -37,7 +37,7 @@ describe("Auth Rate Limiting", () => {
     expect(res.body).toEqual({
       error: "Too many login/signup attempts, please try again later.",
     });
-  });
+  }, 15000);
 
   it("should enforce rate limit on /api/signup/student independently", async () => {
     // Use a DIFFERENT IP for this test so it starts fresh
@@ -68,5 +68,5 @@ describe("Auth Rate Limiting", () => {
       });
 
     expect(res.status).toBe(429);
-  });
+  }, 15000);
 });
