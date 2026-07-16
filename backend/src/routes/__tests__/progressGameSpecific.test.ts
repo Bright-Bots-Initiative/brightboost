@@ -437,6 +437,50 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(body).not.toContain("x".repeat(64));
   });
 
+  it("E-9: explicit null gameSpecific → 400 (null is not omitted), no Progress write", async () => {
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: {
+        gameKey: "move_measure",
+        gameSpecific: null,
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expectNoProgressWrites();
+    const body = JSON.stringify(res.body);
+    // §5.9.1: name field + gameKey; null is not treated as omit (contrast E-1).
+    expect(body).toContain("gameSpecific");
+    expect(body).toContain("move_measure");
+  });
+
+  it("E-11: deeply nested gameSpecific is rejected (schemas allow only bounded primitives)", async () => {
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: {
+        gameKey: "move_measure",
+        gameSpecific: {
+          ...validMoveMeasure,
+          nested: { deeper: { still: true } },
+        },
+      },
+    });
+
+    expect(res.status).toBe(400);
+    expectNoProgressWrites();
+    const body = JSON.stringify(res.body);
+    expect(body).toContain("gameSpecific");
+    expect(body).toContain("move_measure");
+    expect(body).not.toContain("deeper");
+    expect(body).not.toContain("still");
+  });
+
   it("T2-1-07 / §5.2.3: IN_PROGRESS stored A then POST with B overwrites (last-write-wins on update path)", async () => {
     const storedA = {
       dash: 1,
