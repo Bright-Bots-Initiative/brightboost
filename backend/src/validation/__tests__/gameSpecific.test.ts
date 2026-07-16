@@ -191,36 +191,49 @@ describe("GAME_SPECIFIC_SCHEMAS", () => {
 });
 
 /**
- * T1-2-06 / G-202: prove structural guards would catch a loose entry.
- * Local copy only — never sabotages production gameSpecific.ts.
+ * T1-2-06 / G-202: temporarily add a loose entry to a *local copy* of the
+ * registry, confirm R-4/R-5 go red, then discard the copy (never touch prod).
  */
 describe("R-4/R-5 guard bite (local loose copy)", () => {
-  it("T1-2-06: loose passthrough/any schema fails the same R-4/R-5 checks", () => {
-    const looseSchemas = {
+  it("T1-2-06: loose entry on a local registry copy makes R-4 and R-5 go red", () => {
+    // Local copy of the real registry + one deliberately loose entry
+    const localCopy: Record<string, z.ZodTypeAny> = {
+      ...GAME_SPECIFIC_SCHEMAS,
       loose_game: z.object({ score: z.any() }).passthrough(),
     };
 
-    // Without the guard, unknown keys slip through
-    expect(
-      looseSchemas.loose_game.safeParse({ score: 1, unexpectedKey: true }).success,
-    ).toBe(true);
-
-    // Production-style R-4 loop would go red on this registry
-    const r4Holds = Object.entries(looseSchemas).every(([, schema]) => {
-      return !schema.safeParse({ score: 1, unexpectedKey: true }).success;
+    // R-4 against the local copy: production keys still reject; loose accepts → overall red
+    const r4AllRejectUnknown = Object.entries(localCopy).every(([key, schema]) => {
+      const base =
+        key === "loose_game"
+          ? { score: 1 }
+          : (validByKey[key as RegisteredGameKey] as Record<string, unknown>);
+      return !schema.safeParse({ ...base, smuggle: "nope" }).success;
     });
-    expect(r4Holds).toBe(false);
+    expect(r4AllRejectUnknown).toBe(false);
 
-    const fakeSource = `
-      export const GAME_SPECIFIC_SCHEMAS = {
-        loose_game: z.object({ score: z.any() }).passthrough(),
-      };
+    // R-5 against a source string that includes the loose entry → red
+    const localSource = `
+      ${readFileSync(moduleSourcePath, "utf8")}
+      // sabotaged local addition:
+      loose_game: z.object({ score: z.any() }).passthrough(),
     `;
-    const hasForbidden =
-      /\bz\.any\b/.test(fakeSource) ||
-      /\bz\.record\b/.test(fakeSource) ||
-      /\bz\.unknown\b/.test(fakeSource) ||
-      /\.passthrough\s*\(/.test(fakeSource);
-    expect(hasForbidden).toBe(true);
+    const r5Clean =
+      !/\bz\.any\b/.test(localSource) &&
+      !/\bz\.record\b/.test(localSource) &&
+      !/\bz\.unknown\b/.test(localSource) &&
+      !/\.passthrough\s*\(/.test(localSource);
+    expect(r5Clean).toBe(false);
+
+    // Production registry itself remains clean (revert = discard localCopy)
+    for (const [key, schema] of Object.entries(GAME_SPECIFIC_SCHEMAS)) {
+      const base = validByKey[key as RegisteredGameKey] as Record<string, unknown>;
+      expect(schema.safeParse({ ...base, smuggle: "nope" }).success, key).toBe(
+        false,
+      );
+    }
+    const prodSource = readFileSync(moduleSourcePath, "utf8");
+    expect(prodSource).not.toMatch(/z\.any\b/);
+    expect(prodSource).not.toContain(".passthrough(");
   });
 });
