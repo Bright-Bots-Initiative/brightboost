@@ -22,6 +22,10 @@ import {
   idSchema,
   slugSchema,
 } from "../validation/schemas";
+import {
+  GAME_SPECIFIC_SCHEMAS,
+  isRegisteredGameKey,
+} from "../validation/gameSpecific";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 import { trackServer } from "../services/analytics";
 import { GameError } from "../utils/errors";
@@ -112,6 +116,20 @@ router.post(
 
     const { moduleSlug, lessonId, activityId, timeSpentS, result } = parse.data;
 
+    // Re-parse: superRefine validates but does not transform (E-8 / G-009).
+    const gs =
+      result?.gameSpecific !== undefined &&
+      result.gameKey &&
+      isRegisteredGameKey(result.gameKey)
+        ? GAME_SPECIFIC_SCHEMAS[result.gameKey].parse(result.gameSpecific)
+        : undefined;
+
+    if (result?.gameKey && !isRegisteredGameKey(result.gameKey)) {
+      console.warn(
+        `[complete-activity] Unregistered gameKey "${result.gameKey}" (no gameSpecific registry entry)`,
+      );
+    }
+
     // 0. Fetch Existing Progress and Activity concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
     // 🛡️ Sentinel: Verify activity existence to prevent Game Integrity/Infinite Leveling exploit
@@ -181,6 +199,7 @@ router.post(
         data: {
           status: ProgressStatus.COMPLETED,
           timeSpentS: { increment: timeSpentS || 0 },
+          ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
     } else {
@@ -192,6 +211,7 @@ router.post(
           activityId,
           status: ProgressStatus.COMPLETED,
           timeSpentS: timeSpentS || 0,
+          ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
     }
