@@ -73,6 +73,17 @@ const validMoveMeasure = {
   exitCorrect: true,
 };
 
+/** Isolate each request under the test gameActionLimiter (5/IP). */
+let ipSeq = 0;
+function completeActivity(body: Record<string, unknown>) {
+  ipSeq += 1;
+  return request(app)
+    .post("/api/progress/complete-activity")
+    .set("Authorization", "Bearer mock-token-for-mvp")
+    .set("X-Forwarded-For", `198.51.100.${ipSeq}`)
+    .send(body);
+}
+
 describe("POST /api/progress/complete-activity gameSpecific persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -99,20 +110,17 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       gameSpecific: validMoveMeasure,
     });
 
-    const res = await request(app)
-      .post("/api/progress/complete-activity")
-      .set("Authorization", "Bearer mock-token-for-mvp")
-      .send({
-        moduleSlug: "test-module",
-        lessonId: "lesson-1",
-        activityId: "valid-activity",
-        timeSpentS: 12,
-        result: {
-          gameKey: "move_measure",
-          score: 8,
-          gameSpecific: validMoveMeasure,
-        },
-      });
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 12,
+      result: {
+        gameKey: "move_measure",
+        score: 8,
+        gameSpecific: validMoveMeasure,
+      },
+    });
 
     expect(res.status).toBe(200);
     expect(prismaMock.progress.create).toHaveBeenCalled();
@@ -120,6 +128,42 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
     expect(createArg.data.gameSpecific).toEqual(expected);
     // §5.5 / §7: persist only — do not surface gameSpecific on the wire.
+    expect(res.body.progress).not.toHaveProperty("gameSpecific");
+  });
+
+  it("C2-01: persists re-parsed gameSpecific on update (IN_PROGRESS → COMPLETED)", async () => {
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "IN_PROGRESS",
+      gameSpecific: null,
+    });
+    prismaMock.progress.update.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: validMoveMeasure,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 8,
+      result: {
+        gameKey: "move_measure",
+        score: 8,
+        gameSpecific: validMoveMeasure,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(prismaMock.progress.update).toHaveBeenCalled();
+    const updateArg = prismaMock.progress.update.mock.calls[0][0];
+    const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
+    expect(updateArg.data.gameSpecific).toEqual(expected);
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
@@ -147,42 +191,116 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       gameSpecific: stored,
     });
 
-    const res = await request(app)
-      .post("/api/progress/complete-activity")
-      .set("Authorization", "Bearer mock-token-for-mvp")
-      .send({
-        moduleSlug: "test-module",
-        lessonId: "lesson-1",
-        activityId: "valid-activity",
-        timeSpentS: 5,
-        result: { gameKey: "move_measure", score: 3 },
-      });
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: { gameKey: "move_measure", score: 3 },
+    });
 
     expect(res.status).toBe(200);
     expect(prismaMock.progress.update).toHaveBeenCalled();
     const updateArg = prismaMock.progress.update.mock.calls[0][0];
     expect(updateArg.data).not.toHaveProperty("gameSpecific");
+    expect(res.body.progress).not.toHaveProperty("gameSpecific");
+  });
+
+  it("E-3: POST with telemetry then POST without preserves via idempotent re-complete", async () => {
+    const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
+
+    // First completion stores telemetry.
+    prismaMock.progress.findUnique.mockResolvedValueOnce(null);
+    prismaMock.progress.create.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: expected,
+    });
+
+    const first = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 12,
+      result: {
+        gameKey: "move_measure",
+        score: 8,
+        gameSpecific: validMoveMeasure,
+      },
+    });
+    expect(first.status).toBe(200);
+    expect(prismaMock.progress.create.mock.calls[0][0].data.gameSpecific).toEqual(
+      expected,
+    );
+
+    // Old client re-completes without gameSpecific — must not null stored value.
+    prismaMock.progress.findUnique.mockResolvedValueOnce({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: expected,
+    });
+
+    const second = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: { gameKey: "move_measure", score: 3 },
+    });
+
+    expect(second.status).toBe(200);
+    expect(second.body.message).toBe("Already completed");
+    expect(prismaMock.progress.update).not.toHaveBeenCalled();
+    expect(prismaMock.progress.create).toHaveBeenCalledTimes(1);
+    expect(second.body.progress).not.toHaveProperty("gameSpecific");
   });
 
   it("E-12: invalid gameSpecific returns 400 before any Progress write", async () => {
-    prismaMock.progress.findUnique.mockResolvedValue(null);
-
-    const res = await request(app)
-      .post("/api/progress/complete-activity")
-      .set("Authorization", "Bearer mock-token-for-mvp")
-      .send({
-        moduleSlug: "test-module",
-        lessonId: "lesson-1",
-        activityId: "valid-activity",
-        timeSpentS: 5,
-        result: {
-          gameKey: "move_measure",
-          gameSpecific: { ...validMoveMeasure, smuggle: true },
-        },
-      });
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: {
+        gameKey: "move_measure",
+        gameSpecific: { ...validMoveMeasure, smuggle: true },
+      },
+    });
 
     expect(res.status).toBe(400);
+    expect(prismaMock.progress.findUnique).not.toHaveBeenCalled();
     expect(prismaMock.progress.create).not.toHaveBeenCalled();
     expect(prismaMock.progress.update).not.toHaveBeenCalled();
+    // G-103: 400 must not echo the submitted payload.
+    expect(JSON.stringify(res.body)).not.toContain("smuggle");
+  });
+
+  it("C2-04 / §5.9.2: unregistered gameKey without gameSpecific does not warn (happy path)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    prismaMock.progress.findUnique.mockResolvedValue(null);
+    prismaMock.progress.create.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: { gameKey: "fast_lane", score: 10 },
+    });
+
+    expect(res.status).toBe(200);
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("Unregistered gameKey"),
+    );
+    warnSpy.mockRestore();
   });
 });
