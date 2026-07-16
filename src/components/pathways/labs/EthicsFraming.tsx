@@ -60,65 +60,47 @@ export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingPro
         <div className="px-5 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30">
           <ShieldCheck className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0" />
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {t("pathways.labs.ethics.title", "Before You Start")}
+            {t("pathways.labs.ethics.title")}
           </h2>
         </div>
 
         <div className="px-5 sm:px-6 py-5 space-y-3 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
           <p>
-            {t(
-              "pathways.labs.ethics.intro",
-              "What you're about to practice are real cybersecurity skills. Some of these techniques could be misused.",
-            )}
+            {t("pathways.labs.ethics.intro")}
           </p>
           <div>
             <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1.5">
-              {t("pathways.labs.ethics.ruleHeading", "Our rule, always:")}
+              {t("pathways.labs.ethics.ruleHeading")}
             </p>
             <ul className="space-y-1.5 pl-1">
               <li className="flex gap-2">
                 <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
                 <span>
-                  {t(
-                    "pathways.labs.ethics.rule1",
-                    "We practice here, in the sandbox.",
-                  )}
+                  {t("pathways.labs.ethics.rule1")}
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
                 <span>
-                  {t(
-                    "pathways.labs.ethics.rule2",
-                    "We never use these techniques against real people, real accounts, real companies, or real schools.",
-                  )}
+                  {t("pathways.labs.ethics.rule2")}
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
                 <span>
-                  {t(
-                    "pathways.labs.ethics.rule3",
-                    "Our work is to protect, not to attack.",
-                  )}
+                  {t("pathways.labs.ethics.rule3")}
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
                 <span>
-                  {t(
-                    "pathways.labs.ethics.rule4",
-                    "If you ever see someone misusing these skills, tell a trusted adult.",
-                  )}
+                  {t("pathways.labs.ethics.rule4")}
                 </span>
               </li>
             </ul>
           </div>
           <p className="text-slate-700 dark:text-slate-300">
-            {t(
-              "pathways.labs.ethics.outro",
-              "Your curiosity and skill can protect a lot of people. Let's get to work.",
-            )}
+            {t("pathways.labs.ethics.outro")}
           </p>
         </div>
 
@@ -127,7 +109,7 @@ export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingPro
             onClick={handleAck}
             className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-semibold transition-all"
           >
-            {t("pathways.labs.ethics.cta", "I Understand — Let's Go")}
+            {t("pathways.labs.ethics.cta")}
           </button>
         </div>
       </div>
