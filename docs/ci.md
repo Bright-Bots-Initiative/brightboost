@@ -32,6 +32,8 @@ Must match issue #677 / ticket overview §8. No new env vars are introduced; the
 
 Run staging with `npm run test:e2e:staging` (`cypress/e2e/staging/*.cy.ts`). Also see `docs/staging-smoke.md`.
 
+**Workflow note:** `.github/workflows/cypress-staging.yml` still targets fossil `cypress/e2e/pilot-smoke.cy.ts` (label/`workflow_dispatch`). That job was **not** re-pointed in #677 — the honest staging smoke is the npm script path. Pointing Actions at `test:e2e:staging` is a follow-up.
+
 ## Prove the gate has teeth — `verify:ci-gate`
 
 ```bash
@@ -60,4 +62,6 @@ Require a free `:5173` before running (the script refuses to steal a foreign Vit
 
 ## Deliberate holes left for #671
 
-Bare `test:e2e`, fossil specs, `supportFile: false`, and wiring `tsc -p cypress/tsconfig.json` into CI are intentional handoffs — not omissions. See issue #671 and the #677 PR description §17.
+Bare `test:e2e`, the **9** previous-generation fossil specs, `supportFile: false`, and wiring `tsc -p cypress/tsconfig.json` into CI are intentional handoffs — not omissions. See issue #671 and the #677 PR description §17.
+
+**Inventory:** `cypress/e2e/k2InstantQuiz.cy.js` is a **#623 keeper**, not one of those fossils — do not bulk-delete it when removing the old suite.
