@@ -130,7 +130,13 @@ router.post(
         ? GAME_SPECIFIC_SCHEMAS[result.gameKey].parse(result.gameSpecific)
         : undefined;
 
-    if (result?.gameKey && !isRegisteredGameKey(result.gameKey)) {
+    // §5.9.2: no happy-path logging. Only warn when gameSpecific was sent for an
+    // unregistered key (schema should 400 first; this is defense-in-depth).
+    if (
+      result?.gameSpecific !== undefined &&
+      result.gameKey &&
+      !isRegisteredGameKey(result.gameKey)
+    ) {
       console.warn(
         `[complete-activity] Unregistered gameKey "${result.gameKey}" (no gameSpecific registry entry)`,
       );
