@@ -202,6 +202,19 @@ function hasBackfillCall(calls: string[]) {
   return calls.some((line) => line.includes("node scripts/backfill-gamification.cjs"));
 }
 
+/** Upstream of the gate — must still run when seed is skipped (E-1 "everything else identical"). */
+function hasMigrateCall(calls: string[]) {
+  return calls.some((line) => line.includes("npx prisma migrate deploy"));
+}
+
+function hasGenerateCall(calls: string[]) {
+  return calls.some((line) => line.includes("npx prisma generate"));
+}
+
+const SKIP_LINE =
+  "predeploy: skipping seed (RUN_SEED not set — see docs/deploy.md, issue #651)";
+const RUN_LINE_PREFIX = "predeploy: RUN_SEED=true — running seed from";
+
 describe("predeploy RUN_SEED gate", () => {
   afterEach(async () => {
     while (tempDirs.length > 0) {
@@ -217,8 +230,11 @@ describe("predeploy RUN_SEED gate", () => {
       const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "true" }));
 
       expect(result.code).toBe(0);
+      expect(hasMigrateCall(result.calls)).toBe(true);
+      expect(hasGenerateCall(result.calls)).toBe(true);
       expect(seedCallCount(result.calls)).toBe(1);
       expect(hasSeedCall(result.calls)).toBe(true);
+      expect(result.stdout).toContain(`${RUN_LINE_PREFIX} ../prisma/seed.cjs`);
     });
   });
 
@@ -227,8 +243,12 @@ describe("predeploy RUN_SEED gate", () => {
       const result = await runPredeploy(harness, stubEnv(harness));
 
       expect(result.code).toBe(0);
+      // Call log = the deed (G-202); stdout = the word — asserted separately (T1-1-08).
       expect(hasSeedCall(result.calls)).toBe(false);
-      expect(result.stdout).toContain("predeploy: skipping seed");
+      expect(result.stdout).toContain(SKIP_LINE);
+      // Everything else identical: migrate + generate still ran (§5.8 E-1).
+      expect(hasMigrateCall(result.calls)).toBe(true);
+      expect(hasGenerateCall(result.calls)).toBe(true);
     });
   });
 
@@ -238,6 +258,7 @@ describe("predeploy RUN_SEED gate", () => {
 
       expect(result.code).toBe(0);
       expect(seedCallCount(result.calls)).toBe(1);
+      expect(result.stdout).toContain(`${RUN_LINE_PREFIX} ../prisma/seed.cjs`);
     });
   });
 
@@ -250,16 +271,35 @@ describe("predeploy RUN_SEED gate", () => {
     });
   });
 
-  it("E-4: only exact true enables seed", async () => {
-    for (const value of ["1", "yes", "TRUE"]) {
-      await withHarness(async (harness) => {
-        const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: value }));
+  // Exact `"true"` only — 1/yes/TRUE are counter-intuitive skips (E-4 / G-105).
+  it("E-4: does not seed when RUN_SEED=1", async () => {
+    await withHarness(async (harness) => {
+      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "1" }));
 
-        expect(result.code).toBe(0);
-        expect(hasSeedCall(result.calls)).toBe(false);
-        expect(result.stdout).toContain("predeploy: skipping seed");
-      });
-    }
+      expect(result.code).toBe(0);
+      expect(hasSeedCall(result.calls)).toBe(false);
+      expect(result.stdout).toContain(SKIP_LINE);
+    });
+  });
+
+  it("E-4: does not seed when RUN_SEED=yes", async () => {
+    await withHarness(async (harness) => {
+      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "yes" }));
+
+      expect(result.code).toBe(0);
+      expect(hasSeedCall(result.calls)).toBe(false);
+      expect(result.stdout).toContain(SKIP_LINE);
+    });
+  });
+
+  it("E-4: does not seed when RUN_SEED=TRUE", async () => {
+    await withHarness(async (harness) => {
+      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "TRUE" }));
+
+      expect(result.code).toBe(0);
+      expect(hasSeedCall(result.calls)).toBe(false);
+      expect(result.stdout).toContain(SKIP_LINE);
+    });
   });
 
   it("E-5: keeps seed failures non-fatal", async () => {
