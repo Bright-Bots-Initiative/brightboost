@@ -5,7 +5,7 @@ describe("MazeMaps game", () => {
     const mod = await import("../MazeMapsGame");
     expect(mod.default).toBeDefined();
     expect(typeof mod.default).toBe("function");
-  }, 15000);
+  });
 
   it("is registered in the game registry under maze_maps", async () => {
     const { GAME_COMPONENTS } = await import("../gameRegistry");

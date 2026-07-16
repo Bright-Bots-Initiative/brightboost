@@ -20,10 +20,10 @@ export default defineWorkspace([
       // See options at: https://storybook.js.org/docs/writing-tests/test-addon#storybooktest
       storybookTest({
         configDir: path.join(dirname, ".storybook"),
-        // Many stories are documentation-only (autodocs) and don't export any
-        // Storybook test suite for the vitest addon to execute.
-        // Excluding them prevents "No test suite found in file ..." failures.
-        tags: { exclude: ["autodocs"] },
+        // autodocs: docs-only stories have no vitest suite after tag filtering.
+        // no-vitest: opt-out for stories that trip Storybook issue #29572
+        // ("No test suite found" when the workspace path contains spaces).
+        tags: { exclude: ["autodocs", "no-vitest"] },
       }),
     ],
     test: {
