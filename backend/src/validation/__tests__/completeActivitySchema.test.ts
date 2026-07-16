@@ -32,10 +32,12 @@ describe("completeActivitySchema gameSpecific", () => {
     });
     expect(parsed.success).toBe(false);
     if (!parsed.success) {
-      // Spec refers to the keyed issue under `gameSpecific`; Zod may include
-      // the parent `result` segment depending on where the superRefine lives.
-      const paths = parsed.error.issues.map((i) => i.path);
-      expect(paths.some((p) => p[p.length - 1] === "gameSpecific")).toBe(true);
+      // overview.md §14.2 / §5.3.3: addIssue path is ["gameSpecific"] on the
+      // result object → full Zod path is ["result", "gameSpecific"].
+      expect(parsed.error.issues.map((i) => i.path)).toContainEqual([
+        "result",
+        "gameSpecific",
+      ]);
     }
   });
 
@@ -109,6 +111,13 @@ describe("completeActivitySchema gameSpecific", () => {
       result: { gameKey: "move_measure", gameSpecific: padded },
     });
     expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      // Size gate rejects via the gameSpecific issue path (§5.3.4).
+      expect(parsed.error.issues.map((i) => i.path)).toContainEqual([
+        "result",
+        "gameSpecific",
+      ]);
+    }
   });
 
   it("E-8: after parse(), result.gameSpecific is the raw value (superRefine does not transform)", () => {
