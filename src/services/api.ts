@@ -557,6 +557,8 @@ export const api = {
       total?: number;
       streakMax?: number;
       roundsCompleted?: number;
+      gameSpecific?: unknown;
+      accuracy?: number;
     };
   }) => {
     const res = await fetch(join(API_BASE, "/progress/complete-activity"), {
