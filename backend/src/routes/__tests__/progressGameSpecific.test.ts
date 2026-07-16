@@ -138,7 +138,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     prismaMock.gamePersonalBest.upsert.mockResolvedValue({});
   });
 
-  it("T2-1-01 / AC-1 / C1-01: persists re-parsed move_measure gameSpecific on create", async () => {
+  it("T2-1-01 / AC-1 / C1-01: POST move_measure → 200 → Progress row gameSpecific deep-equals what was sent", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
     prismaMock.progress.create.mockResolvedValue({
       id: "prog-1",
@@ -162,15 +162,20 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     expect(res.status).toBe(200);
     expect(prismaMock.progress.create).toHaveBeenCalled();
-    const createArg = prismaMock.progress.create.mock.calls[0][0];
-    const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
-    expect(createArg.data.gameSpecific).toEqual(expected);
+    // A1-03 mock strategy: create data is the Progress row write (§14.4 "read the row").
+    const row = prismaMock.progress.create.mock.calls[0][0].data;
+    // AC-1: deep-equals what was sent.
+    expect(row.gameSpecific).toEqual(validMoveMeasure);
+    // C1-01 / E-8: stored value is the re-parsed registry object (same for a clean payload).
+    expect(row.gameSpecific).toEqual(
+      GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure),
+    );
     // §5.5 / §7: persist only — do not surface gameSpecific on the wire.
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
   it.each(REGISTRY_KEYS)(
-    "T2-1-02 / AC-1: round-trip persists gameSpecific for %s",
+    "T2-1-02 / AC-1: round-trip Progress.gameSpecific deep-equals what was sent for %s",
     async (gameKey) => {
       const payload = validByKey[gameKey];
       const expected = GAME_SPECIFIC_SCHEMAS[gameKey].parse(payload);
@@ -198,13 +203,15 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
       expect(res.status).toBe(200);
       expect(prismaMock.progress.create).toHaveBeenCalled();
-      const createArg = prismaMock.progress.create.mock.calls[0][0];
-      expect(createArg.data.gameSpecific).toEqual(expected);
+      const row = prismaMock.progress.create.mock.calls[0][0].data;
+      // AC-1: deep-equals what was sent (and the re-parsed registry value).
+      expect(row.gameSpecific).toEqual(payload);
+      expect(row.gameSpecific).toEqual(expected);
       expect(res.body.progress).not.toHaveProperty("gameSpecific");
     },
   );
 
-  it("T2-1-03 / E-1: POST without gameSpecific succeeds and omits column on create", async () => {
+  it("T2-1-03 / E-1: POST without gameSpecific → 200, column null (omitted on create), no error", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
     prismaMock.progress.create.mockResolvedValue({
       id: "prog-1",
@@ -224,8 +231,9 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     expect(res.status).toBe(200);
     expect(prismaMock.progress.create).toHaveBeenCalled();
-    const createArg = prismaMock.progress.create.mock.calls[0][0];
-    expect(createArg.data).not.toHaveProperty("gameSpecific");
+    const row = prismaMock.progress.create.mock.calls[0][0].data;
+    // Omit from create ⇒ column stays null (Prisma default); never write null explicitly.
+    expect(row).not.toHaveProperty("gameSpecific");
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
@@ -357,7 +365,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(second.body.progress).not.toHaveProperty("gameSpecific");
   });
 
-  it("T2-1-05 / E-4: unregistered gameKey with gameSpecific → 400, no Progress write", async () => {
+  it("T2-1-05 / E-4 / E-12 / T2-1-06: unregistered gameKey + gameSpecific → 400, no write, no payload echo", async () => {
     const res = await completeActivity({
       moduleSlug: "test-module",
       lessonId: "lesson-1",
@@ -371,12 +379,15 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     expect(res.status).toBe(400);
     expectNoProgressWrites();
-    // T2-1-06 / G-103: do not echo payload fields.
-    expect(JSON.stringify(res.body)).not.toContain("dash");
-    expect(JSON.stringify(res.body)).not.toContain("impScore");
+    const body = JSON.stringify(res.body);
+    // §5.9.1: name the field and gameKey; G-103: never echo payload content.
+    expect(body).toContain("gameSpecific");
+    expect(body).toContain("not_a_registered_game");
+    expect(body).not.toContain("dash");
+    expect(body).not.toContain("impScore");
   });
 
-  it("T2-1-05 / E-5 / E-12: unknown key inside gameSpecific → 400 before any Progress write", async () => {
+  it("T2-1-05 / E-5 / E-12 / T2-1-06: unknown key inside gameSpecific → 400 before any Progress write", async () => {
     const res = await completeActivity({
       moduleSlug: "test-module",
       lessonId: "lesson-1",
@@ -390,11 +401,14 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     expect(res.status).toBe(400);
     expectNoProgressWrites();
-    // T2-1-06 / G-103: 400 must not echo the submitted payload.
-    expect(JSON.stringify(res.body)).not.toContain("smuggle");
+    const body = JSON.stringify(res.body);
+    // §5.9.1: name field + gameKey; G-103: do not echo smuggled key.
+    expect(body).toContain("gameSpecific");
+    expect(body).toContain("move_measure");
+    expect(body).not.toContain("smuggle");
   });
 
-  it("T2-1-05 / E-7: oversized gameSpecific → 400 before any Progress write", async () => {
+  it("T2-1-05 / E-7 / E-12 / T2-1-06: oversized gameSpecific → 400 before any Progress write", async () => {
     const padded: Record<string, unknown> = { ...validMoveMeasure };
     let i = 0;
     while (JSON.stringify(padded).length <= GAME_SPECIFIC_MAX_BYTES) {
@@ -415,12 +429,15 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     expect(res.status).toBe(400);
     expectNoProgressWrites();
-    // T2-1-06 / G-103: do not echo pad keys or long filler.
-    expect(JSON.stringify(res.body)).not.toContain("pad_0");
-    expect(JSON.stringify(res.body)).not.toContain("x".repeat(64));
+    const body = JSON.stringify(res.body);
+    // §5.9.1: name field + gameKey; G-103: do not echo pad keys or filler.
+    expect(body).toContain("gameSpecific");
+    expect(body).toContain("move_measure");
+    expect(body).not.toContain("pad_0");
+    expect(body).not.toContain("x".repeat(64));
   });
 
-  it("T2-1-07: IN_PROGRESS with stored A then POST with B overwrites (last-write-wins)", async () => {
+  it("T2-1-07 / §5.2.3: IN_PROGRESS stored A then POST with B overwrites (last-write-wins on update path)", async () => {
     const storedA = {
       dash: 1,
       jump: 1,
