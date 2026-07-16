@@ -13,9 +13,6 @@ export default defineConfig({
     name: "unit",
     globals: true,
     environment: "jsdom",
-    // Conservative default: some unit cases (rate-limit loops, heavy dynamic imports)
-    // can exceed Vitest's 5s default under full-suite load.
-    testTimeout: 15000,
     setupFiles: ["./src/test/setup.ts"],
     environmentOptions: {
       jsdom: {},

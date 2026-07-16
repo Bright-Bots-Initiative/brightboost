@@ -18,13 +18,7 @@ export default defineWorkspace([
     plugins: [
       // The plugin will run tests for the stories defined in your Storybook config
       // See options at: https://storybook.js.org/docs/writing-tests/test-addon#storybooktest
-      storybookTest({
-        configDir: path.join(dirname, ".storybook"),
-        // autodocs: docs-only stories have no vitest suite after tag filtering.
-        // no-vitest: opt-out for stories that trip Storybook issue #29572
-        // ("No test suite found" when the workspace path contains spaces).
-        tags: { exclude: ["autodocs", "no-vitest"] },
-      }),
+      storybookTest({ configDir: path.join(dirname, ".storybook") }),
     ],
     test: {
       name: "storybook",
