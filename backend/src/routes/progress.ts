@@ -117,18 +117,22 @@ router.post(
 
     const parse = completeActivitySchema.safeParse(req.body);
     if (!parse.success) {
-      // §5.9.2: deploy-bug signal — gameSpecific sent for a key with no registry entry.
-      // Must run on the 400 path; schema rejects before a successful parse reaches re-parse.
-      const bodyResult = req.body?.result;
-      if (
-        bodyResult?.gameSpecific !== undefined &&
-        typeof bodyResult?.gameKey === "string" &&
-        bodyResult.gameKey.length > 0 &&
-        !isRegisteredGameKey(bodyResult.gameKey)
-      ) {
-        console.warn(
-          `[complete-activity] Unregistered gameKey "${bodyResult.gameKey}" (no gameSpecific registry entry)`,
+      // §5.9.2: deploy-bug signal when schema rejected gameSpecific for an unknown key.
+      // Use the schema issue (gameKey already max-bounded) — never log raw body / payload.
+      const unregisteredIssue = parse.error.issues.find(
+        (i) =>
+          typeof i.message === "string" &&
+          i.message.startsWith('gameSpecific not accepted for gameKey "'),
+      );
+      if (unregisteredIssue) {
+        const match = unregisteredIssue.message.match(
+          /^gameSpecific not accepted for gameKey "([^"]{1,50})"$/,
         );
+        if (match) {
+          console.warn(
+            `[complete-activity] Unregistered gameKey "${match[1]}" (no gameSpecific registry entry)`,
+          );
+        }
       }
       return res.status(400).json({ error: parse.error.flatten() });
     }
