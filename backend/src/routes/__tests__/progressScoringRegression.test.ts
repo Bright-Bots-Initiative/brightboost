@@ -69,8 +69,9 @@ const AVATAR_BEFORE = {
   studentId: "student-123",
   archetype: "AI",
   xp: 100,
-  energy: 100,
-  hp: 100,
+  // Below cap so energyGain(+5)/hpGain(+2) appear in reward + avatar.update (AC-4).
+  energy: 50,
+  hp: 50,
   level: 1,
   speed: 0,
   control: 0,
@@ -81,8 +82,8 @@ const AVATAR_BEFORE = {
 const AVATAR_AFTER = {
   ...AVATAR_BEFORE,
   xp: 150,
-  energy: 100,
-  hp: 100,
+  energy: 55,
+  hp: 52,
   speed: 2,
   control: 3,
   focus: 2,
@@ -114,8 +115,8 @@ const PERSONAL_BEST = {
 /** Expected avatar.update data for the fixed request (main scoring path). */
 const EXPECTED_AVATAR_UPDATE = {
   xp: { increment: 50 },
-  energy: 100,
-  hp: 100,
+  energy: 55,
+  hp: 52,
   speed: 2,
   control: 3,
   focus: 2,
@@ -135,14 +136,15 @@ const EXPECTED_GPB_CREATE = {
 /**
  * T3-1-01 — main-equivalent outcome under this mock setup (saved fixture).
  * Includes response body fields §14.5 cares about: progress, XP/reward, streak/GPB.
+ * energyDelta/hpDelta are non-zero so AC-4 actually pins energyGain(+5)/hpGain(+2).
  */
 const SCORING_BASELINE = {
   progress: PROGRESS_ROW,
   reward: {
     xpDelta: 50,
     levelDelta: 0,
-    energyDelta: 0,
-    hpDelta: 0,
+    energyDelta: 5,
+    hpDelta: 2,
     newAbilitiesDelta: 0,
   },
   avatar: AVATAR_AFTER,
