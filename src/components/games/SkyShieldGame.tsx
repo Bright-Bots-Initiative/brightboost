@@ -10,14 +10,77 @@ import { Button } from "@/components/ui/button";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import { getGradeBand, type GradeBand } from "./gradeBandContent";
 
 // ── Constants & Types ─────────────────────────────────────────────────────
 const LABELS = ["🔵", "🟡", "🩷"];
 const SHIELD_BG = ["bg-blue-500", "bg-yellow-500", "bg-pink-500"];
 const LANE_BG = ["bg-blue-400/20", "bg-yellow-400/20", "bg-pink-400/20"];
 export const PT = { catch: 10, predict: 20, scan: 15 };
-const PRACTICE_N = 5, PATTERN_N = 3, CHALLENGE_N = 10, MYSTERY_N = 2;
+export const SKY_SHIELD_CONTENT = {
+  k2: {
+    practiceRounds: 5,
+    patternRounds: 3,
+    challengeRounds: 10,
+    mysteryDrops: 2,
+    
+    patterns: [
+      [0, 1, 2],
+      [0, 2, 1],
+      [1, 0, 2],
+      [1, 2, 0],
+      [2, 0, 1],
+      [2, 1, 0],
+    ],
 
+    patternLength: 6,
+    mysteryColors: 2,
+
+    exitPattern: [0, 0, 1, 0, 0],
+    exitAnswer: 1,
+  },
+
+  g3_5: {
+    practiceRounds: 3,
+    patternRounds: 5,
+    challengeRounds: 14,
+    mysteryDrops: 4,
+
+    patterns: [
+      [0, 1, 0, 2],
+      [0, 1, 2, 1],
+      [0, 2, 1, 2],
+      [0, 0, 1, 2],
+      [0, 1, 1, 2],
+      [0, 2, 2, 1],
+      [1, 1, 0, 2],
+      [1, 0, 2, 1],
+      [1, 0, 1, 2],
+      [1, 0, 2, 2],
+      [2, 1, 0, 0],
+      [2, 0, 2, 1],
+      [2, 1, 1, 2],
+      [2, 1, 2, 0],
+      [2, 2, 1, 0],
+      [2, 0, 1, 1],
+      [2, 2, 0, 1],
+      [2, 1, 1, 0],
+    ],
+
+    patternLength: 8,
+    mysteryColors: 3,
+
+    exitPattern: [0,1,2,1,0,1,2,1],
+    exitAnswer: 0,
+  },
+};
+
+type SkyShieldContent =
+  (typeof SKY_SHIELD_CONTENT)[keyof typeof SKY_SHIELD_CONTENT];
+type Pattern = {
+  base: number[];
+  sequence: number[];
+};
 type Phase = "intro" | "practice" | "pattern" | "scan" | "challenge" | "exitTicket" | "celebration";
 interface Drop { lane: number; kind: "normal" | "mystery"; hiddenColor?: number }
 
@@ -37,19 +100,19 @@ const BRIEFING: MissionBriefing = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const rLane = () => Math.floor(Math.random() * 3);
-export function mkPattern(): number[] {
-  const b = [0, 1, 2];
-  for (let i = 2; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
-  return [...b, ...b];
+export function mkPattern(content: SkyShieldContent): Pattern {
+  const base =
+        content.patterns[Math.floor(Math.random()*content.patterns.length)];
+  return {base: [...base], sequence: [...base, ...base]};
 }
-export function mkChallenge(): Drop[] {
+export function mkChallenge(content: SkyShieldContent): Drop[] {
   const mi = new Set<number>();
-  while (mi.size < MYSTERY_N) mi.add(2 + Math.floor(Math.random() * (CHALLENGE_N - 2)));
-  const p = mkPattern();
-  return Array.from({ length: CHALLENGE_N }, (_, i) => ({
+  while (mi.size < content.mysteryDrops) mi.add(2 + Math.floor(Math.random() * (content.challengeRounds - 2)));
+  const p = mkPattern(content).sequence;
+  return Array.from({ length: content.challengeRounds }, (_, i) => ({
     lane: p[i % p.length],
     kind: mi.has(i) ? "mystery" as const : "normal" as const,
-    ...(mi.has(i) ? { hiddenColor: Math.random() < 0.5 ? 0 : 1 } : {}),
+    ...(mi.has(i) ? { hiddenColor: Math.floor(Math.random() * content.mysteryColors) } : {}),
   }));
 }
 
@@ -101,7 +164,12 @@ const ColorPicker = ({ onPick }: { onPick: (c: number) => void }) => (
 );
 
 // ── Playfield ─────────────────────────────────────────────────────────────
-function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void }) {
+function SkyShieldPlayfield({ 
+    band,
+    onFinish }: { 
+        band: GradeBand,
+        onFinish: (r: GameResult) => void }) {
+  const content = SKY_SHIELD_CONTENT[band];
   const { t } = useTranslation();
   const T = (k: string, d: string) => t(`games.skyShield.${k}`, { defaultValue: d });
 
@@ -119,7 +187,7 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
   const [prDrop, setPrDrop] = useState<Drop>({ lane: rLane(), kind: "normal" });
   const [prReady, setPrReady] = useState(true);
   // Pattern
-  const pat = useRef<number[]>([]);
+  const pat = useRef<Pattern | null>(null);
   const [patShown, setPatShown] = useState(0);
   const [patCorrect, setPatCorrect] = useState(0);
   const [patAsking, setPatAsking] = useState(false);
@@ -129,7 +197,7 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
   const [scIdx, setScIdx] = useState(0);
   const [scRevealed, setScRevealed] = useState(false);
   // Challenge
-  const [chDrops] = useState<Drop[]>(() => mkChallenge());
+  const [chDrops] = useState<Drop[]>(() => mkChallenge(content));
   const [chIdx, setChIdx] = useState(0);
   const [chRevealed, setChRevealed] = useState(false);
   const [chReady, setChReady] = useState(true);
@@ -196,13 +264,13 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
       setPrReady(false);
       const ok = shield === prDrop.lane;
       bump(PT.catch, ok); showFb(ok ? "ok" : "miss");
-      setTimeout(() => { const n = prIdx + 1; if (n >= PRACTICE_N) { pat.current = mkPattern(); patStarted.current = false; setPatShown(0); setPatCorrect(0); setPatAsking(false); setPhase("pattern"); }
+      setTimeout(() => { const n = prIdx + 1; if (n >= content.practiceRounds) { pat.current = mkPattern(content); patStarted.current = false; setPatShown(0); setPatCorrect(0); setPatAsking(false); setPhase("pattern"); }
         else { setPrIdx(n); setPrDrop({ lane: rLane(), kind: "normal" }); setPrReady(true); } }, 900);
     };
     return (
       <div className="slide-up-fade space-y-4">
         <HUD />
-        <p className="text-center font-bold text-violet-800 text-sm">{T("practiceLabel", "Practice -- Catch the Light!")} ({prIdx + 1}/{PRACTICE_N})</p>
+        <p className="text-center font-bold text-violet-800 text-sm">{T("practiceLabel", "Practice -- Catch the Light!")} ({prIdx + 1}/{content.practiceRounds})</p>
         <Lanes activeLane={prDrop.lane} emoji={LABELS[prDrop.lane]} landed={!prReady} />
         <FBanner />
         <div className="text-center space-y-3">
@@ -215,7 +283,10 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
 
   // ── Phase: PATTERN ──────────────────────────────────────────────────
   if (phase === "pattern") {
-    const p = pat.current;
+    const pattern = pat.current;
+      if (!pattern) return null;
+    const p = pattern.sequence;
+
     if (!patStarted.current && p.length > 0) {
       patStarted.current = true;
       let i = 0;
@@ -224,17 +295,17 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
     }
     const doGuess = (l: number) => {
       if (!patAsking) return;
-      const expected = p[p.length % 3]; // next in cycle
+      const expected = pattern.base[p.length % pattern.base.length]; // next in cycle
       const ok = l === expected;
       bump(PT.predict, ok); showFb(ok ? "pok" : "pmiss");
       const nc = patCorrect + (ok ? 1 : 0); setPatCorrect(nc);
-      setTimeout(() => { if (nc >= PATTERN_N) { setScIdx(0); setScRevealed(false); setPhase("scan"); }
-        else { pat.current = mkPattern(); patStarted.current = false; setPatShown(0); setPatAsking(false); } }, 900);
+      setTimeout(() => { if (nc >= content.patternRounds) { setScIdx(0); setScRevealed(false); setPhase("scan"); }
+        else { pat.current = mkPattern(content); patStarted.current = false; setPatShown(0); setPatAsking(false); } }, 900);
     };
     return (
       <div className="slide-up-fade space-y-4">
         <HUD />
-        <p className="text-center font-bold text-violet-800 text-sm">{T("patternLabel", "Pattern -- Watch and Predict!")} ({patCorrect}/{PATTERN_N})</p>
+        <p className="text-center font-bold text-violet-800 text-sm">{T("patternLabel", "Pattern -- Watch and Predict!")} ({patCorrect}/{content.patternRounds})</p>
         <div className="flex gap-1 justify-center flex-wrap">{p.slice(0, patShown).map((l, i) => <span key={i} className="text-2xl">{LABELS[l]}</span>)}</div>
         {patAsking && <>
           <p className="text-center text-lg font-bold text-violet-900">{T("whichLane", "Which lane is next?")}</p>
@@ -284,7 +355,7 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
     return (
       <div className="slide-up-fade space-y-4">
         <HUD />
-        <p className="text-center font-bold text-violet-800 text-sm">{T("challengeLabel", "Challenge Round!")} ({chIdx + 1}/{CHALLENGE_N})</p>
+        <p className="text-center font-bold text-violet-800 text-sm">{T("challengeLabel", "Challenge Round!")} ({chIdx + 1}/{content.challengeRounds})</p>
         <Lanes activeLane={d.lane} emoji={emoji} landed={!chReady} />
         <FBanner />
         <div className="text-center space-y-3">
@@ -338,10 +409,24 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────
-export default function SkyShieldGame({ onComplete }: { config?: unknown; onComplete?: (result: GameResult) => void }) {
+export default function MazeMapsGame({
+    config,
+    onComplete,
+}: {
+  config?: unknown;
+  onComplete?: (result: GameResult) => void;
+}) 
+{
+    const band = getGradeBand(config);
+
   return (
-    <GameShell gameKey="sky_shield" title="Sky Shield Patterns" briefing={BRIEFING} onComplete={onComplete ?? (() => {})}>
-      {({ onFinish, reducedEffects: _reducedEffects }) => <SkyShieldPlayfield onFinish={onFinish} />}
+    <GameShell 
+      gameKey="sky_shield" 
+      title="Sky Shield Patterns" 
+      briefing={BRIEFING} 
+      onComplete={onComplete ?? (() => {})}
+    >
+      {({ onFinish, reducedEffects: _reducedEffects }) => <SkyShieldPlayfield  band={band} onFinish={onFinish} />}
     </GameShell>
   );
 }
