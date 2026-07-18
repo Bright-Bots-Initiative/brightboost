@@ -40,13 +40,14 @@ Run staging with `npm run test:e2e:staging` (`cypress/e2e/staging/*.cy.ts`). Als
 npm run verify:ci-gate
 ```
 
-This script (see `scripts/verify-ci-shell-gate.sh`):
+This script (see `scripts/verify-ci-shell-gate.sh`) runs a **two-phase causal proof** — healthy-green → sabotaged-red:
 
-1. Backs up `src/main.tsx` outside the repo, injects a sabotage throw, boots Vite, runs `npm run test:e2e:ci`.
-2. Exits **0 only if** Cypress exited **non-zero** (gate rejected the broken shell).
-3. Restores `src/main.tsx` and kills the script’s server via `trap … EXIT`.
+1. **Phase 1 — healthy baseline:** boots the untouched app, runs `npm run test:e2e:ci`, and **requires exit 0**. If the healthy run is red (missing Cypress binary, broken config, already-broken shell), the script FAILs here — an unrelated failure can never masquerade as a successful sabotage.
+2. **Phase 2 — sabotage:** backs up `src/main.tsx` outside the repo, injects a throw, boots again, runs the same gate, and **requires a non-zero exit**.
+3. **PASS is printed only when phase 1 was green AND phase 2 was red** — i.e. the gate changed from green to red *because* the shell broke.
+4. Restores `src/main.tsx` and terminates **only the process tree the script spawned** via `trap … EXIT` (normal, error, and signal exits). It never sweeps or kills other PIDs on `:5173`: a busy port fails the preflight, and if a foreign listener wins the startup race the script errors out and leaves it alone.
 
-It is **not** wired into per-PR CI (would double job time and intentionally breaks the tree). Run it manually and paste the PASS line into PR evidence.
+It is **not** wired into per-PR CI (would double job time and intentionally breaks the tree). Run it manually and paste the PASS block (both exit codes) into PR evidence.
 
 Require a free `:5173` before running (the script refuses to steal a foreign Vite). Prefer Git Bash on Windows (`C:\Program Files\Git\bin\bash.exe`).
 
