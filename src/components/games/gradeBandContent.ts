@@ -574,3 +574,66 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
     ],
   },
 };
+
+
+// ── SkyShield g3-5 sectors ──────────────────────────────────────────
+// 
+// 
+
+export const SKY_SHIELD_CONTENT = {
+  k2: {
+    practiceRounds: 5,
+    patternRounds: 3,
+    challengeRounds: 10,
+    mysteryDrops: 2,
+    
+    patterns: [
+      [0, 1, 2],
+      [0, 2, 1],
+      [1, 0, 2],
+      [1, 2, 0],
+      [2, 0, 1],
+      [2, 1, 0],
+    ],
+
+    patternLength: 6,
+    mysteryColors: 2,
+
+    exitPattern: [0, 0, 1, 0, 0],
+    exitAnswer: 1,
+  },
+
+  g3_5: {
+    practiceRounds: 5,
+    patternRounds: 3,
+    challengeRounds: 10,
+    mysteryDrops: 4,
+
+    patterns: [
+      [0, 1, 0, 2],
+      [0, 1, 2, 1],
+      [0, 2, 1, 2],
+      [0, 0, 1, 2],
+      [0, 1, 1, 2],
+      [0, 2, 2, 1],
+      [1, 1, 0, 2],
+      [1, 0, 2, 1],
+      [1, 0, 1, 2],
+      [1, 0, 2, 2],
+      [2, 1, 0, 0],
+      [2, 0, 2, 1],
+      [2, 1, 1, 2],
+      [2, 1, 2, 0],
+      [2, 2, 1, 0],
+      [2, 0, 1, 1],
+      [2, 2, 0, 1],
+      [2, 1, 1, 0],
+    ],
+
+    patternLength: 8,
+    mysteryColors: 3,
+
+    exitPattern: [0,0,1,2,0,0,1],
+    exitAnswer: 2,
+  },
+};

@@ -10,70 +10,13 @@ import { Button } from "@/components/ui/button";
 import GameShell, { type GameResult, type MissionBriefing } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
-import { getGradeBand, type GradeBand } from "./gradeBandContent";
+import { getGradeBand, SKY_SHIELD_CONTENT, type GradeBand } from "./gradeBandContent";
 
 // ── Constants & Types ─────────────────────────────────────────────────────
 const LABELS = ["🔵", "🟡", "🩷"];
 const SHIELD_BG = ["bg-blue-500", "bg-yellow-500", "bg-pink-500"];
 const LANE_BG = ["bg-blue-400/20", "bg-yellow-400/20", "bg-pink-400/20"];
 export const PT = { catch: 10, predict: 20, scan: 15 };
-export const SKY_SHIELD_CONTENT = {
-  k2: {
-    practiceRounds: 5,
-    patternRounds: 3,
-    challengeRounds: 10,
-    mysteryDrops: 2,
-    
-    patterns: [
-      [0, 1, 2],
-      [0, 2, 1],
-      [1, 0, 2],
-      [1, 2, 0],
-      [2, 0, 1],
-      [2, 1, 0],
-    ],
-
-    patternLength: 6,
-    mysteryColors: 2,
-
-    exitPattern: [0, 0, 1, 0, 0],
-    exitAnswer: 1,
-  },
-
-  g3_5: {
-    practiceRounds: 3,
-    patternRounds: 5,
-    challengeRounds: 14,
-    mysteryDrops: 4,
-
-    patterns: [
-      [0, 1, 0, 2],
-      [0, 1, 2, 1],
-      [0, 2, 1, 2],
-      [0, 0, 1, 2],
-      [0, 1, 1, 2],
-      [0, 2, 2, 1],
-      [1, 1, 0, 2],
-      [1, 0, 2, 1],
-      [1, 0, 1, 2],
-      [1, 0, 2, 2],
-      [2, 1, 0, 0],
-      [2, 0, 2, 1],
-      [2, 1, 1, 2],
-      [2, 1, 2, 0],
-      [2, 2, 1, 0],
-      [2, 0, 1, 1],
-      [2, 2, 0, 1],
-      [2, 1, 1, 0],
-    ],
-
-    patternLength: 8,
-    mysteryColors: 3,
-
-    exitPattern: [0,1,2,1,0,1,2,1],
-    exitAnswer: 0,
-  },
-};
 
 type SkyShieldContent =
   (typeof SKY_SHIELD_CONTENT)[keyof typeof SKY_SHIELD_CONTENT];
@@ -119,11 +62,12 @@ export function mkChallenge(content: SkyShieldContent): Drop[] {
 export function buildSkyShieldCompletionPayload(params: {
   score: number;
   exitAns: number | null;
+  exitAnswer: number;
   totalRounds: number;
   maxStreak: number;
   streak: number;
 }): GameResult {
-  const exitOk = params.exitAns === 1;
+  const exitOk = params.exitAns === params.exitAnswer;
   return {
     gameKey: "sky_shield",
     score: params.score + (exitOk ? PT.predict : 0),
@@ -152,16 +96,27 @@ const LanePicker = ({ onPick }: { onPick: (l: number) => void }) => (
   </div>
 );
 
-const ColorPicker = ({ onPick }: { onPick: (c: number) => void }) => (
-  <div className="flex gap-3 justify-center">
-    {[0, 1].map(c => (
-      <Button key={c} onClick={() => onPick(c)}
-        className={`min-w-[56px] min-h-[56px] text-2xl rounded-xl ${c === 0 ? "bg-blue-500 hover:bg-blue-600" : "bg-yellow-500 hover:bg-yellow-600"} shadow-md hover:scale-105 active:scale-95 transition-transform`}>
-        {c === 0 ? "🔵" : "🟡"}
-      </Button>
-    ))}
-  </div>
-);
+const ColorPicker = ({
+    onPick,
+    colorCount,
+}: {
+    onPick: (c: number) => void;
+    colorCount: number;
+}) => (
+    <div className="flex gap-3 justify-center">
+        {Array.from({ length: colorCount }, (_, c) => (
+        <Button
+            key={c}
+            onClick={() => onPick(c)}
+            className={`min-w-[56px] min-h-[56px] text-2xl rounded-xl ${
+            SHIELD_BG[c]
+            } shadow-md hover:scale-105 active:scale-95 transition-transform`}
+        >
+            {LABELS[c]}
+        </Button>
+        ))}
+    </div>
+    )
 
 // ── Playfield ─────────────────────────────────────────────────────────────
 function SkyShieldPlayfield({ 
@@ -333,7 +288,7 @@ function SkyShieldPlayfield({
         <p className="text-center font-bold text-violet-800 text-sm">{T("scanLabel", "Scan -- Reveal the Mystery!")} ({scIdx + 1}/{scDrops.length})</p>
         <div className="flex justify-center"><span className="text-6xl bounce-in">{scRevealed ? (d.hiddenColor === 0 ? "🔵" : "🟡") : "❓"}</span></div>
         {!scRevealed && <div className="text-center"><BigBtn onClick={() => setScRevealed(true)} cls="bg-gradient-to-r from-cyan-500 to-cyan-600">🔍 {T("scan", "Scan")}</BigBtn></div>}
-        {scRevealed && <><p className="text-center text-sm font-bold text-slate-700">{T("pickColor", "Pick the matching shield!")}</p><ColorPicker onPick={doGuess} /></>}
+        {scRevealed && <><p className="text-center text-sm font-bold text-slate-700">{T("pickColor", "Pick the matching shield!")}</p><ColorPicker onPick={doGuess} colorCount={content.mysteryColors}/></>}
         <FBanner />
       </div>
     );
@@ -370,16 +325,25 @@ function SkyShieldPlayfield({
   // ── Phase: EXIT TICKET ──────────────────────────────────────────────
   if (phase === "exitTicket") {
     const submitted = exitAns !== null;
-    const ok = exitAns === 1;
+    const ok = exitAns === content.exitAnswer;
+    const correctEmoji = LABELS[content.exitAnswer];
     return (
       <div className="slide-up-fade space-y-6 py-4 text-center">
         <h3 className="text-xl font-extrabold text-violet-900">{T("exitTitle", "Exit Ticket")}</h3>
-        <p className="text-base text-slate-700 max-w-sm mx-auto">{T("exitQuestion", "The pattern is blue, blue, gold, blue, blue, ___. What comes next?")}</p>
-        <div className="flex gap-1 justify-center text-2xl"><span>🔵</span><span>🔵</span><span>🟡</span><span>🔵</span><span>🔵</span><span>❓</span></div>
-        {!submitted && <ColorPicker onPick={c => setExitAns(c)} />}
+        <p className="text-base text-slate-700 max-w-sm mx-auto">{"What comes next?"}</p>
+        <div className="flex gap-1 justify-center text-2xl">
+            {content.exitPattern.map((c, i) => (
+                <span key={i}>{LABELS[c]}</span>
+              ))}
+              <span>❓</span>
+            </div>
+        {!submitted && <ColorPicker onPick={c => setExitAns(c)} colorCount={content.mysteryColors}/>}
         {submitted && <div className="space-y-4">
           <div className={`bounce-in py-2 px-4 rounded-xl border font-bold ${ok ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-orange-100 text-orange-700 border-orange-300"}`}>
-            {ok ? T("exitCorrect", "Gold! You got it!") : T("exitWrong", "The answer is gold (🟡). The pattern repeats!")}
+            {ok
+              ? T("exitCorrect", `Correct! ${correctEmoji} comes next!`)
+              : T("exitWrong", `The answer is ${correctEmoji}. The pattern repeats!`)
+            }
           </div>
           <BigBtn onClick={() => setPhase("celebration")} cls="bg-gradient-to-r from-violet-500 to-violet-600">{T("seeResults", "See Results")}</BigBtn>
         </div>}
@@ -397,6 +361,7 @@ function SkyShieldPlayfield({
         <BigBtn onClick={() => onFinish(buildSkyShieldCompletionPayload({
           score,
           exitAns,
+          exitAnswer: content.exitAnswer,
           totalRounds: total.current,
           maxStreak: maxStreak.current,
           streak,
@@ -409,7 +374,7 @@ function SkyShieldPlayfield({
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────
-export default function MazeMapsGame({
+export default function SkyShieldGame({
     config,
     onComplete,
 }: {
