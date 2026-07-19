@@ -4,17 +4,21 @@ import {
   mkChallenge,
   mkPattern,
 } from "../SkyShieldGame";
+import { SKY_SHIELD_CONTENT } from "../gradeBandContent";
 
 describe("Sky Shield helpers", () => {
   it("creates valid repeating base pattern", () => {
-    const pattern = mkPattern();
-    expect(pattern).toHaveLength(6);
-    expect(pattern.slice(0, 3).sort()).toEqual([0, 1, 2]);
-    expect(pattern.slice(3).sort()).toEqual([0, 1, 2]);
+    const pattern = mkPattern(SKY_SHIELD_CONTENT.k2);
+
+    expect(pattern.base).toHaveLength(3);
+    expect(pattern.sequence).toHaveLength(6);
+
+    expect(pattern.sequence.slice(0, 3).sort()).toEqual([0, 1, 2]);
+    expect(pattern.sequence.slice(3).sort()).toEqual([0, 1, 2]);
   });
 
   it("creates challenge with mystery constraints", () => {
-    const challenge = mkChallenge();
+    const challenge = mkChallenge(SKY_SHIELD_CONTENT.k2);
     const mysteries = challenge
       .map((drop, idx) => ({ drop, idx }))
       .filter(({ drop }) => drop.kind === "mystery");
@@ -31,6 +35,7 @@ describe("Sky Shield helpers", () => {
       buildSkyShieldCompletionPayload({
         score: 85,
         exitAns: 1,
+        exitAnswer: 1,
         totalRounds: 20,
         maxStreak: 4,
         streak: 3,
