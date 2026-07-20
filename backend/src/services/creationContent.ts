@@ -12,8 +12,9 @@
 // correct answer) — see the marked extension point below.
 
 import { validateDataDashChallenge } from "./dataDashChallenge";
+import { deriveRaceTrackTitle, validateRaceTrack } from "./raceTrack";
 
-export const CREATION_TYPES = ["data_dash_challenge"] as const;
+export const CREATION_TYPES = ["data_dash_challenge", "race_track"] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
 const dataDashSortRuleLabels: Record<string, string> = {
@@ -60,6 +61,12 @@ export function validateCreationContent(
       // moderate — only to verify the challenge is actually winnable.
       return validateDataDashChallenge(content);
 
+    case "race_track":
+      // Strict-parsed (zod .strict() at every level — unknown keys rejected,
+      // deliberately diverging from Data Dash per #668) + start→finish
+      // rideability guard so a shared track is always playable by peers.
+      return validateRaceTrack(content);
+
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.
       return { ok: false, error: `unsupported creation type: ${type}` };
@@ -83,7 +90,11 @@ export function deriveCreationTitle(
       return label ? `Sort by ${label}` : null;
     }
 
-    default: 
+    case "race_track":
+      // The kid's chosen name from the structured name-kit (schema-bounded).
+      return deriveRaceTrackTitle(content);
+
+    default:
       return null;
   }
 }

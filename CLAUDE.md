@@ -202,9 +202,13 @@ logic (`isSetComplete`, Set 2 unlocks when all Set 1 IDs have `COMPLETED` record
 | Fast Lane | FastLaneGame.tsx | `fast_lane` | `fast-lane` | AI + Biotech | K-2 only |
 | Qualify & Race | QualifyTuneRaceGame.tsx | `qualify_tune_race` | `qualify-tune-race` | Capstone | K-2 only |
 
-### Set 3 — Mastery
-Placeholder IDs only (`set3-game-1`..`set3-game-5`); no components or seed data. Specialization
-(AI/Quantum/Biotech archetype) gating on Set 3 is planned, **not implemented**.
+### Set 3 — Mastery ("mastery through making" — creation-first, #676)
+Game 1 is implemented but **GATED from students** (via `HIDDEN_MODULE_SLUGS`; ungate = one line):
+Boost Track Builder — `TrackMakerGame.tsx` / `track_maker` / `track-maker` / module
+`k2-stem-track-maker`. The kid's track persists as a `Creation` (`type: "race_track"`,
+strict-parsed validator in `backend/src/services/raceTrack.ts`). Slots 2-5 remain placeholders
+(`set3-game-2`..`set3-game-5`); Set 3 unlocks after Set 2 (`isSet3Locked`). Specialization
+(AI/Quantum/Biotech archetype) gating on Set 3 completion is planned, **not implemented**.
 
 ### Grade bands
 - `Course.gradeBand`: `k2` (default) | `g3_5`; teacher sets it at class creation and in class detail.

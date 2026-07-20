@@ -278,7 +278,14 @@ router.get(
       orderBy: { updatedAt: "desc" },
     });
 
-    return res.json(creations.map(toDTO));
+    // race_track cards render a mini track thumbnail, which needs the layout;
+    // a track is ≤64 pieces (~1-3KB) so shipping it in the list is cheap.
+    // Other types keep the lean content-free DTO.
+    return res.json(
+      creations.map((c) =>
+        c.type === "race_track" ? { ...toDTO(c), content: c.content } : toDTO(c),
+      ),
+    );
   },
 );
 

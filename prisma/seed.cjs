@@ -1071,6 +1071,114 @@ async function main() {
     console.log("Seeded Set 2 module:", s2.slug, "(story + game + quiz)");
   }
 
+  // ---------------------------------------------------------------------
+  // SET 3 — Mastery ("mastery through making"; game 1 only, GATED from
+  // students via HIDDEN_MODULE_SLUGS in src/constants/stemSets.ts — the
+  // module is seeded + published so ungating is a one-line frontend change).
+  // ---------------------------------------------------------------------
+  const set3Modules = [
+    {
+      slug: "k2-stem-track-maker",
+      title: "Boost Track Builder",
+      description: "Build your own motorcycle track, then ride it! 🏍️🛠️",
+      activityId: "track-maker",
+      gameKey: "track_maker",
+      strand: "Quantum",
+      story: {
+        title: "Story: Boost's New Wheels",
+        slides: [
+          { id: "tm-s1", text: { en: "Boost just got a shiny motorcycle — vroom! But there's a problem: there's no track to ride it on. Guess who gets to build one? YOU!", es: "¡Boost tiene una moto nueva y brillante — brum! Pero hay un problema: no hay pista para montarla. ¿Adivina quién va a construir una? ¡TÚ!" }, icon: "🏍️" },
+          { id: "tm-s2", text: { en: "Here's Boost's builder tip: bikes love straights, but curves are tricky. Go too fast into a sharp curve and — whoaaa — spin-out! Good builders think about speed.", es: "El consejo de Boost: a las motos les encantan las rectas, pero las curvas son difíciles. Si entras muy rápido a una curva cerrada — ¡uuuy — trompo! Los buenos constructores piensan en la velocidad." }, icon: "🛠️" },
+          { id: "tm-s3", text: { en: "Build your track, ride it, and make it better each time. Every wobble teaches you something. Ready, builder?", es: "Construye tu pista, móntala y mejórala cada vez. Cada tambaleo te enseña algo. ¿Listo, constructor?" }, icon: "⭐" },
+        ],
+        questions: [
+          { id: "tm-q1", prompt: { en: "What happens if the bike goes too fast into a sharp curve?", es: "¿Qué pasa si la moto entra muy rápido a una curva cerrada?" }, choices: [{ en: "It spins out", es: "Da un trompo" }, { en: "It flies away", es: "Sale volando" }, { en: "Nothing happens", es: "No pasa nada" }, { en: "It gets bigger", es: "Se hace más grande" }], answerIndex: 0 },
+        ],
+      },
+      quiz: [
+        { id: "tmz-q1", prompt: { en: "The bike keeps spinning out on your sharp curve. What could help?", es: "La moto sigue dando trompos en tu curva cerrada. ¿Qué podría ayudar?" }, choices: [{ en: "Slow down before the curve", es: "Frenar antes de la curva" }, { en: "Put a boost pad right before it", es: "Poner un acelerador justo antes" }, { en: "Ride faster", es: "Ir más rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 0 },
+        { id: "tmz-q2", prompt: { en: "Your ride didn't go how you wanted. What does a good builder do?", es: "Tu paseo no salió como querías. ¿Qué hace un buen constructor?" }, choices: [{ en: "Change the track and try again", es: "Cambiar la pista y probar otra vez" }, { en: "Stop building forever", es: "Dejar de construir para siempre" }, { en: "Blame the bike", es: "Culpar a la moto" }, { en: "Delete everything", es: "Borrar todo" }], answerIndex: 0 },
+        { id: "tmz-q3", prompt: { en: "What does a boost pad do?", es: "¿Qué hace un acelerador?" }, choices: [{ en: "Makes the bike zoom fast", es: "Hace que la moto vaya súper rápido" }, { en: "Stops the bike", es: "Detiene la moto" }, { en: "Paints the bike", es: "Pinta la moto" }, { en: "Makes the track longer", es: "Alarga la pista" }], answerIndex: 0 },
+      ],
+    },
+  ];
+
+  for (const s3 of set3Modules) {
+    const mod = await prisma.module.upsert({
+      where: { slug: s3.slug },
+      update: { title: s3.title, description: s3.description, level: "K-2", published: true },
+      create: { slug: s3.slug, title: s3.title, description: s3.description, level: "K-2", published: true },
+    });
+
+    // Get or create unit — use first unit of this module (not by title, which may have changed)
+    let s3Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id }, orderBy: { order: "asc" } });
+    if (!s3Unit) {
+      s3Unit = await prisma.unit.create({ data: { title: "Unit 1", order: 1, Module: { connect: { id: mod.id } }, teacher: { connect: { id: teacher.id } } } });
+    }
+
+    // Get or create lesson — use first lesson of this unit
+    let s3Lesson = await prisma.lesson.findFirst({ where: { unitId: s3Unit.id }, orderBy: { order: "asc" } });
+    if (!s3Lesson) {
+      s3Lesson = await prisma.lesson.create({ data: { title: s3.title, order: 1, Unit: { connect: { id: s3Unit.id } } } });
+    }
+
+    // Clean up duplicate lessons (from previous seed runs with different titles)
+    const allS3Lessons = await prisma.lesson.findMany({ where: { unitId: s3Unit.id } });
+    for (const dup of allS3Lessons) {
+      if (dup.id !== s3Lesson.id) {
+        await prisma.activity.deleteMany({ where: { lessonId: dup.id } });
+        await prisma.lesson.delete({ where: { id: dup.id } }).catch(() => {});
+      }
+    }
+
+    // Clean up duplicate activities within this lesson (keep only 3: story, game, quiz)
+    const existingS3Acts = await prisma.activity.findMany({ where: { lessonId: s3Lesson.id }, orderBy: { order: "asc" } });
+    for (const act of existingS3Acts) {
+      if (act.order > 3) {
+        await prisma.activity.delete({ where: { id: act.id } }).catch(() => {});
+      }
+    }
+
+    // Activity 1: Story (INFO)
+    const s3StoryContent = JSON.stringify({
+      type: "story_quiz",
+      slides: s3.story.slides,
+      questions: s3.story.questions,
+      review: { keyIdea: { en: s3.description }, vocab: [s3.strand.toLowerCase()] },
+    });
+
+    let s3StoryAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, kind: INFO, order: 1 } });
+    if (s3StoryAct) {
+      await prisma.activity.update({ where: { id: s3StoryAct.id }, data: { title: s3.story.title, content: s3StoryContent } });
+    } else {
+      await prisma.activity.create({ data: { title: s3.story.title, kind: INFO, order: 1, content: s3StoryContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    // Activity 2: Game (INTERACT)
+    const s3GameContent = JSON.stringify({ gameKey: s3.gameKey });
+    let s3GameAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, kind: INTERACT, order: 2 } });
+    if (s3GameAct) {
+      await prisma.activity.update({ where: { id: s3GameAct.id }, data: { id: s3.activityId, title: `Game: ${s3.title}`, content: s3GameContent } });
+    } else {
+      await prisma.activity.create({ data: { id: s3.activityId, title: `Game: ${s3.title}`, kind: INTERACT, order: 2, content: s3GameContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    // Activity 3: Quiz (INFO with quiz questions)
+    const s3QuizContent = JSON.stringify({
+      type: "story_quiz",
+      slides: [],
+      questions: s3.quiz ?? [],
+    });
+    let s3QuizAct = await prisma.activity.findFirst({ where: { lessonId: s3Lesson.id, order: 3 } });
+    if (s3QuizAct) {
+      await prisma.activity.update({ where: { id: s3QuizAct.id }, data: { title: `Quiz: ${s3.title}`, kind: INFO, content: s3QuizContent } });
+    } else {
+      await prisma.activity.create({ data: { title: `Quiz: ${s3.title}`, kind: INFO, order: 3, content: s3QuizContent, Lesson: { connect: { id: s3Lesson.id } } } });
+    }
+
+    console.log("Seeded Set 3 module:", s3.slug, "(story + game + quiz — gated)");
+  }
+
   console.log("Seeding units...");
   let unit = await prisma.unit.findFirst({
     where: { moduleId: module.id, title: "Unit 1: The Basics" },
