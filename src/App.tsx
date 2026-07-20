@@ -1,4 +1,5 @@
 // src/App.tsx
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,6 +7,13 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
+
+// Dev-only latency spike harness (Echo Avenue, #676 slot 3). The dynamic
+// import lives INSIDE the statically-false DEV branch so production builds
+// emit no chunk for it at all.
+const EchoSpike = import.meta.env.DEV
+  ? lazy(() => import("./pages/dev/EchoSpike"))
+  : () => null;
 import { AuthProvider } from "./contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -128,6 +136,16 @@ function App() {
                   lever from docs/audits/k8-engagement-audit.md Part 3.
                   Must stay outside any auth-gated layout. */}
               <Route path="/try" element={<TryDemo />} />
+              {import.meta.env.DEV && (
+                <Route
+                  path="/dev/echo-spike"
+                  element={
+                    <Suspense fallback={null}>
+                      <EchoSpike />
+                    </Suspense>
+                  }
+                />
+              )}
               <Route path="/for-reviewers" element={<ForReviewers />} />
               {/* Free Access Plans detail pages — reached from the homepage
                   "Learn more" buttons. Public, persona-routed CTAs. */}

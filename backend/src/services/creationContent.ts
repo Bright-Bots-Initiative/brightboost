@@ -12,8 +12,9 @@
 // correct answer) — see the marked extension point below.
 
 import { validateDataDashChallenge } from "./dataDashChallenge";
+import { deriveSoundDuetTitle, validateSoundDuet } from "./soundDuet";
 
-export const CREATION_TYPES = ["data_dash_challenge"] as const;
+export const CREATION_TYPES = ["data_dash_challenge", "sound_duet"] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
 const dataDashSortRuleLabels: Record<string, string> = {
@@ -60,6 +61,12 @@ export function validateCreationContent(
       // moderate — only to verify the challenge is actually winnable.
       return validateDataDashChallenge(content);
 
+    case "sound_duet":
+      // Strict-parsed (zod .strict() at every level — unknown keys rejected,
+      // deliberately diverging from Data Dash per #668) + validity guard
+      // (≥1 event, band-grid bounds, event + payload caps).
+      return validateSoundDuet(content);
+
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.
       return { ok: false, error: `unsupported creation type: ${type}` };
@@ -83,7 +90,11 @@ export function deriveCreationTitle(
       return label ? `Sort by ${label}` : null;
     }
 
-    default: 
+    case "sound_duet":
+      // The kid's token-built name (approved pools only; schema-bounded).
+      return deriveSoundDuetTitle(content);
+
+    default:
       return null;
   }
 }

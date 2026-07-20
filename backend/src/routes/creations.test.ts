@@ -66,6 +66,20 @@ const dbCreation = {
   author: { name: "Ada Lovelace" },
 };
 
+// A minimal valid Echo Avenue duet (see soundDuet.test.ts).
+const validDuet = {
+  v: 1,
+  name: "Midnight Parade",
+  band: "k2",
+  pulses: 4,
+  layers: {
+    lead: [{ t: 0, soundId: "step" }],
+    partner: [{ t: 4, soundId: "clap" }],
+  },
+  spots: [],
+  coverPose: "sideBySide",
+};
+
 describe("Creations routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -167,6 +181,46 @@ describe("Creations routes", () => {
           })
         )
     })
+
+    // ── sound_duet (Set 3 · Echo Avenue) ──
+
+    it("lets an enrolled kid save a valid sound_duet (201, token title derived)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue({
+        ...dbCreation,
+        type: "sound_duet",
+        title: "Midnight Parade",
+        content: validDuet,
+      });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({ courseId: COURSE, type: "sound_duet", content: validDuet });
+
+      expect(res.status).toBe(201);
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ title: "Midnight Parade" }),
+        }),
+      );
+    });
+
+    it("rejects sound_duet content with unknown keys (422 — strict parse, #668 stance)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "sound_duet",
+          content: { ...validDuet, smuggled: "extra key" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {

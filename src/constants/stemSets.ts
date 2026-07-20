@@ -42,6 +42,10 @@ export const STEM_SET_1_STRANDS: Record<StemSet1GameId, string> = {
 export const HIDDEN_MODULE_SLUGS = new Set([
   "stem-1-intro",      // Legacy "Quantum Explorers" — archived
   "k2-stem-sequencing", // "Fix the Order" / "Lost Steps" — removed from canon
+  // GATED (not removed): Set 3 slot-3 game is fully wired (registry, seed,
+  // sound_duet creation type) but held back until Set 3 launches / leads
+  // sign off. Ungating = delete the next line. See #676.
+  "k2-stem-echo-avenue",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -85,9 +89,9 @@ export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
 // Set 3 — Mastery (placeholder, gates specialization)
 // ---------------------------------------------------------------------------
 export const STEM_SET_3_IDS = [
-  "set3-game-1",
-  "set3-game-2",
-  "set3-game-3",
+  "set3-game-1", // Boost Track Builder claims this slot in PR #691
+  "set3-game-2", // reserved: machine game (in design)
+  "echo-avenue", // Echo Avenue (implemented, GATED via HIDDEN_MODULE_SLUGS)
   "set3-game-4",
   "set3-game-5",
 ] as const;

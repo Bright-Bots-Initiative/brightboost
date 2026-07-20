@@ -1516,6 +1516,93 @@
     "saving": "Sharing...",
     "saveError": "Could not share. Try again."
   },
+  "echoAvenue": {
+    "title": {
+      "prompt": "What will your duet sound like?",
+      "moodTogether": "🤝 Together",
+      "moodEcho": "🔁 Echo",
+      "moodSpace": "🌙 Space",
+      "start": "Open the studio!",
+      "watch": "▶ Watch the duet",
+      "resume": "Your last take is waiting inside."
+    },
+    "sensory": {
+      "mute": "🔊 Sound on",
+      "unmute": "🔇 Sound off",
+      "volume": "Volume",
+      "calm": "🕊️ Calm lights",
+      "muteAria": "Toggle sound"
+    },
+    "studio": {
+      "lead": "Lead",
+      "partner": "Partner",
+      "partnerLocked": "Partner (record a take!)",
+      "layerVolume": "Layer volume",
+      "record": "● Record a take",
+      "stopTake": "⏹ Finish the take",
+      "watch": "🎬 Watch the Take",
+      "redoLayer": "Redo this layer",
+      "save": "Save",
+      "name": "Name it",
+      "share": "Share ✨",
+      "done": "Done for now",
+      "untitled": "Untitled take",
+      "saved": "Saved ✓",
+      "savedLocal": "Kept on this device ✓"
+    },
+    "watch": {
+      "joinIn": "🎤 Join in!",
+      "changeLayer": "🔁 Change a layer",
+      "doneWatching": "Done watching",
+      "notAvailable": "This duet can't play right now. Try another one!"
+    },
+    "sound": {
+      "step": "Step",
+      "stomp": "Stomp",
+      "clap": "Clap",
+      "tap": "Tap",
+      "chime": "Chime",
+      "twinkle": "Twinkle",
+      "whoosh": "Whoosh",
+      "breeze": "Breeze"
+    },
+    "unlock": {
+      "partner": "Your Partner joins the stage! Overdub a second layer!",
+      "spots": "Sound spots opened! The tunnel and the puddle color your sounds!",
+      "chime": "You earned the Chime! 🔔",
+      "whoosh": "You earned the Whoosh! 💨",
+      "stomp": "You earned the Stomp! 🐘",
+      "twinkle": "You earned the Twinkle! ✨",
+      "tryIt": "Let's try it!"
+    },
+    "wonder": {
+      "callResponse": "Where did your performers answer each other?",
+      "rests": "Where did quiet make the next sound stand out?",
+      "favorite": "What's your favorite moment in your duet?",
+      "next": "What would you try next?",
+      "newSound": {
+        "chime": "Your new Chime rang out! Where else could it sing?",
+        "whoosh": "Your new Whoosh swept through! What did it change?",
+        "stomp": "Your new Stomp shook the street! Who should answer it?",
+        "twinkle": "Your new Twinkle sparkled! What happens if it comes back quieter?"
+      }
+    },
+    "reflect": {
+      "backToStudio": "Back to my studio"
+    },
+    "name": {
+      "title": "Name your duet!",
+      "taken": "That name's taken — try a different mix!",
+      "poseTitle": "Pick a cover pose",
+      "keep": "That's it!",
+      "later": "Later"
+    },
+    "pose": {
+      "sideBySide": "Side by side",
+      "highFive": "High five",
+      "backToBack": "Back to back"
+    }
+  },
   "challengePlayer": {
     "loading": "Loading challenge...",
     "notFound": "This challenge isn't available."
@@ -1533,6 +1620,7 @@
     "by": "by {{name}}",
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
-    "play": "Play"
+    "play": "Play",
+    "watchListen": "Watch / Listen"
   }
 }

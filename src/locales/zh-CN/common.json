@@ -1515,6 +1515,50 @@
     "saving": "Sharing...",
     "saveError": "Could not share. Try again."
   },
+  "echoAvenue": {
+    "title": {
+      "prompt": "你的二重奏会是什么声音？",
+      "moodTogether": "🤝 一起",
+      "moodEcho": "🔁 回声",
+      "moodSpace": "🌙 留白",
+      "start": "打开录音棚！",
+      "watch": "▶ 看这段二重奏"
+    },
+    "unlock": {
+      "partner": "你的搭档登台啦！再录一层吧！",
+      "spots": "声音角落打开了！隧道和水洼会给你的声音上色！",
+      "chime": "你赢得了风铃声！🔔",
+      "whoosh": "你赢得了呼呼声！💨",
+      "stomp": "你赢得了跺脚声！🐘",
+      "twinkle": "你赢得了闪烁声！✨",
+      "tryIt": "来试试！"
+    },
+    "wonder": {
+      "callResponse": "你的两位演员在哪里互相回应了？",
+      "rests": "哪里的安静让下一个声音更亮了？",
+      "favorite": "你的二重奏里你最喜欢哪一刻？",
+      "next": "接下来你想试试什么？",
+      "newSound": {
+        "chime": "你的新风铃声响啦！它还能在哪里唱歌？",
+        "whoosh": "你的新呼呼声吹过去了！它改变了什么？",
+        "stomp": "你的新跺脚声震动了街道！谁来回应它？",
+        "twinkle": "你的新闪烁声亮了一下！如果它轻轻地回来会怎样？"
+      }
+    },
+    "reflect": {
+      "backToStudio": "回到我的录音棚"
+    },
+    "name": {
+      "title": "给你的二重奏起个名字！",
+      "keep": "就是它！",
+      "later": "以后再说"
+    },
+    "pose": {
+      "sideBySide": "并肩站",
+      "highFive": "击掌",
+      "backToBack": "背靠背"
+    }
+  },
   "challengePlayer": {
     "loading": "Loading challenge...",
     "notFound": "This challenge isn't available."
@@ -1532,6 +1576,7 @@
     "by": "by {{name}}",
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
-    "play": "Play"
+    "play": "Play",
+    "watchListen": "看 / 听"
   }
 }

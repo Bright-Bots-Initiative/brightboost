@@ -278,7 +278,13 @@ router.get(
       orderBy: { updatedAt: "desc" },
     });
 
-    return res.json(creations.map(toDTO));
+    // sound_duet cards render a cover pose, which needs the (small, capped)
+    // content; other types keep the lean content-free DTO.
+    return res.json(
+      creations.map((c) =>
+        c.type === "sound_duet" ? { ...toDTO(c), content: c.content } : toDTO(c),
+      ),
+    );
   },
 );
 

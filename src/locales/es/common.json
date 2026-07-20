@@ -1617,6 +1617,93 @@
     "saving": "Compartiendo...",
     "saveError": "No se pudo compartir. Inténtalo de nuevo."
   },
+  "echoAvenue": {
+    "title": {
+      "prompt": "¿Cómo sonará tu dúo?",
+      "moodTogether": "🤝 Juntos",
+      "moodEcho": "🔁 Eco",
+      "moodSpace": "🌙 Espacio",
+      "start": "¡Abre el estudio!",
+      "watch": "▶ Ver el dúo",
+      "resume": "Tu última toma te espera adentro."
+    },
+    "sensory": {
+      "mute": "🔊 Sonido activado",
+      "unmute": "🔇 Sonido apagado",
+      "volume": "Volumen",
+      "calm": "🕊️ Luces tranquilas",
+      "muteAria": "Activar o silenciar el sonido"
+    },
+    "studio": {
+      "lead": "Solista",
+      "partner": "Compañero",
+      "partnerLocked": "Compañero (¡graba una toma!)",
+      "layerVolume": "Volumen de la capa",
+      "record": "● Grabar una toma",
+      "stopTake": "⏹ Terminar la toma",
+      "watch": "🎬 Ver la toma",
+      "redoLayer": "Rehacer esta capa",
+      "save": "Guardar",
+      "name": "Ponle nombre",
+      "share": "Compartir ✨",
+      "done": "Por ahora, listo",
+      "untitled": "Toma sin título",
+      "saved": "Guardado ✓",
+      "savedLocal": "Guardado en este dispositivo ✓"
+    },
+    "watch": {
+      "joinIn": "🎤 ¡Únete!",
+      "changeLayer": "🔁 Cambiar una capa",
+      "doneWatching": "Terminé de ver",
+      "notAvailable": "Este dúo no se puede reproducir ahora. ¡Prueba otro!"
+    },
+    "sound": {
+      "step": "Paso",
+      "stomp": "Pisotón",
+      "clap": "Palmada",
+      "tap": "Toque",
+      "chime": "Campanada",
+      "twinkle": "Destello",
+      "whoosh": "Zumbido",
+      "breeze": "Brisa"
+    },
+    "unlock": {
+      "partner": "¡Tu Compañero sube al escenario! ¡Graba una segunda capa!",
+      "spots": "¡Se abrieron los rincones sonoros! ¡El túnel y el charco colorean tus sonidos!",
+      "chime": "¡Ganaste la Campanada! 🔔",
+      "whoosh": "¡Ganaste el Zumbido! 💨",
+      "stomp": "¡Ganaste el Pisotón! 🐘",
+      "twinkle": "¡Ganaste el Destello! ✨",
+      "tryIt": "¡A probarlo!"
+    },
+    "wonder": {
+      "callResponse": "¿Dónde se respondieron tus artistas?",
+      "rests": "¿Dónde hizo el silencio que el siguiente sonido brillara?",
+      "favorite": "¿Cuál es tu momento favorito de tu dúo?",
+      "next": "¿Qué te gustaría probar ahora?",
+      "newSound": {
+        "chime": "¡Tu nueva Campanada sonó! ¿Dónde más podría cantar?",
+        "whoosh": "¡Tu nuevo Zumbido pasó volando! ¿Qué cambió?",
+        "stomp": "¡Tu nuevo Pisotón sacudió la calle! ¿Quién debería responderle?",
+        "twinkle": "¡Tu nuevo Destello brilló! ¿Qué pasa si vuelve más despacito?"
+      }
+    },
+    "reflect": {
+      "backToStudio": "Volver a mi estudio"
+    },
+    "name": {
+      "title": "¡Ponle nombre a tu dúo!",
+      "taken": "Ese nombre ya existe — ¡prueba otra combinación!",
+      "poseTitle": "Elige una pose de portada",
+      "keep": "¡Ese es!",
+      "later": "Después"
+    },
+    "pose": {
+      "sideBySide": "Lado a lado",
+      "highFive": "Chócala",
+      "backToBack": "Espalda con espalda"
+    }
+  },
   "challengePlayer": {
     "loading": "Cargando desafío...",
     "notFound": "Este desafío no está disponible.",
@@ -1635,6 +1722,7 @@
     "by": "por {{name}}",
     "boosts": "Ánimos",
     "giveBoost": "Dar ánimo ⭐",
-    "play": "Jugar"
+    "play": "Jugar",
+    "watchListen": "Ver / Escuchar"
   }
 }

@@ -17,7 +17,34 @@ type GalleryCreation = {
   encouragements: number;
   authorId: string;
   authorName: string;
+  /** Present for sound_duet only (the list endpoint ships the small duet
+   *  payload so the card can show its cover pose). */
+  content?: unknown;
 };
+
+/**
+ * sound_duet cover pose for the card. Any malformed/missing content falls
+ * back to 🎙️ — the card must NEVER crash on a sound_duet creation.
+ */
+function DuetCover({ content }: { content: unknown }) {
+  const POSES: Record<string, string> = {
+    sideBySide: "🧍🧍",
+    highFive: "🙌",
+    backToBack: "🔄",
+  };
+  let icon = "🎙️";
+  try {
+    const pose = (content as { coverPose?: string } | null)?.coverPose;
+    if (pose && POSES[pose]) icon = `${POSES[pose]}`;
+  } catch {
+    icon = "🎙️";
+  }
+  return (
+    <span className="text-2xl" aria-hidden>
+      {icon}
+    </span>
+  );
+}
 
 export default function GroupGallery({
   courseId,
@@ -72,9 +99,12 @@ export default function GroupGallery({
           className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col gap-2"
         >
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-brightboost-navy">
-              {c.title || t("gallery.untitled")}
-            </h3>
+            <div className="flex items-center gap-2 min-w-0">
+              {c.type === "sound_duet" && <DuetCover content={c.content} />}
+              <h3 className="font-semibold text-brightboost-navy">
+                {c.title || t("gallery.untitled")}
+              </h3>
+            </div>
             <CreationStatusChip status={c.status} />
           </div>
           <p className="text-xs text-gray-500">
@@ -92,12 +122,14 @@ export default function GroupGallery({
               >
                 {t("gallery.giveBoost")}
               </button>
-            ) : c.type === "data_dash_challenge" ? (
+            ) : c.type === "data_dash_challenge" || c.type === "sound_duet" ? (
               <Link
                 to={`/student/challenge/${c.id}`}
                 className="px-3 py-1.5 text-sm rounded-md bg-brightboost-blue text-white font-semibold hover:bg-brightboost-navy"
               >
-                {t("gallery.play")}
+                {c.type === "sound_duet"
+                  ? t("gallery.watchListen", { defaultValue: "Watch / Listen" })
+                  : t("gallery.play")}
               </Link>
             ) : null}
           </div>
