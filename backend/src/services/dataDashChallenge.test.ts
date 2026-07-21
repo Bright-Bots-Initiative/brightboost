@@ -88,4 +88,9 @@ describe("validateDataDashChallenge", () => {
     });
     expect(r.ok).toBe(false);
   });
+
+  it("rejects unexpected extra keys", () => {
+    const r = validateDataDashChallenge({ ...valid, surprise: "not allowed" });
+    expect(r.ok).toBe(false);
+  })
 });
