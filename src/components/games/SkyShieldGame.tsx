@@ -171,7 +171,8 @@ function SkyShieldPlayfield({
   const [patAsking, setPatAsking] = useState(false);
   const patStarted = useRef(false);
   // Scan
-  const [scDrops] = useState<Drop[]>(() => {
+  const [scDrops, setScDrops] = useState<Drop[]>([]);
+  /* const [scDrops] = useState<Drop[]>(() => {
     if (band === "k2") {
         return [0, 1, 0].map(c => ({ lane: rLane(), kind: "mystery" as const, hiddenColor: c,
       }));
@@ -182,6 +183,7 @@ function SkyShieldPlayfield({
         return {lane, kind: "mystery" as const, hiddenColor: lane, };
     });
   });
+  */
   const [scIdx, setScIdx] = useState(0);
   const [scRevealed, setScRevealed] = useState(false);
   // Challenge
@@ -291,7 +293,25 @@ function SkyShieldPlayfield({
         if (nc >= content.patternRounds) { 
             setScIdx(0); 
             setScRevealed(false); 
-            setChIdx(0); 
+            if (band === "g3_5" && pat.current) {
+                const sequence = pat.current.sequence;
+                setScDrops(
+                    Array.from({ length: 4 }, (_, i) => ({
+                        lane: sequence[i],
+                        kind: "mystery" as const,
+                        hiddenColor: sequence[i],
+                    }))
+                );
+            } else {
+                // keep K-2 unchanged
+                setScDrops(
+                    [0, 1, 0].map(c => ({
+                        lane: rLane(),
+                        kind: "mystery" as const,
+                        hiddenColor: c,
+                    }))
+                );
+            }
             setPhase("scan"); }
         else { pat.current = mkPattern(content); patStarted.current = false; setPatShown(0); setPatAsking(false); } }, 900);
     };
