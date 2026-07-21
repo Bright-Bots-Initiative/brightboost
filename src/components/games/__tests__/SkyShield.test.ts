@@ -18,7 +18,8 @@ describe("Sky Shield helpers", () => {
   });
 
   it("creates challenge with mystery constraints", () => {
-    const challenge = mkChallenge(SKY_SHIELD_CONTENT.k2);
+    const pattern = mkPattern(SKY_SHIELD_CONTENT.k2);
+    const challenge = mkChallenge(SKY_SHIELD_CONTENT.k2, pattern);
     const mysteries = challenge
       .map((drop, idx) => ({ drop, idx }))
       .filter(({ drop }) => drop.kind === "mystery");

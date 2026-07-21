@@ -24,7 +24,7 @@ type Pattern = {
   base: number[];
   sequence: number[];
 };
-type Phase = "intro" | "practice" | "pattern" | "scan" | "challenge" | "exitTicket" | "celebration";
+type Phase = "intro" | "practice" | "pattern" | "scan" | "patternReminder" | "challenge" | "exitTicket" | "celebration";
 interface Drop { lane: number; kind: "normal" | "mystery"; hiddenColor?: number }
 
 // TODO: add translations for the story, tips in briefing
@@ -48,15 +48,36 @@ export function mkPattern(content: SkyShieldContent): Pattern {
         content.patterns[Math.floor(Math.random()*content.patterns.length)];
   return {base: [...base], sequence: [...base, ...base]};
 }
-export function mkChallenge(content: SkyShieldContent): Drop[] {
-  const mi = new Set<number>();
-  while (mi.size < content.mysteryDrops) mi.add(2 + Math.floor(Math.random() * (content.challengeRounds - 2)));
-  const p = mkPattern(content).sequence;
-  return Array.from({ length: content.challengeRounds }, (_, i) => ({
-    lane: p[i % p.length],
-    kind: mi.has(i) ? "mystery" as const : "normal" as const,
-    ...(mi.has(i) ? { hiddenColor: Math.floor(Math.random() * content.mysteryColors) } : {}),
-  }));
+
+export function mkChallenge(
+    content: SkyShieldContent,
+    pattern?: Pattern,
+): Drop[] {
+    const mi = new Set<number>();
+
+    while (mi.size < content.mysteryDrops) {
+        mi.add(
+        2 + Math.floor(Math.random() * (content.challengeRounds - 2))
+        );
+    }
+
+    const p = pattern
+      ? pattern.sequence
+      : mkPattern(content).sequence;
+
+    return Array.from({ length: content.challengeRounds }, (_, i) => {
+        const lane = p[i % p.length];
+
+        return {
+        lane,
+        kind: mi.has(i) ? "mystery" as const : "normal" as const,
+        ...(mi.has(i)
+            ? {
+                hiddenColor: lane,
+            }
+            : {}),
+        };
+    });
 }
 
 export function buildSkyShieldCompletionPayload(params: {
@@ -130,6 +151,8 @@ function SkyShieldPlayfield({
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [shield, setShield] = useState(1);
+  const [predictedLane, setPredictedLane] = useState<number | null>(null);
+  const [predictionScored, setPredictionScored] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const maxStreak = useRef(0);
@@ -148,11 +171,21 @@ function SkyShieldPlayfield({
   const [patAsking, setPatAsking] = useState(false);
   const patStarted = useRef(false);
   // Scan
-  const [scDrops] = useState<Drop[]>(() => [0, 1, 0].map(c => ({ lane: rLane(), kind: "mystery" as const, hiddenColor: c })));
+  const [scDrops] = useState<Drop[]>(() => {
+    if (band === "k2") {
+        return [0, 1, 0].map(c => ({ lane: rLane(), kind: "mystery" as const, hiddenColor: c,
+      }));
+    }
+
+    return Array.from({ length: 3 }, () => {
+        const lane = rLane();
+        return {lane, kind: "mystery" as const, hiddenColor: lane, };
+    });
+  });
   const [scIdx, setScIdx] = useState(0);
   const [scRevealed, setScRevealed] = useState(false);
   // Challenge
-  const [chDrops] = useState<Drop[]>(() => mkChallenge(content));
+  const [chDrops, setChDrops] = useState<Drop[]>([]);
   const [chIdx, setChIdx] = useState(0);
   const [chRevealed, setChRevealed] = useState(false);
   const [chReady, setChReady] = useState(true);
@@ -254,7 +287,12 @@ function SkyShieldPlayfield({
       const ok = l === expected;
       bump(PT.predict, ok); showFb(ok ? "pok" : "pmiss");
       const nc = patCorrect + (ok ? 1 : 0); setPatCorrect(nc);
-      setTimeout(() => { if (nc >= content.patternRounds) { setScIdx(0); setScRevealed(false); setPhase("scan"); }
+      setTimeout(() => { 
+        if (nc >= content.patternRounds) { 
+            setScIdx(0); 
+            setScRevealed(false); 
+            setChIdx(0); 
+            setPhase("scan"); }
         else { pat.current = mkPattern(content); patStarted.current = false; setPatShown(0); setPatAsking(false); } }, 900);
     };
     return (
@@ -279,17 +317,75 @@ function SkyShieldPlayfield({
     const doGuess = (c: number) => {
       if (!scRevealed) return;
       const ok = c === d.hiddenColor; bump(PT.scan, ok); showFb(ok ? "sok" : "smiss");
-      setTimeout(() => { const n = scIdx + 1; if (n >= scDrops.length) { setChIdx(0); setChRevealed(false); setChReady(true); setPhase("challenge"); }
+      setTimeout(() => { 
+        const n = scIdx + 1; 
+        if (n >= scDrops.length) { 
+            setChIdx(0);
+            setChRevealed(false);
+            setChReady(true);
+
+            if (band === "g3_5") {
+                if (pat.current) {
+                    setChDrops(mkChallenge(content, pat.current));
+                }
+                setPhase("patternReminder");
+            } else {
+                setChDrops(mkChallenge(content));
+                setPhase("challenge");
+            } 
+        }
         else { setScIdx(n); setScRevealed(false); } }, 900);
     };
     return (
       <div className="slide-up-fade space-y-4">
         <HUD />
         <p className="text-center font-bold text-violet-800 text-sm">{T("scanLabel", "Scan -- Reveal the Mystery!")} ({scIdx + 1}/{scDrops.length})</p>
-        <div className="flex justify-center"><span className="text-6xl bounce-in">{scRevealed ? (d.hiddenColor === 0 ? "🔵" : "🟡") : "❓"}</span></div>
+        <div className="flex justify-center"><span className="text-6xl bounce-in">{scRevealed ? LABELS[d.hiddenColor!] : "❓"}</span></div>
         {!scRevealed && <div className="text-center"><BigBtn onClick={() => setScRevealed(true)} cls="bg-gradient-to-r from-cyan-500 to-cyan-600">🔍 {T("scan", "Scan")}</BigBtn></div>}
         {scRevealed && <><p className="text-center text-sm font-bold text-slate-700">{T("pickColor", "Pick the matching shield!")}</p><ColorPicker onPick={doGuess} colorCount={content.mysteryColors}/></>}
         <FBanner />
+      </div>
+    );
+  }
+
+// ── Phase: PATTERN REMINDER for G3-5 ────────────────────────────────────────────────
+  if (phase === "patternReminder") {
+    const pattern = pat.current;
+    if (!pattern) return null;
+
+    return (
+      <div className="slide-up-fade space-y-6 py-6 text-center">
+        <h3 className="text-xl font-extrabold text-violet-900">
+          {T("patternReminderTitle", "You learned this pattern:")}
+        </h3>
+
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex gap-2 justify-center text-3xl">
+            {pattern.base.map((l, i) => (
+              <span key={i}>{LABELS[l]}</span>
+            ))}
+          </div>
+
+          <div className="flex gap-2 justify-center text-3xl">
+            {pattern.base.map((l, i) => (
+              <span key={i}>{LABELS[l]}</span>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-slate-700 font-semibold max-w-sm mx-auto">
+          {T(
+            "patternReminderDesc",
+            "Remember it! The mystery lights will follow this same pattern."
+          )}
+        </p>
+
+        <BigBtn
+          onClick={() => setPhase("challenge")}
+          cls="bg-gradient-to-r from-violet-500 to-violet-600"
+        >
+          {T("startChallenge", "Start Challenge")}
+        </BigBtn>
       </div>
     );
   }
@@ -306,7 +402,12 @@ function SkyShieldPlayfield({
       setTimeout(() => { const n = chIdx + 1; if (n >= chDrops.length) { setExitAns(null); setPhase("exitTicket"); }
         else { setChIdx(n); setChRevealed(false); setChReady(true); } }, 900);
     };
-    const emoji = isMyst && !chRevealed ? "❓" : isMyst ? (d.hiddenColor === 0 ? "🔵" : "🟡") : LABELS[d.lane];
+    const emoji =
+        isMyst && !chRevealed
+            ? "❓"
+            : isMyst
+              ? LABELS[d.hiddenColor!]
+              : LABELS[d.lane];
     return (
       <div className="slide-up-fade space-y-4">
         <HUD />
