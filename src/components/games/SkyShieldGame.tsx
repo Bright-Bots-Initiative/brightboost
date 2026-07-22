@@ -442,7 +442,6 @@ if (phase === "challengeG35") {
 
   const nextRound = () => {
     const n = chIdx + 1;
-
     if (n >= chDrops.length) {
       setExitAns(null);
       setPhase("exitTicket");
@@ -454,98 +453,62 @@ if (phase === "challengeG35") {
     }
   };
 
-
   const doPredict = (lane: number) => {
     if (!g35Ready || g35Scanned) return;
-
     setPrediction(lane);
     setShield(lane); // move 🛡️ icon
   };
 
-
   const doScan = () => {
     if (prediction === null) return;
-
     setG35Scanned(true);
-
     const predictionCorrect = prediction === d.lane;
-
     bump(
         PT.predict,
         predictionCorrect
   );
-
 };
-
-  const scorePrediction = () => {
-    if (prediction === null) return;
-
-    const predictionCorrect = prediction === d.lane;
-
-    bump(
-      PT.predict,
-      predictionCorrect
-    );
-
-    showFb(
-      predictionCorrect ? "pok" : "pmiss"
-    );
-
-    setTimeout(() => {
-      setG35Ready(false);
-    }, 500);
-  };
-
 
   const doCatch = () => {
     const caught = shield === d.lane;
-
     bump(
       PT.catch,
       caught
     );
+    showFb(caught ? "ok" : "miss");
+    setTimeout(nextRound, 1200);
+};
 
-    showFb(
-      caught ? "ok" : "miss"
-    );
-
-    setTimeout(nextRound, 900);
-  };
-
-
-  const emoji =
-    g35Scanned
-      ? LABELS[d.hiddenColor ?? d.lane]
-      : "";
-
+  const emoji = isMystery
+    ? (g35Scanned ? LABELS[d.hiddenColor!] : "")
+    : LABELS[d.lane];
 
   return (
     <div className="slide-up-fade space-y-4">
-
       <HUD />
-
       <p className="text-center font-bold text-violet-800 text-sm">
         Challenge ({chIdx + 1}/{chDrops.length})
       </p>
 
-
       {/* Lanes */}
       <Lanes
-        activeLane={g35Scanned ? d.lane : -1}
-        emoji={emoji}
-        landed={false}
-      />
+      activeLane={
+        isMystery
+          ? (g35Scanned ? d.lane : -1)
+          : d.lane
+      }
+      emoji={emoji}
+      landed={false}
+    />
 
-
-      {!g35Scanned && (
+      {isMystery && !g35Scanned && (
         <p className="text-center font-bold text-violet-900">
           Which lane will the light fall into?
         </p>
       )}
 
-
       {/* Predict */}
-      {!g35Scanned && (
+      {isMystery && !g35Scanned && (
         <>
           <LanePicker
             onPick={doPredict}
@@ -562,20 +525,10 @@ if (phase === "challengeG35") {
         </>
       )}
 
-
-      {/* Reveal */}
-    {g35Scanned && (
-    <div className="space-y-4 text-center">
-
-        <p className="text-lg font-bold text-cyan-700">
-        The light is {LABELS[d.hiddenColor ?? d.lane]} and falls into lane {d.lane + 1}!
-        </p>
-
-        <p className="text-base font-semibold text-violet-800">
-        {prediction === d.lane
-            ? "✨ Great prediction! You spotted the pattern!"
-            : "🌟 Not quite. Keep watching the pattern."}
-        </p>
+    {/* Normal Drops */}
+    {!isMystery && (
+      <div className="space-y-4 text-center">
+        <LanePicker onPick={setShield} />
 
         <BigBtn
         onClick={doCatch}
@@ -583,12 +536,29 @@ if (phase === "challengeG35") {
         >
         Catch!
         </BigBtn>
-
     </div>
     )}
 
+    {/* Reveal */}
+    {isMystery && g35Scanned && (
+    <div className="space-y-4 text-center">
+        <p className="text-lg font-bold text-cyan-700">
+        The light is {LABELS[d.hiddenColor ?? d.lane]} and falls into lane {d.lane + 1}!
+        </p>
+        <p className="text-base font-semibold text-violet-800">
+        {prediction === d.lane
+            ? "✨ Great prediction! You spotted the pattern!"
+            : "🌟 Not quite. Keep watching the pattern."}
+        </p>
+        <BigBtn
+        onClick={doCatch}
+        cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
+        >
+        Catch!
+        </BigBtn>
+    </div>
+    )}
       <FBanner />
-
     </div>
   );
 }
