@@ -577,7 +577,10 @@ export const MAPS_G3_5: Record<string, MazeMapConfig> = {
 
 
 // ── SkyShield g3-5 sectors ──────────────────────────────────────────
-// 
+// For g3-5 students, in the challenge phase, they will use the same pattern as 
+// the last round in Pattern phase. For mystery drops, they will predict which 
+// lane the drop will fall onto first, then scan to reveal if their prediction 
+// is correct, and then catch the drop. 
 // 
 
 export const SKY_SHIELD_CONTENT = {
