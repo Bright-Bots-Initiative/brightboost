@@ -13,34 +13,37 @@ const TEST_BANDS = [
 
 describe("Sky Shield helpers", () => {
   it.each(TEST_BANDS)(
-    "creates valid repeating base pattern for %s", 
+    "creates valid repeating base pattern for %s",
     (_band, content) => {
-        const pattern = mkPattern(content);
+      const pattern = mkPattern(content);
 
-        expect(pattern.base).toHaveLength(content.patternLength / 2);
-        expect(pattern.sequence).toHaveLength(content.patternLength);
+      expect(pattern.base).toHaveLength(content.patternLength / 2);
+      expect(pattern.sequence).toHaveLength(content.patternLength);
 
-        expect(pattern.sequence).toEqual([
-          ...pattern.base,
-          ...pattern.base,
-        ]);
-    });
+      expect(pattern.sequence).toEqual([...pattern.base, ...pattern.base]);
+    },
+  );
 
   it.each(TEST_BANDS)(
-    "creates challenge with mystery constraints", 
+    "creates challenge with mystery constraints",
     (_band, content) => {
-        const pattern = mkPattern(content);
-        const challenge = mkChallenge(content, pattern);
-        const mysteries = challenge
+      const pattern = mkPattern(content);
+      const challenge = mkChallenge(content, pattern);
+      const mysteries = challenge
         .map((drop, idx) => ({ drop, idx }))
         .filter(({ drop }) => drop.kind === "mystery");
 
-        expect(challenge).toHaveLength(content.challengeRounds);
-        expect(mysteries).toHaveLength(content.mysteryDrops);
-        expect(mysteries.every(({ idx }) => idx >= 2)).toBe(true);
-        expect(mysteries.every(({ drop }) => drop.hiddenColor === drop.lane)).toBe(true);
-        expect(challenge.every((drop) => drop.lane >= 0 && drop.lane <= 2)).toBe(true);
-    });
+      expect(challenge).toHaveLength(content.challengeRounds);
+      expect(mysteries).toHaveLength(content.mysteryDrops);
+      expect(mysteries.every(({ idx }) => idx >= 2)).toBe(true);
+      expect(
+        mysteries.every(({ drop }) => drop.hiddenColor === drop.lane),
+      ).toBe(true);
+      expect(challenge.every((drop) => drop.lane >= 0 && drop.lane <= 2)).toBe(
+        true,
+      );
+    },
+  );
 
   it("builds completion payload", () => {
     expect(
