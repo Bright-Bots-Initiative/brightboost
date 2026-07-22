@@ -573,10 +573,20 @@ if (phase === "challengeG35") {
     const submitted = exitAns !== null;
     const ok = exitAns === content.exitAnswer;
     const correctEmoji = LABELS[content.exitAnswer];
+    const colorKeys = [
+        "colorBlue",
+        "colorYellow",
+        "colorPink",
+    ];
+
+    const correctColor = t(
+        colorKeys[content.exitAnswer],
+        ["Blue", "Yellow", "Pink"][content.exitAnswer]
+        );
     return (
       <div className="slide-up-fade space-y-6 py-4 text-center">
         <h3 className="text-xl font-extrabold text-violet-900">{T("exitTitle", "Exit Ticket")}</h3>
-        <p className="text-base text-slate-700 max-w-sm mx-auto">{"What comes next?"}</p>
+        <p className="text-base text-slate-700 max-w-sm mx-auto">{T("exitQuestion", "What comes next?")}</p>
         <div className="flex gap-1 justify-center text-2xl">
             {content.exitPattern.map((c, i) => (
                 <span key={i}>{LABELS[c]}</span>
@@ -587,8 +597,14 @@ if (phase === "challengeG35") {
         {submitted && <div className="space-y-4">
           <div className={`bounce-in py-2 px-4 rounded-xl border font-bold ${ok ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-orange-100 text-orange-700 border-orange-300"}`}>
             {ok
-              ? T("exitCorrect", `Correct! ${correctEmoji} comes next!`)
-              : T("exitWrong", `The answer is ${correctEmoji}. The pattern repeats!`)
+              ? t("exitCorrect", {
+                  defaultValue: "Correct! {{color}} comes next!",
+                  color: `${correctEmoji} ${correctColor}`,
+                })
+              : t("games.skyShield.exitWrong", {
+                  defaultValue: "The answer is {{color}}. The pattern repeats!",
+                  color: `${correctEmoji} ${correctColor}`,
+                })
             }
           </div>
           <BigBtn onClick={() => setPhase("celebration")} cls="bg-gradient-to-r from-violet-500 to-violet-600">{T("seeResults", "See Results")}</BigBtn>
