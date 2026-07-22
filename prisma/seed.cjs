@@ -249,6 +249,55 @@ async function main() {
     update: {},
   });
 
+  // ---------------------------------------------------------------------
+  // K-2 emoji-login demo class — join code STARS1  (fixes #698)
+  //
+  // STARS1 was documented (intern-credentials.md, SETUP.md) as the K-2
+  // emoji-login class code but was NEVER seeded, so "Join with a Code" →
+  // STARS1 returned 404 and the K-2 section never unlocked. This seeds the
+  // class (Course.gradeBand defaults "k2") plus a few dedicated emoji-login
+  // students so the emoji-picker roster is non-empty. Effectively resolves
+  // #665. Idempotent (upsert by joinCode / stable student ids).
+  // ---------------------------------------------------------------------
+  const starsClass = await prisma.course.upsert({
+    where: { joinCode: "STARS1" },
+    // gradeBand intentionally omitted on create — schema default is "k2".
+    create: { name: "Ms. Frizzle's Star Class", joinCode: "STARS1", teacherId: teacher.id },
+    update: { gradeBand: "k2", teacherId: teacher.id },
+  });
+
+  // Dedicated emoji-login K-2 students: loginIcon set, NO PIN, NO email —
+  // fresh accounts so student@/explorer@ keep their existing semantics.
+  const starStudents = [
+    { id: "star-nova", name: "Nova", loginIcon: "⭐" },
+    { id: "star-comet", name: "Comet", loginIcon: "🚀" },
+    { id: "star-luna", name: "Luna", loginIcon: "🌙" },
+  ];
+  for (const s of starStudents) {
+    const kid = await prisma.user.upsert({
+      where: { id: s.id },
+      create: {
+        id: s.id,
+        name: s.name,
+        role: "student",
+        loginIcon: s.loginIcon,
+        xp: 0,
+        level: "Novice",
+      },
+      update: { name: s.name, loginIcon: s.loginIcon },
+    });
+    await prisma.enrollment.upsert({
+      where: { studentId_courseId: { studentId: kid.id, courseId: starsClass.id } },
+      create: { studentId: kid.id, courseId: starsClass.id },
+      update: {},
+    });
+  }
+  console.log(
+    "Seeded K-2 emoji-login class STARS1 (band k2) with",
+    starStudents.length,
+    "star students.",
+  );
+
   // 5. Seed Content
   console.log("Seeding modules...");
 

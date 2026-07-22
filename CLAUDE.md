@@ -82,11 +82,10 @@ Seed is find-or-create and **always refreshes password hashes**, so these plaint
 | marcus@test.com | marcus123 | Pathways Student (Launch) | 3/7 Cyber Launch done |
 | aisha@test.com | aisha123 | Pathways Student (Explorer) | Fresh, 0 completions |
 
-Class join codes seeded: `GRADE35` and `UPPER35` (both grade 3-5). Pathways cohort code: `ETO2026`
-("ETO Spring 2026 — Cyber Cohort", partner "Escape The Odds — South Side"; ended pilot: `ETO2025F`).
-⚠️ **Conflict, flagged:** `SETUP.md`/`docs/intern-credentials.md` say K-2 emoji login uses class code
-`STARS1`, but the current seed does **not** create it (it only reuses the teacher's pre-existing first
-class) — on a fresh DB there is no K-2 class code. Works on long-lived demo DBs where STARS1 already exists.
+Class join codes seeded: `STARS1` (K-2 emoji-login demo class "Ms. Frizzle's Star Class", band k2,
+with 3 emoji students: Nova ⭐ / Comet 🚀 / Luna 🌙, no PIN), `GRADE35` and `UPPER35` (both grade
+3-5). Pathways cohort code: `ETO2026` ("ETO Spring 2026 — Cyber Cohort", partner "Escape The Odds
+— South Side"; ended pilot: `ETO2025F`).
 
 ### Misc
 - Slack notifications are optional — without `SLACK_WEBHOOK_URL` they silently no-op (`backend/src/utils/slack.ts`).
@@ -166,7 +165,6 @@ Known conflicts (flag new ones explicitly — never silently pick a side):
 - `frontend/CONTRIBUTING.md` says Node 18; truth is Node 20 (engines + `.nvmrc`).
 - `backend/README.md` describes retired AWS Lambda/Aurora and self-flags as stale; production is
   **Railway + Supabase (PostgreSQL)**.
-- `STARS1` class code: in docs, not in seed (see Test accounts above).
 
 ---
 
