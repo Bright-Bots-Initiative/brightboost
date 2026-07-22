@@ -100,7 +100,7 @@ class) — on a fresh DB there is no K-2 class code. Works on long-lived demo DB
   approve their own PR; cross-pod PRs get both leads), **linear history** — squash merge preferred.
 - Branches: `your-name/short-description`. Conventional commits (`feat:`/`fix:`/`docs:`/...).
 - Log significant Claude Code prompts in `prompts/`. Intern guide: `docs/prompting-guide.md`.
-- Full workflow: `CONTRIBUTING.md` (pod leads: Alice Lin — Build, Catarina Lucas Herrera — Experience).
+- Full workflow: `CONTRIBUTING.md` (pod leads: Alice @alitlin — Build, Catarina @Cat-a-rina — Experience).
 - Labels, priority (`P0`/`P1`/`P2`) & delegation: canonical in `docs/team-workflow.md`.
 
 ### Code style

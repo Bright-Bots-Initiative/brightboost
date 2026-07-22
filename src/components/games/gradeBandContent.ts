@@ -637,3 +637,32 @@ export const SKY_SHIELD_CONTENT = {
     exitAnswer: 2,
   },
 };
+
+
+// ── Move and Measure g3-5 sectors ──────────────────────────────────────────
+// 
+// g3-5 students get a prediction & compare layer. They predict their results, 
+// then play, then see predicted vs. actual and the gap. The game flow is like 
+// the following: 
+// Predict → do → compare per event, then the overall compare, then pick-one-to-improve → retry 
+//
+// The scoring wire is currently untouched. For future implementation, 
+// the QTE target zone can be adjusted to their predicted value, so the score 
+// will reflect prediction accuracy.
+
+export const BAND_CONFIG = {
+  k2: {
+    showScore: true,
+    showDecimals: false,
+    compareMeasurements: false,
+    decimalPlaces: 0,
+    enablePredict: false,
+  },
+  g3_5: {
+    showScore: true,
+    showDecimals: true,
+    compareMeasurements: true,
+    decimalPlaces: 1,
+    enablePredict: true,
+  },
+} as const;
