@@ -604,10 +604,10 @@ export const SKY_SHIELD_CONTENT = {
   },
 
   g3_5: {
-    practiceRounds: 5,
+    practiceRounds: 3,
     patternRounds: 3,
     challengeRounds: 10,
-    mysteryDrops: 4,
+    mysteryDrops: 5,
 
     patterns: [
       [0, 1, 0, 2],
