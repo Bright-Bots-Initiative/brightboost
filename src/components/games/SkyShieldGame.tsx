@@ -24,7 +24,7 @@ type Pattern = {
   base: number[];
   sequence: number[];
 };
-type Phase = "intro" | "practice" | "pattern" | "scan" | "patternReminder" | "challenge" | "exitTicket" | "celebration";
+type Phase = "intro" | "practice" | "pattern" | "scan" | "patternReminder" | "challenge" | "challengeG35" | "exitTicket" | "celebration";
 interface Drop { lane: number; kind: "normal" | "mystery"; hiddenColor?: number }
 
 // TODO: add translations for the story, tips in briefing
@@ -151,8 +151,6 @@ function SkyShieldPlayfield({
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [shield, setShield] = useState(1);
-  const [predictedLane, setPredictedLane] = useState<number | null>(null);
-  const [predictionScored, setPredictionScored] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const maxStreak = useRef(0);
@@ -172,18 +170,6 @@ function SkyShieldPlayfield({
   const patStarted = useRef(false);
   // Scan
   const [scDrops, setScDrops] = useState<Drop[]>([]);
-  /* const [scDrops] = useState<Drop[]>(() => {
-    if (band === "k2") {
-        return [0, 1, 0].map(c => ({ lane: rLane(), kind: "mystery" as const, hiddenColor: c,
-      }));
-    }
-
-    return Array.from({ length: 3 }, () => {
-        const lane = rLane();
-        return {lane, kind: "mystery" as const, hiddenColor: lane, };
-    });
-  });
-  */
   const [scIdx, setScIdx] = useState(0);
   const [scRevealed, setScRevealed] = useState(false);
   // Challenge
@@ -191,6 +177,10 @@ function SkyShieldPlayfield({
   const [chIdx, setChIdx] = useState(0);
   const [chRevealed, setChRevealed] = useState(false);
   const [chReady, setChReady] = useState(true);
+  // G-5 Challenge
+  const [prediction, setPrediction] = useState<number | null>(null);
+const [g35Scanned, setG35Scanned] = useState(false);
+const [g35Ready, setG35Ready] = useState(true);
   // Exit
   const [exitAns, setExitAns] = useState<number | null>(null);
 
@@ -401,7 +391,7 @@ function SkyShieldPlayfield({
         </p>
 
         <BigBtn
-          onClick={() => setPhase("challenge")}
+          onClick={() => setPhase("challengeG35")}
           cls="bg-gradient-to-r from-violet-500 to-violet-600"
         >
           {T("startChallenge", "Start Challenge")}
@@ -442,6 +432,166 @@ function SkyShieldPlayfield({
       </div>
     );
   }
+
+
+// ── Phase: CHALLENGE G3-5 ───────────────────────────────────────────
+if (phase === "challengeG35") {
+  const d = chDrops[chIdx];
+  const isMystery = d.kind === "mystery";
+  if (!d) return null;
+
+  const nextRound = () => {
+    const n = chIdx + 1;
+
+    if (n >= chDrops.length) {
+      setExitAns(null);
+      setPhase("exitTicket");
+    } else {
+      setChIdx(n);
+      setPrediction(null);
+      setG35Scanned(false);
+      setG35Ready(true);
+    }
+  };
+
+
+  const doPredict = (lane: number) => {
+    if (!g35Ready || g35Scanned) return;
+
+    setPrediction(lane);
+    setShield(lane); // move 🛡️ icon
+  };
+
+
+  const doScan = () => {
+    if (prediction === null) return;
+
+    setG35Scanned(true);
+
+    const predictionCorrect = prediction === d.lane;
+
+    bump(
+        PT.predict,
+        predictionCorrect
+  );
+
+};
+
+  const scorePrediction = () => {
+    if (prediction === null) return;
+
+    const predictionCorrect = prediction === d.lane;
+
+    bump(
+      PT.predict,
+      predictionCorrect
+    );
+
+    showFb(
+      predictionCorrect ? "pok" : "pmiss"
+    );
+
+    setTimeout(() => {
+      setG35Ready(false);
+    }, 500);
+  };
+
+
+  const doCatch = () => {
+    const caught = shield === d.lane;
+
+    bump(
+      PT.catch,
+      caught
+    );
+
+    showFb(
+      caught ? "ok" : "miss"
+    );
+
+    setTimeout(nextRound, 900);
+  };
+
+
+  const emoji =
+    g35Scanned
+      ? LABELS[d.hiddenColor ?? d.lane]
+      : "";
+
+
+  return (
+    <div className="slide-up-fade space-y-4">
+
+      <HUD />
+
+      <p className="text-center font-bold text-violet-800 text-sm">
+        Challenge ({chIdx + 1}/{chDrops.length})
+      </p>
+
+
+      {/* Lanes */}
+      <Lanes
+        activeLane={g35Scanned ? d.lane : -1}
+        emoji={emoji}
+        landed={false}
+      />
+
+
+      {!g35Scanned && (
+        <p className="text-center font-bold text-violet-900">
+          Which lane will the light fall into?
+        </p>
+      )}
+
+
+      {/* Predict */}
+      {!g35Scanned && (
+        <>
+          <LanePicker
+            onPick={doPredict}
+          />
+        <div className="flex justify-center">
+          <BigBtn
+            disabled={prediction === null}
+            onClick={doScan}
+            cls="bg-gradient-to-r from-cyan-500 to-cyan-600"
+          >
+            🔍 Scan
+          </BigBtn>
+        </div>
+        </>
+      )}
+
+
+      {/* Reveal */}
+    {g35Scanned && (
+    <div className="space-y-4 text-center">
+
+        <p className="text-lg font-bold text-cyan-700">
+        The light is {LABELS[d.hiddenColor ?? d.lane]} and falls into lane {d.lane + 1}!
+        </p>
+
+        <p className="text-base font-semibold text-violet-800">
+        {prediction === d.lane
+            ? "✨ Great prediction! You spotted the pattern!"
+            : "🌟 Not quite. Keep watching the pattern."}
+        </p>
+
+        <BigBtn
+        onClick={doCatch}
+        cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
+        >
+        Catch!
+        </BigBtn>
+
+    </div>
+    )}
+
+      <FBanner />
+
+    </div>
+  );
+}
 
   // ── Phase: EXIT TICKET ──────────────────────────────────────────────
   if (phase === "exitTicket") {
