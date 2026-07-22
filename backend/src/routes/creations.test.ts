@@ -53,6 +53,29 @@ const validChallenge = {
   inferRule: "growthSpeed",
 };
 
+const validRaceTrack = {
+  v: 1,
+  name: "Turbo Loop",
+  grid: { w: 6, h: 6 },
+  pieces: [
+    { x: 1, y: 2, type: "start", rot: 0 },
+    { x: 2, y: 2, type: "finish", rot: 0 },
+  ],
+};
+
+const validSoundDuet = {
+  v: 1,
+  name: "Moon Echo",
+  band: "k2",
+  pulses: 4,
+  layers: {
+    lead: [{ t: 0, soundId: "step" }],
+    partner: [{ t: 3, soundId: "clap" }],
+  },
+  spots: ["tunnel"],
+  coverPose: "highFive",
+};
+
 const dbCreation = {
   id: "creation-1",
   authorId: KID,
@@ -125,7 +148,12 @@ describe("Creations routes", () => {
           courseId: COURSE,
           type: "data_dash_challenge",
           // Too few cards — fails the solvability guard.
-          content: { v: 1, cardIds: ["bean"], sortRule: "waterNeed", inferRule: "growthSpeed" },
+          content: {
+            v: 1,
+            cardIds: ["bean"],
+            sortRule: "waterNeed",
+            inferRule: "growthSpeed",
+          },
         });
 
       expect(res.status).toBe(422);
@@ -158,15 +186,15 @@ describe("Creations routes", () => {
           content: validChallenge,
         });
 
-        expect(res.status).toBe(201);
-        expect(prismaMock.creation.create).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              title: "Sort by Water need",
-            })
-          })
-        )
-    })
+      expect(res.status).toBe(201);
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Sort by Water need",
+          }),
+        }),
+      );
+    });
 
     it("rejects a challenge with unexpected extra keys (422)", async () => {
       prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
@@ -180,9 +208,9 @@ describe("Creations routes", () => {
           content: { ...validChallenge, surprise: "not allowed" },
         });
 
-        expect(res.status).toBe(422);
-        expect(prismaMock.creation.create).not.toHaveBeenCalled();
-    })
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -253,15 +281,15 @@ describe("Creations routes", () => {
           content: validChallenge,
         });
 
-        expect(res.status).toBe(200);
-        expect(prismaMock.creation.update).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              title: "Sort by Water need",
-            })
-          })
-        )
-    })
+      expect(res.status).toBe(200);
+      expect(prismaMock.creation.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Sort by Water need",
+          }),
+        }),
+      );
+    });
 
     it("rejects unexpected extra keys on update (422)", async () => {
       prismaMock.creation.findUnique.mockResolvedValue({
@@ -276,11 +304,11 @@ describe("Creations routes", () => {
         .set(asStudent(KID))
         .send({
           content: { ...validChallenge, surprise: "not allowed" },
-        })
+        });
 
       expect(res.status).toBe(422);
       expect(prismaMock.creation.update).not.toHaveBeenCalled();
-    })
+    });
   });
 
   describe("GET /api/creations?courseId=", () => {
@@ -321,9 +349,7 @@ describe("Creations routes", () => {
     });
 
     it("400s when courseId is missing", async () => {
-      const res = await request(app)
-        .get("/api/creations")
-        .set(asStudent(KID));
+      const res = await request(app).get("/api/creations").set(asStudent(KID));
 
       expect(res.status).toBe(400);
     });
@@ -345,6 +371,29 @@ describe("Creations routes", () => {
       expect(res.body.content).toEqual(validChallenge); // playable payload
       expect(res.body.authorName).toBe("Ada");
     });
+
+    it.each([
+      ["race_track", validRaceTrack],
+      ["sound_duet", validSoundDuet],
+    ])(
+      "returns complete %s content instead of a Data Dash projection",
+      async (type, content) => {
+        prismaMock.creation.findUnique.mockResolvedValue({
+          ...dbCreation,
+          type,
+          content,
+          status: "SHARED",
+        });
+        prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+        const res = await request(app)
+          .get("/api/creations/creation-1")
+          .set(asStudent(OTHER_KID));
+
+        expect(res.status).toBe(200);
+        expect(res.body.content).toEqual(content);
+      },
+    );
 
     it("lets the author fetch their own unshared draft", async () => {
       prismaMock.creation.findUnique.mockResolvedValue(dbCreation); // IN_PROGRESS
@@ -396,10 +445,10 @@ describe("Creations routes", () => {
       prismaMock.creation.findUnique.mockResolvedValue({
         ...dbCreation,
         status: "SHARED",
-        content: { ...validChallenge, surprise: "not shared" }
+        content: { ...validChallenge, surprise: "not shared" },
       });
       prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
-      
+
       const res = await request(app)
         .get("/api/creations/creation-1")
         .set(asStudent(OTHER_KID));
@@ -407,7 +456,7 @@ describe("Creations routes", () => {
       expect(res.status).toBe(200);
       expect(res.body.content).toEqual(validChallenge);
       expect(res.body.content).not.toHaveProperty("surprise");
-    })
+    });
   });
 
   describe("POST /api/creations/:id/encourage", () => {
