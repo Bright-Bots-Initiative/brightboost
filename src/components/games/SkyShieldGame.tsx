@@ -193,10 +193,10 @@ const [g35Ready, setG35Ready] = useState(true);
   const showFb = (key: string, ms = 800) => { setFb(key); setTimeout(() => setFb(null), ms); };
 
   // ── Lanes visual ────────────────────────────────────────────────────
-  const Lanes = ({ activeLane, emoji, landed }: { activeLane: number; emoji: string; landed: boolean }) => (
+  const Lanes = ({ activeLane, emoji, landed, onPick }: { activeLane: number; emoji: string; landed: boolean; onPick?: (lane: number) => void; }) => (
     <div className="flex gap-2 justify-center" style={{ height: 180 }}>
       {[0, 1, 2].map(l => (
-        <div key={l} onClick={() => setShield(l)}
+        <div key={l} onClick={() => (onPick ?? setShield)(l)}
           className={`relative w-24 rounded-xl border-2 cursor-pointer transition-all ${shield === l ? "border-white shadow-lg scale-105" : "border-white/30"} ${LANE_BG[l]}`}>
           {l === activeLane && (
             <div className="absolute left-0 right-0 flex justify-center transition-all duration-500" style={{ top: landed ? "calc(100% - 60px)" : "8px" }}>
@@ -499,6 +499,11 @@ if (phase === "challengeG35") {
       }
       emoji={emoji}
       landed={false}
+      onPick={
+        !g35Scanned && isMystery
+          ? doPredict
+          : setShield
+      }
     />
 
       {isMystery && !g35Scanned && (
