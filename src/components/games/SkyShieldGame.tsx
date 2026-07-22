@@ -437,6 +437,7 @@ const [g35Ready, setG35Ready] = useState(true);
 // ── Phase: CHALLENGE G3-5 ───────────────────────────────────────────
 if (phase === "challengeG35") {
   const d = chDrops[chIdx];
+  const pattern = pat.current;
   const isMystery = d.kind === "mystery";
   if (!d) return null;
 
@@ -555,6 +556,19 @@ if (phase === "challengeG35") {
             ? "✨ Great prediction! You spotted the pattern!"
             : "🌟 Not quite. Keep watching the pattern."}
         </p>
+        {prediction !== d.lane && pattern && (
+          <div className="space-y-2">
+              <p className="text-base font-bold text-violet-900">
+                The pattern is:
+              </p>
+
+              <div className="flex gap-1 justify-center flex-wrap text-2xl">
+                {pattern.base.map((lane, i) => (
+                  <span key={i}>{LABELS[lane]}</span>
+                ))}
+              </div>
+            </div>
+        )}
         <BigBtn
         onClick={doCatch}
         cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
