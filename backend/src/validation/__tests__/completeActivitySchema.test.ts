@@ -101,10 +101,14 @@ describe("completeActivitySchema gameSpecific", () => {
   it("E-7: serialized payload larger than GAME_SPECIFIC_MAX_BYTES fails", () => {
     const padded: Record<string, unknown> = { ...validMoveMeasure };
     let i = 0;
-    while (JSON.stringify(padded).length <= GAME_SPECIFIC_MAX_BYTES) {
+    while (
+      Buffer.byteLength(JSON.stringify(padded), "utf8") <= GAME_SPECIFIC_MAX_BYTES
+    ) {
       padded[`pad_${i++}`] = "x".repeat(64);
     }
-    expect(JSON.stringify(padded).length).toBeGreaterThan(GAME_SPECIFIC_MAX_BYTES);
+    expect(
+      Buffer.byteLength(JSON.stringify(padded), "utf8"),
+    ).toBeGreaterThan(GAME_SPECIFIC_MAX_BYTES);
 
     const parsed = completeActivitySchema.safeParse({
       ...base,
@@ -118,6 +122,57 @@ describe("completeActivitySchema gameSpecific", () => {
         "gameSpecific",
       ]);
     }
+  });
+
+  it("E-7b: payload under by String.length but over by UTF-8 bytes is rejected", () => {
+    // CJK ideograph U+4E00 is 1 UTF-16 code unit but 3 UTF-8 bytes.
+    // Pad until .length is under the cap while byteLength is over it.
+    const padded: Record<string, unknown> = { ...validMoveMeasure };
+    let i = 0;
+    while (
+      Buffer.byteLength(JSON.stringify(padded), "utf8") <= GAME_SPECIFIC_MAX_BYTES
+    ) {
+      padded[`pad_${i++}`] = "一".repeat(64);
+    }
+    const serialized = JSON.stringify(padded);
+    expect(serialized.length).toBeLessThanOrEqual(GAME_SPECIFIC_MAX_BYTES);
+    expect(Buffer.byteLength(serialized, "utf8")).toBeGreaterThan(
+      GAME_SPECIFIC_MAX_BYTES,
+    );
+
+    const parsed = completeActivitySchema.safeParse({
+      ...base,
+      result: { gameKey: "move_measure", gameSpecific: padded },
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.map((i) => i.path)).toContainEqual([
+        "result",
+        "gameSpecific",
+      ]);
+    }
+  });
+
+  it("E-7c: maximal valid ASCII move_measure payload is unaffected by byteLength gate", () => {
+    const maximal = {
+      dash: 10,
+      jump: 10,
+      toss: 10,
+      impEvent: "toss" as const,
+      impScore: 10,
+      exitCorrect: true,
+    };
+    const serialized = JSON.stringify(maximal);
+    expect(Buffer.byteLength(serialized, "utf8")).toBe(serialized.length);
+    expect(Buffer.byteLength(serialized, "utf8")).toBeLessThan(
+      GAME_SPECIFIC_MAX_BYTES,
+    );
+
+    const parsed = completeActivitySchema.safeParse({
+      ...base,
+      result: { gameKey: "move_measure", gameSpecific: maximal },
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it("E-8: after parse(), result.gameSpecific is the raw value (superRefine does not transform)", () => {
