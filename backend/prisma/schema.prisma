@@ -191,6 +191,7 @@ model Progress {
   activityId String
   status     ProgressStatus
   timeSpentS Int            @default(0)
+  gameSpecific Json?
   updatedAt  DateTime       @updatedAt
 
   User       User @relation(fields: [studentId], references: [id], onDelete: Cascade)

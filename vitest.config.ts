@@ -19,7 +19,7 @@ export default defineConfig({
     },
     coverage: {
       provider: "v8",
-      include: ["src/components/activities/quiz/**"],
+      include: ["src/components/activities/quiz/**", "backend/src/validation/gameSpecific.ts"],
       exclude: ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/types.ts"],
       thresholds: {
         lines: 90,
