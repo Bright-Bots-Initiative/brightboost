@@ -552,6 +552,261 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
 
+  it("R-1: COMPLETED replay overwrites gameSpecific (last-write-wins on idempotent path)", async () => {
+    const storedA = {
+      dash: 1,
+      jump: 1,
+      toss: 1,
+      impEvent: null as null,
+      impScore: 0,
+      exitCorrect: false,
+    };
+    const payloadB = {
+      dash: 9,
+      jump: 8,
+      toss: 7,
+      impEvent: "toss" as const,
+      impScore: 6,
+      exitCorrect: true,
+    };
+    const expectedB = GAME_SPECIFIC_SCHEMAS.move_measure.parse(payloadB);
+
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: storedA,
+    });
+    prismaMock.progress.update.mockResolvedValue({
+      id: "prog-after-replay",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: expectedB,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 8,
+      result: {
+        gameKey: "move_measure",
+        score: 9,
+        gameSpecific: payloadB,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(prismaMock.progress.update).toHaveBeenCalledTimes(1);
+    const updateArg = prismaMock.progress.update.mock.calls[0][0];
+    expect(updateArg.where).toEqual({ id: "prog-1" });
+    expect(updateArg.data).toEqual({ gameSpecific: expectedB });
+  });
+
+  it("R-2: COMPLETED replay awards nothing (no XP/avatar/streak/GamePersonalBest)", async () => {
+    const payloadB = {
+      dash: 9,
+      jump: 8,
+      toss: 7,
+      impEvent: "toss" as const,
+      impScore: 6,
+      exitCorrect: true,
+    };
+    const expectedB = GAME_SPECIFIC_SCHEMAS.move_measure.parse(payloadB);
+
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: {
+        dash: 1,
+        jump: 1,
+        toss: 1,
+        impEvent: null,
+        impScore: 0,
+        exitCorrect: false,
+      },
+    });
+    prismaMock.progress.update.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: expectedB,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 8,
+      result: {
+        gameKey: "move_measure",
+        score: 9,
+        gameSpecific: payloadB,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Already completed");
+    expect(res.body.reward.xpDelta).toBe(0);
+    expect(res.body.reward.levelDelta).toBe(0);
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.avatar.create).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.upsert).not.toHaveBeenCalled();
+  });
+
+  it("R-3: COMPLETED replay without gameSpecific does not call update (E-3)", async () => {
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: validMoveMeasure,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 5,
+      result: { gameKey: "move_measure", score: 3 },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Already completed");
+    expect(prismaMock.progress.update).not.toHaveBeenCalled();
+    expect(res.body.progress).not.toHaveProperty("gameSpecific");
+  });
+
+  it("R-4: COMPLETED replay with wasBackfilled writes telemetry and keeps backfilledXp", async () => {
+    const payloadB = {
+      dash: 9,
+      jump: 8,
+      toss: 7,
+      impEvent: "toss" as const,
+      impScore: 6,
+      exitCorrect: true,
+    };
+    const expectedB = GAME_SPECIFIC_SCHEMAS.move_measure.parse(payloadB);
+    // completedCount=1 → XP_PER_ACTIVITY(50) + levelUpBonus(0) = 50
+    const backfilledXp = 50;
+    const backfilledAvatar = {
+      id: "avatar-backfilled",
+      studentId: "student-123",
+      archetype: null,
+      xp: backfilledXp,
+      energy: 100,
+      hp: 100,
+      level: 1,
+    };
+
+    prismaMock.avatar.findUnique.mockResolvedValue(null);
+    prismaMock.progress.count.mockResolvedValue(1);
+    prismaMock.avatar.create.mockResolvedValue(backfilledAvatar);
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: {
+        dash: 1,
+        jump: 1,
+        toss: 1,
+        impEvent: null,
+        impScore: 0,
+        exitCorrect: false,
+      },
+    });
+    prismaMock.progress.update.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: expectedB,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 8,
+      result: {
+        gameKey: "move_measure",
+        score: 9,
+        gameSpecific: payloadB,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Already completed (avatar backfilled)");
+    expect(prismaMock.progress.update).toHaveBeenCalledTimes(1);
+    expect(prismaMock.progress.update.mock.calls[0][0].data).toEqual({
+      gameSpecific: expectedB,
+    });
+    expect(res.body.reward.xpDelta).toBe(backfilledXp);
+    expect(prismaMock.gamePersonalBest.upsert).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
+  });
+
+  it("R-5: COMPLETED replay response uses post-write row and omits gameSpecific", async () => {
+    const payloadB = {
+      dash: 9,
+      jump: 8,
+      toss: 7,
+      impEvent: "toss" as const,
+      impScore: 6,
+      exitCorrect: true,
+    };
+    const expectedB = GAME_SPECIFIC_SCHEMAS.move_measure.parse(payloadB);
+
+    prismaMock.progress.findUnique.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      gameSpecific: {
+        dash: 1,
+        jump: 1,
+        toss: 1,
+        impEvent: null,
+        impScore: 0,
+        exitCorrect: false,
+      },
+    });
+    prismaMock.progress.update.mockResolvedValue({
+      id: "prog-after-replay",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      moduleSlug: "test-module",
+      gameSpecific: expectedB,
+    });
+
+    const res = await completeActivity({
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      timeSpentS: 8,
+      result: {
+        gameKey: "move_measure",
+        score: 9,
+        gameSpecific: payloadB,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.progress.id).toBe("prog-after-replay");
+    expect(res.body.progress).not.toHaveProperty("gameSpecific");
+  });
+
   it("C2-04 / §5.9.2: warns on unregistered gameKey when gameSpecific is sent (400 path)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
