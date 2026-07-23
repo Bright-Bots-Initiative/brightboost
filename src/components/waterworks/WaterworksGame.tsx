@@ -1,5 +1,5 @@
 /**
- * 石犀工坊 · Waterworks — standalone showcase game (design:
+ * 都江堰水利工坊 · Waterworks — standalone showcase game (design:
  * docs/games/waterworks-design.md; sim rules in ./waterworksSim.ts).
  *
  * ISOLATION CONTRACT: no auth, no API calls, no backend anywhere. All

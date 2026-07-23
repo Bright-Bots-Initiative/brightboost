@@ -1,4 +1,4 @@
-# 石犀工坊 · Waterworks — v2 standalone showcase (design doc)
+# 都江堰水利工坊 · Waterworks — v2 standalone showcase (design doc)
 
 > Status: **design — pending approval.** No game code is written yet.
 > Placement: **standalone showcase** — one unlinked route (`/waterworks`), no auth, device-local
@@ -123,7 +123,7 @@ Dujiangyan) · **What Li Bing built** (one sentence of history) · **What it doe
 
 Standalone route **`/waterworks`** — registered beside `/try` (the existing public, no-auth route
 pattern, `src/App.tsx:130`), **linked from nothing** (direct URL is the access gate). Header lockup:
-🦏 **石犀工坊 · Waterworks** + one-line credit *"Inspired by the 2,300-year-old Dujiangyan waterworks
+🦏 **都江堰水利工坊 · Waterworks** + one-line credit *"Inspired by the 2,300-year-old Dujiangyan waterworks
 of Chengdu · 灵感来自成都两千三百年历史的都江堰"* + the app's standard `LanguageToggle`. No login, no
 PII; everything on-device. Page sets `document.documentElement.lang` to follow the language toggle
 (the global `changeLanguage()` doesn't do this today — page-scoped effect here; a global fix is a

@@ -1,5 +1,5 @@
 /**
- * 石犀工坊 · Waterworks — pure simulation engine.
+ * 都江堰水利工坊 · Waterworks — pure simulation engine.
  *
  * Every rule here is specified in docs/games/waterworks-design.md §2 and is
  * the behavior the pod leads reviewed in the prototype. All functions are

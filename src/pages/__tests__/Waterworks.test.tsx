@@ -47,7 +47,7 @@ describe("/waterworks — logged-out cold render", () => {
 
   it("renders the full page with NO auth provider and NO router", () => {
     render(<Waterworks />);
-    expect(screen.getByText("石犀工坊 · Waterworks")).toBeTruthy(); // lockup
+    expect(screen.getByText("都江堰水利工坊 · Waterworks")).toBeTruthy(); // lockup
     expect(
       screen.getByText("Inspired by the 2,300-year-old Dujiangyan waterworks of Chengdu"),
     ).toBeTruthy(); // credit line

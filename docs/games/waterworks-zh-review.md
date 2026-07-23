@@ -1,4 +1,4 @@
-# 石犀工坊 · Waterworks — zh-CN review checklist
+# 都江堰水利工坊 · Waterworks — zh-CN review checklist
 
 > **Purpose:** every Chinese string on the page, for native-speaker + heritage review
 > **before this page is shared externally** (the gate named in `waterworks-design.md` §7).

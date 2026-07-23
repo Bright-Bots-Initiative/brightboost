@@ -34,7 +34,7 @@ function visitWaterworks(options: { skipFirstRunHelp?: boolean } = {}) {
       }
     },
   });
-  cy.contains("h1", "石犀工坊 · Waterworks").should("be.visible");
+  cy.contains("h1", "都江堰水利工坊 · Waterworks").should("be.visible");
 }
 
 function expectNoDocumentOverflow() {

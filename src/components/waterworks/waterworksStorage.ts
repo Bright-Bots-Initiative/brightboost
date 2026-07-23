@@ -1,5 +1,5 @@
 /**
- * 石犀工坊 · Waterworks — device-local persistence (localStorage).
+ * 都江堰水利工坊 · Waterworks — device-local persistence (localStorage).
  *
  * This game is a standalone showcase: NOTHING touches the backend. Saved
  * rivers, the working draft, and first-run flags live on-device under

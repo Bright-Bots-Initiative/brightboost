@@ -1,5 +1,5 @@
 /**
- * /waterworks — 石犀工坊 · Waterworks, a standalone showcase page.
+ * /waterworks — 都江堰水利工坊 · Waterworks, a standalone showcase page.
  *
  * ISOLATION CONTRACT (mirrors /try):
  *  - Public route, NO auth required, linked from NOTHING — the unlinked URL
@@ -55,7 +55,7 @@ export default function Waterworks() {
         </span>
         <div className="ww-shell-title flex-1 min-w-0">
           <h1 className="text-xl font-black leading-tight tracking-wide">
-            石犀工坊 · Waterworks
+            都江堰水利工坊 · Waterworks
           </h1>
           <p className="text-xs font-bold text-[#7d6c52]">
             {t("waterworks.shell.credit", {
