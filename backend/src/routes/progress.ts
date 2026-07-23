@@ -175,13 +175,25 @@ router.post(
 
     // Handle idempotent case: activity already completed
     if (existing && existing.status === ProgressStatus.COMPLETED) {
+      // Replay: persist newer telemetry (last-write-wins, §5.2.3) WITHOUT re-awarding
+      // anything. XP, streak, avatar, and GamePersonalBest are deliberately untouched —
+      // this path must stay reward-free. Omitted gameSpecific never nulls a stored
+      // value (E-3), so only write when the client actually sent telemetry.
+      let replayed = existing;
+      if (gs !== undefined) {
+        replayed = await prisma.progress.update({
+          where: { id: existing.id },
+          data: { gameSpecific: gs },
+        });
+      }
+
       // If avatar was just backfilled, return the backfilled XP as the delta
       // This handles the edge case where user completed activities without an avatar
       // and later triggers completion again
       if (wasBackfilled) {
         return res.json({
           message: "Already completed (avatar backfilled)",
-          progress: publicProgress(existing),
+          progress: publicProgress(replayed),
           reward: {
             xpDelta: backfilledXp,
             levelDelta: avatarBefore.level - 1, // Delta from level 1
@@ -196,7 +208,7 @@ router.post(
       // Normal idempotent return with 0 rewards
       return res.json({
         message: "Already completed",
-        progress: publicProgress(existing),
+        progress: publicProgress(replayed),
         reward: {
           xpDelta: 0,
           levelDelta: 0,
