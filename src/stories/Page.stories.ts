@@ -6,6 +6,10 @@ import { Page } from "./Page";
 const meta = {
   title: "Example/Page",
   component: Page,
+  // Workspace path contains spaces; Storybook vitest addon then reports
+  // "No test suite found" for this file (storybookjs/storybook#29572).
+  // Opt out via tags.exclude ["no-vitest"] in vitest.workspace.ts.
+  tags: ["no-vitest"],
   parameters: {
     // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
     layout: "fullscreen",
