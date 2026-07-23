@@ -115,7 +115,7 @@ export const completeActivitySchema = z.object({
         return;
       }
 
-      if (serialized.length > GAME_SPECIFIC_MAX_BYTES) {
+      if (Buffer.byteLength(serialized, "utf8") > GAME_SPECIFIC_MAX_BYTES) {
         ctx.addIssue({
           code: "custom",
           path: ["gameSpecific"],
