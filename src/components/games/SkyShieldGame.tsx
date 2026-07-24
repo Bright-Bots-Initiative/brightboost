@@ -622,8 +622,8 @@ function SkyShieldPlayfield({
 
         <p className="text-slate-700 font-semibold max-w-sm mx-auto">
           {T(
-            "patternReminderDesc",
-            "Remember it! The mystery lights will follow this same pattern.",
+            "patternReminderMessage",
+            "Remember it! The mystery lights will follow this same pattern."
           )}
         </p>
 
@@ -704,9 +704,9 @@ function SkyShieldPlayfield({
   // ── Phase: CHALLENGE G3-5 ───────────────────────────────────────────
   if (phase === "challengeG35") {
     const d = chDrops[chIdx];
+    if (!d) return null;
     const pattern = pat.current;
     const isMystery = d.kind === "mystery";
-    if (!d) return null;
 
     const nextRound = () => {
       const n = chIdx + 1;
@@ -751,7 +751,7 @@ function SkyShieldPlayfield({
       <div className="slide-up-fade space-y-4">
         <HUD />
         <p className="text-center font-bold text-violet-800 text-sm">
-          Challenge ({chIdx + 1}/{chDrops.length})
+          {T("challengeLabel", "Challenge")} ({chIdx + 1}/{chDrops.length})
         </p>
 
         {/* Lanes */}
@@ -764,7 +764,7 @@ function SkyShieldPlayfield({
 
         {isMystery && !g35Scanned && (
           <p className="text-center font-bold text-violet-900">
-            Which lane will the light fall into?
+           {T("challengePredict", "Which lane will the light fall into?")}
           </p>
         )}
 
@@ -778,7 +778,7 @@ function SkyShieldPlayfield({
                 onClick={doScan}
                 cls="bg-gradient-to-r from-cyan-500 to-cyan-600"
               >
-                🔍 Scan
+                🔍 {T("scan", "Scan")}
               </BigBtn>
             </div>
           </>
@@ -793,7 +793,7 @@ function SkyShieldPlayfield({
               onClick={doCatch}
               cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
             >
-              Catch!
+              {T("catch", "Catch!")}
             </BigBtn>
           </div>
         )}
@@ -802,18 +802,27 @@ function SkyShieldPlayfield({
         {isMystery && g35Scanned && (
           <div className="space-y-4 text-center">
             <p className="text-lg font-bold text-cyan-700">
-              The light is {LABELS[d.hiddenColor ?? d.lane]} and falls into lane{" "}
-              {d.lane + 1}!
+              {t("games.skyShield.challengeReveal", {
+                  defaultValue: "The light is {{color}} and falls into lane {{lane}}!",
+                  color: LABELS[d.hiddenColor ?? d.lane],
+                  lane: d.lane + 1,
+              })}
             </p>
             <p className="text-base font-semibold text-violet-800">
               {prediction === d.lane
-                ? "✨ Great prediction! You spotted the pattern!"
-                : "🌟 Not quite. Keep watching the pattern."}
+                ? T(
+                    "challengePredictCorrect",
+                    "✨ Great prediction! You spotted the pattern!"
+                )
+                : T(
+                    "challengePredictWrong",
+                    "🌟 Not quite. Keep watching the pattern."
+                )}
             </p>
             {prediction !== d.lane && pattern && (
               <div className="space-y-2">
                 <p className="text-base font-bold text-violet-900">
-                  The pattern is:
+                  {T("challengePatternReminder", "The pattern is")}
                 </p>
 
                 <div className="flex gap-1 justify-center flex-wrap text-2xl">
@@ -827,7 +836,7 @@ function SkyShieldPlayfield({
               onClick={doCatch}
               cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
             >
-              Catch!
+              {T("catch", "Catch!")}
             </BigBtn>
           </div>
         )}
