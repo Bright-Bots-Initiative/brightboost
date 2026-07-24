@@ -623,7 +623,7 @@ function SkyShieldPlayfield({
         <p className="text-slate-700 font-semibold max-w-sm mx-auto">
           {T(
             "patternReminderMessage",
-            "Remember it! The mystery lights will follow this same pattern."
+            "Remember it! The mystery lights will follow this same pattern.",
           )}
         </p>
 
@@ -764,7 +764,7 @@ function SkyShieldPlayfield({
 
         {isMystery && !g35Scanned && (
           <p className="text-center font-bold text-violet-900">
-           {T("challengePredict", "Which lane will the light fall into?")}
+            {T("challengePredict", "Which lane will the light fall into?")}
           </p>
         )}
 
@@ -803,21 +803,22 @@ function SkyShieldPlayfield({
           <div className="space-y-4 text-center">
             <p className="text-lg font-bold text-cyan-700">
               {t("games.skyShield.challengeReveal", {
-                  defaultValue: "The light is {{color}} and falls into lane {{lane}}!",
-                  color: LABELS[d.hiddenColor ?? d.lane],
-                  lane: d.lane + 1,
+                defaultValue:
+                  "The light is {{color}} and falls into lane {{lane}}!",
+                color: LABELS[d.hiddenColor ?? d.lane],
+                lane: d.lane + 1,
               })}
             </p>
             <p className="text-base font-semibold text-violet-800">
               {prediction === d.lane
                 ? T(
                     "challengePredictCorrect",
-                    "✨ Great prediction! You spotted the pattern!"
-                )
+                    "✨ Great prediction! You spotted the pattern!",
+                  )
                 : T(
                     "challengePredictWrong",
-                    "🌟 Not quite. Keep watching the pattern."
-                )}
+                    "🌟 Not quite. Keep watching the pattern.",
+                  )}
             </p>
             {prediction !== d.lane && pattern && (
               <div className="space-y-2">
@@ -882,7 +883,7 @@ function SkyShieldPlayfield({
               className={`bounce-in py-2 px-4 rounded-xl border font-bold ${ok ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-orange-100 text-orange-700 border-orange-300"}`}
             >
               {ok
-                ? t("exitCorrect", {
+                ? t("games.skyShield.exitCorrect", {
                     defaultValue: "Correct! {{color}} comes next!",
                     color: `${correctEmoji} ${correctColor}`,
                   })
