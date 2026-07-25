@@ -1,15 +1,8 @@
-const swaUrl = Cypress.env("CYPRESS_SWA_URL") as string | undefined;
-const apiBase = Cypress.env("VITE_API_BASE") as string | undefined;
+import { requireEnv } from "../../support/requireEnv";
 
 describe("Staging smoke", () => {
   it("UI shell: /student renders basic content", () => {
-    if (!swaUrl) {
-      return cy
-        .wrap({})
-        .log(
-          "CYPRESS_SWA_URL not set; skipping UI shell check in build-only CI",
-        );
-    }
+    const swaUrl = requireEnv("CYPRESS_SWA_URL", (n) => Cypress.env(n));
     return cy
       .visit("/student", { timeout: 30000 })
       .get("#root", { timeout: 30000 })
@@ -19,13 +12,7 @@ describe("Staging smoke", () => {
   });
 
   it("API: GET module stem-1 returns slug", () => {
-    if (!apiBase) {
-      return cy
-        .wrap({})
-        .log(
-          "VITE_API_BASE not set; skipping API health check in build-only CI",
-        );
-    }
+    const apiBase = requireEnv("VITE_API_BASE", (n) => Cypress.env(n));
     return cy
       .request(`${apiBase}/api/module/stem-1`)
       .its("status")
@@ -38,15 +25,13 @@ describe("Staging smoke", () => {
       );
   });
 
-  it("OPTIONAL: checkpoint POST (dev headers) if allowed", () => {
-    if (!apiBase) {
-      return cy.wrap({}).log("VITE_API_BASE not set; skipping checkpoint POST");
-    }
+  it("OPTIONAL: checkpoint POST (dev headers) if allowed", function () {
+    const apiBase = requireEnv("VITE_API_BASE", (n) => Cypress.env(n));
     const allow =
       Cypress.env("ALLOW_DEV_HEADERS") === 1 ||
       Cypress.env("ALLOW_DEV_HEADERS") === "1";
     if (!allow) {
-      return cy.wrap({}).log("Dev headers disabled; skipping checkpoint POST");
+      this.skip();
     }
 
     const studentId = (Cypress.env("STUDENT_ID") as string) || "smoke-student";
