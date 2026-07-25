@@ -91,7 +91,8 @@ const moduleSourcePath = join(
 
 describe("GAME_SPECIFIC_SCHEMAS", () => {
   it("R-1: valid move_measure payload parses", () => {
-    const parsed = GAME_SPECIFIC_SCHEMAS.move_measure.safeParse(validMoveMeasure);
+    const parsed =
+      GAME_SPECIFIC_SCHEMAS.move_measure.safeParse(validMoveMeasure);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data).toEqual(validMoveMeasure);
@@ -121,8 +122,9 @@ describe("GAME_SPECIFIC_SCHEMAS", () => {
           : { ...base };
 
       expect(
-        GAME_SPECIFIC_SCHEMAS[key].safeParse(withField(fixture, field, max, nest))
-          .success,
+        GAME_SPECIFIC_SCHEMAS[key].safeParse(
+          withField(fixture, field, max, nest),
+        ).success,
         `${key}.${nest ? `${nest}.` : ""}${field}@max`,
       ).toBe(true);
 
@@ -153,7 +155,10 @@ describe("GAME_SPECIFIC_SCHEMAS", () => {
 
   it("R-4: every registry schema rejects an unknown key", () => {
     for (const [key, schema] of Object.entries(GAME_SPECIFIC_SCHEMAS)) {
-      const base = validByKey[key as RegisteredGameKey] as Record<string, unknown>;
+      const base = validByKey[key as RegisteredGameKey] as Record<
+        string,
+        unknown
+      >;
       const parsed = schema.safeParse({ ...base, smuggle: "nope" });
       expect(parsed.success, key).toBe(false);
     }
@@ -203,13 +208,15 @@ describe("R-4/R-5 guard bite (local loose copy)", () => {
     };
 
     // R-4 against the local copy: production keys still reject; loose accepts → overall red
-    const r4AllRejectUnknown = Object.entries(localCopy).every(([key, schema]) => {
-      const base =
-        key === "loose_game"
-          ? { score: 1 }
-          : (validByKey[key as RegisteredGameKey] as Record<string, unknown>);
-      return !schema.safeParse({ ...base, smuggle: "nope" }).success;
-    });
+    const r4AllRejectUnknown = Object.entries(localCopy).every(
+      ([key, schema]) => {
+        const base =
+          key === "loose_game"
+            ? { score: 1 }
+            : (validByKey[key as RegisteredGameKey] as Record<string, unknown>);
+        return !schema.safeParse({ ...base, smuggle: "nope" }).success;
+      },
+    );
     expect(r4AllRejectUnknown).toBe(false);
 
     // R-5 against a source string that includes the loose entry → red
@@ -227,7 +234,10 @@ describe("R-4/R-5 guard bite (local loose copy)", () => {
 
     // Production registry itself remains clean (revert = discard localCopy)
     for (const [key, schema] of Object.entries(GAME_SPECIFIC_SCHEMAS)) {
-      const base = validByKey[key as RegisteredGameKey] as Record<string, unknown>;
+      const base = validByKey[key as RegisteredGameKey] as Record<
+        string,
+        unknown
+      >;
       expect(schema.safeParse({ ...base, smuggle: "nope" }).success, key).toBe(
         false,
       );

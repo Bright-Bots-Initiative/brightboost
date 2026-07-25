@@ -102,13 +102,14 @@ describe("completeActivitySchema gameSpecific", () => {
     const padded: Record<string, unknown> = { ...validMoveMeasure };
     let i = 0;
     while (
-      Buffer.byteLength(JSON.stringify(padded), "utf8") <= GAME_SPECIFIC_MAX_BYTES
+      Buffer.byteLength(JSON.stringify(padded), "utf8") <=
+      GAME_SPECIFIC_MAX_BYTES
     ) {
       padded[`pad_${i++}`] = "x".repeat(64);
     }
-    expect(
-      Buffer.byteLength(JSON.stringify(padded), "utf8"),
-    ).toBeGreaterThan(GAME_SPECIFIC_MAX_BYTES);
+    expect(Buffer.byteLength(JSON.stringify(padded), "utf8")).toBeGreaterThan(
+      GAME_SPECIFIC_MAX_BYTES,
+    );
 
     const parsed = completeActivitySchema.safeParse({
       ...base,
@@ -130,7 +131,8 @@ describe("completeActivitySchema gameSpecific", () => {
     const padded: Record<string, unknown> = { ...validMoveMeasure };
     let i = 0;
     while (
-      Buffer.byteLength(JSON.stringify(padded), "utf8") <= GAME_SPECIFIC_MAX_BYTES
+      Buffer.byteLength(JSON.stringify(padded), "utf8") <=
+      GAME_SPECIFIC_MAX_BYTES
     ) {
       padded[`pad_${i++}`] = "一".repeat(64);
     }

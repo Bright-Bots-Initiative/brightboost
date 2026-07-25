@@ -353,9 +353,9 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       },
     });
     expect(first.status).toBe(200);
-    expect(prismaMock.progress.create.mock.calls[0][0].data.gameSpecific).toEqual(
-      expected,
-    );
+    expect(
+      prismaMock.progress.create.mock.calls[0][0].data.gameSpecific,
+    ).toEqual(expected);
 
     // Old client re-completes without gameSpecific — must not null stored value.
     prismaMock.progress.findUnique.mockResolvedValueOnce({
@@ -430,7 +430,9 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     while (JSON.stringify(padded).length <= GAME_SPECIFIC_MAX_BYTES) {
       padded[`pad_${i++}`] = "x".repeat(64);
     }
-    expect(JSON.stringify(padded).length).toBeGreaterThan(GAME_SPECIFIC_MAX_BYTES);
+    expect(JSON.stringify(padded).length).toBeGreaterThan(
+      GAME_SPECIFIC_MAX_BYTES,
+    );
 
     const res = await completeActivity({
       moduleSlug: "test-module",

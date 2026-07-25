@@ -272,12 +272,17 @@ router.post(
         }
       } catch {
         // If parsing fails, use default XP
-        console.warn("[complete-activity] Failed to parse activity.content for totalRounds");
+        console.warn(
+          "[complete-activity] Failed to parse activity.content for totalRounds",
+        );
       }
 
       if (totalRoundsFromContent > 0) {
         // Clamp roundsCompleted to server-known totalRounds (prevents cheating)
-        const rc = Math.min(Math.max(result.roundsCompleted, 0), totalRoundsFromContent);
+        const rc = Math.min(
+          Math.max(result.roundsCompleted, 0),
+          totalRoundsFromContent,
+        );
         xpAward = Math.round((rc / totalRoundsFromContent) * XP_PER_ACTIVITY);
         xpAward = Math.min(Math.max(xpAward, 0), XP_PER_ACTIVITY); // Final clamp
       }
@@ -311,7 +316,10 @@ router.post(
       const currentFocus = (avatarBefore as any).focus || 0;
 
       updateData.speed = Math.min(STAT_MAX, currentSpeed + statGains.speed);
-      updateData.control = Math.min(STAT_MAX, currentControl + statGains.control);
+      updateData.control = Math.min(
+        STAT_MAX,
+        currentControl + statGains.control,
+      );
       updateData.focus = Math.min(STAT_MAX, currentFocus + statGains.focus);
 
       // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
@@ -369,7 +377,10 @@ router.post(
               lastScore: newScore,
               bestScore: Math.max(existing.bestScore, newScore),
               bestStreak: Math.max(existing.bestStreak, newStreak),
-              bestRoundsCompleted: Math.max(existing.bestRoundsCompleted, newRounds),
+              bestRoundsCompleted: Math.max(
+                existing.bestRoundsCompleted,
+                newRounds,
+              ),
               playCount: { increment: 1 },
               lastPlayedAt: new Date(),
             },
@@ -390,7 +401,10 @@ router.post(
           });
         }
       } catch (e) {
-        console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+        console.warn(
+          "[complete-activity] Failed to upsert GamePersonalBest:",
+          e,
+        );
       }
     }
 

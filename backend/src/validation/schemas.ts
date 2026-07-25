@@ -124,7 +124,9 @@ export const completeActivitySchema = z.object({
         return;
       }
 
-      const parsed = GAME_SPECIFIC_SCHEMAS[val.gameKey].safeParse(val.gameSpecific);
+      const parsed = GAME_SPECIFIC_SCHEMAS[val.gameKey].safeParse(
+        val.gameSpecific,
+      );
       if (!parsed.success) {
         ctx.addIssue({
           code: "custom",

@@ -188,7 +188,9 @@ function completeActivity(body: Record<string, unknown>) {
     .send(body);
 }
 
-function setupFirstCompletionMocks(progressRow: Record<string, unknown> = PROGRESS_ROW) {
+function setupFirstCompletionMocks(
+  progressRow: Record<string, unknown> = PROGRESS_ROW,
+) {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
   prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
@@ -238,7 +240,8 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
     expect(without.status).toBe(200);
     expect(without.body).toEqual(SCORING_BASELINE);
     const withoutAvatarUpdate = prismaMock.avatar.update.mock.calls[0][0].data;
-    const withoutGpbCreate = prismaMock.gamePersonalBest.create.mock.calls[0][0].data;
+    const withoutGpbCreate =
+      prismaMock.gamePersonalBest.create.mock.calls[0][0].data;
 
     // Run B: same request with valid gameSpecific (DB row may carry telemetry; wire must not)
     vi.clearAllMocks();
