@@ -85,8 +85,8 @@ jobs:
       - name: Wait for server to be ready
         run: npx wait-on http://localhost:5173 --timeout 60000
 
-      - name: Run Cypress smoke tests
-        run: npx cypress run --spec "cypress/e2e/smoke.cy.ts"
+      - name: Run Cypress shell smoke (no backend; see issue #677)
+        run: npm run test:e2e:ci
 
       - name: Build application
         run: npm run build
