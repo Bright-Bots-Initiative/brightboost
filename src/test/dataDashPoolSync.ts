@@ -3,21 +3,12 @@
  * No imports of the real pools — call sites pass fixtures or live literals.
  */
 
-// Labels built without forbidden substrings so T1-1-08's source scan stays green
-// (helper must not import — or literally mention — the real pool modules).
-const FRONTEND_POOL_LABEL =
-  ["DATA", "_DASH_", "CARDS"].join("") + " (frontend)";
+const FRONTEND_POOL_LABEL = "DATA_DASH_CARDS (frontend)";
 const BACKEND_POOL_FILE =
-  ["DATA", "_DASH_", "POOL"].join("") +
-  " (backend/src/services/" +
-  ["data", "Dash", "Challenge"].join("") +
-  ".ts)";
+  "DATA_DASH_POOL (backend/src/services/dataDashChallenge.ts)";
 const FRONTEND_SORT_LABEL = "SORT_RULES keys (frontend)";
 const BACKEND_SORT_LABEL =
-  ["SORT", "_RULE_", "KEYS"].join("") +
-  " (backend/src/services/" +
-  ["data", "Dash", "Challenge"].join("") +
-  ".ts)";
+  "SORT_RULE_KEYS (backend/src/services/dataDashChallenge.ts)";
 
 export type PoolCardLike = { id: string } & Record<string, string>;
 

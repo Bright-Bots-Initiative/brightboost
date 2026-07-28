@@ -205,11 +205,13 @@ describe("dataDashPoolSync", () => {
   it("T1-1-08: comparison helper is pure — no imports from real pools", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(here, "dataDashPoolSync.ts"), "utf8");
-    expect(source).not.toMatch(/DataDashSortDiscoverGame/);
-    expect(source).not.toMatch(/dataDashAuthoring/);
-    expect(source).not.toMatch(/dataDashChallenge/);
-    expect(source).not.toMatch(/DATA_DASH_CARDS/);
-    expect(source).not.toMatch(/DATA_DASH_POOL/);
+    expect(source).not.toMatch(
+      /^\s*import\s[\s\S]*?from\s+["'][^"']*(dataDashChallenge|DataDashSortDiscoverGame|dataDashAuthoring)/m,
+    );
+    expect(source).not.toMatch(
+      /\bimport\s*\(\s*["'][^"']*(dataDashChallenge|DataDashSortDiscoverGame|dataDashAuthoring)/,
+    );
+    expect(source).not.toMatch(/\brequire\s*\(/);
   });
 
   it("E-9: imports DATA_DASH_CARDS directly (never pool())", () => {
