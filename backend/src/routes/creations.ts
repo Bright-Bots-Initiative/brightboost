@@ -85,6 +85,29 @@ async function isGroupMember(
   return !!enrollment;
 }
 
+// Gallery shows SHARED|COMPLETE to the group; the author additionally sees
+// their own IN_PROGRESS drafts. One definition, two representations (Prisma
+// filter + in-memory boolean) so the forms cannot silently diverge.
+export const VISIBLE_STATUSES = ["SHARED", "COMPLETE"] as const;
+
+/** Prisma filter form — for list queries. */
+export function visibleToWhere(userId: string) {
+  return {
+    OR: [{ status: { in: [...VISIBLE_STATUSES] } }, { authorId: userId }],
+  };
+}
+
+/** In-memory form — for a single already-fetched creation. */
+export function isVisibleTo(
+  creation: { status: string; authorId: string },
+  userId: string,
+): boolean {
+  return (
+    (VISIBLE_STATUSES as readonly string[]).includes(creation.status) ||
+    creation.authorId === userId
+  );
+}
+
 type CreationDTO = {
   id: string;
   courseId: string;
@@ -258,15 +281,12 @@ router.get("/creations", requireAuth, async (req: Request, res: Response) => {
     return res.status(403).json({ error: "not a member of this group" });
   }
 
-  // Gallery shows SHARED|COMPLETE to the group; the author additionally sees
-  // their own IN_PROGRESS drafts.
+  // Gallery visibility: SHARED|COMPLETE to the group; author also sees drafts.
+  // See visibleToWhere / isVisibleTo next to isGroupMember.
   const creations = await prisma.creation.findMany({
     where: {
       courseId,
-      OR: [
-        { status: { in: ["SHARED", "COMPLETE"] } },
-        { authorId: req.user!.id },
-      ],
+      ...visibleToWhere(req.user!.id),
     },
     include: { author: { select: { name: true } } },
     orderBy: { updatedAt: "desc" },
@@ -300,12 +320,7 @@ router.get(
       return res.status(403).json({ error: "not a member of this group" });
     }
 
-    // Visible only if shared/complete to the group, or the requester is author.
-    const visible =
-      creation.status === "SHARED" ||
-      creation.status === "COMPLETE" ||
-      creation.authorId === req.user!.id;
-    if (!visible) {
+    if (!isVisibleTo(creation, req.user!.id)) {
       return res.status(403).json({ error: "creation is not shared" });
     }
 
