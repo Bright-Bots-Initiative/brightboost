@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   DATA_DASH_CARDS,
   SORT_RULES,
+  type DataCard,
 } from "@/components/games/DataDashSortDiscoverGame";
 import {
   DATA_DASH_ATTRS,
@@ -20,8 +21,27 @@ import {
   type PoolMismatch,
 } from "./dataDashPoolSync";
 
+/**
+ * Shared attrs only — id/name/plantBed are frontend-only (A.3).
+ * Keep this Omit list identical to FE_SIDE_ONLY_KEYS below.
+ */
+type ComparableCardAttr = keyof Omit<DataCard, "id" | "name" | "plantBed">;
+
+type AssertNever<T extends never> = T;
+type _AllComparableAttrsCovered = AssertNever<
+  Exclude<ComparableCardAttr, (typeof DATA_DASH_ATTRS)[number]>
+>;
+type _NoExtraAttrsListed = AssertNever<
+  Exclude<(typeof DATA_DASH_ATTRS)[number], ComparableCardAttr>
+>;
+
+/** Same exclusions as ComparableCardAttr Omit above. */
+const FE_SIDE_ONLY_KEYS = new Set(["id", "name", "plantBed"]);
+
 /** Fixture + production guard loop — always the exported attr list (G-201). */
 const FIXTURE_ATTRS = DATA_DASH_ATTRS;
+
+export type { _AllComparableAttrsCovered, _NoExtraAttrsListed };
 
 function card(
   id: string,
@@ -56,6 +76,20 @@ describe("dataDashPoolSync", () => {
     );
     expect(mismatches, formatPoolMismatches(mismatches)).toEqual([]);
     expect(formatPoolMismatches(mismatches)).toBe("");
+  });
+
+  it("DATA_DASH_ATTRS covers every comparable field on every card and pool entry", () => {
+    const expected = [...DATA_DASH_ATTRS].sort();
+    for (const card of DATA_DASH_CARDS) {
+      // FE_SIDE_ONLY_KEYS matches ComparableCardAttr Omit above.
+      const keys = Object.keys(card)
+        .filter((k) => !FE_SIDE_ONLY_KEYS.has(k))
+        .sort();
+      expect(keys).toEqual(expected);
+    }
+    for (const entry of Object.values(DATA_DASH_POOL)) {
+      expect(Object.keys(entry).sort()).toEqual(expected);
+    }
   });
 
   it("E-1 / P-2: fails when a card exists only on the frontend", () => {
