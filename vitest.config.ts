@@ -28,7 +28,11 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8",
-      include: ["src/components/activities/quiz/**", "cypress/support/**/*.ts"],
+      include: [
+        "src/components/activities/quiz/**",
+        "backend/src/validation/gameSpecific.ts",
+        "cypress/support/**/*.ts",
+      ],
       exclude: [
         "**/__tests__/**",
         "**/*.test.{ts,tsx}",
