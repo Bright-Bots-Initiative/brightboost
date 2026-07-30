@@ -30,6 +30,7 @@ export default defineConfig({
       provider: "v8",
       include: [
         "src/components/activities/quiz/**",
+        "backend/src/validation/gameSpecific.ts",
         "cypress/support/**/*.ts",
         "src/test/dataDashPoolSync*.ts",
       ],

@@ -23,6 +23,7 @@
     "test:unit": "vitest run --project unit",
     "test:coverage:quiz": "vitest run --project unit --coverage",
     "test:coverage:ci-guard": "vitest run --project unit --coverage",
+    "test:coverage:gamespecific": "vitest run --project unit --coverage",
     "test:e2e": "cypress run",
     "test:e2e:ci": "cypress run --spec \"cypress/e2e/ci-shell.cy.ts\"",
     "test:e2e:staging": "cypress run --spec \"cypress/e2e/staging/*.cy.ts\"",

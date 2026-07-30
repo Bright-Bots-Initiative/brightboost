@@ -22,17 +22,38 @@ import {
   idSchema,
   slugSchema,
 } from "../validation/schemas";
+import {
+  GAME_SPECIFIC_SCHEMAS,
+  isRegisteredGameKey,
+} from "../validation/gameSpecific";
 import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
 import { trackServer } from "../services/analytics";
 import { GameError } from "../utils/errors";
 
 const router = Router();
 
+/** v1 stores gameSpecific but must not expose it on any response (§5.5 / §7). */
+function publicProgress<T extends { gameSpecific?: unknown }>(row: T) {
+  const { gameSpecific: _omit, ...rest } = row;
+  return rest;
+}
+
 // Get progress for a student (MVP)
 router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
   const progress = await prisma.progress.findMany({
     where: { studentId },
+    // Keep v1 contract stable for #672: persist only, do not expose gameSpecific.
+    select: {
+      id: true,
+      studentId: true,
+      moduleSlug: true,
+      lessonId: true,
+      activityId: true,
+      status: true,
+      timeSpentS: true,
+      updatedAt: true,
+    },
   });
   res.json(progress);
 });
@@ -96,10 +117,35 @@ router.post(
 
     const parse = completeActivitySchema.safeParse(req.body);
     if (!parse.success) {
+      // §5.9.2: deploy-bug signal when schema rejected gameSpecific for an unknown key.
+      // Use the schema issue (gameKey already max-bounded) — never log raw body / payload.
+      const unregisteredIssue = parse.error.issues.find(
+        (i) =>
+          typeof i.message === "string" &&
+          i.message.startsWith('gameSpecific not accepted for gameKey "'),
+      );
+      if (unregisteredIssue) {
+        const match = unregisteredIssue.message.match(
+          /^gameSpecific not accepted for gameKey "([^"]{1,50})"$/,
+        );
+        if (match) {
+          console.warn(
+            `[complete-activity] Unregistered gameKey "${match[1]}" (no gameSpecific registry entry)`,
+          );
+        }
+      }
       return res.status(400).json({ error: parse.error.flatten() });
     }
 
     const { moduleSlug, lessonId, activityId, timeSpentS, result } = parse.data;
+
+    // Re-parse: superRefine validates but does not transform (E-8 / G-009).
+    const gs =
+      result?.gameSpecific !== undefined &&
+      result.gameKey &&
+      isRegisteredGameKey(result.gameKey)
+        ? GAME_SPECIFIC_SCHEMAS[result.gameKey].parse(result.gameSpecific)
+        : undefined;
 
     // 0. Fetch Existing Progress and Activity concurrently
     // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
@@ -129,13 +175,25 @@ router.post(
 
     // Handle idempotent case: activity already completed
     if (existing && existing.status === ProgressStatus.COMPLETED) {
+      // Replay: persist newer telemetry (last-write-wins, §5.2.3) WITHOUT re-awarding
+      // anything. XP, streak, avatar, and GamePersonalBest are deliberately untouched —
+      // this path must stay reward-free. Omitted gameSpecific never nulls a stored
+      // value (E-3), so only write when the client actually sent telemetry.
+      let replayed = existing;
+      if (gs !== undefined) {
+        replayed = await prisma.progress.update({
+          where: { id: existing.id },
+          data: { gameSpecific: gs },
+        });
+      }
+
       // If avatar was just backfilled, return the backfilled XP as the delta
       // This handles the edge case where user completed activities without an avatar
       // and later triggers completion again
       if (wasBackfilled) {
         return res.json({
           message: "Already completed (avatar backfilled)",
-          progress: existing,
+          progress: publicProgress(replayed),
           reward: {
             xpDelta: backfilledXp,
             levelDelta: avatarBefore.level - 1, // Delta from level 1
@@ -150,7 +208,7 @@ router.post(
       // Normal idempotent return with 0 rewards
       return res.json({
         message: "Already completed",
-        progress: existing,
+        progress: publicProgress(replayed),
         reward: {
           xpDelta: 0,
           levelDelta: 0,
@@ -170,6 +228,7 @@ router.post(
         data: {
           status: ProgressStatus.COMPLETED,
           timeSpentS: { increment: timeSpentS || 0 },
+          ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
     } else {
@@ -181,6 +240,7 @@ router.post(
           activityId,
           status: ProgressStatus.COMPLETED,
           timeSpentS: timeSpentS || 0,
+          ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
     }
@@ -212,12 +272,17 @@ router.post(
         }
       } catch {
         // If parsing fails, use default XP
-        console.warn("[complete-activity] Failed to parse activity.content for totalRounds");
+        console.warn(
+          "[complete-activity] Failed to parse activity.content for totalRounds",
+        );
       }
 
       if (totalRoundsFromContent > 0) {
         // Clamp roundsCompleted to server-known totalRounds (prevents cheating)
-        const rc = Math.min(Math.max(result.roundsCompleted, 0), totalRoundsFromContent);
+        const rc = Math.min(
+          Math.max(result.roundsCompleted, 0),
+          totalRoundsFromContent,
+        );
         xpAward = Math.round((rc / totalRoundsFromContent) * XP_PER_ACTIVITY);
         xpAward = Math.min(Math.max(xpAward, 0), XP_PER_ACTIVITY); // Final clamp
       }
@@ -251,7 +316,10 @@ router.post(
       const currentFocus = (avatarBefore as any).focus || 0;
 
       updateData.speed = Math.min(STAT_MAX, currentSpeed + statGains.speed);
-      updateData.control = Math.min(STAT_MAX, currentControl + statGains.control);
+      updateData.control = Math.min(
+        STAT_MAX,
+        currentControl + statGains.control,
+      );
       updateData.focus = Math.min(STAT_MAX, currentFocus + statGains.focus);
 
       // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
@@ -309,7 +377,10 @@ router.post(
               lastScore: newScore,
               bestScore: Math.max(existing.bestScore, newScore),
               bestStreak: Math.max(existing.bestStreak, newStreak),
-              bestRoundsCompleted: Math.max(existing.bestRoundsCompleted, newRounds),
+              bestRoundsCompleted: Math.max(
+                existing.bestRoundsCompleted,
+                newRounds,
+              ),
               playCount: { increment: 1 },
               lastPlayedAt: new Date(),
             },
@@ -330,12 +401,15 @@ router.post(
           });
         }
       } catch (e) {
-        console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+        console.warn(
+          "[complete-activity] Failed to upsert GamePersonalBest:",
+          e,
+        );
       }
     }
 
     res.json({
-      progress: finalProgress,
+      progress: publicProgress(finalProgress),
       reward: {
         xpDelta,
         levelDelta,
