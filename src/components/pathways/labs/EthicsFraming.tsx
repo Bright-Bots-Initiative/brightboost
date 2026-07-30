@@ -66,17 +66,17 @@ export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingPro
 
         <div className="px-5 sm:px-6 py-5 space-y-3 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
           <p>
-          {t("pathways.labs.ethics.body")}
+            {t("pathways.labs.ethics.body")}
           </p>
           <div>
             <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1.5">
-            {t("pathways.labs.ethics.eyebrow")}
+              {t("pathways.labs.ethics.eyebrow")}
             </p>
             <ul className="space-y-1.5 pl-1">
               <li className="flex gap-2">
                 <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
                 <span>
-                {t("pathways.labs.ethics.rules.one")}
+                  {t("pathways.labs.ethics.rules.one")}
                 </span>
               </li>
               <li className="flex gap-2">
@@ -99,7 +99,7 @@ export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingPro
               </li>
             </ul>
           </div>
-          
+
         </div>
 
         <div className="px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
