@@ -2,8 +2,8 @@
  * Compile-time exhaustiveness for DATA_DASH_ATTRS vs DataCard.
  *
  * This assertion MUST live under src/ and outside src/test.
- * Root tsconfig sets include: ["src"] but excludes src/test and **/*.test.ts,
- * so an assertion placed in the test file is never seen by `tsc --noEmit`
+ * Root tsconfig sets include: ["src"] but excludes src/test and *.test.ts
+ * globs, so an assertion placed in the test file is never seen by tsc --noEmit
  * and silently does nothing. See PR #719 review.
  *
  * When typecheck fails naming a field (e.g. Type '"weight"' does not satisfy
