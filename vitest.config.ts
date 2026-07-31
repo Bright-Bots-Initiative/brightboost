@@ -32,6 +32,7 @@ export default defineConfig({
         "src/components/activities/quiz/**",
         "backend/src/validation/gameSpecific.ts",
         "cypress/support/**/*.ts",
+        "src/test/dataDashPoolSync*.ts",
       ],
       exclude: [
         "**/__tests__/**",
