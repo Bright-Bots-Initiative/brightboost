@@ -48,9 +48,6 @@ describe("e2e:seed production DATABASE_URL refusal (U2-08 / G-002)", () => {
     const { status, output } = await runSeed({
       ...process.env,
       DATABASE_URL: "postgresql://u:p@db.example.supabase.co:5432/e2e",
-      // Creds irrelevant — gate runs before Prisma / seed.
-      E2E_TEACHER_EMAIL: "teacher@e2e.invalid",
-      E2E_TEACHER_PASSWORD: "not-a-real-secret",
     });
 
     expect(
