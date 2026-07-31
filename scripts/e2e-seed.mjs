@@ -76,12 +76,56 @@ function loadContract() {
   return JSON.parse(raw);
 }
 
+async function deleteCoursesByIds(prisma, courseIds) {
+  if (courseIds.length === 0) return;
+  // Children that RESTRICT (or lack onDelete) must go before Course.
+  await prisma.assignment.deleteMany({
+    where: { courseId: { in: courseIds } },
+  });
+  await prisma.pulseResponse.deleteMany({
+    where: { courseId: { in: courseIds } },
+  });
+  const bench = await prisma.benchmarkAssignment.findMany({
+    where: { courseId: { in: courseIds } },
+    select: { id: true },
+  });
+  if (bench.length > 0) {
+    const benchIds = bench.map((b) => b.id);
+    await prisma.benchmarkAttempt.deleteMany({
+      where: { assignmentId: { in: benchIds } },
+    });
+    await prisma.benchmarkAssignment.deleteMany({
+      where: { id: { in: benchIds } },
+    });
+  }
+  await prisma.classModuleAssignment.deleteMany({
+    where: { courseId: { in: courseIds } },
+  });
+  await prisma.creation.deleteMany({
+    where: { courseId: { in: courseIds } },
+  });
+  await prisma.enrollment.deleteMany({
+    where: { courseId: { in: courseIds } },
+  });
+  await prisma.course.deleteMany({ where: { id: { in: courseIds } } });
+}
+
 async function resetE2E(prisma) {
   const teacherEmail = process.env.E2E_TEACHER_EMAIL;
   if (!teacherEmail) {
     console.error("[e2e-seed] E2E_TEACHER_EMAIL required for reset.");
     process.exit(2);
   }
+
+  // Clear every E2E001 course (orphans from other teachers desync Cypress IDs).
+  const byJoin = await prisma.course.findMany({
+    where: { joinCode: "E2E001" },
+    select: { id: true },
+  });
+  await deleteCoursesByIds(
+    prisma,
+    byJoin.map((c) => c.id),
+  );
 
   const teacher = await prisma.user.findUnique({
     where: { email: teacherEmail },
@@ -91,13 +135,10 @@ async function resetE2E(prisma) {
       where: { teacherId: teacher.id },
       select: { id: true },
     });
-    const courseIds = courses.map((c) => c.id);
-    if (courseIds.length > 0) {
-      await prisma.enrollment.deleteMany({
-        where: { courseId: { in: courseIds } },
-      });
-      await prisma.course.deleteMany({ where: { id: { in: courseIds } } });
-    }
+    await deleteCoursesByIds(
+      prisma,
+      courses.map((c) => c.id),
+    );
   }
 
   // Module tree before teacher units (Lesson.unitId RESTRICT).
