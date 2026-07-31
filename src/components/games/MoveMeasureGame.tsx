@@ -356,7 +356,7 @@ if (phase === "intro") {
       </h2>
 
       <p className="text-lg text-slate-600 max-w-md mx-auto">
-        {t("games.moveMeasure.introText", {
+        {t("games.moveMeasure.introDesc", {
           defaultValue:
             "Complete 3 events, compare your scores, then improve one!",
         })}
@@ -464,7 +464,7 @@ if (phase === "intro") {
     const sc = dashDone ? zoneScore(dashPos, GZ_DASH.s, GZ_DASH.e) : null;
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
-        {evHeader("🏃", "games.moveMeasure.dashTitle", "Dash", "games.moveMeasure.dashInstr", "Tap when the marker is in the green zone!", t("games.moveMeasure.event1", { defaultValue: "Event 1 of 3" }))}
+        {evHeader("🏃", "games.moveMeasure.dashTitle", "Dash", "games.moveMeasure.dashHint", "Tap when the marker is in the green zone!", t("games.moveMeasure.event1", { defaultValue: "Event 1 of 3" }))}
         <div className="max-w-sm mx-auto"><ZoneBar pos={dashPos} gs={GZ_DASH.s} ge={GZ_DASH.e} vertical={false} stopped={dashDone} /></div>
         {!dashDone && <BigBtn gradient="from-amber-400 to-amber-500" onClick={tapDash}>{t("games.moveMeasure.tap", { defaultValue: "TAP!" })}</BigBtn>}
         {sc !== null && (
@@ -489,7 +489,7 @@ if (phase === "intro") {
     const sc = jDone ? zoneScore(jLevel, GZ_JUMP.s, GZ_JUMP.e) : null;
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
-        {evHeader("🦘", "games.moveMeasure.jumpTitle", "Jump", "games.moveMeasure.jumpInstr", "Hold the button, release in the green zone!", t("games.moveMeasure.event2", { defaultValue: "Event 2 of 3" }))}
+        {evHeader("🦘", "games.moveMeasure.jumpTitle", "Jump", "games.moveMeasure.jumpHint", "Hold the button, release in the green zone!", t("games.moveMeasure.event2", { defaultValue: "Event 2 of 3" }))}
         <div className="max-w-sm mx-auto"><ZoneBar pos={jLevel} gs={GZ_JUMP.s} ge={GZ_JUMP.e} vertical={true} stopped={jDone} /></div>
         {!jDone && !jHold && <BigBtn gradient="from-sky-400 to-sky-500" onPointerDown={() => setJHold(true)}>{t("games.moveMeasure.holdMe", { defaultValue: "HOLD ME!" })}</BigBtn>}
         {!jDone && jHold && <BigBtn gradient="from-emerald-400 to-emerald-500" onPointerUp={relJump} onPointerLeave={relJump}><span className="streak-fire">{t("games.moveMeasure.release", { defaultValue: "RELEASE!" })}</span></BigBtn>}
@@ -515,7 +515,7 @@ if (phase === "intro") {
     const sc = tDone ? tossScore(tVal) : null;
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
-        {evHeader("🥎", "games.moveMeasure.tossTitle", "Toss", "games.moveMeasure.tossInstr", "Slide to pick your angle, then throw!", t("games.moveMeasure.event3", { defaultValue: "Event 3 of 3" }))}
+        {evHeader("🥎", "games.moveMeasure.tossTitle", "Toss", "games.moveMeasure.tossHint", "Slide to pick your angle, then throw!", t("games.moveMeasure.event3", { defaultValue: "Event 3 of 3" }))}
         <div className="max-w-sm mx-auto space-y-4">
           <input type="range" min={0} max={100} value={tVal} onChange={e => !tDone && setTVal(Number(e.target.value))} disabled={tDone} className="w-full h-3 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
           <div className="flex justify-between text-xs text-slate-400 font-bold">
@@ -959,7 +959,7 @@ if (phase === "compare") {
         className="text-lg text-slate-600 bounce-in"
         style={{ animationDelay: "400ms" }}
       >
-        {t("games.moveMeasure.celebText", {
+        {t("games.moveMeasure.celebDesc", {
           defaultValue: "Great scientists always measure and try again.",
         })}
       </p>
