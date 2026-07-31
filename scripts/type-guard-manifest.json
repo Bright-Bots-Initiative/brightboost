@@ -1,0 +1,4 @@
+{
+  "description": "Compile-time guard files that must appear in tsc --listFiles (W-12 / G-008)",
+  "guardFiles": ["src/vite-env.d.ts"]
+}

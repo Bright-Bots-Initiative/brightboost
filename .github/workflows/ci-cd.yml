@@ -67,6 +67,14 @@ jobs:
       - name: Check Prisma schema drift
         run: bash scripts/check-prisma-drift.sh
 
+      # G-205 / W-11: detect silent removal of required CI step invocations.
+      - name: Verify CI step presence
+        run: bash scripts/verify-ci-step-presence.sh
+
+      # G-008 / W-12: type-level guards must be inside the tsc program.
+      - name: Verify type-program membership
+        run: node scripts/verify-type-program-membership.mjs
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 
