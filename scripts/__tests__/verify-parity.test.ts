@@ -3,23 +3,53 @@ import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(__dirname, "../..");
 
-describe("verify-parity.mjs (A5)", () => {
-  it("exports STEPS in CI order matching ci-cd.yml build-and-test then db-check", async () => {
+/**
+ * Exact CI order from overview.md §15.3.2 / verify-parity.mjs STEPS.
+ * U1-01 RED used a deliberately wrong list (CI-02 before CI-01) so the
+ * failure named the order property; U1-02 locks the real sequence.
+ */
+/**
+ * Exact CI order from overview.md §15.3.2 / verify-parity.mjs STEPS.
+ * U1-01 RED used a deliberately wrong list (CI-02 before CI-01); failure
+ * named the order property. U1-02 locks the real sequence below.
+ */
+const EXPECTED_STEP_IDS = [
+  "CI-01",
+  "CI-02",
+  "CI-03",
+  "CI-04",
+  "CI-05",
+  "CI-06",
+  "CI-24",
+  "CI-25",
+  "CI-07",
+  "CI-08",
+  "CI-09",
+  "CI-23",
+  "CI-10",
+  "CI-11",
+  "CI-12",
+  "CI-13",
+  "CI-14",
+  "CI-15",
+  "CI-16",
+  "CI-17",
+  "CI-21",
+  "CI-22",
+  "CI-26",
+];
+
+describe("verify-parity.mjs (A5 / U1)", () => {
+  it("exports STEPS in exact CI order (not merely presence)", async () => {
     const mod = await import(
       pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
     );
     expect(mod.STEPS, "STEPS export must exist").toBeDefined();
     const ids = mod.STEPS.map((s: { id: string }) => s.id);
-    expect(ids.indexOf("CI-01")).toBeLessThan(ids.indexOf("CI-02"));
-    expect(ids.indexOf("CI-06")).toBeLessThan(ids.indexOf("CI-24"));
-    expect(ids.indexOf("CI-24")).toBeLessThan(ids.indexOf("CI-25"));
-    expect(ids.indexOf("CI-25")).toBeLessThan(ids.indexOf("CI-07"));
-    expect(ids.indexOf("CI-07")).toBeLessThan(ids.indexOf("CI-09"));
-    expect(ids.indexOf("CI-09")).toBeLessThan(ids.indexOf("CI-23"));
-    expect(ids.indexOf("CI-23")).toBeLessThan(ids.indexOf("CI-13"));
-    expect(ids.indexOf("CI-13")).toBeLessThan(ids.indexOf("CI-14"));
-    expect(ids.indexOf("CI-14")).toBeLessThan(ids.indexOf("CI-16"));
-    expect(ids.indexOf("CI-26")).toBeGreaterThan(ids.indexOf("CI-16"));
+    expect(
+      ids,
+      "STEPS order must match CI build-and-test then db-check then extras",
+    ).toEqual(EXPECTED_STEP_IDS);
   });
 
   it("parseArgs recognizes --allow-skips and --inject-fail", async () => {
