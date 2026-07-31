@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { assertLoginSuccess, requireE2ECred } from "./loginAsTeacher";
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -12,21 +14,11 @@ declare global {
   }
 }
 
-function requireE2ECred(
-  name: "E2E_TEACHER_EMAIL" | "E2E_TEACHER_PASSWORD",
-): string {
-  const raw = Cypress.env(name);
-  if (raw === undefined || raw === null || String(raw).trim() === "") {
-    throw new Error(
-      `[brightboost-e2e] Required env "${name}" is not set for loginAsTeacher.`,
-    );
-  }
-  return String(raw).trim();
-}
-
 Cypress.Commands.add("loginAsTeacher", () => {
-  const email = requireE2ECred("E2E_TEACHER_EMAIL");
-  const password = requireE2ECred("E2E_TEACHER_PASSWORD");
+  const email = requireE2ECred("E2E_TEACHER_EMAIL", (n) => Cypress.env(n));
+  const password = requireE2ECred("E2E_TEACHER_PASSWORD", (n) =>
+    Cypress.env(n),
+  );
 
   // Relative to Cypress baseUrl (FE) so /api is proxied to the backend — no port literals.
   cy.request({
@@ -35,18 +27,7 @@ Cypress.Commands.add("loginAsTeacher", () => {
     body: { email, password },
     failOnStatusCode: false,
   }).then((resp) => {
-    if (resp.status < 200 || resp.status >= 300) {
-      throw new Error(
-        `[brightboost-e2e] loginAsTeacher failed with status ${resp.status}`,
-      );
-    }
-    const token = resp.body?.token as string | undefined;
-    const user = resp.body?.user as Record<string, unknown> | undefined;
-    if (!token || !user) {
-      throw new Error(
-        `[brightboost-e2e] loginAsTeacher: missing token/user in status ${resp.status}`,
-      );
-    }
+    const { token, user } = assertLoginSuccess(resp.status, resp.body);
     // Seed storage before the app boots (cy.window needs a document).
     cy.visit("/", {
       onBeforeLoad(win) {

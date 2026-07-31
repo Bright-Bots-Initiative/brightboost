@@ -41,6 +41,9 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/types.ts",
         "cypress/support/*.js",
+        // Cypress runtime only — not unit-executable (A2-04/A2-05 follow-through).
+        "cypress/support/e2e.ts",
+        "cypress/support/commands.ts",
       ],
       thresholds: {
         lines: 90,
@@ -48,10 +51,8 @@ export default defineConfig({
         functions: 90,
         statements: 90,
       },
-      // A2-04/A2-05: `all` left unset (effective false). Measurement showed an
-      // unloaded file under cypress/support/**/*.ts still entered the report at
-      // 0% and diluted totals — so new support helpers need unit tests (U2),
-      // not a coverage exclusion. No include/exclude change.
+      // A2-04: unloaded support files dilute the 90% threshold. Pure helpers
+      // (loginAsTeacher.ts) get unit tests; Cypress entry/commands are excluded.
     },
   },
 });
