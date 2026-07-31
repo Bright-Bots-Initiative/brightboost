@@ -1,6 +1,6 @@
 /* @vitest-environment node */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -24,13 +24,33 @@ function resolveBash(): string {
   return process.env.BB_BASH || "bash";
 }
 
+/** Absolute bash path so PATH can be stripped of node without losing the shell. */
+function resolveAbsoluteBash(): string {
+  const candidate = resolveBash();
+  if (path.isAbsolute(candidate)) {
+    return candidate;
+  }
+  const probed = spawnSync(candidate, ["-c", "command -v bash"], {
+    encoding: "utf8",
+    env: process.env,
+  });
+  const found = (probed.stdout || "").trim().split(/\r?\n/)[0];
+  if (probed.status === 0 && found && path.isAbsolute(found)) {
+    return found;
+  }
+  throw new Error(
+    `Could not resolve absolute bash path from ${JSON.stringify(candidate)}`,
+  );
+}
+
 function runBash(
   args: string[],
   env: NodeJS.ProcessEnv,
   timeoutMs = 30_000,
+  bashPath = resolveBash(),
 ): Promise<{ status: number | null; output: string }> {
   return new Promise((resolve) => {
-    const child = spawn(resolveBash(), args, {
+    const child = spawn(bashPath, args, {
       cwd: repoRoot,
       env,
       stdio: ["ignore", "pipe", "pipe"],
@@ -138,15 +158,17 @@ describe("reserved exit codes (§7 / U1-06)", () => {
   });
 
   it("step-presence: PATH without node exits 2 (could not run)", async () => {
-    // U1-06 letter: falsify by removing a required binary from PATH.
-    // Git Bash on Windows still needs a usable PATH for bash builtins; strip
-    // only entries that typically hold node, keep System32 / Git.
+    // U1-06: remove node from PATH. On Linux node often shares /usr/bin with
+    // bash, so spawn via an absolute bash path and use a minimal PATH that
+    // cannot resolve node (empty bin + win32 System32 when present).
     const emptyBin = mkdtempSync(path.join(tmpdir(), "no-node-bin-"));
     tempDirs.push(emptyBin);
-    const gitDir = path.dirname(resolveBash());
-    const slimPath = [emptyBin, gitDir, process.env.SystemRoot + "\\System32"]
-      .filter(Boolean)
-      .join(path.delimiter);
+    const bashAbs = resolveAbsoluteBash();
+    const slimParts = [emptyBin];
+    if (process.env.SystemRoot) {
+      slimParts.push(path.join(process.env.SystemRoot, "System32"));
+    }
+    const slimPath = slimParts.join(path.delimiter);
 
     const { status, output } = await runBash(
       ["scripts/verify-ci-step-presence.sh"],
@@ -155,6 +177,8 @@ describe("reserved exit codes (§7 / U1-06)", () => {
         PATH: slimPath,
         Path: slimPath,
       },
+      30_000,
+      bashAbs,
     );
     expect(
       status,
