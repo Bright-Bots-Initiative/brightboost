@@ -8,7 +8,6 @@
  * Ports from env only (G-007). No && chaining (G-013).
  */
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
@@ -44,7 +43,8 @@ function resolveCmd(cmd) {
  */
 
 /**
- * CI order: build-and-test (with CI-23 after unit tests), then db-check, then extras.
+ * CI order mirrors ci-cd.yml: build-and-test (drift → CI-24/25 → installs →
+ * tests → CI-23 → smoke → build), then db-check, then extras (bundle / format).
  * @type {Step[]}
  */
 export const STEPS = [
@@ -84,6 +84,18 @@ export const STEPS = [
     id: "CI-06",
     name: "Prisma schema drift",
     argv: ["bash", "scripts/check-prisma-drift.sh"],
+    required: true,
+  },
+  {
+    id: "CI-24",
+    name: "Required-step presence",
+    argv: ["bash", "scripts/verify-ci-step-presence.sh"],
+    required: true,
+  },
+  {
+    id: "CI-25",
+    name: "Type-program membership",
+    argv: ["node", "scripts/verify-type-program-membership.mjs"],
     required: true,
   },
   {
@@ -203,28 +215,6 @@ export const STEPS = [
     argv: [],
     kind: "not-local",
     required: false,
-  },
-  {
-    id: "CI-24",
-    name: "Required-step presence",
-    argv: ["bash", "scripts/verify-ci-step-presence.sh"],
-    required: true,
-    skipIf: () =>
-      existsSync(path.join(REPO_ROOT, "scripts/verify-ci-step-presence.sh"))
-        ? null
-        : "scripts/verify-ci-step-presence.sh not present yet (A7-04)",
-  },
-  {
-    id: "CI-25",
-    name: "Type-program membership",
-    argv: ["node", "scripts/verify-type-program-membership.mjs"],
-    required: true,
-    skipIf: () =>
-      existsSync(
-        path.join(REPO_ROOT, "scripts/verify-type-program-membership.mjs"),
-      )
-        ? null
-        : "scripts/verify-type-program-membership.mjs not present yet (A7-06)",
   },
   {
     id: "CI-26",
