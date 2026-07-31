@@ -79,6 +79,12 @@ jobs:
       - name: Run tests
         run: npm test -- --watch=false
 
+      # G-201 / W-10: two-phase sabotage proof that the CI shell gate has teeth
+      # (healthy-pass then sabotage-fail). Do not remove without replacing the
+      # causal proof — a guard file that is never invoked is not a guard.
+      - name: Verify CI shell gate
+        run: npm run verify:ci-gate
+
       - name: Start development server
         run: npm run dev &
 
