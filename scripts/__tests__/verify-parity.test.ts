@@ -5,11 +5,6 @@ const repoRoot = path.resolve(__dirname, "../..");
 
 /**
  * Exact CI order from overview.md §15.3.2 / verify-parity.mjs STEPS.
- * U1-01 RED used a deliberately wrong list (CI-02 before CI-01) so the
- * failure named the order property; U1-02 locks the real sequence.
- */
-/**
- * Exact CI order from overview.md §15.3.2 / verify-parity.mjs STEPS.
  * U1-01 RED used a deliberately wrong list (CI-02 before CI-01); failure
  * named the order property. U1-02 locks the real sequence below.
  */
