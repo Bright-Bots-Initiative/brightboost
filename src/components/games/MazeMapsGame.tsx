@@ -16,6 +16,7 @@ import GameShell, { type GameResult, type MissionBriefing, ProgressHUD } from ".
 import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import { t } from "i18next";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -56,12 +57,12 @@ const LEVELS = 4; // 3, but +1 offset
 interface SweeperStyle {
   color: string;
   icon: string;
-  label: string;
+  labelKey: string;
 }
 
 const SWEEPER_STYLES: Record<string, SweeperStyle> = {
-  loop: { icon: "🔴", color: "text-red-500", label: "Loop Sweeper" },
-  linear: { icon: "🟢", color: "text-blue-500", label: "Line Sweeper" },
+  loop: { icon: "🔴", color: "text-red-500", labelKey: "games.mazeMaps.loopSweeper", },
+  linear: { icon: "🟢", color: "text-blue-500", labelKey: "games.mazeMaps.lineSweeper", },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -134,7 +135,7 @@ const BRIEFING: MissionBriefing = {
   tips: pickLocale({
     en: ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"],
   }, ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"]),
-  chapterLabel: "AI Lab",
+  chapterLabel: pickLocale({en: "AI Lab"}, "AI Lab"),
   themeColor: "cyan",
   controlInstructions: {
     keyboard: [pickLocale({
@@ -229,7 +230,7 @@ function MazeBoard({
         key={id}
         className="absolute flex items-center justify-center z-10 transition-all duration-200"
         style={{left: sc * CELL, top: sr * CELL, width: CELL, height: CELL,}}
-        title={style.label}
+        title={t(style.labelKey, {defaultValue: "Unknown Sweeper",})}
         >
         <span className={`text-2xl ${style.color}`}>
             {style.icon}

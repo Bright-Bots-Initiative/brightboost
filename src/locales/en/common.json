@@ -1568,6 +1568,10 @@
     "gotchaGears": {
       "title": "Gotcha Gears"
     },
+    "mazeMaps": {
+      "loopSweeper": "Loop Sweeper",
+      "lineSweeper": "Line Sweeper"
+    },
     "moveMeasure": {
       "title": "Move, Measure & Improve",
       "introDesc": "Test your body's superpowers! Dash, jump, and toss \u2014 then use data to improve.",
