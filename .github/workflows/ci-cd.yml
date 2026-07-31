@@ -9,7 +9,9 @@ on:
 
 env:
   NODE_VERSION: "20"
-  CYPRESS_BASE_URL: http://localhost:5173
+  # CI Vite still binds :5173 (vite.config.ts / OQ-12). Resolve wait-on + Cypress
+  # via CYPRESS_SWA_URL — never inline a port in the wait-on step (A4-08 / CI-11).
+  CYPRESS_SWA_URL: http://localhost:5173
 
 jobs:
   # Independent build verification. Runs in parallel with build-and-test so an
@@ -97,7 +99,8 @@ jobs:
         run: npm run dev &
 
       - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5173 --timeout 60000
+        # CI-11: env-resolved URL (G-007). Do not hardcode a port in this command.
+        run: npx wait-on "$CYPRESS_SWA_URL" --timeout 60000
 
       - name: Run Cypress shell smoke (no backend; see issue #677)
         run: npm run test:e2e:ci

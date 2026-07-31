@@ -27,6 +27,8 @@
     "test:e2e": "cypress run",
     "test:e2e:ci": "cypress run --spec \"cypress/e2e/ci-shell.cy.ts\"",
     "test:e2e:staging": "cypress run --spec \"cypress/e2e/staging/*.cy.ts\"",
+    "e2e:seed": "node scripts/e2e-seed.mjs",
+    "e2e:reset": "node scripts/e2e-seed.mjs --reset",
     "test:watch": "vitest",
     "test:db": "node scripts/dbHealth.js",
     "verify:ci-gate": "bash scripts/verify-ci-shell-gate.sh",
