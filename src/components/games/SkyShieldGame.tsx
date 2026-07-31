@@ -321,8 +321,8 @@ function SkyShieldPlayfield({ onFinish }: { onFinish: (r: GameResult) => void })
     return (
       <div className="slide-up-fade text-center space-y-6 py-8">
         <div className="text-7xl bounce-in">🛡️✨</div>
-        <h2 className="text-2xl font-extrabold text-violet-900">{T("celebrationTitle", "Amazing Work!")}</h2>
-        <p className="text-slate-600 max-w-md mx-auto">{T("celebrationMsg", "You watched, noticed the pattern, and chose the right shield!")}</p>
+        <h2 className="text-2xl font-extrabold text-violet-900">{T("celebTitle", "Amazing Work!")}</h2>
+        <p className="text-slate-600 max-w-md mx-auto">{T("celebrationDesc", "You watched, noticed the pattern, and chose the right shield!")}</p>
         <BigBtn onClick={() => onFinish(buildSkyShieldCompletionPayload({
           score,
           exitAns,
