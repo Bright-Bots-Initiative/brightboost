@@ -47,9 +47,12 @@ Cypress.Commands.add("loginAsTeacher", () => {
         `[brightboost-e2e] loginAsTeacher: missing token/user in status ${resp.status}`,
       );
     }
-    cy.window().then((win) => {
-      win.localStorage.setItem("bb_access_token", token);
-      win.localStorage.setItem("user", JSON.stringify(user));
+    // Seed storage before the app boots (cy.window needs a document).
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        win.localStorage.setItem("bb_access_token", token);
+        win.localStorage.setItem("user", JSON.stringify(user));
+      },
     });
   });
 });
