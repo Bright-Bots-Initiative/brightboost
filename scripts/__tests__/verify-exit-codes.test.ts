@@ -1,6 +1,6 @@
 /* @vitest-environment node */
 
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -24,33 +24,92 @@ function resolveBash(): string {
   return process.env.BB_BASH || "bash";
 }
 
+function runBash(
+  args: string[],
+  env: NodeJS.ProcessEnv,
+  timeoutMs = 30_000,
+): Promise<{ status: number | null; output: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(resolveBash(), args, {
+      cwd: repoRoot,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      resolve({ status: 124, output: output + "\nspawn timeout\n" });
+    }, timeoutMs);
+    child.stdout?.on("data", (c: Buffer | string) => {
+      output += String(c);
+    });
+    child.stderr?.on("data", (c: Buffer | string) => {
+      output += String(c);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ status: code, output });
+    });
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      resolve({ status: 2, output: output + `\n${err.message}` });
+    });
+  });
+}
+
+function runNode(
+  scriptRel: string,
+  env: NodeJS.ProcessEnv,
+  timeoutMs = 30_000,
+): Promise<{ status: number | null; output: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [scriptRel], {
+      cwd: repoRoot,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      resolve({ status: 124, output: output + "\nspawn timeout\n" });
+    }, timeoutMs);
+    child.stdout?.on("data", (c: Buffer | string) => {
+      output += String(c);
+    });
+    child.stderr?.on("data", (c: Buffer | string) => {
+      output += String(c);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ status: code, output });
+    });
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      resolve({ status: 2, output: output + `\n${err.message}` });
+    });
+  });
+}
+
 describe("reserved exit codes (§7 / U1-06)", () => {
-  it("step-presence: missing manifest exits 2 (could not run), not 1", () => {
+  it("step-presence: missing manifest exits 2 (could not run), not 1", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "ci-step-exit-"));
     tempDirs.push(dir);
     const missingManifest = path.join(dir, "does-not-exist.json");
-    const result = spawnSync(
-      resolveBash(),
+    const { status, output } = await runBash(
       ["scripts/verify-ci-step-presence.sh"],
       {
-        cwd: repoRoot,
-        encoding: "utf8",
-        timeout: 30_000,
-        env: {
-          ...process.env,
-          CI_STEP_PRESENCE_MANIFEST: missingManifest,
-        },
+        ...process.env,
+        CI_STEP_PRESENCE_MANIFEST: missingManifest,
       },
     );
-    const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
     expect(
-      result.status,
-      `missing manifest must be exit 2 (could not run), got ${result.status}:\n${output}`,
+      status,
+      `missing manifest must be exit 2 (could not run), got ${status}:\n${output}`,
     ).toBe(2);
     expect(output).toMatch(/ERROR: missing manifest/);
   });
 
-  it("step-presence: property false (missing step) exits 1, distinct from 2", () => {
+  it("step-presence: property false (missing step) exits 1, distinct from 2", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "ci-step-prop-"));
     tempDirs.push(dir);
     const workflowPath = path.join(dir, "empty.yml");
@@ -63,49 +122,61 @@ describe("reserved exit codes (§7 / U1-06)", () => {
       }),
       "utf8",
     );
-    const result = spawnSync(
-      resolveBash(),
+    const { status, output } = await runBash(
       ["scripts/verify-ci-step-presence.sh"],
       {
-        cwd: repoRoot,
-        encoding: "utf8",
-        timeout: 30_000,
-        env: {
-          ...process.env,
-          CI_STEP_PRESENCE_WORKFLOW: workflowPath,
-          CI_STEP_PRESENCE_MANIFEST: manifestPath,
-        },
+        ...process.env,
+        CI_STEP_PRESENCE_WORKFLOW: workflowPath,
+        CI_STEP_PRESENCE_MANIFEST: manifestPath,
       },
     );
-    const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
     expect(
-      result.status,
-      `absent required step must be exit 1 (property false), got ${result.status}:\n${output}`,
+      status,
+      `absent required step must be exit 1 (property false), got ${status}:\n${output}`,
     ).toBe(1);
-    expect(result.status).not.toBe(2);
+    expect(status).not.toBe(2);
   });
 
-  it("type-program: missing manifest exits 2 (could not run)", () => {
+  it("step-presence: PATH without node exits 2 (could not run)", async () => {
+    // U1-06 letter: falsify by removing a required binary from PATH.
+    // Git Bash on Windows still needs a usable PATH for bash builtins; strip
+    // only entries that typically hold node, keep System32 / Git.
+    const emptyBin = mkdtempSync(path.join(tmpdir(), "no-node-bin-"));
+    tempDirs.push(emptyBin);
+    const gitDir = path.dirname(resolveBash());
+    const slimPath = [emptyBin, gitDir, process.env.SystemRoot + "\\System32"]
+      .filter(Boolean)
+      .join(path.delimiter);
+
+    const { status, output } = await runBash(
+      ["scripts/verify-ci-step-presence.sh"],
+      {
+        ...process.env,
+        PATH: slimPath,
+        Path: slimPath,
+      },
+    );
+    expect(
+      status,
+      `PATH without node must be exit 2 (could not run), got ${status}:\n${output}`,
+    ).toBe(2);
+    expect(output).toMatch(/ERROR: node is required|ERROR: missing/);
+  });
+
+  it("type-program: missing manifest exits 2 (could not run)", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "type-guard-exit-"));
     tempDirs.push(dir);
     const missing = path.join(dir, "no-such-manifest.json");
-    const result = spawnSync(
-      process.execPath,
-      ["scripts/verify-type-program-membership.mjs"],
+    const { status, output } = await runNode(
+      "scripts/verify-type-program-membership.mjs",
       {
-        cwd: repoRoot,
-        encoding: "utf8",
-        timeout: 30_000,
-        env: {
-          ...process.env,
-          TYPE_GUARD_MANIFEST: missing,
-        },
+        ...process.env,
+        TYPE_GUARD_MANIFEST: missing,
       },
     );
-    const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
     expect(
-      result.status,
-      `missing type-guard manifest must be exit 2, got ${result.status}:\n${output}`,
+      status,
+      `missing type-guard manifest must be exit 2, got ${status}:\n${output}`,
     ).toBe(2);
     expect(output).toMatch(/ERROR: missing manifest/);
   });

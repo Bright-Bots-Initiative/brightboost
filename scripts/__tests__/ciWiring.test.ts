@@ -1,6 +1,6 @@
 /* @vitest-environment node */
 
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { config as loadEnv } from "dotenv";
@@ -33,23 +33,43 @@ function resolveBash(): string {
 }
 
 /**
- * Spawn a bash script with BB_BASH on Windows (G-011). Returns status + combined output.
+ * Async bash spawn — spawnSync blocks the Vitest worker thread and trips
+ * birpc "Timeout calling onTaskUpdate" on long gates (~60s+).
  */
-function runBashScript(
+function runBashScriptAsync(
   scriptRel: string,
   opts: { timeoutMs?: number; env?: NodeJS.ProcessEnv } = {},
-): { status: number | null; output: string } {
+): Promise<{ status: number | null; output: string }> {
   const bash = resolveBash();
-  const result = spawnSync(bash, [scriptRel], {
-    cwd: repoRoot,
-    encoding: "utf8",
-    timeout: opts.timeoutMs ?? 60_000,
-    env: opts.env ?? process.env,
+  const timeoutMs = opts.timeoutMs ?? 60_000;
+  return new Promise((resolve) => {
+    const child = spawn(bash, [scriptRel], {
+      cwd: repoRoot,
+      env: opts.env ?? process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      output += `\nspawn timeout after ${timeoutMs}ms\n`;
+      resolve({ status: 124, output });
+    }, timeoutMs);
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      output += String(chunk);
+    });
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      output += String(chunk);
+    });
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      output += `\nspawn error: ${err.message}\n`;
+      resolve({ status: 2, output });
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ status: code, output });
+    });
   });
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}${
-    result.error ? `\nspawn error: ${result.error.message}` : ""
-  }`;
-  return { status: result.status, output };
 }
 
 describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
@@ -90,9 +110,8 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   });
 
   // U1-03 / G-202: execute the step-presence guard instead of reading ci-cd.yml text.
-  // Manifest requires "npm run test:e2e:ci" among other steps (W-5/W-6 property).
-  it("W-5/W-6: verify-ci-step-presence.sh exits 0 (required steps including test:e2e:ci)", () => {
-    const { status, output } = runBashScript(
+  it("W-5: verify-ci-step-presence.sh exits 0 (required steps including test:e2e:ci)", async () => {
+    const { status, output } = await runBashScriptAsync(
       "scripts/verify-ci-step-presence.sh",
       { timeoutMs: 60_000 },
     );
@@ -102,6 +121,12 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
     ).toBe(0);
     expect(output).toMatch(/PASS: CI step-presence guard has teeth/);
   }, 60_000);
+
+  // Restored from pre-U1 W-6: step-presence does not cover this negative.
+  it('W-6: ci-cd.yml does not contain --spec "cypress/e2e/smoke.cy.ts"', () => {
+    const workflow = readText(".github/workflows/ci-cd.yml");
+    expect(workflow).not.toContain('--spec "cypress/e2e/smoke.cy.ts"');
+  });
 
   it("W-7: cypress/e2e/staging/smoke.cy.ts exists and imports requireEnv", () => {
     const stagingSmoke = path.join(repoRoot, "cypress/e2e/staging/smoke.cy.ts");
@@ -113,13 +138,11 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   });
 
   // U1-03 / G-202: execute the shell gate (healthy + sabotage inside the script).
-  // Do not read verify-ci-shell-gate.sh source — existence ≠ execution (G-201/G-202).
-  // Gate boots Vite on :5173 (script contract). Unset remapped CYPRESS_SWA_URL so
-  // Cypress baseUrl falls back to http://localhost:5173 like CI (G-007 seam).
-  it("W-8/W-9: verify-ci-shell-gate.sh exits 0 (two-phase healthy then sabotage)", () => {
+  // Unset remapped CYPRESS_SWA_URL so Cypress matches Vite on :5173 (gate contract).
+  it("W-8/W-9: verify-ci-shell-gate.sh exits 0 (two-phase healthy then sabotage)", async () => {
     const gateEnv: NodeJS.ProcessEnv = { ...process.env };
     delete gateEnv.CYPRESS_SWA_URL;
-    const { status, output } = runBashScript(
+    const { status, output } = await runBashScriptAsync(
       "scripts/verify-ci-shell-gate.sh",
       { timeoutMs: 180_000, env: gateEnv },
     );
@@ -127,12 +150,12 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
       status,
       `CI shell gate must exit 0 (got ${status}):\n${output}`,
     ).toBe(0);
-    expect(output).toMatch(/Healthy baseline GREEN|PASS/i);
+    expect(output).toMatch(/Healthy baseline GREEN/);
+    expect(output).toMatch(/PASS/i);
   }, 180_000);
 
   // Live POSIX proof: nested bash→mid node→:5173 listener must die with the
-  // tree. Skips on Windows/taskkill (that path uses //T). Static source reads
-  // alone would pass against one-level `pkill -P` — W-10 is the teeth (G-202).
+  // tree. Skips on Windows/taskkill (that path uses //T).
   it.skipIf(process.platform === "win32")(
     "W-10: kill_pid_tree reaps nested descendants holding :5173",
     ({ skip }) => {
