@@ -98,19 +98,9 @@ async function resetE2E(prisma) {
       });
       await prisma.course.deleteMany({ where: { id: { in: courseIds } } });
     }
-    await prisma.unit.deleteMany({ where: { teacherId: teacher.id } });
-    await prisma.user.delete({ where: { id: teacher.id } });
   }
 
-  const students = await prisma.user.findMany({
-    where: { name: { in: STUDENT_NAMES }, role: "student" },
-  });
-  for (const s of students) {
-    await prisma.enrollment.deleteMany({ where: { studentId: s.id } });
-    await prisma.progress.deleteMany({ where: { studentId: s.id } });
-    await prisma.user.delete({ where: { id: s.id } });
-  }
-
+  // Module tree before teacher units (Lesson.unitId RESTRICT).
   const mod = await prisma.module.findUnique({ where: { slug: MODULE_SLUG } });
   if (mod) {
     const units = await prisma.unit.findMany({ where: { moduleId: mod.id } });
@@ -124,6 +114,20 @@ async function resetE2E(prisma) {
     }
     await prisma.unit.deleteMany({ where: { moduleId: mod.id } });
     await prisma.module.delete({ where: { id: mod.id } });
+  }
+
+  if (teacher) {
+    await prisma.unit.deleteMany({ where: { teacherId: teacher.id } });
+    await prisma.user.delete({ where: { id: teacher.id } });
+  }
+
+  const students = await prisma.user.findMany({
+    where: { name: { in: STUDENT_NAMES }, role: "student" },
+  });
+  for (const s of students) {
+    await prisma.enrollment.deleteMany({ where: { studentId: s.id } });
+    await prisma.progress.deleteMany({ where: { studentId: s.id } });
+    await prisma.user.delete({ where: { id: s.id } });
   }
 }
 
