@@ -68,3 +68,71 @@ Error: @prisma/client did not initialize yet. Please run "prisma generate" and t
 ```
 
 EXIT_CODE=1
+
+---
+
+## C2 — Independent W-05 verification (after A3-04)
+
+Captured independently of A3-02 on tip with the path-conditional skip already present. Method: `BB_VITEST_PATH_HAS_SPACE` override (same seam as A3-06). `npx prisma generate` run first so unit red from OQ-03 does not obscure Storybook results.
+
+| Field        | Value                                                                    |
+| ------------ | ------------------------------------------------------------------------ |
+| Date         | 2026-07-31                                                               |
+| Tip SHA      | `7230890d` (fix commit present)                                          |
+| Working path | `D:/Programming Projects/Bright Bots/brightboost-707` (contains a space) |
+
+### C2-01 / C2-02 — Failing state (force-include Storybook)
+
+Command: `$env:BB_VITEST_PATH_HAS_SPACE='0'; npm test -- --watch=false`
+
+Storybook project re-registered on the spaced path and hit storybookjs/storybook#29572 again.
+
+| Metric                               | Value                                    |
+| ------------------------------------ | ---------------------------------------- |
+| Storybook files attempted            | 5                                        |
+| Storybook tests collected / executed | **0** (each file: “No test suite found”) |
+| Storybook suites failed              | 5                                        |
+| Process exit code                    | **1**                                    |
+
+```
+ FAIL  |storybook (chromium)| src/components/AvatarPicker.stories.tsx [ src/components/AvatarPicker.stories.tsx ]
+Error: No test suite found in file D:/Programming Projects/Bright
+Bots/brightboost-707/src/components/AvatarPicker.stories.tsx
+
+ FAIL  |storybook (chromium)| src/pages/QuantumDemo.stories.tsx [ src/pages/QuantumDemo.stories.tsx ]
+Error: No test suite found in file D:/Programming Projects/Bright
+Bots/brightboost-707/src/pages/QuantumDemo.stories.tsx
+
+ FAIL  |storybook (chromium)| src/stories/Button.stories.ts [ src/stories/Button.stories.ts ]
+Error: No test suite found in file D:/Programming Projects/Bright Bots/brightboost-707/src/stories/Button.stories.ts
+
+ FAIL  |storybook (chromium)| src/stories/Header.stories.ts [ src/stories/Header.stories.ts ]
+Error: No test suite found in file D:/Programming Projects/Bright Bots/brightboost-707/src/stories/Header.stories.ts
+
+ FAIL  |storybook (chromium)| src/stories/Page.stories.ts [ src/stories/Page.stories.ts ]
+Error: No test suite found in file D:/Programming Projects/Bright Bots/brightboost-707/src/stories/Page.stories.ts
+
+ Test Files  5 failed | 98 passed | 7 skipped (110)
+      Tests  581 passed | 20 skipped (601)
+```
+
+EXIT_CODE=1
+
+### C2-03 — Isolate space as the cause
+
+Force-include on this spaced checkout reproduces #29572 (above). The include branch is therefore exercised; failure is path-space, not “Playwright / Chromium / Storybook config missing.” True space-free success remains CI’s checkout path (A3-06). No clone relocate used.
+
+### C2-04 — Prove W-05 (explicit named skip)
+
+Command: unset `BB_VITEST_PATH_HAS_SPACE`; `npm test -- --watch=false`
+
+```
+[vitest.workspace] Skipping Storybook project (#707): checkout path contains a space (storybookjs/storybook#29572). Reason: path-conditional project skip.
+
+ Test Files  98 passed | 7 skipped (105)
+      Tests  581 passed | 20 skipped (601)
+```
+
+EXIT_CODE=0
+
+No `|storybook|` project in the run. W-05 satisfied via **explicit named skip**.
