@@ -120,7 +120,7 @@ try {
     );
   }
   // Property under test: a guard placed where tsconfig excludes it is detected absent.
-  console.error(
+  console.log(
     `ABSENT (expected): ${sabotageRel} — excluding pattern: ${excludingPattern}`,
   );
   console.log("============================================================");
