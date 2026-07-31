@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Must match overview §12 / #730 Part B: @shared/* → ./shared/*
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   test: {
@@ -46,6 +48,10 @@ export default defineConfig({
         functions: 90,
         statements: 90,
       },
+      // A2-04/A2-05: `all` left unset (effective false). Measurement showed an
+      // unloaded file under cypress/support/**/*.ts still entered the report at
+      // 0% and diluted totals — so new support helpers need unit tests (U2),
+      // not a coverage exclusion. No include/exclude change.
     },
   },
 });
