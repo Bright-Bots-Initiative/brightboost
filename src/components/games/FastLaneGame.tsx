@@ -238,7 +238,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
           {t("games.fastLane.title", { defaultValue: "Fast Lane Signals" })}
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto">
-          {t("games.fastLane.introText", { defaultValue: "Read the road signals and pick the safest lane to deliver your science supplies!" })}
+          {t("games.fastLane.introDesc", { defaultValue: "Read the road signals and pick the safest lane to deliver your science supplies!" })}
         </p>
         <button
           className="bounce-in px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xl font-bold rounded-2xl shadow-lg shadow-blue-500/25 hover:scale-105 active:scale-95 transition-transform"
@@ -257,7 +257,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
           {t("games.fastLane.celebTitle", { defaultValue: "Great driving!" })}
         </h2>
         <p className="text-lg text-slate-600 max-w-sm mx-auto">
-          {t("games.fastLane.celebText", { defaultValue: "You watched the signals and made smart choices!" })}
+          {t("games.fastLane.celebDesc", { defaultValue: "You watched the signals and made smart choices!" })}
         </p>
         <div className="flex gap-4 justify-center text-sm">
           <div className="bg-white rounded-xl px-4 py-3 shadow border">
