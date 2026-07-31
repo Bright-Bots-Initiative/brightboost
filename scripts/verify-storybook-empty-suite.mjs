@@ -5,13 +5,15 @@
  * Phase 1 (healthy): force path-conditional Storybook skip, run `npm test`,
  *   require exit 0 and the named skip line. A red baseline cannot masquerade
  *   as a successful sabotage (G-005).
- * Phase 2 (sabotage): force-include Storybook, empty `.storybook` stories
- *   collection, run the storybook project, require non-zero exit
- *   (`passWithNoTests: false`). Restore stories via finally.
+ * Phase 2 (sabotage): force-include Storybook with a *non-empty* stories glob
+ *   that matches zero files (so Storybook indexes successfully), then require
+ *   Vitest to exit non-zero with "No test files found" — the
+ *   `passWithNoTests: false` path. An empty `stories: []` hard-error from
+ *   Storybook is rejected as a proxy (§15.2 row 11).
  *
  * Exit codes:
  *   0  — both phases satisfied
- *   1  — property false (healthy failed or sabotage did not fail)
+ *   1  — property false (healthy failed or sabotage did not fail correctly)
  *   75 — could not run (missing tooling / restore failure)
  */
 
@@ -27,11 +29,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 const STORYBOOK_MAIN = path.join(REPO_ROOT, ".storybook", "main.ts");
 const SKIP_MARKER = "[vitest.workspace] Skipping Storybook project (#707):";
+/** Vitest message when passWithNoTests is false and zero files collected. */
+const EMPTY_COLLECTION_MARKER = "No test files found";
+/** Storybook rejects stories: [] before Vitest runs — not a W-06 proof. */
+const PROXY_MARKER = "InvalidStoriesEntryError";
 
-const EMPTY_STORIES_MAIN = `import type { StorybookConfig } from "@storybook/react-vite";
+/**
+ * Non-empty stories field that resolves to zero files. Storybook warns but
+ * still hands an empty set to Vitest — unlike `stories: []`, which throws.
+ */
+const EMPTY_COLLECTION_MAIN = `import type { StorybookConfig } from "@storybook/react-vite";
 
 const config: StorybookConfig = {
-  stories: [],
+  stories: ["../src/**/*.stories.__empty_collection__.@(ts|tsx)"],
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-onboarding",
@@ -111,7 +121,7 @@ function phaseHealthy() {
 
 function phaseSabotage() {
   console.log(
-    "--- phase 2 (sabotage): empty Storybook collection, force-include ---",
+    "--- phase 2 (sabotage): Vitest empty collection (passWithNoTests: false) ---",
   );
   if (!fs.existsSync(STORYBOOK_MAIN)) {
     failCouldNotRun(`missing ${STORYBOOK_MAIN}`);
@@ -124,11 +134,23 @@ function phaseSabotage() {
       restored = true;
     }
   };
+  process.on("exit", restore);
+  process.on("SIGINT", () => {
+    restore();
+    process.exit(130);
+  });
+  process.on("SIGTERM", () => {
+    restore();
+    process.exit(143);
+  });
 
   try {
-    fs.writeFileSync(STORYBOOK_MAIN, EMPTY_STORIES_MAIN, "utf8");
+    fs.writeFileSync(STORYBOOK_MAIN, EMPTY_COLLECTION_MAIN, "utf8");
     console.log(
       "command: BB_VITEST_PATH_HAS_SPACE=0 npm test -- --watch=false --project storybook",
+    );
+    console.log(
+      "sabotage: stories glob matches zero files (not stories: [] — that is a proxy)",
     );
     const { status, combined } = runNpm(
       ["test", "--", "--watch=false", "--project", "storybook"],
@@ -139,13 +161,23 @@ function phaseSabotage() {
         "sabotage phase: Storybook was skipped — empty-collection collapse was not exercised",
       );
     }
+    if (combined.includes(PROXY_MARKER)) {
+      failProperty(
+        "sabotage phase: InvalidStoriesEntryError is a Storybook config hard-error, not Vitest empty collection (W-06 proxy)",
+      );
+    }
+    if (!combined.includes(EMPTY_COLLECTION_MARKER)) {
+      failProperty(
+        `sabotage phase: expected Vitest "${EMPTY_COLLECTION_MARKER}" (passWithNoTests path); got a different failure`,
+      );
+    }
     if (status === 0) {
       failProperty(
-        "sabotage phase: empty Storybook collection exited 0 (silent green — W-06 failed)",
+        "sabotage phase: empty Vitest collection exited 0 (silent green — W-06 failed; is passWithNoTests: false set?)",
       );
     }
     console.log(
-      `PASS phase 2: empty collection exited non-zero (status=${status})`,
+      `PASS phase 2: empty Vitest collection exited non-zero (status=${status}) with "${EMPTY_COLLECTION_MARKER}"`,
     );
   } finally {
     restore();
@@ -157,7 +189,7 @@ function main() {
   phaseHealthy();
   phaseSabotage();
   console.log(
-    "PASS: W-06 empty-suite guard — healthy skip green AND emptied collection non-zero",
+    "PASS: W-06 — healthy skip green AND Vitest empty collection non-zero (passWithNoTests)",
   );
   process.exit(0);
 }

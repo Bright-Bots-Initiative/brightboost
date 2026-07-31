@@ -144,14 +144,16 @@ No `|storybook|` project in the run. W-05 satisfied via **explicit named skip**.
 Guard: `scripts/verify-storybook-empty-suite.mjs` · npm script `verify:storybook-empty-suite`.
 Storybook project sets `passWithNoTests: false` in `vitest.workspace.ts`.
 
-Command: `npm run verify:storybook-empty-suite` → **GUARD_EXIT=0** (2026-07-31)
+Command: `npm run verify:storybook-empty-suite` → **GUARD_EXIT=0** (2026-07-31; sabotage rewritten to Vitest empty-collection path)
 
 ### C3-02 — Two-phase proof
 
-| Phase      | What ran                                                                       | Result                                                                   |
-| ---------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| 1 Healthy  | `BB_VITEST_PATH_HAS_SPACE=1 npm test -- --watch=false`                         | exit **0**; named skip line present                                      |
-| 2 Sabotage | Empty `.storybook/main.ts` `stories: []`, force-include, `--project storybook` | exit **1**; `InvalidStoriesEntryError` (empty stories array) — not green |
+| Phase      | What ran                                                                             | Result                                                              |
+| ---------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| 1 Healthy  | `BB_VITEST_PATH_HAS_SPACE=1 npm test -- --watch=false`                               | exit **0**; named skip line present                                 |
+| 2 Sabotage | Non-empty stories glob matching **zero** files; force-include; `--project storybook` | exit **1**; Vitest `No test files found` (`passWithNoTests: false`) |
+
+Rejected proxy: `stories: []` → Storybook `InvalidStoriesEntryError` (never reaches Vitest). Guard fails if that appears.
 
 Phase 1 excerpt:
 
@@ -163,22 +165,22 @@ PASS phase 1: exit 0 with named Storybook skip
 Phase 2 excerpt:
 
 ```
-SB_CORE-COMMON_0004 (InvalidStoriesEntryError): Storybook could not index your stories.
-Your main configuration somehow does not contain a 'stories' field, or it resolved to an empty array.
-PASS phase 2: empty collection exited non-zero (status=1)
+WARN No story files found for the specified pattern: src\**\*.stories.__empty_collection__.@(ts|tsx)
+No test files found, exiting with code 1
+PASS phase 2: empty Vitest collection exited non-zero (status=1) with "No test files found"
 ```
 
-`.storybook/main.ts` restored after sabotage (finally).
+`.storybook/main.ts` restored after sabotage (finally + exit/signal handlers).
 
 ### C3-03 — Explicit skip vs silent collapse
 
-| Mode                 | Observable                                                                                                   | Exit      |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | --------- | --------- | ------------- |
-| **Explicit skip**    | Prints `[vitest.workspace] Skipping Storybook project (#707):… Reason: path-conditional project skip.`; no ` | storybook | ` project | 0 (unit only) |
-| **Empty collection** | No skip marker; Storybook fails indexing empty `stories` / non-zero (cannot report green)                    | non-zero  |
+| Mode                        | Observable                                                                                     | Exit                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------- |
+| **Explicit skip**           | Prints named skip reason; no storybook project                                                 | 0 (unit only)                          |
+| **Empty Vitest collection** | No skip marker; Vitest prints `No test files found` (not Storybook `InvalidStoriesEntryError`) | non-zero when `passWithNoTests: false` |
 
 Distinguishable — not the §15.2 row-11 proxy.
 
 ### C3-04 — Parity handoff (#740)
 
-Do **not** edit `scripts/verify-parity.mjs` here. #740 must add `npm run verify:storybook-empty-suite` to `npm run verify` and the §15.3.2 parity table.
+Do **not** edit `scripts/verify-parity.mjs` here. #740 PR #742 ships `npm run verify` / `verify-parity.mjs` but does **not** yet include `verify:storybook-empty-suite` (script lives on #707). Wire after merge/rebase: add step to STEPS + `package.json` when both land.
