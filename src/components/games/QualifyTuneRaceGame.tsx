@@ -321,7 +321,7 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
       </p>
       <button onClick={() => {setPhase("tune"); setStep(prev => prev + 1);}}
         className="px-8 py-4 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-transform">
-        {t("games.qualifyTuneRace.pickUpgrade", { defaultValue: "Pick an Upgrade!" })}
+        {t("games.qualifyTuneRace.tuneTitle", { defaultValue: "Pick an Upgrade!" })}
       </button>
     </div>
   );
@@ -330,14 +330,14 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
   if (phase === "tune") {
     const ups: { key: Upgrade; icon: string; title: string; desc: string }[] = [
       { key: "grip", icon: "🛞",
-        title: t("games.qualifyTuneRace.gripTitle", { defaultValue: "Grip Tires" }),
+        title: t("games.qualifyTuneRace.gripTires", { defaultValue: "Grip Tires" }),
         desc: t("games.qualifyTuneRace.gripDesc", { defaultValue: "Fewer slips, easier control" }) },
       { key: "speed", icon: "⚡",
-        title: t("games.qualifyTuneRace.speedTitle", { defaultValue: "Speed Boost" }),
+        title: t("games.qualifyTuneRace.speedBoost", { defaultValue: "Speed Boost" }),
         desc: t("games.qualifyTuneRace.speedDesc", { defaultValue: "Faster but harder to steer" }) },
       { key: "steering", icon: "🎯",
-        title: t("games.qualifyTuneRace.steeringTitle", { defaultValue: "Steady Steering" }),
-        desc: t("games.qualifyTuneRace.steeringDesc", { defaultValue: "Smoother, more predictable turns" }) },
+        title: t("games.qualifyTuneRace.steadySteering", { defaultValue: "Steady Steering" }),
+        desc: t("games.qualifyTuneRace.steadyDesc", { defaultValue: "Smoother, more predictable turns" }) },
     ];
     return (
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
@@ -381,9 +381,9 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
   // ── Phase: compare ──────────────────────────────────────────────────
   if (phase === "compare" && run1 && run2) {
     const metrics = [
-      { label: t("games.qualifyTuneRace.time", { defaultValue: "Time" }), icon: "⏱️", v1: run1.time, v2: run2.time, unit: "s", lb: true },
+      { label: t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" }), icon: "⏱️", v1: run1.time, v2: run2.time, unit: "s", lb: true },
       { label: t("games.qualifyTuneRace.bumpsLabel", { defaultValue: "Bumps" }), icon: "💥", v1: run1.bumps, v2: run2.bumps, unit: "", lb: true },
-      { label: t("games.qualifyTuneRace.smoothness", { defaultValue: "Smoothness" }), icon: "🌊", v1: run1.smoothness, v2: run2.smoothness, unit: "", lb: false },
+      { label: t("games.qualifyTuneRace.smoothLabel", { defaultValue: "Smoothness" }), icon: "🌊", v1: run1.smoothness, v2: run2.smoothness, unit: "", lb: false },
     ];
     return (
 
@@ -415,7 +415,7 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
           })}
         </div>
         <p className="text-lg font-bold text-slate-700">
-          {t("games.qualifyTuneRace.whatBetter", { defaultValue: "What got better?" })}
+          {t("games.qualifyTuneRace.whatGotBetter", { defaultValue: "What got better?" })}
         </p>
         <button onClick={() => setPhase("exitTicket")}
           className="px-8 py-4 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg hover:scale-105 active:scale-95 transition-transform">
@@ -428,9 +428,9 @@ function RacePlayfield({ onFinish, reducedEffects }: { onFinish: (r: GameResult)
   // ── Phase: exitTicket ───────────────────────────────────────────────
   if (phase === "exitTicket") {
     const opts = [
-      { key: "one", label: t("games.qualifyTuneRace.answerOne", { defaultValue: "One" }) },
-      { key: "two", label: t("games.qualifyTuneRace.answerTwo", { defaultValue: "Two" }) },
-      { key: "all", label: t("games.qualifyTuneRace.answerAll", { defaultValue: "All of them" }) },
+      { key: "one", label: t("games.qualifyTuneRace.exitCorrect", { defaultValue: "One" }) },
+      { key: "two", label: t("games.qualifyTuneRace.exitWrongB", { defaultValue: "Two" }) },
+      { key: "all", label: t("games.qualifyTuneRace.exitWrongA", { defaultValue: "All of them" }) },
     ];
     const answered = exitAnswer !== null, correct = exitAnswer === "one";
     return (
