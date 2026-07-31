@@ -14,8 +14,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MANIFEST="$SCRIPT_DIR/ci-required-steps.json"
-WORKFLOW="$REPO_ROOT/.github/workflows/ci-cd.yml"
+# U1-04: injectable paths for unit tests (default = production locations).
+MANIFEST="${CI_STEP_PRESENCE_MANIFEST:-$SCRIPT_DIR/ci-required-steps.json}"
+WORKFLOW="${CI_STEP_PRESENCE_WORKFLOW:-$REPO_ROOT/.github/workflows/ci-cd.yml}"
 
 if [[ ! -f "$MANIFEST" ]]; then
   echo "ERROR: missing manifest $MANIFEST" >&2
