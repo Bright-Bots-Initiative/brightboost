@@ -33,6 +33,8 @@ const storybookProject = {
   ],
   test: {
     name: "storybook",
+    // W-06: zero collected Storybook tests must not report green (#707).
+    passWithNoTests: false,
     browser: {
       enabled: true,
       headless: true,
