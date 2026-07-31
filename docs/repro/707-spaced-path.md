@@ -184,3 +184,37 @@ Distinguishable — not the §15.2 row-11 proxy.
 ### C3-04 — Parity handoff (#740)
 
 Do **not** edit `scripts/verify-parity.mjs` here. #740 PR #742 ships `npm run verify` / `verify-parity.mjs` but does **not** yet include `verify:storybook-empty-suite` (script lives on #707). Wire after merge/rebase: add step to STEPS + `package.json` when both land.
+
+---
+
+## Q4 — Independent QA (2026-07-31)
+
+### Q4-02 — W-05 RED before fix (commit order)
+
+| Commit | SHA                                        | Timestamp (−0700)   | Message                                                       |
+| ------ | ------------------------------------------ | ------------------- | ------------------------------------------------------------- |
+| RED    | `14ca9c143236b85eeb3bdbfca5438bcdb743f1c8` | 2026-07-31 02:50:25 | `docs(test): capture #707 Storybook spaced-path RED evidence` |
+| Fix    | `7230890df8f6a391e07f86f2845f57c16626c8d5` | 2026-07-31 02:53:21 | `fix(test): skip Storybook Vitest project on spaced paths`    |
+
+`git merge-base --is-ancestor 14ca9c14 7230890d` → **OK**. RED was captured before the fix.
+
+### Q4-03 — W-06 independent re-run
+
+Command: `npm run verify:storybook-empty-suite` → **GUARD_EXIT=0**
+
+| Phase      | Result                                                                              |
+| ---------- | ----------------------------------------------------------------------------------- |
+| 1 Healthy  | exit 0; `[vitest.workspace] Skipping Storybook project (#707): …`                   |
+| 2 Sabotage | exit 1; Vitest `No test files found`; no `InvalidStoriesEntryError`; no skip marker |
+
+`.storybook/main.ts` clean after run. Skip vs collapse still distinguishable (C3-03).
+
+### Q4-04 — A3-06 include branch (simulation)
+
+Method: `BB_VITEST_PATH_HAS_SPACE=0` + `npm test -- --watch=false --project storybook` (no relocate).
+
+- No named skip line
+- `|storybook (chromium)|` registered — 5 files attempted, 0 tests (`#29572` on spaced path — expected)
+- EXIT_CODE=1
+
+True space-free Storybook green remains CI’s path (H-3).
