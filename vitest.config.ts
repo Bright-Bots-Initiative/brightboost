@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Clone-local A2-02 seam (#730 U2) — match vite.config.ts; #671 keeps identical string
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   test: {

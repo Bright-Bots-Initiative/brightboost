@@ -8,12 +8,13 @@
     "db:migrate": "prisma migrate deploy --schema=../prisma/schema.prisma",
     "build:web": "cd .. && npm install && npm run build",
     "build": "npm run build:web && npm run db:generate && tsc -p .",
-    "build:railway": "npm run db:generate && tsc -p .",
+    "build:shared": "tsc -p ../shared/tsconfig.json",
+    "build:railway": "npm run build:shared && npm run db:generate && tsc -p .",
     "start": "npm run predeploy && node dist/src/server.js",
     "start:dev": "ts-node src/server.ts",
     "dev": "ts-node src/server.ts",
     "predeploy": "sh scripts/predeploy.sh",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "npm run build:shared && tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
