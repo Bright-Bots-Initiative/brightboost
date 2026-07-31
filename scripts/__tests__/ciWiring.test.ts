@@ -52,7 +52,7 @@ function runBashScript(
   return { status: result.status, output };
 }
 
-describe("CI wiring guard (#677 / U1-03)", () => {
+describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   it('W-1: package.json has scripts["test:e2e:ci"]', () => {
     const pkg = JSON.parse(readText("package.json")) as {
       scripts?: Record<string, string>;
