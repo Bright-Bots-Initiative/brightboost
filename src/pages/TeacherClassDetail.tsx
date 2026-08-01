@@ -18,6 +18,7 @@ import {
   Palette,
 } from "lucide-react";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
+import PrepareSessionLink from "@/components/teacher/PrepareSessionLink";
 import CreationStatusChip, {
   type CreationStatus,
 } from "@/components/creations/CreationStatusChip";
@@ -192,7 +193,9 @@ const TeacherClassDetail: React.FC = () => {
   const [pulse, setPulse] = useState<PulseSummary | null>(null);
 
   // Icon assignment
-  const [iconAssignments, setIconAssignments] = useState<Record<string, string>>({});
+  const [iconAssignments, setIconAssignments] = useState<
+    Record<string, string>
+  >({});
   const [savingIcons, setSavingIcons] = useState(false);
   const [showPrintCards, setShowPrintCards] = useState(false);
   const [printCardsData, setPrintCardsData] = useState<{
@@ -203,13 +206,18 @@ const TeacherClassDetail: React.FC = () => {
 
   // Benchmarks
   const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
-  const [benchmarkTemplates, setBenchmarkTemplates] = useState<BenchmarkTemplate[]>([]);
+  const [benchmarkTemplates, setBenchmarkTemplates] = useState<
+    BenchmarkTemplate[]
+  >([]);
   const [assigningBenchmark, setAssigningBenchmark] = useState(false);
   const [growth, setGrowth] = useState<GrowthReport | null>(null);
 
   // Launch session wizard
   const [launchOpen, setLaunchOpen] = useState(false);
   const [modules, setModules] = useState<ModuleSummary[]>([]);
+  // null = availability unknown (loading or fetch failed) — the prep link
+  // stays hidden so an uncovered module can never dead-end on a 404.
+  const [prepSlugs, setPrepSlugs] = useState<Set<string> | null>(null);
   const [selModule, setSelModule] = useState<string>("");
   const [selActivity, setSelActivity] = useState<{
     id: string;
@@ -230,7 +238,16 @@ const TeacherClassDetail: React.FC = () => {
     (async () => {
       setLoading(true);
       try {
-        const [courseData, assignmentData, pulseData, benchmarkData, templateData, growthData, attentionData, creationData] = await Promise.all([
+        const [
+          courseData,
+          assignmentData,
+          pulseData,
+          benchmarkData,
+          templateData,
+          growthData,
+          attentionData,
+          creationData,
+        ] = await Promise.all([
           api.get(`/teacher/courses/${id}`),
           api.get(`/teacher/courses/${id}/assignments`),
           api.get(`/teacher/courses/${id}/pulse/summary`),
@@ -249,9 +266,15 @@ const TeacherClassDetail: React.FC = () => {
         setAttention(attentionData);
         setCreations(Array.isArray(creationData) ? creationData : []);
       } catch (err) {
-        const is404 = (err instanceof ApiError && err.status === 404) ||
-          (err instanceof Error && (/404/.test(err.message) || /not found/i.test(err.message)));
-        setError(is404 ? t("teacher.classDetail.notFound") : t("teacher.classDetail.failedLoad"));
+        const is404 =
+          (err instanceof ApiError && err.status === 404) ||
+          (err instanceof Error &&
+            (/404/.test(err.message) || /not found/i.test(err.message)));
+        setError(
+          is404
+            ? t("teacher.classDetail.notFound")
+            : t("teacher.classDetail.failedLoad"),
+        );
       } finally {
         setLoading(false);
       }
@@ -274,8 +297,26 @@ const TeacherClassDetail: React.FC = () => {
   // -------------------------------------------------------------------
 
   const AVAILABLE_ICONS = [
-    "🐱", "🐶", "🦊", "🐸", "🦁", "🐰", "🐼", "🦄", "🐢", "🦋",
-    "🐧", "🐨", "🦉", "🐙", "🦈", "🐝", "🦜", "🐳", "🦒", "🐞",
+    "🐱",
+    "🐶",
+    "🦊",
+    "🐸",
+    "🦁",
+    "🐰",
+    "🐼",
+    "🦄",
+    "🐢",
+    "🦋",
+    "🐧",
+    "🐨",
+    "🦉",
+    "🐙",
+    "🦈",
+    "🐝",
+    "🦜",
+    "🐳",
+    "🦒",
+    "🐞",
   ];
 
   const assignIcon = useCallback((studentId: string, icon: string) => {
@@ -296,11 +337,15 @@ const TeacherClassDetail: React.FC = () => {
     if (!id || Object.keys(iconAssignments).length === 0) return;
     setSavingIcons(true);
     try {
-      const students = Object.entries(iconAssignments).map(([studentId, icon]) => ({
-        studentId,
-        icon,
-      }));
-      await api.post(`/teacher/courses/${id}/setup-icons`, { students } as Record<string, unknown>);
+      const students = Object.entries(iconAssignments).map(
+        ([studentId, icon]) => ({
+          studentId,
+          icon,
+        }),
+      );
+      await api.post(`/teacher/courses/${id}/setup-icons`, {
+        students,
+      } as Record<string, unknown>);
       const updatedCourse = await api.get(`/teacher/courses/${id}`);
       setCourse(updatedCourse);
     } catch {
@@ -327,10 +372,26 @@ const TeacherClassDetail: React.FC = () => {
 
   const openLaunchWizard = async () => {
     setLaunchOpen(true);
+    if (prepSlugs === null) {
+      api
+        .get(`/teacher/prep`)
+        .then((prep) => {
+          const list = Array.isArray(prep) ? prep : [];
+          setPrepSlugs(
+            new Set(
+              list.filter((p) => p?.hasPrep).map((p) => p.moduleSlug as string),
+            ),
+          );
+        })
+        .catch(() => {
+          // Availability unknown — leave prepSlugs null; the link stays
+          // hidden and session launch is unaffected.
+        });
+    }
     if (modules.length === 0) {
       try {
         const mods = await directApi.getModules();
-        const modArray = Array.isArray(mods) ? mods : mods?.modules ?? [];
+        const modArray = Array.isArray(mods) ? mods : (mods?.modules ?? []);
         const detailed = await Promise.all(
           modArray.map((m: any) =>
             directApi.getModule(m.slug, { structureOnly: true }),
@@ -368,33 +429,49 @@ const TeacherClassDetail: React.FC = () => {
       await api.post(`/teacher/courses/${id}/benchmarks`, { templateId, kind });
       const updated = await api.get(`/teacher/courses/${id}/benchmarks`);
       setBenchmarks(Array.isArray(updated) ? updated : []);
-    } catch { /* toast handles error */ }
-    finally { setAssigningBenchmark(false); }
+    } catch {
+      /* toast handles error */
+    } finally {
+      setAssigningBenchmark(false);
+    }
   };
 
-  const toggleBenchmarkStatus = async (benchmarkId: string, currentStatus: string) => {
+  const toggleBenchmarkStatus = async (
+    benchmarkId: string,
+    currentStatus: string,
+  ) => {
     if (!id) return;
     const newStatus = currentStatus === "OPEN" ? "CLOSED" : "OPEN";
     try {
-      await api.patch(`/teacher/courses/${id}/benchmarks/${benchmarkId}`, { status: newStatus });
-      setBenchmarks((prev) => prev.map((b) => b.id === benchmarkId ? { ...b, status: newStatus } : b));
-    } catch { /* toast handles error */ }
+      await api.patch(`/teacher/courses/${id}/benchmarks/${benchmarkId}`, {
+        status: newStatus,
+      });
+      setBenchmarks((prev) =>
+        prev.map((b) =>
+          b.id === benchmarkId ? { ...b, status: newStatus } : b,
+        ),
+      );
+    } catch {
+      /* toast handles error */
+    }
   };
 
   const handleLaunch = async () => {
     if (!selActivity || !id) return;
     setLaunching(true);
     try {
-      const created = await api.post(
-        `/teacher/courses/${id}/assignments`,
-        {
-          title: sessionTitle || selActivity.title,
-          activityId: selActivity.id,
-          dueDate,
-        } as Record<string, unknown>,
-      );
+      const created = await api.post(`/teacher/courses/${id}/assignments`, {
+        title: sessionTitle || selActivity.title,
+        activityId: selActivity.id,
+        dueDate,
+      } as Record<string, unknown>);
       setAssignments((prev) => [
-        { ...created, enrolledCount: course?.enrollmentCount ?? 0, completedCount: 0, avgTimeSpentS: 0 },
+        {
+          ...created,
+          enrolledCount: course?.enrollmentCount ?? 0,
+          completedCount: 0,
+          avgTimeSpentS: 0,
+        },
         ...prev,
       ]);
       setLaunchOpen(false);
@@ -449,7 +526,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600 flex-wrap gap-y-2">
             <span className="flex items-center">
               <Users className="w-4 h-4 mr-1" />
-              {t("teacher.classDetail.students", { count: course.enrollmentCount })}
+              {t("teacher.classDetail.students", {
+                count: course.enrollmentCount,
+              })}
             </span>
             <span className="flex items-center font-mono bg-gray-100 px-2 py-1 rounded text-xs">
               {t(
@@ -458,8 +537,16 @@ const TeacherClassDetail: React.FC = () => {
                   : "teacher.classDetail.joinCode",
               )}{" "}
               <strong className="ml-1 text-base">{course.joinCode}</strong>
-              <button onClick={handleCopy} className="ml-2 text-brightboost-blue" title={t("teacher.classDetail.copy")}>
-                {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <button
+                onClick={handleCopy}
+                className="ml-2 text-brightboost-blue"
+                title={t("teacher.classDetail.copy")}
+              >
+                {copiedCode ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </button>
             </span>
             <span className="flex items-center gap-1">
@@ -468,13 +555,23 @@ const TeacherClassDetail: React.FC = () => {
                 onChange={async (e) => {
                   try {
                     await directApi.updateCourseBand(course.id, e.target.value);
-                    setCourse((prev: any) => prev ? { ...prev, gradeBand: e.target.value } : prev);
-                  } catch { /* ignore */ }
+                    setCourse((prev: any) =>
+                      prev ? { ...prev, gradeBand: e.target.value } : prev,
+                    );
+                  } catch {
+                    /* ignore */
+                  }
                 }}
                 className="text-xs bg-white border border-gray-200 rounded px-2 py-1 font-medium"
               >
-                <option value="k2">{t("teacher.classDetail.bandK2", { defaultValue: "K-2" })}</option>
-                <option value="g3_5">{t("teacher.classDetail.bandG35", { defaultValue: "Grades 3-5" })}</option>
+                <option value="k2">
+                  {t("teacher.classDetail.bandK2", { defaultValue: "K-2" })}
+                </option>
+                <option value="g3_5">
+                  {t("teacher.classDetail.bandG35", {
+                    defaultValue: "Grades 3-5",
+                  })}
+                </option>
               </select>
             </span>
           </div>
@@ -518,13 +615,19 @@ const TeacherClassDetail: React.FC = () => {
                 className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100"
               >
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-slate-700">{s.studentName}</span>
+                  <span className="font-medium text-slate-700">
+                    {s.studentName}
+                  </span>
                   <span className="text-xs text-amber-700">
-                    {t("teacher.classDetail.attention.lastActive", { count: s.daysSinceActive })}
+                    {t("teacher.classDetail.attention.lastActive", {
+                      count: s.daysSinceActive,
+                    })}
                   </span>
                   {s.inProgressCount > 1 && (
                     <span className="text-xs text-amber-600">
-                      {t("teacher.classDetail.attention.more", { count: s.inProgressCount - 1 })}
+                      {t("teacher.classDetail.attention.more", {
+                        count: s.inProgressCount - 1,
+                      })}
                     </span>
                   )}
                 </div>
@@ -549,7 +652,9 @@ const TeacherClassDetail: React.FC = () => {
           </Link>
         </div>
         {creations.length === 0 ? (
-          <p className="text-sm text-gray-500">{t("teacher.classDetail.made.empty")}</p>
+          <p className="text-sm text-gray-500">
+            {t("teacher.classDetail.made.empty")}
+          </p>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {creations.slice(0, 8).map((c) => (
@@ -583,7 +688,9 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">{t("teacher.classDetail.sessionsLaunched")}</p>
+              <p className="text-sm text-gray-500">
+                {t("teacher.classDetail.sessionsLaunched")}
+              </p>
               <p className="text-2xl font-bold text-brightboost-navy">
                 {assignments.length}
               </p>
@@ -595,7 +702,9 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">{t("teacher.classDetail.avgCompletion")}</p>
+              <p className="text-sm text-gray-500">
+                {t("teacher.classDetail.avgCompletion")}
+              </p>
               <p className="text-2xl font-bold text-brightboost-green">
                 {assignments.length > 0 && course.enrollmentCount > 0
                   ? Math.round(
@@ -614,14 +723,19 @@ const TeacherClassDetail: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">{t("teacher.classDetail.confidenceLift")}</p>
+              <p className="text-sm text-gray-500">
+                {t("teacher.classDetail.confidenceLift")}
+              </p>
               <p className="text-2xl font-bold text-purple-600">
                 {pulse?.delta !== null && pulse?.delta !== undefined
                   ? `${pulse.delta > 0 ? "+" : ""}${pulse.delta}`
                   : "—"}
               </p>
               <p className="text-xs text-gray-400">
-                {t("teacher.classDetail.pre")} {pulse?.avgPre ?? "—"} / {t("teacher.classDetail.post")} {pulse?.avgPost ?? "—"} ({pulse?.preCount ?? 0}/{pulse?.postCount ?? 0} {t("teacher.classDetail.responses")})
+                {t("teacher.classDetail.pre")} {pulse?.avgPre ?? "—"} /{" "}
+                {t("teacher.classDetail.post")} {pulse?.avgPost ?? "—"} (
+                {pulse?.preCount ?? 0}/{pulse?.postCount ?? 0}{" "}
+                {t("teacher.classDetail.responses")})
               </p>
             </div>
             <TrendingUp className="w-8 h-8 text-purple-400 opacity-40" />
@@ -633,7 +747,9 @@ const TeacherClassDetail: React.FC = () => {
       <section className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-brightboost-navy mb-4 flex items-center">
           <Users className="w-5 h-5 mr-2" />
-          {t("teacher.classDetail.enrolledStudents", { count: course.students.length })}
+          {t("teacher.classDetail.enrolledStudents", {
+            count: course.students.length,
+          })}
         </h2>
         {course.students.length === 0 ? (
           <p className="text-sm text-gray-500 italic">
@@ -644,9 +760,15 @@ const TeacherClassDetail: React.FC = () => {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b bg-gray-50">
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.name")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.email")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.enrolled")}</th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.name")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.email")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.enrolled")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -690,10 +812,14 @@ const TeacherClassDetail: React.FC = () => {
               </button>
               <button
                 onClick={saveIcons}
-                disabled={savingIcons || Object.keys(iconAssignments).length === 0}
+                disabled={
+                  savingIcons || Object.keys(iconAssignments).length === 0
+                }
                 className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 transition-colors"
               >
-                {savingIcons ? t("teacher.classDetail.saving") : t("teacher.classDetail.saveIcons")}
+                {savingIcons
+                  ? t("teacher.classDetail.saving")
+                  : t("teacher.classDetail.saveIcons")}
               </button>
               <button
                 onClick={handlePrintCards}
@@ -708,7 +834,10 @@ const TeacherClassDetail: React.FC = () => {
               {course.students.map((s) => {
                 const currentIcon = iconAssignments[s.id] || "";
                 return (
-                  <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
+                  >
                     <span className="text-3xl w-10 text-center">
                       {currentIcon || "❓"}
                     </span>
@@ -763,11 +892,21 @@ const TeacherClassDetail: React.FC = () => {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b bg-gray-50">
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.session")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.due")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.completed")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.avgTime")}</th>
-                  <th className="py-2 px-3 font-medium">{t("teacher.classDetail.statusLabel")}</th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.session")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.due")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.completed")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.avgTime")}
+                  </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.statusLabel")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -810,21 +949,34 @@ const TeacherClassDetail: React.FC = () => {
         </h2>
 
         {benchmarks.length === 0 ? (
-          <p className="text-sm text-gray-400 italic mb-4">{t("teacher.benchmark.noneYet")}</p>
+          <p className="text-sm text-gray-400 italic mb-4">
+            {t("teacher.benchmark.noneYet")}
+          </p>
         ) : (
           <div className="space-y-3 mb-4">
             {benchmarks.map((b) => (
-              <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+              <div
+                key={b.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-200"
+              >
                 <div>
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-2 ${
-                    b.kind === "PRE" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                  }`}>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-2 ${
+                      b.kind === "PRE"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
                     {b.kind}
                   </span>
-                  <span className="text-sm font-medium text-slate-700">{b.template.title}</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {b.template.title}
+                  </span>
                   <div className="text-xs text-slate-400 mt-1">
-                    {b.completedCount}/{b.enrolledCount} {t("teacher.benchmark.completed")}
-                    {b.avgPercent !== null && ` · ${t("teacher.benchmark.avg")} ${b.avgPercent}%`}
+                    {b.completedCount}/{b.enrolledCount}{" "}
+                    {t("teacher.benchmark.completed")}
+                    {b.avgPercent !== null &&
+                      ` · ${t("teacher.benchmark.avg")} ${b.avgPercent}%`}
                   </div>
                 </div>
                 <button
@@ -835,7 +987,9 @@ const TeacherClassDetail: React.FC = () => {
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  {b.status === "OPEN" ? t("teacher.benchmark.open") : t("teacher.benchmark.closed")}
+                  {b.status === "OPEN"
+                    ? t("teacher.benchmark.open")
+                    : t("teacher.benchmark.closed")}
                 </button>
               </div>
             ))}
@@ -847,7 +1001,9 @@ const TeacherClassDetail: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             {benchmarkTemplates.map((tmpl) =>
               (["PRE", "POST"] as const).map((kind) => {
-                const exists = benchmarks.some((b) => b.template.id === tmpl.id && b.kind === kind);
+                const exists = benchmarks.some(
+                  (b) => b.template.id === tmpl.id && b.kind === kind,
+                );
                 if (exists) return null;
                 return (
                   <button
@@ -856,7 +1012,9 @@ const TeacherClassDetail: React.FC = () => {
                     disabled={assigningBenchmark}
                     className="px-3 py-1.5 text-xs bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 flex items-center gap-1"
                   >
-                    {assigningBenchmark && <Loader2 className="w-3 h-3 animate-spin" />}
+                    {assigningBenchmark && (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    )}
                     {t("teacher.benchmark.assign")} {kind}
                   </button>
                 );
@@ -867,140 +1025,240 @@ const TeacherClassDetail: React.FC = () => {
       </section>
 
       {/* Benchmark Growth Report */}
-      {growth && growth.templateId && (growth.hasPreAttempts || growth.hasPostAttempts) && (
-        <section className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-brightboost-navy mb-1 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
-            {t("teacher.benchmark.growth.title")}
-          </h2>
-          <p className="text-xs text-slate-400 mb-4">{growth.templateTitle}</p>
+      {growth &&
+        growth.templateId &&
+        (growth.hasPreAttempts || growth.hasPostAttempts) && (
+          <section className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-brightboost-navy mb-1 flex items-center">
+              <TrendingUp className="w-5 h-5 mr-2" />
+              {t("teacher.benchmark.growth.title")}
+            </h2>
+            <p className="text-xs text-slate-400 mb-4">
+              {growth.templateTitle}
+            </p>
 
-          {/* Class Summary Cards */}
-          {growth.classSummary && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-blue-600 font-medium">{t("teacher.benchmark.growth.preAvg")}</p>
-                <p className="text-2xl font-bold text-blue-700">
-                  {growth.classSummary.avgPrePercent !== null ? `${growth.classSummary.avgPrePercent}%` : "—"}
-                </p>
-                <p className="text-xs text-blue-400">{growth.classSummary.preCompleted}/{growth.classSummary.enrolledCount} {t("teacher.benchmark.completed")}</p>
+            {/* Class Summary Cards */}
+            {growth.classSummary && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-blue-600 font-medium">
+                    {t("teacher.benchmark.growth.preAvg")}
+                  </p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {growth.classSummary.avgPrePercent !== null
+                      ? `${growth.classSummary.avgPrePercent}%`
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-blue-400">
+                    {growth.classSummary.preCompleted}/
+                    {growth.classSummary.enrolledCount}{" "}
+                    {t("teacher.benchmark.completed")}
+                  </p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-purple-600 font-medium">
+                    {t("teacher.benchmark.growth.postAvg")}
+                  </p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    {growth.classSummary.avgPostPercent !== null
+                      ? `${growth.classSummary.avgPostPercent}%`
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-purple-400">
+                    {growth.classSummary.postCompleted}/
+                    {growth.classSummary.enrolledCount}{" "}
+                    {t("teacher.benchmark.completed")}
+                  </p>
+                </div>
+                <div
+                  className={`rounded-lg p-3 text-center ${
+                    growth.classSummary.delta !== null
+                      ? growth.classSummary.delta > 0
+                        ? "bg-green-50"
+                        : growth.classSummary.delta < 0
+                          ? "bg-red-50"
+                          : "bg-gray-50"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <p className="text-xs font-medium text-slate-600">
+                    {t("teacher.benchmark.growth.delta")}
+                  </p>
+                  <p
+                    className={`text-2xl font-bold ${
+                      growth.classSummary.delta !== null
+                        ? growth.classSummary.delta > 0
+                          ? "text-green-700"
+                          : growth.classSummary.delta < 0
+                            ? "text-red-700"
+                            : "text-gray-500"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {growth.classSummary.delta !== null
+                      ? `${growth.classSummary.delta > 0 ? "+" : ""}${growth.classSummary.delta}%`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-3 text-center">
+                  <p className="text-xs font-medium text-slate-600">
+                    {t("teacher.benchmark.growth.enrolled")}
+                  </p>
+                  <p className="text-2xl font-bold text-slate-700">
+                    {growth.classSummary.enrolledCount}
+                  </p>
+                </div>
               </div>
-              <div className="bg-purple-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-purple-600 font-medium">{t("teacher.benchmark.growth.postAvg")}</p>
-                <p className="text-2xl font-bold text-purple-700">
-                  {growth.classSummary.avgPostPercent !== null ? `${growth.classSummary.avgPostPercent}%` : "—"}
-                </p>
-                <p className="text-xs text-purple-400">{growth.classSummary.postCompleted}/{growth.classSummary.enrolledCount} {t("teacher.benchmark.completed")}</p>
-              </div>
-              <div className={`rounded-lg p-3 text-center ${
-                growth.classSummary.delta !== null
-                  ? growth.classSummary.delta > 0 ? "bg-green-50" : growth.classSummary.delta < 0 ? "bg-red-50" : "bg-gray-50"
-                  : "bg-gray-50"
-              }`}>
-                <p className="text-xs font-medium text-slate-600">{t("teacher.benchmark.growth.delta")}</p>
-                <p className={`text-2xl font-bold ${
-                  growth.classSummary.delta !== null
-                    ? growth.classSummary.delta > 0 ? "text-green-700" : growth.classSummary.delta < 0 ? "text-red-700" : "text-gray-500"
-                    : "text-gray-400"
-                }`}>
-                  {growth.classSummary.delta !== null
-                    ? `${growth.classSummary.delta > 0 ? "+" : ""}${growth.classSummary.delta}%`
-                    : "—"}
-                </p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-3 text-center">
-                <p className="text-xs font-medium text-slate-600">{t("teacher.benchmark.growth.enrolled")}</p>
-                <p className="text-2xl font-bold text-slate-700">{growth.classSummary.enrolledCount}</p>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Skill Breakdown */}
-          {growth.skills.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">{t("teacher.benchmark.growth.bySkill")}</h3>
-              <div className="space-y-3">
-                {growth.skills.map((s) => (
-                  <div key={s.skillTag}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-slate-600 capitalize">{s.skillTag.replace(/-/g, " ")}</span>
-                      <span className="text-xs text-slate-400">
-                        {s.delta !== null ? (
-                          <span className={s.delta > 0 ? "text-green-600" : s.delta < 0 ? "text-red-600" : "text-gray-500"}>
-                            {s.delta > 0 ? "+" : ""}{s.delta}%
-                          </span>
-                        ) : "—"}
-                      </span>
-                    </div>
-                    <div className="flex gap-1 h-4">
-                      <div className="flex-1 bg-gray-100 rounded-full overflow-hidden" title={`PRE: ${s.preCorrectRate ?? 0}%`}>
-                        <div className="h-full bg-blue-400 rounded-full" style={{ width: `${s.preCorrectRate ?? 0}%` }} />
-                      </div>
-                      <div className="flex-1 bg-gray-100 rounded-full overflow-hidden" title={`POST: ${s.postCorrectRate ?? 0}%`}>
-                        <div className="h-full bg-purple-400 rounded-full" style={{ width: `${s.postCorrectRate ?? 0}%` }} />
-                      </div>
-                    </div>
-                    <div className="flex gap-1 mt-0.5">
-                      <span className="flex-1 text-[10px] text-blue-500">{t("teacher.benchmark.growth.pre")} {s.preCorrectRate ?? 0}%</span>
-                      <span className="flex-1 text-[10px] text-purple-500">{t("teacher.benchmark.growth.post")} {s.postCorrectRate ?? 0}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Student Table */}
-          {growth.students.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-slate-700 mb-3">{t("teacher.benchmark.growth.studentDetail")}</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-slate-500 border-b">
-                      <th className="py-2 px-2">{t("teacher.benchmark.growth.name")}</th>
-                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.pre")}</th>
-                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.post")}</th>
-                      <th className="py-2 px-2 text-center">{t("teacher.benchmark.growth.delta")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {growth.students.map((s) => (
-                      <tr key={s.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-2 font-medium text-slate-700">{s.name}</td>
-                        <td className="py-2 px-2 text-center">
-                          {s.prePercent !== null ? `${s.prePercent}%` : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="py-2 px-2 text-center">
-                          {s.postPercent !== null ? `${s.postPercent}%` : <span className="text-slate-300">—</span>}
-                        </td>
-                        <td className="py-2 px-2 text-center">
+            {/* Skill Breakdown */}
+            {growth.skills.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  {t("teacher.benchmark.growth.bySkill")}
+                </h3>
+                <div className="space-y-3">
+                  {growth.skills.map((s) => (
+                    <div key={s.skillTag}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-slate-600 capitalize">
+                          {s.skillTag.replace(/-/g, " ")}
+                        </span>
+                        <span className="text-xs text-slate-400">
                           {s.delta !== null ? (
-                            <span className={`font-medium ${s.delta > 0 ? "text-green-600" : s.delta < 0 ? "text-red-600" : "text-slate-500"}`}>
-                              {s.delta > 0 ? "+" : ""}{s.delta}%
+                            <span
+                              className={
+                                s.delta > 0
+                                  ? "text-green-600"
+                                  : s.delta < 0
+                                    ? "text-red-600"
+                                    : "text-gray-500"
+                              }
+                            >
+                              {s.delta > 0 ? "+" : ""}
+                              {s.delta}%
                             </span>
-                          ) : <span className="text-slate-300">—</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          ) : (
+                            "—"
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex gap-1 h-4">
+                        <div
+                          className="flex-1 bg-gray-100 rounded-full overflow-hidden"
+                          title={`PRE: ${s.preCorrectRate ?? 0}%`}
+                        >
+                          <div
+                            className="h-full bg-blue-400 rounded-full"
+                            style={{ width: `${s.preCorrectRate ?? 0}%` }}
+                          />
+                        </div>
+                        <div
+                          className="flex-1 bg-gray-100 rounded-full overflow-hidden"
+                          title={`POST: ${s.postCorrectRate ?? 0}%`}
+                        >
+                          <div
+                            className="h-full bg-purple-400 rounded-full"
+                            style={{ width: `${s.postCorrectRate ?? 0}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-1 mt-0.5">
+                        <span className="flex-1 text-[10px] text-blue-500">
+                          {t("teacher.benchmark.growth.pre")}{" "}
+                          {s.preCorrectRate ?? 0}%
+                        </span>
+                        <span className="flex-1 text-[10px] text-purple-500">
+                          {t("teacher.benchmark.growth.post")}{" "}
+                          {s.postCorrectRate ?? 0}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Waiting state: assignments exist but no attempts */}
-          {!growth.hasPreAttempts && !growth.hasPostAttempts && (
-            <p className="text-sm text-gray-400 italic">{t("teacher.benchmark.growth.waiting")}</p>
-          )}
-        </section>
-      )}
+            {/* Student Table */}
+            {growth.students.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">
+                  {t("teacher.benchmark.growth.studentDetail")}
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-slate-500 border-b">
+                        <th className="py-2 px-2">
+                          {t("teacher.benchmark.growth.name")}
+                        </th>
+                        <th className="py-2 px-2 text-center">
+                          {t("teacher.benchmark.growth.pre")}
+                        </th>
+                        <th className="py-2 px-2 text-center">
+                          {t("teacher.benchmark.growth.post")}
+                        </th>
+                        <th className="py-2 px-2 text-center">
+                          {t("teacher.benchmark.growth.delta")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {growth.students.map((s) => (
+                        <tr key={s.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2 font-medium text-slate-700">
+                            {s.name}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {s.prePercent !== null ? (
+                              `${s.prePercent}%`
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {s.postPercent !== null ? (
+                              `${s.postPercent}%`
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {s.delta !== null ? (
+                              <span
+                                className={`font-medium ${s.delta > 0 ? "text-green-600" : s.delta < 0 ? "text-red-600" : "text-slate-500"}`}
+                              >
+                                {s.delta > 0 ? "+" : ""}
+                                {s.delta}%
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Waiting state: assignments exist but no attempts */}
+            {!growth.hasPreAttempts && !growth.hasPostAttempts && (
+              <p className="text-sm text-gray-400 italic">
+                {t("teacher.benchmark.growth.waiting")}
+              </p>
+            )}
+          </section>
+        )}
 
       {/* Empty state: no benchmark template selected */}
       {growth && !growth.templateId && benchmarks.length === 0 && (
         <section className="bg-white rounded-lg shadow p-6 text-center">
           <TrendingUp className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm text-gray-400">{t("teacher.benchmark.growth.assignFirst")}</p>
+          <p className="text-sm text-gray-400">
+            {t("teacher.benchmark.growth.assignFirst")}
+          </p>
         </section>
       )}
 
@@ -1021,7 +1279,9 @@ const TeacherClassDetail: React.FC = () => {
                 {t("teacher.classDetail.module")}
               </label>
               {modules.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">{t("teacher.classDetail.loadingModules")}</p>
+                <p className="text-sm text-gray-400 italic">
+                  {t("teacher.classDetail.loadingModules")}
+                </p>
               ) : (
                 <select
                   value={selModule}
@@ -1031,7 +1291,9 @@ const TeacherClassDetail: React.FC = () => {
                   }}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
                 >
-                  <option value="">{t("teacher.classDetail.selectModule")}</option>
+                  <option value="">
+                    {t("teacher.classDetail.selectModule")}
+                  </option>
                   {modules.map((m) => (
                     <option key={m.slug} value={m.slug}>
                       {m.title}
@@ -1041,16 +1303,8 @@ const TeacherClassDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Teacher Prep link */}
-            {selModule && (
-              <Link
-                to={`/teacher/prep/${selModule}`}
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 hover:underline"
-                target="_blank"
-              >
-                {t("teacher.classDetail.prepareSession")} &rarr;
-              </Link>
-            )}
+            {/* Teacher Prep link — only for modules that actually have prep data */}
+            <PrepareSessionLink slug={selModule} prepSlugs={prepSlugs} />
 
             {/* Activity picker */}
             {selModule && (
@@ -1072,7 +1326,9 @@ const TeacherClassDetail: React.FC = () => {
                       }`}
                     >
                       <div>
-                        <span className="text-xs text-gray-400 block">{a.breadcrumb}</span>
+                        <span className="text-xs text-gray-400 block">
+                          {a.breadcrumb}
+                        </span>
                         {a.title}
                       </div>
                       {selActivity?.id === a.id && (
@@ -1132,7 +1388,9 @@ const TeacherClassDetail: React.FC = () => {
               disabled={!selActivity || launching}
               className="px-4 py-2 text-sm text-white bg-brightboost-blue rounded-md hover:bg-brightboost-navy disabled:opacity-50"
             >
-              {launching ? t("teacher.classDetail.launching") : t("teacher.classDetail.launchBtn")}
+              {launching
+                ? t("teacher.classDetail.launching")
+                : t("teacher.classDetail.launchBtn")}
             </button>
           </DialogFooter>
         </DialogContent>
