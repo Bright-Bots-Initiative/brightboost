@@ -53,6 +53,8 @@ import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
 import PlanDetail from "./pages/PlanDetail";
+import Parents from "./pages/Parents";
+import ParentGuide from "./pages/ParentGuide";
 import StudentBenchmark from "./pages/StudentBenchmark";
 import StudentSettings from "./pages/StudentSettings";
 import ExperimentDashboard from "./components/admin/ExperimentDashboard";
@@ -115,9 +117,18 @@ function App() {
               <Route path="/student-login" element={<LoginSelection />} />
               <Route path="/class-login" element={<StudentClassLogin />} />
               {/* Legacy redirects for old login routes */}
-              <Route path="/login" element={<Navigate to="/student-login" replace />} />
-              <Route path="/teacher/login" element={<Navigate to="/teacher-login" replace />} />
-              <Route path="/student/login" element={<Navigate to="/student-login" replace />} />
+              <Route
+                path="/login"
+                element={<Navigate to="/student-login" replace />}
+              />
+              <Route
+                path="/teacher/login"
+                element={<Navigate to="/teacher-login" replace />}
+              />
+              <Route
+                path="/student/login"
+                element={<Navigate to="/student-login" replace />}
+              />
               <Route path="/signup" element={<SignupSelection />} />
               <Route path="/teacher/signup" element={<TeacherSignup />} />
               <Route path="/student/signup" element={<StudentSignup />} />
@@ -134,12 +145,30 @@ function App() {
               <Route path="/plans/:plan" element={<PlanDetail />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/feedback" element={<HomeSectionRedirect sectionId="feedback" />} />
-              <Route path="/donate" element={<HomeSectionRedirect sectionId="donation" />} />
-              <Route path="/students" element={<AudiencePlaceholder audience="Students" />} />
-              <Route path="/teachers" element={<AudiencePlaceholder audience="Teachers" />} />
-              <Route path="/parents" element={<AudiencePlaceholder audience="Parents" />} />
-              <Route path="/organizations" element={<AudiencePlaceholder audience="Organizations" />} />
+              <Route
+                path="/feedback"
+                element={<HomeSectionRedirect sectionId="feedback" />}
+              />
+              <Route
+                path="/donate"
+                element={<HomeSectionRedirect sectionId="donation" />}
+              />
+              <Route
+                path="/students"
+                element={<AudiencePlaceholder audience="Students" />}
+              />
+              <Route
+                path="/teachers"
+                element={<AudiencePlaceholder audience="Teachers" />}
+              />
+              <Route path="/parents" element={<Parents />} />
+              {/* Public print-friendly K-2 facilitator guide — linked from
+                  /parents and Teacher Resources (single source, no copies). */}
+              <Route path="/parents/guide" element={<ParentGuide />} />
+              <Route
+                path="/organizations"
+                element={<AudiencePlaceholder audience="Organizations" />}
+              />
 
               {/* Protected Teacher routes (nested) */}
               <Route
@@ -154,7 +183,10 @@ function App() {
                 <Route path="dashboard" element={<TeacherDashboard />} />
                 <Route path="classes" element={<TeacherClasses />} />
                 <Route path="classes/:id" element={<TeacherClassDetail />} />
-                <Route path="classes/:id/gallery" element={<TeacherGallery />} />
+                <Route
+                  path="classes/:id/gallery"
+                  element={<TeacherGallery />}
+                />
                 <Route path="students" element={<TeacherStudentRoster />} />
                 <Route path="prep/:slug" element={<TeacherModulePrep />} />
                 <Route path="resources" element={<TeacherResources />} />
@@ -188,7 +220,10 @@ function App() {
                 <Route path="challenge/:id" element={<ChallengePlayer />} />
                 <Route path="gallery" element={<StudentGallery />} />
                 <Route path="settings" element={<StudentSettings />} />
-                <Route path="benchmark/:assignmentId" element={<StudentBenchmark />} />
+                <Route
+                  path="benchmark/:assignmentId"
+                  element={<StudentBenchmark />}
+                />
                 <Route
                   path="arena"
                   element={<Navigate to="/student/play?tab=pvp" replace />}
@@ -221,18 +256,63 @@ function App() {
               {/* Pathways: Cyber Skills 101 welcome flow — rendered OUTSIDE
                   PathwaysLayout so it has its own minimal chrome. Each step
                   is its own URL so users can bookmark/resume. */}
-              <Route path="/pathways/welcome" element={<ProtectedRoute><WelcomeAvatarStep /></ProtectedRoute>} />
-              <Route path="/pathways/welcome/skills" element={<ProtectedRoute><WelcomeSkillsStep /></ProtectedRoute>} />
-              <Route path="/pathways/welcome/mission" element={<ProtectedRoute><WelcomeMissionStep /></ProtectedRoute>} />
-              <Route path="/pathways/welcome/goals" element={<ProtectedRoute><WelcomeGoalsStep /></ProtectedRoute>} />
-              <Route path="/pathways/welcome/complete" element={<ProtectedRoute><WelcomeCompleteStep /></ProtectedRoute>} />
+              <Route
+                path="/pathways/welcome"
+                element={
+                  <ProtectedRoute>
+                    <WelcomeAvatarStep />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pathways/welcome/skills"
+                element={
+                  <ProtectedRoute>
+                    <WelcomeSkillsStep />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pathways/welcome/mission"
+                element={
+                  <ProtectedRoute>
+                    <WelcomeMissionStep />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pathways/welcome/goals"
+                element={
+                  <ProtectedRoute>
+                    <WelcomeGoalsStep />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pathways/welcome/complete"
+                element={
+                  <ProtectedRoute>
+                    <WelcomeCompleteStep />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Pathways: student authenticated routes */}
-              <Route path="/pathways" element={<ProtectedRoute><PathwaysLayout /></ProtectedRoute>}>
+              <Route
+                path="/pathways"
+                element={
+                  <ProtectedRoute>
+                    <PathwaysLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route index element={<PathwaysHome />} />
                 <Route path="tracks" element={<TracksOverview />} />
                 <Route path="tracks/:trackSlug" element={<TrackDetail />} />
-                <Route path="tracks/:trackSlug/:moduleSlug" element={<ModulePlayer />} />
+                <Route
+                  path="tracks/:trackSlug/:moduleSlug"
+                  element={<ModulePlayer />}
+                />
                 <Route path="challenges" element={<ChallengesPage />} />
                 <Route path="challenges/:slug" element={<ChallengePage />} />
                 <Route path="glossary" element={<GlossaryPage />} />
@@ -243,7 +323,11 @@ function App() {
                   layout shell so the student sidebar doesn't render on top. */}
               <Route
                 path="/pathways/facilitator"
-                element={<ProtectedRoute requiredRole="teacher"><FacilitatorLayout /></ProtectedRoute>}
+                element={
+                  <ProtectedRoute requiredRole="teacher">
+                    <FacilitatorLayout />
+                  </ProtectedRoute>
+                }
               >
                 <Route index element={<FacilitatorDashboardPage />} />
                 <Route path="cohorts" element={<CohortsListPage />} />
@@ -251,7 +335,10 @@ function App() {
                 <Route path="cohorts/:id" element={<CohortDetailPage />} />
                 <Route path="tracks" element={<FacilitatorTracksPage />} />
                 <Route path="learners" element={<FacilitatorLearnersPage />} />
-                <Route path="learners/:userId" element={<FacilitatorLearnerDetailPage />} />
+                <Route
+                  path="learners/:userId"
+                  element={<FacilitatorLearnerDetailPage />}
+                />
                 <Route path="reports" element={<FacilitatorReportsPage />} />
                 <Route path="resources" element={<ProgramOverviewPage />} />
                 <Route path="settings" element={<FacilitatorSettingsPage />} />
