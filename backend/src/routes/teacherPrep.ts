@@ -22,56 +22,9 @@ const MODULE_PREP_DATA: Record<
     pacingGuide: { label: string; minutes: number }[];
   }
 > = {
-  "k2-stem-sequencing": {
-    objectives: [
-      "Students will understand that instructions must be followed in order (sequencing).",
-      "Students will identify when steps are out of order and correct a sequence.",
-      "Students will connect sequencing to everyday routines like getting dressed or baking.",
-    ],
-    vocabulary: [
-      { term: "Sequence", definition: "The order in which things happen, one after another." },
-      { term: "Algorithm", definition: "A set of step-by-step instructions to solve a problem." },
-      { term: "Debug", definition: "To find and fix a mistake in instructions." },
-      { term: "Step", definition: "One single action in a sequence of instructions." },
-    ],
-    prerequisites: [
-      "Ability to follow simple 2-3 step verbal instructions.",
-      "Understanding of first, next, and last.",
-      "Familiarity with everyday routines (morning routine, cooking, etc.).",
-    ],
-    estimatedMinutes: 45,
-    misconceptions: [
-      "Students may think any order works as long as all steps are included.",
-      "Students may confuse 'steps' with 'choices' — emphasize that order matters.",
-      "Some students believe computers can figure out the right order on their own.",
-    ],
-    discussionBefore: [
-      "What do you do every morning to get ready for school? What happens if you put on your shoes before your socks?",
-      "If you were making a peanut butter sandwich, what would happen if you spread the peanut butter before opening the jar?",
-      "Can you think of a time when doing things in the wrong order caused a silly mistake?",
-    ],
-    discussionAfter: [
-      "What happened when Boost's steps were out of order? How did you help fix them?",
-      "Why is it important for robots (and computers) to have steps in the right order?",
-      "Can you think of something at home where the order of steps really matters?",
-    ],
-    turnAndTalk: [
-      "Tell your partner about your morning routine. What is the FIRST thing you do?",
-      "If a robot wanted to brush its teeth, what steps would it need? Tell your partner.",
-    ],
-    materials: [
-      "Tablets or computers with internet access (one per student or pair)",
-      "Optional: printed sequence cards for unplugged warm-up activity",
-      "Optional: sticky notes for students to write their own sequence steps",
-    ],
-    pacingGuide: [
-      { label: "Warm-up discussion (use Before questions)", minutes: 5 },
-      { label: "Teacher intro: What is a sequence?", minutes: 5 },
-      { label: "Students on BrightBoost platform", minutes: 20 },
-      { label: "Group debrief (use After questions)", minutes: 10 },
-      { label: "Exit ticket: Draw 3 steps in order", minutes: 5 },
-    ],
-  },
+  // Archived modules (see HIDDEN_MODULE_SLUGS in src/constants/stemSets.ts)
+  // must not have entries here: this catalog drives both /teacher/prep/:slug
+  // and the availability list the launch dialog uses to show "Prepare Session".
   "k2-stem-rhyme-ride": {
     objectives: [
       "Students will identify words that rhyme (have the same ending sound).",
@@ -79,10 +32,23 @@ const MODULE_PREP_DATA: Record<
       "Students will connect rhyming to reading fluency and word patterns.",
     ],
     vocabulary: [
-      { term: "Rhyme", definition: "Words that have the same ending sound, like cat and hat." },
-      { term: "Sound", definition: "What we hear when we say a word out loud." },
-      { term: "Pattern", definition: "Something that repeats in a regular way." },
-      { term: "Word family", definition: "A group of words that end with the same letters and sound." },
+      {
+        term: "Rhyme",
+        definition: "Words that have the same ending sound, like cat and hat.",
+      },
+      {
+        term: "Sound",
+        definition: "What we hear when we say a word out loud.",
+      },
+      {
+        term: "Pattern",
+        definition: "Something that repeats in a regular way.",
+      },
+      {
+        term: "Word family",
+        definition:
+          "A group of words that end with the same letters and sound.",
+      },
     ],
     prerequisites: [
       "Ability to hear and identify individual sounds in words.",
@@ -129,10 +95,24 @@ const MODULE_PREP_DATA: Record<
       "Students will connect biology to everyday health habits like handwashing.",
     ],
     vocabulary: [
-      { term: "Cell", definition: "The smallest building block of all living things." },
-      { term: "Microbe", definition: "A tiny living thing too small to see without a microscope." },
-      { term: "Microscope", definition: "A tool that makes tiny things look big so we can see them." },
-      { term: "Healthy", definition: "When your body is working well and feeling good." },
+      {
+        term: "Cell",
+        definition: "The smallest building block of all living things.",
+      },
+      {
+        term: "Microbe",
+        definition:
+          "A tiny living thing too small to see without a microscope.",
+      },
+      {
+        term: "Microscope",
+        definition:
+          "A tool that makes tiny things look big so we can see them.",
+      },
+      {
+        term: "Healthy",
+        definition: "When your body is working well and feeling good.",
+      },
     ],
     prerequisites: [
       "Understanding that plants, animals, and people are living things.",
@@ -179,10 +159,23 @@ const MODULE_PREP_DATA: Record<
       "Students will learn that debugging means finding and fixing mistakes in a plan.",
     ],
     vocabulary: [
-      { term: "Robot", definition: "A machine that follows instructions to do a job." },
-      { term: "AI (Artificial Intelligence)", definition: "When a computer can learn and make decisions, like a smart helper." },
-      { term: "Plan", definition: "Thinking about what to do before you do it." },
-      { term: "Debug", definition: "Finding and fixing a mistake in your plan or code." },
+      {
+        term: "Robot",
+        definition: "A machine that follows instructions to do a job.",
+      },
+      {
+        term: "AI (Artificial Intelligence)",
+        definition:
+          "When a computer can learn and make decisions, like a smart helper.",
+      },
+      {
+        term: "Plan",
+        definition: "Thinking about what to do before you do it.",
+      },
+      {
+        term: "Debug",
+        definition: "Finding and fixing a mistake in your plan or code.",
+      },
     ],
     prerequisites: [
       "Basic understanding that machines and computers are built by people.",
@@ -216,7 +209,10 @@ const MODULE_PREP_DATA: Record<
     ],
     pacingGuide: [
       { label: "Warm-up: What do you know about robots?", minutes: 5 },
-      { label: "Teacher intro: How do robots follow instructions?", minutes: 5 },
+      {
+        label: "Teacher intro: How do robots follow instructions?",
+        minutes: 5,
+      },
       { label: "Students on BrightBoost platform", minutes: 20 },
       { label: "Group debrief (use After questions)", minutes: 10 },
       { label: "Exit ticket: Draw your own robot helper", minutes: 5 },
@@ -235,7 +231,9 @@ router.get(
 
       const prepData = MODULE_PREP_DATA[moduleSlug];
       if (!prepData) {
-        return res.status(404).json({ error: "No prep data found for this module" });
+        return res
+          .status(404)
+          .json({ error: "No prep data found for this module" });
       }
 
       // Fetch teacher's checklist state
@@ -309,7 +307,10 @@ router.get(
       });
 
       const checklistMap = Object.fromEntries(
-        checklists.map((c) => [c.moduleSlug, { items: c.items, completedAt: c.completedAt }]),
+        checklists.map((c) => [
+          c.moduleSlug,
+          { items: c.items, completedAt: c.completedAt },
+        ]),
       );
 
       const moduleSlugs = Object.keys(MODULE_PREP_DATA);
