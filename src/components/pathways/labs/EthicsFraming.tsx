@@ -31,7 +31,10 @@ export function readEthicsAck(): boolean {
   }
 }
 
-export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingProps) {
+export default function EthicsFraming({
+  onAcknowledge,
+  force,
+}: EthicsFramingProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
@@ -65,43 +68,33 @@ export default function EthicsFraming({ onAcknowledge, force }: EthicsFramingPro
         </div>
 
         <div className="px-5 sm:px-6 py-5 space-y-3 text-sm leading-relaxed text-slate-800 dark:text-slate-200">
-          <p>
-            {t("pathways.labs.ethics.body")}
-          </p>
+          <p>{t("pathways.labs.ethics.body")}</p>
           <div>
             <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1.5">
               {t("pathways.labs.ethics.eyebrow")}
             </p>
             <ul className="space-y-1.5 pl-1">
               <li className="flex gap-2">
-                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
-                <span>
-                  {t("pathways.labs.ethics.rules.one")}
+                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">
+                  ✓
                 </span>
+                <span>{t("pathways.labs.ethics.rules.one")}</span>
               </li>
               <li className="flex gap-2">
-                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
-                <span>
-                  {t("pathways.labs.ethics.rules.two")}
+                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">
+                  ✓
                 </span>
+                <span>{t("pathways.labs.ethics.rules.two")}</span>
               </li>
               <li className="flex gap-2">
-                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
-                <span>
-                  {t("pathways.labs.ethics.rules.three")}
+                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">
+                  ✓
                 </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-emerald-600 dark:text-emerald-400 shrink-0">✓</span>
-                <span>
-                  {t("pathways.labs.ethics.rules.four")}
-                </span>
+                <span>{t("pathways.labs.ethics.rules.three")}</span>
               </li>
             </ul>
           </div>
-
         </div>
-
         <div className="px-5 sm:px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
           <button
             onClick={handleAck}
