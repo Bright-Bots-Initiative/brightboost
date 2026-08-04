@@ -1601,7 +1601,21 @@
       "consistent": "Nice \u2014 you were consistent across every event!",
       "tiedBest": "You tied your best in {{first}} AND {{second}}!",
       "enjoyAck": "Great choice \u2014 everyone has a favorite!",
-      "perfectRun": "Perfect Run!"
+      "perfectRun": "Perfect Run!",
+      "dashName": "Dash",
+      "jumpName": "Jump",
+      "tossName": "Toss",
+      "and": "AND",
+      "predictionHint": "You will compare your prediction with your actual result after the activity.",
+      "distanceLabel": "Distance: ",
+      "heightLabel": "Height:",
+      "compareQuestion": "How far off was your prediction?",
+      "predictedLabel": "Predicted:",
+      "actualLabel": "Actual:",
+      "differenceLabel": "Difference:",
+      "prediction": "Prediction",
+      "actual": "Actual",
+      "continue": "Continue"
     },
     "skyShield": {
       "title": "Sky Shield Patterns",
