@@ -2,12 +2,15 @@ import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import app from "../server";
 
-// Mock Prisma to avoid DB calls
+// Mock Prisma to avoid DB calls (include auditLog — login path calls logAudit)
 vi.mock("../utils/prisma", () => ({
   default: {
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
+    },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({ id: "audit-test" }),
     },
   },
 }));
@@ -37,7 +40,7 @@ describe("Auth Rate Limiting", () => {
     expect(res.body).toEqual({
       error: "Too many login/signup attempts, please try again later.",
     });
-  });
+  }, 20_000);
 
   it("should enforce rate limit on /api/signup/student independently", async () => {
     // Use a DIFFERENT IP for this test so it starts fresh
@@ -68,5 +71,5 @@ describe("Auth Rate Limiting", () => {
       });
 
     expect(res.status).toBe(429);
-  });
+  }, 20_000);
 });

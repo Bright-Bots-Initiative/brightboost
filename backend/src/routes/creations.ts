@@ -8,6 +8,7 @@ import {
   validateCreationContent,
   type CreationType,
 } from "../services/creationContent";
+import { serializeCreationContent } from "../services/creationContentSerializer";
 
 // Phase 0 — Creations CRUD (the "kid makes something" foundation).
 //
@@ -82,6 +83,29 @@ async function isGroupMember(
     select: { id: true },
   });
   return !!enrollment;
+}
+
+// Gallery shows SHARED|COMPLETE to the group; the author additionally sees
+// their own IN_PROGRESS drafts. One definition, two representations (Prisma
+// filter + in-memory boolean) so the forms cannot silently diverge.
+export const VISIBLE_STATUSES = ["SHARED", "COMPLETE"] as const;
+
+/** Prisma filter form — for list queries. */
+export function visibleToWhere(userId: string) {
+  return {
+    OR: [{ status: { in: [...VISIBLE_STATUSES] } }, { authorId: userId }],
+  };
+}
+
+/** In-memory form — for a single already-fetched creation. */
+export function isVisibleTo(
+  creation: { status: string; authorId: string },
+  userId: string,
+): boolean {
+  return (
+    (VISIBLE_STATUSES as readonly string[]).includes(creation.status) ||
+    creation.authorId === userId
+  );
 }
 
 type CreationDTO = {
@@ -245,42 +269,31 @@ router.patch(
 // GET /creations?courseId= — group-scoped gallery read
 // ---------------------------------------------------------------------------
 
-router.get(
-  "/creations",
-  requireAuth,
-  async (req: Request, res: Response) => {
-    const parsed = listQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      return res.status(400).json({ error: "courseId is required" });
-    }
-    const { courseId } = parsed.data;
+router.get("/creations", requireAuth, async (req: Request, res: Response) => {
+  const parsed = listQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "courseId is required" });
+  }
+  const { courseId } = parsed.data;
 
-    const member = await isGroupMember(
-      req.user!.id,
-      req.user!.role,
+  const member = await isGroupMember(req.user!.id, req.user!.role, courseId);
+  if (!member) {
+    return res.status(403).json({ error: "not a member of this group" });
+  }
+
+  // Gallery visibility: SHARED|COMPLETE to the group; author also sees drafts.
+  // See visibleToWhere / isVisibleTo next to isGroupMember.
+  const creations = await prisma.creation.findMany({
+    where: {
       courseId,
-    );
-    if (!member) {
-      return res.status(403).json({ error: "not a member of this group" });
-    }
+      ...visibleToWhere(req.user!.id),
+    },
+    include: { author: { select: { name: true } } },
+    orderBy: { updatedAt: "desc" },
+  });
 
-    // Gallery shows SHARED|COMPLETE to the group; the author additionally sees
-    // their own IN_PROGRESS drafts.
-    const creations = await prisma.creation.findMany({
-      where: {
-        courseId,
-        OR: [
-          { status: { in: ["SHARED", "COMPLETE"] } },
-          { authorId: req.user!.id },
-        ],
-      },
-      include: { author: { select: { name: true } } },
-      orderBy: { updatedAt: "desc" },
-    });
-
-    return res.json(creations.map(toDTO));
-  },
-);
+  return res.json(creations.map(toDTO));
+});
 
 // ---------------------------------------------------------------------------
 // GET /creations/:id — single creation WITH content (to play it). Group-scoped.
@@ -307,29 +320,15 @@ router.get(
       return res.status(403).json({ error: "not a member of this group" });
     }
 
-    // Visible only if shared/complete to the group, or the requester is author.
-    const visible =
-      creation.status === "SHARED" ||
-      creation.status === "COMPLETE" ||
-      creation.authorId === req.user!.id;
-    if (!visible) {
+    if (!isVisibleTo(creation, req.user!.id)) {
       return res.status(403).json({ error: "creation is not shared" });
     }
 
-    const safeContent =
-      typeof creation.content === "object" &&
-      creation.content !== null &&
-      !Array.isArray(creation.content)
-        ? {
-          v: creation.content.v,
-          cardIds: creation.content.cardIds,
-          sortRule: creation.content.sortRule,
-          inferRule: creation.content.inferRule,
-        }
-        : creation.content;
-
     // Single-get includes content so the creation can actually be played.
-    return res.json({ ...toDTO(creation), content: safeContent });
+    return res.json({
+      ...toDTO(creation),
+      content: serializeCreationContent(creation.type, creation.content),
+    });
   },
 );
 

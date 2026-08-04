@@ -90,7 +90,10 @@ const TeacherResources: React.FC = () => {
 
   const handlePrint = (resource: Resource) => {
     const token = localStorage.getItem("bb_access_token");
-    const url = join(API_BASE, `/teacher/resources/${resource.id}/print?lang=${lang}`);
+    const url = join(
+      API_BASE,
+      `/teacher/resources/${resource.id}/print?lang=${lang}`,
+    );
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       fetch(url, {
@@ -109,12 +112,37 @@ const TeacherResources: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <FolderOpen className="w-6 h-6 text-blue-600" /> {t("teacher.resources.title")}
+          <FolderOpen className="w-6 h-6 text-blue-600" />{" "}
+          {t("teacher.resources.title")}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {t("teacher.resources.subtitle")}
         </p>
       </div>
+
+      {/* K-2 Facilitator Quick Start — same public guide the parents page
+          links to (/parents/guide); one source, no duplicated content. */}
+      <a
+        href="/parents/guide"
+        target="_blank"
+        rel="noreferrer"
+        className="block bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 hover:bg-blue-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Printer className="w-4 h-4 text-blue-600" aria-hidden="true" />
+          <span className="font-semibold text-sm text-gray-900">
+            {t("parentGuide.title", {
+              defaultValue: "K–2 Facilitator Quick Start",
+            })}
+          </span>
+        </div>
+        <p className="text-sm text-gray-600 mt-1">
+          {t("parentGuide.teacherCardDesc", {
+            defaultValue:
+              "Printable one-pager for parents and program volunteers — before, during, and after an activity.",
+          })}
+        </p>
+      </a>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -127,7 +155,9 @@ const TeacherResources: React.FC = () => {
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">{t("teacher.resources.allModules")}</option>
-            <option value="general">{t("teacher.resources.generalResources")}</option>
+            <option value="general">
+              {t("teacher.resources.generalResources")}
+            </option>
             {Object.entries(MODULE_KEYS).map(([slug, key]) => (
               <option key={slug} value={slug}>
                 {t(key)}
@@ -185,7 +215,9 @@ const TeacherResources: React.FC = () => {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          <span className="ml-2 text-gray-500">{t("teacher.resources.loading")}</span>
+          <span className="ml-2 text-gray-500">
+            {t("teacher.resources.loading")}
+          </span>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
@@ -211,7 +243,9 @@ const TeacherResources: React.FC = () => {
                 </span>
               </div>
 
-              <p className="text-xs text-gray-500 mb-3">{resource.description}</p>
+              <p className="text-xs text-gray-500 mb-3">
+                {resource.description}
+              </p>
 
               <div className="flex items-center gap-2 mb-3">
                 {resource.moduleSlug && (
@@ -230,7 +264,8 @@ const TeacherResources: React.FC = () => {
                     onClick={() => setPreviewResource(resource)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
                   >
-                    <BookOpen className="w-3 h-3" /> {t("teacher.resources.preview")}
+                    <BookOpen className="w-3 h-3" />{" "}
+                    {t("teacher.resources.preview")}
                   </button>
                 )}
                 {resource.printable && resource.contentHtml && (
@@ -238,7 +273,8 @@ const TeacherResources: React.FC = () => {
                     onClick={() => handlePrint(resource)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                   >
-                    <Printer className="w-3 h-3" /> {t("teacher.resources.print")}
+                    <Printer className="w-3 h-3" />{" "}
+                    {t("teacher.resources.print")}
                   </button>
                 )}
                 {resource.contentUrl && (
@@ -248,7 +284,8 @@ const TeacherResources: React.FC = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-600 border border-green-200 rounded-md hover:bg-green-50 transition-colors"
                   >
-                    <ExternalLink className="w-3 h-3" /> {t("teacher.resources.openLink")}
+                    <ExternalLink className="w-3 h-3" />{" "}
+                    {t("teacher.resources.openLink")}
                   </a>
                 )}
               </div>
@@ -262,14 +299,17 @@ const TeacherResources: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">{previewResource.title}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {previewResource.title}
+              </h2>
               <div className="flex items-center gap-2">
                 {previewResource.printable && (
                   <button
                     onClick={() => handlePrint(previewResource)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50"
                   >
-                    <Printer className="w-4 h-4" /> {t("teacher.resources.print")}
+                    <Printer className="w-4 h-4" />{" "}
+                    {t("teacher.resources.print")}
                   </button>
                 )}
                 <button
@@ -280,20 +320,24 @@ const TeacherResources: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div
-              className="p-6 overflow-y-auto flex-grow prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: previewResource.contentHtml || "" }}
+            {/* Server-authored resource HTML renders in a fully sandboxed
+                iframe (no scripts, no same-origin) instead of being injected
+                into the app's DOM — the preview styles ship inside the doc. */}
+            <iframe
+              title={previewResource.title}
+              sandbox=""
+              className="flex-grow w-full min-h-[55vh] border-0 rounded-b-lg"
+              srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>
+                body { font-family: ui-sans-serif, system-ui, sans-serif; color: #111827; margin: 1.5rem; }
+                .k2-worksheet h2 { font-size: 1.35rem; margin: 1.2rem 0 0.5rem; }
+                .k2-worksheet h3 { font-size: 1.15rem; margin: 1rem 0 0.4rem; }
+                .k2-worksheet p, .k2-worksheet li { font-size: 1.1rem; line-height: 1.7; }
+                .k2-worksheet .worksheet-area { border: 1px dashed #d1d5db; padding: 1.5rem; margin: 0.75rem 0; min-height: 140px; border-radius: 4px; }
+                .k2-worksheet .line { border-bottom: 1px solid #d1d5db; margin: 1rem 0; min-height: 36px; }
+                .k2-worksheet td, .k2-worksheet th { padding: 0.75rem; font-size: 1.05rem; }
+                .k2-worksheet .match-table td { border: none; padding: 0.6rem 1.2rem; font-size: 1.15rem; }
+              </style></head><body>${previewResource.contentHtml || ""}</body></html>`}
             />
-            {/* K-2 worksheet preview styles */}
-            <style>{`
-              .k2-worksheet h2 { font-size: 1.35rem; margin: 1.2rem 0 0.5rem; }
-              .k2-worksheet h3 { font-size: 1.15rem; margin: 1rem 0 0.4rem; }
-              .k2-worksheet p, .k2-worksheet li { font-size: 1.1rem; line-height: 1.7; }
-              .k2-worksheet .worksheet-area { border: 1px dashed #d1d5db; padding: 1.5rem; margin: 0.75rem 0; min-height: 140px; border-radius: 4px; }
-              .k2-worksheet .line { border-bottom: 1px solid #d1d5db; margin: 1rem 0; min-height: 36px; }
-              .k2-worksheet td, .k2-worksheet th { padding: 0.75rem; font-size: 1.05rem; }
-              .k2-worksheet .match-table td { border: none; padding: 0.6rem 1.2rem; font-size: 1.15rem; }
-            `}</style>
           </div>
         </div>
       )}

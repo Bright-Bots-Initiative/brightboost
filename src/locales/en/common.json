@@ -1908,5 +1908,96 @@
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
     "play": "Play"
+  },
+  "parents": {
+    "docTitle": "Bright Boost for Parents & Families",
+    "title": "For Parents & Families",
+    "subtitle": "Bright Boost is a multilingual STEM learning platform for kids — built for classrooms, after-school programs, and home.",
+    "fits": {
+      "title": "Where Bright Boost fits",
+      "classroom": {
+        "title": "In the classroom",
+        "desc": "Teachers run sessions and see each child's progress."
+      },
+      "afterschool": {
+        "title": "After school",
+        "desc": "Program leaders use the same activities with small groups."
+      },
+      "home": {
+        "title": "At home",
+        "desc": "Families explore together — or kids explore on their own."
+      }
+    },
+    "journey": {
+      "title": "How the learning is organized",
+      "intro": "Children move through three sets of activities. Each one builds on the last."
+    },
+    "stages": {
+      "availableNow": "Available now",
+      "afterFoundation": "Opens after Foundation",
+      "inDevelopment": "In development",
+      "foundationDesc": "Structured, highly supported introductions to STEM ideas. Every activity guides children step by step.",
+      "explorationDesc": "Children predict, plan, test, measure, and revise — with more room to make their own choices.",
+      "masteryDesc": "Creation-first experiences built around Imagine → Create → Play → Share → Reflect. Children make things of their own."
+    },
+    "role": {
+      "title": "Your role: a guide, not a proctor",
+      "p1": "Kids do best when a nearby adult is curious with them — not checking their answers.",
+      "b1": "Ask what they notice and what they want to try.",
+      "b2": "Help with reading only when they ask.",
+      "b3": "Let them experiment — unexpected results are part of the learning.",
+      "b4": "Children can also explore entirely on their own."
+    },
+    "guideCard": {
+      "title": "K–2 Facilitator Quick Start",
+      "desc": "A one-page printable guide for any adult sitting alongside a young learner.",
+      "open": "Open the guide"
+    },
+    "cta": {
+      "title": "Get started",
+      "demo": "Try a game — no signup",
+      "join": "Join with a class code",
+      "home": "Create a home group"
+    },
+    "backHome": "Return to homepage"
+  },
+  "parentGuide": {
+    "docTitle": "K–2 Facilitator Quick Start — Bright Boost",
+    "title": "K–2 Facilitator Quick Start",
+    "subtitle": "For any adult alongside a young learner — parents, tutors, program leaders, and teachers.",
+    "back": "Back",
+    "print": "Print this guide",
+    "teacherCardDesc": "Printable one-pager for parents and program volunteers — before, during, and after an activity.",
+    "before": {
+      "title": "Before you start (2 minutes)",
+      "b1": "Open the activity once yourself so you know what the child will see.",
+      "b2": "Check the device: charged, connected, sound on if you have it.",
+      "b3": "Invite curiosity: \"We get to try something new today.\""
+    },
+    "during": {
+      "title": "While they play",
+      "b1": "Help with reading only when the child asks or gets stuck.",
+      "b2": "Ask wondering questions instead of giving answers.",
+      "b3": "Encourage experimenting — trying, changing, and even \"breaking\" things is how the games are meant to be played.",
+      "b4": "If they ask you for the answer, try: \"What could we try to find out?\""
+    },
+    "after": {
+      "title": "Afterwards",
+      "b1": "Ask what they noticed and what surprised them.",
+      "b2": "Ask what they changed, made, or figured out.",
+      "b3": "Ask what they want to try next time."
+    },
+    "prompts": {
+      "title": "Prompts you can use as-is",
+      "p1": "What do you notice?",
+      "p2": "What do you think will happen if…?",
+      "p3": "How did you figure that out?",
+      "p4": "What would you change next time?",
+      "p5": "Can you show me what you made?",
+      "p6": "What surprised you?",
+      "p7": "What do you want to try next?"
+    },
+    "independence": "You don't have to be there the whole time. The activities are built so a child can explore on their own — your curiosity is a bonus, not a requirement.",
+    "footer": "brightboost.org"
   }
 }

@@ -298,6 +298,7 @@ BrightBoost production runs on **Railway + Supabase**:
 |---|---|
 | `DATABASE_URL` | Supabase Postgres connection string |
 | `DIRECT_URL` | Supabase direct connection (bypasses pooler) |
+| `RUN_SEED` | Optional; only exact `true` runs the predeploy seed (default: unset = skip). See [`DEPLOYMENT.md`](DEPLOYMENT.md). |
 | `SESSION_SECRET` | JWT signing secret (must not be default) |
 | `NODE_ENV` | `production` |
 | `PORT` | Server port (Railway sets automatically) |
@@ -309,7 +310,7 @@ BrightBoost production runs on **Railway + Supabase**:
 
 1. Push to `main` branch on GitHub
 2. Railway auto-deploys using `Dockerfile.backend`
-3. On startup, `backend/scripts/predeploy.sh` runs Prisma migrations and seeds
+3. On startup, `backend/scripts/predeploy.sh` runs Prisma migrations (hard-fail) and `prisma generate`; the seed step runs **only** when `RUN_SEED=true` (default: skip). See [`DEPLOYMENT.md`](DEPLOYMENT.md) (`RUN_SEED` runbook).
 4. Express serves API at `/api/*` and frontend SPA for all other routes
 
 > **Note:** The repo contains legacy AWS Lambda, Azure Static Web Apps, and Aurora references from earlier deployment phases. These are no longer the production path. See `docs/legacy/` for historical context.

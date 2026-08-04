@@ -1743,5 +1743,96 @@
     "boosts": "Ánimos",
     "giveBoost": "Dar ánimo ⭐",
     "play": "Jugar"
+  },
+  "parents": {
+    "docTitle": "Bright Boost para padres y familias",
+    "title": "Para padres y familias",
+    "subtitle": "Bright Boost es una plataforma multilingüe de aprendizaje STEM para niños — pensada para el aula, los programas extraescolares y el hogar.",
+    "fits": {
+      "title": "Dónde encaja Bright Boost",
+      "classroom": {
+        "title": "En el aula",
+        "desc": "Los maestros dirigen sesiones y ven el progreso de cada niño."
+      },
+      "afterschool": {
+        "title": "Después de clases",
+        "desc": "Los líderes de programas usan las mismas actividades con grupos pequeños."
+      },
+      "home": {
+        "title": "En casa",
+        "desc": "Las familias exploran juntas — o los niños exploran por su cuenta."
+      }
+    },
+    "journey": {
+      "title": "Cómo se organiza el aprendizaje",
+      "intro": "Los niños avanzan por tres conjuntos de actividades. Cada uno se apoya en el anterior."
+    },
+    "stages": {
+      "availableNow": "Disponible ahora",
+      "afterFoundation": "Se abre después de Fundamentos",
+      "inDevelopment": "En desarrollo",
+      "foundationDesc": "Introducciones a las ideas STEM con mucha estructura y apoyo. Cada actividad guía a los niños paso a paso.",
+      "explorationDesc": "Los niños predicen, planean, prueban, miden y revisan — con más espacio para tomar sus propias decisiones.",
+      "masteryDesc": "Experiencias centradas en crear, construidas alrededor de Imaginar → Crear → Jugar → Compartir → Reflexionar. Los niños hacen cosas propias."
+    },
+    "role": {
+      "title": "Tu papel: guía, no supervisor",
+      "p1": "A los niños les va mejor cuando un adulto cercano siente curiosidad con ellos — no cuando revisa sus respuestas.",
+      "b1": "Pregunta qué notan y qué quieren intentar.",
+      "b2": "Ayuda con la lectura solo cuando lo pidan.",
+      "b3": "Deja que experimenten — los resultados inesperados son parte del aprendizaje.",
+      "b4": "Los niños también pueden explorar completamente por su cuenta."
+    },
+    "guideCard": {
+      "title": "Guía rápida para facilitadores K–2",
+      "desc": "Una guía imprimible de una página para cualquier adulto que acompañe a un pequeño aprendiz.",
+      "open": "Abrir la guía"
+    },
+    "cta": {
+      "title": "Empieza ahora",
+      "demo": "Prueba un juego — sin registro",
+      "join": "Únete con un código de clase",
+      "home": "Crea un grupo de hogar"
+    },
+    "backHome": "Volver a la página principal"
+  },
+  "parentGuide": {
+    "docTitle": "Guía rápida para facilitadores K–2 — Bright Boost",
+    "title": "Guía rápida para facilitadores K–2",
+    "subtitle": "Para cualquier adulto que acompañe a un pequeño aprendiz — padres, tutores, líderes de programas y maestros.",
+    "back": "Volver",
+    "print": "Imprimir esta guía",
+    "teacherCardDesc": "Una página imprimible para padres y voluntarios — antes, durante y después de una actividad.",
+    "before": {
+      "title": "Antes de empezar (2 minutos)",
+      "b1": "Abre la actividad una vez tú mismo para saber qué verá el niño.",
+      "b2": "Revisa el dispositivo: con carga, conectado, con sonido si lo tienes.",
+      "b3": "Invita a la curiosidad: \"Hoy vamos a probar algo nuevo\"."
+    },
+    "during": {
+      "title": "Mientras juegan",
+      "b1": "Ayuda con la lectura solo cuando el niño lo pida o se atasque.",
+      "b2": "Haz preguntas de asombro en lugar de dar respuestas.",
+      "b3": "Anima a experimentar — probar, cambiar e incluso \"romper\" cosas es como se juegan estos juegos.",
+      "b4": "Si te piden la respuesta, prueba con: \"¿Qué podríamos intentar para descubrirlo?\""
+    },
+    "after": {
+      "title": "Después",
+      "b1": "Pregunta qué notaron y qué les sorprendió.",
+      "b2": "Pregunta qué cambiaron, hicieron o descubrieron.",
+      "b3": "Pregunta qué quieren intentar la próxima vez."
+    },
+    "prompts": {
+      "title": "Frases listas para usar",
+      "p1": "¿Qué notas?",
+      "p2": "¿Qué crees que pasará si…?",
+      "p3": "¿Cómo lo descubriste?",
+      "p4": "¿Qué cambiarías la próxima vez?",
+      "p5": "¿Me enseñas lo que hiciste?",
+      "p6": "¿Qué te sorprendió?",
+      "p7": "¿Qué quieres intentar ahora?"
+    },
+    "independence": "No tienes que estar presente todo el tiempo. Las actividades están hechas para que un niño pueda explorar por su cuenta — tu curiosidad es un extra, no un requisito.",
+    "footer": "brightboost.org"
   }
 }

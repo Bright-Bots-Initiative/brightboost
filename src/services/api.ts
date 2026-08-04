@@ -344,7 +344,8 @@ export const useApi = () => {
         });
 
         if (!response.ok) {
-          if (response.status === 401) throw new ApiError(t("api.sessionExpired"), 401);
+          if (response.status === 401)
+            throw new ApiError(t("api.sessionExpired"), 401);
           if (response.status === 403)
             throw new ApiError(t("api.dashboardUnavailable"), 403);
           // Parse error body safely — backend may return HTML for unknown routes
@@ -364,7 +365,9 @@ export const useApi = () => {
       } catch (error) {
         // Only retry on network errors or 5xx — never retry 4xx client errors
         const isClientError =
-          error instanceof ApiError && error.status >= 400 && error.status < 500;
+          error instanceof ApiError &&
+          error.status >= 400 &&
+          error.status < 500;
         const isAuthError =
           error instanceof Error && error.message.includes("Authentication");
         const isSessionExpired =
@@ -557,6 +560,8 @@ export const api = {
       total?: number;
       streakMax?: number;
       roundsCompleted?: number;
+      gameSpecific?: unknown;
+      accuracy?: number;
     };
   }) => {
     const res = await fetch(join(API_BASE, "/progress/complete-activity"), {
@@ -593,55 +598,83 @@ export const api = {
   // ── Module Catalog & Assignments ──────────────────────────────────────
 
   getModuleFamilies: async () => {
-    const res = await fetch(join(API_BASE, "/module-catalog/families"), { headers: getHeaders() });
+    const res = await fetch(join(API_BASE, "/module-catalog/families"), {
+      headers: getHeaders(),
+    });
     return res.json();
   },
 
   getModuleVariants: async (band?: string) => {
-    const url = new URL(join(API_BASE, "/module-catalog/variants"), window.location.origin);
+    const url = new URL(
+      join(API_BASE, "/module-catalog/variants"),
+      window.location.origin,
+    );
     if (band) url.searchParams.append("band", band);
     const res = await fetch(url.toString(), { headers: getHeaders() });
     return res.json();
   },
 
   updateCourseBand: async (courseId: string, gradeBand: string) => {
-    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/band`), {
-      method: "PUT",
-      headers: getHeaders(),
-      body: JSON.stringify({ gradeBand }),
-    });
+    const res = await fetch(
+      join(API_BASE, `/teacher/courses/${courseId}/band`),
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ gradeBand }),
+      },
+    );
     return res.json();
   },
 
   getCourseAssignments: async (courseId: string) => {
-    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments`), { headers: getHeaders() });
+    const res = await fetch(
+      join(API_BASE, `/teacher/courses/${courseId}/module-assignments`),
+      { headers: getHeaders() },
+    );
     return res.json();
   },
 
-  assignModuleToClass: async (courseId: string, moduleVariantId: string, opts?: { orderIndex?: number; isLocked?: boolean }) => {
-    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments`), {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({ moduleVariantId, ...opts }),
-    });
+  assignModuleToClass: async (
+    courseId: string,
+    moduleVariantId: string,
+    opts?: { orderIndex?: number; isLocked?: boolean },
+  ) => {
+    const res = await fetch(
+      join(API_BASE, `/teacher/courses/${courseId}/module-assignments`),
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ moduleVariantId, ...opts }),
+      },
+    );
     return res.json();
   },
 
   removeModuleAssignment: async (courseId: string, assignmentId: string) => {
-    const res = await fetch(join(API_BASE, `/teacher/courses/${courseId}/module-assignments/${assignmentId}`), {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      join(
+        API_BASE,
+        `/teacher/courses/${courseId}/module-assignments/${assignmentId}`,
+      ),
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      },
+    );
     return res.json();
   },
 
   getStudentCourses: async () => {
-    const res = await fetch(join(API_BASE, "/student/courses"), { headers: getHeaders() });
+    const res = await fetch(join(API_BASE, "/student/courses"), {
+      headers: getHeaders(),
+    });
     return res.json().catch(() => []);
   },
 
   getStudentAssignedModules: async () => {
-    const res = await fetch(join(API_BASE, "/student/assigned-modules"), { headers: getHeaders() });
+    const res = await fetch(join(API_BASE, "/student/assigned-modules"), {
+      headers: getHeaders(),
+    });
     return res.json();
   },
 

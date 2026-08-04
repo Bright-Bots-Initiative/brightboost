@@ -11,6 +11,8 @@ const dirname =
     : path.dirname(fileURLToPath(import.meta.url));
 
 // More info at: https://storybook.js.org/docs/writing-tests/test-addon
+// Path-with-spaces Storybook noise (#29572) is owned by #707 (path-conditional
+// project skip) — keep this file aligned with main for #702.
 export default defineWorkspace([
   "vitest.config.ts",
   {

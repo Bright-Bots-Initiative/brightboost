@@ -22,7 +22,7 @@ All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The s
 | `student@test.com` | `password` | Fresh K-2 student, Set 1 incomplete |
 | `explorer@test.com` | `explore123` | Set 1 complete, Set 2 unlocked |
 
-**Class code (emoji-picker flow):** `STARS1` — enter under "I'm a Student" → "Join with a Code", then pick your emoji to log in without a password.
+**Class code (emoji-picker flow):** `STARS1` — enter under "I'm a Student" → "Join with a Code", then pick your emoji to log in without a password. Seeded class **"Ms. Frizzle's Star Class"** (band k2) with three emoji students, no PIN: **Nova ⭐ · Comet 🚀 · Luna 🌙**.
 
 ## Grade 3-5 Student Account
 
