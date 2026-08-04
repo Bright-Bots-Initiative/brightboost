@@ -36,7 +36,7 @@ const BRIEFING: MissionBriefing = {
   tips: pickLocale({
     en: ["Green means safe", "Red means blocked", "Yellow means watch out \u2014 it might close!"],
   }, ["Green means safe", "Red means blocked", "Yellow means watch out \u2014 it might close!"]),
-  chapterLabel: "Signal School",
+  chapterLabel: pickLocale({en: "Signal School"}, "Signal School"),
   themeColor: "blue",
 };
 

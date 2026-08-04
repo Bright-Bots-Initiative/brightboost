@@ -74,7 +74,7 @@ const BRIEFING: MissionBriefing = {
   tips: pickLocale({
     en: ["Drive carefully on the first run", "Pick ONE upgrade to test", "Compare your two runs!"],
   }, ["Drive carefully on the first run", "Pick ONE upgrade to test", "Compare your two runs!"]),
-  chapterLabel: "Race Lab",
+  chapterLabel: pickLocale({en: "Race Lab"}, "Race Lab"),
   themeColor: "amber",
   controlInstructions: {
     keyboard: pickLocale({

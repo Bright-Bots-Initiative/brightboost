@@ -31,7 +31,7 @@ const BRIEFING: MissionBriefing = {
   tips: pickLocale({
     en: ["Watch which lane the light falls in", "Look for repeating patterns", "Scan mystery lights before choosing"],
   }, ["Watch which lane the light falls in", "Look for repeating patterns", "Scan mystery lights before choosing"]),
-  chapterLabel: "Pattern Lab",
+  chapterLabel: pickLocale({en: "Pattern Lab"}, "Pattern Lab"),
   themeColor: "violet",
 };
 
