@@ -79,7 +79,7 @@ const BRIEFING: MissionBriefing = {
       "Scan mystery lights before choosing",
     ],
   ),
-  chapterLabel: pickLocale({en: "Pattern Lab"}, "Pattern Lab"),
+  chapterLabel: pickLocale({ en: "Pattern Lab" }, "Pattern Lab"),
   themeColor: "violet",
 };
 

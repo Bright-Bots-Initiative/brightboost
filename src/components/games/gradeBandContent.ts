@@ -1310,8 +1310,16 @@ interface SweeperStyle {
 }
 
 const SWEEPER_STYLES: Record<string, SweeperStyle> = {
-  loop: { icon: "🔴", color: "text-red-500", labelKey: "games.mazeMaps.loopSweeper" },
-  linear: { icon: "🟢", color: "text-blue-500", labelKey: "games.mazeMaps.loopSweeper" },
+  loop: {
+    icon: "🔴",
+    color: "text-red-500",
+    labelKey: "games.mazeMaps.loopSweeper",
+  },
+  linear: {
+    icon: "🟢",
+    color: "text-blue-500",
+    labelKey: "games.mazeMaps.loopSweeper",
+  },
 };
 
 export interface SweepConfig {

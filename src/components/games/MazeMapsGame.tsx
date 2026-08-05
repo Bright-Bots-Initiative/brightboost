@@ -12,7 +12,11 @@
  */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import GameShell, { type GameResult, type MissionBriefing, ProgressHUD } from "./shared/GameShell";
+import GameShell, {
+  type GameResult,
+  type MissionBriefing,
+  ProgressHUD,
+} from "./shared/GameShell";
 import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
@@ -43,7 +47,14 @@ interface MazeMapConfig {
   sweepers: SweepConfig[];
 }
 
-type GamePhase = "intro" | "tutorial" | "watchPattern" | "guided" | "main" | "exitTicket" | "celebration";
+type GamePhase =
+  | "intro"
+  | "tutorial"
+  | "watchPattern"
+  | "guided"
+  | "main"
+  | "exitTicket"
+  | "celebration";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -61,8 +72,16 @@ interface SweeperStyle {
 }
 
 const SWEEPER_STYLES: Record<string, SweeperStyle> = {
-  loop: { icon: "🔴", color: "text-red-500", labelKey: "games.mazeMaps.loopSweeper", },
-  linear: { icon: "🟢", color: "text-blue-500", labelKey: "games.mazeMaps.lineSweeper", },
+  loop: {
+    icon: "🔴",
+    color: "text-red-500",
+    labelKey: "games.mazeMaps.loopSweeper",
+  },
+  linear: {
+    icon: "🟢",
+    color: "text-blue-500",
+    labelKey: "games.mazeMaps.lineSweeper",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -71,32 +90,110 @@ const SWEEPER_STYLES: Record<string, SweeperStyle> = {
 
 export const MAPS_k2: Record<string, MazeMapConfig> = {
   tutorial: {
-    id: "tutorial", rows: 4, cols: 4,
-    start: [3, 0], goal: [0, 3],
-    walls: [[1, 1], [2, 2]],
-    orbs: [[0, 1], [2, 0], [3, 3]],
+    id: "tutorial",
+    rows: 4,
+    cols: 4,
+    start: [3, 0],
+    goal: [0, 3],
+    walls: [
+      [1, 1],
+      [2, 2],
+    ],
+    orbs: [
+      [0, 1],
+      [2, 0],
+      [3, 3],
+    ],
     safePads: [],
     sweepers: [],
   },
   guided: {
-    id: "guided", rows: 5, cols: 5,
-    start: [4, 0], goal: [0, 4],
-    walls: [[1, 1], [1, 2], [3, 3], [2, 4]],
-    orbs: [[0, 2], [2, 0], [4, 3], [3, 1]],
+    id: "guided",
+    rows: 5,
+    cols: 5,
+    start: [4, 0],
+    goal: [0, 4],
+    walls: [
+      [1, 1],
+      [1, 2],
+      [3, 3],
+      [2, 4],
+    ],
+    orbs: [
+      [0, 2],
+      [2, 0],
+      [4, 3],
+      [3, 1],
+    ],
     safePads: [[2, 2]],
     sweepers: [
-      { id: "s1", type: "loop", loop: [[1, 3], [1, 4], [2, 4], [2, 3], [1, 3]], startIndex: 0 },
+      {
+        id: "s1",
+        type: "loop",
+        loop: [
+          [1, 3],
+          [1, 4],
+          [2, 4],
+          [2, 3],
+          [1, 3],
+        ],
+        startIndex: 0,
+      },
     ],
   },
   main: {
-    id: "main", rows: 7, cols: 7,
-    start: [6, 0], goal: [0, 6],
-    walls: [[1, 1], [1, 2], [2, 4], [3, 1], [3, 5], [4, 3], [5, 5], [5, 1]],
-    orbs: [[0, 2], [1, 5], [2, 0], [4, 6], [5, 3], [6, 5]],
-    safePads: [[3, 3], [1, 4]],
+    id: "main",
+    rows: 7,
+    cols: 7,
+    start: [6, 0],
+    goal: [0, 6],
+    walls: [
+      [1, 1],
+      [1, 2],
+      [2, 4],
+      [3, 1],
+      [3, 5],
+      [4, 3],
+      [5, 5],
+      [5, 1],
+    ],
+    orbs: [
+      [0, 2],
+      [1, 5],
+      [2, 0],
+      [4, 6],
+      [5, 3],
+      [6, 5],
+    ],
+    safePads: [
+      [3, 3],
+      [1, 4],
+    ],
     sweepers: [
-      { id: "s1", type: "loop", loop: [[2, 2], [2, 3], [3, 3], [3, 2], [2, 2]], startIndex: 0 },
-      { id: "s2", type: "loop", loop: [[4, 4], [4, 5], [5, 5], [5, 4], [4, 4]], startIndex: 0 },
+      {
+        id: "s1",
+        type: "loop",
+        loop: [
+          [2, 2],
+          [2, 3],
+          [3, 3],
+          [3, 2],
+          [2, 2],
+        ],
+        startIndex: 0,
+      },
+      {
+        id: "s2",
+        type: "loop",
+        loop: [
+          [4, 4],
+          [4, 5],
+          [5, 5],
+          [5, 4],
+          [4, 4],
+        ],
+        startIndex: 0,
+      },
     ],
   },
 };
@@ -106,7 +203,13 @@ export const MAPS_k2: Record<string, MazeMapConfig> = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function isWall(r: number, c: number, map: MazeMapConfig): boolean {
-  return r < 0 || c < 0 || r >= map.rows || c >= map.cols || map.walls.some(([wr, wc]) => wr === r && wc === c);
+  return (
+    r < 0 ||
+    c < 0 ||
+    r >= map.rows ||
+    c >= map.cols ||
+    map.walls.some(([wr, wc]) => wr === r && wc === c)
+  );
 }
 
 function cellAt(r: number, c: number, arr: [number, number][]): boolean {
@@ -127,24 +230,56 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
 
 // TODO: add translations for the story, tips, control instructions in the briefing
 const BRIEFING: MissionBriefing = {
-  title: pickLocale({ en: "Maze Maps & Smart Paths", es: "Mapas de Laberinto", vi: "Bản Đồ Mê Cung", "zh-CN": "迷宫地图" }, "Maze Maps & Smart Paths"),
-  story: pickLocale({ 
-    en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
-  }, "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze."),
+  title: pickLocale(
+    {
+      en: "Maze Maps & Smart Paths",
+      es: "Mapas de Laberinto",
+      vi: "Bản Đồ Mê Cung",
+      "zh-CN": "迷宫地图",
+    },
+    "Maze Maps & Smart Paths",
+  ),
+  story: pickLocale(
+    {
+      en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+    },
+    "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+  ),
   icon: "🗺️",
-  tips: pickLocale({
-    en: ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"],
-  }, ["Move one step at a time", "Watch the Sweepers before you move", "Safe Pads protect you from Sweepers"]),
-  chapterLabel: pickLocale({en: "AI Lab"}, "AI Lab"),
+  tips: pickLocale(
+    {
+      en: [
+        "Move one step at a time",
+        "Watch the Sweepers before you move",
+        "Safe Pads protect you from Sweepers",
+      ],
+    },
+    [
+      "Move one step at a time",
+      "Watch the Sweepers before you move",
+      "Safe Pads protect you from Sweepers",
+    ],
+  ),
+  chapterLabel: pickLocale({ en: "AI Lab" }, "AI Lab"),
   themeColor: "cyan",
   controlInstructions: {
-    keyboard: [pickLocale({
-      en: "Use Tab to move to action buttons and Enter or Space to choose.",
-    }, "Use Tab to move to action buttons and Enter or Space to choose."),
-  ],
-    buttons: pickLocale({
-      en: ["Choose a move or wait action.", "Watch the pattern before moving."],
-    }, ["Choose a move or wait action.", "Watch the pattern before moving."]),
+    keyboard: [
+      pickLocale(
+        {
+          en: "Use Tab to move to action buttons and Enter or Space to choose.",
+        },
+        "Use Tab to move to action buttons and Enter or Space to choose.",
+      ),
+    ],
+    buttons: pickLocale(
+      {
+        en: [
+          "Choose a move or wait action.",
+          "Watch the pattern before moving.",
+        ],
+      },
+      ["Choose a move or wait action.", "Watch the pattern before moving."],
+    ),
   },
 };
 
@@ -171,9 +306,10 @@ function MazeBoard({
   const h = map.rows * CELL;
 
   return (
-    <div className="relative mx-auto rounded-xl overflow-hidden border-2 border-cyan-300 shadow-lg select-none"
-      style={{ width: w, height: h, maxWidth: "100%" }}>
-
+    <div
+      className="relative mx-auto rounded-xl overflow-hidden border-2 border-cyan-300 shadow-lg select-none"
+      style={{ width: w, height: h, maxWidth: "100%" }}
+    >
       {/* Grid cells */}
       {Array.from({ length: map.rows * map.cols }, (_, i) => {
         const r = Math.floor(i / map.cols);
@@ -195,7 +331,10 @@ function MazeBoard({
             key={key}
             className={`absolute flex items-center justify-center ${bg} ${isFlash ? "ring-2 ring-red-400" : ""}`}
             style={{
-              left: c * CELL, top: r * CELL, width: CELL, height: CELL,
+              left: c * CELL,
+              top: r * CELL,
+              width: CELL,
+              height: CELL,
               borderRight: "1px solid rgba(0,0,0,0.06)",
               borderBottom: "1px solid rgba(0,0,0,0.06)",
             }}
@@ -210,38 +349,54 @@ function MazeBoard({
 
       {/* Hint path dots */}
       {showHintPath?.map(([r, c], i) => (
-        <div key={`hint-${i}`} className="absolute w-2 h-2 rounded-full bg-cyan-400/40 z-5"
-          style={{ left: c * CELL + CELL / 2 - 4, top: r * CELL + CELL / 2 - 4 }} />
+        <div
+          key={`hint-${i}`}
+          className="absolute w-2 h-2 rounded-full bg-cyan-400/40 z-5"
+          style={{
+            left: c * CELL + CELL / 2 - 4,
+            top: r * CELL + CELL / 2 - 4,
+          }}
+        />
       ))}
 
       {/* Sweepers */}
       {Object.entries(sweeperPositions).map(([id, [sr, sc]]) => {
-      const sweeper = map.sweepers.find((s) => s.id === id);
-      const style =
-        SWEEPER_STYLES[sweeper?.type as keyof typeof SWEEPER_STYLES]
-        ?? {
+        const sweeper = map.sweepers.find((s) => s.id === id);
+        const style = SWEEPER_STYLES[
+          sweeper?.type as keyof typeof SWEEPER_STYLES
+        ] ?? {
           icon: "⚫",
           color: "text-black",
           label: "Unknown Sweeper",
         };
 
-      return (
-        <div
-        key={id}
-        className="absolute flex items-center justify-center z-10 transition-all duration-200"
-        style={{left: sc * CELL, top: sr * CELL, width: CELL, height: CELL,}}
-        title={t(style.labelKey, {defaultValue: "Unknown Sweeper",})}
-        >
-        <span className={`text-2xl ${style.color}`}>
-            {style.icon}
-        </span>
-        </div>
-      );
+        return (
+          <div
+            key={id}
+            className="absolute flex items-center justify-center z-10 transition-all duration-200"
+            style={{
+              left: sc * CELL,
+              top: sr * CELL,
+              width: CELL,
+              height: CELL,
+            }}
+            title={t(style.labelKey, { defaultValue: "Unknown Sweeper" })}
+          >
+            <span className={`text-2xl ${style.color}`}>{style.icon}</span>
+          </div>
+        );
       })}
 
       {/* Player */}
-      <div className="absolute flex items-center justify-center z-20 transition-all duration-200"
-        style={{ left: playerPos[1] * CELL, top: playerPos[0] * CELL, width: CELL, height: CELL }}>
+      <div
+        className="absolute flex items-center justify-center z-20 transition-all duration-200"
+        style={{
+          left: playerPos[1] * CELL,
+          top: playerPos[0] * CELL,
+          width: CELL,
+          height: CELL,
+        }}
+      >
         <span className="text-2xl">🤖</span>
       </div>
     </div>
@@ -252,17 +407,59 @@ function MazeBoard({
 // D-Pad Controls
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MazeControls({ onMove, disabled }: { onMove: (dir: Dir) => void; disabled?: boolean }) {
-  const btn = "w-14 h-14 rounded-xl bg-white border-2 border-cyan-200 text-2xl font-bold shadow active:scale-90 disabled:opacity-40 transition-transform flex items-center justify-center";
+function MazeControls({
+  onMove,
+  disabled,
+}: {
+  onMove: (dir: Dir) => void;
+  disabled?: boolean;
+}) {
+  const btn =
+    "w-14 h-14 rounded-xl bg-white border-2 border-cyan-200 text-2xl font-bold shadow active:scale-90 disabled:opacity-40 transition-transform flex items-center justify-center";
   return (
     <div className="flex flex-col items-center gap-1">
-      <button className={btn} onClick={() => onMove("up")} disabled={disabled} aria-label="Move up">↑</button>
+      <button
+        className={btn}
+        onClick={() => onMove("up")}
+        disabled={disabled}
+        aria-label="Move up"
+      >
+        ↑
+      </button>
       <div className="flex gap-1">
-        <button className={btn} onClick={() => onMove("left")} disabled={disabled} aria-label="Move left">←</button>
-        <button className={`${btn} text-base`} onClick={() => onMove("wait")} disabled={disabled} aria-label="Wait">⏸️</button>
-        <button className={btn} onClick={() => onMove("right")} disabled={disabled} aria-label="Move right">→</button>
+        <button
+          className={btn}
+          onClick={() => onMove("left")}
+          disabled={disabled}
+          aria-label="Move left"
+        >
+          ←
+        </button>
+        <button
+          className={`${btn} text-base`}
+          onClick={() => onMove("wait")}
+          disabled={disabled}
+          aria-label="Wait"
+        >
+          ⏸️
+        </button>
+        <button
+          className={btn}
+          onClick={() => onMove("right")}
+          disabled={disabled}
+          aria-label="Move right"
+        >
+          →
+        </button>
       </div>
-      <button className={btn} onClick={() => onMove("down")} disabled={disabled} aria-label="Move down">↓</button>
+      <button
+        className={btn}
+        onClick={() => onMove("down")}
+        disabled={disabled}
+        aria-label="Move down"
+      >
+        ↓
+      </button>
     </div>
   );
 }
@@ -271,19 +468,22 @@ function MazeControls({ onMove, disabled }: { onMove: (dir: Dir) => void; disabl
 // Core Game Component
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MazeMapsCore({ 
-    maps, 
-    onFinish }: { 
-        maps: Record<string, MazeMapConfig>, 
-        onFinish: (result: GameResult) => void 
-    }) {
+function MazeMapsCore({
+  maps,
+  onFinish,
+}: {
+  maps: Record<string, MazeMapConfig>;
+  onFinish: (result: GameResult) => void;
+}) {
   const { t } = useTranslation();
 
   const [phase, setPhase] = useState<GamePhase>("intro");
   const [mapKey, setMapKey] = useState<string>("tutorial");
   const [playerPos, setPlayerPos] = useState<[number, number]>([0, 0]);
   const [collectedOrbs, setCollectedOrbs] = useState<Set<string>>(new Set());
-  const [sweeperIndices, setSweeperIndices] = useState<Record<string, number>>({});
+  const [sweeperIndices, setSweeperIndices] = useState<Record<string, number>>(
+    {},
+  );
   const [checkpoint, setCheckpoint] = useState<[number, number]>([0, 0]);
   const [score, setScore] = useState(0);
   const [moves, setMoves] = useState(0);
@@ -299,21 +499,26 @@ function MazeMapsCore({
   const map = maps[mapKey];
 
   // ── Initialize map ──
-  const initMap = useCallback((key: string) => {
-    const m = maps[key];
-    setMapKey(key);
-    setPlayerPos([...m.start]);
-    setCheckpoint([...m.start]);
-    setCollectedOrbs(new Set());
-    setLevelComplete(false);
-    setFeedback(null);
-    setFlashCell(null);
-    setShowHint(false);
-    // Initialize sweeper indices
-    const indices: Record<string, number> = {};
-    m.sweepers.forEach((s) => { indices[s.id] = s.startIndex; });
-    setSweeperIndices(indices);
-  }, [maps]);
+  const initMap = useCallback(
+    (key: string) => {
+      const m = maps[key];
+      setMapKey(key);
+      setPlayerPos([...m.start]);
+      setCheckpoint([...m.start]);
+      setCollectedOrbs(new Set());
+      setLevelComplete(false);
+      setFeedback(null);
+      setFlashCell(null);
+      setShowHint(false);
+      // Initialize sweeper indices
+      const indices: Record<string, number> = {};
+      m.sweepers.forEach((s) => {
+        indices[s.id] = s.startIndex;
+      });
+      setSweeperIndices(indices);
+    },
+    [maps],
+  );
 
   // Init on phase change
   useEffect(() => {
@@ -331,13 +536,26 @@ function MazeMapsCore({
 
   // ── Keyboard input ──
   useEffect(() => {
-    if (phase !== "tutorial" && phase !== "guided" && phase !== "main" && phase !== "watchPattern") return;
+    if (
+      phase !== "tutorial" &&
+      phase !== "guided" &&
+      phase !== "main" &&
+      phase !== "watchPattern"
+    )
+      return;
     if (levelComplete || animating) return;
 
     const onKey = (e: KeyboardEvent) => {
       const dirMap: Record<string, Dir> = {
-        ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
-        w: "up", s: "down", a: "left", d: "right", " ": "wait",
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        w: "up",
+        s: "down",
+        a: "left",
+        d: "right",
+        " ": "wait",
       };
       const dir = dirMap[e.key];
       if (dir) {
@@ -348,94 +566,138 @@ function MazeMapsCore({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, levelComplete, animating, playerPos, sweeperIndices, collectedOrbs]);
+  }, [
+    phase,
+    levelComplete,
+    animating,
+    playerPos,
+    sweeperIndices,
+    collectedOrbs,
+  ]);
 
   // ── Handle one move (turn-based) ──
-  const handleMove = useCallback((dir: Dir) => {
-    if (levelComplete || animating) return;
-    if (phase === "watchPattern") return; // observing only
+  const handleMove = useCallback(
+    (dir: Dir) => {
+      if (levelComplete || animating) return;
+      if (phase === "watchPattern") return; // observing only
 
-    setAnimating(true);
-    setFeedback(null);
-    setFlashCell(null);
+      setAnimating(true);
+      setFeedback(null);
+      setFlashCell(null);
 
-    // 1. Compute player's next position
-    const [nr, nc] = applyDir(playerPos[0], playerPos[1], dir);
+      // 1. Compute player's next position
+      const [nr, nc] = applyDir(playerPos[0], playerPos[1], dir);
 
-    // Check wall
-    if (dir !== "wait" && isWall(nr, nc, map)) {
-      setAnimating(false);
-      return;
-    }
-
-    const newPos: [number, number] = dir === "wait" ? [...playerPos] : [nr, nc];
-    setPlayerPos(newPos);
-    setMoves((m) => m + 1);
-
-    // 2. Collect orb
-    const orbKey = `${newPos[0]}-${newPos[1]}`;
-    const newCollected = new Set(collectedOrbs);
-    if (cellAt(newPos[0], newPos[1], map.orbs) && !newCollected.has(orbKey)) {
-      newCollected.add(orbKey);
-      setCollectedOrbs(newCollected);
-      setScore((s) => s + 10);
-    }
-
-    // 3. Update checkpoint if on safe pad or start
-    if (cellAt(newPos[0], newPos[1], map.safePads) || (newPos[0] === map.start[0] && newPos[1] === map.start[1])) {
-      setCheckpoint([...newPos]);
-    }
-
-    // 4. Advance sweepers
-    const newIndices: Record<string, number> = {};
-    const newSweeperPos: Record<string, [number, number]> = {};
-    map.sweepers.forEach((s) => {
-      const idx = (sweeperIndices[s.id] ?? s.startIndex) + 1;
-      const loopLen = s.loop.length - 1; // last element duplicates first for wrap
-      newIndices[s.id] = idx % loopLen;
-      newSweeperPos[s.id] = s.loop[idx % loopLen];
-    });
-    setSweeperIndices(newIndices);
-
-    // 5. Check collision (player on sweeper OR sweeper on player)
-    const collided = Object.values(newSweeperPos).some(
-      ([sr, sc]) => sr === newPos[0] && sc === newPos[1],
-    );
-
-    if (collided) {
-      setCollisions((c) => c + 1);
-      setFlashCell(orbKey);
-      setFeedback(t("games.mazeMaps.collisionHint", { defaultValue: "Oops! Back to safety. Watch the pattern first." }));
-
-      // Soft reset to checkpoint — preserve collected orbs
-      setTimeout(() => {
-        setPlayerPos([...checkpoint]);
-        setFlashCell(null);
+      // Check wall
+      if (dir !== "wait" && isWall(nr, nc, map)) {
         setAnimating(false);
+        return;
+      }
 
-        // Show hint after repeated collisions
-        if (collisions + 1 >= MAX_COLLISIONS_FOR_HINT) {
-          setShowHint(true);
-          setHintsUsed((h) => h + 1);
-          setFeedback(t("games.mazeMaps.hintSafePad", { defaultValue: "Try the Safe Pad before moving past the Sweeper." }));
-        }
-      }, 600);
-      return;
-    }
+      const newPos: [number, number] =
+        dir === "wait" ? [...playerPos] : [nr, nc];
+      setPlayerPos(newPos);
+      setMoves((m) => m + 1);
 
-    // 6. Check win
-    const allOrbs = map.orbs.every(([or, oc]) => newCollected.has(`${or}-${oc}`));
-    const atGoal = newPos[0] === map.goal[0] && newPos[1] === map.goal[1];
+      // 2. Collect orb
+      const orbKey = `${newPos[0]}-${newPos[1]}`;
+      const newCollected = new Set(collectedOrbs);
+      if (cellAt(newPos[0], newPos[1], map.orbs) && !newCollected.has(orbKey)) {
+        newCollected.add(orbKey);
+        setCollectedOrbs(newCollected);
+        setScore((s) => s + 10);
+      }
 
-    if (allOrbs && atGoal) {
-      setLevelComplete(true);
-      setFeedback(t("games.mazeMaps.levelComplete", { defaultValue: "All orbs collected! Great path!" }));
-    } else if (atGoal && !allOrbs) {
-      setFeedback(t("games.mazeMaps.collectAll", { defaultValue: "Collect all the Idea Orbs first!" }));
-    }
+      // 3. Update checkpoint if on safe pad or start
+      if (
+        cellAt(newPos[0], newPos[1], map.safePads) ||
+        (newPos[0] === map.start[0] && newPos[1] === map.start[1])
+      ) {
+        setCheckpoint([...newPos]);
+      }
 
-    setAnimating(false);
-  }, [playerPos, map, sweeperIndices, collectedOrbs, checkpoint, collisions, levelComplete, animating, phase, t]);
+      // 4. Advance sweepers
+      const newIndices: Record<string, number> = {};
+      const newSweeperPos: Record<string, [number, number]> = {};
+      map.sweepers.forEach((s) => {
+        const idx = (sweeperIndices[s.id] ?? s.startIndex) + 1;
+        const loopLen = s.loop.length - 1; // last element duplicates first for wrap
+        newIndices[s.id] = idx % loopLen;
+        newSweeperPos[s.id] = s.loop[idx % loopLen];
+      });
+      setSweeperIndices(newIndices);
+
+      // 5. Check collision (player on sweeper OR sweeper on player)
+      const collided = Object.values(newSweeperPos).some(
+        ([sr, sc]) => sr === newPos[0] && sc === newPos[1],
+      );
+
+      if (collided) {
+        setCollisions((c) => c + 1);
+        setFlashCell(orbKey);
+        setFeedback(
+          t("games.mazeMaps.collisionHint", {
+            defaultValue: "Oops! Back to safety. Watch the pattern first.",
+          }),
+        );
+
+        // Soft reset to checkpoint — preserve collected orbs
+        setTimeout(() => {
+          setPlayerPos([...checkpoint]);
+          setFlashCell(null);
+          setAnimating(false);
+
+          // Show hint after repeated collisions
+          if (collisions + 1 >= MAX_COLLISIONS_FOR_HINT) {
+            setShowHint(true);
+            setHintsUsed((h) => h + 1);
+            setFeedback(
+              t("games.mazeMaps.hintSafePad", {
+                defaultValue:
+                  "Try the Safe Pad before moving past the Sweeper.",
+              }),
+            );
+          }
+        }, 600);
+        return;
+      }
+
+      // 6. Check win
+      const allOrbs = map.orbs.every(([or, oc]) =>
+        newCollected.has(`${or}-${oc}`),
+      );
+      const atGoal = newPos[0] === map.goal[0] && newPos[1] === map.goal[1];
+
+      if (allOrbs && atGoal) {
+        setLevelComplete(true);
+        setFeedback(
+          t("games.mazeMaps.levelComplete", {
+            defaultValue: "All orbs collected! Great path!",
+          }),
+        );
+      } else if (atGoal && !allOrbs) {
+        setFeedback(
+          t("games.mazeMaps.collectAll", {
+            defaultValue: "Collect all the Idea Orbs first!",
+          }),
+        );
+      }
+
+      setAnimating(false);
+    },
+    [
+      playerPos,
+      map,
+      sweeperIndices,
+      collectedOrbs,
+      checkpoint,
+      collisions,
+      levelComplete,
+      animating,
+      phase,
+      t,
+    ],
+  );
 
   // ── Phase transitions ──
   const advancePhase = useCallback(() => {
@@ -506,10 +768,15 @@ function MazeMapsCore({
       <div className="text-center space-y-6 py-8 slide-up-fade">
         <div className="text-6xl bounce-in">🗺️</div>
         <h2 className="text-2xl font-extrabold text-cyan-800">
-          {t("games.mazeMaps.introTitle", { defaultValue: "Maze Maps & Smart Paths" })}
+          {t("games.mazeMaps.introTitle", {
+            defaultValue: "Maze Maps & Smart Paths",
+          })}
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto">
-          {t("games.mazeMaps.introDesc", { defaultValue: "Help Byte Bot collect the Idea Orbs. Watch the Sweepers and choose a smart path!" })}
+          {t("games.mazeMaps.introDesc", {
+            defaultValue:
+              "Help Byte Bot collect the Idea Orbs. Watch the Sweepers and choose a smart path!",
+          })}
         </p>
         <button
           className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-lg rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
@@ -527,10 +794,15 @@ function MazeMapsCore({
       <div className="space-y-4">
         <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-4 text-center">
           <p className="text-lg font-bold text-amber-800">
-            {t("games.mazeMaps.watchFirst", { defaultValue: "Watch the Sweeper's pattern first!" })}
+            {t("games.mazeMaps.watchFirst", {
+              defaultValue: "Watch the Sweeper's pattern first!",
+            })}
           </p>
           <p className="text-sm text-amber-600 mt-1">
-            {t("games.mazeMaps.watchDesc", { defaultValue: "See how it moves in a loop? Watch one more cycle..." })}
+            {t("games.mazeMaps.watchDesc", {
+              defaultValue:
+                "See how it moves in a loop? Watch one more cycle...",
+            })}
           </p>
         </div>
         <MazeBoard
@@ -545,7 +817,9 @@ function MazeMapsCore({
               className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-xl shadow hover:scale-105 active:scale-95 transition-transform"
               onClick={advancePhase}
             >
-              {t("games.mazeMaps.readyToTry", { defaultValue: "I see the pattern! Let me try." })}
+              {t("games.mazeMaps.readyToTry", {
+                defaultValue: "I see the pattern! Let me try.",
+              })}
             </button>
           </div>
         )}
@@ -556,16 +830,36 @@ function MazeMapsCore({
   // Exit Ticket phase
   if (phase === "exitTicket") {
     const options = [
-      { id: 0, label: t("games.mazeMaps.exitA", { defaultValue: "Run straight through as fast as possible" }), correct: false },
-      { id: 1, label: t("games.mazeMaps.exitB", { defaultValue: "Watch the pattern, wait at a safe spot, then move" }), correct: true },
-      { id: 2, label: t("games.mazeMaps.exitC", { defaultValue: "Close your eyes and hope for the best" }), correct: false },
+      {
+        id: 0,
+        label: t("games.mazeMaps.exitA", {
+          defaultValue: "Run straight through as fast as possible",
+        }),
+        correct: false,
+      },
+      {
+        id: 1,
+        label: t("games.mazeMaps.exitB", {
+          defaultValue: "Watch the pattern, wait at a safe spot, then move",
+        }),
+        correct: true,
+      },
+      {
+        id: 2,
+        label: t("games.mazeMaps.exitC", {
+          defaultValue: "Close your eyes and hope for the best",
+        }),
+        correct: false,
+      },
     ];
     return (
       <div className="text-center space-y-6 py-8 slide-up-fade max-w-lg mx-auto">
-        <ProgressHUD step={3} totalLevels={LEVELS}/>
+        <ProgressHUD step={3} totalLevels={LEVELS} />
         <div className="text-5xl">🤔</div>
         <h3 className="text-xl font-extrabold text-cyan-800">
-          {t("games.mazeMaps.exitQuestion", { defaultValue: "Which path is smartest?" })}
+          {t("games.mazeMaps.exitQuestion", {
+            defaultValue: "Which path is smartest?",
+          })}
         </h3>
         <div className="space-y-3">
           {options.map((o) => (
@@ -598,7 +892,9 @@ function MazeMapsCore({
         </div>
         {exitAnswer !== null && !options[exitAnswer].correct && (
           <p className="text-sm text-red-600">
-            {t("games.mazeMaps.exitRetry", { defaultValue: "Not quite — try again!" })}
+            {t("games.mazeMaps.exitRetry", {
+              defaultValue: "Not quite — try again!",
+            })}
           </p>
         )}
       </div>
@@ -611,14 +907,20 @@ function MazeMapsCore({
       <div className="text-center space-y-6 py-8 slide-up-fade">
         <div className="text-6xl bounce-in">🎉</div>
         <h3 className="text-2xl font-extrabold text-cyan-800">
-          {t("games.mazeMaps.celebTitle", { defaultValue: "You used a smart path!" })}
+          {t("games.mazeMaps.celebTitle", {
+            defaultValue: "You used a smart path!",
+          })}
         </h3>
         <p className="text-lg text-slate-600">
-          {t("games.mazeMaps.celebDesc", { defaultValue: "You watched, planned, and chose a smart path. Smart systems look for patterns before they act." })}
+          {t("games.mazeMaps.celebDesc", {
+            defaultValue:
+              "You watched, planned, and chose a smart path. Smart systems look for patterns before they act.",
+          })}
         </p>
         <div className="flex items-center justify-center gap-6 text-sm">
           <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full font-bold">
-            {t("games.mazeMaps.orbsCollected", { defaultValue: "Orbs" })}: {Math.floor(score / 10)}
+            {t("games.mazeMaps.orbsCollected", { defaultValue: "Orbs" })}:{" "}
+            {Math.floor(score / 10)}
           </span>
           <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full font-bold">
             {t("games.mazeMaps.movesUsed", { defaultValue: "Moves" })}: {moves}
@@ -641,21 +943,33 @@ function MazeMapsCore({
     return cellAt(r, c, map.orbs);
   }).length;
 
-  const phaseLabel = phase === "tutorial"
-    ? t("games.mazeMaps.phaseTutorial", { defaultValue: "Tutorial" })
-    : phase === "guided"
-      ? t("games.mazeMaps.phaseGuided", { defaultValue: "Guided Play" })
-      : t("games.mazeMaps.phaseMain", { defaultValue: "Main Challenge" });
+  const phaseLabel =
+    phase === "tutorial"
+      ? t("games.mazeMaps.phaseTutorial", { defaultValue: "Tutorial" })
+      : phase === "guided"
+        ? t("games.mazeMaps.phaseGuided", { defaultValue: "Guided Play" })
+        : t("games.mazeMaps.phaseMain", { defaultValue: "Main Challenge" });
 
   return (
     <div className="space-y-3">
       {/* Phase banner */}
       <div className="rounded-xl bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 p-3 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-cyan-600">{phaseLabel}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-cyan-600">
+          {phaseLabel}
+        </p>
         <p className="text-sm text-slate-700 mt-1">
-          {phase === "tutorial" && t("games.mazeMaps.tutorialHint", { defaultValue: "Collect all Idea Orbs and reach the Goal!" })}
-          {phase === "guided" && t("games.mazeMaps.guidedHint", { defaultValue: "Watch the Sweeper. Use the Safe Pad!" })}
-          {phase === "main" && t("games.mazeMaps.mainHint", { defaultValue: "Two Sweepers! Plan a smart path." })}
+          {phase === "tutorial" &&
+            t("games.mazeMaps.tutorialHint", {
+              defaultValue: "Collect all Idea Orbs and reach the Goal!",
+            })}
+          {phase === "guided" &&
+            t("games.mazeMaps.guidedHint", {
+              defaultValue: "Watch the Sweeper. Use the Safe Pad!",
+            })}
+          {phase === "main" &&
+            t("games.mazeMaps.mainHint", {
+              defaultValue: "Two Sweepers! Plan a smart path.",
+            })}
         </p>
       </div>
 
@@ -674,8 +988,11 @@ function MazeMapsCore({
         )}
       </div>
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
-          <ProgressHUD step={phase === "tutorial" ? 0 : phase === "guided" ? 1 : 2} totalLevels={LEVELS}/>
-        </div>
+        <ProgressHUD
+          step={phase === "tutorial" ? 0 : phase === "guided" ? 1 : 2}
+          totalLevels={LEVELS}
+        />
+      </div>
 
       {/* Board */}
       <MazeBoard
@@ -688,21 +1005,30 @@ function MazeMapsCore({
 
       {/* Controls */}
       <div className="flex justify-center pt-2">
-        <MazeControls onMove={handleMove} disabled={levelComplete || animating} />
+        <MazeControls
+          onMove={handleMove}
+          disabled={levelComplete || animating}
+        />
       </div>
 
       {/* Feedback */}
       {feedback && (
-        <div className={`text-center py-2 rounded-xl font-bold text-sm ${
-          levelComplete ? "bg-green-100 text-green-800 bounce-in" : "bg-amber-100 text-amber-800"
-        }`}>
+        <div
+          className={`text-center py-2 rounded-xl font-bold text-sm ${
+            levelComplete
+              ? "bg-green-100 text-green-800 bounce-in"
+              : "bg-amber-100 text-amber-800"
+          }`}
+        >
           {feedback}
         </div>
       )}
 
       {/* Controls hint */}
       <p className="text-center text-xs text-slate-400">
-        {t("games.mazeMaps.controlsHint", { defaultValue: "Arrow keys to move \u2022 Space to wait" })}
+        {t("games.mazeMaps.controlsHint", {
+          defaultValue: "Arrow keys to move \u2022 Space to wait",
+        })}
       </p>
     </div>
   );
@@ -713,15 +1039,14 @@ function MazeMapsCore({
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function MazeMapsGame({
-    config,
-    onComplete,
+  config,
+  onComplete,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
-}) 
-{
-    const band = getGradeBand(config);
-    const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
+}) {
+  const band = getGradeBand(config);
+  const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
 
   return (
     <GameShell
@@ -730,7 +1055,9 @@ export default function MazeMapsGame({
       briefing={BRIEFING}
       onComplete={onComplete ?? (() => {})}
     >
-      {({ onFinish, reducedEffects: _reducedEffects }) => <MazeMapsCore maps={maps} onFinish={onFinish} />}
+      {({ onFinish, reducedEffects: _reducedEffects }) => (
+        <MazeMapsCore maps={maps} onFinish={onFinish} />
+      )}
     </GameShell>
   );
 }
