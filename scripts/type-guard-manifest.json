@@ -1,4 +1,7 @@
 {
-  "description": "Compile-time guard files that must appear in tsc --listFiles (W-12 / G-008)",
-  "guardFiles": ["src/vite-env.d.ts"]
+  "description": "Compile-time guard files that must appear in tsc --listFiles (W-12 / G-008). src/components/games/dataDashAttrsExhaustiveness.ts is the real exhaustiveness guard. src/vite-env.d.ts is a smoke entry (Vite ambient decl), not a behavioral guard.",
+  "guardFiles": [
+    "src/components/games/dataDashAttrsExhaustiveness.ts",
+    "src/vite-env.d.ts"
+  ]
 }
