@@ -6,8 +6,9 @@
 # not raw file text — a commented-out `run:` line must not count as present.
 #
 # Phase 1 (healthy): every manifest substring must appear in an active run:/uses:.
-# Phase 2 (sabotage): for each manifest entry, remove that step from the parsed
-#   document and require the check to fail (exhaustive falsification).
+# Phase 2 (sabotage): for EACH manifest entry, remove matching steps from the
+#   parsed document and require failure (exhaustive — always on in CI; not
+#   gated behind --exhaustive).
 #
 # Exit 0 = both phases OK.
 # Exit 1 = property false (missing step / sabotage did not fail).
