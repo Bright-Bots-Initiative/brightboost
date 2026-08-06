@@ -39,6 +39,7 @@ function resolveCmd(cmd) {
  *   required?: boolean,
  *   kind?: 'run' | 'not-local',
  *   skipIf?: () => string | null,
+ *   env?: Record<string, string | undefined>,
  * }} Step
  */
 
@@ -125,6 +126,9 @@ export const STEPS = [
     name: "CI shell gate",
     argv: ["npm", "run", "verify:ci-gate"],
     required: true,
+    // Gate boots Vite on hardcoded :5173 (same as CI). Unset remapped
+    // CYPRESS_SWA_URL so Cypress hits the gate's server (remember.md §8 #19).
+    env: { CYPRESS_SWA_URL: undefined },
   },
   {
     id: "CI-10",
@@ -244,6 +248,9 @@ Documented setup (from repo root):
 Then:
   npm run verify -- --skip-install
   # env-dependent / out-of-scope steps SKIP; use --allow-skips for exit 0
+  # If CYPRESS_SWA_URL points at a remapped FE, that server must be listening
+  # or unset the var so CI-10/11/12 SKIP. CI-23 unsets remapped URL itself
+  # (shell gate uses CI's :5173).
 
 Skip contract:
   Required SKIP without --allow-skips → exit 1 (never silent green).
@@ -275,9 +282,16 @@ export function runCommand(argv, opts = {}) {
     // npm/npx/bare bash need shell resolution on Windows; an absolute BB_BASH path must not
     // go through shell:true (spaces in "Program Files" break unquoted spawn).
     const needsShell = cmd === "npm" || cmd === "npx" || cmd === "bash";
+    const childEnv = { ...process.env, ...(opts.env || {}) };
+    // Explicit undefined in opts.env means "unset" (cannot rely on spread alone).
+    if (opts.env) {
+      for (const [k, v] of Object.entries(opts.env)) {
+        if (v === undefined) delete childEnv[k];
+      }
+    }
     const child = spawn(cmd, args, {
       cwd: opts.cwd ? path.join(REPO_ROOT, opts.cwd) : REPO_ROOT,
-      env: { ...process.env, ...opts.env },
+      env: childEnv,
       shell: needsShell,
       windowsHide: true,
     });
@@ -388,7 +402,10 @@ export async function runParity(steps, opts) {
 
     console.log(`[RUN] ${step.id} ${step.name}`);
     console.log(`command: ${cmdStr}`);
-    const { code, output } = await runCommand(step.argv, { cwd: step.cwd });
+    const { code, output } = await runCommand(step.argv, {
+      cwd: step.cwd,
+      env: step.env,
+    });
     if (code !== 0) {
       console.log(`[FAIL] ${step.id} ${step.name}`);
       console.log(`command: ${cmdStr}`);
