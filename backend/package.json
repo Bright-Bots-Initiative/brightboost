@@ -17,6 +17,7 @@
     "typecheck": "npm run build:shared && tsc --noEmit"
   },
   "dependencies": {
+    "@brightboost/greatwork-engine": "file:../shared",
     "@prisma/client": "^6.19.1",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",

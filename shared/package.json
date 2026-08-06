@@ -1,0 +1,7 @@
+{
+  "name": "@brightboost/greatwork-engine",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/greatwork-engine/index.js",
+  "types": "dist/greatwork-engine/index.d.ts"
+}

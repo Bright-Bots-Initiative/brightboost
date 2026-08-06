@@ -143,10 +143,26 @@ Canonical §15.2 row 7 evidence: compile/lint/unit/build green while container e
 - Reverted `backend/tsconfig.json` to `rootDir: "."`, `include: ["src/**/*"]` only.
 - Added `shared/tsconfig.json` → emit CommonJS + declarations to `shared/dist/`.
 - `backend/package.json`: `build:shared`, `build:railway` runs shared then `db:generate` then `tsc`; `typecheck` builds shared first.
-- Probe imports `../../shared/dist/greatwork-engine` (emitted, not live TS outside `rootDir`).
+- ~~Probe imports `../../shared/dist/greatwork-engine` (emitted, not live TS outside `rootDir`).~~ **Superseded by review fix below** — that relative path typechecked against source depth and failed at runtime under `dist/src/`.
 - **`main` / `start` / `predeploy.sh` untouched** — S-2 preserves `dist/src/server.js`.
 
-W-02 proof: `cd backend; npm run build:railway` exit 0; `dist/src/server.js` present; probe requires `../../shared/dist/greatwork-engine`.
+W-02 proof: `cd backend; npm run build:railway` exit 0; `dist/src/server.js` present.
+
+### Review fix — runtime package-name resolution (PR #743)
+
+**Defect (nwalker):** relative `../../shared/dist/greatwork-engine` from `backend/src/sharedEngineProbe.ts` resolves at compile time to `<repo>/shared/dist/…`, but after emit to `backend/dist/src/` the same specifier resolves to `backend/shared/dist/…` (`MODULE_NOT_FOUND`). Separately, nothing imported the probe, so `/health` 200 proved the server, not the shared engine.
+
+**Resolution (Option 1):**
+
+| Piece                  | Change                                                                                                               |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `shared/package.json`  | `name: @brightboost/greatwork-engine`, `main`/`types` → `dist/greatwork-engine/index.{js,d.ts}`                      |
+| `backend/package.json` | `"@brightboost/greatwork-engine": "file:../shared"`                                                                  |
+| Probe import           | `from "@brightboost/greatwork-engine"` — Node resolves identically at compile and runtime                            |
+| Boot                   | `server.ts` imports `sharedEngineProbeLabel`; `/health` returns `{ status, sharedEngine }`                           |
+| Regression             | `backend/src/__tests__/sharedEngineProbe.test.ts` (root Vitest `unit` project — backend has no `test` script, OQ-06) |
+
+Rejected shortcuts: deepening to `../../../` (breaks compile), copying/symlinking `shared/` under `backend/` (spike anti-goal), S-1 / flatten `rootDir: "src"` (moves entrypoint; out of scope).
 
 ---
 
