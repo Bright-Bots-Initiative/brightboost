@@ -115,6 +115,10 @@ export const STEPS = [
     name: "Unit + Storybook tests",
     argv: ["npm", "test", "--", "--watch=false"],
     required: true,
+    skipIf: () =>
+      REPO_ROOT.includes(" ")
+        ? "checkout path contains a space — Storybook Vitest project owned by #707"
+        : null,
   },
   {
     id: "CI-23",
@@ -221,8 +225,43 @@ export const STEPS = [
     name: "Prettier format check",
     argv: ["npm", "run", "format:check"],
     required: true,
+    skipIf: () =>
+      "whole-tree format:check is a reverse gap (OQ-10); Prettier is enforced reject-only on staged files via husky — not mass-fixed in #740",
   },
 ];
+
+/**
+ * Documented local setup and skip contract (Bug E / nwalker review).
+ * Printed by `node scripts/verify-parity.mjs --help`.
+ */
+export const HELP_TEXT = `npm run verify — local–CI parity runner (#740)
+
+Documented setup (from repo root):
+  npm ci
+  cd backend && npm ci
+  # optional: npx prisma generate  (usually supplied by @prisma/client postinstall)
+
+Then:
+  npm run verify -- --skip-install
+  # env-dependent / out-of-scope steps SKIP; use --allow-skips for exit 0
+
+Skip contract:
+  Required SKIP without --allow-skips → exit 1 (never silent green).
+  Known local SKIPs (named + linked):
+    CI-09  spaced path → #707 Storybook Vitest
+    CI-10/11/12  CYPRESS_SWA_URL unset
+    CI-14/16  DATABASE_URL unset
+    CI-26  whole-tree Prettier reverse gap (OQ-10); hooks cover staged files
+  NOT-LOCAL: CI-21 deploy, CI-22 prod-smoke
+  Do not fix backend pre-existing tsc / Prisma gaps here (OQ-03 residual / B5-02).
+
+Flags:
+  --skip-install   omit CI-01/04/07/08
+  --allow-skips    treat required SKIPs as non-fatal
+  --only CI-0X     run a subset (comma-separated)
+  --inject-fail ID sabotage one step (parity-selfcheck)
+  --help           this text
+`;
 
 /**
  * @param {string[]} argv
@@ -380,6 +419,10 @@ const isMain =
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMain) {
+  if (process.argv.slice(2).includes("--help")) {
+    console.log(HELP_TEXT);
+    process.exit(0);
+  }
   const opts = parseArgs(process.argv.slice(2));
   runParity(STEPS, opts).then((code) => {
     process.exit(code);
