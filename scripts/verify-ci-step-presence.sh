@@ -2,9 +2,12 @@
 # verify-ci-step-presence.sh — Two-phase proof that required CI steps remain
 # invoked in ci-cd.yml (W-11 / G-205).
 #
-# Phase 1 (healthy): parse the real workflow; every manifest substring must appear.
-# Phase 2 (sabotage): copy the workflow, delete one required invocation, re-run
-#   against the copy, require non-zero.
+# Matches against *active* workflow commands (parsed YAML jobs.*.steps[]),
+# not raw file text — a commented-out `run:` line must not count as present.
+#
+# Phase 1 (healthy): every manifest substring must appear in an active run:/uses:.
+# Phase 2 (sabotage): for each manifest entry, remove that step from the parsed
+#   document and require the check to fail (exhaustive falsification).
 #
 # Exit 0 = both phases OK.
 # Exit 1 = property false (missing step / sabotage did not fail).
@@ -17,6 +20,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # U1-04: injectable paths for unit tests (default = production locations).
 MANIFEST="${CI_STEP_PRESENCE_MANIFEST:-$SCRIPT_DIR/ci-required-steps.json}"
 WORKFLOW="${CI_STEP_PRESENCE_WORKFLOW:-$REPO_ROOT/.github/workflows/ci-cd.yml}"
+CORE="$SCRIPT_DIR/verify-ci-step-presence-core.mjs"
 
 if [[ ! -f "$MANIFEST" ]]; then
   echo "ERROR: missing manifest $MANIFEST" >&2
@@ -26,65 +30,42 @@ if [[ ! -f "$WORKFLOW" ]]; then
   echo "ERROR: missing workflow $WORKFLOW" >&2
   exit 2
 fi
+if [[ ! -f "$CORE" ]]; then
+  echo "ERROR: missing core module $CORE" >&2
+  exit 2
+fi
 if ! command -v node >/dev/null 2>&1; then
-  echo "ERROR: node is required to parse the manifest" >&2
+  echo "ERROR: node is required to parse the workflow YAML" >&2
   exit 2
 fi
 
-# Read required substrings from JSON via node (no jq dependency).
-mapfile -t REQUIRED < <(node -e '
-  const m = require(process.argv[1]);
-  for (const s of m.requiredSubstrings) process.stdout.write(s + "\n");
-' "$MANIFEST")
-
-check_workflow() {
-  local file="$1"
-  local label="$2"
-  local missing=0
-  local s
-  for s in "${REQUIRED[@]}"; do
-    if ! grep -Fq -- "$s" "$file"; then
-      echo "[$label] MISSING required step substring: $s" >&2
-      missing=1
-    fi
-  done
-  return "$missing"
-}
+export CI_STEP_PRESENCE_MANIFEST="$MANIFEST"
+export CI_STEP_PRESENCE_WORKFLOW="$WORKFLOW"
 
 echo "[verify-ci-step-presence] Phase 1/2 — healthy workflow (expect PASS)…"
-if ! check_workflow "$WORKFLOW" "healthy"; then
-  echo "FAIL: healthy workflow is missing required step(s)." >&2
-  exit 1
+set +e
+node "$CORE" check
+phase1=$?
+set -e
+if [[ "$phase1" -ne 0 ]]; then
+  echo "FAIL: healthy workflow is missing required step(s) (or could not check)." >&2
+  exit "$phase1"
 fi
 echo "[verify-ci-step-presence] Healthy workflow PASS."
 
-TMP="$(mktemp)"
-trap 'rm -f "$TMP"' EXIT
-cp "$WORKFLOW" "$TMP"
-
-# Sabotage: remove the prisma-drift invocation line (G-205 exemplar).
-# Use a portable sed-free approach via node.
-node -e '
-  const fs = require("fs");
-  const p = process.argv[1];
-  let t = fs.readFileSync(p, "utf8");
-  const next = t.split(/\r?\n/).filter((line) => !line.includes("check-prisma-drift.sh")).join("\n");
-  if (next === t) {
-    console.error("sabotage failed: check-prisma-drift.sh line not found");
-    process.exit(2);
-  }
-  fs.writeFileSync(p, next);
-' "$TMP"
-
-echo "[verify-ci-step-presence] Phase 2/2 — sabotaged copy missing drift invocation (expect FAIL)…"
-if check_workflow "$TMP" "sabotage"; then
-  echo "FAIL: sabotaged workflow still passed — guard has no teeth." >&2
-  exit 1
+echo "[verify-ci-step-presence] Phase 2/2 — exhaustive sabotage per manifest entry (expect each FAIL)…"
+set +e
+node "$CORE" sabotage-all
+phase2=$?
+set -e
+if [[ "$phase2" -ne 0 ]]; then
+  echo "FAIL: exhaustive sabotage phase did not prove every entry." >&2
+  exit "$phase2"
 fi
 
 echo "============================================================"
 echo "  PASS: CI step-presence guard has teeth."
-echo "  Healthy:   all required substrings present"
-echo "  Sabotaged: missing check-prisma-drift.sh detected"
+echo "  Healthy:   all required substrings present in active steps"
+echo "  Sabotaged: every manifest entry falsified via YAML parse"
 echo "============================================================"
 exit 0
