@@ -20,6 +20,8 @@ export function clearModuleCache() {
 
 function bypassCacheForE2E(): boolean {
   // Parallel Cypress suites reseed frequently; stale module trees 404 complete-activity.
+  // Never engage under Vitest — .env.local may set the flag and would break cache unit tests.
+  if (process.env.VITEST) return false;
   return process.env.E2E_RELAX_AUTH_LIMIT === "1";
 }
 

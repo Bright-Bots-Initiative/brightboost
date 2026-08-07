@@ -13,7 +13,8 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many login/signup attempts, please try again later." },
   // Local E2E (#671): parallel Cypress suites exhaust 20/15min; set in .env.local.
-  skip: () => process.env.E2E_RELAX_AUTH_LIMIT === "1",
+  // Skip must not fire under Vitest (same env can leak from .env.local).
+  skip: () => process.env.E2E_RELAX_AUTH_LIMIT === "1" && !process.env.VITEST,
 });
 
 /**
