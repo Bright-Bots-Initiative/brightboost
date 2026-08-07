@@ -37,11 +37,6 @@ const GZ_DASH = { s: 0.3, e: 0.4 };
 const GZ_JUMP = { s: 0.6, e: 0.8 };
 const IDEAL_TOSS = 50;
 const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎" };
-const NAMES: Record<string, string> = {
-  dash: "games.moveMeasure.dashName",
-  jump: "games.moveMeasure.jumpName",
-  toss: "games.moveMeasure.tossName",
-};
 const defaultNames = { dash: "Dash", jump: "Jump", toss: "Toss" } as const;
 const EVENT_ORDER: EventKey[] = ["dash", "jump", "toss"];
 
@@ -229,7 +224,22 @@ function MoveMeasurePlayfield({
 }) {
   const config = BAND_CONFIG[band];
   const { t } = useTranslation();
-  const eventName = (event: EventKey) => t(NAMES[event]);
+  const eventName = (event: EventKey) => {
+    switch (event) {
+      case "dash":
+        return t("games.moveMeasure.dashName", {
+          defaultValue: defaultNames.dash,
+        });
+      case "jump":
+        return t("games.moveMeasure.jumpName", {
+          defaultValue: defaultNames.jump,
+        });
+      case "toss":
+        return t("games.moveMeasure.tossName", {
+          defaultValue: defaultNames.toss,
+        });
+    }
+  };
   const [phase, setPhase] = useState<Phase>("intro");
   const [scores, setScores] = useState<Scores>({ dash: 0, jump: 0, toss: 0 });
   const [impEvent, setImpEvent] = useState<EventKey | null>(null);
@@ -623,8 +633,7 @@ function MoveMeasurePlayfield({
 
         {/* Event label */}
         <div className="text-lg font-bold text-emerald-700">
-          {ICONS[currentEvent]}{" "}
-          {t(NAMES[currentEvent], { defaultValue: defaultNames[currentEvent] })}
+          {ICONS[currentEvent]} {eventName(currentEvent)}
         </div>
 
         {/* Slider */}
@@ -829,8 +838,7 @@ function MoveMeasurePlayfield({
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
         <h3 className="text-2xl font-extrabold">
-          {ICONS[currentEvent]}{" "}
-          {t(NAMES[currentEvent], { defaultValue: defaultNames[currentEvent] })}
+          {ICONS[currentEvent]} {eventName(currentEvent)}
         </h3>
 
         <div className="flex justify-center gap-10">
@@ -963,12 +971,8 @@ function MoveMeasurePlayfield({
         {twoTied && (
           <p className="bounce-in text-lg font-bold text-emerald-700">
             {t("games.moveMeasure.tiedBest", {
-              first: t(NAMES[bestEvents[0]], {
-                defaultValue: defaultNames[bestEvents[0]],
-              }),
-              second: t(NAMES[bestEvents[1]], {
-                defaultValue: defaultNames[bestEvents[1]],
-              }),
+              first: eventName(bestEvents[0]),
+              second: eventName(bestEvents[1]),
               defaultValue: `You tied your best in ${tiedNames}!`,
             })}
           </p>
@@ -1030,9 +1034,7 @@ function MoveMeasurePlayfield({
                   </div>
                 )}
 
-                <span className="text-xs text-slate-500">
-                  {t(NAMES[ev], { defaultValue: defaultNames[ev] })}
-                </span>
+                <span className="text-xs text-slate-500">{eventName(ev)}</span>
               </div>
             );
           })}
@@ -1073,7 +1075,7 @@ function MoveMeasurePlayfield({
                   setTimeout(() => setPhase("improve"), 1200);
                 }}
               >
-                {ICONS[ev]} {t(NAMES[ev], { defaultValue: defaultNames[ev] })}
+                {ICONS[ev]} {eventName(ev)}
               </button>
             );
           })}
@@ -1148,8 +1150,7 @@ function MoveMeasurePlayfield({
         {impEvent && (
           <div className="bounce-in space-y-2">
             <p className="text-sm font-bold uppercase tracking-widest text-emerald-600">
-              {ICONS[impEvent]}{" "}
-              {t(NAMES[impEvent], { defaultValue: defaultNames[impEvent] })}{" "}
+              {ICONS[impEvent]} {eventName(impEvent)}{" "}
               {t("games.moveMeasure.results", { defaultValue: "Results" })}
             </p>
 
