@@ -34,7 +34,18 @@ function extractKeys(source: string): string[] {
   // Matches: T("patternLabel")
   const TRegex = /\bT\s*\(\s*["'`]([^"'`]+)["'`]/g;
 
+  // Matches: labelKey: "games.mazeMaps.xxx"
+  const labelKeyRegex = /labelKey\s*:\s*["'`]([^"'`]+)["'`]/g;
+
   let match: RegExpExecArray | null;
+
+  while ((match = labelKeyRegex.exec(source)) !== null) {
+    const key = match[1];
+
+    if (key.includes(".")) {
+        keys.add(key);
+    }
+  }
 
   while ((match = tRegex.exec(source)) !== null) {
     const key = match[1];

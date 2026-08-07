@@ -1654,6 +1654,7 @@
     "mazeMaps": {
       "loopSweeper": "Loop Sweeper",
       "lineSweeper": "Line Sweeper",
+      "unknownSweeper": "Unknown Sweeper",
       "collisionHint": "Oops! Back to safety. Watch the pattern first.",
       "hintSafePad": "Try the Safe Pad before moving past the Sweeper.",
       "levelComplete": "All orbs collected! Great path!",

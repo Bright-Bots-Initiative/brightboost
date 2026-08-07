@@ -367,7 +367,7 @@ function MazeBoard({
         ] ?? {
           icon: "⚫",
           color: "text-black",
-          label: "Unknown Sweeper",
+          labelKey: "games.mazeMaps.unknownSweeper",
         };
 
         return (
