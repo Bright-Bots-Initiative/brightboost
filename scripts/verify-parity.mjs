@@ -265,10 +265,47 @@ Skip contract:
 Flags:
   --skip-install   omit CI-01/04/07/08
   --allow-skips    treat required SKIPs as non-fatal
-  --only CI-0X     run a subset (comma-separated)
-  --inject-fail ID sabotage one step (parity-selfcheck)
+  --only CI-0X     run a subset (comma-separated; unknown/empty IDs → exit 2)
+  --inject-fail ID sabotage one step (parity-selfcheck; unknown ID → exit 2)
   --help           this text
 `;
+
+/**
+ * @typedef {{
+ *   allowSkips: boolean,
+ *   only: string[] | null,
+ *   injectFail: string | null,
+ *   skipInstall: boolean,
+ *   usageError: string | null,
+ * }} ParsedArgs
+ */
+
+/**
+ * Parse a comma-separated ID list flag (`--only`, future selectors).
+ * Missing value, flag-as-value, or empty/whitespace entries → usageError.
+ * @param {string[]} argvCli
+ * @param {string} flag
+ * @returns {{ values: string[] | null, usageError: string | null }}
+ */
+export function parseIdListFlag(argvCli, flag) {
+  const idx = argvCli.indexOf(flag);
+  if (idx < 0) return { values: null, usageError: null };
+  const raw = argvCli[idx + 1];
+  if (raw === undefined || raw.startsWith("--")) {
+    return {
+      values: null,
+      usageError: `${flag} requires a comma-separated list of step IDs`,
+    };
+  }
+  const parts = raw.split(",").map((s) => s.trim());
+  if (parts.length === 0 || parts.some((p) => !p)) {
+    return {
+      values: null,
+      usageError: `${flag} contains an empty step ID (check commas / quotes)`,
+    };
+  }
+  return { values: parts, usageError: null };
+}
 
 /**
  * @param {string[]} argv
@@ -320,32 +357,76 @@ export function runCommand(argv, opts = {}) {
 
 /**
  * @param {string[]} argvCli
+ * @returns {ParsedArgs}
  */
 export function parseArgs(argvCli) {
   const allowSkips = argvCli.includes("--allow-skips");
-  const onlyIdx = argvCli.indexOf("--only");
-  const only =
-    onlyIdx >= 0 && argvCli[onlyIdx + 1]
-      ? argvCli[onlyIdx + 1].split(",").map((s) => s.trim())
-      : null;
-  const injectIdx = argvCli.indexOf("--inject-fail");
-  const injectFail =
-    injectIdx >= 0 && argvCli[injectIdx + 1]
-      ? argvCli[injectIdx + 1].trim()
-      : null;
   const skipInstall = argvCli.includes("--skip-install");
-  return { allowSkips, only, injectFail, skipInstall };
+
+  const onlyParsed = parseIdListFlag(argvCli, "--only");
+  let usageError = onlyParsed.usageError;
+  const only = onlyParsed.values;
+
+  const injectIdx = argvCli.indexOf("--inject-fail");
+  let injectFail = null;
+  if (injectIdx >= 0) {
+    const raw = argvCli[injectIdx + 1];
+    if (raw === undefined || raw.startsWith("--")) {
+      usageError =
+        usageError ?? "--inject-fail requires a step ID (e.g. CI-06)";
+    } else if (!raw.trim()) {
+      usageError = usageError ?? "--inject-fail requires a non-empty step ID";
+    } else {
+      injectFail = raw.trim();
+    }
+  }
+
+  return { allowSkips, only, injectFail, skipInstall, usageError };
 }
 
 /**
+ * Validate selection flags against the step registry.
+ * Unknown IDs → exit 2 (usage); do not run a partial selection.
  * @param {Step[]} steps
- * @param {ReturnType<typeof parseArgs>} opts
+ * @param {ParsedArgs} opts
+ * @returns {{ ok: true } | { ok: false, code: number, message: string }}
  */
-export async function runParity(steps, opts) {
-  let failed = false;
-  let skippedRequired = false;
+export function validateStepSelection(steps, opts) {
+  if (opts.usageError) {
+    return { ok: false, code: 2, message: opts.usageError };
+  }
+  const validIds = steps.map((s) => s.id);
+  const validList = validIds.join(", ");
 
-  const selected = steps.filter((step) => {
+  if (opts.only) {
+    const unknown = opts.only.filter((id) => !validIds.includes(id));
+    if (unknown.length > 0) {
+      return {
+        ok: false,
+        code: 2,
+        message: `Unknown step ID(s): ${unknown.join(", ")}. Valid IDs: ${validList}`,
+      };
+    }
+  }
+
+  if (opts.injectFail && !validIds.includes(opts.injectFail)) {
+    return {
+      ok: false,
+      code: 2,
+      message: `Unknown step ID for --inject-fail: ${opts.injectFail}. Valid IDs: ${validList}`,
+    };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Filter steps by --only / --skip-install (and any future selectors).
+ * @param {Step[]} steps
+ * @param {ParsedArgs} opts
+ */
+export function selectSteps(steps, opts) {
+  return steps.filter((step) => {
     if (opts.only && !opts.only.includes(step.id)) return false;
     if (
       opts.skipInstall &&
@@ -358,6 +439,36 @@ export async function runParity(steps, opts) {
     }
     return true;
   });
+}
+
+/**
+ * @param {Step[]} steps
+ * @param {ParsedArgs} opts
+ */
+export async function runParity(steps, opts) {
+  let failed = false;
+  let skippedRequired = false;
+
+  const selection = validateStepSelection(steps, opts);
+  if (!selection.ok) {
+    console.error(selection.message);
+    return selection.code;
+  }
+
+  const selected = selectSteps(steps, opts);
+
+  if (opts.only || opts.skipInstall) {
+    const ids = selected.map((s) => s.id).join(", ") || "(none)";
+    console.log(`Selected ${selected.length} of ${steps.length} steps: ${ids}`);
+  }
+
+  // Terminal invariant: a narrowing filter must never silently verify nothing.
+  if (selected.length === 0) {
+    console.error(
+      "No steps selected after filtering. Refusing to exit 0 with an empty run.",
+    );
+    return 1;
+  }
 
   // Rebuild wait-on argv with live env (STEPS is evaluated at import time).
   const liveSteps = selected.map((step) => {
