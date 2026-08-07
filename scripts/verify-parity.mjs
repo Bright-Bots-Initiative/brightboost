@@ -183,10 +183,10 @@ export const STEPS = [
     name: "Prisma migrate deploy",
     argv: ["npx", "prisma", "migrate", "deploy"],
     required: true,
-    skipIf: () =>
-      process.env.DATABASE_URL
-        ? null
-        : "DATABASE_URL unset (db-check not locally runnable)",
+    skipIf: () => {
+      const gate = resolveParityDbGate();
+      return gate.action === "skip" ? gate.reason : null;
+    },
   },
   {
     id: "CI-15",
@@ -199,10 +199,10 @@ export const STEPS = [
     name: "DB connectivity",
     argv: ["npm", "run", "test:db"],
     required: true,
-    skipIf: () =>
-      process.env.DATABASE_URL
-        ? null
-        : "DATABASE_URL unset (db-check not locally runnable)",
+    skipIf: () => {
+      const gate = resolveParityDbGate();
+      return gate.action === "skip" ? gate.reason : null;
+    },
   },
   {
     id: "CI-17",
@@ -257,7 +257,7 @@ Skip contract:
   Known local SKIPs (named + linked):
     CI-09  spaced path → #707 Storybook Vitest
     CI-10/11/12  CYPRESS_SWA_URL unset
-    CI-14/16  DATABASE_URL unset
+    CI-14/16  TEST_DATABASE_URL unset
     CI-26  whole-tree Prettier reverse gap (OQ-10); hooks cover staged files
   NOT-LOCAL: CI-21 deploy, CI-22 prod-smoke
   Do not fix backend pre-existing tsc / Prisma gaps here (OQ-03 residual / B5-02).
@@ -268,7 +268,110 @@ Flags:
   --only CI-0X     run a subset (comma-separated; unknown/empty IDs → exit 2)
   --inject-fail ID sabotage one step (parity-selfcheck; unknown ID → exit 2)
   --help           this text
+
+DB safety (CI-14 / CI-16):
+  Requires TEST_DATABASE_URL (never falls back to DATABASE_URL).
+  Target must look designated (db name ~/test|e2e/i or host localhost/127.0.0.1).
+  Override: BB_ALLOW_NON_TEST_DB=1 (warns with host + database name only; never prints the URL).
 `;
+
+/**
+ * Host + database only — never echo credentials (parity logs are pasted into PRs).
+ * @param {string} url
+ * @returns {{ host: string, database: string } | null}
+ */
+export function describeDbUrl(url) {
+  try {
+    const u = new URL(url);
+    const database = decodeURIComponent(u.pathname.replace(/^\//, "")).split(
+      "/",
+    )[0];
+    return { host: u.hostname, database: database || "" };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Designated test DB: localhost / 127.0.0.1, or database name matching /test|e2e/i.
+ * @param {string} url
+ * @returns {{ ok: true, host: string, database: string } | { ok: false, reason: string, host?: string, database?: string }}
+ */
+export function isDesignatedTestDbUrl(url) {
+  const info = describeDbUrl(url);
+  if (!info) {
+    return { ok: false, reason: "TEST_DATABASE_URL is not a parseable URL" };
+  }
+  const hostOk = info.host === "localhost" || info.host === "127.0.0.1";
+  const nameOk = /test|e2e/i.test(info.database);
+  if (hostOk || nameOk) {
+    return { ok: true, host: info.host, database: info.database };
+  }
+  return {
+    ok: false,
+    reason: `TEST_DATABASE_URL is not a designated test target (host=${info.host}, database=${info.database}); require localhost/127.0.0.1 or a database name matching /test|e2e/i, or set BB_ALLOW_NON_TEST_DB=1`,
+    host: info.host,
+    database: info.database,
+  };
+}
+
+/**
+ * Pass the same designated URL to every DB variable the child steps read.
+ * @param {string} designatedUrl
+ */
+export function buildParityDbChildEnv(designatedUrl) {
+  return {
+    DATABASE_URL: designatedUrl,
+    TEST_DATABASE_URL: designatedUrl,
+    POSTGRES_URL: designatedUrl,
+  };
+}
+
+/**
+ * Gate CI-14 / CI-16 on an explicitly designated test database (G-002).
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {{ action: 'skip', reason: string } | { action: 'refuse', reason: string, host?: string, database?: string } | { action: 'run', env: Record<string, string>, host: string, database: string, warning: string | null }}
+ */
+export function resolveParityDbGate(env = process.env) {
+  const url = env.TEST_DATABASE_URL;
+  if (!url || !String(url).trim()) {
+    return {
+      action: "skip",
+      reason: "TEST_DATABASE_URL unset (db-check not locally runnable)",
+    };
+  }
+  const check = isDesignatedTestDbUrl(String(url).trim());
+  const allow = env.BB_ALLOW_NON_TEST_DB === "1";
+  if (!check.ok) {
+    // Unparseable URLs are never overridable — we cannot name the target safely.
+    if (!("host" in check) || check.host === undefined) {
+      return { action: "refuse", reason: check.reason };
+    }
+    if (!allow) {
+      return {
+        action: "refuse",
+        reason: check.reason,
+        host: check.host,
+        database: check.database,
+      };
+    }
+    const warning = `WARNING: BB_ALLOW_NON_TEST_DB=1 — proceeding against non-test DB host=${check.host} database=${check.database}`;
+    return {
+      action: "run",
+      env: buildParityDbChildEnv(String(url).trim()),
+      host: check.host,
+      database: check.database ?? "",
+      warning,
+    };
+  }
+  return {
+    action: "run",
+    env: buildParityDbChildEnv(String(url).trim()),
+    host: check.host,
+    database: check.database,
+    warning: null,
+  };
+}
 
 /**
  * @typedef {{
@@ -444,8 +547,10 @@ export function selectSteps(steps, opts) {
 /**
  * @param {Step[]} steps
  * @param {ParsedArgs} opts
+ * @param {{ runCommand?: typeof runCommand }} [deps]
  */
-export async function runParity(steps, opts) {
+export async function runParity(steps, opts, deps = {}) {
+  const run = deps.runCommand ?? runCommand;
   let failed = false;
   let skippedRequired = false;
 
@@ -501,6 +606,25 @@ export async function runParity(steps, opts) {
       continue;
     }
 
+    /** @type {Record<string, string | undefined> | undefined} */
+    let stepEnv = step.env;
+    if (step.id === "CI-14" || step.id === "CI-16") {
+      const gate = resolveParityDbGate();
+      if (gate.action === "refuse") {
+        console.log(`[FAIL] ${step.id} ${step.name}`);
+        console.log(`command: ${cmdStr}`);
+        console.error(gate.reason);
+        failed = true;
+        break;
+      }
+      if (gate.action === "run") {
+        if (gate.warning) {
+          console.warn(gate.warning);
+        }
+        stepEnv = { ...step.env, ...gate.env };
+      }
+    }
+
     if (opts.injectFail === step.id) {
       console.log(`[FAIL] ${step.id} ${step.name}`);
       console.log(`command: ${cmdStr}`);
@@ -513,9 +637,9 @@ export async function runParity(steps, opts) {
 
     console.log(`[RUN] ${step.id} ${step.name}`);
     console.log(`command: ${cmdStr}`);
-    const { code, output } = await runCommand(step.argv, {
+    const { code, output } = await run(step.argv, {
       cwd: step.cwd,
-      env: step.env,
+      env: stepEnv,
     });
     if (code !== 0) {
       console.log(`[FAIL] ${step.id} ${step.name}`);
