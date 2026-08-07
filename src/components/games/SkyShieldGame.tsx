@@ -852,9 +852,9 @@ function SkyShieldPlayfield({
     const ok = exitAns === content.exitAnswer;
     const correctEmoji = LABELS[content.exitAnswer];
     const colorNames = [
-        T("colorBlue", "Blue"),
-        T("colorYellow", "Yellow"),
-        T("colorPink", "Pink"),
+      T("colorBlue", "Blue"),
+      T("colorYellow", "Yellow"),
+      T("colorPink", "Pink"),
     ];
 
     const correctColor = colorNames[content.exitAnswer];
