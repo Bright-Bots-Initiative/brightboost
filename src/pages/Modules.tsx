@@ -12,11 +12,26 @@ import { AlertCircle } from "lucide-react";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { translateContentName } from "@/utils/localizedContent";
-import { getStudentArchetype, canAccessModule, isSet2ModuleSlug, checkSet2Locked } from "@/lib/moduleAccess";
 import {
-  STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_1_STRANDS, STEM_SET_2_STRANDS,
-  HIDDEN_MODULE_SLUGS, countCompletedInSet,
-  type StemSet1GameId, type StemSet2GameId,
+  getStudentArchetype,
+  canAccessModule,
+  isSet2ModuleSlug,
+  isSet3ModuleSlug,
+  checkSet2Locked,
+  checkSet3Locked,
+} from "@/lib/moduleAccess";
+import {
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+  STEM_SET_1_STRANDS,
+  STEM_SET_2_STRANDS,
+  STEM_SET_3_STRANDS,
+  HIDDEN_MODULE_SLUGS,
+  countCompletedInSet,
+  type StemSet1GameId,
+  type StemSet2GameId,
+  type StemSet3GameId,
 } from "@/constants/stemSets";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +46,7 @@ const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-sky-shield": "type_game",
   "k2-stem-fast-lane": "type_game",
   "k2-stem-qualify-tune-race": "type_game",
+  "k2-stem-track-maker": "type_game",
   "stem-1-intro": "type_game",
 };
 
@@ -47,6 +63,8 @@ const MODULE_ORDER: Record<string, number> = {
   "k2-stem-sky-shield": 12,
   "k2-stem-fast-lane": 13,
   "k2-stem-qualify-tune-race": 14,
+  // Set 3
+  "k2-stem-track-maker": 20,
   // Legacy / hidden
   "k2-stem-sequencing": 90,
   // Specialization modules come after public content
@@ -69,6 +87,10 @@ const SLUG_TO_SET2_ID: Record<string, StemSet2GameId> = {
   "k2-stem-qualify-tune-race": "qualify-tune-race",
 };
 
+const SLUG_TO_SET3_ID: Record<string, StemSet3GameId> = {
+  "k2-stem-track-maker": "track-maker",
+};
+
 const STRAND_COLORS: Record<string, string> = {
   AI: "bg-blue-100 text-blue-800",
   Biotech: "bg-green-100 text-green-800",
@@ -85,8 +107,10 @@ export default function Modules() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [set2Locked, setSet2Locked] = useState(true);
+  const [set3Locked, setSet3Locked] = useState(true);
   const [set1Done, setSet1Done] = useState(0);
   const [set2Done, setSet2Done] = useState(0);
+  const [set3Done, setSet3Done] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -105,11 +129,15 @@ export default function Modules() {
 
         const locked = checkSet2Locked(completedIds);
         setSet2Locked(locked);
+        setSet3Locked(checkSet3Locked(completedIds));
         setSet1Done(countCompletedInSet(completedIds, STEM_SET_1_IDS));
         setSet2Done(countCompletedInSet(completedIds, STEM_SET_2_IDS));
+        setSet3Done(countCompletedInSet(completedIds, STEM_SET_3_IDS));
 
-        const visible = (data as any[]).filter((m: any) =>
-          canAccessModule({ slug: m.slug, archetype }) && !HIDDEN_MODULE_SLUGS.has(m.slug),
+        const visible = (data as any[]).filter(
+          (m: any) =>
+            canAccessModule({ slug: m.slug, archetype }) &&
+            !HIDDEN_MODULE_SLUGS.has(m.slug),
         );
 
         visible.sort(
@@ -129,14 +157,31 @@ export default function Modules() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const set1Modules = modules.filter((m) => !isSet2ModuleSlug(m.slug));
+  const set1Modules = modules.filter(
+    (m) => !isSet2ModuleSlug(m.slug) && !isSet3ModuleSlug(m.slug),
+  );
   const set2Modules = modules.filter((m) => isSet2ModuleSlug(m.slug));
+  const set3Modules = modules.filter((m) => isSet3ModuleSlug(m.slug));
 
   const handleLockedClick = () => {
     toast({
-      title: t("modules.set2LockedToastTitle", { defaultValue: "Set 2 is Locked" }),
+      title: t("modules.set2LockedToastTitle", {
+        defaultValue: "Set 2 is Locked",
+      }),
       description: t("modules.set2LockedMessage", {
-        defaultValue: "Complete Set 1 STEM Games to unlock the next challenge set.",
+        defaultValue:
+          "Complete Set 1 STEM Games to unlock the next challenge set.",
+      }),
+    });
+  };
+
+  const handleSet3LockedClick = () => {
+    toast({
+      title: t("modules.set3LockedToastTitle", {
+        defaultValue: "Set 3 is Locked",
+      }),
+      description: t("modules.set3LockedMessage", {
+        defaultValue: "Complete Set 2 STEM Games to unlock the mastery set.",
       }),
     });
   };
@@ -161,14 +206,28 @@ export default function Modules() {
             label={t("modules.set2Label", { defaultValue: "Set 2" })}
             done={set2Done}
             total={STEM_SET_2_IDS.length}
-            status={set2Locked ? "locked" : set2Done >= STEM_SET_2_IDS.length ? "complete" : "active"}
+            status={
+              set2Locked
+                ? "locked"
+                : set2Done >= STEM_SET_2_IDS.length
+                  ? "complete"
+                  : "active"
+            }
           />
           <div className="w-8 h-0.5 bg-slate-200" />
           <SetStep
             label={t("modules.set3Label", { defaultValue: "Set 3" })}
-            done={0}
-            total={5}
-            status="coming"
+            done={set3Done}
+            total={STEM_SET_3_IDS.length}
+            status={
+              set3Modules.length === 0
+                ? "coming"
+                : set3Locked
+                  ? "locked"
+                  : set3Done >= STEM_SET_3_IDS.length
+                    ? "complete"
+                    : "active"
+            }
           />
         </div>
       )}
@@ -197,8 +256,18 @@ export default function Modules() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {set1Modules.map((m) => {
                   const set1Id = SLUG_TO_SET1_ID[m.slug];
-                  const strand = set1Id ? STEM_SET_1_STRANDS[set1Id] : undefined;
-                  return <ModuleCard key={m.id} module={m} navigate={navigate} t={t} strand={strand} />;
+                  const strand = set1Id
+                    ? STEM_SET_1_STRANDS[set1Id]
+                    : undefined;
+                  return (
+                    <ModuleCard
+                      key={m.id}
+                      module={m}
+                      navigate={navigate}
+                      t={t}
+                      strand={strand}
+                    />
+                  );
                 })}
               </div>
             </>
@@ -223,7 +292,8 @@ export default function Modules() {
               {set2Locked && (
                 <p className="text-sm text-slate-500 -mt-2 mb-4">
                   {t("modules.set2LockedMessage", {
-                    defaultValue: "Complete Set 1 STEM Games to unlock the next challenge set.",
+                    defaultValue:
+                      "Complete Set 1 STEM Games to unlock the next challenge set.",
                   })}
                 </p>
               )}
@@ -231,7 +301,9 @@ export default function Modules() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {set2Modules.map((m) => {
                   const set2Id = SLUG_TO_SET2_ID[m.slug];
-                  const strand = set2Id ? STEM_SET_2_STRANDS[set2Id] : undefined;
+                  const strand = set2Id
+                    ? STEM_SET_2_STRANDS[set2Id]
+                    : undefined;
                   return (
                     <ModuleCard
                       key={m.id}
@@ -248,34 +320,85 @@ export default function Modules() {
             </>
           )}
 
-          {/* Set 3: Coming Soon */}
-          <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
-            <div className="flex items-center justify-center gap-2 text-slate-400 mb-2">
-              <Lock className="h-5 w-5" />
-              <span className="text-lg font-bold">
-                {t("modules.set3ComingSoon", { defaultValue: "Set 3: Mastery — Coming Soon" })}
-              </span>
-            </div>
-            <p className="text-sm text-slate-400">
-              {t("modules.set3ComingSoonDesc", {
-                defaultValue: "New challenges are being built. Stay tuned!",
-              })}
-            </p>
-          </div>
-
-          {set1Modules.length === 0 && set2Modules.length === 0 && !error && (
-            <div className="text-center py-12 px-4 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
-                <BookOpen size={32} />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {t("modules.noModules")}
+          {/* Set 3 */}
+          {set3Modules.length > 0 ? (
+            <>
+              <h2 className="text-lg font-bold text-brightboost-navy flex items-center gap-2 mt-8">
+                {t("modules.set3Label", { defaultValue: "Set 3: Mastery" })}
+                {set3Locked && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    <Lock className="h-3 w-3" />
+                    {t("modules.locked", { defaultValue: "Locked" })}
+                  </span>
+                )}
+                {!set3Locked && set3Done >= STEM_SET_3_IDS.length && (
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                )}
               </h2>
-              <p className="text-gray-500 max-w-md mx-auto">
-                {t("modules.noModulesDesc")}
+
+              {set3Locked && (
+                <p className="text-sm text-slate-500 -mt-2 mb-4">
+                  {t("modules.set3LockedMessage", {
+                    defaultValue:
+                      "Complete Set 2 STEM Games to unlock the mastery set.",
+                  })}
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {set3Modules.map((m) => {
+                  const set3Id = SLUG_TO_SET3_ID[m.slug];
+                  const strand = set3Id
+                    ? STEM_SET_3_STRANDS[set3Id]
+                    : undefined;
+                  return (
+                    <ModuleCard
+                      key={m.id}
+                      module={m}
+                      navigate={navigate}
+                      t={t}
+                      locked={set3Locked}
+                      strand={strand}
+                      onLockedClick={handleSet3LockedClick}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
+              <div className="flex items-center justify-center gap-2 text-slate-400 mb-2">
+                <Lock className="h-5 w-5" />
+                <span className="text-lg font-bold">
+                  {t("modules.set3ComingSoon", {
+                    defaultValue: "Set 3: Mastery — Coming Soon",
+                  })}
+                </span>
+              </div>
+              <p className="text-sm text-slate-400">
+                {t("modules.set3ComingSoonDesc", {
+                  defaultValue: "New challenges are being built. Stay tuned!",
+                })}
               </p>
             </div>
           )}
+
+          {set1Modules.length === 0 &&
+            set2Modules.length === 0 &&
+            set3Modules.length === 0 &&
+            !error && (
+              <div className="text-center py-12 px-4 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
+                  <BookOpen size={32} />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t("modules.noModules")}
+                </h2>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  {t("modules.noModulesDesc")}
+                </p>
+              </div>
+            )}
         </>
       )}
     </div>
@@ -295,27 +418,37 @@ function SetStep({
   total: number;
   status: "complete" | "active" | "locked" | "coming";
 }) {
-  const ring = status === "complete"
-    ? "border-green-500 bg-green-50 text-green-700"
-    : status === "active"
-      ? "border-brightboost-blue bg-blue-50 text-brightboost-blue animate-pulse"
-      : "border-slate-200 bg-slate-50 text-slate-400";
+  const ring =
+    status === "complete"
+      ? "border-green-500 bg-green-50 text-green-700"
+      : status === "active"
+        ? "border-brightboost-blue bg-blue-50 text-brightboost-blue animate-pulse"
+        : "border-slate-200 bg-slate-50 text-slate-400";
 
-  const icon = status === "complete"
-    ? <CheckCircle2 className="h-5 w-5" />
-    : status === "active"
-      ? <span className="text-xs font-extrabold">{done}/{total}</span>
-      : status === "coming"
-        ? <Clock className="h-4 w-4" />
-        : <Lock className="h-4 w-4" />;
+  const icon =
+    status === "complete" ? (
+      <CheckCircle2 className="h-5 w-5" />
+    ) : status === "active" ? (
+      <span className="text-xs font-extrabold">
+        {done}/{total}
+      </span>
+    ) : status === "coming" ? (
+      <Clock className="h-4 w-4" />
+    ) : (
+      <Lock className="h-4 w-4" />
+    );
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${ring}`}>
+      <div
+        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${ring}`}
+      >
         {icon}
       </div>
       <div className="text-xs">
-        <p className={`font-bold ${status === "locked" || status === "coming" ? "text-slate-400" : "text-slate-700"}`}>
+        <p
+          className={`font-bold ${status === "locked" || status === "coming" ? "text-slate-400" : "text-slate-700"}`}
+        >
           {label}
         </p>
         <p className="text-slate-400">
@@ -397,7 +530,10 @@ function ModuleCard({
           </Button>
         ) : (
           <Button
-            onClick={(e) => { e.stopPropagation(); navigate(`/student/modules/${m.slug}`); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/student/modules/${m.slug}`);
+            }}
             className="w-full sm:w-auto"
             aria-label={`${t("modules.startLearning")} ${translateContentName(m.title)}`}
           >

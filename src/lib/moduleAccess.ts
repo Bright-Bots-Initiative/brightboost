@@ -10,7 +10,12 @@
  * 4. Specialization choice is gated behind completing STEM Set 3
  *    (enforced in Avatar.tsx + backend POST /avatar/select-archetype).
  */
-import { STEM_SET_2_MODULE_SLUGS, isSet2Locked } from "@/constants/stemSets";
+import {
+  STEM_SET_2_MODULE_SLUGS,
+  STEM_SET_3_MODULE_SLUGS,
+  isSet2Locked,
+  isSet3Locked,
+} from "@/constants/stemSets";
 
 // ── Specialization-gated module slugs ────────────────────────────────────
 // Add future specialization-only modules here.
@@ -58,6 +63,19 @@ export function isSet2ModuleSlug(slug: string): boolean {
  */
 export function checkSet2Locked(completedActivityIds: string[]): boolean {
   return isSet2Locked(completedActivityIds);
+}
+
+/** True when `slug` is a Set 3 module. */
+export function isSet3ModuleSlug(slug: string): boolean {
+  return (STEM_SET_3_MODULE_SLUGS as readonly string[]).includes(slug);
+}
+
+/**
+ * Whether Set 3 is currently locked for the student — mirrors the
+ * Set 1 → Set 2 gate (Set 3 unlocks when all Set 2 activities are complete).
+ */
+export function checkSet3Locked(completedActivityIds: string[]): boolean {
+  return isSet3Locked(completedActivityIds);
 }
 
 /**

@@ -751,7 +751,7 @@ function SkyShieldPlayfield({
       <div className="slide-up-fade space-y-4">
         <HUD />
         <p className="text-center font-bold text-violet-800 text-sm">
-          {T("challengeLabel", "Challenge")} ({chIdx + 1}/{chDrops.length})
+          {T("challenge", "Challenge")} ({chIdx + 1}/{chDrops.length})
         </p>
 
         {/* Lanes */}
@@ -851,12 +851,13 @@ function SkyShieldPlayfield({
     const submitted = exitAns !== null;
     const ok = exitAns === content.exitAnswer;
     const correctEmoji = LABELS[content.exitAnswer];
-    const colorKeys = ["colorBlue", "colorYellow", "colorPink"];
+    const colorNames = [
+      T("colorBlue", "Blue"),
+      T("colorYellow", "Yellow"),
+      T("colorPink", "Pink"),
+    ];
 
-    const correctColor = t(
-      colorKeys[content.exitAnswer],
-      ["Blue", "Yellow", "Pink"][content.exitAnswer],
-    );
+    const correctColor = colorNames[content.exitAnswer];
     return (
       <div className="slide-up-fade space-y-6 py-4 text-center">
         <h3 className="text-xl font-extrabold text-violet-900">
@@ -911,11 +912,11 @@ function SkyShieldPlayfield({
       <div className="slide-up-fade text-center space-y-6 py-8">
         <div className="text-7xl bounce-in">🛡️✨</div>
         <h2 className="text-2xl font-extrabold text-violet-900">
-          {T("celebrationTitle", "Amazing Work!")}
+          {T("celebTitle", "Amazing Work!")}
         </h2>
         <p className="text-slate-600 max-w-md mx-auto">
           {T(
-            "celebrationMsg",
+            "celebDesc",
             "You watched, noticed the pattern, and chose the right shield!",
           )}
         </p>

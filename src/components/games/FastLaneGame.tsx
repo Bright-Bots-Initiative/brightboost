@@ -382,7 +382,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
           {t("games.fastLane.title", { defaultValue: "Fast Lane Signals" })}
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto">
-          {t("games.fastLane.introText", {
+          {t("games.fastLane.introDesc", {
             defaultValue:
               "Read the road signals and pick the safest lane to deliver your science supplies!",
           })}
@@ -406,7 +406,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
           {t("games.fastLane.celebTitle", { defaultValue: "Great driving!" })}
         </h2>
         <p className="text-lg text-slate-600 max-w-sm mx-auto">
-          {t("games.fastLane.celebText", {
+          {t("games.fastLane.celebDesc", {
             defaultValue: "You watched the signals and made smart choices!",
           })}
         </p>

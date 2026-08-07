@@ -564,7 +564,7 @@ function MoveMeasurePlayfield({
         </h2>
 
         <p className="text-lg text-slate-600 max-w-md mx-auto">
-          {t("games.moveMeasure.introText", {
+          {t("games.moveMeasure.introDesc", {
             defaultValue:
               "Complete 3 events, compare your scores, then improve one!",
           })}
@@ -680,7 +680,7 @@ function MoveMeasurePlayfield({
           "🏃",
           "games.moveMeasure.dashTitle",
           "Dash",
-          "games.moveMeasure.dashInstr",
+          "games.moveMeasure.dashHint",
           "Tap when the marker is in the green zone!",
           t("games.moveMeasure.event1", { defaultValue: "Event 1 of 3" }),
         )}
@@ -724,7 +724,7 @@ function MoveMeasurePlayfield({
           "🦘",
           "games.moveMeasure.jumpTitle",
           "Jump",
-          "games.moveMeasure.jumpInstr",
+          "games.moveMeasure.jumpHint",
           "Hold the button, release in the green zone!",
           t("games.moveMeasure.event2", { defaultValue: "Event 2 of 3" }),
         )}
@@ -782,7 +782,7 @@ function MoveMeasurePlayfield({
           "🥎",
           "games.moveMeasure.tossTitle",
           "Toss",
-          "games.moveMeasure.tossInstr",
+          "games.moveMeasure.tossHint",
           "Slide to pick your angle, then throw!",
           t("games.moveMeasure.event3", { defaultValue: "Event 3 of 3" }),
         )}
@@ -1275,7 +1275,7 @@ function MoveMeasurePlayfield({
           className="text-lg text-slate-600 bounce-in"
           style={{ animationDelay: "400ms" }}
         >
-          {t("games.moveMeasure.celebText", {
+          {t("games.moveMeasure.celebDesc", {
             defaultValue: "Great scientists always measure and try again.",
           })}
         </p>
