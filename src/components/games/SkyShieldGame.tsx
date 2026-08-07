@@ -851,12 +851,13 @@ function SkyShieldPlayfield({
     const submitted = exitAns !== null;
     const ok = exitAns === content.exitAnswer;
     const correctEmoji = LABELS[content.exitAnswer];
-    const colorKeys = ["colorBlue", "colorYellow", "colorPink"];
+    const colorNames = [
+        T("colorBlue", "Blue"),
+        T("colorYellow", "Yellow"),
+        T("colorPink", "Pink"),
+    ];
 
-    const correctColor = t(
-      colorKeys[content.exitAnswer],
-      ["Blue", "Yellow", "Pink"][content.exitAnswer],
-    );
+    const correctColor = colorNames[content.exitAnswer];
     return (
       <div className="slide-up-fade space-y-6 py-4 text-center">
         <h3 className="text-xl font-extrabold text-violet-900">
