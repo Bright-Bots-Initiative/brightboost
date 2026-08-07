@@ -43,7 +43,7 @@ function extractKeys(source: string): string[] {
     const key = match[1];
 
     if (key.includes(".")) {
-        keys.add(key);
+      keys.add(key);
     }
   }
 
