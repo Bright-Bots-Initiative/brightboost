@@ -44,8 +44,18 @@ describe("seed defines the STARS1 K-2 emoji-login class (#698)", () => {
   });
 
   it("keeps STARS1 students PIN-less (emoji-only login path)", () => {
-    const block = src.slice(src.indexOf("starStudents"), src.indexOf("starStudents") + 600);
+    const block = src.slice(
+      src.indexOf("starStudents"),
+      src.indexOf("starStudents") + 600,
+    );
     expect(block).not.toMatch(/loginPin/);
+  });
+
+  it("seeds a shared Track Builder creation for cross-student gallery testing", () => {
+    expect(src).toContain('id: "seed-race-track-star-sprint"');
+    expect(src).toContain('authorId: "star-nova"');
+    expect(src).toContain('type: "race_track"');
+    expect(src).toContain('status: "SHARED"');
   });
 
   it("root and backend seed files stay byte-identical (sync invariant)", () => {

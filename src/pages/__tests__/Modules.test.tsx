@@ -1,9 +1,10 @@
 // src/pages/__tests__/Modules.test.tsx
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Modules from "../Modules";
 import { BrowserRouter } from "react-router-dom";
 import { api } from "../../services/api";
+import { HIDDEN_MODULE_SLUGS, STEM_SET_2_IDS } from "@/constants/stemSets";
 
 // Mock the API
 vi.mock("../../services/api", () => ({
@@ -41,6 +42,11 @@ vi.mock("@/components/ModulesSkeleton", () => ({
 describe("Modules Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    HIDDEN_MODULE_SLUGS.add("k2-stem-track-maker");
+  });
+
+  afterEach(() => {
+    HIDDEN_MODULE_SLUGS.add("k2-stem-track-maker");
   });
 
   it("shows loading skeleton initially", async () => {
@@ -131,5 +137,36 @@ describe("Modules Page", () => {
     expect(
       screen.getByText("Failed to load modules. Please try again later."),
     ).toBeDefined();
+  });
+
+  it("places Track Builder in unlocked Set 3 after the hidden release flag is removed", async () => {
+    HIDDEN_MODULE_SLUGS.delete("k2-stem-track-maker");
+    (api.getModules as any).mockResolvedValue([
+      {
+        id: "track-module",
+        title: "Boost Track Builder",
+        description: "Build and ride a track",
+        slug: "k2-stem-track-maker",
+        level: "K-2",
+      },
+    ]);
+    (api.getProgress as any).mockResolvedValue({
+      progress: STEM_SET_2_IDS.map((activityId) => ({
+        activityId,
+        status: "COMPLETED",
+      })),
+    });
+
+    render(
+      <BrowserRouter>
+        <Modules />
+      </BrowserRouter>,
+    );
+
+    expect(await screen.findByText("Boost Track Builder")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Start Learning Boost Track Builder"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Set 3: Mastery — Coming Soon")).toBeNull();
   });
 });
