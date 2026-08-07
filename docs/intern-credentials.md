@@ -11,32 +11,34 @@ All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The s
 
 ## Teacher Account
 
-| Email | Password | Notes |
-|---|---|---|
+| Email                | Password      | Notes                                                             |
+| -------------------- | ------------- | ----------------------------------------------------------------- |
 | `teacher@school.com` | `password123` | Ms. Frizzle — demo class owner, K-2 class with join code `STARS1` |
 
 ## K-2 Student Accounts
 
-| Email | Password | Notes |
-|---|---|---|
-| `student@test.com` | `password` | Fresh K-2 student, Set 1 incomplete |
-| `explorer@test.com` | `explore123` | Set 1 complete, Set 2 unlocked |
+| Email               | Password     | Notes                               |
+| ------------------- | ------------ | ----------------------------------- |
+| `student@test.com`  | `password`   | Fresh K-2 student, Set 1 incomplete |
+| `explorer@test.com` | `explore123` | Set 1 complete, Set 2 unlocked      |
 
 **Class code (emoji-picker flow):** `STARS1` — enter under "I'm a Student" → "Join with a Code", then pick your emoji to log in without a password. Seeded class **"Ms. Frizzle's Star Class"** (band k2) with three emoji students, no PIN: **Nova ⭐ · Comet 🚀 · Luna 🌙**.
 
+**Track Builder test fixture:** Log in to `STARS1` as Comet or Luna, open the student gallery, and ride Nova's shared **Star Sprint** track. The creator studio remains gated until Set 3 is approved for student release; local reviewers can remove `k2-stem-track-maker` from `HIDDEN_MODULE_SLUGS` to test the full build-and-save flow.
+
 ## Grade 3-5 Student Account
 
-| Email | Password | Notes |
-|---|---|---|
+| Email             | Password    | Notes                                                           |
+| ----------------- | ----------- | --------------------------------------------------------------- |
 | `jordan@test.com` | `jordan123` | Enrolled in a g3_5 class — sees Data Dash and other 3-5 content |
 
 ## Pathways Accounts (Ages 14-17)
 
-| Email | Password | Notes |
-|---|---|---|
+| Email                  | Password     | Notes                                                                    |
+| ---------------------- | ------------ | ------------------------------------------------------------------------ |
 | `facilitator@test.com` | `pathway123` | Coach Davis — facilitator/program manager for the ETO Spring 2026 cohort |
-| `marcus@test.com` | `marcus123` | Launch band (16-17), partial Cyber Launch progress (3/7 modules done) |
-| `aisha@test.com` | `aisha123` | Explorer band (14-15), fresh account, 0 completions |
+| `marcus@test.com`      | `marcus123`  | Launch band (16-17), partial Cyber Launch progress (3/7 modules done)    |
+| `aisha@test.com`       | `aisha123`   | Explorer band (14-15), fresh account, 0 completions                      |
 
 **Cohort join code:** `ETO2026` — for the "ETO Spring 2026 — Cyber Cohort"
 
