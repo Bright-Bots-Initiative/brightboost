@@ -1,7 +1,8 @@
 describe("P-02 teacher signs up", () => {
   it("creates a teacher account and lands on the dashboard with a session", () => {
     const email = `teacher+e1-${Date.now()}@e2e.invalid`;
-    const password = "E2eSignup1!";
+    // Ephemeral password for this run only — never a committed secret (G-003).
+    const password = `E2e!${Date.now().toString(36)}Aa1`;
 
     cy.visit("/teacher/signup");
     cy.contains("Let's get you set up").should("be.visible");
