@@ -1653,7 +1653,7 @@
     },
     "mazeMaps": {
       "loopSweeper": "Loop Sweeper",
-      "lineSweeper": "Line Sweeper"
+      "lineSweeper": "Line Sweeper",
       "collisionHint": "Oops! Back to safety. Watch the pattern first.",
       "hintSafePad": "Try the Safe Pad before moving past the Sweeper.",
       "levelComplete": "All orbs collected! Great path!",
@@ -1727,7 +1727,7 @@
       "differenceLabel": "Difference:",
       "prediction": "Prediction",
       "actual": "Actual",
-      "continue": "Continue"
+      "continue": "Continue",
       "tryHarder": "Keep trying!",
       "great": "Great!",
       "good": "Good!",
