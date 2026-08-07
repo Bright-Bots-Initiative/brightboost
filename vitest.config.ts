@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Must match overview §12 / #730 Part B: @shared/* → ./shared/*
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   test: {
@@ -39,6 +41,9 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/types.ts",
         "cypress/support/*.js",
+        // Cypress runtime only — not unit-executable (A2-04/A2-05 follow-through).
+        "cypress/support/e2e.ts",
+        "cypress/support/commands.ts",
       ],
       thresholds: {
         lines: 90,
@@ -46,6 +51,8 @@ export default defineConfig({
         functions: 90,
         statements: 90,
       },
+      // A2-04: unloaded support files dilute the 90% threshold. Pure helpers
+      // (loginAsTeacher.ts) get unit tests; Cypress entry/commands are excluded.
     },
   },
 });

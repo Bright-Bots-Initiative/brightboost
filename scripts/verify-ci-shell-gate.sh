@@ -29,6 +29,11 @@ MAIN="$REPO_ROOT/src/main.tsx"
 BACKUP=""
 DEV_PID=""
 
+# A4-03 / #671: cypress.config requires CYPRESS_SWA_URL (no silent fallback).
+# This gate always boots Vite on :5173 — default the env to match that contract.
+# Remapped local runs that already set CYPRESS_SWA_URL keep their value.
+export CYPRESS_SWA_URL="${CYPRESS_SWA_URL:-http://localhost:5173}"
+
 # Shared tree-kill (recursive POSIX walk / Windows taskkill //T). W-9 / W-10.
 # shellcheck source=lib/kill-pid-tree.sh
 source "$SCRIPT_DIR/lib/kill-pid-tree.sh"

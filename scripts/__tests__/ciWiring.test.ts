@@ -138,10 +138,11 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   });
 
   // U1-03 / G-202: execute the shell gate (healthy + sabotage inside the script).
-  // Unset remapped CYPRESS_SWA_URL so Cypress matches Vite on :5173 (gate contract).
+  // Force gate URL to :5173 (do not leak remapped CYPRESS_SWA_URL). Gate script
+  // also defaults this; set explicitly so the healthy phase matches Vite (#671 A4-03).
   it("W-8/W-9: verify-ci-shell-gate.sh exits 0 (two-phase healthy then sabotage)", async () => {
     const gateEnv: NodeJS.ProcessEnv = { ...process.env };
-    delete gateEnv.CYPRESS_SWA_URL;
+    gateEnv.CYPRESS_SWA_URL = "http://localhost:5173";
     const { status, output } = await runBashScriptAsync(
       "scripts/verify-ci-shell-gate.sh",
       { timeoutMs: 180_000, env: gateEnv },

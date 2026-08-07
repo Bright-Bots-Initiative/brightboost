@@ -18,7 +18,17 @@ export function clearModuleCache() {
   allModulesCache = null;
 }
 
+function bypassCacheForE2E(): boolean {
+  // Parallel Cypress suites reseed frequently; stale module trees 404 complete-activity.
+  // Never engage under Vitest — .env.local may set the flag and would break cache unit tests.
+  if (process.env.VITEST) return false;
+  return process.env.E2E_RELAX_AUTH_LIMIT === "1";
+}
+
 export async function getAllModules(filter?: { level?: string }) {
+  if (bypassCacheForE2E()) {
+    clearModuleCache();
+  }
   const now = Date.now();
   let modules;
 
@@ -44,6 +54,9 @@ export async function getAllModules(filter?: { level?: string }) {
 }
 
 export async function getModuleStructure(slug: string) {
+  if (bypassCacheForE2E()) {
+    clearModuleCache();
+  }
   const now = Date.now();
 
   // 1. Try Structure Cache
@@ -128,6 +141,9 @@ export async function getModuleStructure(slug: string) {
 }
 
 export async function getModuleWithContent(slug: string) {
+  if (bypassCacheForE2E()) {
+    clearModuleCache();
+  }
   const now = Date.now();
   const cached = moduleCache.get(slug);
 
