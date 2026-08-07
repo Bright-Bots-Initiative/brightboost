@@ -1594,7 +1594,8 @@
       "tutorialHint": "Collect all Idea Orbs and reach the Goal!",
       "guidedHint": "Watch the Sweeper. Use the Safe Pad!",
       "mainHint": "Two Sweepers! Plan a smart path.",
-      "movesLabel": "Moves"
+      "movesLabel": "Moves",
+      "controlsHint": "Arrow keys to move \u2022 Space to wait"
     },
     "moveMeasure": {
       "title": "Move, Measure & Improve",
@@ -1695,7 +1696,9 @@
       "exitWrong": "The answer is {{color}}. The pattern repeats!",
       "colorBlue": "Blue",
       "colorYellow": "Yellow",
-      "colorPink": "Pink"
+      "colorPink": "Pink",
+      "startChallenge": "Start Challenge",
+      "finish": "Finish"
     },
     "fastLane": {
       "title": "Fast Lane Signals",
@@ -1771,7 +1774,9 @@
       "seeBadge": "See Your Badge!",
       "badgeName": "Big Challenge",
       "badgeDesc": "Completed the Qualify, Tune, Race capstone!",
-      "finish": "Finish!"
+      "finish": "Finish!",
+      "steerLeft": "Steer Left",
+      "steerRight": "Steer Right"
     },
     "personalBest": {
       "highScore": "High Score",

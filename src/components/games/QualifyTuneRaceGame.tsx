@@ -520,7 +520,7 @@ function RacePlayfield({
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
         <ProgressHUD step={1} totalLevels={LEVELS} />
         <h2 className="text-2xl font-extrabold text-amber-900">
-          {t("games.qualifyTuneRace.qualifyResults", {
+          {t("games.qualifyTuneRace.resultsTitle", {
             defaultValue: "Qualifying Results",
           })}
         </h2>
@@ -529,7 +529,7 @@ function RacePlayfield({
           <MetricCard
             icon={timeIcon(run1.time)}
             value={`${run1.time}s`}
-            label={`⏱️ ${t("games.qualifyTuneRace.time", { defaultValue: "Time" })}`}
+            label={`⏱️ ${t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" })}`}
             sub={timeLabel(run1.time)}
             color="text-indigo-600"
           />
@@ -544,7 +544,7 @@ function RacePlayfield({
           <MetricCard
             icon={smoothIcon(run1.smoothness)}
             value={`${run1.smoothness}`}
-            label={`🌊 ${t("games.qualifyTuneRace.smoothness", { defaultValue: "Smoothness" })}`}
+            label={`🌊 ${t("games.qualifyTuneRace.smoothLabel", { defaultValue: "Smoothness" })}`}
             sub={smoothLabel(run1.smoothness)}
             color="text-emerald-500"
           />
