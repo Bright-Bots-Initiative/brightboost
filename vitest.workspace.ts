@@ -17,7 +17,7 @@ const dirname =
  * Override for verification / falsification only (A3-06, W-06 guard): set
  * BB_VITEST_PATH_HAS_SPACE=0 to force-include the Storybook project, or =1 to
  * force-skip, regardless of cwd. Do not set in CI. Not a product env var —
- * intentionally omitted from overview §10 / remember §2 (H-1).
+ * do not document in app/CI env tables (H-1).
  */
 function checkoutPathHasSpace(): boolean {
   const override = process.env.BB_VITEST_PATH_HAS_SPACE;
