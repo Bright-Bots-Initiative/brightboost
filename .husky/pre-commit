@@ -1,0 +1,4 @@
+# pre-commit contract (#740): REJECT unformatted staged files.
+# Runs `prettier --check` via lint-staged — does NOT auto-write or re-stage.
+# Developers format locally (`npx prettier --write -- <paths>`) before commit.
+npx lint-staged

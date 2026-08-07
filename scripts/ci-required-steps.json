@@ -1,0 +1,15 @@
+{
+  "description": "Required CI step invocations in .github/workflows/ci-cd.yml (W-11 / G-205)",
+  "workflow": ".github/workflows/ci-cd.yml",
+  "requiredSubstrings": [
+    "scripts/check-prisma-drift.sh",
+    "npm run verify:ci-gate",
+    "scripts/verify-ci-step-presence.sh",
+    "scripts/verify-type-program-membership.mjs",
+    "npm run lint",
+    "npm run typecheck",
+    "npm test -- --watch=false",
+    "npm run test:e2e:ci",
+    "npm run build"
+  ]
+}
