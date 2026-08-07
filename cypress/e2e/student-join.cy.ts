@@ -55,8 +55,8 @@ describe("P-07 student joins / logs in", () => {
     });
     cy.contains("Find your icon!", { timeout: 15000 }).should("be.visible");
 
-    // Seed order: 🐱 Student One, 🐶 Two, 🦊 Three — first names all "E2E".
-    cy.get("div.grid button").first().click();
+    // Seed order: 🐱 Student One, 🐶 Two, 🦊 Three — pick by icon text (G-105: no Tailwind class).
+    cy.contains("button", "🐱").should("be.visible").click();
 
     cy.url({ timeout: 15000 }).should("include", "/student/dashboard");
     cy.window()

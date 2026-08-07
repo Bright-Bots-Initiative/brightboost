@@ -135,13 +135,12 @@ describe("P-09 student completes a quiz activity", () => {
       .click();
     // Abandon without Finish — progress must not show Done.
     cy.visit(`/student/modules/${MODULE_SLUG}`);
-    cy.contains(ACTIVITY_TITLE, { timeout: 15000 }).should("be.visible");
-    cy.contains(ACTIVITY_TITLE)
-      .parents("div.flex")
-      .first()
-      .within(() => {
-        cy.contains("Done").should("not.exist");
-      });
+    cy.contains("button", ACTIVITY_TITLE, { timeout: 15000 }).should(
+      "be.visible",
+    );
+    cy.contains("button", ACTIVITY_TITLE).within(() => {
+      cy.contains("Done").should("not.exist");
+    });
   });
 
   it("completing the quiz persists Done on ModuleDetail after reload", () => {
@@ -155,12 +154,12 @@ describe("P-09 student completes a quiz activity", () => {
     cy.contains(/Activity Complete!/i, { timeout: 15000 }).should("be.visible");
 
     cy.visit(`/student/modules/${MODULE_SLUG}`);
-    cy.contains(ACTIVITY_TITLE, { timeout: 15000 }).should("be.visible");
+    cy.contains("button", ACTIVITY_TITLE, { timeout: 15000 }).should(
+      "be.visible",
+    );
     cy.reload();
-    cy.contains(ACTIVITY_TITLE, { timeout: 15000 }).should("be.visible");
-    cy.contains(ACTIVITY_TITLE)
-      .parents("div.flex")
-      .first()
+    cy.contains("button", ACTIVITY_TITLE, { timeout: 15000 })
+      .should("be.visible")
       .within(() => {
         cy.contains("Done").should("be.visible");
       });
