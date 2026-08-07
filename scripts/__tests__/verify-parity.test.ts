@@ -195,3 +195,147 @@ describe("verify-parity --only selection integrity (Bug F / #740)", () => {
     }
   });
 });
+
+describe("verify-parity DB gate (Bug G / #740)", () => {
+  const secretUrl =
+    "postgresql://user:s3cret-password@db.prod.example.com:5432/brightboost";
+  const decoyAmbient =
+    "postgresql://ambient:decoy@db.ambient.example.com:5432/production";
+  const designatedLocal =
+    "postgresql://user:localpass@127.0.0.1:5432/brightboost_test";
+
+  it("skips CI-14 and CI-16 when TEST_DATABASE_URL unset (exit 1 without --allow-skips)", async () => {
+    const env = { ...process.env };
+    delete env.TEST_DATABASE_URL;
+    delete env.DATABASE_URL;
+    delete env.POSTGRES_URL;
+    delete env.BB_ALLOW_NON_TEST_DB;
+    const { status, output } = await runParityCli(
+      ["--only", "CI-14,CI-16"],
+      env,
+    );
+    expect(status, output).toBe(1);
+    expect(output).toMatch(/\[SKIP\] CI-14/);
+    expect(output).toMatch(/\[SKIP\] CI-16/);
+    expect(output).toMatch(/TEST_DATABASE_URL unset/);
+    expect(countRunLines(output)).toBe(0);
+  });
+
+  it("allows required SKIPs with --allow-skips when TEST_DATABASE_URL unset", async () => {
+    const env = { ...process.env };
+    delete env.TEST_DATABASE_URL;
+    delete env.DATABASE_URL;
+    delete env.POSTGRES_URL;
+    delete env.BB_ALLOW_NON_TEST_DB;
+    const { status, output } = await runParityCli(
+      ["--only", "CI-14,CI-16", "--allow-skips"],
+      env,
+    );
+    expect(status, output).toBe(0);
+    expect(output).toMatch(/\[SKIP\] CI-14/);
+    expect(output).toMatch(/\[SKIP\] CI-16/);
+  });
+
+  it("refuses production-shaped TEST_DATABASE_URL with zero spawns", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    let spawnCount = 0;
+    const prev = process.env.TEST_DATABASE_URL;
+    const prevAllow = process.env.BB_ALLOW_NON_TEST_DB;
+    process.env.TEST_DATABASE_URL = secretUrl;
+    delete process.env.BB_ALLOW_NON_TEST_DB;
+    try {
+      const code = await mod.runParity(
+        mod.STEPS,
+        mod.parseArgs(["--only", "CI-14,CI-16"]),
+        {
+          runCommand: async () => {
+            spawnCount += 1;
+            return { code: 0, output: "" };
+          },
+        },
+      );
+      expect(code).toBe(1);
+      expect(spawnCount, "refusal must happen before any child spawn").toBe(0);
+    } finally {
+      if (prev === undefined) delete process.env.TEST_DATABASE_URL;
+      else process.env.TEST_DATABASE_URL = prev;
+      if (prevAllow === undefined) delete process.env.BB_ALLOW_NON_TEST_DB;
+      else process.env.BB_ALLOW_NON_TEST_DB = prevAllow;
+    }
+  });
+
+  it("BB_ALLOW_NON_TEST_DB=1 proceeds with warning naming host and database", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const gate = mod.resolveParityDbGate({
+      TEST_DATABASE_URL: secretUrl,
+      BB_ALLOW_NON_TEST_DB: "1",
+    });
+    expect(gate.action).toBe("run");
+    if (gate.action === "run") {
+      expect(gate.warning).toMatch(/db\.prod\.example\.com/);
+      expect(gate.warning).toMatch(/brightboost/);
+      expect(gate.warning).not.toMatch(/s3cret-password/);
+    }
+  });
+
+  it("passes the same designated URL in every DB env var to both steps", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const captured: Array<Record<string, string | undefined> | undefined> = [];
+    const prev = process.env.TEST_DATABASE_URL;
+    const prevDb = process.env.DATABASE_URL;
+    process.env.TEST_DATABASE_URL = designatedLocal;
+    process.env.DATABASE_URL = decoyAmbient;
+    delete process.env.BB_ALLOW_NON_TEST_DB;
+    try {
+      const code = await mod.runParity(
+        mod.STEPS,
+        mod.parseArgs(["--only", "CI-14,CI-16"]),
+        {
+          runCommand: async (_argv, opts) => {
+            captured.push(opts?.env);
+            return { code: 0, output: "" };
+          },
+        },
+      );
+      expect(code).toBe(0);
+      expect(captured).toHaveLength(2);
+      for (const env of captured) {
+        expect(env?.DATABASE_URL).toBe(designatedLocal);
+        expect(env?.TEST_DATABASE_URL).toBe(designatedLocal);
+        expect(env?.POSTGRES_URL).toBe(designatedLocal);
+        expect(env?.DATABASE_URL).not.toBe(decoyAmbient);
+      }
+    } finally {
+      if (prev === undefined) delete process.env.TEST_DATABASE_URL;
+      else process.env.TEST_DATABASE_URL = prev;
+      if (prevDb === undefined) delete process.env.DATABASE_URL;
+      else process.env.DATABASE_URL = prevDb;
+    }
+  });
+
+  it("never prints the password on the refusal path", async () => {
+    const env = { ...process.env, TEST_DATABASE_URL: secretUrl };
+    delete env.BB_ALLOW_NON_TEST_DB;
+    const { status, output } = await runParityCli(["--only", "CI-14"], env);
+    expect(status, output).toBe(1);
+    expect(output).not.toMatch(/s3cret-password/);
+    expect(output).toMatch(/db\.prod\.example\.com/);
+    expect(countRunLines(output)).toBe(0);
+  });
+
+  it("buildParityDbChildEnv keeps all three DB vars identical", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const env = mod.buildParityDbChildEnv(designatedLocal);
+    expect(env.DATABASE_URL).toBe(designatedLocal);
+    expect(env.TEST_DATABASE_URL).toBe(designatedLocal);
+    expect(env.POSTGRES_URL).toBe(designatedLocal);
+  });
+});
