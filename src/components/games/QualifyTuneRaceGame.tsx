@@ -11,6 +11,7 @@ import GameShell, {
 } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import { t } from "i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Phase =
@@ -152,7 +153,7 @@ const BRIEFING: MissionBriefing = {
       "Compare your two runs!",
     ],
   ),
-  chapterLabel: pickLocale({ en: "Race Lab" }, "Race Lab"),
+  chapterLabel: t("games.qualifyTuneRace.chapterLabel", { defaultValue: "Race Lab" }),
   themeColor: "amber",
   controlInstructions: {
     keyboard: pickLocale(

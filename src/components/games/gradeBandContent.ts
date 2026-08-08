@@ -1318,7 +1318,7 @@ const SWEEPER_STYLES: Record<string, SweeperStyle> = {
   linear: {
     icon: "🟢",
     color: "text-blue-500",
-    labelKey: "games.mazeMaps.loopSweeper",
+    labelKey: "games.mazeMaps.lineSweeper",
   },
 };
 

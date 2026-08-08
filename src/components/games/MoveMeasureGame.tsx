@@ -12,6 +12,7 @@ import GameShell, {
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
 import { getGradeBand, BAND_CONFIG, type GradeBand } from "./gradeBandContent";
+import { t } from "i18next";
 
 // ── Types & constants ────────────────────────────────────────────────────
 type Phase =
@@ -123,7 +124,7 @@ const BRIEFING: MissionBriefing = {
       "Try again to improve!",
     ],
   ),
-  chapterLabel: pickLocale({ en: "Body Lab" }, "Body Lab"),
+  chapterLabel: t("games.moveMeasure.chapterLabel", { defaultValue: "Body Lab" }),
   themeColor: "emerald",
 };
 

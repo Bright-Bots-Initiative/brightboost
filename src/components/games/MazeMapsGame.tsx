@@ -260,7 +260,7 @@ const BRIEFING: MissionBriefing = {
       "Safe Pads protect you from Sweepers",
     ],
   ),
-  chapterLabel: pickLocale({ en: "AI Lab" }, "AI Lab"),
+  chapterLabel: t("games.mazeMaps.chapterLabel", { defaultValue: "AI Lab" }),
   themeColor: "cyan",
   controlInstructions: {
     keyboard: [

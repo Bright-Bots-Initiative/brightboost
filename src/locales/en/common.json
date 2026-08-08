@@ -1652,6 +1652,7 @@
       "title": "Gotcha Gears"
     },
     "mazeMaps": {
+      "chapterLabel": "AI Lab",
       "loopSweeper": "Loop Sweeper",
       "lineSweeper": "Line Sweeper",
       "unknownSweeper": "Unknown Sweeper",
@@ -1685,6 +1686,7 @@
     },
     "moveMeasure": {
       "title": "Move, Measure & Improve",
+      "chapterLabel": "Body Lab",
       "introDesc": "Test your body's superpowers! Dash, jump, and toss \u2014 then use data to improve.",
       "letsGo": "Let's Go!",
       "dashTitle": "Dash!",
@@ -1757,6 +1759,7 @@
     },
     "skyShield": {
       "title": "Sky Shield Patterns",
+      "chapterLabel": "Pattern Lab",
       "introDesc": "Light drops are falling! Watch the pattern and place your shield to catch them.",
       "letsGo": "Let's Go!",
       "practiceLabel": "Practice -- Catch the Light!",
@@ -1802,6 +1805,7 @@
     },
     "fastLane": {
       "title": "Fast Lane Signals",
+      "chapterLabel": "Signal School",
       "introDesc": "Deliver the science supplies safely! Read the signals and pick the best lane.",
       "letsGo": "Let's Go!",
       "phasePractice": "Practice",
@@ -1834,6 +1838,7 @@
     },
     "qualifyTuneRace": {
       "title": "Qualify, Tune, Race",
+      "chapterLabel": "Race Lab",
       "introDesc": "First we test. Then we tune. Then we race again!",
       "letsGo": "Let's Go!",
       "qualifyTitle": "Qualifying Run",
