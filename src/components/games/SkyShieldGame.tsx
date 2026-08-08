@@ -18,6 +18,7 @@ import {
   SKY_SHIELD_CONTENT,
   type GradeBand,
 } from "./gradeBandContent";
+import { t } from "i18next";
 
 // ── Constants & Types ─────────────────────────────────────────────────────
 const LABELS = ["🔵", "🟡", "🩷"];
@@ -79,7 +80,9 @@ const BRIEFING: MissionBriefing = {
       "Scan mystery lights before choosing",
     ],
   ),
-  chapterLabel: "Pattern Lab",
+  chapterLabel: t("games.skyShield.chapterLabel", {
+    defaultValue: "Pattern Lab",
+  }),
   themeColor: "violet",
 };
 

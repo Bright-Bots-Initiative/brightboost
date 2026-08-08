@@ -13,6 +13,7 @@ import GameShell, {
 } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import { t } from "i18next";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Signal = "safe" | "blocked" | "caution";
@@ -82,7 +83,9 @@ const BRIEFING: MissionBriefing = {
       "Yellow means watch out \u2014 it might close!",
     ],
   ),
-  chapterLabel: "Signal School",
+  chapterLabel: t("games.fastLane.chapterLabel", {
+    defaultValue: "Signal School",
+  }),
   themeColor: "blue",
 };
 

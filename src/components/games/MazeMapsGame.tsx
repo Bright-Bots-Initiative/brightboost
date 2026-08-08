@@ -20,6 +20,7 @@ import GameShell, {
 import { getGradeBand, MAPS_G3_5 } from "./gradeBandContent";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import { t } from "i18next";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -67,12 +68,20 @@ const LEVELS = 4; // 3, but +1 offset
 interface SweeperStyle {
   color: string;
   icon: string;
-  label: string;
+  labelKey: string;
 }
 
 const SWEEPER_STYLES: Record<string, SweeperStyle> = {
-  loop: { icon: "🔴", color: "text-red-500", label: "Loop Sweeper" },
-  linear: { icon: "🟢", color: "text-blue-500", label: "Line Sweeper" },
+  loop: {
+    icon: "🔴",
+    color: "text-red-500",
+    labelKey: "games.mazeMaps.loopSweeper",
+  },
+  linear: {
+    icon: "🟢",
+    color: "text-blue-500",
+    labelKey: "games.mazeMaps.lineSweeper",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -251,7 +260,7 @@ const BRIEFING: MissionBriefing = {
       "Safe Pads protect you from Sweepers",
     ],
   ),
-  chapterLabel: "AI Lab",
+  chapterLabel: t("games.mazeMaps.chapterLabel", { defaultValue: "AI Lab" }),
   themeColor: "cyan",
   controlInstructions: {
     keyboard: [
@@ -358,7 +367,7 @@ function MazeBoard({
         ] ?? {
           icon: "⚫",
           color: "text-black",
-          label: "Unknown Sweeper",
+          labelKey: "games.mazeMaps.unknownSweeper",
         };
 
         return (
@@ -371,7 +380,7 @@ function MazeBoard({
               width: CELL,
               height: CELL,
             }}
-            title={style.label}
+            title={t(style.labelKey, { defaultValue: "Unknown Sweeper" })}
           >
             <span className={`text-2xl ${style.color}`}>{style.icon}</span>
           </div>
