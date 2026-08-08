@@ -153,7 +153,9 @@ const BRIEFING: MissionBriefing = {
       "Compare your two runs!",
     ],
   ),
-  chapterLabel: t("games.qualifyTuneRace.chapterLabel", { defaultValue: "Race Lab" }),
+  chapterLabel: t("games.qualifyTuneRace.chapterLabel", {
+    defaultValue: "Race Lab",
+  }),
   themeColor: "amber",
   controlInstructions: {
     keyboard: pickLocale(

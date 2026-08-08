@@ -80,7 +80,9 @@ const BRIEFING: MissionBriefing = {
       "Scan mystery lights before choosing",
     ],
   ),
-  chapterLabel: t("games.skyShield.chapterLabel", { defaultValue: "Pattern Lab" }),
+  chapterLabel: t("games.skyShield.chapterLabel", {
+    defaultValue: "Pattern Lab",
+  }),
   themeColor: "violet",
 };
 

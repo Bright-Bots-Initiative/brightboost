@@ -124,7 +124,9 @@ const BRIEFING: MissionBriefing = {
       "Try again to improve!",
     ],
   ),
-  chapterLabel: t("games.moveMeasure.chapterLabel", { defaultValue: "Body Lab" }),
+  chapterLabel: t("games.moveMeasure.chapterLabel", {
+    defaultValue: "Body Lab",
+  }),
   themeColor: "emerald",
 };
 

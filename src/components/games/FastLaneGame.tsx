@@ -83,7 +83,9 @@ const BRIEFING: MissionBriefing = {
       "Yellow means watch out \u2014 it might close!",
     ],
   ),
-  chapterLabel: t("games.fastLane.chapterLabel", { defaultValue: "Signal School" }),
+  chapterLabel: t("games.fastLane.chapterLabel", {
+    defaultValue: "Signal School",
+  }),
   themeColor: "blue",
 };
 
