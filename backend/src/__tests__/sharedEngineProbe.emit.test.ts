@@ -39,6 +39,9 @@ const EMITTED_PROBE = path.join(
  * its real emit depth and requires the emitted artifact in a child Node process.
  */
 describe("sharedEngineProbe emitted-artifact resolution", () => {
+  // Two intentional `tsc` invocations (shared + probe emit). Default hookTimeout
+  // (10s) is too low under a full parallel unit suite; this is sized for the work,
+  // not a flake waiver (G-006).
   beforeAll(() => {
     // Fail loudly — never skip (G-017, proxy row 17).
     if (!existsSync(BACKEND_DIR)) {
@@ -81,7 +84,7 @@ describe("sharedEngineProbe emitted-artifact resolution", () => {
       ],
       { cwd: BACKEND_DIR, stdio: "pipe" },
     );
-  });
+  }, 60_000);
 
   it("emits the probe to backend/dist/src/ (the real S-2 depth)", () => {
     expect(existsSync(EMITTED_PROBE)).toBe(true);

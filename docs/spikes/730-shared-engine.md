@@ -144,7 +144,7 @@ Canonical §15.2 row 7 evidence: compile/lint/unit/build green while container e
 
 - Reverted `backend/tsconfig.json` to `rootDir: "."`, `include: ["src/**/*"]` only.
 - Added `shared/tsconfig.json` → emit CommonJS + declarations to `shared/dist/`.
-- `backend/package.json`: `build:shared`, `build:railway` runs shared then `db:generate` then `tsc`; `typecheck` builds shared first.
+- `backend/package.json`: `build:shared`; `build`, `build:railway`, and `typecheck` all run shared before `tsc` (or `--noEmit`).
 - ~~Probe imports `../../shared/dist/greatwork-engine` (emitted, not live TS outside `rootDir`).~~ **Superseded by review fix below** — that relative path typechecked against source depth and failed at runtime under `dist/src/`.
 - **`main` / `start` / `predeploy.sh` untouched** — S-2 preserves `dist/src/server.js`.
 
