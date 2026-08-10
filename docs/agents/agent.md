@@ -6,6 +6,8 @@ Before work, read `docs/agents/overview.md`, everything under `docs/agents/rules
 
 This file is the only path adapters name. It carries no rule or skill body.
 
+## Pointers
+
 | Path                                   | Role                                               |
 | -------------------------------------- | -------------------------------------------------- |
 | `docs/agents/overview.md`              | Project overview, commands, source-of-truth ladder |
@@ -20,4 +22,21 @@ This file is the only path adapters name. It carries no rule or skill body.
 | `docs/agents/learned/`                 | Migrated learnings (performance, a11y, security)   |
 | `docs/agents/mcp.md`                   | MCP / tooling notes (optional; never required)     |
 
-Adapters (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/agent-context.mdc`) must repeat the bootstrap sentence above verbatim and stay under 40 lines.
+## Adapter contract
+
+Adapters (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/agent-context.mdc`) must:
+
+- Name this file (`docs/agents/agent.md`)
+- Repeat the bootstrap sentence above **verbatim**
+- Stay under 40 lines
+- Carry no rule or skill body text
+
+Derived Claude skill stubs under `.claude/skills/` point at canonical `docs/agents/skills/**/SKILL.md` and are regenerated with `npm run agent:check -- --fix`.
+
+Jules stubs under `.jules/` are one-line routers into `docs/agents/learned/`.
+
+## Hop order
+
+1. Read `overview.md` and every file in `rules/`
+2. Skim `skills/overview.md`; open a skill only when the task matches
+3. Consult `learned/` for incident-style notes; do not treat them as always-on rules
