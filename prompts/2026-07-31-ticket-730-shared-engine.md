@@ -67,14 +67,15 @@ shared/dist from root typecheck, and write Nathan decision items into the PR.
 
 ## What Claude Code Did
 
-- Files created/modified: `backend/src/__tests__/sharedEngineProbe.test.ts`, `backend/src/__tests__/sharedEngineProbe.emit.test.ts`, `backend/package.json`, `tsconfig.json`, `docs/spikes/730-shared-engine.md`, `docs/architecture/shared-code.md`, `prompts/2026-07-31-ticket-730-shared-engine.md`
-- Tests passed: yes (F1/F4: emit + source-contract green; F2: emit RED under broken relative import; F3: source-contract still green under that break)
+- Files created/modified: `backend/src/__tests__/sharedEngineProbe.test.ts`, `backend/src/__tests__/sharedEngineProbe.emit.test.ts`, `backend/package.json`, `package.json` (`pretest:unit`), `tsconfig.json`, `docs/spikes/730-shared-engine.md`, `docs/architecture/shared-code.md`, `prompts/2026-07-31-ticket-730-shared-engine.md`
+- Tests passed: yes (F1/F4: emit + source-contract green; F2: emit RED under broken relative import; F3: source-contract still green under that break; CI `build-and-test` + review bot green on head)
 - Build clean: yes (`docker build` exit 0; `/health` includes `sharedEngine` label; separate shared/dist and `@brightboost` sabotages exit 1)
 
 ## What Worked
 
 - Emitting the probe inside the Vitest test (no workflow edits) caught the depth-fragility defect that source imports cannot see.
 - Separate sabotages for `shared/dist` vs the package link showed each link is load-bearing.
+- Root `pretest:unit` (`tsc -p shared/tsconfig.json`) fixed the review bot: without it, route suites that import `server` → probe failed when `shared/dist` did not yet exist.
 
 ## What Needed Editing
 
