@@ -8,10 +8,10 @@ BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that bui
 
 ## Demo Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
+| Role    | Email                | Password      |
+| ------- | -------------------- | ------------- |
 | Teacher | `teacher@school.com` | `password123` |
-| Student | `student@test.com` | `password` |
+| Student | `student@test.com`   | `password`    |
 
 ## Quick Share Links
 
@@ -21,6 +21,7 @@ BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that bui
 ## Recommended 10-Minute Exploration Path
 
 ### As a Teacher (5 minutes)
+
 1. Go to the app and click **"I'm a Teacher"**
 2. Log in with the teacher credentials above
 3. A **tutorial overlay** will guide you through the key features on first login
@@ -32,6 +33,7 @@ BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that bui
 9. Check the **Impact** dashboard for community-level metrics
 
 ### As a Student (5 minutes)
+
 1. Open a new browser tab/incognito window
 2. Click **"I'm a Student!"** on the landing page
 3. Enter the join code from the class you created above
@@ -40,6 +42,7 @@ BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that bui
 6. Check out the **Avatar** customization and **Achievements**
 
 ### Key Features to Notice
+
 - **Language toggle** (top-right) — switch between English and Spanish anytime
 - **Pulse surveys** — confidence check-ins that appear after joining a class
 - **Showcase Mode** — 6-slide presentation designed for family nights or community events
@@ -56,6 +59,7 @@ Click the **"Give Feedback"** button (bottom-right corner on any page). Tell us 
 ## Password Reset (Dev Mode)
 
 If you need to test password reset:
+
 1. Click **"Forgot password?"** on any login page
 2. Enter an email address
 3. Check the **backend console output** for the reset link (emails are logged, not sent, in dev mode)
@@ -70,7 +74,7 @@ If you need to test password reset:
 
 ## District Deployment
 
-See `DISTRICT_PILOT_CHECKLIST.md` for a full pre-deployment readiness checklist covering infrastructure, accounts, curriculum, privacy, and go/no-go criteria.
+See [`district-pilot-checklist.md`](district-pilot-checklist.md) for a full pre-deployment readiness checklist covering infrastructure, accounts, curriculum, privacy, and go/no-go criteria.
 
 ## Questions?
 

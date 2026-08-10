@@ -12,22 +12,22 @@ BrightBoost is a **bilingual (English / Spanish) K-8 STEM learning platform** th
 
 ## How to Explore the Demo
 
-| Step | What to Do | Time |
-|------|-----------|------|
-| 1 | Open the **Showcase Presentation** at `/showcase` — no login needed | 2 min |
-| 2 | Log in as a **teacher** (`teacher@school.com` / `password123`) — explore classes, resources, prep checklists | 5 min |
-| 3 | Log in as a **student** (`student@test.com` / `password`) — play a module, see the avatar and dashboard | 5 min |
+| Step | What to Do                                                                                                   | Time  |
+| ---- | ------------------------------------------------------------------------------------------------------------ | ----- |
+| 1    | Open the **Showcase Presentation** at `/showcase` — no login needed                                          | 2 min |
+| 2    | Log in as a **teacher** (`teacher@school.com` / `password123`) — explore classes, resources, prep checklists | 5 min |
+| 3    | Log in as a **student** (`student@test.com` / `password`) — play a module, see the avatar and dashboard      | 5 min |
 
 You can also visit `/for-reviewers` inside the app for an interactive evaluator guide.
 
 ## What to Look For
 
-| Lens | Questions to Consider |
-|------|----------------------|
-| **Student Engagement** | Are the current K-2 activities age-appropriate? Is the XP/avatar system motivating? |
-| **Teacher Usability** | Is it easy to create a class, assign modules, and review progress? |
+| Lens                       | Questions to Consider                                                                                    |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Student Engagement**     | Are the current K-2 activities age-appropriate? Is the XP/avatar system motivating?                      |
+| **Teacher Usability**      | Is it easy to create a class, assign modules, and review progress?                                       |
 | **Accessibility & Equity** | Does icon-based login work for pre-readers? Is bilingual support effective? Does it load on Chromebooks? |
-| **Data & Trust** | Is it clear what data is collected? Does the privacy policy address your concerns? |
+| **Data & Trust**           | Is it clear what data is collected? Does the privacy policy address your concerns?                       |
 
 ## Privacy & Data Handling
 
@@ -61,6 +61,7 @@ BrightBoost is in **active pilot** with a small group of schools. The current ro
 ## Sharing Feedback
 
 Use the **"Give Feedback"** button (bottom-right corner in the app) to share your evaluation. The form asks:
+
 - Your role (educator, school leader, community partner, parent, technical reviewer)
 - What felt strongest
 - What was confusing or could improve
@@ -73,4 +74,4 @@ Questions about BrightBoost? Reach out to your pilot coordinator or use the in-a
 
 ---
 
-*BrightBoost is a project of the Bright Bots Initiative.*
+_BrightBoost is a project of the Bright Bots Initiative._

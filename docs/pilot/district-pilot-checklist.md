@@ -60,15 +60,15 @@ Pre-deployment readiness checklist for district IT, curriculum coordinators, and
 
 ## Testing Matrix
 
-| Feature | Chrome | Safari | Edge | iPad | Chromebook |
-|---------|--------|--------|------|------|------------|
-| Teacher login | | | | | |
-| Student login (email) | | | | | |
-| Student login (icon/K-2) | | | | | |
-| Module player | | | | | |
-| Showcase Mode | | | | | |
-| Language toggle | | | | | |
-| Password reset | | | | | |
+| Feature                  | Chrome | Safari | Edge | iPad | Chromebook |
+| ------------------------ | ------ | ------ | ---- | ---- | ---------- |
+| Teacher login            |        |        |      |      |            |
+| Student login (email)    |        |        |      |      |            |
+| Student login (icon/K-2) |        |        |      |      |            |
+| Module player            |        |        |      |      |            |
+| Showcase Mode            |        |        |      |      |            |
+| Language toggle          |        |        |      |      |            |
+| Password reset           |        |        |      |      |            |
 
 ## Go / No-Go
 
@@ -81,9 +81,9 @@ Pre-deployment readiness checklist for district IT, curriculum coordinators, and
 
 ## Contacts
 
-| Role | Name | Email |
-|------|------|-------|
-| Technical Lead | | |
-| District IT | | |
-| Curriculum Coordinator | | |
-| Pilot Teacher(s) | | |
+| Role                   | Name | Email |
+| ---------------------- | ---- | ----- |
+| Technical Lead         |      |       |
+| District IT            |      |       |
+| Curriculum Coordinator |      |       |
+| Pilot Teacher(s)       |      |       |
