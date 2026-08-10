@@ -131,12 +131,14 @@ Canonical §15.2 row 7 evidence: compile/lint/unit/build green while container e
 
 ### B3-03 — S-2 vs S-3
 
-| Strategy | Cost                                                        | Preserves                                                 |
-| -------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| S-2      | Second `tsconfig` + `build:shared` in `build:railway`       | `dist/src/server.js`, `main`/`start`, no `server.ts` edit |
-| S-3      | `paths` + bundling; must prove CommonJS resolves at runtime | Same layout if bundler inlines shared                     |
+| Strategy | Cost                                                        | Preserves                                                                                     |
+| -------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| S-2      | Second `tsconfig` + `build:shared` in `build:railway`       | `dist/src/server.js`, `main`/`start`; originally claimed no `server.ts` edit (see note below) |
+| S-3      | `paths` + bundling; must prove CommonJS resolves at runtime | Same layout if bundler inlines shared                                                         |
 
 **Selected: S-2** — smallest blast radius inside §11.2 ownership. S-1 rejected for landing (entrypoint + unowned `server.ts` `__dirname` static-path risk). S-3 rejected as more moving parts for the same preserved layout.
+
+**Round-1 correction:** the review fix **does** edit `server.ts` — one top-level import of `sharedEngineProbeLabel` and one `/health` field. That is acceptable under S-2: it does not touch `__dirname` static-path math, does not move `main`/`start`, and makes `/health` a load-bearing assertion rather than a proxy. The original “no `server.ts` edit” cell above is therefore outdated.
 
 ### B3-04 / B3-05 — Landed config (S-2)
 
@@ -154,13 +156,14 @@ W-02 proof: `cd backend; npm run build:railway` exit 0; `dist/src/server.js` pre
 
 **Resolution (Option 1):**
 
-| Piece                  | Change                                                                                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `shared/package.json`  | `name: @brightboost/greatwork-engine`, `main`/`types` → `dist/greatwork-engine/index.{js,d.ts}`                      |
-| `backend/package.json` | `"@brightboost/greatwork-engine": "file:../shared"`                                                                  |
-| Probe import           | `from "@brightboost/greatwork-engine"` — Node resolves identically at compile and runtime                            |
-| Boot                   | `server.ts` imports `sharedEngineProbeLabel`; `/health` returns `{ status, sharedEngine }`                           |
-| Regression             | `backend/src/__tests__/sharedEngineProbe.test.ts` (root Vitest `unit` project — backend has no `test` script, OQ-06) |
+| Piece                  | Change                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `shared/package.json`  | `name: @brightboost/greatwork-engine`, `main`/`types` → `dist/greatwork-engine/index.{js,d.ts}`                |
+| `backend/package.json` | `"@brightboost/greatwork-engine": "file:../shared"`                                                            |
+| Probe import           | `from "@brightboost/greatwork-engine"` — Node resolves identically at compile and runtime                      |
+| Boot                   | `server.ts` imports `sharedEngineProbeLabel`; `/health` returns `{ status, sharedEngine }`                     |
+| Source contract        | `backend/src/__tests__/sharedEngineProbe.test.ts` — label from SOURCE only (cannot see emit-depth defect)      |
+| Emit regression        | `backend/src/__tests__/sharedEngineProbe.emit.test.ts` — compiles probe to `dist/src/` and requires it in Node |
 
 Rejected shortcuts: deepening to `../../../` (breaks compile), copying/symlinking `shared/` under `backend/` (spike anti-goal), S-1 / flatten `rootDir: "src"` (moves entrypoint; out of scope).
 
@@ -174,21 +177,26 @@ Added G-010 comment above `COPY . .` naming the load-bearing `shared/` dependenc
 
 ### B4-02 — W-03
 
-`docker build -f Dockerfile.backend -t brightboost-730-spike:local .` → **exit 0**
-Image: `brightboost-730-spike:local` (`sha256:80b9f4e0e4e915f212e87786728a2be19f9462b98405bf7f7c39c2e7b3b95556`).
+Rebuilt 2026-08-10 after review-fix graph (`file:../shared`, `build:shared` in `build:railway`).
+
+`docker build -f Dockerfile.backend -t brightboost-730-spike:local .` → **exit 0**  
+`BUILD_EXIT=0`  
+Image: `brightboost-730-spike:local` (`sha256:66d749f2f3664e9c3a4ed64985e79e32f6b777d1deef62dc4b0b0b364d49ec96`).
 
 ### B4-03 — Start path vs emit
 
-Image contains:
-
-- `/app/backend/dist/src/server.js` (S-2 entrypoint)
-- `/app/shared/dist/greatwork-engine/index.js`
+```
+$ docker run --rm brightboost-730-spike:local sh -c "ls -l /app/backend/dist/src/server.js /app/shared/dist/greatwork-engine/index.js"
+-rwxr-xr-x    1 root     root         12257 Aug 10 13:00 /app/backend/dist/src/server.js
+-rwxr-xr-x    1 root     root           484 Aug 10 13:00 /app/shared/dist/greatwork-engine/index.js
+LS_EXIT=0
+```
 
 `backend/package.json` still: `"start": "npm run predeploy && node dist/src/server.js"`.
 
-Note: default `npm start` → `predeploy.sh` failed in Alpine with `set: line 2: illegal option -` (CRLF / `set -e` on the committed script — pre-existing, not introduced by this spike). W-04 proved the **node entrypoint** S-2 preserves: `node dist/src/server.js` from `/app/backend`.
+Note: default `npm start` → `predeploy.sh` failed in Alpine with `set: line 2: illegal option -` (CRLF / `set -e` on the committed script — pre-existing, not introduced by this spike). W-04 proves the **node entrypoint** S-2 preserves: `node dist/src/server.js` from `/app/backend` (**CMD bypassed**).
 
-### B4-04 — W-04
+### B4-04 — W-04 (healthy)
 
 ```
 docker run -d --name bb730-w04 -p 8318:3000 -w /app/backend \
@@ -198,7 +206,12 @@ docker run -d --name bb730-w04 -p 8318:3000 -w /app/backend \
 ```
 
 Logs: `Server running on port 3000`  
-`GET http://127.0.0.1:8318/health` → **200** `{"status":"ok"}`
+`GET http://127.0.0.1:8318/health` → **200**
+
+```
+{"status":"ok","sharedEngine":"greatwork-engine-stub-730@0.0.0"}
+HEALTH_CURL_EXIT=0
+```
 
 ### B4-05 — Falsify container start
 
@@ -210,20 +223,61 @@ Error: Cannot find module '/app/backend/dist/backend/src/server.js'
 
 Restored by removing the bad container (no lasting package.json change).
 
+### B4-06 — Shared-module two-phase proof (separate sabotages)
+
+Each sabotage asserts the path changed **before** asserting boot failure. Restored healthy `/health` after.
+
+**Sabotage A — `/app/shared/dist` alone** (`@brightboost` link still present):
+
+```
+BEFORE: ls -ld /app/shared/dist → present
+AFTER_RM: ls: /app/shared/dist: No such file or directory
+LINK_STILL: /app/backend/node_modules/@brightboost/greatwork-engine -> ../../../shared
+node dist/src/server.js →
+Error: Cannot find module '/app/backend/node_modules/@brightboost/greatwork-engine/dist/greatwork-engine/index.js'. Please verify that the package.json has a valid "main" entry
+  code: 'MODULE_NOT_FOUND'
+  requestPath: '@brightboost/greatwork-engine'
+NODE_EXIT=1
+```
+
+**Sabotage B — `/app/backend/node_modules/@brightboost` alone** (`shared/dist` still present):
+
+```
+BEFORE: link present; /app/shared/dist present
+AFTER_RM: ls: /app/backend/node_modules/@brightboost: No such file or directory
+SHARED_STILL: /app/shared/dist/greatwork-engine/index.js present
+node dist/src/server.js →
+Error: Cannot find module '@brightboost/greatwork-engine'
+Require stack:
+- /app/backend/dist/src/sharedEngineProbe.js
+- /app/backend/dist/src/server.js
+NODE_EXIT=1
+```
+
+**Restored:** fresh `docker run` with same env → logs `Server running on port 3000`;  
+`GET http://127.0.0.1:8318/health` → `{"status":"ok","sharedEngine":"greatwork-engine-stub-730@0.0.0"}` (`RESTORE_EXIT=0`).
+
 ---
 
 ## B5 — Scope check
 
-`git diff --name-only 6cc86a1...HEAD` (after U2 + Q2-02 tsconfig exclude):
+`git diff --name-only $(git merge-base origin/main HEAD)...HEAD` (2026-08-10, post review-2 remediation commits):
 
 ```
 Dockerfile.backend
+backend/package-lock.json
 backend/package.json
+backend/src/__tests__/sharedEngineProbe.emit.test.ts
+backend/src/__tests__/sharedEngineProbe.test.ts
+backend/src/server.ts
 backend/src/sharedEngineProbe.ts
+docs/architecture/shared-code.md
 docs/spikes/730-shared-engine.md
+prompts/2026-07-31-ticket-730-shared-engine.md
 shared/greatwork-engine/index.test.ts
 shared/greatwork-engine/index.ts
 shared/greatwork-engine/types.ts
+shared/package.json
 shared/tsconfig.json
 src/main.tsx
 tsconfig.json
@@ -231,7 +285,68 @@ vite.config.ts
 vitest.config.ts
 ```
 
-No `vitest.workspace.ts`, no root `package.json` script changes, no `.github/workflows/**`. Matches §11.2 (+ backend probe; U2 colocated test; U2 `@shared` in `vitest.config.ts` per blockers-log exception). `shared/tsconfig.json` excludes `greatwork-engine/**/*.test.ts` so `build:shared` does not typecheck Vitest files (Q2-02).
+**19 files.** No `.github/workflows/**`, no `scripts/**`, no `prisma/**`, no `backend/scripts/predeploy.sh`, no `DEPLOYMENT.md`.
+
+---
+
+## Falsification log — emit regression (F1–F4)
+
+Governing question: _Could this pass for a reason other than the thing being claimed?_
+
+| Step | Action                                                                                                | Result                                                                                                                                                                                                                                   |
+| ---- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1   | `npm run test:unit -- --reporter=verbose "backend/src/__tests__/sharedEngineProbe"` with landed probe | **GREEN** — 2 files / 4 tests passed (`F4_EXIT` path; F1 same)                                                                                                                                                                           |
+| F2   | Temporarily change probe to `from "../../shared/dist/greatwork-engine"`                               | Emit test **RED** on phase-1 (`resolves the shared engine when the EMITTED artifact is required`); `EMIT_EXIT=1`; stderr includes `Cannot find module '../../shared/dist/greatwork-engine'` from `backend/dist/src/sharedEngineProbe.js` |
+| F3   | Same break; run source-contract test only                                                             | **GREEN** — `sharedEngineProbe.test.ts` 1 passed (`F3_EXIT=0`) — proves source-only test cannot catch the defect                                                                                                                         |
+| F4   | Restore `@brightboost/greatwork-engine`; re-run both                                                  | **GREEN** — 2 files / 4 tests; `F4_EXIT=0`                                                                                                                                                                                               |
+
+### F1 verbatim (healthy)
+
+```
+ ✓ |unit| backend/src/__tests__/sharedEngineProbe.test.ts > sharedEngineProbe (source contract) > computes the expected label when resolved from source 1ms
+ ✓ |unit| backend/src/__tests__/sharedEngineProbe.emit.test.ts > sharedEngineProbe emitted-artifact resolution > emits the probe to backend/dist/src/ (the real S-2 depth) 2ms
+ ✓ |unit| backend/src/__tests__/sharedEngineProbe.emit.test.ts > sharedEngineProbe emitted-artifact resolution > resolves the shared engine when the EMITTED artifact is required 62ms
+ ✓ |unit| backend/src/__tests__/sharedEngineProbe.emit.test.ts > sharedEngineProbe emitted-artifact resolution > fails at this emit depth when the old relative specifier is used 56ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+```
+
+### F2 verbatim (broken relative import — emit RED)
+
+```
+ × |unit| backend/src/__tests__/sharedEngineProbe.emit.test.ts > sharedEngineProbe emitted-artifact resolution > resolves the shared engine when the EMITTED artifact is required 75ms
+   → Command failed: … require('./dist/src/sharedEngineProbe.js')
+Error: Cannot find module '../../shared/dist/greatwork-engine'
+Require stack:
+- …\backend\dist\src\sharedEngineProbe.js
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+EMIT_EXIT=1
+```
+
+### F3 verbatim (source contract still green under F2 break)
+
+```
+ ✓ |unit| backend/src/__tests__/sharedEngineProbe.test.ts > sharedEngineProbe (source contract) > computes the expected label when resolved from source 3ms
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+F3_EXIT=0
+```
+
+### F4 verbatim (restored)
+
+```
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+F4_EXIT=0
+```
+
+---
+
+## Decision required (nwalker) — S-2 vs #730 §7 A1
+
+**Decision required (nwalker):** S-2 makes the frontend consume shared **source** (`@shared/greatwork-engine` → `shared/greatwork-engine/index.ts`) and the backend consume shared **built output** (`@brightboost/greatwork-engine` → `shared/dist/…`). This is the A4 trade #730 §4 rejected (build artifact + ordering + skew risk). Accepting it means #720 needs a freshness/parity guard on `shared/dist` before byte-identical output can be claimed. Confirm S-2 is accepted, and confirm whether that guard is #720 scope or a new issue.
 
 ---
 

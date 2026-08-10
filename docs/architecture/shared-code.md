@@ -37,3 +37,7 @@ Backend keeps `rootDir: "."` and `main` / `start` on `dist/src/server.js`. Do **
 | `shared/greatwork-engine/` | Stub + future simulation engine (#720). Not a template for inventing parallel engines per game. |
 
 Add another `shared/<domain>/` only when a new feature hits the same cross-runtime identity requirement — not by default.
+
+## Decision required (nwalker) — frontend source vs backend emit
+
+S-2 leaves a split: frontend compiles shared **source**; backend consumes shared **built** `dist`. That is the A4-shaped trade #730 §4 rejected. Confirm acceptance for #720 and whether a `shared/dist` freshness/parity guard belongs on #720 or a new issue. Full write-up: spike report “Decision required (nwalker) — S-2 vs #730 §7 A1”.
