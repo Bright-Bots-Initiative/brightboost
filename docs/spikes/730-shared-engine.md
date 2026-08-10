@@ -273,6 +273,7 @@ backend/src/server.ts
 backend/src/sharedEngineProbe.ts
 docs/architecture/shared-code.md
 docs/spikes/730-shared-engine.md
+package.json
 prompts/2026-07-31-ticket-730-shared-engine.md
 shared/greatwork-engine/index.test.ts
 shared/greatwork-engine/index.ts
@@ -285,7 +286,7 @@ vite.config.ts
 vitest.config.ts
 ```
 
-**19 files.** No `.github/workflows/**`, no `scripts/**`, no `prisma/**`, no `backend/scripts/predeploy.sh`, no `DEPLOYMENT.md`.
+**20 files.** No `.github/workflows/**`, no `scripts/**`, no `prisma/**`, no `backend/scripts/predeploy.sh`, no `DEPLOYMENT.md`. Root `package.json` gained `pretest:unit` so Vitest can resolve `@brightboost/greatwork-engine` `main` when `shared/dist` has not already been produced by backend typecheck.
 
 ---
 
