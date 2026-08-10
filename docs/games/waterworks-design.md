@@ -2,7 +2,7 @@
 
 > Status: **design — pending approval.** No game code is written yet.
 > Placement: **standalone showcase** — one unlinked route (`/waterworks`), no auth, device-local
-> persistence, zero backend. Set 3 candidacy (#676) is a *possible future placement*, decided later.
+> persistence, zero backend. Set 3 candidacy (#676) is a _possible future placement_, decided later.
 > Bar: `docs/design-principles.md`. Reviewed-prototype feedback from both pod leads is the
 > requirements spec baked in below.
 
@@ -14,9 +14,9 @@ A child designs a river system on a sandbox grid using parts inspired by the rea
 **Dujiangyan waterworks** (都江堰, Chengdu, built ~256 BC under Li Bing): the **鱼嘴 Fish Mouth**
 that splits the river, the **飞沙堰 Flying Sand Weir** that spills excess water safely away, and the
 **宝瓶口 Bottle-Neck** that throttles flow so fields drink without drowning. The child lays channels,
-places fields, runs the water, then storm-tests with Rain — and discovers *by doing* why each of Li
+places fields, runs the water, then storm-tests with Rain — and discovers _by doing_ why each of Li
 Bing's inventions exists: the flood comes first, the wisdom follows. **小石犀 (Shíxī)**, the little
-stone rhino mascot (after the stone rhinos Li Bing set in the river), watches and *wonders* — never
+stone rhino mascot (after the stone rhinos Li Bing set in the river), watches and _wonders_ — never
 grades. There is **no game-over**: a flood is feedback about the river, not failure of the child.
 
 ## 2. The sim, specified (unit-testable; numbers = prototype baseline)
@@ -27,11 +27,12 @@ open/closed; erase removes), `fishmouth 鱼嘴`, `sandweir 飞沙堰`, `bottlene
 Conductors = source, channel, fishmouth, sandweir, bottleneck, open gate. A run = **16 ticks × 180 ms**.
 
 Each tick (order matters):
+
 1. **Source inflow:** every source's next level = **4**.
 2. **Spread (max, not sum):** every cell with `water > 0` that can emit (not land/house/closed gate)
    offers `water − loss` to each orthogonal neighbor that can receive; a cell's next level is the
    **max** offer. `loss = 1` when either side is a field, else 0 (channels carry full strength).
-   **鱼嘴 emits only N, S, E** (never back west) — so it *splits* the river when the child digs
+   **鱼嘴 emits only N, S, E** (never back west) — so it _splits_ the river when the child digs
    channels both above and below it.
 3. **Rain (storm test, toggled):** conductors +1, fields +2, capped at 4.
 4. **Part rules (after rain, so protectors keep protecting):** source pinned to 4;
@@ -45,17 +46,18 @@ Each tick (order matters):
 
 ## 3. Spiral mapping (every stage a concrete UI moment)
 
-| Stage | Moment |
-|---|---|
-| **Imagine** | Title screen: Shíxī bobbing, "What will you build? 你想造什么？", pick a band. |
-| **Create** | Tap a part, tap the land. Live hint bar describes the selected part. Starter channel already dug (Guided/3–5) — never a blank void for the young ones. |
-| **Play** | **Let it flow! 放水啦！** runs 16 ticks of real water; **Rain 下雨** storm-tests. Floods darken fields/houses — feedback, not failure. |
-| **Share** | Explicit **Save** → named build lands in **My Waterworks** (device-local gallery); Create (＋) card in the gallery starts a fresh river. |
+| Stage       | Moment                                                                                                                                                                                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Imagine** | Title screen: Shíxī bobbing, "What will you build? 你想造什么？", pick a band.                                                                                                                                                                                            |
+| **Create**  | Tap a part, tap the land. Live hint bar describes the selected part. Starter channel already dug (Guided/3–5) — never a blank void for the young ones.                                                                                                                    |
+| **Play**    | **Let it flow! 放水啦！** runs 16 ticks of real water; **Rain 下雨** storm-tests. Floods darken fields/houses — feedback, not failure.                                                                                                                                    |
+| **Share**   | Explicit **Save** → named build lands in **My Waterworks** (device-local gallery); Create (＋) card in the gallery starts a fresh river.                                                                                                                                  |
 | **Reflect** | After each run, **Shíxī asks ONE wondering question** from a context-aware pool (flood happened / clean run / a just-unlocked part was used / evergreen). **Separate beat from save/naming** — the run-end card carries no name input (fixes the prototype's conflation). |
 
 ## 4. Bands + scaffolding (the leads' spec, as requirements)
 
 **Bands:** 🐣 **K–2 Guided** · 🌱 **3–5** · 🚀 **6–8 Open**.
+
 - Guided + 3–5 open with a **starter channel** (row 4, cols 1–3). 6–8 opens blank (full ceiling).
 - Guided palette starts **constrained: Channel + Field** (+ eraser). 3–5/6–8 get the full palette.
 - 6–8 shows no goal banner (open build); Guided/3–5 show the band goal.
@@ -67,18 +69,19 @@ Each tick (order matters):
 | 2+ fields watered in one run | **水闸 Gate** | "You earned the Gate! 水闸" |
 | **First flood, however caused** (any field or house floods during any run — Rain not required) | **飞沙堰 Sand Weir** + **宝瓶口 Bottle-Neck** (two queued announces) | "The flood showed you why Li Bing built this! 飞沙堰" |
 
-The flood-first-then-tools beat is deliberate: the child *feels the problem* before receiving the
+The flood-first-then-tools beat is deliberate: the child _feels the problem_ before receiving the
 2,300-year-old solution. **Reachability guarantee:** if no flood has occurred by the end of the
 child's **3rd run**, Shíxī's run-end wondering question becomes a gentle storm invitation
 ("Your river has never seen a flood… want to try Rain? 🌧️") so every kid can reach the beat.
 Each announce card includes **"Learn more"** → the part's heritage card (§7).
 
-**Pattern book ("Show me ideas 📖"):** 3–4 browsable example river shapes (e.g. *The Split River*
-两条河, *The Safe Farm* 平安农田, *The Storm-Proof Village* 防洪村) rendered as mini-thumbnails;
+**Pattern book ("Show me ideas 📖"):** 3–4 browsable example river shapes (e.g. _The Split River_
+两条河, _The Safe Farm_ 平安农田, _The Storm-Proof Village_ 防洪村) rendered as mini-thumbnails;
 "Build from this" loads the shape (two-tap confirm protects current work). Possibility shown,
 solution never dictated; extends How-to-Play. Every pattern is validated by test to water ≥1 field.
 
 **Soft targets (dismissible chips, never requirements):**
+
 - 🐣 water 1 field → water 2 fields → try Rain and keep every field green
 - 🌱 water 3 fields using a 鱼嘴 → survive Rain with zero floods → keep every house dry in Rain
 - 🚀 water every field with the fewest parts · design a river where Rain changes nothing
@@ -115,6 +118,7 @@ One tap-open card per real invention (鱼嘴 / 飞沙堰 / 宝瓶口), reachable
 and from the How-to-Play legend. Each card, in child language: **What it is** (the real thing at
 Dujiangyan) · **What Li Bing built** (one sentence of history) · **What it does in YOUR river**
 (the sim rule in kid words). Written best-effort in EN/ES/zh-CN.
+
 > ⚠️ **Heritage/native review gate:** all three languages of heritage content are best-effort and
 > **explicitly pending native-speaker and cultural review before any public promotion** (the Phase D
 > zh-CN checklist is the review vehicle).
@@ -123,8 +127,8 @@ Dujiangyan) · **What Li Bing built** (one sentence of history) · **What it doe
 
 Standalone route **`/waterworks`** — registered beside `/try` (the existing public, no-auth route
 pattern, `src/App.tsx:130`), **linked from nothing** (direct URL is the access gate). Header lockup:
-🦏 **都江堰水利工坊 · Waterworks** + one-line credit *"Inspired by the 2,300-year-old Dujiangyan waterworks
-of Chengdu · 灵感来自成都两千三百年历史的都江堰"* + the app's standard `LanguageToggle`. No login, no
+🦏 **都江堰水利工坊 · Waterworks** + one-line credit _"Inspired by the 2,300-year-old Dujiangyan waterworks
+of Chengdu · 灵感来自成都两千三百年历史的都江堰"_ + the app's standard `LanguageToggle`. No login, no
 PII; everything on-device. Page sets `document.documentElement.lang` to follow the language toggle
 (the global `changeLanguage()` doesn't do this today — page-scoped effect here; a global fix is a
 separate follow-up), and the page root carries a Chinese-capable system font stack
@@ -132,18 +136,19 @@ separate follow-up), and the page root carries a Chinese-capable system font sta
 
 ## 9. Principles checklist + open questions
 
-| Principle | Verdict |
-|---|---|
-| Spiral is the spine | ✅ §3 — all five stages, Reflect separated from Share |
-| Creators, not consumers | ✅ the river is theirs; gallery holds *their* works |
+| Principle                             | Verdict                                                                                                                                                          |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Spiral is the spine                   | ✅ §3 — all five stages, Reflect separated from Share                                                                                                            |
+| Creators, not consumers               | ✅ the river is theirs; gallery holds _their_ works                                                                                                              |
 | Low floor / high ceiling / wide walls | ✅ starter channel + constrained palette + announced unlocks + pattern book (floor); 6–8 blank canvas + efficiency targets (ceiling); any river is valid (walls) |
-| Playground, not playpen | ✅ floods are information; Rain invites safe mischief; Shíxī wonders, never corrects |
-| Measure creation, not completion | ✅ no scores/stars/leaderboards at all in v1 — builds, runs, and saves are the artifacts |
-| Adult is a guide | ✅ no grading surface exists |
-| Screen use, not screen time | ✅ build–test–revise loop |
-| Localizable from day one | ✅ EN/ES/zh-CN real (zh first-class), vi placeholder; all via shared locale files + `t()` |
+| Playground, not playpen               | ✅ floods are information; Rain invites safe mischief; Shíxī wonders, never corrects                                                                             |
+| Measure creation, not completion      | ✅ no scores/stars/leaderboards at all in v1 — builds, runs, and saves are the artifacts                                                                         |
+| Adult is a guide                      | ✅ no grading surface exists                                                                                                                                     |
+| Screen use, not screen time           | ✅ build–test–revise loop                                                                                                                                        |
+| Localizable from day one              | ✅ EN/ES/zh-CN real (zh first-class), vi placeholder; all via shared locale files + `t()`                                                                        |
 
 **Decisions (approved 2026-07-09):**
+
 1. **Unlock ladder approved, amended:** the 飞沙堰+宝瓶口 unlock triggers on the **first flood
    however caused** (not Rain specifically); if no flood by ~run 3, Shíxī gently invites the storm —
    the beat must be reachable by every kid (§4).
@@ -155,6 +160,7 @@ separate follow-up), and the page root carries a Chinese-capable system font sta
 6. zh-CN native/heritage review happens before any external share — acknowledged in §7.
 
 **Named fast-follows (not in v1):**
+
 - **Gallery delete (pre-classroom REQUIREMENT):** long-press/⋯ delete with a kid-safe confirm must
   ship **before classroom use** — shared devices will accumulate rivers. v1's quota-degradation path
   (graceful in-memory fallback, unit-tested) is the stopgap.
@@ -164,5 +170,6 @@ separate follow-up), and the page root carries a Chinese-capable system font sta
   page-scoped effect).
 
 ---
-*Build order after approval: Phase B (sim engine + storage, unit-tested; components) → C (route,
-locale keys, lang/font) → D (verify + round-trip + zh-CN review checklist) → E (PR, labels, leads).*
+
+_Build order after approval: Phase B (sim engine + storage, unit-tested; components) → C (route,
+locale keys, lang/font) → D (verify + round-trip + zh-CN review checklist) → E (PR, labels, leads)._

@@ -24,7 +24,8 @@ const fakeI18n = {
 vi.mock("react-i18next", () => ({
   initReactI18next: { type: "3rdParty" as const, init: () => {} },
   useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue || key,
+    t: (key: string, opts?: { defaultValue?: string }) =>
+      opts?.defaultValue || key,
     i18n: fakeI18n,
   }),
 }));
@@ -49,7 +50,9 @@ describe("/waterworks — logged-out cold render", () => {
     render(<Waterworks />);
     expect(screen.getByText("都江堰水利工坊 · Waterworks")).toBeTruthy(); // lockup
     expect(
-      screen.getByText("Inspired by the 2,300-year-old Dujiangyan waterworks of Chengdu"),
+      screen.getByText(
+        "Inspired by the 2,300-year-old Dujiangyan waterworks of Chengdu",
+      ),
     ).toBeTruthy(); // credit line
     expect(screen.getByText("What will you build?")).toBeTruthy(); // Imagine
     expect(screen.getByText(/K–2 · Guided/)).toBeTruthy(); // band picker

@@ -15,12 +15,15 @@
 
 import type { ContentValidation } from "./creationContent";
 
-type Attr =
-  | "sunlightNeed"
-  | "waterNeed"
-  | "leafType"
-  | "seedType"
-  | "growthSpeed";
+export const DATA_DASH_ATTRS = [
+  "sunlightNeed",
+  "waterNeed",
+  "leafType",
+  "seedType",
+  "growthSpeed",
+] as const;
+
+type Attr = (typeof DATA_DASH_ATTRS)[number];
 
 // Phase A sort rules a kid may pick (must mirror SORT_RULES on the frontend).
 export const SORT_RULE_KEYS = [
@@ -42,14 +45,62 @@ export const MIN_CARDS = 4;
 
 // id → attribute map. COPY of DATA_DASH_CARDS (kept in sync with the frontend).
 export const DATA_DASH_POOL: Record<string, Record<Attr, string>> = {
-  bean: { sunlightNeed: "full", waterNeed: "medium", leafType: "broad", seedType: "pod", growthSpeed: "fast" },
-  fern: { sunlightNeed: "shade", waterNeed: "high", leafType: "frond", seedType: "spore", growthSpeed: "medium" },
-  pine: { sunlightNeed: "full", waterNeed: "low", leafType: "needle", seedType: "cone", growthSpeed: "slow" },
-  pea: { sunlightNeed: "full", waterNeed: "medium", leafType: "broad", seedType: "pod", growthSpeed: "fast" },
-  moss: { sunlightNeed: "shade", waterNeed: "high", leafType: "frond", seedType: "spore", growthSpeed: "slow" },
-  spruce: { sunlightNeed: "partial", waterNeed: "low", leafType: "needle", seedType: "cone", growthSpeed: "medium" },
-  sunflower: { sunlightNeed: "full", waterNeed: "medium", leafType: "broad", seedType: "pod", growthSpeed: "fast" },
-  hosta: { sunlightNeed: "shade", waterNeed: "high", leafType: "broad", seedType: "pod", growthSpeed: "medium" },
+  bean: {
+    sunlightNeed: "full",
+    waterNeed: "medium",
+    leafType: "broad",
+    seedType: "pod",
+    growthSpeed: "fast",
+  },
+  fern: {
+    sunlightNeed: "shade",
+    waterNeed: "high",
+    leafType: "frond",
+    seedType: "spore",
+    growthSpeed: "medium",
+  },
+  pine: {
+    sunlightNeed: "full",
+    waterNeed: "low",
+    leafType: "needle",
+    seedType: "cone",
+    growthSpeed: "slow",
+  },
+  pea: {
+    sunlightNeed: "full",
+    waterNeed: "medium",
+    leafType: "broad",
+    seedType: "pod",
+    growthSpeed: "fast",
+  },
+  moss: {
+    sunlightNeed: "shade",
+    waterNeed: "high",
+    leafType: "frond",
+    seedType: "spore",
+    growthSpeed: "slow",
+  },
+  spruce: {
+    sunlightNeed: "partial",
+    waterNeed: "low",
+    leafType: "needle",
+    seedType: "cone",
+    growthSpeed: "medium",
+  },
+  sunflower: {
+    sunlightNeed: "full",
+    waterNeed: "medium",
+    leafType: "broad",
+    seedType: "pod",
+    growthSpeed: "fast",
+  },
+  hosta: {
+    sunlightNeed: "shade",
+    waterNeed: "high",
+    leafType: "broad",
+    seedType: "pod",
+    growthSpeed: "medium",
+  },
 };
 
 export interface DataDashChallenge {
@@ -100,6 +151,13 @@ export function validateDataDashChallenge(content: unknown): ContentValidation {
   if (!c || typeof c !== "object") {
     return { ok: false, error: "challenge must be an object" };
   }
+
+  const allowedKeys = new Set(["v", "cardIds", "sortRule", "inferRule"]);
+  const extraKeys = Object.keys(c).filter((key) => !allowedKeys.has(key));
+  if (extraKeys.length > 0) {
+    return { ok: false, error: "unexpected field(s)" };
+  }
+
   if (c.v !== 1) {
     return { ok: false, error: "unsupported challenge version" };
   }
@@ -132,12 +190,20 @@ export function validateDataDashChallenge(content: unknown): ContentValidation {
 
   // Phase A: the sort must actually split the cards (≥2 bins used).
   if (distinctValues(cardIds, sortRule as Attr) < 2) {
-    return { ok: false, error: "all plants share the same sort value — pick a rule that splits them" };
+    return {
+      ok: false,
+      error:
+        "all plants share the same sort value — pick a rule that splits them",
+    };
   }
 
   // Chart question (derived "which value is most common") must have ONE answer.
   if (!hasUniqueMax(cardIds, sortRule as Attr)) {
-    return { ok: false, error: "the sort groups tie — the chart question would have no single answer" };
+    return {
+      ok: false,
+      error:
+        "the sort groups tie — the chart question would have no single answer",
+    };
   }
 
   // Phase B: the hidden rule must group the cards (≥2 groups)...
@@ -151,7 +217,8 @@ export function validateDataDashChallenge(content: unknown): ContentValidation {
     if (partitionSignature(cardIds, other as Attr) === inferSig) {
       return {
         ok: false,
-        error: "another attribute groups the plants the same way — the hidden rule is ambiguous",
+        error:
+          "another attribute groups the plants the same way — the hidden rule is ambiguous",
       };
     }
   }

@@ -55,8 +55,21 @@ fi
 echo "predeploy: prisma generate"
 npx prisma generate --schema "$SCHEMA"
 
-echo "predeploy: running seed from $SEED_FILE"
-node "$SEED_FILE" || echo "predeploy: seed had warnings (non-fatal)"
+# Seed — gated by RUN_SEED=true (#651).
+# Previously ran on EVERY deploy. The seed is a development fixture: it
+# find-or-creates demo accounts AND refreshes their password hashes on every
+# run (prisma/seed.cjs — "Always refresh password hash on seed"), so each
+# deploy silently rewrote production user rows. Gate it the way the
+# gamification backfill is gated. Set RUN_SEED=true only to bootstrap a fresh
+# database (see docs/deploy.md), then clear it.
+# Mandatory else (unlike RUN_GAMIFICATION_BACKFILL): skip must be loud so a
+# fresh DB isn't mysteriously empty.
+if [ "$RUN_SEED" = "true" ]; then
+  echo "predeploy: RUN_SEED=true — running seed from $SEED_FILE"
+  node "$SEED_FILE" || echo "predeploy: seed had warnings (non-fatal)"
+else
+  echo "predeploy: skipping seed (RUN_SEED not set — see docs/deploy.md, issue #651)"
+fi
 
 # One-time gamification backfill — gated by RUN_GAMIFICATION_BACKFILL=true.
 # The script is idempotent (XP events keyed by source+sourceRefId, badges

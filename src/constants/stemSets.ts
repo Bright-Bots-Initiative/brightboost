@@ -40,8 +40,12 @@ export const STEM_SET_1_STRANDS: Record<StemSet1GameId, string> = {
 
 /** Module slugs that should NOT appear in student-facing UI. */
 export const HIDDEN_MODULE_SLUGS = new Set([
-  "stem-1-intro",      // Legacy "Quantum Explorers" — archived
+  "stem-1-intro", // Legacy "Quantum Explorers" — archived
   "k2-stem-sequencing", // "Fix the Order" / "Lost Steps" — removed from canon
+  // GATED (not removed): Set 3 game 1 is fully wired (registry, seed,
+  // race_track creation type) but held back until Set 3 has more games /
+  // leads sign off. Ungating = delete the next line. See #676.
+  "k2-stem-track-maker",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -82,23 +86,48 @@ export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Set 3 — Mastery (placeholder, gates specialization)
+// Set 3 — Mastery ("mastery through making"; completion gates specialization)
+// Game 1 (track-maker) is implemented but GATED from students via
+// HIDDEN_MODULE_SLUGS above; slots 2-5 are still placeholders (slot 2 is
+// earmarked for the machine-programming game in design). See #676.
 // ---------------------------------------------------------------------------
 export const STEM_SET_3_IDS = [
-  "set3-game-1",
+  "track-maker",
   "set3-game-2",
   "set3-game-3",
   "set3-game-4",
   "set3-game-5",
 ] as const;
 
+export type StemSet3GameId = (typeof STEM_SET_3_IDS)[number];
+
+// Partial until all five Set 3 games exist — placeholders have no name/strand.
+export const STEM_SET_3_NAMES: Partial<Record<StemSet3GameId, string>> = {
+  "track-maker": "Boost Track Builder",
+};
+
+export const STEM_SET_3_STRANDS: Partial<Record<StemSet3GameId, string>> = {
+  "track-maker": "Quantum",
+};
+
+/** Module slugs for Set 3 (grows as the set is built out). */
+export const STEM_SET_3_MODULE_SLUGS = ["k2-stem-track-maker"] as const;
+
 // ---------------------------------------------------------------------------
 // Aggregate constants
 // ---------------------------------------------------------------------------
-export const ALL_STEM_SETS = [STEM_SET_1_IDS, STEM_SET_2_IDS, STEM_SET_3_IDS] as const;
+export const ALL_STEM_SETS = [
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+] as const;
 export const TOTAL_SETS = 3;
 
-export const SET_LABELS = ["Set 1: Foundation", "Set 2: Exploration", "Set 3: Mastery"] as const;
+export const SET_LABELS = [
+  "Set 1: Foundation",
+  "Set 2: Exploration",
+  "Set 3: Mastery",
+] as const;
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -113,15 +142,17 @@ export function countCompletedInSet(
 }
 
 /** A set is complete when all its IDs are completed. */
-function isSetComplete(completedIds: string[], setIds: readonly string[]): boolean {
+function isSetComplete(
+  completedIds: string[],
+  setIds: readonly string[],
+): boolean {
   return countCompletedInSet(completedIds, setIds) >= setIds.length;
 }
 
 /** Count how many full sets the player has completed. */
 export function countCompletedSets(completedIds: string[]): number {
-  return ALL_STEM_SETS.filter(
-    (setIds) => isSetComplete(completedIds, setIds),
-  ).length;
+  return ALL_STEM_SETS.filter((setIds) => isSetComplete(completedIds, setIds))
+    .length;
 }
 
 /** True when all Set 1 activities are completed. */
@@ -134,14 +165,36 @@ export function isSet2Locked(completedIds: string[]): boolean {
   return !isSet1Complete(completedIds);
 }
 
+/** True when all Set 2 activities are completed. */
+export function isSet2Complete(completedIds: string[]): boolean {
+  return isSetComplete(completedIds, STEM_SET_2_IDS);
+}
+
+/** True when Set 3 is still locked (Set 2 not yet complete) — mirrors the
+ *  Set 1 → Set 2 unlock. */
+export function isSet3Locked(completedIds: string[]): boolean {
+  return !isSet2Complete(completedIds);
+}
+
 /** Type guard: is this activity ID a Set 1 game? */
-export function isStemSet1Game(activityId: string): activityId is StemSet1GameId {
+export function isStemSet1Game(
+  activityId: string,
+): activityId is StemSet1GameId {
   return (STEM_SET_1_IDS as readonly string[]).includes(activityId);
 }
 
 /** Type guard: is this activity ID a Set 2 game? */
-export function isStemSet2Game(activityId: string): activityId is StemSet2GameId {
+export function isStemSet2Game(
+  activityId: string,
+): activityId is StemSet2GameId {
   return (STEM_SET_2_IDS as readonly string[]).includes(activityId);
+}
+
+/** Type guard: is this activity ID a Set 3 game? */
+export function isStemSet3Game(
+  activityId: string,
+): activityId is StemSet3GameId {
+  return (STEM_SET_3_IDS as readonly string[]).includes(activityId);
 }
 
 /** Module slugs for Set 2. */

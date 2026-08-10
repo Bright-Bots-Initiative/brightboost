@@ -12,15 +12,16 @@
 // correct answer) — see the marked extension point below.
 
 import { validateDataDashChallenge } from "./dataDashChallenge";
+import { deriveRaceTrackTitle, validateRaceTrack } from "./raceTrack";
 
-export const CREATION_TYPES = ["data_dash_challenge"] as const;
+export const CREATION_TYPES = ["data_dash_challenge", "race_track"] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
 const dataDashSortRuleLabels: Record<string, string> = {
   sunlightNeed: "Sunlight need",
   waterNeed: "Water need",
   leafType: "Leaf type",
-}
+};
 
 export function isCreationType(value: unknown): value is CreationType {
   return (
@@ -29,14 +30,10 @@ export function isCreationType(value: unknown): value is CreationType {
   );
 }
 
-export type ContentValidation =
-  | { ok: true }
-  | { ok: false; error: string };
+export type ContentValidation = { ok: true } | { ok: false; error: string };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === "object" && value !== null && !Array.isArray(value)
-  );
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -60,6 +57,11 @@ export function validateCreationContent(
       // moderate — only to verify the challenge is actually winnable.
       return validateDataDashChallenge(content);
 
+    case "race_track":
+      // Strict-parsed (zod .strict() at every level — unknown keys rejected)
+      // plus a start→finish rideability guard so every shared track is playable.
+      return validateRaceTrack(content);
+
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.
       return { ok: false, error: `unsupported creation type: ${type}` };
@@ -72,18 +74,22 @@ export function deriveCreationTitle(
 ): string | null {
   if (!isPlainObject(content)) return null;
 
-  switch(type) {
+  switch (type) {
     case "data_dash_challenge": {
       const challenge = content as {
         sortRule?: string;
       };
 
-      const label = dataDashSortRuleLabels[challenge.sortRule ?? ""]
-      
+      const label = dataDashSortRuleLabels[challenge.sortRule ?? ""];
+
       return label ? `Sort by ${label}` : null;
     }
 
-    default: 
+    case "race_track":
+      // The kid's chosen name from the structured name-kit (schema-bounded).
+      return deriveRaceTrackTitle(content);
+
+    default:
       return null;
   }
 }

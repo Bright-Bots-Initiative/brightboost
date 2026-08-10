@@ -53,6 +53,29 @@ const validChallenge = {
   inferRule: "growthSpeed",
 };
 
+const validRaceTrack = {
+  v: 1,
+  name: "Turbo Loop",
+  grid: { w: 6, h: 6 },
+  pieces: [
+    { x: 1, y: 2, type: "start", rot: 0 },
+    { x: 2, y: 2, type: "finish", rot: 0 },
+  ],
+};
+
+const validSoundDuet = {
+  v: 1,
+  name: "Moon Echo",
+  band: "k2",
+  pulses: 4,
+  layers: {
+    lead: [{ t: 0, soundId: "step" }],
+    partner: [{ t: 3, soundId: "clap" }],
+  },
+  spots: ["tunnel"],
+  coverPose: "highFive",
+};
+
 const dbCreation = {
   id: "creation-1",
   authorId: KID,
@@ -125,7 +148,12 @@ describe("Creations routes", () => {
           courseId: COURSE,
           type: "data_dash_challenge",
           // Too few cards — fails the solvability guard.
-          content: { v: 1, cardIds: ["bean"], sortRule: "waterNeed", inferRule: "growthSpeed" },
+          content: {
+            v: 1,
+            cardIds: ["bean"],
+            sortRule: "waterNeed",
+            inferRule: "growthSpeed",
+          },
         });
 
       expect(res.status).toBe(422);
@@ -158,15 +186,97 @@ describe("Creations routes", () => {
           content: validChallenge,
         });
 
-        expect(res.status).toBe(201);
-        expect(prismaMock.creation.create).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              title: "Sort by Water need",
-            })
-          })
-        )
-    })
+      expect(res.status).toBe(201);
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Sort by Water need",
+          }),
+        }),
+      );
+    });
+
+    it("rejects a challenge with unexpected extra keys (422)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "data_dash_challenge",
+          content: { ...validChallenge, surprise: "not allowed" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
+
+    // ── race_track (Set 3 · Boost Track Builder) ──
+
+    it("lets an enrolled kid save a rideable race_track (201)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue({
+        ...dbCreation,
+        type: "race_track",
+        title: "Turbo Loop",
+        content: validRaceTrack,
+      });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "race_track",
+          content: validRaceTrack,
+        });
+
+      expect(res.status).toBe(201);
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ title: "Turbo Loop" }),
+        }),
+      );
+    });
+
+    it("rejects race_track content with unknown keys (422 — strict parse, #668 closed)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "race_track",
+          content: { ...validRaceTrack, smuggled: "extra key" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a race_track that is not rideable start→finish (422)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "race_track",
+          content: {
+            ...validRaceTrack,
+            pieces: [
+              { x: 1, y: 3, type: "start", rot: 0 },
+              { x: 6, y: 6, type: "finish", rot: 0 },
+            ],
+          },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -237,15 +347,34 @@ describe("Creations routes", () => {
           content: validChallenge,
         });
 
-        expect(res.status).toBe(200);
-        expect(prismaMock.creation.update).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              title: "Sort by Water need",
-            })
-          })
-        )
-    })
+      expect(res.status).toBe(200);
+      expect(prismaMock.creation.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Sort by Water need",
+          }),
+        }),
+      );
+    });
+
+    it("rejects unexpected extra keys on update (422)", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        authorId: KID,
+        type: "data_dash_challenge",
+        content: validChallenge,
+      });
+
+      const res = await request(app)
+        .patch("/api/creations/creation-1")
+        .set(asStudent(KID))
+        .send({
+          content: { ...validChallenge, surprise: "not allowed" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("GET /api/creations?courseId=", () => {
@@ -275,6 +404,31 @@ describe("Creations routes", () => {
       expect(res.body).toHaveLength(1);
     });
 
+    it("ships content ONLY for race_track items (thumbnail payload)", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.findMany.mockResolvedValue([
+        dbCreation,
+        {
+          ...dbCreation,
+          id: "creation-2",
+          type: "race_track",
+          title: "Turbo Loop",
+          content: { ...validRaceTrack, internalNote: "never expose" },
+        },
+      ]);
+
+      const res = await request(app)
+        .get(`/api/creations?courseId=${COURSE}`)
+        .set(asStudent(KID));
+
+      expect(res.status).toBe(200);
+      const dash = res.body.find((c: { id: string }) => c.id === "creation-1");
+      const track = res.body.find((c: { id: string }) => c.id === "creation-2");
+      expect(dash.content).toBeUndefined(); // other types stay lean
+      expect(track.content).toEqual(validRaceTrack); // card can draw the thumbnail
+      expect(track.content).not.toHaveProperty("internalNote");
+    });
+
     it("forbids a non-member (403)", async () => {
       prismaMock.enrollment.findUnique.mockResolvedValue(null);
 
@@ -286,9 +440,7 @@ describe("Creations routes", () => {
     });
 
     it("400s when courseId is missing", async () => {
-      const res = await request(app)
-        .get("/api/creations")
-        .set(asStudent(KID));
+      const res = await request(app).get("/api/creations").set(asStudent(KID));
 
       expect(res.status).toBe(400);
     });
@@ -310,6 +462,29 @@ describe("Creations routes", () => {
       expect(res.body.content).toEqual(validChallenge); // playable payload
       expect(res.body.authorName).toBe("Ada");
     });
+
+    it.each([
+      ["race_track", validRaceTrack],
+      ["sound_duet", validSoundDuet],
+    ])(
+      "returns complete %s content instead of a Data Dash projection",
+      async (type, content) => {
+        prismaMock.creation.findUnique.mockResolvedValue({
+          ...dbCreation,
+          type,
+          content,
+          status: "SHARED",
+        });
+        prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+        const res = await request(app)
+          .get("/api/creations/creation-1")
+          .set(asStudent(OTHER_KID));
+
+        expect(res.status).toBe(200);
+        expect(res.body.content).toEqual(content);
+      },
+    );
 
     it("lets the author fetch their own unshared draft", async () => {
       prismaMock.creation.findUnique.mockResolvedValue(dbCreation); // IN_PROGRESS
@@ -355,6 +530,23 @@ describe("Creations routes", () => {
         .set(asStudent(KID));
 
       expect(res.status).toBe(404);
+    });
+
+    it("does not return unexpected content keys", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        ...dbCreation,
+        status: "SHARED",
+        content: { ...validChallenge, surprise: "not shared" },
+      });
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .get("/api/creations/creation-1")
+        .set(asStudent(OTHER_KID));
+
+      expect(res.status).toBe(200);
+      expect(res.body.content).toEqual(validChallenge);
+      expect(res.body.content).not.toHaveProperty("surprise");
     });
   });
 
