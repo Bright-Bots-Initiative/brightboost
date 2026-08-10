@@ -7,8 +7,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Must match overview §12 / #730 Part B: @shared/* → ./shared/*
-      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   test: {
