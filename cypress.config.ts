@@ -10,7 +10,7 @@ const baseUrl = requireEnv("CYPRESS_SWA_URL", (name) => process.env[name]);
 export default defineConfig({
   e2e: {
     baseUrl,
-    specPattern: "cypress/e2e/**/*.cy.{ts,js}",
+    specPattern: "cypress/e2e/*.cy.{ts,js}",
     supportFile: "cypress/support/e2e.ts",
     video: true,
     screenshotOnRunFailure: true,
