@@ -10,8 +10,11 @@
     "build": "npm run build:web && npm run build:shared && npm run db:generate && tsc -p .",
     "build:shared": "tsc -p ../shared/tsconfig.json",
     "build:railway": "npm run build:shared && npm run db:generate && tsc -p .",
+    "prepare": "npm run build:shared",
     "start": "npm run predeploy && node dist/src/server.js",
+    "prestart:dev": "npm run build:shared",
     "start:dev": "ts-node src/server.ts",
+    "predev": "npm run build:shared",
     "dev": "ts-node src/server.ts",
     "predeploy": "sh scripts/predeploy.sh",
     "typecheck": "npm run build:shared && tsc --noEmit"

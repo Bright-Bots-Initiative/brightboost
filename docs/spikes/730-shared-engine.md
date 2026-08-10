@@ -144,7 +144,7 @@ Canonical §15.2 row 7 evidence: compile/lint/unit/build green while container e
 
 - Reverted `backend/tsconfig.json` to `rootDir: "."`, `include: ["src/**/*"]` only.
 - Added `shared/tsconfig.json` → emit CommonJS + declarations to `shared/dist/`.
-- `backend/package.json`: `build:shared`; `build`, `build:railway`, and `typecheck` all run shared before `tsc` (or `--noEmit`).
+- `backend/package.json`: `build:shared`; `build`, `build:railway`, and `typecheck` all run shared before `tsc` (or `--noEmit`). Also `prepare` / `predev` / `prestart:dev` → `build:shared` so clean `npm ci` and local TS entrypoints recreate gitignored `shared/dist`.
 - ~~Probe imports `../../shared/dist/greatwork-engine` (emitted, not live TS outside `rootDir`).~~ **Superseded by review fix below** — that relative path typechecked against source depth and failed at runtime under `dist/src/`.
 - **`main` / `start` / `predeploy.sh` untouched** — S-2 preserves `dist/src/server.js`.
 
@@ -257,11 +257,63 @@ NODE_EXIT=1
 **Restored:** fresh `docker run` with same env → logs `Server running on port 3000`;  
 `GET http://127.0.0.1:8318/health` → `{"status":"ok","sharedEngine":"greatwork-engine-stub-730@0.0.0"}` (`RESTORE_EXIT=0`).
 
+### B4-07 — Clean-checkout / auto-build of `shared/dist`
+
+`shared/dist` is gitignored but required by `@brightboost/greatwork-engine` `main`/`types`. Backend lifecycle hooks:
+
+- `prepare` → `build:shared` (runs on `npm ci` / `npm install` in `backend/`)
+- `predev` / `prestart:dev` → `build:shared` (local TS entrypoints)
+
+**Negative (dist missing, no rebuild):**
+
+```
+dist_exists_before_neg=False
+NEG_CODE=MODULE_NOT_FOUND
+Cannot find module '…/backend/node_modules/@brightboost/greatwork-engine/dist/greatwork-engine/index.js'. Please verify that the package.json has a valid "main" entry
+NEG_NODE_EXIT=1
+```
+
+**Install path** (`Remove-Item shared/dist` → `cd backend; npm ci`):
+
+```
+dist_exists_before_ci=False
+> brightboost-backend@0.1.0 prepare
+> npm run build:shared
+> tsc -p ../shared/tsconfig.json
+NPM_CI_EXIT=0
+dist_exists_after_ci=True
+node require('@brightboost/greatwork-engine') →
+greatwork-engine-stub-730
+greatwork-engine-stub-730@0.0.0
+REQUIRE_EXIT=0
+```
+
+**Dev path** (wipe `shared/dist` → `npm run predev`):
+
+```
+dist_exists_before_predev=False
+PREDEV_EXIT=0
+dist_exists_after_predev=True
+predev_require=ok
+PREDEV_REQUIRE_EXIT=0
+```
+
+**`prestart:dev`:** wipe dist → `npm run prestart:dev` → `PRESTART_DEV_EXIT=0`, `dist_exists_after_prestart_dev=True`.
+
+### B4-08 — Railway build context (repo evidence)
+
+In-repo evidence that production backend builds from the **full repository root**:
+
+- [`Dockerfile.backend`](../../Dockerfile.backend): `COPY . .` (includes `shared/`), then `WORKDIR /app/backend` + `npm ci` (now runs `prepare` → `build:shared`), then `npm --prefix backend run build:railway`.
+- [`DEPLOYMENT.md`](../../DEPLOYMENT.md): “Railway builds using `Dockerfile.backend` (at repo root).”
+
+**Decision required (Alice / ops):** confirm in the Railway dashboard that **both** services (`fe-production-3552…` and `brightboost-production…`) use this root/full-repo `Dockerfile.backend` context (not a narrowed backend-only context). That live UI check cannot be done from this clone.
+
 ---
 
 ## B5 — Scope check
 
-`git diff --name-only $(git merge-base origin/main HEAD)...HEAD` (2026-08-10, post review-2 remediation commits):
+`git diff --name-only $(git merge-base origin/main HEAD)...HEAD` (2026-08-10, post shared/dist auto-build):
 
 ```
 Dockerfile.backend
@@ -286,7 +338,7 @@ vite.config.ts
 vitest.config.ts
 ```
 
-**20 files.** No `.github/workflows/**`, no `scripts/**`, no `prisma/**`, no `backend/scripts/predeploy.sh`, no `DEPLOYMENT.md`. Root `package.json` gained `pretest:unit` so Vitest can resolve `@brightboost/greatwork-engine` `main` when `shared/dist` has not already been produced by backend typecheck.
+**20 files.** No `.github/workflows/**`, no `scripts/**`, no `prisma/**`, no `backend/scripts/predeploy.sh`, no `DEPLOYMENT.md`. Backend `prepare` / `predev` / `prestart:dev` keep `shared/dist` fresh on install and local TS entrypoints; root `pretest:unit` covers the Review Bot unit path.
 
 ---
 
