@@ -20,6 +20,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
+    "pretest:unit": "tsc -p shared/tsconfig.json",
     "test:unit": "vitest run --project unit",
     "test:coverage:quiz": "vitest run --project unit --coverage",
     "test:coverage:ci-guard": "vitest run --project unit --coverage",
