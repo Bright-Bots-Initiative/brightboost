@@ -32,7 +32,7 @@
     "verify:ci-gate": "bash scripts/verify-ci-shell-gate.sh",
     "agent:check": "node scripts/agent-check.mjs",
     "docs:check": "node scripts/docs-check.mjs",
-    "verify": "bash scripts/verify.sh",
+    "verify": "node scripts/run-verify.mjs",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
     "check-bundle-size": "npm run build && node scripts/check-bundle-size.js",
