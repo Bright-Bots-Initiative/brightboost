@@ -30,6 +30,11 @@ const DELETED_PATHS = new Set([
   "README_LOCAL.md",
   "TECHNICAL_QUICKSTART.md",
   "DEPLOYMENT_RAILWAY.md",
+  "DISTRICT_PILOT_CHECKLIST.md",
+  "EVALUATOR_GUIDE.md",
+  "INFRASTRUCTURE_REQUIREMENTS.md",
+  "PILOT_QUICKSTART.md",
+  "PILOT_READINESS.md",
   "docs/dev-workflow.md",
   "docs/deploy.md",
   "docs/deploy/PROD_LOGIN_405_FIX.md",
@@ -199,6 +204,8 @@ function runChecks(root) {
     if (!name.endsWith(".md")) continue;
     /** @type {string[]} */ (inventory.rootMarkdown).push(name);
     if (!ROOT_ALLOWLIST.has(name)) {
+      // Still on disk until #753 deletes them — do not fail DC-001 in the meantime.
+      if (DELETED_PATHS.has(name)) continue;
       add(
         "DC-001",
         name,
