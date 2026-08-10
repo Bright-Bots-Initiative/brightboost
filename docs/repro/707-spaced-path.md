@@ -23,6 +23,10 @@ Vitest registered the `storybook` project and attempted five story files. Each f
 | Storybook suites failed              | 5                                        |
 | Overall process exit code            | 1                                        |
 
+> Note: RED (`6cc86a19`, 110 files / 597 tests, 2026-07-31) and GREEN (`94ff89c`, 113 files / 661 tests,
+> 2026-08-07) are **different tips**. The counts are not a like-for-like delta; the load-bearing evidence
+> is the presence/absence of the `|storybook|` project and the exit code, not the totals.
+
 Note: overview §1.1 described an empty suite reporting green. On this tip the Storybook project fails loudly (exit 1) with zero executable tests — still dishonest relative to CI (space-free paths run Storybook successfully), and still owned by the path-conditional skip in #707.
 
 Unrelated to #707 (do not fix here): `backend/tests/security.test.ts` also failed (`@prisma/client` not generated — OQ-03).
@@ -138,6 +142,24 @@ EXIT_CODE=0
 No `|storybook|` project in the run. W-05 satisfied via **explicit named skip**.
 
 ---
+
+> ## ⚠️ RETRACTED — §C3 and §Q4-03 below are superseded (2026-08-10)
+>
+> The W-06 claim recorded below is **false**. Vitest evaluates `passWithNoTests` on the **aggregate**
+> spec list using the **root** config (`cli-api`: `if (!files.length) { … this.config.passWithNoTests ? 0 : 1 }`).
+> A project-level `passWithNoTests` is never consulted, and the branch is not entered at all when any
+> sibling project contributes files.
+>
+> Consequently:
+>
+> - `passWithNoTests: false` on the Storybook project was **inert**. It has been removed.
+> - Phase 2 exited non-zero because `--project storybook` made the _global_ file count zero — not because
+>   of the fix. Re-running phase 2 with `passWithNoTests: false` deleted produces an **identical** exit 1.
+> - The real property is **false**: a full `npm test` where `unit` collects tests and `storybook` collects
+>   zero exits **0**. Verified on vitest 3.1.3 and 3.2.4.
+>
+> W-06 is therefore **not delivered by this PR** and moves in full to #749.
+> §C2 (W-05, the path-conditional skip) and §Q4-02 (RED-before-fix ordering) are **unaffected and stand**.
 
 ## C3 — W-06 empty-suite guard (two-phase)
 

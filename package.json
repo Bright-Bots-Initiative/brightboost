@@ -30,7 +30,6 @@
     "test:watch": "vitest",
     "test:db": "node scripts/dbHealth.js",
     "verify:ci-gate": "bash scripts/verify-ci-shell-gate.sh",
-    "verify:storybook-empty-suite": "node scripts/verify-storybook-empty-suite.mjs",
     "typecheck": "tsc --noEmit",
     "check-bundle-size": "npm run build && node scripts/check-bundle-size.js",
     "cy:open": "cypress open",

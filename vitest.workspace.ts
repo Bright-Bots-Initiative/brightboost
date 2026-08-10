@@ -14,7 +14,7 @@ const dirname =
  * Path-with-spaces Storybook noise (#29572) is owned by #707 (path-conditional
  * project skip) — keep this file aligned with main for #702.
  *
- * Override for verification / falsification only (A3-06, W-06 guard): set
+ * Override for verification / falsification only (A3-06): set
  * BB_VITEST_PATH_HAS_SPACE=0 to force-include the Storybook project, or =1 to
  * force-skip, regardless of cwd. Do not set in CI. Not a product env var —
  * do not document in app/CI env tables (H-1).
@@ -35,8 +35,6 @@ const storybookProject = {
   ],
   test: {
     name: "storybook",
-    // W-06: zero collected Storybook tests must not report green (#707).
-    passWithNoTests: false,
     browser: {
       enabled: true,
       headless: true,
