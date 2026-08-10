@@ -35,7 +35,7 @@ Vite proxies `/api` → the backend (`vite.config.ts`). Production nginx uses th
 
 ## Backend cannot see `DATABASE_URL`
 
-Symptoms: `Environment variable not found: DATABASE_URL` when starting the API.
+Symptoms: Prisma errors on the first DB-backed API call, or `Environment variable not found: DATABASE_URL`.
 
 1. Confirm `backend/.env` exists (`cp backend/.env.example backend/.env`).
 2. Start with:
@@ -45,7 +45,7 @@ cd backend
 node -r dotenv/config -r ts-node/register src/server.ts
 ```
 
-Plain `npm run dev` in `backend/` does not load dotenv today.
+Plain `npm run dev` in `backend/` does not load dotenv today. The HTTP server may still **listen** without `DATABASE_URL`; the failure often appears on the first database request.
 
 ## Unit tests vs full `npm test`
 

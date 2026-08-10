@@ -138,7 +138,9 @@ node -r dotenv/config -r ts-node/register src/server.ts
 
 You should see `Server running on port 3000`.
 
-> Plain `npm run dev` in `backend/` does **not** load `backend/.env` (no dotenv), so it cannot find `DATABASE_URL`. Use the command above.
+> Plain `npm run dev` in `backend/` does **not** load `backend/.env` (no dotenv), so Prisma
+> lacks `DATABASE_URL` for DB work. Use the command above. The server may still bind the port;
+> the failure often shows up on the first database-backed request.
 
 ### Terminal 2 — Frontend (port 5173)
 
@@ -168,16 +170,16 @@ Use **`test:unit`**, not bare `npm test`. `npm test` loads the Storybook browser
 
 ## 7. Troubleshooting
 
-| Symptom                                 | Cause                                         | Fix                                                                                                 |
-| --------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Modules 404 but login works             | `VITE_API_BASE` missing `/api`                | Set `VITE_API_BASE=/api`; restart Vite. See [`docs/guides/local-dev.md`](docs/guides/local-dev.md). |
-| Prisma `P1001`                          | Postgres down / wrong URL                     | `docker compose -f docker-compose-pg.yml up -d`; fix `DATABASE_URL`.                                |
-| `P3009` / `P3018` / missing tables      | `#646` migrate path                           | `npx prisma db push --schema prisma/schema.prisma` then generate + seed.                            |
-| Backend `DATABASE_URL` not found        | Missing `backend/.env` or plain `npm run dev` | Copy `backend/.env.example` → `backend/.env`; start with the §5 dotenv command.                     |
-| Playwright hang / Vitest wants Chromium | Bare `npm test`                               | `npm run test:unit`.                                                                                |
-| Docker / WSL2 pain                      | Docker Desktop                                | Direct-Postgres fallback (§4a).                                                                     |
-| Editing `.env` ignored                  | `.env.development` wins for `VITE_*`          | Edit `.env.development` or `.env.development.local`.                                                |
-| `@prisma/client did not initialize`     | Client not generated                          | `npx prisma generate` from repo root.                                                               |
+| Symptom                                               | Cause                                         | Fix                                                                                                                                                                                            |
+| ----------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Modules 404 but login works                           | `VITE_API_BASE` missing `/api`                | Set `VITE_API_BASE=/api`; restart Vite. See [`docs/guides/local-dev.md`](docs/guides/local-dev.md).                                                                                            |
+| Prisma `P1001`                                        | Postgres down / wrong URL                     | `docker compose -f docker-compose-pg.yml up -d`; fix `DATABASE_URL`.                                                                                                                           |
+| `P3009` / `P3018` / missing tables                    | `#646` migrate path                           | `npx prisma db push --schema prisma/schema.prisma` then generate + seed.                                                                                                                       |
+| Backend `DATABASE_URL` not found / first API DB error | Missing `backend/.env` or plain `npm run dev` | Copy `backend/.env.example` → `backend/.env`; start with the §5 dotenv command. The process may still **listen** without `DATABASE_URL`; failure often appears on the first DB-backed request. |
+| Playwright hang / Vitest wants Chromium               | Bare `npm test`                               | `npm run test:unit`.                                                                                                                                                                           |
+| Docker / WSL2 pain                                    | Docker Desktop                                | Direct-Postgres fallback (§4a).                                                                                                                                                                |
+| Editing `.env` ignored                                | `.env.development` wins for `VITE_*`          | Edit `.env.development` or `.env.development.local`.                                                                                                                                           |
+| `@prisma/client did not initialize`                   | Client not generated                          | `npx prisma generate` from repo root.                                                                                                                                                          |
 
 More detail: [`docs/guides/local-dev.md`](docs/guides/local-dev.md).
 
