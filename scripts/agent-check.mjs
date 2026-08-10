@@ -544,7 +544,7 @@ function runChecks(root, fix) {
     }
   }
 
-  // --- --fix: regenerate .claude skill stubs ---
+  // --- --fix: regenerate .claude skill stubs and .jules routers ---
   if (fix) {
     for (const name of skillNames) {
       const canonicalRel = `docs/agents/skills/${name}/SKILL.md`;
@@ -560,9 +560,17 @@ function runChecks(root, fix) {
         `Canonical: \`docs/agents/skills/${name}/SKILL.md\`\n`;
       fs.writeFileSync(joinRoot(root, stubRel), content, "utf8");
     }
-    // Re-run would clear AC-014; drop AC-014 findings for stubs we just wrote
+    for (const rel of julesFiles) {
+      const text = readText(joinRoot(root, rel));
+      const m = text.match(/docs\/agents\/learned\/[A-Za-z0-9_.-]+\.md/);
+      if (!m) continue;
+      const content = `See \`${m[0]}\`.\n`;
+      fs.writeFileSync(joinRoot(root, rel), content, "utf8");
+    }
     for (let i = findings.length - 1; i >= 0; i--) {
-      if (findings[i].code === "AC-014") findings.splice(i, 1);
+      if (findings[i].code === "AC-014" || findings[i].code === "AC-015") {
+        findings.splice(i, 1);
+      }
     }
   }
 
