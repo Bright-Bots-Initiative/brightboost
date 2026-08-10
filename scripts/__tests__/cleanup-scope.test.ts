@@ -2,8 +2,16 @@
 /**
  * Cleanup scope: static forbidden patterns + live negative twins (#740 round 3).
  *
- * Order-sensitive: binding the configured FE port can collide with a local
- * `npm run dev`. Tests resolve the port from env (no hardcoded Vite default port).
+ * Production path (G-205): verify-parity.mjs CI-23 → `npm run verify:ci-gate`
+ * → verify-ci-shell-gate.sh → scripts/lib/kill-pid-tree.sh. Tests invoke
+ * kill_pid_tree via invoke-kill-pid-tree.mjs; static asserts keep the production
+ * wiring from drifting.
+ *
+ * Order-sensitive if run in parallel with a local `npm run dev` on the same
+ * ephemeral port (unlikely). No ambient .env port dependency.
+ *
+ * Rule: no test may conditional-early-return into a pass. Missing preconditions
+ * must fail or be an explicit runner-counted skip — never a silent green.
  */
 
 import { spawn } from "node:child_process";
@@ -15,20 +23,29 @@ import { config as loadEnv } from "dotenv";
 import { afterEach, describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(__dirname, "../..");
+// BB_BASH / PATH only — Test A must not depend on CYPRESS_SWA_URL for its port.
 loadEnv({ path: path.join(repoRoot, ".env.local") });
 loadEnv({ path: path.join(repoRoot, ".env") });
 
 const killTreePath = path.join(repoRoot, "scripts/lib/kill-pid-tree.sh");
+const invokePath = path.join(repoRoot, "scripts/lib/invoke-kill-pid-tree.mjs");
+const parityPath = path.join(repoRoot, "scripts/verify-parity.mjs");
 const gatePath = path.join(repoRoot, "scripts/verify-ci-shell-gate.sh");
+const packageJsonPath = path.join(repoRoot, "package.json");
 
-/** Broad kill patterns that must not appear in cleanup implementations. */
+/**
+ * Broad kill patterns that must not appear in cleanup implementations.
+ * Accepted Windows form: `taskkill //F //T //PID <pid>` (/F = force, not scope).
+ * `\/IM\b` also matches the MSYS `//IM` spelling.
+ */
 const FORBIDDEN_KILL_PATTERNS = [
   /\bpkill\b/,
   /\bkillall\b/,
   /\bfuser\b/,
   /\blsof\b/,
-  /taskkill[^\n]*\/IM/i, // Windows kill-by-image-name
-  // Intentionally not matching `taskkill //F //T //PID` (accepted PID-scoped path).
+  /taskkill[^\n]*\/IM\b/i, // kill by image name (every node.exe)
+  /taskkill[^\n]*\/FI\b/i, // kill by filter (e.g. IMAGENAME eq node.exe)
+  /\bwmic\b[^\n]*process[^\n]*\bdelete\b/i,
   /kill\s+-9\s+\$\(/, // kill $(something that finds a pid)
   /netstat[^\n]*\|\s*(grep|findstr)/i,
 ];
@@ -48,25 +65,6 @@ afterEach(() => {
 
 function pathToFileUrl(p: string): string {
   return pathToFileURL(p).href;
-}
-
-/**
- * Configured FE/dev port from env only (G-007). Returns null if unset/unparseable.
- */
-function resolveConfiguredDevPort(
-  env: NodeJS.ProcessEnv = process.env,
-): number | null {
-  const raw = env.CYPRESS_SWA_URL || env.VITE_DEV_SERVER_URL;
-  if (raw) {
-    try {
-      const u = new URL(raw);
-      if (u.port) return Number(u.port);
-    } catch {
-      /* fall through */
-    }
-  }
-  if (env.PORT && /^\d+$/.test(env.PORT)) return Number(env.PORT);
-  return null;
 }
 
 function spawnDetachedListener(
@@ -161,34 +159,66 @@ function stripShellComments(src: string): string {
     .join("\n");
 }
 
+/** Allocate an ephemeral free port (hermetic — no .env / CYPRESS_SWA_URL). */
+async function allocateEphemeralPort(): Promise<number> {
+  const probe = createServer();
+  await new Promise<void>((resolve, reject) => {
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => resolve());
+  });
+  const addr = probe.address();
+  if (!addr || typeof addr === "string") {
+    probe.close();
+    throw new Error("failed to allocate ephemeral port");
+  }
+  const port = addr.port;
+  await new Promise<void>((resolve) => probe.close(() => resolve()));
+  return port;
+}
+
 describe("cleanup scope static guards (#740 round 3)", () => {
-  it("forbids broad kill patterns; tracks a PID", () => {
+  it("production path still reaches kill-pid-tree; no broad kill patterns", () => {
     const killSrc = readFileSync(killTreePath, "utf8");
+    const invokeSrc = readFileSync(invokePath, "utf8");
+    const paritySrc = readFileSync(parityPath, "utf8");
     const gateSrc = readFileSync(gatePath, "utf8");
-    // Comments may name anti-patterns (e.g. "pkill -P is one level"); check code only.
-    const combined = `${stripShellComments(killSrc)}\n${stripShellComments(gateSrc)}`;
+    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+      scripts?: Record<string, string>;
+    };
 
-    for (const re of FORBIDDEN_KILL_PATTERNS) {
-      expect(combined, `forbidden pattern ${re}`).not.toMatch(re);
-    }
-
-    // Positive: cleanup references a tracked PID / kill_pid_tree handle.
-    expect(gateSrc).toMatch(/DEV_PID/);
+    // G-205: parity must still invoke the CI shell gate, which sources kill-pid-tree.
+    // (Cleanup is not inline in verify-parity.mjs — §9 keeps the gate untouched.)
+    expect(paritySrc).toMatch(/verify:ci-gate/);
+    expect(pkg.scripts?.["verify:ci-gate"] ?? "").toMatch(
+      /verify-ci-shell-gate\.sh/,
+    );
+    expect(gateSrc).toMatch(/kill-pid-tree\.sh/);
     expect(gateSrc).toMatch(/kill_pid_tree/);
+    expect(gateSrc).toMatch(/DEV_PID/);
+    expect(invokeSrc).toMatch(/kill-pid-tree\.sh/);
     expect(killSrc).toMatch(/kill_pid_tree/);
-    // PID-scoped Windows path is allowed and expected.
+    // Accepted Windows form: taskkill //F //T //PID <pid> (/F = force, scoped by PID).
     expect(killSrc).toMatch(/taskkill[^\n]*\/\/PID/);
+
+    // Forbidden patterns over all three cleanup-related files (plus the gate).
+    // Comments may name anti-patterns; check code only.
+    const scanned: Array<[string, string]> = [
+      ["kill-pid-tree.sh", stripShellComments(killSrc)],
+      ["verify-parity.mjs", paritySrc],
+      ["invoke-kill-pid-tree.mjs", invokeSrc],
+      ["verify-ci-shell-gate.sh", stripShellComments(gateSrc)],
+    ];
+    for (const [label, src] of scanned) {
+      for (const re of FORBIDDEN_KILL_PATTERNS) {
+        expect(src, `${label} forbidden ${re}`).not.toMatch(re);
+      }
+    }
   });
 });
 
 describe("cleanup scope live controls (#740 round 3)", () => {
-  it("Test A: untracked listener on configured port survives no-op cleanup", async () => {
-    const port = resolveConfiguredDevPort();
-    if (port === null) {
-      // No configured port in env — cannot bind "the" dev port without a literal.
-      return;
-    }
-
+  it("Test A: untracked listener survives no-op cleanup (hermetic port)", async () => {
+    const port = await allocateEphemeralPort();
     const invoke = await import(
       pathToFileUrl(path.join(repoRoot, "scripts/lib/invoke-kill-pid-tree.mjs"))
     );
@@ -198,9 +228,13 @@ describe("cleanup scope live controls (#740 round 3)", () => {
       listener = await spawnDetachedListener(port);
       children.push(listener);
 
-      // Runner has started no tracked PID — correct cleanup is a no-op.
+      // No tracked child — correct cleanup is a no-op. Port env set so any
+      // future port-sweep keyed off the runner's FE URL would hit *this* listener.
       const { code, output } = await invoke.invokeKillPidTree("", {
-        env: process.env,
+        env: {
+          ...process.env,
+          CYPRESS_SWA_URL: `http://127.0.0.1:${port}`,
+        },
       });
       expect(code, output).toBe(0);
       expect(pidAlive(listener.pid), "untracked listener must survive").toBe(
@@ -216,20 +250,7 @@ describe("cleanup scope live controls (#740 round 3)", () => {
       pathToFileUrl(path.join(repoRoot, "scripts/lib/invoke-kill-pid-tree.mjs"))
     );
 
-    // Ephemeral port for the control process (not the configured FE port).
-    const controlServer = createServer();
-    await new Promise<void>((resolve, reject) => {
-      controlServer.once("error", reject);
-      controlServer.listen(0, "127.0.0.1", () => resolve());
-    });
-    const addr = controlServer.address();
-    if (!addr || typeof addr === "string") {
-      controlServer.close();
-      throw new Error("failed to bind control port");
-    }
-    const controlPort = addr.port;
-    controlServer.close();
-
+    const controlPort = await allocateEphemeralPort();
     const control = await spawnDetachedListener(controlPort);
     children.push(control);
 

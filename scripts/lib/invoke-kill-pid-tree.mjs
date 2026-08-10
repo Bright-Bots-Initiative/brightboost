@@ -2,8 +2,8 @@
  * Thin Node surface to invoke scripts/lib/kill-pid-tree.sh without editing
  * verify-ci-shell-gate.sh (§9). Used by cleanup-scope live tests (#740 round 3).
  *
- * Order-sensitive with a running local `npm run dev` if tests bind the same
- * configured FE port — prefer CYPRESS_SWA_URL / an unused port.
+ * Tests must allocate their own ephemeral ports — do not rely on ambient
+ * CYPRESS_SWA_URL (silent green on CI where .env.local is absent).
  */
 import { spawn } from "node:child_process";
 import path from "node:path";
