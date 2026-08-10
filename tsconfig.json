@@ -29,6 +29,7 @@
   "include": ["src", "shared"],
   "exclude": [
     "node_modules",
+    "shared/dist",
     "src/components/ui/**",
     "src/stories/**",
     "**/__tests__/**",
