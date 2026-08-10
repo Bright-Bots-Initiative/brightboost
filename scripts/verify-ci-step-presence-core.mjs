@@ -3,6 +3,9 @@
  * Parses active workflow steps (YAML), not raw text — commented-out lines
  * must not count as present.
  *
+ * Matching is job-scoped and exact per normalized run line (or exact uses:),
+ * never a global substring search.
+ *
  * Exit codes (process.exit when run as CLI):
  *   0 = healthy OK (+ sabotage OK when --sabotage-all)
  *   1 = property false
@@ -19,45 +22,45 @@ export const EXIT_PROPERTY = 1;
 export const EXIT_CANNOT_RUN = 2;
 
 /**
- * @param {unknown} doc
- * @returns {{ jobId: string, stepIndex: number, name: string, values: string[] }[]}
+ * Split a `run:` block into normalized command lines.
+ * @param {string} runValue
+ * @returns {string[]}
  */
-export function collectActiveStepCommands(doc) {
-  /** @type {{ jobId: string, stepIndex: number, name: string, values: string[] }[]} */
-  const out = [];
-  if (!doc || typeof doc !== "object" || !("jobs" in doc)) return out;
-  const jobs = /** @type {Record<string, unknown>} */ (doc).jobs;
-  if (!jobs || typeof jobs !== "object") return out;
+export function normalizeRunLines(runValue) {
+  return runValue
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !l.startsWith("#"));
+}
 
-  for (const [jobId, job] of Object.entries(jobs)) {
-    if (!job || typeof job !== "object") continue;
-    const steps = /** @type {{ steps?: unknown }} */ (job).steps;
-    if (!Array.isArray(steps)) continue;
-    steps.forEach((step, stepIndex) => {
-      if (!step || typeof step !== "object") return;
-      const s = /** @type {Record<string, unknown>} */ (step);
-      /** @type {string[]} */
-      const values = [];
-      if (typeof s.run === "string") values.push(s.run);
-      if (typeof s.uses === "string") values.push(s.uses);
-      if (values.length === 0) return;
-      out.push({
-        jobId,
-        stepIndex,
-        name: typeof s.name === "string" ? s.name : `(step ${stepIndex})`,
-        values,
-      });
-    });
+/**
+ * @param {Record<string, unknown>} step
+ * @param {{ job: string, run?: string, uses?: string }} req
+ */
+export function stepSatisfies(step, req) {
+  if (req.uses) {
+    return (
+      typeof step.uses === "string" && step.uses.trim() === req.uses.trim()
+    );
   }
-  return out;
+  if (typeof step.run !== "string") return false;
+  return normalizeRunLines(step.run).includes(req.run.trim());
+}
+
+/**
+ * @param {{ job: string, run?: string, uses?: string }} req
+ */
+export function reqLabel(req) {
+  if (req.uses) return `${req.job} uses: ${req.uses}`;
+  return `${req.job} run: ${req.run}`;
 }
 
 /**
  * @param {string} workflowText
- * @param {string[]} requiredSubstrings
- * @returns {{ ok: boolean, missing: string[], matches: { substring: string, jobId: string, stepName: string }[] }}
+ * @param {{ job: string, run?: string, uses?: string }[]} requiredSteps
+ * @returns {{ ok: boolean, missing: string[], matches: { label: string, jobId: string, stepName: string }[] }}
  */
-export function checkRequiredPresent(workflowText, requiredSubstrings) {
+export function checkRequiredPresent(workflowText, requiredSteps) {
   let doc;
   try {
     doc = parseYaml(workflowText);
@@ -66,70 +69,104 @@ export function checkRequiredPresent(workflowText, requiredSubstrings) {
       `YAML parse failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
-  const active = collectActiveStepCommands(doc);
+  if (!doc || typeof doc !== "object" || !("jobs" in doc)) {
+    throw new Error("workflow YAML missing jobs");
+  }
+  const jobs = /** @type {Record<string, { steps?: unknown[] }>} */ (doc).jobs;
+  if (!jobs || typeof jobs !== "object") {
+    throw new Error("workflow YAML missing jobs");
+  }
+
   /** @type {string[]} */
   const missing = [];
-  /** @type {{ substring: string, jobId: string, stepName: string }[]} */
+  /** @type {{ label: string, jobId: string, stepName: string }[]} */
   const matches = [];
 
-  for (const substring of requiredSubstrings) {
-    const hit = active.find((step) =>
-      step.values.some((v) => v.includes(substring)),
-    );
-    if (!hit) {
-      missing.push(substring);
+  for (const req of requiredSteps) {
+    const label = reqLabel(req);
+    if (!(req.job in jobs)) {
+      missing.push(label);
+      continue;
+    }
+    const job = jobs[req.job];
+    const steps = Array.isArray(job?.steps) ? job.steps : [];
+    let hitName = null;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (!step || typeof step !== "object") continue;
+      const s = /** @type {Record<string, unknown>} */ (step);
+      if (stepSatisfies(s, req)) {
+        hitName = typeof s.name === "string" ? s.name : `(step ${i})`;
+        break;
+      }
+    }
+    if (!hitName) {
+      missing.push(label);
     } else {
-      matches.push({
-        substring,
-        jobId: hit.jobId,
-        stepName: hit.name,
-      });
+      matches.push({ label, jobId: req.job, stepName: hitName });
     }
   }
   return { ok: missing.length === 0, missing, matches };
 }
 
 /**
- * Remove every step whose run/uses contains substring; return new YAML text.
- * (A substring may appear in more than one job/step — e.g. frontend + backend
- * `npm run typecheck` — so sabotage must clear all matches.)
+ * Remove steps in req.job that satisfy req; return new YAML text.
  * @param {string} workflowText
- * @param {string} substring
- * @returns {{ text: string, removed: boolean }}
+ * @param {{ job: string, run?: string, uses?: string }} req
+ * @returns {{ text: string, removedCount: number }}
  */
-export function removeStepContaining(workflowText, substring) {
+export function removeStepsMatching(workflowText, req) {
   const doc = parseYaml(workflowText);
   if (!doc || typeof doc !== "object" || !("jobs" in doc)) {
-    return { text: workflowText, removed: false };
+    return { text: workflowText, removedCount: 0 };
   }
   const jobs = /** @type {Record<string, { steps?: unknown[] }>} */ (doc).jobs;
-  let removed = false;
-  for (const job of Object.values(jobs || {})) {
-    if (!job || !Array.isArray(job.steps)) continue;
-    const next = job.steps.filter((step) => {
-      if (!step || typeof step !== "object") return true;
-      const s = /** @type {Record<string, unknown>} */ (step);
-      const run = typeof s.run === "string" ? s.run : "";
-      const uses = typeof s.uses === "string" ? s.uses : "";
-      const hit = run.includes(substring) || uses.includes(substring);
-      if (hit) removed = true;
-      return !hit;
-    });
-    job.steps = next;
+  const job = jobs?.[req.job];
+  if (!job || !Array.isArray(job.steps)) {
+    return { text: stringifyYaml(doc), removedCount: 0 };
   }
-  return { text: stringifyYaml(doc), removed };
+  let removedCount = 0;
+  job.steps = job.steps.filter((step) => {
+    if (!step || typeof step !== "object") return true;
+    const s = /** @type {Record<string, unknown>} */ (step);
+    if (stepSatisfies(s, req)) {
+      removedCount += 1;
+      return false;
+    }
+    return true;
+  });
+  return { text: stringifyYaml(doc), removedCount };
 }
 
 /**
  * @param {string} manifestPath
- * @returns {string[]}
+ * @returns {{ job: string, run?: string, uses?: string }[]}
  */
-export function loadRequiredSubstrings(manifestPath) {
+export function loadRequiredSteps(manifestPath) {
   const raw = JSON.parse(readFileSync(manifestPath, "utf8"));
-  if (!Array.isArray(raw.requiredSubstrings)) {
-    throw new Error("manifest missing requiredSubstrings array");
+  if (!Array.isArray(raw.requiredSteps)) {
+    throw new Error("manifest missing requiredSteps array");
   }
-  return raw.requiredSubstrings.map(String);
+  return raw.requiredSteps.map((entry, i) => {
+    if (!entry || typeof entry !== "object") {
+      throw new Error(`requiredSteps[${i}] must be an object`);
+    }
+    const job = entry.job;
+    if (typeof job !== "string" || !job.trim()) {
+      throw new Error(`requiredSteps[${i}] missing job`);
+    }
+    const hasRun = typeof entry.run === "string";
+    const hasUses = typeof entry.uses === "string";
+    if (hasRun === hasUses) {
+      throw new Error(
+        `requiredSteps[${i}] must have exactly one of run or uses`,
+      );
+    }
+    if (hasRun) {
+      return { job: job.trim(), run: String(entry.run) };
+    }
+    return { job: job.trim(), uses: String(entry.uses) };
+  });
 }
 
 function main(argv) {
@@ -146,7 +183,7 @@ function main(argv) {
   let required;
   let workflowText;
   try {
-    required = loadRequiredSubstrings(manifestPath);
+    required = loadRequiredSteps(manifestPath);
     workflowText = readFileSync(workflowPath, "utf8");
   } catch (err) {
     console.error(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
@@ -165,24 +202,25 @@ function main(argv) {
     }
     for (const m of result.matches) {
       console.log(
-        `  present: ${m.substring}  (job=${m.jobId} step="${m.stepName}")`,
+        `  present: ${m.label}  (job=${m.jobId} step="${m.stepName}")`,
       );
     }
     for (const miss of result.missing) {
-      console.error(`[check] MISSING required step substring: ${miss}`);
+      console.error(`[check] MISSING required step: ${miss}`);
     }
     process.exit(result.ok ? EXIT_OK : EXIT_PROPERTY);
   }
 
   if (mode === "sabotage-all") {
     // Phase-2 exhaustive: each entry removed in turn must make check fail.
-    for (const substring of required) {
-      const { text, removed } = removeStepContaining(workflowText, substring);
-      if (!removed) {
+    for (const req of required) {
+      const label = reqLabel(req);
+      const { text, removedCount } = removeStepsMatching(workflowText, req);
+      if (removedCount === 0) {
         console.error(
-          `FAIL: could not remove step containing ${substring} from parsed workflow`,
+          `FAIL: sabotage no-op — could not remove steps matching ${label}`,
         );
-        process.exit(EXIT_PROPERTY);
+        process.exit(EXIT_CANNOT_RUN);
       }
       const tmp = path.join(
         tmpdir(),
@@ -193,17 +231,17 @@ function main(argv) {
         const result = checkRequiredPresent(text, required);
         if (result.ok) {
           console.error(
-            `FAIL: after removing "${substring}", check still passed — guard has no teeth`,
+            `FAIL: after removing "${label}", check still passed — guard has no teeth`,
           );
           process.exit(EXIT_PROPERTY);
         }
-        if (!result.missing.includes(substring)) {
+        if (!result.missing.includes(label)) {
           console.error(
-            `FAIL: after removing "${substring}", missing list did not name it: ${result.missing.join(", ")}`,
+            `FAIL: after removing "${label}", missing list did not name it: ${result.missing.join(", ")}`,
           );
           process.exit(EXIT_PROPERTY);
         }
-        console.log(`  sabotage OK: removed "${substring}" → missing detected`);
+        console.log(`  sabotage OK: removed "${label}" → missing detected`);
       } finally {
         try {
           unlinkSync(tmp);

@@ -138,7 +138,12 @@ describe("reserved exit codes (§7 / U1-06)", () => {
     writeFileSync(
       manifestPath,
       JSON.stringify({
-        requiredSubstrings: ["scripts/check-prisma-drift.sh"],
+        requiredSteps: [
+          {
+            job: "build-and-test",
+            run: "bash scripts/check-prisma-drift.sh",
+          },
+        ],
       }),
       "utf8",
     );

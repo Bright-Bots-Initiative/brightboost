@@ -5,10 +5,10 @@
 # Matches against *active* workflow commands (parsed YAML jobs.*.steps[]),
 # not raw file text — a commented-out `run:` line must not count as present.
 #
-# Phase 1 (healthy): every manifest substring must appear in an active run:/uses:.
-# Phase 2 (sabotage): for EACH manifest entry, remove matching steps from the
-#   parsed document and require failure (exhaustive — always on in CI; not
-#   gated behind --exhaustive).
+# Phase 1 (healthy): every manifest requiredSteps entry must match exactly
+#   within its named job (normalized run line or exact uses:).
+# Phase 2 (sabotage): for EACH entry, remove matching steps in that job only
+#   and require failure (exhaustive — always on in CI).
 #
 # Exit 0 = both phases OK.
 # Exit 1 = property false (missing step / sabotage did not fail).
@@ -66,7 +66,7 @@ fi
 
 echo "============================================================"
 echo "  PASS: CI step-presence guard has teeth."
-echo "  Healthy:   all required substrings present in active steps"
+echo "  Healthy:   all requiredSteps present as exact job-scoped matches"
 echo "  Sabotaged: every manifest entry falsified via YAML parse"
 echo "============================================================"
 exit 0
