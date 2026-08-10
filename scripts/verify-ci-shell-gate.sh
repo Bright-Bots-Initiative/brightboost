@@ -29,9 +29,14 @@ MAIN="$REPO_ROOT/src/main.tsx"
 BACKUP=""
 DEV_PID=""
 
-# A4-03 / #671: cypress.config requires CYPRESS_SWA_URL (no silent fallback).
-# This gate always boots Vite on :5173 — default the env to match that contract.
-# Remapped local runs that already set CYPRESS_SWA_URL keep their value.
+# XF-01 / #671: cypress.config requires CYPRESS_SWA_URL (A4-03 removed the silent
+# Cypress baseUrl fallback — that anti-pattern is NOT what this default is).
+# This gate spawns `npm run dev`, and product vite.config.ts pins
+# server.port: 5173 with strictPort: true, so the only server *this script*
+# starts is :5173. Default CYPRESS_SWA_URL to match that spawned target.
+# Callers that already set CYPRESS_SWA_URL keep their value. Busy-port
+# preflight below still refuses a foreign :5173 listener (non-zero) — the
+# default never silently retargets onto someone else's Vite (G-007 note).
 export CYPRESS_SWA_URL="${CYPRESS_SWA_URL:-http://localhost:5173}"
 
 # Shared tree-kill (recursive POSIX walk / Windows taskkill //T). W-9 / W-10.
