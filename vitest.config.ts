@@ -41,9 +41,6 @@ export default defineConfig({
         "**/*.test.{ts,tsx}",
         "**/types.ts",
         "cypress/support/*.js",
-        // Cypress runtime only — not unit-executable (A2-04/A2-05 follow-through).
-        "cypress/support/e2e.ts",
-        "cypress/support/commands.ts",
       ],
       thresholds: {
         lines: 90,
@@ -51,8 +48,11 @@ export default defineConfig({
         functions: 90,
         statements: 90,
       },
-      // A2-04: unloaded support files dilute the 90% threshold. Pure helpers
-      // (loginAsTeacher.ts) get unit tests; Cypress entry/commands are excluded.
+      // Bug D / SF-03 (PR #750): measured with vs without excluding e2e.ts +
+      // commands.ts. With exclude: All files 98.18/95.18/96.77/98.18. Without:
+      // 92.32/94.17/90.9/92.32 (e2e.ts + commands.ts at 0% dilute support to
+      // 48.45 stmts). Thresholds still ≥90 without the exclusion — keep both
+      // files in the denominator so the 90% floor stays honest (G-006).
     },
   },
 });
