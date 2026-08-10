@@ -8,9 +8,22 @@
  * Ports from env only (G-007). No && chaining (G-013).
  */
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
+import { datasourceEnvNames } from "./lib/prisma-datasource-env.mjs";
+import {
+  assertNoAmbientDbLeak,
+  buildDbChildEnv,
+} from "./lib/parity-db-child-env.mjs";
+
+export { datasourceEnvNames } from "./lib/prisma-datasource-env.mjs";
+export {
+  assertNoAmbientDbLeak,
+  buildDbChildEnv,
+  DB_SHAPED_ENV,
+} from "./lib/parity-db-child-env.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, "..");
@@ -316,21 +329,69 @@ export function isDesignatedTestDbUrl(url) {
 }
 
 /**
- * Pass the same designated URL to every DB variable the child steps read.
- * @param {string} designatedUrl
+ * Union env() connection names from root + backend Prisma schemas.
+ * Zero names from either file → could-not-run (exit 2), never silent empty protection.
+ * @param {string} [repoRoot]
+ * @returns {{ ok: true, names: Set<string> } | { ok: false, code: 2, reason: string }}
  */
-export function buildParityDbChildEnv(designatedUrl) {
-  return {
-    DATABASE_URL: designatedUrl,
-    TEST_DATABASE_URL: designatedUrl,
-    POSTGRES_URL: designatedUrl,
-  };
+export function loadSchemaDatasourceEnvNames(repoRoot = REPO_ROOT) {
+  const schemaPaths = [
+    path.join(repoRoot, "prisma", "schema.prisma"),
+    path.join(repoRoot, "backend", "prisma", "schema.prisma"),
+  ];
+  const union = new Set();
+  for (const schemaPath of schemaPaths) {
+    let text;
+    try {
+      text = fs.readFileSync(schemaPath, "utf8");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        ok: false,
+        code: 2,
+        reason: `could not read Prisma schema ${schemaPath}: ${msg}`,
+      };
+    }
+    const names = datasourceEnvNames(text);
+    if (names.size === 0) {
+      return {
+        ok: false,
+        code: 2,
+        reason: `Prisma schema yielded zero datasource env names: ${schemaPath}`,
+      };
+    }
+    for (const n of names) union.add(n);
+  }
+  return { ok: true, names: union };
+}
+
+/**
+ * Build the full deny-by-default child env for a designated test URL.
+ * @param {string} designatedUrl
+ * @param {NodeJS.ProcessEnv | Record<string, string | undefined>} [baseEnv]
+ * @param {Iterable<string>} [schemaEnvNames]
+ * @returns {{ child: Record<string, string>, mustSet: Set<string> }}
+ */
+export function buildParityDbChildEnv(
+  designatedUrl,
+  baseEnv = process.env,
+  schemaEnvNames,
+) {
+  let names = schemaEnvNames;
+  if (!names) {
+    const loaded = loadSchemaDatasourceEnvNames();
+    if (!loaded.ok) {
+      throw Object.assign(new Error(loaded.reason), { exitCode: 2 });
+    }
+    names = loaded.names;
+  }
+  return buildDbChildEnv(designatedUrl, baseEnv, names);
 }
 
 /**
  * Gate CI-14 / CI-16 on an explicitly designated test database (G-002).
  * @param {NodeJS.ProcessEnv} [env]
- * @returns {{ action: 'skip', reason: string } | { action: 'refuse', reason: string, host?: string, database?: string } | { action: 'run', env: Record<string, string>, host: string, database: string, warning: string | null }}
+ * @returns {{ action: 'skip', reason: string } | { action: 'refuse', reason: string, host?: string, database?: string } | { action: 'could-not-run', code: 2, reason: string } | { action: 'run', env: Record<string, string>, mustSet: Set<string>, host: string, database: string, warning: string | null }}
  */
 export function resolveParityDbGate(env = process.env) {
   const url = env.TEST_DATABASE_URL;
@@ -340,7 +401,16 @@ export function resolveParityDbGate(env = process.env) {
       reason: "TEST_DATABASE_URL unset (db-check not locally runnable)",
     };
   }
-  const check = isDesignatedTestDbUrl(String(url).trim());
+  const schemaNames = loadSchemaDatasourceEnvNames();
+  if (!schemaNames.ok) {
+    return {
+      action: "could-not-run",
+      code: 2,
+      reason: schemaNames.reason,
+    };
+  }
+  const designatedUrl = String(url).trim();
+  const check = isDesignatedTestDbUrl(designatedUrl);
   const allow = env.BB_ALLOW_NON_TEST_DB === "1";
   if (!check.ok) {
     // Unparseable URLs are never overridable — we cannot name the target safely.
@@ -355,18 +425,42 @@ export function resolveParityDbGate(env = process.env) {
         database: check.database,
       };
     }
+    const { child, mustSet } = buildDbChildEnv(
+      designatedUrl,
+      env,
+      schemaNames.names,
+    );
+    assertNoAmbientDbLeak({
+      child,
+      mustSet,
+      designatedUrl,
+      baseEnv: env,
+    });
     const warning = `WARNING: BB_ALLOW_NON_TEST_DB=1 — proceeding against non-test DB host=${check.host} database=${check.database}`;
     return {
       action: "run",
-      env: buildParityDbChildEnv(String(url).trim()),
+      env: child,
+      mustSet,
       host: check.host,
       database: check.database ?? "",
       warning,
     };
   }
+  const { child, mustSet } = buildDbChildEnv(
+    designatedUrl,
+    env,
+    schemaNames.names,
+  );
+  assertNoAmbientDbLeak({
+    child,
+    mustSet,
+    designatedUrl,
+    baseEnv: env,
+  });
   return {
     action: "run",
-    env: buildParityDbChildEnv(String(url).trim()),
+    env: child,
+    mustSet,
     host: check.host,
     database: check.database,
     warning: null,
@@ -412,7 +506,7 @@ export function parseIdListFlag(argvCli, flag) {
 
 /**
  * @param {string[]} argv
- * @param {{ cwd?: string, env?: NodeJS.ProcessEnv }} [opts]
+ * @param {{ cwd?: string, env?: NodeJS.ProcessEnv | Record<string, string | undefined>, replaceEnv?: boolean }} [opts]
  * @returns {Promise<{ code: number, output: string }>}
  */
 export function runCommand(argv, opts = {}) {
@@ -422,11 +516,20 @@ export function runCommand(argv, opts = {}) {
     // npm/npx/bare bash need shell resolution on Windows; an absolute BB_BASH path must not
     // go through shell:true (spaces in "Program Files" break unquoted spawn).
     const needsShell = cmd === "npm" || cmd === "npx" || cmd === "bash";
-    const childEnv = { ...process.env, ...(opts.env || {}) };
-    // Explicit undefined in opts.env means "unset" (cannot rely on spread alone).
-    if (opts.env) {
-      for (const [k, v] of Object.entries(opts.env)) {
-        if (v === undefined) delete childEnv[k];
+    // DB steps pass a deny-by-default child env — never re-spread process.env (ambient leak).
+    /** @type {NodeJS.ProcessEnv} */
+    let childEnv;
+    if (opts.replaceEnv) {
+      childEnv = {};
+      for (const [k, v] of Object.entries(opts.env || {})) {
+        if (v !== undefined) childEnv[k] = v;
+      }
+    } else {
+      childEnv = { ...process.env, ...(opts.env || {}) };
+      if (opts.env) {
+        for (const [k, v] of Object.entries(opts.env)) {
+          if (v === undefined) delete childEnv[k];
+        }
       }
     }
     const child = spawn(cmd, args, {
@@ -608,8 +711,29 @@ export async function runParity(steps, opts, deps = {}) {
 
     /** @type {Record<string, string | undefined> | undefined} */
     let stepEnv = step.env;
+    let replaceEnv = false;
     if (step.id === "CI-14" || step.id === "CI-16") {
-      const gate = resolveParityDbGate();
+      let gate;
+      try {
+        gate = resolveParityDbGate();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.log(`[FAIL] ${step.id} ${step.name}`);
+        console.log(`command: ${cmdStr}`);
+        console.error(msg);
+        return typeof err === "object" &&
+          err &&
+          "exitCode" in err &&
+          err.exitCode === 2
+          ? 2
+          : 2;
+      }
+      if (gate.action === "could-not-run") {
+        console.log(`[FAIL] ${step.id} ${step.name}`);
+        console.log(`command: ${cmdStr}`);
+        console.error(gate.reason);
+        return gate.code;
+      }
       if (gate.action === "refuse") {
         console.log(`[FAIL] ${step.id} ${step.name}`);
         console.log(`command: ${cmdStr}`);
@@ -621,7 +745,9 @@ export async function runParity(steps, opts, deps = {}) {
         if (gate.warning) {
           console.warn(gate.warning);
         }
-        stepEnv = { ...step.env, ...gate.env };
+        // Full deny-by-default child — do not merge onto process.env at spawn.
+        stepEnv = gate.env;
+        replaceEnv = true;
       }
     }
 
@@ -640,6 +766,7 @@ export async function runParity(steps, opts, deps = {}) {
     const { code, output } = await run(step.argv, {
       cwd: step.cwd,
       env: stepEnv,
+      replaceEnv,
     });
     if (code !== 0) {
       console.log(`[FAIL] ${step.id} ${step.name}`);

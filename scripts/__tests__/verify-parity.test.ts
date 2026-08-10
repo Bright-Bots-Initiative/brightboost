@@ -289,8 +289,10 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     const captured: Array<Record<string, string | undefined> | undefined> = [];
     const prev = process.env.TEST_DATABASE_URL;
     const prevDb = process.env.DATABASE_URL;
+    const prevDirect = process.env.DIRECT_URL;
     process.env.TEST_DATABASE_URL = designatedLocal;
     process.env.DATABASE_URL = decoyAmbient;
+    process.env.DIRECT_URL = decoyAmbient;
     delete process.env.BB_ALLOW_NON_TEST_DB;
     try {
       const code = await mod.runParity(
@@ -298,7 +300,11 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
         mod.parseArgs(["--only", "CI-14,CI-16"]),
         {
           runCommand: async (_argv, opts) => {
-            captured.push(opts?.env);
+            captured.push(opts?.env as Record<string, string | undefined>);
+            expect(
+              opts?.replaceEnv,
+              "DB spawn must not re-spread process.env",
+            ).toBe(true);
             return { code: 0, output: "" };
           },
         },
@@ -309,13 +315,16 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
         expect(env?.DATABASE_URL).toBe(designatedLocal);
         expect(env?.TEST_DATABASE_URL).toBe(designatedLocal);
         expect(env?.POSTGRES_URL).toBe(designatedLocal);
-        expect(env?.DATABASE_URL).not.toBe(decoyAmbient);
+        expect(env?.DIRECT_URL).toBe(designatedLocal);
+        expect(Object.values(env ?? {})).not.toContain(decoyAmbient);
       }
     } finally {
       if (prev === undefined) delete process.env.TEST_DATABASE_URL;
       else process.env.TEST_DATABASE_URL = prev;
       if (prevDb === undefined) delete process.env.DATABASE_URL;
       else process.env.DATABASE_URL = prevDb;
+      if (prevDirect === undefined) delete process.env.DIRECT_URL;
+      else process.env.DIRECT_URL = prevDirect;
     }
   });
 
@@ -329,13 +338,21 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     expect(countRunLines(output)).toBe(0);
   });
 
-  it("buildParityDbChildEnv keeps all three DB vars identical", async () => {
+  it("buildParityDbChildEnv sets schema-derived + TEST/POSTGRES to the designated URL", async () => {
     const mod = await import(
       pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
     );
-    const env = mod.buildParityDbChildEnv(designatedLocal);
-    expect(env.DATABASE_URL).toBe(designatedLocal);
-    expect(env.TEST_DATABASE_URL).toBe(designatedLocal);
-    expect(env.POSTGRES_URL).toBe(designatedLocal);
+    const { child, mustSet } = mod.buildParityDbChildEnv(designatedLocal, {
+      PATH: "/usr/bin",
+      DATABASE_URL: decoyAmbient,
+      DIRECT_URL: decoyAmbient,
+    });
+    expect(mustSet.has("DATABASE_URL")).toBe(true);
+    expect(mustSet.has("DIRECT_URL")).toBe(true);
+    expect(child.DATABASE_URL).toBe(designatedLocal);
+    expect(child.TEST_DATABASE_URL).toBe(designatedLocal);
+    expect(child.POSTGRES_URL).toBe(designatedLocal);
+    expect(child.DIRECT_URL).toBe(designatedLocal);
+    expect(Object.values(child)).not.toContain(decoyAmbient);
   });
 });
