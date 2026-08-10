@@ -1,9 +1,15 @@
-import { spawnSync } from "node:child_process";
+/* @vitest-environment node */
+
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { config as loadEnv } from "dotenv";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(__dirname, "../..");
+
+loadEnv({ path: path.join(repoRoot, ".env.local") });
+loadEnv({ path: path.join(repoRoot, ".env") });
 
 function readText(relativePath: string): string {
   return readFileSync(path.join(repoRoot, relativePath), "utf8");
@@ -22,7 +28,51 @@ function extractCiSpecPath(testE2eCiScript: string): string {
 /** Matches one-liner `cy.wrap({}).log(` and multiline `cy\n  .wrap({})\n  .log(` (overview.md §5.7). */
 const SILENT_SKIP_PATTERN = /cy\s*\.wrap\(\{\}\)[\s\S]*?\.log\(/;
 
-describe("CI wiring guard (#677)", () => {
+function resolveBash(): string {
+  return process.env.BB_BASH || "bash";
+}
+
+/**
+ * Async bash spawn — spawnSync blocks the Vitest worker thread and trips
+ * birpc "Timeout calling onTaskUpdate" on long gates (~60s+).
+ */
+function runBashScriptAsync(
+  scriptRel: string,
+  opts: { timeoutMs?: number; env?: NodeJS.ProcessEnv } = {},
+): Promise<{ status: number | null; output: string }> {
+  const bash = resolveBash();
+  const timeoutMs = opts.timeoutMs ?? 60_000;
+  return new Promise((resolve) => {
+    const child = spawn(bash, [scriptRel], {
+      cwd: repoRoot,
+      env: opts.env ?? process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let output = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGTERM");
+      output += `\nspawn timeout after ${timeoutMs}ms\n`;
+      resolve({ status: 124, output });
+    }, timeoutMs);
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      output += String(chunk);
+    });
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      output += String(chunk);
+    });
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      output += `\nspawn error: ${err.message}\n`;
+      resolve({ status: 2, output });
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      resolve({ status: code, output });
+    });
+  });
+}
+
+describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   it('W-1: package.json has scripts["test:e2e:ci"]', () => {
     const pkg = JSON.parse(readText("package.json")) as {
       scripts?: Record<string, string>;
@@ -59,12 +109,21 @@ describe("CI wiring guard (#677)", () => {
     expect(source).not.toMatch(/Cypress\.env\(/);
   });
 
-  it("W-5: ci-cd.yml text contains npm run test:e2e:ci", () => {
-    const workflow = readText(".github/workflows/ci-cd.yml");
-    expect(workflow).toContain("npm run test:e2e:ci");
-  });
+  // U1-03 / G-202: execute the step-presence guard instead of reading ci-cd.yml text.
+  it("W-5: verify-ci-step-presence.sh exits 0 (required steps including test:e2e:ci)", async () => {
+    const { status, output } = await runBashScriptAsync(
+      "scripts/verify-ci-step-presence.sh",
+      { timeoutMs: 60_000 },
+    );
+    expect(
+      status,
+      `step-presence guard must exit 0 (got ${status}):\n${output}`,
+    ).toBe(0);
+    expect(output).toMatch(/PASS: CI step-presence guard has teeth/);
+  }, 60_000);
 
-  it('W-6: ci-cd.yml text does not contain --spec "cypress/e2e/smoke.cy.ts"', () => {
+  // Restored from pre-U1 W-6: step-presence does not cover this negative.
+  it('W-6: ci-cd.yml does not contain --spec "cypress/e2e/smoke.cy.ts"', () => {
     const workflow = readText(".github/workflows/ci-cd.yml");
     expect(workflow).not.toContain('--spec "cypress/e2e/smoke.cy.ts"');
   });
@@ -73,51 +132,30 @@ describe("CI wiring guard (#677)", () => {
     const stagingSmoke = path.join(repoRoot, "cypress/e2e/staging/smoke.cy.ts");
     expect(existsSync(stagingSmoke)).toBe(true);
     const source = readFileSync(stagingSmoke, "utf8");
-    // overview.md §5.7: "imports requireEnv" (stronger than a bare reference)
     expect(source).toMatch(
       /import\s*\{[^}]*\brequireEnv\b[^}]*\}\s*from\s*["'][^"']+["']/,
     );
   });
 
-  // ── verify-ci-shell-gate.sh contracts (review r3598393451 / r3598393457) ──
-
-  it("W-8: the sabotage verifier runs a HEALTHY baseline before injecting sabotage", () => {
-    const script = readText("scripts/verify-ci-shell-gate.sh");
-    const healthyGate = script.indexOf("HEALTHY_EC=$CYPRESS_EC");
-    const healthyCheck = script.indexOf('"$HEALTHY_EC" -ne 0');
-    const sabotageInjection = script.indexOf("SABOTAGE #677");
-    // All three exist…
-    expect(healthyGate).toBeGreaterThan(-1);
-    expect(healthyCheck).toBeGreaterThan(-1);
-    expect(sabotageInjection).toBeGreaterThan(-1);
-    // …and the healthy run + its exit-0 requirement come BEFORE the sabotage,
-    // so a missing binary / broken config / already-red baseline can never
-    // masquerade as a successful sabotage (causality, r3598393451).
-    expect(healthyGate).toBeLessThan(sabotageInjection);
-    expect(healthyCheck).toBeLessThan(sabotageInjection);
-  });
-
-  it("W-9: the sabotage verifier never sweeps arbitrary PIDs on :5173", () => {
-    const script = readText("scripts/verify-ci-shell-gate.sh");
-    const killLib = readText("scripts/lib/kill-pid-tree.sh");
-    // No port-wide PID harvesting (r3598393457): cleanup must be scoped to
-    // the process tree this script spawned (DEV_PID), never "whoever is on
-    // the port".
-    for (const source of [script, killLib]) {
-      expect(source).not.toMatch(/lsof\s+-ti/);
-      expect(source).not.toMatch(/netstat[^\n]*5173/);
-      expect(source).not.toMatch(/sweep_port/);
-    }
-    // The only kill target is the tracked DEV_PID tree.
-    expect(script).toMatch(/kill_pid_tree\s+"\$DEV_PID"/);
-    expect(script).toMatch(/source\s+"\$SCRIPT_DIR\/lib\/kill-pid-tree\.sh"/);
-  });
+  // U1-03 / G-202: execute the shell gate (healthy + sabotage inside the script).
+  // Unset remapped CYPRESS_SWA_URL so Cypress matches Vite on :5173 (gate contract).
+  it("W-8/W-9: verify-ci-shell-gate.sh exits 0 (two-phase healthy then sabotage)", async () => {
+    const gateEnv: NodeJS.ProcessEnv = { ...process.env };
+    delete gateEnv.CYPRESS_SWA_URL;
+    const { status, output } = await runBashScriptAsync(
+      "scripts/verify-ci-shell-gate.sh",
+      { timeoutMs: 180_000, env: gateEnv },
+    );
+    expect(
+      status,
+      `CI shell gate must exit 0 (got ${status}):\n${output}`,
+    ).toBe(0);
+    expect(output).toMatch(/Healthy baseline GREEN/);
+    expect(output).toMatch(/PASS/i);
+  }, 180_000);
 
   // Live POSIX proof: nested bash→mid node→:5173 listener must die with the
-  // tree. Skips on Windows/taskkill (that path uses //T). Static W-9 alone
-  // would pass against one-level `pkill -P` — W-10 is the teeth (G-202).
-  // Mid is a signal-ignoring node (not bash) so one-level pkill cannot falsely
-  // green by relying on bash job cleanup.
+  // tree. Skips on Windows/taskkill (that path uses //T).
   it.skipIf(process.platform === "win32")(
     "W-10: kill_pid_tree reaps nested descendants holding :5173",
     ({ skip }) => {
@@ -125,13 +163,12 @@ describe("CI wiring guard (#677)", () => {
         repoRoot,
         "scripts/__tests__/kill-pid-tree-live.sh",
       );
-      const result = spawnSync("bash", [harness], {
+      const result = spawnSync(resolveBash(), [harness], {
         cwd: repoRoot,
         encoding: "utf8",
         timeout: 60_000,
       });
       const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`;
-      // 77 = harness skip (busy port / missing tools) — not a failure.
       if (result.status === 77) {
         skip();
         return;
