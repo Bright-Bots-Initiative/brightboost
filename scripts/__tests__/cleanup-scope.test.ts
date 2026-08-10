@@ -3,7 +3,7 @@
  * Cleanup scope: static forbidden patterns + live negative twins (#740 round 3).
  *
  * Order-sensitive: binding the configured FE port can collide with a local
- * `npm run dev`. Tests resolve the port from env (no hardcoded 5173).
+ * `npm run dev`. Tests resolve the port from env (no hardcoded Vite default port).
  */
 
 import { spawn } from "node:child_process";
