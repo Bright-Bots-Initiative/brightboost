@@ -192,7 +192,11 @@ describe("cleanup scope static guards (#740 round 3)", () => {
     expect(pkg.scripts?.["verify:ci-gate"] ?? "").toMatch(
       /verify-ci-shell-gate\.sh/,
     );
-    expect(gateSrc).toMatch(/kill-pid-tree\.sh/);
+    // Positive wiring must ignore shellcheck comments — a leftover
+    // `# shellcheck source=…kill-pid-tree.sh` must not satisfy this.
+    expect(stripShellComments(gateSrc)).toMatch(
+      /^\s*source\s+.*kill-pid-tree\.sh/m,
+    );
     expect(gateSrc).toMatch(/kill_pid_tree/);
     expect(gateSrc).toMatch(/DEV_PID/);
     expect(invokeSrc).toMatch(/kill-pid-tree\.sh/);
