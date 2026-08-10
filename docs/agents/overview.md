@@ -9,7 +9,7 @@ Ranked product priorities: (1) K–2 usability/readability, (2) teacher-dashboar
 ## Before you change anything
 
 1. Read every file under [`docs/agents/rules/`](./rules/).
-2. Read `docs/agents/skills/overview.md` and load task-specific skills as needed (skills land with the skills Part).
+2. Read `docs/agents/skills/overview.md` and load a skill only when the task matches its description.
 3. Prefer the smallest diff that matches adjacent patterns.
 
 ## Commands (spot-checked 2026-08-10 against `package.json`)
