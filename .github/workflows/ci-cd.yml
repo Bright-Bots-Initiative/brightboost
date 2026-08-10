@@ -70,6 +70,12 @@ jobs:
       - name: Check Prisma schema drift
         run: bash scripts/check-prisma-drift.sh
 
+      - name: Agent context check
+        run: npm run agent:check
+
+      - name: Docs integrity check
+        run: npm run docs:check
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 

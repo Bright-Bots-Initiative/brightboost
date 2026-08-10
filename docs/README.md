@@ -2,9 +2,7 @@
 
 # Docs map
 
-Start at the repo [`README.md`](../README.md). Canonical topics below are listed for the map.
-**Note:** until `#751` adds a README → [`docs/README.md`](README.md) hop, some destinations are
-reachable via [`SETUP.md`](../SETUP.md) §8 (≤2 hops from SETUP) rather than strictly ≤2 from README.
+Start at the repo [`README.md`](../README.md). From there, every canonical topic below is reachable in ≤ 2 hops (README → this map → destination, or one hop for root canonicals).
 
 ## Directories under `docs/`
 
