@@ -209,7 +209,6 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     delete env.TEST_DATABASE_URL;
     delete env.DATABASE_URL;
     delete env.POSTGRES_URL;
-    delete env.BB_ALLOW_NON_TEST_DB;
     const { status, output } = await runParityCli(
       ["--only", "CI-14,CI-16"],
       env,
@@ -226,7 +225,6 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     delete env.TEST_DATABASE_URL;
     delete env.DATABASE_URL;
     delete env.POSTGRES_URL;
-    delete env.BB_ALLOW_NON_TEST_DB;
     const { status, output } = await runParityCli(
       ["--only", "CI-14,CI-16", "--allow-skips"],
       env,
@@ -242,9 +240,7 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     );
     let spawnCount = 0;
     const prev = process.env.TEST_DATABASE_URL;
-    const prevAllow = process.env.BB_ALLOW_NON_TEST_DB;
     process.env.TEST_DATABASE_URL = secretUrl;
-    delete process.env.BB_ALLOW_NON_TEST_DB;
     try {
       const code = await mod.runParity(
         mod.STEPS,
@@ -261,24 +257,53 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     } finally {
       if (prev === undefined) delete process.env.TEST_DATABASE_URL;
       else process.env.TEST_DATABASE_URL = prev;
-      if (prevAllow === undefined) delete process.env.BB_ALLOW_NON_TEST_DB;
-      else process.env.BB_ALLOW_NON_TEST_DB = prevAllow;
     }
   });
 
-  it("BB_ALLOW_NON_TEST_DB=1 proceeds with warning naming host and database", async () => {
+  it("refuses localhost URLs whose database name lacks a test token", async () => {
     const mod = await import(
       pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
     );
     const gate = mod.resolveParityDbGate({
-      TEST_DATABASE_URL: secretUrl,
-      BB_ALLOW_NON_TEST_DB: "1",
+      TEST_DATABASE_URL: "postgresql://u:p@127.0.0.1:5432/brightboost",
     });
-    expect(gate.action).toBe("run");
-    if (gate.action === "run") {
-      expect(gate.warning).toMatch(/db\.prod\.example\.com/);
-      expect(gate.warning).toMatch(/brightboost/);
-      expect(gate.warning).not.toMatch(/s3cret-password/);
+    expect(gate.action).toBe("refuse");
+    if (gate.action === "refuse") {
+      expect(gate.reason).toMatch(/brightboost/);
+      expect(gate.reason).toMatch(/test\/e2e token/);
+    }
+  });
+
+  it("refuses contest (substring false positive) as a database name", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const gate = mod.resolveParityDbGate({
+      TEST_DATABASE_URL: "postgresql://u:p@127.0.0.1:5432/contest",
+    });
+    expect(gate.action).toBe("refuse");
+  });
+
+  it("does not treat test in the hostname as a designated database", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const gate = mod.resolveParityDbGate({
+      TEST_DATABASE_URL: "postgresql://u:p@test.example.com:5432/brightboost",
+    });
+    expect(gate.action).toBe("refuse");
+  });
+
+  it("unparseable TEST_DATABASE_URL is could-not-run (exit 2)", async () => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    const gate = mod.resolveParityDbGate({
+      TEST_DATABASE_URL: "not-a-url",
+    });
+    expect(gate.action).toBe("could-not-run");
+    if (gate.action === "could-not-run") {
+      expect(gate.code).toBe(2);
     }
   });
 
@@ -293,7 +318,6 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     process.env.TEST_DATABASE_URL = designatedLocal;
     process.env.DATABASE_URL = decoyAmbient;
     process.env.DIRECT_URL = decoyAmbient;
-    delete process.env.BB_ALLOW_NON_TEST_DB;
     try {
       const code = await mod.runParity(
         mod.STEPS,
@@ -330,11 +354,11 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
 
   it("never prints the password on the refusal path", async () => {
     const env = { ...process.env, TEST_DATABASE_URL: secretUrl };
-    delete env.BB_ALLOW_NON_TEST_DB;
     const { status, output } = await runParityCli(["--only", "CI-14"], env);
     expect(status, output).toBe(1);
     expect(output).not.toMatch(/s3cret-password/);
-    expect(output).toMatch(/db\.prod\.example\.com/);
+    expect(output).not.toMatch(/postgresql:\/\//);
+    expect(output).toMatch(/brightboost/);
     expect(countRunLines(output)).toBe(0);
   });
 
@@ -354,5 +378,31 @@ describe("verify-parity DB gate (Bug G / #740)", () => {
     expect(child.POSTGRES_URL).toBe(designatedLocal);
     expect(child.DIRECT_URL).toBe(designatedLocal);
     expect(Object.values(child)).not.toContain(decoyAmbient);
+  });
+});
+
+describe("isDesignatedTestDbName token boundaries (#740)", () => {
+  const cases: Array<{ name: string; ok: boolean }> = [
+    { name: "test", ok: true },
+    { name: "brightboost_test", ok: true },
+    { name: "test_db", ok: true },
+    { name: "my-test-db", ok: true },
+    { name: "e2e", ok: true },
+    { name: "brightboost-e2e", ok: true },
+    { name: "contest", ok: false },
+    { name: "latest", ok: false },
+    { name: "greatest", ok: false },
+    { name: "protest", ok: false },
+    { name: "testament", ok: false },
+    { name: "testdb", ok: false },
+    { name: "brightboost", ok: false },
+    { name: "postgres", ok: false },
+  ];
+
+  it.each(cases)("$name → $ok", async ({ name, ok }) => {
+    const mod = await import(
+      pathToFileUrl(path.join(repoRoot, "scripts/verify-parity.mjs"))
+    );
+    expect(mod.isDesignatedTestDbName(name)).toBe(ok);
   });
 });

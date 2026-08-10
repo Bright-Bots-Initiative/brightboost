@@ -284,19 +284,22 @@ Flags:
 
 DB safety (CI-14 / CI-16):
   Requires TEST_DATABASE_URL (never falls back to DATABASE_URL).
-  Target must look designated (db name ~/test|e2e/i or host localhost/127.0.0.1).
-  Override: BB_ALLOW_NON_TEST_DB=1 (warns with host + database name only; never prints the URL).
+  Database name must contain a test/e2e token on a boundary (e.g. brightboost_test).
+  Localhost alone is not sufficient. No override path.
 `;
 
 /**
  * Host + database only — never echo credentials (parity logs are pasted into PRs).
+ * Database name is the URL path segment only (not the host).
  * @param {string} url
  * @returns {{ host: string, database: string } | null}
  */
 export function describeDbUrl(url) {
   try {
     const u = new URL(url);
-    const database = decodeURIComponent(u.pathname.replace(/^\//, "")).split(
+    const rawPath = u.pathname || "";
+    const withoutQuery = rawPath.split("?")[0];
+    const database = decodeURIComponent(withoutQuery.replace(/^\//, "")).split(
       "/",
     )[0];
     return { host: u.hostname, database: database || "" };
@@ -305,24 +308,37 @@ export function describeDbUrl(url) {
   }
 }
 
+/** Token-boundary test/e2e database names (not substring — `contest` must fail). */
+const TEST_DB_NAME = /(^|[_-])(test|tests|e2e)([_-]|$)/i;
+
 /**
- * Designated test DB: localhost / 127.0.0.1, or database name matching /test|e2e/i.
+ * @param {string} name
+ */
+export function isDesignatedTestDbName(name) {
+  return TEST_DB_NAME.test(name);
+}
+
+/**
+ * Designated test DB: database name must contain a test/e2e token on a boundary.
+ * Host is not a safety property (SSH tunnels / port-forwards present as localhost).
  * @param {string} url
- * @returns {{ ok: true, host: string, database: string } | { ok: false, reason: string, host?: string, database?: string }}
+ * @returns {{ ok: true, host: string, database: string } | { ok: false, reason: string, host?: string, database?: string, code?: number }}
  */
 export function isDesignatedTestDbUrl(url) {
   const info = describeDbUrl(url);
   if (!info) {
-    return { ok: false, reason: "TEST_DATABASE_URL is not a parseable URL" };
+    return {
+      ok: false,
+      code: 2,
+      reason: "TEST_DATABASE_URL is not a parseable URL (could not check)",
+    };
   }
-  const hostOk = info.host === "localhost" || info.host === "127.0.0.1";
-  const nameOk = /test|e2e/i.test(info.database);
-  if (hostOk || nameOk) {
+  if (isDesignatedTestDbName(info.database)) {
     return { ok: true, host: info.host, database: info.database };
   }
   return {
     ok: false,
-    reason: `TEST_DATABASE_URL is not a designated test target (host=${info.host}, database=${info.database}); require localhost/127.0.0.1 or a database name matching /test|e2e/i, or set BB_ALLOW_NON_TEST_DB=1`,
+    reason: `refusing: database "${info.database}" is not a designated test database (name must contain a test/e2e token, e.g. brightboost_test)`,
     host: info.host,
     database: info.database,
   };
@@ -411,39 +427,19 @@ export function resolveParityDbGate(env = process.env) {
   }
   const designatedUrl = String(url).trim();
   const check = isDesignatedTestDbUrl(designatedUrl);
-  const allow = env.BB_ALLOW_NON_TEST_DB === "1";
   if (!check.ok) {
-    // Unparseable URLs are never overridable — we cannot name the target safely.
-    if (!("host" in check) || check.host === undefined) {
-      return { action: "refuse", reason: check.reason };
-    }
-    if (!allow) {
+    if (check.code === 2) {
       return {
-        action: "refuse",
+        action: "could-not-run",
+        code: 2,
         reason: check.reason,
-        host: check.host,
-        database: check.database,
       };
     }
-    const { child, mustSet } = buildDbChildEnv(
-      designatedUrl,
-      env,
-      schemaNames.names,
-    );
-    assertNoAmbientDbLeak({
-      child,
-      mustSet,
-      designatedUrl,
-      baseEnv: env,
-    });
-    const warning = `WARNING: BB_ALLOW_NON_TEST_DB=1 — proceeding against non-test DB host=${check.host} database=${check.database}`;
     return {
-      action: "run",
-      env: child,
-      mustSet,
+      action: "refuse",
+      reason: check.reason,
       host: check.host,
-      database: check.database ?? "",
-      warning,
+      database: check.database,
     };
   }
   const { child, mustSet } = buildDbChildEnv(
