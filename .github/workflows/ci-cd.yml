@@ -102,6 +102,9 @@ jobs:
       - name: Run Cypress shell smoke (no backend; see issue #677)
         run: npm run test:e2e:ci
 
+      - name: Run Waterworks mobile tests
+        run: npx cypress run --spec "cypress/e2e/waterworks-mobile.cy.ts"
+
       - name: Build application
         run: npm run build
 
