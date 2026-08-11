@@ -27,12 +27,13 @@ Bounded job (`timeout-minutes: 15`) that:
 
 1. Provisions Postgres with database name **`brightboost_test`** (must match the #742 test-token name rule)
 2. Sets **`TEST_DATABASE_URL`**, **`DATABASE_URL`**, and **`DIRECT_URL`** to the same designated URL
-3. Runs `prisma generate`, `prisma migrate deploy`, and `npm run e2e:seed`
-4. Starts backend (`npm run start:dev`) and frontend (`npm run dev`)
-5. Waits on `$CYPRESS_SWA_URL` and `$BACKEND_ORIGIN/health` (health route, not port-only)
-6. Runs `npm run test:e2e:ci:flows` — `auth-login.cy.ts`, `activity-complete.cy.ts`, `dashboard-progress.cy.ts`
+3. Runs **two** Prisma generates (no npm workspaces — root and `backend/` each have their own `@prisma/client`): `cd backend && npm run db:generate` after backend `npm ci`, then root `npx prisma generate` before migrate
+4. Runs `prisma migrate deploy` and `npm run e2e:seed` (`shell: bash` so `seed | tee` has `pipefail` and a failed seed fails the step)
+5. Starts backend (`nohup … start:dev` → `backend.log`) and frontend (`nohup … dev` → `frontend.log`)
+6. Waits on `$CYPRESS_SWA_URL` and `$BACKEND_ORIGIN/health` (health route, not port-only)
+7. Runs `npm run test:e2e:ci:flows` — `auth-login.cy.ts`, `activity-complete.cy.ts`, `dashboard-progress.cy.ts`
 
-That subset covers login → student completion → teacher-visible progress. `dashboard-progress` is self-contained (reseeds + API setup); it does not depend on `activity-complete` having run earlier in the same session. The job promotes `CYPRESS_LESSON_ID` / `CYPRESS_STUDENT_ID` from seed stdout into the job env so `activity-complete` can read them at spec start.
+That subset covers login → student completion → teacher-visible progress. `dashboard-progress` is self-contained (reseeds + API setup); it does not depend on `activity-complete` having run earlier in the same session. The job promotes `CYPRESS_LESSON_ID` / `CYPRESS_STUDENT_ID` from seed stdout into the job env so `activity-complete` can read them at spec start. On failure, artifacts include Cypress screenshots/videos plus `backend.log` / `frontend.log`.
 
 **Shell-gate note (XF-01):** `cypress.config.ts` requires `CYPRESS_SWA_URL` (A4-03). `scripts/verify-ci-shell-gate.sh` therefore defaults it to the Vite port the gate itself spawns, and `ciWiring` sets the same for the unit proof. This is intentional coupling, not a silent Cypress baseUrl fallback.
 

@@ -221,6 +221,11 @@ jobs:
       - name: Install backend dependencies
         run: cd backend && npm ci
 
+      # OQ-03: backend has its own @prisma/client (no workspaces). Root generate
+      # does not populate backend/node_modules — generate both installs.
+      - name: Generate Prisma client (backend)
+        run: cd backend && npm run db:generate
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 
@@ -236,6 +241,8 @@ jobs:
       - name: Seed E2E fixtures
         # activity-complete reads Cypress.env("LESSON_ID") from CYPRESS_LESSON_ID
         # at spec start (seed logs the exports; CI must promote them into the job env).
+        # shell: bash → -eo pipefail so a failing seed is not swallowed by tee.
+        shell: bash
         run: |
           npm run e2e:seed | tee e2e-seed-out.txt
           node <<'NODE'
@@ -264,10 +271,11 @@ jobs:
           NODE
 
       - name: Start backend
-        run: cd backend && npm run start:dev &
+        run: nohup npm run start:dev > "$GITHUB_WORKSPACE/backend.log" 2>&1 &
+        working-directory: backend
 
       - name: Start frontend
-        run: npm run dev &
+        run: nohup npm run dev > "$GITHUB_WORKSPACE/frontend.log" 2>&1 &
 
       - name: Wait for frontend and backend health
         # Health route, not port-only — backend can bind before Prisma is ready.
@@ -284,6 +292,8 @@ jobs:
           path: |
             cypress/screenshots
             cypress/videos
+            backend.log
+            frontend.log
           if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────────────────
