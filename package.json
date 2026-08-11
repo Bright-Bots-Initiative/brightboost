@@ -26,6 +26,7 @@
     "test:coverage:gamespecific": "vitest run --project unit --coverage",
     "test:e2e": "cypress run",
     "test:e2e:ci": "cypress run --spec \"cypress/e2e/smoke.cy.ts\"",
+    "test:e2e:ci:flows": "cypress run --spec \"cypress/e2e/auth-login.cy.ts,cypress/e2e/activity-complete.cy.ts,cypress/e2e/dashboard-progress.cy.ts\"",
     "test:e2e:legacy": "cypress run --spec \"cypress/e2e/legacy/**/*.cy.{ts,js}\"",
     "test:e2e:staging": "cypress run --spec \"cypress/e2e/staging/*.cy.ts\"",
     "e2e:seed": "node scripts/e2e-seed.mjs",
