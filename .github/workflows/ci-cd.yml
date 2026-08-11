@@ -234,7 +234,34 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Seed E2E fixtures
-        run: npm run e2e:seed
+        # activity-complete reads Cypress.env("LESSON_ID") from CYPRESS_LESSON_ID
+        # at spec start (seed logs the exports; CI must promote them into the job env).
+        run: |
+          npm run e2e:seed | tee e2e-seed-out.txt
+          node <<'NODE'
+          const fs = require("fs");
+          const text = fs.readFileSync("e2e-seed-out.txt", "utf8");
+          const pick = (key) => {
+            const m = text.match(new RegExp(`${key}=(\\S+)`));
+            if (!m) {
+              console.error(`[e2e-flows] seed output missing ${key}`);
+              process.exit(1);
+            }
+            return m[1];
+          };
+          const lessonId = pick("CYPRESS_LESSON_ID");
+          const studentId = pick("CYPRESS_STUDENT_ID");
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `CYPRESS_LESSON_ID=${lessonId}\n`,
+          );
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `CYPRESS_STUDENT_ID=${studentId}\n`,
+          );
+          console.log(`[e2e-flows] exported CYPRESS_LESSON_ID=${lessonId}`);
+          console.log(`[e2e-flows] exported CYPRESS_STUDENT_ID=${studentId}`);
+          NODE
 
       - name: Start backend
         run: cd backend && npm run start:dev &
