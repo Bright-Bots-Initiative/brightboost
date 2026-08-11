@@ -1,4 +1,5 @@
 // src/App.tsx
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -9,6 +10,10 @@ import {
 import { AuthProvider } from "./contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
+
+const EchoSpike = import.meta.env.DEV
+  ? lazy(() => import("./pages/dev/EchoSpike"))
+  : () => null;
 
 // Import pages
 import TeacherLogin from "./pages/TeacherLogin";
@@ -145,6 +150,16 @@ function App() {
                   device-local persistence, zero backend. Placement (#676)
                   decided later. See docs/games/waterworks-design.md. */}
               <Route path="/waterworks" element={<Waterworks />} />
+              {import.meta.env.DEV && (
+                <Route
+                  path="/dev/echo-spike"
+                  element={
+                    <Suspense fallback={null}>
+                      <EchoSpike />
+                    </Suspense>
+                  }
+                />
+              )}
               <Route path="/for-reviewers" element={<ForReviewers />} />
               {/* Free Access Plans detail pages — reached from the homepage
                   "Learn more" buttons. Public, persona-routed CTAs. */}
