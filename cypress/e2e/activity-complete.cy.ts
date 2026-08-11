@@ -109,9 +109,10 @@ describe("P-09 student completes a quiz activity", () => {
     cy.then(() => {
       const studentId = Cypress.env("STUDENT_ID") as string;
       expect(studentId, "STUDENT_ID for progress reset").to.be.a("string");
-      const disconnect = "$" + "disconnect";
+      // Avoid a literal "$disconnect" in the shell command — bash expands $vars
+      // inside double quotes on Linux CI (G-011 / runner shell).
       return cy.exec(
-        `node -e "const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); p.progress.deleteMany({where:{studentId:process.env.SID}}).then(async (r)=>{console.log('progressDeleted='+r.count); await p['${disconnect}']();})"`,
+        `node -e "const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); p.progress.deleteMany({where:{studentId:process.env.SID}}).then(async (r)=>{console.log('progressDeleted='+r.count); await p[String.fromCharCode(36)+'disconnect']();})"`,
         {
           env: { SID: studentId },
           failOnNonZeroExit: true,
