@@ -1,5 +1,5 @@
 import { defineConfig } from "cypress";
-import { requireEnv } from "./cypress/support/requireEnv";
+import { requireEnv } from "./cypress/support/requireEnv.ts";
 
 // A4-01 baseline (pre-change): supportFile false; baseUrl silent fallback to
 // http://localhost:5173; retries.runMode 1; JUnit reporter; #677 env keys
