@@ -1,11 +1,18 @@
 import { defineConfig } from "cypress";
-import { requireEnv } from "./cypress/support/requireEnv.ts";
 
 // A4-01 baseline (pre-change): supportFile false; baseUrl silent fallback to
 // http://localhost:5173; retries.runMode 1; JUnit reporter; #677 env keys
 // LIVE_STACK, VITE_API_BASE, ALLOW_DEV_HEADERS, STUDENT_ID, LESSON_ID, CYPRESS_SWA_URL.
 
-const baseUrl = requireEnv("CYPRESS_SWA_URL", (name) => process.env[name]);
+// Cypress 13 loads this config through a CJS/ESM bridge that cannot reliably
+// import sibling TypeScript helpers. Keep the config boundary self-contained.
+const rawBaseUrl = process.env.CYPRESS_SWA_URL;
+if (rawBaseUrl === undefined || rawBaseUrl.trim() === "") {
+  throw new Error(
+    '[brightboost-e2e] Required env "CYPRESS_SWA_URL" is not set. Refusing to pass silently.',
+  );
+}
+const baseUrl = rawBaseUrl.trim();
 
 export default defineConfig({
   e2e: {
