@@ -34,6 +34,8 @@ Bounded job (`timeout-minutes: 15`) that:
 
 That subset covers login → student completion → teacher-visible progress. `dashboard-progress` is self-contained (reseeds + API setup); it does not depend on `activity-complete` having run earlier in the same session. The job promotes `CYPRESS_LESSON_ID` / `CYPRESS_STUDENT_ID` from seed stdout into the job env so `activity-complete` can read them at spec start.
 
+**Shell-gate note (XF-01):** `cypress.config.ts` requires `CYPRESS_SWA_URL` (A4-03). `scripts/verify-ci-shell-gate.sh` therefore defaults it to the Vite port the gate itself spawns, and `ciWiring` sets the same for the unit proof. This is intentional coupling, not a silent Cypress baseUrl fallback.
+
 It **complements** `test:e2e:ci` and `verify:ci-gate`; it does not replace either.
 
 ### Test database requirement (#742)
