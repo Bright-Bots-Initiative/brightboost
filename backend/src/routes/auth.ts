@@ -168,74 +168,9 @@ router.post(
 // POST /login
 router.post("/login", authLimiter, async (req: Request, res: Response) => {
   // SCRATCH: #671 / PR #750 falsification — unconditional 401 (revert after red CI).
+  // Body-only return so ts-node still compiles (unreachable dead code breaks narrowing).
+  void req;
   return res.status(401).json({ error: "Invalid credentials" });
-  try {
-    const data = loginSchema.parse(req.body);
-
-    const user = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (!user) {
-      // 🛡️ Sentinel: Prevent Timing Attack
-      // Even if user is not found, we perform a hash comparison to consume time.
-      // This prevents attackers from guessing valid emails based on response time.
-      await bcrypt.compare(data.password, DUMMY_HASH);
-
-      // 🛡️ Sentinel: Audit Log Failed Login (User Not Found)
-      await logAudit("LOGIN_FAILED", null, {
-        email: data.email,
-        reason: "user_not_found",
-        ip: req.ip,
-      });
-
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Class-code-only students have no password — reject email login
-    if (!user.password) {
-      await logAudit("LOGIN_FAILED", user.id, {
-        email: user.email,
-        reason: "no_password_set",
-        ip: req.ip,
-      });
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // All passwords are bcrypt-hashed (seed.cjs hashes on insert and repairs legacy plaintext)
-    const isValid = await bcrypt.compare(data.password, user.password);
-
-    if (!isValid) {
-      // 🛡️ Sentinel: Audit Log Failed Login (Invalid Password)
-      await logAudit("LOGIN_FAILED", user.id, {
-        email: user.email,
-        reason: "invalid_password",
-        ip: req.ip,
-      });
-
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // 🛡️ Sentinel: Audit Log
-    await logAudit("USER_LOGIN", user.id, { email: user.email, ip: req.ip });
-
-    trackServer(user.id, "login", { role: user.role });
-
-    const token = generateToken(user);
-    const { password, ...userWithoutPassword } = user;
-
-    res.json({
-      message: "Login successful",
-      user: userWithoutPassword,
-      token,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
 });
 
 // POST /auth/lookup-code — check if a code is a K-8 class or Pathways cohort
