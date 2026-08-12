@@ -116,6 +116,8 @@ export function classifySabotageResult(healthyCount, sabotagedCount) {
 
 /**
  * Detect "project not found" from Vitest CLI stderr/stdout (OQ-16).
+ * String match verified against Vitest ^3.1.3 — Vitest exposes no structured
+ * signal for an unregistered project; upgrade may break mode detection (G-021).
  * @param {string} combined
  * @returns {boolean}
  */
