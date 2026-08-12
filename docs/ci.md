@@ -116,6 +116,8 @@ npm run verify:storybook-empty-suite
 
 **Declared gap (§15.3.3):** on a spaced path the guard runs in announced-skip mode, so the **count assertion never executes locally**. CI (space-free) is the only place the primary assertion runs — which is why W-13 exists.
 
+See also the executable guard registry: [`docs/guards.md`](guards.md).
+
 ## Legacy fossils (quarantined)
 
 Previous-generation specs live under `cypress/e2e/legacy/` and are **excluded** from the default `specPattern` (`cypress/e2e/*.cy.{ts,js}`). Run them explicitly with:
