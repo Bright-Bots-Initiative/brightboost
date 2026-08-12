@@ -92,6 +92,30 @@ This script (see `scripts/verify-ci-shell-gate.sh`) runs a **two-phase causal pr
 
 It **is** wired into per-PR CI as the `Verify CI shell gate` step in `build-and-test` (after unit tests, while `:5173` is still free). Require a free `:5173` before running locally (the script refuses to steal a foreign Vite). Prefer Git Bash on Windows.
 
+## Storybook empty-suite guard — `verify:storybook-empty-suite` (#749 / #707)
+
+```bash
+npm run verify:storybook-empty-suite
+# also: npm run verify -- --only CI-27
+```
+
+**What it asserts:** Vitest’s collected Storybook test count (`numTotalTests` from the JSON reporter) — **not** “the suite exited 0”. An empty suite and a full suite can both exit 0; only the count distinguishes them.
+
+**Two modes:**
+
+| Mode               | When                                                                                                                                        | Pass means                                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **count**          | Storybook project is registered (typical CI / space-free path)                                                                              | Healthy collected count > 0, then a sabotage that empties the `stories` glob must be detected (exit 1). Unparseable output / no-op sabotage → exit **2** |
+| **announced-skip** | Spaced checkout path (local) — W-05 / `#748` omits the Storybook project and prints `[vitest.workspace] Skipping Storybook project (#707)…` | Skip warning **and** project unregistered. That is deliberate, not silent collapse                                                                       |
+
+**Deliberately skipped vs silently collected nothing:** announced-skip requires the `#707` warning prefix **and** an unregistered project. A registered project that collected zero tests is a **failure** (exit 1), not a skip. W-05’s path-conditional skip is the announced case; this guard fails closed on the silent case.
+
+**W-13:** under `CI` or `GITHUB_ACTIONS`, any presence of `BB_VITEST_PATH_HAS_SPACE` (including `=0` or `=1`) is refused with exit 1. The local override remains valid when those CI markers are unset.
+
+**Wiring:** parity step **CI-27** (`required: true`, `skipIf: () => null` — unlike CI-09, it still runs on a spaced path), `build-and-test` step after `Run tests`, and `scripts/ci-required-steps.json`.
+
+**Declared gap (§15.3.3):** on a spaced path the guard runs in announced-skip mode, so the **count assertion never executes locally**. CI (space-free) is the only place the primary assertion runs — which is why W-13 exists.
+
 ## Legacy fossils (quarantined)
 
 Previous-generation specs live under `cypress/e2e/legacy/` and are **excluded** from the default `specPattern` (`cypress/e2e/*.cy.{ts,js}`). Run them explicitly with:
@@ -106,12 +130,13 @@ They are not part of `test:e2e:ci`, `test:e2e:ci:flows`, or any required CI job.
 
 ## Scripts cheat sheet
 
-| Script                      | Purpose                                                                    |
-| --------------------------- | -------------------------------------------------------------------------- |
-| `npm run test:e2e:ci`       | Per-PR shell smoke only (`smoke.cy.ts`)                                    |
-| `npm run test:e2e:ci:flows` | Bounded real-flow subset used by the `e2e-flows` job                       |
-| `npm run test:e2e:legacy`   | Quarantined fossils under `cypress/e2e/legacy/`                            |
-| `npm run test:e2e:staging`  | Staging smokes (need env)                                                  |
-| `npm run test:e2e`          | Default `specPattern` suite (rebuilt specs; not fossils)                   |
-| `npm run verify:ci-gate`    | Shell sabotage proof (also run in `build-and-test`)                        |
-| `npm run e2e:seed`          | Deterministic E2E fixtures (requires non-prod / test-named `DATABASE_URL`) |
+| Script                                 | Purpose                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| `npm run test:e2e:ci`                  | Per-PR shell smoke only (`smoke.cy.ts`)                                    |
+| `npm run test:e2e:ci:flows`            | Bounded real-flow subset used by the `e2e-flows` job                       |
+| `npm run test:e2e:legacy`              | Quarantined fossils under `cypress/e2e/legacy/`                            |
+| `npm run test:e2e:staging`             | Staging smokes (need env)                                                  |
+| `npm run test:e2e`                     | Default `specPattern` suite (rebuilt specs; not fossils)                   |
+| `npm run verify:ci-gate`               | Shell sabotage proof (also run in `build-and-test`)                        |
+| `npm run verify:storybook-empty-suite` | Storybook collected-count / announced-skip guard (#749)                    |
+| `npm run e2e:seed`                     | Deterministic E2E fixtures (requires non-prod / test-named `DATABASE_URL`) |
