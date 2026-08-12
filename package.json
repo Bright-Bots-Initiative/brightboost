@@ -30,11 +30,14 @@
     "test:watch": "vitest",
     "test:db": "node scripts/dbHealth.js",
     "verify:ci-gate": "bash scripts/verify-ci-shell-gate.sh",
+    "verify": "node scripts/verify-parity.mjs",
+    "verify:parity-selfcheck": "node scripts/verify-parity-selfcheck.mjs",
     "typecheck": "tsc --noEmit",
     "check-bundle-size": "npm run build && node scripts/check-bundle-size.js",
     "cy:open": "cypress open",
     "cy:run": "cypress run --browser chrome",
-    "db:init": "prisma migrate deploy --schema prisma/schema.prisma && prisma db seed"
+    "db:init": "prisma migrate deploy --schema prisma/schema.prisma && prisma db seed",
+    "prepare": "husky"
   },
   "prisma": {
     "seed": "node prisma/seed.cjs"
@@ -146,7 +149,9 @@
     "eslint-plugin-storybook": "^0.12.0",
     "express": "^5.2.1",
     "globals": "^15.14.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.4.0",
     "msw": "^2.8.4",
     "playwright": "^1.52.0",
     "postcss": "^8.4.31",
@@ -162,7 +167,8 @@
     "vite": "^5.4.21",
     "vite-plugin-compression": "^0.5.1",
     "vitest": "^3.1.3",
-    "wait-on": "^8.0.1"
+    "wait-on": "^8.0.1",
+    "yaml": "^2.9.0"
   },
   "description": "BrightBoost Interactive Learning Platform - Connecting teachers and students through gamified educational experiences",
   "main": "src/main.tsx",
@@ -179,5 +185,8 @@
     "extends": [
       "plugin:storybook/recommended"
     ]
+  },
+  "lint-staged": {
+    "!(package-lock.json)": "prettier --check --ignore-unknown"
   }
 }

@@ -67,6 +67,14 @@ jobs:
       - name: Check Prisma schema drift
         run: bash scripts/check-prisma-drift.sh
 
+      # G-205 / W-11: detect silent removal of required CI step invocations.
+      - name: Verify CI step presence
+        run: bash scripts/verify-ci-step-presence.sh
+
+      # G-008 / W-12: type-level guards must be inside the tsc program.
+      - name: Verify type-program membership
+        run: node scripts/verify-type-program-membership.mjs
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 
@@ -79,6 +87,12 @@ jobs:
       - name: Run tests
         run: npm test -- --watch=false
 
+      # G-201 / W-10: two-phase sabotage proof that the CI shell gate has teeth
+      # (healthy-pass then sabotage-fail). Do not remove without replacing the
+      # causal proof — a guard file that is never invoked is not a guard.
+      - name: Verify CI shell gate
+        run: npm run verify:ci-gate
+
       - name: Start development server
         run: npm run dev &
 
@@ -87,6 +101,9 @@ jobs:
 
       - name: Run Cypress shell smoke (no backend; see issue #677)
         run: npm run test:e2e:ci
+
+      - name: Run Waterworks mobile tests
+        run: npx cypress run --spec "cypress/e2e/waterworks-mobile.cy.ts"
 
       - name: Build application
         run: npm run build
