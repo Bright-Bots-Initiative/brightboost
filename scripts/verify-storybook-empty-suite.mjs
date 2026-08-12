@@ -199,6 +199,16 @@ function logLine(message) {
 }
 
 /**
+ * @param {string} value
+ * @returns {string}
+ */
+function shellQuote(value) {
+  // spawnSync(..., { shell: true }) joins argv with spaces; quote paths (G-011).
+  if (!/[ \t"]/.test(value)) return value;
+  return `"${value.replace(/"/g, '\\"')}"`;
+}
+
+/**
  * @param {NodeJS.ProcessEnv} env
  * @param {string} outputFile
  */
@@ -211,7 +221,7 @@ function runStorybookVitest(env, outputFile) {
       "--project",
       "storybook",
       "--reporter=json",
-      `--outputFile=${outputFile}`,
+      `--outputFile=${shellQuote(outputFile)}`,
     ],
     {
       cwd: REPO_ROOT,
@@ -307,14 +317,14 @@ function probeStorybook(env) {
 }
 
 /**
- * @param {string} original
  * @param {() => void} restore
+ * @returns {() => void} uninstall
  */
-function installSignalRestore(original, restore) {
+function installSignalRestore(restore) {
   /** @type {NodeJS.Signals[]} */
   const signals = ["SIGINT", "SIGTERM"];
-  /** @type {Map<NodeJS.Signals, (...args: unknown[]) => void>} */
-  const previous = new Map();
+  /** @type {Map<NodeJS.Signals, () => void>} */
+  const handlers = new Map();
 
   for (const sig of signals) {
     const handler = () => {
@@ -323,23 +333,25 @@ function installSignalRestore(original, restore) {
       } catch {
         // best-effort before re-raise
       }
-      const prev = previous.get(sig);
-      if (typeof prev === "function") {
-        prev(sig);
-      } else {
+      // Re-raise: uninstall first so we do not recurse into this handler.
+      process.off(sig, handler);
+      handlers.delete(sig);
+      if (process.listenerCount(sig) === 0) {
+        // Default: terminate. 128+signal is conventional for shell traps.
         process.exit(128);
+      } else {
+        process.kill(process.pid, sig);
       }
     };
-    previous.set(sig, process.listeners(sig)[0]);
+    handlers.set(sig, handler);
     process.on(sig, handler);
   }
 
   return () => {
-    for (const sig of signals) {
-      process.removeAllListeners(sig);
-      const prev = previous.get(sig);
-      if (prev) process.on(sig, prev);
+    for (const [sig, handler] of handlers) {
+      process.off(sig, handler);
     }
+    handlers.clear();
   };
 }
 
@@ -428,10 +440,13 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
       }
     };
 
-    const uninstallSignals = installSignalRestore(original, restore);
+    const uninstallSignals = installSignalRestore(restore);
     let sabotagedCount;
     /** @type {{ tmpDir: string } | null} */
     let sabProbe = null;
+    /** @type {number} */
+    let phaseExit = EXIT_CANNOT_CHECK;
+    let restoreFailed = false;
     try {
       writeFileSync(STORYBOOK_MAIN, sabotaged, "utf8");
       sabProbe = probeStorybook(env);
@@ -439,46 +454,45 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
         logLine(
           `CANNOT CHECK: ${sabProbe.browserMissing ? "playwright chromium not installed" : "sabotage-phase JSON unparseable"}`,
         );
-        return EXIT_CANNOT_CHECK;
-      }
-      if (sabProbe.count === null) {
-        // Forced empty glob may still produce JSON with numTotalTests: 0, or
-        // fail project collection. Treat project-not-found after sabotage as 0.
-        if (sabProbe.projectNotFound) {
-          sabotagedCount = 0;
-        } else {
-          logLine(`CANNOT CHECK: sabotage phase produced no countable output`);
-          return EXIT_CANNOT_CHECK;
-        }
+        phaseExit = EXIT_CANNOT_CHECK;
+      } else if (sabProbe.projectNotFound) {
+        // After a stories-glob patch the project must still be registered.
+        // Treating "not found" as count 0 would false-PASS a broken workspace.
+        logLine(
+          `CANNOT CHECK: sabotage phase lost the storybook project (unexpected unregister)`,
+        );
+        phaseExit = EXIT_CANNOT_CHECK;
+      } else if (sabProbe.count === null) {
+        logLine(`CANNOT CHECK: sabotage phase produced no countable output`);
+        phaseExit = EXIT_CANNOT_CHECK;
       } else {
         sabotagedCount = sabProbe.count;
-      }
-
-      const classification = classifySabotageResult(
-        healthyCount,
-        sabotagedCount,
-      );
-      if (classification === "cannot-check") {
-        logLine(
-          `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → CANNOT CHECK: sabotage was a no-op`,
+        const classification = classifySabotageResult(
+          healthyCount,
+          sabotagedCount,
         );
-        return EXIT_CANNOT_CHECK;
+        if (classification === "cannot-check") {
+          logLine(
+            `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → CANNOT CHECK: sabotage was a no-op`,
+          );
+          phaseExit = EXIT_CANNOT_CHECK;
+        } else if (classification === "false") {
+          logLine(
+            `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → FAIL: sabotage did not empty the suite`,
+          );
+          phaseExit = EXIT_FALSE;
+        } else {
+          logLine(
+            `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → PASS`,
+          );
+          phaseExit = EXIT_OK;
+        }
       }
-      if (classification === "false") {
-        logLine(
-          `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → FAIL: sabotage did not empty the suite`,
-        );
-        return EXIT_FALSE;
-      }
-
-      logLine(
-        `mode=count healthy=${healthyCount} sabotaged=${sabotagedCount} → PASS`,
-      );
-      return EXIT_OK;
     } finally {
       try {
         restore();
       } catch (err) {
+        restoreFailed = true;
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`[storybook-empty-suite] RESTORE FAILED: ${msg}`);
       }
@@ -491,6 +505,14 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
         }
       }
     }
+    // G-020: a failed restore must never report PASS/FALSE from the phases.
+    if (restoreFailed) {
+      logLine(
+        `CANNOT CHECK: restore of .storybook/main.ts failed byte-equality`,
+      );
+      return EXIT_CANNOT_CHECK;
+    }
+    return phaseExit;
   } finally {
     try {
       rmSync(probe.tmpDir, { recursive: true, force: true });
