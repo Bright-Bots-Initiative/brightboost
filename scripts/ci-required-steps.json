@@ -15,6 +15,7 @@
       "run": "node scripts/verify-type-program-membership.mjs"
     },
     { "job": "build-and-test", "run": "npm test -- --watch=false" },
+    { "job": "build-and-test", "run": "npm run verify:storybook-empty-suite" },
     { "job": "build-and-test", "run": "npm run verify:ci-gate" },
     { "job": "build-and-test", "run": "npm run test:e2e:ci" },
     { "job": "build-and-test", "run": "npm run build" },
