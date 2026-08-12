@@ -168,11 +168,13 @@ export function selectMode(obs) {
       if (obs.warningPresent) {
         return { mode: "announced-skip", exit: null };
       }
+      // Silent skip: unregistered on a spaced path without the #707 warning.
+      // §7: property false → exit 1 (not "could not check").
       return {
         mode: null,
-        exit: EXIT_CANNOT_CHECK,
+        exit: EXIT_FALSE,
         reason:
-          "storybook project unregistered on a spaced path but skip warning absent",
+          "storybook project unregistered on a spaced path without announced skip warning (silent skip)",
       };
     }
     return {

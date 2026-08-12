@@ -44,7 +44,7 @@ describe("verify-storybook-empty-suite (H1–H4 seed)", () => {
     ).toThrow(mod.CannotCheck);
   });
 
-  it("selectMode: unregistered + spaced → announced-skip; space-free → exit 1", async () => {
+  it("selectMode: unregistered + spaced → announced-skip; silent skip → exit 1; space-free → exit 1", async () => {
     const mod = await loadMod();
     const skip = mod.selectMode({
       projectNotFound: true,
@@ -56,6 +56,17 @@ describe("verify-storybook-empty-suite (H1–H4 seed)", () => {
     });
     expect(skip.mode).toBe("announced-skip");
     expect(skip.exit).toBeNull();
+
+    const silent = mod.selectMode({
+      projectNotFound: true,
+      warningPresent: false,
+      pathHasSpace: true,
+      count: null,
+      parseError: false,
+      browserMissing: false,
+    });
+    expect(silent.exit).toBe(mod.EXIT_FALSE);
+    expect(silent.reason).toMatch(/silent skip/);
 
     const row4 = mod.selectMode({
       projectNotFound: true,
