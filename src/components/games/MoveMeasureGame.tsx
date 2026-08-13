@@ -12,7 +12,6 @@ import GameShell, {
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
 import { getGradeBand, BAND_CONFIG, type GradeBand } from "./gradeBandContent";
-import { t } from "i18next";
 
 // ── Types & constants ────────────────────────────────────────────────────
 type Phase =
@@ -91,44 +90,6 @@ export function buildMoveMeasureCompletionPayload(params: {
     },
   };
 }
-
-// TODO: add translations for the story, tips in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Move, Measure & Improve",
-      es: "Mueve, Mide y Mejora",
-      vi: "Đi, Đo và Cải Thiện",
-      "zh-CN": "动、量、进步",
-    },
-    "Move, Measure & Improve",
-  ),
-  story: pickLocale(
-    {
-      en: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
-    },
-    "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
-  ),
-  icon: "🏃",
-  tips: pickLocale(
-    {
-      en: [
-        "Tap at the right moment",
-        "Watch the green zone",
-        "Try again to improve!",
-      ],
-    },
-    [
-      "Tap at the right moment",
-      "Watch the green zone",
-      "Try again to improve!",
-    ],
-  ),
-  chapterLabel: t("games.moveMeasure.chapterLabel", {
-    defaultValue: "Body Lab",
-  }),
-  themeColor: "emerald",
-};
 
 // ── Reusable bar component ───────────────────────────────────────────────
 function ZoneBar({
@@ -1322,13 +1283,51 @@ export default function MoveMeasureGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const band = getGradeBand(config);
+  // TODO: add translation keys for the title, story, tips in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Move, Measure & Improve",
+        es: "Mueve, Mide y Mejora",
+        vi: "Đi, Đo và Cải Thiện",
+        "zh-CN": "动、量、进步",
+      },
+      "Move, Measure & Improve",
+    ),
+    story: pickLocale(
+      {
+        en: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+      },
+      "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+    ),
+    icon: "🏃",
+    tips: pickLocale(
+      {
+        en: [
+          "Tap at the right moment",
+          "Watch the green zone",
+          "Try again to improve!",
+        ],
+      },
+      [
+        "Tap at the right moment",
+        "Watch the green zone",
+        "Try again to improve!",
+      ],
+    ),
+    chapterLabel: t("games.moveMeasure.chapterLabel", {
+      defaultValue: "Body Lab",
+    }),
+    themeColor: "emerald",
+  };
 
   return (
     <GameShell
       gameKey="move_measure"
       title="Move, Measure & Improve"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (

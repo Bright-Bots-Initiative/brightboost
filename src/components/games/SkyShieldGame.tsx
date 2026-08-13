@@ -18,7 +18,6 @@ import {
   SKY_SHIELD_CONTENT,
   type GradeBand,
 } from "./gradeBandContent";
-import { t } from "i18next";
 
 // ── Constants & Types ─────────────────────────────────────────────────────
 const LABELS = ["🔵", "🟡", "🩷"];
@@ -47,44 +46,6 @@ interface Drop {
   kind: "normal" | "mystery";
   hiddenColor?: number;
 }
-
-// TODO: add translations for the story, tips in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Sky Shield Patterns",
-      es: "Patrones del Cielo",
-      vi: "Mẫu Lá Chắn Bầu Trời",
-      "zh-CN": "天空护盾图案",
-    },
-    "Sky Shield Patterns",
-  ),
-  story: pickLocale(
-    {
-      en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
-    },
-    "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
-  ),
-  icon: "🛡️",
-  tips: pickLocale(
-    {
-      en: [
-        "Watch which lane the light falls in",
-        "Look for repeating patterns",
-        "Scan mystery lights before choosing",
-      ],
-    },
-    [
-      "Watch which lane the light falls in",
-      "Look for repeating patterns",
-      "Scan mystery lights before choosing",
-    ],
-  ),
-  chapterLabel: t("games.skyShield.chapterLabel", {
-    defaultValue: "Pattern Lab",
-  }),
-  themeColor: "violet",
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 const rLane = () => Math.floor(Math.random() * 3);
@@ -954,13 +915,51 @@ export default function SkyShieldGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const band = getGradeBand(config);
+  // TODO: add translation keys for the story, tips in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Sky Shield Patterns",
+        es: "Patrones del Cielo",
+        vi: "Mẫu Lá Chắn Bầu Trời",
+        "zh-CN": "天空护盾图案",
+      },
+      "Sky Shield Patterns",
+    ),
+    story: pickLocale(
+      {
+        en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+      },
+      "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+    ),
+    icon: "🛡️",
+    tips: pickLocale(
+      {
+        en: [
+          "Watch which lane the light falls in",
+          "Look for repeating patterns",
+          "Scan mystery lights before choosing",
+        ],
+      },
+      [
+        "Watch which lane the light falls in",
+        "Look for repeating patterns",
+        "Scan mystery lights before choosing",
+      ],
+    ),
+    chapterLabel: t("games.skyShield.chapterLabel", {
+      defaultValue: "Pattern Lab",
+    }),
+    themeColor: "violet",
+  };
 
   return (
     <GameShell
       gameKey="sky_shield"
       title="Sky Shield Patterns"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (

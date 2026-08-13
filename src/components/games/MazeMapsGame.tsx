@@ -225,65 +225,6 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Briefing
-// ═══════════════════════════════════════════════════════════════════════════
-
-// TODO: add translations for the story, tips, control instructions in the briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Maze Maps & Smart Paths",
-      es: "Mapas de Laberinto",
-      vi: "Bản Đồ Mê Cung",
-      "zh-CN": "迷宫地图",
-    },
-    "Maze Maps & Smart Paths",
-  ),
-  story: pickLocale(
-    {
-      en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
-    },
-    "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
-  ),
-  icon: "🗺️",
-  tips: pickLocale(
-    {
-      en: [
-        "Move one step at a time",
-        "Watch the Sweepers before you move",
-        "Safe Pads protect you from Sweepers",
-      ],
-    },
-    [
-      "Move one step at a time",
-      "Watch the Sweepers before you move",
-      "Safe Pads protect you from Sweepers",
-    ],
-  ),
-  chapterLabel: t("games.mazeMaps.chapterLabel", { defaultValue: "AI Lab" }),
-  themeColor: "cyan",
-  controlInstructions: {
-    keyboard: [
-      pickLocale(
-        {
-          en: "Use Tab to move to action buttons and Enter or Space to choose.",
-        },
-        "Use Tab to move to action buttons and Enter or Space to choose.",
-      ),
-    ],
-    buttons: pickLocale(
-      {
-        en: [
-          "Choose a move or wait action.",
-          "Watch the pattern before moving.",
-        ],
-      },
-      ["Choose a move or wait action.", "Watch the pattern before moving."],
-    ),
-  },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
 // Maze Board — renders the grid + entities
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1045,14 +986,69 @@ export default function MazeMapsGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const band = getGradeBand(config);
   const maps = band === "g3_5" ? MAPS_G3_5 : MAPS_k2;
+  // TODO: add translation keys for the title, story, tips, controlInstructions in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Maze Maps & Smart Paths",
+        es: "Mapas de Laberinto",
+        vi: "Bản Đồ Mê Cung",
+        "zh-CN": "迷宫地图",
+      },
+      "Maze Maps & Smart Paths",
+    ),
+    story: pickLocale(
+      {
+        en: "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+      },
+      "Help Byte Bot collect the Idea Orbs! Watch the Sweepers and choose a smart path through the maze.",
+    ),
+    icon: "🗺️",
+    tips: pickLocale(
+      {
+        en: [
+          "Move one step at a time",
+          "Watch the Sweepers before you move",
+          "Safe Pads protect you from Sweepers",
+        ],
+      },
+      [
+        "Move one step at a time",
+        "Watch the Sweepers before you move",
+        "Safe Pads protect you from Sweepers",
+      ],
+    ),
+    chapterLabel: t("games.mazeMaps.chapterLabel", { defaultValue: "AI Lab" }),
+    themeColor: "cyan",
+    controlInstructions: {
+      keyboard: [
+        pickLocale(
+          {
+            en: "Use Tab to move to action buttons and Enter or Space to choose.",
+          },
+          "Use Tab to move to action buttons and Enter or Space to choose.",
+        ),
+      ],
+      buttons: pickLocale(
+        {
+          en: [
+            "Choose a move or wait action.",
+            "Watch the pattern before moving.",
+          ],
+        },
+        ["Choose a move or wait action.", "Watch the pattern before moving."],
+      ),
+    },
+  };
 
   return (
     <GameShell
       gameKey="maze_maps"
       title="Maze Maps & Smart Paths"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (
