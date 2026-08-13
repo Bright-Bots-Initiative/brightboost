@@ -29,6 +29,48 @@ export const sensitiveOpsLimiter = rateLimit({
   },
 });
 
+const CREATION_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+/**
+ * Creation limits are keyed by the authenticated account, not IP. A classroom
+ * commonly shares one public IP, so IP-keyed limits would make 30 legitimate
+ * students consume the same bucket.
+ *
+ * These limiters must only be mounted after `requireAuth`.
+ */
+function creationRateLimitKey(req: Request): string {
+  return req.user ? `${req.user.role}:${req.user.id}` : "unauthenticated";
+}
+
+const creationLimit = (productionLimit: number, error: string) =>
+  rateLimit({
+    windowMs: CREATION_RATE_LIMIT_WINDOW_MS,
+    // Keep integration tests fast while still exercising a real MemoryStore.
+    limit: process.env.NODE_ENV === "test" ? 3 : productionLimit,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: creationRateLimitKey,
+    message: { error },
+  });
+
+/** A child should only need a few new artifacts in one working session. */
+export const creationCreateLimiter = creationLimit(
+  10,
+  "Too many new creations, please wait and try again.",
+);
+
+/** Iterative making needs a wider lane than creating new gallery records. */
+export const creationUpdateLimiter = creationLimit(
+  120,
+  "Too many creation updates, please wait and try again.",
+);
+
+/** One adult can comfortably encourage a class of about 30 in one session. */
+export const creationEncouragementLimiter = creationLimit(
+  60,
+  "Too many boosts, please wait and try again.",
+);
+
 /**
  * 🛡️ Sentinel: Middleware to prevent HTTP Parameter Pollution (HPP).
  *
