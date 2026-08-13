@@ -1,6 +1,10 @@
 {
   "skipToContent": "跳到内容",
   "student": "学生",
+  "studentLayout": {
+    "bandK2": "K-2",
+    "bandG35": "Grades 3-5"
+  },
   "dashboard": {
     "loading": "加载中…",
     "stillLoading": "还在加载中...",
