@@ -336,6 +336,14 @@ async function seed(prisma) {
   console.log(`    CYPRESS_LESSON_ID=${ids.lessonId}`);
 }
 
+export async function runE2E(prisma, { reset = false } = {}) {
+  requireDatabaseUrl();
+  if (reset) {
+    await resetE2E(prisma);
+  }
+  await seed(prisma);
+}
+
 async function main() {
   requireDatabaseUrl();
   const prisma = new PrismaClient();
@@ -351,7 +359,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("[e2e-seed] Fatal:", err);
-  process.exit(1);
-});
+const isMain =
+  Boolean(process.argv[1]) &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main().catch((err) => {
+    console.error("[e2e-seed] Fatal:", err);
+    process.exit(1);
+  });
+}
