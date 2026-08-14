@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
+import { describeDbUrl, isDesignatedTestDbUrl } from "./lib/db-target.mjs";
 
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require("@prisma/client");
@@ -32,7 +33,7 @@ const STUDENT_NAMES = [
 const MODULE_SLUG = "e2e-quiz-module";
 const COURSE_NAME = "E2E Class";
 
-function isProductionShapedDatabaseUrl(urlString) {
+export function isProductionShapedDatabaseUrl(urlString) {
   let parsed;
   try {
     parsed = new URL(urlString);
@@ -56,13 +57,39 @@ function isProductionShapedDatabaseUrl(urlString) {
   return true;
 }
 
-function requireDatabaseUrl() {
+export function requireDatabaseUrl() {
   const url = process.env.DATABASE_URL;
   if (!url || String(url).trim() === "") {
     console.error("[e2e-seed] DATABASE_URL is not set.");
     process.exit(2);
   }
+  const designated = isDesignatedTestDbUrl(url);
+  if (!designated.ok) {
+    const code = designated.code ?? 1;
+    const info = describeDbUrl(url);
+    if (info) {
+      console.error(
+        `[e2e-seed] target host=${info.host} database=${info.database}`,
+      );
+    }
+    if (code === 2) {
+      console.error(
+        "[e2e-seed] refusing: DATABASE_URL is not a parseable URL (could not check). No writes performed.",
+      );
+    } else {
+      console.error(
+        `[e2e-seed] refusing: database "${designated.database}" is not a designated test database (name must contain a test/e2e token, e.g. brightboost_test). No writes performed.`,
+      );
+    }
+    process.exit(code);
+  }
   if (isProductionShapedDatabaseUrl(url)) {
+    const info = describeDbUrl(url);
+    if (info) {
+      console.error(
+        `[e2e-seed] target host=${info.host} database=${info.database}`,
+      );
+    }
     console.error(
       "[e2e-seed] Refusing to run against production-shaped DATABASE_URL (G-002). No writes performed.",
     );
