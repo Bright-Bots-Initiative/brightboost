@@ -155,15 +155,23 @@ export function assertE2ETeacherEmail() {
 export async function resetE2E(prisma) {
   const teacherEmail = assertE2ETeacherEmail();
 
-  // Clear every E2E001 course (orphans from other teachers desync Cypress IDs).
+  // Clear E2E001 courses owned by @e2e.invalid teachers only.
+  // Unscoped join-code deletes would destroy a real class issued E2E001.
   const byJoin = await prisma.course.findMany({
     where: { joinCode: "E2E001" },
-    select: { id: true },
+    select: { id: true, teacher: { select: { email: true } } },
   });
-  await deleteCoursesByIds(
-    prisma,
-    byJoin.map((c) => c.id),
-  );
+  const safeIds = [];
+  for (const c of byJoin) {
+    if (c.teacher?.email?.endsWith("@e2e.invalid")) {
+      safeIds.push(c.id);
+    } else {
+      console.error(
+        `[e2e-seed] SKIPPING E2E001 course ${c.id} owned by ${c.teacher?.email ?? "(unknown)"} — not @e2e.invalid. No delete performed for this course.`,
+      );
+    }
+  }
+  await deleteCoursesByIds(prisma, safeIds);
 
   const teacher = await prisma.user.findUnique({
     where: { email: teacherEmail },
