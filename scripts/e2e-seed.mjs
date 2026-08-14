@@ -137,12 +137,23 @@ async function deleteCoursesByIds(prisma, courseIds) {
   await prisma.course.deleteMany({ where: { id: { in: courseIds } } });
 }
 
-async function resetE2E(prisma) {
-  const teacherEmail = process.env.E2E_TEACHER_EMAIL;
-  if (!teacherEmail) {
-    console.error("[e2e-seed] E2E_TEACHER_EMAIL required for reset.");
+export function assertE2ETeacherEmail() {
+  const email = process.env.E2E_TEACHER_EMAIL;
+  if (!email) {
+    console.error("[e2e-seed] E2E_TEACHER_EMAIL required.");
     process.exit(2);
   }
+  if (!String(email).endsWith("@e2e.invalid")) {
+    console.error(
+      "[e2e-seed] E2E_TEACHER_EMAIL must use the non-routable @e2e.invalid domain (G-003). No writes performed.",
+    );
+    process.exit(1);
+  }
+  return email;
+}
+
+export async function resetE2E(prisma) {
+  const teacherEmail = assertE2ETeacherEmail();
 
   // Clear every E2E001 course (orphans from other teachers desync Cypress IDs).
   const byJoin = await prisma.course.findMany({
@@ -201,17 +212,11 @@ async function resetE2E(prisma) {
 
 async function seed(prisma) {
   const contract = loadContract();
-  const teacherEmail = process.env.E2E_TEACHER_EMAIL;
+  const teacherEmail = assertE2ETeacherEmail();
   const teacherPassword = process.env.E2E_TEACHER_PASSWORD;
-  if (!teacherEmail || !teacherPassword) {
+  if (!teacherPassword) {
     console.error(
       "[e2e-seed] E2E_TEACHER_EMAIL and E2E_TEACHER_PASSWORD are required.",
-    );
-    process.exit(2);
-  }
-  if (!String(teacherEmail).endsWith("@e2e.invalid")) {
-    console.error(
-      "[e2e-seed] E2E_TEACHER_EMAIL must use the non-routable @e2e.invalid domain (G-003).",
     );
     process.exit(2);
   }
