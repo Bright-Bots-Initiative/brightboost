@@ -55,13 +55,13 @@
 
 ### Summary
 
-| Game                |       EN        |       ES        |     ZH     |     VI     |   Briefing   |                                             Hardcoded                                              | No Lookup bugs |
-| ------------------- | :-------------: | :-------------: | :--------: | :--------: | :----------: | :------------------------------------------------------------------------------------------------: | :------------: |
-| Maze Maps           | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                    sweeper labels, briefing                                    |       ✅        |
-| Move and Measure    | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English | NAMES, briefing |       ✅       |
-| Sky Shield          | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
-| Fast Lane           | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
-| Qualify, Tune, Race | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
+| Game                |       EN        |       ES        |     ZH     |     VI       |                                             Hardcoded                                              | No Lookup bugs |
+| ------------------- | :-------------: | :-------------: | :--------: | :--------: | :------------------------------------------------------------------------------------------------: | :------------: |
+| Maze Maps           | ✅ | ⚠️ Missing keys | ⚠️ draft PR | ❌ Missing |                                   briefing                                    |       ✅        |
+| Move and Measure    | ✅ | ⚠️ Missing keys | ⚠️ draft PR  | ❌ Missing | briefing |       ✅       |
+| Sky Shield          | ✅ | ⚠️ Missing keys | ⚠️ draft PR  | ❌ Missing  |                                            briefing                                            |       ✅       |
+| Fast Lane           | ✅ | ⚠️ Missing keys | ⚠️ draft PR  | ❌ Missing |                                            briefing                                            |       ✅       |
+| Qualify, Tune, Race | ✅ | ⚠️ Missing keys | ⚠️ draft PR  | ❌ Missing |                                           briefing                                            |       ✅       |
 
 ### Maze Maps
 
