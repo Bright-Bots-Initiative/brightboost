@@ -7,31 +7,29 @@
 | Game              | Issue       | Description                                                                                                                                                                                          | Grade Band | Tracked?              | Priority                                                                       |
 | ----------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------- | ------------------------------------------------------------------------------ |
 | Maze Map          | Gameplay    | Safe Pad copy/icon misleading                                                                                                                                                                        | k2 & g35   | tracked in issue #644 | p2                                                                             |
-| Maze Map          | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   |                       | p1                                                                             |
-| Maze Map          | Translation | Missing all translation keys for English, Spainish, Chinese, and Vietnamese                                                                                                                          | k2 & g35   |                       | p1 for adding translation keys for English and Chinese, p2 for other languages |
+| Maze Map          | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   | tracked in issue #731, opened PR #747                     | waiting for review                                                                             |
+| Maze Map          | Translation | Missing all translation keys for Spanish and Vietnamese                                                                                                                          | k2 & g35   |                       | p2 |
 | Move and Measure  | Gameplay    | The QTE target zone and the score should be tied to the student's prediction                                                                                                                         | g35        | tracked in #690       | p2                                                                             |
 | Move and Measure  | Gameplay    | For toss, instead of using a slider to pick the angle, show the ball's trajectory and let students adjust the throwing angle by changing the trajectory.                                             | k2 & g35   |                       | p2                                                                             |
-| Move and Measure  | Score       | 5 points are rewarded if the retry score is higher than the original score. However, if the student already achives full score in the first try, they won't be able to get the +5 improvement score. | k2 & g35   |                       | p1                                                                             |
-| Move and Measure  | Translation | Hardcoded text                                                                                                                                                                                       | k2 & g35   |                       | p1                                                                             |
-| Move and Measure  | Translation | Incorrect translation lookups in English                                                                                                                                                             | k2 & g35   |                       | p1                                                                             |
-| Move and Measure  | Translation | Missing some translation keys in Spainish, missing all translation keys in Chinese and Vietnamese                                                                                                    | k2 & g35   |                       | p1 for Chinese, p2 for other languages                                         |
-| Sky Shield        | Translation | Missing some translation keys in Spainish, missing all translation keys in Chinese and Vietnamese                                                                                                    | k2 & g35   |                       | p1 for Chinese, p2 for other languages                                         |
-| Sky Shield        | Score       | Total score is calculated as (number of rounds) \* 20. However, in the gameplay, not all rounds have a score of 20.                                                                                  | k2 & g35   |                       | p2                                                                             |
+| Move and Measure  | Score       | 5 points are rewarded if the retry score is higher than the original score. However, if the student already achives full score in the first try, they won't be able to get the +5 improvement score. | k2 & g35   |  tracked in issue #734                     | p1                                                                             |
+| Move and Measure  | Translation | Hardcoded text                                                                                                                                                                                       | k2 & g35   |  tracked in issue #731, opened PR #747                     | waiting for review                                                                             |
+| Move and Measure  | Translation | Missing some translation keys in Spanish, missing all translation keys in Vietnamese                                                                                                    | k2 & g35   |                       | p2                                          |
+| Sky Shield        | Translation | Missing some translation keys in Spainish, missing all translation keys in Vietnamese                                                                                                    | k2 & g35   |                       | p2                                         |
+| Sky Shield        | Score       | Total score is calculated as (number of rounds) \* 20. However, in the gameplay, not all rounds have a score of 20.                                                                                  | k2 & g35   | tracked in issue #735                      | p2                                                                             |
 | Fast Lane         | Gameplay    | g35 content has not been implemented                                                                                                                                                                 | g35        | tracked in #620       | p1                                                                             |
-| Fast Lane         | Score       | In some rounds, multiple lanes equally optimal. However, the current scoring mechanism only reward full points to the first lane.                                                                    | k2 & g35   |                       | p2                                                                             |
-| Fast Lane         | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   |                       | p1                                                                             |
-| Fast Lane         | Translation | Missing all translation keys in Chinese and Vietnamese                                                                                                                                               | k2 & g35   |                       | p1 for Chinese, p2 for Vietnamese                                              |
+| Fast Lane         | Score       | In some rounds, multiple lanes equally optimal. However, the current scoring mechanism only reward full points to the first lane.                                                                    | k2 & g35   | tracked in issue #736                      | p2                                                                             |
+| Fast Lane         | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   |  tracked in issue #731, opened PR #747                   | waiting for review                                                                             |
+| Fast Lane         | Translation | Missing some translation keys in Spanish; Missing all translation keys in Vietnamese                                                                                                                                               | k2 & g35   |                       | p2                     |
 | Qualify Tune Race | Gameplay    | g35 content has not been implemented                                                                                                                                                                 | g35        | tracked in #621       | p2                                                                             |
 | Qualify Tune Race | Gameplay    | Make the car move upward instead of downward, or start the car closer to the top of the screen, so students have more time to react to upcoming obstacles                                            | k2 & g3-5  |                       | p2                                                                             |
 | Qualify Tune Race | Gameplay    | The upgrade option "Steady Steering" currently does not change how the car behaves                                                                                                                   | k2 & g35   |                       | p2                                                                             |
-| Qualify Tune Race | Score       | The current scoring mechanism reward points only when round 2 improves compared with round 1. Therefore, if a student has a perfect run in both rounds, they still can't receive full scores.        | k2 & g35   |                       | p2                                                                             |
-| Qualify Tune Race | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   |                       | p1                                                                             |
-| Qualify Tune Race | Translation | Missing all translation keys in Chinese and Vietnamese                                                                                                                                               | k2 & g35   |                       | p1 for Chinese, p2 for Vietnamese                                              |
+| Qualify Tune Race | Score       | The current scoring mechanism reward points only when round 2 improves compared with round 1. Therefore, if a student has a perfect run in both rounds, they still can't receive full scores.        | k2 & g35   | tracked in issue #737                      | p2                                                                             |
+| Qualify Tune Race | Translation | hardcoded text                                                                                                                                                                                       | k2 & g35   |   tracked in issue #731, opened PR #747                   | waiting for review                                                                             |
+| Qualify Tune Race | Translation | Missing some translation keys in Spanish; Missing all translation keys in Vietnamese                                                                                                                                               | k2 & g35   |                       | p2                                               |
 
 ## G3-5 Contents
 
-- g3-5 contents for Maze Map and Move and Measure have been implemented and approved.
-- g3-5 content for Sky Shield has been implemented and is waiting for review.
+- g3-5 contents for Maze Maps, Move and Measure, and Sky Shield have been implemented and approved.
 - g3-5 contents for Fast Lane and Qualify Tune Race has not been implemented.
 
 ## Scoring
@@ -41,10 +39,8 @@
 
 ## Translation
 
-- All games still have some hardcoded English texts. Replace these hardcoded texts (p1).
-- Maze Map and Move and Measure have missing English translation keys and incorrect translation lookups. Fix these (p1).
-- Maze Map, Move and Measure, Sky Shield have missing Spanish translation keys and/or incorrect lookups. Review and fix (p2).
-- All games are missing Chinese translation keys (p1).
+- All games still have some hardcoded English texts in briefing: title, story, tips, controlInstructions. They should be changed into translation keys. (p1)
+- All games have some missing Spanish translation keys and/or incorrect lookups (p2).
 - All games are missing Vietnamese translation keys (p2).
 
 ## Game Mechanics and Design Questions
@@ -61,24 +57,24 @@
 
 | Game                |       EN        |       ES        |     ZH     |     VI     |   Briefing   |                                             Hardcoded                                              | No Lookup bugs |
 | ------------------- | :-------------: | :-------------: | :--------: | :--------: | :----------: | :------------------------------------------------------------------------------------------------: | :------------: |
-| Maze Maps           | ⚠️ Missing keys | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                    sweeper labels, chapterLabel                                    |       -        |
-| Move and Measure    | ⚠️ Missing keys | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English | NAMES, Prediction Hint, Measurement labels, Event Compare page, Compare Results page, chapterLabel |       ❌       |
-| Sky Shield          | ⚠️ Missing keys | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            chapterLabel                                            |       ✅       |
-| Fast Lane           | ⚠️ Missing keys | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            chapterLabel                                            |       ✅       |
-| Qualify, Tune, Race | ⚠️ Missing keys | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            chapterLabel                                            |       ❌       |
+| Maze Maps           | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                    sweeper labels, briefing                                    |       ✅        |
+| Move and Measure    | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English | NAMES, briefing |       ✅       |
+| Sky Shield          | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
+| Fast Lane           | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
+| Qualify, Tune, Race | ✅ | ⚠️ Missing keys | ❌ Missing | ❌ Missing | only English |                                            briefing                                            |       ✅       |
 
 ### Maze Maps
 
-- All translations keys are missing in English, Spainish, Chinese, and Vietnamese.
-- Missing Spanish, Chinese, and Vietnamese in the briefing.
-- Some text are hard coded in English.
+- All translation keys in English and Chinese are implemented. 
+- Translations keys in Spainish and Vietnamese are still incomplete.
+- Title, story, tips, controlInstructions in briefing are hardcoded in English
 
-#### Hardcoded English text
+#### Hardcoded English text (✅ fixed in #747)
 
 - sweeper labels ("Loop Sweeper" & "Line Sweeper")
 - chapterLabel: "AI Lab",
 
-#### Missing translation keys & English source text
+#### Missing translation keys & English source text (✅ fixed in #746)
 
 "collisionHint": "Oops! Back to safety. Watch the pattern first."  
 "hintSafePad": "Try the Safe Pad before moving past the Sweeper."  
@@ -109,11 +105,11 @@
 
 ### Move and Measure
 
-- Missing some translation keys in English and Spainish, missing all translation keys in Chinese and Vietnamese
-- Missing Spanish, Chinese, and Vietnamese in the briefing.
-- Some text are hardcoded in English.
+- All translation keys in English and Chinese are implemented. 
+- Translations keys in Spainish and Vietnamese are still incomplete.
+- Title, story, tips in briefing are hardcoded in English.
 
-#### Hardcoded English text
+#### Hardcoded English text (✅ fixed in #747)
 
 - const NAMES = {
   dash: "Dash",
@@ -126,7 +122,7 @@
 - Compare Results page ("Predicted:", "Actual:", "Difference:")
 - chapterLabel: "Body Lab"
 
-#### Missing translation keys & English source text
+#### Missing translation keys & English source text (✅ fixed in #746)
 
 - Missing translation keys in all language:
 
@@ -166,10 +162,8 @@
    "exitCorrect": "That's right! Measuring helps us know!"  
    "exitWrong": "The best way is to measure and compare!"
 
-- English and Spanish contents are only missing the above keys
-- Chinese and Vietnamese are missing all translation keys and strings
 
-#### Incorrect translation keys lookups
+#### Incorrect translation keys lookups (✅ fixed in #746)
 
 games.moveMeasure.introText, should be games.moveMeasure.introDesc  
 games.moveMeasure.dashInstr, should be games.moveMeasure.dashHint  
@@ -179,16 +173,15 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 
 ### Sky Shield
 
-- Missing Spanish, Chinese, and Vietnamese in the briefing.
-- Missing all translation keys in Chinese and Vietnamese
-- Missing some translation keys in Spanish. Some Spanish translation keys need update.
-- Some text are hardcoded in English.
+- All translation keys in English and Chinese are implemented. 
+- Translations keys in Spainish and Vietnamese are still incomplete.
+- Title, story, tips in briefing are hardcoded in English.
 
-#### Hardcoded English text
+#### Hardcoded English text (✅ fixed in #747)
 
 - chapterLabel: "Pattern Lab"
 
-#### Missing translation keys in all languages & English source text
+#### Missing translation keys in all languages & English source text (✅ fixed in #746)
 
 "catchGood": "Great catch!"  
 "catchMiss": "Oops! Try another lane."  
@@ -210,7 +203,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 "seeResults": "See Results"  
 "celebrationMsg": "You watched, noticed the pattern, and chose the right shield!"
 
-#### Missing Spanish translation keys & English source text
+#### Missing Spanish translation keys & English source text (✅ fixed in #713)
 
 "patternReminderTitle": "You learned this pattern:",  
 "patternReminderMessage": "Remember it! The mystery lights will follow this same pattern.",  
@@ -225,7 +218,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 "colorYellow": "Yellow",  
 "colorPink": "Pink",
 
-#### Spanish translation keys that need to be updated:
+#### Spanish translation keys that need to be updated (✅ fixed in #713)
 
 "exitQuestion": "Azul, azul, dorado, azul, azul, \_\_\_. ¿Qué sigue?" (English source text: "exitQuestion": "What comes next?")  
 "exitCorrect": "Dorado" (English source text: "exitCorrect": "Correct! {{color}} comes next!")
@@ -237,15 +230,15 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 
 ### Fast Lane
 
-- Missing Spanish, Chinese, and Vietnamese in the briefing.
-- Missing all translation keys in Chinese and Vietnamese
-- Some text are hardcoded in English.
+- All translation keys in English and Chinese are implemented. 
+- Translations keys in Spainish and Vietnamese are still incomplete.
+- Title, story, tips in briefing are hardcoded in English.
 
-#### Hardcoded English text
+#### Hardcoded English text (✅ fixed in #747)
 
 - chapterLabel: "Signal School"
 
-#### Missing translation keys & English source text
+#### Missing translation keys & English source text (✅ fixed in #746)
 
 - Missing translation keys in all languages
 
@@ -274,20 +267,18 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
    "nextTurnLabel": "Next turn signals shown below"  
    "nextRound": "Next"
 
-- English and Spanish contents are only missing the above keys
-- Chinese and Vietnamese are missing all translation keys and strings
 
 ### Qualify, Tune, Race
 
-- Missing Spanish, Chinese, and Vietnamese in the briefing.
-- Missing all translation keys in Chinese and Vietnamese
-- Some text are hardcoded in English.
+- All translation keys in English and Chinese are implemented. 
+- Translations keys in Spainish and Vietnamese are still incomplete.
+- Title, story, tips, controlInstruction in briefing are hardcoded in English.
 
-#### Hardcoded English text
+#### Hardcoded English text (✅ fixed in #747)
 
 - chapterLabel: "Race Lab"
 
-#### Missing translation keys & English source text
+#### Missing translation keys & English source text (✅ fixed in #746)
 
 - Missing translation keys in all languages:
 
@@ -308,10 +299,8 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
    "badgeDesc": "Completed the Qualify, Tune, Race capstone!"  
    "finish": "Finish!"
 
-- English and Spanish contents are only missing the above keys
-- Chinese and Vietnamese are missing all translation keys and strings
 
-#### Incorrect translation lookups
+#### Incorrect translation lookups (✅ fixed in #746)
 
 games.qualifyTuneRace.qualifyResults, should be games.qualifyTuneRace.resultsTitle  
 games.qualifyTuneRace.time, should be games.qualifyTuneRace.timeLabel  
