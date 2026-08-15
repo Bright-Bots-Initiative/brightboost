@@ -18,21 +18,21 @@ Start at the repo [`README.md`](../README.md). From there, every canonical topic
 | [`audits/`](audits/)                         | Experience / localization audits                                   |
 | [`architecture/`](architecture/)             | Legacy architecture diagrams                                       |
 | [`azure/`](azure/)                           | Remaining Azure IaC (e.g. `.bicep`); markdown runbooks removed     |
-| _(root of `docs/`)_                          | Topic docs (i18n, testing, staging, API, design, etc.)              |
+| _(root of `docs/`)_                          | Topic docs (i18n, testing, staging, API, design, etc.)             |
 
 ## Canonical documents
 
-| Topic                         | Canonical                                                                                                            |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| What the project is           | [`README.md`](../README.md)                                                                                          |
-| Zero-to-running setup         | [`SETUP.md`](../SETUP.md)                                                                                            |
-| Human contribution workflow   | [`CONTRIBUTING.md`](../CONTRIBUTING.md)                                                                              |
-| Agent context                 | [`docs/agents/agent.md`](agents/agent.md) → overview                                                                 |
-| Internship and cohort planning | [`docs/internship-program/README.md`](internship-program/README.md)                                                   |
-| Deployment                    | [`DEPLOYMENT.md`](../DEPLOYMENT.md)                                                                                  |
-| CI jobs & parity              | [`docs/ops/ci.md`](ops/ci.md) (parity table in [`agents/rules/60-verification.md`](agents/rules/60-verification.md)) |
-| Security policy               | [`SECURITY.md`](../SECURITY.md)                                                                                      |
-| This map                      | [`docs/README.md`](README.md)                                                                                        |
+| Topic                          | Canonical                                                                                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| What the project is            | [`README.md`](../README.md)                                                                                          |
+| Zero-to-running setup          | [`SETUP.md`](../SETUP.md)                                                                                            |
+| Human contribution workflow    | [`CONTRIBUTING.md`](../CONTRIBUTING.md)                                                                              |
+| Agent context                  | [`docs/agents/agent.md`](agents/agent.md) → overview                                                                 |
+| Internship and cohort planning | [`docs/internship-program/README.md`](internship-program/README.md)                                                  |
+| Deployment                     | [`DEPLOYMENT.md`](../DEPLOYMENT.md)                                                                                  |
+| CI jobs & parity               | [`docs/ops/ci.md`](ops/ci.md) (parity table in [`agents/rules/60-verification.md`](agents/rules/60-verification.md)) |
+| Security policy                | [`SECURITY.md`](../SECURITY.md)                                                                                      |
+| This map                       | [`docs/README.md`](README.md)                                                                                        |
 
 ## Guides
 
