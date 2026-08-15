@@ -14,14 +14,14 @@
 List no more than three program-level outcomes. Each must have an owner and observable evidence.
 
 | Outcome | Why it matters | Owner | Completion evidence |
-|---|---|---|---|
-|  |  |  |  |
+| ------- | -------------- | ----- | ------------------- |
+|         |                |       |                     |
 
 ## 2. Participant lanes
 
 | Participant | Primary lane | Stretch area | First bounded issue | Mentor/reviewer |
-|---|---|---|---|---|
-|  |  |  |  |  |
+| ----------- | ------------ | ------------ | ------------------- | --------------- |
+|             |              |              |                     |                 |
 
 ## 3. Pre-program readiness
 
@@ -33,12 +33,12 @@ List no more than three program-level outcomes. Each must have an owner and obse
 
 ## 4. Communication agreement
 
-- **Primary Slack channel:**  
-- **Core collaboration hours:**  
-- **Review acknowledgment target:** One business day unless changed here:  
-- **Escalation owner:**  
-- **Recurring huddle/demo cadence:**  
-- **Review pairs or triads:**  
+- **Primary Slack channel:**
+- **Core collaboration hours:**
+- **Review acknowledgment target:** One business day unless changed here:
+- **Escalation owner:**
+- **Recurring huddle/demo cadence:**
+- **Review pairs or triads:**
 
 GitHub is the permanent technical record. Slack must also be used when a review, revision, approval, or decision requires timely action.
 
@@ -74,22 +74,22 @@ Every issue must include:
 ## 8. Portfolio capture
 
 | Participant | Planned showcase | Evidence to capture | Mentor check date |
-|---|---|---|---|
-|  |  |  |  |
+| ----------- | ---------------- | ------------------- | ----------------- |
+|             |                  |                     |                   |
 
 For each showcase, record the problem, the participant's decisions, before/after evidence, validation, and final repository link.
 
 ## 9. Feedback and closeout
 
-- **Midpoint pulse date:**  
-- **Documented midpoint adjustment:**  
-- **Individual closeout dates:**  
-- **Final cohort retrospective owner:**  
-- **Recommendation/endorsement owner:**  
-- **Unfinished-work transfer owner:**  
+- **Midpoint pulse date:**
+- **Documented midpoint adjustment:**
+- **Individual closeout dates:**
+- **Final cohort retrospective owner:**
+- **Recommendation/endorsement owner:**
+- **Unfinished-work transfer owner:**
 
 ## 10. Decision and action log
 
 | Date | Decision/action | Owner | Due date | Required evidence | Status |
-|---|---|---|---|---|---|
-|  |  |  |  |  |  |
+| ---- | --------------- | ----- | -------- | ----------------- | ------ |
+|      |                 |       |          |                   |        |
