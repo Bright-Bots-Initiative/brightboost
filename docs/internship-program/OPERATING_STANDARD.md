@@ -112,6 +112,6 @@ An assignment is complete only when:
 
 ## Change log
 
-| Effective cohort | Change | Reason/evidence | Approved by |
-|---|---|---|---|
+| Effective cohort              | Change                     | Reason/evidence                                           | Approved by      |
+| ----------------------------- | -------------------------- | --------------------------------------------------------- | ---------------- |
 | Next cohort after Summer 2026 | Initial operating standard | Summer 2026 individual closeouts and cohort retrospective | Nathaniel Walker |
