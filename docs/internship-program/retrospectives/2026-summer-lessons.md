@@ -38,4 +38,3 @@
 ## Resulting canonical policy
 
 The lasting requirements derived from these lessons live in [`../OPERATING_STANDARD.md`](../OPERATING_STANDARD.md). That file is canonical for future cohorts; this document preserves the historical reasoning.
-
