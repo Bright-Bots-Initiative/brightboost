@@ -59,10 +59,26 @@ export const rhymeRideModuleFixture = {
               content: JSON.stringify({
                 type: "story_quiz",
                 slides: [
-                  { id: "s1", text: { i18nKey: "content.rhymo.s1" }, icon: "🚲" },
-                  { id: "s2", text: { i18nKey: "content.rhymo.s2" }, icon: "🎵" },
-                  { id: "s3", text: { i18nKey: "content.rhymo.s3" }, icon: "🐱" },
-                  { id: "s4", text: { i18nKey: "content.rhymo.s4" }, icon: "🏁" },
+                  {
+                    id: "s1",
+                    text: { i18nKey: "content.rhymo.s1" },
+                    icon: "🚲",
+                  },
+                  {
+                    id: "s2",
+                    text: { i18nKey: "content.rhymo.s2" },
+                    icon: "🎵",
+                  },
+                  {
+                    id: "s3",
+                    text: { i18nKey: "content.rhymo.s3" },
+                    icon: "🐱",
+                  },
+                  {
+                    id: "s4",
+                    text: { i18nKey: "content.rhymo.s4" },
+                    icon: "🏁",
+                  },
                 ],
                 questions: [
                   {
@@ -218,9 +234,7 @@ export function resolveStoryQuizUrl(moduleSlug) {
       .then((body) => {
         const lesson = body.units?.[0]?.lessons?.[0];
         expect(lesson, "seeded lesson").to.exist;
-        const storyActivity = lesson.activities?.find(
-          (a) => a.kind === "INFO",
-        );
+        const storyActivity = lesson.activities?.find((a) => a.kind === "INFO");
         expect(storyActivity, "INFO story_quiz activity").to.exist;
         return `/student/modules/${moduleSlug}/lessons/${lesson.id}/activities/${storyActivity.id}`;
       });
@@ -286,9 +300,7 @@ export function tapChoice(partialText) {
 }
 
 export function clickFeedbackNext(label = "Next") {
-  cy.get('[data-testid="feedback-panel"]')
-    .contains("button", label)
-    .click();
+  cy.get('[data-testid="feedback-panel"]').contains("button", label).click();
 }
 
 export function assertIncorrectCheer() {

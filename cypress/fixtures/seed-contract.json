@@ -1,0 +1,62 @@
+{
+  "teacher": {
+    "name": "E2E Teacher",
+    "emailDomain": "@e2e.invalid"
+  },
+  "students": [
+    { "name": "E2E Student One" },
+    { "name": "E2E Student Two" },
+    { "name": "E2E Student Three" }
+  ],
+  "activity": {
+    "title": "E2E Quiz Activity",
+    "kind": "INFO",
+    "questions": [
+      {
+        "id": "e2e-q1",
+        "prompt": {
+          "en": "What color is the sky on a clear day?",
+          "es": "¿De qué color es el cielo en un día despejado?"
+        },
+        "choices": [
+          { "en": "Blue", "es": "Azul" },
+          { "en": "Green", "es": "Verde" },
+          { "en": "Purple", "es": "Morado" }
+        ],
+        "answerIndex": 0
+      },
+      {
+        "id": "e2e-q2",
+        "prompt": {
+          "en": "How many legs does a dog usually have?",
+          "es": "¿Cuántas patas suele tener un perro?"
+        },
+        "choices": [
+          { "en": "Two", "es": "Dos" },
+          { "en": "Four", "es": "Cuatro" },
+          { "en": "Six", "es": "Seis" }
+        ],
+        "answerIndex": 1
+      },
+      {
+        "id": "e2e-q3",
+        "prompt": {
+          "en": "What do plants need to grow?",
+          "es": "¿Qué necesitan las plantas para crecer?"
+        },
+        "choices": [
+          { "en": "Water and light", "es": "Agua y luz" },
+          { "en": "Rocks only", "es": "Solo rocas" },
+          { "en": "Nothing", "es": "Nada" }
+        ],
+        "answerIndex": 0
+      }
+    ]
+  },
+  "counts": {
+    "teachers": 1,
+    "students": 3,
+    "activities": 1,
+    "questions": 3
+  }
+}
