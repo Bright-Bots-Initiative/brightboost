@@ -1,6 +1,10 @@
 {
   "skipToContent": "Chuyển đến nội dung",
   "student": "Học sinh",
+  "studentLayout": {
+    "bandK2": "K-2",
+    "bandG35": "Grades 3-5"
+  },
   "dashboard": {
     "loading": "Đang tải…",
     "stillLoading": "Vẫn đang tải...",

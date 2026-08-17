@@ -3,6 +3,10 @@ import StudentLayout from "../StudentLayout";
 import { BrowserRouter } from "react-router-dom";
 import { vi } from "vitest";
 
+const gradeBandMock = vi.hoisted(() => ({
+  value: "k2" as "k2" | "g3_5",
+}));
+
 // Mock dependencies
 vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({
@@ -11,6 +15,10 @@ vi.mock("../../contexts/AuthContext", () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+}));
+
+vi.mock("@/hooks/useGradeBand", () => ({
+  useGradeBand: () => gradeBandMock.value,
 }));
 
 // Resolve i18n keys against en/common.json — assertions match real
@@ -34,7 +42,6 @@ describe("StudentLayout Accessibility", () => {
       </BrowserRouter>,
     );
 
-    // This query will fail if aria-label is missing on the button with the icon
     const logoutButton = screen.getByRole("button", { name: /log out/i });
     expect(logoutButton).toBeInTheDocument();
   });
@@ -51,5 +58,33 @@ describe("StudentLayout Accessibility", () => {
     const skipLink = screen.getByText("Skip to content");
     expect(skipLink).toBeInTheDocument();
     expect(skipLink).toHaveAttribute("href", "#main-content");
+  });
+
+  test("shows the K-2 grade-band badge", () => {
+    gradeBandMock.value = "k2";
+
+    render(
+      <BrowserRouter>
+        <StudentLayout>
+          <div>Content</div>
+        </StudentLayout>
+      </BrowserRouter>,
+    );
+
+    expect(screen.getByText("K-2")).toBeInTheDocument();
+  });
+
+  test("shows the Grades 3-5 grade-band badge", () => {
+    gradeBandMock.value = "g3_5";
+
+    render(
+      <BrowserRouter>
+        <StudentLayout>
+          <div>Content</div>
+        </StudentLayout>
+      </BrowserRouter>,
+    );
+
+    expect(screen.getByText("Grades 3-5")).toBeInTheDocument();
   });
 });
