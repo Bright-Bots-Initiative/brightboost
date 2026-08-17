@@ -1,6 +1,10 @@
 {
   "skipToContent": "Skip to content",
   "student": "Student",
+  "studentLayout": {
+    "bandK2": "K-2",
+    "bandG35": " Grades 3-5"
+  },
   "dashboard": {
     "loading": "Loading…",
     "stillLoading": "Still loading...",
