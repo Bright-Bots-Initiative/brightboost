@@ -47,7 +47,7 @@
 - All games still have some hardcoded English texts in briefing: title, story, tips, controlInstructions. They should be changed into translation keys. (p1)
 - All games have some missing Spanish translation keys and/or incorrect lookups (p2).
 - All games are missing Vietnamese translation keys (p2).
-- All games have Chinese translatio keys in draft PR #770. (p1)
+- All games have Chinese translation keys in draft PR #770. (p1)
 
 ## Game Mechanics and Design Questions
 
@@ -72,7 +72,7 @@
 ### Maze Maps
 
 - All translation keys in English are implemented.
-- Chinese translation keys are i draft PR #770.
+- Chinese translation keys are in draft PR #770.
 - Translations keys in Spanish and Vietnamese are still incomplete.
 - Title, story, tips, controlInstructions in briefing are hardcoded in English
 
@@ -113,7 +113,7 @@
 ### Move and Measure
 
 - All translation keys in English are implemented.
-- Chinese translation keys are i draft PR #770.
+- Chinese translation keys are in draft PR #770.
 - Translations keys in Spanish and Vietnamese are still incomplete.
 - Title, story, tips in briefing are hardcoded in English.
 
@@ -181,7 +181,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 ### Sky Shield
 
 - All translation keys in English are implemented.
-- Chinese translation keys are i draft PR #770.
+- Chinese translation keys are in draft PR #770.
 - Translations keys in Spanish and Vietnamese are still incomplete.
 - Title, story, tips in briefing are hardcoded in English.
 
@@ -239,7 +239,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 ### Fast Lane
 
 - All translation keys in English are implemented.
-- Chinese translation keys are i draft PR #770.
+- Chinese translation keys are in draft PR #770.
 - Translations keys in Spanish and Vietnamese are still incomplete.
 - Title, story, tips in briefing are hardcoded in English.
 
@@ -279,7 +279,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 ### Qualify, Tune, Race
 
 - All translation keys in English are implemented.
-- Chinese translation keys are i draft PR #770.
+- Chinese translation keys are in draft PR #770.
 - Translations keys in Spanish and Vietnamese are still incomplete.
 - Title, story, tips, controlInstruction in briefing are hardcoded in English.
 
