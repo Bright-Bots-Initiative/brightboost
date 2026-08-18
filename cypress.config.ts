@@ -1,10 +1,24 @@
 import { defineConfig } from "cypress";
 
+// A4-01 baseline (pre-change): supportFile false; baseUrl silent fallback to
+// http://localhost:5173; retries.runMode 1; JUnit reporter; #677 env keys
+// LIVE_STACK, VITE_API_BASE, ALLOW_DEV_HEADERS, STUDENT_ID, LESSON_ID, CYPRESS_SWA_URL.
+
+// Cypress 13 loads this config through a CJS/ESM bridge that cannot reliably
+// import sibling TypeScript helpers. Keep the config boundary self-contained.
+const rawBaseUrl = process.env.CYPRESS_SWA_URL;
+if (rawBaseUrl === undefined || rawBaseUrl.trim() === "") {
+  throw new Error(
+    '[brightboost-e2e] Required env "CYPRESS_SWA_URL" is not set. Refusing to pass silently.',
+  );
+}
+const baseUrl = rawBaseUrl.trim();
+
 export default defineConfig({
   e2e: {
-    baseUrl: process.env.CYPRESS_SWA_URL || "http://localhost:5173",
-    specPattern: "cypress/e2e/**/*.cy.{ts,js}",
-    supportFile: false,
+    baseUrl,
+    specPattern: "cypress/e2e/*.cy.{ts,js}",
+    supportFile: "cypress/support/e2e.ts",
     video: true,
     screenshotOnRunFailure: true,
     viewportWidth: 1280,
@@ -21,11 +35,13 @@ export default defineConfig({
       STUDENT_ID: process.env.CYPRESS_STUDENT_ID,
       LESSON_ID: process.env.CYPRESS_LESSON_ID,
       CYPRESS_SWA_URL: process.env.CYPRESS_SWA_URL,
+      E2E_TEACHER_EMAIL: process.env.E2E_TEACHER_EMAIL,
+      E2E_TEACHER_PASSWORD: process.env.E2E_TEACHER_PASSWORD,
     },
   },
   reporter: "junit",
   reporterOptions: {
     mochaFile: "cypress/results/results-[hash].xml",
-    toConsole: false,
+    toConsole: true,
   },
 });

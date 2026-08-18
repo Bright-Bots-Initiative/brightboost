@@ -1306,12 +1306,20 @@ export function applyG35StoryOverrides(
 interface SweeperStyle {
   color: string;
   icon: string;
-  label: string;
+  labelKey: string;
 }
 
 const SWEEPER_STYLES: Record<string, SweeperStyle> = {
-  loop: { icon: "🔴", color: "text-red-500", label: "Loop Sweeper" },
-  linear: { icon: "🟢", color: "text-blue-500", label: "Line Sweeper" },
+  loop: {
+    icon: "🔴",
+    color: "text-red-500",
+    labelKey: "games.mazeMaps.loopSweeper",
+  },
+  linear: {
+    icon: "🟢",
+    color: "text-blue-500",
+    labelKey: "games.mazeMaps.lineSweeper",
+  },
 };
 
 export interface SweepConfig {

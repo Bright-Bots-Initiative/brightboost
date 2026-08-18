@@ -277,6 +277,48 @@ describe("Creations routes", () => {
       expect(res.status).toBe(422);
       expect(prismaMock.creation.create).not.toHaveBeenCalled();
     });
+
+    it("lets an enrolled kid save a valid sound_duet", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue({
+        ...dbCreation,
+        type: "sound_duet",
+        title: "Moon Echo",
+        content: validSoundDuet,
+      });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "sound_duet",
+          content: validSoundDuet,
+        });
+
+      expect(res.status).toBe(201);
+      expect(prismaMock.creation.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ title: "Moon Echo" }),
+        }),
+      );
+    });
+
+    it("rejects sound_duet content with unknown keys", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+
+      const res = await request(app)
+        .post("/api/creations")
+        .set(asStudent(KID))
+        .send({
+          courseId: COURSE,
+          type: "sound_duet",
+          content: { ...validSoundDuet, smuggled: "extra key" },
+        });
+
+      expect(res.status).toBe(422);
+      expect(prismaMock.creation.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {
