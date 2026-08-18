@@ -46,6 +46,7 @@ export const HIDDEN_MODULE_SLUGS = new Set([
   // race_track creation type) but held back until Set 3 has more games /
   // leads sign off. Ungating = delete the next line. See #676.
   "k2-stem-track-maker",
+  "k2-stem-echo-avenue",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -94,7 +95,7 @@ export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
 export const STEM_SET_3_IDS = [
   "track-maker",
   "set3-game-2",
-  "set3-game-3",
+  "echo-avenue",
   "set3-game-4",
   "set3-game-5",
 ] as const;
@@ -104,14 +105,19 @@ export type StemSet3GameId = (typeof STEM_SET_3_IDS)[number];
 // Partial until all five Set 3 games exist — placeholders have no name/strand.
 export const STEM_SET_3_NAMES: Partial<Record<StemSet3GameId, string>> = {
   "track-maker": "Boost Track Builder",
+  "echo-avenue": "Echo Avenue",
 };
 
 export const STEM_SET_3_STRANDS: Partial<Record<StemSet3GameId, string>> = {
   "track-maker": "Quantum",
+  "echo-avenue": "AI",
 };
 
 /** Module slugs for Set 3 (grows as the set is built out). */
-export const STEM_SET_3_MODULE_SLUGS = ["k2-stem-track-maker"] as const;
+export const STEM_SET_3_MODULE_SLUGS = [
+  "k2-stem-track-maker",
+  "k2-stem-echo-avenue",
+] as const;
 
 // ---------------------------------------------------------------------------
 // Aggregate constants

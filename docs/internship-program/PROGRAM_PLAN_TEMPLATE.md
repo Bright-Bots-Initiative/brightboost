@@ -1,13 +1,13 @@
 # Bright Boost [Season Year] Internship Program Plan
 
-**Status:** Draft  
-**Program dates:**  
-**Program lead:**  
-**Technical lead:**  
-**Product/localization owner:**  
-**Backup reviewer:**  
-**Operating-standard review completed:** [ ]  
-**Latest anonymized lesson record reviewed:** [ ]
+- **Status:** Draft
+- **Program dates:**
+- **Program lead:**
+- **Technical lead:**
+- **Product/localization owner:**
+- **Backup reviewer:**
+- **Operating-standard review completed:** [ ]
+- **Latest anonymized lesson record reviewed:** [ ]
 
 ## 1. Outcomes
 

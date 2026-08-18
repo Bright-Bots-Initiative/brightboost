@@ -1,4 +1,4 @@
-> **Canonical for:** agent bootstrap router. Last verified against code: 2026-08-10.
+> **Canonical for:** agent bootstrap router. Last verified against code: 2026-08-18.
 
 # Agent context router
 

@@ -1,11 +1,11 @@
-> **Canonical for:** internship and contributor-cohort program planning. Last verified against program policy: 2026-08-14.
+> **Canonical for:** internship and contributor-cohort program planning. Last verified against program policy: 2026-08-18.
 
 # Bright Boost Internship Program Operating Standard
 
-**Status:** Canonical program-planning standard  
-**Policy owner:** Bright Bots Initiative Executive Director or delegated program lead  
-**Derived from:** Summer 2026 cohort closeouts  
-**Review cadence:** Before every cohort
+- **Status:** Canonical program-planning standard
+- **Policy owner:** Bright Bots Initiative Executive Director or delegated program lead
+- **Derived from:** Summer 2026 cohort closeouts
+- **Review cadence:** Before every cohort
 
 ## Purpose
 

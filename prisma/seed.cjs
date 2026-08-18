@@ -2527,6 +2527,112 @@ async function main() {
         },
       ],
     },
+    {
+      slug: "k2-stem-echo-avenue",
+      title: "Echo Avenue",
+      description: "Make a two-performer sound-and-motion duet! 🎙️🕺",
+      activityId: "echo-avenue",
+      gameKey: "echo_avenue",
+      strand: "AI",
+      story: {
+        title: "Story: The Quiet Street",
+        slides: [
+          {
+            id: "ea-s1",
+            text: {
+              en: "Echo Avenue used to be the loudest street in town — every step, clap, and chime made the whole block dance. But lately it's gone quiet. The stage is empty!",
+              es: "La Avenida del Eco era la calle más ruidosa de la ciudad: cada paso, palmada y campanada hacía bailar a toda la cuadra. ¡Pero últimamente está en silencio. El escenario está vacío!",
+            },
+            icon: "🎙️",
+          },
+          {
+            id: "ea-s2",
+            text: {
+              en: "Two performers are waiting for a director — that's YOU. Every pad you tap makes a move AND a sound at the same time. Record a phrase, and it loops around and around.",
+              es: "Dos artistas esperan a su director: ¡ese eres TÚ! Cada botón que tocas hace un movimiento Y un sonido a la vez. Graba una frase y se repetirá una y otra vez.",
+            },
+            icon: "🕺",
+          },
+          {
+            id: "ea-s3",
+            text: {
+              en: "There's no wrong beat on Echo Avenue. Layer your two performers, leave quiet spaces, let them answer each other — and share your duet when YOU decide it's ready!",
+              es: "En la Avenida del Eco no hay ritmo equivocado. Combina a tus dos artistas, deja espacios de silencio, haz que se respondan — ¡y comparte tu dúo cuando TÚ decidas que está listo!",
+            },
+            icon: "⭐",
+          },
+        ],
+        questions: [
+          {
+            id: "ea-q1",
+            prompt: {
+              en: "What happens when you tap a pad on Echo Avenue?",
+              es: "¿Qué pasa cuando tocas un botón en la Avenida del Eco?",
+            },
+            choices: [
+              {
+                en: "A performer moves and sounds at the same time",
+                es: "Un artista se mueve y suena a la vez",
+              },
+              { en: "You lose a point", es: "Pierdes un punto" },
+              { en: "Nothing happens", es: "No pasa nada" },
+              { en: "The game ends", es: "El juego termina" },
+            ],
+            answerIndex: 0,
+          },
+        ],
+      },
+      quiz: [
+        {
+          id: "eaz-q1",
+          prompt: {
+            en: "Your loop plays the same phrase again and again. What is that called?",
+            es: "Tu bucle toca la misma frase una y otra vez. ¿Cómo se llama eso?",
+          },
+          choices: [
+            { en: "A repeating pattern", es: "Un patrón que se repite" },
+            { en: "A mistake", es: "Un error" },
+            { en: "A race", es: "Una carrera" },
+            { en: "A test", es: "una prueba" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "eaz-q2",
+          prompt: {
+            en: "One performer plays, then the other answers in the quiet spaces. What did you make?",
+            es: "Un artista toca y el otro responde en los espacios de silencio. ¿Qué creaste?",
+          },
+          choices: [
+            { en: "Call-and-response", es: "Llamada y respuesta" },
+            { en: "A traffic jam", es: "Un atasco" },
+            { en: "A countdown", es: "Una cuenta regresiva" },
+            { en: "An echo error", es: "Un error de eco" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "eaz-q3",
+          prompt: {
+            en: "When is your duet finished?",
+            es: "¿Cuándo está terminado tu dúo?",
+          },
+          choices: [
+            {
+              en: "When YOU decide it's ready",
+              es: "Cuando TÚ decides que está listo",
+            },
+            { en: "When the timer runs out", es: "Cuando se acaba el tiempo" },
+            {
+              en: "When you get all the beats right",
+              es: "Cuando aciertas todos los ritmos",
+            },
+            { en: "When the game says so", es: "Cuando el juego lo dice" },
+          ],
+          answerIndex: 0,
+        },
+      ],
+    },
   ];
 
   for (const s3 of set3Modules) {

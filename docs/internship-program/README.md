@@ -7,8 +7,8 @@ This directory is the canonical entry point for planning, operating, or reviewin
 Before creating a cohort plan, assigning intern work, changing onboarding, or running closeout:
 
 1. Read [OPERATING_STANDARD.md](./OPERATING_STANDARD.md).
-2. Create the new cohort plan from [PROGRAM_PLAN_TEMPLATE.md](./PROGRAM_PLAN_TEMPLATE.md).
-3. Read the most recent anonymized lesson record in [`./retrospectives/`](./retrospectives/).
+2. Read the most recent anonymized lesson record in [`./retrospectives/`](./retrospectives/).
+3. Create the new cohort plan from [PROGRAM_PLAN_TEMPLATE.md](./PROGRAM_PLAN_TEMPLATE.md).
 4. Check the current repository and product documentation before reusing any technical assumptions from a retrospective.
 
 ## Document roles

@@ -9,7 +9,9 @@ on:
 
 env:
   NODE_VERSION: "20"
-  CYPRESS_BASE_URL: http://localhost:5173
+  # CI Vite still binds :5173 (vite.config.ts / OQ-12). Resolve wait-on + Cypress
+  # via CYPRESS_SWA_URL — never inline a port in the wait-on step (A4-08 / CI-11).
+  CYPRESS_SWA_URL: http://localhost:5173
 
 jobs:
   # Independent build verification. Runs in parallel with build-and-test so an
@@ -70,6 +72,14 @@ jobs:
       - name: Check Prisma schema drift
         run: bash scripts/check-prisma-drift.sh
 
+      # G-205 / W-11: detect silent removal of required CI step invocations.
+      - name: Verify CI step presence
+        run: bash scripts/verify-ci-step-presence.sh
+
+      # G-008 / W-12: type-level guards must be inside the tsc program.
+      - name: Verify type-program membership
+        run: node scripts/verify-type-program-membership.mjs
+
       - name: Agent context check
         run: npm run agent:check
 
@@ -88,14 +98,27 @@ jobs:
       - name: Run tests
         run: npm test -- --watch=false
 
+      - name: Verify Storybook empty-suite guard
+        run: npm run verify:storybook-empty-suite
+
+      # G-201 / W-10: two-phase sabotage proof that the CI shell gate has teeth
+      # (healthy-pass then sabotage-fail). Do not remove without replacing the
+      # causal proof — a guard file that is never invoked is not a guard.
+      - name: Verify CI shell gate
+        run: npm run verify:ci-gate
+
       - name: Start development server
         run: npm run dev &
 
       - name: Wait for server to be ready
-        run: npx wait-on http://localhost:5173 --timeout 60000
+        # CI-11: env-resolved URL (G-007). Do not hardcode a port in this command.
+        run: npx wait-on "$CYPRESS_SWA_URL" --timeout 60000
 
       - name: Run Cypress shell smoke (no backend; see issue #677)
         run: npm run test:e2e:ci
+
+      - name: Run Waterworks mobile tests
+        run: npx cypress run --spec "cypress/e2e/waterworks-mobile.cy.ts"
 
       - name: Build application
         run: npm run build
@@ -157,6 +180,133 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+
+  # #671: bounded real-flow E2E (complements test:e2e:ci shell smoke + verify:ci-gate).
+  # Provisions Postgres, migrates, seeds, boots backend + frontend, runs login →
+  # student completion → teacher dashboard evidence. Does not replace the fast gates.
+  e2e-flows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # #742 DB-safety: name must match test-token regex (not default "postgres").
+          POSTGRES_DB: brightboost_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Resolve ports from env in wait-on / Cypress (G-007). Values match CI Vite
+      # (OQ-12 :5173) and backend PORT; do not inline ports in run steps.
+      PORT: "3000"
+      BACKEND_ORIGIN: http://localhost:3000
+      VITE_API_BASE: http://localhost:3000/api
+      FRONTEND_ORIGINS: http://localhost:5173
+      CYPRESS_LIVE_STACK: "1"
+      E2E_TEACHER_EMAIL: teacher@e2e.invalid
+      E2E_TEACHER_PASSWORD: e2e-ci-only-not-production
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+      POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: cd backend && npm ci
+
+      # OQ-03: backend has its own @prisma/client (no workspaces). Root generate
+      # does not populate backend/node_modules — generate both installs.
+      - name: Generate Prisma client (backend)
+        run: cd backend && npm run db:generate
+
+      - name: Install Cypress dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxss1
+
+      - name: Install Cypress binary
+        run: npx cypress install
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed E2E fixtures
+        # activity-complete reads Cypress.env("LESSON_ID") from CYPRESS_LESSON_ID
+        # at spec start (seed logs the exports; CI must promote them into the job env).
+        # shell: bash → -eo pipefail so a failing seed is not swallowed by tee.
+        shell: bash
+        run: |
+          npm run e2e:seed | tee e2e-seed-out.txt
+          node <<'NODE'
+          const fs = require("fs");
+          const text = fs.readFileSync("e2e-seed-out.txt", "utf8");
+          const pick = (key) => {
+            const m = text.match(new RegExp(`${key}=(\\S+)`));
+            if (!m) {
+              console.error(`[e2e-flows] seed output missing ${key}`);
+              process.exit(1);
+            }
+            return m[1];
+          };
+          const lessonId = pick("CYPRESS_LESSON_ID");
+          const studentId = pick("CYPRESS_STUDENT_ID");
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `CYPRESS_LESSON_ID=${lessonId}\n`,
+          );
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `CYPRESS_STUDENT_ID=${studentId}\n`,
+          );
+          console.log(`[e2e-flows] exported CYPRESS_LESSON_ID=${lessonId}`);
+          console.log(`[e2e-flows] exported CYPRESS_STUDENT_ID=${studentId}`);
+          NODE
+
+      - name: Start backend
+        run: nohup npm run start:dev > "$GITHUB_WORKSPACE/backend.log" 2>&1 &
+        working-directory: backend
+
+      - name: Start frontend
+        run: nohup npm run dev > "$GITHUB_WORKSPACE/frontend.log" 2>&1 &
+
+      - name: Wait for frontend and backend health
+        # Health route, not port-only — backend can bind before Prisma is ready.
+        run: npx wait-on "$CYPRESS_SWA_URL" "$BACKEND_ORIGIN/health" --timeout 120000
+
+      - name: Run Cypress real-flow subset
+        run: npm run test:e2e:ci:flows
+
+      - name: Upload Cypress artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-flows-cypress
+          path: |
+            cypress/screenshots
+            cypress/videos
+            backend.log
+            frontend.log
+          if-no-files-found: ignore
 
   # ─────────────────────────────────────────────────────────────────────────
   # LEGACY: The build-docker-image and deploy-to-azure jobs below have been

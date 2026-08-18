@@ -1,4 +1,4 @@
-> **Canonical for:** documentation map. Last verified against code: 2026-08-10.
+> **Canonical for:** documentation map. Last verified against code: 2026-08-18.
 
 # Docs map
 
