@@ -141,6 +141,15 @@ export const STEPS = [
         : null,
   },
   {
+    id: "CI-27",
+    name: "Storybook empty-suite guard",
+    argv: ["npm", "run", "verify:storybook-empty-suite"],
+    required: true,
+    // Unlike CI-09: do not skip on a spaced path — announced-skip mode is the
+    // point (W-06 / #749). required:true uses #740's SKIP contract as-is.
+    skipIf: () => null,
+  },
+  {
     id: "CI-23",
     name: "CI shell gate",
     argv: ["npm", "run", "verify:ci-gate"],
