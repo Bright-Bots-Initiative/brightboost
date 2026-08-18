@@ -13,8 +13,13 @@
 
 import { validateDataDashChallenge } from "./dataDashChallenge";
 import { deriveRaceTrackTitle, validateRaceTrack } from "./raceTrack";
+import { deriveSoundDuetTitle, validateSoundDuet } from "./soundDuet";
 
-export const CREATION_TYPES = ["data_dash_challenge", "race_track"] as const;
+export const CREATION_TYPES = [
+  "data_dash_challenge",
+  "race_track",
+  "sound_duet",
+] as const;
 export type CreationType = (typeof CREATION_TYPES)[number];
 
 const dataDashSortRuleLabels: Record<string, string> = {
@@ -62,6 +67,9 @@ export function validateCreationContent(
       // plus a start→finish rideability guard so every shared track is playable.
       return validateRaceTrack(content);
 
+    case "sound_duet":
+      return validateSoundDuet(content);
+
     default:
       // Exhaustiveness guard — a new CreationType must declare its rules here.
       return { ok: false, error: `unsupported creation type: ${type}` };
@@ -88,6 +96,9 @@ export function deriveCreationTitle(
     case "race_track":
       // The kid's chosen name from the structured name-kit (schema-bounded).
       return deriveRaceTrackTitle(content);
+
+    case "sound_duet":
+      return deriveSoundDuetTitle(content);
 
     default:
       return null;

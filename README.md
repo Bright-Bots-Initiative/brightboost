@@ -37,11 +37,13 @@ Agent-assisted contributors: start at [docs/agents/agent.md](docs/agents/agent.m
 npm ci
 cd backend && npm ci && cd ..
 npx prisma generate --schema prisma/schema.prisma
-npm run verify
+npm run verify -- --skip-install --allow-skips
 ```
 
-`npm run verify` mirrors the main CI gate (lint, format, typecheck, prisma drift, `agent:check`,
-`docs:check`, unit tests). Do not weaken the scripts to get green.
+`npm run verify` mirrors the main CI gate. The command above runs every locally available
+step and reports environment-bound skips; omit `--allow-skips` when the frontend and an
+explicitly designated test database are available. This layer also wires `agent:check` and
+`docs:check` into CI. Do not weaken the scripts to get green.
 
 ## Tech stack (summary)
 

@@ -18,13 +18,36 @@ type GalleryCreation = {
   encouragements: number;
   authorId: string;
   authorName: string;
-  /** Present for race_track only (the list endpoint ships the small track
-   *  layout so the card can draw its thumbnail). */
+  /** Present for thumbnail-bearing types such as race_track and sound_duet. */
   content?: unknown;
 };
 
 /** Playable creation types share the /student/challenge/:id player route. */
-const PLAYABLE_TYPES = new Set(["data_dash_challenge", "race_track"]);
+const PLAYABLE_TYPES = new Set([
+  "data_dash_challenge",
+  "race_track",
+  "sound_duet",
+]);
+
+function DuetCover({ content }: { content: unknown }) {
+  const poses: Record<string, string> = {
+    sideBySide: "🧍🧍",
+    highFive: "🙌",
+    backToBack: "🔄",
+  };
+  let icon = "🎙️";
+  try {
+    const pose = (content as { coverPose?: string } | null)?.coverPose;
+    if (pose && poses[pose]) icon = poses[pose];
+  } catch {
+    icon = "🎙️";
+  }
+  return (
+    <span className="text-2xl" aria-hidden>
+      {icon}
+    </span>
+  );
+}
 
 /**
  * Mini track thumbnail for race_track cards. Any malformed/missing content
@@ -138,6 +161,7 @@ export default function GroupGallery({
               {c.type === "race_track" && (
                 <RaceTrackThumb content={c.content} />
               )}
+              {c.type === "sound_duet" && <DuetCover content={c.content} />}
               <h3 className="font-semibold text-brightboost-navy">
                 {c.title || t("gallery.untitled")}
               </h3>
@@ -169,7 +193,11 @@ export default function GroupGallery({
               >
                 {c.type === "race_track"
                   ? t("gallery.ride", { defaultValue: "Ride" })
-                  : t("gallery.play")}
+                  : c.type === "sound_duet"
+                    ? t("gallery.watchListen", {
+                        defaultValue: "Watch / Listen",
+                      })
+                    : t("gallery.play")}
               </Link>
             ) : null}
           </div>

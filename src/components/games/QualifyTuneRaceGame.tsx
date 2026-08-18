@@ -119,65 +119,6 @@ export function buildQualifyTuneRaceCompletionPayload(params: {
   };
 }
 
-// ── Briefing ──────────────────────────────────────────────────────────────
-// TODO: add translation for the story, tips, control instructions in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Qualify, Tune, Race",
-      es: "Califica, Ajusta, Compite",
-      vi: "Thử, Điều Chỉnh, Đua",
-      "zh-CN": "测试、调整、比赛",
-    },
-    "Qualify, Tune, Race",
-  ),
-  story: pickLocale(
-    {
-      en: "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
-    },
-    "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
-  ),
-  icon: "🏎️",
-  tips: pickLocale(
-    {
-      en: [
-        "Drive carefully on the first run",
-        "Pick ONE upgrade to test",
-        "Compare your two runs!",
-      ],
-    },
-    [
-      "Drive carefully on the first run",
-      "Pick ONE upgrade to test",
-      "Compare your two runs!",
-    ],
-  ),
-  chapterLabel: "Race Lab",
-  themeColor: "amber",
-  controlInstructions: {
-    keyboard: pickLocale(
-      {
-        en: [
-          "Use Tab to reach lane controls, then use Enter or Space to steer.",
-        ],
-      },
-      ["Use Tab to reach lane controls, then use Enter or Space to steer."],
-    ),
-    buttons: pickLocale(
-      {
-        en: [
-          "Use lane controls or available buttons to steer.",
-          "Test one change at a time.",
-        ],
-      },
-      [
-        "Use lane controls or available buttons to steer.",
-        "Test one change at a time.",
-      ],
-    ),
-  },
-};
-
 // ── Metric card (reused in results1) ──────────────────────────────────────
 function MetricCard({
   icon,
@@ -891,11 +832,72 @@ export default function QualifyTuneRaceGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
+  // TODO: add translation keys for the story, tips, control instructions in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Qualify, Tune, Race",
+        es: "Califica, Ajusta, Compite",
+        vi: "Thử, Điều Chỉnh, Đua",
+        "zh-CN": "测试、调整、比赛",
+      },
+      "Qualify, Tune, Race",
+    ),
+    story: pickLocale(
+      {
+        en: "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
+      },
+      "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
+    ),
+    icon: "🏎️",
+    tips: pickLocale(
+      {
+        en: [
+          "Drive carefully on the first run",
+          "Pick ONE upgrade to test",
+          "Compare your two runs!",
+        ],
+      },
+      [
+        "Drive carefully on the first run",
+        "Pick ONE upgrade to test",
+        "Compare your two runs!",
+      ],
+    ),
+    chapterLabel: t("games.qualifyTuneRace.chapterLabel", {
+      defaultValue: "Race Lab",
+    }),
+    themeColor: "amber",
+    controlInstructions: {
+      keyboard: pickLocale(
+        {
+          en: [
+            "Use Tab to reach lane controls, then use Enter or Space to steer.",
+          ],
+        },
+        ["Use Tab to reach lane controls, then use Enter or Space to steer."],
+      ),
+      buttons: pickLocale(
+        {
+          en: [
+            "Use lane controls or available buttons to steer.",
+            "Test one change at a time.",
+          ],
+        },
+        [
+          "Use lane controls or available buttons to steer.",
+          "Test one change at a time.",
+        ],
+      ),
+    },
+  };
+
   return (
     <GameShell
       gameKey="qualify_tune_race"
       title="Qualify, Tune, Race"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects }) => (

@@ -2,21 +2,40 @@
 
 ## Local–CI parity
 
-| CI check          | Local command                        | In `npm run verify`?        |
-| ----------------- | ------------------------------------ | --------------------------- |
-| lint              | `npm run lint`                       | yes                         |
-| format:check      | `npm run format:check`               | yes                         |
-| typecheck         | `npm run typecheck`                  | yes                         |
-| backend typecheck | `cd backend && npm run typecheck`    | yes                         |
-| prisma drift      | `bash scripts/check-prisma-drift.sh` | yes                         |
-| agent:check       | `npm run agent:check`                | yes                         |
-| docs:check        | `npm run docs:check`                 | yes                         |
-| full `npm test`   | `npm run test:unit` locally          | no — unit is the light gate |
-| Cypress ci-shell  | `npm run test:e2e:ci`                | no                          |
-| build             | `npm run build`                      | no                          |
-| db-check          | migrate deploy + `test:db`           | no — red until #646         |
+`npm run verify` is the canonical parity runner. Its ordered steps are defined in
+`scripts/verify-parity.mjs`; do not maintain a second hand-written command sequence.
 
-Run `npm run verify` before claiming parity. Do not widen, disable, or exclude a rule to get green.
+- Dependency installs: root/backend dependencies plus Cypress and Playwright;
+  `--skip-install` omits them.
+- Static checks: lint, diff-scoped Prettier, frontend/backend typecheck, and Prisma drift.
+- Guard wiring: required-step presence, type-program membership, `agent:check`, and
+  `docs:check`.
+- Tests: unit + Storybook tests, the Storybook empty-suite guard, and the two-phase shell
+  gate.
+- Browser shell: wait and shell smoke only when `CYPRESS_SWA_URL` is set.
+- Database: migrate, generate, and connectivity only with an explicitly designated
+  `TEST_DATABASE_URL`.
+- Artifacts: frontend build and bundle-size budget.
+- Platform-only checks: deploy and production smoke are reported as not local.
+
+Required failures always fail. Required skips also fail unless the operator passes
+`--allow-skips`; that flag acknowledges named environment gaps and never converts a failed
+command into success.
+
+After `npm ci` in the root and `backend/`, the usual environment-independent pass is:
+
+```bash
+npm run verify -- --skip-install --allow-skips
+```
+
+For the closest local reproduction of CI, omit `--allow-skips`, start the frontend at the
+URL in `CYPRESS_SWA_URL`, and provide a disposable database whose name contains a bounded
+`test`, `tests`, or `e2e` token through `TEST_DATABASE_URL`. Production-shaped or ambiguous
+database targets must be refused before any Prisma call.
+
+CI workflow details and the relationship among the shell gate, Storybook guard, and
+`e2e-flows` live in `docs/ops/ci.md` once the documentation-consolidation layer lands (until
+then, use `docs/ci.md`).
 
 ## Agent-check
 

@@ -7,6 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Clone-local A2-02 seam (#730 U2) — match vite.config.ts; #671 keeps identical string
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
   test: {
@@ -46,6 +48,11 @@ export default defineConfig({
         functions: 90,
         statements: 90,
       },
+      // Bug D / SF-03 (PR #750): measured with vs without excluding e2e.ts +
+      // commands.ts. With exclude: All files 98.18/95.18/96.77/98.18. Without:
+      // 92.32/94.17/90.9/92.32 (e2e.ts + commands.ts at 0% dilute support to
+      // 48.45 stmts). Thresholds still ≥90 without the exclusion — keep both
+      // files in the denominator so the 90% floor stays honest (G-006).
     },
   },
 });
