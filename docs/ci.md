@@ -23,7 +23,7 @@ What each GitHub Actions job in `.github/workflows/ci-cd.yml` proves, how the th
 
 ## Required checks on `main`
 
-Three jobs are required. A red result on any of them means **merging is blocked** — the PR button greys out until the check goes green or the required entry is removed by an admin. The one-review requirement from #648 stays in force alongside them.
+Three jobs from `.github/workflows/ci-cd.yml` are required. A red result on any of them means **merging is blocked** — the PR button greys out until the check goes green or the required entry is removed by an admin. The one-review requirement from #648 stays in force alongside them. A fourth name, `review` from the PR Review Bot, is claimed as required by `docs/branch-protection.md` and is neither confirmed nor refuted here — see the reconciliation note below.
 
 | Check            | Tier                 | Required since              | Red blocks merge |
 | ---------------- | -------------------- | --------------------------- | ---------------- |
@@ -31,11 +31,40 @@ Three jobs are required. A red result on any of them means **merging is blocked*
 | `db-check`       | Essential (every PR) | #648, closed 2026-08-12     | Yes              |
 | `e2e-flows`      | Essential (every PR) | #774, owner call 2026-08-14 | Yes              |
 
-`build-only` and `check-bundle-size` also report on every PR and are **not** required. A red there is a real signal worth reading, but it does not block the merge — do not treat their green as a gate, and do not silence them either.
+**Everything else that reports on a PR.** A PR into `main` shows more checks than those three. None of the following is in the required set as this document understands it:
+
+| Check                  | Workflow                   | Trigger                                                           | Status here                                 |
+| ---------------------- | -------------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| `build-only`           | BrightBoost CI/CD Pipeline | `push` + `pull_request`, `branches: [main]`                       | Reports, not required                       |
+| `check-bundle-size`    | Bundle Size Check          | `on: [push, pull_request]`, no branch filter — reports **twice**  | Reports, not required                       |
+| `review`               | PR Review Bot              | `pull_request` only, `branches: [main]`                           | **Contested** — see the reconciliation note |
+| `comment`              | PR Review Bot              | `pull_request` only, `branches: [main]`                           | Reporting only; cannot gate                 |
+| `teacher-dashboard-ci` | Teacher Dashboard CI       | `pull_request` with a `paths:` filter on TeacherDashboard sources | Conditional, so it cannot be required       |
+
+A red on a reporting check is a real signal worth reading, but it does not block the merge — do not treat their green as a gate, and do not silence them either.
+
+**`comment` cannot function as a gate whatever the board says.** It is `needs: review` with `if: always() && github.event.pull_request.head.repo.full_name == github.repository`, so it goes green after a red `review`, and it is skipped outright on fork PRs. Requiring it would gate on whether a comment got posted, not on whether anything passed. `review` is the opposite: it runs commitlint, prettier, lint, tests, and a security scan and ends in `exit "$failed"`, so it is gate-capable — which is why its status is worth settling rather than assuming.
 
 **`e2e-flows` is Essential by an explicit ruling, not by drift.** #648 deliberately omitted it and said so; #774 then put the question to the owner, who ruled on 2026-08-14 that the job stays every-PR **and** joins the required set, accepting the ~3.6-minute Postgres + migrate + seed + two-servers cost as the price of protecting the login → student completion → teacher-dashboard path. The Phase 1 recommendation on #709 had been label-or-on-demand; the owner overrode it. Anyone re-tiering `e2e-flows` is reopening a decided question, not filling a gap.
 
-**How this list was derived (honesty rule, applied to ourselves).** `GET /repos/:owner/:repo/branches/main/protection` returns `404` for a non-admin token, so the board setting **cannot be read programmatically** with the access this repo's contributors have. What is verifiable without admin: `GET /branches/main` reports `"protected": true`, `GET /rulesets` returns `[]` (classic branch protection, not a ruleset), and the five checks that actually report on `main` are `build-and-test`, `build-only`, `check-bundle-size`, `db-check`, `e2e-flows`. The three-row table above is therefore **the policy we hold ourselves to**, sourced from the closing evidence on #648 and the owner decision on #774 — not a readback of the setting. An admin should confirm the board matches this table; if it does not, the board is the fact and this table is the bug.
+**How this list was derived (honesty rule, applied to ourselves).** `GET /repos/:owner/:repo/branches/main/protection` returns `404` for a non-admin token, so the board setting **cannot be read programmatically** with the access this repo's contributors have. What is verifiable without admin: `GET /branches/main` reports `"protected": true`, and `GET /rulesets` returns `[]` (classic branch protection, not a ruleset).
+
+For the check **names**, read a PR rollup — not the check-runs on a `main` commit:
+
+```bash
+gh pr view <n> --repo Bright-Bots-Initiative/brightboost --json statusCheckRollup
+```
+
+`GET /repos/:owner/:repo/commits/<sha>/check-runs` against a `main` commit returns five names (`build-and-test`, `build-only`, `check-bundle-size`, `db-check`, `e2e-flows`), and that answer is **structurally incomplete, not merely short**: `pr-review-bot.yml` and `teacher-dashboard-ci.yml` declare `on: pull_request` with no `push` trigger, so their checks can never appear on a commit on `main`. The surface this section governs is a PR targeting `main`, so derive it from a PR. On #756 the rollup carries **seven distinct names** — the five above plus `review` and `comment`.
+
+The three-row table above is therefore **the policy we hold ourselves to**, sourced from the closing evidence on #648 and the owner decision on #774 — not a readback of the setting. An admin should confirm the board matches this table; if it does not, the board is the fact and this table is the bug.
+
+**Reconciliation: two other docs also name a required set, and neither agrees with this one.** Read this note before trusting either of them.
+
+- `docs/branch-protection.md` lists `build-and-test`, `db-check`, and **`review`**, including a `gh api … "contexts":["build-and-test","db-check","review"]` snippet. It predates both `e2e-flows` and #774, so it is **stale on `e2e-flows`**. Its `review` claim is the one live disagreement: it may be an accurate record of the board that was never copied here, or it may be aspirational and never applied. Nobody without admin can settle it, so treat `review` as **undecided** rather than deciding it by omission.
+- `docs/github-branch-protection-setup.md` is a manual UI checklist naming `build-and-test`, `db-check`, and `Bundle Size Check` "(whatever is currently green and meaningful)". It is a **setup procedure, not a statement of the current set**, and it is stale in both directions — it omits `e2e-flows` and proposes `check-bundle-size`, which this section records as not required. Do not read it as policy.
+
+On the required set, **this section supersedes both** as of #774. Correcting or folding them in is out of scope here and belongs with the docs consolidation in #759, which already deletes `docs/branch-protection.md` and relocates this file.
 
 ### When a new job joins the required set (#775)
 
