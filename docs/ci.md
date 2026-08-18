@@ -21,6 +21,34 @@ What each GitHub Actions job in `.github/workflows/ci-cd.yml` proves, how the th
 | `verify:ci-gate`                         | Two-phase sabotage proof failed (healthy shell did not pass, or sabotaged shell did not fail) |
 | `e2e-flows`                              | Seeded stack or real product flow failed (auth, persistence, or teacher-visible evidence)     |
 
+## Required checks on `main`
+
+Three jobs are required. A red result on any of them means **merging is blocked** — the PR button greys out until the check goes green or the required entry is removed by an admin. The one-review requirement from #648 stays in force alongside them.
+
+| Check            | Tier                 | Required since              | Red blocks merge |
+| ---------------- | -------------------- | --------------------------- | ---------------- |
+| `build-and-test` | Essential (every PR) | #648, closed 2026-08-12     | Yes              |
+| `db-check`       | Essential (every PR) | #648, closed 2026-08-12     | Yes              |
+| `e2e-flows`      | Essential (every PR) | #774, owner call 2026-08-14 | Yes              |
+
+`build-only` and `check-bundle-size` also report on every PR and are **not** required. A red there is a real signal worth reading, but it does not block the merge — do not treat their green as a gate, and do not silence them either.
+
+**`e2e-flows` is Essential by an explicit ruling, not by drift.** #648 deliberately omitted it and said so; #774 then put the question to the owner, who ruled on 2026-08-14 that the job stays every-PR **and** joins the required set, accepting the ~3.6-minute Postgres + migrate + seed + two-servers cost as the price of protecting the login → student completion → teacher-dashboard path. The Phase 1 recommendation on #709 had been label-or-on-demand; the owner overrode it. Anyone re-tiering `e2e-flows` is reopening a decided question, not filling a gap.
+
+**How this list was derived (honesty rule, applied to ourselves).** `GET /repos/:owner/:repo/branches/main/protection` returns `404` for a non-admin token, so the board setting **cannot be read programmatically** with the access this repo's contributors have. What is verifiable without admin: `GET /branches/main` reports `"protected": true`, `GET /rulesets` returns `[]` (classic branch protection, not a ruleset), and the five checks that actually report on `main` are `build-and-test`, `build-only`, `check-bundle-size`, `db-check`, `e2e-flows`. The three-row table above is therefore **the policy we hold ourselves to**, sourced from the closing evidence on #648 and the owner decision on #774 — not a readback of the setting. An admin should confirm the board matches this table; if it does not, the board is the fact and this table is the bug.
+
+### When a new job joins the required set (#775)
+
+The standing contract, so a new job never becomes a gate by accident:
+
+1. **Declare a tier before merging.** A new CI job names its tier — Essential (every PR) / Extended / Release-on-demand — in this document in the same PR that adds the job. A job that merges without a declared tier is an unowned cost.
+2. **Required is never the default.** Landing on every PR does **not** make a check required. Joining the required set is an explicit follow-up issue with a named decider, in the shape of #774.
+3. **Default sequencing: earn it on `main` first.** #648's stated preference is that a job runs green on `main` after its own merge and demonstrates stability there before anyone proposes it as required — that is why #648 deferred `e2e-flows` rather than bundling it. The decider may waive the wait, and did for `e2e-flows`: the tier was settled on #774 while #750 was still open, to keep the trigger a one-line change. A waiver is the decider's call to make explicitly, not a step to skip quietly.
+4. **An admin flips the switch and records it.** The required-check list lives in branch protection, which nobody outside admin can read or write. The issue that decides a promotion is closed by an admin confirming the setting, and this table is updated in the same breath.
+5. **Every-PR-but-not-required is the one outcome to avoid.** It buys the full cost of the job and an ignorable red. If a job is worth running on every PR, decide whether it gates; if it does not gate, move it to Extended or on-demand instead of leaving it as decoration.
+
+`e2e-flows` is the worked example: introduced by #750, tiered by a named decider on #774 rather than by default, and documented here. It is also the example of the waiver in rule 3 — the decision landed before the stability window, deliberately and on the record.
+
 ## `e2e-flows` (ticket #671)
 
 Bounded job (`timeout-minutes: 15`) that:
