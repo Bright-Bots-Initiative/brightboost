@@ -2,7 +2,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy full repository
+# Copy full repository.
+# LOAD-BEARING (#730 / G-010): `COPY . .` includes `shared/` at the image root.
+# Narrowing this COPY (e.g. only backend/) would still let `tsc` and npm scripts
+# succeed if misconfigured, but the shared engine would be missing at runtime /
+# shared compile time and the container would fail at start. Do not narrow
+# without re-proving W-04 (container start + /health).
 COPY . .
 
 # Install root dependencies

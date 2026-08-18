@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { useApi } from "../services/api";
 import DataDashSortDiscoverGame from "../components/games/DataDashSortDiscoverGame";
 import TrackMakerGame from "../components/games/TrackMakerGame";
+import EchoAvenueGame from "../components/games/echoAvenue/EchoAvenueGame";
 
 // Phase 0 — play a saved (group-shared) creation. Fetches the single creation
 // (group-scoped + visibility enforced server-side) and renders the matching
@@ -66,6 +67,15 @@ export default function ChallengePlayer() {
     return (
       <TrackMakerGame
         config={{ raceTrack: creation.content }}
+        onComplete={goToGallery}
+        secondaryAction={secondaryAction}
+      />
+    );
+  }
+  if (creation.type === "sound_duet") {
+    return (
+      <EchoAvenueGame
+        config={{ soundDuet: creation.content }}
         onComplete={goToGallery}
         secondaryAction={secondaryAction}
       />

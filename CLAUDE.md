@@ -234,6 +234,12 @@ strict-parsed validator in `backend/src/services/raceTrack.ts`). Slots 2-5 remai
   Games read the band from config; ActivityPlayer injects it from the student's enrolled course and
   applies Set 1 story-quiz overrides at render time (`applyG35StoryOverrides`).
   `useGradeBand()` (`src/hooks/useGradeBand.ts`) fetches the student's class band.
+- Canonical boundary: the platform resolves and injects the band; games consume it and own their content,
+  difficulty, and scaffolding response. Games must not independently fetch or infer the band. Missing or
+  invalid values fall back to K-2. See `docs/architecture/grade-banding.md`.
+- Product target: K-2, grades 3-5, and grades 6-8 will each have 12 ordered within-band difficulty stages.
+  Only K-2 and grades 3-5 are supported today; grades 6-8, stage selection, assessment, and progression
+  are not implemented.
 
 ### Removed / hidden (don't resurrect)
 

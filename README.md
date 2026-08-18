@@ -36,12 +36,13 @@ repo checks (`npm run verify`).
 npm ci
 cd backend && npm ci && cd ..
 npx prisma generate --schema prisma/schema.prisma
-npm run verify
+npm run verify -- --skip-install --allow-skips
 ```
 
-`npm run verify` mirrors the main CI gate (lint, format, typecheck, prisma drift, agent/docs
-checks, unit tests). Some agent/docs findings on `main` are expected until the docs stack
-lands; do not weaken the scripts.
+`npm run verify` mirrors the main CI gate. The command above runs every locally available
+step and reports environment-bound skips; omit `--allow-skips` when the frontend and an
+explicitly designated test database are available. Some agent/docs findings on `main` are
+expected until the docs stack lands; do not weaken the scripts.
 
 ## Tech stack (summary)
 
