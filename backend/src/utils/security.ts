@@ -37,6 +37,10 @@ const CREATION_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
  * students consume the same bucket.
  *
  * These limiters must only be mounted after `requireAuth`.
+ *
+ * The default MemoryStore is process-local. Before horizontally scaling the
+ * backend, configure a shared store so each account has one cross-instance
+ * limit instead of one independent limit per process.
  */
 function creationRateLimitKey(req: Request): string {
   return req.user ? `${req.user.role}:${req.user.id}` : "unauthenticated";
