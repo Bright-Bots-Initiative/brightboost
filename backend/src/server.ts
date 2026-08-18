@@ -36,6 +36,7 @@ import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 import { notifySlack } from "./utils/slack";
 import { shutdownAnalytics } from "./services/analytics";
+import { sharedEngineProbeLabel } from "./sharedEngineProbe";
 
 const app = express();
 
@@ -66,10 +67,7 @@ app.use(
           "quantumai.google",
         ],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        connectSrc: [
-          "'self'",
-          "cl-quantum-game.appspot.com",
-        ],
+        connectSrc: ["'self'", "cl-quantum-game.appspot.com"],
         objectSrc: ["'none'"],
         // 🛡️ Sentinel: Add defense in depth
         frameAncestors: ["'none'"], // Prevent Clickjacking
@@ -216,7 +214,7 @@ app.use("/api", experimentsRouter);
 app.use("/api", adminMetricsRouter);
 
 app.get("/health", (_req: Request, res: Response) =>
-  res.status(200).json({ status: "ok" }),
+  res.status(200).json({ status: "ok", sharedEngine: sharedEngineProbeLabel }),
 );
 
 // Serve static frontend files
