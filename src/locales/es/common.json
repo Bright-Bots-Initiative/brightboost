@@ -1,6 +1,10 @@
 {
   "skipToContent": "Saltar al contenido",
   "student": "Estudiante",
+  "studentLayout": {
+    "bandK2": "K-2",
+    "bandG35": "Grados 3-5"
+  },
   "dashboard": {
     "loading": "Cargando…",
     "stillLoading": "Todavía cargando...",

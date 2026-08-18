@@ -37,11 +37,7 @@ const GZ_DASH = { s: 0.3, e: 0.4 };
 const GZ_JUMP = { s: 0.6, e: 0.8 };
 const IDEAL_TOSS = 50;
 const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎" };
-const NAMES: Record<string, string> = {
-  dash: "Dash",
-  jump: "Jump",
-  toss: "Toss",
-};
+const defaultNames = { dash: "Dash", jump: "Jump", toss: "Toss" } as const;
 const EVENT_ORDER: EventKey[] = ["dash", "jump", "toss"];
 
 export function zoneScore(pos: number, s: number, e: number): number {
@@ -94,42 +90,6 @@ export function buildMoveMeasureCompletionPayload(params: {
     },
   };
 }
-
-// TODO: add translations for the story, tips in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Move, Measure & Improve",
-      es: "Mueve, Mide y Mejora",
-      vi: "Đi, Đo và Cải Thiện",
-      "zh-CN": "动、量、进步",
-    },
-    "Move, Measure & Improve",
-  ),
-  story: pickLocale(
-    {
-      en: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
-    },
-    "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
-  ),
-  icon: "🏃",
-  tips: pickLocale(
-    {
-      en: [
-        "Tap at the right moment",
-        "Watch the green zone",
-        "Try again to improve!",
-      ],
-    },
-    [
-      "Tap at the right moment",
-      "Watch the green zone",
-      "Try again to improve!",
-    ],
-  ),
-  chapterLabel: "Body Lab",
-  themeColor: "emerald",
-};
 
 // ── Reusable bar component ───────────────────────────────────────────────
 function ZoneBar({
@@ -228,6 +188,22 @@ function MoveMeasurePlayfield({
 }) {
   const config = BAND_CONFIG[band];
   const { t } = useTranslation();
+  const eventName = (event: EventKey) => {
+    switch (event) {
+      case "dash":
+        return t("games.moveMeasure.dashName", {
+          defaultValue: defaultNames.dash,
+        });
+      case "jump":
+        return t("games.moveMeasure.jumpName", {
+          defaultValue: defaultNames.jump,
+        });
+      case "toss":
+        return t("games.moveMeasure.tossName", {
+          defaultValue: defaultNames.toss,
+        });
+    }
+  };
   const [phase, setPhase] = useState<Phase>("intro");
   const [scores, setScores] = useState<Scores>({ dash: 0, jump: 0, toss: 0 });
   const [impEvent, setImpEvent] = useState<EventKey | null>(null);
@@ -621,7 +597,7 @@ function MoveMeasurePlayfield({
 
         {/* Event label */}
         <div className="text-lg font-bold text-emerald-700">
-          {ICONS[currentEvent]} {NAMES[currentEvent]}
+          {ICONS[currentEvent]} {eventName(currentEvent)}
         </div>
 
         {/* Slider */}
@@ -652,8 +628,10 @@ function MoveMeasurePlayfield({
 
         {/* Hint */}
         <p className="text-sm text-slate-500">
-          You will compare your prediction with your actual result after the
-          activity.
+          {t("games.moveMeasure.predictionHint", {
+            defaultValue:
+              "You will compare your prediction with your actual result after the activity.",
+          })}
         </p>
 
         {/* Start button */}
@@ -697,7 +675,9 @@ function MoveMeasurePlayfield({
           <>
             {config.showDecimals && (
               <p className="text-xl font-bold text-slate-700">
-                Distance:{" "}
+                {t("games.moveMeasure.distanceLabel", {
+                  defaultValue: "Distance:",
+                })}{" "}
                 {dashMeasurement(dashPos).toFixed(config.decimalPlaces)} m
               </p>
             )}
@@ -753,8 +733,10 @@ function MoveMeasurePlayfield({
           <>
             {config.showDecimals && (
               <p className="text-xl font-bold text-slate-700">
-                Height: {jumpMeasurement(jLevel).toFixed(config.decimalPlaces)}{" "}
-                m
+                {t("games.moveMeasure.heightLabel", {
+                  defaultValue: "Height:",
+                })}{" "}
+                {jumpMeasurement(jLevel).toFixed(config.decimalPlaces)} m
               </p>
             )}
 
@@ -801,8 +783,10 @@ function MoveMeasurePlayfield({
           <>
             {config.showDecimals && (
               <p className="text-xl font-bold text-slate-700">
-                Distance: {tossMeasurement(tVal).toFixed(config.decimalPlaces)}{" "}
-                m
+                {t("games.moveMeasure.distanceLabel", {
+                  defaultValue: "Distance:",
+                })}{" "}
+                {tossMeasurement(tVal).toFixed(config.decimalPlaces)} m
               </p>
             )}
 
@@ -818,25 +802,35 @@ function MoveMeasurePlayfield({
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
         <h3 className="text-2xl font-extrabold">
-          {ICONS[currentEvent]} {NAMES[currentEvent]}
+          {ICONS[currentEvent]} {eventName(currentEvent)}
         </h3>
 
         <div className="flex justify-center gap-10">
           <div>
-            <p className="text-xs">Prediction</p>
+            <p className="text-xs">
+              {t("games.moveMeasure.prediction", {
+                defaultValue: "Prediction",
+              })}
+            </p>
             <p className="text-3xl font-bold">{prediction.toFixed(1)} m</p>
           </div>
 
           <div className="text-2xl self-center">→</div>
 
           <div>
-            <p className="text-xs">Actual</p>
+            <p className="text-xs">
+              {t("games.moveMeasure.actual", {
+                defaultValue: "Actual",
+              })}
+            </p>
             <p className="text-3xl font-bold">{actual.toFixed(1)} m</p>
           </div>
         </div>
 
         <p className="text-lg font-bold text-slate-700">
-          How far off was your prediction?
+          {t("games.moveMeasure.compareQuestion", {
+            defaultValue: "How far off was your prediction?",
+          })}
         </p>
 
         <div className="flex justify-center gap-3 flex-wrap">
@@ -898,7 +892,9 @@ function MoveMeasurePlayfield({
               goToNextPhase();
             }}
           >
-            Continue
+            {t("games.moveMeasure.continue", {
+              defaultValue: "Continue",
+            })}
           </BigBtn>
         )}
       </div>
@@ -908,7 +904,7 @@ function MoveMeasurePlayfield({
   if (phase === "compare") {
     const preferenceMode = allTied || twoTied;
     const tiedNames = twoTied
-      ? bestEvents.map((e) => NAMES[e]).join(" AND ")
+      ? bestEvents.map(eventName).join(` ${t("games.moveMeasure.and")} `)
       : "";
 
     return (
@@ -939,8 +935,8 @@ function MoveMeasurePlayfield({
         {twoTied && (
           <p className="bounce-in text-lg font-bold text-emerald-700">
             {t("games.moveMeasure.tiedBest", {
-              first: NAMES[bestEvents[0]],
-              second: NAMES[bestEvents[1]],
+              first: eventName(bestEvents[0]),
+              second: eventName(bestEvents[1]),
               defaultValue: `You tied your best in ${tiedNames}!`,
             })}
           </p>
@@ -977,16 +973,23 @@ function MoveMeasurePlayfield({
                 {config.compareMeasurements && (
                   <div className="text-xs text-slate-500 text-center space-y-1">
                     <div>
-                      Predicted: {predictions[ev].toFixed(config.decimalPlaces)}{" "}
-                      m
+                      {t("games.moveMeasure.predictedLabel", {
+                        defaultValue: "Predicted:",
+                      })}{" "}
+                      {predictions[ev].toFixed(config.decimalPlaces)} m
                     </div>
 
                     <div>
-                      Actual: {measurement.toFixed(config.decimalPlaces)} m
+                      {t("games.moveMeasure.actualLabel", {
+                        defaultValue: "Actual:",
+                      })}{" "}
+                      {measurement.toFixed(config.decimalPlaces)} m
                     </div>
 
                     <div className="font-semibold text-emerald-700">
-                      Difference:{" "}
+                      {t("games.moveMeasure.differenceLabel", {
+                        defaultValue: "Difference:",
+                      })}{" "}
                       {Math.abs(measurement - predictions[ev]).toFixed(
                         config.decimalPlaces,
                       )}{" "}
@@ -995,7 +998,7 @@ function MoveMeasurePlayfield({
                   </div>
                 )}
 
-                <span className="text-xs text-slate-500">{NAMES[ev]}</span>
+                <span className="text-xs text-slate-500">{eventName(ev)}</span>
               </div>
             );
           })}
@@ -1036,7 +1039,7 @@ function MoveMeasurePlayfield({
                   setTimeout(() => setPhase("improve"), 1200);
                 }}
               >
-                {ICONS[ev]} {NAMES[ev]}
+                {ICONS[ev]} {eventName(ev)}
               </button>
             );
           })}
@@ -1111,7 +1114,7 @@ function MoveMeasurePlayfield({
         {impEvent && (
           <div className="bounce-in space-y-2">
             <p className="text-sm font-bold uppercase tracking-widest text-emerald-600">
-              {ICONS[impEvent]} {NAMES[impEvent]}{" "}
+              {ICONS[impEvent]} {eventName(impEvent)}{" "}
               {t("games.moveMeasure.results", { defaultValue: "Results" })}
             </p>
 
@@ -1280,13 +1283,51 @@ export default function MoveMeasureGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const band = getGradeBand(config);
+  // TODO: add translation keys for the title, story, tips in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Move, Measure & Improve",
+        es: "Mueve, Mide y Mejora",
+        vi: "Đi, Đo và Cải Thiện",
+        "zh-CN": "动、量、进步",
+      },
+      "Move, Measure & Improve",
+    ),
+    story: pickLocale(
+      {
+        en: "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+      },
+      "Test your body's superpowers! Dash, jump, and toss — then use what you learn to get even better.",
+    ),
+    icon: "🏃",
+    tips: pickLocale(
+      {
+        en: [
+          "Tap at the right moment",
+          "Watch the green zone",
+          "Try again to improve!",
+        ],
+      },
+      [
+        "Tap at the right moment",
+        "Watch the green zone",
+        "Try again to improve!",
+      ],
+    ),
+    chapterLabel: t("games.moveMeasure.chapterLabel", {
+      defaultValue: "Body Lab",
+    }),
+    themeColor: "emerald",
+  };
 
   return (
     <GameShell
       gameKey="move_measure"
       title="Move, Measure & Improve"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (
