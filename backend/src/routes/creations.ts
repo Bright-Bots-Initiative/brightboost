@@ -23,6 +23,7 @@ import { serializeCreationContent } from "../services/creationContentSerializer"
 //     identity is exposed as a first name only — never email.
 
 const router = Router();
+const GALLERY_CONTENT_TYPES = new Set(["race_track", "sound_duet"]);
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -292,7 +293,18 @@ router.get("/creations", requireAuth, async (req: Request, res: Response) => {
     orderBy: { updatedAt: "desc" },
   });
 
-  return res.json(creations.map(toDTO));
+  // Thumbnail-bearing creation types need their small layout payload in the
+  // gallery. Project it through the same type-aware read boundary as the
+  // single-creation endpoint so manually inserted fields never leak.
+  return res.json(
+    creations.map((creation) => {
+      const dto = toDTO(creation);
+      if (!GALLERY_CONTENT_TYPES.has(creation.type)) return dto;
+
+      const content = serializeCreationContent(creation.type, creation.content);
+      return content === null ? dto : { ...dto, content };
+    }),
+  );
 });
 
 // ---------------------------------------------------------------------------

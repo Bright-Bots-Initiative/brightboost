@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "coverage"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -30,6 +30,15 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+  // Cypress: Chai `expect(...).to.*` looks like unused expressions; support uses
+  // `namespace Cypress` for command typings — both are standard Cypress patterns.
+  {
+    files: ["cypress/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-namespace": "off",
     },
   },
 );

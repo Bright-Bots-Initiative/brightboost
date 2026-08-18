@@ -35,6 +35,7 @@ npx prisma generate            # root schema dual-generates BOTH clients (fronte
 ```
 
 Traps:
+
 - `npm run start` runs a **build**, not a server (deploy artifact; misleading name).
 - Root `npm run typecheck` gives false confidence for backend changes — backend TS errors only surface
   via `cd backend && npm run typecheck` (this is the schema-drift failure mode below).
@@ -47,6 +48,7 @@ Node: **20.x** (`package.json` engines + `.nvmrc`). `frontend/CONTRIBUTING.md` s
 ## Environment gotchas (these burn sessions)
 
 ### CI: `db-check` is red on every PR — expected
+
 The `db-check` job (`.github/workflows/ci-cd.yml`: postgres service → `prisma migrate deploy` →
 `npm run test:db`) **fails on every PR** until the migration-baseline bug **#646** lands, because the
 committed migration history cannot build the schema from scratch (~13 tables incl. Avatar never CREATEd).
@@ -54,6 +56,7 @@ A red db-check is not a signal about your change. **Never make db-check a requir
 fixed. (Verified failing on open PRs #662, #663.)
 
 ### Migrations: two trees, broken history — do not "fix" ad hoc
+
 - Migrations exist in BOTH `prisma/migrations/` (root) and `backend/prisma/migrations/`. The **root
   schema/migrations are authoritative for deploys**: `backend/scripts/predeploy.sh` and backend
   `db:migrate`/`db:generate` prefer `../prisma/schema.prisma`. The two trees are supposed to stay in
@@ -64,23 +67,25 @@ fixed. (Verified failing on open PRs #662, #663.)
   removed (it risked silent data loss). See the comments in `backend/scripts/predeploy.sh`.
 
 ### Schema sync: root vs backend copy
+
 `prisma/schema.prisma` (root, dual generators) and `backend/prisma/schema.prisma` must be kept in sync.
 The backend **Docker build** generates its Prisma client from the **root** schema
 (`backend/Dockerfile:16-17`), as do predeploy and the backend `db:*` scripts — the backend-local copy is
 a sync mirror; keep it matching so local backend workflows and deploys see the same models.
 
 ### Test accounts (seeded by `prisma/seed.cjs`)
+
 Seed is find-or-create and **always refreshes password hashes**, so these plaintext values always work:
 
-| Email | Password | Role | Notes |
-|-------|----------|------|-------|
-| teacher@school.com | password123 | K-8 Teacher (Ms. Frizzle) | Demo class owner |
-| student@test.com | password | K-8 Student | Incomplete Set 1 |
-| explorer@test.com | explore123 | K-8 Student | Set 1 complete, Set 2 unlocked |
-| jordan@test.com | jordan123 | K-8 Student | Grade 3-5 class (`GRADE35`), fresh |
-| facilitator@test.com | pathway123 | Pathways Facilitator (Coach Davis) | ETO cohort manager |
-| marcus@test.com | marcus123 | Pathways Student (Launch) | 3/7 Cyber Launch done |
-| aisha@test.com | aisha123 | Pathways Student (Explorer) | Fresh, 0 completions |
+| Email                | Password    | Role                               | Notes                              |
+| -------------------- | ----------- | ---------------------------------- | ---------------------------------- |
+| teacher@school.com   | password123 | K-8 Teacher (Ms. Frizzle)          | Demo class owner                   |
+| student@test.com     | password    | K-8 Student                        | Incomplete Set 1                   |
+| explorer@test.com    | explore123  | K-8 Student                        | Set 1 complete, Set 2 unlocked     |
+| jordan@test.com      | jordan123   | K-8 Student                        | Grade 3-5 class (`GRADE35`), fresh |
+| facilitator@test.com | pathway123  | Pathways Facilitator (Coach Davis) | ETO cohort manager                 |
+| marcus@test.com      | marcus123   | Pathways Student (Launch)          | 3/7 Cyber Launch done              |
+| aisha@test.com       | aisha123    | Pathways Student (Explorer)        | Fresh, 0 completions               |
 
 Class join codes seeded: `STARS1` (K-2 emoji-login demo class "Ms. Frizzle's Star Class", band k2,
 with 3 emoji students: Nova ⭐ / Comet 🚀 / Luna 🌙, no PIN), `GRADE35` and `UPPER35` (both grade
@@ -88,6 +93,7 @@ with 3 emoji students: Nova ⭐ / Comet 🚀 / Luna 🌙, no PIN), `GRADE35` and
 — South Side"; ended pilot: `ETO2025F`).
 
 ### Misc
+
 - Slack notifications are optional — without `SLACK_WEBHOOK_URL` they silently no-op (`backend/src/utils/slack.ts`).
 - Docker postgres (docker-compose-pg.yml) runs on port **5435**.
 
@@ -103,11 +109,13 @@ with 3 emoji students: Nova ⭐ / Comet 🚀 / Luna 🌙, no PIN), `GRADE35` and
 - Labels, priority (`P0`/`P1`/`P2`) & delegation: canonical in `docs/team-workflow.md`.
 
 ### Code style
+
 - Functional React components + hooks only; TypeScript strict, no `any` unless commented.
 - **Minimal diff over broad refactor, always.** Match adjacent files' patterns before inventing new ones.
   Reuse existing components/hooks/utils. No architecture changes unless the task requires it.
 
 ### i18n (never hardcode UI English)
+
 - UI strings via `useTranslation()` keys. New copy goes to `en.json` + `es.json` at minimum (also
   `vi`/`zh-CN` when possible); uncertain translations get English + `// TODO: translate`.
 - Locale files: `src/locales/{en,es,vi,zh-CN}/{common,pathways}.json` — one `translation` namespace,
@@ -117,21 +125,25 @@ with 3 emoji students: Nova ⭐ / Comet 🚀 / Luna 🌙, no PIN), `GRADE35` and
   `pathways.glossary.terms.<slug>.*`; `src/data/glossary.ts` holds slug + category only.
 
 ### Educational intent & K-2 bar
+
 - Preserve each game's learning goal, pacing, and instructional clarity — never swap in generic gameplay.
 - K–2: simple vocabulary, large tap targets, clear visual hierarchy; readability beats visual complexity.
 - Keep teacher and student flows consistent with existing app patterns.
 
 ### Definition of "good"
+
 K–2 clarity ✓ educational intent intact ✓ bilingual keys (not hardcoded) ✓ teacher-demo-ready ✓
 small diff, existing patterns ✓.
 
 ---
 
 ## Design Principles (canonical — see `docs/design-principles.md`)
-Bright Boost is built on the *Lifelong Kindergarten* creative-learning model. Every activity should:
+
+Bright Boost is built on the _Lifelong Kindergarten_ creative-learning model. Every activity should:
+
 - **Creators, not consumers** — kids make/author something with many valid solutions, not just respond (match/pick/choose); a kid should walk away with something they made.
 - **Creative spiral as the spine** — Imagine → Create → Play → Share → Reflect, as visible UI moments.
-- **Low floor, high ceiling, wide walls — by grade/level** — K–2 is more structured/scaffolded (a *supported* low floor, never a blank void); later grades and higher levels open up toward more open-ended creation. Structure early, openness later.
+- **Low floor, high ceiling, wide walls — by grade/level** — K–2 is more structured/scaffolded (a _supported_ low floor, never a blank void); later grades and higher levels open up toward more open-ended creation. Structure early, openness later.
 - **Playground, not playpen** — safe experimentation and "breaking" things; mascot/adult is curious, never corrective.
 - **Measure creation, not completion** — things built, iterations, shares, remixes; not completion/badges.
 - **Adult as guide** — Catalyst / Connector / Consultant / Collaborator, not proctor.
@@ -142,6 +154,7 @@ New activities are checked against these (and the review checklist) before build
 ---
 
 ## Team workflow (canonical — see `docs/team-workflow.md`)
+
 Label taxonomy (five axes: Pod / Size / Audience / Topic / State) plus the priority axis
 (`P0 — now` / `P1 — this week` / `P2 — when free`), lead delegation, and the team-up protocol
 for collaborating on someone else's ticket. Full framework: `docs/team-workflow.md`.
@@ -151,10 +164,12 @@ for collaborating on someone else's ticket. Full framework: `docs/team-workflow.
 ## Source of truth
 
 When repository information conflicts, resolve in this order:
+
 1. **Actual code** (imports, runtime behavior) → 2. **package.json** → 3. **prisma/schema.prisma** →
-4. **Root README.md** → 5. **Current passing tests** → 6. **Docs in active use** → 7. **Legacy docs**.
+2. **Root README.md** → 5. **Current passing tests** → 6. **Docs in active use** → 7. **Legacy docs**.
 
 Pointers, not copies:
+
 - `docs/design-principles.md` — **canonical** design principles (merged #664).
 - `docs/team-workflow.md` — **canonical** label taxonomy, priority axis, delegation & team-up protocol.
 - `docs/roadmap-notes.md` — strategic/directional notes (not commitments).
@@ -162,6 +177,7 @@ Pointers, not copies:
 - `docs/audits/g35-first-set-audit.md` — grade 3-5 audit + Set 2 variant briefs.
 
 Known conflicts (flag new ones explicitly — never silently pick a side):
+
 - `frontend/CONTRIBUTING.md` says Node 18; truth is Node 20 (engines + `.nvmrc`).
 - `backend/README.md` describes retired AWS Lambda/Aurora and self-flags as stale; production is
   **Railway + Supabase (PostgreSQL)**.
@@ -183,35 +199,50 @@ logic (`isSetComplete`, Set 2 unlocks when all Set 1 IDs have `COMPLETED` record
 `src/constants/stemSets.ts`. All 10 games below are implemented, registered, and seeded with story slides.
 
 ### Set 1 — Foundation
-| Game | File (src/components/games/) | Game key | Activity ID | Strand | g3_5 |
-|------|------------------------------|----------|-------------|--------|------|
-| Bounce & Buds | BounceBudsGame.tsx | `buddy_garden_sort` | `bounce-buds` | Biotech | ✅ |
-| Gotcha Gears | GotchaGearsGame.tsx | `gotcha_gears_unity` | `gotcha-gears` | Quantum | ✅ |
-| Rhyme & Ride | RhymeRideGame.tsx | `rhymo_rhyme_rocket` | `rhyme-ride` | AI + Biotech | ✅ (banded worlds, 1.25×) |
-| Tank Trek | TankTrekGame.tsx | `tank_trek` | `tank-trek` | Quantum + AI | ✅ (appended chapters) |
-| Quantum Quest | QuantumQuestGame.tsx | `quantum_quest` | `quantum-quest` | Quantum | ✅ (g3_5 math sectors) |
+
+| Game          | File (src/components/games/) | Game key             | Activity ID     | Strand       | g3_5                      |
+| ------------- | ---------------------------- | -------------------- | --------------- | ------------ | ------------------------- |
+| Bounce & Buds | BounceBudsGame.tsx           | `buddy_garden_sort`  | `bounce-buds`   | Biotech      | ✅                        |
+| Gotcha Gears  | GotchaGearsGame.tsx          | `gotcha_gears_unity` | `gotcha-gears`  | Quantum      | ✅                        |
+| Rhyme & Ride  | RhymeRideGame.tsx            | `rhymo_rhyme_rocket` | `rhyme-ride`    | AI + Biotech | ✅ (banded worlds, 1.25×) |
+| Tank Trek     | TankTrekGame.tsx             | `tank_trek`          | `tank-trek`     | Quantum + AI | ✅ (appended chapters)    |
+| Quantum Quest | QuantumQuestGame.tsx         | `quantum_quest`      | `quantum-quest` | Quantum      | ✅ (g3_5 math sectors)    |
 
 ### Set 2 — Exploration (unlocks after Set 1)
-| Game | File | Game key | Activity ID | Strand | g3_5 |
-|------|------|----------|-------------|--------|------|
-| Maze Maps | MazeMapsGame.tsx | `maze_maps` | `maze-maps` | AI | ✅ (#654) |
-| Move & Measure | MoveMeasureGame.tsx | `move_measure` | `move-measure` | Biotech | K-2 only |
-| Sky Shield | SkyShieldGame.tsx | `sky_shield` | `sky-shield` | Quantum | K-2 only |
-| Fast Lane | FastLaneGame.tsx | `fast_lane` | `fast-lane` | AI + Biotech | K-2 only |
-| Qualify & Race | QualifyTuneRaceGame.tsx | `qualify_tune_race` | `qualify-tune-race` | Capstone | K-2 only |
 
-### Set 3 — Mastery
-Placeholder IDs only (`set3-game-1`..`set3-game-5`); no components or seed data. Specialization
-(AI/Quantum/Biotech archetype) gating on Set 3 is planned, **not implemented**.
+| Game           | File                    | Game key            | Activity ID         | Strand       | g3_5      |
+| -------------- | ----------------------- | ------------------- | ------------------- | ------------ | --------- |
+| Maze Maps      | MazeMapsGame.tsx        | `maze_maps`         | `maze-maps`         | AI           | ✅ (#654) |
+| Move & Measure | MoveMeasureGame.tsx     | `move_measure`      | `move-measure`      | Biotech      | K-2 only  |
+| Sky Shield     | SkyShieldGame.tsx       | `sky_shield`        | `sky-shield`        | Quantum      | K-2 only  |
+| Fast Lane      | FastLaneGame.tsx        | `fast_lane`         | `fast-lane`         | AI + Biotech | K-2 only  |
+| Qualify & Race | QualifyTuneRaceGame.tsx | `qualify_tune_race` | `qualify-tune-race` | Capstone     | K-2 only  |
+
+### Set 3 — Mastery ("mastery through making" — creation-first, #676)
+
+Game 1 is implemented but **GATED from students** (via `HIDDEN_MODULE_SLUGS`; ungate = one line):
+Boost Track Builder — `TrackMakerGame.tsx` / `track_maker` / `track-maker` / module
+`k2-stem-track-maker`. The kid's track persists as a `Creation` (`type: "race_track"`,
+strict-parsed validator in `backend/src/services/raceTrack.ts`). Slots 2-5 remain placeholders
+(`set3-game-2`..`set3-game-5`); Set 3 unlocks after Set 2 (`isSet3Locked`). Specialization
+(AI/Quantum/Biotech archetype) gating on Set 3 completion is planned, **not implemented**.
 
 ### Grade bands
+
 - `Course.gradeBand`: `k2` (default) | `g3_5`; teacher sets it at class creation and in class detail.
 - Content variants live in `src/components/games/gradeBandContent.ts` (central registry; K-2 + g3_5).
   Games read the band from config; ActivityPlayer injects it from the student's enrolled course and
   applies Set 1 story-quiz overrides at render time (`applyG35StoryOverrides`).
   `useGradeBand()` (`src/hooks/useGradeBand.ts`) fetches the student's class band.
+- Canonical boundary: the platform resolves and injects the band; games consume it and own their content,
+  difficulty, and scaffolding response. Games must not independently fetch or infer the band. Missing or
+  invalid values fall back to K-2. See `docs/architecture/grade-banding.md`.
+- Product target: K-2, grades 3-5, and grades 6-8 will each have 12 ordered within-band difficulty stages.
+  Only K-2 and grades 3-5 are supported today; grades 6-8, stage selection, assessment, and progression
+  are not implemented.
 
 ### Removed / hidden (don't resurrect)
+
 - **Build-a-Bot** — removed 2026-04-07 (files fully deleted); Tank Trek → Quantum Quest replaced it.
 - **Fix the Order / Lost Steps** (`k2-stem-sequencing`, keys `boost_path_planner` + `sequence_drag_drop`) —
   hidden 2026-04-09 via `HIDDEN_MODULE_SLUGS`; component `BoostPathPlannerGame.tsx` still exists.
@@ -241,6 +272,7 @@ no mascots, direct empowering language for teens).
 ## Authentication & login
 
 Unified login page `src/pages/LoginSelection.tsx` at **`/student-login`** (`/login` redirects there):
+
 - **Email + password:** POST `/api/login` → JWT. Redirect by `userType`+`role`
   (`src/contexts/AuthContext.tsx`): k8 teacher → `/teacher/dashboard`; k8 student → `/student/dashboard`;
   pathways teacher → `/pathways/facilitator`; pathways student → `/pathways`.

@@ -1,0 +1,26 @@
+{
+  "description": "Required CI step invocations in .github/workflows/ci-cd.yml (W-11 / G-205)",
+  "workflow": ".github/workflows/ci-cd.yml",
+  "requiredSteps": [
+    { "job": "build-and-test", "run": "npm run lint" },
+    { "job": "build-and-test", "run": "npm run typecheck" },
+    { "job": "build-and-test", "run": "cd backend && npm run typecheck" },
+    { "job": "build-and-test", "run": "bash scripts/check-prisma-drift.sh" },
+    {
+      "job": "build-and-test",
+      "run": "bash scripts/verify-ci-step-presence.sh"
+    },
+    {
+      "job": "build-and-test",
+      "run": "node scripts/verify-type-program-membership.mjs"
+    },
+    { "job": "build-and-test", "run": "npm test -- --watch=false" },
+    { "job": "build-and-test", "run": "npm run verify:storybook-empty-suite" },
+    { "job": "build-and-test", "run": "npm run verify:ci-gate" },
+    { "job": "build-and-test", "run": "npm run test:e2e:ci" },
+    { "job": "build-and-test", "run": "npm run build" },
+    { "job": "db-check", "run": "npx prisma migrate deploy" },
+    { "job": "db-check", "run": "npx prisma generate" },
+    { "job": "db-check", "run": "npm run test:db" }
+  ]
+}

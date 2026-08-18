@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   STEM_SET_1_IDS,
   STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
   isSet1Complete,
   isSet2Locked,
+  isSet3Locked,
 } from "../stemSets";
 
 describe("STEM set canon and gating", () => {
@@ -29,9 +31,24 @@ describe("STEM set canon and gating", () => {
     ]);
   });
 
+  it("reserves five Set 3 slots and assigns the implemented games", () => {
+    expect(STEM_SET_3_IDS).toEqual([
+      "track-maker",
+      "set3-game-2",
+      "echo-avenue",
+      "set3-game-4",
+      "set3-game-5",
+    ]);
+  });
+
   it("returns false for Set 1 completion when only 4 canonical activities are completed", () => {
     expect(
-      isSet1Complete(["bounce-buds", "gotcha-gears", "rhyme-ride", "tank-trek"]),
+      isSet1Complete([
+        "bounce-buds",
+        "gotcha-gears",
+        "rhyme-ride",
+        "tank-trek",
+      ]),
     ).toBe(false);
   });
 
@@ -75,5 +92,10 @@ describe("STEM set canon and gating", () => {
         "lost-steps",
       ]),
     ).toBe(true);
+  });
+
+  it("unlocks Set 3 only after every canonical Set 2 activity is complete", () => {
+    expect(isSet3Locked(STEM_SET_2_IDS.slice(0, 4))).toBe(true);
+    expect(isSet3Locked([...STEM_SET_2_IDS])).toBe(false);
   });
 });

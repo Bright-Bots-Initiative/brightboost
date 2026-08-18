@@ -163,7 +163,9 @@ async function main() {
 
   // Test Explorer — student with Set 1 fully completed (for Set 2 testing)
   const explorerHash = await bcrypt.hash("explore123", 10);
-  let explorer = await prisma.user.findUnique({ where: { email: "explorer@test.com" } });
+  let explorer = await prisma.user.findUnique({
+    where: { email: "explorer@test.com" },
+  });
   if (!explorer) {
     explorer = await prisma.user.create({
       data: {
@@ -186,10 +188,17 @@ async function main() {
   }
 
   // Enroll explorer in teacher's class
-  const teacherCourse = await prisma.course.findFirst({ where: { teacherId: teacher.id } });
+  const teacherCourse = await prisma.course.findFirst({
+    where: { teacherId: teacher.id },
+  });
   if (teacherCourse) {
     await prisma.enrollment.upsert({
-      where: { studentId_courseId: { studentId: explorer.id, courseId: teacherCourse.id } },
+      where: {
+        studentId_courseId: {
+          studentId: explorer.id,
+          courseId: teacherCourse.id,
+        },
+      },
       create: { studentId: explorer.id, courseId: teacherCourse.id },
       update: {},
     });
@@ -199,13 +208,24 @@ async function main() {
   // Create avatar for explorer
   await prisma.avatar.upsert({
     where: { studentId: explorer.id },
-    create: { studentId: explorer.id, level: 5, xp: 650, hp: 100, energy: 100, speed: 4, control: 3, focus: 3 },
+    create: {
+      studentId: explorer.id,
+      level: 5,
+      xp: 650,
+      hp: 100,
+      energy: 100,
+      speed: 4,
+      control: 3,
+      focus: 3,
+    },
     update: { level: 5, xp: 650, speed: 4, control: 3, focus: 3 },
   });
 
   // Jordan — 9-year-old student in a grade 3-5 class
   const jordanHash = await bcrypt.hash("jordan123", 10);
-  let jordan = await prisma.user.findUnique({ where: { email: "jordan@test.com" } });
+  let jordan = await prisma.user.findUnique({
+    where: { email: "jordan@test.com" },
+  });
   if (!jordan) {
     jordan = await prisma.user.create({
       data: {
@@ -232,11 +252,18 @@ async function main() {
   // Create a grade 3-5 class and enroll Jordan
   const g35Class = await prisma.course.upsert({
     where: { joinCode: "GRADE35" },
-    create: { name: "Grade 3-5 STEM", joinCode: "GRADE35", teacherId: teacher.id, gradeBand: "g3_5" },
+    create: {
+      name: "Grade 3-5 STEM",
+      joinCode: "GRADE35",
+      teacherId: teacher.id,
+      gradeBand: "g3_5",
+    },
     update: { gradeBand: "g3_5" },
   });
   await prisma.enrollment.upsert({
-    where: { studentId_courseId: { studentId: jordan.id, courseId: g35Class.id } },
+    where: {
+      studentId_courseId: { studentId: jordan.id, courseId: g35Class.id },
+    },
     create: { studentId: jordan.id, courseId: g35Class.id },
     update: {},
   });
@@ -262,7 +289,11 @@ async function main() {
   const starsClass = await prisma.course.upsert({
     where: { joinCode: "STARS1" },
     // gradeBand intentionally omitted on create — schema default is "k2".
-    create: { name: "Ms. Frizzle's Star Class", joinCode: "STARS1", teacherId: teacher.id },
+    create: {
+      name: "Ms. Frizzle's Star Class",
+      joinCode: "STARS1",
+      teacherId: teacher.id,
+    },
     update: { gradeBand: "k2", teacherId: teacher.id },
   });
 
@@ -287,7 +318,9 @@ async function main() {
       update: { name: s.name, loginIcon: s.loginIcon },
     });
     await prisma.enrollment.upsert({
-      where: { studentId_courseId: { studentId: kid.id, courseId: starsClass.id } },
+      where: {
+        studentId_courseId: { studentId: kid.id, courseId: starsClass.id },
+      },
       create: { studentId: kid.id, courseId: starsClass.id },
       update: {},
     });
@@ -298,6 +331,47 @@ async function main() {
     "star students.",
   );
 
+  // Shared Track Builder fixture for gallery + ride-path testing. The creator
+  // studio remains intentionally gated, but any STARS1 student can open the
+  // gallery and ride Nova's deterministic, server-valid track.
+  const seededRaceTrack = {
+    v: 1,
+    name: "Star Sprint",
+    grid: { w: 6, h: 6 },
+    pieces: [
+      { x: 0, y: 1, type: "start", rot: 0 },
+      { x: 1, y: 1, type: "straight", rot: 0 },
+      { x: 2, y: 1, type: "gentleCurve", rot: 180 },
+      { x: 2, y: 2, type: "straight", rot: 90 },
+      { x: 2, y: 3, type: "gentleCurve", rot: 0 },
+      { x: 3, y: 3, type: "boost", rot: 0 },
+      { x: 4, y: 3, type: "finish", rot: 0 },
+    ],
+  };
+  await prisma.creation.upsert({
+    where: { id: "seed-race-track-star-sprint" },
+    create: {
+      id: "seed-race-track-star-sprint",
+      authorId: "star-nova",
+      courseId: starsClass.id,
+      type: "race_track",
+      title: seededRaceTrack.name,
+      content: seededRaceTrack,
+      status: "SHARED",
+      encouragements: 2,
+    },
+    update: {
+      authorId: "star-nova",
+      courseId: starsClass.id,
+      type: "race_track",
+      title: seededRaceTrack.name,
+      content: seededRaceTrack,
+      status: "SHARED",
+      encouragements: 2,
+    },
+  });
+  console.log("Seeded shared STARS1 Track Builder creation: Star Sprint.");
+
   // 5. Seed Content
   console.log("Seeding modules...");
 
@@ -305,14 +379,16 @@ async function main() {
     where: { slug: "stem-1-intro" },
     update: {
       title: "Quantum Explorers",
-      description: "Discover the tiny particles that power the future! Unlocks with specialization.",
+      description:
+        "Discover the tiny particles that power the future! Unlocks with specialization.",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "stem-1-intro",
       title: "Quantum Explorers",
-      description: "Discover the tiny particles that power the future! Unlocks with specialization.",
+      description:
+        "Discover the tiny particles that power the future! Unlocks with specialization.",
       level: "K-2",
       published: true,
     },
@@ -373,14 +449,89 @@ async function main() {
   const storyContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "bpp-s1", text: { en: "Boost is a little helper robot in the Bright Lab. Today, Boost has one job: carry a tiny battery to the charging station.", es: "Boost es un pequeño robot ayudante en el Laboratorio Brillante. Hoy, Boost tiene un trabajo: llevar una pequeña batería a la estación de carga." }, icon: "🤖" },
-      { id: "bpp-s2", text: { en: "Boost cannot just rush forward. Boost has to look, think, and put the steps in the right order.", es: "Boost no puede apresurarse. Boost tiene que mirar, pensar y poner los pasos en el orden correcto." }, icon: "🧠" },
-      { id: "bpp-s3", text: { en: "When we help Boost turn and move the right way, we are practicing sequencing. Sequencing means putting steps in order.", es: "Cuando ayudamos a Boost a girar y moverse correctamente, estamos practicando la secuenciación. Secuenciar significa poner los pasos en orden." }, icon: "📋" },
+      {
+        id: "bpp-s1",
+        text: {
+          en: "Boost is a little helper robot in the Bright Lab. Today, Boost has one job: carry a tiny battery to the charging station.",
+          es: "Boost es un pequeño robot ayudante en el Laboratorio Brillante. Hoy, Boost tiene un trabajo: llevar una pequeña batería a la estación de carga.",
+        },
+        icon: "🤖",
+      },
+      {
+        id: "bpp-s2",
+        text: {
+          en: "Boost cannot just rush forward. Boost has to look, think, and put the steps in the right order.",
+          es: "Boost no puede apresurarse. Boost tiene que mirar, pensar y poner los pasos en el orden correcto.",
+        },
+        icon: "🧠",
+      },
+      {
+        id: "bpp-s3",
+        text: {
+          en: "When we help Boost turn and move the right way, we are practicing sequencing. Sequencing means putting steps in order.",
+          es: "Cuando ayudamos a Boost a girar y moverse correctamente, estamos practicando la secuenciación. Secuenciar significa poner los pasos en orden.",
+        },
+        icon: "📋",
+      },
     ],
     questions: [
-      { id: "bpp-q1", prompt: { en: "What is Boost trying to do?", es: "¿Qué intenta hacer Boost?" }, choices: [{ en: "Reach the charging station", es: "Llegar a la estación de carga" }, { en: "Go to sleep", es: "Irse a dormir" }, { en: "Paint the wall", es: "Pintar la pared" }], answerIndex: 0, hint: { en: "Read the first slide again — what is Boost's job today?", es: "Lee la primera diapositiva de nuevo — ¿cuál es el trabajo de Boost hoy?" } },
-      { id: "bpp-q2", prompt: { en: "What should Boost do first?", es: "¿Qué debe hacer Boost primero?" }, choices: [{ en: "Make a plan", es: "Hacer un plan" }, { en: "Guess fast", es: "Adivinar rápido" }, { en: "Spin in circles", es: "Girar en círculos" }], answerIndex: 0, hint: { en: "Boost has to look and think before moving.", es: "Boost tiene que mirar y pensar antes de moverse." } },
-      { id: "bpp-q3", prompt: { en: "What does sequencing mean?", es: "¿Qué significa secuenciar?" }, choices: [{ en: "Putting steps in order", es: "Poner los pasos en orden" }, { en: "Jumping over walls", es: "Saltar sobre paredes" }, { en: "Moving as fast as possible", es: "Moverse lo más rápido posible" }], answerIndex: 0, hint: { en: "The last slide explains what sequencing means.", es: "La última diapositiva explica qué significa secuenciar." } },
+      {
+        id: "bpp-q1",
+        prompt: {
+          en: "What is Boost trying to do?",
+          es: "¿Qué intenta hacer Boost?",
+        },
+        choices: [
+          {
+            en: "Reach the charging station",
+            es: "Llegar a la estación de carga",
+          },
+          { en: "Go to sleep", es: "Irse a dormir" },
+          { en: "Paint the wall", es: "Pintar la pared" },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "Read the first slide again — what is Boost's job today?",
+          es: "Lee la primera diapositiva de nuevo — ¿cuál es el trabajo de Boost hoy?",
+        },
+      },
+      {
+        id: "bpp-q2",
+        prompt: {
+          en: "What should Boost do first?",
+          es: "¿Qué debe hacer Boost primero?",
+        },
+        choices: [
+          { en: "Make a plan", es: "Hacer un plan" },
+          { en: "Guess fast", es: "Adivinar rápido" },
+          { en: "Spin in circles", es: "Girar en círculos" },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "Boost has to look and think before moving.",
+          es: "Boost tiene que mirar y pensar antes de moverse.",
+        },
+      },
+      {
+        id: "bpp-q3",
+        prompt: {
+          en: "What does sequencing mean?",
+          es: "¿Qué significa secuenciar?",
+        },
+        choices: [
+          { en: "Putting steps in order", es: "Poner los pasos en orden" },
+          { en: "Jumping over walls", es: "Saltar sobre paredes" },
+          {
+            en: "Moving as fast as possible",
+            es: "Moverse lo más rápido posible",
+          },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "The last slide explains what sequencing means.",
+          es: "La última diapositiva explica qué significa secuenciar.",
+        },
+      },
     ],
   });
   const storyAct = await prisma.activity.findFirst({
@@ -389,7 +540,10 @@ async function main() {
   if (storyAct) {
     await prisma.activity.update({
       where: { id: storyAct.id },
-      data: { title: "Story: Meet Boost the Careful Planner", content: storyContent },
+      data: {
+        title: "Story: Meet Boost the Careful Planner",
+        content: storyContent,
+      },
     });
   } else {
     await prisma.activity.create({
@@ -411,7 +565,11 @@ async function main() {
   if (gameAct) {
     await prisma.activity.update({
       where: { id: gameAct.id },
-      data: { id: "lost-steps", title: "Game: Boost's Lost Steps", content: gameContent },
+      data: {
+        id: "lost-steps",
+        title: "Game: Boost's Lost Steps",
+        content: gameContent,
+      },
     });
   } else {
     await prisma.activity.create({
@@ -478,17 +636,73 @@ async function main() {
   const rhymeStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: { i18nKey: "content.rhymo.s1" }, icon: "🚲", imageKey: "type_story" },
-      { id: "s2", text: { i18nKey: "content.rhymo.s2" }, icon: "🎵", imageKey: "type_story" },
-      { id: "s3", text: { i18nKey: "content.rhymo.s3" }, icon: "🐱", imageKey: "type_quiz" },
-      { id: "s4", text: { i18nKey: "content.rhymo.s4" }, icon: "🏁", imageKey: "type_game" },
+      {
+        id: "s1",
+        text: { i18nKey: "content.rhymo.s1" },
+        icon: "🚲",
+        imageKey: "type_story",
+      },
+      {
+        id: "s2",
+        text: { i18nKey: "content.rhymo.s2" },
+        icon: "🎵",
+        imageKey: "type_story",
+      },
+      {
+        id: "s3",
+        text: { i18nKey: "content.rhymo.s3" },
+        icon: "🐱",
+        imageKey: "type_quiz",
+      },
+      {
+        id: "s4",
+        text: { i18nKey: "content.rhymo.s4" },
+        icon: "🏁",
+        imageKey: "type_game",
+      },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.rhymo.q1.prompt" }, choices: [{ i18nKey: "content.rhymo.q1.c1" }, { i18nKey: "content.rhymo.q1.c2" }, { i18nKey: "content.rhymo.q1.c3" }, { i18nKey: "content.rhymo.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.rhymo.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.rhymo.q2.prompt" }, choices: [{ i18nKey: "content.rhymo.q2.c1" }, { i18nKey: "content.rhymo.q2.c2" }, { i18nKey: "content.rhymo.q2.c3" }, { i18nKey: "content.rhymo.q2.c4" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.rhymo.q3.prompt" }, choices: [{ i18nKey: "content.rhymo.q3.c1" }, { i18nKey: "content.rhymo.q3.c2" }, { i18nKey: "content.rhymo.q3.c3" }, { i18nKey: "content.rhymo.q3.c4" }], answerIndex: 1, hint: { i18nKey: "content.rhymo.q3.hint" } },
+      {
+        id: "q1",
+        prompt: { i18nKey: "content.rhymo.q1.prompt" },
+        choices: [
+          { i18nKey: "content.rhymo.q1.c1" },
+          { i18nKey: "content.rhymo.q1.c2" },
+          { i18nKey: "content.rhymo.q1.c3" },
+          { i18nKey: "content.rhymo.q1.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.rhymo.q1.hint" },
+      },
+      {
+        id: "q2",
+        prompt: { i18nKey: "content.rhymo.q2.prompt" },
+        choices: [
+          { i18nKey: "content.rhymo.q2.c1" },
+          { i18nKey: "content.rhymo.q2.c2" },
+          { i18nKey: "content.rhymo.q2.c3" },
+          { i18nKey: "content.rhymo.q2.c4" },
+        ],
+        answerIndex: 1,
+        hint: { i18nKey: "content.rhymo.q2.hint" },
+      },
+      {
+        id: "q3",
+        prompt: { i18nKey: "content.rhymo.q3.prompt" },
+        choices: [
+          { i18nKey: "content.rhymo.q3.c1" },
+          { i18nKey: "content.rhymo.q3.c2" },
+          { i18nKey: "content.rhymo.q3.c3" },
+          { i18nKey: "content.rhymo.q3.c4" },
+        ],
+        answerIndex: 1,
+        hint: { i18nKey: "content.rhymo.q3.hint" },
+      },
     ],
-    review: { keyIdea: { i18nKey: "content.rhymo.reviewKeyIdea" }, vocab: ["rhyme", "sound", "end"] },
+    review: {
+      keyIdea: { i18nKey: "content.rhymo.reviewKeyIdea" },
+      vocab: ["rhyme", "sound", "end"],
+    },
   });
   const rhymeStoryAct = await prisma.activity.findFirst({
     where: { lessonId: k2RhymeLesson.id, kind: INFO, order: 1 },
@@ -518,7 +732,11 @@ async function main() {
   if (rhymeGameAct) {
     await prisma.activity.update({
       where: { id: rhymeGameAct.id },
-      data: { id: "rhyme-ride", title: "Game: Rhyme & Ride", content: rhymeGameContent },
+      data: {
+        id: "rhyme-ride",
+        title: "Game: Rhyme & Ride",
+        content: rhymeGameContent,
+      },
     });
   } else {
     await prisma.activity.create({
@@ -539,14 +757,16 @@ async function main() {
     where: { slug: "k2-stem-bounce-buds" },
     update: {
       title: "Bounce & Buds",
-      description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
+      description:
+        "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
     },
     create: {
       slug: "k2-stem-bounce-buds",
       title: "Bounce & Buds",
-      description: "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
+      description:
+        "Bounce Buddy through the right gate to learn about plants! 🌿🧫",
       level: "K-2",
       published: true,
     },
@@ -585,17 +805,73 @@ async function main() {
   const bounceStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: { i18nKey: "content.buddy.s1" }, icon: "🌿", imageKey: "type_story" },
-      { id: "s2", text: { i18nKey: "content.buddy.s2" }, icon: "🧫", imageKey: "type_story" },
-      { id: "s3", text: { i18nKey: "content.buddy.s3" }, icon: "🦠", imageKey: "type_quiz" },
-      { id: "s4", text: { i18nKey: "content.buddy.s4" }, icon: "💻", imageKey: "type_game" },
+      {
+        id: "s1",
+        text: { i18nKey: "content.buddy.s1" },
+        icon: "🌿",
+        imageKey: "type_story",
+      },
+      {
+        id: "s2",
+        text: { i18nKey: "content.buddy.s2" },
+        icon: "🧫",
+        imageKey: "type_story",
+      },
+      {
+        id: "s3",
+        text: { i18nKey: "content.buddy.s3" },
+        icon: "🦠",
+        imageKey: "type_quiz",
+      },
+      {
+        id: "s4",
+        text: { i18nKey: "content.buddy.s4" },
+        icon: "💻",
+        imageKey: "type_game",
+      },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.buddy.q1.prompt" }, choices: [{ i18nKey: "content.buddy.q1.c1" }, { i18nKey: "content.buddy.q1.c2" }, { i18nKey: "content.buddy.q1.c3" }, { i18nKey: "content.buddy.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.buddy.q2.prompt" }, choices: [{ i18nKey: "content.buddy.q2.c1" }, { i18nKey: "content.buddy.q2.c2" }, { i18nKey: "content.buddy.q2.c3" }, { i18nKey: "content.buddy.q2.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.buddy.q3.prompt" }, choices: [{ i18nKey: "content.buddy.q3.c1" }, { i18nKey: "content.buddy.q3.c2" }, { i18nKey: "content.buddy.q3.c3" }, { i18nKey: "content.buddy.q3.c4" }], answerIndex: 0, hint: { i18nKey: "content.buddy.q3.hint" } },
+      {
+        id: "q1",
+        prompt: { i18nKey: "content.buddy.q1.prompt" },
+        choices: [
+          { i18nKey: "content.buddy.q1.c1" },
+          { i18nKey: "content.buddy.q1.c2" },
+          { i18nKey: "content.buddy.q1.c3" },
+          { i18nKey: "content.buddy.q1.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.buddy.q1.hint" },
+      },
+      {
+        id: "q2",
+        prompt: { i18nKey: "content.buddy.q2.prompt" },
+        choices: [
+          { i18nKey: "content.buddy.q2.c1" },
+          { i18nKey: "content.buddy.q2.c2" },
+          { i18nKey: "content.buddy.q2.c3" },
+          { i18nKey: "content.buddy.q2.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.buddy.q2.hint" },
+      },
+      {
+        id: "q3",
+        prompt: { i18nKey: "content.buddy.q3.prompt" },
+        choices: [
+          { i18nKey: "content.buddy.q3.c1" },
+          { i18nKey: "content.buddy.q3.c2" },
+          { i18nKey: "content.buddy.q3.c3" },
+          { i18nKey: "content.buddy.q3.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.buddy.q3.hint" },
+      },
     ],
-    review: { keyIdea: { i18nKey: "content.buddy.reviewKeyIdea" }, vocab: ["cell", "microbe", "root"] },
+    review: {
+      keyIdea: { i18nKey: "content.buddy.reviewKeyIdea" },
+      vocab: ["cell", "microbe", "root"],
+    },
   });
   const bounceStoryAct = await prisma.activity.findFirst({
     where: { lessonId: k2BounceLesson.id, kind: INFO, order: 1 },
@@ -626,7 +902,11 @@ async function main() {
   if (bounceGameAct) {
     await prisma.activity.update({
       where: { id: bounceGameAct.id },
-      data: { id: "bounce-buds", title: "Game: Bounce & Buds", content: bounceGameContent },
+      data: {
+        id: "bounce-buds",
+        title: "Game: Bounce & Buds",
+        content: bounceGameContent,
+      },
     });
   } else {
     await prisma.activity.create({
@@ -693,17 +973,73 @@ async function main() {
   const gotchaStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "s1", text: { i18nKey: "content.gearbot.s1" }, icon: "⚙️", imageKey: "type_story" },
-      { id: "s2", text: { i18nKey: "content.gearbot.s2" }, icon: "📝", imageKey: "type_story" },
-      { id: "s3", text: { i18nKey: "content.gearbot.s3" }, icon: "🛠️", imageKey: "type_quiz" },
-      { id: "s4", text: { i18nKey: "content.gearbot.s4" }, icon: "🌟", imageKey: "type_game" },
+      {
+        id: "s1",
+        text: { i18nKey: "content.gearbot.s1" },
+        icon: "⚙️",
+        imageKey: "type_story",
+      },
+      {
+        id: "s2",
+        text: { i18nKey: "content.gearbot.s2" },
+        icon: "📝",
+        imageKey: "type_story",
+      },
+      {
+        id: "s3",
+        text: { i18nKey: "content.gearbot.s3" },
+        icon: "🛠️",
+        imageKey: "type_quiz",
+      },
+      {
+        id: "s4",
+        text: { i18nKey: "content.gearbot.s4" },
+        icon: "🌟",
+        imageKey: "type_game",
+      },
     ],
     questions: [
-      { id: "q1", prompt: { i18nKey: "content.gearbot.q1.prompt" }, choices: [{ i18nKey: "content.gearbot.q1.c1" }, { i18nKey: "content.gearbot.q1.c2" }, { i18nKey: "content.gearbot.q1.c3" }, { i18nKey: "content.gearbot.q1.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q1.hint" } },
-      { id: "q2", prompt: { i18nKey: "content.gearbot.q2.prompt" }, choices: [{ i18nKey: "content.gearbot.q2.c1" }, { i18nKey: "content.gearbot.q2.c2" }, { i18nKey: "content.gearbot.q2.c3" }, { i18nKey: "content.gearbot.q2.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q2.hint" } },
-      { id: "q3", prompt: { i18nKey: "content.gearbot.q3.prompt" }, choices: [{ i18nKey: "content.gearbot.q3.c1" }, { i18nKey: "content.gearbot.q3.c2" }, { i18nKey: "content.gearbot.q3.c3" }, { i18nKey: "content.gearbot.q3.c4" }], answerIndex: 0, hint: { i18nKey: "content.gearbot.q3.hint" } },
+      {
+        id: "q1",
+        prompt: { i18nKey: "content.gearbot.q1.prompt" },
+        choices: [
+          { i18nKey: "content.gearbot.q1.c1" },
+          { i18nKey: "content.gearbot.q1.c2" },
+          { i18nKey: "content.gearbot.q1.c3" },
+          { i18nKey: "content.gearbot.q1.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.gearbot.q1.hint" },
+      },
+      {
+        id: "q2",
+        prompt: { i18nKey: "content.gearbot.q2.prompt" },
+        choices: [
+          { i18nKey: "content.gearbot.q2.c1" },
+          { i18nKey: "content.gearbot.q2.c2" },
+          { i18nKey: "content.gearbot.q2.c3" },
+          { i18nKey: "content.gearbot.q2.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.gearbot.q2.hint" },
+      },
+      {
+        id: "q3",
+        prompt: { i18nKey: "content.gearbot.q3.prompt" },
+        choices: [
+          { i18nKey: "content.gearbot.q3.c1" },
+          { i18nKey: "content.gearbot.q3.c2" },
+          { i18nKey: "content.gearbot.q3.c3" },
+          { i18nKey: "content.gearbot.q3.c4" },
+        ],
+        answerIndex: 0,
+        hint: { i18nKey: "content.gearbot.q3.hint" },
+      },
     ],
-    review: { keyIdea: { i18nKey: "content.gearbot.reviewKeyIdea" }, vocab: ["debug", "plan", "practice", "rule"] },
+    review: {
+      keyIdea: { i18nKey: "content.gearbot.reviewKeyIdea" },
+      vocab: ["debug", "plan", "practice", "rule"],
+    },
   });
   const gotchaStoryAct = await prisma.activity.findFirst({
     where: { lessonId: k2GotchaLesson.id, kind: INFO, order: 1 },
@@ -739,13 +1075,69 @@ async function main() {
       catchWindowX: 0.95,
     },
     rounds: [
-      { clueText: { i18nKey: "content.gotchaGame.r1.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r1.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r1.d1" }, { i18nKey: "content.gotchaGame.r1.d2" }], hint: { i18nKey: "content.gotchaGame.r1.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r2.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r2.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r2.d1" }, { i18nKey: "content.gotchaGame.r2.d2" }], hint: { i18nKey: "content.gotchaGame.r2.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r3.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r3.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r3.d1" }, { i18nKey: "content.gotchaGame.r3.d2" }], hint: { i18nKey: "content.gotchaGame.r3.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r4.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r4.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r4.d1" }, { i18nKey: "content.gotchaGame.r4.d2" }], hint: { i18nKey: "content.gotchaGame.r4.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r5.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r5.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r5.d1" }, { i18nKey: "content.gotchaGame.r5.d2" }], hint: { i18nKey: "content.gotchaGame.r5.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r6.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r6.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r6.d1" }, { i18nKey: "content.gotchaGame.r6.d2" }], hint: { i18nKey: "content.gotchaGame.r6.hint" } },
-      { clueText: { i18nKey: "content.gotchaGame.r7.clue" }, correctLabel: { i18nKey: "content.gotchaGame.r7.correct" }, distractors: [{ i18nKey: "content.gotchaGame.r7.d1" }, { i18nKey: "content.gotchaGame.r7.d2" }], hint: { i18nKey: "content.gotchaGame.r7.hint" } },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r1.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r1.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r1.d1" },
+          { i18nKey: "content.gotchaGame.r1.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r1.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r2.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r2.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r2.d1" },
+          { i18nKey: "content.gotchaGame.r2.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r2.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r3.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r3.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r3.d1" },
+          { i18nKey: "content.gotchaGame.r3.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r3.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r4.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r4.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r4.d1" },
+          { i18nKey: "content.gotchaGame.r4.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r4.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r5.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r5.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r5.d1" },
+          { i18nKey: "content.gotchaGame.r5.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r5.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r6.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r6.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r6.d1" },
+          { i18nKey: "content.gotchaGame.r6.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r6.hint" },
+      },
+      {
+        clueText: { i18nKey: "content.gotchaGame.r7.clue" },
+        correctLabel: { i18nKey: "content.gotchaGame.r7.correct" },
+        distractors: [
+          { i18nKey: "content.gotchaGame.r7.d1" },
+          { i18nKey: "content.gotchaGame.r7.d2" },
+        ],
+        hint: { i18nKey: "content.gotchaGame.r7.hint" },
+      },
     ],
   });
 
@@ -756,7 +1148,11 @@ async function main() {
   if (gotchaGameAct) {
     await prisma.activity.update({
       where: { id: gotchaGameAct.id },
-      data: { id: "gotcha-gears", title: "Game: Gotcha Gears (Catch the Gear!)", content: gotchaGameContent },
+      data: {
+        id: "gotcha-gears",
+        title: "Game: Gotcha Gears (Catch the Gear!)",
+        content: gotchaGameContent,
+      },
     });
   } else {
     await prisma.activity.create({
@@ -777,48 +1173,194 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   const k2TankModule = await prisma.module.upsert({
     where: { slug: "k2-stem-tank-trek" },
-    update: { title: "Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
-    create: { slug: "k2-stem-tank-trek", title: "Tank Trek", description: "Guide a robot through mazes! 🤖🧩", level: "K-2", published: true },
+    update: {
+      title: "Tank Trek",
+      description: "Guide a robot through mazes! 🤖🧩",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-tank-trek",
+      title: "Tank Trek",
+      description: "Guide a robot through mazes! 🤖🧩",
+      level: "K-2",
+      published: true,
+    },
   });
   console.log("Created module:", k2TankModule.slug);
 
-  let k2TankUnit = await prisma.unit.findFirst({ where: { moduleId: k2TankModule.id, title: "Unit 1: Robot Navigation" } });
+  let k2TankUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2TankModule.id, title: "Unit 1: Robot Navigation" },
+  });
   if (!k2TankUnit) {
-    k2TankUnit = await prisma.unit.create({ data: { title: "Unit 1: Robot Navigation", order: 1, Module: { connect: { id: k2TankModule.id } }, teacher: { connect: { id: teacher.id } } } });
+    k2TankUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Robot Navigation",
+        order: 1,
+        Module: { connect: { id: k2TankModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
   }
 
-  let k2TankLesson = await prisma.lesson.findFirst({ where: { unitId: k2TankUnit.id, title: "Tank Trek" } });
+  let k2TankLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2TankUnit.id, title: "Tank Trek" },
+  });
   if (!k2TankLesson) {
-    k2TankLesson = await prisma.lesson.create({ data: { title: "Tank Trek", order: 1, Unit: { connect: { id: k2TankUnit.id } } } });
+    k2TankLesson = await prisma.lesson.create({
+      data: {
+        title: "Tank Trek",
+        order: 1,
+        Unit: { connect: { id: k2TankUnit.id } },
+      },
+    });
   }
 
   const tankStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "tt-s1", text: { en: "Meet Bolt! Bolt listens to your code words to move safely through the maze.", es: "¡Conoce a Bolt! Bolt escucha tus palabras de código para moverse con seguridad por el laberinto." }, icon: "🤖" },
-      { id: "tt-s2", text: { en: "Use clear commands: Forward, Turn Left, Turn Right. Order matters!", es: "Usa comandos claros: Adelante, Girar Izquierda, Girar Derecha. ¡El orden importa!" }, icon: "🧭" },
-      { id: "tt-s3", text: { en: "Great robot coders test, fix, and try again. Short smart paths earn more stars!", es: "Los grandes programadores de robots prueban, corrigen e intentan otra vez. ¡Los caminos cortos e inteligentes ganan más estrellas!" }, icon: "⭐" },
+      {
+        id: "tt-s1",
+        text: {
+          en: "Meet Bolt! Bolt listens to your code words to move safely through the maze.",
+          es: "¡Conoce a Bolt! Bolt escucha tus palabras de código para moverse con seguridad por el laberinto.",
+        },
+        icon: "🤖",
+      },
+      {
+        id: "tt-s2",
+        text: {
+          en: "Use clear commands: Forward, Turn Left, Turn Right. Order matters!",
+          es: "Usa comandos claros: Adelante, Girar Izquierda, Girar Derecha. ¡El orden importa!",
+        },
+        icon: "🧭",
+      },
+      {
+        id: "tt-s3",
+        text: {
+          en: "Great robot coders test, fix, and try again. Short smart paths earn more stars!",
+          es: "Los grandes programadores de robots prueban, corrigen e intentan otra vez. ¡Los caminos cortos e inteligentes ganan más estrellas!",
+        },
+        icon: "⭐",
+      },
     ],
     questions: [
-      { id: "tt-q1", prompt: { en: "Which command makes Bolt move ahead one space?", es: "¿Qué comando hace que Bolt avance un espacio?" }, choices: [{ en: "Forward", es: "Adelante" }, { en: "Turn Left", es: "Girar Izquierda" }, { en: "Turn Right", es: "Girar Derecha" }, { en: "Stop and spin", es: "Parar y girar" }], answerIndex: 0, hint: { en: "Forward means move ahead.", es: "Adelante significa moverse al frente." } },
-      { id: "tt-q2", prompt: { en: "Two paths reach the goal. Which is more efficient?", es: "Dos caminos llegan a la meta. ¿Cuál es más eficiente?" }, choices: [{ en: "The path with fewer commands", es: "El camino con menos comandos" }, { en: "The path with more turns", es: "El camino con más giros" }, { en: "The longest path", es: "El camino más largo" }, { en: "Any path is always equal", es: "Cualquier camino siempre es igual" }], answerIndex: 0, hint: { en: "Efficient means doing the job in fewer steps.", es: "Eficiente significa hacer el trabajo con menos pasos." } },
-      { id: "tt-q3", prompt: { en: "Bolt bumped a wall. What should you do next?", es: "Bolt chocó con una pared. ¿Qué debes hacer después?" }, choices: [{ en: "Change one command and test again", es: "Cambiar un comando y probar otra vez" }, { en: "Keep the same plan forever", es: "Seguir el mismo plan para siempre" }, { en: "Press random buttons", es: "Presionar botones al azar" }, { en: "Quit the mission", es: "Salir de la misión" }], answerIndex: 0, hint: { en: "Debugging means fixing and retesting.", es: "Depurar significa corregir y volver a probar." } },
+      {
+        id: "tt-q1",
+        prompt: {
+          en: "Which command makes Bolt move ahead one space?",
+          es: "¿Qué comando hace que Bolt avance un espacio?",
+        },
+        choices: [
+          { en: "Forward", es: "Adelante" },
+          { en: "Turn Left", es: "Girar Izquierda" },
+          { en: "Turn Right", es: "Girar Derecha" },
+          { en: "Stop and spin", es: "Parar y girar" },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "Forward means move ahead.",
+          es: "Adelante significa moverse al frente.",
+        },
+      },
+      {
+        id: "tt-q2",
+        prompt: {
+          en: "Two paths reach the goal. Which is more efficient?",
+          es: "Dos caminos llegan a la meta. ¿Cuál es más eficiente?",
+        },
+        choices: [
+          {
+            en: "The path with fewer commands",
+            es: "El camino con menos comandos",
+          },
+          { en: "The path with more turns", es: "El camino con más giros" },
+          { en: "The longest path", es: "El camino más largo" },
+          {
+            en: "Any path is always equal",
+            es: "Cualquier camino siempre es igual",
+          },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "Efficient means doing the job in fewer steps.",
+          es: "Eficiente significa hacer el trabajo con menos pasos.",
+        },
+      },
+      {
+        id: "tt-q3",
+        prompt: {
+          en: "Bolt bumped a wall. What should you do next?",
+          es: "Bolt chocó con una pared. ¿Qué debes hacer después?",
+        },
+        choices: [
+          {
+            en: "Change one command and test again",
+            es: "Cambiar un comando y probar otra vez",
+          },
+          {
+            en: "Keep the same plan forever",
+            es: "Seguir el mismo plan para siempre",
+          },
+          { en: "Press random buttons", es: "Presionar botones al azar" },
+          { en: "Quit the mission", es: "Salir de la misión" },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "Debugging means fixing and retesting.",
+          es: "Depurar significa corregir y volver a probar.",
+        },
+      },
     ],
   });
 
-  let tankStoryAct = await prisma.activity.findFirst({ where: { lessonId: k2TankLesson.id, kind: INFO, order: 1 } });
+  let tankStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2TankLesson.id, kind: INFO, order: 1 },
+  });
   if (tankStoryAct) {
-    await prisma.activity.update({ where: { id: tankStoryAct.id }, data: { title: "Story: Meet Bolt", content: tankStoryContent } });
+    await prisma.activity.update({
+      where: { id: tankStoryAct.id },
+      data: { title: "Story: Meet Bolt", content: tankStoryContent },
+    });
   } else {
-    await prisma.activity.create({ data: { title: "Story: Meet Bolt", kind: INFO, order: 1, content: tankStoryContent, Lesson: { connect: { id: k2TankLesson.id } } } });
+    await prisma.activity.create({
+      data: {
+        title: "Story: Meet Bolt",
+        kind: INFO,
+        order: 1,
+        content: tankStoryContent,
+        Lesson: { connect: { id: k2TankLesson.id } },
+      },
+    });
   }
 
-  const tankGameContent = JSON.stringify({ gameKey: "tank_trek", chapters: [] });
-  let tankGameAct = await prisma.activity.findFirst({ where: { lessonId: k2TankLesson.id, kind: INTERACT, order: 2 } });
+  const tankGameContent = JSON.stringify({
+    gameKey: "tank_trek",
+    chapters: [],
+  });
+  let tankGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2TankLesson.id, kind: INTERACT, order: 2 },
+  });
   if (tankGameAct) {
-    await prisma.activity.update({ where: { id: tankGameAct.id }, data: { id: "tank-trek", title: "Game: Tank Trek", content: tankGameContent } });
+    await prisma.activity.update({
+      where: { id: tankGameAct.id },
+      data: {
+        id: "tank-trek",
+        title: "Game: Tank Trek",
+        content: tankGameContent,
+      },
+    });
   } else {
-    await prisma.activity.create({ data: { id: "tank-trek", title: "Game: Tank Trek", kind: INTERACT, order: 2, content: tankGameContent, Lesson: { connect: { id: k2TankLesson.id } } } });
+    await prisma.activity.create({
+      data: {
+        id: "tank-trek",
+        title: "Game: Tank Trek",
+        kind: INTERACT,
+        order: 2,
+        content: tankGameContent,
+        Lesson: { connect: { id: k2TankLesson.id } },
+      },
+    });
   }
   console.log("Seeded Tank Trek module + activities.");
 
@@ -827,48 +1369,188 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   const k2QuantumModule = await prisma.module.upsert({
     where: { slug: "k2-stem-quantum-quest" },
-    update: { title: "Quantum Quest", description: "Explore quantum puzzles in a space math adventure! 🚀✨", level: "K-2", published: true },
-    create: { slug: "k2-stem-quantum-quest", title: "Quantum Quest", description: "Explore quantum puzzles in a space math adventure! 🚀✨", level: "K-2", published: true },
+    update: {
+      title: "Quantum Quest",
+      description: "Explore quantum puzzles in a space math adventure! 🚀✨",
+      level: "K-2",
+      published: true,
+    },
+    create: {
+      slug: "k2-stem-quantum-quest",
+      title: "Quantum Quest",
+      description: "Explore quantum puzzles in a space math adventure! 🚀✨",
+      level: "K-2",
+      published: true,
+    },
   });
   console.log("Created module:", k2QuantumModule.slug);
 
-  let k2QuantumUnit = await prisma.unit.findFirst({ where: { moduleId: k2QuantumModule.id, title: "Unit 1: Star Math" } });
+  let k2QuantumUnit = await prisma.unit.findFirst({
+    where: { moduleId: k2QuantumModule.id, title: "Unit 1: Star Math" },
+  });
   if (!k2QuantumUnit) {
-    k2QuantumUnit = await prisma.unit.create({ data: { title: "Unit 1: Star Math", order: 1, Module: { connect: { id: k2QuantumModule.id } }, teacher: { connect: { id: teacher.id } } } });
+    k2QuantumUnit = await prisma.unit.create({
+      data: {
+        title: "Unit 1: Star Math",
+        order: 1,
+        Module: { connect: { id: k2QuantumModule.id } },
+        teacher: { connect: { id: teacher.id } },
+      },
+    });
   }
 
-  let k2QuantumLesson = await prisma.lesson.findFirst({ where: { unitId: k2QuantumUnit.id, title: "Quantum Quest" } });
+  let k2QuantumLesson = await prisma.lesson.findFirst({
+    where: { unitId: k2QuantumUnit.id, title: "Quantum Quest" },
+  });
   if (!k2QuantumLesson) {
-    k2QuantumLesson = await prisma.lesson.create({ data: { title: "Quantum Quest", order: 1, Unit: { connect: { id: k2QuantumUnit.id } } } });
+    k2QuantumLesson = await prisma.lesson.create({
+      data: {
+        title: "Quantum Quest",
+        order: 1,
+        Unit: { connect: { id: k2QuantumUnit.id } },
+      },
+    });
   }
 
   const quantumStoryContent = JSON.stringify({
     type: "story_quiz",
     slides: [
-      { id: "qq-s1", text: { en: "Welcome, Space Explorer! Your mission is to spot number patterns and true clues in the stars.", es: "¡Bienvenido, Explorador Espacial! Tu misión es encontrar patrones de números y pistas verdaderas en las estrellas." }, icon: "🚀" },
-      { id: "qq-s2", text: { en: "Look carefully at every choice. Use evidence: count, compare, and notice what repeats.", es: "Mira con atención cada opción. Usa evidencia: cuenta, compara y nota lo que se repite." }, icon: "🔍" },
-      { id: "qq-s3", text: { en: "Each correct answer builds your streak power. Careful thinking keeps your mission safe!", es: "Cada respuesta correcta aumenta tu racha. ¡Pensar con cuidado mantiene tu misión segura!" }, icon: "🌟" },
+      {
+        id: "qq-s1",
+        text: {
+          en: "Welcome, Space Explorer! Your mission is to spot number patterns and true clues in the stars.",
+          es: "¡Bienvenido, Explorador Espacial! Tu misión es encontrar patrones de números y pistas verdaderas en las estrellas.",
+        },
+        icon: "🚀",
+      },
+      {
+        id: "qq-s2",
+        text: {
+          en: "Look carefully at every choice. Use evidence: count, compare, and notice what repeats.",
+          es: "Mira con atención cada opción. Usa evidencia: cuenta, compara y nota lo que se repite.",
+        },
+        icon: "🔍",
+      },
+      {
+        id: "qq-s3",
+        text: {
+          en: "Each correct answer builds your streak power. Careful thinking keeps your mission safe!",
+          es: "Cada respuesta correcta aumenta tu racha. ¡Pensar con cuidado mantiene tu misión segura!",
+        },
+        icon: "🌟",
+      },
     ],
     questions: [
-      { id: "qq-q1", prompt: { en: "Which pattern comes next: 2, 4, 6, __?", es: "¿Qué patrón sigue: 2, 4, 6, __?" }, choices: [{ en: "8", es: "8" }, { en: "7", es: "7" }, { en: "5", es: "5" }, { en: "10", es: "10" }], answerIndex: 0, hint: { en: "The pattern adds 2 each time.", es: "El patrón suma 2 cada vez." } },
-      { id: "qq-q2", prompt: { en: "You count 3 stars, then 2 more. How many stars now?", es: "Cuentas 3 estrellas y luego 2 más. ¿Cuántas estrellas hay ahora?" }, choices: [{ en: "4", es: "4" }, { en: "5", es: "5" }, { en: "6", es: "6" }, { en: "3", es: "3" }], answerIndex: 1, hint: { en: "Count on: 3, 4, 5.", es: "Cuenta hacia adelante: 3, 4, 5." } },
-      { id: "qq-q3", prompt: { en: "Which answer shows careful evidence?", es: "¿Qué respuesta muestra evidencia cuidadosa?" }, choices: [{ en: "Pick the biggest number quickly", es: "Elegir el número más grande rápido" }, { en: "Guess before you look", es: "Adivinar antes de mirar" }, { en: "Check the pattern, then choose", es: "Revisar el patrón y luego elegir" }, { en: "Tap any star", es: "Tocar cualquier estrella" }], answerIndex: 2, hint: { en: "Scientists observe first.", es: "Los científicos observan primero." } },
+      {
+        id: "qq-q1",
+        prompt: {
+          en: "Which pattern comes next: 2, 4, 6, __?",
+          es: "¿Qué patrón sigue: 2, 4, 6, __?",
+        },
+        choices: [
+          { en: "8", es: "8" },
+          { en: "7", es: "7" },
+          { en: "5", es: "5" },
+          { en: "10", es: "10" },
+        ],
+        answerIndex: 0,
+        hint: {
+          en: "The pattern adds 2 each time.",
+          es: "El patrón suma 2 cada vez.",
+        },
+      },
+      {
+        id: "qq-q2",
+        prompt: {
+          en: "You count 3 stars, then 2 more. How many stars now?",
+          es: "Cuentas 3 estrellas y luego 2 más. ¿Cuántas estrellas hay ahora?",
+        },
+        choices: [
+          { en: "4", es: "4" },
+          { en: "5", es: "5" },
+          { en: "6", es: "6" },
+          { en: "3", es: "3" },
+        ],
+        answerIndex: 1,
+        hint: {
+          en: "Count on: 3, 4, 5.",
+          es: "Cuenta hacia adelante: 3, 4, 5.",
+        },
+      },
+      {
+        id: "qq-q3",
+        prompt: {
+          en: "Which answer shows careful evidence?",
+          es: "¿Qué respuesta muestra evidencia cuidadosa?",
+        },
+        choices: [
+          {
+            en: "Pick the biggest number quickly",
+            es: "Elegir el número más grande rápido",
+          },
+          { en: "Guess before you look", es: "Adivinar antes de mirar" },
+          {
+            en: "Check the pattern, then choose",
+            es: "Revisar el patrón y luego elegir",
+          },
+          { en: "Tap any star", es: "Tocar cualquier estrella" },
+        ],
+        answerIndex: 2,
+        hint: {
+          en: "Scientists observe first.",
+          es: "Los científicos observan primero.",
+        },
+      },
     ],
   });
 
-  let quantumStoryAct = await prisma.activity.findFirst({ where: { lessonId: k2QuantumLesson.id, kind: INFO, order: 1 } });
+  let quantumStoryAct = await prisma.activity.findFirst({
+    where: { lessonId: k2QuantumLesson.id, kind: INFO, order: 1 },
+  });
   if (quantumStoryAct) {
-    await prisma.activity.update({ where: { id: quantumStoryAct.id }, data: { title: "Story: Space Explorer", content: quantumStoryContent } });
+    await prisma.activity.update({
+      where: { id: quantumStoryAct.id },
+      data: { title: "Story: Space Explorer", content: quantumStoryContent },
+    });
   } else {
-    await prisma.activity.create({ data: { title: "Story: Space Explorer", kind: INFO, order: 1, content: quantumStoryContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
+    await prisma.activity.create({
+      data: {
+        title: "Story: Space Explorer",
+        kind: INFO,
+        order: 1,
+        content: quantumStoryContent,
+        Lesson: { connect: { id: k2QuantumLesson.id } },
+      },
+    });
   }
 
-  const quantumGameContent = JSON.stringify({ gameKey: "quantum_quest", sectors: [] });
-  let quantumGameAct = await prisma.activity.findFirst({ where: { lessonId: k2QuantumLesson.id, kind: INTERACT, order: 2 } });
+  const quantumGameContent = JSON.stringify({
+    gameKey: "quantum_quest",
+    sectors: [],
+  });
+  let quantumGameAct = await prisma.activity.findFirst({
+    where: { lessonId: k2QuantumLesson.id, kind: INTERACT, order: 2 },
+  });
   if (quantumGameAct) {
-    await prisma.activity.update({ where: { id: quantumGameAct.id }, data: { id: "quantum-quest", title: "Game: Quantum Quest", content: quantumGameContent } });
+    await prisma.activity.update({
+      where: { id: quantumGameAct.id },
+      data: {
+        id: "quantum-quest",
+        title: "Game: Quantum Quest",
+        content: quantumGameContent,
+      },
+    });
   } else {
-    await prisma.activity.create({ data: { id: "quantum-quest", title: "Game: Quantum Quest", kind: INTERACT, order: 2, content: quantumGameContent, Lesson: { connect: { id: k2QuantumLesson.id } } } });
+    await prisma.activity.create({
+      data: {
+        id: "quantum-quest",
+        title: "Game: Quantum Quest",
+        kind: INTERACT,
+        order: 2,
+        content: quantumGameContent,
+        Lesson: { connect: { id: k2QuantumLesson.id } },
+      },
+    });
   }
   console.log("Seeded Quantum Quest module + activities.");
 
@@ -876,17 +1558,47 @@ async function main() {
   // Test Explorer — Set 1 completion records
   // ═══════════════════════════════════════════════════════════════════════════
   const set1Activities = [
-    { activityId: "bounce-buds", moduleSlug: "k2-stem-bounce-buds", timeSpentS: 180, daysAgo: 5 },
-    { activityId: "gotcha-gears", moduleSlug: "k2-stem-gotcha-gears", timeSpentS: 210, daysAgo: 4 },
-    { activityId: "rhyme-ride", moduleSlug: "k2-stem-rhyme-ride", timeSpentS: 240, daysAgo: 3 },
-    { activityId: "tank-trek", moduleSlug: "k2-stem-tank-trek", timeSpentS: 195, daysAgo: 2 },
-    { activityId: "quantum-quest", moduleSlug: "k2-stem-quantum-quest", timeSpentS: 220, daysAgo: 1 },
+    {
+      activityId: "bounce-buds",
+      moduleSlug: "k2-stem-bounce-buds",
+      timeSpentS: 180,
+      daysAgo: 5,
+    },
+    {
+      activityId: "gotcha-gears",
+      moduleSlug: "k2-stem-gotcha-gears",
+      timeSpentS: 210,
+      daysAgo: 4,
+    },
+    {
+      activityId: "rhyme-ride",
+      moduleSlug: "k2-stem-rhyme-ride",
+      timeSpentS: 240,
+      daysAgo: 3,
+    },
+    {
+      activityId: "tank-trek",
+      moduleSlug: "k2-stem-tank-trek",
+      timeSpentS: 195,
+      daysAgo: 2,
+    },
+    {
+      activityId: "quantum-quest",
+      moduleSlug: "k2-stem-quantum-quest",
+      timeSpentS: 220,
+      daysAgo: 1,
+    },
   ];
 
   for (const sa of set1Activities) {
     const completedAt = new Date(Date.now() - sa.daysAgo * 86400000);
     await prisma.progress.upsert({
-      where: { studentId_activityId: { studentId: explorer.id, activityId: sa.activityId } },
+      where: {
+        studentId_activityId: {
+          studentId: explorer.id,
+          activityId: sa.activityId,
+        },
+      },
       create: {
         studentId: explorer.id,
         activityId: sa.activityId,
@@ -900,16 +1612,48 @@ async function main() {
 
   // Game personal bests for explorer
   const explorerBests = [
-    { gameKey: "buddy_garden_sort", bestScore: 45, lastScore: 45, bestStreak: 4, bestRoundsCompleted: 8 },
-    { gameKey: "gotcha_gears_unity", bestScore: 80, lastScore: 60, bestStreak: 3, bestRoundsCompleted: 7 },
-    { gameKey: "boost_path_planner", bestScore: 35, lastScore: 35, bestStreak: 2, bestRoundsCompleted: 3 },
-    { gameKey: "rhymo_rhyme_rocket", bestScore: 120, lastScore: 90, bestStreak: 5, bestRoundsCompleted: 15 },
-    { gameKey: "tank_trek", bestScore: 16, lastScore: 14, bestStreak: 3, bestRoundsCompleted: 7 }, // star-sum units (7 levels x 3 max = 21); the old 55 was fabricated and unearnable
+    {
+      gameKey: "buddy_garden_sort",
+      bestScore: 45,
+      lastScore: 45,
+      bestStreak: 4,
+      bestRoundsCompleted: 8,
+    },
+    {
+      gameKey: "gotcha_gears_unity",
+      bestScore: 80,
+      lastScore: 60,
+      bestStreak: 3,
+      bestRoundsCompleted: 7,
+    },
+    {
+      gameKey: "boost_path_planner",
+      bestScore: 35,
+      lastScore: 35,
+      bestStreak: 2,
+      bestRoundsCompleted: 3,
+    },
+    {
+      gameKey: "rhymo_rhyme_rocket",
+      bestScore: 120,
+      lastScore: 90,
+      bestStreak: 5,
+      bestRoundsCompleted: 15,
+    },
+    {
+      gameKey: "tank_trek",
+      bestScore: 16,
+      lastScore: 14,
+      bestStreak: 3,
+      bestRoundsCompleted: 7,
+    }, // star-sum units (7 levels x 3 max = 21); the old 55 was fabricated and unearnable
   ];
 
   for (const gb of explorerBests) {
     await prisma.gamePersonalBest.upsert({
-      where: { studentId_gameKey: { studentId: explorer.id, gameKey: gb.gameKey } },
+      where: {
+        studentId_gameKey: { studentId: explorer.id, gameKey: gb.gameKey },
+      },
       create: { studentId: explorer.id, ...gb, playCount: 3 },
       update: gb,
     });
@@ -931,18 +1675,112 @@ async function main() {
       story: {
         title: "Story: Maze Explorer",
         slides: [
-          { id: "mm-s1", text: { en: "Spark the helper bot is lost in the idea maze! Glowing orbs are scattered everywhere, but sneaky sweepers are patrolling the paths. Spark needs YOUR help to collect every orb and find the exit.", es: "¡Spark el robot ayudante está perdido en el laberinto de ideas! Hay esferas brillantes por todas partes, pero los barredores patrullan los caminos. ¡Spark necesita TU ayuda para recoger cada esfera y encontrar la salida!" }, icon: "🗺️" },
-          { id: "mm-s2", text: { en: "But here's the trick — Spark can't just run in! The sweepers move in patterns. Watch them carefully before you move. The smartest path isn't always the shortest one.", es: "Pero hay un truco — ¡Spark no puede solo correr! Los barredores se mueven en patrones. Obsérvalos antes de moverte. El camino más inteligente no siempre es el más corto." }, icon: "🤔" },
-          { id: "mm-s3", text: { en: "Ready? Guide Spark through the maze. Collect all the orbs. Avoid the sweepers. Think before you move!", es: "¿Listo? Guía a Spark por el laberinto. Recoge todas las esferas. Evita los barredores. ¡Piensa antes de moverte!" }, icon: "⭐" },
+          {
+            id: "mm-s1",
+            text: {
+              en: "Spark the helper bot is lost in the idea maze! Glowing orbs are scattered everywhere, but sneaky sweepers are patrolling the paths. Spark needs YOUR help to collect every orb and find the exit.",
+              es: "¡Spark el robot ayudante está perdido en el laberinto de ideas! Hay esferas brillantes por todas partes, pero los barredores patrullan los caminos. ¡Spark necesita TU ayuda para recoger cada esfera y encontrar la salida!",
+            },
+            icon: "🗺️",
+          },
+          {
+            id: "mm-s2",
+            text: {
+              en: "But here's the trick — Spark can't just run in! The sweepers move in patterns. Watch them carefully before you move. The smartest path isn't always the shortest one.",
+              es: "Pero hay un truco — ¡Spark no puede solo correr! Los barredores se mueven en patrones. Obsérvalos antes de moverte. El camino más inteligente no siempre es el más corto.",
+            },
+            icon: "🤔",
+          },
+          {
+            id: "mm-s3",
+            text: {
+              en: "Ready? Guide Spark through the maze. Collect all the orbs. Avoid the sweepers. Think before you move!",
+              es: "¿Listo? Guía a Spark por el laberinto. Recoge todas las esferas. Evita los barredores. ¡Piensa antes de moverte!",
+            },
+            icon: "⭐",
+          },
         ],
         questions: [
-          { id: "mm-q1", prompt: { en: "What should you do before moving in a maze?", es: "¿Qué debes hacer antes de moverte en un laberinto?" }, choices: [{ en: "Plan a path", es: "Planificar un camino" }, { en: "Run fast", es: "Correr rápido" }, { en: "Close your eyes", es: "Cerrar los ojos" }, { en: "Ask for directions", es: "Pedir direcciones" }], answerIndex: 0 },
+          {
+            id: "mm-q1",
+            prompt: {
+              en: "What should you do before moving in a maze?",
+              es: "¿Qué debes hacer antes de moverte en un laberinto?",
+            },
+            choices: [
+              { en: "Plan a path", es: "Planificar un camino" },
+              { en: "Run fast", es: "Correr rápido" },
+              { en: "Close your eyes", es: "Cerrar los ojos" },
+              { en: "Ask for directions", es: "Pedir direcciones" },
+            ],
+            answerIndex: 0,
+          },
         ],
       },
       quiz: [
-        { id: "mmz-q1", prompt: { en: "Before moving through the maze, what should you do first?", es: "Antes de moverte en el laberinto, ¿qué debes hacer primero?" }, choices: [{ en: "Run as fast as you can", es: "Correr lo más rápido posible" }, { en: "Watch the sweeper's pattern", es: "Observar el patrón del barredor" }, { en: "Close your eyes and guess", es: "Cerrar los ojos y adivinar" }, { en: "Pick the shortest path", es: "Elegir el camino más corto" }], answerIndex: 1 },
-        { id: "mmz-q2", prompt: { en: "A sweeper moves left, right, left, right. What does it do next?", es: "Un barredor se mueve izquierda, derecha, izquierda, derecha. ¿Qué hace después?" }, choices: [{ en: "Stop", es: "Parar" }, { en: "Move up", es: "Ir arriba" }, { en: "Move left", es: "Ir a la izquierda" }, { en: "Disappear", es: "Desaparecer" }], answerIndex: 2 },
-        { id: "mmz-q3", prompt: { en: "Which is the smartest path?", es: "¿Cuál es el camino más inteligente?" }, choices: [{ en: "The shortest path past a sweeper", es: "El camino más corto pasando un barredor" }, { en: "A longer path that avoids sweepers", es: "Un camino más largo que evita barredores" }, { en: "Standing still forever", es: "Quedarse quieto para siempre" }, { en: "The path with the most turns", es: "El camino con más giros" }], answerIndex: 1 },
+        {
+          id: "mmz-q1",
+          prompt: {
+            en: "Before moving through the maze, what should you do first?",
+            es: "Antes de moverte en el laberinto, ¿qué debes hacer primero?",
+          },
+          choices: [
+            {
+              en: "Run as fast as you can",
+              es: "Correr lo más rápido posible",
+            },
+            {
+              en: "Watch the sweeper's pattern",
+              es: "Observar el patrón del barredor",
+            },
+            {
+              en: "Close your eyes and guess",
+              es: "Cerrar los ojos y adivinar",
+            },
+            { en: "Pick the shortest path", es: "Elegir el camino más corto" },
+          ],
+          answerIndex: 1,
+        },
+        {
+          id: "mmz-q2",
+          prompt: {
+            en: "A sweeper moves left, right, left, right. What does it do next?",
+            es: "Un barredor se mueve izquierda, derecha, izquierda, derecha. ¿Qué hace después?",
+          },
+          choices: [
+            { en: "Stop", es: "Parar" },
+            { en: "Move up", es: "Ir arriba" },
+            { en: "Move left", es: "Ir a la izquierda" },
+            { en: "Disappear", es: "Desaparecer" },
+          ],
+          answerIndex: 2,
+        },
+        {
+          id: "mmz-q3",
+          prompt: {
+            en: "Which is the smartest path?",
+            es: "¿Cuál es el camino más inteligente?",
+          },
+          choices: [
+            {
+              en: "The shortest path past a sweeper",
+              es: "El camino más corto pasando un barredor",
+            },
+            {
+              en: "A longer path that avoids sweepers",
+              es: "Un camino más largo que evita barredores",
+            },
+            {
+              en: "Standing still forever",
+              es: "Quedarse quieto para siempre",
+            },
+            {
+              en: "The path with the most turns",
+              es: "El camino con más giros",
+            },
+          ],
+          answerIndex: 1,
+        },
       ],
     },
     {
@@ -955,18 +1793,106 @@ async function main() {
       story: {
         title: "Story: Body Lab",
         slides: [
-          { id: "mmi-s1", text: { en: "Welcome to the Motion Lab! Today you're the scientist AND the athlete. You'll run, jump, and throw — then measure how you did.", es: "¡Bienvenido al Laboratorio de Movimiento! Hoy eres el científico Y el atleta. Correrás, saltarás y lanzarás — luego medirás cómo te fue." }, icon: "🏃" },
-          { id: "mmi-s2", text: { en: "But here's what makes a real scientist — after you measure, you get to IMPROVE. Pick one coaching tip, try again, and see if your numbers go up.", es: "Pero esto es lo que hace a un verdadero científico — después de medir, puedes MEJORAR. Elige un consejo, inténtalo de nuevo y mira si tus números suben." }, icon: "📏" },
-          { id: "mmi-s3", text: { en: "Ready to test your body and your brain? Let's go!", es: "¿Listo para probar tu cuerpo y tu cerebro? ¡Vamos!" }, icon: "💪" },
+          {
+            id: "mmi-s1",
+            text: {
+              en: "Welcome to the Motion Lab! Today you're the scientist AND the athlete. You'll run, jump, and throw — then measure how you did.",
+              es: "¡Bienvenido al Laboratorio de Movimiento! Hoy eres el científico Y el atleta. Correrás, saltarás y lanzarás — luego medirás cómo te fue.",
+            },
+            icon: "🏃",
+          },
+          {
+            id: "mmi-s2",
+            text: {
+              en: "But here's what makes a real scientist — after you measure, you get to IMPROVE. Pick one coaching tip, try again, and see if your numbers go up.",
+              es: "Pero esto es lo que hace a un verdadero científico — después de medir, puedes MEJORAR. Elige un consejo, inténtalo de nuevo y mira si tus números suben.",
+            },
+            icon: "📏",
+          },
+          {
+            id: "mmi-s3",
+            text: {
+              en: "Ready to test your body and your brain? Let's go!",
+              es: "¿Listo para probar tu cuerpo y tu cerebro? ¡Vamos!",
+            },
+            icon: "💪",
+          },
         ],
         questions: [
-          { id: "mmi-q1", prompt: { en: "How do you know you got better at something?", es: "¿Cómo sabes que mejoraste en algo?" }, choices: [{ en: "Measure and compare", es: "Medir y comparar" }, { en: "Guess", es: "Adivinar" }, { en: "Ask a fish", es: "Preguntar a un pez" }, { en: "Just feel it", es: "Solo sentirlo" }], answerIndex: 0 },
+          {
+            id: "mmi-q1",
+            prompt: {
+              en: "How do you know you got better at something?",
+              es: "¿Cómo sabes que mejoraste en algo?",
+            },
+            choices: [
+              { en: "Measure and compare", es: "Medir y comparar" },
+              { en: "Guess", es: "Adivinar" },
+              { en: "Ask a fish", es: "Preguntar a un pez" },
+              { en: "Just feel it", es: "Solo sentirlo" },
+            ],
+            answerIndex: 0,
+          },
         ],
       },
       quiz: [
-        { id: "mmv-q1", prompt: { en: "What should you do after your first try?", es: "¿Qué debes hacer después de tu primer intento?" }, choices: [{ en: "Give up", es: "Rendirse" }, { en: "Try the exact same thing again", es: "Intentar exactamente lo mismo" }, { en: "Look at your results and pick one thing to change", es: "Mirar tus resultados y elegir una cosa para cambiar" }, { en: "Change everything at once", es: "Cambiar todo a la vez" }], answerIndex: 2 },
-        { id: "mmv-q2", prompt: { en: "Which body part helps the most with jumping?", es: "¿Qué parte del cuerpo ayuda más a saltar?" }, choices: [{ en: "Your arms", es: "Tus brazos" }, { en: "Your legs", es: "Tus piernas" }, { en: "Your ears", es: "Tus orejas" }, { en: "Your neck", es: "Tu cuello" }], answerIndex: 1 },
-        { id: "mmv-q3", prompt: { en: "You threw the ball 10 feet. Then you used a tip and threw it 14 feet. What happened?", es: "Lanzaste la pelota 10 pies. Luego usaste un consejo y la lanzaste 14 pies. ¿Qué pasó?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "The tip helped you throw farther", es: "El consejo te ayudó a lanzar más lejos" }, { en: "You should try a different tip", es: "Deberías probar otro consejo" }, { en: "Throwing doesn't use your arms", es: "Lanzar no usa tus brazos" }], answerIndex: 1 },
+        {
+          id: "mmv-q1",
+          prompt: {
+            en: "What should you do after your first try?",
+            es: "¿Qué debes hacer después de tu primer intento?",
+          },
+          choices: [
+            { en: "Give up", es: "Rendirse" },
+            {
+              en: "Try the exact same thing again",
+              es: "Intentar exactamente lo mismo",
+            },
+            {
+              en: "Look at your results and pick one thing to change",
+              es: "Mirar tus resultados y elegir una cosa para cambiar",
+            },
+            { en: "Change everything at once", es: "Cambiar todo a la vez" },
+          ],
+          answerIndex: 2,
+        },
+        {
+          id: "mmv-q2",
+          prompt: {
+            en: "Which body part helps the most with jumping?",
+            es: "¿Qué parte del cuerpo ayuda más a saltar?",
+          },
+          choices: [
+            { en: "Your arms", es: "Tus brazos" },
+            { en: "Your legs", es: "Tus piernas" },
+            { en: "Your ears", es: "Tus orejas" },
+            { en: "Your neck", es: "Tu cuello" },
+          ],
+          answerIndex: 1,
+        },
+        {
+          id: "mmv-q3",
+          prompt: {
+            en: "You threw the ball 10 feet. Then you used a tip and threw it 14 feet. What happened?",
+            es: "Lanzaste la pelota 10 pies. Luego usaste un consejo y la lanzaste 14 pies. ¿Qué pasó?",
+          },
+          choices: [
+            { en: "Nothing changed", es: "Nada cambió" },
+            {
+              en: "The tip helped you throw farther",
+              es: "El consejo te ayudó a lanzar más lejos",
+            },
+            {
+              en: "You should try a different tip",
+              es: "Deberías probar otro consejo",
+            },
+            {
+              en: "Throwing doesn't use your arms",
+              es: "Lanzar no usa tus brazos",
+            },
+          ],
+          answerIndex: 1,
+        },
       ],
     },
     {
@@ -979,18 +1905,110 @@ async function main() {
       story: {
         title: "Story: Pattern Patrol",
         slides: [
-          { id: "ss-s1", text: { en: "Light drops are falling. Catch them in the right lane.", es: "Caen gotas de luz. Atrápalas en el carril correcto." }, icon: "🌌" },
-          { id: "ss-s2", text: { en: "Watch the pattern: blue, gold, blue, gold...", es: "Mira el patrón: azul, dorado, azul, dorado..." }, icon: "🔍" },
-          { id: "ss-s3", text: { en: "If a light is mystery, tap Scan first.", es: "Si una luz es misterio, toca Escanear primero." }, icon: "🛡️" },
+          {
+            id: "ss-s1",
+            text: {
+              en: "Light drops are falling. Catch them in the right lane.",
+              es: "Caen gotas de luz. Atrápalas en el carril correcto.",
+            },
+            icon: "🌌",
+          },
+          {
+            id: "ss-s2",
+            text: {
+              en: "Watch the pattern: blue, gold, blue, gold...",
+              es: "Mira el patrón: azul, dorado, azul, dorado...",
+            },
+            icon: "🔍",
+          },
+          {
+            id: "ss-s3",
+            text: {
+              en: "If a light is mystery, tap Scan first.",
+              es: "Si una luz es misterio, toca Escanear primero.",
+            },
+            icon: "🛡️",
+          },
         ],
         questions: [
-          { id: "ss-q1", prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" }, choices: [{ en: "Something that repeats", es: "Algo que se repite" }, { en: "A random mess", es: "Un desorden" }, { en: "A color", es: "Un color" }, { en: "A loud sound", es: "Un sonido fuerte" }], answerIndex: 0, hint: { en: "Look for what repeats.", es: "Busca lo que se repite." } },
+          {
+            id: "ss-q1",
+            prompt: { en: "What is a pattern?", es: "¿Qué es un patrón?" },
+            choices: [
+              { en: "Something that repeats", es: "Algo que se repite" },
+              { en: "A random mess", es: "Un desorden" },
+              { en: "A color", es: "Un color" },
+              { en: "A loud sound", es: "Un sonido fuerte" },
+            ],
+            answerIndex: 0,
+            hint: {
+              en: "Look for what repeats.",
+              es: "Busca lo que se repite.",
+            },
+          },
         ],
       },
       quiz: [
-        { id: "ss-qz1", prompt: { en: "Blue, gold, blue, gold, blue. What comes next?", es: "Azul, dorado, azul, dorado, azul. ¿Qué sigue?" }, choices: [{ en: "Blue", es: "Azul" }, { en: "Gold", es: "Dorado" }, { en: "Red", es: "Rojo" }, { en: "Green", es: "Verde" }], answerIndex: 1, hint: { en: "Say the pattern out loud.", es: "Di el patrón en voz alta." } },
-        { id: "ss-qz2", prompt: { en: "You see a mystery light. What should you do?", es: "Ves una luz misteriosa. ¿Qué debes hacer?" }, choices: [{ en: "Guess fast", es: "Adivinar rápido" }, { en: "Tap Scan first", es: "Tocar Escanear primero" }, { en: "Run away", es: "Huir" }, { en: "Skip your turn", es: "Saltar tu turno" }], answerIndex: 1, hint: { en: "Scan helps you check before choosing.", es: "Escanear te ayuda a revisar antes de elegir." } },
-        { id: "ss-qz3", prompt: { en: "Why watch before you choose?", es: "¿Por qué mirar antes de elegir?" }, choices: [{ en: "To predict the next drop", es: "Para predecir la próxima gota" }, { en: "To make it harder", es: "Para hacerlo más difícil" }, { en: "Because patterns do not matter", es: "Porque los patrones no importan" }, { en: "To lose points", es: "Para perder puntos" }], answerIndex: 0, hint: { en: "Watching helps your brain plan.", es: "Mirar ayuda a tu cerebro a planear." } },
+        {
+          id: "ss-qz1",
+          prompt: {
+            en: "Blue, gold, blue, gold, blue. What comes next?",
+            es: "Azul, dorado, azul, dorado, azul. ¿Qué sigue?",
+          },
+          choices: [
+            { en: "Blue", es: "Azul" },
+            { en: "Gold", es: "Dorado" },
+            { en: "Red", es: "Rojo" },
+            { en: "Green", es: "Verde" },
+          ],
+          answerIndex: 1,
+          hint: {
+            en: "Say the pattern out loud.",
+            es: "Di el patrón en voz alta.",
+          },
+        },
+        {
+          id: "ss-qz2",
+          prompt: {
+            en: "You see a mystery light. What should you do?",
+            es: "Ves una luz misteriosa. ¿Qué debes hacer?",
+          },
+          choices: [
+            { en: "Guess fast", es: "Adivinar rápido" },
+            { en: "Tap Scan first", es: "Tocar Escanear primero" },
+            { en: "Run away", es: "Huir" },
+            { en: "Skip your turn", es: "Saltar tu turno" },
+          ],
+          answerIndex: 1,
+          hint: {
+            en: "Scan helps you check before choosing.",
+            es: "Escanear te ayuda a revisar antes de elegir.",
+          },
+        },
+        {
+          id: "ss-qz3",
+          prompt: {
+            en: "Why watch before you choose?",
+            es: "¿Por qué mirar antes de elegir?",
+          },
+          choices: [
+            {
+              en: "To predict the next drop",
+              es: "Para predecir la próxima gota",
+            },
+            { en: "To make it harder", es: "Para hacerlo más difícil" },
+            {
+              en: "Because patterns do not matter",
+              es: "Porque los patrones no importan",
+            },
+            { en: "To lose points", es: "Para perder puntos" },
+          ],
+          answerIndex: 0,
+          hint: {
+            en: "Watching helps your brain plan.",
+            es: "Mirar ayuda a tu cerebro a planear.",
+          },
+        },
       ],
     },
     {
@@ -1003,18 +2021,100 @@ async function main() {
       story: {
         title: "Story: Signal School",
         slides: [
-          { id: "fl-s1", text: { en: "You're driving the science delivery cart today! The lab needs these supplies FAST — but the road is full of obstacles. Cones, puddles, and blocked lanes are everywhere.", es: "¡Hoy conduces el carrito de entregas del laboratorio! El laboratorio necesita estos materiales RÁPIDO — pero el camino está lleno de obstáculos. Conos, charcos y carriles bloqueados por todas partes." }, icon: "🚦" },
-          { id: "fl-s2", text: { en: "Follow the road signals: green arrow means GO, yellow means GET READY, red X means AVOID. The safest driver wins — not the fastest!", es: "Sigue las señales del camino: flecha verde significa AVANZA, amarillo significa PREPÁRATE, X roja significa EVITA. ¡El conductor más seguro gana — no el más rápido!" }, icon: "🤔" },
-          { id: "fl-s3", text: { en: "Watch ahead, read the signs, and deliver those supplies safely. Let's roll!", es: "Mira adelante, lee las señales y entrega los materiales con seguridad. ¡Vamos!" }, icon: "⏱️" },
+          {
+            id: "fl-s1",
+            text: {
+              en: "You're driving the science delivery cart today! The lab needs these supplies FAST — but the road is full of obstacles. Cones, puddles, and blocked lanes are everywhere.",
+              es: "¡Hoy conduces el carrito de entregas del laboratorio! El laboratorio necesita estos materiales RÁPIDO — pero el camino está lleno de obstáculos. Conos, charcos y carriles bloqueados por todas partes.",
+            },
+            icon: "🚦",
+          },
+          {
+            id: "fl-s2",
+            text: {
+              en: "Follow the road signals: green arrow means GO, yellow means GET READY, red X means AVOID. The safest driver wins — not the fastest!",
+              es: "Sigue las señales del camino: flecha verde significa AVANZA, amarillo significa PREPÁRATE, X roja significa EVITA. ¡El conductor más seguro gana — no el más rápido!",
+            },
+            icon: "🤔",
+          },
+          {
+            id: "fl-s3",
+            text: {
+              en: "Watch ahead, read the signs, and deliver those supplies safely. Let's roll!",
+              es: "Mira adelante, lee las señales y entrega los materiales con seguridad. ¡Vamos!",
+            },
+            icon: "⏱️",
+          },
         ],
         questions: [
-          { id: "fl-q1", prompt: { en: "What does a green signal mean?", es: "¿Qué significa una señal verde?" }, choices: [{ en: "Go", es: "Avanzar" }, { en: "Stop", es: "Parar" }, { en: "Sleep", es: "Dormir" }, { en: "Wait", es: "Esperar" }], answerIndex: 0 },
+          {
+            id: "fl-q1",
+            prompt: {
+              en: "What does a green signal mean?",
+              es: "¿Qué significa una señal verde?",
+            },
+            choices: [
+              { en: "Go", es: "Avanzar" },
+              { en: "Stop", es: "Parar" },
+              { en: "Sleep", es: "Dormir" },
+              { en: "Wait", es: "Esperar" },
+            ],
+            answerIndex: 0,
+          },
         ],
       },
       quiz: [
-        { id: "fl-qz1", prompt: { en: "You see a yellow road sign. What does it mean?", es: "Ves una señal amarilla. ¿Qué significa?" }, choices: [{ en: "Speed up", es: "Acelerar" }, { en: "Stop immediately", es: "Parar inmediatamente" }, { en: "Get ready — something is about to change", es: "Prepárate — algo está a punto de cambiar" }, { en: "Close your eyes", es: "Cerrar los ojos" }], answerIndex: 2 },
-        { id: "fl-qz2", prompt: { en: "What matters most when driving the delivery cart?", es: "¿Qué es lo más importante al conducir el carrito de entregas?" }, choices: [{ en: "Going as fast as possible", es: "Ir lo más rápido posible" }, { en: "Getting there safely", es: "Llegar con seguridad" }, { en: "Crashing into every cone", es: "Chocarse con cada cono" }, { en: "Ignoring the signs", es: "Ignorar las señales" }], answerIndex: 1 },
-        { id: "fl-qz3", prompt: { en: "There's a boost pad in a lane with a red X. What should you do?", es: "Hay un impulso en un carril con una X roja. ¿Qué debes hacer?" }, choices: [{ en: "Go for the boost", es: "Ir por el impulso" }, { en: "Avoid that lane — red X means danger", es: "Evitar ese carril — X roja significa peligro" }, { en: "Stop the cart", es: "Parar el carrito" }, { en: "Switch to a random lane", es: "Cambiar a un carril aleatorio" }], answerIndex: 1 },
+        {
+          id: "fl-qz1",
+          prompt: {
+            en: "You see a yellow road sign. What does it mean?",
+            es: "Ves una señal amarilla. ¿Qué significa?",
+          },
+          choices: [
+            { en: "Speed up", es: "Acelerar" },
+            { en: "Stop immediately", es: "Parar inmediatamente" },
+            {
+              en: "Get ready — something is about to change",
+              es: "Prepárate — algo está a punto de cambiar",
+            },
+            { en: "Close your eyes", es: "Cerrar los ojos" },
+          ],
+          answerIndex: 2,
+        },
+        {
+          id: "fl-qz2",
+          prompt: {
+            en: "What matters most when driving the delivery cart?",
+            es: "¿Qué es lo más importante al conducir el carrito de entregas?",
+          },
+          choices: [
+            { en: "Going as fast as possible", es: "Ir lo más rápido posible" },
+            { en: "Getting there safely", es: "Llegar con seguridad" },
+            { en: "Crashing into every cone", es: "Chocarse con cada cono" },
+            { en: "Ignoring the signs", es: "Ignorar las señales" },
+          ],
+          answerIndex: 1,
+        },
+        {
+          id: "fl-qz3",
+          prompt: {
+            en: "There's a boost pad in a lane with a red X. What should you do?",
+            es: "Hay un impulso en un carril con una X roja. ¿Qué debes hacer?",
+          },
+          choices: [
+            { en: "Go for the boost", es: "Ir por el impulso" },
+            {
+              en: "Avoid that lane — red X means danger",
+              es: "Evitar ese carril — X roja significa peligro",
+            },
+            { en: "Stop the cart", es: "Parar el carrito" },
+            {
+              en: "Switch to a random lane",
+              es: "Cambiar a un carril aleatorio",
+            },
+          ],
+          answerIndex: 1,
+        },
       ],
     },
     {
@@ -1027,19 +2127,126 @@ async function main() {
       story: {
         title: "Story: Race Lab",
         slides: [
-          { id: "qtr-s1", text: { en: "Welcome to the engineering garage! Today you'll build, test, and improve your racer. But here's the rule: you can only change ONE thing at a time.", es: "¡Bienvenido al garaje de ingeniería! Hoy construirás, probarás y mejorarás tu corredor. Pero hay una regla: solo puedes cambiar UNA cosa a la vez." }, icon: "🏎️" },
-          { id: "qtr-s2", text: { en: "First, do a practice lap. Then look at your results — time, bumps, smoothness. Pick ONE upgrade: better tires, a speed boost, or steadier steering. Then race again!", es: "Primero, haz una vuelta de práctica. Luego mira tus resultados — tiempo, golpes, suavidad. Elige UNA mejora: mejores neumáticos, turbo de velocidad o dirección más estable. ¡Luego corre de nuevo!" }, icon: "🔧" },
-          { id: "qtr-s3", text: { en: "Real scientists test one change at a time. That's how you know what actually worked. Ready to qualify, tune, and race?", es: "Los científicos reales prueban un cambio a la vez. Así sabes qué realmente funcionó. ¿Listo para probar, ajustar y competir?" }, icon: "🧪" },
+          {
+            id: "qtr-s1",
+            text: {
+              en: "Welcome to the engineering garage! Today you'll build, test, and improve your racer. But here's the rule: you can only change ONE thing at a time.",
+              es: "¡Bienvenido al garaje de ingeniería! Hoy construirás, probarás y mejorarás tu corredor. Pero hay una regla: solo puedes cambiar UNA cosa a la vez.",
+            },
+            icon: "🏎️",
+          },
+          {
+            id: "qtr-s2",
+            text: {
+              en: "First, do a practice lap. Then look at your results — time, bumps, smoothness. Pick ONE upgrade: better tires, a speed boost, or steadier steering. Then race again!",
+              es: "Primero, haz una vuelta de práctica. Luego mira tus resultados — tiempo, golpes, suavidad. Elige UNA mejora: mejores neumáticos, turbo de velocidad o dirección más estable. ¡Luego corre de nuevo!",
+            },
+            icon: "🔧",
+          },
+          {
+            id: "qtr-s3",
+            text: {
+              en: "Real scientists test one change at a time. That's how you know what actually worked. Ready to qualify, tune, and race?",
+              es: "Los científicos reales prueban un cambio a la vez. Así sabes qué realmente funcionó. ¿Listo para probar, ajustar y competir?",
+            },
+            icon: "🧪",
+          },
         ],
         questions: [
-          { id: "qtr-q1", prompt: { en: "To make a fair test, how many things should you change at a time?", es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?" }, choices: [{ en: "One", es: "Una" }, { en: "All of them", es: "Todas" }, { en: "None", es: "Ninguna" }, { en: "Three", es: "Tres" }], answerIndex: 0 },
+          {
+            id: "qtr-q1",
+            prompt: {
+              en: "To make a fair test, how many things should you change at a time?",
+              es: "Para hacer una prueba justa, ¿cuántas cosas debes cambiar a la vez?",
+            },
+            choices: [
+              { en: "One", es: "Una" },
+              { en: "All of them", es: "Todas" },
+              { en: "None", es: "Ninguna" },
+              { en: "Three", es: "Tres" },
+            ],
+            answerIndex: 0,
+          },
         ],
       },
       quiz: [
-        { id: "qtr-qz1", prompt: { en: "How many things should you change at a time when tuning?", es: "¿Cuántas cosas debes cambiar a la vez al ajustar?" }, choices: [{ en: "As many as possible", es: "Todas las posibles" }, { en: "Two", es: "Dos" }, { en: "One", es: "Una" }, { en: "None", es: "Ninguna" }], answerIndex: 2 },
-        { id: "qtr-qz2", prompt: { en: "Your first lap had 5 bumps. You added Grip Tires and your second lap had 2 bumps. What happened?", es: "Tu primera vuelta tuvo 5 golpes. Agregaste Neumáticos de Agarre y tu segunda vuelta tuvo 2 golpes. ¿Qué pasó?" }, choices: [{ en: "Nothing changed", es: "Nada cambió" }, { en: "Grip Tires helped you bump less", es: "Los neumáticos de agarre te ayudaron a golpear menos" }, { en: "The track got easier", es: "La pista se hizo más fácil" }, { en: "Bumps don't matter", es: "Los golpes no importan" }], answerIndex: 1 },
-        { id: "qtr-qz3", prompt: { en: "Why do engineers change only one thing at a time?", es: "¿Por qué los ingenieros cambian solo una cosa a la vez?" }, choices: [{ en: "Because they're slow", es: "Porque son lentos" }, { en: "So they know which change made the difference", es: "Para saber qué cambio hizo la diferencia" }, { en: "Because two changes would break everything", es: "Porque dos cambios romperían todo" }, { en: "They don't — they change everything", es: "No lo hacen — cambian todo" }], answerIndex: 1 },
-        { id: "qtr-qz4", prompt: { en: "You picked Speed Boost but bumped into more walls. What does that tell you?", es: "Elegiste Turbo de Velocidad pero chocaste con más paredes. ¿Qué te dice eso?" }, choices: [{ en: "Speed Boost made it harder to control", es: "El Turbo hizo más difícil de controlar" }, { en: "Speed Boost doesn't work", es: "El Turbo no funciona" }, { en: "You should always pick Speed Boost", es: "Siempre debes elegir Turbo" }, { en: "Bumps help you go faster", es: "Los golpes te ayudan a ir más rápido" }], answerIndex: 0 },
+        {
+          id: "qtr-qz1",
+          prompt: {
+            en: "How many things should you change at a time when tuning?",
+            es: "¿Cuántas cosas debes cambiar a la vez al ajustar?",
+          },
+          choices: [
+            { en: "As many as possible", es: "Todas las posibles" },
+            { en: "Two", es: "Dos" },
+            { en: "One", es: "Una" },
+            { en: "None", es: "Ninguna" },
+          ],
+          answerIndex: 2,
+        },
+        {
+          id: "qtr-qz2",
+          prompt: {
+            en: "Your first lap had 5 bumps. You added Grip Tires and your second lap had 2 bumps. What happened?",
+            es: "Tu primera vuelta tuvo 5 golpes. Agregaste Neumáticos de Agarre y tu segunda vuelta tuvo 2 golpes. ¿Qué pasó?",
+          },
+          choices: [
+            { en: "Nothing changed", es: "Nada cambió" },
+            {
+              en: "Grip Tires helped you bump less",
+              es: "Los neumáticos de agarre te ayudaron a golpear menos",
+            },
+            { en: "The track got easier", es: "La pista se hizo más fácil" },
+            { en: "Bumps don't matter", es: "Los golpes no importan" },
+          ],
+          answerIndex: 1,
+        },
+        {
+          id: "qtr-qz3",
+          prompt: {
+            en: "Why do engineers change only one thing at a time?",
+            es: "¿Por qué los ingenieros cambian solo una cosa a la vez?",
+          },
+          choices: [
+            { en: "Because they're slow", es: "Porque son lentos" },
+            {
+              en: "So they know which change made the difference",
+              es: "Para saber qué cambio hizo la diferencia",
+            },
+            {
+              en: "Because two changes would break everything",
+              es: "Porque dos cambios romperían todo",
+            },
+            {
+              en: "They don't — they change everything",
+              es: "No lo hacen — cambian todo",
+            },
+          ],
+          answerIndex: 1,
+        },
+        {
+          id: "qtr-qz4",
+          prompt: {
+            en: "You picked Speed Boost but bumped into more walls. What does that tell you?",
+            es: "Elegiste Turbo de Velocidad pero chocaste con más paredes. ¿Qué te dice eso?",
+          },
+          choices: [
+            {
+              en: "Speed Boost made it harder to control",
+              es: "El Turbo hizo más difícil de controlar",
+            },
+            { en: "Speed Boost doesn't work", es: "El Turbo no funciona" },
+            {
+              en: "You should always pick Speed Boost",
+              es: "Siempre debes elegir Turbo",
+            },
+            {
+              en: "Bumps help you go faster",
+              es: "Los golpes te ayudan a ir más rápido",
+            },
+          ],
+          answerIndex: 0,
+        },
       ],
     },
   ];
@@ -1047,24 +2254,56 @@ async function main() {
   for (const s2 of set2Modules) {
     const mod = await prisma.module.upsert({
       where: { slug: s2.slug },
-      update: { title: s2.title, description: s2.description, level: "K-2", published: true },
-      create: { slug: s2.slug, title: s2.title, description: s2.description, level: "K-2", published: true },
+      update: {
+        title: s2.title,
+        description: s2.description,
+        level: "K-2",
+        published: true,
+      },
+      create: {
+        slug: s2.slug,
+        title: s2.title,
+        description: s2.description,
+        level: "K-2",
+        published: true,
+      },
     });
 
     // Get or create unit — use first unit of this module (not by title, which may have changed)
-    let s2Unit = await prisma.unit.findFirst({ where: { moduleId: mod.id }, orderBy: { order: "asc" } });
+    let s2Unit = await prisma.unit.findFirst({
+      where: { moduleId: mod.id },
+      orderBy: { order: "asc" },
+    });
     if (!s2Unit) {
-      s2Unit = await prisma.unit.create({ data: { title: "Unit 1", order: 1, Module: { connect: { id: mod.id } }, teacher: { connect: { id: teacher.id } } } });
+      s2Unit = await prisma.unit.create({
+        data: {
+          title: "Unit 1",
+          order: 1,
+          Module: { connect: { id: mod.id } },
+          teacher: { connect: { id: teacher.id } },
+        },
+      });
     }
 
     // Get or create lesson — use first lesson of this unit
-    let s2Lesson = await prisma.lesson.findFirst({ where: { unitId: s2Unit.id }, orderBy: { order: "asc" } });
+    let s2Lesson = await prisma.lesson.findFirst({
+      where: { unitId: s2Unit.id },
+      orderBy: { order: "asc" },
+    });
     if (!s2Lesson) {
-      s2Lesson = await prisma.lesson.create({ data: { title: s2.title, order: 1, Unit: { connect: { id: s2Unit.id } } } });
+      s2Lesson = await prisma.lesson.create({
+        data: {
+          title: s2.title,
+          order: 1,
+          Unit: { connect: { id: s2Unit.id } },
+        },
+      });
     }
 
     // Clean up duplicate lessons (from previous seed runs with different titles)
-    const allLessons = await prisma.lesson.findMany({ where: { unitId: s2Unit.id } });
+    const allLessons = await prisma.lesson.findMany({
+      where: { unitId: s2Unit.id },
+    });
     for (const dup of allLessons) {
       if (dup.id !== s2Lesson.id) {
         await prisma.activity.deleteMany({ where: { lessonId: dup.id } });
@@ -1073,7 +2312,10 @@ async function main() {
     }
 
     // Clean up duplicate activities within this lesson (keep only 3: story, game, quiz)
-    const existingActs = await prisma.activity.findMany({ where: { lessonId: s2Lesson.id }, orderBy: { order: "asc" } });
+    const existingActs = await prisma.activity.findMany({
+      where: { lessonId: s2Lesson.id },
+      orderBy: { order: "asc" },
+    });
     for (const act of existingActs) {
       if (act.order > 3) {
         await prisma.activity.delete({ where: { id: act.id } }).catch(() => {});
@@ -1085,23 +2327,57 @@ async function main() {
       type: "story_quiz",
       slides: s2.story.slides,
       questions: s2.story.questions,
-      review: { keyIdea: { en: s2.description }, vocab: [s2.strand.toLowerCase()] },
+      review: {
+        keyIdea: { en: s2.description },
+        vocab: [s2.strand.toLowerCase()],
+      },
     });
 
-    let storyAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, kind: INFO, order: 1 } });
+    let storyAct = await prisma.activity.findFirst({
+      where: { lessonId: s2Lesson.id, kind: INFO, order: 1 },
+    });
     if (storyAct) {
-      await prisma.activity.update({ where: { id: storyAct.id }, data: { title: s2.story.title, content: storyContent } });
+      await prisma.activity.update({
+        where: { id: storyAct.id },
+        data: { title: s2.story.title, content: storyContent },
+      });
     } else {
-      await prisma.activity.create({ data: { title: s2.story.title, kind: INFO, order: 1, content: storyContent, Lesson: { connect: { id: s2Lesson.id } } } });
+      await prisma.activity.create({
+        data: {
+          title: s2.story.title,
+          kind: INFO,
+          order: 1,
+          content: storyContent,
+          Lesson: { connect: { id: s2Lesson.id } },
+        },
+      });
     }
 
     // Activity 2: Game (INTERACT)
     const gameContent = JSON.stringify({ gameKey: s2.gameKey });
-    let gameAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, kind: INTERACT, order: 2 } });
+    let gameAct = await prisma.activity.findFirst({
+      where: { lessonId: s2Lesson.id, kind: INTERACT, order: 2 },
+    });
     if (gameAct) {
-      await prisma.activity.update({ where: { id: gameAct.id }, data: { id: s2.activityId, title: `Game: ${s2.title}`, content: gameContent } });
+      await prisma.activity.update({
+        where: { id: gameAct.id },
+        data: {
+          id: s2.activityId,
+          title: `Game: ${s2.title}`,
+          content: gameContent,
+        },
+      });
     } else {
-      await prisma.activity.create({ data: { id: s2.activityId, title: `Game: ${s2.title}`, kind: INTERACT, order: 2, content: gameContent, Lesson: { connect: { id: s2Lesson.id } } } });
+      await prisma.activity.create({
+        data: {
+          id: s2.activityId,
+          title: `Game: ${s2.title}`,
+          kind: INTERACT,
+          order: 2,
+          content: gameContent,
+          Lesson: { connect: { id: s2Lesson.id } },
+        },
+      });
     }
 
     // Activity 3: Quiz (INFO with quiz questions)
@@ -1110,14 +2386,419 @@ async function main() {
       slides: [],
       questions: s2.quiz ?? [],
     });
-    let quizAct = await prisma.activity.findFirst({ where: { lessonId: s2Lesson.id, order: 3 } });
+    let quizAct = await prisma.activity.findFirst({
+      where: { lessonId: s2Lesson.id, order: 3 },
+    });
     if (quizAct) {
-      await prisma.activity.update({ where: { id: quizAct.id }, data: { title: `Quiz: ${s2.title}`, kind: INFO, content: quizContent } });
+      await prisma.activity.update({
+        where: { id: quizAct.id },
+        data: { title: `Quiz: ${s2.title}`, kind: INFO, content: quizContent },
+      });
     } else {
-      await prisma.activity.create({ data: { title: `Quiz: ${s2.title}`, kind: INFO, order: 3, content: quizContent, Lesson: { connect: { id: s2Lesson.id } } } });
+      await prisma.activity.create({
+        data: {
+          title: `Quiz: ${s2.title}`,
+          kind: INFO,
+          order: 3,
+          content: quizContent,
+          Lesson: { connect: { id: s2Lesson.id } },
+        },
+      });
     }
 
     console.log("Seeded Set 2 module:", s2.slug, "(story + game + quiz)");
+  }
+
+  // ---------------------------------------------------------------------
+  // SET 3 — Mastery ("mastery through making"; game 1 only, GATED from
+  // students via HIDDEN_MODULE_SLUGS in src/constants/stemSets.ts — the
+  // module is seeded + published so ungating is a one-line frontend change).
+  // ---------------------------------------------------------------------
+  const set3Modules = [
+    {
+      slug: "k2-stem-track-maker",
+      title: "Boost Track Builder",
+      description: "Build your own motorcycle track, then ride it! 🏍️🛠️",
+      activityId: "track-maker",
+      gameKey: "track_maker",
+      strand: "Quantum",
+      story: {
+        title: "Story: Boost's New Wheels",
+        slides: [
+          {
+            id: "tm-s1",
+            text: {
+              en: "Boost just got a shiny motorcycle — vroom! But there's a problem: there's no track to ride it on. Guess who gets to build one? YOU!",
+              es: "¡Boost tiene una moto nueva y brillante — brum! Pero hay un problema: no hay pista para montarla. ¿Adivina quién va a construir una? ¡TÚ!",
+            },
+            icon: "🏍️",
+          },
+          {
+            id: "tm-s2",
+            text: {
+              en: "Here's Boost's builder tip: bikes love straights, but curves are tricky. Go too fast into a sharp curve and — whoaaa — spin-out! Good builders think about speed.",
+              es: "El consejo de Boost: a las motos les encantan las rectas, pero las curvas son difíciles. Si entras muy rápido a una curva cerrada — ¡uuuy — trompo! Los buenos constructores piensan en la velocidad.",
+            },
+            icon: "🛠️",
+          },
+          {
+            id: "tm-s3",
+            text: {
+              en: "Build your track, ride it, and make it better each time. Every wobble teaches you something. Ready, builder?",
+              es: "Construye tu pista, móntala y mejórala cada vez. Cada tambaleo te enseña algo. ¿Listo, constructor?",
+            },
+            icon: "⭐",
+          },
+        ],
+        questions: [
+          {
+            id: "tm-q1",
+            prompt: {
+              en: "What happens if the bike goes too fast into a sharp curve?",
+              es: "¿Qué pasa si la moto entra muy rápido a una curva cerrada?",
+            },
+            choices: [
+              { en: "It spins out", es: "Da un trompo" },
+              { en: "It flies away", es: "Sale volando" },
+              { en: "Nothing happens", es: "No pasa nada" },
+              { en: "It gets bigger", es: "Se hace más grande" },
+            ],
+            answerIndex: 0,
+          },
+        ],
+      },
+      quiz: [
+        {
+          id: "tmz-q1",
+          prompt: {
+            en: "The bike keeps spinning out on your sharp curve. What could help?",
+            es: "La moto sigue dando trompos en tu curva cerrada. ¿Qué podría ayudar?",
+          },
+          choices: [
+            {
+              en: "Slow down before the curve",
+              es: "Frenar antes de la curva",
+            },
+            {
+              en: "Put a boost pad right before it",
+              es: "Poner un acelerador justo antes",
+            },
+            { en: "Ride faster", es: "Ir más rápido" },
+            { en: "Close your eyes", es: "Cerrar los ojos" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "tmz-q2",
+          prompt: {
+            en: "Your ride didn't go how you wanted. What does a good builder do?",
+            es: "Tu paseo no salió como querías. ¿Qué hace un buen constructor?",
+          },
+          choices: [
+            {
+              en: "Change the track and try again",
+              es: "Cambiar la pista y probar otra vez",
+            },
+            {
+              en: "Stop building forever",
+              es: "Dejar de construir para siempre",
+            },
+            { en: "Blame the bike", es: "Culpar a la moto" },
+            { en: "Delete everything", es: "Borrar todo" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "tmz-q3",
+          prompt: {
+            en: "What does a boost pad do?",
+            es: "¿Qué hace un acelerador?",
+          },
+          choices: [
+            {
+              en: "Makes the bike zoom fast",
+              es: "Hace que la moto vaya súper rápido",
+            },
+            { en: "Stops the bike", es: "Detiene la moto" },
+            { en: "Paints the bike", es: "Pinta la moto" },
+            { en: "Makes the track longer", es: "Alarga la pista" },
+          ],
+          answerIndex: 0,
+        },
+      ],
+    },
+    {
+      slug: "k2-stem-echo-avenue",
+      title: "Echo Avenue",
+      description: "Make a two-performer sound-and-motion duet! 🎙️🕺",
+      activityId: "echo-avenue",
+      gameKey: "echo_avenue",
+      strand: "AI",
+      story: {
+        title: "Story: The Quiet Street",
+        slides: [
+          {
+            id: "ea-s1",
+            text: {
+              en: "Echo Avenue used to be the loudest street in town — every step, clap, and chime made the whole block dance. But lately it's gone quiet. The stage is empty!",
+              es: "La Avenida del Eco era la calle más ruidosa de la ciudad: cada paso, palmada y campanada hacía bailar a toda la cuadra. ¡Pero últimamente está en silencio. El escenario está vacío!",
+            },
+            icon: "🎙️",
+          },
+          {
+            id: "ea-s2",
+            text: {
+              en: "Two performers are waiting for a director — that's YOU. Every pad you tap makes a move AND a sound at the same time. Record a phrase, and it loops around and around.",
+              es: "Dos artistas esperan a su director: ¡ese eres TÚ! Cada botón que tocas hace un movimiento Y un sonido a la vez. Graba una frase y se repetirá una y otra vez.",
+            },
+            icon: "🕺",
+          },
+          {
+            id: "ea-s3",
+            text: {
+              en: "There's no wrong beat on Echo Avenue. Layer your two performers, leave quiet spaces, let them answer each other — and share your duet when YOU decide it's ready!",
+              es: "En la Avenida del Eco no hay ritmo equivocado. Combina a tus dos artistas, deja espacios de silencio, haz que se respondan — ¡y comparte tu dúo cuando TÚ decidas que está listo!",
+            },
+            icon: "⭐",
+          },
+        ],
+        questions: [
+          {
+            id: "ea-q1",
+            prompt: {
+              en: "What happens when you tap a pad on Echo Avenue?",
+              es: "¿Qué pasa cuando tocas un botón en la Avenida del Eco?",
+            },
+            choices: [
+              {
+                en: "A performer moves and sounds at the same time",
+                es: "Un artista se mueve y suena a la vez",
+              },
+              { en: "You lose a point", es: "Pierdes un punto" },
+              { en: "Nothing happens", es: "No pasa nada" },
+              { en: "The game ends", es: "El juego termina" },
+            ],
+            answerIndex: 0,
+          },
+        ],
+      },
+      quiz: [
+        {
+          id: "eaz-q1",
+          prompt: {
+            en: "Your loop plays the same phrase again and again. What is that called?",
+            es: "Tu bucle toca la misma frase una y otra vez. ¿Cómo se llama eso?",
+          },
+          choices: [
+            { en: "A repeating pattern", es: "Un patrón que se repite" },
+            { en: "A mistake", es: "Un error" },
+            { en: "A race", es: "Una carrera" },
+            { en: "A test", es: "una prueba" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "eaz-q2",
+          prompt: {
+            en: "One performer plays, then the other answers in the quiet spaces. What did you make?",
+            es: "Un artista toca y el otro responde en los espacios de silencio. ¿Qué creaste?",
+          },
+          choices: [
+            { en: "Call-and-response", es: "Llamada y respuesta" },
+            { en: "A traffic jam", es: "Un atasco" },
+            { en: "A countdown", es: "Una cuenta regresiva" },
+            { en: "An echo error", es: "Un error de eco" },
+          ],
+          answerIndex: 0,
+        },
+        {
+          id: "eaz-q3",
+          prompt: {
+            en: "When is your duet finished?",
+            es: "¿Cuándo está terminado tu dúo?",
+          },
+          choices: [
+            {
+              en: "When YOU decide it's ready",
+              es: "Cuando TÚ decides que está listo",
+            },
+            { en: "When the timer runs out", es: "Cuando se acaba el tiempo" },
+            {
+              en: "When you get all the beats right",
+              es: "Cuando aciertas todos los ritmos",
+            },
+            { en: "When the game says so", es: "Cuando el juego lo dice" },
+          ],
+          answerIndex: 0,
+        },
+      ],
+    },
+  ];
+
+  for (const s3 of set3Modules) {
+    const mod = await prisma.module.upsert({
+      where: { slug: s3.slug },
+      update: {
+        title: s3.title,
+        description: s3.description,
+        level: "K-2",
+        published: true,
+      },
+      create: {
+        slug: s3.slug,
+        title: s3.title,
+        description: s3.description,
+        level: "K-2",
+        published: true,
+      },
+    });
+
+    // Get or create unit — use first unit of this module (not by title, which may have changed)
+    let s3Unit = await prisma.unit.findFirst({
+      where: { moduleId: mod.id },
+      orderBy: { order: "asc" },
+    });
+    if (!s3Unit) {
+      s3Unit = await prisma.unit.create({
+        data: {
+          title: "Unit 1",
+          order: 1,
+          Module: { connect: { id: mod.id } },
+          teacher: { connect: { id: teacher.id } },
+        },
+      });
+    }
+
+    // Get or create lesson — use first lesson of this unit
+    let s3Lesson = await prisma.lesson.findFirst({
+      where: { unitId: s3Unit.id },
+      orderBy: { order: "asc" },
+    });
+    if (!s3Lesson) {
+      s3Lesson = await prisma.lesson.create({
+        data: {
+          title: s3.title,
+          order: 1,
+          Unit: { connect: { id: s3Unit.id } },
+        },
+      });
+    }
+
+    // Clean up duplicate lessons (from previous seed runs with different titles)
+    const allS3Lessons = await prisma.lesson.findMany({
+      where: { unitId: s3Unit.id },
+    });
+    for (const dup of allS3Lessons) {
+      if (dup.id !== s3Lesson.id) {
+        await prisma.activity.deleteMany({ where: { lessonId: dup.id } });
+        await prisma.lesson.delete({ where: { id: dup.id } }).catch(() => {});
+      }
+    }
+
+    // Clean up duplicate activities within this lesson (keep only 3: story, game, quiz)
+    const existingS3Acts = await prisma.activity.findMany({
+      where: { lessonId: s3Lesson.id },
+      orderBy: { order: "asc" },
+    });
+    for (const act of existingS3Acts) {
+      if (act.order > 3) {
+        await prisma.activity.delete({ where: { id: act.id } }).catch(() => {});
+      }
+    }
+
+    // Activity 1: Story (INFO)
+    const s3StoryContent = JSON.stringify({
+      type: "story_quiz",
+      slides: s3.story.slides,
+      questions: s3.story.questions,
+      review: {
+        keyIdea: { en: s3.description },
+        vocab: [s3.strand.toLowerCase()],
+      },
+    });
+
+    let s3StoryAct = await prisma.activity.findFirst({
+      where: { lessonId: s3Lesson.id, kind: INFO, order: 1 },
+    });
+    if (s3StoryAct) {
+      await prisma.activity.update({
+        where: { id: s3StoryAct.id },
+        data: { title: s3.story.title, content: s3StoryContent },
+      });
+    } else {
+      await prisma.activity.create({
+        data: {
+          title: s3.story.title,
+          kind: INFO,
+          order: 1,
+          content: s3StoryContent,
+          Lesson: { connect: { id: s3Lesson.id } },
+        },
+      });
+    }
+
+    // Activity 2: Game (INTERACT)
+    const s3GameContent = JSON.stringify({ gameKey: s3.gameKey });
+    let s3GameAct = await prisma.activity.findFirst({
+      where: { lessonId: s3Lesson.id, kind: INTERACT, order: 2 },
+    });
+    if (s3GameAct) {
+      await prisma.activity.update({
+        where: { id: s3GameAct.id },
+        data: {
+          id: s3.activityId,
+          title: `Game: ${s3.title}`,
+          content: s3GameContent,
+        },
+      });
+    } else {
+      await prisma.activity.create({
+        data: {
+          id: s3.activityId,
+          title: `Game: ${s3.title}`,
+          kind: INTERACT,
+          order: 2,
+          content: s3GameContent,
+          Lesson: { connect: { id: s3Lesson.id } },
+        },
+      });
+    }
+
+    // Activity 3: Quiz (INFO with quiz questions)
+    const s3QuizContent = JSON.stringify({
+      type: "story_quiz",
+      slides: [],
+      questions: s3.quiz ?? [],
+    });
+    let s3QuizAct = await prisma.activity.findFirst({
+      where: { lessonId: s3Lesson.id, order: 3 },
+    });
+    if (s3QuizAct) {
+      await prisma.activity.update({
+        where: { id: s3QuizAct.id },
+        data: {
+          title: `Quiz: ${s3.title}`,
+          kind: INFO,
+          content: s3QuizContent,
+        },
+      });
+    } else {
+      await prisma.activity.create({
+        data: {
+          title: `Quiz: ${s3.title}`,
+          kind: INFO,
+          order: 3,
+          content: s3QuizContent,
+          Lesson: { connect: { id: s3Lesson.id } },
+        },
+      });
+    }
+
+    console.log(
+      "Seeded Set 3 module:",
+      s3.slug,
+      "(story + game + quiz — gated)",
+    );
   }
 
   console.log("Seeding units...");
@@ -1173,25 +2854,28 @@ async function main() {
     where: { lessonId: lesson.id, title: "Build a Bot" },
   });
   if (buildBot) {
-    await prisma.activity.delete({ where: { id: buildBot.id } }).catch(() => {});
+    await prisma.activity
+      .delete({ where: { id: buildBot.id } })
+      .catch(() => {});
     console.log("Cleaned up removed Build-a-Bot activity.");
   }
   console.log("Seeded activities.");
-
 
   // ── Grade 3-5 first playable module: Data Dash: Sort & Discover ──
   const g35DataDashModule = await prisma.module.upsert({
     where: { slug: "g35-data-dash-sort-discover" },
     update: {
       title: "Data Dash: Sort & Discover",
-      description: "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
+      description:
+        "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
       level: "G3-5",
       published: true,
     },
     create: {
       slug: "g35-data-dash-sort-discover",
       title: "Data Dash: Sort & Discover",
-      description: "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
+      description:
+        "Classify plant data with multiple attributes, infer rules, and support claims with chart evidence.",
       level: "G3-5",
       published: true,
     },
@@ -1199,7 +2883,10 @@ async function main() {
   console.log("Created module:", g35DataDashModule.slug);
 
   let g35DataDashUnit = await prisma.unit.findFirst({
-    where: { moduleId: g35DataDashModule.id, title: "Unit 1: Greenhouse Data Lab" },
+    where: {
+      moduleId: g35DataDashModule.id,
+      title: "Unit 1: Greenhouse Data Lab",
+    },
   });
   if (!g35DataDashUnit) {
     g35DataDashUnit = await prisma.unit.create({
@@ -1213,7 +2900,10 @@ async function main() {
   }
 
   let g35DataDashLesson = await prisma.lesson.findFirst({
-    where: { unitId: g35DataDashUnit.id, title: "Lesson 1: Sort, Infer, Explain" },
+    where: {
+      unitId: g35DataDashUnit.id,
+      title: "Lesson 1: Sort, Infer, Explain",
+    },
   });
   if (!g35DataDashLesson) {
     g35DataDashLesson = await prisma.lesson.create({
@@ -1264,64 +2954,148 @@ async function main() {
     questions: [
       {
         id: "dd-q1",
-        prompt: { en: "Which choice is a classification rule (not just one observation)?", es: "¿Qué opción es una regla de clasificación (no solo una observación)?" },
+        prompt: {
+          en: "Which choice is a classification rule (not just one observation)?",
+          es: "¿Qué opción es una regla de clasificación (no solo una observación)?",
+        },
         choices: [
-          { en: "Group plants by seed type", es: "Agrupar plantas por tipo de semilla" },
-          { en: "This fern needs high water", es: "Este helecho necesita mucha agua" },
-          { en: "Plant bed A has three plants", es: "La cama de plantas A tiene tres plantas" },
-          { en: "Card 4 has the prettiest flowers", es: "La tarjeta 4 tiene las flores más bonitas" }
+          {
+            en: "Group plants by seed type",
+            es: "Agrupar plantas por tipo de semilla",
+          },
+          {
+            en: "This fern needs high water",
+            es: "Este helecho necesita mucha agua",
+          },
+          {
+            en: "Plant bed A has three plants",
+            es: "La cama de plantas A tiene tres plantas",
+          },
+          {
+            en: "Card 4 has the prettiest flowers",
+            es: "La tarjeta 4 tiene las flores más bonitas",
+          },
         ],
         answerIndex: 0,
-        hint: { en: "A rule can be used on every card.", es: "Una regla puede usarse en cada tarjeta." }
+        hint: {
+          en: "A rule can be used on every card.",
+          es: "Una regla puede usarse en cada tarjeta.",
+        },
       },
       {
         id: "dd-q2",
-        prompt: { en: "If two cards both have cone seeds, what is true?", es: "Si dos tarjetas tienen semillas en cono, ¿qué es verdadero?" },
+        prompt: {
+          en: "If two cards both have cone seeds, what is true?",
+          es: "Si dos tarjetas tienen semillas en cono, ¿qué es verdadero?",
+        },
         choices: [
           { en: "They match on seed type", es: "Coinciden en tipo de semilla" },
-          { en: "They must be in the same plant bed", es: "Deben estar en la misma cama de plantas" },
-          { en: "They must need the same water", es: "Deben necesitar la misma agua" },
-          { en: "They must be the same color", es: "Deben ser del mismo color" }
+          {
+            en: "They must be in the same plant bed",
+            es: "Deben estar en la misma cama de plantas",
+          },
+          {
+            en: "They must need the same water",
+            es: "Deben necesitar la misma agua",
+          },
+          {
+            en: "They must be the same color",
+            es: "Deben ser del mismo color",
+          },
         ],
         answerIndex: 0,
-        hint: { en: "Look only at the named attribute.", es: "Mira solo el atributo nombrado." }
+        hint: {
+          en: "Look only at the named attribute.",
+          es: "Mira solo el atributo nombrado.",
+        },
       },
       {
         id: "dd-q3",
-        prompt: { en: "A chart shows full sunlight = 5, shade = 2, partial = 1. Which claim is best supported?", es: "Un gráfico muestra luz solar completa = 5, sombra = 2, parcial = 1. ¿Qué afirmación está mejor respaldada?" },
+        prompt: {
+          en: "A chart shows full sunlight = 5, shade = 2, partial = 1. Which claim is best supported?",
+          es: "Un gráfico muestra luz solar completa = 5, sombra = 2, parcial = 1. ¿Qué afirmación está mejor respaldada?",
+        },
         choices: [
-          { en: "Most plants need full sunlight", es: "La mayoría de las plantas necesitan luz solar completa" },
-          { en: "All plants need shade", es: "Todas las plantas necesitan sombra" },
-          { en: "No plants need partial sunlight", es: "Ninguna planta necesita luz solar parcial" },
-          { en: "Plants prefer shade over sunlight", es: "Las plantas prefieren la sombra al sol" }
+          {
+            en: "Most plants need full sunlight",
+            es: "La mayoría de las plantas necesitan luz solar completa",
+          },
+          {
+            en: "All plants need shade",
+            es: "Todas las plantas necesitan sombra",
+          },
+          {
+            en: "No plants need partial sunlight",
+            es: "Ninguna planta necesita luz solar parcial",
+          },
+          {
+            en: "Plants prefer shade over sunlight",
+            es: "Las plantas prefieren la sombra al sol",
+          },
         ],
         answerIndex: 0,
-        hint: { en: "Choose the claim that matches the largest count.", es: "Elige la afirmación que coincide con el mayor conteo." }
+        hint: {
+          en: "Choose the claim that matches the largest count.",
+          es: "Elige la afirmación que coincide con el mayor conteo.",
+        },
       },
       {
         id: "dd-q4",
-        prompt: { en: "What is the strongest evidence for your claim?", es: "¿Cuál es la evidencia más fuerte para tu afirmación?" },
+        prompt: {
+          en: "What is the strongest evidence for your claim?",
+          es: "¿Cuál es la evidencia más fuerte para tu afirmación?",
+        },
         choices: [
-          { en: "The full-sun bar is tallest", es: "La barra de sol completo es la más alta" },
-          { en: "I like full-sun plants", es: "Me gustan las plantas de sol completo" },
-          { en: "My friend chose that answer", es: "Mi amigo eligió esa respuesta" },
-          { en: "It just felt like the right answer", es: "Sentí que era la respuesta correcta" }
+          {
+            en: "The full-sun bar is tallest",
+            es: "La barra de sol completo es la más alta",
+          },
+          {
+            en: "I like full-sun plants",
+            es: "Me gustan las plantas de sol completo",
+          },
+          {
+            en: "My friend chose that answer",
+            es: "Mi amigo eligió esa respuesta",
+          },
+          {
+            en: "It just felt like the right answer",
+            es: "Sentí que era la respuesta correcta",
+          },
         ],
         answerIndex: 0,
-        hint: { en: "Evidence comes from measured data.", es: "La evidencia proviene de datos medidos." }
+        hint: {
+          en: "Evidence comes from measured data.",
+          es: "La evidencia proviene de datos medidos.",
+        },
       },
       {
         id: "dd-q5",
-        prompt: { en: "Why is multi-attribute sorting useful?", es: "¿Por qué es útil clasificar por múltiples atributos?" },
+        prompt: {
+          en: "Why is multi-attribute sorting useful?",
+          es: "¿Por qué es útil clasificar por múltiples atributos?",
+        },
         choices: [
-          { en: "It helps find deeper patterns and better explanations", es: "Ayuda a encontrar patrones más profundos y mejores explicaciones" },
+          {
+            en: "It helps find deeper patterns and better explanations",
+            es: "Ayuda a encontrar patrones más profundos y mejores explicaciones",
+          },
           { en: "It makes data random", es: "Hace los datos aleatorios" },
-          { en: "It removes the need for evidence", es: "Elimina la necesidad de evidencia" },
-          { en: "It makes sorting faster than using one attribute", es: "Hace que clasificar sea más rápido que usar un atributo" }
+          {
+            en: "It removes the need for evidence",
+            es: "Elimina la necesidad de evidencia",
+          },
+          {
+            en: "It makes sorting faster than using one attribute",
+            es: "Hace que clasificar sea más rápido que usar un atributo",
+          },
         ],
         answerIndex: 0,
-        hint: { en: "More than one attribute can reveal hidden structure.", es: "Más de un atributo puede revelar estructura oculta." }
-      }
+        hint: {
+          en: "More than one attribute can reveal hidden structure.",
+          es: "Más de un atributo puede revelar estructura oculta.",
+        },
+      },
     ],
   });
 
@@ -1384,167 +3158,355 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════════════════
   console.log("Seeding module families and variants...");
   try {
+    const familyDefs = [
+      {
+        key: "quantum_quest",
+        title: "Quantum Foundations",
+        iconEmoji: "⚛️",
+        k2: {
+          title: "Quantum Quest",
+          subtitle: "Explore quantum puzzles in a space math adventure!",
+          moduleSlug: "k2-stem-quantum-quest",
+        },
+        g3_5: {
+          title: "Quantum Mission: Pattern Lab",
+          subtitle: "Model quantum patterns and test outcomes!",
+          contentConfig: {
+            theme: "lab",
+            reading: {
+              wordCount: 270,
+              topic: "probability, patterns, observation, and evidence",
+              vocabulary: [
+                "quantum",
+                "pattern",
+                "probability",
+                "outcome",
+                "evidence",
+              ],
+            },
+            questions: {
+              count: 5,
+              types: [
+                "pattern-identification",
+                "prediction",
+                "evidence-choice",
+              ],
+            },
+            game: {
+              rounds: 3,
+              phases: ["observe", "predict", "test"],
+              mechanics: [
+                "state-toggle",
+                "outcome-tracker",
+                "pattern-matcher",
+                "hint-ladder",
+              ],
+            },
+            supports: {
+              hintLadder: true,
+              glossary: true,
+              readAloud: true,
+              recap: true,
+            },
+            ui: { tone: "mission-control", progressType: "ring" },
+          },
+        },
+      },
+      {
+        key: "motion",
+        title: "Forces & Motion",
+        iconEmoji: "🚀",
+        k2: {
+          title: "Rhyme & Ride",
+          subtitle: "Ride through worlds and catch rhymes!",
+          moduleSlug: "k2-stem-rhyme-ride",
+        },
+        g3_5: {
+          title: "Motion Mission: Force Lab",
+          subtitle: "Predict, test, and master forces!",
+          contentConfig: {
+            theme: "lab",
+            reading: {
+              wordCount: 260,
+              topic: "force, friction, mass, prediction",
+              vocabulary: [
+                "force",
+                "friction",
+                "mass",
+                "acceleration",
+                "prediction",
+              ],
+            },
+            questions: {
+              count: 5,
+              types: ["prediction", "comparison", "variable-identification"],
+            },
+            game: {
+              rounds: 3,
+              phases: ["predict", "test", "adjust-variables"],
+              mechanics: [
+                "force-slider",
+                "surface-selector",
+                "target-practice",
+              ],
+            },
+            supports: {
+              hintLadder: true,
+              glossary: true,
+              readAloud: true,
+              recap: true,
+            },
+            ui: { tone: "lab", progressType: "bar" },
+          },
+        },
+      },
+      {
+        key: "sorting",
+        title: "Sorting & Classification",
+        iconEmoji: "📊",
+        k2: {
+          title: "Bounce & Buds",
+          subtitle: "Bounce through the right gate!",
+          moduleSlug: "k2-stem-bounce-buds",
+        },
+        g3_5: {
+          title: "Data Dash: Sort & Discover",
+          subtitle: "Classify data and find hidden patterns!",
+          contentConfig: {
+            theme: "dashboard",
+            reading: {
+              wordCount: 240,
+              topic: "classification, organizing data, finding patterns",
+              vocabulary: ["classify", "attribute", "pattern", "data", "graph"],
+            },
+            questions: {
+              count: 6,
+              types: ["multi-attribute-sort", "hidden-rule", "chart-reading"],
+            },
+            game: {
+              rounds: 3,
+              phases: ["sort-by-attribute", "infer-rule", "read-chart"],
+              mechanics: ["drag-sort", "rule-builder", "bar-chart"],
+            },
+            supports: {
+              hintLadder: true,
+              glossary: true,
+              readAloud: true,
+              recap: true,
+            },
+            ui: { tone: "mission", progressType: "ring" },
+          },
+        },
+      },
+      {
+        key: "plant_variables",
+        title: "Plants & Fair Tests",
+        iconEmoji: "🌱",
+        k2: {
+          title: "Gotcha Gears",
+          subtitle: "Catch the right gear!",
+          moduleSlug: "k2-stem-gotcha-gears",
+        },
+        g3_5: {
+          title: "Variable Quest: Fair Test Lab",
+          subtitle: "Design experiments and test your ideas!",
+          contentConfig: {
+            theme: "lab",
+            reading: {
+              wordCount: 270,
+              topic:
+                "fair tests, changing one variable, evidence-based conclusions",
+              vocabulary: [
+                "variable",
+                "control",
+                "hypothesis",
+                "evidence",
+                "conclusion",
+              ],
+            },
+            questions: {
+              count: 5,
+              types: [
+                "fair-test-check",
+                "variable-identification",
+                "conclusion-choice",
+              ],
+            },
+            game: {
+              rounds: 3,
+              phases: [
+                "setup-experiment",
+                "observe-results",
+                "evaluate-fairness",
+              ],
+              mechanics: ["variable-lock", "lab-notebook", "sentence-stems"],
+            },
+            supports: {
+              hintLadder: true,
+              glossary: true,
+              readAloud: true,
+              recap: true,
+            },
+            ui: { tone: "lab", progressType: "bar" },
+          },
+        },
+      },
+      {
+        key: "bridge",
+        title: "Engineering & Design",
+        iconEmoji: "🏗️",
+        k2: {
+          title: "Tank Trek",
+          subtitle: "Guide a robot through mazes!",
+          moduleSlug: "k2-stem-tank-trek",
+        },
+        g3_5: {
+          title: "Design Under Pressure: Bridge Lab",
+          subtitle: "Build, test, and redesign structures!",
+          contentConfig: {
+            theme: "blueprint",
+            reading: {
+              wordCount: 260,
+              topic: "stability, triangles, constraints, redesign",
+              vocabulary: [
+                "stability",
+                "triangle",
+                "constraint",
+                "load",
+                "redesign",
+              ],
+            },
+            questions: {
+              count: 5,
+              types: [
+                "weak-point-identification",
+                "material-choice",
+                "design-comparison",
+              ],
+            },
+            game: {
+              rounds: 3,
+              phases: ["build", "load-test", "redesign"],
+              mechanics: [
+                "weak-point-highlight",
+                "starter-blueprint",
+                "budget-constraint",
+                "before-after-compare",
+              ],
+            },
+            supports: {
+              hintLadder: true,
+              glossary: true,
+              readAloud: true,
+              recap: true,
+            },
+            ui: { tone: "blueprint", progressType: "ring" },
+          },
+        },
+      },
+    ];
 
-  const familyDefs = [
-    {
-      key: "quantum_quest",
-      title: "Quantum Foundations",
-      iconEmoji: "⚛️",
-      k2: { title: "Quantum Quest", subtitle: "Explore quantum puzzles in a space math adventure!", moduleSlug: "k2-stem-quantum-quest" },
-      g3_5: {
-        title: "Quantum Mission: Pattern Lab",
-        subtitle: "Model quantum patterns and test outcomes!",
-        contentConfig: {
-          theme: "lab",
-          reading: { wordCount: 270, topic: "probability, patterns, observation, and evidence", vocabulary: ["quantum", "pattern", "probability", "outcome", "evidence"] },
-          questions: { count: 5, types: ["pattern-identification", "prediction", "evidence-choice"] },
-          game: { rounds: 3, phases: ["observe", "predict", "test"], mechanics: ["state-toggle", "outcome-tracker", "pattern-matcher", "hint-ladder"] },
-          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
-          ui: { tone: "mission-control", progressType: "ring" },
-        },
-      },
-    },
-    {
-      key: "motion",
-      title: "Forces & Motion",
-      iconEmoji: "🚀",
-      k2: { title: "Rhyme & Ride", subtitle: "Ride through worlds and catch rhymes!", moduleSlug: "k2-stem-rhyme-ride" },
-      g3_5: {
-        title: "Motion Mission: Force Lab",
-        subtitle: "Predict, test, and master forces!",
-        contentConfig: {
-          theme: "lab",
-          reading: { wordCount: 260, topic: "force, friction, mass, prediction", vocabulary: ["force", "friction", "mass", "acceleration", "prediction"] },
-          questions: { count: 5, types: ["prediction", "comparison", "variable-identification"] },
-          game: { rounds: 3, phases: ["predict", "test", "adjust-variables"], mechanics: ["force-slider", "surface-selector", "target-practice"] },
-          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
-          ui: { tone: "lab", progressType: "bar" },
-        },
-      },
-    },
-    {
-      key: "sorting",
-      title: "Sorting & Classification",
-      iconEmoji: "📊",
-      k2: { title: "Bounce & Buds", subtitle: "Bounce through the right gate!", moduleSlug: "k2-stem-bounce-buds" },
-      g3_5: {
-        title: "Data Dash: Sort & Discover",
-        subtitle: "Classify data and find hidden patterns!",
-        contentConfig: {
-          theme: "dashboard",
-          reading: { wordCount: 240, topic: "classification, organizing data, finding patterns", vocabulary: ["classify", "attribute", "pattern", "data", "graph"] },
-          questions: { count: 6, types: ["multi-attribute-sort", "hidden-rule", "chart-reading"] },
-          game: { rounds: 3, phases: ["sort-by-attribute", "infer-rule", "read-chart"], mechanics: ["drag-sort", "rule-builder", "bar-chart"] },
-          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
-          ui: { tone: "mission", progressType: "ring" },
-        },
-      },
-    },
-    {
-      key: "plant_variables",
-      title: "Plants & Fair Tests",
-      iconEmoji: "🌱",
-      k2: { title: "Gotcha Gears", subtitle: "Catch the right gear!", moduleSlug: "k2-stem-gotcha-gears" },
-      g3_5: {
-        title: "Variable Quest: Fair Test Lab",
-        subtitle: "Design experiments and test your ideas!",
-        contentConfig: {
-          theme: "lab",
-          reading: { wordCount: 270, topic: "fair tests, changing one variable, evidence-based conclusions", vocabulary: ["variable", "control", "hypothesis", "evidence", "conclusion"] },
-          questions: { count: 5, types: ["fair-test-check", "variable-identification", "conclusion-choice"] },
-          game: { rounds: 3, phases: ["setup-experiment", "observe-results", "evaluate-fairness"], mechanics: ["variable-lock", "lab-notebook", "sentence-stems"] },
-          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
-          ui: { tone: "lab", progressType: "bar" },
-        },
-      },
-    },
-    {
-      key: "bridge",
-      title: "Engineering & Design",
-      iconEmoji: "🏗️",
-      k2: { title: "Tank Trek", subtitle: "Guide a robot through mazes!", moduleSlug: "k2-stem-tank-trek" },
-      g3_5: {
-        title: "Design Under Pressure: Bridge Lab",
-        subtitle: "Build, test, and redesign structures!",
-        contentConfig: {
-          theme: "blueprint",
-          reading: { wordCount: 260, topic: "stability, triangles, constraints, redesign", vocabulary: ["stability", "triangle", "constraint", "load", "redesign"] },
-          questions: { count: 5, types: ["weak-point-identification", "material-choice", "design-comparison"] },
-          game: { rounds: 3, phases: ["build", "load-test", "redesign"], mechanics: ["weak-point-highlight", "starter-blueprint", "budget-constraint", "before-after-compare"] },
-          supports: { hintLadder: true, glossary: true, readAloud: true, recap: true },
-          ui: { tone: "blueprint", progressType: "ring" },
-        },
-      },
-    },
-  ];
+    for (const fd of familyDefs) {
+      const family = await prisma.moduleFamily.upsert({
+        where: { key: fd.key },
+        create: { key: fd.key, title: fd.title, iconEmoji: fd.iconEmoji },
+        update: { title: fd.title, iconEmoji: fd.iconEmoji },
+      });
 
-  for (const fd of familyDefs) {
-    const family = await prisma.moduleFamily.upsert({
-      where: { key: fd.key },
-      create: { key: fd.key, title: fd.title, iconEmoji: fd.iconEmoji },
-      update: { title: fd.title, iconEmoji: fd.iconEmoji },
-    });
+      // K-2 variant (links to existing module)
+      await prisma.moduleVariant.upsert({
+        where: {
+          familyId_band_version: {
+            familyId: family.id,
+            band: "k2",
+            version: "1.0",
+          },
+        },
+        create: {
+          familyId: family.id,
+          band: "k2",
+          version: "1.0",
+          title: fd.k2.title,
+          subtitle: fd.k2.subtitle,
+          status: "active",
+          moduleSlug: fd.k2.moduleSlug,
+        },
+        update: {
+          title: fd.k2.title,
+          subtitle: fd.k2.subtitle,
+          moduleSlug: fd.k2.moduleSlug,
+        },
+      });
 
-    // K-2 variant (links to existing module)
-    await prisma.moduleVariant.upsert({
-      where: { familyId_band_version: { familyId: family.id, band: "k2", version: "1.0" } },
+      // G3-5 variant (new upper-elementary content)
+      await prisma.moduleVariant.upsert({
+        where: {
+          familyId_band_version: {
+            familyId: family.id,
+            band: "g3_5",
+            version: "1.0",
+          },
+        },
+        create: {
+          familyId: family.id,
+          band: "g3_5",
+          version: "1.0",
+          title: fd.g3_5.title,
+          subtitle: fd.g3_5.subtitle,
+          status: "active",
+          contentConfig: fd.g3_5.contentConfig,
+        },
+        update: {
+          title: fd.g3_5.title,
+          subtitle: fd.g3_5.subtitle,
+          contentConfig: fd.g3_5.contentConfig,
+        },
+      });
+
+      console.log(`  Seeded family "${fd.key}" with k2 + g3_5 variants`);
+    }
+
+    // Seed a demo g3_5 class if teacher exists
+    const demoClass = await prisma.course.upsert({
+      where: { joinCode: "UPPER35" },
       create: {
-        familyId: family.id,
-        band: "k2",
-        version: "1.0",
-        title: fd.k2.title,
-        subtitle: fd.k2.subtitle,
-        status: "active",
-        moduleSlug: fd.k2.moduleSlug,
+        name: "Grade 3-5 STEM Demo",
+        joinCode: "UPPER35",
+        teacherId: teacher.id,
+        gradeBand: "g3_5",
       },
-      update: { title: fd.k2.title, subtitle: fd.k2.subtitle, moduleSlug: fd.k2.moduleSlug },
+      update: { gradeBand: "g3_5" },
     });
+    console.log("Seeded demo g3_5 class:", demoClass.name);
 
-    // G3-5 variant (new upper-elementary content)
-    await prisma.moduleVariant.upsert({
-      where: { familyId_band_version: { familyId: family.id, band: "g3_5", version: "1.0" } },
-      create: {
-        familyId: family.id,
-        band: "g3_5",
-        version: "1.0",
-        title: fd.g3_5.title,
-        subtitle: fd.g3_5.subtitle,
-        status: "active",
-        contentConfig: fd.g3_5.contentConfig,
-      },
-      update: { title: fd.g3_5.title, subtitle: fd.g3_5.subtitle, contentConfig: fd.g3_5.contentConfig },
+    // Auto-assign all g3_5 variants to the demo class
+    const g35Variants = await prisma.moduleVariant.findMany({
+      where: { band: "g3_5", status: "active" },
     });
+    for (let i = 0; i < g35Variants.length; i++) {
+      await prisma.classModuleAssignment.upsert({
+        where: {
+          courseId_moduleVariantId: {
+            courseId: demoClass.id,
+            moduleVariantId: g35Variants[i].id,
+          },
+        },
+        create: {
+          courseId: demoClass.id,
+          moduleVariantId: g35Variants[i].id,
+          orderIndex: i,
+        },
+        update: { orderIndex: i },
+      });
+    }
+    console.log(`  Assigned ${g35Variants.length} g3_5 variants to demo class`);
 
-    console.log(`  Seeded family "${fd.key}" with k2 + g3_5 variants`);
-  }
-
-  // Seed a demo g3_5 class if teacher exists
-  const demoClass = await prisma.course.upsert({
-    where: { joinCode: "UPPER35" },
-    create: {
-      name: "Grade 3-5 STEM Demo",
-      joinCode: "UPPER35",
-      teacherId: teacher.id,
-      gradeBand: "g3_5",
-    },
-    update: { gradeBand: "g3_5" },
-  });
-  console.log("Seeded demo g3_5 class:", demoClass.name);
-
-  // Auto-assign all g3_5 variants to the demo class
-  const g35Variants = await prisma.moduleVariant.findMany({ where: { band: "g3_5", status: "active" } });
-  for (let i = 0; i < g35Variants.length; i++) {
-    await prisma.classModuleAssignment.upsert({
-      where: { courseId_moduleVariantId: { courseId: demoClass.id, moduleVariantId: g35Variants[i].id } },
-      create: { courseId: demoClass.id, moduleVariantId: g35Variants[i].id, orderIndex: i },
-      update: { orderIndex: i },
-    });
-  }
-  console.log(`  Assigned ${g35Variants.length} g3_5 variants to demo class`);
-
-  console.log("Module families and variants seeded.");
+    console.log("Module families and variants seeded.");
   } catch (e) {
-    console.warn("Module families seed skipped (tables may not exist yet):", e.message);
+    console.warn(
+      "Module families seed skipped (tables may not exist yet):",
+      e.message,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1553,413 +3515,537 @@ async function main() {
   console.log("Seeding Pathways data...");
 
   try {
-  // Facilitator
-  const facilitatorHash = await bcrypt.hash("pathway123", 10);
-  let facilitator = await prisma.user.findUnique({ where: { email: "facilitator@test.com" } });
-  if (!facilitator) {
-    facilitator = await prisma.user.create({
-      data: {
-        name: "Coach Davis",
-        email: "facilitator@test.com",
-        password: facilitatorHash,
-        role: "teacher",
-        userType: "pathways",
-      },
+    // Facilitator
+    const facilitatorHash = await bcrypt.hash("pathway123", 10);
+    let facilitator = await prisma.user.findUnique({
+      where: { email: "facilitator@test.com" },
     });
-  } else {
-    facilitator = await prisma.user.update({
-      where: { id: facilitator.id },
-      data: { password: facilitatorHash, userType: "pathways" },
-    });
-  }
-  console.log("Seeded facilitator:", facilitator.email);
-
-  // Marcus — Launch band, partial progress
-  const marcusHash = await bcrypt.hash("marcus123", 10);
-  let marcus = await prisma.user.findUnique({ where: { email: "marcus@test.com" } });
-  if (!marcus) {
-    marcus = await prisma.user.create({
-      data: {
-        name: "Marcus",
-        email: "marcus@test.com",
-        password: marcusHash,
-        role: "student",
-        userType: "pathways",
-        ageBand: "launch",
-        birthYear: 2009,
-      },
-    });
-  } else {
-    marcus = await prisma.user.update({
-      where: { id: marcus.id },
-      data: { password: marcusHash, userType: "pathways", ageBand: "launch", birthYear: 2009 },
-    });
-  }
-  console.log("Seeded Marcus:", marcus.email);
-
-  // Aisha — Explorer band, fresh
-  const aishaHash = await bcrypt.hash("aisha123", 10);
-  let aisha = await prisma.user.findUnique({ where: { email: "aisha@test.com" } });
-  if (!aisha) {
-    aisha = await prisma.user.create({
-      data: {
-        name: "Aisha",
-        email: "aisha@test.com",
-        password: aishaHash,
-        role: "student",
-        userType: "pathways",
-        ageBand: "explorer",
-        birthYear: 2011,
-      },
-    });
-  } else {
-    aisha = await prisma.user.update({
-      where: { id: aisha.id },
-      data: { password: aishaHash, userType: "pathways", ageBand: "explorer", birthYear: 2011 },
-    });
-  }
-  console.log("Seeded Aisha:", aisha.email);
-
-  // ── Active cohort: ETO Spring 2026 ──
-  const cohort = await prisma.pathwayCohort.upsert({
-    where: { joinCode: "ETO2026" },
-    create: {
-      name: "ETO Spring 2026 — Cyber Cohort",
-      band: "launch",
-      sitePartner: "Escape The Odds — South Side",
-      facilitatorId: facilitator.id,
-      trackIds: ["cyber-launch"],
-      joinCode: "ETO2026",
-      status: "active",
-      description: "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
-      maxEnrollment: 12,
-      startDate: new Date("2026-03-02"),
-      endDate: new Date("2026-04-13"),
-      notes: [
-        { text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.", author: "Coach Davis", ts: new Date("2026-05-08").toISOString() },
-        { text: "Aisha needs more individual time on Network Basics.", author: "Coach Davis", ts: new Date("2026-05-10").toISOString() },
-        { text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.", author: "Coach Davis", ts: new Date("2026-05-12").toISOString() },
-      ],
-    },
-    update: {
-      facilitatorId: facilitator.id,
-      status: "active",
-      description: "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
-      maxEnrollment: 12,
-      startDate: new Date("2026-03-02"),
-      endDate: new Date("2026-04-13"),
-      sitePartner: "Escape The Odds — South Side",
-      notes: [
-        { text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.", author: "Coach Davis", ts: new Date("2026-05-08").toISOString() },
-        { text: "Aisha needs more individual time on Network Basics.", author: "Coach Davis", ts: new Date("2026-05-10").toISOString() },
-        { text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.", author: "Coach Davis", ts: new Date("2026-05-12").toISOString() },
-      ],
-    },
-  });
-
-  // Enroll Marcus and Aisha
-  for (const u of [marcus, aisha]) {
-    await prisma.pathwayEnrollment.upsert({
-      where: { userId_cohortId: { userId: u.id, cohortId: cohort.id } },
-      create: { userId: u.id, cohortId: cohort.id },
-      update: {},
-    });
-  }
-
-  // Marcus's Cyber Launch milestones (partial progress).
-  // Section-level fields, homework responses, and time spent are filled in so
-  // Coach Davis's facilitator view shows real-looking work, not empty rows.
-  // upsert update block re-applies these every seed run — important when the
-  // section-progress migration lands on top of existing rows.
-  const MARCUS_HOMEWORK = {
-    "cyber-foundations":
-      "This week I counted 47 times cybersecurity affected my daily life. Most surprising: my game console asked for MFA when I tried to add a new payment method. I always thought MFA was just for banks. Three examples that stood out: (1) school portal asking for 2FA at every login, (2) a 'this site is not secure' warning on a free movie site I tried, (3) my mom getting a phishing text pretending to be Chase.",
-    "digital-safety-sim":
-      "My 5 most important accounts: school email, personal email, bank, Instagram, Discord. Audit results — only 2 had unique passwords (school, bank), only 1 had MFA (bank). Recovery emails were stale on 3 of them. Action plan this week: install Bitwarden, generate unique passwords for the other 3 accounts, turn on MFA on email first (because it's the recovery channel for everything else).",
-    "network-basics":
-      "Drew my home network on paper. Router: Netgear Nighthawk (don't know model #). 11 devices connected — 4 phones, 2 laptops, smart TV, gaming console, Ring doorbell, smart bulb x2. Riskiest device: the smart TV — bought it in 2019 and I can't remember it ever updating. One change: move the smart-home stuff to the guest WiFi so if any of them gets popped it can't see the main network.",
-  };
-  const marcusMilestones = [
-    { moduleSlug: "cyber-foundations", status: "completed", score: 85, daysAgo: 7, timeSpent: 62 },
-    { moduleSlug: "digital-safety-sim", status: "completed", score: 90, daysAgo: 5, timeSpent: 58 },
-    { moduleSlug: "network-basics", status: "completed", score: 78, daysAgo: 3, timeSpent: 65 },
-    { moduleSlug: "threat-detective", status: "in_progress", score: null, daysAgo: 1, timeSpent: 28 },
-  ];
-
-  // Clear any drifted Cyber Launch milestone state before re-seeding the
-  // canonical 4 rows. Without this, live demo usage that touches modules
-  // outside the seed array accumulates rows that the upsert-only loop
-  // never cleans up — Marcus drifted from "3 done + 1 in flight" to
-  // "1 done + 5 in flight" over the past two weeks. (See diagnostic
-  // finding M4.) Scope is bounded to Marcus's Cyber Launch track only.
-  await prisma.pathwayMilestone.deleteMany({
-    where: { userId: marcus.id, trackSlug: "cyber-launch" },
-  });
-
-  for (const m of marcusMilestones) {
-    const isDone = m.status === "completed";
-    const isInProgress = m.status === "in_progress";
-    const fullFields = {
-      status: m.status,
-      score: m.score,
-      completedAt: isDone ? new Date(Date.now() - m.daysAgo * 86400000) : null,
-      hookCompleted: isDone || isInProgress,
-      readingCompleted: isDone || isInProgress,
-      lessonCompleted: isDone || isInProgress,
-      practiceCompleted: isDone,
-      homeworkSubmitted: isDone,
-      homeworkResponse: isDone ? MARCUS_HOMEWORK[m.moduleSlug] ?? null : null,
-      quizCompleted: isDone,
-      quizScore: isDone ? m.score : null,
-      timeSpentMinutes: m.timeSpent,
-    };
-    await prisma.pathwayMilestone.create({
-      data: {
-        userId: marcus.id,
-        trackSlug: "cyber-launch",
-        moduleSlug: m.moduleSlug,
-        ...fullFields,
-      },
-    });
-  }
-  console.log("Seeded Marcus partial Cyber Launch progress (3 completed with homework, 1 in progress)");
-
-  // ── Ended cohort: ETO Fall 2025 Pilot — 3 fictional graduates ──
-  const endedCohort = await prisma.pathwayCohort.upsert({
-    where: { joinCode: "ETO2025F" },
-    create: {
-      name: "ETO Fall 2025 — Pilot Cohort",
-      band: "launch",
-      sitePartner: "Escape The Odds — West Side",
-      facilitatorId: facilitator.id,
-      trackIds: ["cyber-launch"],
-      joinCode: "ETO2025F",
-      status: "ended",
-      description: "First Bright Boost Pathways pilot. Six-week intensive Cyber Launch program. 3 of 4 enrolled graduated with completed capstones.",
-      maxEnrollment: 8,
-      startDate: new Date("2025-10-06"),
-      endDate: new Date("2025-11-17"),
-      notes: [
-        { text: "Strong inaugural cohort. All 3 graduates produced presentation-ready capstones. Two pursuing ISC2 CC now.", author: "Coach Davis", ts: new Date("2025-11-20").toISOString() },
-      ],
-    },
-    update: { facilitatorId: facilitator.id, status: "ended" },
-  });
-
-  // Fictional graduates of the Fall 2025 pilot
-  const graduates = [
-    { name: "Jasmine", email: "grad-jasmine@brightboost.local", scores: [88, 92, 81, 79, 85, 100, 90] },
-    { name: "DeShawn", email: "grad-deshawn@brightboost.local", scores: [82, 95, 87, 84, 91, 100, 95] },
-    { name: "Reina", email: "grad-reina@brightboost.local", scores: [76, 88, 92, 89, 78, 100, 87] },
-  ];
-  const moduleSlugs = ["cyber-foundations", "digital-safety-sim", "network-basics", "threat-detective", "career-map", "cisco-netacad-link", "capstone-security-plan"];
-  const gradHash = await bcrypt.hash("graduate", 10);
-  for (const g of graduates) {
-    let gu = await prisma.user.findUnique({ where: { email: g.email } });
-    if (!gu) {
-      gu = await prisma.user.create({
+    if (!facilitator) {
+      facilitator = await prisma.user.create({
         data: {
-          name: g.name,
-          email: g.email,
-          password: gradHash,
+          name: "Coach Davis",
+          email: "facilitator@test.com",
+          password: facilitatorHash,
+          role: "teacher",
+          userType: "pathways",
+        },
+      });
+    } else {
+      facilitator = await prisma.user.update({
+        where: { id: facilitator.id },
+        data: { password: facilitatorHash, userType: "pathways" },
+      });
+    }
+    console.log("Seeded facilitator:", facilitator.email);
+
+    // Marcus — Launch band, partial progress
+    const marcusHash = await bcrypt.hash("marcus123", 10);
+    let marcus = await prisma.user.findUnique({
+      where: { email: "marcus@test.com" },
+    });
+    if (!marcus) {
+      marcus = await prisma.user.create({
+        data: {
+          name: "Marcus",
+          email: "marcus@test.com",
+          password: marcusHash,
           role: "student",
           userType: "pathways",
           ageBand: "launch",
-          birthYear: 2008,
+          birthYear: 2009,
+        },
+      });
+    } else {
+      marcus = await prisma.user.update({
+        where: { id: marcus.id },
+        data: {
+          password: marcusHash,
+          userType: "pathways",
+          ageBand: "launch",
+          birthYear: 2009,
         },
       });
     }
-    await prisma.pathwayEnrollment.upsert({
-      where: { userId_cohortId: { userId: gu.id, cohortId: endedCohort.id } },
-      create: { userId: gu.id, cohortId: endedCohort.id, status: "completed" },
-      update: { status: "completed" },
+    console.log("Seeded Marcus:", marcus.email);
+
+    // Aisha — Explorer band, fresh
+    const aishaHash = await bcrypt.hash("aisha123", 10);
+    let aisha = await prisma.user.findUnique({
+      where: { email: "aisha@test.com" },
     });
-    // Realistic completion milestones (each module completed during the Fall pilot).
-    // Section-level fields filled in so the facilitator outcomes report shows
-    // 6-of-6 sections done per module, not "completed but 0 sections".
-    for (let i = 0; i < moduleSlugs.length; i++) {
-      const completedDate = new Date(2025, 9, 13 + i * 5); // Oct 13 + 5 days per module
-      const fullFields = {
+    if (!aisha) {
+      aisha = await prisma.user.create({
+        data: {
+          name: "Aisha",
+          email: "aisha@test.com",
+          password: aishaHash,
+          role: "student",
+          userType: "pathways",
+          ageBand: "explorer",
+          birthYear: 2011,
+        },
+      });
+    } else {
+      aisha = await prisma.user.update({
+        where: { id: aisha.id },
+        data: {
+          password: aishaHash,
+          userType: "pathways",
+          ageBand: "explorer",
+          birthYear: 2011,
+        },
+      });
+    }
+    console.log("Seeded Aisha:", aisha.email);
+
+    // ── Active cohort: ETO Spring 2026 ──
+    const cohort = await prisma.pathwayCohort.upsert({
+      where: { joinCode: "ETO2026" },
+      create: {
+        name: "ETO Spring 2026 — Cyber Cohort",
+        band: "launch",
+        sitePartner: "Escape The Odds — South Side",
+        facilitatorId: facilitator.id,
+        trackIds: ["cyber-launch"],
+        joinCode: "ETO2026",
+        status: "active",
+        description:
+          "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
+        maxEnrollment: 12,
+        startDate: new Date("2026-03-02"),
+        endDate: new Date("2026-04-13"),
+        notes: [
+          {
+            text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-08").toISOString(),
+          },
+          {
+            text: "Aisha needs more individual time on Network Basics.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-10").toISOString(),
+          },
+          {
+            text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-12").toISOString(),
+          },
+        ],
+      },
+      update: {
+        facilitatorId: facilitator.id,
+        status: "active",
+        description:
+          "Spring 2026 pilot cohort with Escape The Odds. Six-week Cyber Launch curriculum, in-person sessions twice weekly.",
+        maxEnrollment: 12,
+        startDate: new Date("2026-03-02"),
+        endDate: new Date("2026-04-13"),
+        sitePartner: "Escape The Odds — South Side",
+        notes: [
+          {
+            text: "Marcus showing strong interest in DFIR — recommend extending Career Map discussion next session.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-08").toISOString(),
+          },
+          {
+            text: "Aisha needs more individual time on Network Basics.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-10").toISOString(),
+          },
+          {
+            text: "Cohort responding well to Phishing Sim scenarios. Plan to extend to social engineering deep-dive in week 4.",
+            author: "Coach Davis",
+            ts: new Date("2026-05-12").toISOString(),
+          },
+        ],
+      },
+    });
+
+    // Enroll Marcus and Aisha
+    for (const u of [marcus, aisha]) {
+      await prisma.pathwayEnrollment.upsert({
+        where: { userId_cohortId: { userId: u.id, cohortId: cohort.id } },
+        create: { userId: u.id, cohortId: cohort.id },
+        update: {},
+      });
+    }
+
+    // Marcus's Cyber Launch milestones (partial progress).
+    // Section-level fields, homework responses, and time spent are filled in so
+    // Coach Davis's facilitator view shows real-looking work, not empty rows.
+    // upsert update block re-applies these every seed run — important when the
+    // section-progress migration lands on top of existing rows.
+    const MARCUS_HOMEWORK = {
+      "cyber-foundations":
+        "This week I counted 47 times cybersecurity affected my daily life. Most surprising: my game console asked for MFA when I tried to add a new payment method. I always thought MFA was just for banks. Three examples that stood out: (1) school portal asking for 2FA at every login, (2) a 'this site is not secure' warning on a free movie site I tried, (3) my mom getting a phishing text pretending to be Chase.",
+      "digital-safety-sim":
+        "My 5 most important accounts: school email, personal email, bank, Instagram, Discord. Audit results — only 2 had unique passwords (school, bank), only 1 had MFA (bank). Recovery emails were stale on 3 of them. Action plan this week: install Bitwarden, generate unique passwords for the other 3 accounts, turn on MFA on email first (because it's the recovery channel for everything else).",
+      "network-basics":
+        "Drew my home network on paper. Router: Netgear Nighthawk (don't know model #). 11 devices connected — 4 phones, 2 laptops, smart TV, gaming console, Ring doorbell, smart bulb x2. Riskiest device: the smart TV — bought it in 2019 and I can't remember it ever updating. One change: move the smart-home stuff to the guest WiFi so if any of them gets popped it can't see the main network.",
+    };
+    const marcusMilestones = [
+      {
+        moduleSlug: "cyber-foundations",
         status: "completed",
-        score: g.scores[i],
-        completedAt: completedDate,
-        hookCompleted: true,
-        readingCompleted: true,
-        lessonCompleted: true,
-        practiceCompleted: true,
-        homeworkSubmitted: true,
-        homeworkResponse: `(${g.name}'s ${moduleSlugs[i]} submission — pilot cohort archive)`,
-        quizCompleted: moduleSlugs[i] !== "capstone-security-plan",
-        quizScore: moduleSlugs[i] !== "capstone-security-plan" ? g.scores[i] : null,
-        timeSpentMinutes: 55 + ((i * 7) % 20),
+        score: 85,
+        daysAgo: 7,
+        timeSpent: 62,
+      },
+      {
+        moduleSlug: "digital-safety-sim",
+        status: "completed",
+        score: 90,
+        daysAgo: 5,
+        timeSpent: 58,
+      },
+      {
+        moduleSlug: "network-basics",
+        status: "completed",
+        score: 78,
+        daysAgo: 3,
+        timeSpent: 65,
+      },
+      {
+        moduleSlug: "threat-detective",
+        status: "in_progress",
+        score: null,
+        daysAgo: 1,
+        timeSpent: 28,
+      },
+    ];
+
+    // Clear any drifted Cyber Launch milestone state before re-seeding the
+    // canonical 4 rows. Without this, live demo usage that touches modules
+    // outside the seed array accumulates rows that the upsert-only loop
+    // never cleans up — Marcus drifted from "3 done + 1 in flight" to
+    // "1 done + 5 in flight" over the past two weeks. (See diagnostic
+    // finding M4.) Scope is bounded to Marcus's Cyber Launch track only.
+    await prisma.pathwayMilestone.deleteMany({
+      where: { userId: marcus.id, trackSlug: "cyber-launch" },
+    });
+
+    for (const m of marcusMilestones) {
+      const isDone = m.status === "completed";
+      const isInProgress = m.status === "in_progress";
+      const fullFields = {
+        status: m.status,
+        score: m.score,
+        completedAt: isDone
+          ? new Date(Date.now() - m.daysAgo * 86400000)
+          : null,
+        hookCompleted: isDone || isInProgress,
+        readingCompleted: isDone || isInProgress,
+        lessonCompleted: isDone || isInProgress,
+        practiceCompleted: isDone,
+        homeworkSubmitted: isDone,
+        homeworkResponse: isDone
+          ? (MARCUS_HOMEWORK[m.moduleSlug] ?? null)
+          : null,
+        quizCompleted: isDone,
+        quizScore: isDone ? m.score : null,
+        timeSpentMinutes: m.timeSpent,
       };
-      await prisma.pathwayMilestone.upsert({
-        where: { userId_trackSlug_moduleSlug: { userId: gu.id, trackSlug: "cyber-launch", moduleSlug: moduleSlugs[i] } },
-        create: {
-          userId: gu.id,
+      await prisma.pathwayMilestone.create({
+        data: {
+          userId: marcus.id,
           trackSlug: "cyber-launch",
-          moduleSlug: moduleSlugs[i],
+          moduleSlug: m.moduleSlug,
           ...fullFields,
         },
-        update: fullFields,
       });
     }
-  }
+    console.log(
+      "Seeded Marcus partial Cyber Launch progress (3 completed with homework, 1 in progress)",
+    );
 
-  // ── Draft cohort: ETO Summer 2026 — Planning ──
-  await prisma.pathwayCohort.upsert({
-    where: { joinCode: "ETO2026S" },
-    create: {
-      name: "ETO Summer 2026 — Planning",
-      band: "mixed",
-      sitePartner: "Escape The Odds — TBD",
-      facilitatorId: facilitator.id,
-      trackIds: ["cyber-launch"],
-      joinCode: "ETO2026S",
-      status: "draft",
-      description: "Planning cohort for the summer intensive — site partner and exact dates TBD. Recruiting begins June.",
-      maxEnrollment: 16,
-      startDate: new Date("2026-06-15"),
-      endDate: new Date("2026-07-27"),
-      notes: [],
-    },
-    update: { facilitatorId: facilitator.id, status: "draft" },
-  });
-
-  console.log("Seeded Pathways cohorts (3: active/ended/draft), enrollments, and milestones.");
-
-  // ─── Onboarding seed for demo accounts ───────────────────────────────────
-  // Marcus and Coach Davis show up to demos as already-onboarded so the
-  // welcome flow doesn't re-trigger every time the DB is re-seeded. Aisha
-  // is intentionally LEFT OUT — she's the "fresh-user" demo and should
-  // walk through the welcome flow when someone hits her account.
-  console.log("Seeding Pathways onboarding for demo accounts...");
-  const onboardingDemoData = [
-    {
-      email: "marcus@test.com",
-      avatarSlug: "analyst",
-      missionStatement:
-        "I want to build a real career in cybersecurity and help my community stay safe online.",
-      dailyGoalLevel: "medium",
-      // Demo intent: every fresh demo should see the toolbox intro fire on
-      // first CTF visit. Live sessions used to leave this `true`, breaking
-      // the demo story on the next showing. (Diagnostic finding L3.)
-      toolboxIntroSeen: false,
-    },
-    {
-      email: "facilitator@test.com",
-      avatarSlug: "guardian",
-      missionStatement:
-        "I want to help my students see themselves in this work and build real pathways forward.",
-      dailyGoalLevel: "heavy",
-      toolboxIntroSeen: false,
-    },
-  ];
-
-  for (const data of onboardingDemoData) {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) {
-      console.log(`  Skipping ${data.email} — user not found`);
-      continue;
-    }
-    const payload = {
-      avatarChosen: true,
-      avatarSlug: data.avatarSlug,
-      skillsTourViewed: true,
-      skillsTourSkipped: false,
-      missionStatement: data.missionStatement,
-      dailyGoalLevel: data.dailyGoalLevel,
-      toolboxIntroSeen: data.toolboxIntroSeen,
-      completedAt: new Date(),
-    };
-    await prisma.pathwayOnboarding.upsert({
-      where: { userId: user.id },
-      update: payload,
-      create: { userId: user.id, ...payload },
-    });
-    console.log(`  Seeded onboarding for ${data.email}: ${data.avatarSlug}`);
-  }
-
-  // Award the Getting Started badge so those accounts reflect the
-  // completed-onboarding state in their badge collection. XP for the
-  // badge will be picked up by the gamification backfill (which runs
-  // after this seed in predeploy.sh).
-  for (const { email } of onboardingDemoData) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) continue;
-    await prisma.pathwayBadge.upsert({
-      where: { userId_slug: { userId: user.id, slug: "getting_started" } },
-      update: {},
+    // ── Ended cohort: ETO Fall 2025 Pilot — 3 fictional graduates ──
+    const endedCohort = await prisma.pathwayCohort.upsert({
+      where: { joinCode: "ETO2025F" },
       create: {
-        userId: user.id,
-        slug: "getting_started",
-        metadata: { backfilled: true, source: "seed" },
+        name: "ETO Fall 2025 — Pilot Cohort",
+        band: "launch",
+        sitePartner: "Escape The Odds — West Side",
+        facilitatorId: facilitator.id,
+        trackIds: ["cyber-launch"],
+        joinCode: "ETO2025F",
+        status: "ended",
+        description:
+          "First Bright Boost Pathways pilot. Six-week intensive Cyber Launch program. 3 of 4 enrolled graduated with completed capstones.",
+        maxEnrollment: 8,
+        startDate: new Date("2025-10-06"),
+        endDate: new Date("2025-11-17"),
+        notes: [
+          {
+            text: "Strong inaugural cohort. All 3 graduates produced presentation-ready capstones. Two pursuing ISC2 CC now.",
+            author: "Coach Davis",
+            ts: new Date("2025-11-20").toISOString(),
+          },
+        ],
       },
+      update: { facilitatorId: facilitator.id, status: "ended" },
     });
-  }
-  console.log("  Awarded Getting Started badge to demo accounts");
 
-  // ─── Daily goals for today (demo accounts) ──────────────────────────────
-  // Without a row for "today", the home page goal card briefly renders an
-  // empty/skeleton state until the lazy server-side creation fires. Pre-
-  // seeding here means demos always open to a fully-rendered goal card.
-  // Aisha is intentionally LEFT OUT — she's the fresh-user demo and
-  // should hit the lazy creation path so we can show that flow.
-  //
-  // NOTE: this mirrors getDailyGoalTargets() in
-  // backend/src/services/gamification.ts. Keep slugs (`complete_section`,
-  // `earn_xp`, `try_lab_or_quiz`) stable — updateDailyGoalProgress() keys
-  // off them at runtime to credit progress.
-  function getDailyGoalTargets(level) {
-    const effective = level || "medium";
-    if (effective === "light") {
+    // Fictional graduates of the Fall 2025 pilot
+    const graduates = [
+      {
+        name: "Jasmine",
+        email: "grad-jasmine@brightboost.local",
+        scores: [88, 92, 81, 79, 85, 100, 90],
+      },
+      {
+        name: "DeShawn",
+        email: "grad-deshawn@brightboost.local",
+        scores: [82, 95, 87, 84, 91, 100, 95],
+      },
+      {
+        name: "Reina",
+        email: "grad-reina@brightboost.local",
+        scores: [76, 88, 92, 89, 78, 100, 87],
+      },
+    ];
+    const moduleSlugs = [
+      "cyber-foundations",
+      "digital-safety-sim",
+      "network-basics",
+      "threat-detective",
+      "career-map",
+      "cisco-netacad-link",
+      "capstone-security-plan",
+    ];
+    const gradHash = await bcrypt.hash("graduate", 10);
+    for (const g of graduates) {
+      let gu = await prisma.user.findUnique({ where: { email: g.email } });
+      if (!gu) {
+        gu = await prisma.user.create({
+          data: {
+            name: g.name,
+            email: g.email,
+            password: gradHash,
+            role: "student",
+            userType: "pathways",
+            ageBand: "launch",
+            birthYear: 2008,
+          },
+        });
+      }
+      await prisma.pathwayEnrollment.upsert({
+        where: { userId_cohortId: { userId: gu.id, cohortId: endedCohort.id } },
+        create: {
+          userId: gu.id,
+          cohortId: endedCohort.id,
+          status: "completed",
+        },
+        update: { status: "completed" },
+      });
+      // Realistic completion milestones (each module completed during the Fall pilot).
+      // Section-level fields filled in so the facilitator outcomes report shows
+      // 6-of-6 sections done per module, not "completed but 0 sections".
+      for (let i = 0; i < moduleSlugs.length; i++) {
+        const completedDate = new Date(2025, 9, 13 + i * 5); // Oct 13 + 5 days per module
+        const fullFields = {
+          status: "completed",
+          score: g.scores[i],
+          completedAt: completedDate,
+          hookCompleted: true,
+          readingCompleted: true,
+          lessonCompleted: true,
+          practiceCompleted: true,
+          homeworkSubmitted: true,
+          homeworkResponse: `(${g.name}'s ${moduleSlugs[i]} submission — pilot cohort archive)`,
+          quizCompleted: moduleSlugs[i] !== "capstone-security-plan",
+          quizScore:
+            moduleSlugs[i] !== "capstone-security-plan" ? g.scores[i] : null,
+          timeSpentMinutes: 55 + ((i * 7) % 20),
+        };
+        await prisma.pathwayMilestone.upsert({
+          where: {
+            userId_trackSlug_moduleSlug: {
+              userId: gu.id,
+              trackSlug: "cyber-launch",
+              moduleSlug: moduleSlugs[i],
+            },
+          },
+          create: {
+            userId: gu.id,
+            trackSlug: "cyber-launch",
+            moduleSlug: moduleSlugs[i],
+            ...fullFields,
+          },
+          update: fullFields,
+        });
+      }
+    }
+
+    // ── Draft cohort: ETO Summer 2026 — Planning ──
+    await prisma.pathwayCohort.upsert({
+      where: { joinCode: "ETO2026S" },
+      create: {
+        name: "ETO Summer 2026 — Planning",
+        band: "mixed",
+        sitePartner: "Escape The Odds — TBD",
+        facilitatorId: facilitator.id,
+        trackIds: ["cyber-launch"],
+        joinCode: "ETO2026S",
+        status: "draft",
+        description:
+          "Planning cohort for the summer intensive — site partner and exact dates TBD. Recruiting begins June.",
+        maxEnrollment: 16,
+        startDate: new Date("2026-06-15"),
+        endDate: new Date("2026-07-27"),
+        notes: [],
+      },
+      update: { facilitatorId: facilitator.id, status: "draft" },
+    });
+
+    console.log(
+      "Seeded Pathways cohorts (3: active/ended/draft), enrollments, and milestones.",
+    );
+
+    // ─── Onboarding seed for demo accounts ───────────────────────────────────
+    // Marcus and Coach Davis show up to demos as already-onboarded so the
+    // welcome flow doesn't re-trigger every time the DB is re-seeded. Aisha
+    // is intentionally LEFT OUT — she's the "fresh-user" demo and should
+    // walk through the welcome flow when someone hits her account.
+    console.log("Seeding Pathways onboarding for demo accounts...");
+    const onboardingDemoData = [
+      {
+        email: "marcus@test.com",
+        avatarSlug: "analyst",
+        missionStatement:
+          "I want to build a real career in cybersecurity and help my community stay safe online.",
+        dailyGoalLevel: "medium",
+        // Demo intent: every fresh demo should see the toolbox intro fire on
+        // first CTF visit. Live sessions used to leave this `true`, breaking
+        // the demo story on the next showing. (Diagnostic finding L3.)
+        toolboxIntroSeen: false,
+      },
+      {
+        email: "facilitator@test.com",
+        avatarSlug: "guardian",
+        missionStatement:
+          "I want to help my students see themselves in this work and build real pathways forward.",
+        dailyGoalLevel: "heavy",
+        toolboxIntroSeen: false,
+      },
+    ];
+
+    for (const data of onboardingDemoData) {
+      const user = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (!user) {
+        console.log(`  Skipping ${data.email} — user not found`);
+        continue;
+      }
+      const payload = {
+        avatarChosen: true,
+        avatarSlug: data.avatarSlug,
+        skillsTourViewed: true,
+        skillsTourSkipped: false,
+        missionStatement: data.missionStatement,
+        dailyGoalLevel: data.dailyGoalLevel,
+        toolboxIntroSeen: data.toolboxIntroSeen,
+        completedAt: new Date(),
+      };
+      await prisma.pathwayOnboarding.upsert({
+        where: { userId: user.id },
+        update: payload,
+        create: { userId: user.id, ...payload },
+      });
+      console.log(`  Seeded onboarding for ${data.email}: ${data.avatarSlug}`);
+    }
+
+    // Award the Getting Started badge so those accounts reflect the
+    // completed-onboarding state in their badge collection. XP for the
+    // badge will be picked up by the gamification backfill (which runs
+    // after this seed in predeploy.sh).
+    for (const { email } of onboardingDemoData) {
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user) continue;
+      await prisma.pathwayBadge.upsert({
+        where: { userId_slug: { userId: user.id, slug: "getting_started" } },
+        update: {},
+        create: {
+          userId: user.id,
+          slug: "getting_started",
+          metadata: { backfilled: true, source: "seed" },
+        },
+      });
+    }
+    console.log("  Awarded Getting Started badge to demo accounts");
+
+    // ─── Daily goals for today (demo accounts) ──────────────────────────────
+    // Without a row for "today", the home page goal card briefly renders an
+    // empty/skeleton state until the lazy server-side creation fires. Pre-
+    // seeding here means demos always open to a fully-rendered goal card.
+    // Aisha is intentionally LEFT OUT — she's the fresh-user demo and
+    // should hit the lazy creation path so we can show that flow.
+    //
+    // NOTE: this mirrors getDailyGoalTargets() in
+    // backend/src/services/gamification.ts. Keep slugs (`complete_section`,
+    // `earn_xp`, `try_lab_or_quiz`) stable — updateDailyGoalProgress() keys
+    // off them at runtime to credit progress.
+    function getDailyGoalTargets(level) {
+      const effective = level || "medium";
+      if (effective === "light") {
+        return [
+          { slug: "complete_section", label: "Complete 1 section", target: 1 },
+          { slug: "earn_xp", label: "Earn 30 XP", target: 30 },
+        ];
+      }
+      if (effective === "heavy") {
+        return [
+          { slug: "complete_section", label: "Complete 2 sections", target: 2 },
+          { slug: "earn_xp", label: "Earn 100 XP", target: 100 },
+          {
+            slug: "try_lab_or_quiz",
+            label: "Try 1 lab or challenge",
+            target: 1,
+          },
+        ];
+      }
       return [
         { slug: "complete_section", label: "Complete 1 section", target: 1 },
-        { slug: "earn_xp", label: "Earn 30 XP", target: 30 },
+        { slug: "earn_xp", label: "Earn 50 XP", target: 50 },
+        { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1 },
       ];
     }
-    if (effective === "heavy") {
-      return [
-        { slug: "complete_section", label: "Complete 2 sections", target: 2 },
-        { slug: "earn_xp", label: "Earn 100 XP", target: 100 },
-        { slug: "try_lab_or_quiz", label: "Try 1 lab or challenge", target: 1 },
-      ];
+
+    const todayUtc = new Date();
+    todayUtc.setUTCHours(0, 0, 0, 0);
+
+    for (const data of onboardingDemoData) {
+      const user = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (!user) continue;
+      const goals = getDailyGoalTargets(data.dailyGoalLevel).map((t) => ({
+        ...t,
+        current: 0,
+        completed: false,
+      }));
+      await prisma.pathwayDailyGoal.upsert({
+        where: { userId_date: { userId: user.id, date: todayUtc } },
+        // Don't clobber progress someone already accrued today; just ensure
+        // a row exists with the right shape.
+        update: {},
+        create: {
+          userId: user.id,
+          date: todayUtc,
+          goals,
+          allComplete: false,
+          bonusAwarded: false,
+        },
+      });
     }
-    return [
-      { slug: "complete_section", label: "Complete 1 section", target: 1 },
-      { slug: "earn_xp", label: "Earn 50 XP", target: 50 },
-      { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1 },
-    ];
-  }
-
-  const todayUtc = new Date();
-  todayUtc.setUTCHours(0, 0, 0, 0);
-
-  for (const data of onboardingDemoData) {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) continue;
-    const goals = getDailyGoalTargets(data.dailyGoalLevel).map((t) => ({
-      ...t,
-      current: 0,
-      completed: false,
-    }));
-    await prisma.pathwayDailyGoal.upsert({
-      where: { userId_date: { userId: user.id, date: todayUtc } },
-      // Don't clobber progress someone already accrued today; just ensure
-      // a row exists with the right shape.
-      update: {},
-      create: {
-        userId: user.id,
-        date: todayUtc,
-        goals,
-        allComplete: false,
-        bonusAwarded: false,
-      },
-    });
-  }
-  console.log("  Seeded daily goals for demo accounts (today, by goal level)");
+    console.log(
+      "  Seeded daily goals for demo accounts (today, by goal level)",
+    );
   } catch (e) {
-    console.warn("Pathways seed skipped (tables may not exist yet):", e.message);
+    console.warn(
+      "Pathways seed skipped (tables may not exist yet):",
+      e.message,
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1968,8 +4054,9 @@ async function main() {
   console.log("Seeding A/B experiments...");
   try {
     const creator =
-      (await prisma.user.findUnique({ where: { email: "facilitator@test.com" } })) ||
-      (await prisma.user.findFirst({ where: { role: "teacher" } }));
+      (await prisma.user.findUnique({
+        where: { email: "facilitator@test.com" },
+      })) || (await prisma.user.findFirst({ where: { role: "teacher" } }));
 
     if (creator) {
       await prisma.experiment.upsert({
@@ -1991,7 +4078,10 @@ async function main() {
       console.warn("No teacher user found — skipping experiment seed.");
     }
   } catch (e) {
-    console.warn("Experiment seed skipped (tables may not exist yet):", e.message);
+    console.warn(
+      "Experiment seed skipped (tables may not exist yet):",
+      e.message,
+    );
   }
 }
 

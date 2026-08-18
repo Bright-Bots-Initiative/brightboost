@@ -47,42 +47,6 @@ interface Drop {
   hiddenColor?: number;
 }
 
-// TODO: add translations for the story, tips in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Sky Shield Patterns",
-      es: "Patrones del Cielo",
-      vi: "Mẫu Lá Chắn Bầu Trời",
-      "zh-CN": "天空护盾图案",
-    },
-    "Sky Shield Patterns",
-  ),
-  story: pickLocale(
-    {
-      en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
-    },
-    "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
-  ),
-  icon: "🛡️",
-  tips: pickLocale(
-    {
-      en: [
-        "Watch which lane the light falls in",
-        "Look for repeating patterns",
-        "Scan mystery lights before choosing",
-      ],
-    },
-    [
-      "Watch which lane the light falls in",
-      "Look for repeating patterns",
-      "Scan mystery lights before choosing",
-    ],
-  ),
-  chapterLabel: "Pattern Lab",
-  themeColor: "violet",
-};
-
 // ── Helpers ───────────────────────────────────────────────────────────────
 const rLane = () => Math.floor(Math.random() * 3);
 export function mkPattern(content: SkyShieldContent): Pattern {
@@ -751,7 +715,7 @@ function SkyShieldPlayfield({
       <div className="slide-up-fade space-y-4">
         <HUD />
         <p className="text-center font-bold text-violet-800 text-sm">
-          {T("challengeLabel", "Challenge")} ({chIdx + 1}/{chDrops.length})
+          {T("challenge", "Challenge")} ({chIdx + 1}/{chDrops.length})
         </p>
 
         {/* Lanes */}
@@ -851,12 +815,13 @@ function SkyShieldPlayfield({
     const submitted = exitAns !== null;
     const ok = exitAns === content.exitAnswer;
     const correctEmoji = LABELS[content.exitAnswer];
-    const colorKeys = ["colorBlue", "colorYellow", "colorPink"];
+    const colorNames = [
+      T("colorBlue", "Blue"),
+      T("colorYellow", "Yellow"),
+      T("colorPink", "Pink"),
+    ];
 
-    const correctColor = t(
-      colorKeys[content.exitAnswer],
-      ["Blue", "Yellow", "Pink"][content.exitAnswer],
-    );
+    const correctColor = colorNames[content.exitAnswer];
     return (
       <div className="slide-up-fade space-y-6 py-4 text-center">
         <h3 className="text-xl font-extrabold text-violet-900">
@@ -911,11 +876,11 @@ function SkyShieldPlayfield({
       <div className="slide-up-fade text-center space-y-6 py-8">
         <div className="text-7xl bounce-in">🛡️✨</div>
         <h2 className="text-2xl font-extrabold text-violet-900">
-          {T("celebrationTitle", "Amazing Work!")}
+          {T("celebTitle", "Amazing Work!")}
         </h2>
         <p className="text-slate-600 max-w-md mx-auto">
           {T(
-            "celebrationMsg",
+            "celebDesc",
             "You watched, noticed the pattern, and chose the right shield!",
           )}
         </p>
@@ -950,13 +915,51 @@ export default function SkyShieldGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
   const band = getGradeBand(config);
+  // TODO: add translation keys for the story, tips in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Sky Shield Patterns",
+        es: "Patrones del Cielo",
+        vi: "Mẫu Lá Chắn Bầu Trời",
+        "zh-CN": "天空护盾图案",
+      },
+      "Sky Shield Patterns",
+    ),
+    story: pickLocale(
+      {
+        en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+      },
+      "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
+    ),
+    icon: "🛡️",
+    tips: pickLocale(
+      {
+        en: [
+          "Watch which lane the light falls in",
+          "Look for repeating patterns",
+          "Scan mystery lights before choosing",
+        ],
+      },
+      [
+        "Watch which lane the light falls in",
+        "Look for repeating patterns",
+        "Scan mystery lights before choosing",
+      ],
+    ),
+    chapterLabel: t("games.skyShield.chapterLabel", {
+      defaultValue: "Pattern Lab",
+    }),
+    themeColor: "violet",
+  };
 
   return (
     <GameShell
       gameKey="sky_shield"
       title="Sky Shield Patterns"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (

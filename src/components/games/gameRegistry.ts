@@ -14,6 +14,8 @@ import QualifyTuneRaceGame from "./QualifyTuneRaceGame";
 import TankTrekGame from "./TankTrekGame";
 import QuantumQuestGame from "./QuantumQuestGame";
 import DataDashSortDiscoverGame from "./DataDashSortDiscoverGame";
+import TrackMakerGame from "./TrackMakerGame";
+import EchoAvenueGame from "./echoAvenue/EchoAvenueGame";
 
 type GameProps = {
   config?: any;
@@ -27,20 +29,24 @@ type GameProps = {
  */
 export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   // ── Primary keys (current canonical names) ──
-  boost_path_planner: BoostPathPlannerGame,   // "Boost's Lost Steps"
-  rhymo_rhyme_rocket: RhymeRideGame,          // "Rhyme & Ride" (lane-based redesign)
-  buddy_garden_sort: BounceBudsGame,            // "Bounce & Buds" (restored paddle-ball game)
-  gotcha_gears_unity: GotchaGearsGame,         // "Gotcha Gears" (now React)
-  tank_trek: TankTrekGame,                     // "Tank Trek" (Set 1)
-  quantum_quest: QuantumQuestGame,             // "Quantum Quest"
+  boost_path_planner: BoostPathPlannerGame, // "Boost's Lost Steps"
+  rhymo_rhyme_rocket: RhymeRideGame, // "Rhyme & Ride" (lane-based redesign)
+  buddy_garden_sort: BounceBudsGame, // "Bounce & Buds" (restored paddle-ball game)
+  gotcha_gears_unity: GotchaGearsGame, // "Gotcha Gears" (now React)
+  tank_trek: TankTrekGame, // "Tank Trek" (Set 1)
+  quantum_quest: QuantumQuestGame, // "Quantum Quest"
   data_dash_sort_discover: DataDashSortDiscoverGame, // "Data Dash: Sort & Discover" (G3-5)
 
   // ── Set 2 keys ──
-  maze_maps: MazeMapsGame,                      // "Maze Maps & Smart Paths" (Set 2)
-  move_measure: MoveMeasureGame,                // "Move, Measure & Improve" (Set 2)
-  sky_shield: SkyShieldGame,                    // "Sky Shield Patterns" (Set 2)
-  fast_lane: FastLaneGame,                      // "Fast Lane Signals" (Set 2)
-  qualify_tune_race: QualifyTuneRaceGame,       // "Qualify, Tune, Race" (Set 2)
+  maze_maps: MazeMapsGame, // "Maze Maps & Smart Paths" (Set 2)
+  move_measure: MoveMeasureGame, // "Move, Measure & Improve" (Set 2)
+  sky_shield: SkyShieldGame, // "Sky Shield Patterns" (Set 2)
+  fast_lane: FastLaneGame, // "Fast Lane Signals" (Set 2)
+  qualify_tune_race: QualifyTuneRaceGame, // "Qualify, Tune, Race" (Set 2)
+
+  // ── Set 3 keys ──
+  track_maker: TrackMakerGame, // "Boost Track Builder" (Set 3, gated)
+  echo_avenue: EchoAvenueGame, // "Echo Avenue" (Set 3, gated)
 
   // ── Legacy / alias keys → same implementations ──
   sequence_drag_drop: BoostPathPlannerGame,
