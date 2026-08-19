@@ -3,6 +3,7 @@
   "workflow": ".github/workflows/ci-cd.yml",
   "requiredSteps": [
     { "job": "build-and-test", "run": "npm run lint" },
+    { "job": "build-and-test", "run": "npm run format:check" },
     { "job": "build-and-test", "run": "npm run typecheck" },
     { "job": "build-and-test", "run": "cd backend && npm run typecheck" },
     { "job": "build-and-test", "run": "bash scripts/check-prisma-drift.sh" },

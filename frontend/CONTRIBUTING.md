@@ -4,7 +4,7 @@ Thank you for helping us build joyful K-8 STEM tools! This guide shows you how t
 
 ## Quick-start Prerequisites
 
-- Node 18 LTS (`nvm install 18`)
+- Node 20 LTS (`nvm install 20`)
 - npm (comes with Node.js)
 - VS Code + ESLint/Prettier extensions (recommended)
 

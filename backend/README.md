@@ -1,8 +1,8 @@
 # Bright Boost – Back-End
 
-> ⚠️ **STALE — do not follow for setup.** This page describes a retired AWS Lambda /
-> Aurora architecture (`func start`, port 7071, SAM). The real backend is an Express
-> server run with `ts-node` (port 3000); production is Railway + Supabase.
+> ⚠️ **STALE — do not follow for setup.** AWS Lambda / Aurora content below is
+> **historical**. The real backend is an Express server (`ts-node`, port 3000);
+> **production is Railway + Supabase**.
 > **Use [SETUP.md](../SETUP.md) for local dev and [DEPLOYMENT.md](../DEPLOYMENT.md) for production.**
 > Kept only for historical context.
 

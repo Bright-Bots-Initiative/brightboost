@@ -2,12 +2,12 @@
 
 ## Production Stack
 
-| Component | Platform | URL |
-|---|---|---|
-| Backend + Frontend | Railway | `fe-production-3552.up.railway.app` |
-| Backend API (standalone) | Railway | `brightboost-production.up.railway.app` |
-| Database | Supabase Postgres | Connected via `DATABASE_URL` env var |
-| Schema management | Prisma ORM | `prisma/schema.prisma` (source of truth) |
+| Component                | Platform          | URL                                      |
+| ------------------------ | ----------------- | ---------------------------------------- |
+| Backend + Frontend       | Railway           | `fe-production-3552.up.railway.app`      |
+| Backend API (standalone) | Railway           | `brightboost-production.up.railway.app`  |
+| Database                 | Supabase Postgres | Connected via `DATABASE_URL` env var     |
+| Schema management        | Prisma ORM        | `prisma/schema.prisma` (source of truth) |
 
 ## How Production Deploys
 
@@ -23,23 +23,23 @@
 
 ## Required Environment Variables (Railway)
 
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | Yes | Supabase Postgres connection string (pooled) |
-| `DIRECT_URL` | Yes | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
-| `RUN_SEED` | No | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip) |
-| `RUN_GAMIFICATION_BACKFILL` | No | Existing sibling gate; same exact `"true"` convention as `RUN_SEED` |
-| `SESSION_SECRET` | Yes | JWT signing secret — must NOT be the default |
-| `NODE_ENV` | Yes | `production` |
-| `PORT` | Auto | Railway sets this automatically |
-| `SERVE_FRONTEND` | Yes | `true` to serve frontend from Express |
-| `FRONTEND_URL` | Recommended | Public URL for password reset email links |
-| `FRONTEND_ORIGINS` | Optional | Comma-separated CORS origins (Railway domain is hardcoded) |
-| `SMTP_HOST` | Optional | SMTP server for email delivery |
-| `SMTP_PORT` | Optional | SMTP port |
-| `SMTP_USER` | Optional | SMTP username |
-| `SMTP_PASS` | Optional | SMTP password |
-| `MAIL_FROM` | Optional | From address for emails |
+| Variable                    | Required    | Description                                                                                  |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`              | Yes         | Supabase Postgres connection string (pooled)                                                 |
+| `DIRECT_URL`                | Yes         | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
+| `RUN_SEED`                  | No          | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip)          |
+| `RUN_GAMIFICATION_BACKFILL` | No          | Existing sibling gate; same exact `"true"` convention as `RUN_SEED`                          |
+| `SESSION_SECRET`            | Yes         | JWT signing secret — must NOT be the default                                                 |
+| `NODE_ENV`                  | Yes         | `production`                                                                                 |
+| `PORT`                      | Auto        | Railway sets this automatically                                                              |
+| `SERVE_FRONTEND`            | Yes         | `true` to serve frontend from Express                                                        |
+| `FRONTEND_URL`              | Recommended | Public URL for password reset email links                                                    |
+| `FRONTEND_ORIGINS`          | Optional    | Comma-separated CORS origins (Railway domain is hardcoded)                                   |
+| `SMTP_HOST`                 | Optional    | SMTP server for email delivery                                                               |
+| `SMTP_PORT`                 | Optional    | SMTP port                                                                                    |
+| `SMTP_USER`                 | Optional    | SMTP username                                                                                |
+| `SMTP_PASS`                 | Optional    | SMTP password                                                                                |
+| `MAIL_FROM`                 | Optional    | From address for emails                                                                      |
 
 ## RUN_SEED Runbook (Production)
 
@@ -119,7 +119,7 @@ SESSION_SECRET="local-dev-secret"
 
 The repo contains files from earlier deployment phases (AWS Lambda, Azure Static Web Apps, Aurora PostgreSQL). These are **no longer the production path**:
 
-- `.github/workflows/deploy-stem1.yml` — Azure SWA deploy (legacy)
+- ~~`.github/workflows/deploy-stem1.yml`~~ — removed (legacy Azure SWA deploy)
 - `.github/workflows/prod-smoke.yml` — Azure SWA smoke test (legacy)
 - `docs/azure/` — Azure-specific scaling docs (legacy)
 - `docs/architecture/` — AWS Lambda architecture diagrams (legacy)

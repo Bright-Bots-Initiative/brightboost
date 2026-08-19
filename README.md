@@ -1,330 +1,57 @@
-# BrightBoost 🚀
+# BrightBoost
 
-> A bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech.
+> Canonical for: project front door · Last verified: 2026-08-10
 
-## Overview
+A bilingual (English/Spanish) K–8 STEM learning platform for Title I classrooms and
+after-school programs. Character-driven stories, Unity mini-games, and a teacher dashboard
+for assigning, tracking, and assessing standards-aligned activities.
 
-BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered learning pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — character-driven stories, Unity-powered mini-games, and a full-featured teacher dashboard — with grades 3-5 and 6-8 planned in future releases. Designed for Title I classrooms and after-school programs, it combines gamification mechanics — XP, streaks, avatars, and arena battles — with standards-aligned content that teachers can assign, track, and assess in real time.
-
-> **Design philosophy:** Bright Boost is built on the *Lifelong Kindergarten* creative-learning model — kids as **creators, not consumers**, moving through the creative spiral (Imagine → Create → Play → Share → Reflect), with a *supported* low floor for K–2 that opens up in later grades. Canonical principles: [`docs/design-principles.md`](docs/design-principles.md).
-
-## ✅ Current Working Features
-
-### 👩‍🏫 Teacher Dashboard
-
-- **Class Management** — Create courses, generate unique join codes, and manage student rosters
-- **Icon-Based Login Setup** — Assign emoji icons and 4-digit PINs to K-2 students (no keyboard required for login)
-- **Printable Login Cards** — Generate and print student login cards with icons and PINs for classroom distribution
-- **Assignment Launching** — Assign any activity to a class with due dates; track completion rates and time spent
-- **Pulse Surveys** — Run PRE/POST confidence assessments and view aggregate delta scores per class
-- **Module Prep Checklists** — Per-module prep workflow with objectives, vocabulary, prerequisites, misconceptions, and pacing guides
-- **Discussion Prompts** — Before-teaching prompts, after-teaching debrief questions, and turn-and-talk activities
-- **Teacher Resource Library** — Searchable, filterable resources (worksheets, handouts, guides, links) organized by module and category; printable HTML worksheets
-- **PD Hub** — Log professional development sessions with duration, topic, facilitator, and action items; save reusable session templates
-- **PD Reflections** — Record module-specific reflections (what worked, what to change, student observations) linked to PD sessions
-- **Faculty Discussion Board** — Threaded discussion forum with module tagging, pinning, and replies
-- **Community Impact Dashboard** — Aggregate analytics: student engagement, module completion rates, weekly/monthly trends, time-spent statistics, and progress distribution
-- **Showcase Mode** — 6-slide bilingual presentation for family nights with full-screen navigation; includes take-home card generation
-- **CSV Student Import** — Bulk-import students into a class
-- **Grade Export** — Export class grades as CSV
-- **Profile & Settings** — Edit name, email, school, subject, bio, and password
-
-### 🎒 Student Experience
-
-- **Student Dashboard** — XP progress ring, current streak, assignment tracking with due dates, next-activity recommendation, and completed-module list
-- **Module Browser** — Browse available modules with thumbnails, descriptions, and completion indicators (currently K-2 content)
-- **Module Detail** — Hierarchical Unit → Lesson → Activity navigation with completion tracking
-- **Activity Player** — Plays story slides with comprehension quizzes (shuffled answers, hint system) or launches interactive games; awards XP and stat boosts on completion
-- **Avatar & Superpowers ("My Star")** — Track 5 superpowers (Heart Power 💖, Brain Juice 🧠, Lightning Fast ⚡, Super Focus 🎯, Star Power ⭐) with stage progression (Rookie → Explorer → Champion → Legend)
-- **Archetype Selection** — Choose AI, Quantum, or Biotech specialization pathway
-- **Play Hub** — Game hub with PvP tab (Spacewar Arena) and Coop tab (coming soon)
-- **Class Code Login** — Icon-based login for K-2 students: select class code → pick your icon → enter PIN
-- **Join Class** — Students join a teacher's class via join code
-- **Bilingual UI** — Full English/Spanish toggle across the entire interface
-- **Streak System** — Daily streak tracking with 7-day calendar visualization, streak record celebrations (+50 XP bonus)
-- **Pulse Surveys** — Confidence, enjoyment, and motivation check-ins (1–5 scale) with optional free-text feedback
-- **Break Suggestions** — Prompts students to take breaks during long sessions
-
-### 🎮 Games & Activities
-
-| Game | Type | Description |
-|---|---|---|
-| **Boost's Lost Steps** | Drag-and-drop sequencing | Arrange step cards in the correct order (First → Next → Last); teaches algorithms and procedures |
-| **Rhyme & Ride** | Unity WebGL action game | Tap the word that rhymes with the prompt as words scroll across lanes; teaches phonemic awareness |
-| **Bounce & Buds** | Unity WebGL paddle game | Bounce a ball through the gate matching the clue; teaches biology, cells, and plant science |
-| **Gotcha Gears** | Unity WebGL catch game | Read a clue in the planning phase, then catch the correct gear as gears scroll down lanes; teaches AI thinking, debugging, and pattern recognition |
-| **Spacewar Arena** | Unity WebGL space combat | 2D physics-based PvP shooter with gravity, missiles, and hyperspace; supports keyboard and touch gesture controls; 3 difficulty levels |
-
-Each module also includes **character-driven story activities** (Meet Boost, Meet Rhymo, Meet Buddy, Meet Gearbot) with illustrated narrative slides and multiple-choice comprehension quizzes.
-
-### 📊 Progress & Data
-
-- **XP System** — 50 XP per completed activity, level-up every 100 XP with visual notifications
-- **Streak Tracking** — Current and record streaks stored per student with daily activity checks
-- **Achievement Badges** — First Steps, Streak Starter, Daily Champion, Week Warrior, Module Master
-- **Arena Perks** — Completing STEM Set 1 games unlocks Spacewar boosts (reduced gravity, faster fire rate, better shields, faster projectiles, enhanced thrust)
-- **Time Tracking** — Seconds spent per activity recorded for teacher analytics
-- **Weekly Snapshots** — Aggregated weekly stats (XP, time spent) for trend analysis
-- **Audit Log** — Server-side audit trail for sensitive actions
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Framer Motion |
-| Routing | React Router v6 |
-| State | React Context API |
-| i18n | i18next + react-i18next (EN / ES) |
-| Backend | Node.js 20, Express 5, TypeScript |
-| Database | PostgreSQL (Supabase) |
-| ORM | Prisma 6 |
-| Auth | JWT (jsonwebtoken) + bcryptjs password hashing |
-| Games | Unity WebGL (4 games) + native drag-and-drop (1 game) |
-| Testing | Vitest, Cypress, Testing Library, Storybook |
-| Hosting | Railway (backend serves frontend via Express static) · DB → Supabase Postgres |
-
-## 🗄 Database Schema
-
-Key models in `prisma/schema.prisma`:
-
-| Model | Purpose |
-|---|---|
-| `User` | Students and teachers with role, XP, level, streak, login icon/PIN, language preference |
-| `Module` | Learning modules (K-2 / 3-5 levels) with slug, title, description |
-| `Unit` → `Lesson` → `Activity` | Hierarchical content: units contain lessons, lessons contain activities (INFO or INTERACT) |
-| `Progress` | Per-student activity completion tracking with time spent |
-| `Avatar` | Student avatar with stage, archetype, level, XP, and 5 stat attributes |
-| `Ability` / `UnlockedAbility` | Unlockable abilities tied to archetypes and levels |
-| `Match` / `MatchTurn` | PvP match records with turn-by-turn action logs |
-| `Course` / `Enrollment` | Teacher classes with join codes and student enrollments |
-| `Assignment` | Activities assigned to a class with due dates and status |
-| `PulseResponse` | PRE/POST confidence survey responses (1–5 scale + JSON answers) |
-| `TeacherPrepChecklist` | Per-module prep checklist state |
-| `Resource` | Teacher resource library (worksheets, handouts, guides, links) |
-| `PDSession` / `PDReflection` | Professional development logs and module reflections |
-| `FacultyPost` | Threaded discussion board posts with pinning and replies |
-| `Badge` / `UserBadge` | Achievement definitions and earned badges |
-| `WeeklySnapshot` | Aggregated weekly student stats |
-| `AuditLog` | System audit trail |
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js v20+
-- npm or pnpm
-- PostgreSQL (local via Docker, or a Supabase project)
-
-### Installation
+## Clone
 
 ```bash
-git clone https://github.com/BrightBotsInitiative/brightboost.git
+git clone https://github.com/Bright-Bots-Initiative/brightboost.git
 cd brightboost
-pnpm install
-cd backend && npm install && cd ..
 ```
 
-### Environment Setup
+Package manager: **npm** (CI runs `npm ci`). Do not use pnpm for this repo.
 
-> **📖 [SETUP.md](SETUP.md) is the canonical, end-to-end setup guide (Mac + Windows + troubleshooting).** The summary below is a quick reference.
+## Quick links
 
-Copy `.env.example` to `.env` at the repo root and fill in:
+| Doc                                                    | Purpose                             |
+| ------------------------------------------------------ | ----------------------------------- |
+| [SETUP.md](SETUP.md)                                   | Local development setup             |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                     | Branch, commit, and review workflow |
+| [DEPLOYMENT.md](DEPLOYMENT.md)                         | Production deploy notes             |
+| [SECURITY.md](SECURITY.md)                             | Reporting and secret-handling rules |
+| [docs/design-principles.md](docs/design-principles.md) | Design philosophy                   |
+| [docs/team-workflow.md](docs/team-workflow.md)         | Labels, priority, and delegation    |
 
-```env
-# Frontend API base — relative /api, proxied to the backend by Vite (not a bare host).
-VITE_API_BASE=/api
+Agent-assisted contributors: see [CONTRIBUTING.md](CONTRIBUTING.md). Canonical agent context
+lands under `docs/agents/` in a follow-on change; until then follow CONTRIBUTING and the
+repo checks (`npm run verify`).
 
-# Database — local Docker Postgres on port 5435 (see docker-compose-pg.yml)
-DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
-DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
-SESSION_SECRET=local-dev-secret            # signs auth tokens (any string locally)
-PORT=3000
-```
-
-The backend API server reads its DB credentials from `backend/.env` — copy `backend/.env.example` to `backend/.env`. See [SETUP.md](SETUP.md) for why and how.
-
-For local development with Docker Compose:
+## Verify locally
 
 ```bash
-docker compose -f docker-compose-pg.yml up -d
-# Uses postgres:latest on localhost:5435, user: postgres, pass: brightboostpass
+npm ci
+cd backend && npm ci && cd ..
+npx prisma generate --schema prisma/schema.prisma
+npm run verify -- --skip-install --allow-skips
 ```
 
-### Set Up the Database
+`npm run verify` mirrors the main CI gate. The command above runs every locally available
+step and reports environment-bound skips; omit `--allow-skips` when the frontend and an
+explicitly designated test database are available. Some agent/docs findings on `main` are
+expected until the docs stack lands; do not weaken the scripts.
 
-```bash
-# From a fresh clone, use `db push` to create the schema directly, then seed.
-npx prisma db push --schema prisma/schema.prisma
-npx prisma generate
-npx prisma db seed
-```
+## Tech stack (summary)
 
-> ⚠️ `npm run db:init` (and `prisma migrate deploy`) currently **fail from a clean
-> database** because of a migration-baseline bug (#646) — several tables (Avatar, etc.)
-> never get created. Use `prisma db push` until #646 is fixed. Full details: [SETUP.md](SETUP.md).
+| Layer    | Technology                           |
+| -------- | ------------------------------------ |
+| Frontend | React 18, TypeScript, Vite, Tailwind |
+| Backend  | Node.js 20, Express, TypeScript      |
+| Database | PostgreSQL (Supabase) via Prisma     |
+| i18n     | i18next (EN / ES)                    |
 
-### Troubleshooting database setup
-
-The setup blockers the team has actually hit. Every fix below is **local only** — never run a `migrate` command (especially `reset`) against production.
-
-**`P3018` / "relation does not exist" during migrate (e.g. `relation "Avatar" does not exist`)**
-
-Known issue: the migration history is currently incomplete and **can't build the database from scratch** (tracked in #646). On a fresh setup, `migrate reset` / `migrate deploy` / `migrate resolve` — and `npm run db:init`, which uses `migrate deploy` — will all hit this and fail. It's a repo bug, not your machine.
-
-**Use `db push` for local setup instead** — it builds every table directly from `schema.prisma`, bypassing the migration history:
-
-```bash
-# from the repo ROOT, with your Docker Postgres running (docker compose -f docker-compose-pg.yml up -d)
-npx prisma db push --schema prisma/schema.prisma
-npx prisma db seed
-```
-
-This gives you a correct, fully-seeded local database. It records no migration history, which is fine for local development.
-
-⚠️ `db push` is **local-dev only** — never run it against production (it can drop/alter columns to force-match the schema).
-Until #646 lands, prefer `db push` + seed over `npm run db:init` (or any `migrate` command) for a fresh local DB — including the `P3009` fix below, whose `migrate reset` won't succeed from scratch yet.
-
-**`P3009` — "migrate found failed migrations in the target database"**
-
-A migration was interrupted partway through on your local DB (Ctrl-C, a dropped connection, a transient hiccup), so it's recorded as "failed" and blocks every later migration. The migration itself is fine — this is local DB state, not a code problem.
-
-```bash
-# Fresh setup (simplest): wipes your LOCAL database, re-runs all migrations + seed
-npx prisma migrate reset
-
-# If you have local data to keep: mark the stuck migration rolled-back, then re-apply
-npx prisma migrate resolve --rolled-back <migration_name>
-npx prisma migrate deploy
-```
-
-⚠️ `migrate reset` is **local only** — never run it (or any `migrate` command) against production.
-⚠️ Don't edit the committed migration file — it's applied fine everywhere else. The fix is your local DB state. Run from the repo root (where your dev `DATABASE_URL` points).
-
-**`P1001` — "Can't reach database server at `host:5432`"**
-
-Either the database isn't running, or your `DATABASE_URL` still has the placeholder values from `.env.example` (a literal `user:pass@host`, or port `5432`, in the error is the giveaway). The Docker Postgres listens on **port 5435**, not 5432.
-
-```bash
-# 1. Bring the DB container up
-docker compose -f docker-compose-pg.yml up -d
-
-# 2. Put the REAL local values in backend/.env (must match docker-compose-pg.yml)
-DATABASE_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
-DIRECT_URL=postgresql://postgres:brightboostpass@localhost:5435/brightboost
-```
-
-**Docker won't cooperate?** A plain local Postgres is a fine fallback — install Postgres, create a `brightboost` database, and point `DATABASE_URL` / `DIRECT_URL` at it (any port, as long as the URL matches). Then run `npm run db:init`.
-
-### Run Locally
-
-```bash
-# Terminal 1 — Backend
-cd backend && npm run dev
-
-# Terminal 2 — Frontend
-npm run dev
-```
-
-Frontend runs at `http://localhost:5173` · Backend at `http://localhost:3000`
-
-## 👤 Demo Accounts
-
-Seeded by `prisma/seed.cjs`:
-
-| Role | Email | Password |
-|---|---|---|
-| Teacher | `teacher@school.com` | `password123` |
-| Student | `student@test.com` | `password` |
-
-## 📝 Claude Code Prompt Log
-
-Every significant prompt used with Claude Code goes in `prompts/`. See `prompts/README.md` and `prompts/_template.md`.
-
-To enable the optional pre-commit nudge that reminds you to log prompts:
-
-```bash
-ln -sf ../../scripts/pre-commit-reminder.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-```
-
-## 📁 Project Structure
-
-```
-brightboost/
-├── src/                        # Frontend (React + Vite + TypeScript)
-│   ├── components/
-│   │   ├── activities/         # Game components (SequenceDragDrop, Unity wrappers)
-│   │   ├── StudentDashboard/   # XP ring, module cards, leaderboard
-│   │   ├── TeacherDashboard/   # Sidebar, navbar, lesson table, forms
-│   │   ├── student/            # Pulse survey, class login
-│   │   ├── teacher/            # Roster, CSV import, print cards, showcase
-│   │   ├── unity/              # Unity WebGL container
-│   │   └── ui/                 # shadcn/ui primitives
-│   ├── contexts/               # AuthContext
-│   ├── hooks/                  # Custom React hooks
-│   ├── lib/                    # XP, streak, and utility functions
-│   ├── locales/                # en/common.json, es/common.json
-│   ├── pages/                  # All routed page components
-│   ├── services/               # API service layer
-│   └── App.tsx                 # Route definitions
-├── backend/                    # Express API server
-│   ├── src/
-│   │   ├── routes/             # auth, modules, progress, courses, PD, pulse, etc.
-│   │   ├── services/           # Business logic (game, progress)
-│   │   ├── utils/              # Auth middleware, token helpers
-│   │   └── server.ts           # Express app entry point
-│   └── prisma/                 # Backend Prisma schema (synced for Railway)
-├── prisma/                     # Root Prisma schema + seed + migrations
-├── dist/games/spacewar/        # Built Spacewar WebGL assets
-├── cypress/                    # E2E tests
-├── public/                     # Static assets
-└── package.json
-```
-
-## 🚢 Production Deployment
-
-BrightBoost production runs on **Railway + Supabase**:
-
-| Component | Platform | Details |
-|---|---|---|
-| Backend API | Railway | Express server via `Dockerfile.backend`, auto-deploys from `main` |
-| Frontend | Railway | Vite build served by Express (`SERVE_FRONTEND=true`) |
-| Database | Supabase | PostgreSQL, connected via `DATABASE_URL` |
-| Schema | Prisma | `prisma/schema.prisma` is the source of truth |
-
-### Required Production Env Vars (set in Railway)
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Supabase Postgres connection string |
-| `DIRECT_URL` | Supabase direct connection (bypasses pooler) |
-| `RUN_SEED` | Optional; only exact `true` runs the predeploy seed (default: unset = skip). See [`DEPLOYMENT.md`](DEPLOYMENT.md). |
-| `SESSION_SECRET` | JWT signing secret (must not be default) |
-| `NODE_ENV` | `production` |
-| `PORT` | Server port (Railway sets automatically) |
-| `SERVE_FRONTEND` | `true` — serves Vite build from Express |
-| `FRONTEND_URL` | Production URL (for password reset emails) |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Email delivery (optional) |
-
-### Deploy Process
-
-1. Push to `main` branch on GitHub
-2. Railway auto-deploys using `Dockerfile.backend`
-3. On startup, `backend/scripts/predeploy.sh` runs Prisma migrations (hard-fail) and `prisma generate`; the seed step runs **only** when `RUN_SEED=true` (default: skip). See [`DEPLOYMENT.md`](DEPLOYMENT.md) (`RUN_SEED` runbook).
-4. Express serves API at `/api/*` and frontend SPA for all other routes
-
-> **Note:** The repo contains legacy AWS Lambda, Azure Static Web Apps, and Aurora references from earlier deployment phases. These are no longer the production path. See `docs/legacy/` for historical context.
-
-## 🗺 Roadmap
-
-- [ ] Upper-tier content for grades 3-5 and 6-8 with advanced technology pathways in AI, quantum, and biotech
-- [ ] Real-time PvP matchmaking for Spacewar Arena
-- [ ] Donation-enabled website
-- [ ] Collegiate STEM principles integration (Nathan Frank collab)
-- [ ] Community showcase night flow enhancements
-- [ ] Mobile-optimized game controls
-- [ ] Parent progress portal
-
-## 📬 Contact
-
-Built by the **Bright Bots Initiative** — building strong foundations and preparing students for advanced technology pathways.
+Production is Railway + Supabase. Legacy AWS Lambda / Azure SWA / Aurora notes in older docs
+are historical only.
