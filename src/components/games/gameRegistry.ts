@@ -15,6 +15,7 @@ import TankTrekGame from "./TankTrekGame";
 import QuantumQuestGame from "./QuantumQuestGame";
 import DataDashSortDiscoverGame from "./DataDashSortDiscoverGame";
 import TrackMakerGame from "./TrackMakerGame";
+import EchoAvenueGame from "./echoAvenue/EchoAvenueGame";
 
 type GameProps = {
   config?: any;
@@ -45,6 +46,7 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
 
   // ── Set 3 keys ──
   track_maker: TrackMakerGame, // "Boost Track Builder" (Set 3, gated)
+  echo_avenue: EchoAvenueGame, // "Echo Avenue" (Set 3, gated)
 
   // ── Legacy / alias keys → same implementations ──
   sequence_drag_drop: BoostPathPlannerGame,

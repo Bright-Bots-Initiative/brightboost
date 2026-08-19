@@ -23,7 +23,7 @@ import { serializeCreationContent } from "../services/creationContentSerializer"
 //     identity is exposed as a first name only — never email.
 
 const router = Router();
-const GALLERY_CONTENT_TYPES = new Set(["race_track"]);
+const GALLERY_CONTENT_TYPES = new Set(["race_track", "sound_duet"]);
 
 // ---------------------------------------------------------------------------
 // Validation
