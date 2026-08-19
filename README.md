@@ -23,12 +23,13 @@ Package manager: **npm** (CI runs `npm ci`). Do not use pnpm for this repo.
 | [CONTRIBUTING.md](CONTRIBUTING.md)                     | Branch, commit, and review workflow |
 | [DEPLOYMENT.md](DEPLOYMENT.md)                         | Production deploy notes             |
 | [SECURITY.md](SECURITY.md)                             | Reporting and secret-handling rules |
+| [docs/README.md](docs/README.md)                       | Docs map (directories + canonicals) |
+| [docs/ops/ci.md](docs/ops/ci.md)                       | CI jobs, Cypress gates, parity      |
 | [docs/design-principles.md](docs/design-principles.md) | Design philosophy                   |
 | [docs/team-workflow.md](docs/team-workflow.md)         | Labels, priority, and delegation    |
 
-Agent-assisted contributors: see [CONTRIBUTING.md](CONTRIBUTING.md). Canonical agent context
-lands under `docs/agents/` in a follow-on change; until then follow CONTRIBUTING and the
-repo checks (`npm run verify`).
+Agent-assisted contributors: start at [docs/agents/agent.md](docs/agents/agent.md) (also linked from
+[AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md)). Run `npm run verify` before claiming local–CI parity.
 
 ## Verify locally
 
@@ -41,8 +42,8 @@ npm run verify -- --skip-install --allow-skips
 
 `npm run verify` mirrors the main CI gate. The command above runs every locally available
 step and reports environment-bound skips; omit `--allow-skips` when the frontend and an
-explicitly designated test database are available. Some agent/docs findings on `main` are
-expected until the docs stack lands; do not weaken the scripts.
+explicitly designated test database are available. This layer also wires `agent:check` and
+`docs:check` into CI. Do not weaken the scripts to get green.
 
 ## Tech stack (summary)
 

@@ -1,3 +1,5 @@
+> **Canonical for:** deployment. Last verified against code: 2026-08-10.
+
 # BrightBoost Deployment Guide
 
 ## Production Stack
@@ -8,6 +10,12 @@
 | Backend API (standalone) | Railway           | `brightboost-production.up.railway.app`  |
 | Database                 | Supabase Postgres | Connected via `DATABASE_URL` env var     |
 | Schema management        | Prisma ORM        | `prisma/schema.prisma` (source of truth) |
+
+## Architecture
+
+- **Frontend**: React (Vite) build served on Railway (nginx via `Dockerfile.frontend`, or Express with `SERVE_FRONTEND=true`).
+- **Backend**: Node.js (Express) hosted on Railway.
+- **Database**: PostgreSQL hosted on Supabase.
 
 ## How Production Deploys
 
@@ -41,6 +49,50 @@
 | `SMTP_PASS`                 | Optional    | SMTP password                                                                                |
 | `MAIL_FROM`                 | Optional    | From address for emails                                                                      |
 
+## First-time Railway + Supabase setup
+
+Prerequisites: accounts on [Railway](https://railway.app) and [Supabase](https://supabase.com); GitHub repo connected.
+
+### Database (Supabase)
+
+1. Create a new project on Supabase.
+2. Go to **Project Settings** → **Database**.
+3. Copy **two** connection strings from **Project Settings → Database → Connection String**:
+   - **Transaction Mode (port 6543)** → `DATABASE_URL` (runtime queries via pooler).
+   - **Session Mode (port 5432)** → `DIRECT_URL` (Prisma migrations need a direct/session connection).
+   - Ensure both strings end with `?sslmode=require`.
+   - If the direct host `db.<ref>.supabase.co:5432` is blocked by your host, use the **pooler Session** string (`<ref>.pooler.supabase.com:5432`) as `DIRECT_URL` instead.
+
+### Backend (Railway)
+
+1. Create a Railway project; deploy from the GitHub repo.
+2. Prefer the root `Dockerfile.backend` path used in production (see **How Production Deploys** above). If configuring a Node service manually:
+   - **Root Directory**: `backend`
+   - **Build Command**: `npm run build`
+   - **Start Command**: `npm run start`
+3. Set the required environment variables from the table above. Locally, `DIRECT_URL` may equal `DATABASE_URL` (both point at local Postgres).
+
+### Frontend (Railway)
+
+1. Create a second Railway service from the same GitHub repo, or serve the SPA from Express with `SERVE_FRONTEND=true`.
+2. For a separate frontend service, build from `Dockerfile.frontend` (Vite build served by nginx).
+3. Set build/service variables:
+   - `VITE_API_BASE`: `/api` (default) — same-origin API calls. Nginx (`docs/nginx.conf`) proxies `/api/` → `${BACKEND_URL}/api/`.
+   - `BACKEND_URL`: deployed Railway backend URL (no trailing slash).
+   - `VITE_*` vars are inlined at build time — they must be present when the image builds.
+
+### Database initialization (production)
+
+Prefer letting `predeploy.sh` run `prisma migrate deploy` on deploy. To bootstrap schema/seed once against Supabase from a laptop (use production credentials only when intentional):
+
+```bash
+npx prisma migrate deploy --schema prisma/schema.prisma
+# Optional one-shot seed — prefer RUN_SEED=true on Railway instead (see below)
+npx prisma db seed
+```
+
+`npm run db:init` is **not** the production runbook primary path while migration baseline work (`#646`) is open; use migrate deploy + gated seed as above.
+
 ## RUN_SEED Runbook (Production)
 
 `predeploy.sh` treats seeding as opt-in (same shape as `RUN_GAMIFICATION_BACKFILL`):
@@ -56,7 +108,7 @@ Use `RUN_SEED` only when bootstrapping a fresh/empty production database — ess
 3. Confirm logs include: `predeploy: RUN_SEED=true — running seed from …`
 4. Clear `RUN_SEED` immediately after the successful bootstrap.
 5. Trigger (or observe) the next deploy and confirm logs include:  
-   `predeploy: skipping seed (RUN_SEED not set — see docs/deploy.md, issue #651)`
+   `predeploy: skipping seed (RUN_SEED not set — see DEPLOYMENT.md, issue #651)`
 
 Warnings:
 
@@ -68,45 +120,7 @@ Local dev and CI are unchanged: neither path calls `predeploy.sh`; contributors 
 
 ## Local Development
 
-### Prerequisites
-
-- Node.js v20+
-- npm
-- Docker (for local Postgres)
-
-### Quick Start
-
-```bash
-# Start local Postgres
-docker compose -f docker-compose-pg.yml up -d
-
-# Install dependencies
-npm install
-cd backend && npm install && cd ..
-
-# Copy and configure env
-cp .env.example .env
-# Edit .env with local values (see .env.example for guidance)
-
-# Set up database
-npx prisma db push --schema prisma/schema.prisma
-npx prisma db seed
-
-# Run both servers
-cd backend && npm run dev   # Terminal 1 — API on :3000
-npm run dev                  # Terminal 2 — Frontend on :5173
-```
-
-### Local Env Vars
-
-See `.env.example` for the full list. Key local values:
-
-```env
-DATABASE_URL="postgresql://postgres:brightboostpass@localhost:5435/brightboost"
-DIRECT_URL="postgresql://postgres:brightboostpass@localhost:5435/brightboost"
-VITE_API_BASE="http://localhost:3000"
-SESSION_SECRET="local-dev-secret"
-```
+For zero-to-running setup, use [`SETUP.md`](SETUP.md). Tracked Docker Postgres defaults and env examples live there and in `.env.example`.
 
 ## Schema Management
 
@@ -115,14 +129,22 @@ SESSION_SECRET="local-dev-secret"
 - **Migrations:** `prisma/migrations/` — applied via `prisma migrate deploy` on production startup
 - **Seed:** `prisma/seed.cjs` — deploy seeding is gated by `RUN_SEED=true`; default is skip
 
+## Troubleshooting
+
+- **Prisma / connection limits**: Confirm `DATABASE_URL` and `DIRECT_URL`. For connection-limit errors, use the Supabase Transaction pooler (port 6543) for the app and Session pooler (port 5432) for migrations.
+- **CORS**: With same-origin `/api` (nginx proxy) you should not hit CORS. If the frontend is on a different origin, configure `FRONTEND_ORIGINS` / CORS for that domain.
+
+## Pipeline reference
+
+See [`docs/ops/deployment-pipeline.md`](docs/ops/deployment-pipeline.md) for CI workflow inventory (separate from Railway deploy).
+
 ## Legacy Deployment References
 
-The repo contains files from earlier deployment phases (AWS Lambda, Azure Static Web Apps, Aurora PostgreSQL). These are **no longer the production path**:
+The repo still contains files from earlier deployment phases (AWS Lambda, Azure Static Web Apps, Aurora PostgreSQL). These are **no longer the production path**:
 
-- ~~`.github/workflows/deploy-stem1.yml`~~ — removed (legacy Azure SWA deploy)
+- `.github/workflows/deploy-stem1.yml` — marked `[LEGACY]`; removal is a separate follow-up
 - `.github/workflows/prod-smoke.yml` — Azure SWA smoke test (legacy)
-- `docs/azure/` — Azure-specific scaling docs (legacy)
-- `docs/architecture/` — AWS Lambda architecture diagrams (legacy)
+- `docs/azure/` — may retain infrastructure-as-code (e.g. `.bicep`); point-in-time Azure markdown runbooks were removed
 - `docker-compose.yml` — references Azure Functions `func start` (legacy)
 
-These files are retained for historical reference but should not be used for production decisions.
+These leftovers should not drive production decisions. Canonical deploy path is Railway + Supabase above.

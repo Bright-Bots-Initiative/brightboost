@@ -1,4 +1,6 @@
-# Bright Boost Test Credentials
+# Demo accounts (seeded)
+
+> **Banner:** These are **seeded demo accounts**, not production secrets. Password hashes refresh on every seed/deploy. Keep/remove/relocate of this public path is a deliberate hygiene decision (H-02). Last moved from `docs/intern-credentials.md`.
 
 Use these accounts to explore and test the platform during development.
 

@@ -6,7 +6,7 @@ This repo includes a minimal Cypress smoke test that verifies:
 - The live API is reachable (`VITE_API_BASE`)
 - Optional: a guarded checkpoint POST works with dev headers enabled
 
-Secrets / env required (see `docs/ci.md` for the full table):
+Secrets / env required (see [`docs/ops/ci.md`](ops/ci.md) for the full table):
 
 - `CYPRESS_SWA_URL`: deployed staging / SWA URL (e.g. `https://brightboost-staging.up.railway.app`)
 - `VITE_API_BASE`: API base (same host as SWA in the Railway single-service setup)
@@ -20,7 +20,7 @@ Run locally (spec lives at `cypress/e2e/staging/smoke.cy.ts`):
 CYPRESS_SWA_URL=https://<swa-url> VITE_API_BASE=https://<api-base> npm run test:e2e:staging
 ```
 
-Missing required env throws via `requireEnv` (never a silent pass). See `docs/ci.md`.
+Missing required env throws via `requireEnv` (never a silent pass). See [`docs/ops/ci.md`](ops/ci.md).
 
 Notes:
 

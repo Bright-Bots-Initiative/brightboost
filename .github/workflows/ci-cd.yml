@@ -80,6 +80,12 @@ jobs:
       - name: Verify type-program membership
         run: node scripts/verify-type-program-membership.mjs
 
+      - name: Agent context check
+        run: npm run agent:check
+
+      - name: Docs integrity check
+        run: npm run docs:check
+
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1
 
