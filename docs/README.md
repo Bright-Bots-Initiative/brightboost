@@ -16,8 +16,10 @@ Start at the repo [`README.md`](../README.md). From there, every canonical topic
 | [`frontend/`](frontend/)                     | Frontend dashboard and accessibility notes                         |
 | [`games/`](games/)                           | Game design notes                                                  |
 | [`audits/`](audits/)                         | Experience / localization audits                                   |
-| [`architecture/`](architecture/)             | Legacy architecture diagrams                                       |
+| [`architecture/`](architecture/)             | Architecture decisions, shared-code contracts, and legacy diagrams |
 | [`azure/`](azure/)                           | Remaining Azure IaC (e.g. `.bicep`); markdown runbooks removed     |
+| [`repro/`](repro/)                           | Reproduction cases and evidence for known failures                  |
+| [`spikes/`](spikes/)                         | Time-boxed technical investigations and findings                    |
 | _(root of `docs/`)_                          | Topic docs (i18n, testing, staging, API, design, etc.)             |
 
 ## Canonical documents
@@ -28,7 +30,7 @@ Start at the repo [`README.md`](../README.md). From there, every canonical topic
 | Zero-to-running setup          | [`SETUP.md`](../SETUP.md)                                                                                            |
 | Human contribution workflow    | [`CONTRIBUTING.md`](../CONTRIBUTING.md)                                                                              |
 | Agent context                  | [`docs/agents/agent.md`](agents/agent.md) → overview                                                                 |
-| Internship and cohort planning | [`docs/internship-program/README.md`](internship-program/README.md)                                                  |
+| Internship and cohort planning | [`docs/internship-program/OPERATING_STANDARD.md`](internship-program/OPERATING_STANDARD.md)                         |
 | Deployment                     | [`DEPLOYMENT.md`](../DEPLOYMENT.md)                                                                                  |
 | CI jobs & parity               | [`docs/ops/ci.md`](ops/ci.md) (parity table in [`agents/rules/60-verification.md`](agents/rules/60-verification.md)) |
 | Security policy                | [`SECURITY.md`](../SECURITY.md)                                                                                      |
