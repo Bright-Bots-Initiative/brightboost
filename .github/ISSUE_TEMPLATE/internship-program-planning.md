@@ -2,8 +2,6 @@
 name: Internship program planning
 about: Plan a new Bright Boost internship or contributor cohort from the canonical operating standard
 title: "[Program] [Season Year] cohort plan"
-labels: ""
-assignees: []
 ---
 
 ## Required reading
@@ -22,16 +20,8 @@ assignees: []
 
 ## Launch gates
 
-- [ ] Prerequisites checklist scheduled
-- [ ] Group setup huddle scheduled
-- [ ] Git branch-to-PR flight check scheduled
-- [ ] Primary lanes and first bounded issues assigned
-- [ ] Slack/GitHub review protocol published
-- [ ] LLM and data-safety guardrails scheduled
-- [ ] Localization reviewer and glossary available when relevant
-- [ ] Test evidence defined for every assignment
-- [ ] Peer interaction and review cadence scheduled
-- [ ] Portfolio capture, midpoint pulse, and closeouts scheduled
+- [ ] Sections 1–11 of `docs/internship-program/PROGRAM_PLAN_TEMPLATE.md` are complete or have a named owner and due date.
+- [ ] Every item in the template's pre-program readiness section is complete before production work begins.
 
 ## Decisions or approved exceptions
 
