@@ -2,7 +2,7 @@
 
 > **Superseded status (as of 2026-08-18).** The Branches table below is a dated snapshot and is now stale.
 > Since it was written: **#750 merged** (`fdded13`), **#760 merged** (`94e9a99`), **#743 merged** (`866e8f0`).
-> **#762 is still open** and still needs its base retargeted to `main`.
+> **#762 is still open**; its base has since been retargeted from the merged `jack/chore-749-…` branch to `main`.
 > The table is left unedited on purpose — it records what was true on 2026-08-14, not current state.
 
 One-page snapshot after executing `handoff-execute-decisions.md` (workspace-local; not tracked in this repo). Reflects reality at handoff close — not intent.
