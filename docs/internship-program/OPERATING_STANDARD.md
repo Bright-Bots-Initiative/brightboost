@@ -104,15 +104,15 @@ An assignment is complete only when:
 
 Record these measures in the cohort's program plan. The program lead owns the record unless the plan names another owner.
 
-| Measure | Target | Evidence recorded in |
-| ------- | ------ | -------------------- |
-| Readiness | Every participant passes before production assignment | Program plan readiness record |
-| Initial ownership | Every participant has a primary lane and first bounded issue at launch | Participant-lanes table |
-| Review handoff | Action-required reviews are acknowledged within the plan's target | Decision and action log |
-| Peer learning | Every participant performs the peer-review cadence named in the plan | Interaction record or action log |
-| Localization confidence | Uncertainty is resolved by the named language reviewer | Assignment or PR evidence |
-| Test quality | Every completed contribution includes expected evidence | Assignment or PR evidence |
-| Portfolio outcome | Every participant leaves with at least one accurate, reviewable case study | Portfolio-capture table |
+| Measure                 | Target                                                                     | Evidence recorded in             |
+| ----------------------- | -------------------------------------------------------------------------- | -------------------------------- |
+| Readiness               | Every participant passes before production assignment                      | Program plan readiness record    |
+| Initial ownership       | Every participant has a primary lane and first bounded issue at launch     | Participant-lanes table          |
+| Review handoff          | Action-required reviews are acknowledged within the plan's target          | Decision and action log          |
+| Peer learning           | Every participant performs the peer-review cadence named in the plan       | Interaction record or action log |
+| Localization confidence | Uncertainty is resolved by the named language reviewer                     | Assignment or PR evidence        |
+| Test quality            | Every completed contribution includes expected evidence                    | Assignment or PR evidence        |
+| Portfolio outcome       | Every participant leaves with at least one accurate, reviewable case study | Portfolio-capture table          |
 
 ## Change log
 
