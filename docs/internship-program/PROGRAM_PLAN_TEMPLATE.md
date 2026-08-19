@@ -1,13 +1,13 @@
 # Bright Boost [Season Year] Internship Program Plan
 
-- **Status:** Draft
-- **Program dates:**
-- **Program lead:**
-- **Technical lead:**
-- **Product/localization owner:**
-- **Backup reviewer:**
-- **Operating-standard review completed:** [ ]
-- **Latest anonymized lesson record reviewed:** [ ]
+**Status:** Draft  
+**Program dates:**  
+**Program lead:**  
+**Technical lead:**  
+**Product/localization owner:**  
+**Backup reviewer:**  
+**Operating-standard review completed:** [ ]  
+**Latest anonymized lesson record reviewed:** [ ]
 
 ## 1. Outcomes
 
@@ -27,7 +27,7 @@ List no more than three program-level outcomes. Each must have an owner and obse
 
 - [ ] Prerequisites and access checklist sent 7–10 days before start
 - [ ] Group setup huddle scheduled and recorded
-- [ ] Frontend, backend, database, and smoke test verified
+- [ ] `SETUP.md` sections 1–6 and `npm run verify -- --skip-install --allow-skips` completed
 - [ ] Practice branch, push, PR, review response, and CI loop completed by every participant
 - [ ] Individual blockers resolved before production assignment
 
@@ -93,3 +93,11 @@ For each showcase, record the problem, the participant's decisions, before/after
 | Date | Decision/action | Owner | Due date | Required evidence | Status |
 | ---- | --------------- | ----- | -------- | ----------------- | ------ |
 |      |                 |       |          |                   |        |
+
+## 11. Program-measure record
+
+Use the measures in `OPERATING_STANDARD.md`. Name an owner for any measure not owned by the program lead and link the evidence location.
+
+| Measure | Owner | Evidence location | Result | Follow-up |
+| ------- | ----- | ----------------- | ------ | --------- |
+|         |       |                   |        |           |
