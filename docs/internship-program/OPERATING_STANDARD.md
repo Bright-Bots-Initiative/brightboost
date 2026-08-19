@@ -2,10 +2,10 @@
 
 # Bright Boost Internship Program Operating Standard
 
-- **Status:** Canonical program-planning standard
+- **Status:** Provisional canonical standard; first revision due after the next cohort
 - **Policy owner:** Bright Bots Initiative Executive Director or delegated program lead
 - **Derived from:** Summer 2026 cohort closeouts
-- **Review cadence:** Before every cohort
+- **Review cadence:** Before every cohort and after the first cohort using this standard
 
 ## Purpose
 
@@ -24,13 +24,15 @@ Bright Boost internships should give participants authentic experience contribut
 
 ## Pre-program readiness gate
 
-Complete this before assigning production work. Every participant must be able to:
+Complete this before assigning production work. Use [`SETUP.md`](../../SETUP.md) sections 1–6 as the single setup procedure. Each participant must complete it and run the canonical environment-independent parity command:
+
+```bash
+npm run verify -- --skip-install --allow-skips
+```
+
+In the same readiness flight check, every participant must be able to:
 
 - access GitHub, Slack, and the required project documentation;
-- install the documented runtimes, package managers, and database tools;
-- configure the local environment without exposing credentials;
-- start the database, backend, and frontend;
-- run the designated smoke test or test suite;
 - create a branch, commit, and push it;
 - open a practice pull request and request review;
 - respond to a change request and update the same pull request; and
@@ -54,24 +56,22 @@ Every participant should complete at least one substantive peer review per sprin
 
 ## Responsible LLM standard
 
-For every AI-assisted change, the contributor must be able to:
+Follow the repository's canonical [`AI-assisted coding practices`](../guides/ai-coding-practices.md). For every AI-assisted cohort change, the contributor must also be able to:
 
 - explain what changed and why;
 - connect it to the issue's acceptance criteria;
 - inspect the complete diff for unrelated or unsafe changes;
-- verify APIs, translations, and architecture assumptions against an authoritative source;
-- run the relevant automated and manual tests;
-- protect credentials and private user data;
-- record significant prompts when required by the repository; and
+- identify the authoritative source used to verify APIs, translations, and architecture assumptions;
+- show the relevant automated and manual test evidence; and
 - accept full responsibility for the submitted result.
 
 ## Localization confidence standard
 
-Before assigning localization work, provide:
+Use the existing glossary and translation architecture documented in [`docs/i18n.md`](../i18n.md), including `src/data/glossary.ts` and `pathways.glossary.terms.<slug>.*`. Follow the repository rule for uncertain wording in [`20-i18n.md`](../agents/rules/20-i18n.md): retain the English value and add `// TODO: translate` until a language reviewer resolves it.
 
-- a shared product and learning-term glossary;
+Before assigning localization work, also provide:
+
 - screen or interaction context for assigned strings;
-- a documented way to flag uncertain wording;
 - a designated reviewer for language accuracy; and
 - UI checks for missing keys, fallback text, truncation, and the intended student age band.
 
@@ -102,13 +102,17 @@ An assignment is complete only when:
 
 ## Program-level success measures
 
-- 100% of participants pass the readiness gate before production assignment.
-- Every participant has a primary lane and a first bounded issue at launch.
-- Action-required reviews are acknowledged within one business day.
-- Every participant performs substantive peer review during each sprint.
-- Localization uncertainty is resolved by a named reviewer.
-- Every completed contribution includes expected test evidence.
-- Every participant leaves with at least one accurate, reviewable case study.
+Record these measures in the cohort's program plan. The program lead owns the record unless the plan names another owner.
+
+| Measure | Target | Evidence recorded in |
+| ------- | ------ | -------------------- |
+| Readiness | Every participant passes before production assignment | Program plan readiness record |
+| Initial ownership | Every participant has a primary lane and first bounded issue at launch | Participant-lanes table |
+| Review handoff | Action-required reviews are acknowledged within the plan's target | Decision and action log |
+| Peer learning | Every participant performs the peer-review cadence named in the plan | Interaction record or action log |
+| Localization confidence | Uncertainty is resolved by the named language reviewer | Assignment or PR evidence |
+| Test quality | Every completed contribution includes expected evidence | Assignment or PR evidence |
+| Portfolio outcome | Every participant leaves with at least one accurate, reviewable case study | Portfolio-capture table |
 
 ## Change log
 
