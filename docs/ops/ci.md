@@ -1,3 +1,4 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
 > **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-18.
 
 # CI jobs and Cypress gates
@@ -8,12 +9,12 @@ What each GitHub Actions job in `.github/workflows/ci-cd.yml` proves, how the th
 
 ## What each job proves
 
-| Job                | What it proves                                                                                                                                                                                   | What it does **not** do                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| **build-only**     | `npm run build` succeeds                                                                                                                                                                         | No lint, typecheck, unit tests, or Cypress                                              |
+| Job                | What it proves                                                                                                                                                                                  | What it does **not** do                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **build-only**     | `npm run build` succeeds                                                                                                                                                                        | No lint, typecheck, unit tests, or Cypress                                              |
 | **build-and-test** | Lint, diff-scoped format, FE/BE typecheck, Prisma drift, wiring/type guards, agent/docs checks, unit + Storybook tests, shell gate/smoke, Waterworks mobile test, and production build artifact | No Postgres service and no backend process for the shell smoke. Does not hit `/api`     |
-| **db-check**       | Prisma migrate + `npm run test:db` against its own Postgres service (`brightboost_test`)                                                                                                         | Does not run Cypress                                                                    |
-| **e2e-flows**      | Seeded real flow: Postgres + migrate + `e2e:seed` + backend + frontend, then `npm run test:e2e:ci:flows` (login → student completion → teacher dashboard)                                        | Not the full Cypress suite; does not replace the shell smoke or the shell sabotage gate |
+| **db-check**       | Prisma migrate + `npm run test:db` against its own Postgres service (`brightboost_test`)                                                                                                        | Does not run Cypress                                                                    |
+| **e2e-flows**      | Seeded real flow: Postgres + migrate + `e2e:seed` + backend + frontend, then `npm run test:e2e:ci:flows` (login → student completion → teacher dashboard)                                       | Not the full Cypress suite; does not replace the shell smoke or the shell sabotage gate |
 
 Per #774, `e2e-flows` is required on every pull request. Changes to the required-check set
 follow the governance policy tracked in #775.
