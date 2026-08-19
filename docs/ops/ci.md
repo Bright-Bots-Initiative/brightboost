@@ -1,4 +1,5 @@
 npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
 > **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-18.
 
 # CI jobs and Cypress gates
