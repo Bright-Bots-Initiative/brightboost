@@ -1,3 +1,5 @@
+> **Canonical for:** executable guard registry. Last verified against code: 2026-08-20.
+
 # Executable guards
 
 Registry of scripts that prove a property (and what actually runs them).
@@ -24,7 +26,7 @@ sat unwired for months). A row without a real Runner is decoration.
 | ------------------------------------------ | --------------------------------------------------------------------------- |
 | `scripts/verify-ci-step-presence-core.mjs` | Library loaded by `verify-ci-step-presence.sh`; not a standalone entrypoint |
 
-**Out of the R1-01 glob** (`scripts/verify-*.{sh,mjs}` + `scripts/check-*.sh`) and therefore not inventoried as rows: `scripts/check-docs.mjs`, `scripts/check-bundle-size.js`, `scripts/run-pr-review-check.sh` (helpers / bot plumbing).
+**Out of the R1-01 glob** (`scripts/verify-*.{sh,mjs}` + `scripts/check-*.sh`) and therefore not inventoried as rows: `scripts/docs-check.mjs`, `scripts/check-bundle-size.js`, `scripts/run-pr-review-check.sh` (helpers / bot plumbing).
 
 ## Conditional scope (not done)
 
