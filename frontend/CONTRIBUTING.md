@@ -4,7 +4,7 @@ Thank you for helping us build joyful K-8 STEM tools! This guide shows you how t
 
 ## Quick-start Prerequisites
 
-- Node 18 LTS (`nvm install 18`)
+- Node 20 LTS (`nvm install 20`)
 - npm (comes with Node.js)
 - VS Code + ESLint/Prettier extensions (recommended)
 
@@ -90,6 +90,6 @@ src/
 
 ## Code of Conduct & License
 
-Please refer to the [Code of Conduct](/CODE_OF_CONDUCT.md) when participating in our community.
+Please follow the project's contribution guidelines and community norms when participating.
 
 This project is licensed under the MIT License - see the LICENSE file in the repo root for details.

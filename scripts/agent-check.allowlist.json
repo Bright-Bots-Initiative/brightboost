@@ -1,0 +1,8 @@
+{
+  "trackedEnvFiles": [
+    { "path": ".env", "issue": 754, "expires": "2026-11-30" },
+    { "path": ".env.development", "issue": 754, "expires": "2026-11-30" },
+    { "path": ".env.production", "issue": 754, "expires": "2026-11-30" },
+    { "path": ".env.local-be", "issue": 754, "expires": "2026-11-30" }
+  ]
+}
