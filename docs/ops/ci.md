@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-18.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-20.
 
 # CI jobs and Cypress gates
 
@@ -15,8 +15,9 @@ What each GitHub Actions job in `.github/workflows/ci-cd.yml` proves, how the th
 | **db-check**       | Prisma migrate + `npm run test:db` against its own Postgres service (`brightboost_test`)                                                                                                        | Does not run Cypress                                                                    |
 | **e2e-flows**      | Seeded real flow: Postgres + migrate + `e2e:seed` + backend + frontend, then `npm run test:e2e:ci:flows` (login → student completion → teacher dashboard)                                       | Not the full Cypress suite; does not replace the shell smoke or the shell sabotage gate |
 
-Per #774, `e2e-flows` is required on every pull request. Changes to the required-check set
-follow the governance policy tracked in #775.
+Per #774, `e2e-flows` is required on every pull request. The full required-check
+table, what each non-required check reports, and the policy for adding a new job to
+that set are in [Required checks on `main`](#required-checks-on-main) below.
 
 `build-and-test` starts `npm run dev` (Vite; port from product `vite.config.ts` / OQ-12), waits with `wait-on "$CYPRESS_SWA_URL"`, then runs the shell spec. Workflow env sets `CYPRESS_SWA_URL` (not `CYPRESS_BASE_URL`).
 
@@ -27,6 +28,63 @@ follow the governance policy tracked in #775.
 | `npm run test:e2e:ci` / shell smoke step | Frontend shell failed to mount (no backend required)                                          |
 | `verify:ci-gate`                         | Two-phase sabotage proof failed (healthy shell did not pass, or sabotaged shell did not fail) |
 | `e2e-flows`                              | Seeded stack or real product flow failed (auth, persistence, or teacher-visible evidence)     |
+
+## Required checks on `main`
+
+Three jobs from `.github/workflows/ci-cd.yml` are required. A red result on any of them means **merging is blocked** — the PR button greys out until the check goes green or the required entry is removed by an admin. The one-review requirement from #648 stays in force alongside them. A fourth name, `review` from the PR Review Bot, is claimed as required by `docs/ops/branch-protection.md` and is neither confirmed nor refuted here — see the reconciliation note below.
+
+| Check            | Tier                 | Required since              | Red blocks merge |
+| ---------------- | -------------------- | --------------------------- | ---------------- |
+| `build-and-test` | Essential (every PR) | #648, closed 2026-08-12     | Yes              |
+| `db-check`       | Essential (every PR) | #648, closed 2026-08-12     | Yes              |
+| `e2e-flows`      | Essential (every PR) | #774, owner call 2026-08-14 | Yes              |
+
+**Everything else that reports on a PR.** A PR into `main` shows more checks than those three. None of the following is in the required set as this document understands it:
+
+| Check                  | Workflow                   | Trigger                                                           | Status here                                 |
+| ---------------------- | -------------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| `build-only`           | BrightBoost CI/CD Pipeline | `push` + `pull_request`, `branches: [main]`                       | Reports, not required                       |
+| `check-bundle-size`    | Bundle Size Check          | `on: [push, pull_request]`, no branch filter — reports **twice**  | Reports, not required                       |
+| `review`               | PR Review Bot              | `pull_request` only, `branches: [main]`                           | **Contested** — see the reconciliation note |
+| `comment`              | PR Review Bot              | `pull_request` only, `branches: [main]`                           | Reporting only; cannot gate                 |
+| `teacher-dashboard-ci` | Teacher Dashboard CI       | `pull_request` with a `paths:` filter on TeacherDashboard sources | Conditional, so it cannot be required       |
+
+A red on a reporting check is a real signal worth reading, but it does not block the merge — do not treat their green as a gate, and do not silence them either.
+
+**`comment` cannot function as a gate whatever the board says.** It is `needs: review` with `if: always() && github.event.pull_request.head.repo.full_name == github.repository`, so it goes green after a red `review`, and it is skipped outright on fork PRs. Requiring it would gate on whether a comment got posted, not on whether anything passed. `review` is the opposite: it runs commitlint, prettier, lint, tests, and a security scan and ends in `exit "$failed"`, so it is gate-capable — which is why its status is worth settling rather than assuming.
+
+**`e2e-flows` is Essential by an explicit ruling, not by drift.** #648 deliberately omitted it and said so; #774 then put the question to the owner, who ruled on 2026-08-14 that the job stays every-PR **and** joins the required set, accepting the ~3.6-minute Postgres + migrate + seed + two-servers cost as the price of protecting the login → student completion → teacher-dashboard path. The Phase 1 recommendation on #709 had been label-or-on-demand; the owner overrode it. Anyone re-tiering `e2e-flows` is reopening a decided question, not filling a gap.
+
+**How this list was derived (honesty rule, applied to ourselves).** `GET /repos/:owner/:repo/branches/main/protection` returns `404` for a non-admin token, so the board setting **cannot be read programmatically** with the access this repo's contributors have. What is verifiable without admin: `GET /branches/main` reports `"protected": true`, and `GET /rulesets` returns `[]` (classic branch protection, not a ruleset).
+
+For the check **names**, read a PR rollup — not the check-runs on a `main` commit:
+
+```bash
+gh pr view <n> --repo Bright-Bots-Initiative/brightboost --json statusCheckRollup
+```
+
+`GET /repos/:owner/:repo/commits/<sha>/check-runs` against a `main` commit returns five names (`build-and-test`, `build-only`, `check-bundle-size`, `db-check`, `e2e-flows`), and that answer is **structurally incomplete, not merely short**: `pr-review-bot.yml` and `teacher-dashboard-ci.yml` declare `on: pull_request` with no `push` trigger, so their checks can never appear on a commit on `main`. The surface this section governs is a PR targeting `main`, so derive it from a PR. On #756 the rollup carries **seven distinct names** — the five above plus `review` and `comment`.
+
+The three-row table above is therefore **the policy we hold ourselves to**, sourced from the closing evidence on #648 and the owner decision on #774 — not a readback of the setting. An admin should confirm the board matches this table; if it does not, the board is the fact and this table is the bug.
+
+**Reconciliation: `docs/ops/branch-protection.md` also names a required set.** Read this note before trusting it.
+
+- It listed `build-and-test`, `db-check`, and **`review`**, including a `gh api … "contexts":["build-and-test","db-check","review"]` snippet. It predated both `e2e-flows` and #774, so it was **stale on `e2e-flows`** — corrected in this PR, where the snippet is also relabelled a template rather than a readback. Its `review` claim is the one live disagreement: it may be an accurate record of the board that was never copied here, or it may be aspirational and never applied. Nobody without admin can settle it, so `review` stays **undecided** rather than decided by omission.
+- `docs/github-branch-protection-setup.md`, a manual UI checklist that named `Bundle Size Check`, was **deleted by #759** and is registered in `DELETED_PATHS` in `scripts/docs-check.mjs`. Do not resurrect it as policy.
+
+On the required set, **this section supersedes both** as of #774.
+
+### When a new job joins the required set (#775)
+
+The standing contract, so a new job never becomes a gate by accident:
+
+1. **Declare a tier before merging.** A new CI job names its tier — Essential (every PR) / Extended / Release-on-demand — in this document in the same PR that adds the job. A job that merges without a declared tier is an unowned cost.
+2. **Required is never the default.** Landing on every PR does **not** make a check required. Joining the required set is an explicit follow-up issue with a named decider, in the shape of #774.
+3. **Default sequencing: earn it on `main` first.** #648's stated preference is that a job runs green on `main` after its own merge and demonstrates stability there before anyone proposes it as required — that is why #648 deferred `e2e-flows` rather than bundling it. The decider may waive the wait, and did for `e2e-flows`: the tier was settled on #774 while #750 was still open, to keep the trigger a one-line change. A waiver is the decider's call to make explicitly, not a step to skip quietly.
+4. **An admin flips the switch and records it.** The required-check list lives in branch protection, which nobody outside admin can read or write. The issue that decides a promotion is closed by an admin confirming the setting, and this table is updated in the same breath.
+5. **Every-PR-but-not-required is the one outcome to avoid.** It buys the full cost of the job and an ignorable red. If a job is worth running on every PR, decide whether it gates; if it does not gate, move it to Extended or on-demand instead of leaving it as decoration.
+
+`e2e-flows` is the worked example: introduced by #750, tiered by a named decider on #774 rather than by default, and documented here. It is also the example of the waiver in rule 3 — the decision landed before the stability window, deliberately and on the record.
 
 ## `e2e-flows` (ticket #671)
 
@@ -122,6 +180,8 @@ npm run verify:storybook-empty-suite
 **Wiring:** parity step **CI-27** (`required: true`, `skipIf: () => null` — unlike CI-09, it still runs on a spaced path), `build-and-test` step after `Run tests`, and `scripts/ci-required-steps.json`.
 
 **Declared gap (§15.3.3):** on a spaced path the guard runs in announced-skip mode, so the **count assertion never executes locally**. CI (space-free) is the only place the primary assertion runs — which is why W-13 exists.
+
+See also the executable guard registry: [`docs/ops/guards.md`](guards.md).
 
 ## Legacy fossils (quarantined)
 
