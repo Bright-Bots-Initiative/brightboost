@@ -22,7 +22,12 @@ type RunResult = {
 
 const repoRoot = join(process.cwd());
 /** Real script under test — §13.2 / C1-03 (not a sandbox copy). */
-const realPredeployScript = join(repoRoot, "backend", "scripts", "predeploy.sh");
+const realPredeployScript = join(
+  repoRoot,
+  "backend",
+  "scripts",
+  "predeploy.sh",
+);
 
 type Harness = {
   root: string;
@@ -58,7 +63,9 @@ function buildChildEnv(
     }
   }
   return Object.fromEntries(
-    Object.entries(childEnv).filter((entry): entry is [string, string] => entry[1] !== undefined),
+    Object.entries(childEnv).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    ),
   );
 }
 
@@ -114,8 +121,16 @@ async function setupHarness(): Promise<Harness> {
 
   // Path probes are cwd-relative (`../prisma/…` from backend/). Fake them so
   // resolution never touches the real repo tree (C1-02 / overview.md §13.2).
-  await writeFile(join(rootPrismaDir, "schema.prisma"), "generator client {}\n", "utf8");
-  await writeFile(join(rootPrismaDir, "seed.cjs"), "console.log('sandbox seed');\n", "utf8");
+  await writeFile(
+    join(rootPrismaDir, "schema.prisma"),
+    "generator client {}\n",
+    "utf8",
+  );
+  await writeFile(
+    join(rootPrismaDir, "seed.cjs"),
+    "console.log('sandbox seed');\n",
+    "utf8",
+  );
 
   const callLog = join(root, "calls.log");
   await writeFile(callLog, "", "utf8");
@@ -161,7 +176,9 @@ async function cleanupHarness(root: string) {
 }
 
 /** Primary cleanup path (C1-04 / G-005): always rm the sandbox in finally. */
-async function withHarness<T>(fn: (harness: Harness) => Promise<T>): Promise<T> {
+async function withHarness<T>(
+  fn: (harness: Harness) => Promise<T>,
+): Promise<T> {
   const harness = await setupHarness();
   try {
     return await fn(harness);
@@ -196,11 +213,14 @@ function hasSeedCall(calls: string[]) {
 }
 
 function seedCallCount(calls: string[]) {
-  return calls.filter((line) => line.includes("node ../prisma/seed.cjs")).length;
+  return calls.filter((line) => line.includes("node ../prisma/seed.cjs"))
+    .length;
 }
 
 function hasBackfillCall(calls: string[]) {
-  return calls.some((line) => line.includes("node scripts/backfill-gamification.cjs"));
+  return calls.some((line) =>
+    line.includes("node scripts/backfill-gamification.cjs"),
+  );
 }
 
 /** Upstream of the gate — must still run when seed is skipped (E-1 "everything else identical"). */
@@ -213,7 +233,7 @@ function hasGenerateCall(calls: string[]) {
 }
 
 const SKIP_LINE =
-  "predeploy: skipping seed (RUN_SEED not set — see docs/deploy.md, issue #651)";
+  "predeploy: skipping seed (RUN_SEED not set — see DEPLOYMENT.md, issue #651)";
 const RUN_LINE_PREFIX = "predeploy: RUN_SEED=true — running seed from";
 
 describe("predeploy RUN_SEED gate", () => {
@@ -228,7 +248,10 @@ describe("predeploy RUN_SEED gate", () => {
 
   it("C1-05: harness observes node seed when RUN_SEED=true", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "true" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "true" }),
+      );
 
       expect(result.code).toBe(0);
       expect(hasMigrateCall(result.calls)).toBe(true);
@@ -255,7 +278,10 @@ describe("predeploy RUN_SEED gate", () => {
 
   it("E-2: runs seed once when RUN_SEED=true", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "true" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "true" }),
+      );
 
       expect(result.code).toBe(0);
       expect(seedCallCount(result.calls)).toBe(1);
@@ -265,7 +291,10 @@ describe("predeploy RUN_SEED gate", () => {
 
   it("E-3: skips seed when RUN_SEED=false", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "false" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "false" }),
+      );
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
@@ -277,7 +306,10 @@ describe("predeploy RUN_SEED gate", () => {
   // Exact `"true"` only — 1/yes/TRUE are counter-intuitive skips (E-4 / G-105).
   it("E-4: does not seed when RUN_SEED=1", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "1" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "1" }),
+      );
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
@@ -287,7 +319,10 @@ describe("predeploy RUN_SEED gate", () => {
 
   it("E-4: does not seed when RUN_SEED=yes", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "yes" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "yes" }),
+      );
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
@@ -297,7 +332,10 @@ describe("predeploy RUN_SEED gate", () => {
 
   it("E-4: does not seed when RUN_SEED=TRUE", async () => {
     await withHarness(async (harness) => {
-      const result = await runPredeploy(harness, stubEnv(harness, { RUN_SEED: "TRUE" }));
+      const result = await runPredeploy(
+        harness,
+        stubEnv(harness, { RUN_SEED: "TRUE" }),
+      );
 
       expect(result.code).toBe(0);
       expect(hasSeedCall(result.calls)).toBe(false);
@@ -314,7 +352,9 @@ describe("predeploy RUN_SEED gate", () => {
 
       expect(result.code).toBe(0);
       expect(seedCallCount(result.calls)).toBe(1);
-      expect(result.stdout).toContain("predeploy: seed had warnings (non-fatal)");
+      expect(result.stdout).toContain(
+        "predeploy: seed had warnings (non-fatal)",
+      );
     });
   });
 
@@ -355,7 +395,9 @@ describe("predeploy incident regression", () => {
       );
 
       expect(result.code).toBe(1);
-      expect(result.stdout).toContain("predeploy: FATAL — DIRECT_URL is not set.");
+      expect(result.stdout).toContain(
+        "predeploy: FATAL — DIRECT_URL is not set.",
+      );
       // Before the gate (§5.8): no migrate, generate, or seed.
       expect(hasMigrateCall(result.calls)).toBe(false);
       expect(hasGenerateCall(result.calls)).toBe(false);

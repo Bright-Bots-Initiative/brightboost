@@ -1,26 +1,40 @@
 # Contributing to Bright Boost
 
+> Canonical for: human contribution workflow · Last verified: 2026-08-10
+
+## Agent-assisted work
+
+If you are using Cursor, Claude Code, or another coding agent, follow any `AGENTS.md` at the
+repo root when it exists (it lands with the docs/agents stack). Until then, use this file and
+run `npm run verify` before opening a PR. When an agent helped ship the change, log the prompt
+in `prompts/` (see the Code Review Checklist below).
+
 ## Branch Workflow
 
 1. **Never push directly to `main`.** All changes go through pull requests.
 2. Create a feature branch from `main`:
+
    ```bash
    git checkout main
    git pull
    git checkout -b your-name/short-description
    ```
+
    Example: `alice/fix-maze-maps-scoring` or `catarina/redesign-game-cards`
 
 3. Make your changes, commit with clear messages:
+
    ```bash
    git add .
    git commit -m "fix: cap Maze Maps score at 100%"
    ```
 
 4. Push your branch and open a PR:
+
    ```bash
    git push origin your-name/short-description
    ```
+
    Then open a Pull Request on GitHub.
 
 5. Your PR needs at least **1 review** from a pod lead or Nathaniel before merging.
@@ -30,6 +44,7 @@
 ## Commit Message Format
 
 Use conventional commits:
+
 - `feat:` — new feature
 - `fix:` — bug fix
 - `refactor:` — code restructuring (no behavior change)
@@ -41,13 +56,14 @@ Use conventional commits:
 ## Code Review Checklist
 
 Before approving a PR, reviewers check:
+
 - [ ] Does it build? (`npm run build`)
 - [ ] Does it pass lint? (`npm run lint`)
 - [ ] Does it pass tests? (`npm run test`)
 - [ ] Is there hardcoded English? (should use i18n keys)
 - [ ] Is it mobile responsive?
 - [ ] Does it match existing code patterns?
-- [ ] If Claude Code was used, is the prompt logged in `prompts/`?
+- [ ] If an AI coding agent was used, is the prompt logged in `prompts/`?
 
 ## Pod Leads
 

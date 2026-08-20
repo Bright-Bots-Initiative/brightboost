@@ -57,6 +57,9 @@ jobs:
       - name: Lint code
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Typecheck frontend
         run: npm run typecheck
 
@@ -76,6 +79,12 @@ jobs:
       # G-008 / W-12: type-level guards must be inside the tsc program.
       - name: Verify type-program membership
         run: node scripts/verify-type-program-membership.mjs
+
+      - name: Agent context check
+        run: npm run agent:check
+
+      - name: Docs integrity check
+        run: npm run docs:check
 
       - name: Install Cypress dependencies
         run: sudo apt-get update && sudo apt-get install -y libxss1

@@ -63,8 +63,9 @@ function resolveCmd(cmd) {
  */
 
 /**
- * CI order mirrors ci-cd.yml: build-and-test (drift → CI-24/25 → installs →
- * tests → CI-23 → smoke → build), then db-check, then extras (bundle / format).
+ * CI order mirrors ci-cd.yml: build-and-test (drift → CI-24/25 → agent/docs →
+ * installs → tests → CI-23 → smoke → build), then db-check, then extras
+ * (bundle / format).
  * @type {Step[]}
  */
 export const STEPS = [
@@ -116,6 +117,18 @@ export const STEPS = [
     id: "CI-25",
     name: "Type-program membership",
     argv: ["node", "scripts/verify-type-program-membership.mjs"],
+    required: true,
+  },
+  {
+    id: "CI-28",
+    name: "Agent context check",
+    argv: ["npm", "run", "agent:check"],
+    required: true,
+  },
+  {
+    id: "CI-29",
+    name: "Docs integrity check",
+    argv: ["npm", "run", "docs:check"],
     required: true,
   },
   {
@@ -257,8 +270,6 @@ export const STEPS = [
     name: "Prettier format check",
     argv: ["npm", "run", "format:check"],
     required: true,
-    skipIf: () =>
-      "whole-tree format:check is a reverse gap (OQ-10); Prettier is enforced reject-only on staged files via husky — not mass-fixed in #740",
   },
 ];
 
@@ -286,7 +297,6 @@ Skip contract:
     CI-09  spaced path → #707 Storybook Vitest
     CI-10/11/12  CYPRESS_SWA_URL unset
     CI-14/16  TEST_DATABASE_URL unset
-    CI-26  whole-tree Prettier reverse gap (OQ-10); hooks cover staged files
   NOT-LOCAL: CI-21 deploy, CI-22 prod-smoke
   Do not fix backend pre-existing tsc / Prisma gaps here (OQ-03 residual / B5-02).
 

@@ -3,6 +3,7 @@
   "workflow": ".github/workflows/ci-cd.yml",
   "requiredSteps": [
     { "job": "build-and-test", "run": "npm run lint" },
+    { "job": "build-and-test", "run": "npm run format:check" },
     { "job": "build-and-test", "run": "npm run typecheck" },
     { "job": "build-and-test", "run": "cd backend && npm run typecheck" },
     { "job": "build-and-test", "run": "bash scripts/check-prisma-drift.sh" },
@@ -14,6 +15,8 @@
       "job": "build-and-test",
       "run": "node scripts/verify-type-program-membership.mjs"
     },
+    { "job": "build-and-test", "run": "npm run agent:check" },
+    { "job": "build-and-test", "run": "npm run docs:check" },
     { "job": "build-and-test", "run": "npm test -- --watch=false" },
     { "job": "build-and-test", "run": "npm run verify:storybook-empty-suite" },
     { "job": "build-and-test", "run": "npm run verify:ci-gate" },
