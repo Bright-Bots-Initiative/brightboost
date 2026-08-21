@@ -37,9 +37,12 @@ in `prompts/` (see the Code Review Checklist below).
 
    Then open a Pull Request on GitHub.
 
-5. Your PR needs at least **1 review** from a pod lead or Nathaniel before merging.
+5. Open a draft as soon as the first meaningful slice is ready. Prefer one coherent outcome per PR and
+   follow the size/cadence triggers in [`docs/team-workflow.md`](docs/team-workflow.md#pull-requests-are-small-early-and-frequent).
 
-6. After approval, merge via GitHub (squash merge preferred).
+6. Your PR needs at least **1 review** from a pod lead or Nathaniel before merging.
+
+7. After approval, merge via GitHub (squash merge preferred).
 
 ## Commit Message Format
 
@@ -78,7 +81,8 @@ Before approving a PR, reviewers check:
 ## Labels, Priority & Delegation
 
 How we label issues (Pod / Size / Audience / Topic / State + the `P0`/`P1`/`P2` priority axis),
-how leads hand out tickets, and how to team up on someone else's ticket are canonical in
+how leads hand out tickets, how to team up, and how cohorts handle preboarding, deadlines,
+dependency chains, ownership updates, and reviewable PRs are canonical in
 [`docs/team-workflow.md`](docs/team-workflow.md).
 
 ## Getting Help
