@@ -30,6 +30,48 @@ also chooses the question: handed a target, they are solving; picking the target
 
 ---
 
+## Precedence: which source wins
+
+This document is not the top of the stack, and it already says so three times without ever saying what
+happens when two of those claims collide. Section 4.3 calls the reaction table "the single source of
+truth for the game's chemistry"; sections 8.5 and 18.1 hand build mechanics to
+`docs/architecture/shared-code.md`; section 19.1 hands the grade band to
+`docs/architecture/grade-banding.md`. Each is right in isolation, and none of them says which document
+an implementer follows when a section body, a register row and an architecture doc disagree. The
+absence of that rule is the gap this section closes: without it two tickets can each cite this design
+honestly, typecheck in isolation, and contradict each other at the seam where they meet.
+
+The order, highest first:
+
+| Rank | Source                                                                      | Governs                                                                                                               |
+| ---- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1    | `docs/architecture/shared-code.md` and the landed S-2 shared-engine pattern | Where shared code lives, which consumer takes source and which takes emit, and the authoring constraints on `shared/` |
+| 2    | The #704 decisions log                                                      | Anything it rules on, including the XP deferral and naming localization                                               |
+| 3    | `docs/architecture/grade-banding.md`                                        | How a band reaches a game, and what a missing or invalid band falls back to                                           |
+| 4    | This document's decisions register, R1 to R24 (section 23)                  | Product and mechanic decisions, always read together with the row's Status column                                     |
+| 5    | This document's section bodies                                              | Everything else                                                                                                       |
+
+Two things about reading that table.
+
+Ranks 1 to 3 are inherited. Each of those three sources is already named as authoritative somewhere in
+this document, and ordering them only writes down what was implicit. **Rank 4 above rank 5 is
+derived.** No source material says that the register beats a section body; it is a judgement call made
+here, on the grounds that a register row is a decision carrying a recorded status while a section body
+is exposition that can fall out of date around it. It is written down precisely because it is a
+judgement call: recorded, it can be overruled once and deliberately, instead of being re-decided
+differently by every implementer who trips over a disagreement. If it is the wrong way round, change
+this section rather than quietly following the other order.
+
+Precedence resolves conflict, not detail. Underneath it the preamble's split still holds: the
+specifics — costs, footprint counts, part counts, tick budgets — are reviewed proposals and are
+tunable, while the rules called out as authoritative where they appear are not. Those are the tick
+order (§8.2), rotation-only matching (§8.4), the area rule (§10) and the metrics firewall (§10). And a
+superseded register row is kept rather than deleted, so "R19 says so" is never a citation on its own.
+Read the Status column: the superseded text is still the text circulating in issue bodies, which is
+exactly why it is still printed here.
+
+---
+
 ## 2. Originality and IP (hard rules)
 
 This game is mechanically inspired by an existing hex-grid alchemy-machine puzzle game written for
@@ -145,18 +187,18 @@ Diamond rather than erroring. This ladder is the arithmetic and counting spine o
 
 ### 4.3 Reaction table, single source of truth
 
-| Reaction       | Inputs                     | Outputs            | Notes                              |
-| -------------- | -------------------------- | ------------------ | ---------------------------------- |
-| Simplify       | 1 Cardinal                 | 1 Essence          | Any cardinal                       |
-| Duplicate      | Essence + 1 Cardinal       | 2 of that Cardinal | Essence consumed                   |
-| Growth         | Water + Earth              | Grass              |                                    |
-| Affect (Death) | Grass + Fire               | Death              |                                    |
-| Affect (Life)  | Grass + Air                | Life               |                                    |
-| Realize        | Death + Life               | Balance + Balance  | Two outputs                        |
-| Unification    | Fire + Water + Air + Earth | Omni               | Four inputs                        |
-| Compression    | [n] + [n]                  | [n+1]              | Same rung; caps at Diamond         |
-| Refinement     | [n] + Catalyst             | [n+1]              | Catalyst consumed; caps at Diamond |
-| Destroy        | any 1 atom                 | ∅                  | Disposal                           |
+| Reaction       | Inputs                     | Outputs            | `capsAtDiamond` | Notes             |
+| -------------- | -------------------------- | ------------------ | --------------- | ----------------- |
+| Simplify       | 1 Cardinal                 | 1 Essence          | `false`         | Any cardinal      |
+| Duplicate      | Essence + 1 Cardinal       | 2 of that Cardinal | `false`         | Essence consumed  |
+| Growth         | Water + Earth              | Grass              | `false`         |                   |
+| Affect (Death) | Grass + Fire               | Death              | `false`         |                   |
+| Affect (Life)  | Grass + Air                | Life               | `false`         |                   |
+| Realize        | Death + Life               | Balance + Balance  | `false`         | Two outputs       |
+| Unification    | Fire + Water + Air + Earth | Omni               | `false`         | Four inputs       |
+| Compression    | [n] + [n]                  | [n+1]              | `true`          | Same rung         |
+| Refinement     | [n] + Catalyst             | [n+1]              | `true`          | Catalyst consumed |
+| Destroy        | any 1 atom                 | ∅                  | `false`         | Disposal          |
 
 Exactly ten rows, and this table is the single source of truth for the game's chemistry. It is encoded
 once, in the engine, as a frozen constant, and never re-keyed by hand into the UI or the backend: the
@@ -165,6 +207,21 @@ hand-written table is skew that nothing would detect. Encode inputs as predicate
 an element class, a ladder rung bound as `n`, or "any"), not as expanded element lists. Five of the ten
 rows are class-generic or rung-generic, and expanding them yields roughly thirty rows that drift from
 this table the first time a row is tuned.
+
+`capsAtDiamond` is a real per-row field on `ReactionDef` and not a note about two of the rows. The cap
+is the §4.2 rule that promoting a Diamond returns a Diamond rather than erroring, and the only two
+rows that promote are Compression and Refinement, so every other row carries `false` explicitly. Made
+a field, it is exhaustively checkable — a test walks all ten rows and asserts the flag is set on
+exactly those two — where a note in the Notes column is prose that the next tuning pass can drop
+without anything noticing.
+
+The table is encoded once, frozen, and asserted frozen. `Object.freeze` is shallow, and both of these
+tables are arrays of objects that themselves hold arrays: freezing `REACTIONS` leaves every row, every
+predicate and every slot list mutable, so freeze the nested entries too and assert `Object.isFrozen`
+on a row rather than only on the collection. That matters more here than it would in a single-process
+app, because the frontend and the backend hold physically separate copies of the compiled engine
+(§18.2): a mutation applied to one copy at runtime is skew, and nothing else in the system would
+detect it.
 
 ---
 
@@ -201,6 +258,45 @@ Adding that facing to a placed glyph is a proposal, not a decision inherited fro
 needs a ruling before the glyph templates are frozen, because without it a V-shaped glyph can only ever
 point one way.
 
+The footprint table above gives cell counts and shapes. These are the slot indexes into each glyph's
+own `cellOffsets`, in the same row order, and they are what an implementation actually encodes:
+
+| Glyph       | `inputSlots`   | `outputSlots` | `consumeSlots` | Notes                                                         |
+| ----------- | -------------- | ------------- | -------------- | ------------------------------------------------------------- |
+| Simplify    | `[0]`          | `[0]`         | —              | Converts in place: one cell, both roles                       |
+| Duplicate   | `[0, ?]`       | `[0, 1]`      | —              | The Essence input cell is unresolved; see below               |
+| Growth      | `[1, 2]`       | `[0]`         | —              | Slot 0 is the shared output at the base of the "V"            |
+| Compression | `[1, 2]`       | `[0]`         | —              | Slot 0 is the centre of the short line                        |
+| Refinement  | `[0, 1]`       | `[0]`         | `[1]`          | Metal promoted in place on 0; the Catalyst on 1 is eaten      |
+| Affect      | `[0, 1]`       | `[0]`         | —              | Product forms on the Grass hex, slot 0                        |
+| Realize     | `[0, 1]`       | `[2, 3]`      | —              | Two in, two out on the compact diamond; no cell is shared     |
+| Unification | `[1, 2, 3, 4]` | `[0]`         | —              | Slot 0 is the centre of the flower, ringed by the four inputs |
+| Destroy     | `[0]`          | `[]`          | —              | An empty output list is correct, not a missing value          |
+
+Three things this table settles.
+
+A single cell appearing in both lists is the mechanism, not a mistake. It is the rule stated at the
+top of this section, and it is visible four times here: Simplify, Duplicate, Refinement and Affect
+all reuse a cell, three of them because they convert in place. Any acceptance criterion requiring
+`inputSlots` and `outputSlots` to be disjoint is wrong, and would fail correct work on four of the
+nine glyphs. The disjointness that placement validation does enforce is between _different parts'_
+footprints — two glyphs, or a glyph and a dispenser or acceptor, may not share a cell — never within
+one glyph's own slot lists.
+
+Duplicate's second input is genuinely open. Its reaction takes Essence plus a Cardinal, but its
+footprint is two cells described as the Cardinal's hex plus the hex where the copy appears, which
+leaves the Essence with no declared cell. Either the footprint is three cells or the Essence is
+consumed from one of the two, and the answer changes the glyph's cost line and its tutorial board in
+T4. Settle it before the glyph templates are frozen; the `?` above is deliberate and must not be
+guessed into a number.
+
+`consumeSlots` is a third list beside inputs and outputs, not a subset flag on the input list. Only
+Refinement uses it in Release 1. It exists because "consumed" and "read" are different fates for an
+input atom: a consumed reagent's cell must be free afterwards, and a read input's cell may be written
+by the same glyph in the same tick.
+
+The bond glyphs of §6.3 are not in this table. They change bond topology rather than elements, so they
+have no reaction inputs or outputs to index.
 Glyphs, their inputs and their outputs may not overlap each other, so placement validation rejects two
 footprints, or a glyph and a dispenser or acceptor, sharing a cell. Arms and tracks may pass over
 glyphs freely, and a hex an arm merely swings across still counts toward area (§10).
@@ -352,8 +448,10 @@ Implementation notes that follow from that order rather than adding to it:
   bug in the file. Held molecules move with their arm, with the transitive drag computed from the
   snapshot bond graph.
 - Step 3 is evaluated against committed post-move state. Several collisions can be simultaneous, so
-  sort the candidates deterministically and report the first, or the error payload itself is
-  nondeterministic.
+  sort the candidates by `(tick, q, r, partId)` and report the first, or the error payload itself is
+  nondeterministic. That key is a total order over distinct candidates — `partId` is the tie-break
+  that stops the comparator ever returning zero for two different collisions — which is what makes the
+  reported hex the same hex on every run, in the browser and in Node.
 - Step 4's "at most one transformation per tick" is implemented as a per-tick set of transformed atom
   ids; a glyph fires only if none of its inputs is already in that set. Bond glyphs are the
   multi-bonding exemption. New atoms get fresh, monotonically increasing ids that are never reused, or
@@ -398,12 +496,28 @@ each of the six rotations, rotate, re-translate, sort the `(q, r, element)` tupl
 and serialise, with bonds serialised as sorted unordered position pairs plus bond order; then return
 the lexicographically smallest of the six strings.
 
+The three axial transforms that order needs, written down once so nobody re-derives them: 60°
+clockwise is `(q, r) -> (-r, q + r)`, 60° counter-clockwise is `(q, r) -> (q + r, -q)`, and the mirror
+is `(q, r) -> (q, -q - r)`. Each is pinned by its own test, which applies it six times to a cell away
+from the origin and asserts the result is the input again — six 60° steps are a full turn, and six
+reflections are three round trips, so an identity that is off by a sign fails in that test rather than
+at the far end of a canonicalisation where it looks like a matching bug.
+
 Chirality needs a safety net, not an exception. Accidentally building the mirror image is the classic
 way to lose an hour in this genre: the machine looks right and the output silently is not. Keeping the
 rule means making the diagnosis instant. When a produced molecule matches the target under reflection
 but not under rotation, the engine sets `mirrored: true` and the UI says so outright (§9). A mirrored
 product is never also a solved one. The child still fixes it; they never have to discover it. That is
 the difference between a hard rule and a cruel one.
+
+The predicate is exactly
+`canonicalize(reflectMolecule(p)) === canonicalize(t) && canonicalize(p) !== canonicalize(t)`. Reflect,
+canonicalise over the same six rotations, and require that the unreflected product does not already
+match, which is what keeps "never also a solved one" true in code rather than only in prose.
+`reflectMolecule` touches positions only: it never rewrites an element and never rewrites a bond
+order, because a reflection is a change of handedness and not a change of chemistry, and a reflection
+that quietly edited the molecule would make the diagnosis wrong in the one place the child is being
+asked to trust it.
 
 ### 8.5 Determinism and server authority
 
@@ -424,7 +538,8 @@ Two supersessions matter here, because the original draft reads otherwise:
   `docs/architecture/shared-code.md` is now authoritative: the frontend consumes engine source through
   the `@shared/*` alias, the backend consumes built output through the package name, and the shared
   build is wired into the backend's build and typecheck. The draft's file layout inside
-  `shared/greatwork-engine/` still stands; its build story does not. Do not restore it.
+  `shared/greatwork-engine/` still stands, and §8.7 states it; its build story does not. Do not
+  restore it.
 
 Because those two consumers hold physically different artifacts, a stale or divergent build is a silent
 wrong-numbers failure rather than a crash. The engine's own suite therefore owns a freshness and parity
@@ -439,6 +554,333 @@ first-appearance tick. In target mode it is a record; in open mode it is the ent
 mode has no win condition and the report is what tells the child what they made. It powers the
 generated title, the discovery log, and adopt-a-discovery, which turns "look what came out" into "now
 make six of those". It is reporting only and changes nothing in the tick loop.
+
+### 8.7 The engine's public surface
+
+Everything below is the engine's exported API. It is stated here rather than left to the
+implementation because four other tickets are written against it before a line of it exists, and
+because two of those consumers hold physically different artifacts (§18.1): a type that is only
+implied is a type that lands twice.
+
+One tag convention. `[P]` marks a declaration that is a proposal rather than a decision inherited from
+the reviewed draft, so a reviewer can see at a glance which lines they are being asked to approve and
+which merely restate a settled rule. `[P2]` marks Release 2 surface that is declared from Release 1
+and left unimplemented, so a tape carrying one is recognisably invalid rather than silently misread
+(§7). Untagged declarations are specified elsewhere in this document, and the comment says where.
+
+The type surface, in dependency order:
+
+```ts
+// board
+export interface Axial {
+  readonly q: number; // §8.1: integers only, never a float
+  readonly r: number;
+}
+export type HexDir = 0 | 1 | 2 | 3 | 4 | 5; // indexes NEIGHBOURS; ROTATE steps by 1 (§7)
+export type CellKey = string; // canonical "q,r" (§8.1: never a bare number key)
+
+export interface Cell {
+  // [P]
+  readonly at: Axial;
+  readonly atomId: AtomId | null;
+  readonly glyphId: GlyphId | null;
+  readonly staticId: PartId | null;
+}
+export interface Board {
+  // [P]
+  readonly cells: ReadonlyMap<CellKey, Cell>;
+  readonly bounds: { minQ: number; maxQ: number; minR: number; maxR: number };
+}
+
+// chemistry (§4)
+export type ElementId =
+  | "essence"
+  | "fire"
+  | "water"
+  | "air"
+  | "earth" // the four cardinals
+  | "grass"
+  | "life"
+  | "death"
+  | "balance"
+  | "omni" // the five derived
+  | "copper"
+  | "silver"
+  | "gold"
+  | "platinum"
+  | "emerald"
+  | "diamond" // ladder rungs 1 to 6
+  | "catalyst"; // seventeen in total (§4.1), and the count is asserted
+export type ElementClass =
+  | "base"
+  | "cardinal"
+  | "derived"
+  | "ladder"
+  | "special";
+export interface ElementDef {
+  readonly id: ElementId;
+  readonly cls: ElementClass;
+  readonly icon: string;
+  readonly shape: string; // §4.1 and §19.2: identity never depends on colour alone
+  readonly rung?: 1 | 2 | 3 | 4 | 5 | 6; // §4.2, ladder members only
+}
+
+// matter
+export type AtomId = number; // fresh, monotonic, never reused (§8.2 step 4)
+export interface Atom {
+  readonly id: AtomId;
+  readonly element: ElementId;
+  readonly at: Axial;
+}
+export type BondOrder = 1 | 3; // [P]; single is [MVP] and triple is [P2] per §6.3
+export interface Bond {
+  readonly a: AtomId;
+  readonly b: AtomId;
+  readonly order: BondOrder;
+}
+export interface Molecule {
+  // one connected component, relative to its own canonical origin (§8.4)
+  readonly atoms: ReadonlyArray<{
+    readonly element: ElementId;
+    readonly at: Axial;
+  }>;
+  readonly bonds: ReadonlyArray<{
+    readonly a: number; // indexes into atoms, not AtomIds
+    readonly b: number;
+    readonly order: BondOrder;
+  }>;
+}
+
+// glyphs (§5, §6.3)
+export type GlyphKind =
+  | "simplify"
+  | "duplicate"
+  | "growth"
+  | "compression"
+  | "refinement"
+  | "affect"
+  | "realize"
+  | "unification"
+  | "destroy" // the nine of §5
+  | "bond_single"; // §6.3
+export interface GlyphDef {
+  readonly kind: GlyphKind;
+  readonly cellOffsets: ReadonlyArray<Axial>; // glyph-local space, index 0 at the origin
+  readonly inputSlots: ReadonlyArray<number>; // indexes into cellOffsets, never coordinates
+  readonly outputSlots: ReadonlyArray<number>;
+  readonly consumeSlots: ReadonlyArray<number>; // [P]; §5's "any consumable cell"
+  readonly cost: number;
+  readonly reactionId: ReactionId;
+}
+export type GlyphId = number;
+export type PartId = number;
+export interface Glyph {
+  readonly id: GlyphId;
+  readonly kind: GlyphKind;
+  readonly anchor: Axial;
+  readonly facing: HexDir; // [P]; the open placement-orientation call in §5
+}
+
+// reactions (§4.3)
+export type ReactionId =
+  | "simplify"
+  | "duplicate"
+  | "growth"
+  | "affect_death"
+  | "affect_life"
+  | "realize"
+  | "unification"
+  | "compression"
+  | "refinement"
+  | "destroy"; // exactly ten, matching §4.3 row for row
+export type InputPred =
+  | { readonly kind: "element"; readonly element: ElementId }
+  | { readonly kind: "class"; readonly cls: ElementClass }
+  | { readonly kind: "ladder"; readonly bind: "n" } // Compression and Refinement
+  | { readonly kind: "any" }; // Destroy: not an ElementClass, and typing it as one will not compile
+export type OutputSpec =
+  | { readonly kind: "element"; readonly element: ElementId }
+  | { readonly kind: "promote"; readonly from: "n" }; // §4.2, caps at Diamond
+export interface ReactionDef {
+  readonly id: ReactionId;
+  readonly inputs: ReadonlyArray<InputPred>;
+  readonly outputs: ReadonlyArray<OutputSpec>;
+  readonly capsAtDiamond: boolean; // true on compression and refinement only
+}
+
+// machinery (§6.1, §6.2, §7)
+export type GrabberCount = 1 | 2 | 3 | 6;
+export type Reach = 1 | 2 | 3; // static at placement; there is no change-reach affordance
+export interface Arm {
+  readonly id: PartId;
+  readonly anchor: Axial;
+  readonly grabbers: GrabberCount;
+  readonly reach: Reach;
+  readonly facing: HexDir;
+  readonly trackIndex: number; // [P2], §6.2
+  readonly held: ReadonlyArray<AtomId>; // all grabbers act at once (§6.1)
+}
+export type Instruction =
+  | "GRAB"
+  | "DROP"
+  | "ROTATE_CW"
+  | "ROTATE_CCW"
+  | "WAIT"
+  | "RESET"
+  | "REPEAT"
+  // [P2], declared from Release 1 and left unimplemented:
+  | "MOVE_PLUS"
+  | "MOVE_MINUS"
+  | "PIVOT_CW"
+  | "PIVOT_CCW";
+export interface Tape {
+  readonly armId: PartId;
+  readonly chips: ReadonlyArray<Instruction>; // one chip per tick, one lane per arm (§7)
+}
+
+// engine input
+export interface MachineSpec {
+  readonly parts: ReadonlyArray<Part>;
+  readonly tapes: ReadonlyArray<Tape>;
+} // and nothing else; §16.2 fixes its relationship to the persisted envelope
+export type Part =
+  | {
+      readonly kind: "arm";
+      readonly id: PartId;
+      readonly anchor: Axial;
+      readonly grabbers: GrabberCount;
+      readonly reach: Reach;
+      readonly facing: HexDir;
+    }
+  | { readonly kind: "glyph"; readonly id: PartId; readonly glyph: Glyph }
+  | {
+      readonly kind: "dispenser";
+      readonly id: PartId;
+      readonly at: Axial;
+      readonly element: ElementId;
+    }
+  | { readonly kind: "acceptor"; readonly id: PartId; readonly at: Axial }
+  | {
+      readonly kind: "track";
+      readonly id: PartId;
+      readonly cells: ReadonlyArray<Axial>;
+    }; // [P2]
+
+// Level definitions live in src/constants/greatWorkLevels.ts (§16.3); the TYPE lives here.
+// This document specifies no level schema, so every field below is [P]. Do not read §16.2's
+// payload example as one: those lines describe a saved machine's content, not a level.
+export interface LevelSpec {
+  readonly key: string; // T1 to T8 now, C1 to C12 later (§12)
+  readonly mode: "target" | "open"; // §11.2
+  readonly gradeBand: "k2" | "g3_5"; // §19.1: injected by the platform, never inferred here
+  readonly targetProduct?: Molecule;
+  readonly targetCount?: number; // §11.4 and R15: 3 for K-2 and the tutorial, 6 for grades 3-5
+  readonly fixedParts: ReadonlyArray<Part>; // R11: levels fix inputs, the studio does not
+  readonly allowedGlyphs?: ReadonlyArray<GlyphKind>; // §5's allow-list; absent in the studio
+  readonly maxTicks: number; // mandatory: REPEAT makes every tape an infinite loop (§8.2)
+}
+
+// results
+export type RunError =
+  | { readonly kind: "collision"; readonly at: Axial; readonly tick: number } // §8.2 step 3
+  | { readonly kind: "stall"; readonly tick: number } // §9
+  | { readonly kind: "tick_limit"; readonly tick: number }; // [P]; a result, never a throw
+export interface ProducedEntry {
+  readonly canonical: string;
+  readonly molecule: Molecule;
+  readonly count: number;
+  readonly firstTick: number; // §8.6: append order is the record
+}
+export type ProductReport = ReadonlyArray<ProducedEntry>;
+export interface RunResult {
+  // §8.5's field list verbatim: do not add to it and do not rename within it
+  readonly solved: boolean;
+  readonly cycles: number;
+  readonly cost: number;
+  readonly area: number;
+  readonly instructions: number;
+  readonly produced: ProductReport;
+  readonly mirrored?: boolean; // §8.4 and R9
+  readonly error?: RunError;
+}
+export interface TickResult {
+  // [P]; the per-tick projection the build surface plays back
+  readonly tick: number;
+  readonly board: Board;
+  readonly arms: ReadonlyArray<Arm>;
+  readonly deliveredThisTick: ReadonlyArray<Molecule>;
+  readonly areaClaimed: ReadonlySet<CellKey>; // the same set §10's overlay draws
+  readonly error?: RunError;
+}
+```
+
+The function surface, by module:
+
+```ts
+// index.ts
+export function runMachine(level: LevelSpec, program: MachineSpec): RunResult;
+export function runMachineTraced(
+  level: LevelSpec,
+  program: MachineSpec,
+): Iterable<TickResult>; // [P]
+
+// board.ts (§8.1)
+export const NEIGHBOURS: readonly Axial[]; // six offsets, and their order is the direction index
+export function neighbour(a: Axial, d: HexDir): Axial;
+export function add(a: Axial, b: Axial): Axial;
+export function key(a: Axial): CellKey;
+export function rotate(a: Axial, steps: number): Axial; // 60° per step, about the origin
+export function reflect(a: Axial): Axial; // used only by mirror detection (§8.4)
+
+// reactions.ts (§4)
+export const ELEMENTS: Readonly<Record<ElementId, ElementDef>>; // 17 entries
+export const LADDER: readonly ElementId[]; // index + 1 is the rung; gems are ordinary rungs (R8)
+export const REACTIONS: readonly ReactionDef[]; // exactly ten rows
+export const GLYPHS: Readonly<Record<GlyphKind, GlyphDef>>;
+export function promote(el: ElementId): ElementId; // caps at Diamond rather than erroring (§4.2)
+export function resolveReaction(
+  id: ReactionId,
+  inputs: readonly ElementId[],
+): readonly ElementId[] | null;
+
+// matching.ts (§8.4)
+export function canonicalize(m: Molecule): string; // the minimum over the six rotations only
+export function matches(product: Molecule, target: Molecule): boolean;
+export function isMirrorOf(product: Molecule, target: Molecule): boolean; // sets RunResult.mirrored
+
+// scoring.ts (§10)
+export function partCost(p: Part): number; // the §5 and §6.1 tables, +10¤ per reach cell beyond 1
+export function totalCost(program: MachineSpec): number;
+export function countInstructions(program: MachineSpec): number;
+
+// tick.ts (§8.2) — internal, exported for tests
+export function step(state: SimState): SimState; // exactly one tick, pure, input never mutated
+```
+
+`runMachineTraced` **must delegate to the same `step()` that `runMachine` uses and must never be a
+second implementation.** Two loops over the same rules is the same failure as two copies of the engine
+(§18.2), one board smaller: the child watches the traced run, the score comes from the untraced one,
+and the two disagree with nothing turning red. The traced entry point exists to expose intermediate
+state, not to re-derive it.
+
+Eight files, and this is the layout section 8.5 is referring to when it says the draft's file layout
+still stands:
+
+```
+shared/greatwork-engine/
+  index.ts       public API: runMachine, runMachineTraced, and the re-exports
+  types.ts       every type above
+  board.ts       hex grid, axial coordinates, neighbours, rotate, reflect
+  tick.ts        the §8.2 loop, as seven named functions plus step()
+  reactions.ts   the §4.3 table, the element catalog, and the §5 glyph templates
+  matching.ts    canonicalisation over six rotations (§8.4)
+  scoring.ts     cycles, cost and area (§10)
+  __tests__/     Vitest, with RESET timing and the reaction rows first (§8.3)
+```
+
+Build the files in that dependency order: `board.ts`, then `reactions.ts`, then `tick.ts` with RESET
+first, then `matching.ts`, then `scoring.ts`. The layout is settled. The build story around it is not
+this document's to settle and belongs to `docs/architecture/shared-code.md` (§18.1).
 
 ---
 
@@ -480,7 +922,19 @@ passes through, including the intermediate hexes of a 60° sweep. That is what m
 rather than a free upgrade, and it is how the game teaches compactness without ever using the word.
 Accumulate the claimed hexes into a set as the run proceeds and expose that set per tick, because
 Release 1 ships a "show area" overlay during playback so the claimed hexes are visible rather than
-merely scored.
+merely scored. Three things go into that set, and all three are required:
+
+1. every static part's footprint at tick 0, so an unused glyph still costs area;
+2. every atom's position on every tick it exists, not only where it ends up; and
+3. every hex the body of an arm **and each of its grabbers** passes through during a 60° rotation,
+   the intermediate sweep included and not just the start and end positions.
+
+`area` is the size of that set, and the same set is what the overlay draws, so the number and the
+picture can never disagree. Component 3 is the one that gets dropped, and it is the whole point: drop
+it and a reach-3 arm costs the same area as a reach-1 arm, reach becomes a free upgrade, and the game
+stops teaching compactness. Which hexes an arm body occupies is the open question recorded in §6.1;
+what is not open is that the sweep counts, so freeze the geometry there first and this rule then reads
+off it unchanged.
 
 Personal bests reuse the existing per-student per-game record, keyed `"great_work"`, holding best
 cycles, best cost, best area and per-target bests in its existing metadata field. No new table.
@@ -1105,14 +1559,37 @@ Numbered decisions carried forward from the design review. Superseded entries ar
 
 ### Open items requiring a ruling before the work they gate
 
-1. A concrete tick budget and wall-clock bound for server-side verification, plus the friendly copy for a machine that hits it. Needed before persistence implementation starts.
-2. Ownership of the reaction table, glyph footprints and element catalog, between the engine ticket and the content ticket. Three sources disagree, and the constants land twice if this is unsettled at pull-request time. Recommendation: the engine owns the data, the content ticket owns presentation.
-3. The gallery card payload shape: existing content projection, a server-derived summary field, or a card-only projection. Decide before card work.
-4. The version key spelling on the persisted envelope. Recommendation is `v`, matching all three existing creation types.
-5. Whether the metrics count of instructions is a Release 1 number or a later one; the design currently tags it both ways.
-6. Adding the pool-locale field to the stored name seed. A payload change, not a migration, but a data-model call.
-7. Which locales get curated name pools in Release 1. Recommendation: English and Spanish curated, with a declared fallback for the other two.
-8. Whether the game mounts inside the standard game shell, whose results screen is a star-and-score surface that sits awkwardly against a design that never shows completion percentage. The repository has precedent both ways. This changes the top of the component tree.
-9. The registered game key and whether the module ships gated.
-10. Whether the studio is reachable outside an activity, and if so how it obtains a group id for saving.
-11. The cross-group leaderboard scope ruling for Release 3, which must precede any schema design and re-opens the moderation question that group scoping closed.
+Every row names one person who can settle it. An open item with no named decider is not tracked, it is deferred, and a list of eleven undeferred-looking questions with nobody on any of them is how a ruling gets made accidentally by whoever writes the file first. Handles are GitHub handles; where a row names a role as well, the role is what makes that person the right decider, not a second owner.
+
+| #   | Ruling needed                                                                                                                                                                                                                                                                                | Owner                                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 1   | A concrete tick budget and wall-clock bound for server-side verification, plus the friendly copy for a machine that hits it. Needed before persistence implementation starts                                                                                                                 | @BrightBoost-Tech                                                                 |
+| 2   | Ownership of the reaction table, glyph footprints and element catalog, between the engine ticket and the content ticket. Three sources disagree, and the constants land twice if this is unsettled at pull-request time. Recommendation: the engine owns the data, content owns presentation | @alitlin, before either file is written                                           |
+| 3   | The gallery card payload shape: existing content projection, a server-derived summary field, or a card-only projection. Decide before card work                                                                                                                                              | @BrightBoost-Tech with the #725 implementer                                       |
+| 4   | The version key spelling on the persisted envelope. Recommendation is `v`, matching all three existing creation types                                                                                                                                                                        | @jgoetzmann, as author of #722                                                    |
+| 5   | Whether the metrics count of instructions is a Release 1 number or a later one; this document currently tags it both ways                                                                                                                                                                    | @jgoetzmann, as owner of this document                                            |
+| 6   | Adding the pool-locale field to the stored name seed. A payload change, not a migration, but a data-model call                                                                                                                                                                               | @alitlin                                                                          |
+| 7   | Which locales get curated name pools in Release 1. Recommendation: English and Spanish curated, with a declared fallback for the other two. The open half is the fallback experience, not the mechanism, which §13.5 already fixes                                                           | @Cat-a-rina, executed in #723                                                     |
+| 8   | Whether the game mounts inside the standard game shell, whose results screen is a star-and-score surface that sits awkwardly against a design that never shows completion percentage. The repository has precedent both ways. This changes the top of the component tree                     | @Cat-a-rina as experience lead, with the #721 implementer                         |
+| 9   | The registered game key and whether the module ships gated                                                                                                                                                                                                                                   | @BrightBoost-Tech, as owner of the Set 3 tracking issue #676                      |
+| 10  | Whether the studio is reachable outside an activity, and if so how it obtains a group id for saving                                                                                                                                                                                          | @Cat-a-rina as experience lead, with platform                                     |
+| 11  | The cross-group leaderboard scope ruling for Release 3, which must precede any schema design and re-opens the moderation question that group scoping closed                                                                                                                                  | @Cat-a-rina with whoever owns child-safety policy; must precede any schema design |
+
+Two of these gate a file rather than a release. Item 2 has to land before either ticket writes its constants file, because the failure it prevents is two tables, not a wrong table. Item 1 has to land before the verification service is written, because a re-run path with no bound is the trust boundary's own denial-of-service. The rest can be settled in parallel with implementation as long as they are settled by the pull request that depends on them.
+
+---
+
+## 24. Review ownership
+
+Jack (@jgoetzmann) leads the design and the implementation. Two reviewers split the document between them, and both are required on the eventual pull request; neither is advisory.
+
+| Reviewer               | Lane         | Sections                                                                                                                                            |
+| ---------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Catarina (@Cat-a-rina) | Experience   | §9 failure-mode voice · §11 Creator Studio · §12 Tutorial, T8 in particular · §13 Naming and copy · §19 Accessibility, grade bands and localization |
+| Alice (@alitlin)       | Architecture | §8 the simulation engine · §16 Data model · §18 Technical architecture, and §18.1 engine placement in particular                                    |
+
+Two things this document does not say elsewhere, and has to.
+
+**The architecture calls in §16 and §18.1 were made without Alice's input, and are explicitly overrulable.** That is not a formality. The zero-migration reuse of `Creation`, and the choice to hold metrics in the JSON payload rather than in columns, are both in that set: they are written as decisions and recorded as R17, and they should be presented to her as proposals anyway. §18.1 is a different case in the same lane — it has already been overruled once, by the shared-code decision that replaced R19, so bring her the landed state rather than this document's earlier version of it, and treat the source-versus-emit split that decision leaves open as hers to close.
+
+**Two items are pre-flagged for Catarina and should reach her early rather than at pull-request time.** The first is the localization fallback _experience_: §13.5 settles the mechanism, and what it does not settle is how it feels to a child whose locale renders English tokens under a native slot order. That is a felt-quality question, not a technical one, and it is the half of the naming decision that engineering cannot answer. The second is §12's T8 framing together with §11.2's studio nudge copy — both are experience calls that happen to sit inside engineering tickets, which is exactly how they get shipped unreviewed. Add the target designer to her list if a schedule squeeze puts §11.4 at risk, because cutting it is an explicit override of R3 rather than a deferral R3 authorizes.
