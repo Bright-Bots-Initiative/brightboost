@@ -7,7 +7,7 @@
 
 ## Intent
 
-Get `.env`, `.env.development`, `.env.production`, and `.env.local-be` out of the tree so audits stop reading them as live production credentials, and retire the temporary allowlist that had been holding the guard green while they stayed tracked.
+Get `.env`, `.env.development`, `.env.production`, and `.env.local-be` out of the tree so audits stop reading them as live production credentials, and retire the temporary allowlist that had been holding the guard green while they stayed tracked. Written after the fact — PR #755 merged 2026-08-21 without a log.
 
 ## Prompt
 
