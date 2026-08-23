@@ -789,7 +789,8 @@ export interface LevelSpec {
   readonly key: string; // T1 to T7 now, C1 to C12 later. NOT T8: §12 is explicit that T8 is not a
   // level and has no board, target, count, fail state or win check. Do not add it here.
   readonly mode: "target" | "open"; // §11.2
-  readonly gradeBand: "k2" | "g3_5"; // §19.1: injected by the platform, never inferred here
+  // Grade band is deliberately absent. The game consumes the platform-injected value and resolves
+  // it to this grade-agnostic engine input before calling the engine (§19.1).
   readonly targetProduct?: Molecule;
   readonly targetCount?: number; // §11.4 and R15: 3 for K-2 and the tutorial, 6 for grades 3-5
   readonly fixedParts: ReadonlyArray<Part>; // R11: levels fix inputs, the studio does not
@@ -827,6 +828,21 @@ export interface TickResult {
   readonly arms: ReadonlyArray<Arm>;
   readonly deliveredThisTick: ReadonlyArray<Molecule>;
   readonly areaClaimed: ReadonlySet<CellKey>; // the same set §10's overlay draws
+  readonly error?: RunError;
+}
+export interface SimState {
+  // [P]; complete immutable snapshot consumed and returned by one step
+  readonly level: LevelSpec;
+  readonly program: MachineSpec;
+  readonly tick: number;
+  readonly board: Board;
+  readonly atoms: ReadonlyMap<AtomId, Atom>;
+  readonly arms: ReadonlyMap<PartId, Arm>;
+  readonly tapePointers: ReadonlyMap<PartId, number>;
+  readonly dispenserReadyAt: ReadonlyMap<PartId, number>;
+  readonly produced: ProductReport;
+  readonly areaClaimed: ReadonlySet<CellKey>;
+  readonly nextAtomId: AtomId;
   readonly error?: RunError;
 }
 ```
@@ -1266,31 +1282,44 @@ Use `v` for the version key, not `schemaVersion`. Every existing creation type o
   "targetProduct": {
     // absent or null in open mode
     "atoms": [
-      { "id": "a0", "el": "grass", "q": 0, "r": 0 },
-      { "id": "a1", "el": "grass", "q": 1, "r": 0 },
+      { "element": "grass", "at": { "q": 0, "r": 0 } },
+      { "element": "grass", "at": { "q": 1, "r": 0 } },
     ],
-    "bonds": [{ "a": "a0", "b": "a1", "kind": "single" }],
+    "bonds": [{ "a": 0, "b": 1, "order": 1 }],
   },
   "targetCount": 3, // 3 for K-2 and tutorial, 6 for grades 3-5 and challenges
   "program": {
     // this object, exactly, is the engine's MachineSpec
     "parts": [
-      { "kind": "dispenser", "q": -2, "r": 0, "rot": 0, "el": "water" },
-      { "kind": "glyph", "q": 0, "r": 0, "rot": 60, "glyph": "bond" },
+      {
+        "kind": "dispenser",
+        "id": 1,
+        "at": { "q": -2, "r": 0 },
+        "element": "water",
+      },
+      {
+        "kind": "glyph",
+        "id": 2,
+        "glyph": {
+          "id": 2,
+          "kind": "bond_single",
+          "anchor": { "q": 0, "r": 0 },
+          "facing": 1,
+        },
+      },
       {
         "kind": "arm",
-        "q": 1,
-        "r": 0,
-        "rot": 0,
+        "id": 3,
+        "anchor": { "q": 1, "r": 0 },
         "grabbers": 1,
         "reach": 1,
-        "armId": "arm1",
+        "facing": 0,
       },
-      { "kind": "output", "q": 3, "r": -1, "rot": 0 },
+      { "kind": "acceptor", "id": 4, "at": { "q": 3, "r": -1 } },
     ],
     "tapes": [
       {
-        "armId": "arm1",
+        "armId": 3,
         "chips": ["GRAB", "ROTATE_CW", "ROTATE_CW", "DROP", "RESET"],
       },
     ],
@@ -1364,11 +1393,11 @@ The stored payload is attacker-controlled JSON on a route the kid legitimately o
 
 That third case is the specific bug the shared-engine architecture exists to prevent: the server's authoritative score disagreeing with what the kid watched happen. Two engine copies drifting by one tick produce it silently.
 
-The server refuses with a validation failure, never a server error, on: any strict-parse failure including unknown keys at any depth; any structural invariant violation; resource exhaustion; and an engine throw. A crash is a validation failure with a friendly message, never a leaked stack trace, and never a score penalty.
+The server refuses with a validation failure, never a server error, on: any strict-parse failure including unknown keys at any depth; any structural invariant violation; exceeding the wall-clock verification bound; and an engine throw. Reaching deterministic `LevelSpec.maxTicks` is not resource exhaustion and is not rejected: it returns `tick_limit` and saves as unsolved. A crash is a validation failure with a friendly message, never a leaked stack trace, and never a score penalty.
 
 It explicitly does not refuse an unsolved machine, an open-mode machine with no target, or a machine that produces nothing. Those are all first-class states and they save with a 200.
 
-Two guards the design does not yet size and that must be settled before implementation. First, a hard tick budget plus a wall-clock bound: the repeat instruction has no terminating condition, the engine runs in-process, and there is no tick cap anywhere in the design today. A machine that hits the cap resolves as unsolved with a friendly message and is saved, not rejected. Second, a per-user rate limit on the re-run path: the existing limiter is per-IP, and a shared classroom NAT makes per-IP simultaneously too loose per kid and too tight per class.
+Two guards the design does not yet size and that must be settled before implementation. First, concrete per-level `maxTicks` values plus a wall-clock bound: the repeat instruction has no terminating condition and the engine runs in-process. The type already requires `maxTicks`, but the values and service deadline remain unresolved. A machine that reaches `maxTicks` resolves as unsolved with a friendly message and is saved; a verifier that exceeds the wall-clock bound is rejected with a validation response. Second, a per-user rate limit on the re-run path: the existing limiter is per-IP, and a shared classroom NAT makes per-IP simultaneously too loose per kid and too tight per class.
 
 ### 17.3 Active-time XP is deferred
 
@@ -1434,9 +1463,18 @@ One test-harness gap to budget for: this is the repository's first `<canvas>` su
 
 ### 19.1 Grade bands
 
-`docs/architecture/grade-banding.md` is the canonical contract and is not restated here. In short: the platform injects one normalized band, the game consumes it, and the game never fetches or infers it independently; a missing or invalid band falls back safely to K-2. The band originates from `Course.gradeBand`, and per-band configuration is specified to ride on `ModuleVariant.contentConfig`, subject to the plumbing gap recorded in section 16.3.
+`docs/architecture/grade-banding.md` is the canonical contract and is not restated here. The
+platform injects one normalized band, the game consumes it, and the game never fetches or infers it
+independently; a missing or invalid band falls back safely to K-2. The band originates from
+`Course.gradeBand`, and per-band configuration is specified to ride on
+`ModuleVariant.contentConfig`, subject to the plumbing gap recorded in section 16.3.
 
-Use the `k2` and `g3_5` spelling. A different casing exists elsewhere in the schema for a different model; do not propagate it.
+The current application recognizes `k2` and `g3_5`; `g6_8` is a target contract, not implemented
+behavior. Great Work's application layer must consume the platform-owned normalized type in force
+when implementation begins. If no shared code-level type exists then, the integration work must
+extract one from the platform path rather than declare a Great Work-specific union. The engine is
+deliberately grade-agnostic: the application resolves the injected band into a `LevelSpec` before
+calling it.
 
 |           | K-2 floor                                                            | Grades 3-5 ceiling                                  |
 | --------- | -------------------------------------------------------------------- | --------------------------------------------------- |
@@ -1447,15 +1485,33 @@ Use the `k2` and `g3_5` spelling. A different casing exists elsewhere in the sch
 | Metrics   | Hidden entirely                                                      | Optional, with histograms later                     |
 | Reading   | Not required to succeed                                              | Assumed                                             |
 
-Both configurations are built in the same code, as data, with no forked components. Only K-2 is live on the platform today, so ship K-2 correct with 3-5 ready to enable, and tune only K-2. The band review rule requires tests proving each supported band variant and the K-2 fallback; the band-config object is a plain resolved value and must survive a JSON round trip, which means unbounded limits are expressed as `null` and never as infinity.
+Both currently supported configurations are built in the same code, as data, with no forked
+components. Ship, tune and test both `k2` and `g3_5`; do not advertise `g6_8` until both the
+platform and Great Work configuration implement it. The band review rule requires tests proving
+each supported band variant and the K-2 fallback. The resolved band-config object must survive a
+JSON round trip, so unbounded limits are expressed as `null` and never as infinity.
 
-The within-band 12-stage progression mechanism is unresolved. Placement and advancement are owned by a separate open decision (#772). Release 1 may author richer difficulty data, but it must not hard-code a stage ladder, claim adaptive placement, or introduce a competing learner-level concept. Keep the band config a resolved object that a later per-stage resolver can feed.
+The within-band 12-stage progression mechanism is unresolved. Placement and advancement are owned
+by a separate open decision (#772). Release 1 may author richer difficulty data, but it must not
+hard-code a stage ladder, claim adaptive placement, or introduce a competing learner-level
+concept. Keep the band config a resolved object that a later per-stage resolver can feed.
 
 ### 19.2 Accessibility
 
-Drag-only interaction throughout. Large touch targets. Colour-blind safe: identity is always reinforced by shape and icon, never carried by colour alone, checkable in review by rendering the tray in greyscale. No reading required to succeed at the floor, which means every failure state needs a non-textual channel: the side-by-side comparison for a mirrored product, the collision hex highlighted, the area overlay for area.
+Dragging may be the primary pointer shortcut, but it must never be the only interaction path.
+Every placement, move, tape edit and reorder must also be available through tap/select controls
+and a keyboard-operable control with visible focus. Large touch targets remain required.
+Colour-blind safety means identity is always reinforced by shape and icon, never carried by colour
+alone, and is checked in review by rendering the tray in greyscale. No reading is required to
+succeed at the floor, so every failure state needs a non-textual channel: the side-by-side
+comparison for a mirrored product, the collision hex highlighted, and the area overlay for area.
 
-A keyboard-navigable timeline is a build, not a checkbox. The drag library's default keyboard sensor translates by pixels, which is meaningless against discrete slots and hex cells, so the timeline supplies the sortable coordinate getter and the canvas gets either a snapping coordinate getter or a non-drag path: a focusable cell cursor, arrows to traverse, Enter to place. Nothing in the repository currently covers keyboard drag and drop, and the one existing test mocks the sensor away, so this needs its own test with the real sensors.
+A keyboard-navigable timeline is a build, not a checkbox. The drag library's default keyboard
+sensor translates by pixels, which is meaningless against discrete slots and hex cells, so the
+timeline supplies the sortable coordinate getter and the canvas supplies a focusable cell cursor:
+arrows to traverse and Enter to place. Acceptance evidence includes component tests using the real
+pointer and keyboard sensors, focus-order assertions, and a Cypress path that completes the core
+place, edit and run flow without dragging.
 
 Audio is architecture now, content later: a keyed audio service with sound and music slots, a mute toggle and persisted volume, shipping with placeholders, following the existing keyed-audio precedent. Playback honours the reduced-effects preference, which means no easing or particles, not a disabled Step button. Control instructions are supplied for the shell, because the tray and timeline are the least self-evident controls in the catalogue.
 
@@ -1579,37 +1635,64 @@ Numbered decisions carried forward from the design review. Superseded entries ar
 
 ### Open items requiring a ruling before the work they gate
 
-Every row names one person who can settle it. An open item with no named decider is not tracked, it is deferred, and a list of eleven undeferred-looking questions with nobody on any of them is how a ruling gets made accidentally by whoever writes the file first. Handles are GitHub handles; where a row names a role as well, the role is what makes that person the right decider, not a second owner.
+The Summer 2026 cohort is closed. No former participant or contributor inherits future ownership
+from this document. Before implementation resumes, the maintainer of #704 must assign a current
+named owner to each item in the tracker. Until that happens, every item below is explicitly
+unassigned and the dependent work remains blocked.
 
-| #   | Ruling needed                                                                                                                                                                                                                                                                                | Owner                                                                             |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 1   | A concrete tick budget and wall-clock bound for server-side verification, plus the friendly copy for a machine that hits it. Needed before persistence implementation starts                                                                                                                 | @BrightBoost-Tech                                                                 |
-| 2   | Ownership of the reaction table, glyph footprints and element catalog, between the engine ticket and the content ticket. Three sources disagree, and the constants land twice if this is unsettled at pull-request time. Recommendation: the engine owns the data, content owns presentation | @alitlin, before either file is written                                           |
-| 3   | The gallery card payload shape: existing content projection, a server-derived summary field, or a card-only projection. Decide before card work                                                                                                                                              | @BrightBoost-Tech with the #725 implementer                                       |
-| 4   | The version key spelling on the persisted envelope. Recommendation is `v`, matching all three existing creation types                                                                                                                                                                        | @jgoetzmann, as author of #722                                                    |
-| 5   | Whether the metrics count of instructions is a Release 1 number or a later one; this document currently tags it both ways                                                                                                                                                                    | @jgoetzmann, as owner of this document                                            |
-| 6   | Adding the pool-locale field to the stored name seed. A payload change, not a migration, but a data-model call                                                                                                                                                                               | @alitlin                                                                          |
-| 7   | Which locales get curated name pools in Release 1. Recommendation: English and Spanish curated, with a declared fallback for the other two. The open half is the fallback experience, not the mechanism, which §13.5 already fixes                                                           | @Cat-a-rina, executed in #723                                                     |
-| 8   | Whether the game mounts inside the standard game shell, whose results screen is a star-and-score surface that sits awkwardly against a design that never shows completion percentage. The repository has precedent both ways. This changes the top of the component tree                     | @Cat-a-rina as experience lead, with the #721 implementer                         |
-| 9   | The registered game key and whether the module ships gated                                                                                                                                                                                                                                   | @BrightBoost-Tech, as owner of the Set 3 tracking issue #676                      |
-| 10  | Whether the studio is reachable outside an activity, and if so how it obtains a group id for saving                                                                                                                                                                                          | @Cat-a-rina as experience lead, with platform                                     |
-| 11  | The cross-group leaderboard scope ruling for Release 3, which must precede any schema design and re-opens the moderation question that group scoping closed                                                                                                                                  | @Cat-a-rina with whoever owns child-safety policy; must precede any schema design |
+1. **Verification bounds — unassigned: product and technical leads.** Set concrete per-level tick
+   budgets, the server wall-clock bound, and friendly copy before persistence implementation.
+2. **Engine/content constants — unassigned: technical lead.** Decide whether the engine or content
+   layer owns the reaction table, glyph footprints, and element catalog before either constants
+   file is written. The recommendation remains: engine owns data; content owns presentation.
+3. **Gallery projection — unassigned: API/product owner with the #725 implementer.** Choose the
+   existing content projection, a server-derived summary, or a card-only projection before card
+   work.
+4. **Envelope version key — unassigned: #722 owner.** Confirm `v`, matching the existing creation
+   types, before persistence code.
+5. **Instruction metric — unassigned: product owner.** Decide whether instruction count is a
+   Release 1 metric or a later metric and remove the remaining mixed labels.
+6. **Name-seed locale — unassigned: data-model owner.** Confirm the stored pool-locale field before
+   the creation schema is implemented.
+7. **Curated name locales — unassigned: localization/product owner with the #723 implementer.**
+   Decide the Release 1 curated locales and the child-facing fallback experience.
+8. **Game shell — unassigned: experience owner with the #721 implementer.** Decide whether Great
+   Work mounts in the standard star-and-score shell before the component tree is built.
+9. **Registration and gate — unassigned: product/platform owner.** Set the game key and rollout
+   gate before registration.
+10. **Studio entry point — unassigned: product/platform owner.** Decide whether the studio is
+    reachable outside an activity and, if so, how it receives a group id for saving.
+11. **Cross-group leaderboard — unassigned: child-safety and product owners.** Rule on Release 3
+    scope before any schema design or reopening of the moderation boundary.
 
-Two of these gate a file rather than a release. Item 2 has to land before either ticket writes its constants file, because the failure it prevents is two tables, not a wrong table. Item 1 has to land before the verification service is written, because a re-run path with no bound is the trust boundary's own denial-of-service. The rest can be settled in parallel with implementation as long as they are settled by the pull request that depends on them.
+Items 1 and 2 gate files rather than releases: implementation may not begin around them. The other
+items may be decided in parallel, but each decision must be recorded on #704 or its dependent
+ticket before the implementing pull request leaves draft.
 
 ---
 
-## 24. Review ownership
+## 24. Review ownership and handoff
 
-Jack (@jgoetzmann) leads the design and the implementation. Two reviewers split the document between them, and both are required on the eventual pull request; neither is advisory.
+Cohort closeout ended the earlier delivery and review assignments. This document records design
+history; it does not create future obligations for former program participants. Historical
+contributors may be asked for optional context, but their availability is never an approval gate.
 
-| Reviewer               | Lane         | Sections                                                                                                                                            |
-| ---------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Catarina (@Cat-a-rina) | Experience   | §9 failure-mode voice · §11 Creator Studio · §12 Tutorial, T8 in particular · §13 Naming and copy · §19 Accessibility, grade bands and localization |
-| Alice (@alitlin)       | Architecture | §8 the simulation engine · §16 Data model · §18 Technical architecture, and §18.1 engine placement in particular                                    |
+Before the first #720-#727 implementation pull request opens, the maintainer of #704 records current
+named owners in the tracker for:
 
-Two things this document does not say elsewhere, and has to.
+- delivery and issue coordination;
+- product and experience decisions;
+- engine, persistence, and shared-code architecture;
+- accessibility and localization review; and
+- child-safety review for sharing or leaderboard scope.
 
-**The architecture calls in §16 and §18.1 were made without Alice's input, and are explicitly overrulable.** That is not a formality. The zero-migration reuse of `Creation`, and the choice to hold metrics in the JSON payload rather than in columns, are both in that set: they are written as decisions and recorded as R17, and they should be presented to her as proposals anyway. §18.1 is a different case in the same lane — it has already been overruled once, by the shared-code decision that replaced R19, so bring her the landed state rather than this document's earlier version of it, and treat the source-versus-emit split that decision leaves open as hers to close.
+Each child pull request links that assignment and requests the sign-offs relevant to its lane. If a
+required role is not filled, the pull request remains draft rather than silently assigning the work
+to a historical contributor.
 
-**Two items are pre-flagged for Catarina and should reach her early rather than at pull-request time.** The first is the localization fallback _experience_: §13.5 settles the mechanism, and what it does not settle is how it feels to a child whose locale renders English tokens under a native slot order. That is a felt-quality question, not a technical one, and it is the half of the naming decision that engineering cannot answer. The second is §12's T8 framing together with §11.2's studio nudge copy — both are experience calls that happen to sit inside engineering tickets, which is exactly how they get shipped unreviewed. Add the target designer to her list if a schedule squeeze puts §11.4 at risk, because cutting it is an explicit override of R3 rather than a deferral R3 authorizes.
+The architecture calls in sections 16 and 18.1 remain explicitly reviewable. The current
+architecture owner must confirm the zero-migration `Creation` reuse, JSON-held metrics, and the
+landed source-versus-built-artifact split before the dependent code merges. The current experience
+owner must review the localization fallback, T8 framing, studio nudge, and target-designer cut line
+early enough to change the implementation. Decisions belong in #704 or the dependent issue, not in
+a private handoff.
