@@ -1,8 +1,8 @@
 # Summer 2026 Internship Program Lessons
 
-- **Visibility:** Public, anonymized program record
-- **Recorded:** August 14, 2026
-- **Purpose:** Preserve cohort-level learning without publishing individual performance or private closeout details
+**Visibility:** Public, anonymized program record  
+**Recorded:** August 14, 2026  
+**Purpose:** Preserve cohort-level learning without publishing individual performance or private closeout details
 
 ## What worked
 

@@ -24,7 +24,9 @@ Bright Boost internships should give participants authentic experience contribut
 
 ## Pre-program readiness gate
 
-Complete this before assigning production work. Use [`SETUP.md`](../../SETUP.md) sections 1–6 as the single setup procedure. Each participant must complete it and run the canonical environment-independent parity command:
+Open the preboarding window 7–10 days before the official program start and complete it before assigning production work. The recorded group huddle must cover the product, repository, team roles, communication channels, review etiquette, and how to ask for help.
+
+Use [`SETUP.md`](../../SETUP.md) sections 1–6 as the single setup procedure. Each participant must complete it and run the canonical environment-independent parity command:
 
 ```bash
 npm run verify -- --skip-install --allow-skips
@@ -34,7 +36,9 @@ In the same readiness flight check, every participant must be able to:
 
 - access GitHub, Slack, and the required project documentation;
 - create a branch, commit, and push it;
-- open a practice pull request and request review;
+- complete one small, reversible acclimation task that ends in a real practice pull request before Day 1;
+- keep that acclimation task away from production data and release-critical dependency chains;
+- request review on the practice pull request;
 - respond to a change request and update the same pull request; and
 - locate the CI result and explain whether the pull request is ready.
 
@@ -53,6 +57,8 @@ Send a direct Slack message in addition to the GitHub notification when:
 The message must include the link, requested action, reason it is needed, and target timeframe. The recipient should acknowledge it within one business day.
 
 Every participant should complete at least one substantive peer review per sprint and share one review insight during a huddle or demo.
+
+After a planning or team meeting changes active work, the lead posts a short ownership recap in the team channel: driver, ticket, status, next milestone, blocker, and reviewer. GitHub remains the permanent source of truth; the recap makes the changed action visible.
 
 ## Responsible LLM standard
 
@@ -88,6 +94,31 @@ At minimum, every cohort includes:
 - a midpoint feedback pulse with at least one documented program adjustment; and
 - individual closeouts plus a final cohort retrospective.
 
+## Assignment delivery contract
+
+Before work begins, every cohort assignment records:
+
+- one accountable driver and any collaborators;
+- the intended outcome, explicit exclusions, and acceptance criteria;
+- a concrete due date with time zone and the first check-in or draft-PR milestone;
+- `Blocked by`, `Prerequisite for`, and `Unlocks` links wherever dependencies exist;
+- the expected reviewer and review window; and
+- the required handoff if the full scope cannot land during the cohort.
+
+Deadlines are planning tools, not punishment. If scope or circumstances change, the owner and lead revise the date or cut scope explicitly in the issue rather than allowing the plan to become silently stale.
+
+Parent issues own outcomes and sub-issues own reviewable implementation seams. A dependent issue is not marked `ready` until its prerequisites have landed or a lead records why parallel work is safe. Stacked pull requests are exceptional and must name their base, merge order, and what each merge unblocks.
+
+## Reviewable pull requests
+
+- One pull request delivers one coherent outcome; unrelated cleanup, content, infrastructure, and feature work stay separate.
+- Open a draft when the first meaningful vertical slice exists so review can shape the work early.
+- Aim for no more than roughly **400 substantive changed lines or 10 files**. Locale data, generated artifacts, and mechanical fixtures may be excluded when clearly separated for review.
+- Above roughly **800 substantive lines or 15 files**, agree on a split plan with the expected reviewer before adding more work. If the change is genuinely inseparable, include a review map naming the seams and reading order.
+- Schedule implementation so review and one correction round can happen before the assignment deadline. A pull request opened on the final day is a handoff, not a completed assignment.
+
+These are reviewability triggers, not performance scores. The governing question is whether a reviewer can understand, test, and safely approve one outcome without reconstructing an entire project.
+
 ## Definition of done for intern assignments
 
 An assignment is complete only when:
@@ -104,18 +135,18 @@ An assignment is complete only when:
 
 Record these measures in the cohort's program plan. The program lead owns the record unless the plan names another owner.
 
-| Measure                 | Target                                                                     | Evidence recorded in             |
-| ----------------------- | -------------------------------------------------------------------------- | -------------------------------- |
-| Readiness               | Every participant passes before production assignment                      | Program plan readiness record    |
-| Initial ownership       | Every participant has a primary lane and first bounded issue at launch     | Participant-lanes table          |
-| Review handoff          | Action-required reviews are acknowledged within the plan's target          | Decision and action log          |
-| Peer learning           | Every participant performs the peer-review cadence named in the plan       | Interaction record or action log |
-| Localization confidence | Uncertainty is resolved by the named language reviewer                     | Assignment or PR evidence        |
-| Test quality            | Every completed contribution includes expected evidence                    | Assignment or PR evidence        |
-| Portfolio outcome       | Every participant leaves with at least one accurate, reviewable case study | Portfolio-capture table          |
+| Measure | Target | Evidence recorded in |
+| ------- | ------ | -------------------- |
+| Readiness | Every participant passes before production assignment | Program plan readiness record |
+| Initial ownership | Every participant has a primary lane and first bounded issue at launch | Participant-lanes table |
+| Review handoff | Action-required reviews are acknowledged within the plan's target | Decision and action log |
+| Peer learning | Every participant performs the peer-review cadence named in the plan | Interaction record or action log |
+| Localization confidence | Uncertainty is resolved by the named language reviewer | Assignment or PR evidence |
+| Test quality | Every completed contribution includes expected evidence | Assignment or PR evidence |
+| Portfolio outcome | Every participant leaves with at least one accurate, reviewable case study | Portfolio-capture table |
 
 ## Change log
 
 | Effective cohort              | Change                     | Reason/evidence                                           | Approved by      |
 | ----------------------------- | -------------------------- | --------------------------------------------------------- | ---------------- |
-| Next cohort after Summer 2026 | Initial operating standard | Summer 2026 individual closeouts and cohort retrospective | Nathaniel Walker |
+| Next cohort after Summer 2026 | Initial operating and delivery standard | Summer 2026 closeouts, cohort retrospective, and #771 delivery-policy reconciliation | Nathaniel Walker |

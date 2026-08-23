@@ -25,10 +25,10 @@ List no more than three program-level outcomes. Each must have an owner and obse
 
 ## 3. Pre-program readiness
 
-- [ ] Prerequisites and access checklist sent 7–10 days before start
-- [ ] Group setup huddle scheduled and recorded
+- [ ] Preboarding window and prerequisites sent 7–10 days before start
+- [ ] Group product, setup, communication, and review-orientation huddle scheduled and recorded
 - [ ] `SETUP.md` sections 1–6 and `npm run verify -- --skip-install --allow-skips` completed
-- [ ] Practice branch, push, PR, review response, and CI loop completed by every participant
+- [ ] Small reversible acclimation task, branch, push, PR, review response, and CI loop completed by every participant before Day 1
 - [ ] Individual blockers resolved before production assignment
 
 ## 4. Communication agreement
@@ -39,6 +39,7 @@ List no more than three program-level outcomes. Each must have an owner and obse
 - **Escalation owner:**
 - **Recurring huddle/demo cadence:**
 - **Review pairs or triads:**
+- **Post-meeting ownership-recap owner:**
 
 GitHub is the permanent technical record. Slack must also be used when a review, revision, approval, or decision requires timely action.
 
@@ -53,7 +54,12 @@ Every issue must include:
 - [ ] Required manual or automated evidence
 - [ ] Grade-band and language checks when relevant
 - [ ] Named reviewer and decision owner
+- [ ] Accountable driver, collaborators, due date with time zone, and first milestone
+- [ ] `Blocked by`, `Prerequisite for`, and `Unlocks` links where applicable
+- [ ] Expected review window and one correction round before the due date
 - [ ] Documentation and handoff expectation
+
+Pull requests should contain one coherent outcome, open as drafts at the first meaningful vertical slice, and normally stay within roughly 400 substantive changed lines or 10 files. Above roughly 800 substantive lines or 15 files, record an agreed split plan or a review map before work continues.
 
 ## 6. LLM guardrails
 
