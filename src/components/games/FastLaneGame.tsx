@@ -50,42 +50,6 @@ const PHASE_ORDER: GamePhase[] = [
   "celebration",
 ];
 
-// TODO: add translations for the story, tips in briefing
-const BRIEFING: MissionBriefing = {
-  title: pickLocale(
-    {
-      en: "Fast Lane Signals",
-      es: "Señales de Carril Rápido",
-      vi: "Tín Hiệu Làn Nhanh",
-      "zh-CN": "快车道信号",
-    },
-    "Fast Lane Signals",
-  ),
-  story: pickLocale(
-    {
-      en: "Deliver the science supplies safely! Read the road signals and choose the best lane.",
-    },
-    "Deliver the science supplies safely! Read the road signals and choose the best lane.",
-  ),
-  icon: "\uD83D\uDEA6",
-  tips: pickLocale(
-    {
-      en: [
-        "Green means safe",
-        "Red means blocked",
-        "Yellow means watch out \u2014 it might close!",
-      ],
-    },
-    [
-      "Green means safe",
-      "Red means blocked",
-      "Yellow means watch out \u2014 it might close!",
-    ],
-  ),
-  chapterLabel: "Signal School",
-  themeColor: "blue",
-};
-
 // ── Helpers ───────────────────────────────────────────────────────────────
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -568,11 +532,49 @@ export default function FastLaneGame({
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
+  const { t } = useTranslation();
+  // TODO: add translation keys for the story, tips in briefing
+  const briefing: MissionBriefing = {
+    title: pickLocale(
+      {
+        en: "Fast Lane Signals",
+        es: "Señales de Carril Rápido",
+        vi: "Tín Hiệu Làn Nhanh",
+        "zh-CN": "快车道信号",
+      },
+      "Fast Lane Signals",
+    ),
+    story: pickLocale(
+      {
+        en: "Deliver the science supplies safely! Read the road signals and choose the best lane.",
+      },
+      "Deliver the science supplies safely! Read the road signals and choose the best lane.",
+    ),
+    icon: "\uD83D\uDEA6",
+    tips: pickLocale(
+      {
+        en: [
+          "Green means safe",
+          "Red means blocked",
+          "Yellow means watch out \u2014 it might close!",
+        ],
+      },
+      [
+        "Green means safe",
+        "Red means blocked",
+        "Yellow means watch out \u2014 it might close!",
+      ],
+    ),
+    chapterLabel: t("games.fastLane.chapterLabel", {
+      defaultValue: "Signal School",
+    }),
+    themeColor: "blue",
+  };
   return (
     <GameShell
       gameKey="fast_lane"
       title="Fast Lane Signals"
-      briefing={BRIEFING}
+      briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (

@@ -1,0 +1,9 @@
+---
+description: Bright Boost agent context — always load docs/agents bootstrap
+globs: ["**/*"]
+alwaysApply: true
+---
+
+Before work, read `docs/agents/overview.md`, everything under `docs/agents/rules`, and `docs/agents/skills/overview.md`. Use task-specific skills from `docs/agents/skills/**/SKILL.md`.
+
+See `docs/agents/agent.md`.

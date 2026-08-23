@@ -32,11 +32,18 @@ vi.mock("../utils/prisma", () => ({
 
 // Import app AFTER mocking.
 import app from "../server";
+import {
+  creationCreateLimiter,
+  creationEncouragementLimiter,
+  creationUpdateLimiter,
+} from "../utils/security";
 
 const KID = "kid-1";
 const OTHER_KID = "kid-2";
 const TEACHER = "teacher-1";
 const COURSE = "course-1";
+const BURST_KID = "burst-kid";
+const BURST_TEACHER = "burst-teacher";
 
 function asStudent(id: string) {
   return { "x-user-id": id, "x-role": "student" } as Record<string, string>;
@@ -93,6 +100,19 @@ describe("Creations routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ALLOW_DEV_ROLE_HEADER = "1";
+
+    for (const user of [
+      { id: KID, role: "student" },
+      { id: OTHER_KID, role: "student" },
+      { id: TEACHER, role: "teacher" },
+      { id: BURST_KID, role: "student" },
+      { id: BURST_TEACHER, role: "teacher" },
+    ] as const) {
+      const key = `${user.role}:${user.id}`;
+      creationCreateLimiter.resetKey(key);
+      creationUpdateLimiter.resetKey(key);
+      creationEncouragementLimiter.resetKey(key);
+    }
   });
 
   describe("POST /api/creations", () => {
@@ -319,6 +339,48 @@ describe("Creations routes", () => {
       expect(res.status).toBe(422);
       expect(prismaMock.creation.create).not.toHaveBeenCalled();
     });
+
+    it("rate-limits a burst from one student after the creation limit", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue(dbCreation);
+
+      const statuses: number[] = [];
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const res = await request(app)
+          .post("/api/creations")
+          .set(asStudent(BURST_KID))
+          .send({
+            courseId: COURSE,
+            type: "data_dash_challenge",
+            content: validChallenge,
+          });
+        statuses.push(res.status);
+      }
+
+      expect(statuses).toEqual([201, 201, 201, 429]);
+      expect(prismaMock.creation.create).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not make 30 classmates on one IP share a creation bucket", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.create.mockResolvedValue(dbCreation);
+
+      const statuses = await Promise.all(
+        Array.from({ length: 30 }, async (_, index) => {
+          const res = await request(app)
+            .post("/api/creations")
+            .set(asStudent(`classmate-${index}`))
+            .send({
+              courseId: COURSE,
+              type: "data_dash_challenge",
+              content: validChallenge,
+            });
+          return res.status;
+        }),
+      );
+
+      expect(statuses).toEqual(Array(30).fill(201));
+    });
   });
 
   describe("PATCH /api/creations/:id", () => {
@@ -416,6 +478,28 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(422);
       expect(prismaMock.creation.update).not.toHaveBeenCalled();
+    });
+
+    it("rate-limits repeated updates in their own bucket", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        authorId: BURST_KID,
+        type: "data_dash_challenge",
+        content: validChallenge,
+      });
+      prismaMock.creation.update.mockResolvedValue(dbCreation);
+
+      const statuses: number[] = [];
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const res = await request(app)
+          .patch("/api/creations/creation-1")
+          .set(asStudent(BURST_KID))
+          .send({ status: "SHARED" });
+        statuses.push(res.status);
+      }
+
+      expect(statuses).toEqual([200, 200, 200, 429]);
+      expect(prismaMock.creation.update).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -633,6 +717,27 @@ describe("Creations routes", () => {
         .send({});
 
       expect(res.status).toBe(403);
+    });
+
+    it("rate-limits a burst of boosts from one adult", async () => {
+      prismaMock.creation.findUnique.mockResolvedValue({
+        id: "creation-1",
+        courseId: COURSE,
+      });
+      prismaMock.course.findFirst.mockResolvedValue({ id: COURSE });
+      prismaMock.creation.update.mockResolvedValue({ encouragements: 3 });
+
+      const statuses: number[] = [];
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const res = await request(app)
+          .post("/api/creations/creation-1/encourage")
+          .set(asTeacher(BURST_TEACHER))
+          .send({});
+        statuses.push(res.status);
+      }
+
+      expect(statuses).toEqual([200, 200, 200, 429]);
+      expect(prismaMock.creation.update).toHaveBeenCalledTimes(3);
     });
   });
 });
