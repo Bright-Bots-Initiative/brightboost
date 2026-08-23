@@ -9,6 +9,11 @@ import {
   type CreationType,
 } from "../services/creationContent";
 import { serializeCreationContent } from "../services/creationContentSerializer";
+import {
+  creationCreateLimiter,
+  creationEncouragementLimiter,
+  creationUpdateLimiter,
+} from "../utils/security";
 
 // Phase 0 — Creations CRUD (the "kid makes something" foundation).
 //
@@ -156,6 +161,7 @@ router.post(
   "/creations",
   requireAuth,
   requireRole("student"),
+  creationCreateLimiter,
   async (req: Request, res: Response) => {
     const parsed = createCreationSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -205,6 +211,7 @@ router.patch(
   "/creations/:id",
   requireAuth,
   requireRole("student"),
+  creationUpdateLimiter,
   async (req: Request, res: Response) => {
     const parsed = patchCreationSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -353,6 +360,7 @@ router.get(
 router.post(
   "/creations/:id/encourage",
   requireAuth,
+  creationEncouragementLimiter,
   async (req: Request, res: Response) => {
     if (req.user!.role !== "teacher" && req.user!.role !== "admin") {
       return res.status(403).json({ error: "only adults can encourage" });

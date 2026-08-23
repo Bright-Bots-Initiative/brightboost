@@ -17,6 +17,7 @@ import {
   assertNoAmbientDbLeak,
   buildDbChildEnv,
 } from "./lib/parity-db-child-env.mjs";
+import { isDesignatedTestDbUrl } from "./lib/db-target.mjs";
 
 export { datasourceEnvNames } from "./lib/prisma-datasource-env.mjs";
 export {
@@ -24,6 +25,11 @@ export {
   buildDbChildEnv,
   DB_SHAPED_ENV,
 } from "./lib/parity-db-child-env.mjs";
+export {
+  describeDbUrl,
+  isDesignatedTestDbName,
+  isDesignatedTestDbUrl,
+} from "./lib/db-target.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, "..");
@@ -57,8 +63,9 @@ function resolveCmd(cmd) {
  */
 
 /**
- * CI order mirrors ci-cd.yml: build-and-test (drift → CI-24/25 → installs →
- * tests → CI-23 → smoke → build), then db-check, then extras (bundle / format).
+ * CI order mirrors ci-cd.yml: build-and-test (drift → CI-24/25 → agent/docs →
+ * installs → tests → CI-23 → smoke → build), then db-check, then extras
+ * (bundle / format).
  * @type {Step[]}
  */
 export const STEPS = [
@@ -113,6 +120,18 @@ export const STEPS = [
     required: true,
   },
   {
+    id: "CI-28",
+    name: "Agent context check",
+    argv: ["npm", "run", "agent:check"],
+    required: true,
+  },
+  {
+    id: "CI-29",
+    name: "Docs integrity check",
+    argv: ["npm", "run", "docs:check"],
+    required: true,
+  },
+  {
     id: "CI-07",
     name: "Cypress binary install",
     argv: ["npx", "cypress", "install"],
@@ -133,6 +152,15 @@ export const STEPS = [
       REPO_ROOT.includes(" ")
         ? "checkout path contains a space — Storybook Vitest project owned by #707"
         : null,
+  },
+  {
+    id: "CI-27",
+    name: "Storybook empty-suite guard",
+    argv: ["npm", "run", "verify:storybook-empty-suite"],
+    required: true,
+    // Unlike CI-09: do not skip on a spaced path — announced-skip mode is the
+    // point (W-06 / #749). required:true uses #740's SKIP contract as-is.
+    skipIf: () => null,
   },
   {
     id: "CI-23",
@@ -242,8 +270,6 @@ export const STEPS = [
     name: "Prettier format check",
     argv: ["npm", "run", "format:check"],
     required: true,
-    skipIf: () =>
-      "whole-tree format:check is a reverse gap (OQ-10); Prettier is enforced reject-only on staged files via husky — not mass-fixed in #740",
   },
 ];
 
@@ -271,7 +297,6 @@ Skip contract:
     CI-09  spaced path → #707 Storybook Vitest
     CI-10/11/12  CYPRESS_SWA_URL unset
     CI-14/16  TEST_DATABASE_URL unset
-    CI-26  whole-tree Prettier reverse gap (OQ-10); hooks cover staged files
   NOT-LOCAL: CI-21 deploy, CI-22 prod-smoke
   Do not fix backend pre-existing tsc / Prisma gaps here (OQ-03 residual / B5-02).
 
@@ -287,62 +312,6 @@ DB safety (CI-14 / CI-16):
   Database name must contain a test/e2e token on a boundary (e.g. brightboost_test).
   Localhost alone is not sufficient. No override path.
 `;
-
-/**
- * Host + database only — never echo credentials (parity logs are pasted into PRs).
- * Database name is the URL path segment only (not the host).
- * @param {string} url
- * @returns {{ host: string, database: string } | null}
- */
-export function describeDbUrl(url) {
-  try {
-    const u = new URL(url);
-    const rawPath = u.pathname || "";
-    const withoutQuery = rawPath.split("?")[0];
-    const database = decodeURIComponent(withoutQuery.replace(/^\//, "")).split(
-      "/",
-    )[0];
-    return { host: u.hostname, database: database || "" };
-  } catch {
-    return null;
-  }
-}
-
-/** Token-boundary test/e2e database names (not substring — `contest` must fail). */
-const TEST_DB_NAME = /(^|[_-])(test|tests|e2e)([_-]|$)/i;
-
-/**
- * @param {string} name
- */
-export function isDesignatedTestDbName(name) {
-  return TEST_DB_NAME.test(name);
-}
-
-/**
- * Designated test DB: database name must contain a test/e2e token on a boundary.
- * Host is not a safety property (SSH tunnels / port-forwards present as localhost).
- * @param {string} url
- * @returns {{ ok: true, host: string, database: string } | { ok: false, reason: string, host?: string, database?: string, code?: number }}
- */
-export function isDesignatedTestDbUrl(url) {
-  const info = describeDbUrl(url);
-  if (!info) {
-    return {
-      ok: false,
-      code: 2,
-      reason: "TEST_DATABASE_URL is not a parseable URL (could not check)",
-    };
-  }
-  if (isDesignatedTestDbName(info.database)) {
-    return { ok: true, host: info.host, database: info.database };
-  }
-  return {
-    ok: false,
-    reason: `refusing: database "${info.database}" is not a designated test database (name must contain a test/e2e token, e.g. brightboost_test)`,
-    host: info.host,
-    database: info.database,
-  };
-}
 
 /**
  * Union env() connection names from root + backend Prisma schemas.

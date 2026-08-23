@@ -2,7 +2,9 @@
 import { ReactNode } from "react";
 import BottomNav from "../components/BottomNav";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "../contexts/AuthContext";
+import { useGradeBand } from "@/hooks/useGradeBand";
 import { Link } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import LanguageToggle from "../components/LanguageToggle";
@@ -12,6 +14,11 @@ import { useTranslation } from "react-i18next";
 export default function StudentLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const { t } = useTranslation();
+  const gradeBand = useGradeBand();
+  const gradeBandLabel =
+    gradeBand === "g3_5"
+      ? t("studentLayout.bandG35")
+      : t("studentLayout.bandK2");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 to-blue-50 flex flex-col pb-20">
@@ -21,13 +28,24 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
       >
         {t("skipToContent")}
       </a>
+
       <header className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-40">
-        <Link
-          to="/student/dashboard"
-          className="font-bold text-xl text-blue-600 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded-md px-1 -ml-1"
-        >
-          BrightBoost
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/student/dashboard"
+            className="font-bold text-xl text-blue-600 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded-md px-1 -ml-1"
+          >
+            BrightBoost
+          </Link>
+
+          <Badge
+            variant="secondary"
+            className="whitespace-nowrap bg-blue-100 text-blue-700"
+          >
+            {gradeBandLabel}
+          </Badge>
+        </div>
+
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <Button
@@ -38,16 +56,20 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
             aria-label={t("common.logOut")}
           >
             <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs">{t("common.logOut")}</span>
+            <span className="hidden sm:inline text-xs">
+              {t("common.logOut")}
+            </span>
           </Button>
         </div>
       </header>
+
       <main
         id="main-content"
         className="flex-1 container mx-auto p-4 max-w-6xl"
       >
         {children}
       </main>
+
       <BottomNav />
       <FeedbackFab />
     </div>

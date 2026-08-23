@@ -1,6 +1,10 @@
 {
   "skipToContent": "Skip to content",
   "student": "Student",
+  "studentLayout": {
+    "bandK2": "K-2",
+    "bandG35": " Grades 3-5"
+  },
   "dashboard": {
     "loading": "Loading…",
     "stillLoading": "Still loading...",
@@ -1652,6 +1656,10 @@
       "title": "Gotcha Gears"
     },
     "mazeMaps": {
+      "chapterLabel": "AI Lab",
+      "loopSweeper": "Loop Sweeper",
+      "lineSweeper": "Line Sweeper",
+      "unknownSweeper": "Unknown Sweeper",
       "collisionHint": "Oops! Back to safety. Watch the pattern first.",
       "hintSafePad": "Try the Safe Pad before moving past the Sweeper.",
       "levelComplete": "All orbs collected! Great path!",
@@ -1682,7 +1690,8 @@
     },
     "moveMeasure": {
       "title": "Move, Measure & Improve",
-      "introDesc": "Test your body's superpowers! Dash, jump, and toss — then use data to improve.",
+      "chapterLabel": "Body Lab",
+      "introDesc": "Test your body's superpowers! Dash, jump, and toss \u2014 then use data to improve.",
       "letsGo": "Let's Go!",
       "dashTitle": "Dash!",
       "dashHint": "Tap when the marker hits the green zone!",
@@ -1712,6 +1721,20 @@
       "tiedBest": "You tied your best in {{first}} AND {{second}}!",
       "enjoyAck": "Great choice — everyone has a favorite!",
       "perfectRun": "Perfect Run!",
+      "dashName": "Dash",
+      "jumpName": "Jump",
+      "tossName": "Toss",
+      "and": "AND",
+      "predictionHint": "You will compare your prediction with your actual result after the activity.",
+      "distanceLabel": "Distance: ",
+      "heightLabel": "Height:",
+      "compareQuestion": "How far off was your prediction?",
+      "predictedLabel": "Predicted:",
+      "actualLabel": "Actual:",
+      "differenceLabel": "Difference:",
+      "prediction": "Prediction",
+      "actual": "Actual",
+      "continue": "Continue",
       "tryHarder": "Keep trying!",
       "great": "Great!",
       "good": "Good!",
@@ -1740,6 +1763,7 @@
     },
     "skyShield": {
       "title": "Sky Shield Patterns",
+      "chapterLabel": "Pattern Lab",
       "introDesc": "Light drops are falling! Watch the pattern and place your shield to catch them.",
       "letsGo": "Let's Go!",
       "practiceLabel": "Practice -- Catch the Light!",
@@ -1785,6 +1809,7 @@
     },
     "fastLane": {
       "title": "Fast Lane Signals",
+      "chapterLabel": "Signal School",
       "introDesc": "Deliver the science supplies safely! Read the signals and pick the best lane.",
       "letsGo": "Let's Go!",
       "phasePractice": "Practice",
@@ -1817,6 +1842,7 @@
     },
     "qualifyTuneRace": {
       "title": "Qualify, Tune, Race",
+      "chapterLabel": "Race Lab",
       "introDesc": "First we test. Then we tune. Then we race again!",
       "letsGo": "Let's Go!",
       "qualifyTitle": "Qualifying Run",
