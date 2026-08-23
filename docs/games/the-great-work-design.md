@@ -11,7 +11,7 @@
 > with its layout and tapes in the existing `content: Json`. Zero new Prisma models and zero migrations
 > in Release 1. The simulation engine lives at `shared/greatwork-engine/`.
 
-Scope tags used throughout: **[MVP]** Release 1 · **[P2]** Release 2 · **[P3]** Release 3.
+Scope tags used throughout: **[MVP]** Release 1 · **[P2]** Release 2 · **[P3]** Release 3. In §8.7 only, **[P]** additionally marks a declaration that is a _proposal_ rather than an inherited decision. It is not a release tag and does not mean "phase 1"; read it as "provisional".
 
 ---
 
@@ -219,8 +219,8 @@ The table is encoded once, frozen, and asserted frozen. `Object.freeze` is shall
 tables are arrays of objects that themselves hold arrays: freezing `REACTIONS` leaves every row, every
 predicate and every slot list mutable, so freeze the nested entries too and assert `Object.isFrozen`
 on a row rather than only on the collection. That matters more here than it would in a single-process
-app, because the frontend and the backend hold physically separate copies of the compiled engine
-(§18.2): a mutation applied to one copy at runtime is skew, and nothing else in the system would
+app, because the frontend and the backend hold physically separate copies of the engine — the frontend
+built from source through the alias, the backend loaded from the emitted package (§18.1, §18.2): a mutation applied to one copy at runtime is skew, and nothing else in the system would
 detect it.
 
 ---
@@ -297,6 +297,7 @@ by the same glyph in the same tick.
 
 The bond glyphs of §6.3 are not in this table. They change bond topology rather than elements, so they
 have no reaction inputs or outputs to index.
+
 Glyphs, their inputs and their outputs may not overlap each other, so placement validation rejects two
 footprints, or a glyph and a dispenser or acceptor, sharing a cell. Arms and tracks may pass over
 glyphs freely, and a hex an arm merely swings across still counts toward area (§10).
@@ -498,10 +499,17 @@ the lexicographically smallest of the six strings.
 
 The three axial transforms that order needs, written down once so nobody re-derives them: 60°
 clockwise is `(q, r) -> (-r, q + r)`, 60° counter-clockwise is `(q, r) -> (q + r, -q)`, and the mirror
-is `(q, r) -> (q, -q - r)`. Each is pinned by its own test, which applies it six times to a cell away
-from the origin and asserts the result is the input again — six 60° steps are a full turn, and six
-reflections are three round trips, so an identity that is off by a sign fails in that test rather than
-at the far end of a canonicalisation where it looks like a matching bug.
+is `(q, r) -> (q, -q - r)`. The two rotations are each pinned by a test that applies the transform six
+times to a cell away from the origin and asserts the result is the input again, because six 60° steps
+are a full turn, so a sign error fails there rather than at the far end of a canonicalisation where it
+reads as a matching bug.
+
+**The mirror needs a different test, and the obvious one is worthless.** Applying a reflection six
+times also returns the input — but so does applying _any_ involution six times, including several
+wrong ones, so that test passes on a broken mirror. Pin it instead with three assertions: applying it
+twice is the identity; it is _not_ itself the identity, so at least one cell must move; and a
+hand-computed vector matches, for example `(3, -1)` maps to `(3, -2)` and `(1, 2)` maps to `(1, -3)`.
+Chirality is the thing this transform protects, so the test that guards it has to be able to fail.
 
 Chirality needs a safety net, not an exception. Accidentally building the mirror image is the classic
 way to lose an hour in this genre: the machine looks right and the output silently is not. Keeping the
@@ -670,8 +678,12 @@ export interface GlyphDef {
   readonly outputSlots: ReadonlyArray<number>;
   readonly consumeSlots: ReadonlyArray<number>; // [P]; §5's "any consumable cell"
   readonly cost: number;
-  readonly reactionId: ReactionId;
+  readonly reactionIds: ReadonlyArray<ReactionId>; // [P]; NOT singular, see below
 }
+// reactionIds is a list because the mapping is not one-to-one in either direction. "affect" fires two
+// rows, affect_death and affect_life, chosen by which reagent is present. "bond_single" fires none: it
+// changes bond topology, not elements, so it has no §4.3 row at all and its list is empty. A singular
+// mandatory field cannot express either case, and GLYPHS below is total over all ten GlyphKinds.
 export type GlyphId = number;
 export type PartId = number;
 export interface Glyph {
@@ -700,7 +712,11 @@ export type InputPred =
   | { readonly kind: "any" }; // Destroy: not an ElementClass, and typing it as one will not compile
 export type OutputSpec =
   | { readonly kind: "element"; readonly element: ElementId }
-  | { readonly kind: "promote"; readonly from: "n" }; // §4.2, caps at Diamond
+  | { readonly kind: "promote"; readonly from: "n" } // §4.2, caps at Diamond
+  | { readonly kind: "copy"; readonly fromInput: number }; // [P]; Duplicate emits two of its Cardinal
+// The third variant exists because Duplicate's §4.3 row is "Essence + 1 Cardinal -> 2 of that
+// Cardinal". Its output is not a fixed element and not a promotion; it is whichever Cardinal arrived.
+// Without it the ten-row table cannot be encoded, which a describe.each over REACTIONS would catch.
 export interface ReactionDef {
   readonly id: ReactionId;
   readonly inputs: ReadonlyArray<InputPred>;
@@ -770,7 +786,8 @@ export type Part =
 // This document specifies no level schema, so every field below is [P]. Do not read §16.2's
 // payload example as one: those lines describe a saved machine's content, not a level.
 export interface LevelSpec {
-  readonly key: string; // T1 to T8 now, C1 to C12 later (§12)
+  readonly key: string; // T1 to T7 now, C1 to C12 later. NOT T8: §12 is explicit that T8 is not a
+  // level and has no board, target, count, fail state or win check. Do not add it here.
   readonly mode: "target" | "open"; // §11.2
   readonly gradeBand: "k2" | "g3_5"; // §19.1: injected by the platform, never inferred here
   readonly targetProduct?: Molecule;
@@ -836,7 +853,7 @@ export function reflect(a: Axial): Axial; // used only by mirror detection (§8.
 export const ELEMENTS: Readonly<Record<ElementId, ElementDef>>; // 17 entries
 export const LADDER: readonly ElementId[]; // index + 1 is the rung; gems are ordinary rungs (R8)
 export const REACTIONS: readonly ReactionDef[]; // exactly ten rows
-export const GLYPHS: Readonly<Record<GlyphKind, GlyphDef>>;
+export const GLYPHS: Readonly<Record<GlyphKind, GlyphDef>>; // total over all ten kinds; see reactionIds
 export function promote(el: ElementId): ElementId; // caps at Diamond rather than erroring (§4.2)
 export function resolveReaction(
   id: ReactionId,
@@ -847,6 +864,7 @@ export function resolveReaction(
 export function canonicalize(m: Molecule): string; // the minimum over the six rotations only
 export function matches(product: Molecule, target: Molecule): boolean;
 export function isMirrorOf(product: Molecule, target: Molecule): boolean; // sets RunResult.mirrored
+export function reflectMolecule(m: Molecule): Molecule; // positions only; never elements or bond orders
 
 // scoring.ts (§10)
 export function partCost(p: Part): number; // the §5 and §6.1 tables, +10¤ per reach cell beyond 1
@@ -863,8 +881,9 @@ second implementation.** Two loops over the same rules is the same failure as tw
 and the two disagree with nothing turning red. The traced entry point exists to expose intermediate
 state, not to re-derive it.
 
-Eight files, and this is the layout section 8.5 is referring to when it says the draft's file layout
-still stands:
+Seven modules and a test directory, and this is the layout section 8.5 is referring to when it says the
+draft's file layout still stands. They are listed here in reading order, which is not the order to build
+them in — see below:
 
 ```
 shared/greatwork-engine/
@@ -878,8 +897,9 @@ shared/greatwork-engine/
   __tests__/     Vitest, with RESET timing and the reaction rows first (§8.3)
 ```
 
-Build the files in that dependency order: `board.ts`, then `reactions.ts`, then `tick.ts` with RESET
-first, then `matching.ts`, then `scoring.ts`. The layout is settled. The build story around it is not
+Build them in dependency order, which differs from the listing above: `board.ts`, then `reactions.ts`,
+then `tick.ts` with RESET first, then `matching.ts`, then `scoring.ts`. `types.ts` has no dependencies
+and comes first of all; `index.ts` is last because it only re-exports. The layout is settled. The build story around it is not
 this document's to settle and belongs to `docs/architecture/shared-code.md` (§18.1).
 
 ---
