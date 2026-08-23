@@ -12,7 +12,7 @@ Turn recurring intern feedback into permanent repository policy for future cohor
 ## Prompt
 
 ```text
-Add the issues Alice flagged to the relevant docs so they become canonical going forward.
+Add the cohort-delivery issues identified during closeout to the relevant docs so they become canonical going forward.
 ```
 
 ## What Claude Code Did
