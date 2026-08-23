@@ -82,7 +82,7 @@
 - All translation keys in English are implemented.
 - Chinese translation keys are complete in ready PR #770 (not yet merged).
 - Translation keys in Spanish and Vietnamese are still incomplete.
-- Title, story, tips, controlInstructions in briefing are hardcoded in English
+- Briefing title has inline locale values; story, tips, and controlInstructions remain English-only inline `pickLocale()` content.
 
 #### Hardcoded English text (✅ fixed in #747)
 
@@ -123,7 +123,7 @@
 - All translation keys in English are implemented.
 - Chinese translation keys are complete in ready PR #770 (not yet merged).
 - Translation keys in Spanish and Vietnamese are still incomplete.
-- Title, story, tips in briefing are hardcoded in English.
+- Briefing title has inline locale values; story and tips remain English-only inline `pickLocale()` content.
 
 #### Hardcoded English text (✅ fixed in #747)
 
@@ -191,7 +191,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 - All translation keys in English are implemented.
 - Chinese translation keys are complete in ready PR #770 (not yet merged).
 - Translation keys in Spanish and Vietnamese are still incomplete.
-- Title, story, tips in briefing are hardcoded in English.
+- Briefing title has inline locale values; story and tips remain English-only inline `pickLocale()` content.
 
 #### Hardcoded English text (✅ fixed in #747)
 
@@ -249,7 +249,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 - All translation keys in English are implemented.
 - Chinese translation keys are complete in ready PR #770 (not yet merged).
 - Translation keys in Spanish and Vietnamese are still incomplete.
-- Title, story, tips in briefing are hardcoded in English.
+- Briefing title has inline locale values; story and tips remain English-only inline `pickLocale()` content.
 
 #### Hardcoded English text (✅ fixed in #747)
 
@@ -289,7 +289,7 @@ games.moveMeasure.celebText, should be games.moveMeasure.celebDesc
 - All translation keys in English are implemented.
 - Chinese translation keys are complete in ready PR #770 (not yet merged).
 - Translation keys in Spanish and Vietnamese are still incomplete.
-- Title, story, tips, controlInstruction in briefing are hardcoded in English.
+- Briefing title has inline locale values; story, tips, and controlInstructions remain English-only inline `pickLocale()` content.
 
 #### Hardcoded English text (✅ fixed in #747)
 
