@@ -1,36 +1,37 @@
-# Branch status handoff (2026-08-14)
+# Branch status handoff (2026-08-14; refreshed 2026-08-23)
 
-> **Superseded status (as of 2026-08-18).** The Branches table below is a dated snapshot and is now stale.
-> Since it was written: **#750 merged** (`fdded13`), **#760 merged** (`94e9a99`), **#743 merged** (`866e8f0`).
-> **#762 is still open**; its base has since been retargeted from the merged `jack/chore-749-…` branch to `main`.
-> The table is left unedited on purpose — it records what was true on 2026-08-14, not current state.
+> This file began as the branch snapshot taken at handoff close on 2026-08-14. It was refreshed on 2026-08-23 to record the outcomes and leave only actionable follow-ups. Linked issues, pull requests, and canonical docs remain the source of truth after that date.
 
-One-page snapshot after executing `handoff-execute-decisions.md` (workspace-local; not tracked in this repo). Reflects reality at handoff close — not intent.
+## Resolved handoff stack
 
-## Branches
+- **#750 merged on 2026-08-17.** The real seeded Cypress stack landed, and the owner decision in #774 made `e2e-flows` an every-PR required check.
+- **#760 merged on 2026-08-18.** The Storybook empty-suite guard landed. Its dependent split, #776, is unblocked.
+- **#743 merged on 2026-08-18.** S-2 is the accepted shared-engine build layout, and Railway verification passed. The built-artifact freshness guard and spike-scaffold decision remain #720 scope.
+- **#762 merged on 2026-08-20.** The required-check policy and executable guard registry now live in `docs/ops/ci.md` and `docs/ops/guards.md`.
+- **#777 merged on 2026-08-23.** The Set 2 experience/localization audit now distinguishes shipped UI key wiring from the remaining briefing and locale work.
 
-| Branch                                       | PR                                                                     | Status                                                                                       | Owner                  | Next action                                                                                              |
-| -------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `jack/test-671-cypress-rebuild`              | [#750](https://github.com/Bright-Bots-Initiative/brightboost/pull/750) | Open · head `fe213e1b` · Alice + Nathan re-requested · `e2e-flows` Essential/required (#774) | Jack / Build reviewers | Await re-review; Nathan sets required check before merge; **do not force-push**                          |
-| `jack/chore-749-storybook-empty-suite-guard` | [#760](https://github.com/Bright-Bots-Initiative/brightboost/pull/760) | Open · base = #750 tip                                                                       | Jack                   | After #750 merges: confirm base → `main`, re-run all required checks (incl. `e2e-flows`), request review |
-| `jack/docs-738-guard-registry`               | [#762](https://github.com/Bright-Bots-Initiative/brightboost/pull/762) | Open · base = #760 tip                                                                       | Jack                   | After #760 merges: same retarget + checks + review                                                       |
-| `jack/spike-730-shared-engine`               | [#743](https://github.com/Bright-Bots-Initiative/brightboost/pull/743) | Open · §9.1 **S-2 accepted**; freshness guard → **#720**                                     | Nathan (Railway)       | Railway backend build verification; then merge                                                           |
+The original #750 → #760 → #762 stack is fully merged. Its force-push and retarget sequence is no longer an active dependency.
 
-Related (not in table): **#776** open, **blocked by #760** (must not land first). **#775** open until policy lands in `docs/ci.md` with the #709 map commit. **#709** administrative — Nathan decides close-or-not.
+## Remaining closeout pull request
 
-## Merge order (and why)
+At this refresh, the only open pull requests are #770 and this documentation PR (#779).
 
-1. **#750** first — introduces `e2e-flows` and is the stack base.
-2. **#760** after #750 — both touch `ci-cd.yml` / `package.json` / `docs/ci.md`; base is the #750 tip until retarget.
-3. **#762** after #760 — registry needs a row for the Storybook empty-suite guard.
-4. **#776** only after #760 — #760’s `CI-27` sits after `npm test` because Storybook is inside that run; splitting Storybook first invalidates that placement.
-5. **#743** independent of the Cypress stack, but gates `shared/` on `main` and the After-#743 half of #764.
+- **#770** is updated with current `main`, changes only `src/locales/zh-CN/common.json`, contains all 222 Simplified Chinese Set 2 keys, preserves every interpolation token, has approval, and has green required CI including `e2e-flows`. It remains open for the final localization acceptance/merge decision.
+- **#779** is this corrected handoff. After it merges, #770 is the only remaining open pull request from the closeout set.
 
-## Maintenance traps
+## Open work that still needs an owner
 
-- **Stacked force-push:** rewriting #750 moves #760/#762 bases — warn both before any rewrite.
-- **`e2e-flows` is required** once the board setting lands — a red `e2e-flows` blocks every merge.
-- **`shared/dist` freshness under S-2** is silent wrong-numbers; guard is **#720 scope**, not a new lane.
-- **`dataset.greatWorkEngine`** on `#root` is spike DCE-defeat — #720 must decide keep-vs-remove.
-- **`vitest.workspace.ts` three-way contention** (#748 + #760 + #720’s third project) — branch from a tree with both, or re-derive the skip.
-- **`db-target.mjs` must stay single-sourced** — seed and parity share one regex (no second copy).
+- **#720 — deterministic simulation engine.** Implement Release 1 from the in-repo design and handoff. Under S-2, CI must prove `shared/dist` is fresh; the `dataset.greatWorkEngine` DCE-defeat scaffold also needs an explicit keep-or-remove decision.
+- **#709 — CI suite map.** This remains administrative and unassigned. The policy is documented, but the command-level suite inventory is still open.
+- **#775 — branch-protection readback.** The policy landed with #762. An admin still needs to verify the full protection settings and reconcile the `enforce_admins` contradiction in `docs/ops/branch-protection.md`.
+- **#776 — Storybook tier/split.** This is unblocked and unassigned. If Storybook moves out of `npm test`, move CI-27, its parity test, `scripts/ci-required-steps.json`, the workflow step, and the `docs/ops/guards.md` runner entry together.
+- **#739 — release-integrity umbrella.** Its unassigned follow-ups include #764, #765, #767, #782, and #783.
+
+## Current maintenance traps
+
+- **Required status contexts:** the `main` branch summary reported `build-and-test`, `db-check`, and `e2e-flows` on 2026-08-23. That summary does not expose strict-update, PR-approval, conversation-resolution, or administrator-enforcement settings; #775 owns the admin readback.
+- **`shared/dist` freshness under S-2:** a stale artifact can compile and run while producing different browser/Node behavior. #720 must make freshness executable.
+- **Storybook split coordination:** #776 and #720 can both touch `vitest.workspace.ts`; branch from current `main` and re-derive CI-27 placement rather than copying the old order.
+- **Guard completeness:** #782 records that `scripts/ci-required-steps.json` covers neither `e2e-flows` nor `build-only`; #783 records the registry's one-way AC-018 check.
+- **Database target guard:** keep `scripts/lib/db-target.mjs` single-sourced for seed and parity safety. Do not introduce a second database-name regex.
+- **Stacked branches:** if future work is stacked, do not force-push a base without coordinating and revalidating every dependent head.

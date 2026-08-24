@@ -1,7 +1,7 @@
 # Pre-Launch Smoke Test Checklist
 
 Run through this in a browser before declaring Phase 1 complete.
-See `docs/intern-credentials.md` for accounts.
+See [`docs/pilot/demo-accounts.md`](pilot/demo-accounts.md) for accounts.
 
 ## Logins
 

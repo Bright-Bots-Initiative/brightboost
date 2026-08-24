@@ -21,6 +21,8 @@ const EXPECTED_STEP_IDS = [
   "CI-06",
   "CI-24",
   "CI-25",
+  "CI-28",
+  "CI-29",
   "CI-07",
   "CI-08",
   "CI-09",
@@ -173,11 +175,14 @@ describe("verify-parity --only selection integrity (Bug F / #740)", () => {
   });
 
   it("exits 1 when selection is all SKIP (zero executable steps)", async () => {
-    // CI-26 always SKIPs locally (OQ-10 reverse gap).
-    const { status, output } = await runParityCli(["--only", "CI-26"]);
+    const env = { ...process.env };
+    delete env.TEST_DATABASE_URL;
+    delete env.DATABASE_URL;
+    delete env.POSTGRES_URL;
+    const { status, output } = await runParityCli(["--only", "CI-14"], env);
     expect(status, output).toBe(1);
-    expect(output).toMatch(/Selected 1 of \d+ steps: CI-26/);
-    expect(output).toMatch(/\[SKIP\] CI-26/);
+    expect(output).toMatch(/Selected 1 of \d+ steps: CI-14/);
+    expect(output).toMatch(/\[SKIP\] CI-14/);
     expect(output).toMatch(/Required step\(s\) were SKIPPED/);
     expect(countRunLines(output)).toBe(0);
   });
