@@ -21,8 +21,7 @@ The prompt continued an owner-operated repository thread that required live-stat
 
 - Files modified: gallery API serialization and tests, gallery UI and tests, four locale files
 - File created: this prompt log
-- Tests passed: pending exact-head GitHub checks; the sandbox could not complete a dependency install
-- Build clean: pending exact-head GitHub checks
+- Verification: exact-head GitHub checks are required before merge because the sandbox could not complete a dependency install
 
 ## What Worked
 
