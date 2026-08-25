@@ -2262,6 +2262,7 @@
     "error": "Could not load the gallery.",
     "untitled": "Untitled",
     "by": "by {{name}}",
+    "byClassmate": "by a classmate",
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
     "play": "Play",

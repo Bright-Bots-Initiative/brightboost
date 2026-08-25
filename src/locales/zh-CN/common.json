@@ -2045,6 +2045,7 @@
     "error": "Could not load the gallery.",
     "untitled": "Untitled",
     "by": "by {{name}}",
+    "byClassmate": "来自一位同学",
     "boosts": "Boosts",
     "giveBoost": "Give a boost ⭐",
     "play": "Play",

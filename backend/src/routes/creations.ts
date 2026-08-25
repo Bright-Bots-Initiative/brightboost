@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
-import { requireAuth, requireRole } from "../utils/auth";
+import { requireAuth, requireRole, type UserRole } from "../utils/auth";
 import {
   CREATION_TYPES,
   deriveCreationTitle,
@@ -24,8 +24,9 @@ import {
 //     adults have no endpoint to change a kid's status.
 //   - Reads (GET ?courseId=) are GROUP-SCOPED. A requester must belong to the
 //     group (teacher/owner, admin, or enrolled student). The gallery exposes
-//     only SHARED|COMPLETE creations, plus the requester's OWN drafts. Author
-//     identity is exposed as a first name only — never email.
+//     only SHARED|COMPLETE creations, plus the requester's OWN drafts. Adults
+//     and the author may see the author's first name. Student peers receive no
+//     profile-derived name, so kid-editable text cannot reach the class.
 
 const router = Router();
 const GALLERY_CONTENT_TYPES = new Set(["race_track", "sound_duet"]);
@@ -122,23 +123,50 @@ type CreationDTO = {
   status: string;
   encouragements: number;
   authorId: string;
-  authorName: string;
+  authorName: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-function toDTO(c: {
+type GalleryViewer = {
   id: string;
-  courseId: string;
-  type: string;
-  title: string | null;
-  status: string;
-  encouragements?: number;
-  authorId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  author?: { name: string | null } | null;
-}): CreationDTO {
+  role: UserRole;
+};
+
+/**
+ * Profile names are kid-editable and therefore not safe peer-facing copy.
+ * Fail closed: only the author or an adult role receives the first name.
+ */
+function authorNameFor(
+  creation: {
+    authorId: string;
+    author?: { name: string | null } | null;
+  },
+  viewer: GalleryViewer,
+): string | null {
+  const canSeeAuthorName =
+    creation.authorId === viewer.id ||
+    viewer.role === "teacher" ||
+    viewer.role === "admin";
+
+  return canSeeAuthorName ? firstName(creation.author?.name) : null;
+}
+
+function toDTO(
+  c: {
+    id: string;
+    courseId: string;
+    type: string;
+    title: string | null;
+    status: string;
+    encouragements?: number;
+    authorId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    author?: { name: string | null } | null;
+  },
+  viewer: GalleryViewer,
+): CreationDTO {
   return {
     id: c.id,
     courseId: c.courseId,
@@ -147,7 +175,7 @@ function toDTO(c: {
     status: c.status,
     encouragements: c.encouragements ?? 0,
     authorId: c.authorId,
-    authorName: firstName(c.author?.name),
+    authorName: authorNameFor(c, viewer),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -199,7 +227,7 @@ router.post(
       include: { author: { select: { name: true } } },
     });
 
-    return res.status(201).json(toDTO(creation));
+    return res.status(201).json(toDTO(creation, req.user!));
   },
 );
 
@@ -269,7 +297,7 @@ router.patch(
       include: { author: { select: { name: true } } },
     });
 
-    return res.json(toDTO(updated));
+    return res.json(toDTO(updated, req.user!));
   },
 );
 
@@ -305,7 +333,7 @@ router.get("/creations", requireAuth, async (req: Request, res: Response) => {
   // single-creation endpoint so manually inserted fields never leak.
   return res.json(
     creations.map((creation) => {
-      const dto = toDTO(creation);
+      const dto = toDTO(creation, req.user!);
       if (!GALLERY_CONTENT_TYPES.has(creation.type)) return dto;
 
       const content = serializeCreationContent(creation.type, creation.content);
@@ -345,7 +373,7 @@ router.get(
 
     // Single-get includes content so the creation can actually be played.
     return res.json({
-      ...toDTO(creation),
+      ...toDTO(creation, req.user!),
       content: serializeCreationContent(creation.type, creation.content),
     });
   },

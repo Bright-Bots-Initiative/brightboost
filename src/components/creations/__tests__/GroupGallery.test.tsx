@@ -125,4 +125,15 @@ describe("GroupGallery — race_track cards (HARD REQUIREMENT: never crash)", ()
     await waitFor(() => expect(screen.getByText("Sort It")).toBeTruthy());
     expect(screen.getByText("gallery.play")).toBeTruthy();
   });
+
+  it("renders the localized classmate label when the API protects a peer name", async () => {
+    mockGet.mockResolvedValue([
+      galleryItem({ title: "Shared Safely", authorName: null }),
+    ]);
+    renderGallery();
+    await waitFor(() =>
+      expect(screen.getByText("Shared Safely")).toBeTruthy(),
+    );
+    expect(screen.getByText("gallery.byClassmate")).toBeTruthy();
+  });
 });
