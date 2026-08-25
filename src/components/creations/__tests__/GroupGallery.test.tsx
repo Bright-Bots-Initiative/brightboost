@@ -131,9 +131,7 @@ describe("GroupGallery — race_track cards (HARD REQUIREMENT: never crash)", ()
       galleryItem({ title: "Shared Safely", authorName: null }),
     ]);
     renderGallery();
-    await waitFor(() =>
-      expect(screen.getByText("Shared Safely")).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText("Shared Safely")).toBeTruthy());
     expect(screen.getByText("gallery.byClassmate")).toBeTruthy();
   });
 });
