@@ -17,7 +17,7 @@ type GalleryCreation = {
   status: CreationStatus;
   encouragements: number;
   authorId: string;
-  authorName: string;
+  authorName: string | null;
   /** Present for thumbnail-bearing types such as race_track and sound_duet. */
   content?: unknown;
 };
@@ -169,7 +169,9 @@ export default function GroupGallery({
             <CreationStatusChip status={c.status} />
           </div>
           <p className="text-xs text-gray-500">
-            {t("gallery.by", { name: c.authorName })}
+            {c.authorName
+              ? t("gallery.by", { name: c.authorName })
+              : t("gallery.byClassmate")}
           </p>
           <div className="mt-auto flex items-center justify-between pt-2">
             <span

@@ -504,7 +504,7 @@ describe("Creations routes", () => {
   });
 
   describe("GET /api/creations?courseId=", () => {
-    it("returns group creations to an enrolled member (first name only)", async () => {
+    it("does not expose a peer's kid-editable profile name", async () => {
       prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
       prismaMock.creation.findMany.mockResolvedValue([dbCreation]);
 
@@ -514,7 +514,7 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
-      expect(res.body[0].authorName).toBe("Ada");
+      expect(res.body[0].authorName).toBeNull();
       expect(res.body[0].email).toBeUndefined();
     });
 
@@ -528,6 +528,19 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
+      expect(res.body[0].authorName).toBe("Ada");
+    });
+
+    it("lets the author see their own first name", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr-1" });
+      prismaMock.creation.findMany.mockResolvedValue([dbCreation]);
+
+      const res = await request(app)
+        .get(`/api/creations?courseId=${COURSE}`)
+        .set(asStudent(KID));
+
+      expect(res.status).toBe(200);
+      expect(res.body[0].authorName).toBe("Ada");
     });
 
     it("ships content ONLY for race_track items (thumbnail payload)", async () => {
@@ -586,7 +599,7 @@ describe("Creations routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.content).toEqual(validChallenge); // playable payload
-      expect(res.body.authorName).toBe("Ada");
+      expect(res.body.authorName).toBeNull();
     });
 
     it.each([
@@ -621,6 +634,7 @@ describe("Creations routes", () => {
         .set(asStudent(KID));
 
       expect(res.status).toBe(200);
+      expect(res.body.authorName).toBe("Ada");
     });
 
     it("hides an unshared draft from another group member (403)", async () => {
