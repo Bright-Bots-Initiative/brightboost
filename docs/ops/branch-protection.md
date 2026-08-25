@@ -78,9 +78,15 @@ gh api repos/:owner/:repo/branches/main/protection \
 This snippet now mirrors [Verified state](#verified-state-admin-readback), so running it re-applies
 the board rather than changing it. It omits `review` because the readback confirms `review` is not
 required. Read the live values first: **a PUT replaces the whole set**, and `restrictions=null` would
-drop the `Team leads` push restriction the board currently carries. Reading is safe for an admin —
-`GET /branches/main/protection` still returns 404 for non-admin tokens, so contributors without admin
-cannot repeat the readback. See [`docs/ops/ci.md`](ci.md) for the policy table.
+drop the `Team leads` push restriction the board currently carries. See [`docs/ops/ci.md`](ci.md) for
+the policy table.
+
+**Who can read this endpoint.** `GET /branches/main/protection` needs a token with admin
+(`Administration: read`) access; the readback above used one and got `200`. This document previously
+asserted the endpoint returns `404` for non-admin tokens — that claim is **unverified**. It was not
+retested here, and the one adjacent case that was checked disagrees with it: an **unauthenticated**
+request returns `401 Requires authentication`, not `404`. Treat the requirement as "needs admin", not
+as a specific error code, until someone confirms the non-admin response with a non-admin token.
 
 ## Verify
 
