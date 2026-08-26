@@ -82,10 +82,21 @@ export function mkChallenge(
   });
 }
 
+/**
+ * `maxScore` is the running total of points the run actually put on the table —
+ * every scored round adds its own value whether or not the learner got it right.
+ *
+ * It cannot be derived from the round *count*: rounds are worth different
+ * amounts (`PT.catch` 10 / `PT.scan` 15 / `PT.predict` 20). Treating each of
+ * them as a 20-point predict round inflated the denominator so far that perfect
+ * play was capped at 285/440 = 65% (K-2) and 370/520 = 71% (g3-5) — 2 stars, with
+ * 3 stars and the 100% badge unreachable by construction (#735).
+ */
 export function buildSkyShieldCompletionPayload(params: {
   score: number;
   exitAns: number | null;
   exitAnswer: number;
+  maxScore: number;
   totalRounds: number;
   maxStreak: number;
   streak: number;
@@ -94,7 +105,7 @@ export function buildSkyShieldCompletionPayload(params: {
   return {
     gameKey: "sky_shield",
     score: params.score + (exitOk ? PT.predict : 0),
-    total: (params.totalRounds + 1) * PT.predict,
+    total: params.maxScore + PT.predict,
     streakMax: Math.max(
       params.maxStreak,
       exitOk ? params.streak + 1 : params.streak,
@@ -182,6 +193,9 @@ function SkyShieldPlayfield({
   const [fb, setFb] = useState<string | null>(null);
   const total = useRef(0);
   const correct = useRef(0);
+  // Points offered so far — the denominator behind the star rating (see
+  // buildSkyShieldCompletionPayload).
+  const maxScore = useRef(0);
 
   // Practice
   const [prIdx, setPrIdx] = useState(0);
@@ -220,6 +234,7 @@ function SkyShieldPlayfield({
       correct.current++;
     } else setStreak(0);
     total.current++;
+    maxScore.current += pts;
   }, []);
 
   const showFb = (key: string, ms = 800) => {
@@ -891,6 +906,7 @@ function SkyShieldPlayfield({
                 score,
                 exitAns,
                 exitAnswer: content.exitAnswer,
+                maxScore: maxScore.current,
                 totalRounds: total.current,
                 maxStreak: maxStreak.current,
                 streak,
