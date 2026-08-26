@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -58,8 +59,42 @@ afterEach(() => {
 });
 
 function trackTemp(root: string): string {
-  tempRoots.push(root);
-  return root;
+  // realpath so the isolation assertion below compares like with like
+  // (Windows 8.3 names, macOS /var -> /private/var).
+  const real = realpathSync(root);
+  tempRoots.push(real);
+  return real;
+}
+
+/**
+ * Ambient git environment is poison for this file (#787).
+ *
+ * Git exports `GIT_DIR` into every process a hook spawns when the checkout is a
+ * linked worktree (`pre-commit` also exports `GIT_INDEX_FILE`), and husky's
+ * `pre-push` runs this suite. `spawnSync`'s `cwd` does NOT override an
+ * inherited `GIT_DIR`: with `GIT_WORK_TREE` unset git treats the child's cwd as
+ * the work tree, so the fixture `git add -A` / `git commit` below rewrote the
+ * contributor's real index with the fixture tree and pushed "fixture" /
+ * "track env" onto their branch. Every git call in this file therefore runs
+ * with the inherited git environment scrubbed.
+ */
+function gitSafeEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (!/^GIT_/i.test(key)) env[key] = value;
+  }
+  return { ...env, ...extra };
+}
+
+/** Scrubbed env pinned at `root`'s own repository — nothing else is reachable. */
+function tempRepoEnv(root: string): NodeJS.ProcessEnv {
+  return gitSafeEnv({ GIT_DIR: join(root, ".git"), GIT_WORK_TREE: root });
+}
+
+function normalizePath(p: string): string {
+  const real = existsSync(p) ? realpathSync(p) : p;
+  const slashed = real.replace(/\\/g, "/");
+  return process.platform === "win32" ? slashed.toLowerCase() : slashed;
 }
 
 function copyFixture(src: string): string {
@@ -98,7 +133,7 @@ function runCheck(
   const result = spawnSync(
     process.execPath,
     [scriptPath, "--root", root, "--json", ...args],
-    { encoding: "utf8", cwd: repoRoot },
+    { encoding: "utf8", cwd: repoRoot, env: gitSafeEnv() },
   );
   const stdout = result.stdout ?? "";
   const stderr = result.stderr ?? "";
@@ -115,21 +150,67 @@ function codes(result: RunResult): string[] {
   return (result.json?.findings ?? []).map((f) => f.code);
 }
 
-function git(cwd: string, args: string[]): void {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8" });
+/** Run git against `cwd`'s own temp repository only (#787) and return stdout. */
+function gitOut(cwd: string, args: string[]): string {
+  const r = spawnSync("git", ["-C", cwd, ...args], {
+    cwd,
+    encoding: "utf8",
+    env: tempRepoEnv(cwd),
+  });
   if (r.status !== 0) {
     throw new Error(
       `git ${args.join(" ")} failed: ${r.stderr || r.stdout || r.status}`,
+    );
+  }
+  return (r.stdout ?? "").trim();
+}
+
+function git(cwd: string, args: string[]): void {
+  gitOut(cwd, args);
+}
+
+/** Fail loudly rather than corrupt: the repo git resolved must be `root`'s. */
+function assertRepoIsolated(root: string): void {
+  const resolved = normalizePath(
+    gitOut(root, ["rev-parse", "--absolute-git-dir"]),
+  );
+  const expected = normalizePath(join(root, ".git"));
+  if (resolved !== expected) {
+    throw new Error(
+      `fixture git escaped its temp repo (#787): expected ${expected}, got ${resolved}`,
     );
   }
 }
 
 function initGitRepo(root: string): void {
   git(root, ["init"]);
+  assertRepoIsolated(root);
   git(root, ["config", "user.email", "agent-check@test.local"]);
   git(root, ["config", "user.name", "agent-check-test"]);
   git(root, ["add", "-A"]);
   git(root, ["commit", "-m", "fixture"]);
+}
+
+/**
+ * Read-only probe of the checkout this suite runs in — never pinned, because a
+ * linked worktree's `.git` is a file, not a directory. Worktree status is
+ * deliberately not sampled: other guard tests legitimately dirty the tree
+ * (see scripts/verify-ci-shell-gate.sh), while HEAD, branch and a staged diff
+ * are exactly what the #787 corruption moved.
+ */
+function realCheckoutState(): Record<string, string> {
+  const read = (args: string[]): string => {
+    const r = spawnSync("git", ["-C", repoRoot, ...args], {
+      encoding: "utf8",
+      env: gitSafeEnv(),
+    });
+    return (r.stdout ?? "").trim();
+  };
+  return {
+    head: read(["rev-parse", "HEAD"]),
+    branch: read(["rev-parse", "--abbrev-ref", "HEAD"]),
+    staged: read(["diff", "--cached", "--name-only"]),
+  };
 }
 
 function trackEnvFile(root: string): void {
@@ -165,7 +246,7 @@ describe("agent-check silent-logic", () => {
     const result = spawnSync(
       process.execPath,
       [realScript, "--root", missing, "--json"],
-      { encoding: "utf8", cwd: repoRoot },
+      { encoding: "utf8", cwd: repoRoot, env: gitSafeEnv() },
     );
     expect(result.status).toBe(2);
     expect(result.status).not.toBe(1);
@@ -173,7 +254,7 @@ describe("agent-check silent-logic", () => {
     const notDir = spawnSync(
       process.execPath,
       [realScript, "--root", realScript, "--json"],
-      { encoding: "utf8", cwd: repoRoot },
+      { encoding: "utf8", cwd: repoRoot, env: gitSafeEnv() },
     );
     expect(notDir.status).toBe(2);
     expect(notDir.status).not.toBe(1);
@@ -372,6 +453,73 @@ describe("agent-check silent-logic", () => {
     const second = runCheck(root, ["--fix"]);
     expect(second.status).toBe(0);
     expect(snapshot(join(root, ".claude"))).toEqual(before);
+  });
+
+  it("U1-25 leaked git env cannot reach the ambient repository (#787)", () => {
+    // Sacrificial stand-in for a contributor's checkout. Before the fix the
+    // fixture commits landed here (and, in the wild, on their real branch).
+    const victim = trackTemp(
+      mkdtempSync(join(tmpdir(), "agent-check-victim-")),
+    );
+    writeFileSync(join(victim, "keep.txt"), "keep\n", "utf8");
+    initGitRepo(victim);
+    // Report a broken probe as state rather than throwing, so a failure names
+    // what the leak did to the repository instead of where git gave up.
+    const probe = (args: string[]): string => {
+      try {
+        return gitOut(victim, args);
+      } catch (error) {
+        return `unreadable: ${(error as Error).message}`;
+      }
+    };
+    const snapshot = () => ({
+      head: probe(["rev-parse", "HEAD"]),
+      branch: probe(["rev-parse", "--abbrev-ref", "HEAD"]),
+      index: probe(["ls-files"]),
+      status: probe(["status", "--porcelain"]),
+    });
+    const victimBefore = snapshot();
+    const realBefore = realCheckoutState();
+
+    // Exactly the #787 leak: git exports these into everything a hook spawns
+    // when the checkout is a linked worktree, and husky's pre-push runs this
+    // suite. Restored in `finally` so no other test in this file sees them.
+    const saved = {
+      GIT_DIR: process.env.GIT_DIR,
+      GIT_INDEX_FILE: process.env.GIT_INDEX_FILE,
+    };
+    let escaped: Error | null = null;
+    let bad: RunResult | null = null;
+    try {
+      process.env.GIT_DIR = join(victim, ".git");
+      process.env.GIT_INDEX_FILE = join(victim, ".git", "index");
+
+      const root = copyFixture(fixtureTree);
+      // The spawned script must also read `root`'s repo, not the leaked one:
+      // AC-018 only fires when `.env` is tracked in the temp fixture repo.
+      const { scriptPath } = copyScriptBundle({
+        trackedEnvFiles: [{ path: ".env", issue: 754, expires: "2020-01-01" }],
+      });
+      try {
+        initGitRepo(root);
+        trackEnvFile(root);
+        bad = runCheck(root, [], scriptPath);
+      } catch (error) {
+        escaped = error as Error;
+      }
+    } finally {
+      for (const key of ["GIT_DIR", "GIT_INDEX_FILE"] as const) {
+        const prev = saved[key];
+        if (prev === undefined) delete process.env[key];
+        else process.env[key] = prev;
+      }
+    }
+
+    expect(snapshot()).toEqual(victimBefore);
+    expect(realCheckoutState()).toEqual(realBefore);
+    expect(escaped?.message ?? null).toBeNull();
+    expect(bad!.status).toBe(1);
+    expect(codes(bad!)).toContain("AC-018");
   });
 
   it("U1-23 spaced-path healthy run", () => {
