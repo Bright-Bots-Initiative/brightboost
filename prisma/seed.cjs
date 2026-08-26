@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const {
   describeTarget,
   evaluateSeedTarget,
+  evaluateSeedWipe,
   syncFixtureEnrollment,
 } = require("./seedFixtures.cjs");
 
@@ -25,23 +26,26 @@ async function main() {
       );
     }
     console.error(`SEED REFUSED — ${gate.reason} No writes performed.`);
-    process.exit(1);
+    process.exit(gate.code ?? 1);
   }
   console.log(`Seed environment gate: ${gate.reason}`);
-  prisma = new PrismaClient();
 
   // 1) IMPORTANT: Do not early-return based on existing data.
   // This seed must be able to append new curriculum/modules to an existing DB.
 
-  // 2. Cleanup (Production Safe)
-  const isProduction = process.env.NODE_ENV === "production";
-  const forceReset = process.env.SEED_RESET === "true";
-  const forceNoReset = process.env.SEED_RESET === "false";
+  // 2. Cleanup decision (Production Safe).
+  // Decided and announced BEFORE the client exists, so the choice is on the
+  // record even if the connection later fails. Passing the write gate is not
+  // consent to delete: SEED_ALLOW_PRODUCTION permits writing to a remote
+  // target, only SEED_RESET=true permits wiping one.
+  const wipe = evaluateSeedWipe(process.env);
+  console.log(
+    `Cleanup: ${wipe.shouldWipe ? "enabled" : "skipped"} — ${wipe.reason}.`,
+  );
 
-  // Wipe only if NOT production, unless forced.
-  const shouldWipe = forceReset || (!isProduction && !forceNoReset);
+  prisma = new PrismaClient();
 
-  if (shouldWipe) {
+  if (wipe.shouldWipe) {
     console.log("Cleaning up database...");
     // Delete in reverse order of dependencies
     try {
@@ -71,8 +75,6 @@ async function main() {
       );
     }
     console.log("Database cleaned.");
-  } else {
-    console.log("Skipping cleanup (Production or SEED_RESET=false).");
   }
 
   // 3. Seed Abilities (idempotent)

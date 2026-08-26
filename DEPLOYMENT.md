@@ -37,6 +37,7 @@
 | `DIRECT_URL`                | Yes         | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
 | `RUN_SEED`                  | No          | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip)          |
 | `SEED_ALLOW_PRODUCTION`     | No          | Second gate **inside** the seed; only exact `true` lets it write to a production target      |
+| `SEED_RESET`                | No          | Separate wipe switch; exact `true` forces the pre-seed wipe, `false` forbids it (see below)  |
 | `RUN_GAMIFICATION_BACKFILL` | No          | Existing sibling gate; same exact `"true"` convention as `RUN_SEED`                          |
 | `SESSION_SECRET`            | Yes         | JWT signing secret — must NOT be the default                                                 |
 | `NODE_ENV`                  | Yes         | `production`                                                                                 |
@@ -90,7 +91,8 @@ Prefer letting `predeploy.sh` run `prisma migrate deploy` on deploy. To bootstra
 npx prisma migrate deploy --schema prisma/schema.prisma
 # Optional one-shot seed — prefer RUN_SEED=true on Railway instead (see below).
 # The seed refuses non-local targets; SEED_ALLOW_PRODUCTION=true is the opt-in.
-SEED_ALLOW_PRODUCTION=true npx prisma db seed
+# It permits writing only: a remote target is never wiped (SEED_RESET below).
+SEED_ALLOW_PRODUCTION=true SEED_RESET=false npx prisma db seed
 ```
 
 `npm run db:init` is **not** the production runbook primary path while migration baseline work (`#646`) is open; use migrate deploy + gated seed as above.
@@ -105,7 +107,21 @@ SEED_ALLOW_PRODUCTION=true npx prisma db seed
 
 Use `RUN_SEED` only when bootstrapping a fresh/empty production database — essentially never otherwise.
 
-Since #700 the seed carries its own gate as well: it refuses to write when `NODE_ENV=production`, or when `DATABASE_URL` points at anything other than a loopback host, and exits 1 with `SEED REFUSED — … No writes performed.` before a Prisma client is even constructed. A production bootstrap therefore needs **both** flags. `RUN_SEED` decides whether predeploy calls the seed; `SEED_ALLOW_PRODUCTION` decides whether the seed will touch a production database at all (it also covers a hand-run `npx prisma db seed` pointed at Supabase).
+Since #700 the seed carries its own gate as well: it refuses to write when `NODE_ENV=production`, or when `DATABASE_URL` points at anything other than a loopback host, and exits 1 with `SEED REFUSED — … No writes performed.` before a Prisma client is even constructed. (An unset `DATABASE_URL` exits 2 — could not run, not refused.) A production bootstrap therefore needs **both** flags. `RUN_SEED` decides whether predeploy calls the seed; `SEED_ALLOW_PRODUCTION` decides whether the seed will touch a production database at all (it also covers a hand-run `npx prisma db seed` pointed at Supabase).
+
+### `SEED_RESET` — the wipe is a separate decision
+
+The seed can also **wipe** before reseeding: `matchTurn`, `match`, `unlockedAbility`, `ability`, `progress`, `avatar`, `activity`, `lesson`, `unit`, `userBadge`, `badge`, `module`, `user`. That is governed by `SEED_RESET`, not by the write gate — **`SEED_ALLOW_PRODUCTION=true` permits writing, never deleting.** Precedence:
+
+| Condition                                    | Wipe?                                       |
+| -------------------------------------------- | ------------------------------------------- |
+| `SEED_RESET=true`                            | **yes** — explicit request, wins everywhere |
+| `SEED_RESET=false`                           | no                                          |
+| `NODE_ENV=production`                        | no (the Railway path)                       |
+| `DATABASE_URL` is not a loopback host        | no                                          |
+| otherwise (local target, `SEED_RESET` unset) | yes — the local-dev default                 |
+
+The seed announces the decision on its first lines, before it connects: `Cleanup: enabled — …` or `Cleanup: skipped — …`. Treat `SEED_RESET=true` against anything but a throwaway database as a destructive operation.
 
 1. Set `RUN_SEED=true` **and** `SEED_ALLOW_PRODUCTION=true` on the Railway backend service.
 2. Trigger a deploy.
@@ -119,7 +135,7 @@ Since #700 the seed carries its own gate as well: it refuses to write when `NODE
 Warnings:
 
 - The seed find-or-creates demo accounts **and refreshes their password hashes** on every run (`prisma/seed.cjs` — "Always refresh password hash on seed").
-- When `NODE_ENV !== "production"`, seed cleanup can wipe/reset data.
+- Seed cleanup wipes data on a local target with `SEED_RESET` unset, and anywhere with `SEED_RESET=true`. See the `SEED_RESET` table above.
 - Do not set `RUN_SEED=true` against a populated production database unless you intend both.
 
 Local dev and CI are unchanged: neither path calls `predeploy.sh`; contributors should continue running seed directly (`npm run seed`) when needed. If we add a future DB-backed CI job, it should call seed directly and must not route through `predeploy.sh`.

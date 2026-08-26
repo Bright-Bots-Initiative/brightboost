@@ -34,9 +34,13 @@ const repoRoot = path.resolve(here, "../..");
 const {
   ALLOW_PRODUCTION_ENV,
   evaluateSeedTarget,
+  evaluateSeedWipe,
   isProductionShapedDatabaseUrl,
   syncFixtureEnrollment,
 } = require_("../seedFixtures.cjs");
+
+const LOCAL_URL = "postgresql://u:p@127.0.0.1:5435/brightboost";
+const REMOTE_URL = "postgresql://u:p@db.example.supabase.co:5432/postgres";
 
 const ROOT_SEED = path.resolve(here, "../seed.cjs");
 const BACKEND_SEED = path.resolve(repoRoot, "backend/prisma/seed.cjs");
@@ -236,8 +240,7 @@ describe("seed wiring: no order-dependent course resolution (#700)", () => {
 });
 
 describe("seed environment gate refuses production targets (#700)", () => {
-  it("allows an unset / local environment", () => {
-    expect(evaluateSeedTarget({}).allowed).toBe(true);
+  it("allows a local environment", () => {
     expect(
       evaluateSeedTarget({
         NODE_ENV: "development",
@@ -249,18 +252,41 @@ describe("seed environment gate refuses production targets (#700)", () => {
         DATABASE_URL: "postgresql://u:p@127.0.0.1:5432/brightboost_test",
       }).allowed,
     ).toBe(true);
+    // WHATWG URL reports an IPv6 host with its brackets — "[::1]", not "::1".
+    expect(
+      evaluateSeedTarget({ DATABASE_URL: "postgresql://u:p@[::1]:5432/bb" })
+        .allowed,
+    ).toBe(true);
+    expect(
+      isProductionShapedDatabaseUrl("postgresql://u:p@[::1]:5432/bb"),
+    ).toBe(false);
+  });
+
+  it("refuses a missing or empty DATABASE_URL as could-not-run (code 2)", () => {
+    for (const env of [{}, { DATABASE_URL: "" }, { DATABASE_URL: "   " }]) {
+      const verdict = evaluateSeedTarget(env);
+      expect(verdict.allowed).toBe(false);
+      expect(verdict.code, "missing config is 2, not property-false 1").toBe(2);
+      expect(verdict.reason).toMatch(/DATABASE_URL is not set/);
+    }
+    // Not even the operator opt-in can seed a target that was never named.
+    expect(evaluateSeedTarget({ [ALLOW_PRODUCTION_ENV]: "true" }).allowed).toBe(
+      false,
+    );
   });
 
   it("refuses NODE_ENV=production", () => {
-    const verdict = evaluateSeedTarget({ NODE_ENV: "production" });
+    const verdict = evaluateSeedTarget({
+      NODE_ENV: "production",
+      DATABASE_URL: LOCAL_URL,
+    });
     expect(verdict.allowed).toBe(false);
+    expect(verdict.code ?? 1).toBe(1);
     expect(verdict.reason).toMatch(/NODE_ENV=production/);
   });
 
   it("refuses a non-local DATABASE_URL even without NODE_ENV", () => {
-    const verdict = evaluateSeedTarget({
-      DATABASE_URL: "postgresql://u:p@db.example.supabase.co:5432/postgres",
-    });
+    const verdict = evaluateSeedTarget({ DATABASE_URL: REMOTE_URL });
     expect(verdict.allowed).toBe(false);
     expect(verdict.reason).toMatch(/not a local database/);
     expect(isProductionShapedDatabaseUrl("postgresql://u:p@host/db")).toBe(
@@ -273,6 +299,7 @@ describe("seed environment gate refuses production targets (#700)", () => {
     expect(
       evaluateSeedTarget({
         NODE_ENV: "production",
+        DATABASE_URL: LOCAL_URL,
         [ALLOW_PRODUCTION_ENV]: "true",
       }).allowed,
     ).toBe(true);
@@ -280,11 +307,73 @@ describe("seed environment gate refuses production targets (#700)", () => {
       expect(
         evaluateSeedTarget({
           NODE_ENV: "production",
+          DATABASE_URL: LOCAL_URL,
           [ALLOW_PRODUCTION_ENV]: value,
         }).allowed,
         `${ALLOW_PRODUCTION_ENV}=${JSON.stringify(value)} must not enable the seed`,
       ).toBe(false);
     }
+  });
+});
+
+describe("write permission is not delete permission (#700 review B1)", () => {
+  it("does NOT wipe on the documented operator-shell override", () => {
+    // DEPLOYMENT.md tells an operator to run
+    //   SEED_ALLOW_PRODUCTION=true npx prisma db seed
+    // from a shell where NODE_ENV is normally unset. That passes the write
+    // gate; it must not also authorise the users/progress/modules deleteMany.
+    const env = {
+      [ALLOW_PRODUCTION_ENV]: "true",
+      DATABASE_URL: REMOTE_URL,
+    };
+    expect(evaluateSeedTarget(env).allowed).toBe(true);
+    const wipe = evaluateSeedWipe(env);
+    expect(wipe.shouldWipe).toBe(false);
+    expect(wipe.reason).toMatch(/not a local database/);
+  });
+
+  it("does NOT wipe a remote target even with no flags at all", () => {
+    expect(evaluateSeedWipe({ DATABASE_URL: REMOTE_URL }).shouldWipe).toBe(
+      false,
+    );
+  });
+
+  it("leaves the Railway path unchanged (NODE_ENV=production never wipes)", () => {
+    expect(
+      evaluateSeedWipe({ NODE_ENV: "production", DATABASE_URL: LOCAL_URL })
+        .shouldWipe,
+    ).toBe(false);
+    expect(
+      evaluateSeedWipe({ NODE_ENV: "production", DATABASE_URL: REMOTE_URL })
+        .shouldWipe,
+    ).toBe(false);
+  });
+
+  it("still wipes a local target by default, and honours SEED_RESET both ways", () => {
+    expect(evaluateSeedWipe({ DATABASE_URL: LOCAL_URL }).shouldWipe).toBe(true);
+    expect(
+      evaluateSeedWipe({ DATABASE_URL: LOCAL_URL, SEED_RESET: "false" })
+        .shouldWipe,
+    ).toBe(false);
+    // SEED_RESET=true is the wipe's own opt-in and still wins everywhere.
+    expect(
+      evaluateSeedWipe({
+        DATABASE_URL: REMOTE_URL,
+        NODE_ENV: "production",
+        SEED_RESET: "true",
+      }).shouldWipe,
+    ).toBe(true);
+  });
+
+  it("decides the wipe before the Prisma client is constructed", () => {
+    const wipeIdx = seedSrc.indexOf("evaluateSeedWipe(process.env)");
+    const clientIdx = seedSrc.indexOf("new PrismaClient()");
+    const deleteIdx = seedSrc.indexOf("deleteMany()");
+    expect(wipeIdx).toBeGreaterThan(-1);
+    expect(wipeIdx).toBeLessThan(clientIdx);
+    expect(wipeIdx).toBeLessThan(deleteIdx);
+    // The old predicate must be gone — it keyed the wipe on NODE_ENV only.
+    expect(seedSrc).not.toContain("!isProduction && !forceNoReset");
   });
 });
 
@@ -321,7 +410,11 @@ function runSeed(
 
 describe("seed process refuses to run in production (#700)", () => {
   it("exits 1 with no writes when NODE_ENV=production", async () => {
-    const env = { ...process.env, NODE_ENV: "production" };
+    const env = {
+      ...process.env,
+      NODE_ENV: "production",
+      DATABASE_URL: LOCAL_URL,
+    };
     delete env[ALLOW_PRODUCTION_ENV];
     const { status, output } = await runSeed(env);
 
@@ -337,5 +430,44 @@ describe("seed process refuses to run in production (#700)", () => {
     // The refusal happens before a Prisma client is even constructed.
     expect(output).not.toMatch(/@prisma\/client/);
     expect(output).not.toMatch(/Can't reach database/i);
+  });
+
+  it("exits 2 when DATABASE_URL is missing (could not run, not property false)", async () => {
+    const env = { ...process.env };
+    delete env.DATABASE_URL;
+    delete env[ALLOW_PRODUCTION_ENV];
+    const { status, output } = await runSeed(env);
+
+    expect(
+      status,
+      `missing DATABASE_URL must exit 2, got ${status}:\n${output}`,
+    ).toBe(2);
+    expect(status).not.toBe(1);
+    expect(output).toMatch(/DATABASE_URL is not set/);
+    expect(output).not.toMatch(/Cleaning up database/);
+    expect(output).not.toMatch(/SEED COMPLETED SUCCESSFULLY/);
+  });
+
+  it("never wipes on the documented operator-shell override (B1)", async () => {
+    // The exact scenario the review reproduced: NODE_ENV unset, the operator
+    // opt-in set, and a production-shaped target. 127.0.0.2 is non-loopback by
+    // the gate's host rule but refuses the TCP connection instantly, so the
+    // case stays fast and DNS-free wherever it runs.
+    const env = {
+      ...process.env,
+      [ALLOW_PRODUCTION_ENV]: "true",
+      DATABASE_URL: "postgresql://u:p@127.0.0.2:5432/brightboost",
+    };
+    delete env.NODE_ENV;
+    delete env.SEED_RESET;
+    const { output } = await runSeed(env);
+
+    expect(output).toMatch(/Cleanup: skipped/);
+    expect(output).toMatch(/not a local database/);
+    expect(
+      output,
+      `the override must never authorise a wipe:\n${output}`,
+    ).not.toMatch(/Cleaning up database/);
+    expect(output).not.toMatch(/Database cleaned/);
   });
 });

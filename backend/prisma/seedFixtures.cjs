@@ -38,7 +38,8 @@ const ALLOW_PRODUCTION_ENV = "SEED_ALLOW_PRODUCTION";
  */
 function isProductionShapedDatabaseUrl(urlString) {
   if (!urlString || String(urlString).trim() === "") {
-    // Nothing to judge — Prisma will fail on its own; not a production signal.
+    // Nothing to judge. Absence is handled as "could not run" by the callers,
+    // not as a production signal.
     return false;
   }
   let parsed;
@@ -48,8 +49,9 @@ function isProductionShapedDatabaseUrl(urlString) {
     // Unparseable: cannot prove it is local, so treat it as production-shaped.
     return true;
   }
+  // WHATWG URL keeps the brackets on an IPv6 host, so the literal is "[::1]".
   const host = parsed.hostname.toLowerCase();
-  return !(host === "localhost" || host === "127.0.0.1" || host === "::1");
+  return !(host === "localhost" || host === "127.0.0.1" || host === "[::1]");
 }
 
 /**
@@ -73,10 +75,23 @@ function describeTarget(urlString) {
 /**
  * Decide whether the demo seed may write to this target.
  *
+ * `code` follows the repo's reserved exit codes: 1 = property false (refused
+ * on purpose), 2 = could not run. Missing configuration is checked first, so
+ * an unset DATABASE_URL is reported here rather than surfacing later as a
+ * Prisma stack trace (same posture as `scripts/e2e-seed.mjs`).
+ *
  * @param {Record<string, string | undefined>} env
- * @returns {{ allowed: boolean, reason: string }}
+ * @returns {{ allowed: boolean, reason: string, code?: number }}
  */
 function evaluateSeedTarget(env = {}) {
+  if (!env.DATABASE_URL || String(env.DATABASE_URL).trim() === "") {
+    return {
+      allowed: false,
+      code: 2,
+      reason:
+        "cannot seed: DATABASE_URL is not set. Point it at a local database (see SETUP.md).",
+    };
+  }
   if (env[ALLOW_PRODUCTION_ENV] === "true") {
     return {
       allowed: true,
@@ -96,6 +111,49 @@ function evaluateSeedTarget(env = {}) {
     };
   }
   return { allowed: true, reason: "local/non-production target" };
+}
+
+/**
+ * Decide whether the seed may WIPE the database before reseeding.
+ *
+ * Separate from `evaluateSeedTarget` on purpose: passing the write gate is not
+ * consent to delete. `SEED_ALLOW_PRODUCTION=true` says "yes, write to this
+ * target"; only `SEED_RESET=true` says "yes, delete what is there first".
+ * Before that split, the documented hand-run
+ * `SEED_ALLOW_PRODUCTION=true npx prisma db seed` from an operator shell (where
+ * NODE_ENV is normally unset) passed the gate and then ran the full
+ * users/progress/modules `deleteMany` against the remote target.
+ *
+ * Precedence, preserving the original semantics and adding the remote check:
+ *   SEED_RESET=true   → wipe (explicit request; still wins everywhere)
+ *   SEED_RESET=false  → no wipe
+ *   NODE_ENV=production → no wipe (unchanged; this is the Railway path)
+ *   non-local DATABASE_URL → no wipe (new)
+ *   otherwise → wipe (local dev default)
+ *
+ * @param {Record<string, string | undefined>} env
+ * @returns {{ shouldWipe: boolean, reason: string }}
+ */
+function evaluateSeedWipe(env = {}) {
+  if (env.SEED_RESET === "true") {
+    return {
+      shouldWipe: true,
+      reason: "SEED_RESET=true (explicitly requested)",
+    };
+  }
+  if (env.SEED_RESET === "false") {
+    return { shouldWipe: false, reason: "SEED_RESET=false" };
+  }
+  if (env.NODE_ENV === "production") {
+    return { shouldWipe: false, reason: "NODE_ENV=production" };
+  }
+  if (isProductionShapedDatabaseUrl(env.DATABASE_URL)) {
+    return {
+      shouldWipe: false,
+      reason: `DATABASE_URL is not a local database — ${ALLOW_PRODUCTION_ENV} permits writing, never deleting; set SEED_RESET=true to wipe on purpose`,
+    };
+  }
+  return { shouldWipe: true, reason: "local target, SEED_RESET unset" };
 }
 
 /**
@@ -125,6 +183,7 @@ module.exports = {
   ALLOW_PRODUCTION_ENV,
   describeTarget,
   evaluateSeedTarget,
+  evaluateSeedWipe,
   isProductionShapedDatabaseUrl,
   syncFixtureEnrollment,
 };
