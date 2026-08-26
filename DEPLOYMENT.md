@@ -36,6 +36,7 @@
 | `DATABASE_URL`              | Yes         | Supabase Postgres connection string (pooled)                                                 |
 | `DIRECT_URL`                | Yes         | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
 | `RUN_SEED`                  | No          | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip)          |
+| `SEED_ALLOW_PRODUCTION`     | No          | Second gate **inside** the seed; only exact `true` lets it write to a production target      |
 | `RUN_GAMIFICATION_BACKFILL` | No          | Existing sibling gate; same exact `"true"` convention as `RUN_SEED`                          |
 | `SESSION_SECRET`            | Yes         | JWT signing secret — must NOT be the default                                                 |
 | `NODE_ENV`                  | Yes         | `production`                                                                                 |
@@ -87,8 +88,9 @@ Prefer letting `predeploy.sh` run `prisma migrate deploy` on deploy. To bootstra
 
 ```bash
 npx prisma migrate deploy --schema prisma/schema.prisma
-# Optional one-shot seed — prefer RUN_SEED=true on Railway instead (see below)
-npx prisma db seed
+# Optional one-shot seed — prefer RUN_SEED=true on Railway instead (see below).
+# The seed refuses non-local targets; SEED_ALLOW_PRODUCTION=true is the opt-in.
+SEED_ALLOW_PRODUCTION=true npx prisma db seed
 ```
 
 `npm run db:init` is **not** the production runbook primary path while migration baseline work (`#646`) is open; use migrate deploy + gated seed as above.
@@ -103,10 +105,14 @@ npx prisma db seed
 
 Use `RUN_SEED` only when bootstrapping a fresh/empty production database — essentially never otherwise.
 
-1. Set `RUN_SEED=true` on the Railway backend service.
+Since #700 the seed carries its own gate as well: it refuses to write when `NODE_ENV=production`, or when `DATABASE_URL` points at anything other than a loopback host, and exits 1 with `SEED REFUSED — … No writes performed.` before a Prisma client is even constructed. A production bootstrap therefore needs **both** flags. `RUN_SEED` decides whether predeploy calls the seed; `SEED_ALLOW_PRODUCTION` decides whether the seed will touch a production database at all (it also covers a hand-run `npx prisma db seed` pointed at Supabase).
+
+1. Set `RUN_SEED=true` **and** `SEED_ALLOW_PRODUCTION=true` on the Railway backend service.
 2. Trigger a deploy.
-3. Confirm logs include: `predeploy: RUN_SEED=true — running seed from …`
-4. Clear `RUN_SEED` immediately after the successful bootstrap.
+3. Confirm logs include: `predeploy: RUN_SEED=true — running seed from …` followed by
+   `Seed environment gate: SEED_ALLOW_PRODUCTION=true — production guard explicitly overridden by the operator`.
+   A line reading `SEED REFUSED` means `SEED_ALLOW_PRODUCTION` is missing or not the exact string `true`.
+4. Clear `RUN_SEED` **and** `SEED_ALLOW_PRODUCTION` immediately after the successful bootstrap.
 5. Trigger (or observe) the next deploy and confirm logs include:  
    `predeploy: skipping seed (RUN_SEED not set — see DEPLOYMENT.md, issue #651)`
 

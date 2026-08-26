@@ -1,9 +1,35 @@
 const { PrismaClient, Archetype, ActivityKind } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const {
+  describeTarget,
+  evaluateSeedTarget,
+  syncFixtureEnrollment,
+} = require("./seedFixtures.cjs");
 
-const prisma = new PrismaClient();
+// Constructed inside main(), after the environment gate — a refused target
+// must not even instantiate a client (#700).
+let prisma = null;
 
 async function main() {
+  // 0. Environment gate (#700) — refuse production targets BEFORE any write.
+  // This seed is a demo/test fixture: it creates documented demo accounts and
+  // refreshes their password hashes on every run. predeploy.sh gates the
+  // deploy-time call behind RUN_SEED; this gate also covers a hand-run
+  // `npx prisma db seed` that happens to be pointed at production.
+  const gate = evaluateSeedTarget(process.env);
+  if (!gate.allowed) {
+    const target = describeTarget(process.env.DATABASE_URL);
+    if (target) {
+      console.error(
+        `Seed target host=${target.host} database=${target.database}`,
+      );
+    }
+    console.error(`SEED REFUSED — ${gate.reason} No writes performed.`);
+    process.exit(1);
+  }
+  console.log(`Seed environment gate: ${gate.reason}`);
+  prisma = new PrismaClient();
+
   // 1) IMPORTANT: Do not early-return based on existing data.
   // This seed must be able to append new curriculum/modules to an existing DB.
 
@@ -187,23 +213,8 @@ async function main() {
     });
   }
 
-  // Enroll explorer in teacher's class
-  const teacherCourse = await prisma.course.findFirst({
-    where: { teacherId: teacher.id },
-  });
-  if (teacherCourse) {
-    await prisma.enrollment.upsert({
-      where: {
-        studentId_courseId: {
-          studentId: explorer.id,
-          courseId: teacherCourse.id,
-        },
-      },
-      create: { studentId: explorer.id, courseId: teacherCourse.id },
-      update: {},
-    });
-    console.log("Enrolled explorer in class:", teacherCourse.name);
-  }
+  // Explorer's enrollment is wired further down, once the K-2 class exists —
+  // see "Deterministic demo fixture enrollments (#700)".
 
   // Create avatar for explorer
   await prisma.avatar.upsert({
@@ -260,14 +271,7 @@ async function main() {
     },
     update: { gradeBand: "g3_5" },
   });
-  await prisma.enrollment.upsert({
-    where: {
-      studentId_courseId: { studentId: jordan.id, courseId: g35Class.id },
-    },
-    create: { studentId: jordan.id, courseId: g35Class.id },
-    update: {},
-  });
-  console.log("Enrolled Jordan in grade 3-5 class:", g35Class.name);
+  // Jordan's enrollment is wired below with the other fixture enrollments.
 
   // Create avatar for Jordan
   await prisma.avatar.upsert({
@@ -330,6 +334,33 @@ async function main() {
     starStudents.length,
     "star students.",
   );
+
+  // ---------------------------------------------------------------------
+  // Deterministic demo fixture enrollments (#700)
+  //
+  // Was: explorer resolved a class with
+  //   `course.findFirst({ where: { teacherId: teacher.id } })`
+  // run BEFORE any course existed — null on a fresh DB (explorer in no
+  // class at all) and, on a re-seed, the first row the DB returned: the
+  // g3_5 GRADE35 class. Since `useGradeBand` reports g3_5 when ANY enrolled
+  // course is g3_5, the documented K-2 demo account silently exercised the
+  // grade 3-5 band.
+  //
+  // Now: each fixture student names its class by stable join code, wired
+  // after the classes are created, and reconciled so the student ends every
+  // run enrolled in exactly that one class (a DB carrying the old g3_5
+  // enrollment heals on the next seed). Repeat runs converge.
+  const fixtureEnrollments = [
+    { user: student, course: starsClass }, // K-2 (band k2, STARS1)
+    { user: explorer, course: starsClass }, // K-2 (band k2, STARS1)
+    { user: jordan, course: g35Class }, // grade 3-5 (band g3_5, GRADE35)
+  ];
+  for (const fx of fixtureEnrollments) {
+    await syncFixtureEnrollment(prisma, fx.user.id, fx.course.id);
+    console.log(
+      `Enrolled fixture student ${fx.user.name} in ${fx.course.name} (band ${fx.course.gradeBand}).`,
+    );
+  }
 
   // Shared Track Builder fixture for gallery + ride-path testing. The creator
   // studio remains intentionally gated, but any STARS1 student can open the
@@ -4095,5 +4126,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    if (prisma) await prisma.$disconnect();
   });

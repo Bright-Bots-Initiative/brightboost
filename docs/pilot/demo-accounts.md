@@ -4,7 +4,7 @@
 
 Use these accounts to explore and test the platform during development.
 
-All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The seed runs on every Railway deploy and **refreshes every password on each run** — if login stops working, check Railway deploy logs for seed output.
+All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The seed **refreshes every password on each run**. It is a demo/test fixture: the deploy-time call is gated behind `RUN_SEED=true` and the seed itself refuses a production target (`NODE_ENV=production`, or a non-local `DATABASE_URL`) unless the operator sets `SEED_ALLOW_PRODUCTION=true` — see [DEPLOYMENT.md](../../DEPLOYMENT.md#run_seed-runbook-production). If login stops working, check the deploy logs for seed output.
 
 ## App URLs
 
@@ -23,6 +23,8 @@ All accounts are seeded in `prisma/seed.cjs` with bcrypt-hashed passwords. The s
 | ------------------- | ------------ | ----------------------------------- |
 | `student@test.com`  | `password`   | Fresh K-2 student, Set 1 incomplete |
 | `explorer@test.com` | `explore123` | Set 1 complete, Set 2 unlocked      |
+
+Both are enrolled in the `STARS1` class (band `k2`) on every seed run, deterministically (#700). Before that fix `explorer@test.com` was resolved with `findFirst` and landed in the grade 3-5 class on any re-seed, and `student@test.com` had no class at all.
 
 **Class code (emoji-picker flow):** `STARS1` — enter under "I'm a Student" → "Join with a Code", then pick your emoji to log in without a password. Seeded class **"Ms. Frizzle's Star Class"** (band k2) with three emoji students, no PIN: **Nova ⭐ · Comet 🚀 · Luna 🌙**.
 
