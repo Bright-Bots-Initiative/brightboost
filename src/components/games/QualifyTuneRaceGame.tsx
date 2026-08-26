@@ -44,6 +44,10 @@ const SCROLL_SPEED = 2.5,
   TRACK_LENGTH = 3200,
   BUMP_ZONE = 28;
 const LEVELS = 3; // 2 levels, but +1 offset
+// Ceilings a second run can only hold, never beat.
+const PERFECT_BUMPS = 0;
+const MAX_SMOOTHNESS = 100;
+const FAST_BAND = "Fast";
 
 const OBSTACLES: Obstacle[] = [
   { lane: 1, y: 300 },
@@ -63,7 +67,7 @@ export function laneX(lane: number) {
   return lane * LANE_W + LANE_W / 2;
 }
 export function timeLabel(s: number) {
-  return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow";
+  return s < 15 ? FAST_BAND : s < 22 ? "Medium" : "Slow";
 }
 export function timeIcon(s: number) {
   return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢";
@@ -84,10 +88,21 @@ export function calculateQualifyTuneRaceScore(
   exitAnswer: string | null,
 ) {
   if (!run1 || !run2) return { score: 0, total: 10 };
+  // Improvement credit is earned by improving, or by maintaining a result that
+  // was already at the ceiling. Without the ceiling clauses a flawless first run
+  // made these points unreachable: a perfect-both-runs student scored 5/10 while
+  // a sloppy one who tidied up scored 10/10. Repeating a non-ceiling result
+  // still earns nothing, so the incentive to improve is intact.
+  const heldPerfectBumps =
+    run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
+  const heldFastTime =
+    timeLabel(run1.time) === FAST_BAND && timeLabel(run2.time) === FAST_BAND;
+  const heldMaxSmoothness =
+    run1.smoothness === MAX_SMOOTHNESS && run2.smoothness === MAX_SMOOTHNESS;
   let s = 3;
-  if (run2.bumps < run1.bumps) s += 2;
-  if (run2.time < run1.time) s += 2;
-  if (run2.smoothness > run1.smoothness) s += 1;
+  if (run2.bumps < run1.bumps || heldPerfectBumps) s += 2;
+  if (run2.time < run1.time || heldFastTime) s += 2;
+  if (run2.smoothness > run1.smoothness || heldMaxSmoothness) s += 1;
   if (exitAnswer === "one") s += 2;
   return { score: Math.min(s, 10), total: 10 };
 }
