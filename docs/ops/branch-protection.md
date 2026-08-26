@@ -64,7 +64,7 @@ Go to GitHub → **Settings** → **Branches** → **Add rule** for `main`:
 
 Save the rule.
 
-## Optional: GitHub API
+## Optional: GitHub API template (do not run verbatim)
 
 ```bash
 gh api repos/:owner/:repo/branches/main/protection \
@@ -75,11 +75,12 @@ gh api repos/:owner/:repo/branches/main/protection \
   --field restrictions=null
 ```
 
-This snippet now mirrors [Verified state](#verified-state-admin-readback), so running it re-applies
-the board rather than changing it. It omits `review` because the readback confirms `review` is not
-required. Read the live values first: **a PUT replaces the whole set**, and `restrictions=null` would
-drop the `Team leads` push restriction the board currently carries. See [`docs/ops/ci.md`](ci.md) for
-the policy table.
+**Do not run this snippet verbatim.** Its status-check and review fields match the
+[Verified state](#verified-state-admin-readback), including the deliberate omission of `review`,
+but it is not a complete representation of the live board. **A PUT replaces the whole set**:
+`restrictions=null` would drop the `Team leads` push restriction, and omitted settings may also
+change. Start from a fresh admin readback and preserve every live setting and restriction before
+using PUT. See [`docs/ops/ci.md`](ci.md) for the policy table.
 
 **Who can read this endpoint.** `GET /branches/main/protection` needs a token with admin
 (`Administration: read`) access; the readback above used one and got `200`. This document previously
