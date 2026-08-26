@@ -42,7 +42,7 @@ Protects the independent "does the production bundle compile" signal from being 
 Protects the static checks, guard wiring, unit/Storybook tests, shell smoke, and the build.
 
 **`db-check`** — `npx prisma migrate deploy`, `npx prisma generate`, `npm run test:db`.
-Protects migrate/generate/connectivity as the job's actual work (job stays red until #646).
+Protects migrate/generate/connectivity as the job's actual work; the job has been green since #646.
 
 **`e2e-flows`** — `cd backend && npm run db:generate`, `npx prisma generate`,
 `npx prisma migrate deploy`, `npm run e2e:seed | tee e2e-seed-out.txt`,
