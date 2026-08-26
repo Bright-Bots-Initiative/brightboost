@@ -16,6 +16,7 @@ import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { useGradeBand } from "@/hooks/useGradeBand";
+import { updatePersonalBestCache } from "@/hooks/usePersonalBest";
 import { applyG35StoryOverrides } from "@/components/games/gradeBandContent";
 import {
   getStudentArchetype,
@@ -306,6 +307,12 @@ export default function ActivityPlayer() {
         timeSpentS,
         result,
       });
+      // #640: trust the persisted record, not the value cached at first mount.
+      // The backend reconciles GamePersonalBest on replays too, so this keeps
+      // the next "Best" chip / "New Record!" claim honest for the whole session.
+      if (res?.personalBest?.gameKey) {
+        updatePersonalBestCache(res.personalBest.gameKey, res.personalBest);
+      }
       track({
         kind: "game_completed",
         game_id: result?.gameKey || content?.gameKey || String(activityId),

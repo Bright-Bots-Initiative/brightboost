@@ -38,6 +38,93 @@ function publicProgress<T extends { gameSpecific?: unknown }>(row: T) {
   return rest;
 }
 
+/** Scoring fields of a complete-activity `result` that feed GamePersonalBest. */
+type PersonalBestInput = {
+  gameKey?: string;
+  score?: number;
+  streakMax?: number;
+  roundsCompleted?: number;
+};
+
+/**
+ * Reconcile the student's GamePersonalBest for one play-through (#640).
+ *
+ * Called from BOTH the first-completion path and the idempotent replay path:
+ * a personal best is a **record**, not a reward. Replays award no XP, streak,
+ * energy, hp or abilities — but they must still move `bestScore`, `lastScore`,
+ * `bestRoundsCompleted` and `playCount`, otherwise those freeze at the first
+ * completion forever and the results screen claims a record that never persists.
+ *
+ * Best-effort: a failure here is warned and swallowed so it never fails the
+ * completion, and the "new record" flags stay false because nothing persisted.
+ */
+async function reconcilePersonalBest(
+  studentId: string,
+  result: PersonalBestInput | undefined,
+) {
+  let personalBest: Awaited<
+    ReturnType<typeof prisma.gamePersonalBest.findUnique>
+  > = null;
+  let isNewHighScore = false;
+  let isNewBestStreak = false;
+
+  if (!result?.gameKey) {
+    return { personalBest, isNewHighScore, isNewBestStreak };
+  }
+
+  try {
+    const existing = await prisma.gamePersonalBest.findUnique({
+      where: { studentId_gameKey: { studentId, gameKey: result.gameKey } },
+    });
+
+    const newScore = result.score ?? 0;
+    const newStreak = result.streakMax ?? 0;
+    const newRounds = result.roundsCompleted ?? 0;
+
+    if (existing) {
+      personalBest = await prisma.gamePersonalBest.update({
+        where: { id: existing.id },
+        data: {
+          lastScore: newScore,
+          bestScore: Math.max(existing.bestScore, newScore),
+          bestStreak: Math.max(existing.bestStreak, newStreak),
+          bestRoundsCompleted: Math.max(
+            existing.bestRoundsCompleted,
+            newRounds,
+          ),
+          playCount: { increment: 1 },
+          lastPlayedAt: new Date(),
+        },
+      });
+      isNewHighScore = newScore > existing.bestScore;
+      isNewBestStreak = newStreak > existing.bestStreak;
+    } else {
+      personalBest = await prisma.gamePersonalBest.create({
+        data: {
+          studentId,
+          gameKey: result.gameKey,
+          bestScore: newScore,
+          lastScore: newScore,
+          bestStreak: newStreak,
+          bestRoundsCompleted: newRounds,
+          playCount: 1,
+        },
+      });
+      isNewHighScore = true;
+      isNewBestStreak = newStreak > 0;
+    }
+  } catch (e) {
+    console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+    return {
+      personalBest: null,
+      isNewHighScore: false,
+      isNewBestStreak: false,
+    };
+  }
+
+  return { personalBest, isNewHighScore, isNewBestStreak };
+}
+
 // Get progress for a student (MVP)
 router.get("/progress", requireAuth, async (req, res) => {
   const studentId = req.user!.id;
@@ -176,8 +263,8 @@ router.post(
     // Handle idempotent case: activity already completed
     if (existing && existing.status === ProgressStatus.COMPLETED) {
       // Replay: persist newer telemetry (last-write-wins, §5.2.3) WITHOUT re-awarding
-      // anything. XP, streak, avatar, and GamePersonalBest are deliberately untouched —
-      // this path must stay reward-free. Omitted gameSpecific never nulls a stored
+      // anything. XP, streak, avatar and abilities are deliberately untouched — this
+      // path must stay reward-free. Omitted gameSpecific never nulls a stored
       // value (E-3), so only write when the client actually sent telemetry.
       let replayed = existing;
       if (gs !== undefined) {
@@ -186,6 +273,11 @@ router.post(
           data: { gameSpecific: gs },
         });
       }
+
+      // #640: GamePersonalBest is a record, not a reward, so it IS reconciled here.
+      // Retries / refreshes / double submissions therefore still return xpDelta 0
+      // while a better replay finally moves bestScore off the first completion.
+      const replayBest = await reconcilePersonalBest(studentId, result);
 
       // If avatar was just backfilled, return the backfilled XP as the delta
       // This handles the edge case where user completed activities without an avatar
@@ -202,6 +294,9 @@ router.post(
             newAbilitiesDelta: 0,
           },
           avatar: avatarBefore,
+          personalBest: replayBest.personalBest,
+          isNewHighScore: replayBest.isNewHighScore,
+          isNewBestStreak: replayBest.isNewBestStreak,
         });
       }
 
@@ -217,6 +312,9 @@ router.post(
           newAbilitiesDelta: 0,
         },
         avatar: avatarBefore,
+        personalBest: replayBest.personalBest,
+        isNewHighScore: replayBest.isNewHighScore,
+        isNewBestStreak: replayBest.isNewBestStreak,
       });
     }
 
@@ -353,60 +451,10 @@ router.post(
       levelDelta = avatarAfter.level - 1; // Show level gained from level 1
     }
 
-    // 5. Upsert Game Personal Best (when gameKey is present)
-    let personalBest = null;
-    let isNewHighScore = false;
-    let isNewBestStreak = false;
-
-    if (result?.gameKey) {
-      try {
-        const existing = await prisma.gamePersonalBest.findUnique({
-          where: { studentId_gameKey: { studentId, gameKey: result.gameKey } },
-        });
-
-        const newScore = result.score ?? 0;
-        const newStreak = result.streakMax ?? 0;
-        const newRounds = result.roundsCompleted ?? 0;
-
-        if (existing) {
-          isNewHighScore = newScore > existing.bestScore;
-          isNewBestStreak = newStreak > existing.bestStreak;
-          personalBest = await prisma.gamePersonalBest.update({
-            where: { id: existing.id },
-            data: {
-              lastScore: newScore,
-              bestScore: Math.max(existing.bestScore, newScore),
-              bestStreak: Math.max(existing.bestStreak, newStreak),
-              bestRoundsCompleted: Math.max(
-                existing.bestRoundsCompleted,
-                newRounds,
-              ),
-              playCount: { increment: 1 },
-              lastPlayedAt: new Date(),
-            },
-          });
-        } else {
-          isNewHighScore = true;
-          isNewBestStreak = newStreak > 0;
-          personalBest = await prisma.gamePersonalBest.create({
-            data: {
-              studentId,
-              gameKey: result.gameKey,
-              bestScore: newScore,
-              lastScore: newScore,
-              bestStreak: newStreak,
-              bestRoundsCompleted: newRounds,
-              playCount: 1,
-            },
-          });
-        }
-      } catch (e) {
-        console.warn(
-          "[complete-activity] Failed to upsert GamePersonalBest:",
-          e,
-        );
-      }
-    }
+    // 5. Upsert Game Personal Best (when gameKey is present) — shared with the
+    // replay path above so a record is reconciled on every play-through (#640).
+    const { personalBest, isNewHighScore, isNewBestStreak } =
+      await reconcilePersonalBest(studentId, result);
 
     res.json({
       progress: publicProgress(finalProgress),

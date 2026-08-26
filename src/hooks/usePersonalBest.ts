@@ -50,16 +50,24 @@ export function usePersonalBest(gameKey: string): PersonalBest | null {
   return pb;
 }
 
-/** Call after a game completes to update the local cache. */
-export function updatePersonalBestCache(
-  gameKey: string,
-  score: number,
-  streak: number,
-) {
-  const existing = cache.get(gameKey);
+/**
+ * Sync the session cache from the record the server actually persisted (#640).
+ *
+ * Call this after a completion POST resolves, with the `personalBest` row from
+ * the response. The backend reconciles GamePersonalBest on replays as well as
+ * first completions, so this keeps the "Best" chip and the "New Record!" claim
+ * measured against the persisted value instead of the one cached at first
+ * mount — which never expired and so froze for the whole session.
+ */
+export function updatePersonalBestCache(gameKey: string, best: PersonalBest) {
   cache.set(gameKey, {
-    bestScore: Math.max(existing?.bestScore ?? 0, score),
-    bestStreak: Math.max(existing?.bestStreak ?? 0, streak),
-    playCount: (existing?.playCount ?? 0) + 1,
+    bestScore: best.bestScore,
+    bestStreak: best.bestStreak,
+    playCount: best.playCount,
   });
+}
+
+/** Test-only: drop the module-level cache between cases. */
+export function __resetPersonalBestCache() {
+  cache.clear();
 }

@@ -607,7 +607,11 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(updateArg.data).toEqual({ gameSpecific: expectedB });
   });
 
-  it("R-2: COMPLETED replay awards nothing (no XP/avatar/streak/GamePersonalBest)", async () => {
+  // #640 narrowed this: a replay still awards nothing, but GamePersonalBest is a
+  // record rather than a reward and is reconciled on every play-through. The
+  // reward-free half is pinned here; the record half lives in
+  // progressScoringRegression.test.ts (PB-R-01..08).
+  it("R-2: COMPLETED replay awards nothing (no XP/avatar/streak) but does reconcile GamePersonalBest", async () => {
     const payloadB = {
       dash: 9,
       jump: 8,
@@ -658,8 +662,18 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(res.body.reward.levelDelta).toBe(0);
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
     expect(prismaMock.avatar.create).not.toHaveBeenCalled();
-    expect(prismaMock.gamePersonalBest.findUnique).not.toHaveBeenCalled();
-    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
+    // #640: the record IS reconciled — no row yet in this fixture, so it is created
+    // with the replay's score. No XP rides along (asserted above).
+    expect(prismaMock.gamePersonalBest.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.gamePersonalBest.create.mock.calls[0][0].data).toEqual({
+      studentId: "student-123",
+      gameKey: "move_measure",
+      bestScore: 9,
+      lastScore: 9,
+      bestStreak: 0,
+      bestRoundsCompleted: 0,
+      playCount: 1,
+    });
     expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
     expect(prismaMock.gamePersonalBest.upsert).not.toHaveBeenCalled();
   });
@@ -753,9 +767,20 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       gameSpecific: expectedB,
     });
     expect(res.body.reward.xpDelta).toBe(backfilledXp);
+    // #640: backfill delta is pre-existing XP being surfaced, not a fresh award —
+    // and the replay still reconciles the record alongside it.
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
     expect(prismaMock.gamePersonalBest.upsert).not.toHaveBeenCalled();
-    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
     expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.create.mock.calls[0][0].data).toEqual({
+      studentId: "student-123",
+      gameKey: "move_measure",
+      bestScore: 9,
+      lastScore: 9,
+      bestStreak: 0,
+      bestRoundsCompleted: 0,
+      playCount: 1,
+    });
   });
 
   it("R-5: COMPLETED replay response uses post-write row and omits gameSpecific", async () => {
