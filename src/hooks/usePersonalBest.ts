@@ -28,25 +28,34 @@ export function usePersonalBest(gameKey: string): PersonalBest | null {
       return;
     }
     let cancelled = false;
-    api.getGamePersonalBests().then((bests) => {
-      if (cancelled) return;
-      for (const b of bests) {
-        cache.set(b.gameKey, {
-          bestScore: b.bestScore,
-          bestStreak: b.bestStreak,
-          playCount: b.playCount,
-        });
-      }
-      setPb(cache.get(gameKey) ?? null);
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    api
+      .getGamePersonalBests()
+      .then((bests) => {
+        if (cancelled) return;
+        for (const b of bests) {
+          cache.set(b.gameKey, {
+            bestScore: b.bestScore,
+            bestStreak: b.bestStreak,
+            playCount: b.playCount,
+          });
+        }
+        setPb(cache.get(gameKey) ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [gameKey]);
 
   return pb;
 }
 
 /** Call after a game completes to update the local cache. */
-export function updatePersonalBestCache(gameKey: string, score: number, streak: number) {
+export function updatePersonalBestCache(
+  gameKey: string,
+  score: number,
+  streak: number,
+) {
   const existing = cache.get(gameKey);
   cache.set(gameKey, {
     bestScore: Math.max(existing?.bestScore ?? 0, score),

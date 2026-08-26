@@ -1,5 +1,12 @@
 // src/pages/ActivityPlayer.tsx
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -24,10 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useTranslation } from "react-i18next";
-import {
-  LocalizedField,
-  resolveText,
-} from "@/utils/localizedContent";
+import { LocalizedField, resolveText } from "@/utils/localizedContent";
 import { track } from "@/lib/analytics";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import LegacyListQuiz from "@/components/activities/quiz/LegacyListQuiz";
@@ -105,7 +109,9 @@ export default function ActivityPlayer() {
   const [shuffleMap, setShuffleMap] = useState<Record<string, number[]>>({});
   const [quizVariant, setQuizVariant] = useState<QuizVariant | null>(null);
 
-  const breakSuggestions = t("activityPlayer.breakSuggestions", { returnObjects: true }) as string[];
+  const breakSuggestions = t("activityPlayer.breakSuggestions", {
+    returnObjects: true,
+  }) as string[];
 
   const startMsRef = useRef<number>(Date.now());
 
@@ -312,11 +318,14 @@ export default function ActivityPlayer() {
       setCompletionData(res);
       toast({
         title: t("activity.completed"),
-        description: res.reward?.xpDelta ? t("activityPlayer.points", { count: res.reward.xpDelta }) : t("activity.saved")
+        description: res.reward?.xpDelta
+          ? t("activityPlayer.points", { count: res.reward.xpDelta })
+          : t("activity.saved"),
       });
 
       // Track session completions for break-time interstitial
-      const count = Number(sessionStorage.getItem("bb_session_completions") || "0") + 1;
+      const count =
+        Number(sessionStorage.getItem("bb_session_completions") || "0") + 1;
       sessionStorage.setItem("bb_session_completions", String(count));
       if (count > 0 && count % 3 === 0) {
         setShowBreak(true);
@@ -357,7 +366,9 @@ export default function ActivityPlayer() {
 
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-2">
-                <div className="text-gray-500 text-lg">{t("activityPlayer.youEarned")}</div>
+                <div className="text-gray-500 text-lg">
+                  {t("activityPlayer.youEarned")}
+                </div>
                 <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
                   <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
                   {t("activityPlayer.points", { count: reward?.xpDelta ?? 0 })}
@@ -394,7 +405,13 @@ export default function ActivityPlayer() {
 
               {reward?.newAbilitiesDelta > 0 && (
                 <div className="text-blue-600 font-semibold bg-blue-50 p-2 rounded border border-blue-100">
-                  {t(reward.newAbilitiesDelta > 1 ? "activityPlayer.unlockedPlural" : "activityPlayer.unlocked", { count: reward.newAbilitiesDelta })} {"⚡"}
+                  {t(
+                    reward.newAbilitiesDelta > 1
+                      ? "activityPlayer.unlockedPlural"
+                      : "activityPlayer.unlocked",
+                    { count: reward.newAbilitiesDelta },
+                  )}{" "}
+                  {"⚡"}
                 </div>
               )}
             </div>
@@ -424,7 +441,11 @@ export default function ActivityPlayer() {
               </p>
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
                 <p className="text-green-800 font-semibold text-lg">
-                  {breakSuggestions[Math.floor(Math.random() * breakSuggestions.length)]}
+                  {
+                    breakSuggestions[
+                      Math.floor(Math.random() * breakSuggestions.length)
+                    ]
+                  }
                 </p>
               </div>
             </div>
@@ -450,7 +471,9 @@ export default function ActivityPlayer() {
       <div className="p-6 max-w-2xl mx-auto">
         <Card>
           <CardContent className="p-6 space-y-4">
-            <div className="text-lg font-semibold">{t("activityPlayer.notFound")}</div>
+            <div className="text-lg font-semibold">
+              {t("activityPlayer.notFound")}
+            </div>
             <Button
               onClick={() =>
                 navigate(slug ? `/student/modules/${slug}` : "/student/modules")
@@ -468,7 +491,10 @@ export default function ActivityPlayer() {
   if (activity.kind === "INFO") {
     const questions = infoQuestions;
 
-    if (bandedContent?.type !== "story_quiz" || (slides.length === 0 && !isQuizOnly)) {
+    if (
+      bandedContent?.type !== "story_quiz" ||
+      (slides.length === 0 && !isQuizOnly)
+    ) {
       // fallback display
       const text = resolveText(
         t,
@@ -493,7 +519,10 @@ export default function ActivityPlayer() {
                 >
                   {t("activityPlayer.back")}
                 </Button>
-                <Button className="min-h-[44px] px-6" onClick={() => handleComplete()}>
+                <Button
+                  className="min-h-[44px] px-6"
+                  onClick={() => handleComplete()}
+                >
                   {t("activityPlayer.markComplete")}
                 </Button>
               </div>
@@ -511,7 +540,10 @@ export default function ActivityPlayer() {
           <ActivityHeader
             title={activity.title}
             visualKey="story"
-            subtitle={t("activityPlayer.slideOf", { current: Math.min(slideIndex + 1, slides.length), total: slides.length })}
+            subtitle={t("activityPlayer.slideOf", {
+              current: Math.min(slideIndex + 1, slides.length),
+              total: slides.length,
+            })}
           />
           <div className="flex items-center justify-between">
             <Button
@@ -596,7 +628,8 @@ export default function ActivityPlayer() {
                     aria-label={t("activityPlayer.nextSlide")}
                     className="min-h-[44px] px-6"
                   >
-                    {t("activityPlayer.next")} <ArrowRight className="w-4 h-4 ml-1" />
+                    {t("activityPlayer.next")}{" "}
+                    <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -611,7 +644,8 @@ export default function ActivityPlayer() {
                 }}
                 className="min-h-[44px] px-6"
               >
-                {t("activityPlayer.startQuiz")} <ArrowRight className="w-4 h-4 ml-1" />
+                {t("activityPlayer.startQuiz")}{" "}
+                <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             )}
           </div>
@@ -724,7 +758,10 @@ export default function ActivityPlayer() {
               >
                 {t("activityPlayer.back")}
               </Button>
-              <Button className="min-h-[44px] px-6" onClick={() => handleComplete()}>
+              <Button
+                className="min-h-[44px] px-6"
+                onClick={() => handleComplete()}
+              >
                 {t("activityPlayer.markComplete")}
               </Button>
             </div>
@@ -738,7 +775,9 @@ export default function ActivityPlayer() {
     <div className="p-6 max-w-2xl mx-auto">
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="text-xl font-bold">{t("activityPlayer.unsupported")}</div>
+          <div className="text-xl font-bold">
+            {t("activityPlayer.unsupported")}
+          </div>
           <Button
             onClick={() => navigate(`/student/modules/${slug}`)}
             variant="outline"
