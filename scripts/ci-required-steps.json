@@ -1,7 +1,8 @@
 {
-  "description": "Required CI step invocations in .github/workflows/ci-cd.yml (W-11 / G-205)",
+  "description": "Required CI step invocations in .github/workflows/ci-cd.yml (W-11 / G-205). Covers all four jobs: build-only, build-and-test, db-check, e2e-flows (#782).",
   "workflow": ".github/workflows/ci-cd.yml",
   "requiredSteps": [
+    { "job": "build-only", "run": "npm run build" },
     { "job": "build-and-test", "run": "npm run lint" },
     { "job": "build-and-test", "run": "npm run format:check" },
     { "job": "build-and-test", "run": "npm run typecheck" },
@@ -24,6 +25,23 @@
     { "job": "build-and-test", "run": "npm run build" },
     { "job": "db-check", "run": "npx prisma migrate deploy" },
     { "job": "db-check", "run": "npx prisma generate" },
-    { "job": "db-check", "run": "npm run test:db" }
+    { "job": "db-check", "run": "npm run test:db" },
+    { "job": "e2e-flows", "run": "cd backend && npm run db:generate" },
+    { "job": "e2e-flows", "run": "npx prisma generate" },
+    { "job": "e2e-flows", "run": "npx prisma migrate deploy" },
+    { "job": "e2e-flows", "run": "npm run e2e:seed | tee e2e-seed-out.txt" },
+    {
+      "job": "e2e-flows",
+      "run": "nohup npm run start:dev > \"$GITHUB_WORKSPACE/backend.log\" 2>&1 &"
+    },
+    {
+      "job": "e2e-flows",
+      "run": "nohup npm run dev > \"$GITHUB_WORKSPACE/frontend.log\" 2>&1 &"
+    },
+    {
+      "job": "e2e-flows",
+      "run": "npx wait-on \"$CYPRESS_SWA_URL\" \"$BACKEND_ORIGIN/health\" --timeout 120000"
+    },
+    { "job": "e2e-flows", "run": "npm run test:e2e:ci:flows" }
   ]
 }
