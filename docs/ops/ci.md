@@ -151,9 +151,11 @@ npm run verify:ci-gate
 This script (see `scripts/verify-ci-shell-gate.sh`) runs a **two-phase causal proof** — healthy-green → sabotaged-red:
 
 1. **Phase 1 — healthy baseline:** boots the untouched app, runs `npm run test:e2e:ci`, and **requires exit 0**. If the healthy run is red (missing Cypress binary, broken config, already-broken shell), the script FAILs here — an unrelated failure can never masquerade as a successful sabotage.
-2. **Phase 2 — sabotage:** backs up `src/main.tsx` outside the repo, injects a throw, boots again, runs the same gate, and **requires a non-zero exit**.
+2. **Phase 2 — sabotage:** injects a throw into the sandbox's `src/main.tsx`, boots again, runs the same gate, and **requires a non-zero exit**.
 3. **PASS is printed only when phase 1 was green AND phase 2 was red** — i.e. the gate changed from green to red _because_ the shell broke.
-4. Restores `src/main.tsx` and terminates **only the process tree the script spawned** via `trap … EXIT`.
+4. Terminates **only the process tree the script spawned** via `trap … EXIT`, and deletes the sandbox.
+
+**Repository safety (#801):** both phases serve a disposable `mktemp -d` sandbox (a copy of `src/`, `shared/` and the root configs, with `node_modules`/`public` linked), so **your checkout is never written to** — `src/main.tsx` is only ever read. This is deliberately structural rather than trap-based: no trap runs on `SIGKILL` or on the hard kill Vitest/CI issue at timeout. The earlier in-place edit could survive such a kill and strand the throw in your tree, after which every later run failed with a misleading `healthy baseline is RED`. If you still have such a leftover, the gate now says so and points at `git checkout -- src/main.tsx`.
 
 It **is** wired into per-PR CI as the `Verify CI shell gate` step in `build-and-test` (after unit tests, while `:5173` is still free). Require a free `:5173` before running locally (the script refuses to steal a foreign Vite). Prefer Git Bash on Windows.
 
