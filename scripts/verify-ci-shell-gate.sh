@@ -88,7 +88,12 @@ remove_sandbox() {
   # Guard the path: never let an unset or mis-expanded variable point rm at the
   # checkout. The junctions/symlinks inside are removed as links, not followed.
   if [[ -n "$SANDBOX" && "$SANDBOX" != "$REPO_ROOT" && -d "$SANDBOX" ]]; then
-    rm -rf "$SANDBOX"
+    # `|| true`: this runs from the EXIT trap, where under `set -e` a failed
+    # command rewrites a successful `exit 0` into `exit 1`. A transient removal
+    # failure (locked file, AV scan, busy junction) must not turn a genuinely
+    # passing gate RED in the required build-and-test context. A leftover temp
+    # directory is not a gate verdict.
+    rm -rf "$SANDBOX" || true
   fi
   SANDBOX=""
   SANDBOX_MAIN=""
@@ -118,6 +123,8 @@ kill_our_dev_server() {
 cleanup() {
   kill_our_dev_server
   remove_sandbox
+  # Explicit success: teardown must never decide the verdict (see remove_sandbox).
+  return 0
 }
 
 on_signal() {
