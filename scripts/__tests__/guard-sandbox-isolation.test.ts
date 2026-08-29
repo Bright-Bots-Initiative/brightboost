@@ -815,27 +815,21 @@ describe("#815 unmodified guard invocations", () => {
     expect(repoState()).toEqual(before);
   }, 180_000);
 
-  it("CI-27 CLI run never touches the tracked .storybook/main.ts", async () => {
-    const before = repoState();
-    const tripwire = armTripwire();
-    let result: { status: number | null; output: string };
-    try {
-      result = await runGuardCli(
-        "scripts/verify-storybook-empty-suite.mjs",
-        300_000,
-      );
-    } finally {
-      tripwire.close();
-    }
-    // Exit 2 is legitimate here (no playwright chromium locally); exit 1 would
-    // mean the property is actually false, which is CI-27's own job to report.
-    expect(result.status, result.output).not.toBe(1);
-    expect(
-      tripwire.events,
-      `the guard wrote the checkout during its run: ${tripwire.events.join(", ")}`,
-    ).toEqual([]);
-    expect(repoState()).toEqual(before);
-  }, 300_000);
+  // There is deliberately NO equivalent seam-free case for CI-27. Running that
+  // guard end to end means two real Storybook browser runs, and from inside
+  // `npm test` those re-enter the Storybook Vitest project that the outer run is
+  // already executing — the two share `node_modules/.vite` through the sandbox's
+  // link, and the nested run then collects nothing (`healthy=0 → FAIL`).
+  // Measured, not assumed: the case passes standalone (`--project unit`) and
+  // fails under a full `npm test`. That interference belongs to #817's residual
+  // `node_modules/.vite` writes.
+  //
+  // CI-27 already runs end to end twice per PR outside this suite — as its own
+  // `build-and-test` step and as parity CI-27 — so re-running it here buys no
+  // coverage and would make `npm test` flaky. The equivalent falsification is
+  // documented as a manual proof in docs/ops/guards.md; the repository-safety
+  // property itself is covered above by the mid-run barrier, SIGKILL, SIGTERM,
+  // toothless × cleanup-failure and static-wiring cases.
 });
 
 // ── static wiring (keeps the structural fix from drifting back) ─────────────

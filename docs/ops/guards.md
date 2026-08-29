@@ -46,6 +46,22 @@ Regression coverage: `scripts/__tests__/guard-sandbox-isolation.test.ts` — it
 inspects the two production target paths **while the sabotage is live** (via a
 barrier, not a sleep) and after `SIGKILL`/`SIGTERM` at that same point.
 
+Manual falsification, checkout-safety (CI-27 has no automated seam-free case —
+running it end to end from inside `npm test` re-enters the Storybook Vitest
+project, see the note in that spec):
+
+```bash
+# in one shell
+npm run verify:storybook-empty-suite
+# in another, for the whole run
+while :; do git status --porcelain -- .storybook/main.ts; sleep 0.2; done
+```
+
+Pre-#815 this printed ` M .storybook/main.ts` for several seconds; it must now
+print nothing at any point. The same watch over `src/test/` during
+`node scripts/verify-type-program-membership.mjs` must never show
+`?? src/test/__type_guard_sabotage__.ts` (that one _is_ covered automatically).
+
 ## `ci-required-steps.json` job coverage (#782)
 
 The manifest is the whole guarantee: the guard protects exactly the commands listed there,
