@@ -19,6 +19,7 @@ import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -365,6 +366,64 @@ function messageOf(err) {
   return err instanceof Error ? err.message : String(err);
 }
 
+const STORY_FILE = /\.(stories\.(js|jsx|mjs|ts|tsx)|mdx)$/;
+
+/**
+ * Count the files `.storybook/main.ts`'s globs can match under `<root>/src`.
+ * The sandbox has to reproduce the checkout exactly; if it does not, a zero
+ * collected count says nothing about the guard's property.
+ * @param {string} root
+ * @returns {number}
+ */
+export function countStoryFiles(root) {
+  const start = path.join(root, "src");
+  if (!existsSync(start)) return 0;
+  let total = 0;
+  /** @type {string[]} */
+  const stack = [start];
+  while (stack.length > 0) {
+    const dir = stack.pop();
+    if (!dir) continue;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else if (entry.isFile() && STORY_FILE.test(entry.name)) total += 1;
+    }
+  }
+  return total;
+}
+
+/**
+ * A zero collected count is either the property being false or a sandbox that
+ * never reproduced the suite. Print enough to tell those apart instead of
+ * leaving a bare "collected 0 tests" (#815 follow-up).
+ * @param {{ sandboxRoot: string, repoRoot: string, probe: { stdout: string, stderr: string } }} ctx
+ */
+function explainZeroCount({ sandboxRoot, repoRoot, probe }) {
+  const tail = (text) =>
+    text.split(/\r?\n/).filter(Boolean).slice(-25).join("\n    ");
+  logLine(`  sandbox:        ${sandboxRoot}`);
+  logLine(
+    `  story files:    checkout=${countStoryFiles(repoRoot)} sandbox=${countStoryFiles(sandboxRoot)}`,
+  );
+  for (const rel of [
+    "src",
+    ".storybook/main.ts",
+    ".storybook/vitest.setup.ts",
+    "vitest.workspace.ts",
+    "vitest.config.ts",
+    "vite.config.ts",
+    "package.json",
+    "node_modules",
+  ]) {
+    logLine(
+      `  ${rel.padEnd(28)}${existsSync(path.join(sandboxRoot, rel)) ? "present" : "MISSING"}`,
+    );
+  }
+  logLine(`  probe stdout tail:\n    ${tail(probe.stdout) || "(empty)"}`);
+  logLine(`  probe stderr tail:\n    ${tail(probe.stderr) || "(empty)"}`);
+}
+
 /**
  * @param {{ tmpDir?: string } | null | undefined} probe
  */
@@ -414,7 +473,7 @@ export function runStorybookEmptySuiteGuard(env = process.env, deps = {}) {
   }
 
   try {
-    return runPhases({ env, spaced, sandbox, probeImpl });
+    return runPhases({ env, spaced, sandbox, probeImpl, repoRoot });
   } finally {
     // Teardown must never decide the verdict (#814): a failed removal leaves
     // temp residue, never a repository change.
@@ -436,16 +495,28 @@ export function runStorybookEmptySuiteGuard(env = process.env, deps = {}) {
  *   spaced: boolean,
  *   sandbox: import("./lib/guard-sandbox.mjs").GuardSandbox,
  *   probeImpl: (env: NodeJS.ProcessEnv, cwd: string) => ReturnType<typeof probeStorybook>,
+ *   repoRoot: string,
  * }} args
  * @returns {number}
  */
-function runPhases({ env, spaced, sandbox, probeImpl }) {
+function runPhases({ env, spaced, sandbox, probeImpl, repoRoot }) {
   let sabotageTarget;
   try {
     sabotageTarget = sandbox.resolve(STORYBOOK_MAIN_REL);
   } catch (err) {
     logLine(
       `CANNOT CHECK: refusing to patch ${STORYBOOK_MAIN_REL}: ${messageOf(err)}`,
+    );
+    return EXIT_CANNOT_CHECK;
+  }
+
+  // Fidelity: an incomplete copy would collect 0 for a reason that has nothing
+  // to do with the property under test.
+  const checkoutStories = countStoryFiles(repoRoot);
+  const sandboxStories = countStoryFiles(sandbox.root);
+  if (sandboxStories !== checkoutStories) {
+    logLine(
+      `CANNOT CHECK: sandbox reproduced ${sandboxStories} of the checkout's ${checkoutStories} story files (${sandbox.root})`,
     );
     return EXIT_CANNOT_CHECK;
   }
@@ -494,6 +565,7 @@ function runPhases({ env, spaced, sandbox, probeImpl }) {
       logLine(
         `mode=count healthy=0 → FAIL: Storybook project collected 0 tests`,
       );
+      explainZeroCount({ sandboxRoot: sandbox.root, repoRoot, probe });
       return EXIT_FALSE;
     }
 
