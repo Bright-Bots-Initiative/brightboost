@@ -261,6 +261,24 @@ function runStorybookVitest(env, outputFile, cwd) {
 }
 
 /**
+ * Re-run the same command with the human reporter. `--reporter=json` writes the
+ * report to a file and leaves stdout/stderr empty, so a zero collected count
+ * otherwise arrives with no explanation at all. Failure path only.
+ * @param {NodeJS.ProcessEnv} env
+ * @param {string} cwd
+ */
+function diagnosticRerun(env, cwd) {
+  const result = spawnSync("npx", ["vitest", "run", "--project", "storybook"], {
+    cwd,
+    encoding: "utf8",
+    env,
+    shell: true,
+    windowsHide: true,
+  });
+  return `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+}
+
+/**
  * @param {string} combined
  * @returns {boolean}
  */
@@ -399,7 +417,7 @@ export function countStoryFiles(root) {
  * leaving a bare "collected 0 tests" (#815 follow-up).
  * @param {{ sandboxRoot: string, repoRoot: string, probe: { stdout: string, stderr: string } }} ctx
  */
-function explainZeroCount({ sandboxRoot, repoRoot, probe }) {
+function explainZeroCount({ sandboxRoot, repoRoot, probe, env }) {
   const tail = (text) =>
     text.split(/\r?\n/).filter(Boolean).slice(-25).join("\n    ");
   logLine(`  sandbox:        ${sandboxRoot}`);
@@ -422,6 +440,9 @@ function explainZeroCount({ sandboxRoot, repoRoot, probe }) {
   }
   logLine(`  probe stdout tail:\n    ${tail(probe.stdout) || "(empty)"}`);
   logLine(`  probe stderr tail:\n    ${tail(probe.stderr) || "(empty)"}`);
+  logLine(
+    `  human-reporter re-run:\n    ${tail(diagnosticRerun(env, sandboxRoot)) || "(empty)"}`,
+  );
 }
 
 /**
@@ -565,7 +586,7 @@ function runPhases({ env, spaced, sandbox, probeImpl, repoRoot }) {
       logLine(
         `mode=count healthy=0 → FAIL: Storybook project collected 0 tests`,
       );
-      explainZeroCount({ sandboxRoot: sandbox.root, repoRoot, probe });
+      explainZeroCount({ sandboxRoot: sandbox.root, repoRoot, probe, env });
       return EXIT_FALSE;
     }
 
