@@ -140,19 +140,55 @@ describe("CI wiring guard (#677 / U1-03)", { timeout: 300_000 }, () => {
   // U1-03 / G-202: execute the shell gate (healthy + sabotage inside the script).
   // Force gate URL to :5173 (do not leak remapped CYPRESS_SWA_URL). Gate script
   // also defaults this; set explicitly so the healthy phase matches Vite (#671 A4-03).
-  it("W-8/W-9: verify-ci-shell-gate.sh exits 0 (two-phase healthy then sabotage)", async () => {
+  //
+  // W-11 / #801: the gate must sabotage a disposable sandbox, never this
+  // checkout. Poll src/main.tsx for the whole run — restoring it on exit is NOT
+  // enough, because no trap runs on SIGKILL (or on the hard kill this very test
+  // issues at timeout), and a stranded throw bricks every later run. Sampling
+  // mid-run is what makes this red against the pre-#801 script, which rewrote
+  // the file in place for ~10s and then put it back.
+  it("W-8/W-9/W-11: verify-ci-shell-gate.sh exits 0 and never writes the caller's src/main.tsx", async () => {
     const gateEnv: NodeJS.ProcessEnv = { ...process.env };
     gateEnv.CYPRESS_SWA_URL = "http://localhost:5173";
-    const { status, output } = await runBashScriptAsync(
-      "scripts/verify-ci-shell-gate.sh",
-      { timeoutMs: 180_000, env: gateEnv },
-    );
+
+    const mainPath = path.join(repoRoot, "src/main.tsx");
+    const pristine = readFileSync(mainPath, "utf8");
+    const mutations: string[] = [];
+    const poll = setInterval(() => {
+      try {
+        const current = readFileSync(mainPath, "utf8");
+        if (current !== pristine) {
+          mutations.push(current.split("\n", 1)[0]);
+        }
+      } catch (err) {
+        mutations.push(`unreadable: ${String(err)}`);
+      }
+    }, 250);
+
+    let status: number | null;
+    let output: string;
+    try {
+      ({ status, output } = await runBashScriptAsync(
+        "scripts/verify-ci-shell-gate.sh",
+        { timeoutMs: 180_000, env: gateEnv },
+      ));
+    } finally {
+      clearInterval(poll);
+    }
+
     expect(
       status,
       `CI shell gate must exit 0 (got ${status}):\n${output}`,
     ).toBe(0);
     expect(output).toMatch(/Healthy baseline GREEN/);
     expect(output).toMatch(/PASS/i);
+    expect(
+      mutations,
+      `src/main.tsx was rewritten ${mutations.length}x during the gate run ` +
+        `(first line seen: ${mutations[0] ?? "n/a"}). The sabotage must land in ` +
+        `the gate's temp sandbox, never in the checkout — see #801.`,
+    ).toEqual([]);
+    expect(readFileSync(mainPath, "utf8")).toBe(pristine);
   }, 180_000);
 
   // Live POSIX proof: nested bash→mid node→:5173 listener must die with the
