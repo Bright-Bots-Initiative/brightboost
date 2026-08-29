@@ -179,6 +179,8 @@ npm run verify:storybook-empty-suite
 
 **W-13:** under `CI` or `GITHUB_ACTIONS`, any presence of `BB_VITEST_PATH_HAS_SPACE` (including `=0` or `=1`) is refused with exit 1. The local override remains valid when those CI markers are unset.
 
+**Repository safety (#815):** `.storybook/main.ts` is a **tracked** file, and the guard used to patch it in place and restore it afterwards. It no longer does: a disposable sandbox (copy of `src/`, `shared/`, `.storybook/` and the root configs, with `node_modules`/`public` linked) is built before either phase, and **both phases run there** — so, as in the shell gate (#801), the only difference between them is still the patched `stories:` glob and your checkout is never written. Restoring could not be the safety mechanism: no `finally` and no signal handler runs on `SIGKILL` (or on the hard kill Vitest/CI issue at timeout), so a hard-killed run left a modified tracked file behind. The sandbox is created with the **same path space-ness as the checkout**, because the Storybook project is registered per path space-ness (#707) — if no matching temp base exists the guard reports could-not-run (exit 2) and names `BB_GUARD_SANDBOX_BASE` rather than silently reporting another mode's verdict.
+
 **Wiring:** parity step **CI-27** (`required: true`, `skipIf: () => null` — unlike CI-09, it still runs on a spaced path), `build-and-test` step after `Run tests`, and `scripts/ci-required-steps.json`.
 
 **Declared gap (§15.3.3):** on a spaced path the guard runs in announced-skip mode, so the **count assertion never executes locally**. CI (space-free) is the only place the primary assertion runs — which is why W-13 exists.

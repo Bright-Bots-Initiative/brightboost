@@ -2,6 +2,18 @@
 // W-06: an empty Storybook suite cannot report green.  #749, closes #707.
 // Two-phase: healthy (count > 0) then sabotage (count === 0 must be detected).
 // Exit 0 = property holds · 1 = property false · 2 = could not check.
+//
+// Repository safety (#815): the sabotage is never written into the caller's
+// checkout. A disposable sandbox is built BEFORE either phase, the target is
+// resolved through it (anything outside is refused), and both phases run there
+// — so, exactly as in verify-ci-shell-gate.sh (#801/#814), the only difference
+// between them is still the patched `stories:` glob. This is structural rather
+// than a restore-on-exit: `.storybook/main.ts` is TRACKED, and no `finally` or
+// signal handler runs on SIGKILL (nor on the hard kill Vitest/CI issue at
+// timeout), so the old in-place edit could leave a modified tracked file in the
+// developer's tree. A healthy count of 0 — which is what an incomplete sandbox
+// would produce — fails loudly as "collected 0 tests"; it can never be mistaken
+// for successful sabotage.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -14,6 +26,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createGuardSandbox } from "./lib/guard-sandbox.mjs";
 
 export const EXIT_OK = 0;
 export const EXIT_FALSE = 1;
@@ -21,6 +34,8 @@ export const EXIT_CANNOT_CHECK = 2;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, "..");
+/** Relative on purpose: it is resolved inside the sandbox, never joined onto the checkout. */
+export const STORYBOOK_MAIN_REL = ".storybook/main.ts";
 export const STORYBOOK_MAIN = path.join(REPO_ROOT, ".storybook", "main.ts");
 export const SKIP_WARNING_PREFIX =
   "[vitest.workspace] Skipping Storybook project (#707)";
@@ -215,8 +230,9 @@ function shellQuote(value) {
 /**
  * @param {NodeJS.ProcessEnv} env
  * @param {string} outputFile
+ * @param {string} cwd — the sandbox root; never the checkout once sabotage exists
  */
-function runStorybookVitest(env, outputFile) {
+function runStorybookVitest(env, outputFile, cwd) {
   const result = spawnSync(
     "npx",
     [
@@ -228,7 +244,7 @@ function runStorybookVitest(env, outputFile) {
       `--outputFile=${shellQuote(outputFile)}`,
     ],
     {
-      cwd: REPO_ROOT,
+      cwd,
       encoding: "utf8",
       env,
       shell: true,
@@ -272,10 +288,10 @@ function looksLikeMissingBrowser(combined) {
  *   tmpDir: string;
  * }}
  */
-function probeStorybook(env) {
+function probeStorybook(env, cwd = REPO_ROOT) {
   const tmpDir = mkdtempSync(path.join(os.tmpdir(), "bb749-sb-"));
   const outputFile = path.join(tmpDir, "storybook.json");
-  const run = runStorybookVitest(env, outputFile);
+  const run = runStorybookVitest(env, outputFile, cwd);
   const combined = `${run.stdout}\n${run.stderr}`;
   const warningPresent = hasSkipWarning(run.stderr);
   const projectNotFound = isProjectNotFound(combined);
@@ -321,49 +337,62 @@ function probeStorybook(env) {
 }
 
 /**
- * @param {() => void} restore
- * @returns {() => void} uninstall
+ * Disposable tree both phases are served from. Storybook needs the stories
+ * (`src/`), the config dir it patches (`.storybook/`) and the root vite/vitest
+ * configs; `node_modules` and `public` are linked because copying them costs
+ * hundreds of megabytes.
+ *
+ * `matchPathSpace` is required here: vitest.workspace.ts registers the Storybook
+ * project based on whether the *running* path contains a space (#707), so a
+ * sandbox whose space-ness differed from the checkout would silently move the
+ * guard into another row of its own mode table.
+ *
+ * @param {{ repoRoot: string, env?: NodeJS.ProcessEnv }} opts
  */
-function installSignalRestore(restore) {
-  /** @type {NodeJS.Signals[]} */
-  const signals = ["SIGINT", "SIGTERM"];
-  /** @type {Map<NodeJS.Signals, () => void>} */
-  const handlers = new Map();
+function defaultCreateSandbox({ repoRoot, env }) {
+  return createGuardSandbox({
+    repoRoot,
+    prefix: "bb815-sb-",
+    copyDirs: ["src", "shared", ".storybook"],
+    linkDirs: ["node_modules", "public"],
+    matchPathSpace: true,
+    env,
+  });
+}
 
-  for (const sig of signals) {
-    const handler = () => {
-      try {
-        restore();
-      } catch {
-        // best-effort before re-raise
-      }
-      // Re-raise: uninstall first so we do not recurse into this handler.
-      process.off(sig, handler);
-      handlers.delete(sig);
-      if (process.listenerCount(sig) === 0) {
-        // Default: terminate. 128+signal is conventional for shell traps.
-        process.exit(128);
-      } else {
-        process.kill(process.pid, sig);
-      }
-    };
-    handlers.set(sig, handler);
-    process.on(sig, handler);
+/** @param {unknown} err */
+function messageOf(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+
+/**
+ * @param {{ tmpDir?: string } | null | undefined} probe
+ */
+function dropProbeTmp(probe) {
+  if (!probe?.tmpDir) return;
+  try {
+    rmSync(probe.tmpDir, { recursive: true, force: true });
+  } catch {
+    // ignore temp cleanup
   }
-
-  return () => {
-    for (const [sig, handler] of handlers) {
-      process.off(sig, handler);
-    }
-    handlers.clear();
-  };
 }
 
 /**
  * @param {NodeJS.ProcessEnv} [env]
+ * @param {{
+ *   repoRoot?: string,
+ *   probe?: (env: NodeJS.ProcessEnv, cwd: string) => ReturnType<typeof probeStorybook>,
+ *   createSandbox?: (opts: { repoRoot: string, env: NodeJS.ProcessEnv }) => import("./lib/guard-sandbox.mjs").GuardSandbox,
+ * }} [deps]
  * @returns {number}
  */
-export function runStorybookEmptySuiteGuard(env = process.env) {
+export function runStorybookEmptySuiteGuard(env = process.env, deps = {}) {
+  const {
+    repoRoot = REPO_ROOT,
+    probe: probeImpl = probeStorybook,
+    createSandbox = defaultCreateSandbox,
+  } = deps;
+
   const refusal = refuseOverrideUnderCI(env);
   if (refusal) {
     logLine(`mode=w13-refusal → FAIL: ${refusal}`);
@@ -371,12 +400,61 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
   }
 
   const spaced = pathHasSpace(env);
+
+  // Built before either phase, so no window exists in which the checkout is the
+  // sabotage target (#815).
+  let sandbox;
+  try {
+    sandbox = createSandbox({ repoRoot, env });
+  } catch (err) {
+    logLine(
+      `CANNOT CHECK: could not build the sabotage sandbox: ${messageOf(err)}`,
+    );
+    return EXIT_CANNOT_CHECK;
+  }
+
+  try {
+    return runPhases({ env, spaced, sandbox, probeImpl });
+  } finally {
+    // Teardown must never decide the verdict (#814): a failed removal leaves
+    // temp residue, never a repository change.
+    try {
+      sandbox.dispose();
+    } catch (err) {
+      console.error(
+        `[storybook-empty-suite] sandbox cleanup failed (temp residue only): ${messageOf(err)}`,
+      );
+    }
+  }
+}
+
+/**
+ * Both phases run in the sandbox; the only difference between them is the
+ * patched `stories:` glob.
+ * @param {{
+ *   env: NodeJS.ProcessEnv,
+ *   spaced: boolean,
+ *   sandbox: import("./lib/guard-sandbox.mjs").GuardSandbox,
+ *   probeImpl: (env: NodeJS.ProcessEnv, cwd: string) => ReturnType<typeof probeStorybook>,
+ * }} args
+ * @returns {number}
+ */
+function runPhases({ env, spaced, sandbox, probeImpl }) {
+  let sabotageTarget;
+  try {
+    sabotageTarget = sandbox.resolve(STORYBOOK_MAIN_REL);
+  } catch (err) {
+    logLine(
+      `CANNOT CHECK: refusing to patch ${STORYBOOK_MAIN_REL}: ${messageOf(err)}`,
+    );
+    return EXIT_CANNOT_CHECK;
+  }
+
   let probe;
   try {
-    probe = probeStorybook(env);
+    probe = probeImpl(env, sandbox.root);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    logLine(`CANNOT CHECK: ${msg}`);
+    logLine(`CANNOT CHECK: ${messageOf(err)}`);
     return EXIT_CANNOT_CHECK;
   }
 
@@ -419,12 +497,12 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
       return EXIT_FALSE;
     }
 
-    if (!existsSync(STORYBOOK_MAIN)) {
+    if (!existsSync(sabotageTarget)) {
       logLine(`CANNOT CHECK: .storybook/main.ts is missing`);
       return EXIT_CANNOT_CHECK;
     }
 
-    const original = readFileSync(STORYBOOK_MAIN, "utf8");
+    const original = readFileSync(sabotageTarget, "utf8");
     let sabotaged;
     try {
       sabotaged = sabotageStories(original);
@@ -434,26 +512,17 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
       return EXIT_CANNOT_CHECK;
     }
 
-    const restore = () => {
-      writeFileSync(STORYBOOK_MAIN, original, "utf8");
-      const after = readFileSync(STORYBOOK_MAIN, "utf8");
-      if (after !== original) {
-        throw new CannotCheck(
-          "restore of .storybook/main.ts failed byte-equality check",
-        );
-      }
-    };
-
-    const uninstallSignals = installSignalRestore(restore);
     let sabotagedCount;
     /** @type {{ tmpDir: string } | null} */
     let sabProbe = null;
     /** @type {number} */
     let phaseExit = EXIT_CANNOT_CHECK;
-    let restoreFailed = false;
     try {
-      writeFileSync(STORYBOOK_MAIN, sabotaged, "utf8");
-      sabProbe = probeStorybook(env);
+      // Sandbox copy only — $REPO_ROOT/.storybook/main.ts is opened for reading
+      // nowhere in this function, and never for writing (#815). Nothing is
+      // restored afterwards because nothing in the checkout was touched.
+      writeFileSync(sabotageTarget, sabotaged, "utf8");
+      sabProbe = probeImpl(env, sandbox.root);
       if (sabProbe.parseError || sabProbe.browserMissing) {
         logLine(
           `CANNOT CHECK: ${sabProbe.browserMissing ? "playwright chromium not installed" : "sabotage-phase JSON unparseable"}`,
@@ -493,36 +562,15 @@ export function runStorybookEmptySuiteGuard(env = process.env) {
         }
       }
     } finally {
-      try {
-        restore();
-      } catch (err) {
-        restoreFailed = true;
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`[storybook-empty-suite] RESTORE FAILED: ${msg}`);
-      }
-      uninstallSignals();
-      if (sabProbe?.tmpDir) {
-        try {
-          rmSync(sabProbe.tmpDir, { recursive: true, force: true });
-        } catch {
-          // ignore temp cleanup
-        }
-      }
+      dropProbeTmp(sabProbe);
     }
-    // G-020: a failed restore must never report PASS/FALSE from the phases.
-    if (restoreFailed) {
-      logLine(
-        `CANNOT CHECK: restore of .storybook/main.ts failed byte-equality`,
-      );
-      return EXIT_CANNOT_CHECK;
-    }
+    // G-020 previously escalated a failed restore to CANNOT CHECK because a
+    // half-restored checkout made the verdict meaningless. There is no restore
+    // to fail now: the sabotage lives in a disposable tree, so the phase verdict
+    // stands on its own and cleanup cannot flip it.
     return phaseExit;
   } finally {
-    try {
-      rmSync(probe.tmpDir, { recursive: true, force: true });
-    } catch {
-      // ignore temp cleanup
-    }
+    dropProbeTmp(probe);
   }
 }
 

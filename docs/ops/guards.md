@@ -1,4 +1,4 @@
-> **Canonical for:** executable guard registry. Last verified against code: 2026-08-25.
+> **Canonical for:** executable guard registry. Last verified against code: 2026-08-29.
 
 # Executable guards
 
@@ -19,6 +19,32 @@ sat unwired for months). A row without a real Runner is decoration.
 | `scripts/verify-storybook-empty-suite.mjs`   | An empty Storybook Vitest suite cannot report green; spaced-path skips must be announced (W-06 / W-13)                 | `npm run verify:storybook-empty-suite`; parity **CI-27**; `ci-cd.yml` `build-and-test` / Verify Storybook empty-suite guard       | `CI=1 BB_VITEST_PATH_HAS_SPACE=1 npm run verify:storybook-empty-suite` → exit 1 (W-13); or force-include with empty stories → `healthy=0` exit 1                                                                  | #749 / #707                     |
 | `scripts/check-prisma-drift.sh`              | Root and `backend/` Prisma model/enum definitions stay in sync                                                         | Parity **CI-06**; `ci-cd.yml` `build-and-test` / Check Prisma schema drift                                                        | Edit only one schema’s model block (scratch), run `bash scripts/check-prisma-drift.sh` → exit 1; restore                                                                                                          | #740                            |
 | `scripts/check-todos.sh`                     | New `TODO:` / `FIXME:` lines in a PR diff are reported (failure status via `GITHUB_OUTPUT`)                            | **None today** — not referenced by any workflow or npm script (orphaned; same class as G-201)                                     | `bash scripts/check-todos.sh` (omit SHAs) → exit 1                                                                                                                                                                | legacy / unowned                |
+
+## Sabotage guards never write your checkout (#801 / #815)
+
+Three guards prove a check has teeth by breaking something. All three break a
+**disposable sandbox**, never the working tree:
+
+| Guard                                        | What it breaks                                            | Where                                               |
+| -------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------- |
+| `scripts/verify-ci-shell-gate.sh`            | a `throw` in `src/main.tsx`                               | `mktemp -d` sandbox (#801)                          |
+| `scripts/verify-type-program-membership.mjs` | `src/test/__type_guard_sabotage__.ts`                     | sandbox from `scripts/lib/guard-sandbox.mjs` (#815) |
+| `scripts/verify-storybook-empty-suite.mjs`   | the `stories:` glob in `.storybook/main.ts` (**tracked**) | sandbox from `scripts/lib/guard-sandbox.mjs` (#815) |
+
+The rule is structural, not restorative. `finally` blocks, `trap`s and signal
+handlers do not run on `SIGKILL` — nor on the hard kill Vitest and CI issue at
+timeout — so "mutate the checkout and put it back" strands damage: #815 observed
+`src/test/__type_guard_sabotage__.ts` left untracked and `.storybook/main.ts`
+left modified after a killed run. `scripts/lib/guard-sandbox.mjs` therefore
+builds the sandbox **before** any sabotage exists, asserts the sandbox root is
+disjoint from the repository, and resolves every target through it — refusing
+(loud, non-zero) anything that would land outside. Real-checkout safety does not
+depend on cleanup running at all; a leftover sandbox is temp residue the OS
+reclaims, and a failed cleanup never changes a verdict.
+
+Regression coverage: `scripts/__tests__/guard-sandbox-isolation.test.ts` — it
+inspects the two production target paths **while the sabotage is live** (via a
+barrier, not a sleep) and after `SIGKILL`/`SIGTERM` at that same point.
 
 ## `ci-required-steps.json` job coverage (#782)
 
