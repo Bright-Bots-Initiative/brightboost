@@ -55,3 +55,7 @@ coverage/
 cypress/videos/
 cypress/screenshots/
 cypress/results/
+
+# Disposable sandbox for the sabotage guards (#815). A hard-killed run can
+# leave one behind; it is safe to delete.
+/.bb-guard-sandbox-*/

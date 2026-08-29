@@ -23,6 +23,8 @@ export default defineConfig({
     exclude: [
       "**/node_modules/**",
       "**/dist/**",
+      // #815 guard sandbox: never collect its copied suite as a second run.
+      "**/.bb-guard-sandbox-*/**",
       "**/cypress/e2e/**",
       "**/cypress/support/*.js",
       "**/.{idea,git,cache,output,temp}/**",

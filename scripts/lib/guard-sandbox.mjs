@@ -20,6 +20,7 @@
  *      the linked directories. A refusal throws SandboxEscapeError; callers
  *      turn that into a loud non-zero "could not run".
  */
+import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -169,13 +170,32 @@ export function resolveSandboxBase({
  * A file this misses surfaces as a loud failing phase in the calling guard, not
  * as a silent pass — the same trade-off `verify-ci-shell-gate.sh` documents.
  *
+ * `location` picks WHERE, and the two options carry different — equally
+ * positive — assertions:
+ *
+ *   "tmp"  (default) — outside the checkout entirely; asserted disjoint from the
+ *            repository root. Right for a guard that only needs the copied files.
+ *   "repo" — a dot-prefixed directory inside the checkout, asserted **ignored by
+ *            git** (`git check-ignore`), so it can never alter `git status`,
+ *            the index, or any tracked file. Needed when the sandboxed tool must
+ *            resolve modules the way the checkout does: Vite serves files only
+ *            from its workspace root, which it derives from the nearest
+ *            `package.json` (`searchForWorkspaceRoot`). A /tmp sandbox therefore
+ *            gets `fs.allow = [sandbox]` and the checkout's real `node_modules`
+ *            is refused — measured on CI as
+ *            `Failed to fetch dynamically imported module: …/node_modules/@storybook/
+ *            experimental-addon-test/dist/vitest-plugin/setup-file.mjs`, with all
+ *            story files failing to import and 0 tests collected.
+ *
  * @param {{
  *   repoRoot: string,
  *   prefix?: string,
  *   copyDirs?: string[],
  *   linkDirs?: string[],
  *   copyRootFiles?: boolean,
+ *   excludeRootFiles?: string[],
  *   matchPathSpace?: boolean,
+ *   location?: "tmp" | "repo",
  *   env?: NodeJS.ProcessEnv,
  * }} opts
  * @returns {GuardSandbox}
@@ -186,18 +206,26 @@ export function createGuardSandbox({
   copyDirs = ["src", "shared", ".storybook"],
   linkDirs = ["node_modules", "public"],
   copyRootFiles = true,
+  excludeRootFiles = [],
   matchPathSpace = false,
+  location = "tmp",
   env = process.env,
 }) {
   const absRepoRoot = path.resolve(repoRoot);
   if (!existsSync(absRepoRoot)) {
     throw new GuardSandboxError(`repository root does not exist: ${repoRoot}`);
   }
-  const { base, spacedSegment } = resolveSandboxBase({
-    repoRoot: absRepoRoot,
-    matchPathSpace,
-    env,
-  });
+  if (location === "repo" && !prefix.startsWith(".")) {
+    throw new GuardSandboxError(
+      `an in-repository sandbox prefix must start with "." (got ${JSON.stringify(prefix)})`,
+    );
+  }
+
+  const { base, spacedSegment } =
+    location === "repo"
+      ? // Nested in the checkout, so path space-ness matches by construction.
+        { base: absRepoRoot, spacedSegment: false }
+      : resolveSandboxBase({ repoRoot: absRepoRoot, matchPathSpace, env });
 
   const disposeRoot = mkdtempSync(path.join(base, prefix));
   const root = spacedSegment
@@ -205,12 +233,31 @@ export function createGuardSandbox({
     : disposeRoot;
   if (spacedSegment) mkdirSync(root);
 
-  // Assertion 1: the sandbox and the checkout must be disjoint trees. A sandbox
-  // that resolved onto (or inside) the checkout would make every later
-  // containment check pass while writing the caller's files.
   const realRepoRoot = realpathSync(absRepoRoot);
   const realRoot = realpathSync(root);
-  if (isInside(realRoot, realRepoRoot) || isInside(realRepoRoot, realRoot)) {
+  if (location === "repo") {
+    // Assertion 1a: git must not be able to see it. This is the invariant #815
+    // is actually about — status, the index and tracked files stay identical —
+    // and it is checked, never assumed.
+    const ignored = spawnSync("git", ["check-ignore", "-q", "--", realRoot], {
+      cwd: absRepoRoot,
+      windowsHide: true,
+    });
+    if (ignored.error || ignored.status !== 0) {
+      rmSync(disposeRoot, { recursive: true, force: true });
+      throw new GuardSandboxError(
+        `in-repository sandbox ${realRoot} is not ignored by git ` +
+          `(git check-ignore status=${ignored.status}${ignored.error ? `, ${ignored.error.message}` : ""}). ` +
+          `Add the sandbox pattern to .gitignore before running this guard.`,
+      );
+    }
+  } else if (
+    // Assertion 1b: a /tmp sandbox that resolved onto (or inside) the checkout
+    // would make every later containment check pass while writing the caller's
+    // files.
+    isInside(realRoot, realRepoRoot) ||
+    isInside(realRepoRoot, realRoot)
+  ) {
     rmSync(disposeRoot, { recursive: true, force: true });
     throw new GuardSandboxError(
       `sandbox root ${realRoot} is not disjoint from the repository root ${realRepoRoot}`,
@@ -225,7 +272,7 @@ export function createGuardSandbox({
 
   if (copyRootFiles) {
     for (const entry of readdirSync(absRepoRoot, { withFileTypes: true })) {
-      if (!entry.isFile()) continue;
+      if (!entry.isFile() || excludeRootFiles.includes(entry.name)) continue;
       cpSync(path.join(absRepoRoot, entry.name), path.join(root, entry.name));
     }
   }

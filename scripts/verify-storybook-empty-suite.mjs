@@ -356,25 +356,38 @@ function probeStorybook(env, cwd = REPO_ROOT) {
 }
 
 /**
- * Disposable tree both phases are served from. Storybook needs the stories
- * (`src/`), the config dir it patches (`.storybook/`) and the root vite/vitest
- * configs; `node_modules` and `public` are linked because copying them costs
- * hundreds of megabytes.
+ * Disposable tree both phases are served from: the stories (`src/`), the config
+ * dir this guard patches (`.storybook/`) and the root vite/vitest configs.
  *
- * `matchPathSpace` is required here: vitest.workspace.ts registers the Storybook
- * project based on whether the *running* path contains a space (#707), so a
- * sandbox whose space-ness differed from the checkout would silently move the
- * guard into another row of its own mode table.
+ * Three deliberate choices, all forced by how Vite decides what it may serve —
+ * `server.fs.allow` defaults to the workspace root, which Vite derives from the
+ * nearest `package.json` (`searchForWorkspaceRoot`):
+ *
+ *  - `location: "repo"` — a git-ignored `.bb-guard-sandbox-*` inside the
+ *    checkout. From `/tmp` the workspace root is the sandbox itself, so the
+ *    checkout's `node_modules` is off-limits and Storybook's own setup file
+ *    cannot be fetched; CI measured every story file failing to import and
+ *    `healthy=0`. Nesting also makes path space-ness match the checkout by
+ *    construction, which #707 requires.
+ *  - `excludeRootFiles: ["package.json"]` — with one of its own, the sandbox
+ *    becomes the workspace root again and the same denial returns.
+ *  - no `node_modules` link — Node's resolution already walks up to the
+ *    checkout's, and the realpath stays inside the allowed workspace root.
+ *
+ * The sandbox is ignored by git (asserted, not assumed), by ESLint and by the
+ * Vitest unit project, so even a hard-killed run leaves nothing that changes
+ * `git status` or breaks a later command.
  *
  * @param {{ repoRoot: string, env?: NodeJS.ProcessEnv }} opts
  */
 function defaultCreateSandbox({ repoRoot, env }) {
   return createGuardSandbox({
     repoRoot,
-    prefix: "bb815-sb-",
+    prefix: ".bb-guard-sandbox-",
+    location: "repo",
     copyDirs: ["src", "shared", ".storybook"],
-    linkDirs: ["node_modules", "public"],
-    matchPathSpace: true,
+    linkDirs: ["public"],
+    excludeRootFiles: ["package.json"],
     env,
   });
 }

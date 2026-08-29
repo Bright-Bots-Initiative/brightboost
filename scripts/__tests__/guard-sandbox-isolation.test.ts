@@ -439,6 +439,54 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
     expect(git(["status", "--porcelain"])).not.toMatch(/bb815-nested-/);
   });
 
+  it("refuses an in-repository sandbox git can see", async () => {
+    const { createGuardSandbox, GuardSandboxError } = await loadSandboxLib();
+    // `.bb-guard-sandbox-*` is in .gitignore; this prefix deliberately is not.
+    expect(() =>
+      createGuardSandbox({
+        repoRoot,
+        prefix: ".bb-not-ignored-sandbox-",
+        location: "repo",
+        copyDirs: [],
+        linkDirs: [],
+        copyRootFiles: false,
+      }),
+    ).toThrow(GuardSandboxError);
+    // The refusal must not leave the rejected directory behind.
+    expect(git(["status", "--porcelain"])).not.toMatch(/bb-not-ignored/);
+    // A prefix git does ignore is accepted, and stays invisible while it lives.
+    const before = git(["status", "--porcelain"]);
+    const sandbox = createGuardSandbox({
+      repoRoot,
+      prefix: ".bb-guard-sandbox-",
+      location: "repo",
+      copyDirs: [],
+      linkDirs: [],
+      copyRootFiles: false,
+    });
+    try {
+      expect(existsSync(sandbox.root)).toBe(true);
+      expect(path.dirname(sandbox.root)).toBe(repoRoot);
+      expect(git(["status", "--porcelain"])).toBe(before);
+    } finally {
+      sandbox.dispose();
+    }
+  });
+
+  it("rejects an in-repository prefix that is not dot-prefixed", async () => {
+    const { createGuardSandbox, GuardSandboxError } = await loadSandboxLib();
+    expect(() =>
+      createGuardSandbox({
+        repoRoot,
+        prefix: "visible-sandbox-",
+        location: "repo",
+        copyDirs: [],
+        linkDirs: [],
+        copyRootFiles: false,
+      }),
+    ).toThrow(GuardSandboxError);
+  });
+
   it("keeps the sandbox path space-ness aligned with the checkout", async () => {
     const { resolveSandboxBase } = await loadSandboxLib();
     const spaced = resolveSandboxBase({
@@ -692,10 +740,11 @@ describe("#815 CI-27 verify-storybook-empty-suite", () => {
           createSandbox: (opts: { repoRoot: string }) => {
             const sandbox = createGuardSandbox({
               repoRoot: opts.repoRoot,
-              prefix: "bb815-sb-",
+              prefix: ".bb-guard-sandbox-",
+              location: "repo",
               copyDirs: ["src", "shared", ".storybook"],
-              linkDirs: ["node_modules", "public"],
-              matchPathSpace: true,
+              linkDirs: ["public"],
+              excludeRootFiles: ["package.json"],
             });
             return breakCleanup ? withFailingDispose(sandbox) : sandbox;
           },

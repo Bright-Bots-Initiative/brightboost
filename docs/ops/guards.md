@@ -25,22 +25,32 @@ sat unwired for months). A row without a real Runner is decoration.
 Three guards prove a check has teeth by breaking something. All three break a
 **disposable sandbox**, never the working tree:
 
-| Guard                                        | What it breaks                                            | Where                                               |
-| -------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------- |
-| `scripts/verify-ci-shell-gate.sh`            | a `throw` in `src/main.tsx`                               | `mktemp -d` sandbox (#801)                          |
-| `scripts/verify-type-program-membership.mjs` | `src/test/__type_guard_sabotage__.ts`                     | sandbox from `scripts/lib/guard-sandbox.mjs` (#815) |
-| `scripts/verify-storybook-empty-suite.mjs`   | the `stories:` glob in `.storybook/main.ts` (**tracked**) | sandbox from `scripts/lib/guard-sandbox.mjs` (#815) |
+| Guard                                        | What it breaks                                            | Where                                                       |
+| -------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
+| `scripts/verify-ci-shell-gate.sh`            | a `throw` in `src/main.tsx`                               | `mktemp -d` sandbox (#801)                                  |
+| `scripts/verify-type-program-membership.mjs` | `src/test/__type_guard_sabotage__.ts`                     | `guard-sandbox.mjs` sandbox in `$TMPDIR` (#815)             |
+| `scripts/verify-storybook-empty-suite.mjs`   | the `stories:` glob in `.storybook/main.ts` (**tracked**) | `guard-sandbox.mjs` sandbox in `.bb-guard-sandbox-*` (#815) |
 
 The rule is structural, not restorative. `finally` blocks, `trap`s and signal
 handlers do not run on `SIGKILL` — nor on the hard kill Vitest and CI issue at
 timeout — so "mutate the checkout and put it back" strands damage: #815 observed
 `src/test/__type_guard_sabotage__.ts` left untracked and `.storybook/main.ts`
 left modified after a killed run. `scripts/lib/guard-sandbox.mjs` therefore
-builds the sandbox **before** any sabotage exists, asserts the sandbox root is
-disjoint from the repository, and resolves every target through it — refusing
-(loud, non-zero) anything that would land outside. Real-checkout safety does not
-depend on cleanup running at all; a leftover sandbox is temp residue the OS
-reclaims, and a failed cleanup never changes a verdict.
+builds the sandbox **before** any sabotage exists, asserts where it is allowed to
+be, and resolves every target through it — refusing (loud, non-zero) anything
+that would land outside. Real-checkout safety does not depend on cleanup running
+at all, and a failed cleanup never changes a verdict.
+
+Where the sandbox may live is itself asserted, not assumed:
+
+- **`$TMPDIR`** (type-program guard) — asserted **disjoint** from the repository.
+- **`.bb-guard-sandbox-*` inside the checkout** (Storybook guard) — asserted
+  **ignored by git** (`git check-ignore`) before anything is written into it, so
+  `git status`, the index and every tracked file stay identical. It has to be
+  nested: Vite serves only from its workspace root (the nearest `package.json`),
+  so a `/tmp` sandbox cannot load the checkout's `node_modules` and collects zero
+  stories. ESLint and the Vitest unit project ignore it too, so one stranded by a
+  hard kill breaks nothing — delete it at leisure.
 
 Regression coverage: `scripts/__tests__/guard-sandbox-isolation.test.ts` — it
 inspects the two production target paths **while the sabotage is live** (via a
