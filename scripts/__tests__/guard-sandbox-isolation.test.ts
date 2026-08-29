@@ -27,7 +27,9 @@ import { createHash } from "node:crypto";
 import {
   existsSync,
   readFileSync,
+  rmdirSync,
   rmSync,
+  unlinkSync,
   watch,
   type FSWatcher,
 } from "node:fs";
@@ -57,11 +59,40 @@ const storybookGuardSrc = path.join(
 const scratch: string[] = [];
 const sessions: BarrierSession[] = [];
 
+/**
+ * Sandboxes left behind on purpose (SIGKILL cases, simulated cleanup failure)
+ * still contain links into the real `node_modules` / `public`. Drop those AS
+ * LINKS before any recursive delete, and refuse the delete if one survives —
+ * the same rule guard-sandbox.mjs applies to its own cleanup.
+ */
+function removeSandboxSafely(dir: string): void {
+  if (!existsSync(dir)) return;
+  for (const rel of ["node_modules", "public"]) {
+    const link = path.join(dir, rel);
+    if (!existsSync(link)) continue;
+    try {
+      unlinkSync(link);
+    } catch {
+      try {
+        rmdirSync(link);
+      } catch {
+        /* checked below */
+      }
+    }
+    if (existsSync(link)) {
+      throw new Error(
+        `refusing to recursively delete ${dir}: ${link} still links into the checkout`,
+      );
+    }
+  }
+  rmSync(dir, { recursive: true, force: true });
+}
+
 afterEach(() => {
   while (sessions.length > 0) sessions.pop()?.dispose();
   while (scratch.length > 0) {
     const dir = scratch.pop();
-    if (dir) rmSync(dir, { recursive: true, force: true });
+    if (dir) removeSandboxSafely(dir);
   }
 });
 
