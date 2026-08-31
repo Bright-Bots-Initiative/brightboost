@@ -1,4 +1,4 @@
-> **Canonical for:** executable guard registry. Last verified against code: 2026-08-25.
+> **Canonical for:** executable guard registry. Last verified against code: 2026-08-29.
 
 # Executable guards
 
@@ -19,6 +19,114 @@ sat unwired for months). A row without a real Runner is decoration.
 | `scripts/verify-storybook-empty-suite.mjs`   | An empty Storybook Vitest suite cannot report green; spaced-path skips must be announced (W-06 / W-13)                 | `npm run verify:storybook-empty-suite`; parity **CI-27**; `ci-cd.yml` `build-and-test` / Verify Storybook empty-suite guard       | `CI=1 BB_VITEST_PATH_HAS_SPACE=1 npm run verify:storybook-empty-suite` → exit 1 (W-13); or force-include with empty stories → `healthy=0` exit 1                                                                  | #749 / #707                     |
 | `scripts/check-prisma-drift.sh`              | Root and `backend/` Prisma model/enum definitions stay in sync                                                         | Parity **CI-06**; `ci-cd.yml` `build-and-test` / Check Prisma schema drift                                                        | Edit only one schema’s model block (scratch), run `bash scripts/check-prisma-drift.sh` → exit 1; restore                                                                                                          | #740                            |
 | `scripts/check-todos.sh`                     | New `TODO:` / `FIXME:` lines in a PR diff are reported (failure status via `GITHUB_OUTPUT`)                            | **None today** — not referenced by any workflow or npm script (orphaned; same class as G-201)                                     | `bash scripts/check-todos.sh` (omit SHAs) → exit 1                                                                                                                                                                | legacy / unowned                |
+
+## Sabotage guards never write your checkout (#801 / #815)
+
+Three guards prove a check has teeth by breaking something. All three break a
+**disposable sandbox**, never the working tree:
+
+| Guard                                        | What it breaks                                            | Where                                                       |
+| -------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- |
+| `scripts/verify-ci-shell-gate.sh`            | a `throw` in `src/main.tsx`                               | `mktemp -d` sandbox (#801)                                  |
+| `scripts/verify-type-program-membership.mjs` | `src/test/__type_guard_sabotage__.ts`                     | `guard-sandbox.mjs` sandbox in `$TMPDIR` (#815)             |
+| `scripts/verify-storybook-empty-suite.mjs`   | the `stories:` glob in `.storybook/main.ts` (**tracked**) | `guard-sandbox.mjs` sandbox in `.bb-guard-sandbox-*` (#815) |
+
+The rule is structural, not restorative. `finally` blocks, `trap`s and signal
+handlers do not run on `SIGKILL` — nor on the hard kill Vitest and CI issue at
+timeout — so "mutate the checkout and put it back" strands damage: #815 observed
+`src/test/__type_guard_sabotage__.ts` left untracked and `.storybook/main.ts`
+left modified after a killed run. `scripts/lib/guard-sandbox.mjs` therefore
+builds the sandbox **before** any sabotage exists, asserts where it is allowed to
+be, and resolves every target through it — refusing (loud, non-zero) anything
+that would land outside. Real-checkout safety does not depend on cleanup running
+at all, and a failed cleanup never changes a verdict.
+
+Where the sandbox may live is itself asserted, not assumed:
+
+- **`$TMPDIR`** (type-program guard) — asserted **disjoint** from the repository.
+- **`.bb-guard-sandbox-*` inside the checkout** (Storybook guard) — asserted
+  **ignored by git** (`git check-ignore`) before anything is written into it, so
+  `git status`, the index and every tracked file stay identical. It has to be
+  nested: Vite serves only from its workspace root (the nearest `package.json`),
+  so a `/tmp` sandbox cannot load the checkout's `node_modules` and collects zero
+  stories. ESLint and the Vitest unit project ignore it too, so one stranded by a
+  hard kill breaks nothing — delete it at leisure.
+
+What a sandbox may contain is also asserted, not assumed. Each guard names the
+root configuration files it needs; there is no "copy every root file" switch, and
+the retired `copyRootFiles` / `excludeRootFiles` options now throw if requested:
+
+| Guard                                        | `rootFiles` allowlist                                       | How it was determined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify-type-program-membership.mjs` (CI-25) | `tsconfig.json`                                             | Omit it and the sandbox program no longer reproduces the manifest files — exit 2, `sandbox program did not reproduce manifest file(s)`. Nothing else in the root is read: the root `tsconfig.json` has no `extends` and no `references`.                                                                                                                                                                                                                                                                                                                                                      |
+| `verify-storybook-empty-suite.mjs` (CI-27)   | `vite.config.ts`, `vitest.config.ts`, `vitest.workspace.ts` | Measured by removal, one at a time, with a real Storybook Vitest run each. Missing them gives `failed to load config from …/vite.config.ts`, `Workspace config file … references a non-existing file` and `No projects matched the filter "storybook"`. `postcss.config.js`, `tailwind.config.ts` and `tsconfig.json` were measured and are **not** required (15 tests collected and passing without them — this sandbox is nested, and PostCSS/esbuild search upward into the checkout). `package.json` is excluded on purpose: one of its own would make the sandbox Vite's workspace root. |
+
+`.git`, `.env*`, `.npmrc`, lockfiles, private-key material and every unnamed root
+file — tracked or untracked — are never copied, and a hard deny list
+(`FORBIDDEN_ROOT_FILES`) refuses them even if a future allowlist names one. Every
+rule in that list is case-insensitive, because NTFS and the default macOS
+filesystem are not: a case-sensitive `.git` rule was bypassable by asking for
+`.GIT`, which is the same file there. This
+matters most for a **linked worktree**, where `.git` is a regular `gitdir:` file:
+copying it made the sandbox a second working tree for the real repository (the
+repository-selection class of #787), and the sandbox is explicitly allowed to
+outlive a `SIGKILL`. An allowlisted file that is missing, or is not a regular
+file, is a loud construction failure — a guard never runs against a partial tree,
+because that is how an empty result becomes a false pass.
+
+Targets are contained **including the final path component**. `resolve()` walks
+every component from the sandbox root down and `lstat`s it (never `stat`, which
+follows): a symlink, Windows junction or other reparse point anywhere on the path
+is refused, an existing final component must be a regular file with one link, and
+the deepest existing component must still `realpath` inside the sandbox. Stopping
+at the parent directory was the #822 review finding: `cpSync` preserves a symlink
+the caller had at the exact target, and the write then followed it out of the
+sandbox. The write itself goes through `sandbox.write()`, which unlinks the old
+entry (acting on the link, never through it) and creates the file with `wx`
+(`O_CREAT|O_EXCL`) — a flag the kernel will not satisfy through a symbolic link.
+That makes the **final component** unfollowable even if it is swapped after the
+check; ancestor directories are checked before the write and not re-validated
+atomically, so this is not a claim of resistance to a concurrent local attacker.
+
+Regression coverage: `scripts/__tests__/guard-sandbox-isolation.test.ts` — it
+inspects the two production target paths **while the sabotage is live** (via a
+barrier, not a sleep) and after `SIGKILL`/`SIGTERM` at that same point, builds a
+sandbox from a real disposable **linked worktree** and asserts `.git` and the
+secret sentinels are absent (during sabotage and after a forced kill), and points
+both exact targets at an external sentinel through a symlink that must be refused
+while the sentinel stays byte-identical.
+
+The escape-refusal matrix in that spec is grouped by the host capability each
+input needs, and the group sizes are asserted exactly (`ESCAPE_GROUP_SIZES`) so
+neither the matrix nor this table can drift:
+
+| host                                      | inputs |
+| ----------------------------------------- | ------ |
+| base — no links available                 | 21     |
+| \+ hard links (same volume, no privilege) | 22     |
+| \+ symlinks (Developer Mode on Windows)   | 25     |
+| both                                      | **26** |
+
+The two symlink-target cases `it.skipIf` themselves when the host cannot create
+symlinks, so they report **skipped** rather than a green test that asserted
+nothing; a companion assertion fails on any non-Windows platform where symlinks
+turn out to be unavailable, which keeps them exercised on the Linux runner.
+
+Manual falsification, checkout-safety (CI-27 has no automated seam-free case —
+running it end to end from inside `npm test` re-enters the Storybook Vitest
+project, see the note in that spec):
+
+```bash
+# in one shell
+npm run verify:storybook-empty-suite
+# in another, for the whole run
+while :; do git status --porcelain -- .storybook/main.ts; sleep 0.2; done
+```
+
+Pre-#815 this printed ` M .storybook/main.ts` for several seconds; it must now
+print nothing at any point. The same watch over `src/test/` during
+`node scripts/verify-type-program-membership.mjs` must never show
+`?? src/test/__type_guard_sabotage__.ts` (that one _is_ covered automatically).
 
 ## `ci-required-steps.json` job coverage (#782)
 
