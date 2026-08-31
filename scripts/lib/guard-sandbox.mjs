@@ -12,27 +12,35 @@
  * tree. Here the checkout is only ever read; if cleanup never runs the residue
  * is a temp directory the OS reclaims, never a dirty working tree.
  *
- * Two positive assertions, not assumptions:
+ * Three positive assertions, not assumptions:
  *   1. the sandbox root is disjoint from the repository root (neither contains
  *      the other) — checked at construction;
  *   2. every sabotage target resolves inside the sandbox — checked per target
- *      lexically AND by realpath, and refused if it would travel through one of
- *      the linked directories. A refusal throws SandboxEscapeError; callers
- *      turn that into a loud non-zero "could not run".
+ *      lexically AND physically, component by component INCLUDING the final one,
+ *      and refused if it would travel through one of the linked directories. A
+ *      refusal throws SandboxEscapeError; callers turn that into a loud non-zero
+ *      "could not run";
+ *   3. only the root configuration files a guard actually names are copied in —
+ *      never "every regular file in the root". A blanket copy pulls a linked
+ *      worktree's `.git` (a regular `gitdir:` FILE pointing at the real
+ *      repository — the repository-selection class of #787) and any untracked
+ *      `.env*` / `.npmrc` credentials into a tree that is explicitly allowed to
+ *      survive SIGKILL.
  */
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
-  readdirSync,
   realpathSync,
   rmSync,
   rmdirSync,
   statSync,
   symlinkSync,
   unlinkSync,
+  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -59,6 +67,58 @@ export class SandboxEscapeError extends GuardSandboxError {
 export const SPACED_SEGMENT = "spaced path";
 
 /**
+ * Root files no guard may ever copy, whatever its allowlist says.
+ *
+ * The allowlist alone already excludes these — this is the second lock, so the
+ * rule survives a future caller who adds a name without thinking about it. If a
+ * guard genuinely needs one of these, that is an owner decision, not a patch:
+ * the sandbox can outlive the process (SIGKILL leaves it on disk by design) and
+ * these are exactly the files that must not be duplicated when it does.
+ *
+ * @type {Array<{ test: RegExp, why: string }>}
+ */
+export const FORBIDDEN_ROOT_FILES = [
+  {
+    test: /^\.git$/,
+    why: "in a linked worktree this is a regular `gitdir:` file pointing at the real repository (#787 repository-selection class)",
+  },
+  { test: /^\.env(\..+)?$/i, why: "environment/secret file" },
+  {
+    test: /^\.(npmrc|yarnrc|yarnrc\.yml|netrc|pypirc|dockercfg)$/i,
+    why: "registry/credential file",
+  },
+  { test: /^_netrc$/i, why: "registry/credential file" },
+  {
+    test: /^(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb)$/i,
+    why: "lockfile — never needed to run a guard, and large",
+  },
+  {
+    test: /(^id_(rsa|dsa|ecdsa|ed25519)|\.(pem|key|p12|pfx|keystore)$)/i,
+    why: "private key material",
+  },
+];
+
+/**
+ * Validate one allowlisted root-file name. Returns the refusal reason, or null.
+ * @param {string} name
+ * @returns {string | null}
+ */
+export function rootFileRefusal(name) {
+  if (typeof name !== "string" || !name.trim()) {
+    return `root file entries must be non-empty strings (got ${JSON.stringify(name)})`;
+  }
+  if (name !== path.basename(name) || name === "." || name === "..") {
+    return `root file entries must be bare file names in the repository root (got ${JSON.stringify(name)})`;
+  }
+  for (const { test, why } of FORBIDDEN_ROOT_FILES) {
+    if (test.test(name)) {
+      return `${name} is never copied into a guard sandbox: ${why}`;
+    }
+  }
+  return null;
+}
+
+/**
  * True when `child` is at or below `parent` (both already absolute).
  * @param {string} parent
  * @param {string} child
@@ -67,6 +127,22 @@ export function isInside(parent, child) {
   if (parent === child) return true;
   const rel = path.relative(parent, child);
   return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
+}
+
+/**
+ * Human-readable file kind, for refusal messages.
+ * @param {import("node:fs").Stats} st
+ * @returns {string}
+ */
+function describeStat(st) {
+  if (st.isSymbolicLink()) return "a symbolic link or reparse point";
+  if (st.isDirectory()) return "a directory";
+  if (st.isFile()) return "a regular file";
+  if (st.isFIFO()) return "a FIFO";
+  if (st.isSocket()) return "a socket";
+  if (st.isBlockDevice()) return "a block device";
+  if (st.isCharacterDevice()) return "a character device";
+  return "not a regular file";
 }
 
 /**
@@ -154,7 +230,9 @@ export function resolveSandboxBase({
  *   root: string,
  *   base: string,
  *   linkDirs: string[],
+ *   rootFiles: string[],
  *   resolve: (rel: string) => string,
+ *   write: (rel: string, contents: string) => string,
  *   dispose: () => void,
  * }} GuardSandbox
  */
@@ -187,13 +265,15 @@ export function resolveSandboxBase({
  *            experimental-addon-test/dist/vitest-plugin/setup-file.mjs`, with all
  *            story files failing to import and 0 tests collected.
  *
+ * `rootFiles` is an explicit per-guard ALLOWLIST — there is deliberately no
+ * "copy them all" switch. See the module header, assertion 3.
+ *
  * @param {{
  *   repoRoot: string,
  *   prefix?: string,
  *   copyDirs?: string[],
  *   linkDirs?: string[],
- *   copyRootFiles?: boolean,
- *   excludeRootFiles?: string[],
+ *   rootFiles?: string[],
  *   matchPathSpace?: boolean,
  *   location?: "tmp" | "repo",
  *   env?: NodeJS.ProcessEnv,
@@ -205,12 +285,31 @@ export function createGuardSandbox({
   prefix = "bb-guard-",
   copyDirs = ["src", "shared", ".storybook"],
   linkDirs = ["node_modules", "public"],
-  copyRootFiles = true,
-  excludeRootFiles = [],
+  rootFiles = [],
   matchPathSpace = false,
   location = "tmp",
   env = process.env,
+  ...rest
 }) {
+  // The retired blanket-copy options must fail loudly, not be quietly ignored:
+  // a caller that still asks for them would otherwise get a sandbox with NO root
+  // config at all and a confusing downstream error.
+  for (const retired of ["copyRootFiles", "excludeRootFiles"]) {
+    if (Object.hasOwn(rest, retired)) {
+      throw new GuardSandboxError(
+        `${retired} was removed: a guard sandbox copies only the root files it names in ` +
+          `\`rootFiles\`. Blanket root copying pulled a linked worktree's \`.git\` and any ` +
+          `untracked .env*/.npmrc into the sandbox.`,
+      );
+    }
+  }
+  const unknown = Object.keys(rest);
+  if (unknown.length > 0) {
+    throw new GuardSandboxError(
+      `unknown createGuardSandbox option(s): ${unknown.join(", ")}`,
+    );
+  }
+
   const absRepoRoot = path.resolve(repoRoot);
   if (!existsSync(absRepoRoot)) {
     throw new GuardSandboxError(`repository root does not exist: ${repoRoot}`);
@@ -219,6 +318,35 @@ export function createGuardSandbox({
     throw new GuardSandboxError(
       `an in-repository sandbox prefix must start with "." (got ${JSON.stringify(prefix)})`,
     );
+  }
+
+  // Validate the allowlist BEFORE anything is created, so a bad entry cannot
+  // leave a half-built sandbox behind — and so a guard can never run against a
+  // partial tree whose missing config would make an empty result look like a
+  // pass. Fail loudly on missing, non-regular and forbidden entries alike.
+  if (!Array.isArray(rootFiles)) {
+    throw new GuardSandboxError("rootFiles must be an array of file names");
+  }
+  for (const name of rootFiles) {
+    const refusal = rootFileRefusal(name);
+    if (refusal) throw new GuardSandboxError(refusal);
+    const from = path.join(absRepoRoot, name);
+    let st;
+    try {
+      st = lstatSync(from);
+    } catch {
+      throw new GuardSandboxError(
+        `required root file is missing from the checkout: ${name} (${from}). ` +
+          `A guard sandbox is never built partially — that is how an empty result ` +
+          `becomes a false pass.`,
+      );
+    }
+    if (!st.isFile()) {
+      throw new GuardSandboxError(
+        `required root file ${name} is not a regular file (${describeStat(st)}); ` +
+          `refusing to copy it into the sandbox`,
+      );
+    }
   }
 
   const { base, spacedSegment } =
@@ -270,11 +398,10 @@ export function createGuardSandbox({
     cpSync(from, path.join(root, rel), { recursive: true });
   }
 
-  if (copyRootFiles) {
-    for (const entry of readdirSync(absRepoRoot, { withFileTypes: true })) {
-      if (!entry.isFile() || excludeRootFiles.includes(entry.name)) continue;
-      cpSync(path.join(absRepoRoot, entry.name), path.join(root, entry.name));
-    }
+  // Allowlist only — validated above. `.git`, `.env*`, `.npmrc`, lockfiles and
+  // every other unnamed root file (tracked or not) stay in the checkout.
+  for (const name of rootFiles) {
+    cpSync(path.join(absRepoRoot, name), path.join(root, name));
   }
 
   for (const rel of linkDirs) {
@@ -319,18 +446,91 @@ export function createGuardSandbox({
           `which points back into the checkout`,
       );
     }
-    // Physical containment: lexical checks alone cannot see a link planted
-    // inside the sandbox.
-    let probe = path.dirname(target);
-    while (!existsSync(probe) && path.dirname(probe) !== probe) {
-      probe = path.dirname(probe);
+    // Physical containment, EVERY component including the last. Lexical checks
+    // cannot see a link planted inside the sandbox, and stopping at
+    // path.dirname(target) let a symlink AT THE TARGET pass: `cpSync` preserves
+    // such a link from the caller, and the write then followed it out of the
+    // sandbox. Walk down from the root and lstat (never stat: it follows) each
+    // component in turn.
+    const segments = relFromRoot.split(/[\\/]/).filter(Boolean);
+    let deepestExisting = root;
+    for (let i = 0; i < segments.length; i += 1) {
+      const soFar = path.join(root, ...segments.slice(0, i + 1));
+      const isFinal = i === segments.length - 1;
+      let st;
+      try {
+        st = lstatSync(soFar);
+      } catch (err) {
+        if (err && err.code === "ENOENT") break; // created fresh by the caller
+        throw new SandboxEscapeError(
+          `cannot inspect ${soFar} while resolving sabotage target ${rel}: ${err?.message ?? err}`,
+        );
+      }
+      // Symlinks, Windows junctions and every other reparse point land here:
+      // node reports all of them as symbolic links to lstat.
+      if (st.isSymbolicLink()) {
+        throw new SandboxEscapeError(
+          `sabotage target ${rel} passes through a ${isFinal ? "symlinked target" : "symlinked directory"} ` +
+            `(${soFar}); a guard sandbox never follows links, whatever they point at`,
+        );
+      }
+      if (isFinal) {
+        if (!st.isFile()) {
+          throw new SandboxEscapeError(
+            `sabotage target ${rel} already exists and is not a regular file (${describeStat(st)}); refusing to write it`,
+          );
+        }
+        if (typeof st.nlink === "number" && st.nlink > 1) {
+          throw new SandboxEscapeError(
+            `sabotage target ${rel} has ${st.nlink} hard links, so writing it would change a file outside the sandbox too`,
+          );
+        }
+      } else if (!st.isDirectory()) {
+        throw new SandboxEscapeError(
+          `sabotage target ${rel} treats ${soFar} as a directory, but it is ${describeStat(st)}`,
+        );
+      }
+      deepestExisting = soFar;
     }
-    const realProbe = realpathSync(probe);
+
+    // Belt and braces: whatever the deepest existing component is — the target
+    // itself when it exists, otherwise its nearest existing ancestor — its
+    // realpath must still be inside the sandbox.
+    const realProbe = realpathSync(deepestExisting);
     if (!isInside(realRoot, realProbe)) {
       throw new SandboxEscapeError(
         `sabotage target ${rel} resolves through a link out of the sandbox (${realProbe} is not under ${realRoot})`,
       );
     }
+    return target;
+  }
+
+  /**
+   * Write a sabotage file inside the sandbox, or refuse.
+   *
+   * The path is re-resolved (all of the checks above) immediately before the
+   * write, and the write itself cannot follow a link: the old entry is removed
+   * with `unlink`, which acts on the link and never on its referent, and the new
+   * file is created with the `wx` flag (`O_CREAT|O_EXCL`), which the kernel
+   * refuses to satisfy through a symbolic link.
+   *
+   * Scope of that guarantee, stated exactly: the FINAL component cannot be
+   * followed out of the sandbox even if it is replaced after the check. The
+   * ancestor directories are validated by `lstat` before the write and are not
+   * re-validated atomically, so this is still check-then-act with respect to a
+   * process that can rename a directory mid-run. The threat model is a stale or
+   * accidental link in a developer's checkout — not a concurrent local attacker.
+   *
+   * @param {string} rel
+   * @param {string} contents
+   * @returns {string} the absolute path written
+   */
+  function writeInside(rel, contents) {
+    const target = resolveTarget(rel);
+    mkdirSync(path.dirname(target), { recursive: true });
+    // unlink, not truncate: removes a link as a link, never through it.
+    rmSync(target, { force: true });
+    writeFileSync(target, contents, { encoding: "utf8", flag: "wx" });
     return target;
   }
 
@@ -366,7 +566,9 @@ export function createGuardSandbox({
     root,
     base,
     linkDirs: [...linkDirs],
+    rootFiles: [...rootFiles],
     resolve: resolveTarget,
+    write: writeInside,
     dispose,
   };
 }

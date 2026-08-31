@@ -52,9 +52,46 @@ Where the sandbox may live is itself asserted, not assumed:
   stories. ESLint and the Vitest unit project ignore it too, so one stranded by a
   hard kill breaks nothing — delete it at leisure.
 
+What a sandbox may contain is also asserted, not assumed. Each guard names the
+root configuration files it needs; there is no "copy every root file" switch, and
+the retired `copyRootFiles` / `excludeRootFiles` options now throw if requested:
+
+| Guard                                        | `rootFiles` allowlist                                       | How it was determined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify-type-program-membership.mjs` (CI-25) | `tsconfig.json`                                             | Omit it and the sandbox program no longer reproduces the manifest files — exit 2, `sandbox program did not reproduce manifest file(s)`. Nothing else in the root is read: the root `tsconfig.json` has no `extends` and no `references`.                                                                                                                                                                                                                                                                                                                                                      |
+| `verify-storybook-empty-suite.mjs` (CI-27)   | `vite.config.ts`, `vitest.config.ts`, `vitest.workspace.ts` | Measured by removal, one at a time, with a real Storybook Vitest run each. Missing them gives `failed to load config from …/vite.config.ts`, `Workspace config file … references a non-existing file` and `No projects matched the filter "storybook"`. `postcss.config.js`, `tailwind.config.ts` and `tsconfig.json` were measured and are **not** required (15 tests collected and passing without them — this sandbox is nested, and PostCSS/esbuild search upward into the checkout). `package.json` is excluded on purpose: one of its own would make the sandbox Vite's workspace root. |
+
+`.git`, `.env*`, `.npmrc`, lockfiles, private-key material and every unnamed root
+file — tracked or untracked — are never copied, and a hard deny list
+(`FORBIDDEN_ROOT_FILES`) refuses them even if a future allowlist names one. This
+matters most for a **linked worktree**, where `.git` is a regular `gitdir:` file:
+copying it made the sandbox a second working tree for the real repository (the
+repository-selection class of #787), and the sandbox is explicitly allowed to
+outlive a `SIGKILL`. An allowlisted file that is missing, or is not a regular
+file, is a loud construction failure — a guard never runs against a partial tree,
+because that is how an empty result becomes a false pass.
+
+Targets are contained **including the final path component**. `resolve()` walks
+every component from the sandbox root down and `lstat`s it (never `stat`, which
+follows): a symlink, Windows junction or other reparse point anywhere on the path
+is refused, an existing final component must be a regular file with one link, and
+the deepest existing component must still `realpath` inside the sandbox. Stopping
+at the parent directory was the #822 review finding: `cpSync` preserves a symlink
+the caller had at the exact target, and the write then followed it out of the
+sandbox. The write itself goes through `sandbox.write()`, which unlinks the old
+entry (acting on the link, never through it) and creates the file with `wx`
+(`O_CREAT|O_EXCL`) — a flag the kernel will not satisfy through a symbolic link.
+That makes the **final component** unfollowable even if it is swapped after the
+check; ancestor directories are checked before the write and not re-validated
+atomically, so this is not a claim of resistance to a concurrent local attacker.
+
 Regression coverage: `scripts/__tests__/guard-sandbox-isolation.test.ts` — it
 inspects the two production target paths **while the sabotage is live** (via a
-barrier, not a sleep) and after `SIGKILL`/`SIGTERM` at that same point.
+barrier, not a sleep) and after `SIGKILL`/`SIGTERM` at that same point, builds a
+sandbox from a real disposable **linked worktree** and asserts `.git` and the
+secret sentinels are absent (during sabotage and after a forced kill), and points
+both exact targets at an external sentinel through a symlink that must be refused
+while the sentinel stays byte-identical.
 
 Manual falsification, checkout-safety (CI-27 has no automated seam-free case —
 running it end to end from inside `npm test` re-enters the Storybook Vitest

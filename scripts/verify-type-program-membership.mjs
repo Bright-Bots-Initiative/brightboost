@@ -17,12 +17,18 @@
  * it stranded src/test/__type_guard_sabotage__.ts as an untracked file in the
  * caller's checkout.
  *
+ * #822 review: the sandbox copies only the root config this guard names
+ * (SANDBOX_ROOT_FILES) — never the whole root, which pulled a linked worktree's
+ * `.git` and any untracked `.env*`/`.npmrc` in with it — and the probe is written
+ * through `sandbox.write`, which refuses a symlink at the exact target instead of
+ * following it out of the sandbox.
+ *
  * Exit 0 = both phases OK.
  * Exit 1 = property false.
  * Exit 2 = could not run.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createGuardSandbox } from "./lib/guard-sandbox.mjs";
@@ -100,8 +106,23 @@ export function listFiles(root = REPO_ROOT) {
 }
 
 /**
- * tsc only needs the program sources, the root tsconfig files and the type
- * packages — `public/` is not part of the program, so it is not linked.
+ * Root configuration this guard's sandbox needs — an explicit ALLOWLIST, not
+ * "every file in the root" (#822 review). Determined by removal: with
+ * `tsconfig.json` absent, `tsc --noEmit --listFiles` in the sandbox falls back to
+ * its own defaults and the run is not the checkout's program any more. Nothing
+ * else in the root is read by `tsc` here — `tsconfig.json` has no `extends` and
+ * no `references`, so `tsconfig.app.json` / `tsconfig.node.json` are not part of
+ * this program, and `package.json` is not needed to compile.
+ *
+ * Explicitly NOT copied, and never to be added: `.git` (a regular `gitdir:` file
+ * in a linked worktree, pointing at the real repository), `.env*`, `.npmrc`,
+ * lockfiles, and any other untracked or machine-local root file.
+ */
+export const SANDBOX_ROOT_FILES = ["tsconfig.json"];
+
+/**
+ * tsc only needs the program sources, the root tsconfig and the type packages —
+ * `public/` is not part of the program, so it is not linked.
  * @param {{ repoRoot: string, env?: NodeJS.ProcessEnv }} opts
  */
 function defaultCreateSandbox({ repoRoot, env }) {
@@ -110,6 +131,7 @@ function defaultCreateSandbox({ repoRoot, env }) {
     prefix: "bb815-type-",
     copyDirs: ["src", "shared"],
     linkDirs: ["node_modules"],
+    rootFiles: SANDBOX_ROOT_FILES,
     env,
   });
 }
@@ -177,16 +199,16 @@ export function runTypeProgramMembership(deps = {}) {
     }
 
     try {
-      let sabotageAbs;
+      // sandbox.write re-checks containment for every path component — the
+      // final one included — and creates the file with `wx`, which cannot be
+      // satisfied through a symbolic link. A refusal is could-not-run (exit 2).
       try {
-        sabotageAbs = sandbox.resolve(SABOTAGE_REL);
+        sandbox.write(SABOTAGE_REL, SABOTAGE_SOURCE);
       } catch (err) {
         throw new CannotRun(
           `refusing to write the excluded-path probe: ${messageOf(err)}`,
         );
       }
-      mkdirSync(path.dirname(sabotageAbs), { recursive: true });
-      writeFileSync(sabotageAbs, SABOTAGE_SOURCE);
 
       console.log(
         "[verify-type-program-membership] Phase 2/2 — excluded-path guard (expect ABSENT / non-zero)…",

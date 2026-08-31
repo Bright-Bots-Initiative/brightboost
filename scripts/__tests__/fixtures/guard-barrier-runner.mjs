@@ -13,7 +13,11 @@
  * checkout WHILE the sabotage is live, and what lets it SIGKILL the guard at
  * exactly that point.
  *
- * usage: node guard-barrier-runner.mjs <type|storybook> <releasePort>
+ * usage: node guard-barrier-runner.mjs <type|storybook> <releasePort> [checkoutRoot]
+ *
+ * `checkoutRoot` defaults to this repository. Pass a disposable checkout — a
+ * linked worktree, say — to observe what the sandbox copied out of IT while the
+ * sabotage is live and after a forced kill (#822).
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeSync } from "node:fs";
@@ -25,6 +29,11 @@ const repoRoot = path.resolve(here, "../../..");
 
 const guard = process.argv[2];
 const port = Number(process.argv[3]);
+/** The checkout the guard treats as its repository root. */
+const targetRoot = process.argv[4] ? path.resolve(process.argv[4]) : repoRoot;
+const manifestPath =
+  process.env.TYPE_GUARD_MANIFEST ||
+  path.join(repoRoot, "scripts/type-guard-manifest.json");
 
 const BLOCKER = `
 const net = require("net");
@@ -49,14 +58,9 @@ function barrier(payload) {
 
 /** Synthetic `tsc --listFiles` output: manifest files present, probe absent. */
 function healthyListing() {
-  const manifest = JSON.parse(
-    readFileSync(
-      path.join(repoRoot, "scripts/type-guard-manifest.json"),
-      "utf8",
-    ),
-  );
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   return manifest.guardFiles
-    .map((rel) => `${repoRoot.replace(/\\/g, "/")}/${rel}`)
+    .map((rel) => `${targetRoot.replace(/\\/g, "/")}/${rel}`)
     .join("\n");
 }
 
@@ -84,11 +88,14 @@ async function main() {
     );
     const listing = healthyListing();
     const code = mod.runTypeProgramMembership({
+      repoRoot: targetRoot,
+      env: process.env,
       listFiles: (root) => {
-        if (path.resolve(root) === path.resolve(repoRoot)) return listing;
+        if (path.resolve(root) === targetRoot) return listing;
         barrier({
           event: "sabotage-active",
           guard: "type",
+          checkoutRoot: targetRoot,
           sandboxRoot: root,
           sandboxTarget: path.join(root, "src/test/__type_guard_sabotage__.ts"),
         });
@@ -109,12 +116,14 @@ async function main() {
     const code = mod.runStorybookEmptySuiteGuard(
       {},
       {
+        repoRoot: targetRoot,
         probe: (_env, cwd) => {
           calls += 1;
           if (calls === 1) return syntheticProbe(15);
           barrier({
             event: "sabotage-active",
             guard: "storybook",
+            checkoutRoot: targetRoot,
             sandboxRoot: cwd,
             sandboxTarget: path.join(cwd, ".storybook/main.ts"),
           });

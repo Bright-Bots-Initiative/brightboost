@@ -20,20 +20,38 @@
  * is blocked inside the callback), and the out-of-process tests use
  * fixtures/guard-barrier-runner.mjs, which announces on stdout and then blocks
  * on a socket until this test releases or kills it.
+ *
+ * #822 review added two more ways the sandbox could reach outside itself, both
+ * covered below against disposable fixtures:
+ *
+ *   A. blanket root copying pulled a LINKED WORKTREE's `.git` — a regular
+ *      `gitdir:` file naming the real repository — plus any untracked `.env*` /
+ *      `.npmrc`, into a tree explicitly allowed to survive SIGKILL;
+ *   B. containment started at the target's PARENT, so a symlink at the exact
+ *      target passed: `cpSync` preserves such a link from the caller and the
+ *      write then followed it out of the sandbox.
  */
 
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   existsSync,
+  linkSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
   readFileSync,
   rmdirSync,
   rmSync,
+  symlinkSync,
   unlinkSync,
   watch,
+  writeFileSync,
   type FSWatcher,
 } from "node:fs";
 import { createServer, type Server, type Socket } from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
@@ -227,6 +245,202 @@ function syntheticProbe(count: number) {
   };
 }
 
+// ── #822 fixtures: link capability, linked worktrees, external sentinels ────
+
+const EXTERNAL_SENTINEL_BODY =
+  'const c = { stories: ["../src/**/*.stories.tsx"] };\nexport default c;\n// EXTERNAL SENTINEL — must stay byte-identical\n';
+
+/** The two root files CI-27's sandbox actually needs (mirrors the guard). */
+const sbRootFiles = [
+  "vite.config.ts",
+  "vitest.config.ts",
+  "vitest.workspace.ts",
+];
+
+/**
+ * Plant symlinks inside `dir`. Windows only allows this with Developer Mode or
+ * elevation, so report the capability instead of failing the whole suite — the
+ * Linux CI runner always has it, and the assertion count says which ran.
+ */
+function trySymlinks(
+  dir: string,
+  outsideDir: string,
+  sentinel: string,
+): { available: boolean; reason?: string } {
+  try {
+    symlinkSync(sentinel, path.join(dir, "file-link.ts"), "file");
+    symlinkSync(
+      path.join(outsideDir, "no-such-file.ts"),
+      path.join(dir, "dangling.ts"),
+      "file",
+    );
+    symlinkSync(outsideDir, path.join(dir, "dir-link"), "junction");
+    return { available: true };
+  } catch (err) {
+    return { available: false, reason: (err as NodeJS.ErrnoException).code };
+  }
+}
+
+/** Hard links need no privilege but do need the same volume. */
+function tryHardlink(from: string, to: string): boolean {
+  try {
+    linkSync(from, to);
+    return lstatSync(to).nlink > 1;
+  } catch {
+    return false;
+  }
+}
+
+interface WorktreeFixture {
+  base: string;
+  mainRepo: string;
+  worktree: string;
+  manifestPath: string;
+  sentinels: string[];
+  dotGitIsRegularFile: boolean;
+  state: () => Record<string, string | null>;
+}
+
+/**
+ * A disposable repository plus a REAL linked worktree (`git worktree add`), in
+ * which `.git` is a regular `gitdir:` FILE pointing back at the real repository.
+ * That file is what blanket root copying duplicated into a sandbox allowed to
+ * outlive SIGKILL (#822 review; the repository-selection class of #787).
+ *
+ * The worktree root also carries deliberately fake secret sentinels.
+ */
+function makeLinkedWorktreeFixture(): WorktreeFixture {
+  const base = mkdtempSync(path.join(os.tmpdir(), "bb822-wt-"));
+  scratch.push(base);
+  const mainRepo = path.join(base, "mainrepo");
+  const worktree = path.join(base, "linked-wt");
+  const run = (args: string[], cwd: string) => {
+    const r = spawnSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    if (r.status !== 0) {
+      throw new Error(`git ${args.join(" ")} failed: ${r.stdout}${r.stderr}`);
+    }
+    return (r.stdout ?? "").trim();
+  };
+
+  mkdirSync(mainRepo, { recursive: true });
+  run(["init", "-q", "-b", "main"], mainRepo);
+  run(["config", "user.email", "fixture@example.invalid"], mainRepo);
+  run(["config", "user.name", "Fixture"], mainRepo);
+  run(["config", "core.hooksPath", ""], mainRepo);
+
+  for (const rel of [
+    "src/components",
+    "src/test",
+    "shared",
+    ".storybook",
+    "public",
+    "node_modules",
+  ]) {
+    mkdirSync(path.join(mainRepo, rel), { recursive: true });
+  }
+  writeFileSync(
+    path.join(mainRepo, "src/components/Demo.stories.tsx"),
+    "export default {};\n",
+  );
+  writeFileSync(path.join(mainRepo, "src/guard-a.ts"), "export {};\n");
+  writeFileSync(path.join(mainRepo, "shared/kind.ts"), "export {};\n");
+  writeFileSync(
+    path.join(mainRepo, ".storybook/main.ts"),
+    'const c = { stories: ["../src/**/*.stories.tsx"] };\nexport default c;\n',
+  );
+  writeFileSync(
+    path.join(mainRepo, "package.json"),
+    '{ "name": "fx", "private": true }\n',
+  );
+  writeFileSync(
+    path.join(mainRepo, "tsconfig.json"),
+    '{ "include": ["src", "shared"] }\n',
+  );
+  for (const name of sbRootFiles) {
+    writeFileSync(path.join(mainRepo, name), "export default {};\n");
+  }
+  writeFileSync(
+    path.join(mainRepo, ".gitignore"),
+    "node_modules\n.bb-guard-sandbox-*/\n.env*\n.npmrc\n",
+  );
+  run(["add", "-A"], mainRepo);
+  run(["commit", "-qm", "fixture base"], mainRepo);
+  run(["worktree", "add", "-q", "-b", "wt-branch", worktree], mainRepo);
+
+  // Fake values only — these exist to be looked for, never to be a real secret.
+  writeFileSync(
+    path.join(worktree, ".env.local"),
+    "FAKE_API_KEY=not-a-real-secret-0000\n",
+  );
+  writeFileSync(
+    path.join(worktree, ".npmrc"),
+    "//registry.example.invalid/:_authToken=FAKE-TOKEN-0000\n",
+  );
+  writeFileSync(
+    path.join(worktree, "unrelated-untracked.txt"),
+    "unrelated untracked root file\n",
+  );
+  mkdirSync(path.join(worktree, "node_modules"), { recursive: true });
+  writeFileSync(
+    path.join(worktree, "node_modules/marker.txt"),
+    "worktree node_modules\n",
+  );
+
+  const manifestPath = path.join(base, "manifest.json");
+  writeFileSync(
+    manifestPath,
+    JSON.stringify({ guardFiles: ["src/guard-a.ts"] }),
+  );
+
+  const sentinels = [".env.local", ".npmrc", "unrelated-untracked.txt"];
+  const wtGit = (args: string[]) =>
+    (
+      spawnSync("git", args, {
+        cwd: worktree,
+        encoding: "utf8",
+        windowsHide: true,
+      }).stdout ?? ""
+    ).trim();
+
+  return {
+    base,
+    mainRepo,
+    worktree,
+    manifestPath,
+    sentinels,
+    dotGitIsRegularFile: lstatSync(path.join(worktree, ".git")).isFile(),
+    state: () => {
+      const snap: Record<string, string | null> = {
+        head: wtGit(["rev-parse", "HEAD"]),
+        ref: wtGit(["symbolic-ref", "HEAD"]),
+        status: wtGit(["status", "--porcelain"]),
+        index: digest(wtGit(["ls-files", "-s"])),
+      };
+      for (const rel of sentinels)
+        snap[rel] = hashFile(path.join(worktree, rel));
+      return snap;
+    },
+  };
+}
+
+/** Names never allowed in a sandbox built from that fixture. */
+const PROHIBITED_IN_SANDBOX = [
+  ".git",
+  ".env.local",
+  ".npmrc",
+  "unrelated-untracked.txt",
+];
+
+function prohibitedPresentIn(root: string): string[] {
+  if (!existsSync(root)) return [];
+  const names = new Set(readdirSync(root));
+  return PROHIBITED_IN_SANDBOX.filter((n) => names.has(n));
+}
+
 /** Wrap a real sandbox so cleanup fails, without changing anything else. */
 function withFailingDispose<T extends { dispose: () => void; root: string }>(
   sandbox: T,
@@ -252,7 +466,16 @@ interface BarrierSession {
 
 function startBarrier(
   guard: "type" | "storybook",
-  timeoutMs = 60_000,
+  {
+    timeoutMs = 60_000,
+    checkoutRoot,
+    env,
+  }: {
+    timeoutMs?: number;
+    /** Run the guard against a disposable checkout instead of this repository. */
+    checkoutRoot?: string;
+    env?: NodeJS.ProcessEnv;
+  } = {},
 ): Promise<BarrierSession> {
   return new Promise((resolve, reject) => {
     const sockets: Socket[] = [];
@@ -275,8 +498,18 @@ function startBarrier(
       }
       const child = spawn(
         process.execPath,
-        [runnerPath, guard, String(address.port)],
-        { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], windowsHide: true },
+        [
+          runnerPath,
+          guard,
+          String(address.port),
+          ...(checkoutRoot ? [checkoutRoot] : []),
+        ],
+        {
+          cwd: repoRoot,
+          env: env ?? process.env,
+          stdio: ["ignore", "pipe", "pipe"],
+          windowsHide: true,
+        },
       );
 
       let stdout = "";
@@ -392,33 +625,106 @@ function runGuardCli(
 // ── sandbox library ─────────────────────────────────────────────────────────
 
 describe("#815 guard sandbox — targets resolve inside it or are refused", () => {
-  it("refuses escapes, absolute paths and linked-directory traversal", async () => {
+  it("refuses escapes, absolute paths, linked-directory traversal and non-regular targets", async () => {
     const { createGuardSandbox, SandboxEscapeError } = await loadSandboxLib();
+    const outside = mkdtempSync(path.join(os.tmpdir(), "bb822-outside-"));
+    scratch.push(outside);
+    const sentinel = path.join(outside, "EXTERNAL_SENTINEL.ts");
+    writeFileSync(sentinel, EXTERNAL_SENTINEL_BODY);
+    const sentinelBefore = hashFile(sentinel);
+
     const sandbox = createGuardSandbox({
       repoRoot,
       prefix: "bb815-unit-",
       copyDirs: [".storybook"],
       linkDirs: ["node_modules"],
-      copyRootFiles: false,
     });
     scratch.push(sandbox.root);
     try {
+      // Hostile entries planted INSIDE the sandbox, the way `cpSync` would carry
+      // them in from a caller's checkout.
+      const planted = path.join(sandbox.root, "planted");
+      mkdirSync(path.join(planted, "a-directory"), { recursive: true });
+      const links = trySymlinks(planted, outside, sentinel);
+      const hardlinked = tryHardlink(
+        sentinel,
+        path.join(planted, "hardlink.ts"),
+      );
+
+      /** Every input `resolve()` must refuse, named so a failure says which. */
+      const matrix: Array<[string, unknown]> = [
+        ["empty string", ""],
+        ["whitespace only", "   "],
+        ["null", null],
+        ["undefined", undefined],
+        ["number", 42],
+        ["object", {}],
+        ["parent escape", "../outside.ts"],
+        ["grandparent escape", "../../outside.ts"],
+        [
+          "sideways into the checkout",
+          `../${path.basename(repoRoot)}/${SB_TARGET_REL}`,
+        ],
+        ["absolute checkout path", path.join(repoRoot, SB_TARGET_REL)],
+        ["absolute temp path", path.resolve(os.tmpdir(), "bb822-escape.ts")],
+        ["normalising escape", "a/../../outside.ts"],
+        ["trailing-slash parent", "../"],
+        ["dot", "."],
+        ["dot dot", ".."],
+        ["the sandbox root itself", "./"],
+        ["a linked directory itself", "node_modules"],
+        ["through a linked directory", "node_modules/typescript/package.json"],
+        ["deep through a linked directory", "node_modules/.bin/anything"],
+        ["an existing directory as the target", ".storybook"],
+        ["a planted directory as the target", "planted/a-directory"],
+      ];
+      if (hardlinked) {
+        matrix.push(["a hard-linked target", "planted/hardlink.ts"]);
+      }
+      if (links.available) {
+        matrix.push(
+          ["a symlink AT the exact target", "planted/file-link.ts"],
+          ["a DANGLING symlink at the target", "planted/dangling.ts"],
+          ["a symlinked directory as the target", "planted/dir-link"],
+          ["through a symlinked directory", "planted/dir-link/inside.ts"],
+        );
+      }
+
+      for (const [label, input] of matrix) {
+        expect(
+          () => sandbox.resolve(input as string),
+          `resolve(${JSON.stringify(input)}) — ${label} — must refuse`,
+        ).toThrow(SandboxEscapeError);
+        expect(
+          () => sandbox.write(input as string, "should never be written"),
+          `write(${JSON.stringify(input)}) — ${label} — must refuse`,
+        ).toThrow(SandboxEscapeError);
+      }
+
+      // The matrix must not silently shrink. 23 inputs is the full set; a host
+      // that cannot create links contributes fewer, and says so.
+      expect(
+        matrix.length,
+        `escape-refusal matrix shrank (symlinks=${links.available}, hardlinks=${hardlinked})`,
+      ).toBeGreaterThanOrEqual(links.available && hardlinked ? 26 : 21);
+
+      // Nothing outside the sandbox was touched by any refusal.
+      expect(hashFile(sentinel)).toBe(sentinelBefore);
+
+      // …and the legitimate targets still work.
       expect(sandbox.resolve(SB_TARGET_REL)).toBe(
         path.join(sandbox.root, SB_TARGET_REL),
       );
-      for (const escape of [
-        "../outside.ts",
-        "../../outside.ts",
-        `../${path.basename(repoRoot)}/${SB_TARGET_REL}`,
-        path.join(repoRoot, SB_TARGET_REL),
-        "node_modules/typescript/package.json",
-        "",
-      ]) {
-        expect(
-          () => sandbox.resolve(escape),
-          `resolve(${JSON.stringify(escape)}) must refuse`,
-        ).toThrow(SandboxEscapeError);
-      }
+      expect(sandbox.write(SB_TARGET_REL, "// patched\n")).toBe(
+        path.join(sandbox.root, SB_TARGET_REL),
+      );
+      expect(readFileSync(path.join(sandbox.root, SB_TARGET_REL), "utf8")).toBe(
+        "// patched\n",
+      );
+      // A target whose directories do not exist yet is created, not refused.
+      const fresh = sandbox.write(TYPE_TARGET_REL, "export {};\n");
+      expect(fresh).toBe(path.join(sandbox.root, TYPE_TARGET_REL));
+      expect(lstatSync(fresh).isFile()).toBe(true);
     } finally {
       sandbox.dispose();
     }
@@ -432,7 +738,6 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         prefix: "bb815-nested-",
         copyDirs: [],
         linkDirs: [],
-        copyRootFiles: false,
         env: { BB_GUARD_SANDBOX_BASE: repoRoot },
       }),
     ).toThrow(GuardSandboxError);
@@ -449,7 +754,6 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         location: "repo",
         copyDirs: [],
         linkDirs: [],
-        copyRootFiles: false,
       }),
     ).toThrow(GuardSandboxError);
     // The refusal must not leave the rejected directory behind.
@@ -462,7 +766,6 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
       location: "repo",
       copyDirs: [],
       linkDirs: [],
-      copyRootFiles: false,
     });
     try {
       expect(existsSync(sandbox.root)).toBe(true);
@@ -482,7 +785,6 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         location: "repo",
         copyDirs: [],
         linkDirs: [],
-        copyRootFiles: false,
       }),
     ).toThrow(GuardSandboxError);
   });
@@ -504,6 +806,344 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
     expect(spaced.spacedSegment || spaced.base.includes(" ")).toBe(true);
     expect(plain.spacedSegment).toBe(false);
   });
+});
+
+// ── #822 A: only allowlisted root config is copied ──────────────────────────
+
+describe("#822 root-file allowlist — a sandbox never copies .git or secrets", () => {
+  it("has no broad-copy API left to ask for", async () => {
+    const { createGuardSandbox, GuardSandboxError, rootFileRefusal } =
+      await loadSandboxLib();
+    const shared = {
+      repoRoot,
+      prefix: "bb822-api-",
+      copyDirs: [],
+      linkDirs: [],
+    };
+
+    // The retired switches must throw, not be quietly ignored.
+    for (const retired of [
+      { copyRootFiles: true },
+      { copyRootFiles: false },
+      { excludeRootFiles: ["package.json"] },
+    ]) {
+      expect(
+        () => createGuardSandbox({ ...shared, ...retired }),
+        `${Object.keys(retired)[0]} must be refused, not ignored`,
+      ).toThrow(GuardSandboxError);
+    }
+    // …and so must any other unrecognised option, so a typo cannot re-open one.
+    expect(() =>
+      createGuardSandbox({ ...shared, copyEverything: true }),
+    ).toThrow(GuardSandboxError);
+
+    // The hard deny list stands even if a future allowlist names one of these.
+    for (const name of [
+      ".git",
+      ".env",
+      ".env.local",
+      ".env.production",
+      ".npmrc",
+      ".netrc",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      "id_rsa",
+      "server.pem",
+      "../outside.json",
+      "nested/dir.json",
+    ]) {
+      expect(rootFileRefusal(name), `${name} must be refused`).toBeTruthy();
+      expect(() =>
+        createGuardSandbox({ ...shared, rootFiles: [name] }),
+      ).toThrow(GuardSandboxError);
+    }
+    expect(rootFileRefusal("tsconfig.json")).toBeNull();
+
+    // Fail loudly rather than build a partial sandbox that could false-pass.
+    expect(() =>
+      createGuardSandbox({ ...shared, rootFiles: ["no-such-config.json"] }),
+    ).toThrow(/required root file is missing/);
+    expect(() => createGuardSandbox({ ...shared, rootFiles: ["src"] })).toThrow(
+      /not a regular file/,
+    );
+
+    // The rejections leave nothing behind.
+    expect(git(["status", "--porcelain"])).not.toMatch(/bb822-api-/);
+  });
+
+  it("copies only the named config out of a real linked worktree", async () => {
+    const { createGuardSandbox } = await loadSandboxLib();
+    const fx = makeLinkedWorktreeFixture();
+    expect(
+      fx.dotGitIsRegularFile,
+      "fixture must be a LINKED worktree: .git has to be a regular gitdir: file",
+    ).toBe(true);
+    const before = fx.state();
+
+    const variants = [
+      {
+        label: "CI-25",
+        opts: {
+          prefix: "bb822-type-",
+          copyDirs: ["src", "shared"],
+          linkDirs: ["node_modules"],
+          rootFiles: ["tsconfig.json"],
+        },
+      },
+      {
+        label: "CI-27",
+        opts: {
+          prefix: ".bb-guard-sandbox-",
+          location: "repo" as const,
+          copyDirs: ["src", "shared", ".storybook"],
+          linkDirs: ["public"],
+          rootFiles: sbRootFiles,
+        },
+      },
+    ];
+
+    for (const { label, opts } of variants) {
+      const sandbox = createGuardSandbox({ repoRoot: fx.worktree, ...opts });
+      scratch.push(sandbox.root);
+      try {
+        expect(
+          prohibitedPresentIn(sandbox.root),
+          `${label} sandbox copied files it must never copy`,
+        ).toEqual([]);
+        expect(existsSync(path.join(sandbox.root, ".git"))).toBe(false);
+        // Exactly the allowlist, nothing more: every other entry is a copied
+        // directory or a link.
+        const files = readdirSync(sandbox.root, { withFileTypes: true })
+          .filter((e) => e.isFile())
+          .map((e) => e.name)
+          .sort();
+        expect(files, `${label} root files`).toEqual(
+          [...opts.rootFiles].sort(),
+        );
+      } finally {
+        sandbox.dispose();
+      }
+    }
+
+    expect(fx.state(), "the linked worktree must be untouched").toEqual(before);
+  }, 60_000);
+
+  it("keeps .git and the secret sentinels out DURING active sabotage", async () => {
+    const mod = await loadTypeGuard();
+    const fx = makeLinkedWorktreeFixture();
+    const before = fx.state();
+    const seen: Array<{
+      root: string;
+      sabotageLive: boolean;
+      prohibited: string[];
+      state: Record<string, string | null>;
+    }> = [];
+
+    const code = mod.runTypeProgramMembership({
+      repoRoot: fx.worktree,
+      env: { ...process.env, TYPE_GUARD_MANIFEST: fx.manifestPath },
+      // The guard is blocked inside this callback with the probe already
+      // written — a barrier, not a sleep. Everything observed here is observed
+      // WHILE the sabotage is live, before any cleanup can run.
+      listFiles: (root: string) => {
+        const listing = `${fx.worktree.replace(/\\/g, "/")}/src/guard-a.ts`;
+        if (path.resolve(root) !== path.resolve(fx.worktree)) {
+          scratch.push(root);
+          seen.push({
+            root,
+            sabotageLive: existsSync(path.join(root, TYPE_TARGET_REL)),
+            prohibited: prohibitedPresentIn(root),
+            state: fx.state(),
+          });
+        }
+        return listing;
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(seen, "phase 2 must run against a sandbox").toHaveLength(1);
+    expect(
+      seen[0].sabotageLive,
+      "sabotage must really be live at the observation point",
+    ).toBe(true);
+    expect(
+      seen[0].prohibited,
+      "prohibited files were present in the sandbox while sabotage was live",
+    ).toEqual([]);
+    expect(seen[0].state).toEqual(before);
+    expect(fx.state()).toEqual(before);
+  }, 60_000);
+
+  it("keeps them out after SIGKILL, with the sandbox still on disk", async () => {
+    const fx = makeLinkedWorktreeFixture();
+    const before = fx.state();
+    const session = await startBarrier("type", {
+      checkoutRoot: fx.worktree,
+      env: { ...process.env, TYPE_GUARD_MANIFEST: fx.manifestPath },
+    });
+    sessions.push(session);
+
+    // Live sabotage, in the sandbox only.
+    expect(existsSync(session.active.sandboxTarget)).toBe(true);
+    expect(prohibitedPresentIn(session.active.sandboxRoot)).toEqual([]);
+
+    session.child.kill("SIGKILL");
+    const result = await session.exited;
+    expect(result.signal ?? result.code).not.toBe(0);
+
+    // Untrappable kill: no cleanup ran, so the sandbox is still there — and it
+    // still holds none of the prohibited files.
+    expect(
+      existsSync(session.active.sandboxRoot),
+      "the SIGKILL must have landed while the sandbox was live",
+    ).toBe(true);
+    expect(existsSync(session.active.sandboxTarget)).toBe(true);
+    expect(
+      prohibitedPresentIn(session.active.sandboxRoot),
+      "a hard-killed sandbox stranded prohibited files on disk",
+    ).toEqual([]);
+    expect(existsSync(path.join(session.active.sandboxRoot, ".git"))).toBe(
+      false,
+    );
+    expect(fx.state()).toEqual(before);
+  }, 90_000);
+});
+
+// ── #822 B: the final path component is contained too ───────────────────────
+
+describe("#822 final-component containment — a symlinked target is refused", () => {
+  /**
+   * Build a disposable checkout in which `rel` IS a file symlink to a sentinel
+   * outside the sandbox — the shape `cpSync` preserves into the sandbox.
+   */
+  function makeSymlinkTargetFixture(rel: string): {
+    repo: string;
+    sentinel: string;
+    manifestPath: string;
+    available: boolean;
+  } {
+    const base = mkdtempSync(path.join(os.tmpdir(), "bb822-sym-"));
+    scratch.push(base);
+    const repo = path.join(base, "repo");
+    const outside = path.join(base, "outside");
+    mkdirSync(outside, { recursive: true });
+    const sentinel = path.join(outside, "EXTERNAL_SENTINEL.ts");
+    writeFileSync(sentinel, EXTERNAL_SENTINEL_BODY);
+
+    const run = (args: string[]) => {
+      const r = spawnSync("git", args, {
+        cwd: repo,
+        encoding: "utf8",
+        windowsHide: true,
+      });
+      if (r.status !== 0)
+        throw new Error(`git ${args.join(" ")}: ${r.stdout}${r.stderr}`);
+    };
+    mkdirSync(path.join(repo, "src/components"), { recursive: true });
+    mkdirSync(path.join(repo, "src/test"), { recursive: true });
+    mkdirSync(path.join(repo, "shared"), { recursive: true });
+    mkdirSync(path.join(repo, ".storybook"), { recursive: true });
+    mkdirSync(path.join(repo, "node_modules"), { recursive: true });
+    writeFileSync(
+      path.join(repo, "src/components/Demo.stories.tsx"),
+      "export default {};\n",
+    );
+    writeFileSync(path.join(repo, "src/guard-a.ts"), "export {};\n");
+    writeFileSync(path.join(repo, "shared/kind.ts"), "export {};\n");
+    writeFileSync(
+      path.join(repo, "package.json"),
+      '{ "name": "fx", "private": true }\n',
+    );
+    writeFileSync(
+      path.join(repo, "tsconfig.json"),
+      '{ "include": ["src", "shared"] }\n',
+    );
+    for (const name of sbRootFiles) {
+      writeFileSync(path.join(repo, name), "export default {};\n");
+    }
+    writeFileSync(
+      path.join(repo, ".gitignore"),
+      "node_modules\n.bb-guard-sandbox-*/\n",
+    );
+    if (rel !== SB_TARGET_REL) {
+      writeFileSync(path.join(repo, SB_TARGET_REL), EXTERNAL_SENTINEL_BODY);
+    }
+    run(["init", "-q", "-b", "main"]);
+    run(["config", "user.email", "fixture@example.invalid"]);
+    run(["config", "user.name", "Fixture"]);
+    run(["config", "core.hooksPath", ""]);
+    run(["add", "-A"]);
+    run(["commit", "-qm", "base"]);
+
+    let available = true;
+    try {
+      symlinkSync(sentinel, path.join(repo, rel), "file");
+    } catch {
+      available = false;
+    }
+    const manifestPath = path.join(base, "manifest.json");
+    writeFileSync(
+      manifestPath,
+      JSON.stringify({ guardFiles: ["src/guard-a.ts"] }),
+    );
+    return { repo, sentinel, manifestPath, available };
+  }
+
+  it("CI-25 refuses a symlinked probe path and the sentinel is byte-identical", async () => {
+    const mod = await loadTypeGuard();
+    const fx = makeSymlinkTargetFixture(TYPE_TARGET_REL);
+    if (!fx.available) {
+      // Honest skip: Windows needs Developer Mode to create file symlinks. The
+      // Linux CI runner always can, so this case is covered on every PR.
+      expect(fx.available, "file symlinks unavailable on this host").toBe(
+        false,
+      );
+      return;
+    }
+    const before = hashFile(fx.sentinel);
+    const code = mod.runTypeProgramMembership({
+      repoRoot: fx.repo,
+      env: { ...process.env, TYPE_GUARD_MANIFEST: fx.manifestPath },
+      listFiles: () => `${fx.repo.replace(/\\/g, "/")}/src/guard-a.ts`,
+    });
+    expect(code, "a refusal is could-not-run, never a pass").toBe(2);
+    expect(
+      hashFile(fx.sentinel),
+      "the guard wrote through the symlink to a file outside the sandbox",
+    ).toBe(before);
+    expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
+  }, 60_000);
+
+  it("CI-27 refuses a symlinked .storybook/main.ts and spends no probe run", async () => {
+    const mod = await loadStorybookGuard();
+    const fx = makeSymlinkTargetFixture(SB_TARGET_REL);
+    if (!fx.available) {
+      expect(fx.available, "file symlinks unavailable on this host").toBe(
+        false,
+      );
+      return;
+    }
+    const before = hashFile(fx.sentinel);
+    let probes = 0;
+    const code = mod.runStorybookEmptySuiteGuard(
+      {},
+      {
+        repoRoot: fx.repo,
+        probe: () => {
+          probes += 1;
+          return syntheticProbe(15);
+        },
+      },
+    );
+    expect(code).toBe(2);
+    expect(probes, "refuse before spending a probe run").toBe(0);
+    expect(
+      hashFile(fx.sentinel),
+      "the guard wrote through the symlink to a file outside the sandbox",
+    ).toBe(before);
+    expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
+  }, 60_000);
 });
 
 // ── CI-25 ───────────────────────────────────────────────────────────────────
@@ -744,7 +1384,7 @@ describe("#815 CI-27 verify-storybook-empty-suite", () => {
               location: "repo",
               copyDirs: ["src", "shared", ".storybook"],
               linkDirs: ["public"],
-              excludeRootFiles: ["package.json"],
+              rootFiles: sbRootFiles,
             });
             return breakCleanup ? withFailingDispose(sandbox) : sandbox;
           },
@@ -896,16 +1536,55 @@ describe("#815 static wiring", () => {
         /from "\.\/lib\/guard-sandbox\.mjs"/,
       );
       expect(src, `${label} must resolve targets through it`).toMatch(
-        /sandbox\.resolve\(/,
+        /sandbox\.(resolve|write)\(/,
       );
     }
 
-    expect(typeSrc).toMatch(/writeFileSync\(\s*\n?\s*sabotageAbs/);
-    expect(sbSrc).toMatch(/writeFileSync\(sabotageTarget/);
-    // No write may be aimed at a REPO_ROOT-derived path again.
-    expect(typeSrc).not.toMatch(/writeFileSync\([^)]*REPO_ROOT/);
-    expect(sbSrc).not.toMatch(/writeFileSync\(\s*STORYBOOK_MAIN\b/);
+    // Every sabotage write goes through the sandbox's contained writer, which
+    // re-checks the whole path (final component included) and creates with `wx`.
+    expect(typeSrc).toMatch(/sandbox\.write\(\s*SABOTAGE_REL/);
+    expect(sbSrc).toMatch(/sandbox\.write\(STORYBOOK_MAIN_REL/);
+    // No bare writeFileSync may reappear in either guard.
+    for (const [label, src] of [
+      ["verify-type-program-membership.mjs", typeSrc],
+      ["verify-storybook-empty-suite.mjs", sbSrc],
+    ] as const) {
+      expect(src, `${label} must not write files directly`).not.toMatch(
+        /\bwriteFileSync\(/,
+      );
+    }
     // Restoring the checkout is no longer the safety mechanism.
     expect(sbSrc).not.toMatch(/installSignalRestore/);
+  });
+
+  it("neither guard can ask for a blanket root copy", () => {
+    const libSrc = readFileSync(
+      path.join(repoRoot, "scripts/lib/guard-sandbox.mjs"),
+      "utf8",
+    );
+    for (const [label, src] of [
+      [
+        "verify-type-program-membership.mjs",
+        readFileSync(typeGuardSrc, "utf8"),
+      ],
+      [
+        "verify-storybook-empty-suite.mjs",
+        readFileSync(storybookGuardSrc, "utf8"),
+      ],
+    ] as const) {
+      expect(src, `${label} must name its root files explicitly`).toMatch(
+        /rootFiles:\s*SANDBOX_ROOT_FILES/,
+      );
+      expect(
+        src,
+        `${label} must not use the retired blanket switches`,
+      ).not.toMatch(/copyRootFiles|excludeRootFiles:/);
+    }
+    // The library must not read the checkout root as a directory listing at all.
+    expect(
+      libSrc,
+      "guard-sandbox.mjs must not enumerate the repository root",
+    ).not.toMatch(/readdirSync\(\s*absRepoRoot/);
+    expect(libSrc).toMatch(/FORBIDDEN_ROOT_FILES/);
   });
 });

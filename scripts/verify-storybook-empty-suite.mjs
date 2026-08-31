@@ -14,6 +14,12 @@
 // developer's tree. A healthy count of 0 — which is what an incomplete sandbox
 // would produce — fails loudly as "collected 0 tests"; it can never be mistaken
 // for successful sabotage.
+//
+// #822 review: the sandbox copies only the root config this guard names
+// (SANDBOX_ROOT_FILES) — never the whole root, which pulled a linked worktree's
+// `.git` and any untracked `.env*`/`.npmrc` in with it — and the patch is written
+// through `sandbox.write`, which refuses a symlinked `.storybook/main.ts` instead
+// of following it out of the sandbox.
 
 import { spawnSync } from "node:child_process";
 import {
@@ -22,7 +28,6 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -356,8 +361,43 @@ function probeStorybook(env, cwd = REPO_ROOT) {
 }
 
 /**
+ * Root configuration this guard's sandbox needs — an explicit ALLOWLIST, not
+ * "every file in the root except package.json" (#822 review).
+ *
+ * Determined by removal, one candidate at a time, each measured with a real
+ * Storybook Vitest run in the sandbox. The three below are load-bearing:
+ *
+ *  - `vitest.workspace.ts` — without it there is no `storybook` project at all:
+ *    `Error: No projects matched the filter "storybook"`.
+ *  - `vitest.config.ts` — the workspace lists it by name: `Workspace config file
+ *    "vitest.workspace.ts" references a non-existing file or a directory`.
+ *  - `vite.config.ts` — the storybook project is declared `extends:
+ *    "vite.config.ts"`: `failed to load config from …/vite.config.ts`.
+ *
+ * Three further candidates were measured and are NOT required — `postcss.config.js`,
+ * `tailwind.config.ts` and `tsconfig.json` each still gave `numTotalTests: 15`,
+ * all passing, when omitted. This sandbox is nested inside the checkout, and both
+ * PostCSS and esbuild search upward from the project root, so they resolve the
+ * checkout's copies read-only. They are therefore not copied.
+ *
+ * `package.json` is deliberately ABSENT: Vite derives its workspace root (and
+ * therefore `server.fs.allow`) from the nearest `package.json`, so one of its own
+ * would make the sandbox the workspace root and put the checkout's real
+ * `node_modules` off-limits — the measured `healthy=0` failure described below.
+ *
+ * Explicitly NOT copied, and never to be added: `.git` (a regular `gitdir:` file
+ * in a linked worktree, pointing at the real repository), `.env*`, `.npmrc`,
+ * lockfiles, and any other untracked or machine-local root file.
+ */
+export const SANDBOX_ROOT_FILES = [
+  "vite.config.ts",
+  "vitest.config.ts",
+  "vitest.workspace.ts",
+];
+
+/**
  * Disposable tree both phases are served from: the stories (`src/`), the config
- * dir this guard patches (`.storybook/`) and the root vite/vitest configs.
+ * dir this guard patches (`.storybook/`) and the root vite/vitest configs above.
  *
  * Three deliberate choices, all forced by how Vite decides what it may serve —
  * `server.fs.allow` defaults to the workspace root, which Vite derives from the
@@ -369,8 +409,8 @@ function probeStorybook(env, cwd = REPO_ROOT) {
  *    cannot be fetched; CI measured every story file failing to import and
  *    `healthy=0`. Nesting also makes path space-ness match the checkout by
  *    construction, which #707 requires.
- *  - `excludeRootFiles: ["package.json"]` — with one of its own, the sandbox
- *    becomes the workspace root again and the same denial returns.
+ *  - no `package.json` in `rootFiles` — with one of its own, the sandbox becomes
+ *    the workspace root again and the same denial returns.
  *  - no `node_modules` link — Node's resolution already walks up to the
  *    checkout's, and the realpath stays inside the allowed workspace root.
  *
@@ -387,7 +427,7 @@ function defaultCreateSandbox({ repoRoot, env }) {
     location: "repo",
     copyDirs: ["src", "shared", ".storybook"],
     linkDirs: ["public"],
-    excludeRootFiles: ["package.json"],
+    rootFiles: SANDBOX_ROOT_FILES,
     env,
   });
 }
@@ -627,7 +667,17 @@ function runPhases({ env, spaced, sandbox, probeImpl, repoRoot }) {
       // Sandbox copy only — $REPO_ROOT/.storybook/main.ts is opened for reading
       // nowhere in this function, and never for writing (#815). Nothing is
       // restored afterwards because nothing in the checkout was touched.
-      writeFileSync(sabotageTarget, sabotaged, "utf8");
+      // sandbox.write re-checks every path component (the final one included)
+      // and creates the file with `wx`, so a symlink at the target cannot be
+      // followed out of the sandbox (#822 review).
+      try {
+        sandbox.write(STORYBOOK_MAIN_REL, sabotaged);
+      } catch (err) {
+        logLine(
+          `CANNOT CHECK: refusing to patch ${STORYBOOK_MAIN_REL}: ${messageOf(err)}`,
+        );
+        return EXIT_CANNOT_CHECK;
+      }
       sabProbe = probeImpl(env, sandbox.root);
       if (sabProbe.parseError || sabProbe.browserMissing) {
         logLine(
