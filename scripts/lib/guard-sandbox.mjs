@@ -75,11 +75,17 @@ export const SPACED_SEGMENT = "spaced path";
  * the sandbox can outlive the process (SIGKILL leaves it on disk by design) and
  * these are exactly the files that must not be duplicated when it does.
  *
+ * Every pattern here is case-insensitive on purpose: NTFS and the default
+ * macOS filesystem are case-insensitive, so `.GIT` and `.git` name the same
+ * file there. A case-sensitive rule would be bypassable by spelling alone,
+ * which is exactly the "future caller who adds a name without thinking" this
+ * lock exists to catch. The suite asserts the `i` flag on every entry.
+ *
  * @type {Array<{ test: RegExp, why: string }>}
  */
 export const FORBIDDEN_ROOT_FILES = [
   {
-    test: /^\.git$/,
+    test: /^\.git$/i,
     why: "in a linked worktree this is a regular `gitdir:` file pointing at the real repository (#787 repository-selection class)",
   },
   { test: /^\.env(\..+)?$/i, why: "environment/secret file" },

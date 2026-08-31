@@ -247,6 +247,35 @@ function syntheticProbe(count: number) {
 
 // ── #822 fixtures: link capability, linked worktrees, external sentinels ────
 
+/**
+ * Sizes of the three escape-matrix groups, asserted exactly.
+ *
+ * Totals derive from these: 21 on a host with neither link type, 22 with hard
+ * links, 25 with symlinks, 26 with both. docs/ops/guards.md quotes the same
+ * four figures; a change here fails the suite until they agree.
+ */
+const ESCAPE_GROUP_SIZES = { base: 21, hardLink: 1, symLink: 4 } as const;
+
+const ESCAPE_COUNT_HINT =
+  "escape-refusal matrix changed size — update ESCAPE_GROUP_SIZES and the counts in docs/ops/guards.md";
+
+/** Can this host create symlinks at all? Probed once, outside any test. */
+const SYMLINKS_AVAILABLE = ((): boolean => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "bb822-linkprobe-"));
+  try {
+    symlinkSync(
+      path.join(dir, "target.txt"),
+      path.join(dir, "link.txt"),
+      "file",
+    );
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+})();
+
 const EXTERNAL_SENTINEL_BODY =
   'const c = { stories: ["../src/**/*.stories.tsx"] };\nexport default c;\n// EXTERNAL SENTINEL — must stay byte-identical\n';
 
@@ -651,8 +680,15 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         path.join(planted, "hardlink.ts"),
       );
 
-      /** Every input `resolve()` must refuse, named so a failure says which. */
-      const matrix: Array<[string, unknown]> = [
+      /**
+       * Every input `resolve()` must refuse, named so a failure says which.
+       *
+       * The inputs are grouped by the host capability they need, and the
+       * totals below are computed from these arrays rather than written out
+       * in prose — the previous comment claimed "23" when the real figure was
+       * 21/22/26 depending on the host, and nothing caught the drift.
+       */
+      const baseInputs: Array<[string, unknown]> = [
         ["empty string", ""],
         ["whitespace only", "   "],
         ["null", null],
@@ -678,17 +714,23 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         ["an existing directory as the target", ".storybook"],
         ["a planted directory as the target", "planted/a-directory"],
       ];
-      if (hardlinked) {
-        matrix.push(["a hard-linked target", "planted/hardlink.ts"]);
-      }
-      if (links.available) {
-        matrix.push(
-          ["a symlink AT the exact target", "planted/file-link.ts"],
-          ["a DANGLING symlink at the target", "planted/dangling.ts"],
-          ["a symlinked directory as the target", "planted/dir-link"],
-          ["through a symlinked directory", "planted/dir-link/inside.ts"],
-        );
-      }
+      /** Needs a hard link: same volume, no privilege. */
+      const hardLinkInputs: Array<[string, unknown]> = [
+        ["a hard-linked target", "planted/hardlink.ts"],
+      ];
+      /** Needs symlink creation: Developer Mode / root-equivalent on Windows. */
+      const symLinkInputs: Array<[string, unknown]> = [
+        ["a symlink AT the exact target", "planted/file-link.ts"],
+        ["a DANGLING symlink at the target", "planted/dangling.ts"],
+        ["a symlinked directory as the target", "planted/dir-link"],
+        ["through a symlinked directory", "planted/dir-link/inside.ts"],
+      ];
+
+      const matrix: Array<[string, unknown]> = [
+        ...baseInputs,
+        ...(hardlinked ? hardLinkInputs : []),
+        ...(links.available ? symLinkInputs : []),
+      ];
 
       for (const [label, input] of matrix) {
         expect(
@@ -701,12 +743,28 @@ describe("#815 guard sandbox — targets resolve inside it or are refused", () =
         ).toThrow(SandboxEscapeError);
       }
 
-      // The matrix must not silently shrink. 23 inputs is the full set; a host
-      // that cannot create links contributes fewer, and says so.
+      // The matrix must not silently shrink — per group, not just in total, so
+      // the four symlink cases cannot vanish behind an unavailable hard link.
+      // These sizes are the figures quoted in docs/ops/guards.md; changing a
+      // group is meant to fail here until that table is updated too.
+      expect(baseInputs.length, ESCAPE_COUNT_HINT).toBe(
+        ESCAPE_GROUP_SIZES.base,
+      );
+      expect(hardLinkInputs.length, ESCAPE_COUNT_HINT).toBe(
+        ESCAPE_GROUP_SIZES.hardLink,
+      );
+      expect(symLinkInputs.length, ESCAPE_COUNT_HINT).toBe(
+        ESCAPE_GROUP_SIZES.symLink,
+      );
+      // …and the assembled matrix is exactly the groups this host can run.
       expect(
         matrix.length,
-        `escape-refusal matrix shrank (symlinks=${links.available}, hardlinks=${hardlinked})`,
-      ).toBeGreaterThanOrEqual(links.available && hardlinked ? 26 : 21);
+        `escape-refusal matrix mis-assembled (symlinks=${links.available}, hardlinks=${hardlinked})`,
+      ).toBe(
+        baseInputs.length +
+          (hardlinked ? hardLinkInputs.length : 0) +
+          (links.available ? symLinkInputs.length : 0),
+      );
 
       // Nothing outside the sandbox was touched by any refusal.
       expect(hashFile(sentinel)).toBe(sentinelBefore);
@@ -870,6 +928,78 @@ describe("#822 root-file allowlist — a sandbox never copies .git or secrets", 
 
     // The rejections leave nothing behind.
     expect(git(["status", "--porcelain"])).not.toMatch(/bb822-api-/);
+  });
+
+  it("denies the forbidden root files whatever their case", async () => {
+    const {
+      createGuardSandbox,
+      GuardSandboxError,
+      rootFileRefusal,
+      FORBIDDEN_ROOT_FILES,
+    } = await loadSandboxLib();
+    const shared = {
+      repoRoot,
+      prefix: "bb822-case-",
+      copyDirs: [],
+      linkDirs: [],
+    };
+
+    // Structural: NTFS and the default macOS filesystem are case-insensitive,
+    // so a rule without `i` is bypassable by spelling. Asserting the flag on
+    // the data itself means a future entry cannot reintroduce the hole.
+    for (const { test, why } of FORBIDDEN_ROOT_FILES) {
+      expect(
+        test.flags,
+        `${test} must be case-insensitive (${why}) — a case-sensitive deny rule is bypassable on NTFS/APFS`,
+      ).toContain("i");
+    }
+
+    // Behavioural: the spelling that slipped past the old `/^\.git$/` rule,
+    // plus a case variant of every other entry.
+    for (const name of [
+      ".GIT",
+      ".Git",
+      ".gIt",
+      ".ENV",
+      ".Env.Local",
+      ".env.PRODUCTION",
+      ".NPMRC",
+      ".NetRC",
+      "_NETRC",
+      "PACKAGE-LOCK.JSON",
+      "Yarn.Lock",
+      "PNPM-LOCK.YAML",
+      "Bun.Lockb",
+      "ID_RSA",
+      "Id_Ed25519",
+      "SERVER.PEM",
+      "Cert.PFX",
+      "A.KeyStore",
+    ]) {
+      expect(
+        rootFileRefusal(name),
+        `${name} must be refused whatever its case`,
+      ).toBeTruthy();
+      expect(
+        () => createGuardSandbox({ ...shared, rootFiles: [name] }),
+        `createGuardSandbox must refuse rootFiles: [${JSON.stringify(name)}]`,
+      ).toThrow(GuardSandboxError);
+    }
+
+    // The case rule must not swallow legitimate names that merely look similar.
+    for (const allowed of [
+      "gitignore.json",
+      "envcheck.ts",
+      "tsconfig.json",
+      "vite.config.ts",
+    ]) {
+      expect(
+        rootFileRefusal(allowed),
+        `${allowed} must stay allowed`,
+      ).toBeNull();
+    }
+
+    expect(git(["status", "--porcelain"])).not.toMatch(/bb822-case-/);
   });
 
   it("copies only the named config out of a real linked worktree", async () => {
@@ -1090,60 +1220,82 @@ describe("#822 final-component containment — a symlinked target is refused", (
     return { repo, sentinel, manifestPath, available };
   }
 
-  it("CI-25 refuses a symlinked probe path and the sentinel is byte-identical", async () => {
-    const mod = await loadTypeGuard();
-    const fx = makeSymlinkTargetFixture(TYPE_TARGET_REL);
-    if (!fx.available) {
-      // Honest skip: Windows needs Developer Mode to create file symlinks. The
-      // Linux CI runner always can, so this case is covered on every PR.
-      expect(fx.available, "file symlinks unavailable on this host").toBe(
-        false,
-      );
-      return;
-    }
-    const before = hashFile(fx.sentinel);
-    const code = mod.runTypeProgramMembership({
-      repoRoot: fx.repo,
-      env: { ...process.env, TYPE_GUARD_MANIFEST: fx.manifestPath },
-      listFiles: () => `${fx.repo.replace(/\\/g, "/")}/src/guard-a.ts`,
-    });
-    expect(code, "a refusal is could-not-run, never a pass").toBe(2);
-    expect(
-      hashFile(fx.sentinel),
-      "the guard wrote through the symlink to a file outside the sandbox",
-    ).toBe(before);
-    expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
-  }, 60_000);
-
-  it("CI-27 refuses a symlinked .storybook/main.ts and spends no probe run", async () => {
-    const mod = await loadStorybookGuard();
-    const fx = makeSymlinkTargetFixture(SB_TARGET_REL);
-    if (!fx.available) {
-      expect(fx.available, "file symlinks unavailable on this host").toBe(
-        false,
-      );
-      return;
-    }
-    const before = hashFile(fx.sentinel);
-    let probes = 0;
-    const code = mod.runStorybookEmptySuiteGuard(
-      {},
-      {
+  // These two are the headline evidence for the containment fix. On a host
+  // that cannot create symlinks they must report SKIPPED, never green: a
+  // passing test that asserted nothing reads as "verified" to anyone scanning
+  // the run, which is precisely the false confidence this suite exists to deny.
+  it.skipIf(!SYMLINKS_AVAILABLE)(
+    "CI-25 refuses a symlinked probe path and the sentinel is byte-identical",
+    async () => {
+      const mod = await loadTypeGuard();
+      const fx = makeSymlinkTargetFixture(TYPE_TARGET_REL);
+      expect(
+        fx.available,
+        "host can create symlinks, so the fixture must have planted one",
+      ).toBe(true);
+      const before = hashFile(fx.sentinel);
+      const code = mod.runTypeProgramMembership({
         repoRoot: fx.repo,
-        probe: () => {
-          probes += 1;
-          return syntheticProbe(15);
+        env: { ...process.env, TYPE_GUARD_MANIFEST: fx.manifestPath },
+        listFiles: () => `${fx.repo.replace(/\\/g, "/")}/src/guard-a.ts`,
+      });
+      expect(code, "a refusal is could-not-run, never a pass").toBe(2);
+      expect(
+        hashFile(fx.sentinel),
+        "the guard wrote through the symlink to a file outside the sandbox",
+      ).toBe(before);
+      expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
+    },
+    60_000,
+  );
+
+  it.skipIf(!SYMLINKS_AVAILABLE)(
+    "CI-27 refuses a symlinked .storybook/main.ts and spends no probe run",
+    async () => {
+      const mod = await loadStorybookGuard();
+      const fx = makeSymlinkTargetFixture(SB_TARGET_REL);
+      expect(
+        fx.available,
+        "host can create symlinks, so the fixture must have planted one",
+      ).toBe(true);
+      const before = hashFile(fx.sentinel);
+      let probes = 0;
+      const code = mod.runStorybookEmptySuiteGuard(
+        {},
+        {
+          repoRoot: fx.repo,
+          probe: () => {
+            probes += 1;
+            return syntheticProbe(15);
+          },
         },
-      },
-    );
-    expect(code).toBe(2);
-    expect(probes, "refuse before spending a probe run").toBe(0);
+      );
+      expect(code).toBe(2);
+      expect(probes, "refuse before spending a probe run").toBe(0);
+      expect(
+        hashFile(fx.sentinel),
+        "the guard wrote through the symlink to a file outside the sandbox",
+      ).toBe(before);
+      expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
+    },
+    60_000,
+  );
+
+  // The skips above are honest on a developer's Windows box, but they must not
+  // become a way for this coverage to disappear on CI. Every POSIX host can
+  // create symlinks, so anything other than "available" there is a defect.
+  it("keeps the symlink cases runnable wherever the OS allows them", () => {
+    if (process.platform === "win32") {
+      // Developer Mode (or an elevated shell) is optional on Windows; the
+      // Linux runner below is what keeps the two cases exercised every PR.
+      expect(typeof SYMLINKS_AVAILABLE).toBe("boolean");
+      return;
+    }
     expect(
-      hashFile(fx.sentinel),
-      "the guard wrote through the symlink to a file outside the sandbox",
-    ).toBe(before);
-    expect(readFileSync(fx.sentinel, "utf8")).toBe(EXTERNAL_SENTINEL_BODY);
-  }, 60_000);
+      SYMLINKS_AVAILABLE,
+      `symlinks must be creatable on ${process.platform} — the two containment cases silently skipped instead of running`,
+    ).toBe(true);
+  });
 });
 
 // ── CI-25 ───────────────────────────────────────────────────────────────────
@@ -1249,6 +1401,18 @@ describe("#815 CI-25 verify-type-program-membership", () => {
     const { SandboxEscapeError } = await loadSandboxLib();
     const before = repoState();
     let disposed = false;
+    // CI-25 writes its probe through `sandbox.write` and never calls
+    // `resolve`. An earlier version of this stub supplied only a throwing
+    // `resolve`, so the exit 2 actually came from `sandbox.write is not a
+    // function` — the right code for the wrong reason, pinning nothing. The
+    // call counters below are what keep that from happening again.
+    let writeCalls = 0;
+    let resolveCalls = 0;
+    const refuse = (rel: string) => {
+      throw new SandboxEscapeError(
+        `sabotage target ${rel} resolves outside the sandbox`,
+      );
+    };
     const code = mod.runTypeProgramMembership({
       listFiles: () => healthyListing(),
       createSandbox: () => ({
@@ -1256,15 +1420,25 @@ describe("#815 CI-25 verify-type-program-membership", () => {
         base: "",
         linkDirs: [],
         resolve: (rel: string) => {
-          throw new SandboxEscapeError(
-            `sabotage target ${rel} resolves outside the sandbox`,
-          );
+          resolveCalls += 1;
+          return refuse(rel);
+        },
+        write: (rel: string) => {
+          writeCalls += 1;
+          return refuse(rel);
         },
         dispose: () => {
           disposed = true;
         },
       }),
     });
+    expect(
+      writeCalls + resolveCalls,
+      "the guard never asked the sandbox for the target — this test would pass on a TypeError",
+    ).toBeGreaterThan(0);
+    expect(writeCalls, "CI-25 must route its probe through sandbox.write").toBe(
+      1,
+    );
     expect(code, "a refusal is could-not-run, never a pass").toBe(2);
     expect(disposed).toBe(true);
     expect(existsSync(typeTargetAbs)).toBe(false);

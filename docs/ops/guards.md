@@ -63,7 +63,10 @@ the retired `copyRootFiles` / `excludeRootFiles` options now throw if requested:
 
 `.git`, `.env*`, `.npmrc`, lockfiles, private-key material and every unnamed root
 file — tracked or untracked — are never copied, and a hard deny list
-(`FORBIDDEN_ROOT_FILES`) refuses them even if a future allowlist names one. This
+(`FORBIDDEN_ROOT_FILES`) refuses them even if a future allowlist names one. Every
+rule in that list is case-insensitive, because NTFS and the default macOS
+filesystem are not: a case-sensitive `.git` rule was bypassable by asking for
+`.GIT`, which is the same file there. This
 matters most for a **linked worktree**, where `.git` is a regular `gitdir:` file:
 copying it made the sandbox a second working tree for the real repository (the
 repository-selection class of #787), and the sandbox is explicitly allowed to
@@ -92,6 +95,22 @@ sandbox from a real disposable **linked worktree** and asserts `.git` and the
 secret sentinels are absent (during sabotage and after a forced kill), and points
 both exact targets at an external sentinel through a symlink that must be refused
 while the sentinel stays byte-identical.
+
+The escape-refusal matrix in that spec is grouped by the host capability each
+input needs, and the group sizes are asserted exactly (`ESCAPE_GROUP_SIZES`) so
+neither the matrix nor this table can drift:
+
+| host                                      | inputs |
+| ----------------------------------------- | ------ |
+| base — no links available                 | 21     |
+| \+ hard links (same volume, no privilege) | 22     |
+| \+ symlinks (Developer Mode on Windows)   | 25     |
+| both                                      | **26** |
+
+The two symlink-target cases `it.skipIf` themselves when the host cannot create
+symlinks, so they report **skipped** rather than a green test that asserted
+nothing; a companion assertion fails on any non-Windows platform where symlinks
+turn out to be unavailable, which keeps them exercised on the Linux runner.
 
 Manual falsification, checkout-safety (CI-27 has no automated seam-free case —
 running it end to end from inside `npm test` re-enters the Storybook Vitest
