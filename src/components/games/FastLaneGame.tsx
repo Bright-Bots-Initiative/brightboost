@@ -90,22 +90,39 @@ export function generateLookAhead(): LaneState {
   return { current, next };
 }
 
-export function bestLane(state: LaneState): number {
+const indicesWhere = (
+  lanes: [Signal, Signal, Signal],
+  predicate: (signal: Signal, index: number) => boolean,
+): number[] =>
+  lanes.map((s, i) => (predicate(s, i) ? i : -1)).filter((i) => i >= 0);
+
+/**
+ * Every lane that is equally optimal for this state, ranked by the same
+ * priority as before: safe now and next > safe now > safe > caution.
+ * The whole tie is returned so equally good picks earn equal credit.
+ */
+export function bestLanes(state: LaneState): number[] {
   const { current, next } = state;
   if (next) {
-    const bothSafe = current
-      .map((s, i) => (s === "safe" && next[i] === "safe" ? i : -1))
-      .filter((i) => i >= 0);
-    if (bothSafe.length > 0) return bothSafe[0];
-    const safeNow = current
-      .map((s, i) => (s === "safe" && next[i] !== "blocked" ? i : -1))
-      .filter((i) => i >= 0);
-    if (safeNow.length > 0) return safeNow[0];
+    const bothSafe = indicesWhere(
+      current,
+      (s, i) => s === "safe" && next[i] === "safe",
+    );
+    if (bothSafe.length > 0) return bothSafe;
+    const safeNow = indicesWhere(
+      current,
+      (s, i) => s === "safe" && next[i] !== "blocked",
+    );
+    if (safeNow.length > 0) return safeNow;
   }
-  const safeIdx = current.indexOf("safe");
-  if (safeIdx >= 0) return safeIdx;
-  const cautionIdx = current.indexOf("caution");
-  return cautionIdx >= 0 ? cautionIdx : 0;
+  const safe = indicesWhere(current, (s) => s === "safe");
+  if (safe.length > 0) return safe;
+  const caution = indicesWhere(current, (s) => s === "caution");
+  return caution.length > 0 ? caution : [0];
+}
+
+export function bestLane(state: LaneState): number {
+  return bestLanes(state)[0];
 }
 
 export function scorePick(signal: Signal, isBest: boolean): number {
@@ -271,7 +288,7 @@ function FastLaneCore({ onFinish }: { onFinish: (r: GameResult) => void }) {
       if (chosenLane !== null) return;
       setChosenLane(laneIdx);
       const signal = laneState.current[laneIdx];
-      const isBest = laneIdx === bestLane(laneState);
+      const isBest = bestLanes(laneState).includes(laneIdx);
       setScore((s) => s + scorePick(signal, isBest));
       setTotalRounds((r) => r + 1);
 
