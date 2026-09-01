@@ -36,6 +36,15 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     strictPort: true,
     host: "::",
+    watch: {
+      // #823: guard sandboxes (#815/#822) are built inside the checkout as
+      // .bb-guard-sandbox-* so their Vite can reach the real node_modules. A
+      // fresh sandbox's copied tsconfig.json otherwise makes this watcher
+      // force a full-reload mid-run, dropping the Vitest browser connection —
+      // the Storybook project extends this config, so its browser-mode server
+      // inherits this ignore. Vite merges the list with its built-in ignores.
+      ignored: ["**/.bb-guard-sandbox-*/**"],
+    },
     proxy: {
       "/api": {
         target: "http://localhost:3000",
