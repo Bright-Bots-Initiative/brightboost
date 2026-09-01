@@ -111,7 +111,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose }) => {
           <button
             onClick={handleClose}
             aria-label="Close CSV import modal"
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-500 hover:text-gray-600 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>

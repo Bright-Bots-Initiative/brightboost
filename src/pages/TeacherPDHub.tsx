@@ -1010,7 +1010,7 @@ const TeacherPDHub: React.FC = () => {
                               setReplyTo(null);
                               setReplyContent("");
                             }}
-                            className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-600"
+                            className="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-600"
                           >
                             {t("teacher.pdHub.cancel")}
                           </button>
@@ -1018,7 +1018,7 @@ const TeacherPDHub: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => setReplyTo(post.id)}
-                          className="mt-2 text-xs text-gray-400 hover:text-gray-600"
+                          className="mt-2 text-xs text-gray-500 hover:text-gray-600"
                         >
                           {t("teacher.pdHub.reply")}
                         </button>

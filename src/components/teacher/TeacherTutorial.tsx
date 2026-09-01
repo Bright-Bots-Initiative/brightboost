@@ -56,7 +56,7 @@ export default function TeacherTutorial() {
         {/* Close / skip */}
         <button
           onClick={finish}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-600 transition-colors"
           aria-label={t("tutorial.skip")}
         >
           <X className="w-5 h-5" />
@@ -105,7 +105,7 @@ export default function TeacherTutorial() {
         <div className="flex justify-between mt-6">
           <button
             onClick={finish}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-600 transition-colors"
           >
             {t("tutorial.skip")}
           </button>
