@@ -28,6 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # npm test's unit project includes backend suites; without backend deps
+      # the run dies on "Missing backend/node_modules/@brightboost/greatwork-
+      # engine" — this workflow predates that and failed on every PR matching
+      # its path filter. Mirrors the build-and-test job in ci-cd.yml.
+      - name: Install backend dependencies
+        run: cd backend && npm ci
+
       - name: Lint code
         run: npm run lint
 
