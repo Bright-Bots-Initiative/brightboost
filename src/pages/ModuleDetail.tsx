@@ -110,7 +110,9 @@ export default function ModuleDetail() {
       <h1 className="text-2xl font-bold mb-4 text-brightboost-navy">
         {translateContentName(module.title)}
       </h1>
-      <p className="text-sm text-gray-600 mb-6">{translateContentName(module.description)}</p>
+      <p className="text-sm text-gray-600 mb-6">
+        {translateContentName(module.description)}
+      </p>
       <div className="space-y-3">
         {(() => {
           // Flatten units → lessons → activities into a single numbered list
@@ -162,7 +164,8 @@ export default function ModuleDetail() {
                           {translateContentName(a.title)}
                         </span>
                         <span className="text-[10px] bg-white/50 px-1.5 rounded text-green-700 flex items-center gap-1">
-                          <Check className="h-3 w-3" /> {t("modules.detail.done")}
+                          <Check className="h-3 w-3" />{" "}
+                          {t("modules.detail.done")}
                         </span>
                       </div>
                     </Button>
