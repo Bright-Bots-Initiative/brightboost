@@ -46,10 +46,11 @@ const SCROLL_SPEED = 2.5,
 const LEVELS = 3; // 2 levels, but +1 offset
 // Ceilings a second run can only hold, never beat.
 const PERFECT_BUMPS = 0;
-const MAX_SMOOTHNESS = 100;
 const FAST_BAND = "Fast";
+/** Every run starts here (see startRun); the smoothness ceiling derives from it. */
+export const START_LANE = 1;
 
-const OBSTACLES: Obstacle[] = [
+export const OBSTACLES: readonly Obstacle[] = [
   { lane: 1, y: 300 },
   { lane: 0, y: 600 },
   { lane: 2, y: 900 },
@@ -61,6 +62,38 @@ const OBSTACLES: Obstacle[] = [
   { lane: 2, y: 2600 },
   { lane: 1, y: 2900 },
 ];
+
+/**
+ * Fewest lane changes that dodge every obstacle starting from `startLane`.
+ * `steer()` moves exactly one lane per input and counts one transition, so
+ * moving a → b costs |a − b|. Exported so the tests can cross-check it with an
+ * independent brute force instead of mirroring the number.
+ */
+export function minCleanLaneChanges(
+  obstacles: readonly Obstacle[],
+  startLane: number,
+): number {
+  const LANES = [0, 1, 2] as const;
+  let costs = LANES.map((lane) => Math.abs(lane - startLane));
+  for (const obs of obstacles) {
+    costs = LANES.map((lane) =>
+      lane === obs.lane
+        ? Number.POSITIVE_INFINITY
+        : Math.min(...LANES.map((prev) => costs[prev] + Math.abs(lane - prev))),
+    );
+  }
+  return Math.min(...costs);
+}
+
+/**
+ * The smoothness a flawless run can actually reach (#737 review, #806 item 2):
+ * smoothness = 100 − 15·bumps − 2·laneChanges, and the obstacle table forces
+ * lane changes from START_LANE, so 100 is unreachable and a held-at-100 clause
+ * was dead code — the sandbagging inversion #737 reported stayed open. Derived
+ * from the track (86 today) so it moves with OBSTACLES instead of going stale.
+ */
+export const MAX_CLEAN_SMOOTHNESS =
+  100 - 2 * minCleanLaneChanges(OBSTACLES, START_LANE);
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 export function laneX(lane: number) {
@@ -98,7 +131,8 @@ export function calculateQualifyTuneRaceScore(
   const heldFastTime =
     timeLabel(run1.time) === FAST_BAND && timeLabel(run2.time) === FAST_BAND;
   const heldMaxSmoothness =
-    run1.smoothness === MAX_SMOOTHNESS && run2.smoothness === MAX_SMOOTHNESS;
+    run1.smoothness >= MAX_CLEAN_SMOOTHNESS &&
+    run2.smoothness >= MAX_CLEAN_SMOOTHNESS;
   let s = 3;
   if (run2.bumps < run1.bumps || heldPerfectBumps) s += 2;
   if (run2.time < run1.time || heldFastTime) s += 2;
@@ -170,7 +204,7 @@ function RacePlayfield({
 }) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("intro");
-  const [carLane, setCarLane] = useState(1);
+  const [carLane, setCarLane] = useState(START_LANE);
   const [scrollY, setScrollY] = useState(0);
   const [bumps, setBumps] = useState(0);
   const [wobble, setWobble] = useState(false);
@@ -206,8 +240,8 @@ function RacePlayfield({
 
   const startRun = useCallback((p: "qualify" | "race") => {
     setPhase(p);
-    setCarLane(1);
-    carLaneRef.current = 1;
+    setCarLane(START_LANE);
+    carLaneRef.current = START_LANE;
     setScrollY(0);
     scrollRef.current = 0;
     setBumps(0);
