@@ -224,7 +224,7 @@ const ClassesPage: React.FC = () => {
                   </Link>
                   <button
                     onClick={() => setDeleteId(c.id)}
-                    className="p-1.5 text-gray-500 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                    className="p-1.5 text-gray-500 hover:text-red-700 rounded-md hover:bg-red-50 transition-colors"
                     title={t("teacher.classes.deleteClass")}
                   >
                     <Trash2 className="w-4 h-4" />

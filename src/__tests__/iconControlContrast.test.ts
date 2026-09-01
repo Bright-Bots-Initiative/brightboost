@@ -13,6 +13,14 @@
  * live Tailwind palette, so a palette drift re-opens the question loudly), and
  * a source sweep that fails when an interactive `text-gray-400` reappears on
  * a light surface. Deliberate exceptions are allowlisted with their reasons.
+ *
+ * The sweep is a REINTRODUCTION guard for the known interactive signatures
+ * (hover text shift, grab cursor, chevron state indicator), not a proof of
+ * coverage — JSX spreads interactivity across lines, so a line predicate
+ * cannot decide "interactive" in general (a ghost Button's onClick sits lines
+ * away from its className). The coverage claim for #810 rests on the
+ * adversarial audit recorded on PR #825, which swept every `text-gray-400`
+ * occurrence element-by-element.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -25,9 +33,10 @@ const SRC_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 /**
  * These `text-gray-400` interactive matches are correct as they are:
- *  - Sidebar.tsx — control sits on the dark sidebar (`hover:bg-gray-700`
- *    surface family); gray-400 passes there and gray-500 would REDUCE its
- *    contrast. #810 is strictly about light surfaces.
+ *  - Sidebar.tsx — control rests on the dark sidebar root (`bg-gray-800`,
+ *    lines 45/113): gray-400 measures 5.78:1 there, and gray-500 would drop
+ *    it to 3.04:1 — darkening REDUCES contrast on this surface. #810 is
+ *    strictly about light surfaces.
  *  - TeacherDashboard.tsx — the gray icon sits inside a Link that is
  *    identified by an adjacent visible text label; the icon is supplementary,
  *    so 1.4.11 does not hang the control's identification on it.
@@ -80,9 +89,11 @@ describe("interactive icon-control contrast (#810)", () => {
   });
 
   it("no interactive text-gray-400 remains outside the allowlisted surfaces", () => {
-    // A className carrying text-gray-400 together with a hover text shift or
-    // a grab cursor is an interactive control by construction — the exact
-    // pattern the #795 audit measured at 2.54:1 on white.
+    // A className carrying text-gray-400 together with a hover text shift, a
+    // grab cursor, or a chevron state glyph is an interactive control by
+    // construction — the signatures the #795/#825 audits measured at 2.54:1
+    // on white (chevrons: the icon is the sole conveyor of expanded state,
+    // so 1.4.11 hangs on it even when row text names the topic).
     const offenders: string[] = [];
     for (const file of walkTsx(SRC_ROOT)) {
       const rel = path.relative(SRC_ROOT, file);
@@ -91,7 +102,9 @@ describe("interactive icon-control contrast (#810)", () => {
       lines.forEach((line, i) => {
         if (
           line.includes("text-gray-400") &&
-          (line.includes("hover:text-") || line.includes("cursor-grab"))
+          (line.includes("hover:text-") ||
+            line.includes("cursor-grab") ||
+            line.includes("<Chevron"))
         ) {
           offenders.push(`${rel}:${i + 1}`);
         }

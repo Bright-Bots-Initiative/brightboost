@@ -172,7 +172,7 @@ export default function ModuleDetail() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-xs text-gray-400 h-14 px-2"
+                      className="text-xs text-gray-500 h-14 px-2"
                       aria-label={`${t("modules.detail.replay")} ${translateContentName(a.title)}`}
                       onClick={() =>
                         navigate(
