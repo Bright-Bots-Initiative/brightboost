@@ -116,7 +116,8 @@ const ClassesPage: React.FC = () => {
     try {
       await api.delete(`/teacher/courses/${courseId}`);
     } catch (err) {
-      const is404 = (err instanceof ApiError && err.status === 404) ||
+      const is404 =
+        (err instanceof ApiError && err.status === 404) ||
         (err instanceof Error && /404/.test(err.message));
       if (!is404) return;
     }
@@ -131,9 +132,7 @@ const ClassesPage: React.FC = () => {
             <Zap className="w-7 h-7 mr-2 text-brightboost-blue" />
             {t("teacher.classes.title")}
           </h1>
-          <p className="text-gray-600 mt-1">
-            {t("teacher.classes.subtitle")}
-          </p>
+          <p className="text-gray-600 mt-1">{t("teacher.classes.subtitle")}</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
@@ -242,10 +241,18 @@ const ClassesPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t(isHome ? "teacher.classes.createTitleHome" : "teacher.classes.createTitle")}
+              {t(
+                isHome
+                  ? "teacher.classes.createTitleHome"
+                  : "teacher.classes.createTitle",
+              )}
             </DialogTitle>
             <DialogDescription>
-              {t(isHome ? "teacher.classes.createDescHome" : "teacher.classes.createDesc")}
+              {t(
+                isHome
+                  ? "teacher.classes.createDescHome"
+                  : "teacher.classes.createDesc",
+              )}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -286,7 +293,11 @@ const ClassesPage: React.FC = () => {
                 htmlFor="className"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t(isHome ? "teacher.classes.classNameHome" : "teacher.classes.className")}
+                {t(
+                  isHome
+                    ? "teacher.classes.classNameHome"
+                    : "teacher.classes.className",
+                )}
               </label>
               <input
                 id="className"
@@ -306,7 +317,9 @@ const ClassesPage: React.FC = () => {
                 htmlFor="classGradeBand"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {t("teacher.classes.gradeBandLabel", { defaultValue: "Grade Band" })}
+                {t("teacher.classes.gradeBandLabel", {
+                  defaultValue: "Grade Band",
+                })}
               </label>
               <select
                 id="classGradeBand"
@@ -314,8 +327,12 @@ const ClassesPage: React.FC = () => {
                 onChange={(e) => setNewBand(e.target.value as "k2" | "g3_5")}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brightboost-blue bg-white"
               >
-                <option value="k2">{t("teacher.classes.bandK2", { defaultValue: "K-2" })}</option>
-                <option value="g3_5">{t("teacher.classes.bandG35", { defaultValue: "Grades 3-5" })}</option>
+                <option value="k2">
+                  {t("teacher.classes.bandK2", { defaultValue: "K-2" })}
+                </option>
+                <option value="g3_5">
+                  {t("teacher.classes.bandG35", { defaultValue: "Grades 3-5" })}
+                </option>
               </select>
             </div>
             <DialogFooter>
@@ -333,7 +350,11 @@ const ClassesPage: React.FC = () => {
               >
                 {creating
                   ? t("teacher.classes.creating")
-                  : t(isHome ? "teacher.classes.createGroupHome" : "teacher.classes.createClass")}
+                  : t(
+                      isHome
+                        ? "teacher.classes.createGroupHome"
+                        : "teacher.classes.createClass",
+                    )}
               </button>
             </DialogFooter>
           </form>
@@ -341,12 +362,19 @@ const ClassesPage: React.FC = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("teacher.classes.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("teacher.classes.deleteTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("teacher.classes.deleteConfirm", { name: courseToDelete?.name })}
+              {t("teacher.classes.deleteConfirm", {
+                name: courseToDelete?.name,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

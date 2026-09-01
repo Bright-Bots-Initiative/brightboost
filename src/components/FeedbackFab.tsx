@@ -102,10 +102,16 @@ const FeedbackFab: React.FC = () => {
                     <option value="teacher">{t("feedback.roleTeacher")}</option>
                     <option value="student">{t("feedback.roleStudent")}</option>
                     <option value="admin">{t("feedback.roleAdmin")}</option>
-                    <option value="school_leader">{t("feedback.roleSchoolLeader")}</option>
-                    <option value="community">{t("feedback.roleCommunity")}</option>
+                    <option value="school_leader">
+                      {t("feedback.roleSchoolLeader")}
+                    </option>
+                    <option value="community">
+                      {t("feedback.roleCommunity")}
+                    </option>
                     <option value="parent">{t("feedback.roleParent")}</option>
-                    <option value="technical">{t("feedback.roleTechnical")}</option>
+                    <option value="technical">
+                      {t("feedback.roleTechnical")}
+                    </option>
                     <option value="other">{t("feedback.roleOther")}</option>
                   </select>
                 </div>

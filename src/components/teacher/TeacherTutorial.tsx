@@ -95,9 +95,7 @@ export default function TeacherTutorial() {
             <div
               key={i}
               className={`w-2 h-2 rounded-full transition-all ${
-                i === step
-                  ? "bg-brightboost-blue scale-125"
-                  : "bg-gray-200"
+                i === step ? "bg-brightboost-blue scale-125" : "bg-gray-200"
               }`}
             />
           ))}
