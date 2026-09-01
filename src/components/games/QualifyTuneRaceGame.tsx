@@ -218,7 +218,7 @@ function RacePlayfield({
   const startTime = useRef(0);
   const bumpsRef = useRef(0);
   const scrollRef = useRef(0);
-  const carLaneRef = useRef(1);
+  const carLaneRef = useRef(START_LANE);
   const hitSet = useRef<Set<number>>(new Set());
   const transitionsRef = useRef(0);
   const isRacing = useRef(false);

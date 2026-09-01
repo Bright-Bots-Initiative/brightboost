@@ -234,6 +234,35 @@ describe("smoothness ceiling derivation (#737 review / #806 item 2)", () => {
     expect(MAX_CLEAN_SMOOTHNESS).toBe(86);
   });
 
+  it("scores a literal ceiling-held pair at 8 — independent of the derivation", () => {
+    // Literal values on purpose: every other behavioral fixture is written as
+    // MAX_CLEAN_SMOOTHNESS ± n and moves with the derivation, so a wrong
+    // derived ceiling would only be caught by the pin tests. 3 base + 2 bumps
+    // held + 1 smoothness held + 2 exit.
+    expect(
+      calculateQualifyTuneRaceScore(
+        { time: 21.3, bumps: 0, smoothness: 86 },
+        { time: 21.3, bumps: 0, smoothness: 86 },
+        "one",
+      ).score,
+    ).toBe(8);
+  });
+
+  it("holds the layout invariants the lane-change DP relies on", () => {
+    // minCleanLaneChanges treats OBSTACLES as sequential gates: rows must be
+    // strictly y-ordered with disjoint pass windows (gap > 2 × BUMP_ZONE = 56)
+    // so the optimal line is executable between windows. A future overlapping
+    // or unclearable row would otherwise silently corrupt the ceiling (an
+    // unclearable table would drive it to -Infinity and make the held clause
+    // free for everyone).
+    for (let i = 1; i < OBSTACLES.length; i++) {
+      expect(OBSTACLES[i].y - OBSTACLES[i - 1].y).toBeGreaterThan(56);
+    }
+    expect(Number.isFinite(MAX_CLEAN_SMOOTHNESS)).toBe(true);
+    expect(MAX_CLEAN_SMOOTHNESS).toBeGreaterThan(0);
+    expect(MAX_CLEAN_SMOOTHNESS).toBeLessThanOrEqual(100);
+  });
+
   it("keeps the held-smoothness clause exclusive to clean runs", () => {
     // A single bump costs 15, and 100 − 15 = 85 sits below the ceiling, so no
     // run with bumps can claim held-ceiling smoothness (the pre-repair suite
