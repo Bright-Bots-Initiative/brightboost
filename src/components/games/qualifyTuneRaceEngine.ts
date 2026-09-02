@@ -105,9 +105,10 @@ export const SIMULATION_HZ = 120;
 export const FIXED_STEP_SECONDS = 1 / SIMULATION_HZ;
 /**
  * Longest real frame the engine will honour. A backgrounded tab hands back a
- * multi-second `requestAnimationFrame` gap; without this the car would teleport
- * across the track (and through cone windows). Beyond this the race simply
- * waits for the student to come back.
+ * multi-second `requestAnimationFrame` gap; collisions are still checked per
+ * fixed step, so nothing is ever skipped — the clamp exists so the world does
+ * not race ahead (hitting cones) while the student is away. Beyond this the
+ * race simply waits for them to come back.
  */
 export const MAX_FRAME_SECONDS = 0.25;
 

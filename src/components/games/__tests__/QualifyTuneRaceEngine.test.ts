@@ -16,6 +16,7 @@ import {
   SIMULATION_HZ,
   SPEED_MULTIPLIER,
   START_LANE,
+  STEERING_TRANSITION_PENALTY,
   TRACK_LENGTH,
   upgradeTuning,
   type RaceEngine,
@@ -260,6 +261,24 @@ describe("race engine — every upgrade moves a measured metric (#820)", () => {
     expect(steering.smoothness).toBeGreaterThan(base.smoothness);
     expect(steering.bumps).toBe(base.bumps);
     expect(steering.time).toBe(base.time);
+
+    // #833 review NB-4a: the behavioural probes above run on lines where a
+    // second lever can hide (a flawless line never nears a cone, so a
+    // steering car that ALSO narrowed the bump zone would pass them). Pin
+    // one-lever-per-upgrade at the tuning table itself.
+    const stock = upgradeTuning(null);
+    expect(upgradeTuning("speed")).toEqual({
+      ...stock,
+      speedMultiplier: SPEED_MULTIPLIER,
+    });
+    expect(upgradeTuning("grip")).toEqual({
+      ...stock,
+      bumpZone: BUMP_ZONE * GRIP_BUMP_ZONE_FACTOR,
+    });
+    expect(upgradeTuning("steering")).toEqual({
+      ...stock,
+      transitionPenalty: STEERING_TRANSITION_PENALTY,
+    });
   });
 
   it("lets flawless play reach 10/10 under every upgrade", () => {

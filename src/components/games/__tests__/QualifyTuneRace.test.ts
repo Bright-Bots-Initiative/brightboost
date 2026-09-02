@@ -12,9 +12,14 @@ import {
   timeLabel,
 } from "../QualifyTuneRaceGame";
 import {
+  BUMP_SLOW_FACTOR,
+  BUMP_SLOW_SECONDS,
   BUMP_SMOOTHNESS_PENALTY,
   BUMP_TIME_COST_SECONDS,
+  BUMP_ZONE,
   cleanLapSeconds,
+  SCROLL_UNITS_PER_SECOND,
+  SPEED_MULTIPLIER,
   upgradeTuning,
   type RunResult,
   type Upgrade,
@@ -174,6 +179,9 @@ describe("Qualify, Tune, Race — improvement bonus at the ceiling (#737)", () =
     // === "Fast"`, and this exact fixture — two laps inside the Fast band, two
     // cones each — used to buy 2 points. It buys nothing now: the pair
     // improved nothing and neither lap was at its car's floor.
+    // (These 12s/13s laps are ENGINE-UNREACHABLE ON PURPOSE — no car can
+    // finish under 14.7s — kept verbatim as the regression witness for the
+    // old display-band clause, which awarded them the time point.)
     expect(timeLabel(12)).toBe("Fast");
     expect(timeLabel(13)).toBe("Fast");
     expect(
@@ -269,8 +277,10 @@ describe("smoothness ceiling derivation (#737 review / #806 item 2)", () => {
   it("scores literal ceiling-held pairs independently of the derivation", () => {
     // Literal values on purpose: every other behavioural fixture is built from
     // the derivation and would move with it, so a wrong derived ceiling would
-    // only be caught by the pin test. 86/86 holds the ceiling (10); 85/85 is
-    // one wobble below it and loses exactly the smoothness point (9).
+    // only be caught by the pin test. 86/86 holds the ceiling (10); 84/84 is
+    // one wobble below it — clean un-upgraded smoothness is 100 − 2·changes,
+    // always even, so 84 is the nearest reachable below-ceiling state — and
+    // loses exactly the smoothness point (9).
     expect(
       calculateQualifyTuneRaceScore(
         { time: 21.3, bumps: 0, smoothness: 86 },
@@ -280,8 +290,8 @@ describe("smoothness ceiling derivation (#737 review / #806 item 2)", () => {
     ).toBe(10);
     expect(
       calculateQualifyTuneRaceScore(
-        { time: 21.3, bumps: 0, smoothness: 85 },
-        { time: 21.3, bumps: 0, smoothness: 85 },
+        { time: 21.3, bumps: 0, smoothness: 84 },
+        { time: 21.3, bumps: 0, smoothness: 84 },
         "one",
       ).score,
     ).toBe(9);
@@ -289,13 +299,23 @@ describe("smoothness ceiling derivation (#737 review / #806 item 2)", () => {
 
   it("holds the layout invariants the lane-change DP relies on", () => {
     // minCleanLaneChanges treats OBSTACLES as sequential gates: rows must be
-    // strictly y-ordered with disjoint pass windows (gap > 2 × BUMP_ZONE = 56)
-    // so the optimal line is executable between windows. A future overlapping
-    // or unclearable row would otherwise silently corrupt the ceiling (an
-    // unclearable table would drive it to -Infinity and make the held clause
-    // free for everyone).
+    // strictly y-ordered with disjoint pass windows so the optimal line is
+    // executable between windows. A future overlapping or unclearable row
+    // would otherwise silently corrupt the ceiling (an unclearable table
+    // would drive it to -Infinity and make the held clause free for
+    // everyone). The gap floor is DERIVED (#833 review NB-2): the bump
+    // slowdown RESETS rather than extends, so "every cone costs exactly
+    // 0.5s" — the invariant heldFloorTime and every lap() fixture rest on —
+    // additionally needs consecutive cones farther apart than one slowdown's
+    // ground cover in the fastest car.
+    const slowdownCoverUnits =
+      BUMP_SLOW_SECONDS *
+      SCROLL_UNITS_PER_SECOND *
+      SPEED_MULTIPLIER *
+      BUMP_SLOW_FACTOR;
+    const minGap = Math.max(2 * BUMP_ZONE, slowdownCoverUnits);
     for (let i = 1; i < OBSTACLES.length; i++) {
-      expect(OBSTACLES[i].y - OBSTACLES[i - 1].y).toBeGreaterThan(56);
+      expect(OBSTACLES[i].y - OBSTACLES[i - 1].y).toBeGreaterThan(minGap);
     }
     expect(Number.isFinite(MAX_CLEAN_SMOOTHNESS)).toBe(true);
     expect(MAX_CLEAN_SMOOTHNESS).toBeGreaterThan(0);
