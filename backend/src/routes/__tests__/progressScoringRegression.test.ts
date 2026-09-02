@@ -19,6 +19,7 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     count: vi.fn(),
   },
   avatar: {
@@ -33,8 +34,10 @@ const prismaMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -191,6 +194,10 @@ function completeActivity(body: Record<string, unknown>) {
 function setupFirstCompletionMocks(
   progressRow: Record<string, unknown> = PROGRESS_ROW,
 ) {
+  prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+  prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
+    Promise.all(ops),
+  );
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
   prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
@@ -239,25 +246,72 @@ const ZERO_REWARD = {
   newAbilitiesDelta: 0,
 };
 
+/**
+ * Emulates the database's adjudication of the #809 conditional writes: a
+ * guarded `updateMany` matches only when the stored field is strictly lower,
+ * the unconditional pass applies lastScore/playCount/lastPlayedAt, and every
+ * later read observes the row those writes produced. The response `personalBest`
+ * therefore comes from the re-read, exactly as it does against Postgres.
+ */
+function armPersonalBestDb(initial: Record<string, unknown> | null) {
+  let row: Record<string, unknown> | null = initial ? { ...initial } : null;
+  prismaMock.gamePersonalBest.findUnique.mockImplementation(async () =>
+    row ? { ...row } : null,
+  );
+  prismaMock.gamePersonalBest.create.mockImplementation(
+    async ({ data }: { data: Record<string, unknown> }) => {
+      row = { id: "gpb-1", meta: null, ...data };
+      return { ...row };
+    },
+  );
+  prismaMock.gamePersonalBest.updateMany.mockImplementation(
+    async ({
+      where,
+      data,
+    }: {
+      where: Record<string, { lt?: number } | unknown>;
+      data: Record<string, unknown>;
+    }) => {
+      if (!row) return { count: 0 };
+      for (const field of [
+        "bestScore",
+        "bestStreak",
+        "bestRoundsCompleted",
+      ] as const) {
+        const guard = where[field] as { lt?: number } | undefined;
+        if (guard?.lt !== undefined) {
+          if ((row[field] as number) < guard.lt) {
+            row[field] = data[field];
+            return { count: 1 };
+          }
+          return { count: 0 };
+        }
+      }
+      if (data.lastScore !== undefined) row.lastScore = data.lastScore;
+      const inc = (data.playCount as { increment?: number } | undefined)
+        ?.increment;
+      if (inc) row.playCount = (row.playCount as number) + inc;
+      if (data.lastPlayedAt) row.lastPlayedAt = data.lastPlayedAt;
+      return { count: 1 };
+    },
+  );
+}
+
 function setupReplayMocks(existingBest: Record<string, unknown> | null) {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
   prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
   prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_PROGRESS_ROW);
   prismaMock.progress.update.mockResolvedValue(COMPLETED_PROGRESS_ROW);
+  prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
   prismaMock.progress.count.mockResolvedValue(1);
   prismaMock.ability.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.createMany.mockResolvedValue({ count: 0 });
-  prismaMock.gamePersonalBest.findUnique.mockResolvedValue(existingBest);
-  prismaMock.gamePersonalBest.create.mockResolvedValue(PERSONAL_BEST);
-  prismaMock.gamePersonalBest.update.mockImplementation(
-    async ({ data }: { data: Record<string, unknown> }) => ({
-      ...EXISTING_BEST,
-      ...data,
-      playCount: EXISTING_BEST.playCount + 1,
-    }),
+  prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
+    Promise.all(ops),
   );
+  armPersonalBestDb(existingBest);
   prismaMock.gamePersonalBest.upsert.mockResolvedValue(PERSONAL_BEST);
 }
 
@@ -423,18 +477,20 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Already completed");
 
-    // The record moves…
-    expect(prismaMock.gamePersonalBest.update).toHaveBeenCalledTimes(1);
-    const updateArg = prismaMock.gamePersonalBest.update.mock.calls[0][0];
-    expect(updateArg.where).toEqual({ id: "gpb-1" });
-    expect(updateArg.data).toEqual({
-      lastScore: 12,
-      bestScore: 12,
-      bestStreak: 5,
-      bestRoundsCompleted: 6,
-      playCount: { increment: 1 },
-      lastPlayedAt: expect.any(Date),
-    });
+    // The record moves — through #809's conditional guards, never a
+    // read-modify-write: each best field carries its own strictly-lower
+    // predicate so a concurrent higher value cannot be regressed.
+    const wheres = prismaMock.gamePersonalBest.updateMany.mock.calls.map(
+      (c) => c[0].where,
+    );
+    expect(wheres).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ bestScore: { lt: 12 } }),
+        expect.objectContaining({ bestStreak: { lt: 5 } }),
+        expect.objectContaining({ bestRoundsCompleted: { lt: 6 } }),
+      ]),
+    );
+    expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
     expect(res.body.personalBest.bestScore).toBe(12);
     expect(res.body.personalBest.lastScore).toBe(12);
     expect(res.body.personalBest.playCount).toBe(2);
@@ -459,16 +515,11 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
     );
 
     expect(res.status).toBe(200);
-    const updateArg = prismaMock.gamePersonalBest.update.mock.calls[0][0];
-    expect(updateArg.data).toEqual({
-      lastScore: 3,
-      bestScore: 8, // held at the earlier best — a worse run never lowers it
-      bestStreak: 3,
-      bestRoundsCompleted: 4,
-      playCount: { increment: 1 },
-      lastPlayedAt: expect.any(Date),
-    });
+    // The guards did not match (3 < 8 fails `lt`), so the stored best is
+    // untouched — the database held it, no app-side Math.max involved.
     expect(res.body.personalBest.bestScore).toBe(8);
+    expect(res.body.personalBest.bestStreak).toBe(3);
+    expect(res.body.personalBest.bestRoundsCompleted).toBe(4);
     expect(res.body.personalBest.lastScore).toBe(3);
     expect(res.body.personalBest.playCount).toBe(2);
     expect(res.body.isNewHighScore).toBe(false);
@@ -519,11 +570,15 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
       },
     ];
 
+    const observedBests: number[] = [];
+    const observedPlayCounts: number[] = [];
     for (const { label, result } of repeats) {
       const res = await completeActivity(replayBody(result));
       expect(res.status, label).toBe(200);
       expect(res.body.message, label).toBe("Already completed");
       expect(res.body.reward, label).toEqual(ZERO_REWARD);
+      observedBests.push(res.body.personalBest.bestScore);
+      observedPlayCounts.push(res.body.personalBest.playCount);
     }
 
     // Four repeats, zero XP writes, zero level/ability churn.
@@ -533,15 +588,10 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
     expect(prismaMock.progress.create).not.toHaveBeenCalled();
 
     // Every repeat still reconciled the record (playCount is the play counter,
-    // XP is not) and only the better run claimed a new high score.
-    expect(prismaMock.gamePersonalBest.update).toHaveBeenCalledTimes(4);
-    const bestScores = prismaMock.gamePersonalBest.update.mock.calls.map(
-      (c) => c[0].data.bestScore,
-    );
-    expect(bestScores).toEqual([8, 8, 8, 14]);
-    for (const call of prismaMock.gamePersonalBest.update.mock.calls) {
-      expect(call[0].data.playCount).toEqual({ increment: 1 });
-    }
+    // XP is not) and only the better run moved the stored best — read back
+    // from the emulated database, the way Postgres would report it.
+    expect(observedBests).toEqual([8, 8, 8, 14]);
+    expect(observedPlayCounts).toEqual([2, 3, 4, 5]);
   });
 
   it("PB-R-05: replay without a gameKey writes no record and still returns xpDelta 0", async () => {
@@ -580,7 +630,7 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
 
   it("PB-R-07: a failed record write never fails the replay and claims no record", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    prismaMock.gamePersonalBest.update.mockRejectedValue(
+    prismaMock.gamePersonalBest.updateMany.mockRejectedValue(
       new Error("forced GPB failure"),
     );
 

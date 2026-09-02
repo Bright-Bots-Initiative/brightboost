@@ -74,7 +74,18 @@ export const completeActivitySchema = z.object({
   timeSpentS: timeSpentSchema.optional().default(0),
   result: z
     .object({
-      gameKey: z.string().max(50).optional(),
+      // #809: shape-validated, not just length-bounded — every registered key
+      // is snake_case ascii (see GAME_SPECIFIC_SCHEMAS), and GamePersonalBest
+      // rows are keyed by this string, so arbitrary bytes never reach storage.
+      // An allowlist was considered and deferred: only 5 of 10 games register
+      // gameSpecific schemas, so isRegisteredGameKey is not a drop-in gate.
+      gameKey: z
+        .string()
+        .regex(
+          /^[a-z][a-z0-9_]{0,49}$/,
+          "gameKey must be snake_case ascii (max 50)",
+        )
+        .optional(),
       score: z.number().int().nonnegative().max(10000).optional(),
       total: z.number().int().nonnegative().max(10000).optional(),
       streakMax: z.number().int().nonnegative().max(10000).optional(),

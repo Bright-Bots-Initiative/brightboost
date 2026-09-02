@@ -13,6 +13,7 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     count: vi.fn(),
   },
   avatar: {
@@ -27,8 +28,10 @@ const prismaMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -144,7 +147,13 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     prismaMock.gamePersonalBest.findUnique.mockResolvedValue(null);
     prismaMock.gamePersonalBest.create.mockResolvedValue({});
     prismaMock.gamePersonalBest.update.mockResolvedValue({});
+    prismaMock.gamePersonalBest.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.gamePersonalBest.upsert.mockResolvedValue({});
+    // #821: the IN_PROGRESS → COMPLETED transition is now an atomic claim.
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
+      Promise.all(ops),
+    );
   });
 
   it("T2-1-01 / AC-1 / C1-01: POST move_measure → 200 → Progress row gameSpecific deep-equals what was sent", async () => {
@@ -282,8 +291,10 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
 
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.update).toHaveBeenCalled();
-    const updateArg = prismaMock.progress.update.mock.calls[0][0];
+    // #821: the transition is an atomic claim (updateMany with a status guard).
+    expect(prismaMock.progress.updateMany).toHaveBeenCalled();
+    const updateArg = prismaMock.progress.updateMany.mock.calls[0][0];
+    expect(updateArg.where.status).toEqual({ not: "COMPLETED" });
     const expected = GAME_SPECIFIC_SCHEMAS.move_measure.parse(validMoveMeasure);
     expect(updateArg.data.gameSpecific).toEqual(expected);
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
@@ -322,8 +333,9 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
 
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.update).toHaveBeenCalled();
-    const updateArg = prismaMock.progress.update.mock.calls[0][0];
+    // #821: the transition is an atomic claim (updateMany with a status guard).
+    expect(prismaMock.progress.updateMany).toHaveBeenCalled();
+    const updateArg = prismaMock.progress.updateMany.mock.calls[0][0];
     expect(updateArg.data).not.toHaveProperty("gameSpecific");
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
@@ -547,8 +559,9 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
 
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.update).toHaveBeenCalled();
-    const updateArg = prismaMock.progress.update.mock.calls[0][0];
+    // #821: the transition is an atomic claim (updateMany with a status guard).
+    expect(prismaMock.progress.updateMany).toHaveBeenCalled();
+    const updateArg = prismaMock.progress.updateMany.mock.calls[0][0];
     expect(updateArg.data.gameSpecific).toEqual(expectedB);
     expect(updateArg.data.gameSpecific).not.toEqual(storedA);
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
