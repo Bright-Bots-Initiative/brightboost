@@ -44,8 +44,13 @@ const SCROLL_SPEED = 2.5,
   TRACK_LENGTH = 3200,
   BUMP_ZONE = 28;
 const LEVELS = 3; // 2 levels, but +1 offset
+// Ceilings a second run can only hold, never beat.
+const PERFECT_BUMPS = 0;
+const FAST_BAND = "Fast";
+/** Every run starts here (see startRun); the smoothness ceiling derives from it. */
+export const START_LANE = 1;
 
-const OBSTACLES: Obstacle[] = [
+export const OBSTACLES: readonly Obstacle[] = [
   { lane: 1, y: 300 },
   { lane: 0, y: 600 },
   { lane: 2, y: 900 },
@@ -58,12 +63,44 @@ const OBSTACLES: Obstacle[] = [
   { lane: 1, y: 2900 },
 ];
 
+/**
+ * Fewest lane changes that dodge every obstacle starting from `startLane`.
+ * `steer()` moves exactly one lane per input and counts one transition, so
+ * moving a → b costs |a − b|. Exported so the tests can cross-check it with an
+ * independent brute force instead of mirroring the number.
+ */
+export function minCleanLaneChanges(
+  obstacles: readonly Obstacle[],
+  startLane: number,
+): number {
+  const LANES = [0, 1, 2] as const;
+  let costs = LANES.map((lane) => Math.abs(lane - startLane));
+  for (const obs of obstacles) {
+    costs = LANES.map((lane) =>
+      lane === obs.lane
+        ? Number.POSITIVE_INFINITY
+        : Math.min(...LANES.map((prev) => costs[prev] + Math.abs(lane - prev))),
+    );
+  }
+  return Math.min(...costs);
+}
+
+/**
+ * The smoothness a flawless run can actually reach (#737 review, #806 item 2):
+ * smoothness = 100 − 15·bumps − 2·laneChanges, and the obstacle table forces
+ * lane changes from START_LANE, so 100 is unreachable and a held-at-100 clause
+ * was dead code — the sandbagging inversion #737 reported stayed open. Derived
+ * from the track (86 today) so it moves with OBSTACLES instead of going stale.
+ */
+export const MAX_CLEAN_SMOOTHNESS =
+  100 - 2 * minCleanLaneChanges(OBSTACLES, START_LANE);
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 export function laneX(lane: number) {
   return lane * LANE_W + LANE_W / 2;
 }
 export function timeLabel(s: number) {
-  return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow";
+  return s < 15 ? FAST_BAND : s < 22 ? "Medium" : "Slow";
 }
 export function timeIcon(s: number) {
   return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢";
@@ -84,10 +121,22 @@ export function calculateQualifyTuneRaceScore(
   exitAnswer: string | null,
 ) {
   if (!run1 || !run2) return { score: 0, total: 10 };
+  // Improvement credit is earned by improving, or by maintaining a result that
+  // was already at the ceiling. Without the ceiling clauses a flawless first run
+  // made these points unreachable: a perfect-both-runs student scored 5/10 while
+  // a sloppy one who tidied up scored 10/10. Repeating a non-ceiling result
+  // still earns nothing, so the incentive to improve is intact.
+  const heldPerfectBumps =
+    run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
+  const heldFastTime =
+    timeLabel(run1.time) === FAST_BAND && timeLabel(run2.time) === FAST_BAND;
+  const heldMaxSmoothness =
+    run1.smoothness >= MAX_CLEAN_SMOOTHNESS &&
+    run2.smoothness >= MAX_CLEAN_SMOOTHNESS;
   let s = 3;
-  if (run2.bumps < run1.bumps) s += 2;
-  if (run2.time < run1.time) s += 2;
-  if (run2.smoothness > run1.smoothness) s += 1;
+  if (run2.bumps < run1.bumps || heldPerfectBumps) s += 2;
+  if (run2.time < run1.time || heldFastTime) s += 2;
+  if (run2.smoothness > run1.smoothness || heldMaxSmoothness) s += 1;
   if (exitAnswer === "one") s += 2;
   return { score: Math.min(s, 10), total: 10 };
 }
@@ -155,7 +204,7 @@ function RacePlayfield({
 }) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("intro");
-  const [carLane, setCarLane] = useState(1);
+  const [carLane, setCarLane] = useState(START_LANE);
   const [scrollY, setScrollY] = useState(0);
   const [bumps, setBumps] = useState(0);
   const [wobble, setWobble] = useState(false);
@@ -169,7 +218,7 @@ function RacePlayfield({
   const startTime = useRef(0);
   const bumpsRef = useRef(0);
   const scrollRef = useRef(0);
-  const carLaneRef = useRef(1);
+  const carLaneRef = useRef(START_LANE);
   const hitSet = useRef<Set<number>>(new Set());
   const transitionsRef = useRef(0);
   const isRacing = useRef(false);
@@ -191,8 +240,8 @@ function RacePlayfield({
 
   const startRun = useCallback((p: "qualify" | "race") => {
     setPhase(p);
-    setCarLane(1);
-    carLaneRef.current = 1;
+    setCarLane(START_LANE);
+    carLaneRef.current = START_LANE;
     setScrollY(0);
     scrollRef.current = 0;
     setBumps(0);
