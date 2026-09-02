@@ -78,7 +78,7 @@ Every new game or substantial exploratory feature identifies, before it is built
 
 ### The four variation modes
 
-A ticket names exactly which mode(s) it uses, so it can be judged objectively:
+A ticket names exactly which mode(s) it uses, so it can be judged objectively. The modes describe two axes — where variation comes from and how content is assembled — so they can combine: a generative experience is normally seeded too, and a ticket names both.
 
 - **Deterministic** — the content never varies; the unknown lives in the learner's own choices and their visible consequences. (A fixed maze explored by different routes is deterministic.)
 - **Seeded** — variation comes from a stored seed: purposeful, replayable, and versioned. The same seed and settings replay the same experience, and tests can pin it.
@@ -89,7 +89,7 @@ A ticket names exactly which mode(s) it uses, so it can be judged objectively:
 
 The contract scales with principle 3's progression — one contract, distinguished expressions:
 
-- **K–2** — a **supported starting state**, never a blank canvas; one variable at a time; concrete verbs (Try, Notice, Change, Keep, Go back); the way back is one obvious action.
+- **K–2** — a **supported starting state**, never a blank canvas; one variable at a time; concrete verbs (for example Try, Notice, Change, Keep, Go back — final state names belong to the shared-controls work, #838); the way back is one obvious action.
 - **Grades 3–5** — predictions before experiments, repeated trials, and side-by-side comparison of outcomes; more than one variable may open up; version language ("before / after") is allowed.
 - **Grades 6–8 (future)** — open investigation: learner-framed questions, multi-variable experiments, and comparison across their own versions and peers' remixes, still inside the same safety rules.
 
