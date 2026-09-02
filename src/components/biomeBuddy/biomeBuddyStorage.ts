@@ -18,10 +18,20 @@
  * a share link gets a NEW id (the shared snapshot is never the same record).
  */
 import {
+  CATEGORIES,
+  STATS,
+  clampStat,
   isBand,
+  isBiome,
+  isCategory,
+  isOptionOf,
+  isStat,
   validateRecipe,
   type Band,
   type BuddyRecipe,
+  type Contribution,
+  type StatBlock,
+  type StatChange,
   type TestSummary,
 } from "./biomeBuddyModel";
 
@@ -80,16 +90,84 @@ function isId(value: unknown): value is string {
   return typeof value === "string" && ID_PATTERN.test(value);
 }
 
-function isTestSummary(value: unknown): value is TestSummary {
-  if (!value || typeof value !== "object") return false;
-  const v = value as TestSummary;
-  return (
-    typeof v.biome === "string" &&
-    !!v.before &&
-    !!v.after &&
-    Array.isArray(v.changes) &&
-    typeof v.unchanged === "boolean"
-  );
+function coerceStatBlock(value: unknown): StatBlock | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const out = {} as StatBlock;
+  for (const stat of STATS) {
+    const n = raw[stat];
+    if (typeof n !== "number" || !Number.isFinite(n)) return null;
+    out[stat] = clampStat(n);
+  }
+  return out;
+}
+
+function coerceContribution(value: unknown): Contribution | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (!isCategory(raw.category) || !isOptionOf(raw.category, raw.option))
+    return null;
+  const base = Number(raw.base);
+  const mod = Number(raw.mod);
+  if (!Number.isFinite(base) || !Number.isFinite(mod)) return null;
+  return { category: raw.category, option: raw.option, base, mod };
+}
+
+function coerceChange(value: unknown): StatChange | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (!isStat(raw.stat)) return null;
+  const before = Number(raw.before);
+  const after = Number(raw.after);
+  if (!Number.isFinite(before) || !Number.isFinite(after)) return null;
+  if (!Array.isArray(raw.changedContributions)) return null;
+  const rows: Contribution[] = [];
+  for (const entry of raw.changedContributions) {
+    const row = coerceContribution(entry);
+    if (!row) return null;
+    rows.push(row);
+  }
+  return {
+    stat: raw.stat,
+    before: clampStat(before),
+    after: clampStat(after),
+    delta: clampStat(after) - clampStat(before),
+    changedContributions: rows,
+  };
+}
+
+/**
+ * A stored Test & Learn walkthrough is re-validated field by field — every
+ * biome / stat / category / option must be a closed-enum id, every number
+ * finite — so a hand-edited record can never reach the renderer and throw
+ * from a `TRAITS[category][option]` lookup. Anything off → null (the Buddy
+ * is kept, only its "Last test" chip is dropped).
+ */
+export function coerceTestSummary(value: unknown): TestSummary | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (!isBiome(raw.biome)) return null;
+  const before = coerceStatBlock(raw.before);
+  const after = coerceStatBlock(raw.after);
+  if (!before || !after) return null;
+  if (!Array.isArray(raw.changes) || raw.changes.length > STATS.length)
+    return null;
+  const changes: StatChange[] = [];
+  const seen = new Set<string>();
+  for (const entry of raw.changes) {
+    const change = coerceChange(entry);
+    if (!change || seen.has(change.stat)) return null;
+    seen.add(change.stat);
+    if (change.changedContributions.length > CATEGORIES.length) return null;
+    changes.push(change);
+  }
+  return {
+    biome: raw.biome,
+    before,
+    after,
+    changes,
+    unchanged: raw.unchanged === true,
+  };
 }
 
 function coerceSaved(value: unknown): SavedBuddy | null {
@@ -104,7 +182,7 @@ function coerceSaved(value: unknown): SavedBuddy | null {
     id: raw.id,
     recipe: validated.recipe,
     savedAt,
-    lastTest: isTestSummary(raw.lastTest) ? raw.lastTest : null,
+    lastTest: coerceTestSummary(raw.lastTest),
   };
 }
 
@@ -201,7 +279,7 @@ export function loadDraft(
       band: parsed.band,
       recipe: validated.recipe,
       lastTested,
-      lastTest: isTestSummary(parsed.lastTest) ? parsed.lastTest : null,
+      lastTest: coerceTestSummary(parsed.lastTest),
       named: parsed.named === true,
     };
   } catch {

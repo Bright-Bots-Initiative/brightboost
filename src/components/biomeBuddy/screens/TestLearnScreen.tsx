@@ -3,6 +3,12 @@
  * bars before → after. Then one card per CHANGED bar: what moved, why in this
  * biome (one kid sentence per part, "Tell me more" for the deeper science)
  * and a wondering nudge — never an instruction. "Got it!" closes.
+ *
+ * Three shapes, all with a next step and none a dead end:
+ *   - bars moved            → one card per moved bar;
+ *   - a part changed but no bar moved here → one "nothing moved" card that
+ *     says what that means (looks / built-for changed, not these four bars);
+ *   - nothing changed at all → one "same parts, same home" card.
  */
 import { useId, useState } from "react";
 import {
@@ -96,11 +102,12 @@ export default function TestLearnScreen({
   const { t, L } = useBuddyLocale();
   const [page, setPage] = useState(0);
   const headingId = useId();
-  const biomeLabel = L(BIOME_INFO[recipe.biome].label);
-  const total = 1 + (summary.unchanged ? 1 : summary.changes.length);
+  const info = BIOME_INFO[recipe.biome];
+  const where = L(info.inPhrase);
+  const noMovement = summary.changes.length === 0;
+  const total = 1 + (noMovement ? 1 : summary.changes.length);
   const last = page === total - 1;
-  const change =
-    page > 0 && !summary.unchanged ? summary.changes[page - 1] : null;
+  const change = page > 0 && !noMovement ? summary.changes[page - 1] : null;
 
   return (
     <Overlay
@@ -119,21 +126,27 @@ export default function TestLearnScreen({
         <>
           <h3 id={headingId} className="text-xl font-extrabold text-[#3a2e22]">
             {t("biomeBuddy.test.heading", {
-              defaultValue: "Here's how {{name}} does in the {{biome}}!",
+              defaultValue: "Here's how {{name}} does {{where}}!",
               name,
-              biome: biomeLabel,
+              where,
             })}
             <span aria-hidden> {BIOME_EMOJI[recipe.biome]}</span>
           </h3>
           <p className="text-sm font-bold text-[#6f6048]">
             {summary.unchanged
               ? t("biomeBuddy.test.introSame", {
-                  defaultValue: "Same parts, same home — the bars stayed put.",
-                })
-              : t("biomeBuddy.test.intro", {
                   defaultValue:
-                    "The grey mark is before. The color is now. Tap next to see why each bar moved.",
-                })}
+                    "Same parts, same home — the bars stayed put. Tap next.",
+                })
+              : noMovement
+                ? t("biomeBuddy.test.introNoMove", {
+                    defaultValue:
+                      "You changed a part, but these four bars stayed put in this home. Tap next to see what that means.",
+                  })
+                : t("biomeBuddy.test.intro", {
+                    defaultValue:
+                      "The grey mark is before. The color is now. Tap next to see why each bar moved.",
+                  })}
           </p>
           <div className="w-full rounded-2xl bg-white/80 p-3">
             <StatBars
@@ -145,18 +158,23 @@ export default function TestLearnScreen({
         </>
       )}
 
-      {page > 0 && summary.unchanged && (
+      {page > 0 && noMovement && (
         <>
           <h3 id={headingId} className="text-xl font-extrabold text-[#3a2e22]">
             {t("biomeBuddy.test.unchangedTitle", {
               defaultValue: "Nothing moved this time",
             })}
           </h3>
-          <p className="font-bold text-[#3a2e22]">
-            {t("biomeBuddy.test.unchangedBody", {
-              defaultValue:
-                "That's useful to know too! Same parts in the same home do the same things.",
-            })}
+          <p className="font-bold text-[#3a2e22]" data-testid="no-move-body">
+            {summary.unchanged
+              ? t("biomeBuddy.test.unchangedBody", {
+                  defaultValue:
+                    "That's useful to know too! Same parts in the same home do the same things.",
+                })
+              : t("biomeBuddy.test.noMoveBody", {
+                  defaultValue:
+                    "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?",
+                })}
           </p>
         </>
       )}
@@ -188,8 +206,8 @@ export default function TestLearnScreen({
           </p>
           <p className="text-sm font-extrabold text-[#3a2e22] self-start">
             {t("biomeBuddy.test.whyIntro", {
-              defaultValue: "Why, in the {{biome}}?",
-              biome: biomeLabel,
+              defaultValue: "Why, {{where}}?",
+              where,
             })}
           </p>
           <ul className="w-full flex flex-col gap-2">

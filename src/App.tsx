@@ -58,9 +58,11 @@ import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
 import Waterworks from "./pages/Waterworks";
-import BiomeBuddy from "./pages/BiomeBuddy";
-import BiomeBuddyShare from "./pages/BiomeBuddyShare";
-import BiomeBuddyReview from "./pages/BiomeBuddyReview";
+// Biome Buddy prototype: unlisted routes, lazy so its content tables never
+// ride in the main chunk.
+const BiomeBuddy = lazy(() => import("./pages/BiomeBuddy"));
+const BiomeBuddyShare = lazy(() => import("./pages/BiomeBuddyShare"));
+const BiomeBuddyReview = lazy(() => import("./pages/BiomeBuddyReview"));
 import PlanDetail from "./pages/PlanDetail";
 import Parents from "./pages/Parents";
 import ParentGuide from "./pages/ParentGuide";
@@ -158,11 +160,29 @@ function App() {
                   zero backend. /share renders a recipe carried in the URL
                   fragment; /review is the reviewer intro. Unlisted is not
                   authentication. */}
-              <Route path="/biome-buddy" element={<BiomeBuddy />} />
-              <Route path="/biome-buddy/share" element={<BiomeBuddyShare />} />
+              <Route
+                path="/biome-buddy"
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddy />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/biome-buddy/share"
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddyShare />
+                  </Suspense>
+                }
+              />
               <Route
                 path="/biome-buddy/review"
-                element={<BiomeBuddyReview />}
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddyReview />
+                  </Suspense>
+                }
               />
               {import.meta.env.DEV && (
                 <Route

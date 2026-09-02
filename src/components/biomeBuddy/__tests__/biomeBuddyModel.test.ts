@@ -18,6 +18,7 @@ import {
   optionEffect,
   recipeKey,
   starterRecipe,
+  STARTER_TRAITS,
   statContributions,
   unlockedPickers,
   nextUnlock,
@@ -171,19 +172,31 @@ describe("stat calculation", () => {
       }
   });
 
-  it("statContributions sums to the (unclamped) stat and only lists nonzero rows", () => {
+  it("statContributions lists exactly the nonzero rows, and the clamp bites when the raw sum overflows", () => {
     const traits: TraitSelection = {
       eyes: "compound_eyes",
       ears: "hidden_ears",
       nose: "spiracles",
       movement: "wings",
-      covering: "feathers",
+      covering: "keeled_scales", // zero agility in air → must NOT appear
     };
     const rows = statContributions("air", traits, "agility");
-    for (const row of rows) expect(row.base !== 0 || row.mod !== 0).toBe(true);
+    expect(rows).toEqual([
+      { category: "eyes", option: "compound_eyes", base: 10, mod: 5 },
+      { category: "ears", option: "hidden_ears", base: 5, mod: 0 },
+      { category: "nose", option: "spiracles", base: 10, mod: 5 },
+      { category: "movement", option: "wings", base: 55, mod: 30 },
+    ]);
     const raw = rows.reduce((sum, r) => sum + r.base + r.mod, 0);
-    expect(raw).toBeGreaterThan(100); // wings+compound+spiracles+feathers in air overflow…
-    expect(computeStats({ biome: "air", traits }).agility).toBe(100); // …and clamp
+    expect(raw).toBe(120);
+    expect(computeStats({ biome: "air", traits }).agility).toBe(100);
+    // the same build in water does not overflow, so no clamp is applied
+    expect(computeStats({ biome: "water", traits }).agility).toBe(
+      statContributions("water", traits, "agility").reduce(
+        (sum, r) => sum + r.base + r.mod,
+        0,
+      ),
+    );
   });
 
   it("optionEffect matches the matrix (contribution correctness spot-checks from the design doc)", () => {
@@ -306,6 +319,78 @@ describe("explanation completeness (invariant 4)", () => {
   });
 });
 
+describe("science guards (adversarial-review corrections stay corrected)", () => {
+  const en = (l: Localized) => l.en;
+
+  it("an eyeless Buddy never GAINS sight from any biome (finding 7)", () => {
+    for (const biome of BIOMES) {
+      expect(
+        TRAITS.eyes.no_eyes.biomeMod[biome].sight ?? 0,
+      ).toBeLessThanOrEqual(0);
+      expect(
+        optionEffect("eyes", "no_eyes", biome).sight ?? 0,
+      ).toBeLessThanOrEqual(TRAITS.eyes.no_eyes.base.sight ?? 0);
+    }
+  });
+
+  it("gills breathe; the nares smell (finding 1)", () => {
+    const card = scienceFor("nose", "gills");
+    expect(en(card.label)).toMatch(/water-nose/);
+    expect(en(card.what)).toMatch(/nostril/);
+    expect(en(card.more)).toMatch(/nares/);
+    expect(en(card.more)).not.toMatch(/fish smells with every breath/i);
+    for (const biome of BIOMES) {
+      const why = whyFor("nose", "gills", biome);
+      expect(why).not.toBeNull();
+      // gills may "pull oxygen"; they may never be the thing that smells
+      expect(en(why!)).not.toMatch(
+        /gills (sniff|smell|pull (in )?(smells?|scents?)|catch (smells?|scents?)|take in (smells?|scents?))/i,
+      );
+      expect(why!.es).not.toMatch(
+        /branquias (huelen|olfatean|sacan (olores?|aromas?)|atrapan (olores?|aromas?))/i,
+      );
+    }
+  });
+
+  it("spiracles breathe; antennae smell; spiders are not insects (findings 2, 6)", () => {
+    const card = scienceFor("nose", "spiracles");
+    expect(en(card.label)).toMatch(/antennae/);
+    expect(en(card.what)).toMatch(/antennae do the smelling/);
+    expect(en(card.animals)).not.toMatch(/spider/i);
+    expect(card.animals.es).not.toMatch(/araña/i);
+    expect(en(whyFor("nose", "spiracles", "water")!)).toMatch(/antennae/);
+  });
+
+  it("claws are claws, not hooves or gecko pads (finding 3)", () => {
+    const card = scienceFor("movement", "claws");
+    expect(en(card.animals)).not.toMatch(/goat|gecko/i);
+    expect(en(card.more)).not.toMatch(/hoo(f|ves)/i);
+    expect(en(whyFor("movement", "claws", "air")!)).not.toMatch(
+      /hoo(f|ves)|goat/i,
+    );
+  });
+
+  it("ladybugs are warning-coloured, skunks are not disruptive, chameleons are not sand lances (findings 4, 5, 23)", () => {
+    expect(en(scienceFor("pattern", "spots").animals)).not.toMatch(/ladybug/i);
+    expect(en(scienceFor("pattern", "warning").animals)).toMatch(/ladybug/i);
+    expect(en(scienceFor("pattern", "stripes").animals)).not.toMatch(/skunk/i);
+    expect(en(scienceFor("eyes", "rotating_eyes").animals)).not.toMatch(
+      /sandlance|sand lance/i,
+    );
+  });
+
+  it("evolution is told as differential survival, never use-and-disuse (finding 21)", () => {
+    for (const category of CATEGORIES)
+      for (const id of TRAIT_OPTIONS[category]) {
+        const line = en(scienceFor(category, id).evolved);
+        expect(line, `${category}.${id}.evolved`).not.toMatch(
+          /slowly lost|because they (stopped|didn't) us/i,
+        );
+      }
+    expect(en(scienceFor("eyes", "no_eyes").evolved)).toMatch(/generations/);
+  });
+});
+
 describe("name kit", () => {
   it("renders from ids in both locales with locale word order", () => {
     expect(renderBuddyName({ adjective: "swift", noun: "finfox" }, "en")).toBe(
@@ -411,11 +496,33 @@ describe("recipe validation (invariant 5)", () => {
     expect(validateRecipe(sneaky).ok).toBe(false);
   });
 
-  it("recipeKey is stable and order-independent; cloneRecipe never aliases", () => {
+  it("recipeKey is stable, order-independent, and changes for EVERY field", () => {
     const a = good();
     const b = { ...good(), traits: { ...good().traits } };
     expect(recipeKey(a)).toBe(recipeKey(b));
+    const variants: BuddyRecipe[] = [
+      { ...good(), biome: "fire" },
+      { ...good(), traits: { ...good().traits, eyes: "no_eyes" } },
+      { ...good(), traits: { ...good().traits, ears: "pinna" } },
+      { ...good(), traits: { ...good().traits, nose: "spiracles" } },
+      { ...good(), traits: { ...good().traits, movement: "wings" } },
+      { ...good(), traits: { ...good().traits, covering: "feathers" } },
+      { ...good(), pattern: "stripes" },
+      { ...good(), name: { adjective: "brave", noun: "splasher" } },
+      { ...good(), name: { adjective: "swift", noun: "digger" } },
+    ];
+    const keys = new Set(variants.map(recipeKey));
+    expect(keys.size).toBe(variants.length);
+    expect(keys.has(recipeKey(a))).toBe(false);
+  });
+
+  it("cloneRecipe never aliases", () => {
+    const a = good();
     const clone = cloneRecipe(a);
+    expect(clone).toEqual(a);
+    expect(clone).not.toBe(a);
+    expect(clone.traits).not.toBe(a.traits);
+    expect(clone.name).not.toBe(a.name);
     clone.traits.eyes = "no_eyes";
     clone.name.noun = "digger";
     expect(a.traits.eyes).toBe("compound_eyes");
@@ -429,14 +536,45 @@ describe("Test & Learn diff", () => {
     current.traits.eyes = "no_eyes";
     const summary = diffBuilds(null, current);
     expect(summary.unchanged).toBe(false);
-    expect(summary.changes.map((c) => c.stat)).toContain("sight");
+    const starterStats = computeStats({
+      biome: "earth",
+      traits: STARTER_TRAITS,
+    });
+    const nowStats = computeStats(current);
+    expect(summary.before).toEqual(starterStats);
+    expect(summary.after).toEqual(nowStats);
+    // exactly the stats that differ, in display order, each attributed to eyes
+    const moved = STATS.filter((s) => starterStats[s] !== nowStats[s]);
+    expect(moved.length).toBeGreaterThan(0);
+    expect(summary.changes.map((c) => c.stat)).toEqual(moved);
     for (const change of summary.changes) {
-      expect(change.delta).toBe(change.after - change.before);
-      expect(change.delta).not.toBe(0);
-      expect(
-        change.changedContributions.every((c) => c.category === "eyes"),
-      ).toBe(true);
+      expect(change.before).toBe(starterStats[change.stat]);
+      expect(change.after).toBe(nowStats[change.stat]);
+      expect(change.delta).toBe(
+        nowStats[change.stat] - starterStats[change.stat],
+      );
+      expect(change.changedContributions.map((c) => c.category)).toEqual([
+        "eyes",
+      ]);
     }
+    // the eyeless Buddy's Sight goes DOWN (finding 7): never up in any biome
+    for (const biome of BIOMES) {
+      const r = starterRecipe(biome);
+      r.traits.eyes = "no_eyes";
+      expect(computeStats(r).sight).toBeLessThan(
+        computeStats({ biome, traits: STARTER_TRAITS }).sight,
+      );
+    }
+  });
+
+  it("a part swap that moves no bar is reported as changes=[] with unchanged=false (the UI shows a 'nothing moved' card, not a dead end)", () => {
+    const prev = starterRecipe("earth"); // short_fur
+    const next = starterRecipe("earth");
+    next.traits.covering = "smooth_scales"; // same agility in earth
+    const summary = diffBuilds(prev, next);
+    expect(summary.unchanged).toBe(false);
+    expect(summary.changes).toEqual([]);
+    expect(summary.before).toEqual(summary.after);
   });
 
   it("flags an identical re-test as unchanged (the 'nothing moved' wondering card)", () => {

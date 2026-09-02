@@ -39,6 +39,9 @@ export interface BiomeInfo {
   /** Kid-facing subtitle that keeps the four-elements theme honest
    *  ("Fire" = desert & volcano, not a habitat made of fire). */
   subtitle: Localized;
+  /** "in the Water" / "en el Agua" — carries the article and gender so
+   *  templates never glue an English-shaped preposition onto a label. */
+  inPhrase: Localized;
   /** Four kid-level sentences: temperature, animals, plants, sights. */
   description: Localized;
   fauna: Localized;
@@ -47,6 +50,7 @@ export interface BiomeInfo {
 export const BIOME_INFO: Record<Biome, BiomeInfo> = {
   earth: {
     label: { en: "Earth", es: "Tierra" },
+    inPhrase: { en: "in the Earth", es: "en la Tierra" },
     subtitle: { en: "Forest floor & jungle", es: "Suelo del bosque y selva" },
     description: {
       en: "It is shady and damp under the trees. Leaves and roots cover the ground. Beetles, frogs, foxes and snakes live here. There are lots of places to hide and lots of things to sniff.",
@@ -59,6 +63,7 @@ export const BIOME_INFO: Record<Biome, BiomeInfo> = {
   },
   water: {
     label: { en: "Water", es: "Agua" },
+    inPhrase: { en: "in the Water", es: "en el Agua" },
     subtitle: {
       en: "Pond, swamp & shallows",
       es: "Estanque, pantano y orilla",
@@ -74,18 +79,20 @@ export const BIOME_INFO: Record<Biome, BiomeInfo> = {
   },
   fire: {
     label: { en: "Fire", es: "Fuego" },
+    inPhrase: { en: "in the Fire", es: "en el Fuego" },
     subtitle: { en: "Desert & volcano", es: "Desierto y volcán" },
     description: {
       en: "It is hot and dry, with sand dunes and black volcanic rock. Days are burning hot and nights get cold. Camels, fennec foxes, sidewinder snakes and scorpions live here. Water is hard to find, so every drop counts.",
-      es: "Hace calor y todo está seco, con dunas de arena y roca volcánica negra. Los días queman y las noches son frías. Aquí viven camellos, zorros del desierto, serpientes cornudas y escorpiones. El agua es difícil de encontrar, así que cada gota cuenta.",
+      es: "Hace calor y todo está seco, con dunas de arena y roca volcánica negra. Los días queman y las noches son frías. Aquí viven camellos, zorros del desierto, cascabeles cornudas y escorpiones. El agua es difícil de encontrar, así que cada gota cuenta.",
     },
     fauna: {
       en: "camels · fennec foxes · sidewinders · thorny devils · scorpions",
-      es: "camellos · zorros del desierto · serpientes cornudas · diablos espinosos · escorpiones",
+      es: "camellos · zorros del desierto · cascabeles cornudas · diablos espinosos · escorpiones",
     },
   },
   air: {
     label: { en: "Air", es: "Aire" },
+    inPhrase: { en: "in the Air", es: "en el Aire" },
     subtitle: {
       en: "Windy cliffs & high canopy",
       es: "Acantilados ventosos y copas altas",
@@ -149,8 +156,8 @@ export const SCIENCE: CardTable = {
         es: "Ahorrar energía donde no hay luz para ver.",
       },
       evolved: {
-        en: "Animals that lived in dark caves for a very long time slowly lost their eyes.",
-        es: "Los animales que vivieron mucho tiempo en cuevas oscuras fueron perdiendo los ojos.",
+        en: "In pitch-dark caves, animals born with smaller eyes did just as well and saved energy, so over many generations eyes faded away.",
+        es: "En cuevas totalmente oscuras, a los animales que nacían con ojos más pequeños les iba igual de bien y ahorraban energía, así que con muchas generaciones los ojos desaparecieron.",
       },
       animals: {
         en: "Cave salamanders, cave fish, some cave beetles.",
@@ -188,8 +195,8 @@ export const SCIENCE: CardTable = {
         es: "A los cazadores lentos que se quedan quietos en las ramas les fue mejor al poder mirar sin moverse.",
       },
       animals: {
-        en: "Chameleons, some fish like the sandlance.",
-        es: "Camaleones y algunos peces como el lanzón.",
+        en: "Chameleons, seahorses.",
+        es: "Camaleones y caballitos de mar.",
       },
       where: {
         en: "Forests of Madagascar and Africa.",
@@ -416,15 +423,15 @@ export const SCIENCE: CardTable = {
   },
   nose: {
     gills: {
-      label: { en: "Gills", es: "Branquias" },
-      term: { en: "gills (branchiae)", es: "branquias" },
+      label: { en: "Gills & water-nose", es: "Branquias y nariz de agua" },
+      term: { en: "gills (branchiae) + nares", es: "branquias + narinas" },
       what: {
-        en: "Feathery slits that pull oxygen and smells straight out of water.",
-        es: "Rendijas con forma de pluma que sacan oxígeno y olores directamente del agua.",
+        en: "Feathery slits that breathe water, plus two tiny nostril pits that sniff it.",
+        es: "Rendijas con forma de pluma que respiran agua, y dos hoyitos de nariz que la olfatean.",
       },
       usedFor: {
-        en: "Breathing and smelling underwater without ever coming up.",
-        es: "Respirar y oler bajo el agua sin subir nunca.",
+        en: "Breathing with the gills and sniffing with the nostril pits, all underwater.",
+        es: "Respirar con las branquias y olfatear con los hoyitos de la nariz, todo bajo el agua.",
       },
       evolved: {
         en: "The first animals lived in water, and gills came long before lungs.",
@@ -443,8 +450,8 @@ export const SCIENCE: CardTable = {
         es: "Las branquias solo funcionan mojadas; fuera del agua se secan y al cuerpo le falta aire.",
       },
       more: {
-        en: "Water flows over thin gill filaments full of blood vessels, and oxygen crosses into the blood. The same water carries scent molecules, so a fish smells with every breath. In air, the filaments collapse and stick together, which is why a fish out of water cannot breathe even though air has more oxygen.",
-        es: "El agua pasa por filamentos finos llenos de vasos sanguíneos y el oxígeno cruza a la sangre. Esa misma agua lleva moléculas de olor, así que un pez huele con cada respiración. En el aire los filamentos se aplastan y se pegan, y por eso un pez fuera del agua no puede respirar aunque el aire tenga más oxígeno.",
+        en: "Water flows over thin gill filaments full of blood vessels, and oxygen crosses into the blood. Smelling is a separate job: water flows through two little nostril pits (nares) on the snout, past scent sensors, so a fish sniffs the water it swims through. In air, the filaments collapse and stick together, which is why a fish out of water cannot breathe even though air has more oxygen.",
+        es: "El agua pasa por filamentos finos llenos de vasos sanguíneos y el oxígeno cruza a la sangre. Oler es otro trabajo: el agua pasa por dos hoyitos de nariz (narinas) en el hocico, junto a sensores de olor, así que el pez olfatea el agua por la que nada. En el aire los filamentos se aplastan y se pegan, y por eso un pez fuera del agua no puede respirar aunque el aire tenga más oxígeno.",
       },
     },
     nose_lungs: {
@@ -515,11 +522,14 @@ export const SCIENCE: CardTable = {
       },
     },
     spiracles: {
-      label: { en: "Side breathing holes", es: "Agujeros para respirar" },
-      term: { en: "spiracles + tracheae", es: "espiráculos + tráqueas" },
+      label: {
+        en: "Breathing holes & antennae",
+        es: "Agujeros para respirar y antenas",
+      },
+      term: { en: "spiracles + antennae", es: "espiráculos + antenas" },
       what: {
-        en: "Tiny holes along the body that let air straight in, no nose needed.",
-        es: "Agujeritos a lo largo del cuerpo por donde entra el aire, sin nariz.",
+        en: "Tiny holes along the body let air straight in, and two antennae do the smelling.",
+        es: "Agujeritos a lo largo del cuerpo por donde entra el aire, y dos antenas que se encargan de oler.",
       },
       usedFor: {
         en: "Breathing through tubes that reach every part of a small body; antennae do the smelling.",
@@ -530,8 +540,8 @@ export const SCIENCE: CardTable = {
         es: "A los animales pequeños les fue bien sin pulmones porque los tubos de aire llegaban a todas partes.",
       },
       animals: {
-        en: "Beetles, grasshoppers, caterpillars, spiders.",
-        es: "Escarabajos, saltamontes, orugas, arañas.",
+        en: "Beetles, grasshoppers, caterpillars, ants.",
+        es: "Escarabajos, saltamontes, orugas, hormigas.",
       },
       where: {
         en: "Everywhere on land, from rainforests to deserts.",
@@ -663,8 +673,8 @@ export const SCIENCE: CardTable = {
         es: "A los trepadores y cavadores les fue mejor cuando los dedos se enganchaban en madera, roca y tierra.",
       },
       animals: {
-        en: "Squirrels, bears, mountain goats, geckos, meerkats.",
-        es: "Ardillas, osos, cabras montesas, geckos, suricatas.",
+        en: "Squirrels, bears, badgers, cats, meerkats.",
+        es: "Ardillas, osos, tejones, gatos, suricatas.",
       },
       where: {
         en: "Forests, mountains and deserts everywhere.",
@@ -675,8 +685,8 @@ export const SCIENCE: CardTable = {
         es: "Necesita huesos de dedo fuertes; las garras no sirven para empujar agua y cuesta nadar con ellas.",
       },
       more: {
-        en: "A squirrel can run head-first down a tree because its back ankles rotate and its claws hook the bark. Mountain goats climb near-vertical cliffs on two-toed hooves with a rubbery pad and a hard rim. Fennec foxes dig burrows so fast with their claws that they can vanish into sand in seconds.",
-        es: "Una ardilla baja un árbol de cabeza porque los tobillos traseros giran y las garras se enganchan en la corteza. Las cabras montesas trepan acantilados casi verticales con pezuñas de dos dedos con almohadilla de goma y borde duro. Los zorros del desierto cavan tan rápido con las garras que desaparecen en la arena en segundos.",
+        en: "A squirrel can run head-first down a tree because its back ankles rotate and its claws hook the bark. A bat hangs from a cliff or cave roof on hooked claws all day without using a muscle. Fennec foxes dig burrows so fast with their claws that they can vanish into sand in seconds.",
+        es: "Una ardilla baja un árbol de cabeza porque los tobillos traseros giran y las garras se enganchan en la corteza. Un murciélago cuelga de un acantilado o del techo de una cueva con garras en forma de gancho todo el día sin usar un músculo. Los zorros del desierto cavan tan rápido con las garras que desaparecen en la arena en segundos.",
       },
     },
     padded_paws: {
@@ -931,8 +941,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Los animales cuyos bordes eran difíciles de ver fueron atrapados menos veces.",
     },
     animals: {
-      en: "Zebras, tigers, striped skunks, clownfish.",
-      es: "Cebras, tigres, mofetas rayadas, peces payaso.",
+      en: "Zebras, tigers, okapis, clownfish.",
+      es: "Cebras, tigres, okapis, peces payaso.",
     },
     where: {
       en: "Grasslands, jungles and coral reefs.",
@@ -966,8 +976,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "A los animales del bosque les fue mejor pareciendo luz de sol entre hojas.",
     },
     animals: {
-      en: "Leopards, fawns, ladybugs, trout.",
-      es: "Leopardos, cervatillos, mariquitas, truchas.",
+      en: "Leopards, fawns, cheetahs, trout.",
+      es: "Leopardos, cervatillos, guepardos, truchas.",
     },
     where: {
       en: "Forests and rivers worldwide.",
@@ -1023,15 +1033,15 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
     },
     usedFor: {
       en: "Telling hunters: I taste terrible or I sting, leave me alone.",
-      es: "Decirle a los cazadores: sé horrible o pico, déjame en paz.",
+      es: "Decirles a los cazadores: tengo un sabor horrible o pico, déjenme en paz.",
     },
     evolved: {
       en: "Animals that were poisonous did better when hunters could learn to recognize them.",
       es: "A los animales venenosos les fue mejor cuando los cazadores aprendían a reconocerlos.",
     },
     animals: {
-      en: "Poison dart frogs, bees, monarch butterflies, skunks.",
-      es: "Ranas dardo, abejas, mariposas monarca, mofetas.",
+      en: "Poison dart frogs, bees, monarch butterflies, ladybugs, skunks.",
+      es: "Ranas dardo, abejas, mariposas monarca, mariquitas, mofetas.",
     },
     where: {
       en: "Rainforests, meadows and gardens worldwide.",
@@ -1063,7 +1073,7 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
     },
     animals: {
       en: "Sand cats, sidewinders, tree frogs, stick insects.",
-      es: "Gatos de las arenas, serpientes cornudas, ranas arborícolas, insectos palo.",
+      es: "Gatos de las arenas, cascabeles cornudas, ranas arborícolas, insectos palo.",
     },
     where: {
       en: "Deserts, forests and rocky shores everywhere.",
@@ -1075,7 +1085,7 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
     },
     more: {
       en: "A sidewinder is the exact color of the dune it lives on, and it buries itself so only its eyes show. The same trick fails the moment the animal moves to a different background: a sand-colored snake on dark volcanic rock stands out completely.",
-      es: "La serpiente cornuda tiene el color exacto de su duna y se entierra hasta que solo se ven los ojos. El mismo truco falla en cuanto el animal cambia de fondo: una serpiente color arena sobre roca volcánica oscura se ve de lejos.",
+      es: "La cascabel cornuda tiene el color exacto de su duna y se entierra hasta que solo se ven los ojos. El mismo truco falla en cuanto el animal cambia de fondo: una serpiente color arena sobre roca volcánica oscura se ve de lejos.",
     },
   },
 };
@@ -1217,20 +1227,20 @@ export const WHY: WhyTable = {
   nose: {
     gills: {
       earth: {
-        en: "Gills need water to work; on the damp forest floor they get a little, so this Buddy is slower and smells less.",
-        es: "Las branquias necesitan agua para funcionar; en el suelo húmedo del bosque reciben poca, así que este Buddy es más lento y huele menos.",
+        en: "Gills need water to breathe, and the nostril pits only sniff smells that are wet. On the damp forest floor both get a little, so this Buddy is slower and smells less.",
+        es: "Las branquias necesitan agua para respirar, y los hoyitos de la nariz solo olfatean olores mojados. En el suelo húmedo del bosque ambos reciben poca, así que este Buddy es más lento y huele menos.",
       },
       water: {
-        en: "In the pond, gills pull oxygen and smells from every mouthful of water, so this Buddy is quick and sharp-nosed.",
-        es: "En el estanque, las branquias sacan oxígeno y olores de cada bocanada de agua, así que este Buddy es rápido y tiene buen olfato.",
+        en: "In the pond, gills pull oxygen from every mouthful and the nostril pits sniff scents right out of the water, so this Buddy is quick and sharp-nosed.",
+        es: "En el estanque, las branquias sacan oxígeno de cada bocanada y los hoyitos de la nariz olfatean los olores del agua, así que este Buddy es rápido y tiene buen olfato.",
       },
       fire: {
-        en: "In the desert gills dry out fast, so this Buddy gets little air and slows right down. Gills miss the pond here.",
-        es: "En el desierto las branquias se secan rápido, así que este Buddy recibe poco aire y se vuelve muy lento. Las branquias echan de menos el estanque.",
+        en: "In the desert gills dry out fast and there is no water for the nostril pits to sniff, so this Buddy gets little air and slows right down. Gills miss the pond here.",
+        es: "En el desierto las branquias se secan rápido y no hay agua que los hoyitos de la nariz puedan olfatear, así que este Buddy recibe poco aire y se vuelve muy lento. Las branquias echan de menos el estanque.",
       },
       air: {
-        en: "Thin dry cliff air gives gills almost nothing to breathe, so this Buddy tires quickly up high.",
-        es: "El aire fino y seco del acantilado casi no da nada que respirar a las branquias, así que este Buddy se cansa rápido en las alturas.",
+        en: "Thin dry cliff air gives gills almost nothing to breathe and the water-sniffing nostrils nothing to sniff, so this Buddy tires quickly up high.",
+        es: "El aire fino y seco del acantilado casi no da nada que respirar a las branquias ni nada que olfatear a la nariz de agua, así que este Buddy se cansa rápido en las alturas.",
       },
     },
     nose_lungs: {
@@ -1271,8 +1281,8 @@ export const WHY: WhyTable = {
         es: "Los agujeros para respirar funcionan bien en el aire húmedo del bosque, y las antenas captan olores en el suelo.",
       },
       water: {
-        en: "The breathing holes must stay shut underwater, so this Buddy cannot smell much while it holds its air.",
-        es: "Los agujeros para respirar deben estar cerrados bajo el agua, así que este Buddy no huele mucho mientras guarda el aire.",
+        en: "The breathing holes must stay shut underwater, and antennae are built for smells in air, so this Buddy smells much less in the pond.",
+        es: "Los agujeros para respirar deben estar cerrados bajo el agua, y las antenas están hechas para oler en el aire, así que este Buddy huele mucho menos en el estanque.",
       },
       fire: {
         en: "Desert beetles shut their breathing holes to keep water in, and still catch scents with antennae.",
@@ -1349,8 +1359,8 @@ export const WHY: WhyTable = {
         es: "Las garras cavan una madriguera fresca bajo la arena caliente en segundos, como un zorro del desierto.",
       },
       air: {
-        en: "Claws grip cliff rock like a mountain goat's hooves, so this Buddy scrambles up high.",
-        es: "Las garras agarran la roca del acantilado como las pezuñas de una cabra montesa, así que este Buddy trepa muy alto.",
+        en: "Claws hook into cracks in the cliff rock, the way a bat hangs on by its claws, so this Buddy scrambles up high.",
+        es: "Las garras se enganchan en las grietas de la roca, como un murciélago colgado de sus garras, así que este Buddy trepa muy alto.",
       },
     },
     padded_paws: {
@@ -1512,7 +1522,7 @@ export const NAME_NOUN_LABEL: Record<NameNoun, Localized> = {
   glider: { en: "Glider", es: "Planeador" },
   digger: { en: "Digger", es: "Excavador" },
   splasher: { en: "Splasher", es: "Chapoteador" },
-  crawler: { en: "Crawler", es: "Trepador" },
+  crawler: { en: "Crawler", es: "Gateador" },
   flutter: { en: "Flutter", es: "Aleteo" },
   roamer: { en: "Roamer", es: "Vagabundo" },
 };

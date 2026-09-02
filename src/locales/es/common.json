@@ -2165,29 +2165,30 @@
       "prev": "Hogar anterior",
       "next": "Hogar siguiente",
       "animalsHere": "Quién vive aquí:",
-      "select": "Elegir {{biome}} ✓"
+      "select": "Elegir {{biome}} ✓",
+      "currentAria": "Hogar: {{biome}}"
     },
     "create": {
       "spriteAria": "{{name}}, un Buddy de {{biome}}",
       "renameAria": "Nombre del Buddy: {{name}}. Toca para cambiarlo",
       "changeHomeAria": "Hogar: {{biome}}. Toca para cambiarlo",
       "save": "Guardar",
-      "statsHeading": "Cómo le va a {{name}} en {{biome}}",
-      "locked": "se abre después de probar un Buddy",
+      "statsHeading": "Cómo le va a {{name}} {{where}}",
       "groupAria": "Opciones de {{category}}",
       "pickAria": "{{category}}: {{option}}",
-      "guidedHint": "Cambia una parte y prueba tu Buddy para abrir más partes.",
       "test": "¡Pruébalo! 🔬",
       "nameSave": "Nombrar y guardar",
       "lastTestAria": "Volver a abrir la última prueba",
       "lastTest": "Última prueba",
       "unlockTitle": "¡Nueva parte para cambiar: {{category}}!",
-      "unlockTry": "¡Pruébala!"
+      "unlockTry": "¡Pruébala!",
+      "lockedTeaser": "Cambia una parte y prueba tu Buddy para abrir {{next}}.",
+      "lockedRest": "Después: {{list}}."
     },
     "science": {
       "term": "también se llama: {{term}}",
-      "effect": "Qué hace esta parte en {{biome}}:",
-      "noEffect": "En {{biome}} esto cambia cómo se ve tu Buddy, no las barras.",
+      "effect": "Qué hace esta parte {{where}}:",
+      "noEffect": "{{where}}, esta parte cambia cómo se ve tu Buddy, no las barras.",
       "less": "Mostrar menos",
       "more": "Cuéntame más 🔬",
       "usedFor": "Para qué sirve",
@@ -2211,19 +2212,21 @@
       "meterAria": "{{stat}}: {{value}} de 100, {{band}}{{delta}}"
     },
     "test": {
-      "heading": "¡Así le va a {{name}} en {{biome}}!",
-      "introSame": "Mismas partes, mismo hogar: las barras no se movieron.",
+      "heading": "¡Así le va a {{name}} {{where}}!",
+      "introSame": "Mismas partes, mismo hogar: las barras no se movieron. Toca siguiente.",
       "intro": "La marca gris es antes. El color es ahora. Toca siguiente para ver por qué se movió cada barra.",
       "unchangedTitle": "Esta vez nada se movió",
       "unchangedBody": "¡Eso también sirve saberlo! Las mismas partes en el mismo hogar hacen lo mismo.",
       "wentUp": "¡{{stat}} subió {{n}}!",
       "wentDown": "{{stat}} bajó {{n}}.",
       "beforeAfter": "Antes: {{before}} · Ahora: {{after}}",
-      "whyIntro": "¿Por qué, en {{biome}}?",
+      "whyIntro": "¿Por qué, {{where}}?",
       "prev": "◀ Atrás",
       "page": "{{n}} de {{total}}",
       "gotIt": "¡Entendido!",
-      "next": "Siguiente ▶"
+      "next": "Siguiente ▶",
+      "introNoMove": "Cambiaste una parte, pero estas cuatro barras no se movieron en este hogar. Toca siguiente para ver qué significa.",
+      "noMoveBody": "Tu parte nueva no movió estas barras aquí, pero cambió cómo se ve tu Buddy y para qué está hecho. Me pregunto en qué hogar sí importaría."
     },
     "name": {
       "heading": "¡Ponle nombre a tu Buddy!",
@@ -2252,8 +2255,8 @@
     "sharePage": {
       "subtitle": "Un Buddy de {{biome}}, compartido contigo",
       "parts": "Sus partes",
-      "stats": "Cómo le va en {{biome}}",
-      "why": "Por qué este Buddy encaja así en {{biome}}",
+      "stats": "Cómo le va {{where}}",
+      "why": "Por qué este Buddy encaja así {{where}}",
       "science": "Ciencia destacada",
       "remix": "Hacer mi propia versión 🔧",
       "remixNote": "Tendrás tu propia copia para cambiarla. Este Buddy compartido se queda tal como está.",

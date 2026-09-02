@@ -87,7 +87,9 @@ export default function BiomeBuddyShare() {
   const { recipe } = result;
   const stats = computeStats(recipe);
   const name = renderBuddyName(recipe.name, lang);
-  const biomeLabel = L(BIOME_INFO[recipe.biome].label);
+  const info = BIOME_INFO[recipe.biome];
+  const biomeLabel = L(info.label);
+  const where = L(info.inPhrase);
 
   // "Why this Buddy fits this biome this way": the strongest biome-sensitive
   // part per stat, deduped by part, biggest effects first.
@@ -142,7 +144,7 @@ export default function BiomeBuddyShare() {
           {biomeLabel}
           <span className="text-sm font-bold text-[#6f6048]">
             {" "}
-            · {L(BIOME_INFO[recipe.biome].subtitle)}
+            · {L(info.subtitle)}
           </span>
         </p>
 
@@ -208,8 +210,8 @@ export default function BiomeBuddyShare() {
             className="text-base font-extrabold text-[#3a2e22] mb-2"
           >
             {t("biomeBuddy.sharePage.stats", {
-              defaultValue: "How it does in the {{biome}}",
-              biome: biomeLabel,
+              defaultValue: "How it does {{where}}",
+              where,
             })}
           </h3>
           <StatBars stats={stats} animate={!reducedEffects} />
@@ -224,8 +226,8 @@ export default function BiomeBuddyShare() {
             className="text-base font-extrabold text-[#3a2e22] mb-2"
           >
             {t("biomeBuddy.sharePage.why", {
-              defaultValue: "Why this Buddy fits the {{biome}} this way",
-              biome: biomeLabel,
+              defaultValue: "Why this Buddy fits {{where}} this way",
+              where,
             })}
           </h3>
           <ul className="flex flex-col gap-2">
@@ -268,6 +270,9 @@ export default function BiomeBuddyShare() {
           <ul className="flex flex-col gap-2">
             {highlights.map((row) => {
               const card = scienceFor(row.category, row.option);
+              const termDiffers =
+                L(card.term).trim().toLowerCase() !==
+                L(card.label).trim().toLowerCase();
               return (
                 <li
                   key={`${row.category}-${row.option}-sci`}
@@ -275,8 +280,7 @@ export default function BiomeBuddyShare() {
                 >
                   <p className="text-sm font-extrabold text-[#3a2e22]">
                     {L(card.label)}
-                    {L(card.term).trim().toLowerCase() !==
-                      L(card.label).trim().toLowerCase() && (
+                    {termDiffers && (
                       <span className="text-xs font-bold text-[#7d6c52]">
                         {" "}
                         · {L(card.term)}
@@ -295,7 +299,9 @@ export default function BiomeBuddyShare() {
           </ul>
         </section>
 
-        <div className="bb-actions-sticky w-full flex flex-col items-center gap-2">
+        {/* Only the primary action is sticky; the note and the secondary
+            action flow below it. */}
+        <div className="bb-actions-sticky w-full flex flex-col items-center">
           <Link
             to={buildRemixUrl(recipe)}
             className="bb-btn bb-primary inline-flex items-center justify-center min-h-14 px-10 rounded-full bg-brightboost-yellow text-[#3a2e22] text-xl font-extrabold shadow-[0_5px_0_#c46f55] active:translate-y-1 active:shadow-none"
@@ -305,22 +311,20 @@ export default function BiomeBuddyShare() {
               defaultValue: "Make my own version 🔧",
             })}
           </Link>
-          <p className="text-xs font-bold text-[#6f6048] text-center max-w-sm">
-            {t("biomeBuddy.sharePage.remixNote", {
-              defaultValue:
-                "You'll get your own copy to change. This shared Buddy stays just as it is.",
-            })}
-          </p>
-          <Link
-            to="/biome-buddy"
-            className="bb-btn inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95"
-            data-testid="share-new"
-          >
-            {t("biomeBuddy.sharePage.new", {
-              defaultValue: "Build a new Buddy",
-            })}
-          </Link>
         </div>
+        <p className="text-xs font-bold text-[#6f6048] text-center max-w-sm">
+          {t("biomeBuddy.sharePage.remixNote", {
+            defaultValue:
+              "You'll get your own copy to change. This shared Buddy stays just as it is.",
+          })}
+        </p>
+        <Link
+          to="/biome-buddy"
+          className="bb-btn inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95"
+          data-testid="share-new"
+        >
+          {t("biomeBuddy.sharePage.new", { defaultValue: "Build a new Buddy" })}
+        </Link>
       </article>
     </BiomeBuddyShell>
   );

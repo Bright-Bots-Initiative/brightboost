@@ -30,8 +30,11 @@ const LanguageToggle = ({
   const offered = languages
     ? SUPPORTED_LANGUAGES.filter((l) => languages.includes(l.code))
     : SUPPORTED_LANGUAGES;
+  // When a page restricts the menu and the app language is not offered, the
+  // page is rendering the first offered language — say so on the trigger.
   const currentLabel =
-    SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.label ?? "English";
+    (offered.find((l) => l.code === currentLang) ?? offered[0])?.label ??
+    "English";
 
   const triggerClass =
     variant === "dark"

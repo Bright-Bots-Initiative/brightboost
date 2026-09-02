@@ -29,8 +29,9 @@ export const SHARE_PARAM = "r";
 /** Remix entry: the game page reads the same param from its own hash. */
 export const REMIX_PATH = "/biome-buddy";
 
-/** A valid v1 payload encodes to ~150 chars; anything past this is not a
- *  Buddy. Checked BEFORE decoding so oversized junk costs nothing. */
+/** The longest valid v1 payload encodes to 195 chars; anything past this
+ *  cap is not a Buddy. Checked BEFORE decoding so oversized junk costs
+ *  nothing. */
 export const SHARE_MAX_LENGTH = 400;
 
 export type ShareError =
@@ -141,9 +142,12 @@ export function encodeShare(recipe: BuddyRecipe): string {
 export function decodeShare(encoded: string | null | undefined): ShareResult {
   if (typeof encoded !== "string" || encoded.length === 0)
     return { ok: false, error: "empty" };
-  if (encoded.length > SHARE_MAX_LENGTH)
+  // Some tools re-pad a copied link; padding carries no information.
+  const unpadded = encoded.replace(/=+$/, "");
+  if (unpadded.length === 0) return { ok: false, error: "empty" };
+  if (unpadded.length > SHARE_MAX_LENGTH)
     return { ok: false, error: "too_long" };
-  const json = fromBase64Url(encoded);
+  const json = fromBase64Url(unpadded);
   if (json === null) return { ok: false, error: "encoding" };
   let parsed: unknown;
   try {

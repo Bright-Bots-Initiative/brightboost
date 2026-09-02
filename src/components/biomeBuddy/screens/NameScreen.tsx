@@ -10,6 +10,7 @@ import { NAME_ADJECTIVE_LABEL, NAME_NOUN_LABEL } from "../biomeBuddyContent";
 import BuddySprite from "../BuddySprite";
 import ProgressDots from "../ProgressDots";
 import ShareButton from "../ShareButton";
+import { onRadioArrowKeys, radioTabIndex } from "../radioKeys";
 import { useBuddyLocale } from "../useBuddyLocale";
 
 export type SaveNote = "saved" | "local" | null;
@@ -69,19 +70,24 @@ export default function NameScreen({
           role="radiogroup"
           aria-labelledby="bb-name-adj"
           className="flex flex-wrap gap-2"
+          onKeyDown={onRadioArrowKeys}
         >
-          {NAME_ADJECTIVES.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={recipe.name.adjective === id}
-              onClick={() => onAdjective(id)}
-              className="bb-chip min-h-12 px-4 rounded-2xl bg-white border-[3px] border-[#e1d0a6] font-extrabold text-[#3a2e22] active:scale-95"
-            >
-              {L(NAME_ADJECTIVE_LABEL[id])}
-            </button>
-          ))}
+          {NAME_ADJECTIVES.map((id) => {
+            const selected = recipe.name.adjective === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                tabIndex={radioTabIndex(selected)}
+                onClick={() => onAdjective(id)}
+                className="bb-chip min-h-12 px-4 rounded-2xl bg-white border-[3px] border-[#e1d0a6] font-extrabold text-[#3a2e22] active:scale-95"
+              >
+                {L(NAME_ADJECTIVE_LABEL[id])}
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -98,23 +104,30 @@ export default function NameScreen({
           role="radiogroup"
           aria-labelledby="bb-name-noun"
           className="flex flex-wrap gap-2"
+          onKeyDown={onRadioArrowKeys}
         >
-          {NAME_NOUNS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={recipe.name.noun === id}
-              onClick={() => onNoun(id)}
-              className="bb-chip min-h-12 px-4 rounded-2xl bg-white border-[3px] border-[#e1d0a6] font-extrabold text-[#3a2e22] active:scale-95"
-            >
-              {L(NAME_NOUN_LABEL[id])}
-            </button>
-          ))}
+          {NAME_NOUNS.map((id) => {
+            const selected = recipe.name.noun === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                tabIndex={radioTabIndex(selected)}
+                onClick={() => onNoun(id)}
+                className="bb-chip min-h-12 px-4 rounded-2xl bg-white border-[3px] border-[#e1d0a6] font-extrabold text-[#3a2e22] active:scale-95"
+              >
+                {L(NAME_NOUN_LABEL[id])}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <div className="bb-actions-sticky w-full flex flex-col items-center gap-3">
+      {/* Only the primary action is sticky; everything else flows below it so
+          the bar never grows past one control on a phone. */}
+      <div className="bb-actions-sticky w-full flex flex-col items-center gap-1">
         <button
           type="button"
           onClick={onSave}
@@ -127,7 +140,7 @@ export default function NameScreen({
         <p
           role="status"
           aria-live="polite"
-          className="text-sm font-bold text-green-800 min-h-5"
+          className="text-sm font-bold text-green-800 min-h-5 text-center"
         >
           {saveNote === "saved" &&
             t("biomeBuddy.name.saved", {
@@ -139,25 +152,25 @@ export default function NameScreen({
                 "Saved for now — this device is out of room, so it may not stick.",
             })}
         </p>
-        {saved && <ShareButton recipe={recipe} name={name} />}
-        <div className="flex flex-wrap justify-center gap-2">
-          <button
-            type="button"
-            onClick={onKeepBuilding}
-            className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95"
-          >
-            {t("biomeBuddy.name.keepBuilding", {
-              defaultValue: "Keep building 🔧",
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={onTitle}
-            className="min-h-11 px-5 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95"
-          >
-            {t("biomeBuddy.common.myBuddies", { defaultValue: "My Buddies" })}
-          </button>
-        </div>
+      </div>
+      {saved && <ShareButton recipe={recipe} name={name} />}
+      <div className="flex flex-wrap justify-center gap-2">
+        <button
+          type="button"
+          onClick={onKeepBuilding}
+          className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95"
+        >
+          {t("biomeBuddy.name.keepBuilding", {
+            defaultValue: "Keep building 🔧",
+          })}
+        </button>
+        <button
+          type="button"
+          onClick={onTitle}
+          className="min-h-11 px-5 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95"
+        >
+          {t("biomeBuddy.common.myBuddies", { defaultValue: "My Buddies" })}
+        </button>
       </div>
     </div>
   );

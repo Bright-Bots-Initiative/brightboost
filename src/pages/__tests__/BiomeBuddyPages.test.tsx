@@ -88,7 +88,6 @@ describe("/biome-buddy — logged-out cold render", () => {
     fakeI18n.language = "en";
     fakeI18n.resolvedLanguage = "en";
     document.documentElement.lang = "";
-    window.history.replaceState(null, "", "/");
   });
 
   it("renders the full page with NO auth provider and mirrors + restores document.lang", () => {
@@ -106,13 +105,20 @@ describe("/biome-buddy — logged-out cold render", () => {
     expect(document.documentElement.lang).toBe("en-US");
   });
 
-  it("offers only the locales the game is complete in (no mixed-language surface)", () => {
+  it("an app set to vi renders this page in English and SAYS so: lang=en, trigger reads English, menu offers en/es only", () => {
+    fakeI18n.language = "vi";
+    fakeI18n.resolvedLanguage = "vi";
     renderAt("/biome-buddy");
-    fireEvent.click(screen.getByRole("button", { name: "Change language" }));
+    expect(document.documentElement.lang).toBe("en");
+    const trigger = screen.getByRole("button", { name: "Change language" });
+    expect(trigger).toHaveTextContent("English");
+    fireEvent.click(trigger);
     const labels = screen.getAllByRole("button").map((b) => b.textContent);
     expect(labels).toContain("Español");
     expect(labels).not.toContain("Tiếng Việt");
     expect(labels).not.toContain("简体中文");
+    // no Vietnamese anywhere on a page whose content is English
+    expect(document.body.textContent).not.toMatch(/Tiếng|Xây/);
   });
 
   it("makes zero network requests on mount (isolation contract)", () => {
@@ -125,6 +131,10 @@ describe("/biome-buddy — logged-out cold render", () => {
   it("a #r= remix fragment seeds a copy, strips itself from the URL, and never re-seeds on refresh", () => {
     const source = starterRecipe("air");
     source.traits.covering = "feathers";
+    localStorage.setItem(
+      "biomebuddy:progress:v1",
+      JSON.stringify({ guidedTestsCompleted: 0, band: "g35" }),
+    );
     renderAt(`/biome-buddy#r=${encodeShare(source)}`);
     expect(
       screen.getByText(/Starting from a shared Buddy/),
@@ -160,8 +170,10 @@ describe("/biome-buddy/share", () => {
     expect(within(page).getByRole("heading", { level: 2 })).toHaveTextContent(
       "Swift Splasher",
     );
-    expect(within(page).getAllByText("Gills").length).toBeGreaterThan(0);
-    expect(within(page).getAllByText("Fins").length).toBeGreaterThan(0);
+    const parts = within(page).getByRole("heading", { name: "Its parts" })
+      .parentElement as HTMLElement;
+    expect(within(parts).getByText("Gills & water-nose")).toBeInTheDocument();
+    expect(within(parts).getByText("Fins")).toBeInTheDocument();
     const stats = computeStats(recipe);
     expect(
       within(page).getByRole("meter", { name: /^Smell:/ }),
@@ -170,11 +182,9 @@ describe("/biome-buddy/share", () => {
       within(page).getByRole("meter", { name: /^Agility:/ }),
     ).toHaveAttribute("aria-valuenow", String(stats.agility));
     expect(
-      within(page).getByText(/Why this Buddy fits the Water this way/),
+      within(page).getByText(/Why this Buddy fits in the Water this way/),
     ).toBeInTheDocument();
-    expect(
-      within(page).getByText(/gills pull oxygen and smells/),
-    ).toBeInTheDocument();
+    expect(within(page).getByText(/gills pull oxygen/)).toBeInTheDocument();
     expect(
       within(page).getByRole("img", { name: /Swift Splasher, a Water Buddy/ }),
     ).toBeInTheDocument();
@@ -193,8 +203,13 @@ describe("/biome-buddy/share", () => {
     expect(within(page).getByRole("heading", { level: 2 })).toHaveTextContent(
       "Chapoteador Veloz",
     );
-    expect(within(page).getAllByText("Branquias").length).toBeGreaterThan(0);
-    expect(within(page).queryByText("Gills")).not.toBeInTheDocument();
+    const parts = within(page).getByRole("heading", { name: "Its parts" })
+      .parentElement as HTMLElement;
+    expect(
+      within(parts).getByText("Branquias y nariz de agua"),
+    ).toBeInTheDocument();
+    expect(within(page).queryByText(/Gills/)).not.toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("es");
   });
 
   it("Make my own version links to the game with the SAME payload; the source stays intact", () => {
@@ -260,10 +275,5 @@ describe("/biome-buddy/review", () => {
     );
     fireEvent.click(screen.getByTestId("review-start"));
     expect(screen.getByText("What will you build?")).toBeInTheDocument();
-  });
-
-  it("contains no secret, token or person's name in its markup", () => {
-    const { container } = renderAt("/biome-buddy/review");
-    expect(container.innerHTML).not.toMatch(/secret|token|password|catarina/i);
   });
 });

@@ -99,7 +99,7 @@ export const TRAITS: TraitTable = {
       base: { sight: 5, hearing: 10, smell: 10 },
       biomeMod: {
         earth: { hearing: 5 },
-        water: { sight: 5, smell: 5 },
+        water: { smell: 5 },
         fire: {},
         air: { hearing: -5 },
       },
@@ -607,6 +607,17 @@ export function diffBuilds(
         changedCategories.includes(row.category) ||
         (biomeChanged && row.mod !== 0),
     );
+    // A swapped part whose NEW option adds nothing to this stat still moved
+    // it (the old option did) — keep it in the explanation so the child sees
+    // which part is responsible, never an empty "why".
+    for (const category of changedCategories)
+      if (!rows.some((row) => row.category === category))
+        rows.push({
+          category,
+          option: current.traits[category],
+          base: 0,
+          mod: 0,
+        });
     changes.push({
       stat,
       before: before[stat],

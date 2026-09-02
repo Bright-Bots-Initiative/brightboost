@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { starterRecipe, type BuddyRecipe } from "../biomeBuddyModel";
+import {
+  diffBuilds,
+  starterRecipe,
+  type BuddyRecipe,
+  type TestSummary,
+} from "../biomeBuddyModel";
 import {
   DRAFT_KEY,
   GALLERY_KEY,
   PROGRESS_KEY,
   clearDraft,
+  coerceTestSummary,
   deleteBuddy,
   loadDraft,
   loadGallery,
@@ -13,6 +19,7 @@ import {
   saveBuddy,
   saveDraft,
   saveProgress,
+  type DraftState,
   type SavedBuddy,
   type StorageLike,
 } from "../biomeBuddyStorage";
@@ -46,6 +53,28 @@ function fullStorage(initial: Record<string, string> = {}): StorageLike {
 
 function buddy(id: string, recipe: BuddyRecipe = starterRecipe()): SavedBuddy {
   return { id, recipe, savedAt: 1, lastTest: null };
+}
+
+/** A genuine walkthrough: starter → fins in water. */
+function realSummary(): TestSummary {
+  const next = starterRecipe("water");
+  next.traits.movement = "fins";
+  return diffBuilds(null, next);
+}
+
+function validDraft(): DraftState {
+  const recipe = starterRecipe("air");
+  recipe.traits.eyes = "compound_eyes";
+  return {
+    id: "bb-draft-1",
+    band: "g35",
+    recipe,
+    // deliberately DIFFERENT from the recipe, so a reader that ignores it
+    // (or copies the recipe) is caught
+    lastTested: { biome: "earth", traits: { ...starterRecipe().traits } },
+    lastTest: realSummary(),
+    named: true,
+  };
 }
 
 describe("ids", () => {
@@ -94,7 +123,7 @@ describe("gallery", () => {
     expect(deleteBuddy("bb-missing", storage)).toBe(true); // idempotent
   });
 
-  it("skips corrupt ENTRIES and keeps the good ones (never crashes)", () => {
+  it("skips corrupt ENTRIES and keeps the good ones — rejected by recipe validation, not by the id check", () => {
     const good = buddy("bb-good");
     const storage = fakeStorage({
       [GALLERY_KEY]: JSON.stringify([
@@ -136,13 +165,35 @@ describe("gallery", () => {
     expect(loadGallery(fakeStorage({ [GALLERY_KEY]: "null" }))).toEqual([]);
   });
 
-  it("a lastTest blob that is not a summary is dropped, the Buddy is kept", () => {
+  it("keeps a genuine lastTest and drops a hostile one (the Buddy itself survives)", () => {
+    const real = realSummary();
+    const hostile = {
+      ...real,
+      changes: [
+        {
+          ...real.changes[0],
+          changedContributions: [
+            { category: "movement", option: "laser_fins", base: 1, mod: 1 },
+          ],
+        },
+      ],
+    };
     const storage = fakeStorage({
       [GALLERY_KEY]: JSON.stringify([
-        { ...buddy("bb-one"), lastTest: "garbage" },
+        { ...buddy("bb-real"), lastTest: real },
+        { ...buddy("bb-hostile"), lastTest: hostile },
+        { ...buddy("bb-garbage"), lastTest: "garbage" },
       ]),
     });
-    expect(loadGallery(storage)[0].lastTest).toBeNull();
+    const back = loadGallery(storage);
+    expect(back.map((b) => b.id)).toEqual([
+      "bb-real",
+      "bb-hostile",
+      "bb-garbage",
+    ]);
+    expect(back[0].lastTest).toEqual(real);
+    expect(back[1].lastTest).toBeNull();
+    expect(back[2].lastTest).toBeNull();
   });
 
   it("quota failure returns false and never throws; disabled storage returns false", () => {
@@ -153,29 +204,123 @@ describe("gallery", () => {
   });
 });
 
+describe("coerceTestSummary (a stored walkthrough is re-validated, never trusted)", () => {
+  it("round-trips a genuine summary byte for byte", () => {
+    const real = realSummary();
+    expect(coerceTestSummary(JSON.parse(JSON.stringify(real)))).toEqual(real);
+    expect(real.changes.length).toBeGreaterThan(0); // the fixture is not trivial
+  });
+
+  it.each([
+    ["not an object", 42],
+    ["null", null],
+    ["array", []],
+    ["unknown biome", { ...realSummary(), biome: "lava" }],
+    ["missing before", { ...realSummary(), before: undefined }],
+    [
+      "non-numeric stat",
+      { ...realSummary(), after: { ...realSummary().after, sight: "high" } },
+    ],
+    [
+      "NaN stat",
+      {
+        ...realSummary(),
+        after: { ...realSummary().after, smell: Number.NaN },
+      },
+    ],
+    ["changes not an array", { ...realSummary(), changes: {} }],
+    [
+      "five changes",
+      {
+        ...realSummary(),
+        changes: [0, 1, 2, 3, 4].map(() => realSummary().changes[0]),
+      },
+    ],
+    [
+      "duplicate stat",
+      {
+        ...realSummary(),
+        changes: [realSummary().changes[0], realSummary().changes[0]],
+      },
+    ],
+    [
+      "unknown stat",
+      {
+        ...realSummary(),
+        changes: [{ ...realSummary().changes[0], stat: "luck" }],
+      },
+    ],
+    [
+      "unknown category",
+      {
+        ...realSummary(),
+        changes: [
+          {
+            ...realSummary().changes[0],
+            changedContributions: [
+              { category: "touch", option: "whiskers", base: 1, mod: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "option of another category",
+      {
+        ...realSummary(),
+        changes: [
+          {
+            ...realSummary().changes[0],
+            changedContributions: [
+              { category: "eyes", option: "fins", base: 1, mod: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+    [
+      "non-finite contribution",
+      {
+        ...realSummary(),
+        changes: [
+          {
+            ...realSummary().changes[0],
+            changedContributions: [
+              { category: "movement", option: "fins", base: Infinity, mod: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+  ])("refuses %s", (_label, value) => {
+    expect(coerceTestSummary(value)).toBeNull();
+  });
+
+  it("clamps out-of-range numbers and normalises the flag instead of trusting them", () => {
+    const real = realSummary();
+    const out = coerceTestSummary({
+      ...real,
+      before: { ...real.before, sight: 900 },
+      after: { ...real.after, hearing: -5 },
+      unchanged: "yes",
+    });
+    expect(out?.before.sight).toBe(100);
+    expect(out?.after.hearing).toBe(0);
+    expect(out?.unchanged).toBe(false);
+  });
+});
+
 describe("draft", () => {
-  it("round-trips and validates the recipe on read", () => {
+  it("round-trips a full draft, including a lastTested that differs from the recipe and a real lastTest", () => {
     const storage = fakeStorage();
-    const recipe = starterRecipe("air");
-    expect(
-      saveDraft(
-        {
-          id: null,
-          band: "k2",
-          recipe,
-          lastTested: { biome: "air", traits: recipe.traits },
-          lastTest: null,
-          named: false,
-        },
-        storage,
-      ),
-    ).toBe(true);
+    const draft = validDraft();
+    expect(saveDraft(draft, storage)).toBe(true);
     const back = loadDraft(storage);
-    expect(back?.recipe).toEqual(recipe);
-    expect(back?.band).toBe("k2");
-    expect(back?.id).toBeNull();
-    expect(back?.lastTested).toEqual({ biome: "air", traits: recipe.traits });
-    expect(back?.named).toBe(false);
+    expect(back).toEqual(draft);
+    expect(back?.lastTested).not.toEqual({
+      biome: draft.recipe.biome,
+      traits: draft.recipe.traits,
+    });
   });
 
   it("returns null for corrupt or invalid drafts instead of crashing", () => {
@@ -202,31 +347,39 @@ describe("draft", () => {
     ).toBeNull();
   });
 
-  it("drops a corrupt lastTested but keeps the draft", () => {
+  it("drops a corrupt lastTested and a hostile lastTest but keeps the draft", () => {
+    const draft = validDraft();
     const storage = fakeStorage({
       [DRAFT_KEY]: JSON.stringify({
-        band: "g35",
-        recipe: starterRecipe(),
+        ...draft,
         lastTested: { biome: "lava", traits: "x" },
-        named: true,
+        lastTest: { ...draft.lastTest, biome: "lava" },
       }),
     });
     const back = loadDraft(storage);
+    expect(back?.recipe).toEqual(draft.recipe);
     expect(back?.lastTested).toBeNull();
+    expect(back?.lastTest).toBeNull();
     expect(back?.named).toBe(true);
   });
 
-  it("clearDraft removes the key (or blanks it when removeItem is missing)", () => {
-    const storage = fakeStorage({ [DRAFT_KEY]: "x" });
+  it("clearDraft removes a VALID draft (and blanks it when removeItem is missing)", () => {
+    const storage = fakeStorage();
+    saveDraft(validDraft(), storage);
+    expect(loadDraft(storage)).not.toBeNull();
     clearDraft(storage);
     expect(storage.data[DRAFT_KEY]).toBeUndefined();
+    expect(loadDraft(storage)).toBeNull();
+
     const noRemove: StorageLike & { data: Record<string, string> } = {
-      data: { [DRAFT_KEY]: "x" },
+      data: {},
       getItem: (k) => noRemove.data[k] ?? null,
       setItem: (k, v) => {
         noRemove.data[k] = v;
       },
     };
+    saveDraft(validDraft(), noRemove);
+    expect(loadDraft(noRemove)).not.toBeNull();
     clearDraft(noRemove);
     expect(loadDraft(noRemove)).toBeNull();
   });

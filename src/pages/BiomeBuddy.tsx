@@ -11,13 +11,14 @@
  *
  * Remix entry: `/biome-buddy#r=<share payload>` seeds a NEW build from a
  * validated COPY of a shared recipe ("Make my own version"). The fragment is
- * stripped right away so a refresh does not re-seed, and the shared snapshot
- * itself is never touched. A scrambled fragment falls back to a fresh start
- * with a friendly note — never a crash.
+ * replaced out of the URL right away so a refresh or back-swipe does not
+ * re-seed, and the shared snapshot itself is never touched. A scrambled
+ * fragment falls back to a fresh start with a friendly note — never a crash.
  *
  * Language: content is complete in en + es, so the page-scoped toggle only
- * offers those (no child-visible mixed-language surface). The document
- * language is mirrored while the page is open (Waterworks precedent).
+ * offers those, and the document language mirrors the language the page is
+ * ACTUALLY rendering (an app set to vi/zh-CN reads this page in English, so
+ * `lang` says "en", never a language the text is not in).
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,7 @@ import {
   decodeShare,
   readShareParam,
 } from "@/components/biomeBuddy/biomeBuddyShare";
+import { resolveBuddyLang } from "@/components/biomeBuddy/useBuddyLocale";
 
 export const BIOME_BUDDY_FONT_STACK =
   '"Baloo 2", "Comic Sans MS", system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
@@ -46,8 +48,9 @@ export function BiomeBuddyShell({
   useEffect(() => {
     const prior = document.documentElement.lang;
     const apply = () => {
-      document.documentElement.lang =
-        i18n.resolvedLanguage || i18n.language || "en";
+      document.documentElement.lang = resolveBuddyLang(
+        i18n.resolvedLanguage || i18n.language,
+      );
     };
     apply();
     i18n.on("languageChanged", apply);
@@ -116,30 +119,27 @@ function useRemixFromHash(): { recipe: BuddyRecipe | null; invalid: boolean } {
 export default function BiomeBuddy() {
   const { t } = useTranslation();
   const remix = useRemixFromHash();
+  // The live region exists from first paint so a later message is announced.
+  const note = remix.recipe
+    ? t("biomeBuddy.shell.remixNote", {
+        defaultValue:
+          "Starting from a shared Buddy — this copy is yours to change.",
+      })
+    : remix.invalid
+      ? t("biomeBuddy.shell.remixInvalid", {
+          defaultValue:
+            "That share link got scrambled, so here's a fresh start.",
+        })
+      : "";
   return (
     <BiomeBuddyShell>
-      {remix.recipe && (
-        <p
-          role="status"
-          className="mx-auto max-w-3xl px-4 pt-3 text-sm font-bold text-[#1c3d6c]"
-        >
-          {t("biomeBuddy.shell.remixNote", {
-            defaultValue:
-              "Starting from a shared Buddy — this copy is yours to change.",
-          })}
-        </p>
-      )}
-      {remix.invalid && (
-        <p
-          role="status"
-          className="mx-auto max-w-3xl px-4 pt-3 text-sm font-bold text-orange-800"
-        >
-          {t("biomeBuddy.shell.remixInvalid", {
-            defaultValue:
-              "That share link got scrambled, so here's a fresh start.",
-          })}
-        </p>
-      )}
+      <p
+        role="status"
+        aria-live="polite"
+        className={`mx-auto max-w-3xl px-4 text-sm font-bold ${remix.invalid ? "text-orange-800" : "text-[#1c3d6c]"} ${note ? "pt-3" : "min-h-0"}`}
+      >
+        {note}
+      </p>
       <BiomeBuddyGame remixRecipe={remix.recipe} />
     </BiomeBuddyShell>
   );

@@ -1,10 +1,11 @@
 /**
  * Biome Buddy — the four stat bars (Sight · Hearing · Smell · Agility).
  *
- * Meaning never depends on color alone: every bar carries its emoji, its
- * label, the number, a word band ("just a little / some / good / great") and,
- * when a "before" block is given, the delta as text with ▲ / ▼. Each bar is a
- * `role="meter"` with a full accessible name.
+ * Meaning never depends on color alone, at any width: every bar carries its
+ * emoji, its label, the number, a word band ("just a little / some / good /
+ * great") stacked under the label, and, when a "before" block is given, the
+ * delta as text with ▲ / ▼. Each bar is a `role="meter"` with a full
+ * accessible name.
  */
 import {
   STATS,
@@ -88,9 +89,17 @@ export default function StatBars({
               {STAT_EMOJI[stat]}
             </span>
             <span
-              className={`bb-stat-label font-extrabold ${compact ? "text-xs w-16" : "text-sm w-20"} shrink-0`}
+              className={`bb-stat-label flex flex-col leading-tight shrink-0 ${compact ? "w-16" : "w-20"}`}
+              aria-hidden
             >
-              {label}
+              <span
+                className={`font-extrabold ${compact ? "text-xs" : "text-sm"}`}
+              >
+                {label}
+              </span>
+              <span className="bb-stat-band text-[11px] font-bold text-[#6f6048]">
+                {band}
+              </span>
             </span>
             <div
               role="meter"
@@ -120,14 +129,6 @@ export default function StatBars({
             >
               {value}
             </span>
-            {!compact && (
-              <span
-                className="bb-stat-band text-xs font-bold text-[#6f6048] w-16 shrink-0"
-                aria-hidden
-              >
-                {band}
-              </span>
-            )}
             {before && (
               <span
                 className={`bb-stat-delta text-xs font-extrabold shrink-0 ${delta > 0 ? "text-green-700" : delta < 0 ? "text-orange-700" : "text-[#6f6048]"}`}

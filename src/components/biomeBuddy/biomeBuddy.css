@@ -83,8 +83,13 @@
   animation: bb-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Reduced motion — the manual toggle (.bb-reduced) and the OS preference
+   both silence every animation this page owns, including Tailwind's
+   animate-* utilities if any slips in. */
 .bb-reduced .bb-sprite--bob .bb-sprite-body,
-.bb-reduced .bb-pop {
+.bb-reduced .bb-pop,
+.bb-reduced .animate-pop,
+.bb-reduced .animate-float {
   animation: none;
 }
 
@@ -93,12 +98,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bb-sprite--bob .bb-sprite-body,
-  .bb-pop {
+  .bb-page .bb-sprite--bob .bb-sprite-body,
+  .bb-page .bb-pop,
+  .bb-page .animate-pop,
+  .bb-page .animate-float,
+  .bb-dialog.bb-pop,
+  .bb-dialog .bb-sprite--bob .bb-sprite-body {
     animation: none;
   }
 
-  .bb-meter-fill--animate {
+  .bb-page .bb-meter-fill--animate,
+  .bb-dialog .bb-meter-fill--animate {
     transition: none;
   }
 }
@@ -135,6 +145,15 @@
 .bb-biome-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+/* Choose: arrows flank the preview on wide screens and drop below it on
+   narrow phones so the description keeps a readable measure. */
+.bb-choose-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: stretch;
   gap: 0.5rem;
 }
 
@@ -194,10 +213,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .bb-stat-band {
-    display: none;
-  }
-
+  /* One primary control tall at most; the scroll container keeps room
+     below the last content block so nothing sits under the bar. */
   .bb-actions-sticky {
     position: sticky;
     bottom: max(0.5rem, env(safe-area-inset-bottom));
@@ -207,6 +224,27 @@
     border-radius: 1rem;
     padding: 0.5rem;
     box-shadow: 0 8px 24px rgb(58 46 34 / 18%);
+  }
+
+  .bb-create-layout,
+  .bb-choose-panel {
+    scroll-margin-bottom: 6rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .bb-choose-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bb-choose-scene {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .bb-choose-arrow {
+    grid-row: 2;
+    min-height: 48px;
   }
 }
 
@@ -226,8 +264,11 @@
   }
 
   .bb-stat-label {
-    width: 3.5rem;
-    font-size: 0.7rem;
+    width: 4rem;
+  }
+
+  .bb-stat-label > span:first-child {
+    font-size: 0.75rem;
   }
 }
 

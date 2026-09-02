@@ -44,6 +44,8 @@ adversarial review; Phase 14 do not graduate to backend yet.)
 - Focus return after a science card depended on the browser having focused the chip; the opener is now passed explicitly.
 - A doc comment containing `locales/*/common.json` closed the block comment early (`*/`).
 
+- The fresh-context adversarial review (Opus) returned CHANGES-REQUIRED on the first pass: seven science-content errors (gills taught as a smell organ, spiracles vs antennae, claws vs hooves, ladybugs as camouflage, skunks in two contradictory cards, spiders as insects, an eyeless Buddy gaining Sight in water), the 320px Choose layout, a no-movement dead end in Test & Learn, an unvalidated stored walkthrough that could crash the "Last test" chip, missing roving tabindex, `animate-pop` escaping reduced motion, and several vacuous tests. All were fixed in a follow-up commit and re-reviewed.
+
 ## Lessons
 
 - A second Claude session was active in the same checkout; moving to a dedicated worktree outside the repo (parallel-clones skill) avoided sharing a dirty tree.

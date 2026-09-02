@@ -2498,29 +2498,30 @@
       "prev": "Previous home",
       "next": "Next home",
       "animalsHere": "Who lives here:",
-      "select": "Select {{biome}} ✓"
+      "select": "Select {{biome}} ✓",
+      "currentAria": "Home: {{biome}}"
     },
     "create": {
       "spriteAria": "{{name}}, a {{biome}} Buddy",
       "renameAria": "Buddy name: {{name}} — tap to change",
       "changeHomeAria": "Home: {{biome}} — tap to change",
       "save": "Save",
-      "statsHeading": "How {{name}} does in the {{biome}}",
-      "locked": "opens after you test a Buddy",
+      "statsHeading": "How {{name}} does {{where}}",
       "groupAria": "{{category}} choices",
       "pickAria": "{{category}}: {{option}}",
-      "guidedHint": "Change a part, then test your Buddy to open more parts.",
       "test": "Test it! 🔬",
       "nameSave": "Name & Save",
       "lastTestAria": "Reopen the last Test & Learn",
       "lastTest": "Last test",
       "unlockTitle": "New part to change: {{category}}!",
-      "unlockTry": "Try it!"
+      "unlockTry": "Try it!",
+      "lockedTeaser": "Change a part and test your Buddy to open {{next}}.",
+      "lockedRest": "Then: {{list}}."
     },
     "science": {
       "term": "also called: {{term}}",
-      "effect": "What this part does in the {{biome}}:",
-      "noEffect": "In the {{biome}} this changes how your Buddy looks, not the bars.",
+      "effect": "What this part does {{where}}:",
+      "noEffect": "{{where}}, this part changes how your Buddy looks, not the bars.",
       "less": "Show less",
       "more": "Tell me more 🔬",
       "usedFor": "What it's for",
@@ -2544,19 +2545,21 @@
       "meterAria": "{{stat}}: {{value}} out of 100, {{band}}{{delta}}"
     },
     "test": {
-      "heading": "Here's how {{name}} does in the {{biome}}!",
-      "introSame": "Same parts, same home — the bars stayed put.",
+      "heading": "Here's how {{name}} does {{where}}!",
+      "introSame": "Same parts, same home — the bars stayed put. Tap next.",
       "intro": "The grey mark is before. The color is now. Tap next to see why each bar moved.",
       "unchangedTitle": "Nothing moved this time",
       "unchangedBody": "That's useful to know too! Same parts in the same home do the same things.",
       "wentUp": "{{stat}} went up by {{n}}!",
       "wentDown": "{{stat}} went down by {{n}}.",
       "beforeAfter": "Before: {{before}} · Now: {{after}}",
-      "whyIntro": "Why, in the {{biome}}?",
+      "whyIntro": "Why, {{where}}?",
       "prev": "◀ Back",
       "page": "{{n}} of {{total}}",
       "gotIt": "Got it!",
-      "next": "Next ▶"
+      "next": "Next ▶",
+      "introNoMove": "You changed a part, but these four bars stayed put in this home. Tap next to see what that means.",
+      "noMoveBody": "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?"
     },
     "name": {
       "heading": "Name your Buddy!",
@@ -2585,8 +2588,8 @@
     "sharePage": {
       "subtitle": "A {{biome}} Buddy, shared with you",
       "parts": "Its parts",
-      "stats": "How it does in the {{biome}}",
-      "why": "Why this Buddy fits the {{biome}} this way",
+      "stats": "How it does {{where}}",
+      "why": "Why this Buddy fits {{where}} this way",
       "science": "Science highlights",
       "remix": "Make my own version 🔧",
       "remixNote": "You'll get your own copy to change. This shared Buddy stays just as it is.",

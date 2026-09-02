@@ -7,7 +7,6 @@ import {
   BIOMES,
   TRAIT_OPTIONS,
   computeStats,
-  recipeKey,
   starterRecipe,
   type BuddyRecipe,
 } from "../biomeBuddyModel";
@@ -74,7 +73,10 @@ describe("round trip", () => {
           (recipe.traits as Record<string, string>)[category] = option;
           const back = decodeShare(encodeShare(recipe));
           expect(back.ok).toBe(true);
-          if (back.ok) expect(recipeKey(back.recipe)).toBe(recipeKey(recipe));
+          if (back.ok) {
+            expect(back.recipe).toEqual(recipe);
+            expect(back.recipe).not.toBe(recipe);
+          }
         }
   });
 
@@ -112,9 +114,9 @@ describe("malformed input fails safely with a typed reason", () => {
     ["base64 of JSON string", b64url('"just a string"'), "shape"],
     ["base64 of JSON null", b64url("null"), "shape"],
     [
-      "padded base64 (never emitted) is refused as encoding",
+      "padded base64 is tolerated, then judged on content",
       btoa("null"),
-      "encoding",
+      "shape",
     ],
   ])("%s → %s", (_label, input, error) => {
     const result = decodeShare(input as string);

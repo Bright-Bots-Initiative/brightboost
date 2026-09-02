@@ -1,5 +1,4 @@
 /** Create — the trait pickers, live stat bars and the Buddy in its home. */
-import type { KeyboardEvent } from "react";
 import {
   BIOME_EMOJI,
   CATEGORY_EMOJI,
@@ -20,11 +19,13 @@ import {
   CATEGORY_LABEL,
   PATTERN_SCIENCE,
   SCIENCE,
+  type ScienceCard,
 } from "../biomeBuddyContent";
 import BiomeScene from "../BiomeScene";
 import BuddySprite from "../BuddySprite";
 import ProgressDots from "../ProgressDots";
 import StatBars from "../StatBars";
+import { onRadioArrowKeys, radioTabIndex } from "../radioKeys";
 import { useBuddyLocale } from "../useBuddyLocale";
 
 export interface CreateScreenProps {
@@ -54,19 +55,10 @@ function optionsOf(picker: Picker): { id: string; emoji: string }[] {
   }));
 }
 
-function onArrowKeys(event: KeyboardEvent<HTMLDivElement>) {
-  const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
-  if (!keys.includes(event.key)) return;
-  const chips = Array.from(
-    event.currentTarget.querySelectorAll<HTMLButtonElement>(
-      '[role="radio"]:not([aria-disabled="true"])',
-    ),
-  );
-  const index = chips.indexOf(document.activeElement as HTMLButtonElement);
-  if (index < 0 || chips.length === 0) return;
-  event.preventDefault();
-  const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
-  chips[(index + (forward ? 1 : -1) + chips.length) % chips.length].focus();
+function cardFor(picker: Picker, id: string): ScienceCard {
+  return picker === "pattern"
+    ? PATTERN_SCIENCE[id as keyof typeof PATTERN_SCIENCE]
+    : (SCIENCE[picker] as Record<string, ScienceCard>)[id];
 }
 
 export default function CreateScreen({
@@ -87,12 +79,15 @@ export default function CreateScreen({
   reduced,
 }: CreateScreenProps) {
   const { t, L } = useBuddyLocale();
-  const biomeLabel = L(BIOME_INFO[recipe.biome].label);
+  const info = BIOME_INFO[recipe.biome];
+  const biomeLabel = L(info.label);
   const spriteLabel = t("biomeBuddy.create.spriteAria", {
     defaultValue: "{{name}}, a {{biome}} Buddy",
     name,
     biome: biomeLabel,
   });
+  const openPickers = PICKERS.filter((picker) => unlocked.includes(picker));
+  const lockedPickers = PICKERS.filter((picker) => !unlocked.includes(picker));
 
   return (
     <div className="bb-create flex flex-col items-center gap-3 py-3 px-2 sm:px-4 w-full max-w-6xl mx-auto">
@@ -160,32 +155,23 @@ export default function CreateScreen({
           <div className="rounded-2xl bg-white/80 p-3">
             <h3 className="text-sm font-extrabold text-[#3a2e22] mb-2">
               {t("biomeBuddy.create.statsHeading", {
-                defaultValue: "How {{name}} does in the {{biome}}",
+                defaultValue: "How {{name}} does {{where}}",
                 name,
-                biome: biomeLabel,
+                where: L(info.inPhrase),
               })}
             </h3>
             <StatBars stats={stats} animate={!reduced} />
           </div>
         </div>
 
-        {/* Main: pickers */}
+        {/* Main: pickers — Guided renders only the OPEN pickers (one screen of
+            choices), with a one-line teaser for what opens next. */}
         <div className="flex flex-col gap-4 min-w-0">
-          {PICKERS.map((picker) => {
-            const open = unlocked.includes(picker);
+          {openPickers.map((picker) => {
             const label = L(CATEGORY_LABEL[picker]);
             const current =
               picker === "pattern" ? recipe.pattern : recipe.traits[picker];
             const emoji = picker === "pattern" ? "🎨" : CATEGORY_EMOJI[picker];
-            const cardFor = (id: string) =>
-              picker === "pattern"
-                ? PATTERN_SCIENCE[id as keyof typeof PATTERN_SCIENCE]
-                : (
-                    SCIENCE[picker] as Record<
-                      string,
-                      (typeof SCIENCE)["eyes"]["no_eyes"]
-                    >
-                  )[id];
             return (
               <section
                 key={picker}
@@ -198,14 +184,6 @@ export default function CreateScreen({
                 >
                   <span aria-hidden>{emoji}</span>
                   {label}
-                  {!open && (
-                    <span className="text-xs font-bold text-[#7d6c52] flex items-center gap-1">
-                      <span aria-hidden>🔒</span>
-                      {t("biomeBuddy.create.locked", {
-                        defaultValue: "opens after you test a Buddy",
-                      })}
-                    </span>
-                  )}
                 </h3>
                 <div
                   role="radiogroup"
@@ -214,12 +192,9 @@ export default function CreateScreen({
                     category: label,
                   })}
                   className="bb-option-grid"
-                  onKeyDown={onArrowKeys}
+                  onKeyDown={onRadioArrowKeys}
                 >
-                  {(open
-                    ? optionsOf(picker)
-                    : optionsOf(picker).filter((o) => o.id === current)
-                  ).map((option) => {
+                  {optionsOf(picker).map((option) => {
                     const selected = option.id === current;
                     return (
                       <button
@@ -227,22 +202,22 @@ export default function CreateScreen({
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        aria-disabled={open ? undefined : true}
+                        tabIndex={radioTabIndex(selected)}
                         onClick={(event) =>
-                          open && onPick(picker, option.id, event.currentTarget)
+                          onPick(picker, option.id, event.currentTarget)
                         }
                         className="bb-chip min-h-14 rounded-2xl bg-white border-[3px] border-[#e1d0a6] shadow-[0_3px_0_#0002] font-extrabold text-[#3a2e22] flex items-center gap-2 px-3 text-left active:translate-y-0.5"
                         aria-label={t("biomeBuddy.create.pickAria", {
                           defaultValue: "{{category}}: {{option}}",
                           category: label,
-                          option: L(cardFor(option.id).label),
+                          option: L(cardFor(picker, option.id).label),
                         })}
                       >
                         <span className="text-2xl" aria-hidden>
                           {option.emoji}
                         </span>
                         <span className="text-sm leading-tight">
-                          {L(cardFor(option.id).label)}
+                          {L(cardFor(picker, option.id).label)}
                         </span>
                       </button>
                     );
@@ -251,12 +226,29 @@ export default function CreateScreen({
               </section>
             );
           })}
-          {band === "k2" && unlocked.length < PICKERS.length && (
-            <p className="text-xs font-bold text-[#7d6c52] text-center">
-              {t("biomeBuddy.create.guidedHint", {
+          {band === "k2" && lockedPickers.length > 0 && (
+            <p
+              className="bb-locked-note rounded-2xl bg-white/60 p-3 text-sm font-bold text-[#6f6048]"
+              data-testid="locked-note"
+            >
+              <span aria-hidden>🔒 </span>
+              {t("biomeBuddy.create.lockedTeaser", {
                 defaultValue:
-                  "Change a part, then test your Buddy to open more parts.",
+                  "Change a part and test your Buddy to open {{next}}.",
+                next: L(CATEGORY_LABEL[lockedPickers[0]]),
               })}
+              {lockedPickers.length > 1 && (
+                <>
+                  {" "}
+                  {t("biomeBuddy.create.lockedRest", {
+                    defaultValue: "Then: {{list}}.",
+                    list: lockedPickers
+                      .slice(1)
+                      .map((picker) => L(CATEGORY_LABEL[picker]))
+                      .join(" · "),
+                  })}
+                </>
+              )}
             </p>
           )}
         </div>

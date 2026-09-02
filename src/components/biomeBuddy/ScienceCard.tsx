@@ -42,7 +42,7 @@ export default function ScienceCard({
   const headingId = useId();
   const moreId = useId();
   const card = scienceFor(category, option);
-  const biomeLabel = L(BIOME_INFO[biome].label);
+  const where = L(BIOME_INFO[biome].inPhrase);
   const effect =
     category === "pattern"
       ? {}
@@ -92,13 +92,13 @@ export default function ScienceCard({
           <span aria-hidden>{BIOME_EMOJI[biome]} </span>
           {effectRows.length > 0
             ? t("biomeBuddy.science.effect", {
-                defaultValue: "What this part does in the {{biome}}:",
-                biome: biomeLabel,
+                defaultValue: "What this part does {{where}}:",
+                where,
               })
             : t("biomeBuddy.science.noEffect", {
                 defaultValue:
-                  "In the {{biome}} this changes how your Buddy looks, not the bars.",
-                biome: biomeLabel,
+                  "{{where}}, this part changes how your Buddy looks, not the bars.",
+                where,
               })}
         </p>
         {effectRows.length > 0 && (

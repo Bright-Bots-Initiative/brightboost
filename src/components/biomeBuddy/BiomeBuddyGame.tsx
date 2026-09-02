@@ -17,6 +17,8 @@ import "./biomeBuddy.css";
 import { useReducedGameEffects } from "@/components/games/shared/useReducedGameEffects";
 import {
   CATEGORY_EMOJI,
+  PATTERN_EMOJI,
+  TRAITS,
   cloneRecipe,
   computeStats,
   diffBuilds,
@@ -32,16 +34,13 @@ import {
   type Pattern,
   type Picker,
   type TestSummary,
+  type TraitOption,
 } from "./biomeBuddyModel";
 import {
   CATEGORY_LABEL,
-  PATTERN_SCIENCE,
-  SCIENCE,
   WONDER_POOL,
   renderBuddyName,
-  type ScienceCard as ScienceCardData,
 } from "./biomeBuddyContent";
-import { PATTERN_EMOJI, TRAITS, type TraitOption } from "./biomeBuddyModel";
 import {
   clearDraft,
   deleteBuddy,
@@ -90,6 +89,7 @@ export default function BiomeBuddyGame({
   const initialDraft = useMemo(loadDraft, []);
   const initialProgress = useMemo(loadProgress, []);
   const [progress, setProgress] = useState<ProgressState>(initialProgress);
+  const progressRef = useRef(initialProgress);
   const [band, setBand] = useState<Band>(
     initialDraft?.band ?? initialProgress.band ?? "k2",
   );
@@ -187,6 +187,12 @@ export default function BiomeBuddyGame({
     return () => clearTimeout(id);
   }, [saveNote]);
 
+  const commitProgress = useCallback((next: ProgressState) => {
+    progressRef.current = next;
+    setProgress(next);
+    saveProgress(next);
+  }, []);
+
   // ---- gallery ----
   const refreshGallery = useCallback(() => {
     setGallery(volatileGalleryRef.current.reduce(upsert, loadGallery()));
@@ -249,13 +255,13 @@ export default function BiomeBuddyGame({
   );
 
   // ---- remix: "Make my own version" hands us a validated COPY ----
+  // The remixer keeps their own band (a Guided child keeps the ladder; locked
+  // pickers simply hold the shared choice) — design §14 Q5.
   useEffect(() => {
     if (!remixRecipe) return;
     const key = recipeKey(remixRecipe);
     if (remixKeyRef.current === key) return;
     remixKeyRef.current = key;
-    const startBand: Band = latestRef.current.band ?? "g35";
-    setBand(startBand);
     replaceBuild(cloneRecipe(remixRecipe), {
       id: null,
       named: false,
@@ -269,11 +275,7 @@ export default function BiomeBuddyGame({
   const startBand = useCallback(
     (nextBand: Band) => {
       setBand(nextBand);
-      setProgress((p) => {
-        const n = { ...p, band: nextBand };
-        saveProgress(n);
-        return n;
-      });
+      commitProgress({ ...progressRef.current, band: nextBand });
       replaceBuild(starterRecipe("earth"), {
         id: null,
         named: false,
@@ -282,7 +284,7 @@ export default function BiomeBuddyGame({
       });
       setScreen("choose");
     },
-    [replaceBuild],
+    [commitProgress, replaceBuild],
   );
 
   const goTitle = useCallback(() => {
@@ -323,16 +325,18 @@ export default function BiomeBuddyGame({
     setLastTest(summary);
     setLastTested({ biome: s.recipe.biome, traits: { ...s.recipe.traits } });
     setWonderIndex((i) => i + 1);
+    // Guided ladder: a TESTED CHANGE opens the next picker — iteration, never
+    // a stat value. (An unchanged re-test is not a change.)
     if (s.band === "k2" && !summary.unchanged) {
-      setProgress((p) => {
-        const unlock = nextUnlock("k2", p.guidedTestsCompleted);
-        const n = { ...p, guidedTestsCompleted: p.guidedTestsCompleted + 1 };
-        saveProgress(n);
-        if (unlock) setPendingUnlock(unlock);
-        return n;
+      const p = progressRef.current;
+      const unlock = nextUnlock("k2", p.guidedTestsCompleted);
+      commitProgress({
+        ...p,
+        guidedTestsCompleted: p.guidedTestsCompleted + 1,
       });
+      if (unlock) setPendingUnlock(unlock);
     }
-  }, []);
+  }, [commitProgress]);
 
   const onGotIt = useCallback(() => {
     const fresh = walkthrough?.fresh === true;
@@ -376,10 +380,6 @@ export default function BiomeBuddyGame({
   const unlockLabel = (picker: Picker) => L(CATEGORY_LABEL[picker]);
   const unlockEmoji = (picker: Picker) =>
     picker === "pattern" ? "🎨" : CATEGORY_EMOJI[picker];
-  const cardFor = (picker: Picker, option: string): ScienceCardData =>
-    picker === "pattern"
-      ? PATTERN_SCIENCE[option as Pattern]
-      : (SCIENCE[picker] as Record<string, ScienceCardData>)[option];
 
   return (
     <div className={`bb-game w-full ${reducedEffects ? "bb-reduced" : ""}`}>
@@ -555,10 +555,6 @@ export default function BiomeBuddyGame({
           </div>
         </Overlay>
       )}
-
-      {/* science card data is also what the walkthrough reads — keep the
-          lookup referenced so the two can never drift apart silently */}
-      {science && cardFor(science.picker, science.option) === undefined && null}
     </div>
   );
 }

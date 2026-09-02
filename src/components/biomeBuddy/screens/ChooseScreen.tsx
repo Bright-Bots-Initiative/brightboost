@@ -3,6 +3,7 @@ import { BIOMES, BIOME_EMOJI, type Biome } from "../biomeBuddyModel";
 import { BIOME_INFO } from "../biomeBuddyContent";
 import BiomeScene from "../BiomeScene";
 import ProgressDots from "../ProgressDots";
+import { onRadioArrowKeys, radioTabIndex } from "../radioKeys";
 import { useBuddyLocale } from "../useBuddyLocale";
 
 export interface ChooseScreenProps {
@@ -38,6 +39,7 @@ export default function ChooseScreen({
         className="bb-biome-grid w-full"
         role="radiogroup"
         aria-label={t("biomeBuddy.choose.groupAria", { defaultValue: "Homes" })}
+        onKeyDown={onRadioArrowKeys}
       >
         {BIOMES.map((b) => (
           <button
@@ -45,6 +47,7 @@ export default function ChooseScreen({
             type="button"
             role="radio"
             aria-checked={b === biome}
+            tabIndex={radioTabIndex(b === biome)}
             onClick={() => onBiome(b)}
             className="bb-chip bb-primary min-h-14 rounded-2xl bg-white border-[3px] border-[#e1d0a6] font-extrabold text-[#3a2e22] flex flex-col items-center justify-center gap-0.5 px-2 active:scale-95"
           >
@@ -57,36 +60,45 @@ export default function ChooseScreen({
           </button>
         ))}
       </div>
+      {/* The arrows change the radiogroup from outside it — announce the result. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {t("biomeBuddy.choose.currentAria", {
+          defaultValue: "Home: {{biome}}",
+          biome: L(info.label),
+        })}
+      </p>
 
-      {/* Preview panel with side navigation */}
-      <div className="w-full flex items-stretch gap-2">
+      {/* Preview panel with side navigation (arrows drop below the panel on
+          narrow phones so the description keeps a readable measure). */}
+      <div className="bb-choose-panel w-full">
         <button
           type="button"
           onClick={() => step(-1)}
           aria-label={t("biomeBuddy.choose.prev", {
             defaultValue: "Previous home",
           })}
-          className="min-w-11 rounded-2xl bg-white text-2xl font-extrabold text-[#3a2e22] shadow active:scale-95 shrink-0"
+          className="bb-choose-arrow min-w-11 rounded-2xl bg-white text-2xl font-extrabold text-[#3a2e22] shadow active:scale-95 shrink-0"
         >
           ◀
         </button>
-        <BiomeScene biome={biome} className="flex-1 min-w-0" minHeight={260}>
-          <div
-            className="m-3 sm:m-6 rounded-3xl bg-white/70 backdrop-blur-sm p-4 text-[#3a2e22] flex flex-col gap-2"
-            aria-live="polite"
-          >
-            <h3 className="text-xl font-extrabold">
+        <BiomeScene
+          biome={biome}
+          className="bb-choose-scene min-w-0"
+          minHeight={240}
+        >
+          <div className="bb-choose-card m-2 sm:m-6 rounded-3xl bg-white/75 backdrop-blur-sm p-3 sm:p-4 text-[#3a2e22] flex flex-col gap-2">
+            <h3 className="text-lg sm:text-xl font-extrabold leading-tight">
               <span aria-hidden>{BIOME_EMOJI[biome]} </span>
               {L(info.label)}
-              <span className="text-sm font-bold text-[#6f6048]">
-                {" "}
-                · {L(info.subtitle)}
+              <span className="block sm:inline text-sm font-bold text-[#6f6048]">
+                <span className="hidden sm:inline"> · </span>
+                {L(info.subtitle)}
               </span>
             </h3>
-            <p className="text-base font-bold leading-snug">
+            <p className="text-sm sm:text-base font-bold leading-snug">
               {L(info.description)}
             </p>
-            <p className="text-sm font-bold text-[#6f6048]">
+            <p className="text-xs sm:text-sm font-bold text-[#6f6048]">
               {t("biomeBuddy.choose.animalsHere", {
                 defaultValue: "Who lives here:",
               })}{" "}
@@ -100,7 +112,7 @@ export default function ChooseScreen({
           aria-label={t("biomeBuddy.choose.next", {
             defaultValue: "Next home",
           })}
-          className="min-w-11 rounded-2xl bg-white text-2xl font-extrabold text-[#3a2e22] shadow active:scale-95 shrink-0"
+          className="bb-choose-arrow min-w-11 rounded-2xl bg-white text-2xl font-extrabold text-[#3a2e22] shadow active:scale-95 shrink-0"
         >
           ▶
         </button>
@@ -117,7 +129,7 @@ export default function ChooseScreen({
         <button
           type="button"
           onClick={onSelect}
-          className="bb-primary min-h-14 px-10 rounded-full bg-brightboost-yellow text-[#3a2e22] text-xl font-extrabold shadow-[0_5px_0_#c46f55] active:translate-y-1 active:shadow-none animate-pop"
+          className="bb-primary bb-pop min-h-14 px-10 rounded-full bg-brightboost-yellow text-[#3a2e22] text-xl font-extrabold shadow-[0_5px_0_#c46f55] active:translate-y-1 active:shadow-none"
         >
           {t("biomeBuddy.choose.select", {
             defaultValue: "Select {{biome}} ✓",
