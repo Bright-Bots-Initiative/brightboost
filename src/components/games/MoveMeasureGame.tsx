@@ -39,6 +39,8 @@ const IDEAL_TOSS = 50;
 const ICONS: Record<string, string> = { dash: "🏃", jump: "🦘", toss: "🥎" };
 const defaultNames = { dash: "Dash", jump: "Jump", toss: "Toss" } as const;
 const EVENT_ORDER: EventKey[] = ["dash", "jump", "toss"];
+/** Highest score a single event can reach — the ceiling a retry can only hold. */
+const MAX_EVENT_SCORE = 10;
 
 export function zoneScore(pos: number, s: number, e: number): number {
   const c = (s + e) / 2,
@@ -70,7 +72,16 @@ export function buildMoveMeasureCompletionPayload(params: {
 }): GameResult {
   const { scores, impEvent, impScore, exitAns } = params;
   const base = scores.dash + scores.jump + scores.toss;
-  const bonus = impScore > (impEvent ? scores[impEvent] : 0) ? 5 : 0;
+  const before = impEvent ? scores[impEvent] : 0;
+  // Improvement credit is earned by improving, or by maintaining a result that
+  // was already at the ceiling. Without the ceiling clause a perfect retry
+  // (10 → 10) scored below an imperfect one (9 → 10). Repeating a non-perfect
+  // score still earns nothing, so the incentive to improve is intact.
+  const bonus =
+    impScore > before ||
+    (before === MAX_EVENT_SCORE && impScore === MAX_EVENT_SCORE)
+      ? 5
+      : 0;
   const eBonus = exitAns === "correct" ? 5 : 0;
   const total = base + bonus + eBonus;
   return {
