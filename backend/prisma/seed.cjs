@@ -4,6 +4,8 @@ const {
   describeTarget,
   evaluateSeedTarget,
   evaluateSeedWipe,
+  formatSeedCleanupReport,
+  runSeedCleanup,
   syncFixtureEnrollment,
 } = require("./seedFixtures.cjs");
 
@@ -47,34 +49,28 @@ async function main() {
 
   if (wipe.shouldWipe) {
     console.log("Cleaning up database...");
-    // Delete in reverse order of dependencies
-    try {
-      await prisma.matchTurn.deleteMany();
-      await prisma.match.deleteMany();
-      await prisma.unlockedAbility.deleteMany();
-      await prisma.ability.deleteMany();
-      await prisma.progress.deleteMany();
-      await prisma.avatar.deleteMany();
-      await prisma.activity.deleteMany();
-      await prisma.lesson.deleteMany();
-      await prisma.unit.deleteMany();
-      // userBadge and badge might be present in some schemas
-      try {
-        await prisma.userBadge.deleteMany();
-      } catch {}
-      try {
-        await prisma.badge.deleteMany();
-      } catch {}
-
-      await prisma.module.deleteMany();
-      await prisma.user.deleteMany();
-    } catch (e) {
-      console.warn(
-        "Cleanup warning (some tables might be empty or missing):",
-        e.message,
+    // Truthful cleanup (#812). The previous block wrapped the whole
+    // reverse-dependency-order sequence in one catch that logged a warning
+    // (plus two bare `catch {}`s for userBadge/badge) and then printed
+    // "Database cleaned." unconditionally — a half-wiped database reported as
+    // clean. `runSeedCleanup` deletes the same tables, in the same order, and
+    // returns what actually cleared.
+    //
+    // Failure is fatal and exits 1 (the existing .catch below): the wipe was
+    // authorised and attempted, so "the database is clean" is a property that
+    // came back FALSE. Exit 2 stays reserved for could-not-run, which the
+    // environment gate above already owns.
+    const cleanup = await runSeedCleanup(prisma);
+    const report = formatSeedCleanupReport(cleanup);
+    if (!cleanup.ok) {
+      console.error(report);
+      throw new Error(
+        `Seed cleanup failed at ${cleanup.failed.table}.deleteMany() — ` +
+          `${cleanup.cleared.length} table(s) cleared, ` +
+          `${cleanup.notAttempted.length} never attempted. Database left partially wiped.`,
       );
     }
-    console.log("Database cleaned.");
+    console.log(report);
   }
 
   // 3. Seed Abilities (idempotent)

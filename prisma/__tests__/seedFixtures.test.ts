@@ -33,9 +33,12 @@ const repoRoot = path.resolve(here, "../..");
 
 const {
   ALLOW_PRODUCTION_ENV,
+  SEED_WIPE_TABLES,
   evaluateSeedTarget,
   evaluateSeedWipe,
+  formatSeedCleanupReport,
   isProductionShapedDatabaseUrl,
+  runSeedCleanup,
   syncFixtureEnrollment,
 } = require_("../seedFixtures.cjs");
 
@@ -368,12 +371,187 @@ describe("write permission is not delete permission (#700 review B1)", () => {
   it("decides the wipe before the Prisma client is constructed", () => {
     const wipeIdx = seedSrc.indexOf("evaluateSeedWipe(process.env)");
     const clientIdx = seedSrc.indexOf("new PrismaClient()");
-    const deleteIdx = seedSrc.indexOf("deleteMany()");
+    // The delete sequence moved into runSeedCleanup (#812); this is its call site.
+    const deleteIdx = seedSrc.indexOf("runSeedCleanup(prisma)");
     expect(wipeIdx).toBeGreaterThan(-1);
     expect(wipeIdx).toBeLessThan(clientIdx);
     expect(wipeIdx).toBeLessThan(deleteIdx);
     // The old predicate must be gone — it keyed the wipe on NODE_ENV only.
     expect(seedSrc).not.toContain("!isProduction && !forceNoReset");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cleanup truthfulness (#812)
+// ---------------------------------------------------------------------------
+
+type CleanupResult = {
+  ok: boolean;
+  cleared: string[];
+  failed: null | { table: string; code: string | null; message: string };
+  notAttempted: string[];
+};
+
+/** Mocked Prisma: one delegate per wipe table, recording every attempt. */
+function makePrismaStub(failures: Record<string, Error> = {}) {
+  const attempted: string[] = [];
+  const prisma: Record<string, { deleteMany: () => Promise<unknown> }> = {};
+  for (const table of SEED_WIPE_TABLES as string[]) {
+    prisma[table] = {
+      deleteMany: async () => {
+        attempted.push(table);
+        const failure = failures[table];
+        if (failure) throw failure;
+        return { count: 0 };
+      },
+    };
+  }
+  return { prisma, attempted };
+}
+
+function fkError(message: string) {
+  const err = new Error(message) as Error & { code: string };
+  err.code = "P2003";
+  return err;
+}
+
+describe("seed cleanup reports what it actually cleared (#812)", () => {
+  it("clears every wipe table, in reverse-dependency order, on the happy path", async () => {
+    const { prisma, attempted } = makePrismaStub();
+    const result: CleanupResult = await runSeedCleanup(prisma);
+
+    expect(result.ok).toBe(true);
+    expect(result.failed).toBeNull();
+    expect(result.notAttempted).toStrictEqual([]);
+    expect(result.cleared).toStrictEqual([...SEED_WIPE_TABLES]);
+    expect(attempted).toStrictEqual([...SEED_WIPE_TABLES]);
+    // Children before parents: user last, matchTurn first.
+    expect(attempted[0]).toBe("matchTurn");
+    expect(attempted[attempted.length - 1]).toBe("user");
+    // Only the earned claim gets the phrase.
+    expect(formatSeedCleanupReport(result)).toMatch(/^Database cleaned — 13 /);
+  });
+
+  it("never claims 'Database cleaned.' when a mid-sequence deleteMany rejects", async () => {
+    const { prisma } = makePrismaStub({
+      progress: new Error('relation "Progress" does not exist'),
+    });
+    const result: CleanupResult = await runSeedCleanup(prisma);
+    const report = formatSeedCleanupReport(result);
+
+    expect(result.ok).toBe(false);
+    expect(
+      report,
+      `a partial wipe must never read as clean:\n${report}`,
+    ).not.toMatch(/Database cleaned/);
+    expect(report).toMatch(/PARTIALLY WIPED/);
+  });
+
+  it("names exactly which tables cleared, which failed, and which were skipped", async () => {
+    const { prisma, attempted } = makePrismaStub({
+      progress: new Error("boom"),
+    });
+    const result: CleanupResult = await runSeedCleanup(prisma);
+
+    expect(result.cleared).toStrictEqual([
+      "matchTurn",
+      "match",
+      "unlockedAbility",
+      "ability",
+    ]);
+    expect(result.failed).toMatchObject({ table: "progress", message: "boom" });
+    expect(result.notAttempted).toStrictEqual([
+      "avatar",
+      "activity",
+      "lesson",
+      "unit",
+      "userBadge",
+      "badge",
+      "module",
+      "user",
+    ]);
+    // Stopping is the point: continuing past an FK-ordered failure would
+    // delete MORE than the pre-fix code ever did.
+    expect(attempted).toStrictEqual([
+      "matchTurn",
+      "match",
+      "unlockedAbility",
+      "ability",
+      "progress",
+    ]);
+
+    const report = formatSeedCleanupReport(result);
+    expect(report).toMatch(
+      /cleared: +matchTurn, match, unlockedAbility, ability/,
+    );
+    expect(report).toMatch(/failed: +progress/);
+    expect(report).toMatch(/not attempted: +avatar, .*, user/);
+  });
+
+  it("diagnoses the Course.teacherId foreign key that reproduced the bug", async () => {
+    // The audited failure: user.deleteMany() blocked by a Course row, which the
+    // wipe list does not (and must not silently start to) delete.
+    const { prisma } = makePrismaStub({
+      user: fkError(
+        "Foreign key constraint failed on the field: `Course_teacherId_fkey`",
+      ),
+    });
+    const result: CleanupResult = await runSeedCleanup(prisma);
+    const report = formatSeedCleanupReport(result);
+
+    expect(result.ok).toBe(false);
+    expect(result.failed?.table).toBe("user");
+    expect(result.failed?.code).toBe("P2003");
+    expect(result.notAttempted).toStrictEqual([]);
+    expect(report).not.toMatch(/Database cleaned/);
+    expect(report).toMatch(/Course\.teacherId/);
+    expect(report).toMatch(/SEED_RESET=false/);
+    // The wipe is not allowed to grow teeth on its own.
+    expect(report).toMatch(/separate, gated decision/);
+  });
+
+  it("does not silently delete beyond the authorised wipe list", () => {
+    // #797 gated a wipe of exactly these tables. Course, Enrollment and the
+    // Pathways tables carry real classroom rows and stay out of it.
+    expect([...SEED_WIPE_TABLES]).toStrictEqual([
+      "matchTurn",
+      "match",
+      "unlockedAbility",
+      "ability",
+      "progress",
+      "avatar",
+      "activity",
+      "lesson",
+      "unit",
+      "userBadge",
+      "badge",
+      "module",
+      "user",
+    ]);
+    for (const forbidden of [
+      "course",
+      "enrollment",
+      "assignment",
+      "creation",
+      "pathwayCohort",
+      "pathwayEnrollment",
+    ]) {
+      expect(SEED_WIPE_TABLES).not.toContain(forbidden);
+    }
+  });
+
+  it("wires the seed to fail on a bad cleanup instead of announcing success", () => {
+    const idx = seedSrc.indexOf("runSeedCleanup(prisma)");
+    expect(idx).toBeGreaterThan(-1);
+    const block = seedSrc.slice(idx, idx + 700);
+    expect(block).toMatch(/if \(!cleanup\.ok\)/);
+    expect(block).toMatch(/throw new Error\(/);
+    // The swallowing shape is gone: no bare catch, no unconditional claim.
+    expect(seedSrc).not.toContain('console.log("Database cleaned.")');
+    expect(seedSrc).not.toContain(
+      "Cleanup warning (some tables might be empty or missing)",
+    );
+    expect(seedSrc).not.toContain("await prisma.userBadge.deleteMany();");
   });
 });
 
@@ -469,5 +647,36 @@ describe("seed process refuses to run in production (#700)", () => {
       `the override must never authorise a wipe:\n${output}`,
     ).not.toMatch(/Cleaning up database/);
     expect(output).not.toMatch(/Database cleaned/);
+  });
+
+  it("exits non-zero and never prints 'Database cleaned.' when the wipe fails (#812)", async () => {
+    // Loopback so the wipe gate authorises the wipe, port 1 so the very first
+    // deleteMany is refused instantly — no database required. Before the fix
+    // this run printed "Database cleaned." over a DB it had never touched.
+    const env = {
+      ...process.env,
+      DATABASE_URL: "postgresql://u:p@127.0.0.1:1/brightboost",
+    };
+    delete env.NODE_ENV;
+    delete env.SEED_RESET;
+    delete env[ALLOW_PRODUCTION_ENV];
+    const { status, output } = await runSeed(env);
+
+    expect(output).toMatch(/Cleanup: enabled/);
+    expect(output).toMatch(/Cleaning up database/);
+    expect(output).toMatch(/CLEANUP FAILED at matchTurn\.deleteMany\(\)/);
+    // Nothing cleared here, so the report says so rather than over-claiming a
+    // partial wipe it did not perform.
+    expect(output).toMatch(/Nothing was deleted/);
+    expect(output).not.toMatch(/PARTIALLY WIPED/);
+    expect(
+      output,
+      `a failed wipe must never claim success:\n${output}`,
+    ).not.toMatch(/Database cleaned/);
+    expect(output).not.toMatch(/SEED COMPLETED SUCCESSFULLY/);
+    expect(
+      status,
+      `a failed wipe is a false property, exit 1 — got ${status}:\n${output}`,
+    ).toBe(1);
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Deterministic demo/test fixture helpers for `prisma/seed.cjs` (#700).
  *
- * Two properties this module exists to guarantee:
+ * Three properties this module exists to guarantee:
  *
  * 1. **Deterministic enrollment.** The seed used to resolve the explorer's
  *    class with `course.findFirst({ where: { teacherId } })`, executed BEFORE
@@ -19,6 +19,10 @@
  *    conditions before any write unless an operator opts in explicitly.
  *    (`predeploy.sh` already gates the deploy-time call behind `RUN_SEED`;
  *    this guard also covers `npx prisma db seed` run by hand.)
+ *
+ * 3. **Truthful cleanup.** `runSeedCleanup` reports which tables were actually
+ *    cleared and which failed, so the seed can no longer print
+ *    "Database cleaned." over a half-wiped database (#812).
  *
  * Mirrored byte-for-byte at `backend/prisma/seedFixtures.cjs`, like the seed
  * itself — see the sync assertion in `prisma/__tests__/`.
@@ -157,6 +161,104 @@ function evaluateSeedWipe(env = {}) {
 }
 
 /**
+ * Tables the seed wipe clears, in FK-safe order (children before parents).
+ *
+ * This list is the *authorised* blast radius (#797), and it is deliberately
+ * narrower than the schema: `Course`, `Enrollment`, the Pathways tables and
+ * everything else holding real classroom rows are never deleted. Widening it
+ * is a separate, gated decision — the seed must not quietly grow teeth.
+ */
+const SEED_WIPE_TABLES = Object.freeze([
+  "matchTurn",
+  "match",
+  "unlockedAbility",
+  "ability",
+  "progress",
+  "avatar",
+  "activity",
+  "lesson",
+  "unit",
+  "userBadge",
+  "badge",
+  "module",
+  "user",
+]);
+
+/**
+ * Run the wipe one table at a time and report what actually happened (#812).
+ *
+ * The old block wrapped the whole sequence in a single `catch` that logged a
+ * warning and then printed "Database cleaned." regardless — so a half-wiped
+ * database read as a clean one, which is the state an operator trusts and
+ * acts on.
+ *
+ * Stops at the FIRST failure on purpose. The list is FK-ordered, so once a
+ * delete fails every later one is unsound, and pushing on would delete MORE
+ * than the pre-fix code ever did. The caller gets three sets instead of one
+ * claim: cleared, the table that failed, and the tables never attempted.
+ *
+ * @param {import("@prisma/client").PrismaClient} prisma
+ * @param {readonly string[]} tables
+ * @returns {Promise<{ ok: boolean, cleared: string[], failed: null | { table: string, code: string | null, message: string }, notAttempted: string[] }>}
+ */
+async function runSeedCleanup(prisma, tables = SEED_WIPE_TABLES) {
+  const cleared = [];
+  for (let i = 0; i < tables.length; i++) {
+    const table = tables[i];
+    try {
+      const delegate = prisma ? prisma[table] : null;
+      if (!delegate || typeof delegate.deleteMany !== "function") {
+        throw new Error(`no Prisma delegate named "${table}"`);
+      }
+      await delegate.deleteMany();
+      cleared.push(table);
+    } catch (error) {
+      return {
+        ok: false,
+        cleared,
+        failed: {
+          table,
+          code: (error && error.code) || null,
+          message: (error && error.message) || String(error),
+        },
+        notAttempted: tables.slice(i + 1),
+      };
+    }
+  }
+  return { ok: true, cleared, failed: null, notAttempted: [] };
+}
+
+/**
+ * Render a cleanup outcome. Shared by the seed and its tests so the wording an
+ * operator reads is asserted rather than guessed.
+ *
+ * @param {Awaited<ReturnType<typeof runSeedCleanup>>} result
+ * @returns {string}
+ */
+function formatSeedCleanupReport(result) {
+  if (result.ok) {
+    return `Database cleaned — ${result.cleared.length} tables: ${result.cleared.join(", ")}.`;
+  }
+  const { table, code, message } = result.failed;
+  const lines = [
+    `CLEANUP FAILED at ${table}.deleteMany()${code ? ` (${code})` : ""}: ${message}`,
+    `  cleared:       ${result.cleared.length ? result.cleared.join(", ") : "(none)"}`,
+    `  failed:        ${table}`,
+    `  not attempted: ${result.notAttempted.length ? result.notAttempted.join(", ") : "(none)"}`,
+    result.cleared.length
+      ? "The database is PARTIALLY WIPED. It is not clean; do not treat it as clean."
+      : "Nothing was deleted. The database is unchanged and was never cleaned.",
+  ];
+  if (code === "P2003" || /foreign key/i.test(message)) {
+    lines.push(
+      `A row outside the wipe list still references ${table}. Course.teacherId is the observed case (#812): the wipe never deletes Course, so any course — including the ones this seed itself created on an earlier run — blocks user.deleteMany().`,
+      "Re-seed without wiping (SEED_RESET=false npx prisma db seed — the seed is idempotent and appends), or drop and recreate the local database. Widening the wipe to Course and its dependents is a separate, gated decision; this seed will not take it silently.",
+    );
+  }
+  return lines.join("\n");
+}
+
+/**
  * Enroll a fixture student in exactly one course, converging on repeat runs.
  *
  * Deletes the student's enrollments in every OTHER course first, so a database
@@ -181,9 +283,12 @@ async function syncFixtureEnrollment(prisma, studentId, courseId) {
 
 module.exports = {
   ALLOW_PRODUCTION_ENV,
+  SEED_WIPE_TABLES,
   describeTarget,
   evaluateSeedTarget,
   evaluateSeedWipe,
+  formatSeedCleanupReport,
   isProductionShapedDatabaseUrl,
+  runSeedCleanup,
   syncFixtureEnrollment,
 };
