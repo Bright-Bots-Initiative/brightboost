@@ -43,7 +43,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
-  $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+  $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -146,8 +146,10 @@ function armQuietPersonalBest() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
-    Promise.all(ops),
+  prismaMock.$transaction.mockImplementation((arg: unknown) =>
+    typeof arg === "function"
+      ? (arg as (tx: unknown) => unknown)(prismaMock)
+      : Promise.all(arg as Promise<unknown>[]),
   );
   prismaMock.activity.findUnique.mockResolvedValue(ACTIVITY);
   armHappyAvatar();
@@ -424,5 +426,125 @@ describe("#809 — gameKey validation", () => {
       });
       expect(res.status, `gameKey ${key}`).toBe(200);
     }
+  });
+});
+
+describe("#832 — post-#827 hardening residuals", () => {
+  function getProgress(path: string) {
+    ipSeq += 1;
+    return request(app)
+      .get(path)
+      .set("Authorization", "Bearer mock-token-for-mvp")
+      .set("X-Forwarded-For", `203.0.113.${ipSeq}`);
+  }
+
+  it("ROUTE-1: GET /progress answers a JSON 500 on a rejected read, never hangs", async () => {
+    // Pre-fix RED: the bare async handler's rejection was unhandled — express 4
+    // never answered and this test timed out (#821's exact hang class).
+    prismaMock.progress.findMany.mockRejectedValueOnce(new Error("db down"));
+
+    const res = await getProgress("/api/progress");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBeDefined();
+  }, 5000);
+
+  it("ROUTE-2: GET /get-progress answers a JSON 500 on a rejected read, never hangs", async () => {
+    prismaMock.user.findUnique.mockRejectedValueOnce(new Error("db down"));
+    prismaMock.progress.findMany.mockResolvedValue([]);
+
+    const res = await getProgress("/api/get-progress");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBeDefined();
+  }, 5000);
+
+  it("AVATAR-1: losing the first-avatar create race completes idempotently, not a 500", async () => {
+    // Brand-new student, two concurrent completions: both read "no avatar",
+    // both create; Avatar.studentId is unique so the loser gets P2002 — which
+    // proves the winner's row committed. Pre-fix RED: the loser answered 500
+    // before the completion claim ever ran.
+    const p2002 = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    prismaMock.avatar.findUnique
+      .mockResolvedValueOnce(null) // the racing read: no avatar yet
+      .mockResolvedValue(AVATAR); // the recovery re-read: winner's row
+    prismaMock.avatar.create.mockRejectedValueOnce(p2002);
+    prismaMock.progress.count.mockResolvedValue(0);
+    prismaMock.progress.findUnique.mockResolvedValueOnce(null);
+    prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(200);
+    // The loser proceeds on the winner's committed avatar — no backfill claim.
+    expect(res.body.reward.xpDelta).toBeGreaterThan(0);
+    expect(prismaMock.avatar.create).toHaveBeenCalledTimes(1);
+  }, 5000);
+
+  it("AVATAR-2: a non-P2002 avatar-create failure still surfaces as a JSON 500", async () => {
+    prismaMock.avatar.findUnique.mockResolvedValue(null);
+    prismaMock.avatar.create.mockRejectedValueOnce(new Error("db down"));
+    prismaMock.progress.count.mockResolvedValue(0);
+    prismaMock.progress.findUnique.mockResolvedValueOnce(null);
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(500);
+  }, 5000);
+
+  it("TXN-1: the personal-best re-read runs INSIDE the reconciliation transaction", async () => {
+    // Pre-fix RED: $transaction received an array of already-launched writes
+    // and the response row came from a separate read afterwards — a window a
+    // concurrent play's committed row could occupy. The interactive form
+    // holds the row lock across writes AND read.
+    prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_ROW);
+    prismaMock.gamePersonalBest.findUnique.mockResolvedValue({
+      id: "gpb-1",
+      studentId: "student-123",
+      gameKey: "move_measure",
+      bestScore: 5,
+      lastScore: 5,
+      bestStreak: 1,
+      bestRoundsCompleted: 1,
+      playCount: 1,
+    });
+    prismaMock.gamePersonalBest.updateMany.mockResolvedValue({ count: 1 });
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(200);
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+    expect(typeof prismaMock.$transaction.mock.calls[0][0]).toBe("function");
+    expect(res.body.isNewHighScore).toBe(true);
+  });
+
+  it("TXN-2: a throw inside the transaction reports false flags and a null row", async () => {
+    // With the read inside the transaction, a failure rolls the writes back
+    // too — so "nothing persisted" is literally true, not a false negative.
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_ROW);
+    prismaMock.gamePersonalBest.findUnique
+      .mockResolvedValueOnce({
+        id: "gpb-1",
+        studentId: "student-123",
+        gameKey: "move_measure",
+        bestScore: 5,
+        lastScore: 5,
+        bestStreak: 1,
+        bestRoundsCompleted: 1,
+        playCount: 1,
+      })
+      .mockRejectedValueOnce(new Error("read failed mid-transaction"));
+    prismaMock.gamePersonalBest.updateMany.mockResolvedValue({ count: 1 });
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(200);
+    expect(res.body.personalBest).toBeNull();
+    expect(res.body.isNewHighScore).toBe(false);
+    expect(res.body.isNewBestStreak).toBe(false);
+    warnSpy.mockRestore();
   });
 });

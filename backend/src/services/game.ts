@@ -102,7 +102,7 @@ export async function checkUnlocks(
  * @returns Object containing the avatar and whether it was newly created with backfill
  */
 export async function ensureAvatarWithBackfill(
-  studentId: string
+  studentId: string,
 ): Promise<{ avatar: Avatar; wasBackfilled: boolean; backfilledXp: number }> {
   // Check for existing avatar
   const existingAvatar = await prisma.avatar.findUnique({
@@ -132,26 +132,40 @@ export async function ensureAvatarWithBackfill(
 
   // Create avatar as GENERAL (Explorer) - no archetype, no abilities
   // User must explicitly select a specialty to become SPECIALIZED
-  const newAvatar = await prisma.avatar.create({
-    data: {
-      studentId,
-      stage: "GENERAL",      // Explorer stage
-      archetype: null,       // No archetype until specialty selected
-      level: initialLevel,
-      xp: totalBackfilledXp,
-      hp: 100,
-      energy: 100,
-      speed: 0,              // General stats start at 0
-      control: 0,
-      focus: 0,
-    },
-  });
+  let newAvatar;
+  try {
+    newAvatar = await prisma.avatar.create({
+      data: {
+        studentId,
+        stage: "GENERAL", // Explorer stage
+        archetype: null, // No archetype until specialty selected
+        level: initialLevel,
+        xp: totalBackfilledXp,
+        hp: 100,
+        energy: 100,
+        speed: 0, // General stats start at 0
+        control: 0,
+        focus: 0,
+      },
+    });
+  } catch (e) {
+    // #832 item 3: two concurrent first completions by a brand-new student
+    // both saw "no avatar" and raced this create. Avatar.studentId is unique,
+    // so the loser gets P2002 — which proves the winner's row is committed
+    // (a conflicting INSERT blocks on the in-flight duplicate and errors only
+    // after it commits). Re-read and continue as the existing-avatar path:
+    // the winner reports the backfill; the loser is idempotent, not a 500.
+    if ((e as { code?: string })?.code !== "P2002") throw e;
+    const raced = await prisma.avatar.findUnique({ where: { studentId } });
+    if (!raced) throw e; // concurrent delete (e.g. User cascade) — surface it
+    return { avatar: raced, wasBackfilled: false, backfilledXp: 0 };
+  }
 
   // NOTE: No abilities are unlocked for GENERAL avatars
   // Abilities are only unlocked when user selects a specialty (SPECIALIZED stage)
 
   console.log(
-    `[ensureAvatarWithBackfill] Created GENERAL avatar: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`
+    `[ensureAvatarWithBackfill] Created GENERAL avatar: level=${initialLevel}, xp=${totalBackfilledXp}, completedCount=${completedCount}`,
   );
 
   return {
@@ -182,7 +196,7 @@ export function calculateStatGains(result?: {
   if (result?.score !== undefined && result?.total && result.total > 0) {
     const accuracy = result.score / result.total;
     control += Math.round(accuracy * 2); // 0-2 bonus
-    focus += Math.round(accuracy * 1);   // 0-1 bonus
+    focus += Math.round(accuracy * 1); // 0-1 bonus
   }
 
   // Speed bonus for fast completion
