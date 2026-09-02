@@ -1712,6 +1712,8 @@
       "raceTitle": "¡Carrera Final!",
       "compareTitle": "Compara tus Carreras",
       "whatGotBetter": "¿Qué mejoró?",
+      "whatStayedBest": "¿Qué se mantuvo en tu mejor marca?",
+      "heldBest": "¡Mantuviste tu mejor marca!",
       "timeBand": {
         "fast": "Rápido",
         "medium": "Medio",

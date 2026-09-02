@@ -1609,6 +1609,8 @@
       "finish": "Hoàn thành"
     },
     "qualifyTuneRace": {
+      "whatStayedBest": "Điều gì vẫn ở mức tốt nhất?",
+      "heldBest": "Giữ vững mức tốt nhất!",
       "timeBand": {
         "fast": "Nhanh",
         "medium": "Trung bình",

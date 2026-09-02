@@ -1862,6 +1862,8 @@
       "raceTitle": "Final Run!",
       "compareTitle": "Compare Your Runs",
       "whatGotBetter": "What got better?",
+      "whatStayedBest": "What stayed at your best?",
+      "heldBest": "Held your best!",
       "timeBand": {
         "fast": "Fast",
         "medium": "Medium",
