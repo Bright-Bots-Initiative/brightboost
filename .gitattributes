@@ -1,0 +1,40 @@
+# Line endings. See #826.
+#
+# core.autocrlf=true is the Git-for-Windows default: it smudges LF -> CRLF on
+# checkout while the index stays LF. Prettier defaults to endOfLine=lf, so
+# `prettier --check` then fails on files nobody touched, and lint-staged's
+# failure path restores the working tree (re-smudging CRLF) into a
+# commit-blocking loop. Pinning eol=lf for tracked text types stops both.
+#
+# `.sh` matters beyond formatting: backend/scripts/predeploy.sh runs in the
+# Linux backend image, where a CRLF shebang fails at exec.
+#
+# Deliberately narrow — one line per extension actually tracked here. The
+# index is already LF for all of them, so this introduces no renormalization.
+# Unity text assets (*.asset, *.meta, *.prefab, *.unity) are left to Git's
+# auto-detection on purpose.
+
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.js     text eol=lf
+*.jsx    text eol=lf
+*.cjs    text eol=lf
+*.mjs    text eol=lf
+*.json   text eol=lf
+*.css    text eol=lf
+*.html   text eol=lf
+*.md     text eol=lf
+*.mdx    text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.prisma text eol=lf
+*.sql    text eol=lf
+*.sh     text eol=lf
+*.svg    text eol=lf
+
+# Binary types tracked in this repo — never line-ending-converted, never diffed.
+*.png    binary
+*.ico    binary
+*.avif   binary
+*.mov    binary
+*.wasm   binary
