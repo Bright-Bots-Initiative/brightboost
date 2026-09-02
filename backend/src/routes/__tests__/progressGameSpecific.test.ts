@@ -31,7 +31,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
-  $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+  $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -151,8 +151,10 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     prismaMock.gamePersonalBest.upsert.mockResolvedValue({});
     // #821: the IN_PROGRESS → COMPLETED transition is now an atomic claim.
     prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
-    prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
-      Promise.all(ops),
+    prismaMock.$transaction.mockImplementation((arg: unknown) =>
+      typeof arg === "function"
+        ? (arg as (tx: unknown) => unknown)(prismaMock)
+        : Promise.all(arg as Promise<unknown>[]),
     );
   });
 

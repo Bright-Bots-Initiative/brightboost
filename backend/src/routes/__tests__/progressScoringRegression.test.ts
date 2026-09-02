@@ -37,7 +37,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
-  $transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
+  $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -195,8 +195,10 @@ function setupFirstCompletionMocks(
   progressRow: Record<string, unknown> = PROGRESS_ROW,
 ) {
   prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
-  prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
-    Promise.all(ops),
+  prismaMock.$transaction.mockImplementation((arg: unknown) =>
+    typeof arg === "function"
+      ? (arg as (tx: unknown) => unknown)(prismaMock)
+      : Promise.all(arg as Promise<unknown>[]),
   );
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
@@ -308,8 +310,10 @@ function setupReplayMocks(existingBest: Record<string, unknown> | null) {
   prismaMock.ability.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.createMany.mockResolvedValue({ count: 0 });
-  prismaMock.$transaction.mockImplementation((ops: Promise<unknown>[]) =>
-    Promise.all(ops),
+  prismaMock.$transaction.mockImplementation((arg: unknown) =>
+    typeof arg === "function"
+      ? (arg as (tx: unknown) => unknown)(prismaMock)
+      : Promise.all(arg as Promise<unknown>[]),
   );
   armPersonalBestDb(existingBest);
   prismaMock.gamePersonalBest.upsert.mockResolvedValue(PERSONAL_BEST);
