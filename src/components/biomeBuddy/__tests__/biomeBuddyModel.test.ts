@@ -358,7 +358,7 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
     expect(en(card.what)).toMatch(/antennae do the smelling/);
     expect(en(card.animals)).not.toMatch(/spider/i);
     expect(card.animals.es).not.toMatch(/araña/i);
-    expect(en(whyFor("nose", "spiracles", "water")!)).toMatch(/antennae/);
+    expect(en(whyFor("nose", "spiracles", "water")!)).toMatch(/antennae/i);
   });
 
   it("claws are claws, not hooves or gecko pads (finding 3)", () => {
@@ -375,7 +375,18 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
     expect(en(scienceFor("pattern", "warning").animals)).toMatch(/ladybug/i);
     expect(en(scienceFor("pattern", "stripes").animals)).not.toMatch(/skunk/i);
     expect(en(scienceFor("eyes", "rotating_eyes").animals)).not.toMatch(
-      /sandlance|sand lance/i,
+      /sandlance|sand lance|seahorse/i,
+    );
+    expect(en(scienceFor("pattern", "spots").animals)).not.toMatch(/cheetah/i);
+    expect(en(scienceFor("pattern", "spots").term)).toMatch(/cryptic/);
+    expect(en(scienceFor("nose", "gills").animals)).not.toMatch(
+      /crab|shrimp|lobster/i,
+    );
+    expect(en(whyFor("nose", "nose_lungs", "water")!)).not.toMatch(
+      /no smelling happens/,
+    );
+    expect(en(scienceFor("movement", "wings").affects)).not.toMatch(
+      /open forests/,
     );
   });
 
@@ -564,6 +575,63 @@ describe("Test & Learn diff", () => {
       expect(computeStats(r).sight).toBeLessThan(
         computeStats({ biome, traits: STARTER_TRAITS }).sight,
       );
+    }
+  });
+
+  it("attribution is exact: a single swapped part is the only part blamed, for every swap in every biome", () => {
+    let checked = 0;
+    for (const biome of BIOMES) {
+      const base = starterRecipe(biome);
+      for (const category of CATEGORIES)
+        for (const option of TRAIT_OPTIONS[category]) {
+          if (base.traits[category] === option) continue;
+          const next: BuddyRecipe = {
+            ...base,
+            traits: { ...base.traits, [category]: option },
+          };
+          const summary = diffBuilds(base, next);
+          for (const change of summary.changes) {
+            checked++;
+            expect(
+              change.changedContributions.map((c) => c.category),
+              `${biome} ${category}→${option} ${change.stat}`,
+            ).toEqual([category]);
+            expect(change.changedContributions[0].option).toBe(option);
+          }
+        }
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
+
+  it("attribution is exact: two swapped parts are each blamed only for the bars they moved", () => {
+    const prev = starterRecipe("earth");
+    const next = starterRecipe("earth");
+    next.traits.eyes = "compound_eyes"; // sight and agility
+    next.traits.covering = "hard_shell"; // agility only
+    const summary = diffBuilds(prev, next);
+    const sight = summary.changes.find((c) => c.stat === "sight");
+    const agility = summary.changes.find((c) => c.stat === "agility");
+    expect(sight?.changedContributions.map((c) => c.category)).toEqual([
+      "eyes",
+    ]);
+    expect(agility?.changedContributions.map((c) => c.category).sort()).toEqual(
+      ["covering", "eyes"],
+    );
+  });
+
+  it("attribution is exact: a home change blames only parts whose modifier differs between the two homes", () => {
+    const summary = diffBuilds(starterRecipe("earth"), starterRecipe("water"));
+    expect(summary.changes.length).toBeGreaterThan(0);
+    for (const change of summary.changes) {
+      expect(change.changedContributions.length).toBeGreaterThan(0);
+      for (const row of change.changedContributions) {
+        const def = (TRAITS[row.category] as Record<string, TraitOption>)[
+          row.option
+        ];
+        expect(def.biomeMod.earth[change.stat] ?? 0).not.toBe(
+          def.biomeMod.water[change.stat] ?? 0,
+        );
+      }
     }
   });
 

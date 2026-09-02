@@ -241,7 +241,7 @@ export default function TestLearnScreen({
           type="button"
           onClick={() => setPage((p) => Math.max(0, p - 1))}
           disabled={page === 0}
-          className="min-h-11 px-4 rounded-full bg-white border-2 border-[#e1d0a6] font-bold text-[#3a2e22] active:scale-95 disabled:opacity-40"
+          className="min-h-11 px-4 rounded-full bg-white border-2 border-[#e1d0a6] font-bold text-[#3a2e22] active:scale-95 disabled:opacity-70"
         >
           {t("biomeBuddy.test.prev", { defaultValue: "◀ Back" })}
         </button>

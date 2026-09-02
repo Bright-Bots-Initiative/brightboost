@@ -602,22 +602,28 @@ export function diffBuilds(
   const changes: StatChange[] = [];
   for (const stat of STATS) {
     if (before[stat] === after[stat]) continue;
-    const rows = statContributions(current.biome, current.traits, stat).filter(
-      (row) =>
-        changedCategories.includes(row.category) ||
-        (biomeChanged && row.mod !== 0),
-    );
-    // A swapped part whose NEW option adds nothing to this stat still moved
-    // it (the old option did) — keep it in the explanation so the child sees
-    // which part is responsible, never an empty "why".
-    for (const category of changedCategories)
-      if (!rows.some((row) => row.category === category))
+    // Attribute the move to EXACTLY the parts whose contribution to this stat
+    // differs between the two builds — a swapped part, or a biome-sensitive
+    // part when the home changed. A part that adds the same amount as before
+    // is never blamed, and a part that used to add something and now adds
+    // nothing still is (the old value differs from the new one).
+    const rows: Contribution[] = [];
+    for (const category of CATEGORIES) {
+      const table = TRAITS[category] as Record<string, TraitOption>;
+      const oldDef = table[base.traits[category]];
+      const newDef = table[current.traits[category]];
+      const oldValue =
+        (oldDef.base[stat] ?? 0) + (oldDef.biomeMod[base.biome][stat] ?? 0);
+      const newBase = newDef.base[stat] ?? 0;
+      const newMod = newDef.biomeMod[current.biome][stat] ?? 0;
+      if (newBase + newMod !== oldValue)
         rows.push({
           category,
           option: current.traits[category],
-          base: 0,
-          mod: 0,
+          base: newBase,
+          mod: newMod,
         });
+    }
     changes.push({
       stat,
       before: before[stat],

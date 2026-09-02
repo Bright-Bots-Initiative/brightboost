@@ -132,6 +132,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* The visible dismiss sits in the panel's top-right corner but is LAST in
+   the tab order, so focus lands on the content first. */
+.bb-dialog-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
 .bb-gallery-grid {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
@@ -213,8 +221,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* One primary control tall at most; the scroll container keeps room
-     below the last content block so nothing sits under the bar. */
+  /* The primary action floats at the bottom while the page scrolls (its
+     natural position is the end of the page, so nothing is ever hidden once
+     the child reaches the bottom). It is ONE control tall: a single row that
+     never wraps. */
   .bb-actions-sticky {
     position: sticky;
     bottom: max(0.5rem, env(safe-area-inset-bottom));
@@ -226,9 +236,13 @@
     box-shadow: 0 8px 24px rgb(58 46 34 / 18%);
   }
 
-  .bb-create-layout,
-  .bb-choose-panel {
-    scroll-margin-bottom: 6rem;
+  .bb-actions-row {
+    flex-wrap: nowrap;
+  }
+
+  .bb-actions-row > button {
+    min-width: 0;
+    white-space: nowrap;
   }
 }
 

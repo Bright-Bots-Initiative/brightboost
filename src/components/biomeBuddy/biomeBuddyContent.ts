@@ -195,8 +195,8 @@ export const SCIENCE: CardTable = {
         es: "A los cazadores lentos que se quedan quietos en las ramas les fue mejor al poder mirar sin moverse.",
       },
       animals: {
-        en: "Chameleons, seahorses.",
-        es: "Camaleones y caballitos de mar.",
+        en: "Chameleons.",
+        es: "Camaleones.",
       },
       where: {
         en: "Forests of Madagascar and Africa.",
@@ -438,8 +438,8 @@ export const SCIENCE: CardTable = {
         es: "Los primeros animales vivían en el agua, y las branquias llegaron mucho antes que los pulmones.",
       },
       animals: {
-        en: "Fish, axolotls, tadpoles, crabs.",
-        es: "Peces, ajolotes, renacuajos, cangrejos.",
+        en: "Fish, sharks, axolotls, tadpoles.",
+        es: "Peces, tiburones, ajolotes, renacuajos.",
       },
       where: {
         en: "Every ocean, lake and river on Earth.",
@@ -478,8 +478,8 @@ export const SCIENCE: CardTable = {
         es: "Bosques, praderas y ciudades de todo el mundo.",
       },
       affects: {
-        en: "A wet nose catches scent; underwater the nostrils must close and no smelling happens.",
-        es: "Una nariz húmeda atrapa el olor; bajo el agua las fosas se cierran y no se huele nada.",
+        en: "A wet nose catches scent; underwater the nostrils must close and hardly any smelling happens.",
+        es: "Una nariz húmeda atrapa el olor; bajo el agua las fosas se cierran y casi no se huele nada.",
       },
       more: {
         en: "Damp air carries scent molecules well, which is why a forest smells so strong after rain. A fox's nose has about 200 million smell receptors, and a wet nose helps dissolve scents so they can be sensed. In hot dry air scents evaporate fast, and underwater a lung-breather holds its breath and smells nothing.",
@@ -582,7 +582,7 @@ export const SCIENCE: CardTable = {
         es: "Todos los continentes, incluida la Antártida.",
       },
       affects: {
-        en: "Needs light bones and big chest muscles; wet wings get heavy and open forests get in the way.",
+        en: "Needs light bones and big chest muscles; wet wings get heavy and dense forests get in the way.",
         es: "Necesita huesos ligeros y músculos de pecho grandes; las alas mojadas pesan y los bosques cerrados estorban.",
       },
       more: {
@@ -960,8 +960,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
   spots: {
     label: { en: "Spots", es: "Manchas" },
     term: {
-      en: "spotted coat (disruptive pattern)",
-      es: "pelaje moteado (patrón disruptivo)",
+      en: "spotted coat (cryptic pattern)",
+      es: "pelaje moteado (patrón críptico)",
     },
     what: {
       en: "Dots or rosettes scattered over a lighter background.",
@@ -976,8 +976,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "A los animales del bosque les fue mejor pareciendo luz de sol entre hojas.",
     },
     animals: {
-      en: "Leopards, fawns, cheetahs, trout.",
-      es: "Leopardos, cervatillos, guepardos, truchas.",
+      en: "Leopards, jaguars, fawns, trout.",
+      es: "Leopardos, jaguares, cervatillos, truchas.",
     },
     where: {
       en: "Forests and rivers worldwide.",
@@ -1202,7 +1202,7 @@ export const WHY: WhyTable = {
       },
       fire: {
         en: "Sand carries vibrations well; a sidewinder feels a lizard coming across the dune.",
-        es: "La arena lleva bien las vibraciones; una serpiente cornuda siente llegar a un lagarto por la duna.",
+        es: "La arena lleva bien las vibraciones; una cascabel cornuda siente llegar a un lagarto por la duna.",
       },
       air: {
         en: "Up on a windy cliff there is little ground to press against, so jaw hearing has almost nothing to feel.",
@@ -1227,8 +1227,8 @@ export const WHY: WhyTable = {
   nose: {
     gills: {
       earth: {
-        en: "Gills need water to breathe, and the nostril pits only sniff smells that are wet. On the damp forest floor both get a little, so this Buddy is slower and smells less.",
-        es: "Las branquias necesitan agua para respirar, y los hoyitos de la nariz solo olfatean olores mojados. En el suelo húmedo del bosque ambos reciben poca, así que este Buddy es más lento y huele menos.",
+        en: "Gills need water to breathe, and the nostril pits only sniff smells carried in water. On the damp forest floor both get a little, so this Buddy is slower and smells less.",
+        es: "Las branquias necesitan agua para respirar, y los hoyitos de la nariz solo olfatean olores que lleva el agua. En el suelo húmedo del bosque ambos reciben poca, así que este Buddy es más lento y huele menos.",
       },
       water: {
         en: "In the pond, gills pull oxygen from every mouthful and the nostril pits sniff scents right out of the water, so this Buddy is quick and sharp-nosed.",
@@ -1249,8 +1249,8 @@ export const WHY: WhyTable = {
         es: "El aire húmedo del bosque lleva muy bien los olores, así que una nariz húmeda encuentra todos los rastros.",
       },
       water: {
-        en: "Underwater the nostrils close and the Buddy holds its breath, so no smelling happens.",
-        es: "Bajo el agua las fosas nasales se cierran y el Buddy aguanta la respiración, así que no huele nada.",
+        en: "Underwater the nostrils close and the Buddy holds its breath, so hardly any smelling happens down here.",
+        es: "Bajo el agua las fosas nasales se cierran y el Buddy aguanta la respiración, así que aquí abajo casi no huele nada.",
       },
       fire: {
         en: "Hot dry air dries the nose and scents blow away fast, so smelling is a bit harder in the desert.",
@@ -1281,8 +1281,8 @@ export const WHY: WhyTable = {
         es: "Los agujeros para respirar funcionan bien en el aire húmedo del bosque, y las antenas captan olores en el suelo.",
       },
       water: {
-        en: "The breathing holes must stay shut underwater, and antennae are built for smells in air, so this Buddy smells much less in the pond.",
-        es: "Los agujeros para respirar deben estar cerrados bajo el agua, y las antenas están hechas para oler en el aire, así que este Buddy huele mucho menos en el estanque.",
+        en: "Antennae are built to catch smells in air, so in the pond this Buddy smells much less. Its breathing holes must stay shut down here too, until it surfaces.",
+        es: "Las antenas están hechas para captar olores en el aire, así que en el estanque este Buddy huele mucho menos. Sus agujeros para respirar también deben quedar cerrados aquí abajo, hasta que salga a la superficie.",
       },
       fire: {
         en: "Desert beetles shut their breathing holes to keep water in, and still catch scents with antennae.",

@@ -2467,7 +2467,8 @@
       "remixInvalid": "That share link got scrambled, so here's a fresh start."
     },
     "common": {
-      "myBuddies": "My Buddies"
+      "myBuddies": "My Buddies",
+      "close": "Close"
     },
     "steps": {
       "aria": "Step {{n}} of {{total}}: {{label}}",
@@ -2516,12 +2517,12 @@
       "unlockTitle": "New part to change: {{category}}!",
       "unlockTry": "Try it!",
       "lockedTeaser": "Change a part and test your Buddy to open {{next}}.",
-      "lockedRest": "Then: {{list}}."
+      "lockedNow": "Right now: {{list}}."
     },
     "science": {
       "term": "also called: {{term}}",
       "effect": "What this part does {{where}}:",
-      "noEffect": "{{where}}, this part changes how your Buddy looks, not the bars.",
+      "noEffect": "This part changes how your Buddy looks {{where}}, not the bars.",
       "less": "Show less",
       "more": "Tell me more 🔬",
       "usedFor": "What it's for",

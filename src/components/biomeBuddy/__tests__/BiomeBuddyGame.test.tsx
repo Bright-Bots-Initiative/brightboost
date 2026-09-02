@@ -366,6 +366,36 @@ describe("BiomeBuddyGame loop", () => {
     expect(screen.getByText("No Buddies yet — build one!")).toBeInTheDocument();
   });
 
+  it("the Guided note names what each locked part currently is (an inherited part is never invisible) and what opens next", () => {
+    const source: BuddyRecipe = starterRecipe("fire");
+    source.traits.covering = "feathers";
+    localStorage.setItem(
+      PROGRESS_KEY,
+      JSON.stringify({ guidedTestsCompleted: 0, band: "k2" }),
+    );
+    render(<BiomeBuddyGame remixRecipe={source} />);
+    const note = screen.getByTestId("locked-note");
+    expect(note).toHaveTextContent("Body Covering: Feathers");
+    expect(note).toHaveTextContent("Ears: Hidden ear holes");
+    expect(note).toHaveTextContent(/open Ears/);
+  });
+
+  it("every dialog has a visible Close control, last in the tab order, that returns focus", () => {
+    render(<BiomeBuddyGame />);
+    fireEvent.click(button(/Grades 3–5/));
+    chooseBiome("Earth");
+    pick("Eyes", "No eyes");
+    const dialog = screen.getByRole("dialog");
+    const close = within(dialog).getByRole("button", { name: "Close" });
+    const focusables = within(dialog).getAllByRole("button");
+    expect(focusables[focusables.length - 1]).toBe(close);
+    fireEvent.click(close);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(
+      screen.getByRole("radio", { name: "Eyes: No eyes" }),
+    );
+  });
+
   it("survives corrupt storage on mount and keeps working", () => {
     localStorage.setItem(GALLERY_KEY, "{corrupt");
     localStorage.setItem(

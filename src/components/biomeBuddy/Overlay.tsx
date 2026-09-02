@@ -9,6 +9,7 @@
  * stat bars behind a science card stay visible.
  */
 import { useEffect, useRef, type ReactNode } from "react";
+import { useBuddyLocale } from "./useBuddyLocale";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -37,6 +38,7 @@ export default function Overlay({
   className = "",
   returnFocusTo = null,
 }: OverlayProps) {
+  const { t } = useBuddyLocale();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -108,9 +110,19 @@ export default function Overlay({
         aria-labelledby={labelledBy}
         className={`bb-dialog ${sheet ? "bb-dialog--sheet" : ""} bb-pop bg-[#fbf7ee] rounded-3xl p-5 w-full ${
           wide ? "max-w-lg" : "max-w-sm"
-        } flex flex-col items-center gap-3 text-center shadow-2xl overflow-y-auto outline-none ${className}`}
+        } relative flex flex-col items-center gap-3 text-center shadow-2xl overflow-y-auto outline-none ${className}`}
       >
         {children}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("biomeBuddy.common.close", { defaultValue: "Close" })}
+            className="bb-dialog-close min-h-11 min-w-11 rounded-full bg-white/90 text-[#3a2e22] text-lg font-extrabold shadow active:scale-95"
+          >
+            <span aria-hidden>✕</span>
+          </button>
+        )}
       </div>
     </div>
   );

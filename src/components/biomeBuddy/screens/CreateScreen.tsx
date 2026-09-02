@@ -61,6 +61,10 @@ function cardFor(picker: Picker, id: string): ScienceCard {
     : (SCIENCE[picker] as Record<string, ScienceCard>)[id];
 }
 
+function currentOf(recipe: BuddyRecipe, picker: Picker): string {
+  return picker === "pattern" ? recipe.pattern : recipe.traits[picker];
+}
+
 export default function CreateScreen({
   recipe,
   band,
@@ -120,6 +124,19 @@ export default function CreateScreen({
           <span>{biomeLabel}</span>
         </button>
         <div className="flex-1" />
+        {lastTest && (
+          <button
+            type="button"
+            onClick={onReopenTest}
+            className="min-h-11 px-4 rounded-full bg-[#fff4c2] border-2 border-[#e1d0a6] font-bold text-[#3a2e22] shadow active:scale-95"
+            aria-label={t("biomeBuddy.create.lastTestAria", {
+              defaultValue: "Reopen the last Test & Learn",
+            })}
+          >
+            <span aria-hidden>💡 </span>
+            {t("biomeBuddy.create.lastTest", { defaultValue: "Last test" })}
+          </button>
+        )}
         {saved && (
           <button
             type="button"
@@ -165,12 +182,13 @@ export default function CreateScreen({
         </div>
 
         {/* Main: pickers — Guided renders only the OPEN pickers (one screen of
-            choices), with a one-line teaser for what opens next. */}
+            choices), plus one note that says what the locked parts currently
+            are (so an inherited or remixed part is never invisible) and what
+            opens next. */}
         <div className="flex flex-col gap-4 min-w-0">
           {openPickers.map((picker) => {
             const label = L(CATEGORY_LABEL[picker]);
-            const current =
-              picker === "pattern" ? recipe.pattern : recipe.traits[picker];
+            const current = currentOf(recipe, picker);
             const emoji = picker === "pattern" ? "🎨" : CATEGORY_EMOJI[picker];
             return (
               <section
@@ -232,57 +250,42 @@ export default function CreateScreen({
               data-testid="locked-note"
             >
               <span aria-hidden>🔒 </span>
+              {t("biomeBuddy.create.lockedNow", {
+                defaultValue: "Right now: {{list}}.",
+                list: lockedPickers
+                  .map(
+                    (picker) =>
+                      `${L(CATEGORY_LABEL[picker])}: ${L(cardFor(picker, currentOf(recipe, picker)).label)}`,
+                  )
+                  .join(" · "),
+              })}{" "}
               {t("biomeBuddy.create.lockedTeaser", {
                 defaultValue:
                   "Change a part and test your Buddy to open {{next}}.",
                 next: L(CATEGORY_LABEL[lockedPickers[0]]),
               })}
-              {lockedPickers.length > 1 && (
-                <>
-                  {" "}
-                  {t("biomeBuddy.create.lockedRest", {
-                    defaultValue: "Then: {{list}}.",
-                    list: lockedPickers
-                      .slice(1)
-                      .map((picker) => L(CATEGORY_LABEL[picker]))
-                      .join(" · "),
-                  })}
-                </>
-              )}
             </p>
           )}
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="bb-actions-sticky w-full flex flex-wrap items-center justify-center gap-3 relative">
+      {/* Actions: one compact row on phones (primary + secondary), so the
+          sticky bar never grows past a single control height. */}
+      <div className="bb-actions-sticky bb-actions-row w-full flex items-center justify-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={onTest}
-          className="bb-primary min-h-14 px-10 rounded-full bg-teal-500 text-white text-xl font-extrabold shadow-[0_5px_0_#1d8a7d] active:translate-y-1 active:shadow-none"
+          className="bb-primary min-h-14 px-6 sm:px-10 rounded-full bg-teal-500 text-white text-lg sm:text-xl font-extrabold shadow-[0_5px_0_#1d8a7d] active:translate-y-1 active:shadow-none"
         >
           {t("biomeBuddy.create.test", { defaultValue: "Test it! 🔬" })}
         </button>
         <button
           type="button"
           onClick={onName}
-          className="min-h-11 px-5 rounded-full bg-white font-extrabold text-[#3a2e22] shadow active:scale-95"
+          className="min-h-11 px-4 sm:px-5 rounded-full bg-white font-extrabold text-sm sm:text-base text-[#3a2e22] shadow active:scale-95"
         >
           {t("biomeBuddy.create.nameSave", { defaultValue: "Name & Save" })}
         </button>
-        {lastTest && (
-          <button
-            type="button"
-            onClick={onReopenTest}
-            className="min-h-11 px-4 rounded-full bg-[#fff4c2] border-2 border-[#e1d0a6] font-bold text-[#3a2e22] shadow active:scale-95 sm:absolute sm:right-0 sm:bottom-0"
-            aria-label={t("biomeBuddy.create.lastTestAria", {
-              defaultValue: "Reopen the last Test & Learn",
-            })}
-          >
-            <span aria-hidden>💡 </span>
-            {t("biomeBuddy.create.lastTest", { defaultValue: "Last test" })}
-          </button>
-        )}
       </div>
     </div>
   );

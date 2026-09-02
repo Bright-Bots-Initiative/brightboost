@@ -97,7 +97,7 @@ export default function ScienceCard({
               })
             : t("biomeBuddy.science.noEffect", {
                 defaultValue:
-                  "{{where}}, this part changes how your Buddy looks, not the bars.",
+                  "This part changes how your Buddy looks {{where}}, not the bars.",
                 where,
               })}
         </p>

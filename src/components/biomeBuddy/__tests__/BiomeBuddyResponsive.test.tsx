@@ -110,9 +110,8 @@ describe("Biome Buddy layout contracts", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(4 + 5);
     const note = screen.getByTestId("locked-note");
     expect(note).toHaveTextContent(/open Ears/);
-    expect(note).toHaveTextContent(
-      /Nose & Breathing · Body Covering · Color & Pattern/,
-    );
+    expect(note).toHaveTextContent("Ears: Hidden ear holes");
+    expect(note).toHaveTextContent("Body Covering: Short fur");
     expect(screen.queryByText(/opens after you test/)).not.toBeInTheDocument();
   });
 

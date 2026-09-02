@@ -2134,7 +2134,8 @@
       "remixInvalid": "Ese enlace se estropeó, así que empezamos de nuevo."
     },
     "common": {
-      "myBuddies": "Mis Buddies"
+      "myBuddies": "Mis Buddies",
+      "close": "Cerrar"
     },
     "steps": {
       "aria": "Paso {{n}} de {{total}}: {{label}}",
@@ -2183,12 +2184,12 @@
       "unlockTitle": "¡Nueva parte para cambiar: {{category}}!",
       "unlockTry": "¡Pruébala!",
       "lockedTeaser": "Cambia una parte y prueba tu Buddy para abrir {{next}}.",
-      "lockedRest": "Después: {{list}}."
+      "lockedNow": "Ahora mismo: {{list}}."
     },
     "science": {
       "term": "también se llama: {{term}}",
       "effect": "Qué hace esta parte {{where}}:",
-      "noEffect": "{{where}}, esta parte cambia cómo se ve tu Buddy, no las barras.",
+      "noEffect": "Esta parte cambia cómo se ve tu Buddy {{where}}, no las barras.",
       "less": "Mostrar menos",
       "more": "Cuéntame más 🔬",
       "usedFor": "Para qué sirve",

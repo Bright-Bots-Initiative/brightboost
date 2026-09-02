@@ -157,6 +157,7 @@ export function coerceTestSummary(value: unknown): TestSummary | null {
   for (const entry of raw.changes) {
     const change = coerceChange(entry);
     if (!change || seen.has(change.stat)) return null;
+    if (change.delta === 0) continue; // a "moved" bar that did not move
     seen.add(change.stat);
     if (change.changedContributions.length > CATEGORIES.length) return null;
     changes.push(change);
