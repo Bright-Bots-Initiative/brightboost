@@ -64,6 +64,30 @@ export function tossMeasurement(value: number) {
   return value * 0.2;
 }
 
+/**
+ * The one improvement-credit rule (#734/#803): credit is earned by improving,
+ * or by maintaining a result that was already at the ceiling. Without the
+ * ceiling clause a perfect retry (10 → 10) scored below an imperfect one
+ * (9 → 10); repeating a non-perfect score still earns nothing, so the
+ * incentive to improve is intact.
+ *
+ * Exported as the SINGLE source of truth for both the scorer and the
+ * exit-ticket celebration screen — #803 existed because the screen computed
+ * its own strict-improvement predicate and told a bonus-earning
+ * ceiling-holder to "Keep practicing!".
+ */
+export type ImprovementCredit = "improved" | "held_ceiling" | "none";
+export function improvementCredit(
+  before: number,
+  after: number,
+): ImprovementCredit {
+  if (after > before) return "improved";
+  if (before === MAX_EVENT_SCORE && after === MAX_EVENT_SCORE) {
+    return "held_ceiling";
+  }
+  return "none";
+}
+
 export function buildMoveMeasureCompletionPayload(params: {
   scores: Scores;
   impEvent: EventKey | null;
@@ -73,15 +97,7 @@ export function buildMoveMeasureCompletionPayload(params: {
   const { scores, impEvent, impScore, exitAns } = params;
   const base = scores.dash + scores.jump + scores.toss;
   const before = impEvent ? scores[impEvent] : 0;
-  // Improvement credit is earned by improving, or by maintaining a result that
-  // was already at the ceiling. Without the ceiling clause a perfect retry
-  // (10 → 10) scored below an imperfect one (9 → 10). Repeating a non-perfect
-  // score still earns nothing, so the incentive to improve is intact.
-  const bonus =
-    impScore > before ||
-    (before === MAX_EVENT_SCORE && impScore === MAX_EVENT_SCORE)
-      ? 5
-      : 0;
+  const bonus = improvementCredit(before, impScore) !== "none" ? 5 : 0;
   const eBonus = exitAns === "correct" ? 5 : 0;
   const total = base + bonus + eBonus;
   return {
@@ -1118,7 +1134,9 @@ function MoveMeasurePlayfield({
 
   if (phase === "exitTicket") {
     const before = impEvent ? scores[impEvent] : 0;
-    const improved = impScore > before;
+    // #803: the celebration must agree with the scorer — same predicate, same
+    // source. "held_ceiling" earns the bonus and celebrates, never scolds.
+    const credit = improvementCredit(before, impScore);
 
     return (
       <div className="slide-up-fade text-center space-y-6 py-6">
@@ -1152,7 +1170,9 @@ function MoveMeasurePlayfield({
                 </p>
                 <p
                   className={`text-3xl font-extrabold ${
-                    improved ? "text-emerald-600 streak-fire" : "text-amber-500"
+                    credit !== "none"
+                      ? "text-emerald-600 streak-fire"
+                      : "text-amber-500"
                   }`}
                 >
                   {impScore}
@@ -1166,13 +1186,17 @@ function MoveMeasurePlayfield({
             </div>
 
             <p className="text-sm text-slate-500">
-              {improved
+              {credit === "improved"
                 ? t("games.moveMeasure.youImproved", {
                     defaultValue: "You improved!",
                   })
-                : t("games.moveMeasure.keepPracticing", {
-                    defaultValue: "Keep practicing!",
-                  })}
+                : credit === "held_ceiling"
+                  ? t("games.moveMeasure.heldYourBest", {
+                      defaultValue: "Perfect again — you held your best!",
+                    })
+                  : t("games.moveMeasure.keepPracticing", {
+                      defaultValue: "Keep practicing!",
+                    })}
             </p>
           </div>
         )}
