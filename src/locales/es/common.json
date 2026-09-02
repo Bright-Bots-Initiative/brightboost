@@ -2125,5 +2125,99 @@
       "highFive": "Chócala",
       "backToBack": "Espalda con espalda"
     }
+  },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "Prueba cosas",
+      "actionsLabel": "Lo que puedes hacer",
+      "baselinePrefix": "Ahora tienes:",
+      "replaceNotice": "Si guardas esto, toma el lugar de {{baseline}}.",
+      "branchNotice": "Puedes guardar esto y quedarte con {{baseline}}.",
+      "headings": {
+        "baseline": "Listo para probar",
+        "preview": "Mira primero",
+        "running": "Probando",
+        "observing": "¿Qué pasó?",
+        "kept": "Lo guardaste",
+        "restored": "Volviste atrás",
+        "branched": "Guardaste uno nuevo",
+        "unavailable": "Ahora no",
+        "recoverableError": "Eso no se guardó",
+        "unexpectedError": "Algo se rompió de nuestro lado"
+      },
+      "body": {
+        "baseline": "Cambia una cosa y pruébalo. Siempre puedes volver atrás."
+      },
+      "actions": {
+        "preview": "Mira primero",
+        "run": "Pruébalo",
+        "cancel": "Mejor no",
+        "keep": "Guárdalo",
+        "restore": "Volver atrás",
+        "branch": "Guardar uno nuevo",
+        "tryAgain": "Prueba de otra forma",
+        "retry": "Inténtalo otra vez",
+        "exit": "Volver a mi lección"
+      },
+      "announce": {
+        "preview": "Esto va a cambiar {{baseline}}. Siempre puedes volver atrás.",
+        "running": "Probando ahora.",
+        "observing": "Lo probaste. Esto es lo que pasó.",
+        "observingPlain": "Lo probaste. Mira qué cambió.",
+        "kept": "Lo guardaste. Ahora {{baseline}} es esto.",
+        "restored": "Volviste atrás. {{baseline}} está como estaba antes.",
+        "branched": "Guardaste uno nuevo. {{baseline}} no cambió.",
+        "recoverableError": "Eso no se guardó.",
+        "unexpectedError": "Algo se rompió de nuestro lado, no en tu prueba.",
+        "baselineSafe": "{{baseline}} sigue a salvo.",
+        "restoreFailed": "Todavía no pudimos traer de vuelta {{baseline}}. No se perdió nada de lo que hiciste."
+      }
+    },
+    "older": {
+      "regionLabel": "Controles del experimento",
+      "actionsLabel": "Acciones disponibles",
+      "baselinePrefix": "Versión guardada:",
+      "replaceNotice": "Si guardas esto, reemplaza {{baseline}} con tu nueva ejecución.",
+      "branchNotice": "Guardar como versión nueva deja {{baseline}} intacta.",
+      "headings": {
+        "baseline": "Listo para ejecutar",
+        "preview": "Vista previa",
+        "running": "Ejecutando",
+        "observing": "Comparar",
+        "kept": "Guardado",
+        "restored": "Restaurado",
+        "branched": "Nueva versión guardada",
+        "unavailable": "No disponible",
+        "recoverableError": "Eso no se guardó",
+        "unexpectedError": "Problema del sistema"
+      },
+      "body": {
+        "baseline": "Cambia una variable y luego haz una vista previa o ejecútala. Puedes restaurar la versión guardada cuando quieras."
+      },
+      "actions": {
+        "preview": "Vista previa",
+        "run": "Ejecutar",
+        "cancel": "Cancelar",
+        "keep": "Guardar esta versión",
+        "restore": "Restaurar",
+        "branch": "Guardar como versión nueva",
+        "tryAgain": "Intentar de nuevo",
+        "retry": "Reintentar",
+        "exit": "Volver a la lección"
+      },
+      "announce": {
+        "preview": "Vista previa lista. Ejecutar esto reemplazará {{baseline}}.",
+        "running": "Ejecutando ahora.",
+        "observing": "La ejecución terminó. Este es el resultado.",
+        "observingPlain": "La ejecución terminó. Compárala con la versión guardada.",
+        "kept": "Guardado. Ahora {{baseline}} apunta a esta versión.",
+        "restored": "Restaurado. {{baseline}} volvió a la versión guardada.",
+        "branched": "Guardada como versión nueva. {{baseline}} no cambió.",
+        "recoverableError": "Eso no se guardó.",
+        "unexpectedError": "Ocurrió un problema del sistema de nuestro lado, no en tu experimento.",
+        "baselineSafe": "{{baseline}} sigue a salvo.",
+        "restoreFailed": "Todavía no pudimos restaurar {{baseline}}. No se borró nada de lo que hiciste."
+      }
+    }
   }
 }

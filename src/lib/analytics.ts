@@ -42,9 +42,16 @@ export type AnalyticsEvent =
   | { kind: "parent_page_clicked" }
   | { kind: "organization_page_clicked" }
   | { kind: "free_plan_clicked"; plan: string }
-  | { kind: "feedback_submitted"; audience: "teacher" | "student" | "parent" | "org" }
+  | {
+      kind: "feedback_submitted";
+      audience: "teacher" | "student" | "parent" | "org";
+    }
   // Funnel events (see docs/analytics.md)
-  | { kind: "account_registered"; role: AnalyticsRole; signup_method: SignupMethod }
+  | {
+      kind: "account_registered";
+      role: AnalyticsRole;
+      signup_method: SignupMethod;
+    }
   | { kind: "login"; role: AnalyticsRole }
   | {
       kind: "class_created";
@@ -103,7 +110,51 @@ export type AnalyticsEvent =
     }
   // Free Access Plans detail pages (/plans/:plan)
   | { kind: "plan_page_viewed"; plan: string }
-  | { kind: "plan_cta_clicked"; plan: string; cta: string };
+  | { kind: "plan_cta_clicked"; plan: string; cta: string }
+  // Safe Exploration controls (#838). These describe *process* — what the
+  // learner previewed, tried, kept, or undid — and deliberately carry no
+  // score, mastery, accuracy, or correctness signal. `attempt` counts runs on
+  // the surface (a revision measure, principle 9), not performance.
+  | {
+      kind: "experiment_previewed";
+      surface_id: string;
+      band: string;
+      attempt: number;
+    }
+  | {
+      kind: "experiment_tried";
+      surface_id: string;
+      band: string;
+      attempt: number;
+    }
+  | {
+      kind: "experiment_kept";
+      surface_id: string;
+      band: string;
+      attempt: number;
+    }
+  | {
+      kind: "experiment_restored";
+      surface_id: string;
+      band: string;
+      attempt: number;
+    }
+  | {
+      kind: "experiment_branched";
+      surface_id: string;
+      band: string;
+      attempt: number;
+    }
+  | {
+      // Keeps an infrastructure failure countable and distinct from a learner
+      // outcome (Safe Exploration accessibility contract §6) rather than
+      // silently swallowed.
+      kind: "experiment_failed";
+      surface_id: string;
+      band: string;
+      attempt: number;
+      error_kind: "recoverable" | "unexpected";
+    };
 
 let initialized = false;
 
