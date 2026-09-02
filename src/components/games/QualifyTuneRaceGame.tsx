@@ -169,6 +169,17 @@ export function compareRowState(
   return v1 === v2 ? "same" : "worse";
 }
 
+/**
+ * "What got better?" is only a fair question when something did — a student
+ * who held every ceiling improved nothing and still earned every point, so
+ * the compare heading swaps to "What stayed at your best?" exactly then.
+ * Exported and pinned by tests (#844 review NB-1): this is the screen's one
+ * piece of new behaviour, and inlined in JSX it had no automated guard.
+ */
+export function asksWhatGotBetter(credits: MetricCredit[]): boolean {
+  return credits.includes("improved") || !credits.includes("held");
+}
+
 export function calculateQualifyTuneRaceScore(
   run1: RunResult | null,
   run2: RunResult | null,
@@ -707,10 +718,7 @@ function RacePlayfield({
       },
     ];
     const credits = [credit.bumps, credit.time, credit.smoothness];
-    // "What got better?" is only a fair question when something did. A student
-    // who held every ceiling improved nothing and still earned every point.
-    const askWhatGotBetter =
-      credits.includes("improved") || !credits.includes("held");
+    const askWhatGotBetter = asksWhatGotBetter(credits);
     return (
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
         <ProgressHUD step={2} totalLevels={LEVELS} />

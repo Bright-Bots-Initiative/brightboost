@@ -5,6 +5,7 @@ import vi from "@/locales/vi/common.json";
 import zhCN from "@/locales/zh-CN/common.json";
 import {
   BAND_LABELS,
+  asksWhatGotBetter,
   calculateQualifyTuneRaceScore,
   compareRowState,
   metricCredit,
@@ -136,10 +137,43 @@ describe("compare rows tell the truth the scorer told (#805)", () => {
       }
       checked += 1;
     }
-    // Guard the guard: an empty or collapsed grid would pass vacuously.
-    expect(checked).toBe(
-      UPGRADES.length * statesFor(null).length * statesFor("grip").length,
-    );
+    // Guard the guard with LITERAL counts (#844 review NB-3): deriving both
+    // sides from the same generators detected an empty grid but not a
+    // collapsed one — shrinking LANE_CHANGES to a single value passed all 18
+    // tests while dropping every below-ceiling smoothness state.
+    expect(statesFor(null)).toHaveLength(55);
+    expect(checked).toBe(9075);
+  });
+
+  it("never renders a held row over a number that got worse", () => {
+    // #844 review NB-9: compareRowState trusts the credit, so a future ceiling
+    // clause that is not co-extensive with "identical or better" would show a
+    // green ⭐ beside a ⬇️ arrow. Reachable frontier today: zero such cases —
+    // pin that so the assumption breaks loudly instead of silently.
+    for (const { run1, run2 } of pairs()) {
+      const states = rowStates(run1, run2);
+      if (states.bumps === "held") {
+        expect(run2.bumps).toBeLessThanOrEqual(run1.bumps);
+      }
+      if (states.time === "held") {
+        expect(run2.time).toBeLessThanOrEqual(run1.time);
+      }
+      if (states.smoothness === "held") {
+        expect(run2.smoothness).toBeGreaterThanOrEqual(run1.smoothness);
+      }
+    }
+  });
+
+  it("swaps the heading only when everything earned was held (#844 review NB-1)", () => {
+    // All held → the screen must not ask "What got better?" (nothing did).
+    expect(asksWhatGotBetter(["held", "held", "held"])).toBe(false);
+    expect(asksWhatGotBetter(["held", "none", "none"])).toBe(false);
+    // Anything improved → the original question is fair, even beside helds.
+    expect(asksWhatGotBetter(["improved", "held", "held"])).toBe(true);
+    expect(asksWhatGotBetter(["improved", "none", "none"])).toBe(true);
+    // Nothing earned at all → keep the original question; the amber rows
+    // answer it truthfully ("nothing"), which is the incentive to retry.
+    expect(asksWhatGotBetter(["none", "none", "none"])).toBe(true);
   });
 
   it("keeps the row state a pure re-spelling of the credit", () => {
