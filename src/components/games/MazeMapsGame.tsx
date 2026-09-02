@@ -10,7 +10,13 @@
  * Keyboard: Arrow keys to move, Space to wait
  * Touch: on-screen D-pad buttons
  */
-import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, {
   type GameResult,
@@ -280,12 +286,15 @@ export function MazeBoard({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so the up-front measurement lands before
+  // the browser paints: when the map grows 4x4 -> 5x5 -> 7x7 between phases,
+  // the FIRST frame of the bigger board is already fitted rather than clipped
+  // for a frame at the previous map's scale. The [w] dependency is what
+  // re-measures on that growth — this board is the only sibling-game field
+  // whose size changes mid-game (#793 review B1).
+  useLayoutEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
-    // Measure once up front so the first paint of a new map (the board grows
-    // 4x4 -> 5x5 -> 7x7 between phases) is already fitted, not clipped until
-    // the observer fires.
     setScale(mazeBoardScale(el.getBoundingClientRect().width, w));
     const obs = new ResizeObserver((entries) =>
       setScale(mazeBoardScale(entries[0]?.contentRect.width ?? w, w)),
@@ -295,6 +304,10 @@ export function MazeBoard({
   }, [w]);
 
   return (
+    // The wrapper must sit in a normal block-flow parent: a shrink-to-fit
+    // parent (flex item / inline-block / grid auto column) would size itself
+    // from the box it is meant to bound, feeding the measurement back on
+    // itself. Both current call sites are plain block divs.
     <div
       ref={wrapperRef}
       className="mx-auto select-none"

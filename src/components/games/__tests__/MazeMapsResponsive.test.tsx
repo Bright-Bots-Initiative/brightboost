@@ -16,6 +16,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { render, act, screen } from "@testing-library/react";
 import { MazeBoard, MAZE_CELL, mazeBoardScale, MAPS_k2 } from "../MazeMapsGame";
+import { MAPS_G3_5 } from "../gradeBandContent";
 
 type StubEntry = { contentRect: { width: number } };
 type StubCallback = (entries: StubEntry[]) => void;
@@ -53,11 +54,17 @@ function scaledLayer(container: HTMLElement): HTMLElement | null {
   );
 }
 
-/** Scale actually applied to the board layer (1 when nothing scales it). */
+/**
+ * Scale actually applied to the board layer. The component always writes the
+ * transform (scale(1) included), so a missing layer means the fix is gone —
+ * throw rather than default to 1, or the anti-over-shrink guards would pass
+ * against a board with no transform at all (#793 review N4).
+ */
 function appliedScale(container: HTMLElement): number {
   const layer = scaledLayer(container);
   const match = layer && /scale\(([\d.]+)\)/.exec(layer.style.transform);
-  return match ? Number(match[1]) : 1;
+  if (!match) throw new Error("expected a board layer carrying scale(...)");
+  return Number(match[1]);
 }
 
 function renderBoardAt(availableWidth: number, map = MAPS_k2.main) {
@@ -110,7 +117,15 @@ describe("Maze Maps board fits the available width (#793)", () => {
       const map = MAPS_k2.main;
       const scale = appliedScale(container);
       expect(map.cols * MAZE_CELL * scale).toBeLessThanOrEqual(availableWidth);
-      expect(map.rows * MAZE_CELL * scale).toBeLessThanOrEqual(availableWidth);
+      // The visible box must be sized to the scaled board, not left at the
+      // unscaled width (#793 review N5/N6: assert the BOX's width; height
+      // against a width budget was tautological on square maps).
+      const box = scaledLayer(container)?.parentElement;
+      if (!box) throw new Error("expected a scaled board layer inside a box");
+      expect(Number.parseFloat(box.style.width)).toBeCloseTo(
+        map.cols * MAZE_CELL * scale,
+        5,
+      );
     },
   );
 
@@ -135,6 +150,53 @@ describe("Maze Maps board fits the available width (#793)", () => {
     // 4 cols = 208px, already inside 240px — the fix must not shrink it.
     const { container } = renderBoardAt(NARROWEST_AVAILABLE, MAPS_k2.tutorial);
     expect(appliedScale(container)).toBe(1);
+  });
+
+  it("re-fits when the map grows mid-game without a remount (#793 review B1)", () => {
+    // The child reaches the 7x7 main map from the smaller phases IN PLACE —
+    // same JSX position, no remount — so the [w] effect dependency is the
+    // only thing that re-measures. This is the exact scenario the issue was
+    // filed about, and it survived every other test when [w] was mutated to
+    // []: the stale observer closure computed scale from the SMALL map's
+    // width (min(240/208, 1) = 1) and the grown board clipped again.
+    const view = renderBoardAt(NARROWEST_AVAILABLE, MAPS_k2.tutorial);
+    expect(appliedScale(view.container)).toBe(1);
+
+    view.rerender(
+      <MazeBoard
+        map={MAPS_k2.main}
+        playerPos={MAPS_k2.main.start}
+        collectedOrbs={new Set<string>()}
+        sweeperPositions={{}}
+      />,
+    );
+    act(() => {
+      for (const cb of observerCallbacks) {
+        cb([{ contentRect: { width: NARROWEST_AVAILABLE } }]);
+      }
+    });
+
+    const boardW = MAPS_k2.main.cols * MAZE_CELL;
+    expect(appliedScale(view.container)).toBeCloseTo(
+      NARROWEST_AVAILABLE / boardW,
+      5,
+    );
+    expect(goalTileRightEdge(view.container)).toBeLessThanOrEqual(
+      NARROWEST_AVAILABLE,
+    );
+  });
+
+  it("fits the g3_5 band's 7x7 main map on a phone", () => {
+    // The responsive suite otherwise exercised only the k2 maps; the g3_5
+    // band grows 6x6 -> 6x6 -> 7x7 and must fit the same 240px.
+    const { container } = renderBoardAt(NARROWEST_AVAILABLE, MAPS_G3_5.main);
+    const scale = appliedScale(container);
+    expect(MAPS_G3_5.main.cols * MAZE_CELL * scale).toBeLessThanOrEqual(
+      NARROWEST_AVAILABLE,
+    );
+    expect(goalTileRightEdge(container)).toBeLessThanOrEqual(
+      NARROWEST_AVAILABLE,
+    );
   });
 });
 
