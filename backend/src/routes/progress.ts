@@ -1,5 +1,5 @@
 // backend/src/routes/progress.ts
-import { Router } from "express";
+import express, { Router } from "express";
 import prisma from "../utils/prisma";
 
 const ProgressStatus = {
@@ -57,52 +57,83 @@ type PersonalBestInput = {
  *
  * Best-effort: a failure here is warned and swallowed so it never fails the
  * completion, and the "new record" flags stay false because nothing persisted.
+ *
+ * #809: every best-field write carries a strictly-greater conditional guard
+ * (`updateMany` with `lt`), so two concurrent submissions can never regress a
+ * higher stored value the way the old read-Math.max-write did — the database
+ * adjudicates each field, and the "new record" flags come from its answer
+ * (matched row count), not from a possibly-stale read. A create that loses
+ * its race (P2002) falls through to the same conditional update path instead
+ * of giving up with a null row.
  */
 async function reconcilePersonalBest(
   studentId: string,
   result: PersonalBestInput | undefined,
 ) {
-  let personalBest: Awaited<
-    ReturnType<typeof prisma.gamePersonalBest.findUnique>
-  > = null;
-  let isNewHighScore = false;
-  let isNewBestStreak = false;
+  const empty = {
+    personalBest: null as Awaited<
+      ReturnType<typeof prisma.gamePersonalBest.findUnique>
+    >,
+    isNewHighScore: false,
+    isNewBestStreak: false,
+  };
 
   if (!result?.gameKey) {
-    return { personalBest, isNewHighScore, isNewBestStreak };
+    return empty;
   }
+  const gameKey = result.gameKey;
+  const newScore = result.score ?? 0;
+  const newStreak = result.streakMax ?? 0;
+  const newRounds = result.roundsCompleted ?? 0;
+  const byKey = { studentId, gameKey };
 
-  try {
-    const existing = await prisma.gamePersonalBest.findUnique({
-      where: { studentId_gameKey: { studentId, gameKey: result.gameKey } },
-    });
-
-    const newScore = result.score ?? 0;
-    const newStreak = result.streakMax ?? 0;
-    const newRounds = result.roundsCompleted ?? 0;
-
-    if (existing) {
-      personalBest = await prisma.gamePersonalBest.update({
-        where: { id: existing.id },
+  const updateExisting = async () => {
+    const [scoreRes, streakRes] = await prisma.$transaction([
+      prisma.gamePersonalBest.updateMany({
+        where: { ...byKey, bestScore: { lt: newScore } },
+        data: { bestScore: newScore },
+      }),
+      prisma.gamePersonalBest.updateMany({
+        where: { ...byKey, bestStreak: { lt: newStreak } },
+        data: { bestStreak: newStreak },
+      }),
+      prisma.gamePersonalBest.updateMany({
+        where: { ...byKey, bestRoundsCompleted: { lt: newRounds } },
+        data: { bestRoundsCompleted: newRounds },
+      }),
+      prisma.gamePersonalBest.updateMany({
+        where: byKey,
         data: {
           lastScore: newScore,
-          bestScore: Math.max(existing.bestScore, newScore),
-          bestStreak: Math.max(existing.bestStreak, newStreak),
-          bestRoundsCompleted: Math.max(
-            existing.bestRoundsCompleted,
-            newRounds,
-          ),
           playCount: { increment: 1 },
           lastPlayedAt: new Date(),
         },
-      });
-      isNewHighScore = newScore > existing.bestScore;
-      isNewBestStreak = newStreak > existing.bestStreak;
-    } else {
-      personalBest = await prisma.gamePersonalBest.create({
+      }),
+    ]);
+    const personalBest = await prisma.gamePersonalBest.findUnique({
+      where: { studentId_gameKey: byKey },
+    });
+    return {
+      personalBest,
+      isNewHighScore: scoreRes.count > 0,
+      isNewBestStreak: streakRes.count > 0,
+    };
+  };
+
+  try {
+    const existing = await prisma.gamePersonalBest.findUnique({
+      where: { studentId_gameKey: byKey },
+    });
+
+    if (existing) {
+      return await updateExisting();
+    }
+
+    try {
+      const personalBest = await prisma.gamePersonalBest.create({
         data: {
           studentId,
-          gameKey: result.gameKey,
+          gameKey,
           bestScore: newScore,
           lastScore: newScore,
           bestStreak: newStreak,
@@ -110,19 +141,21 @@ async function reconcilePersonalBest(
           playCount: 1,
         },
       });
-      isNewHighScore = true;
-      isNewBestStreak = newStreak > 0;
+      return {
+        personalBest,
+        isNewHighScore: true,
+        isNewBestStreak: newStreak > 0,
+      };
+    } catch (e) {
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+      // Lost the first-create race: another submission owns the row now.
+      // Reconcile through the conditional update path like any replay.
+      return await updateExisting();
     }
   } catch (e) {
     console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
-    return {
-      personalBest: null,
-      isNewHighScore: false,
-      isNewBestStreak: false,
-    };
+    return empty;
   }
-
-  return { personalBest, isNewHighScore, isNewBestStreak };
 }
 
 // Get progress for a student (MVP)
@@ -194,12 +227,32 @@ router.get("/get-progress", requireAuth, async (req, res) => {
   res.json({ user, progress });
 });
 
+/**
+ * #821: express 4 does not catch async rejections — an unhandled throw left
+ * the request with NO response at all (observed as a 20s client timeout when
+ * a racing create hit P2002). Known race outcomes are handled in-line below;
+ * this wrapper is the backstop that turns anything unexpected into a JSON 500
+ * instead of a hang.
+ */
+const answerAsyncErrors =
+  (
+    fn: (req: express.Request, res: express.Response) => Promise<unknown>,
+  ): express.RequestHandler =>
+  (req, res) => {
+    fn(req, res).catch((e) => {
+      console.error("[complete-activity] Unhandled error:", e);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+  };
+
 // Complete an activity (MVP)
 router.post(
   "/progress/complete-activity",
   requireAuth,
   gameActionLimiter,
-  async (req, res) => {
+  answerAsyncErrors(async (req, res) => {
     const studentId = req.user!.id;
 
     const parse = completeActivitySchema.safeParse(req.body);
@@ -260,53 +313,32 @@ router.post(
       backfilledXp,
     } = await ensureAvatarWithBackfill(studentId);
 
-    // Handle idempotent case: activity already completed
-    if (existing && existing.status === ProgressStatus.COMPLETED) {
-      // Replay: persist newer telemetry (last-write-wins, §5.2.3) WITHOUT re-awarding
-      // anything. XP, streak, avatar and abilities are deliberately untouched — this
-      // path must stay reward-free. Omitted gameSpecific never nulls a stored
-      // value (E-3), so only write when the client actually sent telemetry.
-      let replayed = existing;
+    // Reward-free reply shared by every non-winning path (#821): an
+    // already-completed read, a lost claim, and a lost create all answer the
+    // same way. Telemetry stays last-write-wins (§5.2.3; omitted gameSpecific
+    // never nulls a stored value, E-3), GamePersonalBest IS reconciled (#640:
+    // a record, not a reward — retries and double submissions return xpDelta 0
+    // while a better replay still moves bestScore), and the avatar-backfill
+    // edge case reports the backfilled XP exactly as before.
+    const respondRewardFree = async (row: NonNullable<typeof existing>) => {
+      let replayed = row;
       if (gs !== undefined) {
         replayed = await prisma.progress.update({
-          where: { id: existing.id },
+          where: { id: row.id },
           data: { gameSpecific: gs },
         });
       }
 
-      // #640: GamePersonalBest is a record, not a reward, so it IS reconciled here.
-      // Retries / refreshes / double submissions therefore still return xpDelta 0
-      // while a better replay finally moves bestScore off the first completion.
       const replayBest = await reconcilePersonalBest(studentId, result);
 
-      // If avatar was just backfilled, return the backfilled XP as the delta
-      // This handles the edge case where user completed activities without an avatar
-      // and later triggers completion again
-      if (wasBackfilled) {
-        return res.json({
-          message: "Already completed (avatar backfilled)",
-          progress: publicProgress(replayed),
-          reward: {
-            xpDelta: backfilledXp,
-            levelDelta: avatarBefore.level - 1, // Delta from level 1
-            energyDelta: 0,
-            hpDelta: 0,
-            newAbilitiesDelta: 0,
-          },
-          avatar: avatarBefore,
-          personalBest: replayBest.personalBest,
-          isNewHighScore: replayBest.isNewHighScore,
-          isNewBestStreak: replayBest.isNewBestStreak,
-        });
-      }
-
-      // Normal idempotent return with 0 rewards
       return res.json({
-        message: "Already completed",
+        message: wasBackfilled
+          ? "Already completed (avatar backfilled)"
+          : "Already completed",
         progress: publicProgress(replayed),
         reward: {
-          xpDelta: 0,
-          levelDelta: 0,
+          xpDelta: wasBackfilled ? backfilledXp : 0,
+          levelDelta: wasBackfilled ? avatarBefore.level - 1 : 0, // Delta from level 1
           energyDelta: 0,
           hpDelta: 0,
           newAbilitiesDelta: 0,
@@ -316,36 +348,72 @@ router.post(
         isNewHighScore: replayBest.isNewHighScore,
         isNewBestStreak: replayBest.isNewBestStreak,
       });
+    };
+
+    // Handle idempotent case: activity already completed
+    if (existing && existing.status === ProgressStatus.COMPLETED) {
+      return respondRewardFree(existing);
     }
 
-    // 2. Create or update progress record
+    // 2. Claim the transition into COMPLETED atomically (#821). The database
+    // picks exactly one winner under concurrency: a racing loser's updateMany
+    // matches zero rows (its read was stale) and a racing loser's create hits
+    // the (studentId, activityId) unique key with P2002. Both answer through
+    // the reward-free path — XP, game_completed, and unlock checks are
+    // winner-only, so one physical completion can never award twice.
     let finalProgress;
     if (existing) {
-      finalProgress = await prisma.progress.update({
-        where: { id: existing.id },
+      const claimed = await prisma.progress.updateMany({
+        where: { id: existing.id, status: { not: ProgressStatus.COMPLETED } },
         data: {
           status: ProgressStatus.COMPLETED,
           timeSpentS: { increment: timeSpentS || 0 },
           ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
+      if (claimed.count === 0) {
+        const row = await prisma.progress.findUnique({
+          where: { id: existing.id },
+        });
+        return respondRewardFree(row ?? existing);
+      }
+      // The claim matched exactly this write — reconstruct the row rather
+      // than re-read it (updateMany returns only a count).
+      finalProgress = {
+        ...existing,
+        status: ProgressStatus.COMPLETED,
+        timeSpentS: (existing.timeSpentS || 0) + (timeSpentS || 0),
+        ...(gs !== undefined ? { gameSpecific: gs } : {}),
+      };
     } else {
-      finalProgress = await prisma.progress.create({
-        data: {
-          studentId,
-          moduleSlug,
-          lessonId,
-          activityId,
-          status: ProgressStatus.COMPLETED,
-          timeSpentS: timeSpentS || 0,
-          ...(gs !== undefined ? { gameSpecific: gs } : {}),
-        },
-      });
+      try {
+        finalProgress = await prisma.progress.create({
+          data: {
+            studentId,
+            moduleSlug,
+            lessonId,
+            activityId,
+            status: ProgressStatus.COMPLETED,
+            timeSpentS: timeSpentS || 0,
+            ...(gs !== undefined ? { gameSpecific: gs } : {}),
+          },
+        });
+      } catch (e) {
+        if ((e as { code?: string })?.code !== "P2002") throw e;
+        const row = await prisma.progress.findUnique({
+          where: { studentId_activityId: { studentId, activityId } },
+        });
+        // P2002 proves the row exists; the re-read can only miss it if the
+        // winner's transaction has not committed yet — surface that rarity
+        // to the backstop rather than inventing a row.
+        if (!row) throw e;
+        return respondRewardFree(row);
+      }
     }
 
     // Server-side mirror of game_completed — fires once per (student, activity)
-    // because we only reach this branch on first-time completion (idempotent
-    // re-completions short-circuit earlier).
+    // because only the atomic-claim winner reaches this line (#821); idempotent
+    // re-completions and racing losers short-circuit above.
     trackServer(studentId, "game_completed", {
       module_slug: moduleSlug,
       activity_id: activityId,
@@ -470,7 +538,7 @@ router.post(
       isNewHighScore,
       isNewBestStreak,
     });
-  },
+  }),
 );
 
 // Legacy / Comprehensive Routes (with validation)

@@ -115,9 +115,12 @@ export default function ActivityPlayer() {
   }) as string[];
 
   const startMsRef = useRef<number>(Date.now());
+  /** #809: latches while a completion POST is in flight; released on failure. */
+  const completingRef = useRef(false);
 
   useEffect(() => {
     startMsRef.current = Date.now();
+    completingRef.current = false;
   }, [slug, lessonId, activityId]);
 
   useEffect(() => {
@@ -221,6 +224,7 @@ export default function ActivityPlayer() {
         setCompletionData(null);
         setShowBreak(false);
         setQuizVariant(null);
+        completingRef.current = false; // a fresh play-through may submit again
       })
       .catch(() => {
         if (cancelled) return;
@@ -298,6 +302,11 @@ export default function ActivityPlayer() {
     roundsCompleted?: number;
   }): Promise<boolean> => {
     if (!slug || !lessonId || !activityId) return false;
+    // #809: one submission per play-through. A double-tap on Finish (or a
+    // game firing onFinish twice) otherwise POSTs twice — playCount counts
+    // POSTs server-side, and the second request is pure duplicate traffic.
+    if (completingRef.current) return false;
+    completingRef.current = true;
     const timeSpentS = getTimeSpentS();
     try {
       const res = await api.completeActivity({
@@ -339,6 +348,9 @@ export default function ActivityPlayer() {
       }
       return true;
     } catch {
+      // Release the latch so the student can retry a failed save; a
+      // successful save keeps it latched (the results screen replaces the game).
+      completingRef.current = false;
       toast({
         title: t("common.oops"),
         description: t("activity.saveError"),
