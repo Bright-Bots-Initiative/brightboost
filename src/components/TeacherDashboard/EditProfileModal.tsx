@@ -137,7 +137,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
           <button
             onClick={handleClose}
             aria-label="Close edit profile modal"
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-500 hover:text-gray-600 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>

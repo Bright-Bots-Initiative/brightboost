@@ -74,7 +74,7 @@ const FeedbackFab: React.FC = () => {
               </h2>
               <button
                 onClick={() => setOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -102,10 +102,16 @@ const FeedbackFab: React.FC = () => {
                     <option value="teacher">{t("feedback.roleTeacher")}</option>
                     <option value="student">{t("feedback.roleStudent")}</option>
                     <option value="admin">{t("feedback.roleAdmin")}</option>
-                    <option value="school_leader">{t("feedback.roleSchoolLeader")}</option>
-                    <option value="community">{t("feedback.roleCommunity")}</option>
+                    <option value="school_leader">
+                      {t("feedback.roleSchoolLeader")}
+                    </option>
+                    <option value="community">
+                      {t("feedback.roleCommunity")}
+                    </option>
                     <option value="parent">{t("feedback.roleParent")}</option>
-                    <option value="technical">{t("feedback.roleTechnical")}</option>
+                    <option value="technical">
+                      {t("feedback.roleTechnical")}
+                    </option>
                     <option value="other">{t("feedback.roleOther")}</option>
                   </select>
                 </div>

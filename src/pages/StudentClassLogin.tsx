@@ -81,7 +81,9 @@ export default function StudentClassLogin() {
     () => urlCode || localStorage.getItem(LAST_CLASS_CODE_KEY) || "",
   );
   const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<ClassInfo["students"][0] | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<
+    ClassInfo["students"][0] | null
+  >(null);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,7 +116,11 @@ export default function StudentClassLogin() {
       localStorage.setItem(LAST_CLASS_CODE_KEY, code);
       setStep("icon");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("classLogin.error.somethingWrong"));
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("classLogin.error.somethingWrong"),
+      );
     } finally {
       setLoading(false);
     }
@@ -164,7 +170,11 @@ export default function StudentClassLogin() {
       const result = await classLogin(classInfo.courseId, studentId, pinCode);
       login(result.token, result.user, "/student/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("classLogin.error.somethingWrong"));
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("classLogin.error.somethingWrong"),
+      );
       setLoading(false);
     }
   };
@@ -249,7 +259,7 @@ export default function StudentClassLogin() {
               <div>
                 <button
                   onClick={() => setStep("code")}
-                  className="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-600"
+                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-600"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -298,7 +308,7 @@ export default function StudentClassLogin() {
                     setStep("icon");
                     setPin("");
                   }}
-                  className="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-600"
+                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-600"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -306,7 +316,9 @@ export default function StudentClassLogin() {
                   {selectedStudent.loginIcon}
                 </span>
                 <h1 className="text-2xl font-bold text-brightboost-navy">
-                  {t("classLogin.hiName", { name: selectedStudent.name.split(" ")[0] })}
+                  {t("classLogin.hiName", {
+                    name: selectedStudent.name.split(" ")[0],
+                  })}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
                   {t("classLogin.enterPin")}

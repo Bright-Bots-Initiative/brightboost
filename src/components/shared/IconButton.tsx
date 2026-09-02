@@ -120,7 +120,7 @@ export const DragHandleIcon = () => (
     strokeWidth={1.5}
     stroke="currentColor"
     aria-hidden="true"
-    className="w-5 h-5 text-gray-400 cursor-grab"
+    className="w-5 h-5 text-gray-500 cursor-grab"
   >
     <path
       strokeLinecap="round"
