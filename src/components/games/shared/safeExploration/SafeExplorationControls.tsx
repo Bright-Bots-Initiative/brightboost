@@ -136,19 +136,29 @@ export function SafeExplorationControls(props: SafeExplorationControlsProps) {
       data-testid={`${config.surfaceId}-safe-exploration`}
       data-state={state}
       data-band={band}
-      data-reduced-motion={reduced ? "true" : "false"}
+      data-reduced-effects={reduced ? "true" : "false"}
       className={`flex w-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm sm:p-4 ${className ?? ""}`}
     >
-      {/* One polite announcement per state change. Present from first render
-          so assistive tech is already observing the region. */}
+      {/* One polite announcement per state change. The region itself stays
+          mounted from first render so assistive tech is already observing it;
+          the text inside is keyed on `transitionCount` so a *repeat* of an
+          identical message — two identical failed retries — still replaces the
+          node and is still announced. Without the key the string is
+          byte-identical, React skips the mutation, and aria-live never fires. */}
       <p
         role="status"
         aria-live="polite"
         aria-atomic="true"
         className="sr-only"
         data-testid={`${config.surfaceId}-safe-exploration-announcement`}
+        data-transition={transitionCount}
       >
-        {announcementText}
+        <span
+          key={transitionCount}
+          data-testid={`${config.surfaceId}-safe-exploration-announcement-text`}
+        >
+          {announcementText}
+        </span>
       </p>
 
       {/* The preserved "before" is named in ordinary page structure (§1). */}

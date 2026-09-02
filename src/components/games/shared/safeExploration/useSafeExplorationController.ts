@@ -179,6 +179,28 @@ export function useSafeExplorationController(
     [],
   );
 
+  /**
+   * The exits actually on screen in a state — the single source of truth both
+   * the renderer and `requestAction` read, so "not rendered" and "not
+   * invocable" can never drift apart.
+   */
+  const renderedActionIds = useCallback(
+    (state: SafeExplorationState): SafeExplorationActionId[] => {
+      const grammar = SAFE_EXPLORATION_GRAMMAR[state];
+      const candidates = grammar.actions.filter(
+        (id) => isOffered(id) && availabilityOf(id).kind !== "hidden",
+      );
+      if (grammar.exclusiveFirst && candidates.length > 1) {
+        const firstReady = candidates.find(
+          (id) => availabilityOf(id).kind === "available",
+        );
+        return [firstReady ?? candidates[0]];
+      }
+      return candidates;
+    },
+    [availabilityOf, isOffered],
+  );
+
   const emit = useCallback((event: SafeExplorationAnalyticsEvent) => {
     const cfg = configRef.current;
     if (cfg.onAnalyticsEvent) {
@@ -206,7 +228,9 @@ export function useSafeExplorationController(
         : statusRef.current.state;
 
       // Guard 1 — grammar. A control that is not rendered in this state also
-      // cannot be invoked programmatically.
+      // cannot be invoked programmatically, so the checks below mirror the
+      // renderer exactly: the same grammar table, the same offered/available
+      // filter, and the same `exclusiveFirst` collapse.
       if (!SAFE_EXPLORATION_GRAMMAR[originState].actions.includes(id)) {
         return { accepted: false, rejection: "not-in-grammar" };
       }
@@ -216,6 +240,13 @@ export function useSafeExplorationController(
       if (availabilityOf(id).kind !== "available") {
         return { accepted: false, rejection: "unavailable" };
       }
+      // The grammar can list two competing candidates (baseline's preview/run)
+      // and collapse to one. Without this, `run` would be invocable from
+      // `baseline` even though only `preview` is on screen, skipping the
+      // "what will be replaced" disclosure the preview state exists to give.
+      if (!renderedActionIds(originState).includes(id)) {
+        return { accepted: false, rejection: "not-rendered" };
+      }
 
       // Guard 2 — the latch. Escapes stay reachable so a stuck run is escapable.
       if (pendingRef.current !== null && !ESCAPE_ACTIONS.has(id)) {
@@ -223,6 +254,12 @@ export function useSafeExplorationController(
       }
 
       if (id === "exit") {
+        // Leaving abandons whatever is in flight: invalidate its result and
+        // release the latch, so a host that keeps the surface mounted is not
+        // left in a permanently busy state.
+        runTokenRef.current += 1;
+        pendingRef.current = null;
+        setPendingAction(null);
         cfg.onExit?.();
         return { accepted: true };
       }
@@ -233,6 +270,17 @@ export function useSafeExplorationController(
         id === "retry"
           ? (statusRef.current.failedAction as SafeExplorationActionId)
           : id;
+      // …and re-running it must clear the same bars the original had to clear.
+      // The guards above only saw `retry`; a host that revoked `keep` after the
+      // failure would otherwise see it run anyway through the retry button.
+      if (resolvedId !== id) {
+        if (!isOffered(resolvedId)) {
+          return { accepted: false, rejection: "no-handler" };
+        }
+        if (availabilityOf(resolvedId).kind !== "available") {
+          return { accepted: false, rejection: "unavailable" };
+        }
+      }
       const handler = handlerFor(resolvedId);
       if (!handler) {
         return { accepted: false, rejection: "no-handler" };
@@ -252,7 +300,12 @@ export function useSafeExplorationController(
       }
       const attemptNumber = attemptRef.current;
 
+      // A handler may hand back a thenable that calls both callbacks (a badly
+      // behaved mock, a hand-rolled promise). One settle per request, always.
+      let settled = false;
       const settle = (outcome: SafeExplorationOutcome) => {
+        if (settled) return;
+        settled = true;
         if (!mountedRef.current || runTokenRef.current !== token) return;
         pendingRef.current = null;
         setPendingAction(null);
@@ -316,23 +369,23 @@ export function useSafeExplorationController(
       }
       return { accepted: true };
     },
-    [availabilityOf, band, commit, emit, handlerFor, isOffered, surfaceId],
+    [
+      availabilityOf,
+      band,
+      commit,
+      emit,
+      handlerFor,
+      isOffered,
+      renderedActionIds,
+      surfaceId,
+    ],
   );
 
   // ── Presentation plan ────────────────────────────────────────────────────
   // Deliberately not memoized: these are tiny derivations, and a stale memo of
   // "which exits exist" would be an accessibility defect, not a perf win.
 
-  const grammar = SAFE_EXPLORATION_GRAMMAR[effectiveState];
-  let candidates = grammar.actions.filter(
-    (id) => isOffered(id) && availabilityOf(id).kind !== "hidden",
-  );
-  if (grammar.exclusiveFirst && candidates.length > 1) {
-    const firstReady = candidates.find(
-      (id) => availabilityOf(id).kind === "available",
-    );
-    candidates = [firstReady ?? candidates[0]];
-  }
+  const candidates = renderedActionIds(effectiveState);
   const primaryId =
     candidates.find((id) => availabilityOf(id).kind === "available") ??
     candidates[0];

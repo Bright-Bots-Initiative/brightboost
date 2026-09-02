@@ -73,9 +73,12 @@
  * 4. **Do not hide an exit.** Use `availability` to mark an action `hidden`
  *    (absent) or `blocked` **with a reason** — the union makes a mystery
  *    disabled control unrepresentable.
- * 5. **Keep the route back.** Pass `onExit` so the learner always has a
- *    visible, focusable way back to the ordered learning path (§7); the
- *    controls never navigate on their own.
+ * 5. **Keep the route back.** `onExit` renders only in `running` and the two
+ *    error states — the states where a learner could otherwise be stranded.
+ *    It is *not* a persistent Continue affordance: §7's always-visible route
+ *    back to the ordered path stays the game shell's job, and these controls
+ *    never navigate on their own. Pass `onExit` anyway, or a stuck run and a
+ *    failed save have no way out.
  * 6. **Attach the proof.** An adopting PR reruns this component's automated
  *    proof for its states and adds the bounded manual walkthrough that #843's
  *    verification half asks for.

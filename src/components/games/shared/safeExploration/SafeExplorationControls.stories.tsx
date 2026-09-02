@@ -254,6 +254,59 @@ export const K2KeyboardOnly: Story = {
     await expect(
       canvas.getByTestId("demo-safe-exploration-status"),
     ).toHaveFocus();
+
+    // …and the tab order that follows puts the primary action first (§2).
+    await userEvent.tab();
+    const keep = canvas.getByRole("button", { name: "Keep it" });
+    await expect(keep).toHaveFocus();
+    await expect(keep).toHaveAttribute("data-emphasis", "primary");
+    await userEvent.tab();
+    await expect(canvas.getByRole("button", { name: "Go back" })).toHaveFocus();
+    await userEvent.tab();
+    await expect(
+      canvas.getByRole("button", { name: "Try another way" }),
+    ).toHaveFocus();
+  },
+};
+
+/**
+ * Two identical failures in a row: same state, same summary, byte-identical
+ * announcement. The live region's text node is keyed on the transition count,
+ * so the second one still replaces the node and is still spoken.
+ */
+export const K2RepeatedFailure: Story = {
+  args: {
+    onKeep: () => ({
+      status: "recoverableError" as const,
+      summary: "The save did not go through.",
+    }),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      await canvas.findByRole("button", { name: "Try it" }),
+    );
+    await userEvent.click(
+      await canvas.findByRole("button", { name: "Keep it" }),
+    );
+
+    const live = canvas.getByTestId("demo-safe-exploration-announcement");
+    const firstTransition = live.getAttribute("data-transition");
+    const firstNode = canvas.getByTestId(
+      "demo-safe-exploration-announcement-text",
+    );
+
+    await userEvent.click(
+      await canvas.findByRole("button", { name: "Try that again" }),
+    );
+
+    await expect(live.getAttribute("data-transition")).not.toBe(
+      firstTransition,
+    );
+    await expect(
+      canvas.getByTestId("demo-safe-exploration-announcement-text"),
+    ).not.toBe(firstNode);
+    await expect(live).toHaveTextContent("The save did not go through.");
   },
 };
 

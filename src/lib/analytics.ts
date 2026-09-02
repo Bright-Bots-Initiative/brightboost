@@ -27,6 +27,13 @@ export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
 export type SignupMethod = "email" | "class_code" | "cohort_code";
 export type JoinMethod = "class_code" | "cohort_code";
+/**
+ * Banded expression of the Safe Exploration controls (#838). Narrower than
+ * `GradeBand` on purpose: those controls only distinguish K–2 from everyone
+ * older. Mirrors `SafeExplorationBand` in
+ * `src/components/games/shared/safeExploration/types.ts`.
+ */
+export type ExplorationBand = "k2" | "older";
 
 export type AnalyticsEvent =
   // Legacy homepage / marketing events (pre-existing, no-op before PostHog)
@@ -116,33 +123,14 @@ export type AnalyticsEvent =
   // score, mastery, accuracy, or correctness signal. `attempt` counts runs on
   // the surface (a revision measure, principle 9), not performance.
   | {
-      kind: "experiment_previewed";
+      kind:
+        | "experiment_previewed"
+        | "experiment_tried"
+        | "experiment_kept"
+        | "experiment_restored"
+        | "experiment_branched";
       surface_id: string;
-      band: string;
-      attempt: number;
-    }
-  | {
-      kind: "experiment_tried";
-      surface_id: string;
-      band: string;
-      attempt: number;
-    }
-  | {
-      kind: "experiment_kept";
-      surface_id: string;
-      band: string;
-      attempt: number;
-    }
-  | {
-      kind: "experiment_restored";
-      surface_id: string;
-      band: string;
-      attempt: number;
-    }
-  | {
-      kind: "experiment_branched";
-      surface_id: string;
-      band: string;
+      band: ExplorationBand;
       attempt: number;
     }
   | {
@@ -151,7 +139,7 @@ export type AnalyticsEvent =
       // silently swallowed.
       kind: "experiment_failed";
       surface_id: string;
-      band: string;
+      band: ExplorationBand;
       attempt: number;
       error_kind: "recoverable" | "unexpected";
     };

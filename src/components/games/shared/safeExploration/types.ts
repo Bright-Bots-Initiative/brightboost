@@ -173,10 +173,24 @@ export interface SafeExplorationActionView {
   readonly reason?: string;
 }
 
-/** Why a requested action was not performed. */
+/**
+ * Why a requested action was not performed.
+ *
+ *  - `not-in-grammar` — the action is not an exit of the current state at all.
+ *  - `not-rendered` — the action is an exit of the state but is not on screen
+ *    right now, because the grammar collapsed competing candidates to one
+ *    (`exclusiveFirst`). Kept distinct from `not-in-grammar` so a host can tell
+ *    "never valid here" from "not the offered route right now".
+ *  - `unavailable` — the host marked it `hidden` or `blocked`. For `retry` this
+ *    is also raised when the *resolved* action (the one that failed) has since
+ *    been made unavailable.
+ *  - `no-handler` — no callback for it, or its band does not offer it.
+ *  - `in-flight` — the latch: another consequential action is running.
+ */
 export type SafeExplorationRejection =
   | "in-flight"
   | "not-in-grammar"
+  | "not-rendered"
   | "unavailable"
   | "no-handler";
 

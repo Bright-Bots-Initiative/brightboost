@@ -74,8 +74,21 @@ The comment block at the top of `src/lib/analytics.ts` enforces the same rules i
 | `demo_game_completed` | Demo game finished (GameShell results → Finish) | `game_id`, `score`, `stars`, `time_spent_seconds` | client only |
 | `demo_replayed` | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id` | client only |
 | `demo_signup_cta_clicked` | Conversion CTA tapped on `/try` | `placement` (`results` \| `hero_teacher_whisper`) | client only |
+| `experiment_previewed` | Safe Exploration controls enter `preview` (older band only) | `surface_id`, `band`, `attempt` | client only |
+| `experiment_tried` | A Safe Exploration run finishes with a learner outcome | `surface_id`, `band`, `attempt` | client only |
+| `experiment_kept` | Learner keeps the experiment (the one consequential action) | `surface_id`, `band`, `attempt` | client only |
+| `experiment_restored` | Learner returns to the preserved baseline ("Go back" / "Restore") | `surface_id`, `band`, `attempt` | client only |
+| `experiment_branched` | Learner saves the experiment as a new version, original untouched (older band only) | `surface_id`, `band`, `attempt` | client only |
+| `experiment_failed` | A Safe Exploration handler reports or throws an infrastructure failure | `surface_id`, `band`, `attempt`, `error_kind` (`recoverable` \| `unexpected`) | client only |
 
 `grade_band` values: `k2`, `g3_5`, `g6_8` (whatever the student's class is set to).
+
+`band` values (the `experiment_*` family only): `k2`, `older` — the Safe
+Exploration controls (#838) distinguish only those two banded expressions.
+`attempt` counts runs on that surface since mount: a **process** measure
+(revisions), never a score, accuracy, or mastery signal. `experiment_failed`
+exists so an infrastructure failure stays countable and distinct from a learner
+outcome (Safe Exploration accessibility contract §6) instead of being swallowed.
 
 ### Demo-funnel privacy note
 

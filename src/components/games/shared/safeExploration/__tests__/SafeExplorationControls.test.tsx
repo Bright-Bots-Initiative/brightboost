@@ -6,7 +6,7 @@
  * change, reduced motion, the unavailable-with-reason rule, and the §6
  * learner-outcome / system-failure distinction.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -317,7 +317,7 @@ describe("SEA-5 — reduced motion keeps the feedback", () => {
     renderControls();
     await user.click(screen.getByRole("button", { name: "Try it" }));
 
-    expect(region()).toHaveAttribute("data-reduced-motion", "false");
+    expect(region()).toHaveAttribute("data-reduced-effects", "false");
     expect(statusRegion().className).toContain("slide-up-fade");
     expect(statusRegion()).toHaveTextContent("The bike spun out on the turn.");
   });
@@ -328,7 +328,7 @@ describe("SEA-5 — reduced motion keeps the feedback", () => {
     renderControls();
     await user.click(screen.getByRole("button", { name: "Try it" }));
 
-    expect(region()).toHaveAttribute("data-reduced-motion", "true");
+    expect(region()).toHaveAttribute("data-reduced-effects", "true");
     expect(statusRegion().className).not.toContain("slide-up-fade");
     // The consequence is still perceivable: state, heading, body, announcement.
     expect(region()).toHaveAttribute("data-state", "observing");
@@ -342,7 +342,7 @@ describe("SEA-5 — reduced motion keeps the feedback", () => {
   it("honours an explicit reducedEffects prop from GameShell", () => {
     stubMatchMedia(false);
     renderControls({ reducedEffects: true });
-    expect(region()).toHaveAttribute("data-reduced-motion", "true");
+    expect(region()).toHaveAttribute("data-reduced-effects", "true");
   });
 });
 
@@ -499,5 +499,184 @@ describe("SEA-8 — K–2 bar and process analytics", () => {
         "surface_id",
       ]);
     }
+  });
+});
+
+describe("SEA-9 — repeated identical announcements still fire (review B2)", () => {
+  const alwaysFails = () => ({
+    status: "recoverableError" as const,
+    summary: "The save did not go through.",
+  });
+
+  it("replaces the announcement node on every transition, even a byte-identical repeat", async () => {
+    const user = userEvent.setup();
+    renderControls({ onKeep: alwaysFails });
+
+    await user.click(screen.getByRole("button", { name: "Try it" }));
+    await user.click(screen.getByRole("button", { name: "Keep it" }));
+
+    const live = liveRegion();
+    const firstText = live.textContent;
+    const firstTransition = live.getAttribute("data-transition");
+    const firstNode = screen.getByTestId(
+      "demo-safe-exploration-announcement-text",
+    );
+    expect(firstText).toContain("The save did not go through.");
+
+    // The identical failure again: same state, same summary, same string.
+    await user.click(screen.getByRole("button", { name: "Try that again" }));
+
+    const secondNode = screen.getByTestId(
+      "demo-safe-exploration-announcement-text",
+    );
+    expect(live.textContent).toBe(firstText); // byte-identical message
+    expect(live.getAttribute("data-transition")).not.toBe(firstTransition);
+    expect(Number(live.getAttribute("data-transition"))).toBe(
+      Number(firstTransition) + 1,
+    );
+    // A live region only speaks when its content is *mutated*; an identical
+    // string in the same node is not a mutation, so the node must be replaced.
+    expect(secondNode).not.toBe(firstNode);
+    expect(secondNode).toHaveTextContent("The save did not go through.");
+  });
+
+  it("keeps the live region itself mounted across transitions", async () => {
+    const user = userEvent.setup();
+    renderControls({ onKeep: alwaysFails });
+    const before = liveRegion();
+
+    await user.click(screen.getByRole("button", { name: "Try it" }));
+    await user.click(screen.getByRole("button", { name: "Keep it" }));
+
+    // Assistive tech must already be observing the region when it changes.
+    expect(liveRegion()).toBe(before);
+    expect(before).toHaveAttribute("aria-live", "polite");
+  });
+});
+
+describe("SEA-10 — keyboard order puts the primary action first (§843 part 2)", () => {
+  it("tabs from the result region through the actions in priority order", async () => {
+    const user = userEvent.setup();
+    renderControls({ onKeep: () => {}, onRestore: () => {} });
+
+    await user.click(screen.getByRole("button", { name: "Try it" }));
+    expect(document.activeElement).toBe(statusRegion());
+
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Keep it" }),
+    );
+    expect(document.activeElement).toHaveAttribute("data-emphasis", "primary");
+
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Go back" }),
+    );
+
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Try another way" }),
+    );
+  });
+
+  it("puts the older band's primary first too, ahead of branch and restore", async () => {
+    const user = userEvent.setup();
+    renderControls({
+      band: "older",
+      baseline: { id: "b-2", label: "your saved run" },
+      onKeep: () => {},
+      onRestore: () => {},
+      onBranch: () => {},
+    });
+
+    await user.click(screen.getByRole("button", { name: "Run" }));
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Keep this version" }),
+    );
+    expect(document.activeElement).toHaveAttribute("data-emphasis", "primary");
+
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Save as a new version" }),
+    );
+  });
+});
+
+describe("SEA-11 — the rendered path is latched and mirrors the grammar", () => {
+  // Review N12: with the controller latch removed the whole component suite
+  // still passed, because every `userEvent.click` re-renders between clicks.
+  // Two clicks dispatched inside one React batch is the real double-tap.
+  it("a real double-tap on Keep submits once", async () => {
+    const user = userEvent.setup();
+    let release!: (value: void) => void;
+    const onKeep = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
+    renderControls({ onKeep, onRestore: () => {} });
+    await user.click(screen.getByRole("button", { name: "Try it" }));
+
+    const keep = screen.getByRole("button", { name: "Keep it" });
+    await act(async () => {
+      keep.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      keep.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onKeep).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      release();
+    });
+    expect(region()).toHaveAttribute("data-state", "kept");
+    expect(onKeep).toHaveBeenCalledTimes(1);
+  });
+
+  // Review B1, through the rendered button rather than the hook.
+  it("the rendered Retry control refuses a keep the host has since blocked", async () => {
+    const user = userEvent.setup();
+    const onKeep = vi.fn(() => ({
+      status: "recoverableError" as const,
+      summary: "The save did not go through.",
+    }));
+    const { rerender } = renderControls({ onKeep });
+
+    await user.click(screen.getByRole("button", { name: "Try it" }));
+    await user.click(screen.getByRole("button", { name: "Keep it" }));
+    expect(onKeep).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <SafeExplorationControls
+        {...BASE}
+        onKeep={onKeep}
+        availability={{
+          keep: { kind: "blocked", reason: "Your teacher locked saving." },
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Try that again" }));
+    expect(onKeep).toHaveBeenCalledTimes(1);
+    expect(region()).toHaveAttribute("data-state", "recoverableError");
+  });
+
+  // Review B3, through the rendered surface.
+  it("does not run from baseline while only Preview is on screen", async () => {
+    const user = userEvent.setup();
+    const onRun = vi.fn(() => ({
+      status: "ok" as const,
+      summary: "Lap time went up.",
+    }));
+    renderControls({ band: "older", onPreview: () => {}, onRun });
+
+    expect(screen.queryByRole("button", { name: "Run" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Preview" }));
+    expect(onRun).not.toHaveBeenCalled();
+    expect(region()).toHaveAttribute("data-state", "preview");
+
+    await user.click(screen.getByRole("button", { name: "Run" }));
+    expect(onRun).toHaveBeenCalledTimes(1);
   });
 });

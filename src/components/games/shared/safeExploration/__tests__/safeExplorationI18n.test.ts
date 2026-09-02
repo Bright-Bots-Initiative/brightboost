@@ -72,9 +72,18 @@ function flatten(value: unknown, prefix = "", out: string[] = []): string[] {
   return out;
 }
 
-function stringsFor(locale: string, band: string): string[] {
+/**
+ * Path → value for one band of one locale. Keyed, never positional: comparing
+ * two locales by index of an unsorted `flatten()` silently compares unrelated
+ * strings the moment key order drifts between files.
+ */
+function entriesFor(locale: string, band: string): Map<string, string> {
   const root = at(LOCALES[locale], `safeExploration.${band}`);
-  return flatten(root).map((p) => String(at(root, p)));
+  return new Map(flatten(root).map((p) => [p, String(at(root, p))]));
+}
+
+function stringsFor(locale: string, band: string): string[] {
+  return [...entriesFor(locale, band).values()];
 }
 
 const REQUIRED_PATHS = BANDS.flatMap((band) => [
@@ -119,11 +128,32 @@ describe("i18n — every rendered key exists in every locale", () => {
 
   it("leaves no untranslated English in es/vi/zh-CN", () => {
     for (const band of BANDS) {
-      const enStrings = stringsFor("en", band);
+      const source = entriesFor("en", band);
       for (const locale of ["es", "vi", "zh-CN"]) {
-        const localized = stringsFor(locale, band);
-        const identical = localized.filter((s, i) => s === enStrings[i]);
-        expect(identical, `untranslated in ${locale}.${band}`).toEqual([]);
+        const localized = entriesFor(locale, band);
+        // Compare by key, so a reordered locale file cannot make an
+        // untranslated string look translated (or vice versa).
+        const untranslated = [...source.entries()]
+          .filter(([path, value]) => localized.get(path) === value)
+          .map(([path]) => path);
+        expect(untranslated, `untranslated in ${locale}.${band}`).toEqual([]);
+      }
+    }
+  });
+
+  it("compares locales by key, not by position", () => {
+    // Guards the guard: every en path must resolve in every other locale, so
+    // `entriesFor(...).get(path)` can never be a silent `undefined` match.
+    for (const band of BANDS) {
+      const source = entriesFor("en", band);
+      for (const locale of ["es", "vi", "zh-CN"]) {
+        const localized = entriesFor(locale, band);
+        for (const path of source.keys()) {
+          expect(
+            localized.get(path),
+            `missing ${locale}.${band}.${path}`,
+          ).toBeTypeOf("string");
+        }
       }
     }
   });

@@ -10,6 +10,9 @@
  *   SEC-3  learner outcomes never become errors, and infrastructure failures
  *          never become learner outcomes — including thrown/rejected handlers.
  *   SEC-4  the controller computes nothing: no randomness, no scores.
+ *   SEC-6  `retry` re-runs the failed action through the *same* bars that
+ *          action had to clear, and the rendered/invocable action sets are the
+ *          same set (review round 2: B1 and B3).
  */
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -594,5 +597,253 @@ describe("SEC-5 — availability is never a mystery", () => {
       result.current.requestAction("restore");
     });
     check(); // restored
+  });
+});
+
+describe("SEC-6 — retry and the rendered/invocable identity (review round 2)", () => {
+  /** Fail a keep once so the surface sits in an error state with retry armed. */
+  function toFailedKeep(overrides: Partial<SafeExplorationConfig> = {}) {
+    const onKeep = vi.fn(
+      (): SafeExplorationOutcome => ({
+        status: "recoverableError",
+        summary: "The save did not go through.",
+      }),
+    );
+    const view = renderHook(
+      (props: SafeExplorationConfig) => useSafeExplorationController(props),
+      {
+        initialProps: {
+          ...BASE,
+          onKeep,
+          ...overrides,
+        } as SafeExplorationConfig,
+      },
+    );
+    act(() => {
+      view.result.current.requestAction("run");
+    });
+    act(() => {
+      view.result.current.requestAction("keep");
+    });
+    expect(view.result.current.state).toBe("recoverableError");
+    expect(onKeep).toHaveBeenCalledTimes(1);
+    return { ...view, onKeep };
+  }
+
+  // B1: the guards used to run against the *requested* id ("retry"), so a keep
+  // the host had since blocked or hidden still executed through the rendered
+  // "Try that again" button.
+  it("refuses retry when the failed action has since been blocked", () => {
+    const { result, rerender, onKeep } = toFailedKeep();
+    rerender({
+      ...BASE,
+      onKeep,
+      availability: {
+        keep: { kind: "blocked", reason: "Your teacher locked saving." },
+      },
+    } as SafeExplorationConfig);
+
+    let outcome;
+    act(() => {
+      outcome = result.current.requestAction("retry");
+    });
+    expect(outcome).toEqual({ accepted: false, rejection: "unavailable" });
+    expect(onKeep).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe("recoverableError");
+  });
+
+  it("refuses retry when the failed action has since been hidden", () => {
+    const { result, rerender, onKeep } = toFailedKeep();
+    rerender({
+      ...BASE,
+      onKeep,
+      availability: { keep: { kind: "hidden" } },
+    } as SafeExplorationConfig);
+
+    let outcome;
+    act(() => {
+      outcome = result.current.requestAction("retry");
+    });
+    expect(outcome).toEqual({ accepted: false, rejection: "unavailable" });
+    expect(onKeep).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses retry when the failed restore has since been blocked", () => {
+    const onRestore = vi.fn(
+      (): SafeExplorationOutcome => ({ status: "unexpectedError" }),
+    );
+    const { result, rerender } = renderHook(
+      (props: SafeExplorationConfig) => useSafeExplorationController(props),
+      {
+        initialProps: {
+          ...BASE,
+          onKeep: () => {},
+          onRestore,
+        } as SafeExplorationConfig,
+      },
+    );
+    act(() => {
+      result.current.requestAction("run");
+    });
+    act(() => {
+      result.current.requestAction("restore");
+    });
+    expect(result.current.state).toBe("unexpectedError");
+
+    rerender({
+      ...BASE,
+      onKeep: () => {},
+      onRestore,
+      availability: {
+        restore: { kind: "blocked", reason: "The saved track is locked." },
+      },
+    } as SafeExplorationConfig);
+
+    let outcome;
+    act(() => {
+      outcome = result.current.requestAction("retry");
+    });
+    expect(outcome).toEqual({ accepted: false, rejection: "unavailable" });
+    expect(onRestore).toHaveBeenCalledTimes(1);
+  });
+
+  it("still retries the failed action while it remains available", () => {
+    const { result, onKeep } = toFailedKeep();
+    act(() => {
+      result.current.requestAction("retry");
+    });
+    expect(onKeep).toHaveBeenCalledTimes(2);
+  });
+
+  // B3: the renderer collapses baseline's preview/run to one control; the
+  // invocable set must collapse identically or `run` skips the preview
+  // disclosure that names what a run will replace.
+  it("refuses a collapsed-away action and accepts it once it is on screen", () => {
+    const onRun = vi.fn(
+      (): SafeExplorationOutcome => ({ status: "ok", summary: "It wobbled." }),
+    );
+    const { result } = setup({
+      band: "older",
+      onPreview: () => {},
+      onRun,
+    });
+
+    expect(result.current.actions.map((a) => a.id)).toEqual(["preview"]);
+    let outcome;
+    act(() => {
+      outcome = result.current.requestAction("run");
+    });
+    expect(outcome).toEqual({ accepted: false, rejection: "not-rendered" });
+    expect(onRun).not.toHaveBeenCalled();
+    expect(result.current.state).toBe("baseline");
+
+    act(() => {
+      result.current.requestAction("preview");
+    });
+    act(() => {
+      outcome = result.current.requestAction("run");
+    });
+    expect(outcome).toEqual({ accepted: true });
+    expect(onRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("every rendered action is invocable in every state it is rendered in", () => {
+    // The mirror of the guard: nothing on screen may be refused as unrendered.
+    const { result } = setup({
+      band: "older",
+      onPreview: () => {},
+      onCancel: () => {},
+      onKeep: () => {},
+      onRestore: () => {},
+      onBranch: () => {},
+      onExit: () => {},
+    });
+    const seen: string[] = [];
+    const walk = () => {
+      for (const action of result.current.actions) {
+        seen.push(`${result.current.state}:${action.id}`);
+        expect(
+          result.current.actions.map((a) => a.id),
+          `${result.current.state} rendered set`,
+        ).toContain(action.id);
+      }
+    };
+    walk();
+    act(() => {
+      result.current.requestAction("preview");
+    });
+    walk();
+    act(() => {
+      result.current.requestAction("run");
+    });
+    walk();
+    expect(seen).toContain("baseline:preview");
+    expect(seen).toContain("preview:run");
+    expect(seen).toContain("observing:keep");
+  });
+});
+
+describe("SEC-7 — latch hygiene (review round 2)", () => {
+  // N2: exit used to return before releasing the latch, so a host that keeps
+  // the surface mounted was stuck busy for ever.
+  it("releases the latch on exit and drops the abandoned run's result", async () => {
+    const run = deferred<SafeExplorationOutcome>();
+    const onExit = vi.fn();
+    const { result } = setup({ onRun: () => run.promise, onExit });
+
+    act(() => {
+      result.current.requestAction("run");
+    });
+    expect(result.current.pendingAction).toBe("run");
+
+    act(() => {
+      result.current.requestAction("exit");
+    });
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(result.current.pendingAction).toBeNull();
+
+    await act(async () => {
+      run.resolve({ status: "ok", summary: "too late" });
+      await run.promise;
+    });
+    expect(result.current.state).toBe("running");
+
+    // …and the surface is usable again rather than absorbing every request.
+    let outcome;
+    act(() => {
+      outcome = result.current.requestAction("run");
+    });
+    expect(outcome).toEqual({ accepted: true });
+  });
+
+  // N3: a thenable that calls both callbacks must not settle twice.
+  it("settles once even when a thenable resolves and rejects", () => {
+    const onUnexpectedError = vi.fn();
+    const states: string[] = [];
+    const doubleSettling = {
+      then(
+        onOk: (value: SafeExplorationOutcome) => void,
+        onErr: (reason: unknown) => void,
+      ) {
+        onOk({ status: "ok" });
+        onErr(new Error("second settle"));
+      },
+    };
+    const { result } = setup({
+      onKeep: () =>
+        doubleSettling as unknown as Promise<SafeExplorationOutcome>,
+      onUnexpectedError,
+      onStateChange: (next) => states.push(next),
+    });
+    act(() => {
+      result.current.requestAction("run");
+    });
+    act(() => {
+      result.current.requestAction("keep");
+    });
+
+    expect(result.current.state).toBe("kept");
+    expect(onUnexpectedError).not.toHaveBeenCalled();
+    expect(states).toEqual(["running", "observing", "kept"]);
   });
 });

@@ -62,27 +62,46 @@ type SafeExplorationOutcome =
 | `onRestore`         | `observing`, `kept`, `branched`           | `restored`       |
 | `onBranch`          | `observing`, **`band === "older"` only**  | `branched`       |
 | `onTryAgain`        | after any outcome; optional (pure reset)  | `baseline`       |
-| `onExit`            | `running`, error states                   | (host navigates) |
+| `onExit`            | `running`, error states only              | (host navigates) |
 | `onUnexpectedError` | every `unexpectedError`, including throws | —                |
+
+`onExit` is **not** a persistent Continue affordance — it appears only in the
+states where a learner could otherwise be stranded. §7's always-visible route
+back to the ordered path stays the game shell's job.
 
 Every handler takes **zero arguments**. The component never passes the artifact
 around, because it never holds it: `baseline` is `{ id, label }` — a _name_.
 
-`requestAction(id)` returns `{ accepted: true }` or
-`{ accepted: false, rejection: "in-flight" | "not-in-grammar" | "unavailable" | "no-handler" }`.
+`requestAction(id)` returns `{ accepted: true }` or `{ accepted: false, rejection }`,
+where `rejection` is one of:
+
+| Rejection        | Meaning                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `not-in-grammar` | the action is not an exit of this state at all                                                                |
+| `not-rendered`   | it is an exit of this state but not on screen, because the grammar collapsed competing candidates to one      |
+| `unavailable`    | the host marked it `hidden` or `blocked` (for `retry`, also when the action that _failed_ is now unavailable) |
+| `no-handler`     | no callback, or the band does not offer it                                                                    |
+| `in-flight`      | the latch: another consequential action is running                                                            |
 
 ## 3. The two guards
 
 1. **Grammar guard.** `SAFE_EXPLORATION_GRAMMAR` is the single source of truth
-   for "which exits exist in this state", read by both the renderer and
-   `requestAction`. A control that is not rendered also cannot be invoked
-   programmatically. `keep` appears only under `observing`, so a stray keep
-   after a restore — or a second keep after a keep — is refused.
+   for "which exits exist in this state". The renderer and `requestAction` both
+   go through one function that applies the same offered/available filter and
+   the same `exclusiveFirst` collapse, so a control that is not rendered cannot
+   be invoked programmatically either. `keep` appears only under `observing`,
+   so a stray keep after a restore — or a second keep after a keep — is refused;
+   `run` is refused from `baseline` while only `preview` is on screen, because
+   the preview state exists to say what a run will replace.
+   `retry` re-runs the failed action **through that action's own bars**: if the
+   host has blocked or hidden it since the failure, the retry is refused too.
 2. **In-flight latch.** One consequential action at a time
    (`rejection: "in-flight"`), the `completingRef` precedent from
    `src/pages/ActivityPlayer.tsx`. `cancel` and `exit` stay operable so a stuck
-   run always has a visible way out; taking the latch invalidates the abandoned
-   handler's result so it cannot drag the learner back into `observing`.
+   run always has a visible way out; both invalidate the abandoned handler's
+   result so it cannot drag the learner back into `observing`, and both release
+   the latch so a surface that stays mounted is not stuck busy. Each request
+   settles exactly once, even if a handler's thenable calls both callbacks.
 
 Together they are why "restore cannot accidentally overwrite the preserved
 baseline" holds structurally rather than by convention.
@@ -167,29 +186,45 @@ not a performance measure. A test pins the exact payload keys.
 
 ## 7. Accessibility proof map (contract §9)
 
-| §9 asks for               | Where it is proved                                                                    |
-| ------------------------- | ------------------------------------------------------------------------------------- |
-| idle story                | `K2Idle`, `OlderIdle`                                                                 |
-| running story             | `K2Running`, `OlderRunning`                                                           |
-| completed story           | `K2Observing`, `OlderObserving`, `K2Kept`, `OlderBranched`                            |
-| restored story            | `K2Restored`, `OlderRestored`                                                         |
-| unavailable story         | `K2Unavailable`, `OlderBlockedAction`                                                 |
-| unexpected-error story    | `K2UnexpectedError`, `OlderUnexpectedError` (+ `K2RecoverableError` for the contrast) |
-| keyboard order / focus    | `SEA-3` (five focus-matrix cases, jsdom) and the `K2KeyboardOnly` story               |
-| accessible name and state | `SEA-1`, `SEA-6`; `data-state` / `data-error-kind` / `aria-disabled` / `aria-busy`    |
-| reduced motion            | `SEA-5` (two-phase: transition present, then absent with all feedback intact)         |
-| fixed-seed determinism    | n/a — this surface has no randomness; `SEC-4` asserts `Math.random` is never called   |
-| §6 failure distinction    | `SEC-3`, `SEA-7`                                                                      |
+| §9 asks for               | Where it is proved                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| idle story                | `K2Idle`, `OlderIdle`                                                                                        |
+| running story             | `K2Running`, `OlderRunning`                                                                                  |
+| completed story           | `K2Observing`, `OlderObserving`, `K2Kept`, `OlderBranched`                                                   |
+| restored story            | `K2Restored`, `OlderRestored`                                                                                |
+| unavailable story         | `K2Unavailable`, `OlderBlockedAction`                                                                        |
+| unexpected-error story    | `K2UnexpectedError`, `OlderUnexpectedError` (+ `K2RecoverableError` for the contrast)                        |
+| keyboard order / focus    | `SEA-3` (six focus-matrix cases) and `SEA-10` (tab order, primary first, both bands); `K2KeyboardOnly` story |
+| accessible name and state | `SEA-1`, `SEA-6`; `data-state` / `data-error-kind` / `aria-disabled` / `aria-busy`                           |
+| reduced motion            | `SEA-5` (two-phase: transition present, then absent with all feedback intact)                                |
+| repeat announcements      | `SEA-9`, `K2RepeatedFailure` story — an identical message still replaces the live node                       |
+| fixed-seed determinism    | n/a — this surface has no randomness; `SEC-4` asserts `Math.random` is never called                          |
+| §6 failure distinction    | `SEC-3`, `SEA-7`                                                                                             |
+
+Reduced motion is expressed with `data-reduced-effects` on the root, the same
+attribute `GameShell`, `LearningGameFrame`, and `game-effects.css` already use —
+so a game that already sets it, and this component's own class omission, both
+suppress the transition.
 
 The bounded manual walkthrough (keyboard-only, screen reader, reduced motion,
 muted sound, zoom/reflow, touch) is #843's verification half and rides with the
 first adopting game's PR, since this component ships with no consumer.
 
-### Known tradeoff
+## 8. Known limits
 
-In `observing`, `kept`, `branched`, and the error states, focus moves to the
-status region while the live region announces the outcome. The contract asks
-that an announcement not duplicate what a focus move already reads, so the
-region's accessible name is a short heading ("What happened?") and the
-announcement carries the substance. Real screen-reader behaviour here is exactly
-what the manual walkthrough is for.
+- **Focus and announcement overlap.** In `observing`, `kept`, `branched`, and
+  the error states, focus moves to the status region while the live region
+  announces the outcome. The contract asks that an announcement not duplicate
+  what a focus move already reads, so the region's accessible name is a short
+  heading ("What happened?") and the announcement carries the substance. Real
+  screen-reader behaviour here is exactly what the manual walkthrough is for.
+- **Availability is read when an action is requested, not when it settles.** A
+  host that flips `unavailable`, or blocks `keep`, _while a keep is already in
+  flight_ does not cancel it: the handler the host itself started runs to
+  completion and the surface lands in `kept`. Revoking availability is a gate on
+  starting an action, never a kill switch for one already running. Hosts should
+  not revoke availability mid-flight; to stop an in-flight action, resolve its
+  handler with an outcome (or unmount the surface). `retry` is re-checked
+  against current availability precisely because it starts a _new_ run.
+- **`tryAgain` without `onTryAgain`** is a pure return to `baseline`; the game
+  is responsible for resetting its own workspace if that matters.
