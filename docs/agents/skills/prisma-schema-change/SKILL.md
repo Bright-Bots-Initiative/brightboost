@@ -10,13 +10,13 @@ Follow `docs/agents/rules/30-database.md`. Root schema is authoritative for depl
 ## Steps
 
 1. Edit `prisma/schema.prisma` and keep `backend/prisma/schema.prisma` in sync.
-2. Prefer additive, reviewable migrations. Do **not** rewrite broken history ad hoc — that is **#646**.
-3. Local scratch DB when migrate history cannot apply: `npx prisma db push --schema prisma/schema.prisma` → `npx prisma generate` → seed.
+2. Prefer additive, reviewable migrations on top of the `0_init` baseline (**#646**, landed). Do **not** rewrite applied history ad hoc.
+3. Throwaway local scratch DB shortcut: `npx prisma db push --schema prisma/schema.prisma` → `npx prisma generate` → seed. `migrate deploy` also builds a fresh DB.
 4. Run root and backend typecheck after client generate.
 5. Never `db push` / `migrate reset` / migrate against non-local databases.
 
 ## Reminders
 
-- CI `db-check` stays red until #646 — not a signal about unrelated PRs.
+- CI `db-check` is required on `main` and green — a red `db-check` is a real migration failure on your PR.
 - Docker Postgres tracked default host port is **5435**.
 - Backend reads `backend/.env`; Prisma CLI often uses root `.env`.

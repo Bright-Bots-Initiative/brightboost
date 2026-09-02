@@ -1,4 +1,4 @@
-> **Canonical for:** deployment. Last verified against code: 2026-08-10.
+> **Canonical for:** deployment. Last verified against code: 2026-09-01.
 
 # BrightBoost Deployment Guide
 
@@ -95,7 +95,7 @@ npx prisma migrate deploy --schema prisma/schema.prisma
 SEED_ALLOW_PRODUCTION=true SEED_RESET=false npx prisma db seed
 ```
 
-`npm run db:init` is **not** the production runbook primary path while migration baseline work (`#646`) is open; use migrate deploy + gated seed as above.
+`npm run db:init` is **not** the production runbook primary path — it always seeds, and the seed is a development fixture that rewrites demo user rows. Use migrate deploy + the gated seed as above. (The `#646` baseline has landed, so `migrate deploy` builds a fresh database cleanly; `#650` still tracks the production migration-history follow-up.)
 
 ## RUN_SEED Runbook (Production)
 
