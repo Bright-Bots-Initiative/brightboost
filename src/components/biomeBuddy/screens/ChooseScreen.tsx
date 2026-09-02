@@ -118,18 +118,18 @@ export default function ChooseScreen({
         </button>
       </div>
 
-      <div className="bb-actions-sticky w-full flex flex-wrap items-center justify-center gap-3">
+      <div className="bb-actions-sticky bb-actions-row w-full flex items-center justify-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="min-h-11 px-5 rounded-full bg-white text-[#3a2e22] font-bold shadow active:scale-95"
+          className="min-h-11 px-4 sm:px-5 rounded-full bg-white text-[#3a2e22] text-sm sm:text-base font-bold shadow active:scale-95"
         >
           {t("biomeBuddy.common.myBuddies", { defaultValue: "My Buddies" })}
         </button>
         <button
           type="button"
           onClick={onSelect}
-          className="bb-primary bb-pop min-h-14 px-10 rounded-full bg-brightboost-yellow text-[#3a2e22] text-xl font-extrabold shadow-[0_5px_0_#c46f55] active:translate-y-1 active:shadow-none"
+          className="bb-primary bb-pop min-h-14 px-6 sm:px-10 rounded-full bg-brightboost-yellow text-[#3a2e22] text-lg sm:text-xl font-extrabold shadow-[0_5px_0_#c46f55] active:translate-y-1 active:shadow-none"
         >
           {t("biomeBuddy.choose.select", {
             defaultValue: "Select {{biome}} ✓",
