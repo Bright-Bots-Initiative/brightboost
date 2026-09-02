@@ -144,13 +144,30 @@ function armQuietPersonalBest() {
   prismaMock.gamePersonalBest.updateMany.mockResolvedValue({ count: 1 });
 }
 
+/**
+ * #845 review (blocking): asserting only "the transaction got a callback"
+ * did not detect a re-read moved back OUTSIDE the transaction — the exact
+ * #832 item-1 defect. The mock now tracks depth so a test can assert WHERE
+ * a read ran, not just that a callback existed.
+ */
+let txDepth = 0;
+let pbReadsInTx: boolean[] = [];
+
 beforeEach(() => {
   vi.clearAllMocks();
-  prismaMock.$transaction.mockImplementation((arg: unknown) =>
-    typeof arg === "function"
-      ? (arg as (tx: unknown) => unknown)(prismaMock)
-      : Promise.all(arg as Promise<unknown>[]),
-  );
+  txDepth = 0;
+  pbReadsInTx = [];
+  prismaMock.$transaction.mockImplementation(async (arg: unknown) => {
+    if (typeof arg !== "function") {
+      return Promise.all(arg as Promise<unknown>[]);
+    }
+    txDepth++;
+    try {
+      return await (arg as (tx: unknown) => unknown)(prismaMock);
+    } finally {
+      txDepth--;
+    }
+  });
   prismaMock.activity.findUnique.mockResolvedValue(ACTIVITY);
   armHappyAvatar();
   armQuietPersonalBest();
@@ -471,20 +488,30 @@ describe("#832 — post-#827 hardening residuals", () => {
       .mockResolvedValueOnce(null) // the racing read: no avatar yet
       .mockResolvedValue(AVATAR); // the recovery re-read: winner's row
     prismaMock.avatar.create.mockRejectedValueOnce(p2002);
-    prismaMock.progress.count.mockResolvedValue(0);
+    // Non-zero completed count: if the loser wrongly claimed the backfill
+    // (#845 review N5 — the double-count the fix exists to avoid), the
+    // response xpDelta would carry backfilledXp on top of the plain award.
+    prismaMock.progress.count.mockResolvedValue(4);
     prismaMock.progress.findUnique.mockResolvedValueOnce(null);
     prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
 
     const res = await completeActivity(BODY);
 
     expect(res.status).toBe(200);
-    // The loser proceeds on the winner's committed avatar — no backfill claim.
-    expect(res.body.reward.xpDelta).toBeGreaterThan(0);
+    // The loser proceeds on the winner's committed avatar: the PLAIN award
+    // only (avatar.update mock moves xp 100 → 150), never a backfill claim —
+    // the backfill XP lives once, on the winner's row, reported by the winner.
+    expect(res.body.reward.xpDelta).toBe(50);
     expect(prismaMock.avatar.create).toHaveBeenCalledTimes(1);
   }, 5000);
 
   it("AVATAR-2: a non-P2002 avatar-create failure still surfaces as a JSON 500", async () => {
-    prismaMock.avatar.findUnique.mockResolvedValue(null);
+    prismaMock.avatar.findUnique
+      .mockResolvedValueOnce(null) // the pre-create read
+      // #845 review N4: arm the recovery re-read with a real row, so a catch
+      // that swallowed NON-P2002 errors too would answer 200 here and go red
+      // — this pins the P2002 discrimination, not just the 500.
+      .mockResolvedValue(AVATAR);
     prismaMock.avatar.create.mockRejectedValueOnce(new Error("db down"));
     prismaMock.progress.count.mockResolvedValue(0);
     prismaMock.progress.findUnique.mockResolvedValueOnce(null);
@@ -497,10 +524,13 @@ describe("#832 — post-#827 hardening residuals", () => {
   it("TXN-1: the personal-best re-read runs INSIDE the reconciliation transaction", async () => {
     // Pre-fix RED: $transaction received an array of already-launched writes
     // and the response row came from a separate read afterwards — a window a
-    // concurrent play's committed row could occupy. The interactive form
-    // holds the row lock across writes AND read.
+    // concurrent play's committed row could occupy (from the unconditional
+    // write onward the row is locked; see the source comment for the exact
+    // guarantee). #845 review (blocking): asserting only the callback shape
+    // let a re-read moved back OUTSIDE the transaction pass — so this now
+    // asserts WHERE the response read actually ran, via the mock's tx depth.
     prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_ROW);
-    prismaMock.gamePersonalBest.findUnique.mockResolvedValue({
+    const PB_ROW = {
       id: "gpb-1",
       studentId: "student-123",
       gameKey: "move_measure",
@@ -509,6 +539,10 @@ describe("#832 — post-#827 hardening residuals", () => {
       bestStreak: 1,
       bestRoundsCompleted: 1,
       playCount: 1,
+    };
+    prismaMock.gamePersonalBest.findUnique.mockImplementation(async () => {
+      pbReadsInTx.push(txDepth > 0);
+      return PB_ROW;
     });
     prismaMock.gamePersonalBest.updateMany.mockResolvedValue({ count: 1 });
 
@@ -517,12 +551,19 @@ describe("#832 — post-#827 hardening residuals", () => {
     expect(res.status).toBe(200);
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     expect(typeof prismaMock.$transaction.mock.calls[0][0]).toBe("function");
+    // The probe read (before the tx) runs outside; the RESPONSE read inside.
+    expect(pbReadsInTx[0]).toBe(false);
+    expect(pbReadsInTx.at(-1)).toBe(true);
     expect(res.body.isNewHighScore).toBe(true);
+    expect(res.body.personalBest.bestScore).toBe(5);
   });
 
   it("TXN-2: a throw inside the transaction reports false flags and a null row", async () => {
-    // With the read inside the transaction, a failure rolls the writes back
-    // too — so "nothing persisted" is literally true, not a false negative.
+    // Pins the RESPONSE contract on failure (200, null row, false flags).
+    // The rollback itself — writes undone when the re-read throws — is a
+    // database behavior this mock cannot exercise; it was verified at the
+    // SQL level in the #845 review (BEGIN … 4 UPDATEs … ROLLBACK, values
+    // unchanged). This case is deliberately green pre- and post-fix.
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_ROW);
     prismaMock.gamePersonalBest.findUnique

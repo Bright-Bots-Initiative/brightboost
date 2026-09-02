@@ -132,7 +132,7 @@ export async function ensureAvatarWithBackfill(
 
   // Create avatar as GENERAL (Explorer) - no archetype, no abilities
   // User must explicitly select a specialty to become SPECIALIZED
-  let newAvatar;
+  let newAvatar: Avatar;
   try {
     newAvatar = await prisma.avatar.create({
       data: {

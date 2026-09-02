@@ -88,12 +88,16 @@ async function reconcilePersonalBest(
   const byKey = { studentId, gameKey };
 
   // #832 item 1: the writes AND the response re-read share ONE interactive
-  // transaction. The unconditional lastScore/playCount write row-locks the
-  // record until commit, so a concurrent play blocks and cannot slip its own
-  // committed row between our writes and our read — the response displays
-  // exactly the state THIS reconciliation produced. And if the re-read (or
-  // any write) throws, the whole transaction rolls back, so the catch's
-  // "false flags + null row" reply is literally true: nothing persisted.
+  // transaction. From the unconditional lastScore/playCount write onward the
+  // row is locked, so nothing can slip between that write and our read. (The
+  // three predicated writes lock only when they match — a play that sets no
+  // record can still observe a concurrently-committed HIGHER best in the
+  // re-read; that stays truthful and monotone, and the flags always come
+  // from our own matched counts.) And if the re-read (or any write) throws,
+  // the whole transaction rolls back — verified at the SQL level in the #845
+  // review (BEGIN…ROLLBACK, values unchanged) — so the catch's "false flags
+  // + null row" reply is literally true: nothing persisted, playCount
+  // included (recorded as an accepted trade on #832).
   const updateExisting = () =>
     prisma.$transaction(async (tx) => {
       const scoreRes = await tx.gamePersonalBest.updateMany({
