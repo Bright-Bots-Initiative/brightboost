@@ -4,9 +4,16 @@ import { changeLanguage, SUPPORTED_LANGUAGES } from "@/i18n";
 
 type LanguageToggleProps = {
   variant?: "light" | "dark";
+  /** Restrict the menu to languages a page is complete in (e.g. a game whose
+   *  content ships en + es only) so no child-visible surface mixes languages.
+   *  Defaults to every supported language. */
+  languages?: readonly string[];
 };
 
-const LanguageToggle = ({ variant = "light" }: LanguageToggleProps) => {
+const LanguageToggle = ({
+  variant = "light",
+  languages,
+}: LanguageToggleProps) => {
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [, setTick] = useState(0);
@@ -14,11 +21,17 @@ const LanguageToggle = ({ variant = "light" }: LanguageToggleProps) => {
   useEffect(() => {
     const handler = () => setTick((t) => t + 1);
     i18n.on("languageChanged", handler);
-    return () => { i18n.off("languageChanged", handler); };
+    return () => {
+      i18n.off("languageChanged", handler);
+    };
   }, [i18n]);
 
   const currentLang = i18n.resolvedLanguage || i18n.language;
-  const currentLabel = SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.label ?? "English";
+  const offered = languages
+    ? SUPPORTED_LANGUAGES.filter((l) => languages.includes(l.code))
+    : SUPPORTED_LANGUAGES;
+  const currentLabel =
+    SUPPORTED_LANGUAGES.find((l) => l.code === currentLang)?.label ?? "English";
 
   const triggerClass =
     variant === "dark"
@@ -34,8 +47,7 @@ const LanguageToggle = ({ variant = "light" }: LanguageToggleProps) => {
     variant === "dark"
       ? "font-bold text-indigo-300 bg-slate-800"
       : "font-bold text-brightboost-navy bg-slate-50";
-  const itemIdle =
-    variant === "dark" ? "text-slate-300" : "text-slate-700";
+  const itemIdle = variant === "dark" ? "text-slate-300" : "text-slate-700";
   const itemHover =
     variant === "dark" ? "hover:bg-slate-800" : "hover:bg-slate-50";
 
@@ -44,14 +56,16 @@ const LanguageToggle = ({ variant = "light" }: LanguageToggleProps) => {
       <button
         onClick={() => setOpen((o) => !o)}
         className={triggerClass}
-        aria-label={t("common.changeLanguage", { defaultValue: "Change language" })}
+        aria-label={t("common.changeLanguage", {
+          defaultValue: "Change language",
+        })}
         aria-expanded={open}
       >
         {currentLabel}
       </button>
       {open && (
         <div className={menuClass}>
-          {SUPPORTED_LANGUAGES.map((lang) => (
+          {offered.map((lang) => (
             <button
               key={lang.code}
               onClick={() => {

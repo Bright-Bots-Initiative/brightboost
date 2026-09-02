@@ -1,0 +1,243 @@
+/* Biome Buddy — page-scoped styles (no external assets). Waterworks precedent. */
+
+.bb-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-x: clip;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bb-language button {
+  min-height: 44px;
+}
+
+.bb-shell-header {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+/* Every control a child taps is at least 44px; primary K–2 targets are 56px. */
+.bb-page button,
+.bb-page a.bb-btn,
+.bb-page [role="radio"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+.bb-page :focus-visible,
+.bb-dialog :focus-visible {
+  outline: 4px solid #1c3d6c;
+  outline-offset: 3px;
+  border-radius: 1rem;
+}
+
+.bb-primary {
+  min-height: 56px;
+}
+
+.bb-chip[aria-checked="true"] {
+  border-color: #1c3d6c;
+  background: #fff4c2;
+  box-shadow: 0 4px 0 #1c3d6c33;
+}
+
+.bb-chip[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+/* Sprite bob — off under reduced motion and when animate=false */
+@keyframes bb-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.bb-sprite--bob .bb-sprite-body {
+  animation: bb-bob 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.bb-meter-fill--animate {
+  transition: width 420ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+@keyframes bb-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bb-pop {
+  animation: bb-pop 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bb-reduced .bb-sprite--bob .bb-sprite-body,
+.bb-reduced .bb-pop {
+  animation: none;
+}
+
+.bb-reduced .bb-meter-fill--animate {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bb-sprite--bob .bb-sprite-body,
+  .bb-pop {
+    animation: none;
+  }
+
+  .bb-meter-fill--animate {
+    transition: none;
+  }
+}
+
+.bb-overlay {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+}
+
+.bb-dialog {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(
+    100dvh - max(2rem, env(safe-area-inset-top)) -
+      max(2rem, env(safe-area-inset-bottom))
+  );
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bb-gallery-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.bb-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.bb-biome-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.bb-create-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .bb-create-layout {
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .bb-create-side {
+    position: sticky;
+    top: 0.75rem;
+  }
+}
+
+/* Science card docks to the bottom as a sheet on phones so the stat bars
+   behind it stay visible while the number moves. */
+@media (max-width: 639px) {
+  .bb-overlay {
+    padding: 0;
+  }
+
+  .bb-dialog--sheet {
+    max-width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-height: 62dvh;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .bb-shell-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 0.65rem;
+    padding-inline: 0.75rem;
+  }
+
+  .bb-shell-title h1 {
+    font-size: 1.05rem;
+  }
+
+  .bb-biome-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bb-option-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bb-gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bb-stat-band {
+    display: none;
+  }
+
+  .bb-actions-sticky {
+    position: sticky;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    background: rgb(251 247 238 / 94%);
+    backdrop-filter: blur(8px);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    box-shadow: 0 8px 24px rgb(58 46 34 / 18%);
+  }
+}
+
+@media (max-width: 359px) {
+  .bb-shell-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .bb-language {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .bb-option-grid,
+  .bb-gallery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bb-stat-label {
+    width: 3.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .bb-shell-header {
+    padding-top: max(0.25rem, env(safe-area-inset-top));
+    padding-bottom: 0.25rem;
+  }
+
+  .bb-dialog--sheet {
+    max-height: 90dvh;
+  }
+}

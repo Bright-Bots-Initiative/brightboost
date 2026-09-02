@@ -58,6 +58,9 @@ import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
 import Waterworks from "./pages/Waterworks";
+import BiomeBuddy from "./pages/BiomeBuddy";
+import BiomeBuddyShare from "./pages/BiomeBuddyShare";
+import BiomeBuddyReview from "./pages/BiomeBuddyReview";
 import PlanDetail from "./pages/PlanDetail";
 import Parents from "./pages/Parents";
 import ParentGuide from "./pages/ParentGuide";
@@ -150,6 +153,17 @@ function App() {
                   device-local persistence, zero backend. Placement (#676)
                   decided later. See docs/games/waterworks-design.md. */}
               <Route path="/waterworks" element={<Waterworks />} />
+              {/* Biome Buddy — reviewable prototype (docs/games/biome-buddy-design.md).
+                  Public, no auth, linked from NOTHING; device-local persistence,
+                  zero backend. /share renders a recipe carried in the URL
+                  fragment; /review is the reviewer intro. Unlisted is not
+                  authentication. */}
+              <Route path="/biome-buddy" element={<BiomeBuddy />} />
+              <Route path="/biome-buddy/share" element={<BiomeBuddyShare />} />
+              <Route
+                path="/biome-buddy/review"
+                element={<BiomeBuddyReview />}
+              />
               {import.meta.env.DEV && (
                 <Route
                   path="/dev/echo-spike"

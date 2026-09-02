@@ -2458,5 +2458,155 @@
       "highFive": "High five",
       "backToBack": "Back to back"
     }
+  },
+  "biomeBuddy": {
+    "shell": {
+      "title": "Biome Buddy",
+      "tagline": "Build a Buddy for its home and see what it can do there",
+      "remixNote": "Starting from a shared Buddy — this copy is yours to change.",
+      "remixInvalid": "That share link got scrambled, so here's a fresh start."
+    },
+    "common": {
+      "myBuddies": "My Buddies"
+    },
+    "steps": {
+      "aria": "Step {{n}} of {{total}}: {{label}}",
+      "choose": "Choose",
+      "create": "Create",
+      "test": "Test",
+      "name": "Name"
+    },
+    "title": {
+      "tagline": "What will you build?",
+      "intro": "Pick a home, build a Buddy from real animal parts, and see what it can do there.",
+      "resume": "Keep building {{name}}",
+      "pickLevel": "Pick your level to start a new Buddy",
+      "band": {
+        "k2": "K–2 · Guided",
+        "g35": "Grades 3–5",
+        "g68": "Grades 6–8 · Open"
+      },
+      "myBuddies": "My Buddies",
+      "empty": "No Buddies yet — build one!",
+      "open": "Open {{name}}",
+      "deleteAria": "Let {{name}} go",
+      "delete": "Let it go"
+    },
+    "choose": {
+      "heading": "Where will your Buddy live?",
+      "groupAria": "Homes",
+      "prev": "Previous home",
+      "next": "Next home",
+      "animalsHere": "Who lives here:",
+      "select": "Select {{biome}} ✓"
+    },
+    "create": {
+      "spriteAria": "{{name}}, a {{biome}} Buddy",
+      "renameAria": "Buddy name: {{name}} — tap to change",
+      "changeHomeAria": "Home: {{biome}} — tap to change",
+      "save": "Save",
+      "statsHeading": "How {{name}} does in the {{biome}}",
+      "locked": "opens after you test a Buddy",
+      "groupAria": "{{category}} choices",
+      "pickAria": "{{category}}: {{option}}",
+      "guidedHint": "Change a part, then test your Buddy to open more parts.",
+      "test": "Test it! 🔬",
+      "nameSave": "Name & Save",
+      "lastTestAria": "Reopen the last Test & Learn",
+      "lastTest": "Last test",
+      "unlockTitle": "New part to change: {{category}}!",
+      "unlockTry": "Try it!"
+    },
+    "science": {
+      "term": "also called: {{term}}",
+      "effect": "What this part does in the {{biome}}:",
+      "noEffect": "In the {{biome}} this changes how your Buddy looks, not the bars.",
+      "less": "Show less",
+      "more": "Tell me more 🔬",
+      "usedFor": "What it's for",
+      "evolved": "How it came to be",
+      "animals": "Animals that have it",
+      "where": "Where in the world",
+      "affects": "What else it changes",
+      "deeper": "The deeper science",
+      "gotIt": "Got it!"
+    },
+    "stat": {
+      "band": {
+        "low": "just a little",
+        "some": "some",
+        "good": "good",
+        "great": "great"
+      },
+      "up": "up {{n}}",
+      "down": "down {{n}}",
+      "same": "same",
+      "meterAria": "{{stat}}: {{value}} out of 100, {{band}}{{delta}}"
+    },
+    "test": {
+      "heading": "Here's how {{name}} does in the {{biome}}!",
+      "introSame": "Same parts, same home — the bars stayed put.",
+      "intro": "The grey mark is before. The color is now. Tap next to see why each bar moved.",
+      "unchangedTitle": "Nothing moved this time",
+      "unchangedBody": "That's useful to know too! Same parts in the same home do the same things.",
+      "wentUp": "{{stat}} went up by {{n}}!",
+      "wentDown": "{{stat}} went down by {{n}}.",
+      "beforeAfter": "Before: {{before}} · Now: {{after}}",
+      "whyIntro": "Why, in the {{biome}}?",
+      "prev": "◀ Back",
+      "page": "{{n}} of {{total}}",
+      "gotIt": "Got it!",
+      "next": "Next ▶"
+    },
+    "name": {
+      "heading": "Name your Buddy!",
+      "pickWord1": "Pick a word",
+      "pickWord2": "Pick a creature word",
+      "save": "Save it! 💾",
+      "saveAgain": "Save it! 💾",
+      "saved": "Saved on this device! ✓",
+      "savedLocal": "Saved for now — this device is out of room, so it may not stick.",
+      "keepBuilding": "Keep building 🔧"
+    },
+    "share": {
+      "button": "Share my Buddy",
+      "title": "{{name}} — Biome Buddy",
+      "shared": "Shared! 🎉",
+      "copied": "Link copied! Send it to someone you like.",
+      "failed": "Couldn't copy by itself — here's the link to copy:",
+      "linkAria": "Share link"
+    },
+    "delete": {
+      "title": "Let {{name}} go?",
+      "body": "It will leave this device. You can always build a new one.",
+      "yes": "Yes, let it go",
+      "no": "Keep it"
+    },
+    "sharePage": {
+      "subtitle": "A {{biome}} Buddy, shared with you",
+      "parts": "Its parts",
+      "stats": "How it does in the {{biome}}",
+      "why": "Why this Buddy fits the {{biome}} this way",
+      "science": "Science highlights",
+      "remix": "Make my own version 🔧",
+      "remixNote": "You'll get your own copy to change. This shared Buddy stays just as it is.",
+      "new": "Build a new Buddy",
+      "invalidTitle": "Hmm, this link got scrambled",
+      "invalidBody": "We couldn't read this Buddy. Links only carry the recipe, so nothing is lost — you can build a new one!",
+      "invalidCta": "Go to Biome Buddy"
+    },
+    "review": {
+      "subtitle": "Reviewer preview",
+      "title": "Biome Buddy Prototype",
+      "intro": "Build an organism for a biome, see how its adaptations change what it can do, and experiment with another design.",
+      "start": "Start Biome Buddy",
+      "example": "See an example shared Buddy",
+      "noticeHeading": "Things to notice",
+      "notice1": "Every part is real biology; every bar is fit, not a grade — there is no right build.",
+      "notice2": "K–2 · Guided opens two parts first and unlocks more each time a child tests a change.",
+      "notice3": "Test & Learn explains each bar that moved, in kid sentences, with the science underneath.",
+      "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
+      "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
+    }
   }
 }
