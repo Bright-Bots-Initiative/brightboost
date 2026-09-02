@@ -206,6 +206,65 @@ function setupFirstCompletionMocks(
   prismaMock.gamePersonalBest.upsert.mockResolvedValue(PERSONAL_BEST);
 }
 
+/** #640 — the GamePersonalBest row a replaying student already owns. */
+const EXISTING_BEST = {
+  id: "gpb-1",
+  studentId: "student-123",
+  gameKey: "move_measure",
+  bestScore: 8,
+  lastScore: 8,
+  bestStreak: 3,
+  bestRoundsCompleted: 4,
+  playCount: 1,
+  meta: null,
+};
+
+/** Progress row for an activity the student already finished once. */
+const COMPLETED_PROGRESS_ROW = {
+  id: "prog-1",
+  studentId: "student-123",
+  moduleSlug: "test-module",
+  lessonId: "lesson-1",
+  activityId: "valid-activity",
+  status: "COMPLETED",
+  timeSpentS: 45,
+};
+
+/** Every replay must return this reward block verbatim — zero, always (#640). */
+const ZERO_REWARD = {
+  xpDelta: 0,
+  levelDelta: 0,
+  energyDelta: 0,
+  hpDelta: 0,
+  newAbilitiesDelta: 0,
+};
+
+function setupReplayMocks(existingBest: Record<string, unknown> | null) {
+  prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
+  prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
+  prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
+  prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_PROGRESS_ROW);
+  prismaMock.progress.update.mockResolvedValue(COMPLETED_PROGRESS_ROW);
+  prismaMock.progress.count.mockResolvedValue(1);
+  prismaMock.ability.findMany.mockResolvedValue([]);
+  prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
+  prismaMock.unlockedAbility.createMany.mockResolvedValue({ count: 0 });
+  prismaMock.gamePersonalBest.findUnique.mockResolvedValue(existingBest);
+  prismaMock.gamePersonalBest.create.mockResolvedValue(PERSONAL_BEST);
+  prismaMock.gamePersonalBest.update.mockImplementation(
+    async ({ data }: { data: Record<string, unknown> }) => ({
+      ...EXISTING_BEST,
+      ...data,
+      playCount: EXISTING_BEST.playCount + 1,
+    }),
+  );
+  prismaMock.gamePersonalBest.upsert.mockResolvedValue(PERSONAL_BEST);
+}
+
+function replayBody(result: Record<string, unknown>) {
+  return { ...FIXED_BODY, timeSpentS: 30, result };
+}
+
 describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -333,5 +392,246 @@ describe("POST /api/progress/complete-activity scoring regression (AC-4 / T3)", 
       expect.any(Error),
     );
     warnSpy.mockRestore();
+  });
+});
+
+/**
+ * #640 — replay reconciles GamePersonalBest while staying reward-free.
+ *
+ * Before the fix the COMPLETED short-circuit returned before the personal-best
+ * upsert, so bestScore / lastScore / bestRoundsCompleted / playCount froze at the
+ * first completion and the results screen's "New Record!" never persisted.
+ * These pin BOTH halves: the record moves, and XP still does not.
+ */
+describe("POST /api/progress/complete-activity replay personal best (#640)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupReplayMocks(EXISTING_BEST);
+  });
+
+  it("PB-R-01: replay with a HIGHER score raises bestScore/lastScore/playCount with xpDelta 0", async () => {
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 12,
+        total: 15,
+        streakMax: 5,
+        roundsCompleted: 6,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Already completed");
+
+    // The record moves…
+    expect(prismaMock.gamePersonalBest.update).toHaveBeenCalledTimes(1);
+    const updateArg = prismaMock.gamePersonalBest.update.mock.calls[0][0];
+    expect(updateArg.where).toEqual({ id: "gpb-1" });
+    expect(updateArg.data).toEqual({
+      lastScore: 12,
+      bestScore: 12,
+      bestStreak: 5,
+      bestRoundsCompleted: 6,
+      playCount: { increment: 1 },
+      lastPlayedAt: expect.any(Date),
+    });
+    expect(res.body.personalBest.bestScore).toBe(12);
+    expect(res.body.personalBest.lastScore).toBe(12);
+    expect(res.body.personalBest.playCount).toBe(2);
+    expect(res.body.isNewHighScore).toBe(true);
+    expect(res.body.isNewBestStreak).toBe(true);
+
+    // …and no reward does.
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.avatar.create).not.toHaveBeenCalled();
+  });
+
+  it("PB-R-02: replay with a LOWER score updates lastScore/playCount but NOT bestScore", async () => {
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 3,
+        total: 15,
+        streakMax: 1,
+        roundsCompleted: 2,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const updateArg = prismaMock.gamePersonalBest.update.mock.calls[0][0];
+    expect(updateArg.data).toEqual({
+      lastScore: 3,
+      bestScore: 8, // held at the earlier best — a worse run never lowers it
+      bestStreak: 3,
+      bestRoundsCompleted: 4,
+      playCount: { increment: 1 },
+      lastPlayedAt: expect.any(Date),
+    });
+    expect(res.body.personalBest.bestScore).toBe(8);
+    expect(res.body.personalBest.lastScore).toBe(3);
+    expect(res.body.personalBest.playCount).toBe(2);
+    expect(res.body.isNewHighScore).toBe(false);
+    expect(res.body.isNewBestStreak).toBe(false);
+
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+  });
+
+  it("PB-R-03: replay tying the best is not a new record (strict >), still xpDelta 0", async () => {
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 8,
+        total: 15,
+        streakMax: 3,
+        roundsCompleted: 4,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.isNewHighScore).toBe(false);
+    expect(res.body.isNewBestStreak).toBe(false);
+    expect(res.body.personalBest.bestScore).toBe(8);
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+  });
+
+  it("PB-R-04: idempotency matrix — retry, refresh, double submit and replay never duplicate XP", async () => {
+    // Same request four times over: an identical retry, a page refresh that
+    // re-posts, a double submission, and a genuinely better replay. XP must be
+    // 0 on every one of them; only the personal best is allowed to move.
+    const repeats = [
+      { label: "retry", result: { ...FIXED_RESULT, roundsCompleted: 4 } },
+      { label: "refresh", result: { ...FIXED_RESULT, roundsCompleted: 4 } },
+      {
+        label: "double-submit",
+        result: { ...FIXED_RESULT, roundsCompleted: 4 },
+      },
+      {
+        label: "better-replay",
+        result: {
+          gameKey: "move_measure",
+          score: 14,
+          total: 15,
+          streakMax: 6,
+          roundsCompleted: 7,
+        },
+      },
+    ];
+
+    for (const { label, result } of repeats) {
+      const res = await completeActivity(replayBody(result));
+      expect(res.status, label).toBe(200);
+      expect(res.body.message, label).toBe("Already completed");
+      expect(res.body.reward, label).toEqual(ZERO_REWARD);
+    }
+
+    // Four repeats, zero XP writes, zero level/ability churn.
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.avatar.create).not.toHaveBeenCalled();
+    expect(prismaMock.unlockedAbility.createMany).not.toHaveBeenCalled();
+    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+
+    // Every repeat still reconciled the record (playCount is the play counter,
+    // XP is not) and only the better run claimed a new high score.
+    expect(prismaMock.gamePersonalBest.update).toHaveBeenCalledTimes(4);
+    const bestScores = prismaMock.gamePersonalBest.update.mock.calls.map(
+      (c) => c[0].data.bestScore,
+    );
+    expect(bestScores).toEqual([8, 8, 8, 14]);
+    for (const call of prismaMock.gamePersonalBest.update.mock.calls) {
+      expect(call[0].data.playCount).toEqual({ increment: 1 });
+    }
+  });
+
+  it("PB-R-05: replay without a gameKey writes no record and still returns xpDelta 0", async () => {
+    const res = await completeActivity(replayBody({ score: 9, total: 15 }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+    expect(res.body.personalBest).toBeNull();
+    expect(res.body.isNewHighScore).toBe(false);
+    expect(res.body.isNewBestStreak).toBe(false);
+    expect(prismaMock.gamePersonalBest.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.update).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
+  });
+
+  it("PB-R-06: first-ever record on a replay creates the row (legacy completions predate GamePersonalBest)", async () => {
+    setupReplayMocks(null);
+
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 8,
+        total: 10,
+        streakMax: 3,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(prismaMock.gamePersonalBest.create.mock.calls[0][0].data).toEqual(
+      EXPECTED_GPB_CREATE,
+    );
+    expect(res.body.personalBest).toEqual(PERSONAL_BEST);
+    expect(res.body.isNewHighScore).toBe(true);
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+  });
+
+  it("PB-R-07: a failed record write never fails the replay and claims no record", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    prismaMock.gamePersonalBest.update.mockRejectedValue(
+      new Error("forced GPB failure"),
+    );
+
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 12,
+        total: 15,
+        streakMax: 5,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.reward).toEqual(ZERO_REWARD);
+    expect(res.body.personalBest).toBeNull();
+    expect(res.body.isNewHighScore).toBe(false);
+    expect(res.body.isNewBestStreak).toBe(false);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[complete-activity] Failed to upsert GamePersonalBest:",
+      expect.any(Error),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("PB-R-08: avatar-backfill replay keeps its backfilled XP and also reconciles the record", async () => {
+    // completedCount=1 → XP_PER_ACTIVITY(50); the backfill delta is pre-existing
+    // XP being surfaced, not a new award for this replay.
+    const backfilledAvatar = {
+      ...AVATAR_BEFORE,
+      id: "avatar-backfilled",
+      xp: 50,
+    };
+    prismaMock.avatar.findUnique.mockResolvedValue(null);
+    prismaMock.avatar.create.mockResolvedValue(backfilledAvatar);
+
+    const res = await completeActivity(
+      replayBody({
+        gameKey: "move_measure",
+        score: 12,
+        total: 15,
+        streakMax: 5,
+        roundsCompleted: 6,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Already completed (avatar backfilled)");
+    expect(res.body.reward.xpDelta).toBe(50);
+    // No fresh award: the avatar row was created with the backfill, not updated.
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(res.body.personalBest.bestScore).toBe(12);
+    expect(res.body.isNewHighScore).toBe(true);
   });
 });
