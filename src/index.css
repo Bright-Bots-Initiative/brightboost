@@ -89,21 +89,19 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* #681: the document is light-only. Pathways ships its own scoped dark theme
+     via a `.dark` class wrapper (src/components/pathways/PathwaysLayout.tsx),
+     so the OS preference must never repaint the canvas. Previously this was the
+     Vite starter's `color-scheme: light dark` + `#242424`, which put near-black
+     behind every surface that does not paint its own background. */
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
 }
 
 body {
@@ -134,7 +132,11 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  /* #681: no `background-color` here on purpose. The Vite starter set `#1a1a1a`
+     (and only lightened it inside its light-mode media query, which this file
+     never carried), so every button without its own bg utility rendered as a
+     near-black box in BOTH schemes. Tailwind preflight's transparent button
+     background is the intended default. */
   cursor: pointer;
   transition: border-color 0.25s;
 }
