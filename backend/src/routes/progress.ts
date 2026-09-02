@@ -231,20 +231,15 @@ router.get("/get-progress", requireAuth, async (req, res) => {
  * #821: express 4 does not catch async rejections — an unhandled throw left
  * the request with NO response at all (observed as a 20s client timeout when
  * a racing create hit P2002). Known race outcomes are handled in-line below;
- * this wrapper is the backstop that turns anything unexpected into a JSON 500
- * instead of a hang.
+ * anything unexpected is delegated to the app's error middleware
+ * (server.ts), which answers a JSON 500 and honors err.status for 4xx.
  */
 const answerAsyncErrors =
   (
     fn: (req: express.Request, res: express.Response) => Promise<unknown>,
   ): express.RequestHandler =>
-  (req, res) => {
-    fn(req, res).catch((e) => {
-      console.error("[complete-activity] Unhandled error:", e);
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Internal server error" });
-      }
-    });
+  (req, res, next) => {
+    fn(req, res).catch(next);
   };
 
 // Complete an activity (MVP)
@@ -362,29 +357,38 @@ router.post(
     // the reward-free path — XP, game_completed, and unlock checks are
     // winner-only, so one physical completion can never award twice.
     let finalProgress;
-    if (existing) {
+
+    // Claims row.id's transition into COMPLETED. Returns the winner's row, or
+    // null when a racing COMPLETION already owns it. The reconstructed row
+    // deliberately skips a re-read (updateMany returns only a count):
+    // updatedAt — and a concurrent checkpoint's timeSpentS increment — reflect
+    // the pre-claim read; no current consumer reads those from this response.
+    const claimCompletion = async (row: NonNullable<typeof existing>) => {
       const claimed = await prisma.progress.updateMany({
-        where: { id: existing.id, status: { not: ProgressStatus.COMPLETED } },
+        where: { id: row.id, status: { not: ProgressStatus.COMPLETED } },
         data: {
           status: ProgressStatus.COMPLETED,
           timeSpentS: { increment: timeSpentS || 0 },
           ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
-      if (claimed.count === 0) {
+      if (claimed.count === 0) return null;
+      return {
+        ...row,
+        status: ProgressStatus.COMPLETED,
+        timeSpentS: (row.timeSpentS || 0) + (timeSpentS || 0),
+        ...(gs !== undefined ? { gameSpecific: gs } : {}),
+      };
+    };
+
+    if (existing) {
+      finalProgress = await claimCompletion(existing);
+      if (!finalProgress) {
         const row = await prisma.progress.findUnique({
           where: { id: existing.id },
         });
         return respondRewardFree(row ?? existing);
       }
-      // The claim matched exactly this write — reconstruct the row rather
-      // than re-read it (updateMany returns only a count).
-      finalProgress = {
-        ...existing,
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: (existing.timeSpentS || 0) + (timeSpentS || 0),
-        ...(gs !== undefined ? { gameSpecific: gs } : {}),
-      };
     } else {
       try {
         finalProgress = await prisma.progress.create({
@@ -403,11 +407,26 @@ router.post(
         const row = await prisma.progress.findUnique({
           where: { studentId_activityId: { studentId, activityId } },
         });
-        // P2002 proves the row exists; the re-read can only miss it if the
-        // winner's transaction has not committed yet — surface that rarity
-        // to the backstop rather than inventing a row.
+        // P2002 implies the duplicate row is committed (a conflicting INSERT
+        // blocks on an in-flight duplicate and errors only after it commits),
+        // so a missing row here means a concurrent delete (e.g. a User
+        // cascade) — surface that to the backstop rather than invent a row.
         if (!row) throw e;
-        return respondRewardFree(row);
+        if (row.status !== ProgressStatus.COMPLETED) {
+          // #827 review B1: the create lost to a NON-completing writer (a
+          // checkpoint upsert), not to a completion. This request still owns
+          // the completion — claim the row it lost to instead of discarding
+          // the play as "already completed".
+          finalProgress = await claimCompletion(row);
+          if (!finalProgress) {
+            const latest = await prisma.progress.findUnique({
+              where: { id: row.id },
+            });
+            return respondRewardFree(latest ?? row);
+          }
+        } else {
+          return respondRewardFree(row);
+        }
       }
     }
 

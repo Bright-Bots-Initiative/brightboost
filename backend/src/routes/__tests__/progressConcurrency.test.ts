@@ -64,6 +64,7 @@ vi.mock("../../services/analytics", () => ({
 }));
 
 import app from "../../server";
+import { GAME_SPECIFIC_SCHEMAS } from "../../validation/gameSpecific";
 
 const ACTIVITY = {
   id: "valid-activity",
@@ -186,6 +187,11 @@ describe("#821 — concurrent first completion of an existing IN_PROGRESS row", 
     expect(deltas[0]).toBe(0);
     // Rewards were applied to the avatar exactly once.
     expect(prismaMock.avatar.update).toHaveBeenCalledTimes(1);
+    // #827 review N1: pin that the claim ASKS the right question — the status
+    // guard is what makes the database adjudicate, not the mock's answers.
+    expect(
+      prismaMock.progress.updateMany.mock.calls[0][0].where.status,
+    ).toEqual({ not: "COMPLETED" });
   });
 
   it("DUP-2: the losing request still reconciles the personal best (a loss is a replay)", async () => {
@@ -200,6 +206,10 @@ describe("#821 — concurrent first completion of an existing IN_PROGRESS row", 
     expect(res.body.reward.xpDelta).toBe(0);
     // Personal best was still touched for the losing submission (#640 contract).
     expect(prismaMock.gamePersonalBest.create).toHaveBeenCalledTimes(1);
+    // #827 review N1: the claim carried its status guard.
+    expect(
+      prismaMock.progress.updateMany.mock.calls[0][0].where.status,
+    ).toEqual({ not: "COMPLETED" });
   });
 });
 
@@ -215,6 +225,59 @@ describe("#821 — concurrent first completion with no existing row", () => {
       { code: "P2002" },
     );
     prismaMock.progress.create.mockRejectedValueOnce(p2002);
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(200);
+    expect(res.body.reward.xpDelta).toBe(0);
+    expect(
+      trackServerMock.mock.calls.filter((c) => c[1] === "game_completed"),
+    ).toHaveLength(0);
+  }, 5000);
+
+  it("CREATE-3: losing the create to a CHECKPOINT still completes and awards (#827 review B1)", async () => {
+    // The unique key can be taken by a NON-completing writer: a checkpoint
+    // upsert creates the row as IN_PROGRESS between this request's read and
+    // its create. P2002 then proves the row exists — NOT that the activity
+    // completed. Pre-fix, this request answered "Already completed" with
+    // xpDelta 0 and the play was silently discarded.
+    prismaMock.progress.findUnique
+      .mockResolvedValueOnce(null) // initial read: no row yet
+      .mockResolvedValue(IN_PROGRESS_ROW); // re-read: the checkpoint's row
+    const p2002 = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    prismaMock.progress.create.mockRejectedValueOnce(p2002);
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+
+    const res = await completeActivity(BODY);
+
+    expect(res.status).toBe(200);
+    // This request still owns the completion: it claimed the checkpoint's row.
+    expect(res.body.reward.xpDelta).toBeGreaterThan(0);
+    expect(res.body.progress.status).toBe("COMPLETED");
+    expect(
+      trackServerMock.mock.calls.filter((c) => c[1] === "game_completed"),
+    ).toHaveLength(1);
+    const claim = prismaMock.progress.updateMany.mock.calls[0][0];
+    expect(claim.where).toEqual({
+      id: IN_PROGRESS_ROW.id,
+      status: { not: "COMPLETED" },
+    });
+  }, 5000);
+
+  it("CREATE-4: losing the create AND the follow-up claim is reward-free, never doubled", async () => {
+    // Worst case: the checkpoint row is then completed by yet another racer
+    // before this request's claim lands — the claim matches zero rows.
+    prismaMock.progress.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(IN_PROGRESS_ROW) // P2002 re-read
+      .mockResolvedValue(COMPLETED_ROW); // post-claim re-read
+    const p2002 = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    prismaMock.progress.create.mockRejectedValueOnce(p2002);
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 0 });
 
     const res = await completeActivity(BODY);
 
@@ -350,16 +413,9 @@ describe("#809 — gameKey validation", () => {
   });
 
   it("VAL-2: every registered game key still passes the tightened pattern", async () => {
-    // Mirrors the shape of real keys (snake_case ascii) without importing the
-    // registry — the registry itself is validated by VAL-3's pattern check in
-    // the schema tests if present; here we pin representative keys.
-    for (const key of [
-      "move_measure",
-      "sky_shield",
-      "qualify_tune_race",
-      "buddy_garden_sort",
-      "gotcha_gears_unity",
-    ]) {
+    // Self-maintaining (#827 review N8): iterate the real registry so a new
+    // game key that fails the pattern is caught here, not in production.
+    for (const key of Object.keys(GAME_SPECIFIC_SCHEMAS)) {
       prismaMock.progress.findUnique.mockResolvedValue(null);
       prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
       const res = await completeActivity({
