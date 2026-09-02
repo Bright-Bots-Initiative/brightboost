@@ -60,7 +60,7 @@ type GamePhase =
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CELL = 52;
+export const MAZE_CELL = 52;
 const MAX_COLLISIONS_FOR_HINT = 2;
 const playPhases = new Set(["tutorial", "guided", "main"]);
 const LEVELS = 4; // 3, but +1 offset
@@ -224,11 +224,37 @@ function applyDir(r: number, c: number, dir: Dir): [number, number] {
   return [r, c]; // wait
 }
 
+/**
+ * Fit-to-width factor for the maze board (#793).
+ *
+ * The board is a fixed grid of `MAZE_CELL` cells, so a 7x7 map is 364px wide.
+ * Student chrome eats ~80px before the game sees the viewport, which leaves a
+ * 320px phone ~240px — narrow enough that the goal tile used to be clipped
+ * away entirely.
+ *
+ * There is deliberately **no floor** on the result: a partly visible maze is
+ * unplayable (the learner cannot see the goal, the orbs, or the sweepers they
+ * have to dodge), so the board keeps shrinking rather than clipping. That
+ * costs no tap-target size — the board is display-only, and movement is the
+ * separate full-size D-pad plus the arrow keys.
+ *
+ * Never scales up, so a roomy screen keeps full-size cells. An unmeasured or
+ * nonsense width falls back to 1 rather than collapsing the board to nothing.
+ */
+export function mazeBoardScale(
+  containerWidth: number,
+  boardWidth: number,
+): number {
+  if (!Number.isFinite(containerWidth) || containerWidth <= 0) return 1;
+  if (!Number.isFinite(boardWidth) || boardWidth <= 0) return 1;
+  return Math.min(containerWidth / boardWidth, 1);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Maze Board — renders the grid + entities
 // ═══════════════════════════════════════════════════════════════════════════
 
-function MazeBoard({
+export function MazeBoard({
   map,
   playerPos,
   collectedOrbs,
@@ -243,102 +269,142 @@ function MazeBoard({
   showHintPath?: [number, number][];
   flashCell?: string | null;
 }) {
-  const w = map.cols * CELL;
-  const h = map.rows * CELL;
+  const w = map.cols * MAZE_CELL;
+  const h = map.rows * MAZE_CELL;
+
+  // Responsive scaling — same approach as Bounce & Buds / Quantum Quest /
+  // Qualify & Race: measure the available width and shrink the whole board so
+  // it fits. Before this, a 7x7 map was 364px of fixed cells inside an
+  // `overflow-hidden` box, so a phone simply lost the right-hand columns —
+  // goal tile included (#793).
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    // Measure once up front so the first paint of a new map (the board grows
+    // 4x4 -> 5x5 -> 7x7 between phases) is already fitted, not clipped until
+    // the observer fires.
+    setScale(mazeBoardScale(el.getBoundingClientRect().width, w));
+    const obs = new ResizeObserver((entries) =>
+      setScale(mazeBoardScale(entries[0]?.contentRect.width ?? w, w)),
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [w]);
 
   return (
     <div
-      className="relative mx-auto rounded-xl overflow-hidden border-2 border-cyan-300 shadow-lg select-none"
-      style={{ width: w, height: h, maxWidth: "100%" }}
+      ref={wrapperRef}
+      className="mx-auto select-none"
+      style={{ maxWidth: w }}
     >
-      {/* Grid cells */}
-      {Array.from({ length: map.rows * map.cols }, (_, i) => {
-        const r = Math.floor(i / map.cols);
-        const c = i % map.cols;
-        const key = `${r}-${c}`;
-        const isW = map.walls.some(([wr, wc]) => wr === r && wc === c);
-        const isGoal = map.goal[0] === r && map.goal[1] === c;
-        const isSafe = cellAt(r, c, map.safePads);
-        const isOrb = cellAt(r, c, map.orbs) && !collectedOrbs.has(key);
-        const isFlash = flashCell === key;
-
-        let bg = "bg-cyan-50";
-        if (isW) bg = "bg-slate-600";
-        else if (isGoal) bg = "bg-emerald-200";
-        else if (isSafe) bg = "bg-amber-100";
-
-        return (
-          <div
-            key={key}
-            className={`absolute flex items-center justify-center ${bg} ${isFlash ? "ring-2 ring-red-400" : ""}`}
-            style={{
-              left: c * CELL,
-              top: r * CELL,
-              width: CELL,
-              height: CELL,
-              borderRight: "1px solid rgba(0,0,0,0.06)",
-              borderBottom: "1px solid rgba(0,0,0,0.06)",
-            }}
-          >
-            {isW && <span className="text-xl">🧱</span>}
-            {isGoal && <span className="text-2xl float-idle">🏁</span>}
-            {isSafe && !isW && <span className="text-lg">🛡️</span>}
-            {isOrb && <span className="text-xl float-idle">💡</span>}
-          </div>
-        );
-      })}
-
-      {/* Hint path dots */}
-      {showHintPath?.map(([r, c], i) => (
-        <div
-          key={`hint-${i}`}
-          className="absolute w-2 h-2 rounded-full bg-cyan-400/40 z-5"
-          style={{
-            left: c * CELL + CELL / 2 - 4,
-            top: r * CELL + CELL / 2 - 4,
-          }}
-        />
-      ))}
-
-      {/* Sweepers */}
-      {Object.entries(sweeperPositions).map(([id, [sr, sc]]) => {
-        const sweeper = map.sweepers.find((s) => s.id === id);
-        const style = SWEEPER_STYLES[
-          sweeper?.type as keyof typeof SWEEPER_STYLES
-        ] ?? {
-          icon: "⚫",
-          color: "text-black",
-          labelKey: "games.mazeMaps.unknownSweeper",
-        };
-
-        return (
-          <div
-            key={id}
-            className="absolute flex items-center justify-center z-10 transition-all duration-200"
-            style={{
-              left: sc * CELL,
-              top: sr * CELL,
-              width: CELL,
-              height: CELL,
-            }}
-            title={t(style.labelKey, { defaultValue: "Unknown Sweeper" })}
-          >
-            <span className={`text-2xl ${style.color}`}>{style.icon}</span>
-          </div>
-        );
-      })}
-
-      {/* Player */}
       <div
-        className="absolute flex items-center justify-center z-20 transition-all duration-200"
-        style={{
-          left: playerPos[1] * CELL,
-          top: playerPos[0] * CELL,
-          width: CELL,
-          height: CELL,
-        }}
+        className="relative mx-auto rounded-xl overflow-hidden border-2 border-cyan-300 shadow-lg"
+        // maxWidth is a belt-and-braces guard: it keeps the very first paint
+        // from widening the page while the measurement above resolves.
+        style={{ width: w * scale, height: h * scale, maxWidth: "100%" }}
       >
-        <span className="text-2xl">🤖</span>
+        <div
+          className="absolute top-0 left-0"
+          style={{
+            width: w,
+            height: h,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          {/* Grid cells */}
+          {Array.from({ length: map.rows * map.cols }, (_, i) => {
+            const r = Math.floor(i / map.cols);
+            const c = i % map.cols;
+            const key = `${r}-${c}`;
+            const isW = map.walls.some(([wr, wc]) => wr === r && wc === c);
+            const isGoal = map.goal[0] === r && map.goal[1] === c;
+            const isSafe = cellAt(r, c, map.safePads);
+            const isOrb = cellAt(r, c, map.orbs) && !collectedOrbs.has(key);
+            const isFlash = flashCell === key;
+
+            let bg = "bg-cyan-50";
+            if (isW) bg = "bg-slate-600";
+            else if (isGoal) bg = "bg-emerald-200";
+            else if (isSafe) bg = "bg-amber-100";
+
+            return (
+              <div
+                key={key}
+                className={`absolute flex items-center justify-center ${bg} ${isFlash ? "ring-2 ring-red-400" : ""}`}
+                style={{
+                  left: c * MAZE_CELL,
+                  top: r * MAZE_CELL,
+                  width: MAZE_CELL,
+                  height: MAZE_CELL,
+                  borderRight: "1px solid rgba(0,0,0,0.06)",
+                  borderBottom: "1px solid rgba(0,0,0,0.06)",
+                }}
+              >
+                {isW && <span className="text-xl">🧱</span>}
+                {isGoal && <span className="text-2xl float-idle">🏁</span>}
+                {isSafe && !isW && <span className="text-lg">🛡️</span>}
+                {isOrb && <span className="text-xl float-idle">💡</span>}
+              </div>
+            );
+          })}
+
+          {/* Hint path dots */}
+          {showHintPath?.map(([r, c], i) => (
+            <div
+              key={`hint-${i}`}
+              className="absolute w-2 h-2 rounded-full bg-cyan-400/40 z-5"
+              style={{
+                left: c * MAZE_CELL + MAZE_CELL / 2 - 4,
+                top: r * MAZE_CELL + MAZE_CELL / 2 - 4,
+              }}
+            />
+          ))}
+
+          {/* Sweepers */}
+          {Object.entries(sweeperPositions).map(([id, [sr, sc]]) => {
+            const sweeper = map.sweepers.find((s) => s.id === id);
+            const style = SWEEPER_STYLES[
+              sweeper?.type as keyof typeof SWEEPER_STYLES
+            ] ?? {
+              icon: "⚫",
+              color: "text-black",
+              labelKey: "games.mazeMaps.unknownSweeper",
+            };
+
+            return (
+              <div
+                key={id}
+                className="absolute flex items-center justify-center z-10 transition-all duration-200"
+                style={{
+                  left: sc * MAZE_CELL,
+                  top: sr * MAZE_CELL,
+                  width: MAZE_CELL,
+                  height: MAZE_CELL,
+                }}
+                title={t(style.labelKey, { defaultValue: "Unknown Sweeper" })}
+              >
+                <span className={`text-2xl ${style.color}`}>{style.icon}</span>
+              </div>
+            );
+          })}
+
+          {/* Player */}
+          <div
+            className="absolute flex items-center justify-center z-20 transition-all duration-200"
+            style={{
+              left: playerPos[1] * MAZE_CELL,
+              top: playerPos[0] * MAZE_CELL,
+              width: MAZE_CELL,
+              height: MAZE_CELL,
+            }}
+          >
+            <span className="text-2xl">🤖</span>
+          </div>
+        </div>
       </div>
     </div>
   );
