@@ -58,14 +58,37 @@ export {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-export function timeLabel(s: number) {
-  return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow";
+/**
+ * Display bands for the qualifying-results cards. These return a stable band
+ * **id**, never display text: the id reads the same in every locale, so the
+ * pure helper stays testable while the component owns the single `t()` call
+ * (#805). Thresholds are unchanged from the pre-#805 `timeLabel`/`smoothLabel`.
+ */
+export type TimeBand = "fast" | "medium" | "slow";
+export type SmoothBand = "smooth" | "rough";
+
+export function timeBand(s: number): TimeBand {
+  return s < 15 ? "fast" : s < 22 ? "medium" : "slow";
 }
+export function smoothBand(s: number): SmoothBand {
+  return s >= 70 ? "smooth" : "rough";
+}
+/**
+ * Locale key + English fallback for every display band. Exported so the
+ * locale-completeness test can walk the real table instead of regexing JSX —
+ * the band keys are reached through a variable, which the Set 2 English
+ * integrity scan (literal `t("…")` only) cannot see.
+ */
+export const BAND_LABELS = {
+  fast: { key: "games.qualifyTuneRace.timeBand.fast", en: "Fast" },
+  medium: { key: "games.qualifyTuneRace.timeBand.medium", en: "Medium" },
+  slow: { key: "games.qualifyTuneRace.timeBand.slow", en: "Slow" },
+  smooth: { key: "games.qualifyTuneRace.smoothBand.smooth", en: "Smooth" },
+  rough: { key: "games.qualifyTuneRace.smoothBand.rough", en: "Rough" },
+} as const satisfies Record<TimeBand | SmoothBand, { key: string; en: string }>;
+
 export function timeIcon(s: number) {
   return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢";
-}
-export function smoothLabel(s: number) {
-  return s >= 70 ? "Smooth" : "Rough";
 }
 export function smoothIcon(s: number) {
   return s >= 70 ? "✨" : "💨";
@@ -74,17 +97,38 @@ export function arrow(a: number, b: number) {
   return b < a ? "⬇️" : b > a ? "⬆️" : "➡️";
 }
 
-export function calculateQualifyTuneRaceScore(
-  run1: RunResult | null,
-  run2: RunResult | null,
-  exitAnswer: string | null,
-) {
-  if (!run1 || !run2) return { score: 0, total: 10 };
-  // Improvement credit is earned by improving, or by maintaining a result that
-  // was already at the ceiling. Without the ceiling clauses a flawless first run
-  // made these points unreachable: a perfect-both-runs student scored 5/10 while
-  // a sloppy one who tidied up scored 10/10. Repeating a non-ceiling result
-  // still earns nothing, so the incentive to improve is intact.
+/** Why a metric earned its improvement point — or why it earned nothing. */
+export type MetricCredit = "improved" | "held" | "none";
+
+export interface RunCredit {
+  bumps: MetricCredit;
+  time: MetricCredit;
+  smoothness: MetricCredit;
+}
+
+const creditFor = (improved: boolean, heldAtCeiling: boolean): MetricCredit =>
+  improved ? "improved" : heldAtCeiling ? "held" : "none";
+
+/**
+ * The single source of truth for "did this metric earn its point, and why".
+ *
+ * Improvement credit is earned by improving, or by maintaining a result that
+ * was already at the ceiling. Without the ceiling clauses a flawless first run
+ * made these points unreachable: a perfect-both-runs student scored 5/10 while
+ * a sloppy one who tidied up scored 10/10. Repeating a non-ceiling result
+ * still earns nothing, so the incentive to improve is intact.
+ *
+ * The scorer and the compare rows both read this (#805). They used to decide
+ * independently — the rows on a bare `run2 < run1`, which knows nothing about
+ * ceilings — so a flawless student who picked Grip Tires saw all three rows
+ * render grey "same" under "What got better?" while scoring 10/10 · 3★. Any
+ * future clause added here reaches the copy in the same commit, by construction.
+ *
+ * `improved` outranks `held` when both hold (Speed Boost's cone-free lap is
+ * strictly faster *and* at its floor): the number visibly moved, so the row
+ * should say so.
+ */
+export function metricCredit(run1: RunResult, run2: RunResult): RunCredit {
   const heldPerfectBumps =
     run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
   // Two cone-free laps. Cones are the only thing that costs lap time in the
@@ -96,15 +140,57 @@ export function calculateQualifyTuneRaceScore(
   // Before #806 this clause read the "Fast" display band instead, which the
   // qualifying lap could only enter on a ≥85.4 Hz display — dead on a 60 Hz
   // classroom projector, free on a gaming laptop, and coupled to a string
-  // #805 wants to translate.
+  // #805 has since translated (the coupling is gone: nothing here reads a label).
   const heldFloorTime = heldPerfectBumps;
   const heldMaxSmoothness =
     run1.smoothness >= MAX_CLEAN_SMOOTHNESS &&
     run2.smoothness >= MAX_CLEAN_SMOOTHNESS;
+  return {
+    bumps: creditFor(run2.bumps < run1.bumps, heldPerfectBumps),
+    time: creditFor(run2.time < run1.time, heldFloorTime),
+    smoothness: creditFor(run2.smoothness > run1.smoothness, heldMaxSmoothness),
+  };
+}
+
+/** How one compare row renders. `held` is a positive state, never grey/red. */
+export type CompareRowState = "improved" | "held" | "same" | "worse";
+
+/**
+ * Row state for one metric. Takes the credit rather than recomputing it, so the
+ * row can only ever say what the scorer counted; `same` / `worse` are the two
+ * ways of spelling "no credit" and carry no scoring meaning of their own.
+ */
+export function compareRowState(
+  credit: MetricCredit,
+  v1: number,
+  v2: number,
+): CompareRowState {
+  if (credit !== "none") return credit;
+  return v1 === v2 ? "same" : "worse";
+}
+
+/**
+ * "What got better?" is only a fair question when something did — a student
+ * who held every ceiling improved nothing and still earned every point, so
+ * the compare heading swaps to "What stayed at your best?" exactly then.
+ * Exported and pinned by tests (#844 review NB-1): this is the screen's one
+ * piece of new behaviour, and inlined in JSX it had no automated guard.
+ */
+export function asksWhatGotBetter(credits: MetricCredit[]): boolean {
+  return credits.includes("improved") || !credits.includes("held");
+}
+
+export function calculateQualifyTuneRaceScore(
+  run1: RunResult | null,
+  run2: RunResult | null,
+  exitAnswer: string | null,
+) {
+  if (!run1 || !run2) return { score: 0, total: 10 };
+  const credit = metricCredit(run1, run2);
   let s = 3;
-  if (run2.bumps < run1.bumps || heldPerfectBumps) s += 2;
-  if (run2.time < run1.time || heldFloorTime) s += 2;
-  if (run2.smoothness > run1.smoothness || heldMaxSmoothness) s += 1;
+  if (credit.bumps !== "none") s += 2;
+  if (credit.time !== "none") s += 2;
+  if (credit.smoothness !== "none") s += 1;
   if (exitAnswer === "one") s += 2;
   return { score: Math.min(s, 10), total: 10 };
 }
@@ -181,6 +267,10 @@ function RacePlayfield({
   const [upgrade, setUpgrade] = useState<Upgrade | null>(null);
   const [exitAnswer, setExitAnswer] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+
+  /** Bands are ids; the one place they become words is here (#805). */
+  const bandText = (band: TimeBand | SmoothBand) =>
+    t(BAND_LABELS[band].key, { defaultValue: BAND_LABELS[band].en });
 
   const rafId = useRef(0);
   const engineRef = useRef<RaceEngine | null>(null);
@@ -466,7 +556,7 @@ function RacePlayfield({
             icon={timeIcon(run1.time)}
             value={`${run1.time}s`}
             label={`⏱️ ${t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" })}`}
-            sub={timeLabel(run1.time)}
+            sub={bandText(timeBand(run1.time))}
             color="text-indigo-600"
           />
           <MetricCard
@@ -481,7 +571,7 @@ function RacePlayfield({
             icon={smoothIcon(run1.smoothness)}
             value={`${run1.smoothness}`}
             label={`🌊 ${t("games.qualifyTuneRace.smoothLabel", { defaultValue: "Smoothness" })}`}
-            sub={smoothLabel(run1.smoothness)}
+            sub={bandText(smoothBand(run1.smoothness))}
             color="text-emerald-500"
           />
         </div>
@@ -594,6 +684,8 @@ function RacePlayfield({
 
   // ── Phase: compare ──────────────────────────────────────────────────
   if (phase === "compare" && run1 && run2) {
+    // The scorer's own per-metric decision — not a second opinion (#805).
+    const credit = metricCredit(run1, run2);
     const metrics = [
       {
         label: t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" }),
@@ -602,6 +694,7 @@ function RacePlayfield({
         v2: run2.time,
         unit: "s",
         lb: true,
+        credit: credit.time,
       },
       {
         label: t("games.qualifyTuneRace.bumpsLabel", { defaultValue: "Bumps" }),
@@ -610,6 +703,7 @@ function RacePlayfield({
         v2: run2.bumps,
         unit: "",
         lb: true,
+        credit: credit.bumps,
       },
       {
         label: t("games.qualifyTuneRace.smoothLabel", {
@@ -620,8 +714,11 @@ function RacePlayfield({
         v2: run2.smoothness,
         unit: "",
         lb: false,
+        credit: credit.smoothness,
       },
     ];
+    const credits = [credit.bumps, credit.time, credit.smoothness];
+    const askWhatGotBetter = asksWhatGotBetter(credits);
     return (
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
         <ProgressHUD step={2} totalLevels={LEVELS} />
@@ -633,16 +730,26 @@ function RacePlayfield({
 
         <div className="space-y-3">
           {metrics.map((m) => {
-            const better = m.lb ? m.v2 < m.v1 : m.v2 > m.v1;
-            const same = m.v1 === m.v2;
+            const state = compareRowState(m.credit, m.v1, m.v2);
+            const earned = state === "improved" || state === "held";
             return (
               <div
                 key={m.label}
                 className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-md border"
               >
                 <div className="text-left">
-                  <span className="text-lg mr-2">{m.icon}</span>
-                  <span className="font-bold text-slate-700">{m.label}</span>
+                  <div>
+                    <span className="text-lg mr-2">{m.icon}</span>
+                    <span className="font-bold text-slate-700">{m.label}</span>
+                  </div>
+                  {state === "held" && (
+                    <div className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                      ⭐{" "}
+                      {t("games.qualifyTuneRace.heldBest", {
+                        defaultValue: "Held your best!",
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-lg font-extrabold">
                   <span className="text-slate-500">
@@ -654,9 +761,9 @@ function RacePlayfield({
                   </span>
                   <span
                     className={
-                      better
+                      earned
                         ? "text-emerald-600"
-                        : same
+                        : state === "same"
                           ? "text-slate-500"
                           : "text-red-500"
                     }
@@ -670,9 +777,13 @@ function RacePlayfield({
           })}
         </div>
         <p className="text-lg font-bold text-slate-700">
-          {t("games.qualifyTuneRace.whatGotBetter", {
-            defaultValue: "What got better?",
-          })}
+          {askWhatGotBetter
+            ? t("games.qualifyTuneRace.whatGotBetter", {
+                defaultValue: "What got better?",
+              })
+            : t("games.qualifyTuneRace.whatStayedBest", {
+                defaultValue: "What stayed at your best?",
+              })}
         </p>
         <button
           onClick={() => setPhase("exitTicket")}

@@ -7,9 +7,9 @@ import {
   MAX_CLEAN_SMOOTHNESS,
   minCleanLaneChanges,
   OBSTACLES,
-  smoothLabel,
+  smoothBand,
   START_LANE,
-  timeLabel,
+  timeBand,
 } from "../QualifyTuneRaceGame";
 import {
   BUMP_SLOW_FACTOR,
@@ -68,9 +68,14 @@ describe("Qualify, Tune, Race helpers", () => {
   });
 
   it("exports deterministic label helpers", () => {
+    // Re-derived for #805: `timeLabel`/`smoothLabel` returned bare English
+    // ("Fast"/"Smooth") that the component rendered untranslated. They now
+    // return locale-independent band IDS and the component maps the id through
+    // `t()` — so the thresholds are still pinned here (14 s is the fast band,
+    // 80 is the smooth band) while the words live in the locale files.
     expect(laneX(0)).toBeLessThan(laneX(2));
-    expect(timeLabel(14)).toBe("Fast");
-    expect(smoothLabel(80)).toBe("Smooth");
+    expect(timeBand(14)).toBe("fast");
+    expect(smoothBand(80)).toBe("smooth");
     expect(arrow(10, 8)).toBe("⬇️");
   });
 
@@ -182,8 +187,10 @@ describe("Qualify, Tune, Race — improvement bonus at the ceiling (#737)", () =
     // (These 12s/13s laps are ENGINE-UNREACHABLE ON PURPOSE — no car can
     // finish under 14.7s — kept verbatim as the regression witness for the
     // old display-band clause, which awarded them the time point.)
-    expect(timeLabel(12)).toBe("Fast");
-    expect(timeLabel(13)).toBe("Fast");
+    // `timeLabel` became `timeBand` in #805; the band, and therefore this
+    // witness, is unchanged — only the display text moved to the locale files.
+    expect(timeBand(12)).toBe("fast");
+    expect(timeBand(13)).toBe("fast");
     expect(
       calculateQualifyTuneRaceScore(
         { time: 12, bumps: 2, smoothness: 60 },
@@ -195,7 +202,7 @@ describe("Qualify, Tune, Race — improvement bonus at the ceiling (#737)", () =
     // The clause was also unreachable by construction after #806: a qualifying
     // lap is never upgraded, so it cannot finish inside the Fast band at all.
     const qualifyingFloor = Math.round(cleanLapSeconds(null) * 10) / 10;
-    expect(timeLabel(qualifyingFloor)).not.toBe("Fast");
+    expect(timeBand(qualifyingFloor)).not.toBe("fast");
   });
 
   it("does not award bonuses for repeating a non-ceiling result", () => {

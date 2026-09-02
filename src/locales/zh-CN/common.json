@@ -1815,6 +1815,17 @@
       "raceTitle": "最终比赛！",
       "compareTitle": "比较你的比赛结果",
       "whatGotBetter": "哪里变得更好了？",
+      "whatStayedBest": "哪里保持了你的最好成绩？",
+      "heldBest": "保持了你的最好成绩！",
+      "timeBand": {
+        "fast": "快",
+        "medium": "中等",
+        "slow": "慢"
+      },
+      "smoothBand": {
+        "smooth": "平稳",
+        "rough": "颠簸"
+      },
       "exitQuestion": "为了进行更公平的测试，你每次调整应该改变几项事物？",
       "exitCorrect": "一项",
       "exitWrongA": "全部",

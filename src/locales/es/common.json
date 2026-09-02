@@ -1715,6 +1715,17 @@
       "raceTitle": "¡Carrera Final!",
       "compareTitle": "Compara tus Carreras",
       "whatGotBetter": "¿Qué mejoró?",
+      "whatStayedBest": "¿Qué se mantuvo en tu mejor marca?",
+      "heldBest": "¡Mantuviste tu mejor marca!",
+      "timeBand": {
+        "fast": "Rápido",
+        "medium": "Medio",
+        "slow": "Lento"
+      },
+      "smoothBand": {
+        "smooth": "Suave",
+        "rough": "Brusco"
+      },
       "exitQuestion": "Para una prueba justa, ¿cuántas cosas debes cambiar?",
       "exitCorrect": "Una",
       "exitWrongA": "Todas",

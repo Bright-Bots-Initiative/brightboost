@@ -1608,6 +1608,24 @@
       "score": "Điểm",
       "finish": "Hoàn thành"
     },
+    "qualifyTuneRace": {
+      "compareTitle": "So sánh các lượt chạy",
+      "whatGotBetter": "Điều gì đã tốt hơn?",
+      "whatStayedBest": "Điều gì vẫn ở mức tốt nhất?",
+      "heldBest": "Giữ vững mức tốt nhất!",
+      "timeLabel": "Thời gian",
+      "bumpsLabel": "Va chạm",
+      "smoothLabel": "Độ mượt",
+      "timeBand": {
+        "fast": "Nhanh",
+        "medium": "Trung bình",
+        "slow": "Chậm"
+      },
+      "smoothBand": {
+        "smooth": "Mượt",
+        "rough": "Xóc"
+      }
+    },
     "personalBest": {
       "highScore": "Điểm cao nhất",
       "personalBest": "Kỷ lục cá nhân",

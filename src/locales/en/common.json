@@ -1863,6 +1863,17 @@
       "raceTitle": "Final Run!",
       "compareTitle": "Compare Your Runs",
       "whatGotBetter": "What got better?",
+      "whatStayedBest": "What stayed at your best?",
+      "heldBest": "Held your best!",
+      "timeBand": {
+        "fast": "Fast",
+        "medium": "Medium",
+        "slow": "Slow"
+      },
+      "smoothBand": {
+        "smooth": "Smooth",
+        "rough": "Rough"
+      },
       "exitQuestion": "To make a fair test, how many things should you change?",
       "exitCorrect": "One",
       "exitWrongA": "All of them",
