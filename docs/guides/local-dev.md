@@ -1,4 +1,4 @@
-> **Canonical for:** local development troubleshooting. Last verified against code: 2026-08-10.
+> **Canonical for:** local development troubleshooting. Last verified against code: 2026-09-01.
 
 # Local development guide
 
@@ -27,11 +27,11 @@ Vite proxies `/api` → the backend (`vite.config.ts`). Production nginx uses th
 
 ## Prisma error codes
 
-| Code      | Meaning                           | Fix                                                                                                                                                                                                      |
-| --------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **P1001** | Cannot reach the database         | Start Postgres (`docker compose -f docker-compose-pg.yml up -d`). Confirm `DATABASE_URL` / `DIRECT_URL` use host port **5435** and match compose credentials. Copy the same URL into `backend/.env`.     |
-| **P3009** | Failed migrations / migrate state | Do not use `migrate deploy` / `npm run db:init` on a fresh local DB while **#646** is open. Use `npx prisma db push --schema prisma/schema.prisma`, then `npx prisma generate` and `npx prisma db seed`. |
-| **P3018** | Migration failed to apply         | Same as P3009 for local fresh DBs — prefer `db push` until #646 is fixed. Inspect migrate output only if you intentionally run migrate.                                                                  |
+| Code      | Meaning                           | Fix                                                                                                                                                                                                                              |
+| --------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P1001** | Cannot reach the database         | Start Postgres (`docker compose -f docker-compose-pg.yml up -d`). Confirm `DATABASE_URL` / `DIRECT_URL` use host port **5435** and match compose credentials. Copy the same URL into `backend/.env`.                             |
+| **P3009** | Failed migrations / migrate state | A migration genuinely failed against this database — read the migrate output. To rebuild a local DB from scratch, drop it, then `npx prisma db push --schema prisma/schema.prisma`, `npx prisma generate`, `npx prisma db seed`. |
+| **P3018** | Migration failed to apply         | Same as P3009. The `0_init` baseline (**#646**) does build from empty — CI's `db-check` proves it on every run — so this points at local DB state or a new migration, not at the committed history.                              |
 
 ## Backend cannot see `DATABASE_URL`
 

@@ -1,4 +1,4 @@
-> **Canonical for:** zero-to-running setup. Last verified against code: 2026-08-10.
+> **Canonical for:** zero-to-running setup. Last verified against code: 2026-09-01.
 
 # Bright Boost — Local Setup (Zero to Running)
 
@@ -113,7 +113,7 @@ npx prisma generate
 npx prisma db seed
 ```
 
-> **Do not use `npm run db:init` or `prisma migrate deploy` on a fresh local database.** They fail partway (migration-baseline bug **#646**) and leave tables missing. `prisma db push` is the supported local path until #646 is fixed. Production deploy uses migrate via predeploy — see [`DEPLOYMENT.md`](DEPLOYMENT.md).
+> `db push` is the quickest local path — it builds the schema straight from `schema.prisma`, no migration history involved. `prisma migrate deploy` also builds a fresh database correctly now that the **#646** baseline has landed (CI's `db-check` migrates an empty Postgres on every run). Production deploy uses migrate via predeploy — see [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 Seeded demo logins (hashes refresh every seed). Short list:
 
@@ -174,7 +174,7 @@ Use **`test:unit`**, not bare `npm test`. `npm test` loads the Storybook browser
 | ----------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Modules 404 but login works                           | `VITE_API_BASE` missing `/api`                | Set `VITE_API_BASE=/api`; restart Vite. See [`docs/guides/local-dev.md`](docs/guides/local-dev.md).                                                                                            |
 | Prisma `P1001`                                        | Postgres down / wrong URL                     | `docker compose -f docker-compose-pg.yml up -d`; fix `DATABASE_URL`.                                                                                                                           |
-| `P3009` / `P3018` / missing tables                    | `#646` migrate path                           | `npx prisma db push --schema prisma/schema.prisma` then generate + seed.                                                                                                                       |
+| `P3009` / `P3018` / missing tables                    | A migration genuinely failed on this DB       | Read the migrate error. To start clean: drop the local DB, then `npx prisma db push --schema prisma/schema.prisma` and generate + seed.                                                        |
 | Backend `DATABASE_URL` not found / first API DB error | Missing `backend/.env` or plain `npm run dev` | Copy `backend/.env.example` → `backend/.env`; start with the §5 dotenv command. The process may still **listen** without `DATABASE_URL`; failure often appears on the first DB-backed request. |
 | Playwright hang / Vitest wants Chromium               | Bare `npm test`                               | `npm run test:unit`.                                                                                                                                                                           |
 | Docker / WSL2 pain                                    | Docker Desktop                                | Direct-Postgres fallback (§4a).                                                                                                                                                                |

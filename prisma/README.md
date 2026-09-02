@@ -3,7 +3,8 @@
 > ⚠️ **Partly stale.** The "Production Deployment on Azure" / `POSTGRES_URL` notes below are
 > retired — production is Railway + Supabase (see [DEPLOYMENT.md](../DEPLOYMENT.md)).
 > For **local** database setup use [SETUP.md](../SETUP.md): from a clean DB run
-> `npx prisma db push` (not `migrate deploy`/`migrate dev`, which fail from scratch — bug #646).
+> `npx prisma db push` — the quickest path. `migrate deploy` also builds from empty since the
+> #646 baseline (`0_init`) landed; CI's `db-check` migrates an empty Postgres on every run.
 
 This directory contains Prisma schema and migration files for the BrightBoost application.
 
