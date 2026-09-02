@@ -11,6 +11,24 @@ import GameShell, {
 } from "./shared/GameShell";
 import "./shared/game-effects.css";
 import { pickLocale } from "@/utils/localizedContent";
+import {
+  CAR_H,
+  CAR_W,
+  CONE_SIZE,
+  createRaceEngine,
+  LANE_W,
+  laneX,
+  MAX_CLEAN_SMOOTHNESS,
+  minCleanLaneChanges,
+  OBSTACLES,
+  START_LANE,
+  TRACK_H,
+  TRACK_LENGTH,
+  TRACK_W,
+  type RaceEngine,
+  type RunResult,
+  type Upgrade,
+} from "./qualifyTuneRaceEngine";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Phase =
@@ -22,83 +40,25 @@ type Phase =
   | "compare"
   | "exitTicket"
   | "celebration";
-type Upgrade = "grip" | "speed" | "steering";
-interface RunResult {
-  time: number;
-  bumps: number;
-  smoothness: number;
-}
-interface Obstacle {
-  lane: number;
-  y: number;
-}
 
 // ── Constants ─────────────────────────────────────────────────────────────
-const TRACK_W = 360,
-  TRACK_H = 480,
-  LANE_W = TRACK_W / 3;
-const CAR_W = 48,
-  CAR_H = 64,
-  CONE_SIZE = 36;
-const SCROLL_SPEED = 2.5,
-  TRACK_LENGTH = 3200,
-  BUMP_ZONE = 28;
 const LEVELS = 3; // 2 levels, but +1 offset
 // Ceilings a second run can only hold, never beat.
 const PERFECT_BUMPS = 0;
 const FAST_BAND = "Fast";
-/** Every run starts here (see startRun); the smoothness ceiling derives from it. */
-export const START_LANE = 1;
 
-export const OBSTACLES: readonly Obstacle[] = [
-  { lane: 1, y: 300 },
-  { lane: 0, y: 600 },
-  { lane: 2, y: 900 },
-  { lane: 1, y: 1200 },
-  { lane: 0, y: 1500 },
-  { lane: 2, y: 1700 },
-  { lane: 1, y: 2000 },
-  { lane: 0, y: 2300 },
-  { lane: 2, y: 2600 },
-  { lane: 1, y: 2900 },
-];
-
-/**
- * Fewest lane changes that dodge every obstacle starting from `startLane`.
- * `steer()` moves exactly one lane per input and counts one transition, so
- * moving a → b costs |a − b|. Exported so the tests can cross-check it with an
- * independent brute force instead of mirroring the number.
- */
-export function minCleanLaneChanges(
-  obstacles: readonly Obstacle[],
-  startLane: number,
-): number {
-  const LANES = [0, 1, 2] as const;
-  let costs = LANES.map((lane) => Math.abs(lane - startLane));
-  for (const obs of obstacles) {
-    costs = LANES.map((lane) =>
-      lane === obs.lane
-        ? Number.POSITIVE_INFINITY
-        : Math.min(...LANES.map((prev) => costs[prev] + Math.abs(lane - prev))),
-    );
-  }
-  return Math.min(...costs);
-}
-
-/**
- * The smoothness a flawless run can actually reach (#737 review, #806 item 2):
- * smoothness = 100 − 15·bumps − 2·laneChanges, and the obstacle table forces
- * lane changes from START_LANE, so 100 is unreachable and a held-at-100 clause
- * was dead code — the sandbagging inversion #737 reported stayed open. Derived
- * from the track (86 today) so it moves with OBSTACLES instead of going stale.
- */
-export const MAX_CLEAN_SMOOTHNESS =
-  100 - 2 * minCleanLaneChanges(OBSTACLES, START_LANE);
+// The world model, the obstacle table and the ceiling derivations live in
+// ./qualifyTuneRaceEngine so they can be simulated without React (#806/#820).
+// Re-exported because they are part of this game's public test surface.
+export {
+  laneX,
+  MAX_CLEAN_SMOOTHNESS,
+  minCleanLaneChanges,
+  OBSTACLES,
+  START_LANE,
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-export function laneX(lane: number) {
-  return lane * LANE_W + LANE_W / 2;
-}
 export function timeLabel(s: number) {
   return s < 15 ? FAST_BAND : s < 22 ? "Medium" : "Slow";
 }
@@ -128,6 +88,10 @@ export function calculateQualifyTuneRaceScore(
   // still earns nothing, so the incentive to improve is intact.
   const heldPerfectBumps =
     run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
+  // NOTE (#820, next commit): with the clock normalised, a qualifying lap is
+  // 21.3 s on every display, so this clause can no longer fire at all — it used
+  // to fire for free above ~85.4 Hz and never below. Replacing it needs lap
+  // time to respond to driving, which is #820's engine work.
   const heldFastTime =
     timeLabel(run1.time) === FAST_BAND && timeLabel(run2.time) === FAST_BAND;
   const heldMaxSmoothness =
@@ -215,12 +179,7 @@ function RacePlayfield({
   const [step, setStep] = useState(0);
 
   const rafId = useRef(0);
-  const startTime = useRef(0);
-  const bumpsRef = useRef(0);
-  const scrollRef = useRef(0);
-  const carLaneRef = useRef(START_LANE);
-  const hitSet = useRef<Set<number>>(new Set());
-  const transitionsRef = useRef(0);
+  const engineRef = useRef<RaceEngine | null>(null);
   const isRacing = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -235,34 +194,27 @@ function RacePlayfield({
     return () => obs.disconnect();
   }, []);
 
-  const speedMult = upgrade === "speed" ? 1.45 : 1;
-  const bumpZone = upgrade === "grip" ? BUMP_ZONE * 0.55 : BUMP_ZONE;
-
-  const startRun = useCallback((p: "qualify" | "race") => {
-    setPhase(p);
-    setCarLane(START_LANE);
-    carLaneRef.current = START_LANE;
-    setScrollY(0);
-    scrollRef.current = 0;
-    setBumps(0);
-    bumpsRef.current = 0;
-    hitSet.current = new Set();
-    transitionsRef.current = 0;
-    startTime.current = performance.now();
-    isRacing.current = true;
-  }, []);
+  const startRun = useCallback(
+    (p: "qualify" | "race") => {
+      // The qualifying lap is always driven un-upgraded; only the race run
+      // carries the student's one change.
+      engineRef.current = createRaceEngine(p === "race" ? upgrade : null);
+      setPhase(p);
+      setCarLane(START_LANE);
+      setScrollY(0);
+      setBumps(0);
+      isRacing.current = true;
+    },
+    [upgrade],
+  );
 
   const finishRun = useCallback(() => {
     isRacing.current = false;
     cancelAnimationFrame(rafId.current);
-    const elapsed = (performance.now() - startTime.current) / 1000;
-    const b = bumpsRef.current;
-    const result: RunResult = {
-      time: Math.round(elapsed * 10) / 10,
-      bumps: b,
-      smoothness: Math.round(
-        Math.max(0, 100 - b * 15 - transitionsRef.current * 2),
-      ),
+    const result = engineRef.current?.result() ?? {
+      time: 0,
+      bumps: 0,
+      smoothness: 0,
     };
     if (phase === "qualify") {
       setRun1(result);
@@ -276,34 +228,28 @@ function RacePlayfield({
   const finishRef = useRef(finishRun);
   finishRef.current = finishRun;
 
-  // RAF loop
+  // RAF loop. The engine advances by elapsed time, not per frame (#806), so
+  // this only has to hand it honest frame lengths and mirror its state into
+  // React; a 60 Hz projector and a 144 Hz laptop run the identical world.
   useEffect(() => {
     if (phase !== "qualify" && phase !== "race") return;
-    const speed = SCROLL_SPEED * speedMult;
-    const loop = () => {
-      if (!isRacing.current) return;
-      scrollRef.current += speed;
-      setScrollY(scrollRef.current);
-      const carX = laneX(carLaneRef.current),
-        carY = TRACK_H - 100;
-      for (let i = 0; i < OBSTACLES.length; i++) {
-        if (hitSet.current.has(i)) continue;
-        const obs = OBSTACLES[i];
-        if (
-          Math.abs(carX - laneX(obs.lane)) < bumpZone &&
-          Math.abs(carY - (obs.y - scrollRef.current + TRACK_H - 100)) <
-            bumpZone
-        ) {
-          hitSet.current.add(i);
-          bumpsRef.current += 1;
-          setBumps(bumpsRef.current);
-          if (!reducedEffects) {
-            setWobble(true);
-            setTimeout(() => setWobble(false), 400);
-          }
+    let previous = performance.now();
+    const loop = (now: number) => {
+      const engine = engineRef.current;
+      if (!isRacing.current || !engine) return;
+      const frameSeconds = (now - previous) / 1000;
+      previous = now;
+      const bumpsBefore = engine.bumps;
+      engine.advance(frameSeconds);
+      setScrollY(engine.scroll);
+      if (engine.bumps !== bumpsBefore) {
+        setBumps(engine.bumps);
+        if (!reducedEffects) {
+          setWobble(true);
+          setTimeout(() => setWobble(false), 400);
         }
       }
-      if (scrollRef.current >= TRACK_LENGTH) {
+      if (engine.finished) {
         finishRef.current();
         return;
       }
@@ -311,18 +257,14 @@ function RacePlayfield({
     };
     rafId.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafId.current);
-  }, [phase, speedMult, bumpZone, reducedEffects]);
+  }, [phase, reducedEffects]);
 
   useEffect(() => () => cancelAnimationFrame(rafId.current), []);
 
   const steer = useCallback((dir: -1 | 1) => {
     if (!isRacing.current) return;
-    const next = Math.max(0, Math.min(2, carLaneRef.current + dir));
-    if (next !== carLaneRef.current) {
-      carLaneRef.current = next;
-      setCarLane(next);
-      transitionsRef.current += 1;
-    }
+    const engine = engineRef.current;
+    if (engine?.steer(dir)) setCarLane(engine.lane);
   }, []);
 
   useEffect(() => {
@@ -431,7 +373,7 @@ function RacePlayfield({
                 return (
                   <div
                     key={i}
-                    className={`absolute flex items-center justify-center text-2xl ${hitSet.current.has(i) ? "opacity-40" : ""}`}
+                    className={`absolute flex items-center justify-center text-2xl ${engineRef.current?.hasHit(i) ? "opacity-40" : ""}`}
                     style={{
                       left: laneX(obs.lane) - CONE_SIZE / 2,
                       top: sy - CONE_SIZE / 2,
