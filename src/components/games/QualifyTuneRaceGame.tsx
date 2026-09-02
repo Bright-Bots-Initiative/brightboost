@@ -58,14 +58,37 @@ export {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-export function timeLabel(s: number) {
-  return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow";
+/**
+ * Display bands for the qualifying-results cards. These return a stable band
+ * **id**, never display text: the id reads the same in every locale, so the
+ * pure helper stays testable while the component owns the single `t()` call
+ * (#805). Thresholds are unchanged from the pre-#805 `timeLabel`/`smoothLabel`.
+ */
+export type TimeBand = "fast" | "medium" | "slow";
+export type SmoothBand = "smooth" | "rough";
+
+export function timeBand(s: number): TimeBand {
+  return s < 15 ? "fast" : s < 22 ? "medium" : "slow";
 }
+export function smoothBand(s: number): SmoothBand {
+  return s >= 70 ? "smooth" : "rough";
+}
+/**
+ * Locale key + English fallback for every display band. Exported so the
+ * locale-completeness test can walk the real table instead of regexing JSX —
+ * the band keys are reached through a variable, which the Set 2 English
+ * integrity scan (literal `t("…")` only) cannot see.
+ */
+export const BAND_LABELS = {
+  fast: { key: "games.qualifyTuneRace.timeBand.fast", en: "Fast" },
+  medium: { key: "games.qualifyTuneRace.timeBand.medium", en: "Medium" },
+  slow: { key: "games.qualifyTuneRace.timeBand.slow", en: "Slow" },
+  smooth: { key: "games.qualifyTuneRace.smoothBand.smooth", en: "Smooth" },
+  rough: { key: "games.qualifyTuneRace.smoothBand.rough", en: "Rough" },
+} as const satisfies Record<TimeBand | SmoothBand, { key: string; en: string }>;
+
 export function timeIcon(s: number) {
   return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢";
-}
-export function smoothLabel(s: number) {
-  return s >= 70 ? "Smooth" : "Rough";
 }
 export function smoothIcon(s: number) {
   return s >= 70 ? "✨" : "💨";
@@ -181,6 +204,10 @@ function RacePlayfield({
   const [upgrade, setUpgrade] = useState<Upgrade | null>(null);
   const [exitAnswer, setExitAnswer] = useState<string | null>(null);
   const [step, setStep] = useState(0);
+
+  /** Bands are ids; the one place they become words is here (#805). */
+  const bandText = (band: TimeBand | SmoothBand) =>
+    t(BAND_LABELS[band].key, { defaultValue: BAND_LABELS[band].en });
 
   const rafId = useRef(0);
   const engineRef = useRef<RaceEngine | null>(null);
@@ -466,7 +493,7 @@ function RacePlayfield({
             icon={timeIcon(run1.time)}
             value={`${run1.time}s`}
             label={`⏱️ ${t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" })}`}
-            sub={timeLabel(run1.time)}
+            sub={bandText(timeBand(run1.time))}
             color="text-indigo-600"
           />
           <MetricCard
@@ -481,7 +508,7 @@ function RacePlayfield({
             icon={smoothIcon(run1.smoothness)}
             value={`${run1.smoothness}`}
             label={`🌊 ${t("games.qualifyTuneRace.smoothLabel", { defaultValue: "Smoothness" })}`}
-            sub={smoothLabel(run1.smoothness)}
+            sub={bandText(smoothBand(run1.smoothness))}
             color="text-emerald-500"
           />
         </div>

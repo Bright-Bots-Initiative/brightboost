@@ -1608,6 +1608,17 @@
       "score": "Điểm",
       "finish": "Hoàn thành"
     },
+    "qualifyTuneRace": {
+      "timeBand": {
+        "fast": "Nhanh",
+        "medium": "Trung bình",
+        "slow": "Chậm"
+      },
+      "smoothBand": {
+        "smooth": "Mượt",
+        "rough": "Xóc"
+      }
+    },
     "personalBest": {
       "highScore": "Điểm cao nhất",
       "personalBest": "Kỷ lục cá nhân",
