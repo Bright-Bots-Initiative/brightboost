@@ -18,9 +18,28 @@
  * 60 Hz is the anchor: `SCROLL_SPEED` 2.5 px/frame × 60 fps = 150 units/s, so
  * an un-upgraded clean lap is still 3200 / 150 = 21.3 s, as it was.
  *
- * Upgrade observability (#820) is deliberately NOT part of this change: `grip`
- * and `steering` still cannot move a measured metric, which is that ticket's
- * job.
+ * **#820 — three upgrades, three levers, three metrics.** Previously only
+ * `speed` touched anything measured, `grip`'s narrower cone window was
+ * invisible to a driver who never bumped, and `steering` had no engine effect
+ * at all. Each upgrade now owns exactly one lever, and each lever owns exactly
+ * one metric — which is also the lesson the exit ticket asks about:
+ *
+ * | Upgrade      | Lever                              | Metric it moves |
+ * | ------------ | ---------------------------------- | --------------- |
+ * | ⚡ speed     | world speed ×1.45                  | ⏱️ time         |
+ * | 🛞 grip      | cone window 28 → 15.4 units        | 💥 bumps        |
+ * | 🎯 steering  | lane-change smoothness cost 2 → 1  | 🌊 smoothness   |
+ *
+ * None of them is free, and none is dominant. Speed shortens the distance a
+ * cone is visible before it can be hit (136 − bumpZone units) into far less
+ * *time* to react, so a late-reacting driver takes MORE cones with it. Grip
+ * widens that same margin by 11.7 %, and does nothing at all for a driver who
+ * was never going to touch a cone. Steering halves the cost of weaving but
+ * moves neither time nor bumps. Cones — and only cones — cost lap time
+ * (`BUMP_SLOW_SECONDS` at `BUMP_SLOW_FACTOR` speed ⇒
+ * `BUMP_TIME_COST_SECONDS` per hit), which is what lets the scorer treat a
+ * cone-free lap as "this car's floor" without handing the point to anyone who
+ * merely picked an upgrade.
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -95,10 +114,24 @@ export const MAX_FRAME_SECONDS = 0.25;
 // ── Cost model ────────────────────────────────────────────────────────────
 export const BUMP_SMOOTHNESS_PENALTY = 15;
 export const TRANSITION_PENALTY = 2;
+/** Steady Steering: a lane change costs half the smoothness it used to. */
+export const STEERING_TRANSITION_PENALTY = 1;
 /** Grip Tires: the cone's pass window narrows to 55 % of its width. */
 export const GRIP_BUMP_ZONE_FACTOR = 0.55;
 /** Speed Boost: the world scrolls 45 % faster. */
 export const SPEED_MULTIPLIER = 1.45;
+/** Clipping a cone scrubs speed for a moment — the only thing that costs time. */
+export const BUMP_SLOW_SECONDS = 1;
+export const BUMP_SLOW_FACTOR = 0.5;
+/**
+ * Seconds a single cone costs, whatever car you are driving: during the
+ * slowdown you cover `BUMP_SLOW_FACTOR` of the usual ground, so you finish
+ * `BUMP_SLOW_SECONDS × (1 − BUMP_SLOW_FACTOR)` later than a clean lap.
+ */
+export const BUMP_TIME_COST_SECONDS =
+  BUMP_SLOW_SECONDS * (1 - BUMP_SLOW_FACTOR);
+const BUMP_SLOW_STEPS = Math.round(BUMP_SLOW_SECONDS * SIMULATION_HZ);
+
 // ── Helpers ───────────────────────────────────────────────────────────────
 export function laneX(lane: number) {
   return lane * LANE_W + LANE_W / 2;
@@ -109,7 +142,8 @@ export function upgradeTuning(upgrade: Upgrade | null): UpgradeTuning {
     speedMultiplier: upgrade === "speed" ? SPEED_MULTIPLIER : 1,
     bumpZone:
       upgrade === "grip" ? BUMP_ZONE * GRIP_BUMP_ZONE_FACTOR : BUMP_ZONE,
-    transitionPenalty: TRANSITION_PENALTY,
+    transitionPenalty:
+      upgrade === "steering" ? STEERING_TRANSITION_PENALTY : TRANSITION_PENALTY,
   };
 }
 
@@ -217,6 +251,7 @@ export function createRaceEngine(upgrade: Upgrade | null): RaceEngine {
   let transitions = 0;
   let steps = 0;
   let finished = false;
+  let slowStepsLeft = 0;
   /** Real time handed in but not yet worth a whole simulation step. */
   let carrySeconds = 0;
 
@@ -232,7 +267,9 @@ export function createRaceEngine(upgrade: Upgrade | null): RaceEngine {
 
   const step = () => {
     steps += 1;
-    scroll += unitsPerStep;
+    const slowed = slowStepsLeft > 0;
+    if (slowed) slowStepsLeft -= 1;
+    scroll += slowed ? unitsPerStep * BUMP_SLOW_FACTOR : unitsPerStep;
 
     // The playfield draws the car at y = TRACK_H − 100 and the cone at
     // `obs.y − scroll + TRACK_H − 100`, so the vertical hit test reduces
@@ -248,6 +285,7 @@ export function createRaceEngine(upgrade: Upgrade | null): RaceEngine {
       ) {
         hits.add(i);
         bumps += 1;
+        slowStepsLeft = BUMP_SLOW_STEPS;
       }
     }
 

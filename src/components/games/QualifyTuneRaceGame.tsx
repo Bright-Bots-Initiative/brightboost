@@ -43,9 +43,8 @@ type Phase =
 
 // ── Constants ─────────────────────────────────────────────────────────────
 const LEVELS = 3; // 2 levels, but +1 offset
-// Ceilings a second run can only hold, never beat.
+// Ceiling a second run can only hold, never beat.
 const PERFECT_BUMPS = 0;
-const FAST_BAND = "Fast";
 
 // The world model, the obstacle table and the ceiling derivations live in
 // ./qualifyTuneRaceEngine so they can be simulated without React (#806/#820).
@@ -60,7 +59,7 @@ export {
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 export function timeLabel(s: number) {
-  return s < 15 ? FAST_BAND : s < 22 ? "Medium" : "Slow";
+  return s < 15 ? "Fast" : s < 22 ? "Medium" : "Slow";
 }
 export function timeIcon(s: number) {
   return s < 15 ? "🚀" : s < 22 ? "🏃" : "🐢";
@@ -88,18 +87,23 @@ export function calculateQualifyTuneRaceScore(
   // still earns nothing, so the incentive to improve is intact.
   const heldPerfectBumps =
     run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
-  // NOTE (#820, next commit): with the clock normalised, a qualifying lap is
-  // 21.3 s on every display, so this clause can no longer fire at all — it used
-  // to fire for free above ~85.4 Hz and never below. Replacing it needs lap
-  // time to respond to driving, which is #820's engine work.
-  const heldFastTime =
-    timeLabel(run1.time) === FAST_BAND && timeLabel(run2.time) === FAST_BAND;
+  // Two cone-free laps. Cones are the only thing that costs lap time in the
+  // engine (BUMP_TIME_COST_SECONDS per hit), so a cone-free lap sits exactly at
+  // the floor of whatever car it was driven in — the fastest that setup can
+  // physically go. That is the ceiling this clause holds, and it has to be
+  // *driven* twice: it is deliberately NOT a per-configuration time threshold,
+  // which would hand the point to anyone who merely picked an upgrade (#820).
+  // Before #806 this clause read the "Fast" display band instead, which the
+  // qualifying lap could only enter on a ≥85.4 Hz display — dead on a 60 Hz
+  // classroom projector, free on a gaming laptop, and coupled to a string
+  // #805 wants to translate.
+  const heldFloorTime = heldPerfectBumps;
   const heldMaxSmoothness =
     run1.smoothness >= MAX_CLEAN_SMOOTHNESS &&
     run2.smoothness >= MAX_CLEAN_SMOOTHNESS;
   let s = 3;
   if (run2.bumps < run1.bumps || heldPerfectBumps) s += 2;
-  if (run2.time < run1.time || heldFastTime) s += 2;
+  if (run2.time < run1.time || heldFloorTime) s += 2;
   if (run2.smoothness > run1.smoothness || heldMaxSmoothness) s += 1;
   if (exitAnswer === "one") s += 2;
   return { score: Math.min(s, 10), total: 10 };

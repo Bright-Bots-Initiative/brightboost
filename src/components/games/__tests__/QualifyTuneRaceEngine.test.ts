@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  BUMP_TIME_COST_SECONDS,
   BUMP_ZONE,
+  CONE_VISIBLE_LEAD,
   cleanLapSeconds,
   createRaceEngine,
   FIXED_STEP_SECONDS,
   GRIP_BUMP_ZONE_FACTOR,
+  MAX_CLEAN_SMOOTHNESS,
   MAX_FRAME_SECONDS,
+  maxCleanSmoothness,
+  minCleanLaneChanges,
   OBSTACLES,
   SCROLL_UNITS_PER_SECOND,
   SIMULATION_HZ,
@@ -14,8 +19,10 @@ import {
   TRACK_LENGTH,
   upgradeTuning,
   type RaceEngine,
+  type RunResult,
   type Upgrade,
 } from "../qualifyTuneRaceEngine";
+import { calculateQualifyTuneRaceScore } from "../QualifyTuneRaceGame";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Deterministic driver harness
@@ -116,7 +123,27 @@ const flawless = (upgrade: Upgrade | null, hz = 60) =>
 const neverSteers = (upgrade: Upgrade | null, hz = 60) =>
   drive(upgrade, [], atHz(hz));
 
+/**
+ * A driver who starts moving `reactionSeconds` after a cone is first drawn.
+ * This is the only thing separating a clean lap from a scruffy one in the real
+ * game, and it is where the upgrades trade against each other: the reaction
+ * margin is `CONE_VISIBLE_LEAD − bumpZone` units, and Speed Boost eats through
+ * those units 45 % faster.
+ */
+function reactionPlay(upgrade: Upgrade | null, reactionSeconds: number) {
+  const unitsPerSecond =
+    SCROLL_UNITS_PER_SECOND * upgradeTuning(upgrade).speedMultiplier;
+  return planFromLanes(
+    FLAWLESS_LINE,
+    CONE_VISIBLE_LEAD - unitsPerSecond * reactionSeconds,
+  );
+}
+const reactionDriver = (upgrade: Upgrade | null, reactionSeconds: number) =>
+  drive(upgrade, reactionPlay(upgrade, reactionSeconds), atHz(60));
+
 const round1 = (seconds: number) => Math.round(seconds * 10) / 10;
+const scoreOf = (run1: RunResult, run2: RunResult) =>
+  calculateQualifyTuneRaceScore(run1, run2, "one").score;
 
 // ═══════════════════════════════════════════════════════════════════════════
 describe("race engine — hardware-fair timing (#806)", () => {
@@ -206,5 +233,207 @@ describe("race engine — hardware-fair timing (#806)", () => {
       6,
     );
     expect(flawless(null).result().time).toBe(round1(cleanLapSeconds(null)));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+describe("race engine — every upgrade moves a measured metric (#820)", () => {
+  it("gives each upgrade exactly one lever on exactly one metric", () => {
+    const base = flawless(null).result();
+
+    const speed = flawless("speed").result();
+    expect(speed.time).toBeLessThan(base.time);
+    expect(speed.bumps).toBe(base.bumps);
+    expect(speed.smoothness).toBe(base.smoothness);
+
+    // Grip narrows the cone's pass window, so a late lane change still clears
+    // it. Same inputs, same positions — one car brushes the cone, one does not.
+    const lateLine = planFromLanes(FLAWLESS_LINE, 20);
+    const lateStock = drive(null, lateLine, atHz(60)).result();
+    const lateGrip = drive("grip", lateLine, atHz(60)).result();
+    expect(lateStock.bumps).toBeGreaterThan(0);
+    expect(lateGrip.bumps).toBe(0);
+    expect(lateGrip.time).toBeLessThan(lateStock.time);
+    expect(lateGrip.smoothness).toBeGreaterThan(lateStock.smoothness);
+
+    const steering = flawless("steering").result();
+    expect(steering.smoothness).toBeGreaterThan(base.smoothness);
+    expect(steering.bumps).toBe(base.bumps);
+    expect(steering.time).toBe(base.time);
+  });
+
+  it("lets flawless play reach 10/10 under every upgrade", () => {
+    // The defect #820 reported: flawless driving scored 10/10 with Speed Boost
+    // and 8/10 with either of the other two, because lap time was a pure
+    // function of the upgrade and the student had no input that touched it.
+    const qualifying = flawless(null).result();
+    expect(qualifying).toEqual({ time: 21.3, bumps: 0, smoothness: 86 });
+
+    for (const upgrade of ["grip", "speed", "steering"] as const) {
+      const race = flawless(upgrade).result();
+      expect(scoreOf(qualifying, race)).toBe(10);
+    }
+  });
+
+  it("charges every cone the same lap time, in every car", () => {
+    // This is what stops the time point from being free: a lap loses time only
+    // to cones, so "cone-free" and "at this car's floor" are the same state,
+    // and the scorer's held-time clause has to be driven rather than chosen.
+    for (const upgrade of UPGRADES) {
+      const clean = flawless(upgrade);
+      expect(clean.bumps).toBe(0);
+      expect(clean.result().time).toBe(round1(cleanLapSeconds(upgrade)));
+
+      const scruffy = neverSteers(upgrade);
+      expect(scruffy.bumps).toBe(4); // the four lane-1 cones
+      expect(scruffy.elapsedSeconds).toBeCloseTo(
+        cleanLapSeconds(upgrade) + scruffy.bumps * BUMP_TIME_COST_SECONDS,
+        4,
+      );
+      expect(scruffy.result().time).toBeGreaterThan(clean.result().time);
+    }
+  });
+
+  it("makes Speed Boost cost reaction margin, so no upgrade wins for everyone", () => {
+    // The margin between a cone appearing and its window opening is fixed in
+    // UNITS (CONE_VISIBLE_LEAD − bumpZone); Speed Boost spends those units 45 %
+    // faster, Grip Tires buys 11.7 % more of them.
+    const marginSeconds = (upgrade: Upgrade | null) =>
+      (CONE_VISIBLE_LEAD - upgradeTuning(upgrade).bumpZone) /
+      (SCROLL_UNITS_PER_SECOND * upgradeTuning(upgrade).speedMultiplier);
+    expect(marginSeconds("speed")).toBeLessThan(marginSeconds(null));
+    expect(marginSeconds("grip")).toBeGreaterThan(marginSeconds(null));
+
+    // A driver who is comfortably inside the stock margin but not the boosted
+    // one: same reflexes, more cones, only because of the upgrade.
+    const reaction = 0.6;
+    expect(reaction).toBeLessThan(marginSeconds(null));
+    expect(reaction).toBeGreaterThan(marginSeconds("speed"));
+    expect(reactionDriver(null, reaction).bumps).toBe(0);
+    expect(reactionDriver("speed", reaction).bumps).toBeGreaterThan(0);
+
+    // And one who is just outside the stock margin but inside grip's.
+    const late = 0.76;
+    expect(late).toBeGreaterThan(marginSeconds(null));
+    expect(late).toBeLessThan(marginSeconds("grip"));
+    expect(reactionDriver(null, late).bumps).toBeGreaterThan(0);
+    expect(reactionDriver("grip", late).bumps).toBe(0);
+  });
+
+  it("has no upgrade that is best for every driver, and none that is dead", () => {
+    const bestFor = (reaction: number) => {
+      const qualifying = reactionDriver(null, reaction).result();
+      const scores = (["grip", "speed", "steering"] as const).map(
+        (upgrade) => ({
+          upgrade,
+          score: scoreOf(
+            qualifying,
+            reactionDriver(upgrade, reaction).result(),
+          ),
+        }),
+      );
+      const top = Math.max(...scores.map((s) => s.score));
+      return {
+        top,
+        winners: scores.filter((s) => s.score === top).map((s) => s.upgrade),
+        scores,
+      };
+    };
+
+    // Sharp reflexes: every upgrade holds the ceiling, the choice is free.
+    expect(bestFor(0.3).winners).toEqual(["grip", "speed", "steering"]);
+    // Slightly late: Grip Tires are the only thing that saves the lap.
+    expect(bestFor(0.76).winners).toEqual(["grip"]);
+    // Far off the pace: cones are unavoidable, and only Speed Boost moves a
+    // metric at all.
+    expect(bestFor(0.95).winners).toEqual(["speed"]);
+    // Every upgrade wins outright somewhere, so none of the three is a decoy.
+    for (const upgrade of ["grip", "speed", "steering"] as const) {
+      const everWins = [0.3, 0.6, 0.76, 0.85, 0.95].some((reaction) =>
+        bestFor(reaction).winners.includes(upgrade),
+      );
+      expect(everWins).toBe(true);
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+describe("race engine — ceilings stay derived (#737 / #804)", () => {
+  it("derives every configuration's smoothness ceiling from the same DP", () => {
+    const forcedChanges = minCleanLaneChanges(OBSTACLES, START_LANE);
+    for (const upgrade of UPGRADES) {
+      const ceiling = maxCleanSmoothness(upgrade);
+      expect(ceiling).toBe(
+        100 - upgradeTuning(upgrade).transitionPenalty * forcedChanges,
+      );
+      // …and the engine actually reaches it on the optimal line.
+      expect(flawless(upgrade).result().smoothness).toBe(ceiling);
+    }
+    expect(MAX_CLEAN_SMOOTHNESS).toBe(maxCleanSmoothness(null));
+  });
+
+  it("keeps the scorer's ceiling at the qualifying lap's, which is the strict one", () => {
+    // The qualifying lap is always un-upgraded, so 86 is the best smoothness a
+    // student can carry into the comparison. Steady Steering's 93 can only be
+    // an improvement, which the strict branch already credits — which is why
+    // the held clause never needs to know the upgrade.
+    expect(MAX_CLEAN_SMOOTHNESS).toBe(86);
+    expect(maxCleanSmoothness("steering")).toBe(93);
+    expect(maxCleanSmoothness("steering")).toBeGreaterThan(
+      MAX_CLEAN_SMOOTHNESS,
+    );
+  });
+
+  it("never lets a reachable pair outscore flawless-both, on any upgrade", () => {
+    // The #804 audit's sweep, re-run against the repaired engine and widened
+    // to cover every upgrade. States are a superset of what the engine can
+    // emit (up to every cone hit, up to 24 lane changes), which makes the
+    // claim strictly stronger than an exact enumeration.
+    const forcedChanges = minCleanLaneChanges(OBSTACLES, START_LANE);
+    const stateFor = (
+      upgrade: Upgrade | null,
+      bumps: number,
+      transitions: number,
+    ): RunResult => ({
+      time: round1(cleanLapSeconds(upgrade) + bumps * BUMP_TIME_COST_SECONDS),
+      bumps,
+      smoothness: Math.round(
+        Math.max(
+          0,
+          100 -
+            bumps * 15 -
+            transitions * upgradeTuning(upgrade).transitionPenalty,
+        ),
+      ),
+    });
+
+    for (const upgrade of ["grip", "speed", "steering"] as const) {
+      for (const exitAnswer of ["one", "two"]) {
+        const flawlessBoth = calculateQualifyTuneRaceScore(
+          stateFor(null, 0, forcedChanges),
+          stateFor(upgrade, 0, forcedChanges),
+          exitAnswer,
+        ).score;
+        for (let b1 = 0; b1 <= OBSTACLES.length; b1++) {
+          for (let t1 = 0; t1 <= 24; t1++) {
+            for (let b2 = 0; b2 <= OBSTACLES.length; b2++) {
+              for (let t2 = 0; t2 <= 24; t2++) {
+                const score = calculateQualifyTuneRaceScore(
+                  stateFor(null, b1, t1),
+                  stateFor(upgrade, b2, t2),
+                  exitAnswer,
+                ).score;
+                if (score > flawlessBoth) {
+                  throw new Error(
+                    `inversion: ${upgrade} run1(${b1},${t1}) run2(${b2},${t2}) scored ${score} > flawless ${flawlessBoth}`,
+                  );
+                }
+              }
+            }
+          }
+        }
+        expect(flawlessBoth).toBe(exitAnswer === "one" ? 10 : 8);
+      }
+    }
   });
 });
