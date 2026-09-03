@@ -75,6 +75,11 @@ export default function ModuleUnavailable({
             <Compass className="w-8 h-8" />
           )}
         </div>
+        {/* `tabIndex={-1}` makes this heading a programmatic focus target ONLY:
+            it never becomes a Tab stop, so `outline-none` removes no focus
+            indicator any keyboard learner could reach — the page is this one
+            message, and the real actions below keep their own focus rings.
+            The denial state passes no tabIndex at all and is never focused. */}
         <h1
           ref={headingRef}
           tabIndex={isSystemProblem ? -1 : undefined}

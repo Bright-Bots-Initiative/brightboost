@@ -363,6 +363,60 @@ describe("a failed progress load never becomes a set-lock denial", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("status")).toBeNull();
   });
+
+  // `api.getProgress` never checks `res.ok`, so a backend 500 RESOLVES with
+  // the routes' error body. Read through `?? []` that says "completed
+  // nothing", which refuses a Set 2 module the child has already earned.
+  it.each([
+    ["a server error body", { error: "Internal server error" }],
+    ["a null body", null],
+    ["a body with no progress array", { progress: "nope" }],
+  ])(
+    "ActivityPlayer treats %s as unknown progress, not empty progress",
+    async (_label, body) => {
+      vi.mocked(api.getProgress).mockResolvedValue(body as never);
+
+      renderPlayer(LOCKED_SET2_SLUG);
+
+      expect(
+        await screen.findByTestId("module-system-problem"),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(LOCKED_COPY)).toBeNull();
+      expect(track).not.toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "game_started" }),
+      );
+    },
+  );
+
+  it("ModuleDetail treats a resolved error body as unknown progress", async () => {
+    vi.mocked(api.getProgress).mockResolvedValue({
+      error: "Internal server error",
+    } as never);
+
+    renderDetail(LOCKED_SET2_SLUG);
+
+    expect(
+      await screen.findByTestId("module-system-problem"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(LOCKED_COPY)).toBeNull();
+  });
+
+  it("a 404 from the PROGRESS request never means the module is missing", async () => {
+    // Unreachable while getProgress resolves everything, but it becomes
+    // reachable the moment that helper is hardened — and mis-attributing it
+    // would claim a module that exists does not.
+    vi.mocked(api.getProgress).mockRejectedValue(
+      new ApiError("Not found", 404),
+    );
+
+    renderDetail(LOCKED_SET2_SLUG);
+
+    expect(
+      await screen.findByTestId("module-system-problem"),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("module-unavailable")).toBeNull();
+    expect(screen.queryByText(GENERIC_COPY)).toBeNull();
+  });
 });
 
 describe("an allowed deep link never flashes 'Activity not found'", () => {

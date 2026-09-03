@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Check } from "lucide-react";
 import ModuleUnavailable from "@/components/modules/ModuleUnavailable";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { completedIdsFromProgressResponse } from "@/lib/progressResponse";
 import { translateContentName } from "@/utils/localizedContent";
 
 export default function ModuleDetail() {
@@ -58,35 +59,52 @@ export default function ModuleDetail() {
     if (!slug) return;
     if (denialReason) return;
 
-    Promise.all([
+    const reportFailure = () => {
+      setLoadFailed(true);
+      toast({
+        title: t("common.oops", { defaultValue: "Oops!" }),
+        description: t("modules.detail.loadError"),
+        variant: "destructive",
+      });
+    };
+
+    // Settled separately, not with Promise.all: only the MODULE request can
+    // establish that the module does not exist. A 404 surfacing from the
+    // progress request must never be read as "this module is unregistered",
+    // which would show the module-doesn't-exist state for one that does.
+    Promise.allSettled([
       api.getModule(slug, { structureOnly: true }),
       // ⚡ Bolt Optimization: Exclude user data to save DB call
       api.getProgress({ excludeUser: true }),
-    ])
-      .then(([m, p]) => {
-        setModule(m ?? null);
-        setCompletedIds(
-          (p?.progress ?? [])
-            .filter((item: any) => item.status === "COMPLETED")
-            .map((item: any) => String(item.activityId)),
-        );
-      })
-      .catch((err) => {
+    ]).then(([moduleResult, progressResult]) => {
+      if (moduleResult.status === "rejected") {
         // A real 404 is an access fact and renders exactly like held-back
         // content; anything else is an infrastructure failure and is said as
         // one, so this page can never be a permanent skeleton.
+        const err = moduleResult.reason;
         if (err instanceof ApiError && err.status === 404) {
           setModule(null);
           setCompletedIds([]);
           return;
         }
-        setLoadFailed(true);
-        toast({
-          title: t("common.oops", { defaultValue: "Oops!" }),
-          description: t("modules.detail.loadError"),
-          variant: "destructive",
-        });
-      });
+        reportFailure();
+        return;
+      }
+
+      let ids: string[];
+      try {
+        if (progressResult.status === "rejected") throw progressResult.reason;
+        // Rejected OR resolved-with-an-error-body: progress is unknown, and an
+        // unknown progress must not be read as "completed nothing".
+        ids = completedIdsFromProgressResponse(progressResult.value);
+      } catch {
+        reportFailure();
+        return;
+      }
+
+      setModule(moduleResult.value ?? null);
+      setCompletedIds(ids);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, denialReason, attempt]); // avoid accidental reruns
 

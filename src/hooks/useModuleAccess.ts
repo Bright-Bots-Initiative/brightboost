@@ -50,6 +50,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
 import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 import { useGradeBandState } from "@/hooks/useGradeBand";
+import { completedIdsFromProgressResponse } from "@/lib/progressResponse";
 import {
   getStudentArchetype,
   gradeBandAffectsAccess,
@@ -146,12 +147,9 @@ export function useModuleAccess({
     let cancelled = false;
     setFetchedCompletedIds(undefined);
     Promise.resolve(api.getProgress({ excludeUser: true }))
-      .then(
-        (data: { progress?: { status?: string; activityId?: unknown }[] }) =>
-          (data?.progress ?? [])
-            .filter((p) => p?.status === "COMPLETED")
-            .map((p) => String(p.activityId)),
-      )
+      // A rejection AND a resolved-but-malformed body both mean the same
+      // thing: progress is unknown, so no answer that depends on it is safe.
+      .then(completedIdsFromProgressResponse)
       .then((ids) => {
         if (!cancelled) setFetchedCompletedIds(ids);
       })

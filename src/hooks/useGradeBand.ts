@@ -75,6 +75,13 @@ function loadBand(userKey: string): Promise<GradeBand> {
  * `band` keeps the historical contract: `k2` until (and unless) the student's
  * courses say otherwise, so content consumers can ignore `status` entirely.
  *
+ * Known gap, deliberately deferred (#856 follow-up): a `/student/courses`
+ * outage still quietly narrows a 3-5 student's **dashboard** to the k2 view,
+ * so their G3-5 content drops out of "Play Next" with no explanation. The
+ * deep-link surfaces refuse to guess and surface a system problem instead, but
+ * the dashboard only orders content and has no error surface of its own, so it
+ * keeps the historical default rather than blocking the whole page.
+ *
  * @param reloadKey bump to retry after a `failed` status.
  */
 export function useGradeBandState(reloadKey = 0): {
