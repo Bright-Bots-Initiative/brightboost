@@ -44,7 +44,7 @@ adversarial review; Phase 14 do not graduate to backend yet.)
 - Focus return after a science card depended on the browser having focused the chip; the opener is now passed explicitly.
 - A doc comment containing `locales/*/common.json` closed the block comment early (`*/`).
 
-- The fresh-context adversarial review (Opus) returned CHANGES-REQUIRED on the first pass: seven science-content errors (gills taught as a smell organ, spiracles vs antennae, claws vs hooves, ladybugs as camouflage, skunks in two contradictory cards, spiders as insects, an eyeless Buddy gaining Sight in water), the 320px Choose layout, a no-movement dead end in Test & Learn, an unvalidated stored walkthrough that could crash the "Last test" chip, missing roving tabindex, `animate-pop` escaping reduced motion, and several vacuous tests. All were fixed in a follow-up commit and re-reviewed.
+- The fresh-context adversarial review (Opus) returned CHANGES-REQUIRED on the first pass: seven science-content errors (gills taught as a smell organ, spiracles vs antennae, claws vs hooves, ladybugs as camouflage, skunks in two contradictory cards, spiders as insects, an eyeless Buddy gaining Sight in water), the 320px Choose layout, a no-movement dead end in Test & Learn, an unvalidated stored walkthrough that could crash the "Last test" chip, missing roving tabindex, `animate-pop` escaping reduced motion, and several vacuous tests. It took seven passes: the engineering (share codec, storage validator, attribution, i18n) was never breached; the science content took five passes because animal lists were being swapped for head nouns instead of re-read against their own card text. The seventh verdict is APPROVE behind SME sign-off, with ten content items handed to the SME.
 
 ## Lessons
 
