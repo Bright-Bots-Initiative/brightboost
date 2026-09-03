@@ -14,6 +14,15 @@
  *   refuse the target — the assignment override is the only thing that could
  *   change the answer at that point.
  *
+ * Infrastructure failures are not access decisions (design principle 9 /
+ * `docs/safe-exploration-accessibility.md` §6): if the archetype or progress
+ * request fails, the gate stays **pending** rather than inventing a reason the
+ * learner would read as their own doing ("finish the games before this one"),
+ * and the surface falls through to its existing recovery state. The only
+ * exception is the assignment list, whose failure falls back to the
+ * progression answer — which is the truthful answer for a student with no
+ * assignment.
+ *
  * Reminder (policy G): this is frontend navigation/visibility POLICY, not a
  * security boundary.
  */
@@ -92,8 +101,8 @@ export function useModuleAccess({
         if (!cancelled) setArchetype(getStudentArchetype(avatarData));
       })
       .catch(() => {
-        // Unknown archetype is treated as "not chosen" — fail closed.
-        if (!cancelled) setArchetype(null);
+        // Left unknown on purpose — see the note on infrastructure failures
+        // in the hook jsdoc.
       });
     return () => {
       cancelled = true;
@@ -110,9 +119,12 @@ export function useModuleAccess({
             .filter((p) => p?.status === "COMPLETED")
             .map((p) => String(p.activityId)),
       )
-      .catch(() => [] as string[])
       .then((ids) => {
         if (!cancelled) setFetchedCompletedIds(ids);
+      })
+      .catch(() => {
+        // Left unknown on purpose — see the note on infrastructure failures
+        // in the hook jsdoc.
       });
     return () => {
       cancelled = true;
