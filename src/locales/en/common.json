@@ -2459,6 +2459,254 @@
       "backToBack": "Back to back"
     }
   },
+  "biomeBuddy": {
+    "shell": {
+      "title": "Biome Buddy",
+      "tagline": "Build a Buddy for its home and see what it can do there",
+      "remixNote": "Starting from a shared Buddy — this copy is yours to change.",
+      "remixInvalid": "That share link got scrambled, so here's a fresh start."
+    },
+    "common": {
+      "myBuddies": "My Buddies",
+      "close": "Close"
+    },
+    "steps": {
+      "aria": "Step {{n}} of {{total}}: {{label}}",
+      "choose": "Choose",
+      "create": "Create",
+      "test": "Test",
+      "name": "Name"
+    },
+    "title": {
+      "tagline": "What will you build?",
+      "intro": "Pick a home, build a Buddy from real animal parts, and see what it can do there.",
+      "resume": "Keep building {{name}}",
+      "pickLevel": "Pick your level to start a new Buddy",
+      "band": {
+        "k2": "K–2 · Guided",
+        "g35": "Grades 3–5",
+        "g68": "Grades 6–8 · Open"
+      },
+      "myBuddies": "My Buddies",
+      "empty": "No Buddies yet — build one!",
+      "open": "Open {{name}}",
+      "deleteAria": "Let it go: {{name}}",
+      "delete": "Let it go"
+    },
+    "choose": {
+      "heading": "Where will your Buddy live?",
+      "groupAria": "Homes",
+      "prev": "Previous home",
+      "next": "Next home",
+      "animalsHere": "Who lives here:",
+      "select": "Select {{biome}} ✓",
+      "currentAria": "Home: {{biome}}"
+    },
+    "create": {
+      "spriteAria": "{{name}}, a {{biome}} Buddy",
+      "renameAria": "Buddy name: {{name}} — tap to change",
+      "changeHomeAria": "Home: {{biome}} — tap to change",
+      "save": "Save",
+      "statsHeading": "How {{name}} does {{where}}",
+      "groupAria": "{{category}} choices",
+      "pickAria": "{{category}}: {{option}}",
+      "test": "Test it! 🔬",
+      "nameSave": "Name & Save",
+      "lastTestAria": "Last test: reopen the walkthrough",
+      "lastTest": "Last test",
+      "unlockTitle": "New part to change: {{category}}!",
+      "unlockTry": "Try it!",
+      "lockedTeaser": "Change a part and test your Buddy to open {{next}}.",
+      "lockedNow": "Right now: {{list}}."
+    },
+    "science": {
+      "term": "also called: {{term}}",
+      "effect": "What this part does {{where}}:",
+      "noEffect": "This part changes how your Buddy looks {{where}}, not the bars.",
+      "less": "Show less",
+      "more": "Tell me more 🔬",
+      "usedFor": "What it's for",
+      "evolved": "How it came to be",
+      "animals": "Animals that have it",
+      "where": "Where in the world",
+      "affects": "What else it changes",
+      "deeper": "The deeper science",
+      "gotIt": "Got it!"
+    },
+    "stat": {
+      "band": {
+        "low": "just a little",
+        "some": "some",
+        "good": "good",
+        "great": "great"
+      },
+      "up": "up {{n}}",
+      "down": "down {{n}}",
+      "same": "same",
+      "meterAria": "{{stat}}: {{value}} out of 100, {{band}}{{delta}}"
+    },
+    "test": {
+      "heading": "Here's how {{name}} does {{where}}!",
+      "introSame": "Same parts, same home — the bars stayed put. Tap next.",
+      "intro": "The grey mark is before. The color is now. Tap next to see why each bar moved.",
+      "unchangedTitle": "Nothing moved this time",
+      "unchangedBody": "That's useful to know too! Same parts in the same home do the same things.",
+      "wentUp": "{{stat}} went up by {{n}}!",
+      "wentDown": "{{stat}} went down by {{n}}.",
+      "beforeAfter": "Before: {{before}} · Now: {{after}}",
+      "whyIntro": "Why, {{where}}?",
+      "prev": "◀ Back",
+      "page": "{{n}} of {{total}}",
+      "gotIt": "Got it!",
+      "next": "Next ▶",
+      "introNoMove": "You changed a part, but these four bars stayed put in this home. Tap next to see what that means.",
+      "noMoveBody": "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?"
+    },
+    "name": {
+      "heading": "Name your Buddy!",
+      "pickWord1": "Pick a word",
+      "pickWord2": "Pick a creature word",
+      "save": "Save it! 💾",
+      "saveAgain": "Save changes 💾",
+      "saved": "Saved on this device! ✓",
+      "savedLocal": "Saved for now — this device is out of room, so it may not stick.",
+      "keepBuilding": "Keep building 🔧"
+    },
+    "share": {
+      "button": "Share my Buddy",
+      "title": "{{name}} — Biome Buddy",
+      "shared": "Shared! 🎉",
+      "copied": "Link copied! Send it to someone you like.",
+      "failed": "Couldn't copy by itself — here's the link to copy:",
+      "linkAria": "Share link"
+    },
+    "delete": {
+      "title": "Let {{name}} go?",
+      "body": "It will leave this device. You can always build a new one.",
+      "yes": "Yes, let it go",
+      "no": "Keep it"
+    },
+    "sharePage": {
+      "subtitle": "A {{biome}} Buddy, shared with you",
+      "parts": "Its parts",
+      "stats": "How it does {{where}}",
+      "why": "Why this Buddy fits {{where}} this way",
+      "science": "Science highlights",
+      "remix": "Make my own version 🔧",
+      "remixNote": "You'll get your own copy to change. This shared Buddy stays just as it is.",
+      "new": "Build a new Buddy",
+      "invalidTitle": "Hmm, this link got scrambled",
+      "invalidBody": "We couldn't read this Buddy. Links only carry the recipe, so nothing is lost — you can build a new one!",
+      "invalidCta": "Go to Biome Buddy"
+    },
+    "review": {
+      "subtitle": "Reviewer preview",
+      "title": "Biome Buddy Prototype",
+      "intro": "Build an organism for a biome, see how its adaptations change what it can do, and experiment with another design.",
+      "start": "Start Biome Buddy",
+      "example": "See an example shared Buddy",
+      "noticeHeading": "Things to notice",
+      "notice1": "Every part is real biology; every bar is fit, not a grade — there is no right build.",
+      "notice2": "K–2 · Guided opens two parts first and unlocks more each time a child tests a change.",
+      "notice3": "Test & Learn explains each bar that moved, in kid sentences, with the science underneath.",
+      "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
+      "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
+    }
+  },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "Try things out",
+      "actionsLabel": "What you can do",
+      "baselinePrefix": "Right now you have:",
+      "replaceNotice": "If you keep this, it takes the place of {{baseline}}.",
+      "branchNotice": "You can save this and still keep {{baseline}}.",
+      "headings": {
+        "baseline": "Ready to try",
+        "preview": "Look first",
+        "running": "Trying it",
+        "observing": "What happened?",
+        "kept": "You kept it",
+        "restored": "You went back",
+        "branched": "You saved a new one",
+        "unavailable": "Not right now",
+        "recoverableError": "That did not save",
+        "unexpectedError": "Something broke on our side"
+      },
+      "body": {
+        "baseline": "Change one thing, then try it. You can always go back."
+      },
+      "actions": {
+        "preview": "Look first",
+        "run": "Try it",
+        "cancel": "Never mind",
+        "keep": "Keep it",
+        "restore": "Go back",
+        "branch": "Save a new one",
+        "tryAgain": "Try another way",
+        "retry": "Try that again",
+        "exit": "Back to my lesson"
+      },
+      "announce": {
+        "preview": "This will change {{baseline}}. You can always go back.",
+        "running": "Trying it now.",
+        "observing": "You tried it. Here is what happened.",
+        "observingPlain": "You tried it. Look at what changed.",
+        "kept": "You kept it. {{baseline}} is this now.",
+        "restored": "You went back. {{baseline}} is the way it was before.",
+        "branched": "You saved a new one. {{baseline}} did not change.",
+        "recoverableError": "That did not save.",
+        "unexpectedError": "Something broke on our side, not in your try.",
+        "baselineSafe": "{{baseline}} is still safe.",
+        "restoreFailed": "We could not bring back {{baseline}} yet. Nothing you made was thrown away."
+      }
+    },
+    "older": {
+      "regionLabel": "Experiment controls",
+      "actionsLabel": "Available actions",
+      "baselinePrefix": "Saved version:",
+      "replaceNotice": "Keeping this replaces {{baseline}} with your new run.",
+      "branchNotice": "Saving as a new version leaves {{baseline}} untouched.",
+      "headings": {
+        "baseline": "Ready to run",
+        "preview": "Preview",
+        "running": "Running",
+        "observing": "Compare",
+        "kept": "Kept",
+        "restored": "Restored",
+        "branched": "New version saved",
+        "unavailable": "Not available",
+        "recoverableError": "That did not save",
+        "unexpectedError": "System problem"
+      },
+      "body": {
+        "baseline": "Change a variable, then preview or run it. You can restore the saved version at any time."
+      },
+      "actions": {
+        "preview": "Preview",
+        "run": "Run",
+        "cancel": "Cancel",
+        "keep": "Keep this version",
+        "restore": "Restore",
+        "branch": "Save as a new version",
+        "tryAgain": "Try again",
+        "retry": "Retry",
+        "exit": "Back to the lesson"
+      },
+      "announce": {
+        "preview": "Preview ready. Running this will replace {{baseline}}.",
+        "running": "Running now.",
+        "observing": "Run finished. Here is the result.",
+        "observingPlain": "Run finished. Compare it with the saved version.",
+        "kept": "Kept. {{baseline}} now points at this version.",
+        "restored": "Restored. {{baseline}} is back to the saved version.",
+        "branched": "Saved as a new version. {{baseline}} is unchanged.",
+        "recoverableError": "That did not save.",
+        "unexpectedError": "A system problem happened on our side, not in your experiment.",
+        "baselineSafe": "{{baseline}} is still safe.",
+        "restoreFailed": "We could not restore {{baseline}} yet. Nothing you made was deleted."
+      }
+    }
+  },
   "envBanner": {
     "message": "{{env}} — test data only. This is not the real Bright Boost.",
     "build": "build {{sha}}",

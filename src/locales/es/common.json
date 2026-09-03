@@ -2126,6 +2126,254 @@
       "backToBack": "Espalda con espalda"
     }
   },
+  "biomeBuddy": {
+    "shell": {
+      "title": "Biome Buddy",
+      "tagline": "Construye un Buddy para su hogar y mira qué puede hacer allí",
+      "remixNote": "Empiezas desde un Buddy compartido: esta copia es tuya para cambiarla.",
+      "remixInvalid": "Ese enlace se estropeó, así que empezamos de nuevo."
+    },
+    "common": {
+      "myBuddies": "Mis Buddies",
+      "close": "Cerrar"
+    },
+    "steps": {
+      "aria": "Paso {{n}} de {{total}}: {{label}}",
+      "choose": "Elegir",
+      "create": "Crear",
+      "test": "Probar",
+      "name": "Nombrar"
+    },
+    "title": {
+      "tagline": "¿Qué vas a construir?",
+      "intro": "Elige un hogar, construye un Buddy con partes de animales reales y mira qué puede hacer allí.",
+      "resume": "Seguir construyendo a {{name}}",
+      "pickLevel": "Elige tu nivel para empezar un Buddy nuevo",
+      "band": {
+        "k2": "K–2 · Guiado",
+        "g35": "Grados 3–5",
+        "g68": "Grados 6–8 · Libre"
+      },
+      "myBuddies": "Mis Buddies",
+      "empty": "Aún no hay Buddies. ¡Construye uno!",
+      "open": "Abrir a {{name}}",
+      "deleteAria": "Dejarlo ir: {{name}}",
+      "delete": "Dejarlo ir"
+    },
+    "choose": {
+      "heading": "¿Dónde vivirá tu Buddy?",
+      "groupAria": "Hogares",
+      "prev": "Hogar anterior",
+      "next": "Hogar siguiente",
+      "animalsHere": "Quién vive aquí:",
+      "select": "Elegir {{biome}} ✓",
+      "currentAria": "Hogar: {{biome}}"
+    },
+    "create": {
+      "spriteAria": "{{name}}, un Buddy de {{biome}}",
+      "renameAria": "Nombre del Buddy: {{name}}. Toca para cambiarlo",
+      "changeHomeAria": "Hogar: {{biome}}. Toca para cambiarlo",
+      "save": "Guardar",
+      "statsHeading": "Cómo le va a {{name}} {{where}}",
+      "groupAria": "Opciones de {{category}}",
+      "pickAria": "{{category}}: {{option}}",
+      "test": "¡Pruébalo! 🔬",
+      "nameSave": "Nombrar y guardar",
+      "lastTestAria": "Última prueba: volver a abrir el recorrido",
+      "lastTest": "Última prueba",
+      "unlockTitle": "¡Nueva parte para cambiar: {{category}}!",
+      "unlockTry": "¡Pruébala!",
+      "lockedTeaser": "Cambia una parte y prueba tu Buddy para abrir {{next}}.",
+      "lockedNow": "Ahora mismo: {{list}}."
+    },
+    "science": {
+      "term": "también se llama: {{term}}",
+      "effect": "Qué hace esta parte {{where}}:",
+      "noEffect": "Esta parte cambia cómo se ve tu Buddy {{where}}, no las barras.",
+      "less": "Mostrar menos",
+      "more": "Cuéntame más 🔬",
+      "usedFor": "Para qué sirve",
+      "evolved": "Cómo apareció",
+      "animals": "Animales que lo tienen",
+      "where": "Dónde en el mundo",
+      "affects": "Qué más cambia",
+      "deeper": "La ciencia más a fondo",
+      "gotIt": "¡Entendido!"
+    },
+    "stat": {
+      "band": {
+        "low": "poquito",
+        "some": "algo",
+        "good": "bien",
+        "great": "genial"
+      },
+      "up": "sube {{n}}",
+      "down": "baja {{n}}",
+      "same": "igual",
+      "meterAria": "{{stat}}: {{value}} de 100, {{band}}{{delta}}"
+    },
+    "test": {
+      "heading": "¡Así le va a {{name}} {{where}}!",
+      "introSame": "Mismas partes, mismo hogar: las barras no se movieron. Toca siguiente.",
+      "intro": "La marca gris es antes. El color es ahora. Toca siguiente para ver por qué se movió cada barra.",
+      "unchangedTitle": "Esta vez nada se movió",
+      "unchangedBody": "¡Eso también sirve saberlo! Las mismas partes en el mismo hogar hacen lo mismo.",
+      "wentUp": "¡{{stat}} subió {{n}}!",
+      "wentDown": "{{stat}} bajó {{n}}.",
+      "beforeAfter": "Antes: {{before}} · Ahora: {{after}}",
+      "whyIntro": "¿Por qué, {{where}}?",
+      "prev": "◀ Atrás",
+      "page": "{{n}} de {{total}}",
+      "gotIt": "¡Entendido!",
+      "next": "Siguiente ▶",
+      "introNoMove": "Cambiaste una parte, pero estas cuatro barras no se movieron en este hogar. Toca siguiente para ver qué significa.",
+      "noMoveBody": "Tu parte nueva no movió estas barras aquí, pero cambió cómo se ve tu Buddy y para qué está hecho. Me pregunto en qué hogar sí importaría."
+    },
+    "name": {
+      "heading": "¡Ponle nombre a tu Buddy!",
+      "pickWord1": "Elige una palabra",
+      "pickWord2": "Elige una palabra de criatura",
+      "save": "¡Guardar! 💾",
+      "saveAgain": "Guardar cambios 💾",
+      "saved": "¡Guardado en este dispositivo! ✓",
+      "savedLocal": "Guardado por ahora: este dispositivo no tiene espacio, así que puede no quedarse.",
+      "keepBuilding": "Seguir construyendo 🔧"
+    },
+    "share": {
+      "button": "Compartir mi Buddy",
+      "title": "{{name}} — Biome Buddy",
+      "shared": "¡Compartido! 🎉",
+      "copied": "¡Enlace copiado! Envíaselo a alguien que te caiga bien.",
+      "failed": "No se pudo copiar solo. Aquí tienes el enlace para copiarlo:",
+      "linkAria": "Enlace para compartir"
+    },
+    "delete": {
+      "title": "¿Dejar ir a {{name}}?",
+      "body": "Se irá de este dispositivo. Siempre puedes construir uno nuevo.",
+      "yes": "Sí, dejarlo ir",
+      "no": "Quedármelo"
+    },
+    "sharePage": {
+      "subtitle": "Un Buddy de {{biome}}, compartido contigo",
+      "parts": "Sus partes",
+      "stats": "Cómo le va {{where}}",
+      "why": "Por qué este Buddy encaja así {{where}}",
+      "science": "Ciencia destacada",
+      "remix": "Hacer mi propia versión 🔧",
+      "remixNote": "Tendrás tu propia copia para cambiarla. Este Buddy compartido se queda tal como está.",
+      "new": "Construir un Buddy nuevo",
+      "invalidTitle": "Mmm, este enlace se estropeó",
+      "invalidBody": "No pudimos leer este Buddy. Los enlaces solo llevan la receta, así que no se pierde nada. ¡Puedes construir uno nuevo!",
+      "invalidCta": "Ir a Biome Buddy"
+    },
+    "review": {
+      "subtitle": "Vista previa para revisores",
+      "title": "Prototipo de Biome Buddy",
+      "intro": "Construye un organismo para un bioma, mira cómo sus adaptaciones cambian lo que puede hacer y experimenta con otro diseño.",
+      "start": "Empezar Biome Buddy",
+      "example": "Ver un Buddy compartido de ejemplo",
+      "noticeHeading": "Cosas para notar",
+      "notice1": "Cada parte es biología real; cada barra es ajuste, no una nota. No hay una construcción correcta.",
+      "notice2": "K–2 · Guiado abre dos partes primero y desbloquea más cada vez que un niño prueba un cambio.",
+      "notice3": "Probar y aprender explica cada barra que se movió, en frases para niños, con la ciencia debajo.",
+      "notice4": "Comparte un Buddy por enlace; el enlace solo lleva la receta, y al abrirlo recibes una copia para remezclar.",
+      "note": "Esto es un prototipo: todo lo que construyas se queda en este navegador y no se envía a ningún sitio. El enlace no está listado, pero no es privado."
+    }
+  },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "Prueba cosas",
+      "actionsLabel": "Lo que puedes hacer",
+      "baselinePrefix": "Ahora tienes:",
+      "replaceNotice": "Si guardas esto, toma el lugar de {{baseline}}.",
+      "branchNotice": "Puedes guardar esto y quedarte con {{baseline}}.",
+      "headings": {
+        "baseline": "Listo para probar",
+        "preview": "Mira primero",
+        "running": "Probando",
+        "observing": "¿Qué pasó?",
+        "kept": "Lo guardaste",
+        "restored": "Volviste atrás",
+        "branched": "Guardaste uno nuevo",
+        "unavailable": "Ahora no",
+        "recoverableError": "Eso no se guardó",
+        "unexpectedError": "Algo se rompió de nuestro lado"
+      },
+      "body": {
+        "baseline": "Cambia una cosa y pruébalo. Siempre puedes volver atrás."
+      },
+      "actions": {
+        "preview": "Mira primero",
+        "run": "Pruébalo",
+        "cancel": "Mejor no",
+        "keep": "Guárdalo",
+        "restore": "Volver atrás",
+        "branch": "Guardar uno nuevo",
+        "tryAgain": "Prueba de otra forma",
+        "retry": "Inténtalo otra vez",
+        "exit": "Volver a mi lección"
+      },
+      "announce": {
+        "preview": "Esto va a cambiar {{baseline}}. Siempre puedes volver atrás.",
+        "running": "Probando ahora.",
+        "observing": "Lo probaste. Esto es lo que pasó.",
+        "observingPlain": "Lo probaste. Mira qué cambió.",
+        "kept": "Lo guardaste. Ahora {{baseline}} es esto.",
+        "restored": "Volviste atrás. {{baseline}} está como estaba antes.",
+        "branched": "Guardaste uno nuevo. {{baseline}} no cambió.",
+        "recoverableError": "Eso no se guardó.",
+        "unexpectedError": "Algo se rompió de nuestro lado, no en tu prueba.",
+        "baselineSafe": "{{baseline}} sigue a salvo.",
+        "restoreFailed": "Todavía no pudimos traer de vuelta {{baseline}}. No se perdió nada de lo que hiciste."
+      }
+    },
+    "older": {
+      "regionLabel": "Controles del experimento",
+      "actionsLabel": "Acciones disponibles",
+      "baselinePrefix": "Versión guardada:",
+      "replaceNotice": "Si guardas esto, reemplaza {{baseline}} con tu nueva ejecución.",
+      "branchNotice": "Guardar como versión nueva deja {{baseline}} intacta.",
+      "headings": {
+        "baseline": "Listo para ejecutar",
+        "preview": "Vista previa",
+        "running": "Ejecutando",
+        "observing": "Comparar",
+        "kept": "Guardado",
+        "restored": "Restaurado",
+        "branched": "Nueva versión guardada",
+        "unavailable": "No disponible",
+        "recoverableError": "Eso no se guardó",
+        "unexpectedError": "Problema del sistema"
+      },
+      "body": {
+        "baseline": "Cambia una variable y luego haz una vista previa o ejecútala. Puedes restaurar la versión guardada cuando quieras."
+      },
+      "actions": {
+        "preview": "Vista previa",
+        "run": "Ejecutar",
+        "cancel": "Cancelar",
+        "keep": "Guardar esta versión",
+        "restore": "Restaurar",
+        "branch": "Guardar como versión nueva",
+        "tryAgain": "Intentar de nuevo",
+        "retry": "Reintentar",
+        "exit": "Volver a la lección"
+      },
+      "announce": {
+        "preview": "Vista previa lista. Ejecutar esto reemplazará {{baseline}}.",
+        "running": "Ejecutando ahora.",
+        "observing": "La ejecución terminó. Este es el resultado.",
+        "observingPlain": "La ejecución terminó. Compárala con la versión guardada.",
+        "kept": "Guardado. Ahora {{baseline}} apunta a esta versión.",
+        "restored": "Restaurado. {{baseline}} volvió a la versión guardada.",
+        "branched": "Guardada como versión nueva. {{baseline}} no cambió.",
+        "recoverableError": "Eso no se guardó.",
+        "unexpectedError": "Ocurrió un problema del sistema de nuestro lado, no en tu experimento.",
+        "baselineSafe": "{{baseline}} sigue a salvo.",
+        "restoreFailed": "Todavía no pudimos restaurar {{baseline}}. No se borró nada de lo que hiciste."
+      }
+    }
+  },
   "envBanner": {
     "message": "{{env}}: solo datos de prueba. Este no es el Bright Boost real.",
     "build": "compilación {{sha}}",

@@ -1926,6 +1926,100 @@
       "backToBack": "Back to back"
     }
   },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "Thử nghiệm",
+      "actionsLabel": "Em có thể làm gì",
+      "baselinePrefix": "Bây giờ em có:",
+      "replaceNotice": "Nếu em giữ cái này, nó sẽ thay cho {{baseline}}.",
+      "branchNotice": "Em có thể lưu cái này mà vẫn giữ {{baseline}}.",
+      "headings": {
+        "baseline": "Sẵn sàng thử",
+        "preview": "Xem trước",
+        "running": "Đang thử",
+        "observing": "Chuyện gì đã xảy ra?",
+        "kept": "Em đã giữ nó",
+        "restored": "Em đã quay lại",
+        "branched": "Em đã lưu cái mới",
+        "unavailable": "Bây giờ chưa được",
+        "recoverableError": "Chưa lưu được",
+        "unexpectedError": "Có lỗi ở phía chúng tôi"
+      },
+      "body": {
+        "baseline": "Đổi một thứ rồi thử. Em luôn có thể quay lại."
+      },
+      "actions": {
+        "preview": "Xem trước",
+        "run": "Thử đi",
+        "cancel": "Thôi",
+        "keep": "Giữ lại",
+        "restore": "Quay lại",
+        "branch": "Lưu cái mới",
+        "tryAgain": "Thử cách khác",
+        "retry": "Thử lại lần nữa",
+        "exit": "Về bài học"
+      },
+      "announce": {
+        "preview": "Việc này sẽ thay đổi {{baseline}}. Em luôn có thể quay lại.",
+        "running": "Đang thử.",
+        "observing": "Em đã thử. Đây là điều đã xảy ra.",
+        "observingPlain": "Em đã thử. Hãy xem cái gì đã đổi.",
+        "kept": "Em đã giữ nó. Bây giờ {{baseline}} là cái này.",
+        "restored": "Em đã quay lại. {{baseline}} như lúc trước.",
+        "branched": "Em đã lưu cái mới. {{baseline}} không đổi.",
+        "recoverableError": "Chưa lưu được.",
+        "unexpectedError": "Có lỗi ở phía chúng tôi, không phải ở lần thử của em.",
+        "baselineSafe": "{{baseline}} vẫn an toàn.",
+        "restoreFailed": "Chúng tôi chưa lấy lại được {{baseline}}. Không có gì em làm bị mất."
+      }
+    },
+    "older": {
+      "regionLabel": "Bảng điều khiển thí nghiệm",
+      "actionsLabel": "Hành động có sẵn",
+      "baselinePrefix": "Phiên bản đã lưu:",
+      "replaceNotice": "Giữ cái này sẽ thay thế {{baseline}} bằng lần chạy mới.",
+      "branchNotice": "Lưu thành phiên bản mới sẽ giữ nguyên {{baseline}}.",
+      "headings": {
+        "baseline": "Sẵn sàng chạy",
+        "preview": "Xem trước",
+        "running": "Đang chạy",
+        "observing": "So sánh",
+        "kept": "Đã giữ",
+        "restored": "Đã khôi phục",
+        "branched": "Đã lưu phiên bản mới",
+        "unavailable": "Không khả dụng",
+        "recoverableError": "Chưa lưu được",
+        "unexpectedError": "Sự cố hệ thống"
+      },
+      "body": {
+        "baseline": "Đổi một biến rồi xem trước hoặc chạy. Bạn có thể khôi phục phiên bản đã lưu bất cứ lúc nào."
+      },
+      "actions": {
+        "preview": "Xem trước",
+        "run": "Chạy",
+        "cancel": "Hủy",
+        "keep": "Giữ phiên bản này",
+        "restore": "Khôi phục",
+        "branch": "Lưu thành phiên bản mới",
+        "tryAgain": "Thử lại",
+        "retry": "Thử lại",
+        "exit": "Quay về bài học"
+      },
+      "announce": {
+        "preview": "Đã sẵn sàng xem trước. Chạy sẽ thay thế {{baseline}}.",
+        "running": "Đang chạy.",
+        "observing": "Đã chạy xong. Đây là kết quả.",
+        "observingPlain": "Đã chạy xong. Hãy so sánh với phiên bản đã lưu.",
+        "kept": "Đã giữ. Bây giờ {{baseline}} trỏ tới phiên bản này.",
+        "restored": "Đã khôi phục. {{baseline}} trở lại phiên bản đã lưu.",
+        "branched": "Đã lưu thành phiên bản mới. {{baseline}} không thay đổi.",
+        "recoverableError": "Chưa lưu được.",
+        "unexpectedError": "Đã xảy ra sự cố hệ thống ở phía chúng tôi, không phải ở thí nghiệm của bạn.",
+        "baselineSafe": "{{baseline}} vẫn an toàn.",
+        "restoreFailed": "Chúng tôi chưa khôi phục được {{baseline}}. Không có gì bạn tạo bị xóa."
+      }
+    }
+  },
   "envBanner": {
     "message": "{{env}} — chỉ có dữ liệu thử nghiệm. Đây không phải là Bright Boost thật.",
     "build": "bản dựng {{sha}}",

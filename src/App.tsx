@@ -59,6 +59,11 @@ import ResetPassword from "./pages/ResetPassword";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
 import Waterworks from "./pages/Waterworks";
+// Biome Buddy prototype: unlisted routes, lazy so its content tables never
+// ride in the main chunk.
+const BiomeBuddy = lazy(() => import("./pages/BiomeBuddy"));
+const BiomeBuddyShare = lazy(() => import("./pages/BiomeBuddyShare"));
+const BiomeBuddyReview = lazy(() => import("./pages/BiomeBuddyReview"));
 import PlanDetail from "./pages/PlanDetail";
 import Parents from "./pages/Parents";
 import ParentGuide from "./pages/ParentGuide";
@@ -153,6 +158,35 @@ function App() {
                   device-local persistence, zero backend. Placement (#676)
                   decided later. See docs/games/waterworks-design.md. */}
               <Route path="/waterworks" element={<Waterworks />} />
+              {/* Biome Buddy — reviewable prototype (docs/games/biome-buddy-design.md).
+                  Public, no auth, linked from NOTHING; device-local persistence,
+                  zero backend. /share renders a recipe carried in the URL
+                  fragment; /review is the reviewer intro. Unlisted is not
+                  authentication. */}
+              <Route
+                path="/biome-buddy"
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddy />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/biome-buddy/share"
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddyShare />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/biome-buddy/review"
+                element={
+                  <Suspense fallback={null}>
+                    <BiomeBuddyReview />
+                  </Suspense>
+                }
+              />
               {import.meta.env.DEV && (
                 <Route
                   path="/dev/echo-spike"

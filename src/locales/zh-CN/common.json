@@ -2108,6 +2108,100 @@
       "backToBack": "背靠背"
     }
   },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "试一试",
+      "actionsLabel": "你可以做的",
+      "baselinePrefix": "你现在有：",
+      "replaceNotice": "如果留下这个，它会代替{{baseline}}。",
+      "branchNotice": "你可以留下这个，同时保留{{baseline}}。",
+      "headings": {
+        "baseline": "准备试一试",
+        "preview": "先看看",
+        "running": "正在试",
+        "observing": "发生了什么？",
+        "kept": "你留下了它",
+        "restored": "你回去了",
+        "branched": "你存了一个新的",
+        "unavailable": "现在还不行",
+        "recoverableError": "没有存上",
+        "unexpectedError": "我们这边出问题了"
+      },
+      "body": {
+        "baseline": "改一样东西，然后试一试。你随时可以回去。"
+      },
+      "actions": {
+        "preview": "先看看",
+        "run": "试一试",
+        "cancel": "算了",
+        "keep": "留下它",
+        "restore": "回去",
+        "branch": "存一个新的",
+        "tryAgain": "换个方法试",
+        "retry": "再试一次",
+        "exit": "回到我的课"
+      },
+      "announce": {
+        "preview": "这会改变{{baseline}}。你随时可以回去。",
+        "running": "正在试。",
+        "observing": "你试过了。看看发生了什么。",
+        "observingPlain": "你试过了。看看有什么变了。",
+        "kept": "你留下了它。现在{{baseline}}就是这个。",
+        "restored": "你回去了。{{baseline}}和原来一样。",
+        "branched": "你存了一个新的。{{baseline}}没有变。",
+        "recoverableError": "没有存上。",
+        "unexpectedError": "我们这边出问题了，不是你试的问题。",
+        "baselineSafe": "{{baseline}}还好好的。",
+        "restoreFailed": "我们还没能把{{baseline}}拿回来。你做的东西都没有丢。"
+      }
+    },
+    "older": {
+      "regionLabel": "实验控制",
+      "actionsLabel": "可用操作",
+      "baselinePrefix": "已保存的版本：",
+      "replaceNotice": "保留这个会用新的运行结果替换{{baseline}}。",
+      "branchNotice": "另存为新版本不会改动{{baseline}}。",
+      "headings": {
+        "baseline": "准备运行",
+        "preview": "预览",
+        "running": "运行中",
+        "observing": "对比",
+        "kept": "已保留",
+        "restored": "已恢复",
+        "branched": "已保存新版本",
+        "unavailable": "暂不可用",
+        "recoverableError": "没有保存成功",
+        "unexpectedError": "系统问题"
+      },
+      "body": {
+        "baseline": "改一个变量，然后预览或运行。你随时可以恢复已保存的版本。"
+      },
+      "actions": {
+        "preview": "预览",
+        "run": "运行",
+        "cancel": "取消",
+        "keep": "保留这个版本",
+        "restore": "恢复",
+        "branch": "另存为新版本",
+        "tryAgain": "再试一次",
+        "retry": "重试",
+        "exit": "返回课程"
+      },
+      "announce": {
+        "preview": "预览已就绪。运行会替换{{baseline}}。",
+        "running": "正在运行。",
+        "observing": "运行结束。这是结果。",
+        "observingPlain": "运行结束。和已保存的版本对比一下。",
+        "kept": "已保留。现在{{baseline}}指向这个版本。",
+        "restored": "已恢复。{{baseline}}回到了已保存的版本。",
+        "branched": "已另存为新版本。{{baseline}}没有改变。",
+        "recoverableError": "没有保存成功。",
+        "unexpectedError": "我们这边出现了系统问题，不是你的实验出错。",
+        "baselineSafe": "{{baseline}}仍然安全。",
+        "restoreFailed": "我们还没能恢复{{baseline}}。你创建的内容都没有被删除。"
+      }
+    }
+  },
   "envBanner": {
     "message": "{{env}} — 仅为测试数据。这不是正式的 Bright Boost。",
     "build": "构建 {{sha}}",

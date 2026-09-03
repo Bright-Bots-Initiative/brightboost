@@ -29,7 +29,7 @@ When unset, the backend shim (`backend/src/services/analytics.ts`) silently no-o
 
 ### Environment guard (BRAND_R0)
 
-A staging environment created by copying production's variables would inherit the production key and write test traffic into the production project. The key therefore carries a **label** naming the environment it was issued for:
+A staging environment created by copying production's variables would inherit the production key and write test traffic into the production project. The key therefore carries a **label** naming the environment it was issued for, and the label must match the environment **exactly**:
 
 ```
 # production
@@ -40,16 +40,21 @@ POSTHOG_KEY=phc_…        POSTHOG_KEY_ENV=staging
 VITE_POSTHOG_KEY=phc_…   VITE_POSTHOG_KEY_ENV=staging
 ```
 
-| Environment (`APP_ENV` / `VITE_APP_ENV`) | Key   | Label                 | Result                                                  |
-| ---------------------------------------- | ----- | --------------------- | ------------------------------------------------------- |
-| any                                      | unset | any                   | `disabled` (silent no-op, as before)                    |
-| production                               | set   | unset or `production` | `enabled`                                               |
-| production                               | set   | anything else         | `refused`                                               |
-| staging / preview / development          | set   | unset                 | `refused` — an unlabeled key is treated as production's |
-| staging / preview / development          | set   | `production`          | `refused`                                               |
-| staging / preview / development          | set   | anything else         | `enabled`                                               |
+| Environment (classifier) | Key   | Label                          | Result                                                                                        |
+| ------------------------ | ----- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| any                      | unset | any                            | `disabled` (silent no-op, as before)                                                          |
+| production               | set   | `production`                   | `enabled`                                                                                     |
+| production               | set   | unset                          | `enabled-unlabeled` — bootstrap compatibility only; degraded posture on `/health`, warns once |
+| production               | set   | any non-production label       | `refused` (`nonproduction-key-in-production`)                                                 |
+| staging                  | set   | `staging`                      | `enabled`                                                                                     |
+| preview                  | set   | `preview`                      | `enabled`                                                                                     |
+| development              | set   | `development`                  | `enabled`                                                                                     |
+| any non-production       | set   | unset                          | `refused` (`unlabeled-nonproduction`)                                                         |
+| any non-production       | set   | `production`                   | `refused` (`production-key-outside-production`)                                               |
+| any non-production       | set   | a **different** non-prod label | `refused` (`environment-key-mismatch`)                                                        |
+| mismatch (classifier)    | set   | any                            | `refused` (`environment-mismatch`) — see the deploy-environment contract in `DEPLOYMENT.md`   |
 
-`refused` logs `[analytics] REFUSED — …` once, never initializes PostHog, and shows as `analytics: "refused"` on `/health`; `scripts/verify-deploy-target.mjs` fails a host in that state (`DT-008`). Logic: `backend/src/utils/analyticsGuard.ts`, `src/lib/analyticsGuard.ts` (tests cover every row). Local dev with a key now needs `POSTHOG_KEY_ENV=development` / `VITE_POSTHOG_KEY_ENV=development` — and a key that is **not** the production project's.
+`refused` logs `[analytics] REFUSED — …` once, never initializes PostHog, and shows as `analytics: "refused"` on `/health`; `scripts/verify-deploy-target.mjs` fails a host in that state (`DT-008`). `enabled-unlabeled` exists only so today's production (no label) keeps working until `POSTHOG_KEY_ENV=production` / `VITE_POSTHOG_KEY_ENV=production` are set; strict verification (`--require-declared-env`) refuses it, and the branch is removed once production is labelled (tracked on #860). Logic: `backend/src/utils/analyticsGuard.ts`, `src/lib/analyticsGuard.ts` (tests cover every row). Local dev with a key needs `POSTHOG_KEY_ENV=development` / `VITE_POSTHOG_KEY_ENV=development` — and a key that is **not** the production project's.
 
 ### Why the frontend env vars require a Docker rebuild
 
@@ -98,8 +103,21 @@ The comment block at the top of `src/lib/analytics.ts` enforces the same rules i
 | `demo_game_completed`     | Demo game finished (GameShell results → Finish)                                                                                                                                                    | `game_id`, `score`, `stars`, `time_spent_seconds`                                    | client only     |
 | `demo_replayed`           | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id`                                                                            | client only     |
 | `demo_signup_cta_clicked` | Conversion CTA tapped on `/try`                                                                                                                                                                    | `placement` (`results` \| `hero_teacher_whisper`)                                    | client only     |
+| `experiment_previewed`    | Safe Exploration controls enter `preview` (older band only)                                                                                                                                        | `surface_id`, `band`, `attempt`                                                      | client only     |
+| `experiment_tried`        | A Safe Exploration run finishes with a learner outcome                                                                                                                                             | `surface_id`, `band`, `attempt`                                                      | client only     |
+| `experiment_kept`         | Learner keeps the experiment (the one consequential action)                                                                                                                                        | `surface_id`, `band`, `attempt`                                                      | client only     |
+| `experiment_restored`     | Learner returns to the preserved baseline ("Go back" / "Restore")                                                                                                                                  | `surface_id`, `band`, `attempt`                                                      | client only     |
+| `experiment_branched`     | Learner saves the experiment as a new version, original untouched (older band only)                                                                                                                | `surface_id`, `band`, `attempt`                                                      | client only     |
+| `experiment_failed`       | A Safe Exploration handler reports or throws an infrastructure failure                                                                                                                             | `surface_id`, `band`, `attempt`, `error_kind` (`recoverable` \| `unexpected`)        | client only     |
 
 `grade_band` values: `k2`, `g3_5`, `g6_8` (whatever the student's class is set to).
+
+`band` values (the `experiment_*` family only): `k2`, `older` — the Safe
+Exploration controls (#838) distinguish only those two banded expressions.
+`attempt` counts runs on that surface since mount: a **process** measure
+(revisions), never a score, accuracy, or mastery signal. `experiment_failed`
+exists so an infrastructure failure stays countable and distinct from a learner
+outcome (Safe Exploration accessibility contract §6) instead of being swallowed.
 
 ### Demo-funnel privacy note
 

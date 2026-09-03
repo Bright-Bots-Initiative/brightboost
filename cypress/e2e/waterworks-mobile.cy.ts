@@ -284,7 +284,7 @@ describe("Waterworks landscape tool reachability", () => {
   it("contains the longer Spanish controls on a portrait iPhone", () => {
     cy.viewport(375, 667);
     visitWaterworks({ skipFirstRunHelp: true });
-    cy.get('button[aria-label="Change language"]').click();
+    cy.get('button[aria-label$="Change language"]').click();
     cy.contains("button", "Español").click();
     cy.contains("button", "Grados 6–8 · Libre").click();
 
