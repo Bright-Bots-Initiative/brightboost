@@ -30,13 +30,30 @@ Backend keeps `rootDir: "."` and `main` / `start` on `dist/src/server.js`. Do **
 - Colocated `*.test.ts` under `shared/` must be **excluded** from `shared/tsconfig.json` `include` so `build:shared` does not typecheck Vitest imports.
 - Registering the engine as its own Vitest project is a separate change (Great Work engine work), not part of the build-context spike.
 
-## First package
+## Packages
 
-| Path                       | Role                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `shared/greatwork-engine/` | Stub + future simulation engine (#720). Not a template for inventing parallel engines per game. |
+| Path                       | Role                                                                                                                                                                                                     |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared/greatwork-engine/` | Stub + future simulation engine (#720). Not a template for inventing parallel engines per game.                                                                                                          |
+| `shared/progression/`      | Canonical STEM set activity-ID allowlists (#855). Pure data. Both runtimes gate on the same list: the app's progress meters and the backend's `POST /avatar/select-archetype` guard must never disagree. |
 
 Add another `shared/<domain>/` only when a new feature hits the same cross-runtime identity requirement — not by default.
+
+### Consuming a shared module that is not the package `main`
+
+`shared/package.json` declares no `exports` map, and `backend/tsconfig.json`
+uses `moduleResolution: "node"`. Import a non-`main` module by its emitted
+path so TypeScript and Node walk the **same** directory:
+
+```ts
+import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
+```
+
+Do not import `@brightboost/greatwork-engine/progression/stemSetIds` (no
+`dist/`). Under `moduleResolution: "node"` that typechecks against the `.ts`
+source inside the linked package and then fails at runtime with
+`MODULE_NOT_FOUND` — the same "compiles, crashes" shape as the relative-path
+hazard above.
 
 ## Decision required (nwalker) — frontend source vs backend emit
 
