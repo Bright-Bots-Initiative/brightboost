@@ -37,7 +37,7 @@ export default function ProgressDots({ current }: { current: Step }) {
           >
             <span
               aria-hidden
-              className={`inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${active ? "bg-[#1c3d6c] border-[#1c3d6c]" : done ? "bg-green-500 border-green-600" : "bg-white border-[#c9b89a]"}`}
+              className={`inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 ${active ? "bg-[#1c3d6c] border-[#1c3d6c]" : done ? "bg-green-500 border-green-600" : "bg-white border-[#8a7a5e]"}`}
             />
             <span className={active ? "" : "hidden sm:inline"}>
               {t(`biomeBuddy.steps.${step}`, { defaultValue: FALLBACK[step] })}
