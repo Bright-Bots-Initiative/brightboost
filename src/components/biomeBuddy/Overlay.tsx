@@ -3,10 +3,15 @@
  * confirmations). Waterworks `Overlay` precedent, plus:
  *   - focus moves INTO the dialog on open (first focusable, else the panel);
  *   - Tab / Shift+Tab cycle inside the dialog;
- *   - Escape calls onClose;
- *   - focus RETURNS to the element that was active when it opened.
- * On phones the panel docks to the bottom as a sheet (biomeBuddy.css) so the
- * stat bars behind a science card stay visible.
+ *   - Escape calls onClose; so does the backdrop and a visible ✕;
+ *   - focus RETURNS to the element that was active when it opened (or to an
+ *     explicit `returnFocusTo`, for taps that never focused the trigger).
+ *
+ * Structure: the panel itself never scrolls — an inner region does — so the
+ * ✕ stays put in the panel's corner. The ✕ is LAST in the DOM (tab order
+ * reaches the content first) and the content reserves a top strip so no
+ * heading runs under it. On phones the panel docks to the bottom as a sheet
+ * (biomeBuddy.css) so the stat bars behind a science card stay visible.
  */
 import { useEffect, useRef, type ReactNode } from "react";
 import { useBuddyLocale } from "./useBuddyLocale";
@@ -108,11 +113,13 @@ export default function Overlay({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
-        className={`bb-dialog ${sheet ? "bb-dialog--sheet" : ""} bb-pop bg-[#fbf7ee] rounded-3xl p-5 w-full ${
+        className={`bb-dialog ${sheet ? "bb-dialog--sheet" : ""} bb-pop relative bg-[#fbf7ee] rounded-3xl w-full ${
           wide ? "max-w-lg" : "max-w-sm"
-        } relative flex flex-col items-center gap-3 text-center shadow-2xl overflow-y-auto outline-none ${className}`}
+        } shadow-2xl outline-none ${className}`}
       >
-        {children}
+        <div className="bb-dialog-scroll flex flex-col items-center gap-3 text-center p-5 pt-12">
+          {children}
+        </div>
         {onClose && (
           <button
             type="button"

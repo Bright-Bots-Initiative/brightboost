@@ -122,22 +122,33 @@
   padding-left: max(1rem, env(safe-area-inset-left));
 }
 
+/* The panel is a non-scrolling frame; the inner region scrolls. That keeps
+   the ✕ pinned in the corner instead of scrolling away with the content. */
 .bb-dialog {
+  display: flex;
+  flex-direction: column;
   max-height: calc(100vh - 2rem);
   max-height: calc(
     100dvh - max(2rem, env(safe-area-inset-top)) -
       max(2rem, env(safe-area-inset-bottom))
   );
+}
+
+.bb-dialog-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-/* The visible dismiss sits in the panel's top-right corner but is LAST in
-   the tab order, so focus lands on the content first. */
+/* Visible dismiss: panel corner, last in the tab order; the content's top
+   padding (pt-12) reserves this strip so no heading runs under it. */
 .bb-dialog-close {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
+  z-index: 1;
 }
 
 .bb-gallery-grid {
@@ -171,6 +182,13 @@
   gap: 1rem;
 }
 
+/* Action rows sit in normal flow at the END of each screen — nothing ever
+   floats over a control. On phones they read as a card. */
+.bb-actions-sticky {
+  border-radius: 1rem;
+  padding: 0.5rem;
+}
+
 @media (min-width: 768px) {
   .bb-create-layout {
     grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
@@ -195,6 +213,9 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     max-height: 62dvh;
+  }
+
+  .bb-dialog--sheet .bb-dialog-scroll {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
@@ -221,28 +242,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* The primary action floats at the bottom while the page scrolls (its
-     natural position is the end of the page, so nothing is ever hidden once
-     the child reaches the bottom). It is ONE control tall: a single row that
-     never wraps. */
   .bb-actions-sticky {
-    position: sticky;
-    bottom: max(0.5rem, env(safe-area-inset-bottom));
-    z-index: 20;
     background: rgb(251 247 238 / 94%);
-    backdrop-filter: blur(8px);
-    border-radius: 1rem;
-    padding: 0.5rem;
     box-shadow: 0 8px 24px rgb(58 46 34 / 18%);
   }
 
   .bb-actions-row {
-    flex-wrap: nowrap;
-  }
-
-  .bb-actions-row > button {
-    min-width: 0;
-    white-space: nowrap;
+    flex-wrap: wrap;
   }
 }
 

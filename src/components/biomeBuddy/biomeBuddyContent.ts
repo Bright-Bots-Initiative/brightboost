@@ -231,7 +231,7 @@ export const SCIENCE: CardTable = {
       },
       animals: {
         en: "Rabbits, deer, woodcocks, horses.",
-        es: "Conejos, ciervos, chochas, caballos.",
+        es: "Conejos, ciervos, becadas, caballos.",
       },
       where: {
         en: "Open fields, deserts and forest edges all over the world.",
@@ -265,8 +265,8 @@ export const SCIENCE: CardTable = {
         es: "A los insectos voladores rápidos les fue mejor al ver el movimiento en todas direcciones a la vez.",
       },
       animals: {
-        en: "Dragonflies, flies, bees, crabs.",
-        es: "Libélulas, moscas, abejas, cangrejos.",
+        en: "Dragonflies, flies, bees, grasshoppers.",
+        es: "Libélulas, moscas, abejas, saltamontes.",
       },
       where: {
         en: "Almost everywhere insects live, from ponds to mountain tops.",
@@ -482,8 +482,8 @@ export const SCIENCE: CardTable = {
         es: "Una nariz húmeda atrapa el olor; bajo el agua las fosas se cierran y casi no se huele nada.",
       },
       more: {
-        en: "Damp air carries scent molecules well, which is why a forest smells so strong after rain. A fox's nose has about 200 million smell receptors, and a wet nose helps dissolve scents so they can be sensed. In hot dry air scents evaporate fast, and underwater a lung-breather holds its breath and smells nothing.",
-        es: "El aire húmedo lleva bien las moléculas de olor; por eso el bosque huele tan fuerte después de la lluvia. La nariz de un zorro tiene unos 200 millones de receptores, y estar húmeda ayuda a disolver los olores para notarlos. En el aire seco y caliente los olores se evaporan rápido, y bajo el agua un animal con pulmones aguanta la respiración y no huele nada.",
+        en: "Damp air carries scent molecules well, which is why a forest smells so strong after rain. A fox's nose has about 200 million smell receptors, and a wet nose helps dissolve scents so they can be sensed. In hot dry air scents evaporate fast, and underwater a lung-breather holds its breath and smells almost nothing.",
+        es: "El aire húmedo lleva bien las moléculas de olor; por eso el bosque huele tan fuerte después de la lluvia. La nariz de un zorro tiene unos 200 millones de receptores, y estar húmeda ayuda a disolver los olores para notarlos. En el aire seco y caliente los olores se evaporan rápido, y bajo el agua un animal con pulmones aguanta la respiración y casi no huele nada.",
       },
     },
     forked_tongue: {
@@ -941,8 +941,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Los animales cuyos bordes eran difíciles de ver fueron atrapados menos veces.",
     },
     animals: {
-      en: "Zebras, tigers, okapis, clownfish.",
-      es: "Cebras, tigres, okapis, peces payaso.",
+      en: "Zebras, tigers, okapis, tiger sharks.",
+      es: "Cebras, tigres, okapis, tiburones tigre.",
     },
     where: {
       en: "Grasslands, jungles and coral reefs.",
@@ -1239,8 +1239,8 @@ export const WHY: WhyTable = {
         es: "En el desierto las branquias se secan rápido y no hay agua que los hoyitos de la nariz puedan olfatear, así que este Buddy recibe poco aire y se vuelve muy lento. Las branquias echan de menos el estanque.",
       },
       air: {
-        en: "Thin dry cliff air gives gills almost nothing to breathe and the water-sniffing nostrils nothing to sniff, so this Buddy tires quickly up high.",
-        es: "El aire fino y seco del acantilado casi no da nada que respirar a las branquias ni nada que olfatear a la nariz de agua, así que este Buddy se cansa rápido en las alturas.",
+        en: "Cliff air is dry, so the gills stick together and can't pull anything from it even though air is full of oxygen, and the water-sniffing nostrils have nothing to sniff. This Buddy tires quickly up high.",
+        es: "El aire del acantilado es seco, así que las branquias se pegan y no pueden sacarle nada aunque esté lleno de oxígeno, y la nariz de agua no tiene nada que olfatear. Este Buddy se cansa rápido en las alturas.",
       },
     },
     nose_lungs: {

@@ -390,6 +390,32 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
     );
   });
 
+  it("third-pass corrections stay corrected (SCI-1..5)", () => {
+    // crabs are not insects; the compound-eyes card talks about insects
+    expect(en(scienceFor("eyes", "compound_eyes").animals)).not.toMatch(
+      /crab|spider|shrimp|lobster/i,
+    );
+    // gills fail in air because it is DRY, not because it lacks oxygen
+    const gillsAir = en(whyFor("nose", "gills", "air")!);
+    expect(gillsAir).toMatch(/dry/i);
+    expect(gillsAir).not.toMatch(/nothing to breathe|thin (dry )?air/i);
+    // no regional vulgarity in the Spanish animal lists
+    expect(scienceFor("eyes", "wide_set_eyes").animals.es).not.toMatch(
+      /chocha/i,
+    );
+    // a bar reading 30 is not "nothing"
+    expect(en(scienceFor("nose", "nose_lungs").more)).not.toMatch(
+      /smells nothing\./,
+    );
+    expect(scienceFor("nose", "nose_lungs").more.es).not.toMatch(
+      /y no huele nada\./,
+    );
+    // disruptive-coloration examples are disruptive, not aposematic or debated
+    expect(en(scienceFor("pattern", "stripes").animals)).not.toMatch(
+      /clownfish|skunk|coral snake/i,
+    );
+  });
+
   it("evolution is told as differential survival, never use-and-disuse (finding 21)", () => {
     for (const category of CATEGORIES)
       for (const id of TRAIT_OPTIONS[category]) {

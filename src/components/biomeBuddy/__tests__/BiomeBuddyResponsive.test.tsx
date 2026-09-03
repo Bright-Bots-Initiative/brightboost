@@ -92,6 +92,11 @@ describe("Biome Buddy layout contracts", () => {
     expect(declarationsOnly).not.toMatch(
       /(?<![\w-])(?:min-)?width:\s*(3[3-9]\d|[4-9]\d\d|\d{4,})px/,
     );
+    // action rows never float over content: no positioned action bar anywhere
+    expect(css).not.toMatch(/\.bb-actions-sticky\s*\{[^}]*position:/s);
+    // the dialog frame does not scroll; its inner region does, so the ✕ stays put
+    expect(css).toMatch(/\.bb-dialog-scroll\s*\{[^}]*overflow-y:\s*auto/s);
+    expect(css).toMatch(/\.bb-dialog-close\s*\{[^}]*position:\s*absolute/s);
     // the sheet and the dialog stay inside the viewport
     expect(css).toMatch(
       /\.bb-dialog\s*\{[^}]*max-height:\s*calc\(100vh - 2rem\)/s,
