@@ -834,6 +834,14 @@
     "set1Label": "Set 1: Fundamentos",
     "set2Label": "Set 2: Exploración",
     "set2LockedMessage": "Completa los Juegos STEM del Set 1 para desbloquear el siguiente set.",
+    "unavailable": {
+      "title": "¡Busquemos otro!",
+      "generic": "Este no está aquí ahora. ¡Elige un juego nuevo en tus módulos!",
+      "wrongGrade": "Este es para niños más grandes. ¡Tus módulos tienen juegos hechos para ti!",
+      "lockedSet": "Termina los juegos de antes para abrir este. ¡Ya casi!",
+      "notSpecialized": "Primero elige tu poder de estrella y después se abre este.",
+      "backToModules": "Ir a Mis Módulos"
+    },
     "detail": {
       "locked": "Módulo Bloqueado",
       "unlockPrompt": "¡Elige tu especialización en la página de avatar para desbloquear este módulo!",

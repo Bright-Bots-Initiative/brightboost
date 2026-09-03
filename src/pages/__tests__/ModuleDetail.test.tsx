@@ -3,6 +3,7 @@ import ModuleDetail from "../ModuleDetail";
 import { api } from "@/services/api";
 import { vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { __resetGradeBandCache } from "@/hooks/useGradeBand";
 
 // Resolve i18n keys against en/common.json so assertions match real
 // English text instead of raw keys.
@@ -11,11 +12,14 @@ vi.mock("react-i18next", async () => {
   return enMock();
 });
 
-// Mock API
+// Mock API. ModuleDetail now resolves the grade band (useGradeBand →
+// api.getStudentCourses) as part of the shared access policy (#856).
 vi.mock("@/services/api", () => ({
   api: {
     getModule: vi.fn(),
     getProgress: vi.fn(),
+    getAvatar: vi.fn(),
+    getStudentCourses: vi.fn(),
   },
 }));
 
@@ -60,6 +64,9 @@ const mockModule = {
 describe("ModuleDetail", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    __resetGradeBandCache();
+    (api.getStudentCourses as any).mockResolvedValue([]);
+    (api.getAvatar as any).mockResolvedValue({});
   });
 
   // TODO(green-ci-recovery): "Unit 1" / "Lesson 1" / "Activity 1" are

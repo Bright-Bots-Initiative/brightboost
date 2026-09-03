@@ -671,6 +671,18 @@ export const api = {
     return res.json().catch(() => []);
   },
 
+  /**
+   * Open teacher-session assignments for the signed-in student. The access
+   * policy (#856) reads this so an assignment can lift a set lock for the
+   * module it targets.
+   */
+  getStudentAssignments: async () => {
+    const res = await fetch(join(API_BASE, "/student/assignments"), {
+      headers: getHeaders(),
+    });
+    return res.json().catch(() => []);
+  },
+
   getStudentAssignedModules: async () => {
     const res = await fetch(join(API_BASE, "/student/assigned-modules"), {
       headers: getHeaders(),

@@ -18,12 +18,8 @@ import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { useGradeBand } from "@/hooks/useGradeBand";
 import { updatePersonalBestCache } from "@/hooks/usePersonalBest";
 import { applyG35StoryOverrides } from "@/components/games/gradeBandContent";
-import {
-  getStudentArchetype,
-  canAccessModule,
-  isSpecializationModuleSlug,
-} from "@/lib/moduleAccess";
-import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
+import ModuleUnavailable from "@/components/modules/ModuleUnavailable";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
   Dialog,
@@ -81,9 +77,21 @@ export default function ActivityPlayer() {
   const gradeBand = useGradeBand();
 
   const [loading, setLoading] = useState(true);
-  const [module, setModule] = useState<any>(null);
+  // `undefined` = not loaded yet; the access policy treats `null` as
+  // "the catalog has no such module".
+  const [module, setModule] = useState<any>(undefined);
   const [activity, setActivity] = useState<any>(null);
   const [content, setContent] = useState<any>(null);
+
+  // #856: one front door for registration, visibility, grade eligibility,
+  // specialization and set progression (with the teacher-assignment override).
+  // A denied target never initializes a game and never posts progress.
+  const access = useModuleAccess({ slug, module });
+  const denialReason =
+    access.status === "resolved" && !access.access.allowed
+      ? access.access.reason
+      : null;
+  const accessAllowed = access.status === "resolved" && access.access.allowed;
 
   // Band-aware view of the activity content. Applied at render time (not
   // parse time) because useGradeBand resolves async — the first paint may
@@ -146,39 +154,22 @@ export default function ActivityPlayer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mode, slides.length, slideIndex]);
 
-  // Guard: block activity deep-links into specialization-locked modules
-  useEffect(() => {
-    if (!slug || !isSpecializationModuleSlug(slug)) return;
-    api.getAvatar().then((avatarData) => {
-      const arch = getStudentArchetype(avatarData);
-      if (!canAccessModule({ slug, archetype: arch })) {
-        toast({
-          title: t("modules.detail.locked"),
-          description: t("modules.detail.unlockPrompt"),
-          variant: "destructive",
-        });
-        navigate("/student/avatar", { replace: true });
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
-
+  // Fetch the module. A slug the policy already refuses on its own (hidden /
+  // held-back content) never gets this far, so no content request goes out for
+  // it; the record itself is what tells us the module is registered and which
+  // grade band it belongs to.
   useEffect(() => {
     if (!slug || !lessonId || !activityId) return;
-
-    let cancelled = false;
-
-    // Removed/archived modules (e.g. lost-steps / "Fix the Order") are hidden
-    // from the module list but were still reachable by direct URL — block the
-    // activity route too so they can't open into a broken half-state.
-    if (HIDDEN_MODULE_SLUGS.has(slug)) {
-      navigate("/student/modules", { replace: true });
+    if (denialReason) {
+      setLoading(false);
       return;
     }
 
+    let cancelled = false;
+
     setLoading(true);
     // clear stale content to avoid "half-loaded" UI when rate-limited
-    setModule(null);
+    setModule(undefined);
     setActivity(null);
     setContent(null);
 
@@ -186,48 +177,13 @@ export default function ActivityPlayer() {
       .getModule(slug)
       .then((m) => {
         if (cancelled) return;
-        setModule(m);
-        // locate activity
-        const targetLessonId = String(lessonId);
-        const targetActivityId = String(activityId);
-        let found: any = null;
-        m?.units?.forEach((u: any) => {
-          u?.lessons?.forEach((l: any) => {
-            if (String(l.id) !== targetLessonId) return;
-            const a = l?.activities?.find(
-              (x: any) => String(x.id) === targetActivityId,
-            );
-            if (a) found = a;
-          });
-        });
-        if (!found) {
-          setActivity(null);
-          setContent(null);
-          return;
-        }
-        setActivity(found);
-        const parsed = safeJsonParse(found.content || "");
-        setContent(parsed);
-        track({
-          kind: "game_started",
-          game_id: parsed?.gameKey || String(found.id),
-          module_slug: String(slug),
-          activity_id: String(found.id),
-          grade_band: gradeBand,
-        });
-        // reset INFO local state (replay must start a fresh quiz session)
-        setSlideIndex(0);
-        setMode("story");
-        setAnswers({});
-        setSubmitted(false);
-        setIncorrectIds([]);
-        setCompletionData(null);
-        setShowBreak(false);
-        setQuizVariant(null);
-        completingRef.current = false; // a fresh play-through may submit again
+        setModule(m ?? null);
       })
       .catch(() => {
         if (cancelled) return;
+        // Infrastructure failure — not an access decision (principle 9 /
+        // a11y contract §6). Leave the module unknown and fall through to the
+        // existing "not found" recovery card.
         toast({
           title: t("common.oops"),
           description: t("activity.loadError"),
@@ -242,7 +198,52 @@ export default function ActivityPlayer() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, lessonId, activityId]); // avoid accidental reruns
+  }, [slug, lessonId, activityId, denialReason]); // avoid accidental reruns
+
+  // Only once access is allowed do we mount the activity: this is the point
+  // past which a game can start and a completion can be posted.
+  useEffect(() => {
+    if (!accessAllowed || !module || !lessonId || !activityId) return;
+
+    const targetLessonId = String(lessonId);
+    const targetActivityId = String(activityId);
+    let found: any = null;
+    module?.units?.forEach((u: any) => {
+      u?.lessons?.forEach((l: any) => {
+        if (String(l.id) !== targetLessonId) return;
+        const a = l?.activities?.find(
+          (x: any) => String(x.id) === targetActivityId,
+        );
+        if (a) found = a;
+      });
+    });
+    if (!found) {
+      setActivity(null);
+      setContent(null);
+      return;
+    }
+    setActivity(found);
+    const parsed = safeJsonParse(found.content || "");
+    setContent(parsed);
+    track({
+      kind: "game_started",
+      game_id: parsed?.gameKey || String(found.id),
+      module_slug: String(slug),
+      activity_id: String(found.id),
+      grade_band: gradeBand,
+    });
+    // reset INFO local state (replay must start a fresh quiz session)
+    setSlideIndex(0);
+    setMode("story");
+    setAnswers({});
+    setSubmitted(false);
+    setIncorrectIds([]);
+    setCompletionData(null);
+    setShowBreak(false);
+    setQuizVariant(null);
+    completingRef.current = false; // a fresh play-through may submit again
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessAllowed, module, lessonId, activityId]); // avoid accidental reruns
 
   // (Re)build the shuffled choice order whenever the band-resolved question
   // set changes — the grade band may resolve after the activity loads.
@@ -479,6 +480,12 @@ export default function ActivityPlayer() {
         </Dialog>
       </div>
     );
+  }
+
+  // #856: a refused target renders a reason and a route back — never a silent
+  // redirect, and never an initialized game.
+  if (denialReason) {
+    return <ModuleUnavailable reason={denialReason} />;
   }
 
   if (loading) {

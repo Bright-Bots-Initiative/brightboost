@@ -1,5 +1,5 @@
 // src/pages/ModuleDetail.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../services/api";
@@ -8,49 +8,43 @@ import { useToast } from "@/hooks/use-toast";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check } from "lucide-react";
-import {
-  getStudentArchetype,
-  canAccessModule,
-  isSpecializationModuleSlug,
-} from "@/lib/moduleAccess";
+import ModuleUnavailable from "@/components/modules/ModuleUnavailable";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { translateContentName } from "@/utils/localizedContent";
-import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 
 export default function ModuleDetail() {
   const { slug } = useParams();
-  const [module, setModule] = useState<any>(null);
-  const [completedActivities, setCompletedActivities] = useState<Set<string>>(
-    new Set(),
+  // `undefined` = not loaded yet; the access policy treats `null` as
+  // "the catalog has no such module".
+  const [module, setModule] = useState<any>(undefined);
+  const [completedIds, setCompletedIds] = useState<string[] | undefined>(
+    undefined,
   );
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // #856: one front door. Hidden slugs resolve on the first render, so a
+  // held-back module is refused before any content request goes out.
+  const access = useModuleAccess({
+    slug,
+    module,
+    completedActivityIds: completedIds,
+    providesProgress: true,
+  });
+  const denialReason =
+    access.status === "resolved" && !access.access.allowed
+      ? access.access.reason
+      : null;
+
+  const completedActivities = useMemo(
+    () => new Set<string>(completedIds ?? []),
+    [completedIds],
+  );
+
   useEffect(() => {
     if (!slug) return;
-
-    // Removed/archived modules (e.g. "Fix the Order" / lost-steps) are
-    // filtered from the module list but were still reachable by direct URL.
-    // Block the route too so a dead module can't be opened.
-    if (HIDDEN_MODULE_SLUGS.has(slug)) {
-      navigate("/student/modules", { replace: true });
-      return;
-    }
-
-    // Guard: if the module requires specialization, check archetype first
-    if (isSpecializationModuleSlug(slug)) {
-      api.getAvatar().then((avatarData) => {
-        const arch = getStudentArchetype(avatarData);
-        if (!canAccessModule({ slug, archetype: arch })) {
-          toast({
-            title: t("modules.detail.locked"),
-            description: t("modules.detail.unlockPrompt"),
-            variant: "destructive",
-          });
-          navigate("/student/avatar", { replace: true });
-        }
-      });
-    }
+    if (denialReason) return;
 
     Promise.all([
       api.getModule(slug, { structureOnly: true }),
@@ -58,15 +52,12 @@ export default function ModuleDetail() {
       api.getProgress({ excludeUser: true }),
     ])
       .then(([m, p]) => {
-        setModule(m);
-        if (p?.progress) {
-          const completed = new Set<string>(
-            p.progress
-              .filter((item: any) => item.status === "COMPLETED")
-              .map((item: any) => String(item.activityId)),
-          );
-          setCompletedActivities(completed);
-        }
+        setModule(m ?? null);
+        setCompletedIds(
+          (p?.progress ?? [])
+            .filter((item: any) => item.status === "COMPLETED")
+            .map((item: any) => String(item.activityId)),
+        );
       })
       .catch(() => {
         toast({
@@ -76,7 +67,11 @@ export default function ModuleDetail() {
         });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]); // avoid accidental reruns
+  }, [slug, denialReason]); // avoid accidental reruns
+
+  if (denialReason) {
+    return <ModuleUnavailable reason={denialReason} />;
+  }
 
   if (!module) {
     return (

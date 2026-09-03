@@ -26,14 +26,27 @@ import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { translateContentName } from "@/utils/localizedContent";
-import { getStudentArchetype, canAccessModule } from "@/lib/moduleAccess";
+import { getStudentArchetype, resolveModuleAccess } from "@/lib/moduleAccess";
+import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
+import { useGradeBand } from "@/hooks/useGradeBand";
+import {
+  buildModuleSlugPriority,
+  scanForNextActivity,
+  type CompletedModule,
+  type NextActivity,
+} from "@/lib/continueScan";
 import {
   computeStreakFromProgress,
-  ProgressLike,
   StreakStats,
 } from "@/lib/streakFromProgress";
 import StreakMeter from "@/components/ui/StreakMeter";
-import { ClipboardList, ArrowRight, Heart, Users, ClipboardCheck } from "lucide-react";
+import {
+  ClipboardList,
+  ArrowRight,
+  Heart,
+  Users,
+  ClipboardCheck,
+} from "lucide-react";
 import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 
 type AssignedSession = {
@@ -48,99 +61,13 @@ type AssignedSession = {
   completed: boolean;
 };
 
-type NextActivity = {
-  moduleSlug: string;
-  moduleTitle: string;
-  unitId: string;
-  unitTitle: string;
-  lessonId: string;
-  lessonTitle: string;
-  activityId: string;
-  activityTitle: string;
-  kind: "INFO" | "INTERACT";
-  orderKey: string;
-};
-
-type CompletedModule = {
-  slug: string;
-  title: string;
-};
-
-function sortNum(n: any, fallback = 9999) {
-  const x = Number(n);
-  return Number.isFinite(x) ? x : fallback;
-}
-
-function flattenModule(module: any): NextActivity[] {
-  const out: NextActivity[] = [];
-  const units = (module?.units || [])
-    .slice()
-    .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
-  for (const u of units) {
-    const lessons = (u?.lessons || [])
-      .slice()
-      .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
-    for (const l of lessons) {
-      const acts = (l?.activities || [])
-        .slice()
-        .sort((a: any, b: any) => sortNum(a.order) - sortNum(b.order));
-      for (const a of acts) {
-        out.push({
-          moduleSlug: module.slug,
-          moduleTitle: module.title,
-          unitId: String(u.id),
-          unitTitle: u.title,
-          lessonId: String(l.id),
-          lessonTitle: l.title,
-          activityId: String(a.id),
-          activityTitle: a.title,
-          kind: a.kind,
-          orderKey: `${sortNum(u.order)}.${sortNum(l.order)}.${sortNum(a.order)}`,
-        });
-      }
-    }
-  }
-  return out;
-}
-
-/**
- * Build priority-ordered list of module slugs:
- * - First: modules with recent progress, sorted by most recent
- * - Then: remaining modules in catalog order
- */
-function buildModuleSlugPriority(
-  modules: any[],
-  progress: (ProgressLike & { moduleSlug?: string })[],
-): string[] {
-  // Get slugs with progress, sorted by most recent
-  const progressBySlug = new Map<string, Date>();
-  for (const p of progress) {
-    if (!p.moduleSlug || !p.updatedAt) continue;
-    const date = new Date(p.updatedAt);
-    if (isNaN(date.getTime())) continue;
-    const existing = progressBySlug.get(p.moduleSlug);
-    if (!existing || date > existing) {
-      progressBySlug.set(p.moduleSlug, date);
-    }
-  }
-
-  const progressedSlugs = Array.from(progressBySlug.entries())
-    .sort((a, b) => b[1].getTime() - a[1].getTime())
-    .map(([slug]) => slug);
-
-  // Add remaining modules in catalog order
-  const allSlugs = modules.map((m) => m.slug);
-  const remainingSlugs = allSlugs.filter((s) => !progressBySlug.has(s));
-
-  return [...progressedSlugs, ...remainingSlugs];
-}
-
 export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const authApi = useApi();
+  const gradeBand = useGradeBand();
 
   const [avatar, setAvatar] = useState<any>(null);
   const [, setModules] = useState<any[]>([]);
@@ -152,16 +79,32 @@ export default function StudentDashboard() {
   );
   const [completedActivitiesCount, setCompletedActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>([]);
+  const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>(
+    [],
+  );
 
   // Enrolled courses + pulse survey state
-  const [enrolledCourses, setEnrolledCourses] = useState<{ id: string; name: string }[]>([]);
-  const [pulseTarget, setPulseTarget] = useState<{ courseId: string; courseName: string; kind: "PRE" | "POST" } | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [pulseTarget, setPulseTarget] = useState<{
+    courseId: string;
+    courseName: string;
+    kind: "PRE" | "POST";
+  } | null>(null);
   const [pulseDoneKeys, setPulseDoneKeys] = useState<Set<string>>(new Set());
 
   // Benchmark state (API-driven, not localStorage)
   const [studentBenchmarks, setStudentBenchmarks] = useState<
-    { id: string; kind: string; courseName: string; courseId: string; templateTitle: string; completed: boolean; locked: boolean }[]
+    {
+      id: string;
+      kind: string;
+      courseName: string;
+      courseId: string;
+      templateTitle: string;
+      completed: boolean;
+      locked: boolean;
+    }[]
   >([]);
 
   // Compute streak from progress
@@ -197,98 +140,85 @@ export default function StudentDashboard() {
         const progList = Array.isArray(prog?.progress) ? prog.progress : [];
         setProgressList(progList);
 
-        // Filter out specialization-locked modules
         const studentArch = getStudentArchetype(av);
-        const modsList = allMods.filter((m: any) =>
-          canAccessModule({ slug: m.slug, archetype: studentArch }),
-        );
-        setModules(modsList);
 
         // Count completed activities
-        const completedCount = progList.filter(
-          (p: any) => p?.status === "COMPLETED",
-        ).length;
-        setCompletedActivitiesCount(completedCount);
+        const completedActivityIds = progList
+          .filter((p: any) => p?.status === "COMPLETED")
+          .map((p: any) => String(p.activityId));
+        setCompletedActivitiesCount(completedActivityIds.length);
 
-        // Build priority order for module scanning
-        const slugPriority = buildModuleSlugPriority(modsList, progList);
-
-        if (slugPriority.length === 0) {
-          setNextOne(null);
-          setUpNext([]);
-          setCompletedModules([]);
-          return;
-        }
-
-        // Scan modules in priority order to find first incomplete activity
-        let foundNextOne: NextActivity | null = null;
-        let foundUpNext: NextActivity[] = [];
-        const completedMods: CompletedModule[] = [];
-
-        for (const slug of slugPriority) {
-          try {
-            const deep = await api.getModule(slug, { structureOnly: true });
-            if (cancelled) return;
-
-            const ordered = flattenModule(deep);
-            if (ordered.length === 0) continue;
-
-            const completedSet = new Set(
-              progList
-                .filter(
-                  (p: any) =>
-                    p?.moduleSlug === slug && p?.status === "COMPLETED",
-                )
-                .map((p: any) => String(p.activityId)),
-            );
-
-            const firstIncomplete = ordered.find(
-              (x) => !completedSet.has(String(x.activityId)),
-            );
-
-            if (firstIncomplete) {
-              // Found the next activity to do
-              foundNextOne = firstIncomplete;
-              const startIdx = ordered.findIndex(
-                (x) => x.activityId === firstIncomplete.activityId,
-              );
-              // Get activities AFTER nextOne (not including it)
-              foundUpNext = ordered.slice(startIdx + 1, startIdx + 4);
-              break;
-            } else {
-              // Module is complete
-              completedMods.push({ slug, title: deep.title || slug });
-            }
-          } catch (e) {
-            // Skip module on fetch failure
-            console.warn(`Failed to fetch module ${slug}:`, e);
-          }
-        }
-
-        setNextOne(foundNextOne);
-        setUpNext(foundUpNext);
-        setCompletedModules(completedMods);
-
-        // Load assigned sessions (pilot mode)
+        // Assigned sessions (pilot mode) load BEFORE the Continue scan: a
+        // teacher assignment lifts the set lock for its target (#856 policy E),
+        // so the scan needs them to make the same decision the student sees.
+        let sessions: AssignedSession[] = [];
         try {
-          const sessions = await authApi.get("/student/assignments");
-          if (!cancelled && Array.isArray(sessions)) {
-            setAssignedSessions(sessions);
-          }
+          const raw = await authApi.get("/student/assignments");
+          if (Array.isArray(raw)) sessions = raw;
         } catch {
           // No sessions or not enrolled — that's fine
         }
+        if (cancelled) return;
+
+        const assignedModuleSlugs = new Set(
+          sessions
+            .map((s) => s.moduleSlug)
+            .filter((s): s is string => typeof s === "string" && !!s),
+        );
+        const catalogBySlug = new Map<string, any>(
+          allMods.map((m: any) => [m.slug, m]),
+        );
+        // #856: one front door — registration, visibility, grade eligibility,
+        // specialization and set progression, with the assignment override.
+        const isAllowed = (slug: string) =>
+          resolveModuleAccess({
+            slug,
+            module: catalogBySlug.get(slug) ?? null,
+            hiddenSlugs: HIDDEN_MODULE_SLUGS,
+            completedActivityIds,
+            archetype: studentArch,
+            gradeBand,
+            assignedModuleSlugs,
+          }).allowed;
+
+        setModules(allMods.filter((m: any) => isAllowed(m.slug)));
+        setAssignedSessions(
+          sessions.filter((s) => !!s.moduleSlug && isAllowed(s.moduleSlug)),
+        );
+
+        // Build priority order for module scanning
+        const slugPriority = buildModuleSlugPriority(allMods, progList);
+
+        // Scan modules in priority order to find first incomplete activity
+        const scan = await scanForNextActivity({
+          slugPriority,
+          progress: progList,
+          loadModule: (slug) => api.getModule(slug, { structureOnly: true }),
+          isAllowed,
+          isCancelled: () => cancelled,
+          onLoadError: (slug, e) =>
+            console.warn(`Failed to fetch module ${slug}:`, e),
+        });
+        if (cancelled || !scan) return;
+
+        setNextOne(scan.nextOne);
+        setUpNext(scan.upNext);
+        setCompletedModules(scan.completedModules);
 
         // Load enrolled courses for pulse surveys
         try {
           const courses = await authApi.get("/student/courses");
           if (!cancelled && Array.isArray(courses)) {
-            setEnrolledCourses(courses.map((c: any) => ({ id: c.courseId, name: c.courseName })));
+            setEnrolledCourses(
+              courses.map((c: any) => ({ id: c.courseId, name: c.courseName })),
+            );
             // Build set of already-completed pulse keys from localStorage
             const doneKeys = new Set<string>();
             for (const c of courses) {
-              if (localStorage.getItem(`bb_pulse_pre_${c.courseId}`)) doneKeys.add(`pre_${c.courseId}`);
-              if (localStorage.getItem(`bb_pulse_post_${c.courseId}`)) doneKeys.add(`post_${c.courseId}`);
+              if (localStorage.getItem(`bb_pulse_pre_${c.courseId}`))
+                doneKeys.add(`pre_${c.courseId}`);
+              if (localStorage.getItem(`bb_pulse_post_${c.courseId}`))
+                doneKeys.add(`post_${c.courseId}`);
             }
             setPulseDoneKeys(doneKeys);
           }
@@ -303,7 +233,9 @@ export default function StudentDashboard() {
             const allBenchmarks: typeof studentBenchmarks = [];
             for (const c of courses) {
               try {
-                const bms = await authApi.get(`/student/courses/${c.courseId}/benchmarks`);
+                const bms = await authApi.get(
+                  `/student/courses/${c.courseId}/benchmarks`,
+                );
                 if (Array.isArray(bms)) {
                   for (const b of bms) {
                     allBenchmarks.push({
@@ -317,11 +249,15 @@ export default function StudentDashboard() {
                     });
                   }
                 }
-              } catch { /* skip */ }
+              } catch {
+                /* skip */
+              }
             }
             if (!cancelled) setStudentBenchmarks(allBenchmarks);
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       } catch (e) {
         console.error(e);
         toast({
@@ -337,7 +273,9 @@ export default function StudentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [toast, t, authApi]);
+    // `gradeBand` resolves async (k2 first): a 3-5 student re-runs the load
+    // once so grade-eligible content is not filtered out by the k2 default.
+  }, [toast, t, authApi, gradeBand]);
 
   const goToNext = () => {
     if (!nextOne) return navigate("/student/modules");
@@ -404,7 +342,9 @@ export default function StudentDashboard() {
             </div>
             <div className="flex-1 text-left">
               <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                {nextOne ? t("dashboard.playNext") : t("dashboard.startPlaying")}
+                {nextOne
+                  ? t("dashboard.playNext")
+                  : t("dashboard.startPlaying")}
               </h2>
               <p className="text-white/80 text-sm md:text-base mt-0.5">
                 {nextOne
@@ -422,7 +362,9 @@ export default function StudentDashboard() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
-              {t("dashboard.welcomeBack", { name: (user?.name || "Explorer").split(" ")[0] })}
+              {t("dashboard.welcomeBack", {
+                name: (user?.name || "Explorer").split(" ")[0],
+              })}
             </h1>
             <p className="text-xl text-slate-600 font-medium">
               {t("dashboard.readyForAdventure")}
@@ -485,9 +427,7 @@ export default function StudentDashboard() {
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                     {t("nav.myStar")}
                   </p>
-                  <p className="text-sm font-bold text-slate-700">
-                    {"⭐"}
-                  </p>
+                  <p className="text-sm font-bold text-slate-700">{"⭐"}</p>
                 </div>
               </div>
             </TooltipTrigger>
@@ -533,7 +473,8 @@ export default function StudentDashboard() {
               <p className="text-sm text-slate-600 mb-3">
                 {streakStats.didCompleteToday
                   ? t("dashboard.todaysGoalCompleteDesc", {
-                      defaultValue: "Great job! You completed an activity today.",
+                      defaultValue:
+                        "Great job! You completed an activity today.",
                     })
                   : t("dashboard.todaysGoalDesc", {
                       defaultValue: "Complete 1 activity (~15 minutes).",
@@ -613,7 +554,8 @@ export default function StudentDashboard() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">{s.title}</CardTitle>
                     <p className="text-xs text-slate-500">
-                      {s.courseName} &middot; {t("dashboard.duePrefix")} {s.dueDate}
+                      {s.courseName} &middot; {t("dashboard.duePrefix")}{" "}
+                      {s.dueDate}
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -637,7 +579,9 @@ export default function StudentDashboard() {
             {assignedSessions.filter((s) => s.completed).length > 0 && (
               <div className="col-span-full text-sm text-green-600 flex items-center gap-1">
                 <Check className="w-4 h-4" />
-                {t("dashboard.sessionsCompleted", { count: assignedSessions.filter((s) => s.completed).length })}
+                {t("dashboard.sessionsCompleted", {
+                  count: assignedSessions.filter((s) => s.completed).length,
+                })}
               </div>
             )}
           </div>
@@ -663,10 +607,14 @@ export default function StudentDashboard() {
               <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-slate-800">{t("dashboard.joinClass")}</p>
+              <p className="font-semibold text-slate-800">
+                {t("dashboard.joinClass")}
+              </p>
               <p className="text-sm text-slate-500">
                 {enrolledCourses.length > 0
-                  ? t("dashboard.joinClassWithCount", { count: enrolledCourses.length })
+                  ? t("dashboard.joinClassWithCount", {
+                      count: enrolledCourses.length,
+                    })
                   : t("dashboard.joinClassDesc")}
               </p>
             </div>
@@ -704,7 +652,11 @@ export default function StudentDashboard() {
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          setPulseTarget({ courseId: course.id, courseName: course.name, kind: "PRE" })
+                          setPulseTarget({
+                            courseId: course.id,
+                            courseName: course.name,
+                            kind: "PRE",
+                          })
                         }
                       >
                         {t("dashboard.howDoIFeel")}
@@ -714,7 +666,11 @@ export default function StudentDashboard() {
                       <Button
                         size="sm"
                         onClick={() =>
-                          setPulseTarget({ courseId: course.id, courseName: course.name, kind: "POST" })
+                          setPulseTarget({
+                            courseId: course.id,
+                            courseName: course.name,
+                            kind: "POST",
+                          })
                         }
                       >
                         {t("dashboard.checkInAgain")}
@@ -722,7 +678,9 @@ export default function StudentDashboard() {
                     )}
                     {preDone && !postDone && completedActivitiesCount < 3 && (
                       <p className="text-xs text-slate-400">
-                        {t("dashboard.completeMoreToUnlock", { count: 3 - completedActivitiesCount })}
+                        {t("dashboard.completeMoreToUnlock", {
+                          count: 3 - completedActivitiesCount,
+                        })}
                       </p>
                     )}
                     {preDone && postDone && (
@@ -751,17 +709,22 @@ export default function StudentDashboard() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{b.templateTitle}</CardTitle>
                   <p className="text-xs text-slate-500">
-                    {b.courseName} · {b.kind === "PRE" ? t("benchmark.student.preLabel") : t("benchmark.student.postLabel")}
+                    {b.courseName} ·{" "}
+                    {b.kind === "PRE"
+                      ? t("benchmark.student.preLabel")
+                      : t("benchmark.student.postLabel")}
                   </p>
                 </CardHeader>
                 <CardContent>
                   {b.completed ? (
                     <span className="text-sm text-green-600 flex items-center gap-1">
-                      <Check className="w-4 h-4" /> {t("benchmark.student.done")}
+                      <Check className="w-4 h-4" />{" "}
+                      {t("benchmark.student.done")}
                     </span>
                   ) : b.locked ? (
                     <span className="text-sm text-slate-400 flex items-center gap-1">
-                      <Lock className="w-4 h-4" /> {t("benchmark.student.locked")}
+                      <Lock className="w-4 h-4" />{" "}
+                      {t("benchmark.student.locked")}
                     </span>
                   ) : (
                     <Button
@@ -792,7 +755,9 @@ export default function StudentDashboard() {
             // Update local done keys so UI refreshes immediately
             setPulseDoneKeys((prev) => {
               const next = new Set(prev);
-              next.add(`${pulseTarget.kind.toLowerCase()}_${pulseTarget.courseId}`);
+              next.add(
+                `${pulseTarget.kind.toLowerCase()}_${pulseTarget.courseId}`,
+              );
               return next;
             });
             setPulseTarget(null);
@@ -832,7 +797,10 @@ export default function StudentDashboard() {
             {[...(nextOne ? [nextOne] : []), ...upNext].map((a, idx) => {
               const isUpNext = idx === 0 && !!nextOne;
               const icon = a.kind === "INFO" ? "📖" : "🎮";
-              const label = a.kind === "INFO" ? t("dashboard.storyLabel") : t("dashboard.gameLabel");
+              const label =
+                a.kind === "INFO"
+                  ? t("dashboard.storyLabel")
+                  : t("dashboard.gameLabel");
 
               return (
                 <div
@@ -844,7 +812,9 @@ export default function StudentDashboard() {
                       : "bg-white border-slate-200 shadow-sm hover:shadow-md",
                   )}
                 >
-                  <span className="text-2xl" aria-hidden>{icon}</span>
+                  <span className="text-2xl" aria-hidden>
+                    {icon}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-brightboost-navy truncate">

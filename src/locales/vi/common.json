@@ -831,6 +831,14 @@
     "set1Label": "Bộ 1: Nền tảng",
     "set2Label": "Bộ 2: Khám phá",
     "set2LockedMessage": "Hoàn thành Trò chơi STEM Bộ 1 để mở khóa bộ tiếp theo.",
+    "unavailable": {
+      "title": "Cùng tìm bài khác nhé!",
+      "generic": "Bài này không có ở đây. Hãy chọn một trò chơi mới trong bài học của em!",
+      "wrongGrade": "Bài này dành cho các bạn lớn hơn. Bài học của em có trò chơi vừa sức em!",
+      "lockedSet": "Hoàn thành các trò chơi trước để mở bài này. Em sắp làm được rồi!",
+      "notSpecialized": "Hãy chọn sức mạnh ngôi sao của em trước, rồi bài này sẽ mở ra!",
+      "backToModules": "Đến Bài học của em"
+    },
     "detail": {
       "locked": "Bài học đã khóa",
       "unlockPrompt": "Chọn chuyên ngành ở trang nhân vật để mở khóa bài học này!",
