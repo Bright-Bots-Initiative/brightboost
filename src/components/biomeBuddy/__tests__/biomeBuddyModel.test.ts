@@ -476,6 +476,15 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
       const seen = new Map<string, string>();
       for (const [option, animals] of lists)
         for (const animal of names(animals)) {
+          // "tiger sharks" on one card and "sharks" on its sibling is the same
+          // animal to a child — compare the head noun as well as the phrase
+          const head = animal.split(/\s+/).pop() ?? animal;
+          const priorHead = seen.get(`#${head}`);
+          expect(
+            priorHead === undefined || priorHead === option,
+            `${label}: "${animal}" shares its head noun with ${priorHead}`,
+          ).toBe(true);
+          seen.set(`#${head}`, option);
           const prior = seen.get(animal);
           expect(
             prior,

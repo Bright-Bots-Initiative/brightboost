@@ -806,8 +806,8 @@ export const SCIENCE: CardTable = {
         es: "A los nadadores y a los reptiles del desierto les fue mejor con una piel lisa e impermeable.",
       },
       animals: {
-        en: "Salmon, smooth-scaled snakes, skinks.",
-        es: "Salmones, serpientes de escamas lisas, eslizones.",
+        en: "Salmon, skinks, eels.",
+        es: "Salmones, eslizones, anguilas.",
       },
       where: {
         en: "Rivers, oceans and deserts worldwide.",
@@ -1072,8 +1072,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Los animales que mejor se parecían a su casa eran los que los cazadores no veían.",
     },
     animals: {
-      en: "Sand cats, sidewinders, tree frogs, stick insects.",
-      es: "Gatos de las arenas, cascabeles cornudas, ranas arborícolas, insectos palo.",
+      en: "Sand cats, sidewinders, leaf-tailed geckos, stick insects.",
+      es: "Gatos de las arenas, cascabeles cornudas, geckos cola de hoja, insectos palo.",
     },
     where: {
       en: "Deserts, forests and rocky shores everywhere.",
