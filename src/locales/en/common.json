@@ -2490,7 +2490,7 @@
       "myBuddies": "My Buddies",
       "empty": "No Buddies yet — build one!",
       "open": "Open {{name}}",
-      "deleteAria": "Let {{name}} go",
+      "deleteAria": "Let it go: {{name}}",
       "delete": "Let it go"
     },
     "choose": {
@@ -2512,7 +2512,7 @@
       "pickAria": "{{category}}: {{option}}",
       "test": "Test it! 🔬",
       "nameSave": "Name & Save",
-      "lastTestAria": "Reopen the last Test & Learn",
+      "lastTestAria": "Last test: reopen the walkthrough",
       "lastTest": "Last test",
       "unlockTitle": "New part to change: {{category}}!",
       "unlockTry": "Try it!",

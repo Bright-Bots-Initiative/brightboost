@@ -73,7 +73,7 @@ export default function BiomeBuddyShare() {
           </p>
           <Link
             to="/biome-buddy"
-            className="bb-btn bb-primary inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-teal-600 text-white font-extrabold text-lg active:scale-95"
+            className="bb-btn bb-primary inline-flex items-center justify-center min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
           >
             {t("biomeBuddy.sharePage.invalidCta", {
               defaultValue: "Go to Biome Buddy",
@@ -173,7 +173,7 @@ export default function BiomeBuddyShare() {
                     {def.emoji}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#7d6c52]">
+                    <p className="text-xs font-bold text-[#6b5a42]">
                       <span aria-hidden>{CATEGORY_EMOJI[category]} </span>
                       {L(CATEGORY_LABEL[category])}
                     </p>
@@ -189,7 +189,7 @@ export default function BiomeBuddyShare() {
                 {PATTERN_EMOJI[recipe.pattern]}
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#7d6c52]">
+                <p className="text-xs font-bold text-[#6b5a42]">
                   <span aria-hidden>🎨 </span>
                   {L(CATEGORY_LABEL.pattern)}
                 </p>
@@ -281,7 +281,7 @@ export default function BiomeBuddyShare() {
                   <p className="text-sm font-extrabold text-[#3a2e22]">
                     {L(card.label)}
                     {termDiffers && (
-                      <span className="text-xs font-bold text-[#7d6c52]">
+                      <span className="text-xs font-bold text-[#6b5a42]">
                         {" "}
                         · {L(card.term)}
                       </span>

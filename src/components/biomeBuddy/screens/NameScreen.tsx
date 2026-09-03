@@ -131,7 +131,7 @@ export default function NameScreen({
         <button
           type="button"
           onClick={onSave}
-          className="bb-primary min-h-14 px-10 rounded-full bg-teal-600 text-white text-xl font-extrabold shadow-[0_5px_0_#0f6f66] active:translate-y-1 active:shadow-none"
+          className="bb-primary min-h-14 px-10 rounded-full bg-teal-700 text-white text-xl font-extrabold shadow-[0_5px_0_#0b4f49] active:translate-y-1 active:shadow-none"
         >
           {saved
             ? t("biomeBuddy.name.saveAgain", {

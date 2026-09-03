@@ -33,6 +33,7 @@ import {
 } from "../biomeBuddyModel";
 import {
   BIOME_INFO,
+  WONDER_POOL,
   NAME_ADJECTIVE_LABEL,
   NAME_NOUN_LABEL,
   PATTERN_SCIENCE,
@@ -463,7 +464,6 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
     const names = (l: Localized) =>
       l.en
         .replace(/\.$/, "")
-        .replace(/^all birds:\s*/i, "")
         .split(/,|\band\b|—/)
         .map((s) =>
           s
@@ -525,6 +525,114 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
         expect(en(scienceFor(category, id).animals)).not.toMatch(
           /^(fish|birds|insects|mammals|reptiles|amphibians),/i,
         );
+  });
+
+  it("fifth-pass corrections stay corrected (C1–C4, polish)", () => {
+    expect(en(scienceFor("eyes", "compound_eyes").animals)).not.toMatch(
+      /hoverfl/i,
+    );
+    expect(en(scienceFor("covering", "smooth_scales").animals)).not.toMatch(
+      /eel/i,
+    );
+    expect(en(scienceFor("pattern", "camouflage").animals)).not.toMatch(
+      /gecko|leaf/i,
+    );
+    expect(en(scienceFor("ears", "hidden_ears").what)).not.toMatch(/scales/i);
+    expect(en(scienceFor("covering", "hard_shell").animals)).not.toMatch(
+      /sea turtle/i,
+    );
+    expect(en(scienceFor("covering", "keeled_scales").animals)).not.toMatch(
+      /garter/i,
+    );
+    expect(en(scienceFor("pattern", "countershading").evolved)).not.toMatch(
+      /swimmers/i,
+    );
+    expect(en(scienceFor("pattern", "warning").evolved)).not.toMatch(
+      /poisonous/i,
+    );
+    expect(scienceFor("pattern", "warning").usedFor.es).not.toMatch(
+      /\bo pico\b/,
+    );
+  });
+
+  it("regional vulgarities are banned in EVERY Spanish field a child can see (cards, patterns, why-lines, biomes, name kit, prompts)", () => {
+    const BANNED =
+      /\bbichos?\b|\bchochas?\b|\bmariquitas?\b|\bpolla\b|\bconcha\b|\bcoger\b/i;
+    const parts = [
+      "label",
+      "term",
+      "what",
+      "usedFor",
+      "evolved",
+      "animals",
+      "where",
+      "affects",
+      "more",
+    ] as const;
+    const cards: [string, ScienceCard][] = [
+      ...CATEGORIES.flatMap((category) =>
+        TRAIT_OPTIONS[category].map((id): [string, ScienceCard] => [
+          `${category}.${id}`,
+          scienceFor(category, id),
+        ]),
+      ),
+      ...PATTERNS.map((id): [string, ScienceCard] => [
+        `pattern.${id}`,
+        scienceFor("pattern", id),
+      ]),
+    ];
+    expect(cards).toHaveLength(28);
+    for (const [label, card] of cards)
+      for (const part of parts) {
+        expect(card[part].es, `${label}.${part}`).not.toMatch(BANNED);
+        expect(card[part].en, `${label}.${part}`).not.toMatch(BANNED);
+      }
+    let whyLines = 0;
+    for (const category of CATEGORIES) {
+      const table = WHY[category] as Record<string, Record<string, Localized>>;
+      for (const [option, byBiome] of Object.entries(table))
+        for (const [biome, line] of Object.entries(byBiome)) {
+          whyLines++;
+          expect(line.es, `why.${category}.${option}.${biome}`).not.toMatch(
+            BANNED,
+          );
+        }
+    }
+    expect(whyLines).toBeGreaterThan(70);
+    for (const biome of BIOMES)
+      for (const field of [
+        "label",
+        "subtitle",
+        "inPhrase",
+        "description",
+        "fauna",
+      ] as const)
+        expect(
+          BIOME_INFO[biome][field].es,
+          `biome.${biome}.${field}`,
+        ).not.toMatch(BANNED);
+    for (const l of [
+      ...Object.values(NAME_ADJECTIVE_LABEL),
+      ...Object.values(NAME_NOUN_LABEL),
+      ...WONDER_POOL,
+    ])
+      expect(l.es).not.toMatch(BANNED);
+  });
+
+  it("no animal list opens with a group noun or hedges with one, on trait AND pattern cards", () => {
+    const GROUP =
+      /^(fish|birds|insects|mammals|reptiles|amphibians|all birds|most mammals)\b|—|most mammals|all birds/i;
+    for (const category of CATEGORIES)
+      for (const id of TRAIT_OPTIONS[category])
+        expect(
+          en(scienceFor(category, id).animals),
+          `${category}.${id}`,
+        ).not.toMatch(GROUP);
+    for (const id of PATTERNS)
+      expect(
+        en(scienceFor("pattern", id).animals),
+        `pattern.${id}`,
+      ).not.toMatch(GROUP);
   });
 
   it("evolution is told as differential survival, never use-and-disuse (finding 21)", () => {

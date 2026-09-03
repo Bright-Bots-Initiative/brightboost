@@ -508,7 +508,7 @@ export default function BiomeBuddyGame({
               setUnlockAnnounce(null);
               setScreen("create");
             }}
-            className="bb-primary min-h-14 px-8 rounded-full bg-teal-600 text-white font-extrabold text-lg active:scale-95"
+            className="bb-primary min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
             data-autofocus
           >
             {t("biomeBuddy.create.unlockTry", { defaultValue: "Try it!" })}
@@ -540,7 +540,7 @@ export default function BiomeBuddyGame({
             <button
               type="button"
               onClick={() => setConfirmDelete(null)}
-              className="bb-primary min-h-14 rounded-full bg-teal-600 text-white font-extrabold text-lg active:scale-95"
+              className="bb-primary min-h-14 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
               data-autofocus
             >
               {t("biomeBuddy.delete.no", { defaultValue: "Keep it" })}

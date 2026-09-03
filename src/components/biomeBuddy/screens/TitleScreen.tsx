@@ -51,7 +51,7 @@ export default function TitleScreen({
         <button
           type="button"
           onClick={onResume}
-          className="bb-primary min-h-14 px-8 rounded-full bg-teal-600 text-white font-extrabold text-lg shadow-[0_5px_0_#0f6f66] active:translate-y-1 active:shadow-none"
+          className="bb-primary min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg shadow-[0_5px_0_#0b4f49] active:translate-y-1 active:shadow-none"
         >
           {t("biomeBuddy.title.resume", {
             defaultValue: "Keep building {{name}}",
@@ -134,7 +134,7 @@ export default function TitleScreen({
                     <span className="font-extrabold text-[#3a2e22] truncate max-w-full">
                       {name}
                     </span>
-                    <span className="text-xs font-bold text-[#7d6c52]">
+                    <span className="text-xs font-bold text-[#6b5a42]">
                       <span aria-hidden>
                         {BIOME_EMOJI[buddy.recipe.biome]}{" "}
                       </span>
@@ -149,9 +149,9 @@ export default function TitleScreen({
                   <button
                     type="button"
                     onClick={() => onDelete(buddy)}
-                    className="min-h-11 px-4 rounded-full text-sm font-bold text-[#7d6c52] hover:bg-[#f3e6c4] active:scale-95"
+                    className="min-h-11 px-4 rounded-full text-sm font-bold text-[#6b5a42] hover:bg-[#f3e6c4] active:scale-95"
                     aria-label={t("biomeBuddy.title.deleteAria", {
-                      defaultValue: "Let {{name}} go",
+                      defaultValue: "Let it go: {{name}}",
                       name,
                     })}
                   >

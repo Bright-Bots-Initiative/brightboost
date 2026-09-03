@@ -2157,7 +2157,7 @@
       "myBuddies": "Mis Buddies",
       "empty": "Aún no hay Buddies. ¡Construye uno!",
       "open": "Abrir a {{name}}",
-      "deleteAria": "Dejar ir a {{name}}",
+      "deleteAria": "Dejarlo ir: {{name}}",
       "delete": "Dejarlo ir"
     },
     "choose": {
@@ -2179,7 +2179,7 @@
       "pickAria": "{{category}}: {{option}}",
       "test": "¡Pruébalo! 🔬",
       "nameSave": "Nombrar y guardar",
-      "lastTestAria": "Volver a abrir la última prueba",
+      "lastTestAria": "Última prueba: volver a abrir el recorrido",
       "lastTest": "Última prueba",
       "unlockTitle": "¡Nueva parte para cambiar: {{category}}!",
       "unlockTry": "¡Pruébala!",

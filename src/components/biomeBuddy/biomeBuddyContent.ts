@@ -265,8 +265,8 @@ export const SCIENCE: CardTable = {
         es: "A los insectos voladores rápidos les fue mejor al ver el movimiento en todas direcciones a la vez.",
       },
       animals: {
-        en: "Dragonflies, flies, bees, hoverflies.",
-        es: "Libélulas, moscas, abejas, moscas cernidoras.",
+        en: "Dragonflies, flies, bees.",
+        es: "Libélulas, moscas, abejas.",
       },
       where: {
         en: "Almost everywhere insects live, from ponds to mountain tops.",
@@ -290,8 +290,8 @@ export const SCIENCE: CardTable = {
         es: "sin pabellón (abertura auditiva)",
       },
       what: {
-        en: "Ear openings under feathers or scales, with no flap on the outside.",
-        es: "Aberturas del oído bajo plumas o escamas, sin oreja por fuera.",
+        en: "Ear openings with no flap on the outside, often tucked under feathers or fur.",
+        es: "Aberturas del oído sin oreja por fuera, a menudo escondidas bajo plumas o pelo.",
       },
       usedFor: {
         en: "Hearing while staying smooth and streamlined.",
@@ -470,8 +470,8 @@ export const SCIENCE: CardTable = {
         es: "Cuando los animales salieron a tierra, los pulmones les dejaron usar el oxígeno del aire.",
       },
       animals: {
-        en: "Dogs, foxes, deer, bears — most mammals.",
-        es: "Perros, zorros, ciervos, osos: casi todos los mamíferos.",
+        en: "Dogs, foxes, deer, bears.",
+        es: "Perros, zorros, ciervos, osos.",
       },
       where: {
         en: "Forests, grasslands and cities everywhere.",
@@ -806,8 +806,8 @@ export const SCIENCE: CardTable = {
         es: "A los nadadores y a los reptiles del desierto les fue mejor con una piel lisa e impermeable.",
       },
       animals: {
-        en: "Salmon, skinks, eels.",
-        es: "Salmones, eslizones, anguilas.",
+        en: "Salmon, carp, skinks.",
+        es: "Salmones, carpas, eslizones.",
       },
       where: {
         en: "Rivers, oceans and deserts worldwide.",
@@ -838,8 +838,8 @@ export const SCIENCE: CardTable = {
         es: "A los reptiles del desierto les fue mejor cuando su piel podía agarrar y recoger agua.",
       },
       animals: {
-        en: "Thorny devils, rattlesnakes, garter snakes.",
-        es: "Diablos espinosos, serpientes de cascabel, culebras.",
+        en: "Thorny devils, rattlesnakes, desert horned lizards.",
+        es: "Diablos espinosos, serpientes de cascabel, lagartos cornudos del desierto.",
       },
       where: {
         en: "Australian and American deserts, dry grasslands.",
@@ -873,8 +873,8 @@ export const SCIENCE: CardTable = {
         es: "A los animales lentos les fue mejor cuando sus costillas se ensancharon hasta ser un escudo.",
       },
       animals: {
-        en: "Tortoises, sea turtles, box turtles.",
-        es: "Tortugas de tierra, tortugas marinas, tortugas de caja.",
+        en: "Tortoises, box turtles, snapping turtles.",
+        es: "Tortugas de tierra, tortugas de caja, tortugas mordedoras.",
       },
       where: {
         en: "Deserts, forests, ponds and oceans in warm parts of the world.",
@@ -905,8 +905,8 @@ export const SCIENCE: CardTable = {
         es: "Las plumas primero dieron calor a los dinosaurios; solo después ayudaron a volar.",
       },
       animals: {
-        en: "All birds: hawks, ducks, penguins, ostriches.",
-        es: "Todas las aves: halcones, patos, pingüinos, avestruces.",
+        en: "Hawks, ducks, penguins, ostriches.",
+        es: "Halcones, patos, pingüinos, avestruces.",
       },
       where: {
         en: "Every continent and every ocean.",
@@ -1004,8 +1004,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Camuflarse desde arriba y desde abajo a la vez.",
     },
     evolved: {
-      en: "Swimmers seen from both directions did better with two colors.",
-      es: "A los nadadores vistos desde arriba y desde abajo les fue mejor con dos colores.",
+      en: "Animals seen from above and from below did better with two colors.",
+      es: "A los animales vistos desde arriba y desde abajo les fue mejor con dos colores.",
     },
     animals: {
       en: "Sharks, penguins, dolphins, deer.",
@@ -1033,11 +1033,11 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
     },
     usedFor: {
       en: "Telling hunters: I taste terrible or I sting, leave me alone.",
-      es: "Decirles a los cazadores: tengo un sabor horrible o pico, déjenme en paz.",
+      es: "Decirles a los cazadores: tengo un sabor horrible o puedo picar, déjenme en paz.",
     },
     evolved: {
-      en: "Animals that were poisonous did better when hunters could learn to recognize them.",
-      es: "A los animales venenosos les fue mejor cuando los cazadores aprendían a reconocerlos.",
+      en: "Animals that were dangerous to eat or touch did better when hunters could learn to recognize them.",
+      es: "A los animales peligrosos de comer o tocar les fue mejor cuando los cazadores aprendían a reconocerlos.",
     },
     animals: {
       en: "Poison dart frogs, bees, wasps, monarch butterflies, skunks.",
@@ -1072,8 +1072,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Los animales que mejor se parecían a su casa eran los que los cazadores no veían.",
     },
     animals: {
-      en: "Sand cats, sidewinders, leaf-tailed geckos, stick insects.",
-      es: "Gatos de las arenas, cascabeles cornudas, geckos cola de hoja, insectos palo.",
+      en: "Sand cats, sidewinders, lions, stick insects.",
+      es: "Gatos de las arenas, cascabeles cornudas, leones, insectos palo.",
     },
     where: {
       en: "Deserts, forests and rocky shores everywhere.",

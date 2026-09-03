@@ -278,9 +278,7 @@ describe("BiomeBuddyGame loop", () => {
     expect(galleryBefore).not.toBeNull();
     const progressBefore = localStorage.getItem(PROGRESS_KEY);
     fireEvent.click(button("Keep building 🔧"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Reopen the last Test & Learn" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /^Last test/ }));
     expect(
       within(screen.getByRole("dialog")).getByText(/Here's how/),
     ).toBeInTheDocument();
@@ -356,11 +354,11 @@ describe("BiomeBuddyGame loop", () => {
       }),
     ).toHaveAttribute("aria-checked", "true");
     fireEvent.click(button("My Buddies"));
-    fireEvent.click(screen.getByRole("button", { name: /^Let .* go$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Let it go: / }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     fireEvent.click(button("Keep it"));
     expect(loadGallery()).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: /^Let .* go$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Let it go: / }));
     fireEvent.click(button("Yes, let it go"));
     expect(loadGallery()).toHaveLength(0);
     expect(screen.getByText("No Buddies yet — build one!")).toBeInTheDocument();
@@ -441,7 +439,7 @@ describe("BiomeBuddyGame loop", () => {
     expect(() => render(<BiomeBuddyGame />)).not.toThrow();
     expect(screen.getByText("Test it! 🔬")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Reopen the last Test & Learn" }),
+      screen.queryByRole("button", { name: /^Last test/ }),
     ).not.toBeInTheDocument();
   });
 

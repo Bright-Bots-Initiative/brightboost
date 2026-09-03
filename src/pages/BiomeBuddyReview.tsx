@@ -74,7 +74,7 @@ export default function BiomeBuddyReview() {
         </p>
         <Link
           to="/biome-buddy"
-          className="bb-btn bb-primary inline-flex items-center justify-center min-h-14 px-10 rounded-full bg-teal-600 text-white text-xl font-extrabold shadow-[0_5px_0_#0f6f66] active:translate-y-1 active:shadow-none"
+          className="bb-btn bb-primary inline-flex items-center justify-center min-h-14 px-10 rounded-full bg-teal-700 text-white text-xl font-extrabold shadow-[0_5px_0_#0b4f49] active:translate-y-1 active:shadow-none"
           data-testid="review-start"
         >
           {t("biomeBuddy.review.start", { defaultValue: "Start Biome Buddy" })}

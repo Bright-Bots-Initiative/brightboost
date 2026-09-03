@@ -76,7 +76,7 @@ export function BiomeBuddyShell({
           <h1 className="text-xl font-black leading-tight tracking-wide">
             {t("biomeBuddy.shell.title", { defaultValue: "Biome Buddy" })}
           </h1>
-          <p className="text-xs font-bold text-[#7d6c52]">
+          <p className="text-xs font-bold text-[#6b5a42]">
             {subtitle ??
               t("biomeBuddy.shell.tagline", {
                 defaultValue:

@@ -130,7 +130,7 @@ export default function CreateScreen({
             onClick={onReopenTest}
             className="min-h-11 px-4 rounded-full bg-[#fff4c2] border-2 border-[#e1d0a6] font-bold text-[#3a2e22] shadow active:scale-95"
             aria-label={t("biomeBuddy.create.lastTestAria", {
-              defaultValue: "Reopen the last Test & Learn",
+              defaultValue: "Last test: reopen the walkthrough",
             })}
           >
             <span aria-hidden>💡 </span>
@@ -157,7 +157,10 @@ export default function CreateScreen({
       </div>
 
       <div className="bb-create-layout w-full">
-        {/* Side: the Buddy in its home + live bars */}
+        {/* Side: the Buddy in its home, the live bars, and the actions right
+            beside them — on a phone this is the first screen, so the primary
+            action is never a long scroll away; on wide screens the column is
+            sticky. */}
         <div className="bb-create-side flex flex-col gap-3">
           <BiomeScene biome={recipe.biome} minHeight={200}>
             <div className="flex items-center justify-center h-full min-h-[200px]">
@@ -178,6 +181,22 @@ export default function CreateScreen({
               })}
             </h3>
             <StatBars stats={stats} animate={!reduced} />
+          </div>
+          <div className="bb-actions-sticky bb-actions-row w-full flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={onTest}
+              className="bb-primary min-h-14 px-6 sm:px-10 rounded-full bg-teal-700 text-white text-lg sm:text-xl font-extrabold shadow-[0_5px_0_#0b4f49] active:translate-y-1 active:shadow-none"
+            >
+              {t("biomeBuddy.create.test", { defaultValue: "Test it! 🔬" })}
+            </button>
+            <button
+              type="button"
+              onClick={onName}
+              className="min-h-11 px-4 sm:px-5 rounded-full bg-white font-extrabold text-sm sm:text-base text-[#3a2e22] shadow active:scale-95"
+            >
+              {t("biomeBuddy.create.nameSave", { defaultValue: "Name & Save" })}
+            </button>
           </div>
         </div>
 
@@ -246,7 +265,7 @@ export default function CreateScreen({
           })}
           {band === "k2" && lockedPickers.length > 0 && (
             <p
-              className="bb-locked-note rounded-2xl bg-white/60 p-3 text-sm font-bold text-[#6f6048]"
+              className="bb-locked-note rounded-2xl bg-white/60 p-3 text-sm font-bold text-[#6b5a42]"
               data-testid="locked-note"
             >
               <span aria-hidden>🔒 </span>
@@ -267,25 +286,6 @@ export default function CreateScreen({
             </p>
           )}
         </div>
-      </div>
-
-      {/* Actions: one compact row on phones (primary + secondary), so the
-          sticky bar never grows past a single control height. */}
-      <div className="bb-actions-sticky bb-actions-row w-full flex items-center justify-center gap-2 sm:gap-3">
-        <button
-          type="button"
-          onClick={onTest}
-          className="bb-primary min-h-14 px-6 sm:px-10 rounded-full bg-teal-500 text-white text-lg sm:text-xl font-extrabold shadow-[0_5px_0_#1d8a7d] active:translate-y-1 active:shadow-none"
-        >
-          {t("biomeBuddy.create.test", { defaultValue: "Test it! 🔬" })}
-        </button>
-        <button
-          type="button"
-          onClick={onName}
-          className="min-h-11 px-4 sm:px-5 rounded-full bg-white font-extrabold text-sm sm:text-base text-[#3a2e22] shadow active:scale-95"
-        >
-          {t("biomeBuddy.create.nameSave", { defaultValue: "Name & Save" })}
-        </button>
       </div>
     </div>
   );

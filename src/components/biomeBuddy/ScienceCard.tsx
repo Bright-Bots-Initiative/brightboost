@@ -70,7 +70,7 @@ export default function ScienceCard({
           </h3>
           {L(card.term).trim().toLowerCase() !==
             L(card.label).trim().toLowerCase() && (
-            <p className="text-xs font-bold text-[#7d6c52]">
+            <p className="text-xs font-bold text-[#6b5a42]">
               {t("biomeBuddy.science.term", {
                 defaultValue: "also called: {{term}}",
                 term: L(card.term),
@@ -155,14 +155,14 @@ export default function ScienceCard({
             ] as const
           ).map(([key, fallback]) => (
             <div key={key}>
-              <dt className="font-extrabold text-[#7d6c52] text-xs uppercase tracking-wide">
+              <dt className="font-extrabold text-[#6b5a42] text-xs uppercase tracking-wide">
                 {t(`biomeBuddy.science.${key}`, { defaultValue: fallback })}
               </dt>
               <dd className="font-bold">{L(card[key])}</dd>
             </div>
           ))}
           <div>
-            <dt className="font-extrabold text-[#7d6c52] text-xs uppercase tracking-wide">
+            <dt className="font-extrabold text-[#6b5a42] text-xs uppercase tracking-wide">
               {t("biomeBuddy.science.deeper", {
                 defaultValue: "The deeper science",
               })}
@@ -175,7 +175,7 @@ export default function ScienceCard({
       <button
         type="button"
         onClick={onClose}
-        className="bb-primary min-h-14 px-8 rounded-full bg-teal-600 text-white font-extrabold text-lg active:scale-95"
+        className="bb-primary min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
       >
         {t("biomeBuddy.science.gotIt", { defaultValue: "Got it!" })}
       </button>

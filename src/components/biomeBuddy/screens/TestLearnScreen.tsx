@@ -245,7 +245,7 @@ export default function TestLearnScreen({
         >
           {t("biomeBuddy.test.prev", { defaultValue: "◀ Back" })}
         </button>
-        <span className="text-xs font-bold text-[#7d6c52]" aria-live="polite">
+        <span className="text-xs font-bold text-[#6b5a42]" aria-live="polite">
           {t("biomeBuddy.test.page", {
             defaultValue: "{{n}} of {{total}}",
             n: page + 1,
@@ -256,7 +256,7 @@ export default function TestLearnScreen({
           <button
             type="button"
             onClick={onGotIt}
-            className="bb-primary min-h-14 px-8 rounded-full bg-orange-500 text-white font-extrabold text-lg active:scale-95"
+            className="bb-primary min-h-14 px-8 rounded-full bg-orange-700 text-white font-extrabold text-lg active:scale-95"
           >
             {t("biomeBuddy.test.gotIt", { defaultValue: "Got it!" })}
           </button>
@@ -264,7 +264,7 @@ export default function TestLearnScreen({
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(total - 1, p + 1))}
-            className="bb-primary min-h-14 px-8 rounded-full bg-teal-600 text-white font-extrabold text-lg active:scale-95"
+            className="bb-primary min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
           >
             {t("biomeBuddy.test.next", { defaultValue: "Next ▶" })}
           </button>
