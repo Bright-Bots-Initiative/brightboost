@@ -533,7 +533,10 @@ export const api = {
             : errBody?.error ||
               errBody?.message ||
               `Request failed: ${res.status}`;
-        throw new Error(msg);
+        // Typed so callers can tell "this module does not exist" (404) from
+        // "we could not reach the server" — #856 needs that distinction to
+        // avoid reporting an outage as an access decision.
+        throw new ApiError(msg, res.status);
       }
 
       const data = await res.json();

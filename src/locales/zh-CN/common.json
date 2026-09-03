@@ -837,6 +837,9 @@
       "wrongGrade": "这个是给大一点的小朋友的。你的模块里有适合你的游戏！",
       "lockedSet": "先完成前面的游戏就能打开它啦。你快做到了！",
       "notSpecialized": "先选好你的星星力量，然后这个就打开啦！",
+      "systemTitle": "哎呀，这是我们的问题！",
+      "systemProblem": "我们这边出了点小问题，暂时打不开这个。这不是你的错，过一会儿再试试吧！",
+      "tryAgain": "再试一次",
       "backToModules": "去我的模块"
     },
     "detail": {

@@ -8,7 +8,7 @@ import {
   useCallback,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "@/services/api";
+import { api, ApiError } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -77,21 +77,54 @@ export default function ActivityPlayer() {
   const gradeBand = useGradeBand();
 
   const [loading, setLoading] = useState(true);
-  // `undefined` = not loaded yet; the access policy treats `null` as
-  // "the catalog has no such module".
+  // `undefined` = not loaded yet; `null` = the catalog has no such module
+  // (a real 404). The access policy reads that distinction directly.
   const [module, setModule] = useState<any>(undefined);
-  const [activity, setActivity] = useState<any>(null);
-  const [content, setContent] = useState<any>(null);
+  /** A non-404 module failure: a system problem, not an access decision. */
+  const [moduleLoadFailed, setModuleLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // #856: one front door for registration, visibility, grade eligibility,
   // specialization and set progression (with the teacher-assignment override).
   // A denied target never initializes a game and never posts progress.
-  const access = useModuleAccess({ slug, module });
+  const access = useModuleAccess({ slug, module, attempt });
   const denialReason =
     access.status === "resolved" && !access.access.allowed
       ? access.access.reason
       : null;
   const accessAllowed = access.status === "resolved" && access.access.allowed;
+  const systemProblem = moduleLoadFailed || access.status === "error";
+
+  const retry = useCallback(() => {
+    setModule(undefined);
+    setModuleLoadFailed(false);
+    setAttempt((n) => n + 1);
+  }, []);
+
+  // The activity is DERIVED, not stored: a state write would leave one painted
+  // frame where access is allowed and the activity is not set yet, which
+  // renders as "activity not found".
+  const activity = useMemo(() => {
+    if (!accessAllowed || !module || !lessonId || !activityId) return null;
+    const targetLessonId = String(lessonId);
+    const targetActivityId = String(activityId);
+    let found: any = null;
+    module?.units?.forEach((u: any) => {
+      u?.lessons?.forEach((l: any) => {
+        if (String(l.id) !== targetLessonId) return;
+        const a = l?.activities?.find(
+          (x: any) => String(x.id) === targetActivityId,
+        );
+        if (a) found = a;
+      });
+    });
+    return found;
+  }, [accessAllowed, module, lessonId, activityId]);
+
+  const content = useMemo(
+    () => (activity ? safeJsonParse(activity.content || "") : null),
+    [activity],
+  );
 
   // Band-aware view of the activity content. Applied at render time (not
   // parse time) because useGradeBand resolves async — the first paint may
@@ -170,8 +203,7 @@ export default function ActivityPlayer() {
     setLoading(true);
     // clear stale content to avoid "half-loaded" UI when rate-limited
     setModule(undefined);
-    setActivity(null);
-    setContent(null);
+    setModuleLoadFailed(false);
 
     api
       .getModule(slug)
@@ -179,11 +211,17 @@ export default function ActivityPlayer() {
         if (cancelled) return;
         setModule(m ?? null);
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return;
-        // Infrastructure failure — not an access decision (principle 9 /
-        // a11y contract §6). Leave the module unknown and fall through to the
-        // existing "not found" recovery card.
+        // A real 404 is an access fact ("this module does not exist"), and the
+        // policy renders it exactly like held-back content so existence never
+        // leaks. Anything else is an infrastructure failure and must be said
+        // as one (principle 9 / a11y contract §6).
+        if (err instanceof ApiError && err.status === 404) {
+          setModule(null);
+          return;
+        }
+        setModuleLoadFailed(true);
         toast({
           title: t("common.oops"),
           description: t("activity.loadError"),
@@ -198,38 +236,18 @@ export default function ActivityPlayer() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, lessonId, activityId, denialReason]); // avoid accidental reruns
+  }, [slug, lessonId, activityId, denialReason, attempt]); // avoid accidental reruns
 
-  // Only once access is allowed do we mount the activity: this is the point
-  // past which a game can start and a completion can be posted.
+  // Side effects of actually mounting an activity — the point past which a
+  // game can start and a completion can be posted. `activity` is only non-null
+  // once access is allowed.
   useEffect(() => {
-    if (!accessAllowed || !module || !lessonId || !activityId) return;
-
-    const targetLessonId = String(lessonId);
-    const targetActivityId = String(activityId);
-    let found: any = null;
-    module?.units?.forEach((u: any) => {
-      u?.lessons?.forEach((l: any) => {
-        if (String(l.id) !== targetLessonId) return;
-        const a = l?.activities?.find(
-          (x: any) => String(x.id) === targetActivityId,
-        );
-        if (a) found = a;
-      });
-    });
-    if (!found) {
-      setActivity(null);
-      setContent(null);
-      return;
-    }
-    setActivity(found);
-    const parsed = safeJsonParse(found.content || "");
-    setContent(parsed);
+    if (!activity) return;
     track({
       kind: "game_started",
-      game_id: parsed?.gameKey || String(found.id),
+      game_id: content?.gameKey || String(activity.id),
       module_slug: String(slug),
-      activity_id: String(found.id),
+      activity_id: String(activity.id),
       grade_band: gradeBand,
     });
     // reset INFO local state (replay must start a fresh quiz session)
@@ -243,7 +261,7 @@ export default function ActivityPlayer() {
     setQuizVariant(null);
     completingRef.current = false; // a fresh play-through may submit again
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessAllowed, module, lessonId, activityId]); // avoid accidental reruns
+  }, [activity]); // avoid accidental reruns
 
   // (Re)build the shuffled choice order whenever the band-resolved question
   // set changes — the grade band may resolve after the activity loads.
@@ -488,7 +506,21 @@ export default function ActivityPlayer() {
     return <ModuleUnavailable reason={denialReason} />;
   }
 
-  if (loading) {
+  // An input the decision needs could not be loaded. Say so as a system
+  // problem — never as "you have not unlocked this" or "this does not exist".
+  if (systemProblem) {
+    return (
+      <ModuleUnavailable
+        reason="system_problem"
+        onRetry={retry}
+        backTo={slug ? `/student/modules/${slug}` : "/student/modules"}
+      />
+    );
+  }
+
+  // Still deciding: keep the loading state. Falling through here would paint
+  // the "not found" card for content that is about to open normally.
+  if (loading || access.status === "pending") {
     return <div className="p-6">{t("activityPlayer.loadingActivity")}</div>;
   }
 

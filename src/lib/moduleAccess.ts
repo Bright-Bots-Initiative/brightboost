@@ -154,7 +154,13 @@ export type ModuleAccessDenialReason =
   | "not_specialized"
   | "locked_set";
 
-/** Why a target was allowed — progression earned it, or a teacher assigned it. */
+/**
+ * Why a target was allowed — progression earned it, or a teacher assigned it.
+ *
+ * Kept in the result even though no surface discloses it yet: #842's guided
+ * choice needs to say *"your teacher picked this"* rather than presenting an
+ * assigned target as a free choice, and that disclosure reads this field.
+ */
 export type ModuleAccessSource = "progression" | "teacher_assignment";
 
 export type ModuleAccessResult =
@@ -263,9 +269,16 @@ function normalizeLevel(
  *
  * K-2 content is allowed for **every** band — banding is intra-activity by
  * product design, and a 3-5 class still plays the K-2 STEM sets. G3-5 content
- * requires a `g3_5` student. An unrecognized or absent level is unrestricted:
- * `level` is free-form, and an unknown value must not lock a child out of
- * registered, visible content.
+ * requires a `g3_5` student.
+ *
+ * **Accepted hole:** an unrecognized or absent level is treated as
+ * unrestricted. `Module.level` is a free-form `String` (`schema.prisma`
+ * documents it as `"K-2"`, `"3-5"`, etc.) with no enum or migration behind it,
+ * so a typo, a future band, or a seed that forgets the field would otherwise
+ * lock every child out of registered, visible, teacher-assignable content. The
+ * failure mode we accept is the milder one — a mislabelled module stays
+ * playable by everyone — because this is navigation policy, not a security
+ * boundary. Tightening it means giving `level` a checked vocabulary first.
  */
 export function isGradeEligible(
   level: string | null | undefined,
@@ -275,6 +288,21 @@ export function isGradeEligible(
   if (required === null) return true;
   if (required === "k2") return true;
   return gradeBand === "g3_5";
+}
+
+/**
+ * Does knowing the band change the answer for this level?
+ *
+ * Only `G3-5` content discriminates: `K-2` and unrecognized levels are open to
+ * both bands. Consumers use this so an unresolved band blocks (or fails) the
+ * decision **only** where it could actually matter — a K-2 module never waits
+ * on `/student/courses`, and a band outage never turns into a wrong-grade
+ * denial for content the band has no say over.
+ */
+export function gradeBandAffectsAccess(
+  level: string | null | undefined,
+): boolean {
+  return isGradeEligible(level, "k2") !== isGradeEligible(level, "g3_5");
 }
 
 /** Progression lock (D) for a slug, given COMPLETED game activity IDs. */
@@ -377,6 +405,14 @@ export function resolveModuleAccess(
  * assignment being created is itself that lock's override — but registration,
  * visibility and grade eligibility are never overridable, so hidden,
  * placeholder, unregistered and wrong-band content is never selectable.
+ *
+ * `archetype` defaults to `null`, which means **specialization-gated modules
+ * are never assignable to a class**. That is deliberate and pinned by test:
+ * an archetype is an individual choice each student makes on the avatar page,
+ * so there is no class-wide answer a teacher could stand in for, and assigning
+ * one would strand every student who has not chosen that specialization. If a
+ * per-student assignment picker ever exists, it should pass that student's
+ * archetype rather than relax this.
  */
 export function canTeacherAssignModule({
   slug,

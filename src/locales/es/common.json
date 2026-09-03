@@ -840,6 +840,9 @@
       "wrongGrade": "Este es para niños más grandes. ¡Tus módulos tienen juegos hechos para ti!",
       "lockedSet": "Termina los juegos de antes para abrir este. ¡Ya casi!",
       "notSpecialized": "Primero elige tu poder de estrella y después se abre este.",
+      "systemTitle": "¡Uy! Esto es cosa nuestra.",
+      "systemProblem": "Algo falló de nuestro lado y no pudimos abrir esto. No es culpa tuya. ¡Inténtalo otra vez en un momento!",
+      "tryAgain": "Intentar otra vez",
       "backToModules": "Ir a Mis Módulos"
     },
     "detail": {

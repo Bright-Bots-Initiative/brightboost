@@ -1,8 +1,8 @@
 // src/pages/ModuleDetail.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../services/api";
+import { api, ApiError } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
@@ -20,6 +20,9 @@ export default function ModuleDetail() {
   const [completedIds, setCompletedIds] = useState<string[] | undefined>(
     undefined,
   );
+  /** A non-404 load failure: a system problem, not an access decision. */
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -31,11 +34,20 @@ export default function ModuleDetail() {
     module,
     completedActivityIds: completedIds,
     providesProgress: true,
+    attempt,
   });
   const denialReason =
     access.status === "resolved" && !access.access.allowed
       ? access.access.reason
       : null;
+  const systemProblem = loadFailed || access.status === "error";
+
+  const retry = useCallback(() => {
+    setModule(undefined);
+    setCompletedIds(undefined);
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  }, []);
 
   const completedActivities = useMemo(
     () => new Set<string>(completedIds ?? []),
@@ -59,7 +71,16 @@ export default function ModuleDetail() {
             .map((item: any) => String(item.activityId)),
         );
       })
-      .catch(() => {
+      .catch((err) => {
+        // A real 404 is an access fact and renders exactly like held-back
+        // content; anything else is an infrastructure failure and is said as
+        // one, so this page can never be a permanent skeleton.
+        if (err instanceof ApiError && err.status === 404) {
+          setModule(null);
+          setCompletedIds([]);
+          return;
+        }
+        setLoadFailed(true);
         toast({
           title: t("common.oops", { defaultValue: "Oops!" }),
           description: t("modules.detail.loadError"),
@@ -67,13 +88,19 @@ export default function ModuleDetail() {
         });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, denialReason]); // avoid accidental reruns
+  }, [slug, denialReason, attempt]); // avoid accidental reruns
 
   if (denialReason) {
     return <ModuleUnavailable reason={denialReason} />;
   }
 
-  if (!module) {
+  if (systemProblem) {
+    return <ModuleUnavailable reason="system_problem" onRetry={retry} />;
+  }
+
+  // Still loading, or still deciding: never render module content before the
+  // gate has answered.
+  if (!module || access.status === "pending") {
     return (
       <div
         className="p-4 max-w-4xl mx-auto space-y-6"

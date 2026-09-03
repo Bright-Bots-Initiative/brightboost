@@ -884,6 +884,9 @@
       "wrongGrade": "This one is made for bigger kids. Your modules have games that are just right for you!",
       "lockedSet": "Finish the games before this one to open it. You are so close!",
       "notSpecialized": "Pick your star power first, then this one opens up!",
+      "systemTitle": "Oops — that one is on us!",
+      "systemProblem": "Something went wrong on our side, so we could not open this. It is not your fault. Try again in a moment!",
+      "tryAgain": "Try again",
       "backToModules": "Go to My Modules"
     },
     "detail": {

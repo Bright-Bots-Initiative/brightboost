@@ -26,9 +26,14 @@ import { api, useApi } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { translateContentName } from "@/utils/localizedContent";
-import { getStudentArchetype, resolveModuleAccess } from "@/lib/moduleAccess";
+import {
+  MODULE_UNAVAILABLE_REASON_KEYS,
+  getStudentArchetype,
+  resolveModuleAccess,
+  type ModuleAccessDenialReason,
+} from "@/lib/moduleAccess";
 import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
-import { useGradeBand } from "@/hooks/useGradeBand";
+import { useGradeBandState } from "@/hooks/useGradeBand";
 import {
   buildModuleSlugPriority,
   scanForNextActivity,
@@ -61,13 +66,31 @@ type AssignedSession = {
   completed: boolean;
 };
 
+/**
+ * An assignment plus the access answer for its target.
+ *
+ * A refused assignment is still rendered (accessibility contract §7 — teacher
+ * assignments stay visible in ordinary page structure on every surface that
+ * could lead away from them); it just carries its reason as text and a
+ * disabled action instead of vanishing.
+ */
+type AssignedSessionView = AssignedSession & {
+  denialReason: ModuleAccessDenialReason | null;
+};
+
 export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const authApi = useApi();
-  const gradeBand = useGradeBand();
+  // #856: the scan waits for the band instead of running once on the k2
+  // default and again after it resolves — that both removes the double load
+  // and stops a 3-5 student's own G3-5 content from being filtered out of
+  // "Play Next" on the first pass. A failed band keeps the historical k2
+  // default here: this surface only orders content, it never tells a child
+  // their module is "for bigger kids".
+  const { band: gradeBand, status: bandStatus } = useGradeBandState();
 
   const [avatar, setAvatar] = useState<any>(null);
   const [, setModules] = useState<any[]>([]);
@@ -79,9 +102,9 @@ export default function StudentDashboard() {
   );
   const [completedActivitiesCount, setCompletedActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [assignedSessions, setAssignedSessions] = useState<AssignedSession[]>(
-    [],
-  );
+  const [assignedSessions, setAssignedSessions] = useState<
+    AssignedSessionView[]
+  >([]);
 
   // Enrolled courses + pulse survey state
   const [enrolledCourses, setEnrolledCourses] = useState<
@@ -123,6 +146,9 @@ export default function StudentDashboard() {
   }, [avatar?.xp]);
 
   useEffect(() => {
+    // Hold until the band settles: scanning on the k2 default would drop a
+    // 3-5 student's own content from "Play Next" for the first pass.
+    if (bandStatus === "pending") return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -153,7 +179,7 @@ export default function StudentDashboard() {
         // so the scan needs them to make the same decision the student sees.
         let sessions: AssignedSession[] = [];
         try {
-          const raw = await authApi.get("/student/assignments");
+          const raw = await api.getStudentAssignments();
           if (Array.isArray(raw)) sessions = raw;
         } catch {
           // No sessions or not enrolled — that's fine
@@ -170,20 +196,29 @@ export default function StudentDashboard() {
         );
         // #856: one front door — registration, visibility, grade eligibility,
         // specialization and set progression, with the assignment override.
-        const isAllowed = (slug: string) =>
+        const accessFor = (slug: string | null | undefined) =>
           resolveModuleAccess({
-            slug,
-            module: catalogBySlug.get(slug) ?? null,
+            slug: slug ?? "",
+            module: slug ? (catalogBySlug.get(slug) ?? null) : null,
             hiddenSlugs: HIDDEN_MODULE_SLUGS,
             completedActivityIds,
             archetype: studentArch,
             gradeBand,
             assignedModuleSlugs,
-          }).allowed;
+          });
+        const isAllowed = (slug: string) => accessFor(slug).allowed;
 
         setModules(allMods.filter((m: any) => isAllowed(m.slug)));
+        // Refused assignments stay on the page with their reason (a11y §7);
+        // only the action is disabled.
         setAssignedSessions(
-          sessions.filter((s) => !!s.moduleSlug && isAllowed(s.moduleSlug)),
+          sessions.map((s) => {
+            const result = accessFor(s.moduleSlug);
+            return {
+              ...s,
+              denialReason: result.allowed ? null : result.reason,
+            };
+          }),
         );
 
         // Build priority order for module scanning
@@ -273,9 +308,8 @@ export default function StudentDashboard() {
     return () => {
       cancelled = true;
     };
-    // `gradeBand` resolves async (k2 first): a 3-5 student re-runs the load
-    // once so grade-eligible content is not filtered out by the k2 default.
-  }, [toast, t, authApi, gradeBand]);
+    // The band is waited on above rather than defaulted, so this runs once.
+  }, [toast, t, authApi, gradeBand, bandStatus]);
 
   const goToNext = () => {
     if (!nextOne) return navigate("/student/modules");
@@ -558,7 +592,18 @@ export default function StudentDashboard() {
                       {s.dueDate}
                     </p>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-2">
+                    {/* #856: a refused assignment stays visible with its
+                        reason as text — an assignment must never be silently
+                        obscured (a11y contract §7). */}
+                    {s.denialReason && (
+                      <p
+                        className="text-sm text-slate-600"
+                        data-testid="assignment-unavailable-reason"
+                      >
+                        {t(MODULE_UNAVAILABLE_REASON_KEYS[s.denialReason])}
+                      </p>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => {
@@ -568,7 +613,9 @@ export default function StudentDashboard() {
                           );
                         }
                       }}
-                      disabled={!s.moduleSlug || !s.activityId}
+                      disabled={
+                        !!s.denialReason || !s.moduleSlug || !s.activityId
+                      }
                     >
                       {t("dashboard.start")}
                       <ArrowRight className="w-4 h-4 ml-1" />

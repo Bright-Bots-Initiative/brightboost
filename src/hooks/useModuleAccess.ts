@@ -8,20 +8,40 @@
  * It fetches as little as the answer requires:
  * - the hidden-slug rule needs nothing, and resolves on the first render, so a
  *   held-back target is refused before any content request goes out;
+ * - an unregistered target (a real 404) resolves without waiting on anything
+ *   else, so a ghost slug is refused exactly like a hidden one;
  * - the archetype is fetched only for specialization-gated slugs;
  * - progress is fetched only for progression-gated slugs (Set 2 / Set 3);
+ * - the grade band is waited on only for content whose level the band actually
+ *   discriminates (`gradeBandAffectsAccess`) — a K-2 module never blocks on
+ *   `/student/courses`;
  * - teacher assignments are fetched only when a set lock would otherwise
  *   refuse the target — the assignment override is the only thing that could
  *   change the answer at that point.
  *
+ * ## Three states, not two
+ *
  * Infrastructure failures are not access decisions (design principle 9 /
- * `docs/safe-exploration-accessibility.md` §6): if the archetype or progress
- * request fails, the gate stays **pending** rather than inventing a reason the
- * learner would read as their own doing ("finish the games before this one"),
- * and the surface falls through to its existing recovery state. The only
- * exception is the assignment list, whose failure falls back to the
- * progression answer — which is the truthful answer for a student with no
- * assignment.
+ * `docs/safe-exploration-accessibility.md` §6). An input the decision needs
+ * that cannot be loaded resolves to `status: "error"` — an honest
+ * system-problem state the surface renders distinctly — never to a
+ * learner-facing reason they would read as their own doing ("finish the games
+ * before this one", "made for bigger kids"). `status: "pending"` means the
+ * answer is still loading and the surface must keep showing its loading state,
+ * never a "not found" card. The one deliberate exception is the assignment
+ * list: its failure falls back to the progression answer, which is the
+ * truthful answer for a student with no assignment.
+ *
+ * ## Known costs (accepted, not oversights)
+ *
+ * - A Set 2 / Set 3 activity deep link costs one extra `GET /progress` per
+ *   mount (ActivityPlayer has no progress of its own). Ungated slugs — every
+ *   Set 1 module and all G3-5 content — pay nothing. Deduping it would mean a
+ *   shared progress cache, which is a bigger change than #856 owns.
+ * - A page can mount this hook alongside a plain `useGradeBand()` (ActivityPlayer
+ *   does: one for content banding, one for the gate). `useGradeBandState`
+ *   dedupes the in-flight `/student/courses` request, so that costs one call,
+ *   not two.
  *
  * Reminder (policy G): this is frontend navigation/visibility POLICY, not a
  * security boundary.
@@ -29,9 +49,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
 import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
-import { useGradeBand } from "@/hooks/useGradeBand";
+import { useGradeBandState } from "@/hooks/useGradeBand";
 import {
   getStudentArchetype,
+  gradeBandAffectsAccess,
   isHiddenTarget,
   isProgressionGatedSlug,
   isSpecializationModuleSlug,
@@ -41,19 +62,27 @@ import {
 } from "@/lib/moduleAccess";
 
 export type ModuleAccessState =
+  /** Still loading an input the decision needs. Keep showing loading. */
   | { status: "pending"; access: null }
-  | { status: "resolved"; access: ModuleAccessResult };
+  | { status: "resolved"; access: ModuleAccessResult }
+  /** An input could not be loaded. A system problem, not a learner outcome. */
+  | { status: "error"; access: null };
 
 const PENDING: ModuleAccessState = { status: "pending", access: null };
+const ERROR: ModuleAccessState = { status: "error", access: null };
 /** Stable empty progress for slugs no set lock can gate. */
 const NO_COMPLETED_IDS: readonly string[] = [];
+
+/** Internal marker for "this input failed to load", distinct from "unknown". */
+const FAILED = Symbol("failed");
+type OrFailed<T> = T | typeof FAILED | undefined;
 
 export interface UseModuleAccessOptions {
   /** Route slug. `undefined` keeps the hook pending. */
   slug: string | undefined;
   /**
    * The catalog record for `slug`: `undefined` while it is still loading,
-   * `null` once the catalog is known to have no such module.
+   * `null` once the catalog is known to have no such module (a real 404).
    */
   module: ModuleAccessTarget | null | undefined;
   /**
@@ -68,6 +97,8 @@ export interface UseModuleAccessOptions {
    * module page does not fetch progress twice.
    */
   providesProgress?: boolean;
+  /** Bump to retry every request this hook owns after a `status: "error"`. */
+  attempt?: number;
 }
 
 export function useModuleAccess({
@@ -75,43 +106,45 @@ export function useModuleAccess({
   module,
   completedActivityIds,
   providesProgress = false,
+  attempt = 0,
 }: UseModuleAccessOptions): ModuleAccessState {
-  const gradeBand = useGradeBand();
+  const { band: gradeBand, status: bandStatus } = useGradeBandState(attempt);
 
   const hiddenDenied = !!slug && isHiddenTarget(slug, HIDDEN_MODULE_SLUGS);
-  const needsArchetype = !!slug && isSpecializationModuleSlug(slug);
+  const unregistered = module === null;
+  const inert = hiddenDenied || unregistered;
+  const needsArchetype = !inert && !!slug && isSpecializationModuleSlug(slug);
   const needsProgress =
-    !!slug && !providesProgress && isProgressionGatedSlug(slug);
+    !inert && !!slug && !providesProgress && isProgressionGatedSlug(slug);
 
-  const [archetype, setArchetype] = useState<string | null | undefined>(
-    undefined,
-  );
-  const [fetchedCompletedIds, setFetchedCompletedIds] = useState<
-    string[] | undefined
-  >(undefined);
+  const [archetype, setArchetype] =
+    useState<OrFailed<string | null>>(undefined);
+  const [fetchedCompletedIds, setFetchedCompletedIds] =
+    useState<OrFailed<string[]>>(undefined);
   const [assignedSlugs, setAssignedSlugs] = useState<Set<string> | undefined>(
     undefined,
   );
 
   useEffect(() => {
-    if (hiddenDenied || !needsArchetype) return;
+    if (!needsArchetype) return;
     let cancelled = false;
+    setArchetype(undefined);
     Promise.resolve(api.getAvatar())
       .then((avatarData) => {
         if (!cancelled) setArchetype(getStudentArchetype(avatarData));
       })
       .catch(() => {
-        // Left unknown on purpose — see the note on infrastructure failures
-        // in the hook jsdoc.
+        if (!cancelled) setArchetype(FAILED);
       });
     return () => {
       cancelled = true;
     };
-  }, [hiddenDenied, needsArchetype, slug]);
+  }, [needsArchetype, slug, attempt]);
 
   useEffect(() => {
-    if (hiddenDenied || !needsProgress) return;
+    if (!needsProgress) return;
     let cancelled = false;
+    setFetchedCompletedIds(undefined);
     Promise.resolve(api.getProgress({ excludeUser: true }))
       .then(
         (data: { progress?: { status?: string; activityId?: unknown }[] }) =>
@@ -123,13 +156,12 @@ export function useModuleAccess({
         if (!cancelled) setFetchedCompletedIds(ids);
       })
       .catch(() => {
-        // Left unknown on purpose — see the note on infrastructure failures
-        // in the hook jsdoc.
+        if (!cancelled) setFetchedCompletedIds(FAILED);
       });
     return () => {
       cancelled = true;
     };
-  }, [hiddenDenied, needsProgress, slug]);
+  }, [needsProgress, slug, attempt]);
 
   const completed = providesProgress
     ? completedActivityIds
@@ -139,25 +171,52 @@ export function useModuleAccess({
   // The policy lives in `resolveModuleAccess`; this hook only decides which
   // inputs are worth loading. `resolve` is called twice at most: once without
   // assignments (to learn whether a set lock is in play) and, only then, once
-  // with them.
+  // with them. It returns PENDING/ERROR sentinels rather than guessing.
   const resolve = useCallback(
     (
       assignedModuleSlugs: ReadonlySet<string> | undefined,
-    ): ModuleAccessResult | null => {
-      if (!slug) return null;
-      if (hiddenDenied) return { allowed: false, reason: "hidden" as const };
-      if (module === undefined) return null;
-      if (needsArchetype && archetype === undefined) return null;
-      if (completed === undefined) return null;
-      return resolveModuleAccess({
-        slug,
-        module,
-        hiddenSlugs: HIDDEN_MODULE_SLUGS,
-        completedActivityIds: completed,
-        archetype: archetype ?? null,
-        gradeBand,
-        assignedModuleSlugs,
-      });
+    ): ModuleAccessState => {
+      if (!slug) return PENDING;
+      if (hiddenDenied) {
+        return {
+          status: "resolved",
+          access: { allowed: false, reason: "hidden" },
+        };
+      }
+      if (module === undefined) return PENDING;
+
+      // A registered target still needs its other inputs; an unregistered one
+      // is refused on the record alone, so a ghost slug never waits on (or
+      // fails because of) progress, archetype or band.
+      if (module !== null) {
+        if (needsArchetype) {
+          if (archetype === FAILED) return ERROR;
+          if (archetype === undefined) return PENDING;
+        }
+        if (completed === FAILED) return ERROR;
+        if (completed === undefined) return PENDING;
+        if (gradeBandAffectsAccess(module.level)) {
+          if (bandStatus === "failed") return ERROR;
+          if (bandStatus === "pending") return PENDING;
+        }
+      }
+
+      return {
+        status: "resolved",
+        access: resolveModuleAccess({
+          slug,
+          module,
+          hiddenSlugs: HIDDEN_MODULE_SLUGS,
+          completedActivityIds:
+            completed === FAILED || completed === undefined
+              ? NO_COMPLETED_IDS
+              : completed,
+          archetype:
+            archetype === FAILED || archetype === undefined ? null : archetype,
+          gradeBand,
+          assignedModuleSlugs,
+        }),
+      };
     },
     [
       slug,
@@ -167,6 +226,7 @@ export function useModuleAccess({
       archetype,
       completed,
       gradeBand,
+      bandStatus,
     ],
   );
 
@@ -175,9 +235,9 @@ export function useModuleAccess({
   const provisional = useMemo(() => resolve(undefined), [resolve]);
 
   const needsAssignments =
-    !!provisional &&
-    !provisional.allowed &&
-    provisional.reason === "locked_set";
+    provisional.status === "resolved" &&
+    !provisional.access.allowed &&
+    provisional.access.reason === "locked_set";
 
   useEffect(() => {
     if (!needsAssignments) return;
@@ -190,6 +250,9 @@ export function useModuleAccess({
               .filter((s): s is string => typeof s === "string" && !!s)
           : [],
       )
+      // An unreachable assignment list falls back to the progression answer:
+      // "you have not unlocked this yet" is the truthful state for a student
+      // with no assignment, and the alternative is a page that never resolves.
       .catch(() => [] as string[])
       .then((slugs) => {
         if (!cancelled) setAssignedSlugs(new Set(slugs));
@@ -197,14 +260,11 @@ export function useModuleAccess({
     return () => {
       cancelled = true;
     };
-  }, [needsAssignments, slug]);
+  }, [needsAssignments, slug, attempt]);
 
   return useMemo<ModuleAccessState>(() => {
-    if (!provisional) return PENDING;
-    if (!needsAssignments) return { status: "resolved", access: provisional };
+    if (!needsAssignments) return provisional;
     if (assignedSlugs === undefined) return PENDING;
-    const withAssignments = resolve(assignedSlugs);
-    if (!withAssignments) return PENDING;
-    return { status: "resolved", access: withAssignments };
+    return resolve(assignedSlugs);
   }, [provisional, needsAssignments, assignedSlugs, resolve]);
 }
