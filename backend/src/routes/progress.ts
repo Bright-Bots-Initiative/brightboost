@@ -87,38 +87,48 @@ async function reconcilePersonalBest(
   const newRounds = result.roundsCompleted ?? 0;
   const byKey = { studentId, gameKey };
 
-  const updateExisting = async () => {
-    const [scoreRes, streakRes] = await prisma.$transaction([
-      prisma.gamePersonalBest.updateMany({
+  // #832 item 1: the writes AND the response re-read share ONE interactive
+  // transaction. From the unconditional lastScore/playCount write onward the
+  // row is locked, so nothing can slip between that write and our read. (The
+  // three predicated writes lock only when they match — a play that sets no
+  // record can still observe a concurrently-committed HIGHER best in the
+  // re-read; that stays truthful and monotone, and the flags always come
+  // from our own matched counts.) And if the re-read (or any write) throws,
+  // the whole transaction rolls back — verified at the SQL level in the #845
+  // review (BEGIN…ROLLBACK, values unchanged) — so the catch's "false flags
+  // + null row" reply is literally true: nothing persisted, playCount
+  // included (recorded as an accepted trade on #832).
+  const updateExisting = () =>
+    prisma.$transaction(async (tx) => {
+      const scoreRes = await tx.gamePersonalBest.updateMany({
         where: { ...byKey, bestScore: { lt: newScore } },
         data: { bestScore: newScore },
-      }),
-      prisma.gamePersonalBest.updateMany({
+      });
+      const streakRes = await tx.gamePersonalBest.updateMany({
         where: { ...byKey, bestStreak: { lt: newStreak } },
         data: { bestStreak: newStreak },
-      }),
-      prisma.gamePersonalBest.updateMany({
+      });
+      await tx.gamePersonalBest.updateMany({
         where: { ...byKey, bestRoundsCompleted: { lt: newRounds } },
         data: { bestRoundsCompleted: newRounds },
-      }),
-      prisma.gamePersonalBest.updateMany({
+      });
+      await tx.gamePersonalBest.updateMany({
         where: byKey,
         data: {
           lastScore: newScore,
           playCount: { increment: 1 },
           lastPlayedAt: new Date(),
         },
-      }),
-    ]);
-    const personalBest = await prisma.gamePersonalBest.findUnique({
-      where: { studentId_gameKey: byKey },
+      });
+      const personalBest = await tx.gamePersonalBest.findUnique({
+        where: { studentId_gameKey: byKey },
+      });
+      return {
+        personalBest,
+        isNewHighScore: scoreRes.count > 0,
+        isNewBestStreak: streakRes.count > 0,
+      };
     });
-    return {
-      personalBest,
-      isNewHighScore: scoreRes.count > 0,
-      isNewBestStreak: streakRes.count > 0,
-    };
-  };
 
   try {
     const existing = await prisma.gamePersonalBest.findUnique({
@@ -158,81 +168,13 @@ async function reconcilePersonalBest(
   }
 }
 
-// Get progress for a student (MVP)
-router.get("/progress", requireAuth, async (req, res) => {
-  const studentId = req.user!.id;
-  const progress = await prisma.progress.findMany({
-    where: { studentId },
-    // Keep v1 contract stable for #672: persist only, do not expose gameSpecific.
-    select: {
-      id: true,
-      studentId: true,
-      moduleSlug: true,
-      lessonId: true,
-      activityId: true,
-      status: true,
-      timeSpentS: true,
-      updatedAt: true,
-    },
-  });
-  res.json(progress);
-});
-
-// Legacy endpoint for AuthContext (supports existing frontend)
-router.get("/get-progress", requireAuth, async (req, res) => {
-  // Return format expected by AuthContext
-  // ⚡ Bolt Optimization: Allow excluding progress to reduce payload size (e.g. for AuthContext)
-  // Default to true (legacy behavior) to prevent breaking other consumers.
-  const excludeProgress = req.query.excludeProgress === "true";
-  const excludeUser = req.query.excludeUser === "true";
-
-  const userPromise = !excludeUser
-    ? prisma.user.findUnique({
-        where: { id: req.user!.id },
-        // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          school: true,
-          subject: true,
-          bio: true,
-          grade: true,
-          xp: true,
-          level: true,
-          streak: true,
-          avatarUrl: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      })
-    : Promise.resolve(null);
-
-  const progressPromise = !excludeProgress
-    ? prisma.progress.findMany({
-        where: { studentId: req.user!.id },
-        // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
-        select: {
-          id: true,
-          moduleSlug: true,
-          activityId: true,
-          status: true,
-          updatedAt: true,
-        },
-      })
-    : Promise.resolve([]);
-
-  const [user, progress] = await Promise.all([userPromise, progressPromise]);
-  res.json({ user, progress });
-});
-
 /**
- * #821: express 4 does not catch async rejections — an unhandled throw left
- * the request with NO response at all (observed as a 20s client timeout when
- * a racing create hit P2002). Known race outcomes are handled in-line below;
- * anything unexpected is delegated to the app's error middleware
- * (server.ts), which answers a JSON 500 and honors err.status for 4xx.
+ * #821/#832: express 4 does not catch async rejections — an unhandled throw
+ * left the request with NO response at all (observed as a 20s client timeout
+ * when a racing create hit P2002). Known race outcomes are handled in-line in
+ * complete-activity; anything unexpected is delegated to the app's error
+ * middleware (server.ts), which answers a JSON 500 and honors err.status.
+ * #832 item 2: the two GET routes below carried the same hang class.
  */
 const answerAsyncErrors =
   (
@@ -241,6 +183,83 @@ const answerAsyncErrors =
   (req, res, next) => {
     fn(req, res).catch(next);
   };
+
+// Get progress for a student (MVP)
+router.get(
+  "/progress",
+  requireAuth,
+  answerAsyncErrors(async (req, res) => {
+    const studentId = req.user!.id;
+    const progress = await prisma.progress.findMany({
+      where: { studentId },
+      // Keep v1 contract stable for #672: persist only, do not expose gameSpecific.
+      select: {
+        id: true,
+        studentId: true,
+        moduleSlug: true,
+        lessonId: true,
+        activityId: true,
+        status: true,
+        timeSpentS: true,
+        updatedAt: true,
+      },
+    });
+    res.json(progress);
+  }),
+);
+
+// Legacy endpoint for AuthContext (supports existing frontend)
+router.get(
+  "/get-progress",
+  requireAuth,
+  answerAsyncErrors(async (req, res) => {
+    // Return format expected by AuthContext
+    // ⚡ Bolt Optimization: Allow excluding progress to reduce payload size (e.g. for AuthContext)
+    // Default to true (legacy behavior) to prevent breaking other consumers.
+    const excludeProgress = req.query.excludeProgress === "true";
+    const excludeUser = req.query.excludeUser === "true";
+
+    const userPromise = !excludeUser
+      ? prisma.user.findUnique({
+          where: { id: req.user!.id },
+          // 🛡️ Sentinel: Select specific fields to prevent leaking password hash
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            school: true,
+            subject: true,
+            bio: true,
+            grade: true,
+            xp: true,
+            level: true,
+            streak: true,
+            avatarUrl: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        })
+      : Promise.resolve(null);
+
+    const progressPromise = !excludeProgress
+      ? prisma.progress.findMany({
+          where: { studentId: req.user!.id },
+          // ⚡ Bolt Optimization: Select only fields used by StudentDashboard to reduce payload size
+          select: {
+            id: true,
+            moduleSlug: true,
+            activityId: true,
+            status: true,
+            updatedAt: true,
+          },
+        })
+      : Promise.resolve([]);
+
+    const [user, progress] = await Promise.all([userPromise, progressPromise]);
+    res.json({ user, progress });
+  }),
+);
 
 // Complete an activity (MVP)
 router.post(

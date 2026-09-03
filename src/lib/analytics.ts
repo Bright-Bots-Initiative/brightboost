@@ -27,6 +27,13 @@ export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
 export type SignupMethod = "email" | "class_code" | "cohort_code";
 export type JoinMethod = "class_code" | "cohort_code";
+/**
+ * Banded expression of the Safe Exploration controls (#838). Narrower than
+ * `GradeBand` on purpose: those controls only distinguish K–2 from everyone
+ * older. Mirrors `SafeExplorationBand` in
+ * `src/components/games/shared/safeExploration/types.ts`.
+ */
+export type ExplorationBand = "k2" | "older";
 
 export type AnalyticsEvent =
   // Legacy homepage / marketing events (pre-existing, no-op before PostHog)
@@ -42,9 +49,16 @@ export type AnalyticsEvent =
   | { kind: "parent_page_clicked" }
   | { kind: "organization_page_clicked" }
   | { kind: "free_plan_clicked"; plan: string }
-  | { kind: "feedback_submitted"; audience: "teacher" | "student" | "parent" | "org" }
+  | {
+      kind: "feedback_submitted";
+      audience: "teacher" | "student" | "parent" | "org";
+    }
   // Funnel events (see docs/analytics.md)
-  | { kind: "account_registered"; role: AnalyticsRole; signup_method: SignupMethod }
+  | {
+      kind: "account_registered";
+      role: AnalyticsRole;
+      signup_method: SignupMethod;
+    }
   | { kind: "login"; role: AnalyticsRole }
   | {
       kind: "class_created";
@@ -103,7 +117,32 @@ export type AnalyticsEvent =
     }
   // Free Access Plans detail pages (/plans/:plan)
   | { kind: "plan_page_viewed"; plan: string }
-  | { kind: "plan_cta_clicked"; plan: string; cta: string };
+  | { kind: "plan_cta_clicked"; plan: string; cta: string }
+  // Safe Exploration controls (#838). These describe *process* — what the
+  // learner previewed, tried, kept, or undid — and deliberately carry no
+  // score, mastery, accuracy, or correctness signal. `attempt` counts runs on
+  // the surface (a revision measure, principle 9), not performance.
+  | {
+      kind:
+        | "experiment_previewed"
+        | "experiment_tried"
+        | "experiment_kept"
+        | "experiment_restored"
+        | "experiment_branched";
+      surface_id: string;
+      band: ExplorationBand;
+      attempt: number;
+    }
+  | {
+      // Keeps an infrastructure failure countable and distinct from a learner
+      // outcome (Safe Exploration accessibility contract §6) rather than
+      // silently swallowed.
+      kind: "experiment_failed";
+      surface_id: string;
+      band: ExplorationBand;
+      attempt: number;
+      error_kind: "recoverable" | "unexpected";
+    };
 
 let initialized = false;
 

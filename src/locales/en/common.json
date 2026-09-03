@@ -2612,5 +2612,99 @@
       "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
       "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
     }
+  },
+  "safeExploration": {
+    "k2": {
+      "regionLabel": "Try things out",
+      "actionsLabel": "What you can do",
+      "baselinePrefix": "Right now you have:",
+      "replaceNotice": "If you keep this, it takes the place of {{baseline}}.",
+      "branchNotice": "You can save this and still keep {{baseline}}.",
+      "headings": {
+        "baseline": "Ready to try",
+        "preview": "Look first",
+        "running": "Trying it",
+        "observing": "What happened?",
+        "kept": "You kept it",
+        "restored": "You went back",
+        "branched": "You saved a new one",
+        "unavailable": "Not right now",
+        "recoverableError": "That did not save",
+        "unexpectedError": "Something broke on our side"
+      },
+      "body": {
+        "baseline": "Change one thing, then try it. You can always go back."
+      },
+      "actions": {
+        "preview": "Look first",
+        "run": "Try it",
+        "cancel": "Never mind",
+        "keep": "Keep it",
+        "restore": "Go back",
+        "branch": "Save a new one",
+        "tryAgain": "Try another way",
+        "retry": "Try that again",
+        "exit": "Back to my lesson"
+      },
+      "announce": {
+        "preview": "This will change {{baseline}}. You can always go back.",
+        "running": "Trying it now.",
+        "observing": "You tried it. Here is what happened.",
+        "observingPlain": "You tried it. Look at what changed.",
+        "kept": "You kept it. {{baseline}} is this now.",
+        "restored": "You went back. {{baseline}} is the way it was before.",
+        "branched": "You saved a new one. {{baseline}} did not change.",
+        "recoverableError": "That did not save.",
+        "unexpectedError": "Something broke on our side, not in your try.",
+        "baselineSafe": "{{baseline}} is still safe.",
+        "restoreFailed": "We could not bring back {{baseline}} yet. Nothing you made was thrown away."
+      }
+    },
+    "older": {
+      "regionLabel": "Experiment controls",
+      "actionsLabel": "Available actions",
+      "baselinePrefix": "Saved version:",
+      "replaceNotice": "Keeping this replaces {{baseline}} with your new run.",
+      "branchNotice": "Saving as a new version leaves {{baseline}} untouched.",
+      "headings": {
+        "baseline": "Ready to run",
+        "preview": "Preview",
+        "running": "Running",
+        "observing": "Compare",
+        "kept": "Kept",
+        "restored": "Restored",
+        "branched": "New version saved",
+        "unavailable": "Not available",
+        "recoverableError": "That did not save",
+        "unexpectedError": "System problem"
+      },
+      "body": {
+        "baseline": "Change a variable, then preview or run it. You can restore the saved version at any time."
+      },
+      "actions": {
+        "preview": "Preview",
+        "run": "Run",
+        "cancel": "Cancel",
+        "keep": "Keep this version",
+        "restore": "Restore",
+        "branch": "Save as a new version",
+        "tryAgain": "Try again",
+        "retry": "Retry",
+        "exit": "Back to the lesson"
+      },
+      "announce": {
+        "preview": "Preview ready. Running this will replace {{baseline}}.",
+        "running": "Running now.",
+        "observing": "Run finished. Here is the result.",
+        "observingPlain": "Run finished. Compare it with the saved version.",
+        "kept": "Kept. {{baseline}} now points at this version.",
+        "restored": "Restored. {{baseline}} is back to the saved version.",
+        "branched": "Saved as a new version. {{baseline}} is unchanged.",
+        "recoverableError": "That did not save.",
+        "unexpectedError": "A system problem happened on our side, not in your experiment.",
+        "baselineSafe": "{{baseline}} is still safe.",
+        "restoreFailed": "We could not restore {{baseline}} yet. Nothing you made was deleted."
+      }
+    }
   }
 }
