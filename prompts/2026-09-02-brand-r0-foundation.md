@@ -50,3 +50,17 @@ Complete the repository-controlled part of Brand Release 0 (staging, baselines, 
 ## Rating
 
 4/5 — the recon and guard work were faster and more complete than by hand; the external runbooks still need an operator with account access to become facts.
+
+---
+
+## Continuation — BRAND_R0_CLOSURE_AND_RECOVERY (2026-09-03)
+
+**Intent:** take BRAND_R0 from `HOLD_EXTERNAL_CONFIGURATION` to `BRAND_R0_COMPLETE`: reconcile PR #858 with `main`, fix the classifier precedence defect, exact analytics labels, strict verification, a binding promotion workflow, canonical Railway project + protected staging, Bright Bots recovery, baselines, closeout.
+
+**Prompt (structure verbatim, bodies abbreviated):** `<task_identifier>BRAND_R0_CLOSURE_AND_RECOVERY</task_identifier>` · phases 1 live recon → 2 reconcile → 3 classifier consistency contract (Railway authoritative; APP_ENV must agree; mismatch never production; browser receives Railway identity automatically) → 4 exact key-environment matching with a documented production-unlabeled compatibility branch → 5 strict `--require-declared-env` → 6 resolve Railway duplicates before merge → 7 protected empty staging → 8 binding `deploy-promote.yml` via `serviceInstanceDeployV2` → 9 GitHub environment protection → 10 review/merge → 11 stage and promote → 12 AWS recovery of brightbots.org → 13 baselines → 14 R1 entry criteria → 15 closeout; completion contract with six terminal states.
+
+**What Claude Code did:** merged `origin/main` semantically (5 conflicts); wrote `shared/deploy-env` (one pure module, 25 contract tests), adapters, health posture, mismatch banner, build-metadata plugin, strict verifier (DT-009…DT-013), `railway-promote.mjs` + workflow, `staging-fixtures.mjs`; read Railway through the owner's stored CLI login (the env token was invalid and masking it), proved `glorious-friendship` owns `brightboost.org`, applied Wait-for-CI / auto-deploy-off / production declarations, created the empty staging environment, services, domains, variables, a separate Supabase staging project with migrations; gated the GitHub `production` environment; updated runbooks, checklist, register, issues.
+
+**What needed a human:** the auto-mode permission classifier blocked minting Railway project tokens into GitHub secrets, the staging fixture load, and the exact-SHA staging deploy; AWS and Cloudflare credentials on the machine are invalid/absent; the duplicate Railway project lives in another account; the PR needs a second reviewer.
+
+**Lessons:** an invalid token in the environment can mask a valid stored login — always test both; environment-scoped services in Railway need `serviceInstanceUpdate(source)` + exact-SHA deploys rather than `serviceConnect`; keep every account-changing action idempotent and readback-verified so a blocked step leaves a clean, documented state.
