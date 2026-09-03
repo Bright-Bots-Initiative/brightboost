@@ -6,7 +6,15 @@
  * `X-Robots-Tag`. Two-phase: the healthy production and staging shapes first,
  * then the shapes the deploy-target smoke must reject.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import request from "supertest";
 
 const prismaMock = vi.hoisted(() => ({
@@ -70,7 +78,15 @@ afterEach(() => {
 
 const SHA = "91e4071f0017fa508bb9cf385abc066ede6b07e1";
 
-describe("/health environment posture (BRAND_R0)", () => {
+// The first `import("./server")` transforms the whole backend graph; under a
+// full `npm test` run with parallel workers it has exceeded Vitest's default
+// 5 s test timeout (observed in the parity gate). Warm it once with a long hook
+// timeout so each case measures the property, not the cold transform.
+beforeAll(async () => {
+  await loadApp({});
+}, 120_000);
+
+describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
   it("healthy production: env=production, sha, no X-Robots-Tag, analytics enabled", async () => {
     const app = await loadApp({
       APP_ENV: "production",
