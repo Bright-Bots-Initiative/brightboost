@@ -40,7 +40,7 @@ export default function TitleScreen({
           defaultValue: "What will you build?",
         })}
       </h2>
-      <p className="text-base font-bold text-[#6f6048] text-center max-w-xl">
+      <p className="text-base font-bold text-[#5a4c38] text-center max-w-xl">
         {t("biomeBuddy.title.intro", {
           defaultValue:
             "Pick a home, build a Buddy from real animal parts, and see what it can do there.",
@@ -102,7 +102,7 @@ export default function TitleScreen({
           {t("biomeBuddy.title.myBuddies", { defaultValue: "My Buddies" })}
         </h3>
         {gallery.length === 0 ? (
-          <p className="text-[#8a795d] font-bold">
+          <p className="text-[#6b5a42] font-bold">
             {t("biomeBuddy.title.empty", {
               defaultValue: "No Buddies yet — build one!",
             })}

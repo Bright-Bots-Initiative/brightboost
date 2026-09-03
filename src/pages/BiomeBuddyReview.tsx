@@ -106,7 +106,7 @@ export default function BiomeBuddyReview() {
             ))}
           </ul>
         </section>
-        <p className="text-xs font-bold text-[#6f6048] max-w-md">
+        <p className="text-xs font-bold text-[#5a4c38] max-w-md">
           {t("biomeBuddy.review.note", {
             defaultValue:
               "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private.",

@@ -51,9 +51,14 @@
 /* src/index.css still carries the Vite template's unlayered
    `button:hover { border-color: #646cff }`, which would make an UNSELECTED
    chip look selected on hover. Pin the chip border in both states. */
-.bb-page button:hover,
-.bb-dialog button:hover {
+.bb-page button:not([class*="border-"]):hover,
+.bb-dialog button:not([class*="border-"]):hover {
   border-color: transparent;
+}
+
+.bb-page button[class*="border-"]:hover,
+.bb-dialog button[class*="border-"]:hover {
+  border-color: #e1d0a6;
 }
 
 .bb-page .bb-chip:hover {

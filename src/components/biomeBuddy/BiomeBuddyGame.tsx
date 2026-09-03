@@ -530,7 +530,7 @@ export default function BiomeBuddyGame({
               name: renderBuddyName(confirmDelete.recipe.name, lang),
             })}
           </h3>
-          <p className="font-bold text-[#6f6048]">
+          <p className="font-bold text-[#5a4c38]">
             {t("biomeBuddy.delete.body", {
               defaultValue:
                 "It will leave this device. You can always build a new one.",

@@ -110,7 +110,7 @@ describe("/biome-buddy — logged-out cold render", () => {
     fakeI18n.resolvedLanguage = "vi";
     renderAt("/biome-buddy");
     expect(document.documentElement.lang).toBe("en");
-    const trigger = screen.getByRole("button", { name: "Change language" });
+    const trigger = screen.getByRole("button", { name: /Change language/ });
     expect(trigger).toHaveTextContent("English");
     fireEvent.click(trigger);
     const labels = screen.getAllByRole("button").map((b) => b.textContent);

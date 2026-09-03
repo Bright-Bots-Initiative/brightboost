@@ -99,6 +99,12 @@ describe("Biome Buddy layout contracts", () => {
     expect(css).toMatch(/\.bb-dialog-close\s*\{[^}]*position:\s*absolute/s);
     // the Vite template's unlayered button:hover rule cannot recolour a chip
     expect(css).toMatch(/\.bb-page \.bb-chip:hover\s*\{[^}]*border-color/s);
+    // bordered buttons keep their design border on hover; only borderless
+    // buttons get the transparent override
+    expect(css).toMatch(
+      /button\[class\*="border-"\]:hover[^{]*\{[^}]*border-color:\s*#e1d0a6/s,
+    );
+    expect(css).not.toMatch(/\.bb-page button:hover,/);
     // the sheet and the dialog stay inside the viewport
     expect(css).toMatch(
       /\.bb-dialog\s*\{[^}]*max-height:\s*calc\(100vh - 2rem\)/s,

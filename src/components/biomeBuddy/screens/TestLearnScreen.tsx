@@ -132,7 +132,7 @@ export default function TestLearnScreen({
             })}
             <span aria-hidden> {BIOME_EMOJI[recipe.biome]}</span>
           </h3>
-          <p className="text-sm font-bold text-[#6f6048]">
+          <p className="text-sm font-bold text-[#5a4c38]">
             {summary.unchanged
               ? t("biomeBuddy.test.introSame", {
                   defaultValue:
@@ -197,7 +197,7 @@ export default function TestLearnScreen({
               },
             )}
           </h3>
-          <p className="text-sm font-bold text-[#6f6048]">
+          <p className="text-sm font-bold text-[#5a4c38]">
             {t("biomeBuddy.test.beforeAfter", {
               defaultValue: "Before: {{before}} · Now: {{after}}",
               before: change.before,

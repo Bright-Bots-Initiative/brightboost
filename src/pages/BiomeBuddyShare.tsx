@@ -65,7 +65,7 @@ export default function BiomeBuddyShare() {
               defaultValue: "Hmm, this link got scrambled",
             })}
           </h2>
-          <p className="font-bold text-[#6f6048]">
+          <p className="font-bold text-[#5a4c38]">
             {t("biomeBuddy.sharePage.invalidBody", {
               defaultValue:
                 "We couldn't read this Buddy. Links only carry the recipe, so nothing is lost — you can build a new one!",
@@ -142,7 +142,7 @@ export default function BiomeBuddyShare() {
         <p className="text-lg font-extrabold text-[#3a2e22]">
           <span aria-hidden>{BIOME_EMOJI[recipe.biome]} </span>
           {biomeLabel}
-          <span className="text-sm font-bold text-[#6f6048]">
+          <span className="text-sm font-bold text-[#5a4c38]">
             {" "}
             · {L(info.subtitle)}
           </span>
@@ -290,7 +290,7 @@ export default function BiomeBuddyShare() {
                   <p className="text-sm font-bold text-[#3a2e22]">
                     {L(card.what)}
                   </p>
-                  <p className="text-xs font-medium text-[#6f6048]">
+                  <p className="text-xs font-medium text-[#5a4c38]">
                     {L(card.animals)}
                   </p>
                 </li>
@@ -312,7 +312,7 @@ export default function BiomeBuddyShare() {
             })}
           </Link>
         </div>
-        <p className="text-xs font-bold text-[#6f6048] text-center max-w-sm">
+        <p className="text-xs font-bold text-[#5a4c38] text-center max-w-sm">
           {t("biomeBuddy.sharePage.remixNote", {
             defaultValue:
               "You'll get your own copy to change. This shared Buddy stays just as it is.",

@@ -109,11 +109,11 @@ export default function ChooseScreen({
           className="bb-choose-scene min-w-0"
           minHeight={220}
         >
-          <div className="bb-choose-card m-2 sm:m-6 rounded-3xl bg-white/75 backdrop-blur-sm p-3 sm:p-4 text-[#3a2e22] flex flex-col gap-2">
+          <div className="bb-choose-card m-2 sm:m-6 rounded-3xl bg-white/90 backdrop-blur-sm p-3 sm:p-4 text-[#3a2e22] flex flex-col gap-2">
             <h3 className="text-lg sm:text-xl font-extrabold leading-tight">
               <span aria-hidden>{BIOME_EMOJI[biome]} </span>
               {L(info.label)}
-              <span className="block sm:inline text-sm font-bold text-[#6f6048]">
+              <span className="block sm:inline text-sm font-bold text-[#5a4c38]">
                 <span className="hidden sm:inline"> · </span>
                 {L(info.subtitle)}
               </span>
@@ -121,7 +121,7 @@ export default function ChooseScreen({
             <p className="text-sm sm:text-base font-bold leading-snug">
               {L(info.description)}
             </p>
-            <p className="text-xs sm:text-sm font-bold text-[#6f6048]">
+            <p className="text-xs sm:text-sm font-bold text-[#5a4c38]">
               {t("biomeBuddy.choose.animalsHere", {
                 defaultValue: "Who lives here:",
               })}{" "}

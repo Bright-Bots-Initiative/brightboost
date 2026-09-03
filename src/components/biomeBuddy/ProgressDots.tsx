@@ -33,7 +33,7 @@ export default function ProgressDots({ current }: { current: Step }) {
           <li
             key={step}
             aria-current={active ? "step" : undefined}
-            className={`flex items-center gap-1 text-xs sm:text-sm font-extrabold ${active ? "text-[#1c3d6c]" : done ? "text-green-700" : "text-[#9a8b70]"}`}
+            className={`flex items-center gap-1 text-xs sm:text-sm font-extrabold ${active ? "text-[#1c3d6c]" : done ? "text-green-700" : "text-[#6b5a42]"}`}
           >
             <span
               aria-hidden

@@ -59,9 +59,7 @@ const LanguageToggle = ({
       <button
         onClick={() => setOpen((o) => !o)}
         className={triggerClass}
-        aria-label={t("common.changeLanguage", {
-          defaultValue: "Change language",
-        })}
+        aria-label={`${currentLabel}: ${t("common.changeLanguage", { defaultValue: "Change language" })}`}
         aria-expanded={open}
       >
         {currentLabel}

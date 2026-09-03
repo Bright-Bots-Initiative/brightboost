@@ -97,7 +97,7 @@ export default function StatBars({
               >
                 {label}
               </span>
-              <span className="bb-stat-band text-[11px] font-bold text-[#6f6048]">
+              <span className="bb-stat-band text-[11px] font-bold text-[#5a4c38]">
                 {band}
               </span>
             </span>
@@ -131,7 +131,7 @@ export default function StatBars({
             </span>
             {before && (
               <span
-                className={`bb-stat-delta text-xs font-extrabold shrink-0 ${delta > 0 ? "text-green-700" : delta < 0 ? "text-orange-700" : "text-[#6f6048]"}`}
+                className={`bb-stat-delta text-xs font-extrabold shrink-0 ${delta > 0 ? "text-green-700" : delta < 0 ? "text-orange-700" : "text-[#5a4c38]"}`}
                 aria-hidden
               >
                 {delta > 0 ? "▲" : delta < 0 ? "▼" : "•"} {deltaText}
