@@ -21,6 +21,16 @@ import {
   checkSet3Locked,
 } from "@/lib/moduleAccess";
 import {
+  resolveGuidedChoice,
+  type GuidedChoiceResult,
+} from "@/lib/guidedChoice";
+import {
+  buildModuleSlugPriority,
+  scanForNextActivity,
+  type ContinueScanResult,
+} from "@/lib/continueScan";
+import { GuidedChoicePanel } from "@/components/modules/GuidedChoicePanel";
+import {
   STEM_SET_1_IDS,
   STEM_SET_2_IDS,
   STEM_SET_3_IDS,
@@ -91,6 +101,51 @@ const SLUG_TO_SET3_ID: Record<string, StemSet3GameId> = {
   "k2-stem-track-maker": "track-maker",
 };
 
+/**
+ * The band guided choice resolves against on this page.
+ *
+ * This page requests `api.getModules({ level: "K-2" })`, and
+ * `gradeBandAffectsAccess("K-2")` is `false` — K-2 content is open to every
+ * band by product design — so the student's real band cannot change the
+ * verdict for any record this page holds, and fetching it would be a request
+ * whose answer provably cannot matter (the same reasoning `useModuleAccess`
+ * applies when it declines to wait on `/student/courses`).
+ *
+ * If a band-discriminating record ever did reach this list, `k2` refuses it,
+ * which is the fail-closed direction for a surface that has not resolved the
+ * band. That refusal only withholds it from the *choice layer*: the module
+ * still renders as an ordinary card in its set section below, so nothing
+ * becomes unreachable and no learner-facing "made for bigger kids" copy is
+ * shown for what would really be an unresolved input (accessibility contract
+ * §6). Widening this page's catalog request means resolving the band first.
+ */
+const GUIDED_CHOICE_BAND = "k2" as const;
+
+/**
+ * Seed parts for the surprise pick, read from what the page already has.
+ *
+ * The user id keeps two children from being shown the same "surprise", and
+ * the date bucket is deliberately a day, not a timestamp: the pick must
+ * survive a re-render and a refresh, or the disclosure a learner is reading
+ * could change under them.
+ */
+function readSeedUserId(): string {
+  try {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id) return String(parsed.id);
+    }
+  } catch {
+    // fall through to anonymous
+  }
+  return "anonymous";
+}
+
+function todayBucket(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 const STRAND_COLORS: Record<string, string> = {
   AI: "bg-blue-100 text-blue-800",
   Biotech: "bg-green-100 text-green-800",
@@ -111,49 +166,145 @@ export default function Modules() {
   const [set1Done, setSet1Done] = useState(0);
   const [set2Done, setSet2Done] = useState(0);
   const [set3Done, setSet3Done] = useState(0);
+  const [guided, setGuided] = useState<GuidedChoiceResult | null>(null);
+  // Frozen once per mount so the surprise pick cannot shift under a re-render.
+  const [seedUserId] = useState(readSeedUserId);
+  const [seedDateBucket] = useState(todayBucket);
   const navigate = useNavigate();
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    Promise.all([
-      api.getModules({ level: "K-2" }),
-      api.getAvatar(),
-      api.getProgress().catch(() => ({ progress: [] })),
-    ])
-      .then(([data, avatarData, progressData]) => {
-        const archetype = getStudentArchetype(avatarData);
 
-        const completedIds: string[] = (progressData?.progress ?? [])
-          .filter((p: any) => p.status === "COMPLETED")
-          .map((p: any) => String(p.activityId));
+    async function load() {
+      let data: any[];
+      let avatarData: unknown;
+      let progressData: { progress?: any[] };
+      try {
+        [data, avatarData, progressData] = await Promise.all([
+          api.getModules({ level: "K-2" }),
+          api.getAvatar(),
+          api.getProgress().catch(() => ({ progress: [] })),
+        ]);
+      } catch {
+        if (!cancelled) {
+          setError(t("modules.loadError"));
+          setLoading(false);
+        }
+        return;
+      }
+      if (cancelled) return;
 
-        const locked = checkSet2Locked(completedIds);
-        setSet2Locked(locked);
-        setSet3Locked(checkSet3Locked(completedIds));
-        setSet1Done(countCompletedInSet(completedIds, STEM_SET_1_IDS));
-        setSet2Done(countCompletedInSet(completedIds, STEM_SET_2_IDS));
-        setSet3Done(countCompletedInSet(completedIds, STEM_SET_3_IDS));
+      const archetype = getStudentArchetype(avatarData);
 
-        const visible = (data as any[]).filter(
+      const completedIds: string[] = (progressData?.progress ?? [])
+        .filter((p: any) => p.status === "COMPLETED")
+        .map((p: any) => String(p.activityId));
+
+      const locked = checkSet2Locked(completedIds);
+      setSet2Locked(locked);
+      setSet3Locked(checkSet3Locked(completedIds));
+      setSet1Done(countCompletedInSet(completedIds, STEM_SET_1_IDS));
+      setSet2Done(countCompletedInSet(completedIds, STEM_SET_2_IDS));
+      setSet3Done(countCompletedInSet(completedIds, STEM_SET_3_IDS));
+
+      const all = Array.isArray(data) ? data : [];
+      const byCanonicalOrder = (a: any, b: any) =>
+        (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
+        String(a.title ?? "").localeCompare(String(b.title ?? ""));
+
+      // The set sections keep exactly the filter and order they had (#697's
+      // territory — this change adds a choice layer above them, it does not
+      // redesign the page).
+      const visible = all
+        .filter(
           (m: any) =>
             canAccessModule({ slug: m.slug, archetype }) &&
             !HIDDEN_MODULE_SLUGS.has(m.slug),
-        );
+        )
+        .sort(byCanonicalOrder);
+      setModules(visible);
+      setError(null);
+      setLoading(false);
 
-        visible.sort(
-          (a: any, b: any) =>
-            (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
-            a.title.localeCompare(b.title),
-        );
-        setModules(visible);
-        setError(null);
-      })
-      .catch(() => {
-        setError(t("modules.loadError"));
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      // ── Guided choice (#842) ──────────────────────────────────────────
+      // Runs after the page is already rendered, so the set sections never
+      // wait on the Continue scan.
+      const progressList = Array.isArray(progressData?.progress)
+        ? progressData.progress
+        : [];
+
+      // A teacher assignment lifts a set lock for its target (access policy
+      // E). Absent or unreachable assignments fall back to the progression
+      // answer, which is the truthful state for a student with none.
+      let sessions: { moduleSlug?: string | null }[] = [];
+      try {
+        const raw = await api.getStudentAssignments();
+        if (Array.isArray(raw)) sessions = raw;
+      } catch {
+        // Not enrolled, or the endpoint is unavailable — that is fine.
+      }
+      if (cancelled) return;
+      const assignedModuleSlugs = new Set(
+        sessions
+          .map((s) => s?.moduleSlug)
+          .filter((s): s is string => typeof s === "string" && !!s),
+      );
+
+      // The catalog list, ordered but NOT pre-filtered: the resolver reports a
+      // reason for every refusal, which is the point of having one.
+      const candidates = [...all].sort(byCanonicalOrder);
+
+      // #842 requires the Modules page's Continue to be the *same* target the
+      // student dashboard computes, so it runs the same canonical scan with
+      // the same access policy rather than a second opinion.
+      const accessOnly = (slug: string) =>
+        resolveGuidedChoice({
+          modules: candidates.filter((m: any) => m.slug === slug),
+          hiddenSlugs: HIDDEN_MODULE_SLUGS,
+          completedActivityIds: completedIds,
+          archetype,
+          gradeBand: GUIDED_CHOICE_BAND,
+          assignedModuleSlugs,
+          scan: null,
+        }).continueTarget !== null;
+
+      let scan: ContinueScanResult | null = null;
+      try {
+        scan = await scanForNextActivity({
+          slugPriority: buildModuleSlugPriority(all, progressList),
+          progress: progressList,
+          loadModule: (slug) => api.getModule(slug, { structureOnly: true }),
+          isAllowed: accessOnly,
+          isCancelled: () => cancelled,
+          onLoadError: (slug, e) =>
+            console.warn(`Failed to fetch module ${slug}:`, e),
+        });
+      } catch {
+        // A failed scan is an infrastructure problem, not a learner outcome
+        // (principle 9): guided choice falls back to the first allowed module
+        // rather than showing an error where a next step belongs.
+        scan = null;
+      }
+      if (cancelled) return;
+
+      setGuided(
+        resolveGuidedChoice({
+          modules: candidates,
+          hiddenSlugs: HIDDEN_MODULE_SLUGS,
+          completedActivityIds: completedIds,
+          archetype,
+          gradeBand: GUIDED_CHOICE_BAND,
+          assignedModuleSlugs,
+          scan,
+        }),
+      );
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -238,6 +389,16 @@ export default function Modules() {
           <AlertTitle>{t("common.error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {/* ── Guided choice (#842): Continue, alternatives, revisit, surprise ── */}
+      {!loading && !error && guided && (
+        <GuidedChoicePanel
+          result={guided}
+          navigate={navigate}
+          seedUserId={seedUserId}
+          seedDateBucket={seedDateBucket}
+        />
       )}
 
       {loading ? (
