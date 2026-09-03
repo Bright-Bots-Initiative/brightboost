@@ -1,40 +1,19 @@
-# Staging Configuration
+# Staging
 
-## Production (Railway)
+There is **no staging host yet** (verified 2026-09-03). Until BRAND_R0's operator work lands, the only deployed environment is production on Railway behind Cloudflare (`https://brightboost.org`).
 
-- **URL:** https://fe-production-3552.up.railway.app
-- **Backend API:** Same domain, under `/api/`
-- **Database:** Supabase Postgres (production)
+- Building the staging environment (Railway, Supabase, PostHog, Cloudflare, GitHub): [`docs/brand-refresh/release-0/staging-runbook.md`](brand-refresh/release-0/staging-runbook.md)
+- What each environment may touch and how they are told apart: [`docs/brand-refresh/release-0/environment-matrix.md`](brand-refresh/release-0/environment-matrix.md)
+- Running the staging smoke once a host exists: [`docs/staging-smoke.md`](staging-smoke.md) (`npm run test:e2e:staging`) and `node scripts/verify-deploy-target.mjs --url <host> --expect-env staging --expect-sha <sha>`
+- Production URLs and variables: [`DEPLOYMENT.md`](../DEPLOYMENT.md)
 
-> **Note:** The former Azure Static Web Apps staging URL (`brave-bay-0bfacc110-...`) is no longer the production frontend.
-
-## Testing Against Production
+## Testing against production (read-only)
 
 ```bash
-# Health check
-curl https://fe-production-3552.up.railway.app/api/login -X POST \
-  -H "Content-Type: application/json" -d '{}'
+curl -sS https://brightboost.org/api/health
+# Expected after BRAND_R0 deploys: {"status":"ok",…,"env":"production","sha":"<commit>","noindex":false,"analytics":"enabled"}
+curl -sS https://brightboost.org/api/login -X POST -H "Content-Type: application/json" -d '{}'
 # Expected: 400 (validation error = API is up)
 ```
 
-## Cypress Staging Smoke
-
-The `cypress-staging.yml` workflow can run against the production Railway URL.
-Set these GitHub Secrets:
-
-| Secret | Purpose |
-|---|---|
-| `CYPRESS_SWA_URL` | Railway production URL |
-| `VITE_API_BASE` | Railway production API base |
-| `CYPRESS_STUDENT_ID` | Test student ID |
-| `CYPRESS_LESSON_ID` | Test lesson ID |
-
-## Local Against Production API
-
-Create `.env.local` in repo root:
-
-```env
-VITE_API_BASE=https://fe-production-3552.up.railway.app
-```
-
-Then run: `npm run dev`
+`cypress-staging.yml` still points at the fossil `cypress/e2e/pilot-smoke.cy.ts` path (see `docs/ops/ci.md`); re-pointing it at `test:e2e:staging` is a follow-up once a staging URL exists.

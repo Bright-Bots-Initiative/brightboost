@@ -17,11 +17,39 @@
  * the compiler catches typos in event names.
  */
 import posthog from "posthog-js";
+import {
+  decideAnalytics,
+  describeAnalyticsDecision,
+  type AnalyticsDecision,
+} from "./analyticsGuard";
+import { resolveClientDeployEnv } from "./deployEnv";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const POSTHOG_HOST =
   (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ||
   "https://us.i.posthog.com";
+// BRAND_R0: the environment the key was issued for. A staging build that
+// inherited the production key (or an unlabeled key) is refused — see
+// src/lib/analyticsGuard.ts and docs/analytics.md.
+const POSTHOG_KEY_ENV = import.meta.env.VITE_POSTHOG_KEY_ENV as
+  | string
+  | undefined;
+
+const GUARD_VARS = { key: "VITE_POSTHOG_KEY", keyEnv: "VITE_POSTHOG_KEY_ENV" };
+
+let decision: AnalyticsDecision | null = null;
+
+/** Environment-guard verdict for this bundle (computed once). */
+export function getAnalyticsDecision(): AnalyticsDecision {
+  if (!decision) {
+    decision = decideAnalytics({
+      envName: resolveClientDeployEnv().name,
+      key: POSTHOG_KEY,
+      keyEnv: POSTHOG_KEY_ENV,
+    });
+  }
+  return decision;
+}
 
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
@@ -42,9 +70,16 @@ export type AnalyticsEvent =
   | { kind: "parent_page_clicked" }
   | { kind: "organization_page_clicked" }
   | { kind: "free_plan_clicked"; plan: string }
-  | { kind: "feedback_submitted"; audience: "teacher" | "student" | "parent" | "org" }
+  | {
+      kind: "feedback_submitted";
+      audience: "teacher" | "student" | "parent" | "org";
+    }
   // Funnel events (see docs/analytics.md)
-  | { kind: "account_registered"; role: AnalyticsRole; signup_method: SignupMethod }
+  | {
+      kind: "account_registered";
+      role: AnalyticsRole;
+      signup_method: SignupMethod;
+    }
   | { kind: "login"; role: AnalyticsRole }
   | {
       kind: "class_created";
@@ -111,8 +146,21 @@ function disabled(): boolean {
   return !POSTHOG_KEY || !initialized;
 }
 
+/** True once posthog-js has loaded and events/flags can flow. */
+export function isAnalyticsReady(): boolean {
+  return !disabled();
+}
+
 export function initAnalytics(): void {
   if (initialized) return;
+  const verdict = getAnalyticsDecision();
+  if (verdict.status === "refused") {
+    // Loud and permanent: events from this build must not reach PostHog.
+    console.error(
+      `[analytics] ${describeAnalyticsDecision(verdict, GUARD_VARS, resolveClientDeployEnv().name)}`,
+    );
+    return;
+  }
   if (!POSTHOG_KEY) {
     // Use warn (not info) so prod consoles surface the disabled state
     // clearly — silent no-ops are the #1 PostHog-not-firing failure mode.

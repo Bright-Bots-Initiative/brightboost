@@ -1,0 +1,57 @@
+# BRAND_R0 — exact-SHA deploy verification (Release-on-demand; not a required check).
+#
+# Railway performs the deploy (see DEPLOYMENT.md). This workflow proves, against
+# the deployed URL, that the expected commit is live with the right environment
+# posture (noindex on staging, none on production, health env/SHA agree,
+# analytics not refused). It runs under the GitHub environment named by the
+# input, so protection rules configured on `production` (required reviewer,
+# prevent self-review, branch restriction) apply to this verification record.
+#
+# Tier is declared in docs/ops/ci.md (#775 contract). No secrets are required.
+name: Deploy verify (exact SHA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub environment to record this verification under"
+        type: choice
+        required: true
+        options:
+          - staging
+          - production
+      base_url:
+        description: "Base URL of the deployed host to verify (https://…)"
+        type: string
+        required: true
+      expected_sha:
+        description: "Commit expected to be live (7–40 hex). Defaults to this run's commit."
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-verify-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: verify-${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify deploy target (exact SHA + environment posture)
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          EXPECT_ENV: ${{ inputs.environment }}
+          EXPECT_SHA: ${{ inputs.expected_sha || github.sha }}
+        run: node scripts/verify-deploy-target.mjs --url "$BASE_URL" --expect-env "$EXPECT_ENV" --expect-sha "$EXPECT_SHA"

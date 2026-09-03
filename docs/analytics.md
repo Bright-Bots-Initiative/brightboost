@@ -4,10 +4,10 @@ Funnel instrumentation, scoreboard, and tooling notes for the K-8 product.
 
 ## Tooling
 
-| What | Where | Used for |
-| --- | --- | --- |
-| **PostHog Cloud** | https://us.i.posthog.com | product analytics, funnels, retention cohorts, session replay, feature flags |
-| **Internal scoreboard** | `/admin/metrics` | DB-source-of-truth totals (admin role required) |
+| What                    | Where                    | Used for                                                                     |
+| ----------------------- | ------------------------ | ---------------------------------------------------------------------------- |
+| **PostHog Cloud**       | https://us.i.posthog.com | product analytics, funnels, retention cohorts, session replay, feature flags |
+| **Internal scoreboard** | `/admin/metrics`         | DB-source-of-truth totals (admin role required)                              |
 
 PostHog is the exploration tool — slice events by property, build funnels, run experiments. The scoreboard is the trustworthy headline number ("how many teachers signed up?") because it counts from Postgres directly.
 
@@ -26,6 +26,30 @@ POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 When unset, the backend shim (`backend/src/services/analytics.ts`) silently no-ops at runtime and prints one info log so the absence is obvious. The frontend shim (`src/lib/analytics.ts`) prints a **warning** with a Railway/Dockerfile pointer when the key is missing — silent prod failures are the #1 thing that hides itself.
+
+### Environment guard (BRAND_R0)
+
+A staging environment created by copying production's variables would inherit the production key and write test traffic into the production project. The key therefore carries a **label** naming the environment it was issued for:
+
+```
+# production
+POSTHOG_KEY=phc_…        POSTHOG_KEY_ENV=production
+VITE_POSTHOG_KEY=phc_…   VITE_POSTHOG_KEY_ENV=production
+# staging (a separate PostHog project)
+POSTHOG_KEY=phc_…        POSTHOG_KEY_ENV=staging
+VITE_POSTHOG_KEY=phc_…   VITE_POSTHOG_KEY_ENV=staging
+```
+
+| Environment (`APP_ENV` / `VITE_APP_ENV`) | Key   | Label                 | Result                                                  |
+| ---------------------------------------- | ----- | --------------------- | ------------------------------------------------------- |
+| any                                      | unset | any                   | `disabled` (silent no-op, as before)                    |
+| production                               | set   | unset or `production` | `enabled`                                               |
+| production                               | set   | anything else         | `refused`                                               |
+| staging / preview / development          | set   | unset                 | `refused` — an unlabeled key is treated as production's |
+| staging / preview / development          | set   | `production`          | `refused`                                               |
+| staging / preview / development          | set   | anything else         | `enabled`                                               |
+
+`refused` logs `[analytics] REFUSED — …` once, never initializes PostHog, and shows as `analytics: "refused"` on `/health`; `scripts/verify-deploy-target.mjs` fails a host in that state (`DT-008`). Logic: `backend/src/utils/analyticsGuard.ts`, `src/lib/analyticsGuard.ts` (tests cover every row). Local dev with a key now needs `POSTHOG_KEY_ENV=development` / `VITE_POSTHOG_KEY_ENV=development` — and a key that is **not** the production project's.
 
 ### Why the frontend env vars require a Docker rebuild
 
@@ -61,19 +85,19 @@ The comment block at the top of `src/lib/analytics.ts` enforces the same rules i
 
 ## Event taxonomy
 
-| Event | When | Properties | Surface |
-| --- | --- | --- | --- |
-| `account_registered` | Signup success (email or cohort code) | `role`, `signup_method` | client + server |
-| `login` | Auth success (any method) | `role` | client + server |
-| `class_created` | Teacher creates a class | `class_id`, `grade_band` | client + server |
-| `student_joined_class` | Student joins via class code | `class_id`, `join_method` | client + server |
-| `game_started` | Activity/game opens | `game_id`, `module_slug`, `activity_id`, `grade_band` | client only |
-| `game_completed` | Activity/game finishes (first time per student) | `game_id`, `module_slug`, `activity_id`, `score`, `time_spent_seconds`, `grade_band` | client + server |
-| `demo_page_viewed` | Public `/try` route mounts | `source` | client only |
-| `demo_game_started` | First interaction inside the demo game area (the Start Mission tap in practice) | `game_id` | client only |
-| `demo_game_completed` | Demo game finished (GameShell results → Finish) | `game_id`, `score`, `stars`, `time_spent_seconds` | client only |
-| `demo_replayed` | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id` | client only |
-| `demo_signup_cta_clicked` | Conversion CTA tapped on `/try` | `placement` (`results` \| `hero_teacher_whisper`) | client only |
+| Event                     | When                                                                                                                                                                                               | Properties                                                                           | Surface         |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------- |
+| `account_registered`      | Signup success (email or cohort code)                                                                                                                                                              | `role`, `signup_method`                                                              | client + server |
+| `login`                   | Auth success (any method)                                                                                                                                                                          | `role`                                                                               | client + server |
+| `class_created`           | Teacher creates a class                                                                                                                                                                            | `class_id`, `grade_band`                                                             | client + server |
+| `student_joined_class`    | Student joins via class code                                                                                                                                                                       | `class_id`, `join_method`                                                            | client + server |
+| `game_started`            | Activity/game opens                                                                                                                                                                                | `game_id`, `module_slug`, `activity_id`, `grade_band`                                | client only     |
+| `game_completed`          | Activity/game finishes (first time per student)                                                                                                                                                    | `game_id`, `module_slug`, `activity_id`, `score`, `time_spent_seconds`, `grade_band` | client + server |
+| `demo_page_viewed`        | Public `/try` route mounts                                                                                                                                                                         | `source`                                                                             | client only     |
+| `demo_game_started`       | First interaction inside the demo game area (the Start Mission tap in practice)                                                                                                                    | `game_id`                                                                            | client only     |
+| `demo_game_completed`     | Demo game finished (GameShell results → Finish)                                                                                                                                                    | `game_id`, `score`, `stars`, `time_spent_seconds`                                    | client only     |
+| `demo_replayed`           | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id`                                                                            | client only     |
+| `demo_signup_cta_clicked` | Conversion CTA tapped on `/try`                                                                                                                                                                    | `placement` (`results` \| `hero_teacher_whisper`)                                    | client only     |
 
 `grade_band` values: `k2`, `g3_5`, `g6_8` (whatever the student's class is set to).
 
@@ -100,17 +124,20 @@ Returns:
 
 ```ts
 {
-  asOf: string;                            // ISO timestamp
-  totalAccounts: number;                   // K-8 only (userType === 'k8')
-  accountsByRole: { teacher: number; student: number };
+  asOf: string; // ISO timestamp
+  totalAccounts: number; // K-8 only (userType === 'k8')
+  accountsByRole: {
+    teacher: number;
+    student: number;
+  }
   totalClasses: number;
-  avgStudentsPerClass: number;             // 1 decimal
-  gamesStarted: number;                    // Progress rows
-  gamesCompleted: number;                  // Progress rows with status COMPLETED
-  completionRate: number;                  // % with 1 decimal
+  avgStudentsPerClass: number; // 1 decimal
+  gamesStarted: number; // Progress rows
+  gamesCompleted: number; // Progress rows with status COMPLETED
+  completionRate: number; // % with 1 decimal
   signupsLast7Days: number;
   signupsLast30Days: number;
-  activeUsersLast7Days: number;            // Distinct students with any Progress.updatedAt in window
+  activeUsersLast7Days: number; // Distinct students with any Progress.updatedAt in window
 }
 ```
 
@@ -118,13 +145,13 @@ The page lives at `/admin/metrics`. It's intentionally plain — function over f
 
 ### Why some metrics live in PostHog instead
 
-| Metric | Where | Why |
-| --- | --- | --- |
-| Signup → first game rate | PostHog funnel | needs sequential event ordering per user |
-| Teacher → class created rate | PostHog funnel | same |
-| Week-2 retention | PostHog cohort | retention math is what PostHog is built for |
-| Most-played games | PostHog breakdown | `game_started` × `game_id` is a one-click chart in PostHog |
-| Headline totals | scoreboard | DB is authoritative for "how many *exist*" |
+| Metric                       | Where             | Why                                                        |
+| ---------------------------- | ----------------- | ---------------------------------------------------------- |
+| Signup → first game rate     | PostHog funnel    | needs sequential event ordering per user                   |
+| Teacher → class created rate | PostHog funnel    | same                                                       |
+| Week-2 retention             | PostHog cohort    | retention math is what PostHog is built for                |
+| Most-played games            | PostHog breakdown | `game_started` × `game_id` is a one-click chart in PostHog |
+| Headline totals              | scoreboard        | DB is authoritative for "how many _exist_"                 |
 
 ## PostHog UI setup (manual)
 
@@ -146,7 +173,7 @@ These steps happen in the PostHog dashboard, not in code. Do them once per envir
 
 ## Adding a new event
 
-1. Pick the moment. Fire at the *exact* moment of the action — don't fire on render.
+1. Pick the moment. Fire at the _exact_ moment of the action — don't fire on render.
 2. Add the event to the `AnalyticsEvent` discriminated union in `src/lib/analytics.ts` so the compiler catches typos.
 3. Call `track({ kind: "your_event", ...props })`.
 4. If it's scoreboard-critical (i.e. corresponds to a DB write that drives a funnel KPI), also call `trackServer(userId, "your_event", { ... })` in the route handler.
@@ -166,11 +193,15 @@ npm run dev
 # Register a test account, start a game, watch PostHog
 ```
 
+## Feature flags and experiments
+
+Flags are read through the typed adapter in `src/lib/featureFlags.ts` (registry with owner, issue, expiry, fallback, variants; safe default while loading or when analytics is disabled/refused; exposure recorded only on render). PostHog owns anonymous/public assignment; the database `Experiment*` tables are reserved for logged-in, server-authoritative experiments. Governance, the activation checklist, and the #641 decision: [`docs/experiments.md`](experiments.md).
+
 ## Baseline
 
 Capture the headline numbers the day analytics go live. Future progress is measured against this row.
 
-> **Baseline (TODO once deployed)**: pull `/api/admin/metrics` on the day this PR lands. Write the row here.
+> **BRAND_R0 baseline (2026-09-03):** PostHog rows are captured in [`docs/brand-refresh/release-0/analytics-baseline.md`](brand-refresh/release-0/analytics-baseline.md) (21 pageviews / 17 visitors / 3 logins in 30 days; 0 flags; 0 experiments; 1 project). The `/api/admin/metrics` row is `PENDING_EXTERNAL_READ` — fill the template below from a production admin session and copy it there.
 
 ```
 Date:              YYYY-MM-DD
@@ -198,16 +229,16 @@ Work through the layers in order — most of these failures fail silently, so do
 
 ## Where the code lives
 
-| Concern | File |
-| --- | --- |
-| Frontend shim (init, identify, track, reset) | `src/lib/analytics.ts` |
-| Frontend init call | `src/main.tsx` |
-| Login + logout identification | `src/contexts/AuthContext.tsx` |
-| Signup events | `src/pages/TeacherSignup.tsx`, `src/pages/StudentSignup.tsx`, `src/pages/LoginSelection.tsx` |
-| Class lifecycle | `src/pages/TeacherClasses.tsx`, `src/pages/JoinClass.tsx` |
-| Game lifecycle | `src/pages/ActivityPlayer.tsx` |
-| Backend shim | `backend/src/services/analytics.ts` |
-| Server-side mirror calls | `backend/src/routes/auth.ts`, `backend/src/routes/courses.ts`, `backend/src/routes/progress.ts` |
-| Scoreboard endpoint | `backend/src/routes/adminMetrics.ts` |
-| Scoreboard page | `src/pages/AdminMetrics.tsx` (route in `src/App.tsx`) |
-| Graceful shutdown flush | `backend/src/server.ts` (`SIGTERM`/`SIGINT`) |
+| Concern                                      | File                                                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Frontend shim (init, identify, track, reset) | `src/lib/analytics.ts`                                                                          |
+| Frontend init call                           | `src/main.tsx`                                                                                  |
+| Login + logout identification                | `src/contexts/AuthContext.tsx`                                                                  |
+| Signup events                                | `src/pages/TeacherSignup.tsx`, `src/pages/StudentSignup.tsx`, `src/pages/LoginSelection.tsx`    |
+| Class lifecycle                              | `src/pages/TeacherClasses.tsx`, `src/pages/JoinClass.tsx`                                       |
+| Game lifecycle                               | `src/pages/ActivityPlayer.tsx`                                                                  |
+| Backend shim                                 | `backend/src/services/analytics.ts`                                                             |
+| Server-side mirror calls                     | `backend/src/routes/auth.ts`, `backend/src/routes/courses.ts`, `backend/src/routes/progress.ts` |
+| Scoreboard endpoint                          | `backend/src/routes/adminMetrics.ts`                                                            |
+| Scoreboard page                              | `src/pages/AdminMetrics.tsx` (route in `src/App.tsx`)                                           |
+| Graceful shutdown flush                      | `backend/src/server.ts` (`SIGTERM`/`SIGINT`)                                                    |

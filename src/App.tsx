@@ -28,6 +28,7 @@ import LoginSelection from "./pages/LoginSelection";
 import SignupSelection from "./pages/SignupSelection";
 import Index from "./pages/Index";
 import HomeSectionRedirect from "./pages/HomeSectionRedirect";
+import EnvironmentBanner from "./components/EnvironmentBanner";
 import AudiencePlaceholder from "./pages/AudiencePlaceholder";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
@@ -116,6 +117,8 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <div className="app">
+            {/* Staging-only strip (BRAND_R0); renders nothing in production. */}
+            <EnvironmentBanner />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />

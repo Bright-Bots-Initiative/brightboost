@@ -2107,5 +2107,13 @@
       "highFive": "击掌",
       "backToBack": "背靠背"
     }
+  },
+  "envBanner": {
+    "message": "{{env}} — 仅为测试数据。这不是正式的 Bright Boost。",
+    "build": "构建 {{sha}}",
+    "env": {
+      "staging": "测试站（staging）",
+      "preview": "预览站"
+    }
   }
 }

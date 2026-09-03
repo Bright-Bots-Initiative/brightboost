@@ -35,8 +35,9 @@ import slackTestRouter from "./routes/slack-test";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { preventHpp, nocache } from "./utils/security";
 import { notifySlack } from "./utils/slack";
-import { shutdownAnalytics } from "./services/analytics";
+import { getAnalyticsStatus, shutdownAnalytics } from "./services/analytics";
 import { sharedEngineProbeLabel } from "./sharedEngineProbe";
+import { resolveDeployEnv, robotsTagFor } from "./utils/deployEnv";
 
 const app = express();
 
@@ -45,6 +46,12 @@ app.set("trust proxy", 1);
 
 // Security headers
 const isProduction = process.env.NODE_ENV === "production";
+
+// BRAND_R0: one typed classification of this deployment (APP_ENV →
+// RAILWAY_ENVIRONMENT_NAME → NODE_ENV). Drives the noindex header below and
+// the /health posture fields; see backend/src/utils/deployEnv.ts.
+const deployEnv = resolveDeployEnv(process.env);
+const robotsTag = robotsTagFor(deployEnv);
 
 app.use(
   helmet({
@@ -100,6 +107,16 @@ app.use((_req, res, next) => {
   );
   next();
 });
+
+// BRAND_R0: every non-production response is unindexable. Production never
+// carries this header; scripts/verify-deploy-target.mjs fails a production
+// host that does (DT-004) and a staging host that does not (DT-003).
+if (robotsTag) {
+  app.use((_req, res, next) => {
+    res.setHeader("X-Robots-Tag", robotsTag);
+    next();
+  });
+}
 
 // ⚡ Bolt Optimization: Enable gzip compression
 // Reduces payload size by 70-90% for JSON APIs and static assets
@@ -213,9 +230,22 @@ app.use("/api", creationsRouter);
 app.use("/api", experimentsRouter);
 app.use("/api", adminMetricsRouter);
 
-app.get("/health", (_req: Request, res: Response) =>
-  res.status(200).json({ status: "ok", sharedEngine: sharedEngineProbeLabel }),
-);
+// Health carries the non-secret deploy posture (BRAND_R0): which environment
+// this is, which commit it was built from, whether it is noindexed, and whether
+// analytics was enabled / disabled / refused by the environment guard. Also
+// mounted under /api so the nginx frontend proxy (docs/nginx.conf) reaches it.
+const healthHandler = (_req: Request, res: Response) =>
+  res.status(200).json({
+    status: "ok",
+    sharedEngine: sharedEngineProbeLabel,
+    env: deployEnv.name,
+    envSource: deployEnv.source,
+    sha: deployEnv.gitSha ?? "unknown",
+    noindex: deployEnv.noindex,
+    analytics: getAnalyticsStatus(),
+  });
+app.get("/health", healthHandler);
+app.get("/api/health", healthHandler);
 
 // Serve static frontend files
 // In production (dist/src/server.js), the frontend build is in ../../../dist

@@ -1,4 +1,4 @@
-> **Canonical for:** deployment. Last verified against code: 2026-09-01.
+> **Canonical for:** deployment. Last verified against code: 2026-09-03.
 
 # BrightBoost Deployment Guide
 
@@ -19,6 +19,8 @@
 
 ## How Production Deploys
 
+> **BRAND_R0 (2026-09-03):** GitHub deployment records show **two** Railway projects (`glorious-friendship`, `hospitable-art`) receiving every push to `main`, and `hospitable-art` failing on the current tip. Which project serves `brightboost.org`, the move to Wait-for-CI + manual exact-SHA promotion, and the staging environment are operator actions in [`docs/brand-refresh/release-0/staging-runbook.md`](docs/brand-refresh/release-0/staging-runbook.md) and [`promotion-runbook.md`](docs/brand-refresh/release-0/promotion-runbook.md). The steps below describe today's behaviour.
+
 1. Code is pushed to the `main` branch on GitHub
 2. Railway detects the push and starts a new deployment
 3. Railway builds using `Dockerfile.backend` (at repo root)
@@ -31,25 +33,39 @@
 
 ## Required Environment Variables (Railway)
 
-| Variable                    | Required    | Description                                                                                  |
-| --------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`              | Yes         | Supabase Postgres connection string (pooled)                                                 |
-| `DIRECT_URL`                | Yes         | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset |
-| `RUN_SEED`                  | No          | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip)          |
-| `SEED_ALLOW_PRODUCTION`     | No          | Second gate **inside** the seed; only exact `true` lets it write to a production target      |
-| `SEED_RESET`                | No          | Separate wipe switch; exact `true` forces the pre-seed wipe, `false` forbids it (see below)  |
-| `RUN_GAMIFICATION_BACKFILL` | No          | Existing sibling gate; same exact `"true"` convention as `RUN_SEED`                          |
-| `SESSION_SECRET`            | Yes         | JWT signing secret — must NOT be the default                                                 |
-| `NODE_ENV`                  | Yes         | `production`                                                                                 |
-| `PORT`                      | Auto        | Railway sets this automatically                                                              |
-| `SERVE_FRONTEND`            | Yes         | `true` to serve frontend from Express                                                        |
-| `FRONTEND_URL`              | Recommended | Public URL for password reset email links                                                    |
-| `FRONTEND_ORIGINS`          | Optional    | Comma-separated CORS origins (Railway domain is hardcoded)                                   |
-| `SMTP_HOST`                 | Optional    | SMTP server for email delivery                                                               |
-| `SMTP_PORT`                 | Optional    | SMTP port                                                                                    |
-| `SMTP_USER`                 | Optional    | SMTP username                                                                                |
-| `SMTP_PASS`                 | Optional    | SMTP password                                                                                |
-| `MAIL_FROM`                 | Optional    | From address for emails                                                                      |
+| Variable                    | Required    | Description                                                                                                                                                                                                                                              |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`              | Yes         | Supabase Postgres connection string (pooled)                                                                                                                                                                                                             |
+| `DIRECT_URL`                | Yes         | Supabase direct connection string (session pooler, port 5432); predeploy hard-fails if unset                                                                                                                                                             |
+| `RUN_SEED`                  | No          | Optional deploy-time seed gate; only exact `true` runs seed (default: unset = skip)                                                                                                                                                                      |
+| `SEED_ALLOW_PRODUCTION`     | No          | Second gate **inside** the seed; only exact `true` lets it write to a production target                                                                                                                                                                  |
+| `SEED_RESET`                | No          | Separate wipe switch; exact `true` forces the pre-seed wipe, `false` forbids it (see below)                                                                                                                                                              |
+| `RUN_GAMIFICATION_BACKFILL` | No          | Existing sibling gate; same exact `"true"` convention as `RUN_SEED`                                                                                                                                                                                      |
+| `SESSION_SECRET`            | Yes         | JWT signing secret — must NOT be the default                                                                                                                                                                                                             |
+| `NODE_ENV`                  | Yes         | `production`                                                                                                                                                                                                                                             |
+| `PORT`                      | Auto        | Railway sets this automatically                                                                                                                                                                                                                          |
+| `SERVE_FRONTEND`            | Yes         | `true` to serve frontend from Express                                                                                                                                                                                                                    |
+| `FRONTEND_URL`              | Recommended | Public URL for password reset email links                                                                                                                                                                                                                |
+| `FRONTEND_ORIGINS`          | Optional    | Comma-separated CORS origins (Railway domain is hardcoded)                                                                                                                                                                                               |
+| `SMTP_HOST`                 | Optional    | SMTP server for email delivery                                                                                                                                                                                                                           |
+| `SMTP_PORT`                 | Optional    | SMTP port                                                                                                                                                                                                                                                |
+| `SMTP_USER`                 | Optional    | SMTP username                                                                                                                                                                                                                                            |
+| `SMTP_PASS`                 | Optional    | SMTP password                                                                                                                                                                                                                                            |
+| `MAIL_FROM`                 | Optional    | From address for emails                                                                                                                                                                                                                                  |
+| `APP_ENV`                   | Recommended | BRAND_R0 classifier: `production` \| `staging` \| `preview`. Precedence `APP_ENV` → `RAILWAY_ENVIRONMENT_NAME` → `NODE_ENV`; anything but `production` adds `X-Robots-Tag: noindex, nofollow` to every response and reports `noindex: true` on `/health` |
+| `POSTHOG_KEY_ENV`           | Recommended | Environment the `POSTHOG_KEY` was issued for (`production` \| `staging`). Outside production an **unlabeled** key or a `production` label is refused (`/health` → `analytics: "refused"`)                                                                |
+| `GIT_SHA`                   | No          | Override for the commit reported on `/health`; Railway's `RAILWAY_GIT_COMMIT_SHA` is used automatically                                                                                                                                                  |
+
+### Frontend service (`Dockerfile.frontend`, build-time `ARG`s — clean rebuild after changes)
+
+| Variable               | Required     | Description                                                                                            |
+| ---------------------- | ------------ | ------------------------------------------------------------------------------------------------------ |
+| `VITE_APP_ENV`         | Recommended  | `production` \| `staging` \| `preview`; shows the staging banner and fills `<meta name="bb-app-env">`  |
+| `VITE_POSTHOG_KEY_ENV` | Recommended  | Label for `VITE_POSTHOG_KEY`, same rules as `POSTHOG_KEY_ENV`                                          |
+| `VITE_GIT_SHA`         | No           | Fills `<meta name="bb-git-sha">`; defaults to Railway's `RAILWAY_GIT_COMMIT_SHA` build arg             |
+| `ROBOTS_TAG`           | Staging only | nginx `X-Robots-Tag` value — set `noindex, nofollow` on staging/preview; **leave unset in production** |
+
+`/health` and `/api/health` report `env`, `envSource`, `sha`, `noindex`, and `analytics` (`enabled` \| `disabled` \| `refused`). `node scripts/verify-deploy-target.mjs --url <host> --expect-env <env> --expect-sha <sha>` proves a deployed host end to end.
 
 ## First-time Railway + Supabase setup
 

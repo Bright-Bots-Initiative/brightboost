@@ -2125,5 +2125,13 @@
       "highFive": "Chócala",
       "backToBack": "Espalda con espalda"
     }
+  },
+  "envBanner": {
+    "message": "{{env}}: solo datos de prueba. Este no es el Bright Boost real.",
+    "build": "compilación {{sha}}",
+    "env": {
+      "staging": "Sitio de pruebas (staging)",
+      "preview": "Sitio de vista previa"
+    }
   }
 }

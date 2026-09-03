@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-09-03.
 
 # CI jobs and Cypress gates
 
@@ -41,13 +41,14 @@ Three jobs from `.github/workflows/ci-cd.yml` are required. A red result on any 
 
 **Everything else that reports on a PR.** A PR into `main` shows more checks than those three. None of the following is in the required set as this document understands it:
 
-| Check                  | Workflow                   | Trigger                                                           | Status here                                 |
-| ---------------------- | -------------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
-| `build-only`           | BrightBoost CI/CD Pipeline | `push` + `pull_request`, `branches: [main]`                       | Reports, not required                       |
-| `check-bundle-size`    | Bundle Size Check          | `on: [push, pull_request]`, no branch filter — reports **twice**  | Reports, not required                       |
-| `review`               | PR Review Bot              | `pull_request` only, `branches: [main]`                           | Reports, not required — settled by readback |
-| `comment`              | PR Review Bot              | `pull_request` only, `branches: [main]`                           | Reporting only; cannot gate                 |
-| `teacher-dashboard-ci` | Teacher Dashboard CI       | `pull_request` with a `paths:` filter on TeacherDashboard sources | Conditional, so it cannot be required       |
+| Check                  | Workflow                   | Trigger                                                                                                                                            | Status here                                                                                  |
+| ---------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `build-only`           | BrightBoost CI/CD Pipeline | `push` + `pull_request`, `branches: [main]`                                                                                                        | Reports, not required                                                                        |
+| `check-bundle-size`    | Bundle Size Check          | `on: [push, pull_request]`, no branch filter — reports **twice**                                                                                   | Reports, not required                                                                        |
+| `review`               | PR Review Bot              | `pull_request` only, `branches: [main]`                                                                                                            | Reports, not required — settled by readback                                                  |
+| `comment`              | PR Review Bot              | `pull_request` only, `branches: [main]`                                                                                                            | Reporting only; cannot gate                                                                  |
+| `teacher-dashboard-ci` | Teacher Dashboard CI       | `pull_request` with a `paths:` filter on TeacherDashboard sources                                                                                  | Conditional, so it cannot be required                                                        |
+| `verify-<env>`         | Deploy verify (exact SHA)  | `workflow_dispatch` only (inputs: environment, base_url, expected_sha); runs under the GitHub environment named, concurrency `deploy-verify-<env>` | **Release-on-demand** (BRAND_R0, declared here per #775). Post-deploy proof, never a PR gate |
 
 A red on a reporting check is a real signal worth reading, but it does not block the merge — do not treat their green as a gate, and do not silence them either.
 

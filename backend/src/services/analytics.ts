@@ -13,21 +13,55 @@
  * content to PostHog.
  */
 import { PostHog } from "posthog-node";
+import {
+  decideAnalytics,
+  describeAnalyticsDecision,
+  type AnalyticsDecision,
+  type AnalyticsStatus,
+} from "../utils/analyticsGuard";
+import { resolveDeployEnv } from "../utils/deployEnv";
 
 const POSTHOG_KEY = process.env.POSTHOG_KEY;
 const POSTHOG_HOST = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
+// BRAND_R0: the environment the key was issued for (production | staging | …).
+// See utils/analyticsGuard.ts — an unlabeled key outside production is refused.
+const POSTHOG_KEY_ENV = process.env.POSTHOG_KEY_ENV;
+
+const GUARD_VARS = { key: "POSTHOG_KEY", keyEnv: "POSTHOG_KEY_ENV" };
 
 let client: PostHog | null = null;
-let warnedMissingKey = false;
+let decision: AnalyticsDecision | null = null;
+let announced = false;
 
-export function getAnalyticsClient(): PostHog | null {
-  if (!POSTHOG_KEY) {
-    if (!warnedMissingKey) {
+/** Environment-guard verdict for this process (computed once, logged once). */
+export function getAnalyticsDecision(): AnalyticsDecision {
+  if (decision) return decision;
+  const envName = resolveDeployEnv(process.env).name;
+  decision = decideAnalytics({
+    envName,
+    key: POSTHOG_KEY,
+    keyEnv: POSTHOG_KEY_ENV,
+  });
+  if (!announced) {
+    announced = true;
+    const message = `[analytics] ${describeAnalyticsDecision(decision, GUARD_VARS, envName)}`;
+    if (decision.status === "refused") console.error(message);
+    else if (decision.status === "disabled") {
       console.info(
         "[analytics] No POSTHOG_KEY set — server-side analytics disabled (fine in local dev)",
       );
-      warnedMissingKey = true;
-    }
+    } else console.info(message);
+  }
+  return decision;
+}
+
+/** `enabled` | `disabled` | `refused` — surfaced on /health. */
+export function getAnalyticsStatus(): AnalyticsStatus {
+  return getAnalyticsDecision().status;
+}
+
+export function getAnalyticsClient(): PostHog | null {
+  if (getAnalyticsDecision().status !== "enabled" || !POSTHOG_KEY) {
     return null;
   }
   if (!client) {
