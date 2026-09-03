@@ -1691,7 +1691,7 @@
     "moveMeasure": {
       "title": "Move, Measure & Improve",
       "chapterLabel": "Body Lab",
-      "introDesc": "Test your body's superpowers! Dash, jump, and toss \u2014 then use data to improve.",
+      "introDesc": "Test your body's superpowers! Dash, jump, and toss — then use data to improve.",
       "letsGo": "Let's Go!",
       "dashTitle": "Dash!",
       "dashHint": "Tap when the marker hits the green zone!",
@@ -2705,6 +2705,15 @@
         "baselineSafe": "{{baseline}} is still safe.",
         "restoreFailed": "We could not restore {{baseline}} yet. Nothing you made was deleted."
       }
+    }
+  },
+  "envBanner": {
+    "message": "{{env}} — test data only. This is not the real Bright Boost.",
+    "mismatch": "Configuration mismatch — this build is not production. Test data only.",
+    "build": "build {{sha}}",
+    "env": {
+      "staging": "Staging site",
+      "preview": "Preview site"
     }
   }
 }

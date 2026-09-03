@@ -126,19 +126,28 @@ describe("computeStreakFromProgress", () => {
     vi.setSystemTime(new Date(2025, 0, 15, 10, 0, 0));
 
     const progress: ProgressLike[] = [
-      { status: "COMPLETED", updatedAt: new Date(2025, 0, 12, 12).toISOString() }, // Sunday
-      { status: "COMPLETED", updatedAt: new Date(2025, 0, 14, 12).toISOString() }, // Tuesday
-      { status: "COMPLETED", updatedAt: new Date(2025, 0, 15, 12).toISOString() }, // Wednesday (today)
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(2025, 0, 12, 12).toISOString(),
+      }, // Sunday
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(2025, 0, 14, 12).toISOString(),
+      }, // Tuesday
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(2025, 0, 15, 12).toISOString(),
+      }, // Wednesday (today)
     ];
 
     const result = computeStreakFromProgress(progress);
 
     expect(result.weekDaysActive).toHaveLength(7);
     // Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
-    expect(result.weekDaysActive[0]).toBe(true);  // Sunday
+    expect(result.weekDaysActive[0]).toBe(true); // Sunday
     expect(result.weekDaysActive[1]).toBe(false); // Monday
-    expect(result.weekDaysActive[2]).toBe(true);  // Tuesday
-    expect(result.weekDaysActive[3]).toBe(true);  // Wednesday
+    expect(result.weekDaysActive[2]).toBe(true); // Tuesday
+    expect(result.weekDaysActive[3]).toBe(true); // Wednesday
     expect(result.weekDaysActive[4]).toBe(false); // Thursday
     expect(result.weekDaysActive[5]).toBe(false); // Friday
     expect(result.weekDaysActive[6]).toBe(false); // Saturday
@@ -181,9 +190,18 @@ describe("computeStreakFromProgress", () => {
 
     const today = new Date(2025, 0, 15);
     const progress: ProgressLike[] = [
-      { status: "COMPLETED", updatedAt: new Date(today.setHours(9)).toISOString() },
-      { status: "COMPLETED", updatedAt: new Date(today.setHours(14)).toISOString() },
-      { status: "COMPLETED", updatedAt: new Date(today.setHours(18)).toISOString() },
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(today.setHours(9)).toISOString(),
+      },
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(today.setHours(14)).toISOString(),
+      },
+      {
+        status: "COMPLETED",
+        updatedAt: new Date(today.setHours(18)).toISOString(),
+      },
     ];
 
     const result = computeStreakFromProgress(progress);

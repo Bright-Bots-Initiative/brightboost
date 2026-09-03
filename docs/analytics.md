@@ -27,6 +27,35 @@ POSTHOG_HOST=https://us.i.posthog.com
 
 When unset, the backend shim (`backend/src/services/analytics.ts`) silently no-ops at runtime and prints one info log so the absence is obvious. The frontend shim (`src/lib/analytics.ts`) prints a **warning** with a Railway/Dockerfile pointer when the key is missing — silent prod failures are the #1 thing that hides itself.
 
+### Environment guard (BRAND_R0)
+
+A staging environment created by copying production's variables would inherit the production key and write test traffic into the production project. The key therefore carries a **label** naming the environment it was issued for, and the label must match the environment **exactly**:
+
+```
+# production
+POSTHOG_KEY=phc_…        POSTHOG_KEY_ENV=production
+VITE_POSTHOG_KEY=phc_…   VITE_POSTHOG_KEY_ENV=production
+# staging (a separate PostHog project)
+POSTHOG_KEY=phc_…        POSTHOG_KEY_ENV=staging
+VITE_POSTHOG_KEY=phc_…   VITE_POSTHOG_KEY_ENV=staging
+```
+
+| Environment (classifier) | Key   | Label                          | Result                                                                                        |
+| ------------------------ | ----- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| any                      | unset | any                            | `disabled` (silent no-op, as before)                                                          |
+| production               | set   | `production`                   | `enabled`                                                                                     |
+| production               | set   | unset                          | `enabled-unlabeled` — bootstrap compatibility only; degraded posture on `/health`, warns once |
+| production               | set   | any non-production label       | `refused` (`nonproduction-key-in-production`)                                                 |
+| staging                  | set   | `staging`                      | `enabled`                                                                                     |
+| preview                  | set   | `preview`                      | `enabled`                                                                                     |
+| development              | set   | `development`                  | `enabled`                                                                                     |
+| any non-production       | set   | unset                          | `refused` (`unlabeled-nonproduction`)                                                         |
+| any non-production       | set   | `production`                   | `refused` (`production-key-outside-production`)                                               |
+| any non-production       | set   | a **different** non-prod label | `refused` (`environment-key-mismatch`)                                                        |
+| mismatch (classifier)    | set   | any                            | `refused` (`environment-mismatch`) — see the deploy-environment contract in `DEPLOYMENT.md`   |
+
+`refused` logs `[analytics] REFUSED — …` once, never initializes PostHog, and shows as `analytics: "refused"` on `/health`; `scripts/verify-deploy-target.mjs` fails a host in that state (`DT-008`). `enabled-unlabeled` exists only so today's production (no label) keeps working until `POSTHOG_KEY_ENV=production` / `VITE_POSTHOG_KEY_ENV=production` are set; strict verification (`--require-declared-env`) refuses it, and the branch is removed once production is labelled (tracked on #860). Logic: `backend/src/utils/analyticsGuard.ts`, `src/lib/analyticsGuard.ts` (tests cover every row). Local dev with a key needs `POSTHOG_KEY_ENV=development` / `VITE_POSTHOG_KEY_ENV=development` — and a key that is **not** the production project's.
+
 ### Why the frontend env vars require a Docker rebuild
 
 Vite **inlines `VITE_*` variables at BUILD time, not runtime**. That means:
@@ -182,11 +211,15 @@ npm run dev
 # Register a test account, start a game, watch PostHog
 ```
 
+## Feature flags and experiments
+
+Flags are read through the typed adapter in `src/lib/featureFlags.ts` (registry with owner, issue, expiry, fallback, variants; safe default while loading or when analytics is disabled/refused; exposure recorded only on render). PostHog owns anonymous/public assignment; the database `Experiment*` tables are reserved for logged-in, server-authoritative experiments. Governance, the activation checklist, and the #641 decision: [`docs/experiments.md`](experiments.md).
+
 ## Baseline
 
 Capture the headline numbers the day analytics go live. Future progress is measured against this row.
 
-> **Baseline (TODO once deployed)**: pull `/api/admin/metrics` on the day this PR lands. Write the row here.
+> **BRAND_R0 baseline (2026-09-03):** PostHog rows are captured in [`docs/brand-refresh/release-0/analytics-baseline.md`](brand-refresh/release-0/analytics-baseline.md) (21 pageviews / 17 visitors / 3 logins in 30 days; 0 flags; 0 experiments; 1 project). The `/api/admin/metrics` row is `PENDING_EXTERNAL_READ` — fill the template below from a production admin session and copy it there.
 
 ```
 Date:              YYYY-MM-DD

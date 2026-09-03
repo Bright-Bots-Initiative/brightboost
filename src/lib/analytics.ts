@@ -17,11 +17,40 @@
  * the compiler catches typos in event names.
  */
 import posthog from "posthog-js";
+import {
+  CLIENT_GUARD_VARS,
+  decideAnalytics,
+  describeAnalyticsDecision,
+  type AnalyticsDecision,
+} from "./analyticsGuard";
+import { resolveClientDeployEnv } from "./deployEnv";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const POSTHOG_HOST =
   (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ||
   "https://us.i.posthog.com";
+// BRAND_R0: the environment the key was issued for. The shared guard
+// (shared/deploy-env) requires an exact match with the classified
+// environment; the production key outside production, an unlabeled key
+// outside production, a foreign label, or a declaration/Railway mismatch is
+// refused — see docs/analytics.md.
+const POSTHOG_KEY_ENV = import.meta.env.VITE_POSTHOG_KEY_ENV as
+  | string
+  | undefined;
+
+let decision: AnalyticsDecision | null = null;
+
+/** Environment-guard verdict for this bundle (computed once). */
+export function getAnalyticsDecision(): AnalyticsDecision {
+  if (!decision) {
+    decision = decideAnalytics({
+      env: resolveClientDeployEnv(),
+      key: POSTHOG_KEY,
+      keyEnv: POSTHOG_KEY_ENV,
+    });
+  }
+  return decision;
+}
 
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
@@ -150,8 +179,29 @@ function disabled(): boolean {
   return !POSTHOG_KEY || !initialized;
 }
 
+/** True once posthog-js has loaded and events/flags can flow. */
+export function isAnalyticsReady(): boolean {
+  return !disabled();
+}
+
 export function initAnalytics(): void {
   if (initialized) return;
+  const verdict = getAnalyticsDecision();
+  const envName = resolveClientDeployEnv().name;
+  if (verdict.status === "refused") {
+    // Loud and permanent: events from this build must not reach PostHog.
+    console.error(
+      `[analytics] ${describeAnalyticsDecision(verdict, CLIENT_GUARD_VARS, envName)}`,
+    );
+    return;
+  }
+  if (verdict.status === "enabled-unlabeled") {
+    // Bootstrap compatibility only (production key without a label). Warn so
+    // the degraded posture is visible; strict deploy verification refuses it.
+    console.warn(
+      `[analytics] ${describeAnalyticsDecision(verdict, CLIENT_GUARD_VARS, envName)}`,
+    );
+  }
   if (!POSTHOG_KEY) {
     // Use warn (not info) so prod consoles surface the disabled state
     // clearly — silent no-ops are the #1 PostHog-not-firing failure mode.

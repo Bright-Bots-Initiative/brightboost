@@ -2201,5 +2201,14 @@
         "restoreFailed": "我们还没能恢复{{baseline}}。你创建的内容都没有被删除。"
       }
     }
+  },
+  "envBanner": {
+    "message": "{{env}} — 仅为测试数据。这不是正式的 Bright Boost。",
+    "mismatch": "配置不一致——此构建不是正式环境。仅为测试数据。",
+    "build": "构建 {{sha}}",
+    "env": {
+      "staging": "测试站（staging）",
+      "preview": "预览站"
+    }
   }
 }

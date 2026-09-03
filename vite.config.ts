@@ -1,14 +1,60 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteCompression from "vite-plugin-compression";
+import { classifyDeployEnv } from "./shared/deploy-env/index";
+
+/**
+ * BRAND_R0 build metadata. Classifies the build-time environment with the
+ * shared contract (shared/deploy-env) and stamps the result into index.html
+ * (`%BB_*%` placeholders) so a plain `curl` can read the declared environment,
+ * Railway's environment, the effective classification, any mismatch, and the
+ * git SHA without executing JavaScript. `scripts/verify-deploy-target.mjs`
+ * reads these tags. Inputs: VITE_APP_ENV (declaration),
+ * VITE_RAILWAY_ENVIRONMENT_NAME (forwarded from Railway's build arg by
+ * Dockerfile.frontend), VITE_GIT_SHA.
+ */
+function bbBuildMetadata(mode: string): Plugin {
+  return {
+    name: "bb-build-metadata",
+    transformIndexHtml(html) {
+      const env = loadEnv(mode, process.cwd(), "VITE_");
+      const resolved = classifyDeployEnv(
+        {
+          railwayEnvironmentName: env.VITE_RAILWAY_ENVIRONMENT_NAME,
+          declaredEnv: env.VITE_APP_ENV,
+          nodeEnv: mode,
+          gitSha: env.VITE_GIT_SHA,
+        },
+        {
+          names: {
+            declared: "VITE_APP_ENV",
+            railway: "VITE_RAILWAY_ENVIRONMENT_NAME",
+          },
+        },
+      );
+      const stamp: Record<string, string> = {
+        BB_ENV_DECLARED: resolved.declaredEnv ?? "",
+        BB_RAILWAY_ENV: resolved.railwayEnv ?? "",
+        BB_ENV_EFFECTIVE: resolved.name,
+        BB_ENV_SOURCE: resolved.source,
+        BB_ENV_MISMATCH: resolved.mismatch,
+        BB_GIT_SHA: resolved.gitSha ?? "",
+      };
+      return html.replace(/%(BB_[A-Z_]+)%/g, (match, key: string) =>
+        key in stamp ? stamp[key] : match,
+      );
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: "/", // Force absolute asset paths for nested routes
   plugins: [
+    bbBuildMetadata(mode),
     react(),
     mode === "development" && componentTagger(),
     visualizer({

@@ -1,5 +1,7 @@
 # Bright Boost Homepage v2 — Implementation Spec
 
+> **Status (BRAND_R0, 2026-09-03):** **historical implementation spec** for #564 (2026-04-27). "This is not a rebrand" described that ticket's scope and does not constrain BRAND_R1 ([`docs/architecture/brand-refresh-decision.md`](architecture/brand-refresh-decision.md) §5). Its no-fake-counts, no-pricing-language, and privacy rules stay in force until BRAND_R1_DESIGN replaces them explicitly. Currency review: #758. The body below is unchanged apart from Prettier formatting.
+
 ## Goal
 
 Polish the existing Bright Boost homepage while preserving the playful K–8 Bright Boost personality.
@@ -15,6 +17,7 @@ The goal is to improve clarity, trust, SEO, conversion, feedback collection, and
 Bright Boost is a free STEM learning web app by Bright Bots Initiative.
 
 The homepage should help visitors understand:
+
 - Bright Boost is free.
 - Students can learn through playful STEM challenges.
 - Teachers can use it for classroom-friendly STEM learning.
@@ -32,6 +35,7 @@ The existing code uses Tailwind CSS, shadcn-style UI primitives, custom Bright B
 Preserve the existing route architecture and existing app flows.
 
 Do not break:
+
 - /teacher-login
 - /student-login
 - /class-login
@@ -39,8 +43,8 @@ Do not break:
 - /student/signup
 - /forgot-password
 - /reset-password
-- /student/*
-- /teacher/*
+- /student/\*
+- /teacher/\*
 - /pathways
 - /pathways/about
 
@@ -49,6 +53,7 @@ Do not break:
 The approved design direction is “Homepage v2.”
 
 Homepage v2 should:
+
 - Keep the playful sky/game background
 - Keep the K–8 STEM energy
 - Keep rounded cards
@@ -66,16 +71,19 @@ Hero desktop height must be less than or equal to 540px.
 Hero mobile height must be less than or equal to 600px.
 
 Headline:
+
 - 40px desktop
 - 30px mobile
 - Max 2 lines
 - Must not dominate the entire first screen
 
 Only two primary hero buttons:
+
 - “I’m a Teacher”
 - “I’m a Student!”
 
 Secondary hero actions must be text links only:
+
 - Give Feedback
 - Support Bright Boost
 - Explore Pathways
@@ -88,6 +96,7 @@ Donation must not appear as a large above-the-fold CTA.
 Right side of hero should use an app-feel preview card, not a generic stock illustration.
 
 The preview card should feel like a mini Bright Boost dashboard:
+
 - Tilt about -2deg
 - Mock dashboard chrome
 - Mini activity tiles
@@ -101,6 +110,7 @@ Sky gradient:
 linear-gradient(180deg,#BFE5F7 0%,#DCEEFB 55%,#EAF6FD 100%)
 
 Palette:
+
 - Navy: #1C3D6C
 - Blue: #46B1E6
 - Yellow: #FACC15
@@ -108,20 +118,24 @@ Palette:
 - Green: #69D681
 
 Card radius:
+
 - 18px for tiles
 - 22px for hero card
 - 9999px for chips/pills
 
 CTA shape:
+
 - Chunky 12px-radius buttons
 - Offset shadow
 - Pressed state should translate down slightly and reduce shadow
 
 Typography:
+
 - Montserrat 800 for display
 - Montserrat 600 for body where appropriate
 
 Spacing:
+
 - Use 4 / 8 / 12 / 16 / 20 / 24 / 32 / 48 / 56px scale
 - Sections use about 56px vertical padding
 - Hero uses about 36–48px top and bottom padding
@@ -129,15 +143,18 @@ Spacing:
 ## CTA hierarchy
 
 Primary:
+
 - “I’m a Teacher” using blue gradient
 - “I’m a Student!” using purple-to-pink gradient
 
 Secondary:
+
 - Give Feedback
 - Support Bright Boost
 - Explore Pathways
 
 Tertiary:
+
 - Early-access pill
 - Donation amount chips
 - Always Free badges
@@ -182,6 +199,7 @@ Free-access badges:
 Implement a compact, polished hero.
 
 Include:
+
 - Sticky nav if compatible with the existing site
 - EN/ES toggle visible on desktop and mobile if existing language toggle is already implemented
 - Sign-in as the only nav-right button
@@ -215,11 +233,13 @@ Do not hardcode a fake number.
 Do not show static social-proof numbers unless they come from real data.
 
 If a reliable user-count endpoint exists:
+
 - Show totalUsers / 1,000
 - Show accessible progress bar
-- Use percent = Math.min((totalUsers / 1000) * 100, 100)
+- Use percent = Math.min((totalUsers / 1000) \* 100, 100)
 
 If no reliable endpoint exists:
+
 - Show:
   “Join our first 1,000 users”
 - Use a neutral visual treatment that does not imply a fake count
@@ -227,6 +247,7 @@ If no reliable endpoint exists:
 ### 3. Free Access Plans
 
 Create 3 cards:
+
 - Learner
 - Classroom
 - Organization
@@ -235,6 +256,7 @@ Every card must display the green badge:
 “Always Free”
 
 Do not use:
+
 - Pricing
 - Paid plans
 - Paid tiers
@@ -246,6 +268,7 @@ Do not include dollar signs in plan cards.
 ### 4. Audience
 
 Create 4 cards:
+
 - Students
 - Teachers
 - Parents
@@ -254,6 +277,7 @@ Create 4 cards:
 Each card should briefly explain how that group uses Bright Boost.
 
 Link cards to:
+
 - /students
 - /teachers
 - /parents
@@ -266,6 +290,7 @@ If those routes do not exist yet, do not break the homepage. Either create simpl
 Add a feedback section.
 
 Include:
+
 - Chip tabs:
   - Teacher
   - Student
@@ -279,6 +304,7 @@ Include:
 No required fields.
 
 Do not collect:
+
 - Full name
 - Birth date
 - Phone number
@@ -287,6 +313,7 @@ Do not collect:
 - Unnecessary child information
 
 If no feedback backend exists:
+
 - Create a frontend-safe thank-you state
 - Clearly document that persistence still needs to be connected
 - Do not pretend feedback is saved if it is not saved
@@ -296,6 +323,7 @@ If no feedback backend exists:
 Donation appears below Feedback, not above the fold.
 
 Include amount chips:
+
 - $5
 - $15
 - $50
@@ -330,6 +358,7 @@ Do not block access to the app if no donation is made.
 Implement a navy footer strip.
 
 Include:
+
 - Bright Boost wordmark/mascot treatment if existing assets support it
 - Tagline
 - Links:
@@ -347,6 +376,7 @@ Use existing components and tokens first.
 Only create new components where helpful.
 
 Suggested components:
+
 - src/components/home/Hero.tsx
 - src/components/home/EarlyAccess.tsx
 - src/components/home/FreeAccessPlans.tsx
@@ -361,6 +391,7 @@ If current architecture works better with src/pages/Index.tsx assembling section
 ## Chunky button behavior
 
 Chunky buttons should have:
+
 - 12px border radius
 - 800 font weight
 - Offset shadow, not soft shadow
@@ -369,6 +400,7 @@ Chunky buttons should have:
   - shadow shrinks to 1px
 
 Variants:
+
 - teacher: blue gradient
 - student: purple to pink gradient
 - soft: white with navy border
@@ -377,6 +409,7 @@ Variants:
 ## Motion
 
 Preserve playful motion where appropriate:
+
 - Cloud drift
 - Mascot bob
 - Subtle sparkle motion
@@ -392,6 +425,7 @@ Focus ring:
 ## Accessibility
 
 Use semantic HTML:
+
 - nav
 - main
 - section
@@ -431,6 +465,7 @@ H1:
 “Build STEM confidence through playful learning”
 
 Add if supported safely in the existing Vite SPA:
+
 - OpenGraph metadata
 - Twitter card metadata
 - Canonical URL for https://brightboost.org
@@ -452,6 +487,7 @@ Do not break existing bilingual behavior.
 ## Analytics
 
 If src/lib/analytics.ts exists and track() is a safe no-op or env-gated helper, wire these events:
+
 - homepage_viewed
 - signup_clicked
 - feedback_clicked
@@ -466,6 +502,7 @@ If src/lib/analytics.ts exists and track() is a safe no-op or env-gated helper, 
 Do not add a third-party analytics package unless the project already uses one.
 
 Do not track:
+
 - Names
 - Emails
 - Class codes
@@ -479,6 +516,7 @@ Use inline SVGs for small decorative assets if under 4 KB.
 Do not replace existing Bright Boost robot/mascot/logo assets unless necessary.
 
 Suggested small SVGs:
+
 - cloud-shape
 - sun-glow
 - star-burst
@@ -516,6 +554,7 @@ Before considering the task complete:
 After creating docs/brightboost-homepage-v2-spec.md, stop.
 
 Return:
+
 - File created
 - Confirmation that no UI was changed
 - Any immediate risks you noticed

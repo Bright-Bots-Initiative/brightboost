@@ -33,7 +33,10 @@ export function normalizeAvatarUrl(
   }
 
   // Teachers shouldn't show the robot default either
-  if (isTeacherRole(role) && (url === DEFAULT_AVATAR_PATH || url.startsWith(DEFAULT_AVATAR_PATH))) {
+  if (
+    isTeacherRole(role) &&
+    (url === DEFAULT_AVATAR_PATH || url.startsWith(DEFAULT_AVATAR_PATH))
+  ) {
     return "";
   }
 
