@@ -48,6 +48,22 @@
   opacity: 0.55;
 }
 
+/* src/index.css still carries the Vite template's unlayered
+   `button:hover { border-color: #646cff }`, which would make an UNSELECTED
+   chip look selected on hover. Pin the chip border in both states. */
+.bb-page button:hover,
+.bb-dialog button:hover {
+  border-color: transparent;
+}
+
+.bb-page .bb-chip:hover {
+  border-color: #e1d0a6;
+}
+
+.bb-page .bb-chip[aria-checked="true"]:hover {
+  border-color: #1c3d6c;
+}
+
 /* Sprite bob — off under reduced motion and when animate=false */
 @keyframes bb-bob {
   0%,
@@ -149,6 +165,10 @@
   top: 0.5rem;
   right: 0.5rem;
   z-index: 1;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  line-height: 1;
 }
 
 .bb-gallery-grid {

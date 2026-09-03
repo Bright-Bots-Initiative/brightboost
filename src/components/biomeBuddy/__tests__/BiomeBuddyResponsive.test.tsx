@@ -97,6 +97,8 @@ describe("Biome Buddy layout contracts", () => {
     // the dialog frame does not scroll; its inner region does, so the ✕ stays put
     expect(css).toMatch(/\.bb-dialog-scroll\s*\{[^}]*overflow-y:\s*auto/s);
     expect(css).toMatch(/\.bb-dialog-close\s*\{[^}]*position:\s*absolute/s);
+    // the Vite template's unlayered button:hover rule cannot recolour a chip
+    expect(css).toMatch(/\.bb-page \.bb-chip:hover\s*\{[^}]*border-color/s);
     // the sheet and the dialog stay inside the viewport
     expect(css).toMatch(
       /\.bb-dialog\s*\{[^}]*max-height:\s*calc\(100vh - 2rem\)/s,
@@ -157,5 +159,13 @@ describe("Biome Buddy layout contracts", () => {
     const panel = prev.parentElement as HTMLElement;
     expect(panel.className).toMatch(/bb-choose-panel/);
     expect(panel.querySelector(".bb-choose-scene")).not.toBeNull();
+    // the primary action precedes both the secondary and the preview in DOM
+    // order, so it is the first thing after the choice and never wraps below
+    const select = screen.getByRole("button", { name: /^Select / });
+    const back = screen.getByRole("button", { name: "My Buddies" });
+    const follows = (a: HTMLElement, b: HTMLElement) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(select, back)).toBe(true);
+    expect(follows(select, prev)).toBe(true);
   });
 });

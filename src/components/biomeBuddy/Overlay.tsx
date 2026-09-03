@@ -117,7 +117,7 @@ export default function Overlay({
           wide ? "max-w-lg" : "max-w-sm"
         } shadow-2xl outline-none ${className}`}
       >
-        <div className="bb-dialog-scroll flex flex-col items-center gap-3 text-center p-5 pt-12">
+        <div className="bb-dialog-scroll flex flex-col items-center gap-3 text-center p-5 pt-14">
           {children}
         </div>
         {onClose && (

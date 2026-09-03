@@ -134,7 +134,9 @@ export default function NameScreen({
           className="bb-primary min-h-14 px-10 rounded-full bg-teal-600 text-white text-xl font-extrabold shadow-[0_5px_0_#0f6f66] active:translate-y-1 active:shadow-none"
         >
           {saved
-            ? t("biomeBuddy.name.saveAgain", { defaultValue: "Save it! 💾" })
+            ? t("biomeBuddy.name.saveAgain", {
+                defaultValue: "Save changes 💾",
+              })
             : t("biomeBuddy.name.save", { defaultValue: "Save it! 💾" })}
         </button>
         <p

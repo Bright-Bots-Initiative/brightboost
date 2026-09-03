@@ -372,7 +372,10 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
 
   it("ladybugs are warning-coloured, skunks are not disruptive, chameleons are not sand lances (findings 4, 5, 23)", () => {
     expect(en(scienceFor("pattern", "spots").animals)).not.toMatch(/ladybug/i);
-    expect(en(scienceFor("pattern", "warning").animals)).toMatch(/ladybug/i);
+    expect(en(scienceFor("pattern", "warning").animals)).toMatch(/wasp|bee/i);
+    expect(scienceFor("pattern", "warning").animals.es).not.toMatch(
+      /mariquita/i,
+    );
     expect(en(scienceFor("pattern", "stripes").animals)).not.toMatch(/skunk/i);
     expect(en(scienceFor("eyes", "rotating_eyes").animals)).not.toMatch(
       /sandlance|sand lance|seahorse/i,
@@ -414,6 +417,105 @@ describe("science guards (adversarial-review corrections stay corrected)", () =>
     expect(en(scienceFor("pattern", "stripes").animals)).not.toMatch(
       /clownfish|skunk|coral snake/i,
     );
+  });
+
+  it("fourth-pass corrections stay corrected (B1–B4, polish)", () => {
+    expect(en(scienceFor("nose", "gills").animals)).not.toMatch(/^fish,/i);
+    expect(en(scienceFor("movement", "fins").animals)).not.toMatch(/^fish,/i);
+    expect(en(scienceFor("ears", "jaw_vibration").animals)).not.toMatch(
+      /elephant|lizard/i,
+    );
+    expect(en(scienceFor("ears", "hidden_ears").animals)).not.toMatch(
+      /lizard/i,
+    );
+    expect(en(scienceFor("covering", "hard_shell").animals)).not.toMatch(
+      /armadillo/i,
+    );
+    expect(en(scienceFor("pattern", "stripes").where)).not.toMatch(/coral/i);
+    expect(en(scienceFor("pattern", "spots").where)).not.toMatch(/river/i);
+    expect(en(scienceFor("movement", "wings").evolved)).not.toMatch(
+      /arms became wings/i,
+    );
+    expect(en(scienceFor("eyes", "compound_eyes").animals)).not.toMatch(
+      /grasshopper/i,
+    );
+    for (const category of CATEGORIES)
+      for (const id of TRAIT_OPTIONS[category]) {
+        const card = scienceFor(category, id);
+        for (const part of [
+          "what",
+          "usedFor",
+          "evolved",
+          "animals",
+          "where",
+          "affects",
+          "more",
+        ] as const)
+          expect(card[part].es, `${category}.${id}.${part}`).not.toMatch(
+            /\bbichos?\b|\bchochas?\b|\bmariquitas?\b/i,
+          );
+      }
+    expect(NAME_ADJECTIVE_LABEL.gentle.es).not.toBe("Gentil");
+    expect(NAME_NOUN_LABEL.roamer.es).not.toBe("Vagabundo");
+  });
+
+  it("no animal is the exemplar of two sibling options in the same picker (structural)", () => {
+    const names = (l: Localized) =>
+      l.en
+        .replace(/\.$/, "")
+        .replace(/^all birds:\s*/i, "")
+        .split(/,|\band\b|—/)
+        .map((s) =>
+          s
+            .trim()
+            .toLowerCase()
+            .replace(/^(some|many|most|all)\s+/, ""),
+        )
+        .filter(Boolean);
+    const check = (label: string, lists: [string, Localized][]) => {
+      const seen = new Map<string, string>();
+      for (const [option, animals] of lists)
+        for (const animal of names(animals)) {
+          const prior = seen.get(animal);
+          expect(
+            prior,
+            `${label}: "${animal}" appears on both ${prior} and ${option}`,
+          ).toBeUndefined();
+          seen.set(animal, option);
+        }
+    };
+    for (const category of CATEGORIES)
+      check(
+        category,
+        TRAIT_OPTIONS[category].map((id) => [
+          id,
+          scienceFor(category, id).animals,
+        ]),
+      );
+    check(
+      "pattern",
+      PATTERNS.map((id) => [id, scienceFor("pattern", id).animals]),
+    );
+  });
+
+  it("a card that teaches insect anatomy lists only insects, and no list opens with a group noun followed by its own members", () => {
+    const INSECTS =
+      /^(dragonflies|flies|bees|wasps|hoverflies|beetles|grasshoppers|caterpillars|ants|butterflies|moths|crickets|mosquitoes)$/;
+    for (const [category, id] of [
+      ["eyes", "compound_eyes"],
+      ["nose", "spiracles"],
+    ] as const)
+      for (const animal of en(scienceFor(category, id).animals)
+        .replace(/\.$/, "")
+        .split(/,\s*/))
+        expect(animal.trim().toLowerCase(), `${category}.${id}`).toMatch(
+          INSECTS,
+        );
+    for (const category of CATEGORIES)
+      for (const id of TRAIT_OPTIONS[category])
+        expect(en(scienceFor(category, id).animals)).not.toMatch(
+          /^(fish|birds|insects|mammals|reptiles|amphibians),/i,
+        );
   });
 
   it("evolution is told as differential survival, never use-and-disuse (finding 21)", () => {

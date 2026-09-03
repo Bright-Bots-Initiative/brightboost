@@ -188,7 +188,7 @@ export const SCIENCE: CardTable = {
       },
       usedFor: {
         en: "Watching two directions at once, then locking both eyes on a bug.",
-        es: "Mirar dos direcciones a la vez y luego fijar los dos ojos en un bicho.",
+        es: "Mirar dos direcciones a la vez y luego fijar los dos ojos en un insecto.",
       },
       evolved: {
         en: "Slow hunters that sit still on branches did better when they could scan without moving.",
@@ -265,8 +265,8 @@ export const SCIENCE: CardTable = {
         es: "A los insectos voladores rápidos les fue mejor al ver el movimiento en todas direcciones a la vez.",
       },
       animals: {
-        en: "Dragonflies, flies, bees, grasshoppers.",
-        es: "Libélulas, moscas, abejas, saltamontes.",
+        en: "Dragonflies, flies, bees, hoverflies.",
+        es: "Libélulas, moscas, abejas, moscas cernidoras.",
       },
       where: {
         en: "Almost everywhere insects live, from ponds to mountain tops.",
@@ -302,8 +302,8 @@ export const SCIENCE: CardTable = {
         es: "A los voladores y nadadores les fue mejor sin orejas que frenan en el viento o el agua.",
       },
       animals: {
-        en: "Birds, lizards, seals.",
-        es: "Aves, lagartos, focas.",
+        en: "Owls, seals, dolphins.",
+        es: "Búhos, focas, delfines.",
       },
       where: {
         en: "Skies, cliffs and coasts everywhere.",
@@ -334,7 +334,7 @@ export const SCIENCE: CardTable = {
       },
       evolved: {
         en: "Desert hunters did better with ears that heard bugs under the sand and cooled them down.",
-        es: "A los cazadores del desierto les fue mejor con orejas que oían bichos bajo la arena y los refrescaban.",
+        es: "A los cazadores del desierto les fue mejor con orejas que oían insectos bajo la arena y que les servían para refrescarse.",
       },
       animals: {
         en: "Fennec foxes, jackrabbits, elephants, bats.",
@@ -372,8 +372,8 @@ export const SCIENCE: CardTable = {
         es: "A los animales que apoyan la cabeza en el suelo les fue mejor cuando sus huesos llevaban la vibración al oído interno.",
       },
       animals: {
-        en: "Snakes, some lizards, elephants through their feet.",
-        es: "Serpientes, algunos lagartos, y los elefantes a través de las patas.",
+        en: "Snakes and blind mole-rats.",
+        es: "Serpientes y ratas topo ciegas.",
       },
       where: {
         en: "Forest floors and deserts on every continent except Antarctica.",
@@ -438,8 +438,8 @@ export const SCIENCE: CardTable = {
         es: "Los primeros animales vivían en el agua, y las branquias llegaron mucho antes que los pulmones.",
       },
       animals: {
-        en: "Fish, sharks, axolotls, tadpoles.",
-        es: "Peces, tiburones, ajolotes, renacuajos.",
+        en: "Trout, sharks, axolotls, tadpoles.",
+        es: "Truchas, tiburones, ajolotes, renacuajos.",
       },
       where: {
         en: "Every ocean, lake and river on Earth.",
@@ -570,12 +570,12 @@ export const SCIENCE: CardTable = {
         es: "Volar hacia arriba, escapar y cruzar cosas que los caminantes no pueden.",
       },
       evolved: {
-        en: "Gliders that could flap did better, and over millions of years arms became wings.",
-        es: "A los planeadores que podían aletear les fue mejor, y en millones de años los brazos se volvieron alas.",
+        en: "Gliders that could flap did better; in birds and bats the front limbs became wings, while insects grew wings of their own.",
+        es: "A los planeadores que podían aletear les fue mejor; en aves y murciélagos las patas delanteras se volvieron alas, y los insectos desarrollaron alas propias.",
       },
       animals: {
-        en: "Hawks, bats, dragonflies, ducks.",
-        es: "Halcones, murciélagos, libélulas, patos.",
+        en: "Hawks, bats, dragonflies, swallows.",
+        es: "Halcones, murciélagos, libélulas, golondrinas.",
       },
       where: {
         en: "Every continent, including Antarctica.",
@@ -606,8 +606,8 @@ export const SCIENCE: CardTable = {
         es: "Los primeros nadadores tuvieron aletas mucho antes de que existieran las patas.",
       },
       animals: {
-        en: "Fish, sharks, dolphins, axolotls.",
-        es: "Peces, tiburones, delfines, ajolotes.",
+        en: "Tuna, sharks, dolphins, axolotls.",
+        es: "Atunes, tiburones, delfines, ajolotes.",
       },
       where: {
         en: "Oceans, rivers and lakes worldwide.",
@@ -673,8 +673,8 @@ export const SCIENCE: CardTable = {
         es: "A los trepadores y cavadores les fue mejor cuando los dedos se enganchaban en madera, roca y tierra.",
       },
       animals: {
-        en: "Squirrels, bears, badgers, cats, meerkats.",
-        es: "Ardillas, osos, tejones, gatos, suricatas.",
+        en: "Squirrels, bears, badgers, woodpeckers, meerkats.",
+        es: "Ardillas, osos, tejones, pájaros carpinteros, suricatas.",
       },
       where: {
         en: "Forests, mountains and deserts everywhere.",
@@ -806,8 +806,8 @@ export const SCIENCE: CardTable = {
         es: "A los nadadores y a los reptiles del desierto les fue mejor con una piel lisa e impermeable.",
       },
       animals: {
-        en: "Fish, smooth-scaled snakes, skinks.",
-        es: "Peces, serpientes de escamas lisas, eslizones.",
+        en: "Salmon, smooth-scaled snakes, skinks.",
+        es: "Salmones, serpientes de escamas lisas, eslizones.",
       },
       where: {
         en: "Rivers, oceans and deserts worldwide.",
@@ -873,8 +873,8 @@ export const SCIENCE: CardTable = {
         es: "A los animales lentos les fue mejor cuando sus costillas se ensancharon hasta ser un escudo.",
       },
       animals: {
-        en: "Tortoises, turtles, armadillos.",
-        es: "Tortugas de tierra, tortugas de agua, armadillos.",
+        en: "Tortoises, sea turtles, box turtles.",
+        es: "Tortugas de tierra, tortugas marinas, tortugas de caja.",
       },
       where: {
         en: "Deserts, forests, ponds and oceans in warm parts of the world.",
@@ -941,12 +941,12 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "Los animales cuyos bordes eran difíciles de ver fueron atrapados menos veces.",
     },
     animals: {
-      en: "Zebras, tigers, okapis, tiger sharks.",
-      es: "Cebras, tigres, okapis, tiburones tigre.",
+      en: "Zebras, tigers, okapis, bongo antelopes.",
+      es: "Cebras, tigres, okapis, antílopes bongo.",
     },
     where: {
-      en: "Grasslands, jungles and coral reefs.",
-      es: "Praderas, selvas y arrecifes de coral.",
+      en: "Grasslands, jungles and forests.",
+      es: "Praderas, selvas y bosques.",
     },
     affects: {
       en: "Only skin and fur color changes; it costs no energy to keep.",
@@ -976,12 +976,12 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "A los animales del bosque les fue mejor pareciendo luz de sol entre hojas.",
     },
     animals: {
-      en: "Leopards, jaguars, fawns, trout.",
-      es: "Leopardos, jaguares, cervatillos, truchas.",
+      en: "Leopards, jaguars, fawns, ocelots.",
+      es: "Leopardos, jaguares, cervatillos, ocelotes.",
     },
     where: {
-      en: "Forests and rivers worldwide.",
-      es: "Bosques y ríos de todo el mundo.",
+      en: "Forests worldwide.",
+      es: "Bosques de todo el mundo.",
     },
     affects: {
       en: "Only skin and fur color; many baby animals lose their spots as they grow.",
@@ -1040,8 +1040,8 @@ export const PATTERN_SCIENCE: Record<Pattern, ScienceCard> = {
       es: "A los animales venenosos les fue mejor cuando los cazadores aprendían a reconocerlos.",
     },
     animals: {
-      en: "Poison dart frogs, bees, monarch butterflies, ladybugs, skunks.",
-      es: "Ranas dardo, abejas, mariposas monarca, mariquitas, mofetas.",
+      en: "Poison dart frogs, bees, wasps, monarch butterflies, skunks.",
+      es: "Ranas dardo, abejas, avispas, mariposas monarca, mofetas.",
     },
     where: {
       en: "Rainforests, meadows and gardens worldwide.",
@@ -1118,7 +1118,7 @@ export const WHY: WhyTable = {
     rotating_eyes: {
       earth: {
         en: "Swivel eyes scan the tangled branches for bugs without moving, just like a chameleon.",
-        es: "Los ojos giratorios rastrean las ramas enredadas en busca de bichos sin moverse, como un camaleón.",
+        es: "Los ojos giratorios rastrean las ramas enredadas en busca de insectos sin moverse, como un camaleón.",
       },
       water: {
         en: "Eyes built for air see blurry underwater, so the swivel trick loses its edge in the pond.",
@@ -1510,7 +1510,7 @@ export const NAME_ADJECTIVE_LABEL: Record<NameAdjective, Localized> = {
   brave: { en: "Brave", es: "Valiente" },
   sparkly: { en: "Sparkly", es: "Brillante" },
   mighty: { en: "Mighty", es: "Fuerte" },
-  gentle: { en: "Gentle", es: "Gentil" },
+  gentle: { en: "Gentle", es: "Tierno" },
   sunny: { en: "Sunny", es: "Alegre" },
   bold: { en: "Bold", es: "Audaz" },
   happy: { en: "Happy", es: "Feliz" },
@@ -1524,7 +1524,7 @@ export const NAME_NOUN_LABEL: Record<NameNoun, Localized> = {
   splasher: { en: "Splasher", es: "Chapoteador" },
   crawler: { en: "Crawler", es: "Gateador" },
   flutter: { en: "Flutter", es: "Aleteo" },
-  roamer: { en: "Roamer", es: "Vagabundo" },
+  roamer: { en: "Roamer", es: "Viajero" },
 };
 
 /** Word order differs by language; ids are what get stored. */
