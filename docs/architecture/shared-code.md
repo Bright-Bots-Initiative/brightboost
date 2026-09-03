@@ -39,6 +39,8 @@ Backend keeps `rootDir: "."` and `main` / `start` on `dist/src/server.js`. Do **
 
 Add another `shared/<domain>/` only when a new feature hits the same cross-runtime identity requirement — not by default.
 
+`shared/progression/` is a deliberate exception to the "duplicated **data** may be guarded" allowance above, and it should be read as a narrow one. #855 showed that guarding is only sufficient when the copies would drift _visibly_: the backend's Set 3 list had been wrong since it was typed, agreed with nothing, and nothing failed — the app's meter and the backend's 403 simply told students different stories. Where a finite allowlist is the **same gate** evaluated in both runtimes, share it; where it is merely similar data used for different purposes (module slugs, thumbnails, ordering) a guard still wins, and those stayed in `src/`.
+
 ### Consuming a shared module that is not the package `main`
 
 `shared/package.json` declares no `exports` map, and `backend/tsconfig.json`
@@ -58,3 +60,5 @@ hazard above.
 ## Decision required (nwalker) — frontend source vs backend emit
 
 S-2 leaves a split: frontend compiles shared **source**; backend consumes shared **built** `dist`. That is the A4-shaped trade #730 §4 rejected. Confirm acceptance for #720 and whether a `shared/dist` freshness/parity guard belongs on #720 or a new issue. Full write-up: spike report “Decision required (nwalker) — S-2 vs #730 §7 A1”.
+
+**#855 raises the stakes on that decision.** When the only shared module was a stub, a stale `shared/dist` was a curiosity. Now the split runs under a live authorization gate: `POST /avatar/select-archetype` reads the emitted `dist` copy of the set IDs while the app's meter reads the source, so a stale `dist` means the two halves disagree about who may specialize — and the unit suite would agree with whichever half it happened to load. `backend/src/__tests__/stemSetIdsResolution.test.ts` builds `shared/dist` and compares it to the source, which contains the risk but does not remove the split. A freshness guard is no longer a #720-only concern.

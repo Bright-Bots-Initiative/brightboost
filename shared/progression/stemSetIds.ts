@@ -51,9 +51,14 @@ export type StemSet2GameId = (typeof STEM_SET_2_IDS)[number];
  *
  * Consequence (intended, see #676): Set 3 is unsatisfiable — and therefore
  * specialization stays locked — until each placeholder below is REPLACED by
- * the real activity ID of a shipped game. Replacing them here unlocks the
+ * the real activity ID of a shipped game. Replacing them here moves the
  * frontend progress meter and the backend `POST /avatar/select-archetype`
- * gate at the same time, because both read this array.
+ * gate together, because both read this array.
+ *
+ * Editing this array is necessary but NOT sufficient to unlock specialization:
+ * `track-maker` and `echo-avenue` are still withheld from students by
+ * `HIDDEN_MODULE_SLUGS` in `src/constants/stemSets.ts`, so a student cannot
+ * reach them to complete them. Ungating is a separate, deliberate edit.
  */
 export const STEM_SET_3_PLACEHOLDER_IDS = [
   "set3-game-2",

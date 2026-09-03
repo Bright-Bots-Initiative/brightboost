@@ -41,6 +41,9 @@ describe("STEM set canon and gating", () => {
     ]);
   });
 
+  // Deliberate forcing function: the placeholder IDs are pinned here on
+  // purpose. Replacing one with a real game MUST visit this test (and the
+  // sibling pins in backend/src/routes/__tests__/stemSetIdCanon.test.ts).
   it("reserves five Set 3 slots and assigns the implemented games", () => {
     expect(STEM_SET_3_IDS).toEqual([
       "track-maker",

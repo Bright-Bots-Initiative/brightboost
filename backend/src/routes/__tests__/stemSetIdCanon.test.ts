@@ -10,15 +10,27 @@
  *
  * These tests drive the behavior through the routes, not through the constants,
  * so they stay honest if the constants move again.
+ *
+ * The routes import the canon through the emitted-artifact specifier, so
+ * loading them reads `shared/dist` — which a parallel worker
+ * (sharedEngineProbe.emit.test.ts) rebuilds mid-run. Both the app and the
+ * expected IDs are therefore loaded in `beforeAll`, after an idempotent
+ * `build:shared`, rather than statically: nothing in this file touches
+ * `shared/dist` before that build.
+ *
+ * This file is also the suite's loudest reaction to a stale `shared/dist`:
+ * its expectations come from the built canon, but its scenarios name real IDs
+ * (`track-maker`, `echo-avenue`, the legacy fakes), so a dist that disagrees
+ * with the source fails here instead of passing quietly. That is a side
+ * effect, not a freshness guard — the neighbouring
+ * `backend/src/__tests__/stemSetIdsResolution.test.ts` owns resolution, and a
+ * real freshness guard is still open in `docs/architecture/shared-code.md`.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import request from "supertest";
-import {
-  STEM_SET_1_IDS,
-  STEM_SET_2_IDS,
-  STEM_SET_3_IDS,
-  STEM_SET_3_PLACEHOLDER_IDS,
-} from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 
 const prismaMock = vi.hoisted(() => ({
   avatar: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -31,18 +43,71 @@ const prismaMock = vi.hoisted(() => ({
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
 
-import app from "../../server";
+const REPO_ROOT = process.cwd();
+const BACKEND_DIR = path.join(REPO_ROOT, "backend");
+const TSC_BIN = path.join(
+  BACKEND_DIR,
+  "node_modules",
+  "typescript",
+  "bin",
+  "tsc",
+);
+const PKG_LINK = path.join(
+  BACKEND_DIR,
+  "node_modules",
+  "@brightboost",
+  "greatwork-engine",
+);
+const SHARED_TSCONFIG = path.join(REPO_ROOT, "shared", "tsconfig.json");
+
+type Canon =
+  typeof import("@brightboost/greatwork-engine/dist/progression/stemSetIds");
+
+let app: typeof import("../../server").default;
+let STEM_SET_1_IDS: Canon["STEM_SET_1_IDS"];
+let STEM_SET_2_IDS: Canon["STEM_SET_2_IDS"];
+let STEM_SET_3_IDS: Canon["STEM_SET_3_IDS"];
+let STEM_SET_3_PLACEHOLDER_IDS: Canon["STEM_SET_3_PLACEHOLDER_IDS"];
+/** The IDs a student can actually earn today: every seeded Set 1/2/3 activity. */
+let ALL_REAL_SEEDED_IDS: string[];
+
+// Fail loudly on a bad environment — never skip (G-017).
+beforeAll(async () => {
+  if (!existsSync(BACKEND_DIR)) {
+    throw new Error(
+      `Expected repo root as cwd; got "${REPO_ROOT}". Run Vitest from the repo root.`,
+    );
+  }
+  if (!existsSync(PKG_LINK)) {
+    throw new Error(
+      "Missing backend/node_modules/@brightboost/greatwork-engine. " +
+        "Run: cd backend ; npm ci",
+    );
+  }
+  if (!existsSync(TSC_BIN)) {
+    throw new Error("Missing backend TypeScript. Run: cd backend ; npm ci");
+  }
+  // Build shared/dist (idempotent) so nothing here reads a dist that a
+  // parallel worker is midway through writing.
+  execFileSync(process.execPath, [TSC_BIN, "-p", SHARED_TSCONFIG], {
+    cwd: BACKEND_DIR,
+    stdio: "pipe",
+  });
+  const canon: Canon =
+    await import("@brightboost/greatwork-engine/dist/progression/stemSetIds");
+  STEM_SET_1_IDS = canon.STEM_SET_1_IDS;
+  STEM_SET_2_IDS = canon.STEM_SET_2_IDS;
+  STEM_SET_3_IDS = canon.STEM_SET_3_IDS;
+  STEM_SET_3_PLACEHOLDER_IDS = canon.STEM_SET_3_PLACEHOLDER_IDS;
+  ALL_REAL_SEEDED_IDS = [
+    ...STEM_SET_1_IDS,
+    ...STEM_SET_2_IDS,
+    ...STEM_SET_3_IDS.filter((id) => !canon.isStemSet3Placeholder(id)),
+  ];
+  app = (await import("../../server")).default;
+}, 60_000);
 
 const AUTH = "Bearer mock-token-for-mvp";
-
-/** The IDs a student can actually earn today: every seeded Set 1/2/3 activity. */
-const ALL_REAL_SEEDED_IDS = [
-  ...STEM_SET_1_IDS,
-  ...STEM_SET_2_IDS,
-  ...STEM_SET_3_IDS.filter(
-    (id) => !(STEM_SET_3_PLACEHOLDER_IDS as readonly string[]).includes(id),
-  ),
-];
 
 /** The wrong list both routes used to hardcode. */
 const LEGACY_FAKE_SET_3_IDS = [
@@ -142,6 +207,8 @@ describe("POST /avatar/select-archetype — Set 3 specialization gate (#855)", (
   // Designed behavior (#676): Set 3 still holds reserved placeholder slots, so
   // no student can satisfy the gate today even with every real game finished.
   // This is intentional and must stay pinned — it is NOT the #855 defect.
+  // Deliberate forcing function: replacing a placeholder with a real game MUST
+  // visit this test (and the sibling pins below and in stemSets.test.ts).
   it("remains unsatisfiable today: every real seeded activity is still not enough", async () => {
     expect(STEM_SET_3_PLACEHOLDER_IDS.length).toBeGreaterThan(0);
     armCompleted(ALL_REAL_SEEDED_IDS);
@@ -186,6 +253,8 @@ describe("GET /student/stats — specialtyProgress counts real IDs (#855)", () =
     const realSet3 = STEM_SET_3_IDS.filter(
       (id) => !(STEM_SET_3_PLACEHOLDER_IDS as readonly string[]).includes(id),
     );
+    // Deliberate forcing function: shipping a new Set 3 game MUST visit this
+    // literal, so the real-vs-placeholder split can never go stale silently.
     expect(realSet3).toEqual(["track-maker", "echo-avenue"]);
     armCompleted(realSet3);
 
