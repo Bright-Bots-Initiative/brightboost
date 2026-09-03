@@ -1,19 +1,36 @@
 // src/constants/stemSets.ts
-// Canonical STEM set definitions and progression utilities
+// STEM set presentation data (names, perks, strands, slugs) and progression
+// utilities.
+//
+// The activity-ID membership of each set is NOT defined here: it lives in
+// `shared/progression/stemSetIds.ts` so the backend consumes the same list
+// (#855). This module re-exports those arrays unchanged, so every existing
+// `@/constants/stemSets` import keeps working.
+export {
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+  STEM_SET_3_PLACEHOLDER_IDS,
+  isStemSet3Placeholder,
+} from "@shared/progression/stemSetIds";
+export type {
+  StemSet1GameId,
+  StemSet2GameId,
+  StemSet3GameId,
+} from "@shared/progression/stemSetIds";
+
+import {
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+  type StemSet1GameId,
+  type StemSet2GameId,
+  type StemSet3GameId,
+} from "@shared/progression/stemSetIds";
 
 // ---------------------------------------------------------------------------
 // Set 1 — Foundation (5 K-2 STEM games)
 // ---------------------------------------------------------------------------
-export const STEM_SET_1_IDS = [
-  "bounce-buds",
-  "gotcha-gears",
-  "rhyme-ride",
-  "tank-trek",
-  "quantum-quest",
-] as const;
-
-export type StemSet1GameId = (typeof STEM_SET_1_IDS)[number];
-
 export const STEM_SET_1_NAMES: Record<StemSet1GameId, string> = {
   "bounce-buds": "Bounce & Buds",
   "gotcha-gears": "Gotcha Gears",
@@ -52,16 +69,6 @@ export const HIDDEN_MODULE_SLUGS = new Set([
 // ---------------------------------------------------------------------------
 // Set 2 — Exploration (5 K-2 STEM games, unlocked after Set 1 complete)
 // ---------------------------------------------------------------------------
-export const STEM_SET_2_IDS = [
-  "maze-maps",
-  "move-measure",
-  "sky-shield",
-  "fast-lane",
-  "qualify-tune-race",
-] as const;
-
-export type StemSet2GameId = (typeof STEM_SET_2_IDS)[number];
-
 export const STEM_SET_2_NAMES: Record<StemSet2GameId, string> = {
   "maze-maps": "Maze Maps & Smart Paths",
   "move-measure": "Move, Measure & Improve",
@@ -88,20 +95,10 @@ export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
 
 // ---------------------------------------------------------------------------
 // Set 3 — Mastery ("mastery through making"; completion gates specialization)
-// Game 1 (track-maker) is implemented but GATED from students via
-// HIDDEN_MODULE_SLUGS above; slots 2-5 are still placeholders (slot 2 is
-// earmarked for the machine-programming game in design). See #676.
+// track-maker and echo-avenue are implemented but GATED from students via
+// HIDDEN_MODULE_SLUGS above; the remaining slots are still placeholders. The
+// ID list itself lives in shared/progression/stemSetIds.ts. See #676, #855.
 // ---------------------------------------------------------------------------
-export const STEM_SET_3_IDS = [
-  "track-maker",
-  "set3-game-2",
-  "echo-avenue",
-  "set3-game-4",
-  "set3-game-5",
-] as const;
-
-export type StemSet3GameId = (typeof STEM_SET_3_IDS)[number];
-
 // Partial until all five Set 3 games exist — placeholders have no name/strand.
 export const STEM_SET_3_NAMES: Partial<Record<StemSet3GameId, string>> = {
   "track-maker": "Boost Track Builder",

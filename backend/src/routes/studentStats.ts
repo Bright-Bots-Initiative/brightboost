@@ -1,6 +1,13 @@
 import { Router, Request, Response } from "express";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
+// Canonical set membership shared with the frontend (#855) — read from the
+// emitted artifact of the `file:../shared` dependency, never a hand copy.
+import {
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+} from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 
 const router = Router();
 
@@ -82,7 +89,9 @@ router.get(
     ).length;
 
     // 7. Count completed modules (all activities in module completed)
-    const moduleSlugs = [...new Set(completedProgress.map((p) => p.moduleSlug))];
+    const moduleSlugs = [
+      ...new Set(completedProgress.map((p) => p.moduleSlug)),
+    ];
     let completedModules = 0;
     for (const slug of moduleSlugs) {
       const totalInModule = await prisma.activity.count({
@@ -126,7 +135,8 @@ router.get(
     const superFocus = cap(quickCompletions);
     const starPower = cap(achievementsCount + completedModules * 2);
 
-    const powerLevel = heartPower + brainJuice + lightningFast + superFocus + starPower;
+    const powerLevel =
+      heartPower + brainJuice + lightningFast + superFocus + starPower;
 
     // 10. Determine stage
     let stage: string;
@@ -139,21 +149,24 @@ router.get(
     //
     // Each set tracks how many of its required activity IDs the student
     // has completed.  Set 3 completion gates specialization selection.
-    const STEM_SET_1 = ["bounce-buds", "gotcha-gears", "rhyme-ride", "tank-trek", "quantum-quest"];
-    const STEM_SET_2 = ["maze-maps", "move-measure", "sky-shield", "fast-lane", "qualify-tune-race"];
-    const STEM_SET_3 = ["set3-game-1", "set3-game-2", "set3-game-3", "set3-game-4", "set3-game-5"];
+    // IDs come from the shared canonical source (#855) — never hand-copied.
+    const completedActivityIds = new Set(
+      completedProgress.map((p) => p.activityId),
+    );
 
-    const completedActivityIds = new Set(completedProgress.map((p) => p.activityId));
-
-    function setProgress(ids: string[]) {
+    function setProgress(ids: readonly string[]) {
       const done = ids.filter((id) => completedActivityIds.has(id)).length;
-      return { current: done, target: ids.length, complete: done >= ids.length };
+      return {
+        current: done,
+        target: ids.length,
+        complete: done >= ids.length,
+      };
     }
 
     const specialtyProgress = {
-      set1: setProgress(STEM_SET_1),
-      set2: setProgress(STEM_SET_2),
-      set3: setProgress(STEM_SET_3),
+      set1: setProgress(STEM_SET_1_IDS),
+      set2: setProgress(STEM_SET_2_IDS),
+      set3: setProgress(STEM_SET_3_IDS),
     };
 
     res.json({
