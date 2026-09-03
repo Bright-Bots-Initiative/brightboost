@@ -17,6 +17,11 @@ import {
   Sparkles,
   Palette,
 } from "lucide-react";
+import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
+import {
+  canTeacherAssignModule,
+  type ModuleAccessGradeBand,
+} from "@/lib/moduleAccess";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
 import PrepareSessionLink from "@/components/teacher/PrepareSessionLink";
 import CreationStatusChip, {
@@ -392,8 +397,22 @@ const TeacherClassDetail: React.FC = () => {
       try {
         const mods = await directApi.getModules();
         const modArray = Array.isArray(mods) ? mods : (mods?.modules ?? []);
+        // #856: the picker only offers targets that pass registration,
+        // visibility and grade eligibility. Locked-set content stays
+        // assignable — the assignment overrides that lock — but hidden,
+        // placeholder and wrong-band content is never selectable.
+        const classBand: ModuleAccessGradeBand =
+          course?.gradeBand === "g3_5" ? "g3_5" : "k2";
+        const assignable = modArray.filter((m: any) =>
+          canTeacherAssignModule({
+            slug: String(m?.slug ?? ""),
+            module: m,
+            hiddenSlugs: HIDDEN_MODULE_SLUGS,
+            gradeBand: classBand,
+          }),
+        );
         const detailed = await Promise.all(
-          modArray.map((m: any) =>
+          assignable.map((m: any) =>
             directApi.getModule(m.slug, { structureOnly: true }),
           ),
         );

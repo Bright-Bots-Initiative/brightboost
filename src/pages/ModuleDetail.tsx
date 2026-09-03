@@ -1,84 +1,124 @@
 // src/pages/ModuleDetail.tsx
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../services/api";
+import { api, ApiError } from "../services/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check } from "lucide-react";
-import {
-  getStudentArchetype,
-  canAccessModule,
-  isSpecializationModuleSlug,
-} from "@/lib/moduleAccess";
+import ModuleUnavailable from "@/components/modules/ModuleUnavailable";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { completedIdsFromProgressResponse } from "@/lib/progressResponse";
 import { translateContentName } from "@/utils/localizedContent";
-import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 
 export default function ModuleDetail() {
   const { slug } = useParams();
-  const [module, setModule] = useState<any>(null);
-  const [completedActivities, setCompletedActivities] = useState<Set<string>>(
-    new Set(),
+  // `undefined` = not loaded yet; the access policy treats `null` as
+  // "the catalog has no such module".
+  const [module, setModule] = useState<any>(undefined);
+  const [completedIds, setCompletedIds] = useState<string[] | undefined>(
+    undefined,
   );
+  /** A non-404 load failure: a system problem, not an access decision. */
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  // #856: one front door. Hidden slugs resolve on the first render, so a
+  // held-back module is refused before any content request goes out.
+  const access = useModuleAccess({
+    slug,
+    module,
+    completedActivityIds: completedIds,
+    providesProgress: true,
+    attempt,
+  });
+  const denialReason =
+    access.status === "resolved" && !access.access.allowed
+      ? access.access.reason
+      : null;
+  const systemProblem = loadFailed || access.status === "error";
+
+  const retry = useCallback(() => {
+    setModule(undefined);
+    setCompletedIds(undefined);
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  }, []);
+
+  const completedActivities = useMemo(
+    () => new Set<string>(completedIds ?? []),
+    [completedIds],
+  );
+
   useEffect(() => {
     if (!slug) return;
+    if (denialReason) return;
 
-    // Removed/archived modules (e.g. "Fix the Order" / lost-steps) are
-    // filtered from the module list but were still reachable by direct URL.
-    // Block the route too so a dead module can't be opened.
-    if (HIDDEN_MODULE_SLUGS.has(slug)) {
-      navigate("/student/modules", { replace: true });
-      return;
-    }
-
-    // Guard: if the module requires specialization, check archetype first
-    if (isSpecializationModuleSlug(slug)) {
-      api.getAvatar().then((avatarData) => {
-        const arch = getStudentArchetype(avatarData);
-        if (!canAccessModule({ slug, archetype: arch })) {
-          toast({
-            title: t("modules.detail.locked"),
-            description: t("modules.detail.unlockPrompt"),
-            variant: "destructive",
-          });
-          navigate("/student/avatar", { replace: true });
-        }
+    const reportFailure = () => {
+      setLoadFailed(true);
+      toast({
+        title: t("common.oops", { defaultValue: "Oops!" }),
+        description: t("modules.detail.loadError"),
+        variant: "destructive",
       });
-    }
+    };
 
-    Promise.all([
+    // Settled separately, not with Promise.all: only the MODULE request can
+    // establish that the module does not exist. A 404 surfacing from the
+    // progress request must never be read as "this module is unregistered",
+    // which would show the module-doesn't-exist state for one that does.
+    Promise.allSettled([
       api.getModule(slug, { structureOnly: true }),
       // ⚡ Bolt Optimization: Exclude user data to save DB call
       api.getProgress({ excludeUser: true }),
-    ])
-      .then(([m, p]) => {
-        setModule(m);
-        if (p?.progress) {
-          const completed = new Set<string>(
-            p.progress
-              .filter((item: any) => item.status === "COMPLETED")
-              .map((item: any) => String(item.activityId)),
-          );
-          setCompletedActivities(completed);
+    ]).then(([moduleResult, progressResult]) => {
+      if (moduleResult.status === "rejected") {
+        // A real 404 is an access fact and renders exactly like held-back
+        // content; anything else is an infrastructure failure and is said as
+        // one, so this page can never be a permanent skeleton.
+        const err = moduleResult.reason;
+        if (err instanceof ApiError && err.status === 404) {
+          setModule(null);
+          setCompletedIds([]);
+          return;
         }
-      })
-      .catch(() => {
-        toast({
-          title: t("common.oops", { defaultValue: "Oops!" }),
-          description: t("modules.detail.loadError"),
-          variant: "destructive",
-        });
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]); // avoid accidental reruns
+        reportFailure();
+        return;
+      }
 
-  if (!module) {
+      let ids: string[];
+      try {
+        if (progressResult.status === "rejected") throw progressResult.reason;
+        // Rejected OR resolved-with-an-error-body: progress is unknown, and an
+        // unknown progress must not be read as "completed nothing".
+        ids = completedIdsFromProgressResponse(progressResult.value);
+      } catch {
+        reportFailure();
+        return;
+      }
+
+      setModule(moduleResult.value ?? null);
+      setCompletedIds(ids);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, denialReason, attempt]); // avoid accidental reruns
+
+  if (denialReason) {
+    return <ModuleUnavailable reason={denialReason} />;
+  }
+
+  if (systemProblem) {
+    return <ModuleUnavailable reason="system_problem" onRetry={retry} />;
+  }
+
+  // Still loading, or still deciding: never render module content before the
+  // gate has answered.
+  if (!module || access.status === "pending") {
     return (
       <div
         className="p-4 max-w-4xl mx-auto space-y-6"

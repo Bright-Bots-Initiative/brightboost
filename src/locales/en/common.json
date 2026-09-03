@@ -878,6 +878,17 @@
     "set3LockedToastTitle": "Set 3 is Locked",
     "set3ComingSoon": "Set 3: Mastery — Coming Soon",
     "set3ComingSoonDesc": "New challenges are being built. Stay tuned!",
+    "unavailable": {
+      "title": "Let's find another one!",
+      "generic": "This one is not here right now. Pick a new game from your modules!",
+      "wrongGrade": "This one is made for bigger kids. Your modules have games that are just right for you!",
+      "lockedSet": "Finish the games before this one to open it. You are so close!",
+      "notSpecialized": "Pick your star power first, then this one opens up!",
+      "systemTitle": "Oops — that one is on us!",
+      "systemProblem": "Something went wrong on our side, so we could not open this. It is not your fault. Try again in a moment!",
+      "tryAgain": "Try again",
+      "backToModules": "Go to My Modules"
+    },
     "detail": {
       "locked": "Module Locked",
       "unlockPrompt": "Choose your specialization on the avatar page to unlock this module!",

@@ -533,7 +533,10 @@ export const api = {
             : errBody?.error ||
               errBody?.message ||
               `Request failed: ${res.status}`;
-        throw new Error(msg);
+        // Typed so callers can tell "this module does not exist" (404) from
+        // "we could not reach the server" — #856 needs that distinction to
+        // avoid reporting an outage as an access decision.
+        throw new ApiError(msg, res.status);
       }
 
       const data = await res.json();
@@ -666,6 +669,18 @@ export const api = {
 
   getStudentCourses: async () => {
     const res = await fetch(join(API_BASE, "/student/courses"), {
+      headers: getHeaders(),
+    });
+    return res.json().catch(() => []);
+  },
+
+  /**
+   * Open teacher-session assignments for the signed-in student. The access
+   * policy (#856) reads this so an assignment can lift a set lock for the
+   * module it targets.
+   */
+  getStudentAssignments: async () => {
+    const res = await fetch(join(API_BASE, "/student/assignments"), {
       headers: getHeaders(),
     });
     return res.json().catch(() => []);
