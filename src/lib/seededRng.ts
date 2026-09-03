@@ -47,12 +47,15 @@ export function createSeededRng(seed: string): () => number {
     state ^= state << 5;
     return (state >>> 0) / 4294967296;
   };
-  // Warm-up. xorshift32's first output is strongly correlated with its seed,
-  // and our seeds differ by a character or two ("student-7" vs "student-8"),
-  // so the raw first draw clusters. Discarding a few steps decorrelates
-  // neighbouring seeds — which is what makes two children in the same class
-  // see different picks. Determinism is untouched: the same seed still
-  // produces the same (now offset) sequence.
+  // Warm-up: discard the first few steps so no consumer ever reads a value
+  // that is a single xorshift round away from the raw djb2 hash of its seed.
+  //
+  // This is hygiene, not a measured distributional improvement — an earlier
+  // version of this comment claimed the unwarmed generator clustered for
+  // neighbouring seeds, and review measured the opposite. No spread claim is
+  // made here, and none belongs here without a measurement to cite. What the
+  // warm-up does not change is the only property this module promises: the
+  // same seed still yields the same (now offset) sequence.
   for (let i = 0; i < 8; i++) step();
   return step;
 }

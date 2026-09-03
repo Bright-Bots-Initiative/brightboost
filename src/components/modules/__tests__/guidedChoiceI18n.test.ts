@@ -65,6 +65,7 @@ const REQUIRED = [
   "cancel",
   "chooseAnother",
   "continueNext",
+  "continueReplay",
   "continueStart",
   "emptyBody",
   "emptyHeading",

@@ -55,7 +55,12 @@ import {
   type ModuleAccessTarget,
 } from "@/lib/moduleAccess";
 import { STEM_SET_3_MODULE_SLUGS } from "@/constants/stemSets";
-import type { ContinueScanResult } from "@/lib/continueScan";
+import {
+  MODULES_INDEX_PATH,
+  activityHref,
+  moduleHref,
+  type ContinueScanResult,
+} from "@/lib/continueScan";
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
 
@@ -138,11 +143,14 @@ export interface GuidedChoiceExclusion {
 /**
  * Where Continue goes.
  *
- * `kind: "activity"` is the canonical scan's answer — byte-for-byte the same
- * target the student dashboard uses, because it comes from the same
- * `ContinueScanResult`. `kind: "module"` is the no-progress-yet fallback (the
- * first allowed module in catalog order). `null` means there is nothing this
- * learner may open at all, and the UI shows the modules index.
+ * `kind: "activity"` is the canonical scan's answer, carried through unchanged
+ * — subject to the module having survived pass 1. `kind: "module"` is the
+ * fallback: no progress yet, or a scan that found nothing this learner may
+ * open. `null` means there is nothing available at all, and the UI shows the
+ * modules index.
+ *
+ * This is the same *scan* the student dashboard runs, not necessarily the same
+ * *target*: see the parity note on `ResolveGuidedChoiceInput.scan`.
  */
 export type GuidedContinueTarget =
   | {
@@ -152,8 +160,21 @@ export type GuidedContinueTarget =
       lessonId: string;
       activityId: string;
       activityTitle: string;
+      /** Always false: the scan only ever returns unfinished activities. */
+      isReplay: boolean;
     }
-  | { kind: "module"; moduleSlug: string; moduleTitle: string }
+  | {
+      kind: "module";
+      moduleSlug: string;
+      moduleTitle: string;
+      /**
+       * True when the learner has already finished this module — the state a
+       * learner who has completed everything available lands in. The UI must
+       * label it as a replay rather than as a fresh start, because telling a
+       * child to "start playing" something they finished is simply untrue.
+       */
+      isReplay: boolean;
+    }
   | null;
 
 export interface GuidedChoiceResult {
@@ -190,6 +211,28 @@ export interface ResolveGuidedChoiceInput {
    * The canonical Continue scan (`scanForNextActivity`). `null` — the caller
    * has not scanned, or the scan was cancelled — falls back to the first
    * allowed module rather than inventing a target.
+   *
+   * ## What "parity with the dashboard" does and does not mean
+   *
+   * Both the student dashboard and the Modules page run **the same scan
+   * function** over **the same access policy**, and build the route with **the
+   * same builders** (`continueScan.ts`). What they do *not* share is the
+   * catalog they scan:
+   *
+   * - the dashboard calls `api.getModules()` — the whole catalog — and
+   *   resolves the student's real grade band before scanning;
+   * - the Modules page calls `api.getModules({ level: "K-2" })` and resolves
+   *   against a constant `k2` band (see `GUIDED_CHOICE_BAND` there).
+   *
+   * For a K-2 learner those inputs coincide and the two Continue targets are
+   * the same. For a **grade 3-5 learner partway through G3-5 content** they do
+   * not: the dashboard resumes that content, while Modules — which does not
+   * show it — resumes the furthest K-2 content instead. The dashboard remains
+   * the authoritative Continue across the full catalog; the Modules page's
+   * Continue is authoritative for the catalog that page actually shows.
+   *
+   * That is a real, deliberate divergence, not an oversight, and narrowing it
+   * means widening this page's catalog request and resolving the band first.
    */
   scan?: ContinueScanResult | null;
   /**
@@ -229,6 +272,19 @@ function titleOf(module: GuidedChoiceModule, slug: string): string {
     : slug;
 }
 
+/**
+ * Normalize the caller's assignment list for *display* purposes.
+ *
+ * The access decision still receives `assignedModuleSlugs` exactly as given —
+ * this is a second read of the same input, never a substitute for it.
+ */
+function toSlugSet(
+  slugs: ReadonlySet<string> | readonly string[] | undefined,
+): ReadonlySet<string> {
+  if (!slugs) return new Set<string>();
+  return slugs instanceof Set ? slugs : new Set(slugs);
+}
+
 /** Slugs of modules the scan found to be fully finished. */
 function completedSlugSet(scan: ContinueScanResult | null | undefined) {
   return new Set(
@@ -249,13 +305,25 @@ function completedSlugSet(scan: ContinueScanResult | null | undefined) {
  *
  * **Pass 1 — access.** Per candidate: the slug must be usable at all (a
  * malformed record is `unregistered`), then `resolveModuleAccess` decides.
- * Nothing in pass 2 can re-admit what pass 1 refused, so a module that was
+ * Nothing downstream can re-admit what pass 1 refused, so a module that was
  * finished and has since been hidden, re-locked or re-banded is refused
  * outright rather than offered as a fond replay.
  *
- * **Pass 2 — role.** Continue's module is `completed_or_duplicate`; a fully
- * finished module leaves the alternatives pool and joins `revisit`; the rest
- * are the alternatives, in the caller's order.
+ * **Continue.** The scan's target is used only if *its module survived pass 1*.
+ * The scan is expected to have applied the same policy already — both callers
+ * pass it an `isAllowed` built from this policy — but "expected to" is not a
+ * guarantee this function can make, and an unfiltered scan would otherwise
+ * hand back a refused module in `excluded` *and* a live route into it. So the
+ * scan's answer is re-checked against pass 1 rather than trusted: Continue is
+ * the one destination a learner is most likely to press, and it must be
+ * subject to exactly the rules everything else here is.
+ *
+ * **Pass 2 — role.** A finished module joins `revisit`; whichever module
+ * Continue leads into is `completed_or_duplicate` among the alternatives; the
+ * rest are the alternatives, in the caller's order. Completion is checked
+ * first, so a learner who has finished everything still gets their finished
+ * modules listed under Revisit — including the one Continue is offering to
+ * replay.
  */
 export function resolveGuidedChoice(
   input: ResolveGuidedChoiceInput,
@@ -273,7 +341,7 @@ export function resolveGuidedChoice(
 
   const declaredSlots = new Set<string>(declaredSlotSlugs);
   const completedSlugs = completedSlugSet(scan);
-  const scanSlug = scan?.nextOne?.moduleSlug ?? null;
+  const assignedSlugs = toSlugSet(assignedModuleSlugs);
 
   const allowed: GuidedChoiceDestination[] = [];
   const excluded: GuidedChoiceExclusion[] = [];
@@ -321,7 +389,19 @@ export function resolveGuidedChoice(
       title: titleOf(module, slug),
       objective: moduleObjective(module),
       setNumber: setNumberFor(slug),
-      whyAvailable: access.source,
+      // Attribution is assignment *membership*, not the access policy's
+      // `source`. `source` reports which rule let the target through, and it
+      // only says `teacher_assignment` when the assignment actually lifted a
+      // set lock — so an assignment naming an already-unlocked module (much
+      // the commoner case) would arrive as plain `progression` and be
+      // presented to the child as a free choice they earned. On the one
+      // surface where assignments are attributed at all, that is the
+      // assignment being reordered away (#842's acceptance criterion;
+      // accessibility contract §7). The foundation's model-1 override is
+      // untouched — this reads the same input it does, and only for display.
+      whyAvailable: assignedSlugs.has(slug)
+        ? "teacher_assignment"
+        : access.source,
     });
   }
 
@@ -330,27 +410,39 @@ export function resolveGuidedChoice(
   // The fallback is the first allowed module the learner has not finished, so
   // "start playing" does not open something they already completed; if they
   // have finished everything available, the first allowed module is still a
-  // better answer than dropping them on an empty index.
+  // better answer than dropping them on an empty index — but Continue then
+  // says so (`isReplay`) instead of calling a replay a fresh start.
+  const allowedSlugs = new Set(allowed.map((d) => d.moduleSlug));
   const fallback =
     allowed.find((d) => !completedSlugs.has(d.moduleSlug)) ??
     allowed[0] ??
     null;
-  const continueTarget = buildContinueTarget(scan, fallback);
-  // Whichever module Continue actually leads into — the scan's, or the
-  // fallback's — is the one the alternatives must not duplicate.
-  const continueSlug = continueTarget?.moduleSlug ?? scanSlug;
+  // The scan's target only counts if its module survived pass 1.
+  const scanTargetSlug = scan?.nextOne?.moduleSlug;
+  const scanIsAllowed =
+    typeof scanTargetSlug === "string" && allowedSlugs.has(scanTargetSlug);
+  const continueTarget = buildContinueTarget(
+    scanIsAllowed ? scan : null,
+    fallback,
+    completedSlugs,
+  );
+  // Whichever module Continue actually leads into is the one the alternatives
+  // must not duplicate.
+  const continueSlug = continueTarget?.moduleSlug ?? null;
 
   const eligible: GuidedChoiceDestination[] = [];
   const revisit: GuidedChoiceDestination[] = [];
 
   for (const destination of allowed) {
     const slug = destination.moduleSlug;
-    if (slug === continueSlug) {
+    // Completion first: a finished module belongs in Revisit whether or not
+    // Continue happens to be offering to replay it.
+    if (completedSlugs.has(slug)) {
+      revisit.push(destination);
       excluded.push({ moduleSlug: slug, reason: "completed_or_duplicate" });
       continue;
     }
-    if (completedSlugs.has(slug)) {
-      revisit.push(destination);
+    if (slug === continueSlug) {
       excluded.push({ moduleSlug: slug, reason: "completed_or_duplicate" });
       continue;
     }
@@ -394,6 +486,7 @@ function mapDenial(
 function buildContinueTarget(
   scan: ContinueScanResult | null | undefined,
   fallback: GuidedChoiceDestination | null,
+  completedSlugs: ReadonlySet<string>,
 ): GuidedContinueTarget {
   const next = scan?.nextOne;
   if (next && next.moduleSlug && next.lessonId && next.activityId) {
@@ -404,6 +497,8 @@ function buildContinueTarget(
       lessonId: next.lessonId,
       activityId: next.activityId,
       activityTitle: next.activityTitle,
+      // The scan only returns an activity the learner has not finished.
+      isReplay: false,
     };
   }
   if (fallback) {
@@ -411,6 +506,7 @@ function buildContinueTarget(
       kind: "module",
       moduleSlug: fallback.moduleSlug,
       moduleTitle: fallback.title,
+      isReplay: completedSlugs.has(fallback.moduleSlug),
     };
   }
   return null;
@@ -418,25 +514,26 @@ function buildContinueTarget(
 
 // ── Routing ───────────────────────────────────────────────────────────────
 
-/** Where the modules index lives — Continue's last resort. */
-export const MODULES_INDEX_PATH = "/student/modules";
+export { MODULES_INDEX_PATH };
 
 /**
  * The route Continue navigates to.
  *
- * The `activity` form is character-for-character the student dashboard's
- * `goToNext()` route, so the two surfaces send a learner to the same place for
- * the same scan; `src/lib/__tests__/guidedChoice.test.ts` pins that parity.
+ * Built from the shared route builders in `src/lib/continueScan.ts`, which the
+ * student dashboard's `goToNext()` also calls — so neither surface can drift
+ * to a different route *shape* than the other.
+ *
+ * That is a narrower guarantee than "the two surfaces send a learner to the
+ * same place", and the difference matters. See the parity note on
+ * `ResolveGuidedChoiceInput.scan`.
  */
 export function continueHref(target: GuidedContinueTarget): string {
   if (!target) return MODULES_INDEX_PATH;
-  if (target.kind === "activity") {
-    return `${MODULES_INDEX_PATH}/${target.moduleSlug}/lessons/${target.lessonId}/activities/${target.activityId}`;
-  }
-  return `${MODULES_INDEX_PATH}/${target.moduleSlug}`;
+  if (target.kind === "activity") return activityHref(target);
+  return moduleHref(target.moduleSlug);
 }
 
 /** The route a chosen alternative / revisit destination opens. */
 export function destinationHref(destination: { moduleSlug: string }): string {
-  return `${MODULES_INDEX_PATH}/${destination.moduleSlug}`;
+  return moduleHref(destination.moduleSlug);
 }

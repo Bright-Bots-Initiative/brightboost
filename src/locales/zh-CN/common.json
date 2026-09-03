@@ -835,6 +835,7 @@
       "heading": "你想做什么？",
       "continueNext": "继续玩：{{name}}",
       "continueStart": "开始玩：{{name}}",
+      "continueReplay": "再玩一次：{{name}}",
       "tryAnother": "换一个游戏试试",
       "tryAnotherIntro": "这些现在对你开放。",
       "revisit": "再玩一次",

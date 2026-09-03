@@ -55,6 +55,7 @@ import {
   destinationHref,
   type GuidedChoiceDestination,
   type GuidedChoiceResult,
+  type GuidedContinueTarget,
 } from "@/lib/guidedChoice";
 
 export interface GuidedChoicePanelProps {
@@ -69,6 +70,21 @@ export interface GuidedChoicePanelProps {
 
 /** Tap-target floor for K-2 (contract §8). */
 const TAP = "min-h-[44px]";
+
+/**
+ * Which sentence Continue says.
+ *
+ * Three states, because two of them would have to lie. Resuming an activity is
+ * "keep going"; opening a module for the first time is "start playing"; and
+ * opening a module the learner has already finished — where a learner who has
+ * completed everything available lands — is a replay, and saying "start
+ * playing" there would tell a child something they can see is untrue.
+ */
+function continueCopyKey(target: NonNullable<GuidedContinueTarget>): string {
+  if (target.kind === "activity") return "modules.guidedChoice.continueNext";
+  if (target.isReplay) return "modules.guidedChoice.continueReplay";
+  return "modules.guidedChoice.continueStart";
+}
 
 export function GuidedChoicePanel({
   result,
@@ -142,7 +158,20 @@ export function GuidedChoicePanel({
     if (surpriseOpen) disclosureRef.current?.focus();
   }, [surpriseOpen]);
 
-  const openSurprise = () => {
+  /**
+   * The "Surprise me" control is a **toggle**, like the other two disclosure
+   * triggers on this panel. Pressing it while the disclosure is open closes it
+   * — it does not re-offer. Re-offering would re-fire `guided_surprise_offered`
+   * and re-announce a destination that has not changed, and would leave
+   * `aria-expanded` stuck at `true` with no way back from that control, which
+   * is exactly the sort of dead end the "safe way back" rule exists to
+   * prevent.
+   */
+  const toggleSurprise = () => {
+    if (surpriseOpen) {
+      closeSurprise();
+      return;
+    }
     setSurpriseOpen(true);
     if (pick) {
       setAnnouncement(announceFor(pick));
@@ -257,9 +286,7 @@ export function GuidedChoicePanel({
           className={`w-full ${TAP} flex items-center justify-between gap-3 rounded-xl bg-brightboost-blue px-5 py-4 text-left text-lg font-extrabold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brightboost-blue/40`}
         >
           <span>
-            {continueTarget.kind === "activity"
-              ? t("modules.guidedChoice.continueNext", { name: continueName })
-              : t("modules.guidedChoice.continueStart", { name: continueName })}
+            {t(continueCopyKey(continueTarget), { name: continueName })}
           </span>
           <ArrowRight className="h-6 w-6 shrink-0" aria-hidden="true" />
         </button>
@@ -292,7 +319,7 @@ export function GuidedChoicePanel({
           buttonRef={surpriseButtonRef}
           expanded={surpriseOpen}
           controls="guided-surprise-disclosure"
-          onClick={openSurprise}
+          onClick={toggleSurprise}
           icon={<Sparkles className="h-4 w-4" aria-hidden="true" />}
           label={t("modules.guidedChoice.surprise")}
         />

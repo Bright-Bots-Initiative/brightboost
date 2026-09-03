@@ -882,6 +882,7 @@
       "heading": "What do you want to do?",
       "continueNext": "Keep going: {{name}}",
       "continueStart": "Start playing: {{name}}",
+      "continueReplay": "Play one again: {{name}}",
       "tryAnother": "Try a different game",
       "tryAnotherIntro": "These are open for you right now.",
       "revisit": "Play one again",

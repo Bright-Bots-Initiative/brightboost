@@ -48,6 +48,7 @@ function result(
       lessonId: "lesson-1",
       activityId: "act-1",
       activityTitle: "Round 1",
+      isReplay: false,
     },
     eligible: [
       destination("alt-a"),
@@ -115,10 +116,35 @@ describe("navigation hierarchy", () => {
         kind: "module",
         moduleSlug: "mod-first",
         moduleTitle: "First Game",
+        isReplay: false,
       },
     });
+    expect(screen.getByTestId("guided-continue")).toHaveTextContent(
+      "Start playing: First Game",
+    );
     await user.click(screen.getByTestId("guided-continue"));
     expect(navigate).toHaveBeenCalledWith("/student/modules/mod-first");
+  });
+
+  it("calls a replay a replay when everything has been finished", () => {
+    // Telling a child to "start playing" a game they finished is a small lie
+    // they can see through, and it is the state a learner who has completed
+    // everything available lands in.
+    renderPanel({
+      continueTarget: {
+        kind: "module",
+        moduleSlug: "done-a",
+        moduleTitle: "Bounce Buds",
+        isReplay: true,
+      },
+      eligible: [],
+      revisit: [destination("done-a"), destination("done-b")],
+    });
+    const cta = screen.getByTestId("guided-continue");
+    expect(cta).toHaveTextContent("Play one again: Bounce Buds");
+    expect(cta).not.toHaveTextContent("Start playing");
+    // Revisit is still offered, and still lists everything finished.
+    expect(screen.getByTestId("guided-revisit")).toBeInTheDocument();
   });
 
   it("keeps alternatives collapsed so they cannot obscure Continue", async () => {
@@ -231,6 +257,31 @@ describe("surprise me", () => {
     expect(screen.queryByTestId("guided-surprise-disclosure")).toBeNull();
     expect(document.activeElement).toBe(trigger);
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("is a toggle: a second press closes it, with no second offer", async () => {
+    const user = userEvent.setup();
+    const { navigate } = renderPanel();
+    const trigger = screen.getByTestId("guided-surprise");
+
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const shown = screen.getByTestId("guided-surprise-name").textContent;
+
+    // Pressing the control again must close rather than re-offer: re-offering
+    // re-announces an unchanged destination and leaves aria-expanded stuck at
+    // true with no way back from that control.
+    await user.click(trigger);
+    expect(screen.queryByTestId("guided-surprise-disclosure")).toBeNull();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(navigate).not.toHaveBeenCalled();
+    expect(
+      track.mock.calls.filter((c) => c[0].kind === "guided_surprise_offered"),
+    ).toHaveLength(1);
+
+    // Reopening offers the same destination — the seed has not moved.
+    await user.click(trigger);
+    expect(screen.getByTestId("guided-surprise-name").textContent).toBe(shown);
   });
 
   it("cancels on Escape without navigating", async () => {

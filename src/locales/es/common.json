@@ -838,6 +838,7 @@
       "heading": "¿Qué quieres hacer?",
       "continueNext": "Sigue jugando: {{name}}",
       "continueStart": "Empieza a jugar: {{name}}",
+      "continueReplay": "Juega otra vez: {{name}}",
       "tryAnother": "Prueba otro juego",
       "tryAnotherIntro": "Estos están abiertos para ti ahora.",
       "revisit": "Juega uno otra vez",

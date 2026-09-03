@@ -11,9 +11,15 @@
  *    check, a level comparison) makes the "obeys" cases fail.
  * 2. **Every exclusion carries a structured reason** — table-driven, one row
  *    per concern, asserting the reason and not merely "absent".
- * 3. **Continue parity.** The Modules page's Continue target is the student
- *    dashboard's, character for character, from the same scan on the same
- *    fixtures.
+ * 3. **Continue is subject to the same policy as everything else.** The scan's
+ *    target is re-checked against pass 1, so an unfiltered scan cannot hand
+ *    back a refused module in `excluded` *and* a live route into it.
+ * 4. **Route parity is structural.** Both surfaces build Continue's route with
+ *    the shared builders in `continueScan.ts`, and the cases below import
+ *    those builders rather than restating the template — a local copy is a
+ *    proxy that stays green while the real routes drift apart. What parity
+ *    does *not* claim is that the two surfaces always pick the same target;
+ *    see `ResolveGuidedChoiceInput.scan`.
  *
  * `hiddenSlugs` is injected in every case: `HIDDEN_MODULE_SLUGS` is a mutable
  * Set a release flag flips at runtime, so no test may depend on its contents.
@@ -26,6 +32,9 @@ import {
   STEM_SET_3_MODULE_SLUGS,
 } from "@/constants/stemSets";
 import {
+  MODULES_INDEX_PATH,
+  activityHref,
+  moduleHref,
   buildModuleSlugPriority,
   scanForNextActivity,
   type ContinueScanResult,
@@ -380,6 +389,70 @@ describe("resolveGuidedChoice — bands and teacher assignments", () => {
     expect(result.eligible[0].whyAvailable).toBe("progression");
   });
 
+  it("attributes an assignment to an ALREADY-UNLOCKED module to the teacher", () => {
+    // The commoner case by far, and the one that used to be invisible: the
+    // access policy's `source` only says `teacher_assignment` when the
+    // assignment lifted a set lock, so an assigned Set 1 module arrived as
+    // plain `progression` and was shown to the child as a free choice they
+    // earned. On the only surface that attributes assignments at all, that is
+    // the assignment being reordered away.
+    const result = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      completedActivityIds: [],
+      assignedModuleSlugs: [SET1_B], // Set 1 — no lock for it to override
+      scan: scanResult({ moduleSlug: SET1_A }),
+    });
+    expect(result.eligible).toHaveLength(1);
+    expect(result.eligible[0]).toMatchObject({
+      moduleSlug: SET1_B,
+      whyAvailable: "teacher_assignment",
+    });
+  });
+
+  it("attributes assigned work in the revisit pool too", () => {
+    const result = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      assignedModuleSlugs: [SET1_B],
+      scan: scanResult({
+        moduleSlug: SET1_A,
+        completedModules: [{ slug: SET1_B, title: "b" }],
+      }),
+    });
+    expect(result.revisit[0]).toMatchObject({
+      moduleSlug: SET1_B,
+      whyAvailable: "teacher_assignment",
+    });
+  });
+
+  it("accepts the assignment list as a Set or an array, identically", () => {
+    const asArray = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      assignedModuleSlugs: [SET1_B],
+      scan: scanResult({ moduleSlug: SET1_A }),
+    });
+    const asSet = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      assignedModuleSlugs: new Set([SET1_B]),
+      scan: scanResult({ moduleSlug: SET1_A }),
+    });
+    expect(asArray.eligible).toEqual(asSet.eligible);
+    expect(asSet.eligible[0].whyAvailable).toBe("teacher_assignment");
+  });
+
+  it("does not attribute an assignment the access policy refused", () => {
+    // Attribution is display, never a re-admission: a hidden assigned module
+    // is still refused, and never appears with a teacher's name on it.
+    const result = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      hiddenSlugs: new Set([SET1_B]),
+      assignedModuleSlugs: [SET1_B],
+      scan: scanResult({ moduleSlug: SET1_A }),
+    });
+    expect(slugs(result.eligible)).toEqual([]);
+    expect(slugs(result.revisit)).toEqual([]);
+    expect(reasonFor(result, SET1_B)).toBe("hidden");
+  });
+
   it("does not let an assignment override hidden, wrong-grade or ghost targets", () => {
     const result = resolve({
       modules: [
@@ -513,6 +586,7 @@ describe("resolveGuidedChoice — Continue", () => {
       kind: "module",
       moduleSlug: SET1_A,
       moduleTitle: `${SET1_A} title`,
+      isReplay: false,
     });
     // …and the module Continue leads into is not also offered as an alternative.
     expect(slugs(result.eligible)).toEqual([SET1_B]);
@@ -555,6 +629,153 @@ describe("resolveGuidedChoice — Continue", () => {
   });
 });
 
+// ── 5b. Continue obeys the access policy too ──────────────────────────────
+
+describe("Continue is subject to the same policy as everything else", () => {
+  // Continue is the one destination a learner is most likely to press, and
+  // until this was fixed it was the one destination that never went through
+  // `resolveModuleAccess`: the scan's answer was carried through verbatim. A
+  // caller handing in an unfiltered scan got the refused module reported in
+  // `excluded` AND a live route into that same module.
+  const refusals: {
+    name: string;
+    slug: string;
+    input: Partial<ResolveGuidedChoiceInput>;
+    reason: GuidedChoiceExclusionReason;
+  }[] = [
+    {
+      name: "a held-back module",
+      slug: SET1_B,
+      input: {
+        modules: [mod(SET1_A), mod(SET1_B)],
+        hiddenSlugs: new Set([SET1_B]),
+      },
+      reason: "hidden",
+    },
+    {
+      name: "content for another band",
+      slug: G35,
+      input: {
+        modules: [mod(SET1_A), mod(G35, { level: "3-5" })],
+        gradeBand: "k2",
+      },
+      reason: "wrong_grade",
+    },
+    {
+      name: "a locked Set 2 module",
+      slug: SET2_A,
+      input: { modules: [mod(SET1_A), mod(SET2_A)], completedActivityIds: [] },
+      reason: "locked",
+    },
+  ];
+
+  it.each(refusals)(
+    "never routes Continue into $name, even when the scan names it",
+    ({ slug, input, reason }) => {
+      const result = resolve({
+        ...input,
+        // An UNFILTERED scan — the scan is expected to apply the same policy,
+        // but the resolver may not assume it did.
+        scan: scanResult({ moduleSlug: slug }),
+      });
+      expect(result.continueTarget?.moduleSlug).not.toBe(slug);
+      expect(continueHref(result.continueTarget)).not.toContain(slug);
+      // …and it is still reported as refused, with its own reason.
+      expect(reasonFor(result, slug)).toBe(reason);
+      // …and Continue falls to the module fallback rather than to nothing.
+      expect(result.continueTarget).toMatchObject({
+        kind: "module",
+        moduleSlug: SET1_A,
+      });
+    },
+  );
+
+  it("never routes Continue into a module the catalog does not serve", () => {
+    const result = resolve({
+      modules: [mod(SET1_A)],
+      scan: scanResult({ moduleSlug: GHOST }),
+    });
+    expect(result.continueTarget?.moduleSlug).not.toBe(GHOST);
+    expect(continueHref(result.continueTarget)).not.toContain(GHOST);
+    expect(result.continueTarget).toMatchObject({ moduleSlug: SET1_A });
+  });
+
+  it("routes Continue nowhere at all when nothing survives pass 1", () => {
+    const result = resolve({
+      modules: [mod(SET1_B)],
+      hiddenSlugs: new Set([SET1_B]),
+      scan: scanResult({ moduleSlug: SET1_B }),
+    });
+    expect(result.continueTarget).toBeNull();
+    expect(continueHref(result.continueTarget)).toBe(MODULES_INDEX_PATH);
+  });
+
+  it("still uses the scan's target when the policy allows it", () => {
+    // The guard narrows nothing it should not: a permitted scan target is
+    // still carried through verbatim.
+    const result = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      scan: scanResult({
+        moduleSlug: SET1_B,
+        lessonId: "l7",
+        activityId: "a7",
+      }),
+    });
+    expect(result.continueTarget).toMatchObject({
+      kind: "activity",
+      moduleSlug: SET1_B,
+      lessonId: "l7",
+      activityId: "a7",
+    });
+  });
+});
+
+// ── 5c. Everything finished ───────────────────────────────────────────────
+
+describe("when the learner has finished everything available", () => {
+  function allDone() {
+    return resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      scan: scanResult({
+        completedModules: [
+          { slug: SET1_A, title: "a" },
+          { slug: SET1_B, title: "b" },
+        ],
+      }),
+    });
+  }
+
+  it("marks Continue as a replay rather than calling it a fresh start", () => {
+    expect(allDone().continueTarget).toEqual({
+      kind: "module",
+      moduleSlug: SET1_A,
+      moduleTitle: `${SET1_A} title`,
+      isReplay: true,
+    });
+  });
+
+  it("still lists every finished module under Revisit, Continue's included", () => {
+    // The module Continue offers to replay is a finished module like any
+    // other; dropping it from Revisit as a "duplicate" would hide it from the
+    // only list that admits finished work exists.
+    const result = allDone();
+    expect(slugs(result.revisit)).toEqual([SET1_A, SET1_B]);
+    expect(result.eligible).toEqual([]);
+  });
+
+  it("does not mark an unfinished Continue target as a replay", () => {
+    const result = resolve({
+      modules: [mod(SET1_A), mod(SET1_B)],
+      scan: scanResult({ completedModules: [{ slug: SET1_A, title: "a" }] }),
+    });
+    expect(result.continueTarget).toMatchObject({
+      moduleSlug: SET1_B,
+      isReplay: false,
+    });
+    expect(slugs(result.revisit)).toEqual([SET1_A]);
+  });
+});
+
 // ── 6. Continue parity with the student dashboard ─────────────────────────
 
 describe("Continue parity — Modules page vs student dashboard", () => {
@@ -592,16 +813,38 @@ describe("Continue parity — Modules page vs student dashboard", () => {
   };
 
   /**
-   * The student dashboard's own route construction, copied from
-   * `StudentDashboard.tsx`'s `goToNext()`. If that template ever changes, this
-   * literal and `continueHref` disagree and the parity test fails — which is
-   * the point.
+   * The route the student dashboard actually navigates to, built the way
+   * `StudentDashboard.goToNext()` builds it — by calling the **real shared
+   * builders**, not by restating the template here.
+   *
+   * That distinction is the whole point. An earlier version of this helper
+   * held a private copy of the template, which meant the dashboard's real
+   * route could be rewritten and this suite stayed green: it was comparing
+   * `continueHref` against the test's own idea of the dashboard rather than
+   * against the dashboard. Mutating `activityHref` or `MODULES_INDEX_PATH` now
+   * fails cases on both surfaces at once.
    */
   function dashboardHref(scan: ContinueScanResult): string {
     const n = scan.nextOne;
-    if (!n) return "/student/modules";
-    return `/student/modules/${n.moduleSlug}/lessons/${n.lessonId}/activities/${n.activityId}`;
+    if (!n) return MODULES_INDEX_PATH;
+    return activityHref(n);
   }
+
+  it("builds Continue's route with the same builder the dashboard calls", () => {
+    // The structural claim, stated directly: no literal on either side.
+    const target = {
+      kind: "activity" as const,
+      moduleSlug: SET1_A,
+      moduleTitle: "t",
+      lessonId: "l9",
+      activityId: "a9",
+      activityTitle: "a",
+      isReplay: false,
+    };
+    expect(continueHref(target)).toBe(activityHref(target));
+    expect(continueHref(null)).toBe(MODULES_INDEX_PATH);
+    expect(destinationHref({ moduleSlug: SET1_B })).toBe(moduleHref(SET1_B));
+  });
 
   async function runScan(
     progress: { moduleSlug: string; activityId: string; status: string }[],

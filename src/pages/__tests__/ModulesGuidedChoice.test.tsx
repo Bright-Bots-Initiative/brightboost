@@ -187,6 +187,26 @@ describe("Modules page — guided choice wiring", () => {
     ]);
   });
 
+  it("attributes an assignment to an already-unlocked module, and lists it first", async () => {
+    // The case that used to be invisible on the only surface that attributes
+    // assignments at all: a Set 1 module needs no lock lifted, so the access
+    // policy reported it as plain progression and the child was shown their
+    // teacher's pick as a free choice they had earned.
+    const user = userEvent.setup();
+    (api.getStudentAssignments as any).mockResolvedValue([
+      { moduleSlug: RHYME },
+    ]);
+    await renderPage();
+
+    await user.click(screen.getByTestId("guided-try-another"));
+    const items = within(
+      screen.getByTestId("guided-alternatives"),
+    ).getAllByRole("listitem");
+    expect(items[0]).toHaveTextContent("Rhyme Ride");
+    expect(items[0]).toHaveTextContent("Your teacher picked this one for you.");
+    expect(items[1]).toHaveTextContent("You opened this one by playing.");
+  });
+
   it("shows the catalog's own objective text, not invented copy", async () => {
     const user = userEvent.setup();
     await renderPage();

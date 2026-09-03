@@ -835,6 +835,7 @@
       "heading": "Em muốn làm gì?",
       "continueNext": "Chơi tiếp: {{name}}",
       "continueStart": "Bắt đầu chơi: {{name}}",
+      "continueReplay": "Chơi lại: {{name}}",
       "tryAnother": "Thử một trò chơi khác",
       "tryAnotherIntro": "Những trò này đang mở cho em.",
       "revisit": "Chơi lại một trò",

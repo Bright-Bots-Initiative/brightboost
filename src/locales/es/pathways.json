@@ -931,10 +931,7 @@
         "ip-address": {
           "term": "IP address",
           "shortDef": "A number that identifies a device on a network. Like a street address for computers.",
-          "examples": [
-            "192.168.1.1",
-            "8.8.8.8"
-          ]
+          "examples": ["192.168.1.1", "8.8.8.8"]
         },
         "dns": {
           "term": "DNS",

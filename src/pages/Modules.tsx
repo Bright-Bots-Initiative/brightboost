@@ -118,8 +118,33 @@ const SLUG_TO_SET3_ID: Record<string, StemSet3GameId> = {
  * becomes unreachable and no learner-facing "made for bigger kids" copy is
  * shown for what would really be an unresolved input (accessibility contract
  * §6). Widening this page's catalog request means resolving the band first.
+ *
+ * **The cost, stated plainly.** Because the dashboard resolves the real band
+ * and scans the whole catalog while this page does neither, a grade 3-5
+ * learner partway through G3-5 content gets a different Continue target here
+ * than on their dashboard: the dashboard resumes that content, this page
+ * resumes their furthest K-2 content, which is the furthest thing this page
+ * shows. The dashboard stays the authoritative Continue across the full
+ * catalog. That is a deliberate trade — fail-closed and provably safe over a
+ * request whose answer cannot matter for what this page displays — not a claim
+ * that the two surfaces always agree. See the parity note in
+ * `src/lib/guidedChoice.ts`.
  */
 const GUIDED_CHOICE_BAND = "k2" as const;
+
+/**
+ * The page's canonical module order. Hoisted out of the load effect because
+ * both the set sections and the guided-choice candidate list sort by it, and
+ * they must not drift apart.
+ *
+ * `title` is coerced defensively: `Module.title` is non-null in the schema,
+ * but this comparator now also runs over the *unfiltered* catalog feed, and a
+ * comparator that throws would take the whole page down rather than skip one
+ * bad record.
+ */
+const byCanonicalOrder = (a: any, b: any) =>
+  (MODULE_ORDER[a?.slug] ?? 999) - (MODULE_ORDER[b?.slug] ?? 999) ||
+  String(a?.title ?? "").localeCompare(String(b?.title ?? ""));
 
 /**
  * Seed parts for the surprise pick, read from what the page already has.
@@ -176,23 +201,12 @@ export default function Modules() {
     let cancelled = false;
     setLoading(true);
 
-    async function load() {
-      let data: any[];
-      let avatarData: unknown;
-      let progressData: { progress?: any[] };
-      try {
-        [data, avatarData, progressData] = await Promise.all([
-          api.getModules({ level: "K-2" }),
-          api.getAvatar(),
-          api.getProgress().catch(() => ({ progress: [] })),
-        ]);
-      } catch {
-        if (!cancelled) {
-          setError(t("modules.loadError"));
-          setLoading(false);
-        }
-        return;
-      }
+    async function loadPage() {
+      const [data, avatarData, progressData] = await Promise.all([
+        api.getModules({ level: "K-2" }),
+        api.getAvatar(),
+        api.getProgress().catch(() => ({ progress: [] })),
+      ]);
       if (cancelled) return;
 
       const archetype = getStudentArchetype(avatarData);
@@ -209,9 +223,6 @@ export default function Modules() {
       setSet3Done(countCompletedInSet(completedIds, STEM_SET_3_IDS));
 
       const all = Array.isArray(data) ? data : [];
-      const byCanonicalOrder = (a: any, b: any) =>
-        (MODULE_ORDER[a.slug] ?? 999) - (MODULE_ORDER[b.slug] ?? 999) ||
-        String(a.title ?? "").localeCompare(String(b.title ?? ""));
 
       // The set sections keep exactly the filter and order they had (#697's
       // territory — this change adds a choice layer above them, it does not
@@ -230,6 +241,38 @@ export default function Modules() {
       // ── Guided choice (#842) ──────────────────────────────────────────
       // Runs after the page is already rendered, so the set sections never
       // wait on the Continue scan.
+      //
+      // Wrapped separately from the page load on purpose: if the choice layer
+      // fails, `guided` stays null and the panel simply does not render. The
+      // learner keeps a working page with its module cards, rather than being
+      // shown "failed to load modules" over modules that loaded perfectly
+      // well — an infrastructure failure in an optional layer is not the
+      // page's failure (design principle 9 / a11y contract §6).
+      try {
+        await loadGuidedChoice(data, progressData, archetype);
+      } catch (e) {
+        console.warn("Guided choice unavailable:", e);
+      }
+    }
+
+    /**
+     * Known network cost, accepted rather than overlooked: this adds one
+     * `GET /student/assignments` plus one `GET /module/:slug?structureOnly`
+     * per scanned slug, and a learner arriving here from their dashboard has
+     * just paid for the same requests there. Deduping means a shared
+     * progress/structure cache across surfaces, which is a larger change than
+     * #842 owns. The cost is paid after first paint, so it delays the choice
+     * panel appearing, never the module cards.
+     */
+    async function loadGuidedChoice(
+      data: any,
+      progressData: { progress?: any[] },
+      archetype: string | null,
+    ) {
+      const completedIds: string[] = (progressData?.progress ?? [])
+        .filter((p: any) => p.status === "COMPLETED")
+        .map((p: any) => String(p.activityId));
+      const all = Array.isArray(data) ? data : [];
       const progressList = Array.isArray(progressData?.progress)
         ? progressData.progress
         : [];
@@ -255,9 +298,13 @@ export default function Modules() {
       // reason for every refusal, which is the point of having one.
       const candidates = [...all].sort(byCanonicalOrder);
 
-      // #842 requires the Modules page's Continue to be the *same* target the
-      // student dashboard computes, so it runs the same canonical scan with
-      // the same access policy rather than a second opinion.
+      // Continue runs the canonical scan (`scanForNextActivity`) with this
+      // page's access policy, rather than growing a second opinion about what
+      // "next" means. Note what that does and does not buy: the dashboard runs
+      // the same scan over the FULL catalog with the student's real band,
+      // while this page scans the K-2 catalog against a constant k2 band, so
+      // for a 3-5 learner partway through G3-5 content the two surfaces
+      // legitimately differ. See the parity note in `src/lib/guidedChoice.ts`.
       const accessOnly = (slug: string) =>
         resolveGuidedChoice({
           modules: candidates.filter((m: any) => m.slug === slug),
@@ -301,7 +348,14 @@ export default function Modules() {
       );
     }
 
-    void load();
+    // One error net over the whole load. Anything that escapes — including the
+    // guided-choice block, whose own handler above is the graceful path —
+    // becomes the page's load error rather than an unhandled rejection.
+    loadPage().catch(() => {
+      if (cancelled) return;
+      setError(t("modules.loadError"));
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };

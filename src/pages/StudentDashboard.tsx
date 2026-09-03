@@ -35,6 +35,8 @@ import {
 import { HIDDEN_MODULE_SLUGS } from "@/constants/stemSets";
 import { useGradeBandState } from "@/hooks/useGradeBand";
 import {
+  MODULES_INDEX_PATH,
+  activityHref,
   buildModuleSlugPriority,
   scanForNextActivity,
   type CompletedModule,
@@ -312,10 +314,10 @@ export default function StudentDashboard() {
   }, [toast, t, authApi, gradeBand, bandStatus]);
 
   const goToNext = () => {
-    if (!nextOne) return navigate("/student/modules");
-    navigate(
-      `/student/modules/${nextOne.moduleSlug}/lessons/${nextOne.lessonId}/activities/${nextOne.activityId}`,
-    );
+    if (!nextOne) return navigate(MODULES_INDEX_PATH);
+    // The shared builder, so the Modules page's Continue (#842) cannot drift
+    // to a different route shape than this one.
+    navigate(activityHref(nextOne));
   };
 
   // Achievement definitions
