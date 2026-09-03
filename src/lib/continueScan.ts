@@ -45,6 +45,34 @@ export type ContinueScanResult = {
 /** How many follow-up activities the "Keep Playing" list shows after nextOne. */
 const UP_NEXT_COUNT = 3;
 
+// ── Routes ────────────────────────────────────────────────────────────────
+//
+// The Continue routes live here, beside the scan that produces the targets,
+// because more than one surface sends a learner to them: the student
+// dashboard's `goToNext()` and the Modules page's guided choice (#842). They
+// used to be two copies of one template literal, which meant "the two surfaces
+// agree" could only be asserted by a test writing that template a third time —
+// a proxy that stays green while the real ones drift apart. Both surfaces now
+// call these, so agreement on the route *shape* is structural, not tested.
+//
+// Agreement on the *target* is a separate question, and a weaker one: see the
+// parity note in `src/lib/guidedChoice.ts`.
+
+/** The modules index — where Continue goes when there is nothing to resume. */
+export const MODULES_INDEX_PATH = "/student/modules";
+
+/** The route for a module's overview page. */
+export function moduleHref(moduleSlug: string): string {
+  return `${MODULES_INDEX_PATH}/${moduleSlug}`;
+}
+
+/** The route that opens one activity inside a module. */
+export function activityHref(
+  activity: Pick<NextActivity, "moduleSlug" | "lessonId" | "activityId">,
+): string {
+  return `${moduleHref(activity.moduleSlug)}/lessons/${activity.lessonId}/activities/${activity.activityId}`;
+}
+
 export function sortNum(n: unknown, fallback = 9999): number {
   const x = Number(n);
   return Number.isFinite(x) ? x : fallback;

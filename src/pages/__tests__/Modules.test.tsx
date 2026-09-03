@@ -7,11 +7,20 @@ import { api } from "../../services/api";
 import { HIDDEN_MODULE_SLUGS, STEM_SET_2_IDS } from "@/constants/stemSets";
 
 // Mock the API
+//
+// `getModule` and `getStudentAssignments` are here for the #842 guided-choice
+// layer: the page now runs the canonical Continue scan, which loads each
+// module's structure and reads the student's assignments. These cases are
+// about the set sections, not about Continue, so the structures come back
+// empty — the scan finds no activity to continue and Continue falls back to
+// the first allowed module. Guided choice is covered in GuidedChoice.test.tsx.
 vi.mock("../../services/api", () => ({
   api: {
     getModules: vi.fn(),
     getAvatar: vi.fn().mockResolvedValue(null),
     getProgress: vi.fn().mockResolvedValue({ progress: [] }),
+    getModule: vi.fn().mockResolvedValue({ units: [] }),
+    getStudentAssignments: vi.fn().mockResolvedValue([]),
   },
 }));
 

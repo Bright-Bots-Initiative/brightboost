@@ -142,6 +142,40 @@ export type AnalyticsEvent =
       band: ExplorationBand;
       attempt: number;
       error_kind: "recoverable" | "unexpected";
+    }
+  // Guided choice on the Modules page (#842). Process only: which of the four
+  // navigation choices a learner reached for, and — for the surprise — which
+  // destination was disclosed and whether they took it. No score, mastery,
+  // accuracy, XP or unlock signal rides on these, because principle 9 forbids
+  // chance from touching any of those; `reroll_count` and the seed parts are
+  // here so a disclosed pick can be reproduced exactly (contract §5), not to
+  // rank anyone.
+  | {
+      kind:
+        | "guided_alternatives_opened"
+        | "guided_revisit_opened"
+        | "guided_surprise_cancelled";
+      /** How many destinations the eligibility resolver offered. */
+      pool_size: number;
+    }
+  | {
+      kind:
+        | "guided_surprise_offered"
+        | "guided_surprise_accepted"
+        | "guided_surprise_rerolled";
+      /** The disclosed destination. Content identity, not a learner outcome. */
+      module_slug: string;
+      /** Why it was offerable — progression, or a teacher's assignment. */
+      why_available: "progression" | "teacher_assignment";
+      pool_size: number;
+      /** Seed parts, so the pick is reproducible. No learner PII beyond the id. */
+      reroll_count: number;
+      date_bucket: string;
+    }
+  | {
+      // The pool was empty: nothing new to offer right now. Distinct from a
+      // cancel, and distinct from a failure — it is a legitimate, safe state.
+      kind: "guided_surprise_empty";
     };
 
 let initialized = false;
