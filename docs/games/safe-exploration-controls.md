@@ -121,6 +121,12 @@ button's accessible description. Whole-surface lock-out uses
 `unavailable={{ reason }}`, which overrides every state, offers no exits, does
 not steal focus, and is never announced unprompted.
 
+**Do not hide the last exit.** The error states offer only `retry` and `exit`,
+so hiding `retry` through `availability` on a surface with no `onExit` renders a
+panel with zero controls — a dead-end error the learner cannot leave. Keep at
+least one of `retry` / `exit` reachable in `recoverableError` and
+`unexpectedError`.
+
 ## 5. Adopting it in a game
 
 Adoption is per-game, in that game's own ticket — never a bulk migration.
@@ -218,13 +224,29 @@ first adopting game's PR, since this component ships with no consumer.
   what a focus move already reads, so the region's accessible name is a short
   heading ("What happened?") and the announcement carries the substance. Real
   screen-reader behaviour here is exactly what the manual walkthrough is for.
-- **Availability is read when an action is requested, not when it settles.** A
-  host that flips `unavailable`, or blocks `keep`, _while a keep is already in
-  flight_ does not cancel it: the handler the host itself started runs to
-  completion and the surface lands in `kept`. Revoking availability is a gate on
-  starting an action, never a kill switch for one already running. Hosts should
-  not revoke availability mid-flight; to stop an in-flight action, resolve its
-  handler with an outcome (or unmount the surface). `retry` is re-checked
-  against current availability precisely because it starts a _new_ run.
+- **Availability is read when an action is requested, not when it settles.**
+  Revoking availability gates _starting_ an action; it is never a kill switch
+  for one already running. Two shapes, and the second is the sharp one:
+  - Blocking **that specific action** mid-flight (`availability.keep` →
+    `blocked` while a keep is in flight) does not cancel it. The handler the
+    host itself started runs to completion, the surface lands in `kept`, and the
+    learner is told so — the block only takes effect from the next request.
+  - Flipping the **whole surface** to `unavailable` mid-flight is worse: the
+    keep still completes, but the surface renders the `unavailable` state, so
+    there is **no announcement, no confirmation of what was kept, no undo, and
+    no actions at all**. The learner's work was committed and they are told
+    nothing. This is the reason hosts must not revoke availability mid-flight.
+
+  To stop an in-flight action, resolve its handler with an outcome, or unmount
+  the surface. `retry` is re-checked against current availability precisely
+  because it starts a _new_ run.
+
+- **`exit` does not reset the state machine.** It releases the latch, abandons
+  the in-flight handler's result, and calls `onExit` — but leaves `state`
+  untouched. A host that stays mounted after `onExit` therefore shows a stale
+  panel: `data-state="running"`, the "Trying it" heading, and a ready "Try it"
+  button, with nothing actually running. `onExit` is meant to unmount or
+  navigate away; hosts that want to stay on the surface should reset it
+  themselves (remount, or key the component) rather than rely on `exit`.
 - **`tryAgain` without `onTryAgain`** is a pure return to `baseline`; the game
   is responsible for resetting its own workspace if that matters.

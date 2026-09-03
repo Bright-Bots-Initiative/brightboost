@@ -747,39 +747,94 @@ describe("SEC-6 — retry and the rendered/invocable identity (review round 2)",
     expect(onRun).toHaveBeenCalledTimes(1);
   });
 
-  it("every rendered action is invocable in every state it is rendered in", () => {
-    // The mirror of the guard: nothing on screen may be refused as unrendered.
-    const { result } = setup({
-      band: "older",
-      onPreview: () => {},
-      onCancel: () => {},
-      onKeep: () => {},
-      onRestore: () => {},
-      onBranch: () => {},
-      onExit: () => {},
-    });
-    const seen: string[] = [];
-    const walk = () => {
-      for (const action of result.current.actions) {
-        seen.push(`${result.current.state}:${action.id}`);
-        expect(
-          result.current.actions.map((a) => a.id),
-          `${result.current.state} rendered set`,
-        ).toContain(action.id);
+  // The mirror of the guard. `requestAction` may refuse something that is not
+  // on screen; it may never refuse something that *is*. Every pair below runs
+  // on its own controller instance, so no action's acceptance can be an
+  // artifact of a sibling having already been performed, or of a latch left
+  // over from one.
+  const FULL_BAND_CONFIG: Partial<SafeExplorationConfig> = {
+    band: "older",
+    onPreview: () => {},
+    onCancel: () => {},
+    onKeep: () => {},
+    onRestore: () => {},
+    onBranch: () => {},
+    onTryAgain: () => {},
+    onExit: () => {},
+  };
+
+  /** Shortest route from a fresh mount to each interactive state. */
+  const ROUTES: Record<string, SafeExplorationActionId[]> = {
+    baseline: [],
+    preview: ["preview"],
+    observing: ["preview", "run"],
+    kept: ["preview", "run", "keep"],
+    branched: ["preview", "run", "branch"],
+    restored: ["preview", "run", "restore"],
+  };
+
+  function driveTo(state: string) {
+    const view = setup(FULL_BAND_CONFIG);
+    for (const step of ROUTES[state]) {
+      let stepOutcome;
+      act(() => {
+        stepOutcome = view.result.current.requestAction(step);
+      });
+      expect(stepOutcome, `route step ${step} toward ${state}`).toEqual({
+        accepted: true,
+      });
+    }
+    expect(view.result.current.state).toBe(state);
+    return view;
+  }
+
+  it.each(Object.keys(ROUTES))(
+    "%s: requestAction accepts every action the state renders",
+    (state) => {
+      const probe = driveTo(state);
+      const rendered = probe.result.current.actions.map((a) => a.id);
+      probe.unmount();
+      expect(rendered.length, `${state} renders nothing`).toBeGreaterThan(0);
+
+      for (const id of rendered) {
+        const view = driveTo(state);
+        let outcome;
+        act(() => {
+          outcome = view.result.current.requestAction(id);
+        });
+        expect(outcome, `${state} renders ${id} but refused it`).toEqual({
+          accepted: true,
+        });
+        view.unmount();
       }
-    };
-    walk();
-    act(() => {
-      result.current.requestAction("preview");
+    },
+  );
+
+  it("covers every rendered (state, action) pair", () => {
+    // Pins the surface the test above walks, so quietly dropping a state or an
+    // action from the grammar cannot shrink the proof unnoticed.
+    const pairs = Object.keys(ROUTES).flatMap((state) => {
+      const view = driveTo(state);
+      const ids = view.result.current.actions.map((a) => `${state}:${a.id}`);
+      view.unmount();
+      return ids;
     });
-    walk();
-    act(() => {
-      result.current.requestAction("run");
-    });
-    walk();
-    expect(seen).toContain("baseline:preview");
-    expect(seen).toContain("preview:run");
-    expect(seen).toContain("observing:keep");
+
+    expect(pairs).toEqual([
+      "baseline:preview",
+      "preview:run",
+      "preview:cancel",
+      "observing:keep",
+      "observing:branch",
+      "observing:restore",
+      "observing:tryAgain",
+      "kept:tryAgain",
+      "kept:restore",
+      "branched:tryAgain",
+      "branched:restore",
+      "restored:tryAgain",
+    ]);
+    expect(pairs).toHaveLength(12);
   });
 });
 

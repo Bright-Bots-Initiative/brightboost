@@ -72,7 +72,10 @@
  *    component itself says comes from `safeExploration.*` in the locale files.
  * 4. **Do not hide an exit.** Use `availability` to mark an action `hidden`
  *    (absent) or `blocked` **with a reason** — the union makes a mystery
- *    disabled control unrepresentable.
+ *    disabled control unrepresentable. Never hide the last one: the error
+ *    states offer only `retry` and `exit`, so hiding `retry` on a surface with
+ *    no `onExit` renders a panel with zero controls — a dead-end the learner
+ *    cannot leave.
  * 5. **Keep the route back.** `onExit` renders only in `running` and the two
  *    error states — the states where a learner could otherwise be stranded.
  *    It is *not* a persistent Continue affordance: §7's always-visible route
