@@ -3,45 +3,84 @@ import { resolveClientDeployEnv, resolveClientGitSha } from "../deployEnv";
 
 const SHA = "91e4071f0017fa508bb9cf385abc066ede6b07e1";
 
-describe("resolveClientDeployEnv (BRAND_R0 browser classifier)", () => {
-  it("healthy production build: VITE_APP_ENV=production → no banner", () => {
+describe("resolveClientDeployEnv (browser adapter over shared/deploy-env)", () => {
+  it("healthy production build on Railway: both signals production → no banner", () => {
     expect(
       resolveClientDeployEnv({
+        VITE_RAILWAY_ENVIRONMENT_NAME: "production",
         VITE_APP_ENV: "production",
         VITE_GIT_SHA: SHA,
         PROD: true,
       }),
-    ).toEqual({
+    ).toMatchObject({
       name: "production",
-      declared: true,
       isProduction: true,
+      source: "railway",
+      mismatch: "none",
       gitSha: SHA,
       showBanner: false,
     });
   });
 
-  it("healthy staging build: VITE_APP_ENV=staging → banner shown", () => {
-    const env = resolveClientDeployEnv({ VITE_APP_ENV: "staging", PROD: true });
-    expect(env.name).toBe("staging");
-    expect(env.declared).toBe(true);
-    expect(env.isProduction).toBe(false);
-    expect(env.showBanner).toBe(true);
+  it("healthy staging build: both signals staging → banner", () => {
+    expect(
+      resolveClientDeployEnv({
+        VITE_RAILWAY_ENVIRONMENT_NAME: "staging",
+        VITE_APP_ENV: "staging",
+        PROD: true,
+      }),
+    ).toMatchObject({
+      name: "staging",
+      isProduction: false,
+      mismatch: "none",
+      showBanner: true,
+    });
   });
 
-  it("today's production build (no VITE_APP_ENV) is production but undeclared", () => {
-    const env = resolveClientDeployEnv({ PROD: true });
-    expect(env).toMatchObject({
+  it("missing explicit value with a valid Railway build value → Railway decides (staging, banner)", () => {
+    expect(
+      resolveClientDeployEnv({
+        VITE_RAILWAY_ENVIRONMENT_NAME: "staging",
+        PROD: true,
+      }),
+    ).toMatchObject({
+      name: "staging",
+      source: "railway",
+      declared: false,
+      showBanner: true,
+    });
+  });
+
+  it("SABOTAGE: frontend staging build with a copied VITE_APP_ENV=production → mismatch, banner, never production", () => {
+    const env = resolveClientDeployEnv({
+      VITE_RAILWAY_ENVIRONMENT_NAME: "staging",
+      VITE_APP_ENV: "production",
+      PROD: true,
+    });
+    expect(env.isProduction).toBe(false);
+    expect(env.name).toBe("preview");
+    expect(env.mismatch).toBe("declared-vs-railway");
+    expect(env.showBanner).toBe(true);
+    expect(env.configError).toContain(
+      "VITE_APP_ENV=production disagrees with VITE_RAILWAY_ENVIRONMENT_NAME",
+    );
+  });
+
+  it("today's production build (no signals) is production but undeclared", () => {
+    expect(resolveClientDeployEnv({ PROD: true })).toMatchObject({
       name: "production",
       declared: false,
+      source: "node_env",
       showBanner: false,
     });
   });
 
-  it("an unrecognised VITE_APP_ENV never becomes production", () => {
-    const env = resolveClientDeployEnv({ VITE_APP_ENV: "prod", PROD: true });
-    expect(env).toMatchObject({
+  it("an unrecognised VITE_APP_ENV is a declared-unrecognized mismatch (banner)", () => {
+    expect(
+      resolveClientDeployEnv({ VITE_APP_ENV: "prod", PROD: true }),
+    ).toMatchObject({
       name: "preview",
-      declared: true,
+      mismatch: "declared-unrecognized",
       showBanner: true,
     });
   });
@@ -54,21 +93,24 @@ describe("resolveClientDeployEnv (BRAND_R0 browser classifier)", () => {
       showBanner: false,
     });
     expect(resolveClientDeployEnv({ PROD: false, MODE: "test" })).toMatchObject(
-      {
-        name: "test",
-        showBanner: false,
-      },
+      { name: "test", showBanner: false },
     );
   });
 
-  it("the Dockerfile's empty-string default counts as undeclared", () => {
+  it("the Dockerfile's empty-string defaults count as absent", () => {
     expect(
       resolveClientDeployEnv({
         VITE_APP_ENV: "",
+        VITE_RAILWAY_ENVIRONMENT_NAME: "",
         VITE_GIT_SHA: "",
         PROD: true,
       }),
-    ).toMatchObject({ name: "production", declared: false, gitSha: null });
+    ).toMatchObject({
+      name: "production",
+      declared: false,
+      railwayEnv: null,
+      gitSha: null,
+    });
   });
 });
 

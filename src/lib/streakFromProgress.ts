@@ -88,7 +88,10 @@ export function computeStreakFromProgress(
 
   // Current streak: only active if last completion is today or yesterday
   let currentStreak = 0;
-  if (lastCompletedDayKey === todayKey || lastCompletedDayKey === yesterdayKey) {
+  if (
+    lastCompletedDayKey === todayKey ||
+    lastCompletedDayKey === yesterdayKey
+  ) {
     // Count backwards from last completed day
     const lastDate = new Date(lastCompletedDayKey + "T00:00:00");
     const checkDate = new Date(lastDate);
@@ -125,7 +128,15 @@ export function computeStreakFromProgress(
 
   // Calculate week days active (Sun=0 through Sat=6)
   const weekStart = getWeekStart(now);
-  const weekDaysActive: boolean[] = [false, false, false, false, false, false, false];
+  const weekDaysActive: boolean[] = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ];
 
   for (let i = 0; i < 7; i++) {
     const checkDate = new Date(weekStart);

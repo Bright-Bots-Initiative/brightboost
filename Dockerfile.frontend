@@ -39,6 +39,11 @@ ARG VITE_POSTHOG_KEY_ENV
 ENV VITE_POSTHOG_KEY_ENV=$VITE_POSTHOG_KEY_ENV
 ARG VITE_APP_ENV
 ENV VITE_APP_ENV=$VITE_APP_ENV
+# Railway's own environment identity, forwarded automatically so the bundle
+# never depends on a hand-copied VITE_APP_ENV alone (shared/deploy-env
+# cross-checks the two; a disagreement is a configuration error).
+ARG RAILWAY_ENVIRONMENT_NAME
+ENV VITE_RAILWAY_ENVIRONMENT_NAME=$RAILWAY_ENVIRONMENT_NAME
 ARG RAILWAY_GIT_COMMIT_SHA
 ARG VITE_GIT_SHA=$RAILWAY_GIT_COMMIT_SHA
 ENV VITE_GIT_SHA=$VITE_GIT_SHA

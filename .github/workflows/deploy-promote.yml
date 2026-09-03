@@ -1,0 +1,100 @@
+# BRAND_R0 — binding exact-SHA promotion (Release-on-demand; not a required check).
+#
+# Deploys ONE exact commit to a Railway environment through Railway's
+# serviceInstanceDeployV2(commitSha) API, for both services, then runs the
+# strict deploy-target verifier. The job runs under the GitHub environment
+# named by the input, so the Railway credential (an environment-scoped secret)
+# is not available until that environment's protection rules — required
+# reviewer, prevent self-review, branch policy — are satisfied. That is what
+# binds production approval to the actual deployment.
+#
+# Validation before any deploy (scripts/railway-promote.mjs): 40-hex SHA that
+# exists and is reachable from origin/main; required checks build-and-test,
+# db-check, e2e-flows green for that SHA; canonical Railway project; target
+# environment classifies as requested; no production seed flags on either
+# service; for production, staging re-proven at the same SHA. After deploy:
+# both services carry the SHA; strict verification of the public URL and the
+# origin URLs. Nothing prints credentials or variable values.
+#
+# Tier is declared in docs/ops/ci.md (#775 contract). `railway up --ci` is
+# deliberately not used: it uploads a working tree, not an exact commit.
+name: Deploy promote (exact SHA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (GitHub environment gates the Railway credential)"
+        type: choice
+        required: true
+        options:
+          - staging
+          - production
+      commit_sha:
+        description: "Exact 40-character commit SHA to deploy (must be on main with green required checks)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: deploy-promote-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: promote-${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Refuse anything but an exact 40-hex SHA (before any secret is read)
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          if ! printf '%s' "$COMMIT_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "commit_sha must be an exact 40-character lowercase hex SHA" >&2
+            exit 2
+          fi
+
+      - name: Promote exact SHA through Railway and verify strictly
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN_TYPE: ${{ vars.RAILWAY_TOKEN_TYPE }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          CANONICAL_RAILWAY_PROJECT_ID: ${{ vars.CANONICAL_RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+          RAILWAY_SERVICE_ID_BACKEND: ${{ vars.RAILWAY_SERVICE_ID_BACKEND }}
+          RAILWAY_SERVICE_ID_FRONTEND: ${{ vars.RAILWAY_SERVICE_ID_FRONTEND }}
+          TARGET_ENV: ${{ inputs.environment }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          ORIGIN_FRONTEND_URL: ${{ vars.ORIGIN_FRONTEND_URL }}
+          ORIGIN_BACKEND_URL: ${{ vars.ORIGIN_BACKEND_URL }}
+          EXPECT_ANALYTICS: ${{ vars.EXPECT_ANALYTICS }}
+          STAGING_PUBLIC_URL: ${{ vars.STAGING_PUBLIC_URL }}
+          STAGING_EXPECT_ANALYTICS: ${{ vars.STAGING_EXPECT_ANALYTICS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          PROMOTE_SUMMARY_PATH: promote-summary.json
+        run: node scripts/railway-promote.mjs
+
+      - name: Upload promotion record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promote-${{ inputs.environment }}-${{ inputs.commit_sha }}
+          path: promote-summary.json
+          if-no-files-found: warn
+          retention-days: 90

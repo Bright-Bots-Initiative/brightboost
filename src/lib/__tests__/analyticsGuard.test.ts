@@ -1,44 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { decideAnalytics, describeAnalyticsDecision } from "../analyticsGuard";
+import {
+  CLIENT_GUARD_VARS,
+  decideAnalytics,
+  describeAnalyticsDecision,
+} from "../analyticsGuard";
 
 const KEY = "phc_test_key_not_real";
-const VARS = { key: "VITE_POSTHOG_KEY", keyEnv: "VITE_POSTHOG_KEY_ENV" };
 
-describe("decideAnalytics (browser mirror of the backend guard)", () => {
-  it("healthy production with an unlabeled key stays enabled", () => {
-    expect(
-      decideAnalytics({ envName: "production", key: KEY, keyEnv: undefined }),
-    ).toEqual({
-      status: "enabled",
-      reason: "production-key",
-    });
-  });
-
-  it("healthy staging with a staging-labeled key is enabled", () => {
-    expect(
-      decideAnalytics({ envName: "staging", key: KEY, keyEnv: "staging" }),
-    ).toEqual({
-      status: "enabled",
-      reason: "nonproduction-key",
-    });
-  });
-
-  it("missing key is disabled, not refused", () => {
-    expect(
-      decideAnalytics({
-        envName: "staging",
-        key: undefined,
-        keyEnv: undefined,
-      }),
-    ).toEqual({
-      status: "disabled",
-      reason: "no-key",
-    });
-  });
-
-  it("staging with the production key is refused", () => {
+describe("analyticsGuard (browser re-export of shared/deploy-env)", () => {
+  it("names VITE_POSTHOG_KEY / VITE_POSTHOG_KEY_ENV in operator messages", () => {
     const d = decideAnalytics({
-      envName: "staging",
+      env: { name: "staging", mismatch: "none" },
       key: KEY,
       keyEnv: "production",
     });
@@ -46,26 +18,35 @@ describe("decideAnalytics (browser mirror of the backend guard)", () => {
       status: "refused",
       reason: "production-key-outside-production",
     });
-    expect(describeAnalyticsDecision(d, VARS, "staging")).toContain(
-      "VITE_POSTHOG_KEY_ENV=staging",
-    );
+    expect(
+      describeAnalyticsDecision(d, CLIENT_GUARD_VARS, "staging"),
+    ).toContain("VITE_POSTHOG_KEY_ENV=staging");
   });
 
-  it("staging with an unlabeled key is refused", () => {
+  it("exact label matching: staging+preview label and preview+staging label are refused", () => {
     expect(
-      decideAnalytics({ envName: "staging", key: KEY, keyEnv: undefined }),
-    ).toEqual({
-      status: "refused",
-      reason: "unlabeled-nonproduction",
-    });
+      decideAnalytics({
+        env: { name: "staging", mismatch: "none" },
+        key: KEY,
+        keyEnv: "preview",
+      }).reason,
+    ).toBe("environment-key-mismatch");
+    expect(
+      decideAnalytics({
+        env: { name: "preview", mismatch: "none" },
+        key: KEY,
+        keyEnv: "staging",
+      }).reason,
+    ).toBe("environment-key-mismatch");
   });
 
-  it("production with a staging-labeled key is refused", () => {
+  it("a classifier mismatch refuses analytics regardless of label", () => {
     expect(
-      decideAnalytics({ envName: "production", key: KEY, keyEnv: "staging" }),
-    ).toEqual({
-      status: "refused",
-      reason: "nonproduction-key-in-production",
-    });
+      decideAnalytics({
+        env: { name: "preview", mismatch: "declared-vs-railway" },
+        key: KEY,
+        keyEnv: "preview",
+      }),
+    ).toEqual({ status: "refused", reason: "environment-mismatch" });
   });
 });

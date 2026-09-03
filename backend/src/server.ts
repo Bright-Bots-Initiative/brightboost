@@ -47,11 +47,19 @@ app.set("trust proxy", 1);
 // Security headers
 const isProduction = process.env.NODE_ENV === "production";
 
-// BRAND_R0: one typed classification of this deployment (APP_ENV →
-// RAILWAY_ENVIRONMENT_NAME → NODE_ENV). Drives the noindex header below and
-// the /health posture fields; see backend/src/utils/deployEnv.ts.
+// BRAND_R0: one typed classification of this deployment from the shared
+// contract (shared/deploy-env): Railway's environment is authoritative, the
+// APP_ENV declaration must agree, NODE_ENV is only the fallback. Drives the
+// noindex header below and the /health posture fields.
 const deployEnv = resolveDeployEnv(process.env);
 const robotsTag = robotsTagFor(deployEnv);
+if (deployEnv.mismatch !== "none") {
+  // One clear startup error, names only — the host runs as noindexed
+  // preview with analytics refused until the configuration is fixed.
+  console.error(
+    `[deploy-env] CONFIGURATION ERROR (${deployEnv.mismatch}): ${deployEnv.configError}`,
+  );
+}
 
 app.use(
   helmet({
@@ -230,9 +238,11 @@ app.use("/api", creationsRouter);
 app.use("/api", experimentsRouter);
 app.use("/api", adminMetricsRouter);
 
-// Health carries the non-secret deploy posture (BRAND_R0): which environment
-// this is, which commit it was built from, whether it is noindexed, and whether
-// analytics was enabled / disabled / refused by the environment guard. Also
+// Health carries the non-secret deploy posture (BRAND_R0): the effective
+// environment and what decided it, the operator declaration, Railway's
+// classification, any declaration/Railway mismatch (names only, never
+// values), the commit, whether the host is noindexed, and the analytics
+// guard verdict (enabled / enabled-unlabeled / disabled / refused). Also
 // mounted under /api so the nginx frontend proxy (docs/nginx.conf) reaches it.
 const healthHandler = (_req: Request, res: Response) =>
   res.status(200).json({
@@ -240,6 +250,11 @@ const healthHandler = (_req: Request, res: Response) =>
     sharedEngine: sharedEngineProbeLabel,
     env: deployEnv.name,
     envSource: deployEnv.source,
+    declaredEnv: deployEnv.declaredEnv,
+    railwayEnv: deployEnv.railwayEnv,
+    railwayEnvironmentName: deployEnv.railwayEnvironmentName,
+    mismatch: deployEnv.mismatch,
+    configError: deployEnv.configError,
     sha: deployEnv.gitSha ?? "unknown",
     noindex: deployEnv.noindex,
     analytics: getAnalyticsStatus(),

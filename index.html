@@ -10,11 +10,18 @@
     <meta name="description" content="Bilingual K-8 STEM learning platform" />
     <meta name="author" content="Bright Bots Initiative" />
     <meta property="og:image" content="/og-image.png" />
-    <!-- BRAND_R0 deploy posture, inlined by Vite at build time (VITE_APP_ENV /
-         VITE_GIT_SHA). Read by scripts/verify-deploy-target.mjs; an unreplaced
-         %…% placeholder means the variable was absent at build time. -->
-    <meta name="bb-app-env" content="%VITE_APP_ENV%" />
-    <meta name="bb-git-sha" content="%VITE_GIT_SHA%" />
+    <!-- BRAND_R0 deploy posture, stamped at build time by the bb-build-metadata
+         plugin (vite.config.ts) from the shared deploy-environment contract.
+         bb-app-env = operator declaration (VITE_APP_ENV); bb-railway-env =
+         Railway's classification (VITE_RAILWAY_ENVIRONMENT_NAME);
+         bb-env-effective / bb-env-source / bb-env-mismatch = the contract's
+         verdict; bb-git-sha = the commit. Read by scripts/verify-deploy-target.mjs. -->
+    <meta name="bb-app-env" content="%BB_ENV_DECLARED%" />
+    <meta name="bb-railway-env" content="%BB_RAILWAY_ENV%" />
+    <meta name="bb-env-effective" content="%BB_ENV_EFFECTIVE%" />
+    <meta name="bb-env-source" content="%BB_ENV_SOURCE%" />
+    <meta name="bb-env-mismatch" content="%BB_ENV_MISMATCH%" />
+    <meta name="bb-git-sha" content="%BB_GIT_SHA%" />
   </head>
 
   <body>

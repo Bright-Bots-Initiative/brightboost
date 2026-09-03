@@ -181,7 +181,11 @@ export function assertRegistryFresh(
 export function useRegisteredFlag<V extends string>(
   def: FlagDefinition<V>,
 ): FlagState<V> {
-  const analyticsEnabled = getAnalyticsDecision().status === "enabled";
+  const analyticsStatus = getAnalyticsDecision().status;
+  // `enabled-unlabeled` is production's bootstrap-compatibility state (key
+  // without a label); flags still load there. Anything else falls back.
+  const analyticsEnabled =
+    analyticsStatus === "enabled" || analyticsStatus === "enabled-unlabeled";
   const [state, setState] = useState<FlagState<V>>(() =>
     resolveFlagValue(def, undefined, false, analyticsEnabled),
   );

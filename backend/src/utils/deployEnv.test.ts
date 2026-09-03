@@ -1,4 +1,9 @@
 /* @vitest-environment node */
+/**
+ * Backend adapter over the shared deploy-environment contract. The contract
+ * itself is proven in shared/deploy-env/index.test.ts; these cases prove the
+ * adapter reads the right process.env names and keeps the SHA precedence.
+ */
 import { describe, expect, it } from "vitest";
 import {
   ROBOTS_TAG_NOINDEX,
@@ -7,100 +12,105 @@ import {
   robotsTagFor,
 } from "./deployEnv";
 
-describe("resolveDeployEnv (BRAND_R0 classifier)", () => {
-  it("healthy production: APP_ENV=production → production, no noindex", () => {
+const SHA = "91e4071f0017fa508bb9cf385abc066ede6b07e1";
+
+describe("resolveDeployEnv (backend adapter)", () => {
+  it("healthy production: RAILWAY_ENVIRONMENT_NAME=production + APP_ENV=production", () => {
     const env = resolveDeployEnv({
+      RAILWAY_ENVIRONMENT_NAME: "production",
       APP_ENV: "production",
       NODE_ENV: "production",
-      RAILWAY_GIT_COMMIT_SHA: "91e4071f0017fa508bb9cf385abc066ede6b07e1",
+      RAILWAY_GIT_COMMIT_SHA: SHA,
     });
-    expect(env).toEqual({
+    expect(env).toMatchObject({
       name: "production",
       isProduction: true,
       noindex: false,
-      source: "APP_ENV",
-      gitSha: "91e4071f0017fa508bb9cf385abc066ede6b07e1",
+      source: "railway",
+      declaredEnv: "production",
+      railwayEnv: "production",
+      mismatch: "none",
+      gitSha: SHA,
     });
     expect(robotsTagFor(env)).toBeNull();
   });
 
-  it("healthy staging: APP_ENV=staging → staging with noindex", () => {
+  it("healthy staging: RAILWAY_ENVIRONMENT_NAME=staging + APP_ENV=staging", () => {
     const env = resolveDeployEnv({
+      RAILWAY_ENVIRONMENT_NAME: "staging",
       APP_ENV: "staging",
       NODE_ENV: "production",
     });
-    expect(env.name).toBe("staging");
-    expect(env.isProduction).toBe(false);
-    expect(env.noindex).toBe(true);
-    expect(env.source).toBe("APP_ENV");
+    expect(env).toMatchObject({
+      name: "staging",
+      noindex: true,
+      mismatch: "none",
+    });
     expect(robotsTagFor(env)).toBe(ROBOTS_TAG_NOINDEX);
   });
 
-  it("today's production (no APP_ENV, no Railway name, NODE_ENV=production) stays production", () => {
-    const env = resolveDeployEnv({ NODE_ENV: "production" });
-    expect(env.name).toBe("production");
-    expect(env.source).toBe("NODE_ENV");
-    expect(env.noindex).toBe(false);
+  it("today's production (no Railway name, no APP_ENV, NODE_ENV=production) stays production", () => {
+    expect(resolveDeployEnv({ NODE_ENV: "production" })).toMatchObject({
+      name: "production",
+      source: "node_env",
+      declared: false,
+    });
   });
 
-  it("a Railway environment named staging is staging even with production's copied NODE_ENV", () => {
+  it("SABOTAGE: Railway staging with a copied APP_ENV=production is never production", () => {
     const env = resolveDeployEnv({
-      NODE_ENV: "production",
       RAILWAY_ENVIRONMENT_NAME: "staging",
+      APP_ENV: "production",
+      NODE_ENV: "production",
     });
-    expect(env.name).toBe("staging");
-    expect(env.source).toBe("RAILWAY_ENVIRONMENT_NAME");
+    expect(env.isProduction).toBe(false);
     expect(env.noindex).toBe(true);
+    expect(env.mismatch).toBe("declared-vs-railway");
+    expect(env.configError).toContain(
+      "APP_ENV=production disagrees with RAILWAY_ENVIRONMENT_NAME",
+    );
   });
 
-  it("a Railway environment named production is production", () => {
-    const env = resolveDeployEnv({
-      NODE_ENV: "production",
-      RAILWAY_ENVIRONMENT_NAME: "production",
+  it("SABOTAGE: Railway production with APP_ENV=staging is a mismatch", () => {
+    expect(
+      resolveDeployEnv({
+        RAILWAY_ENVIRONMENT_NAME: "production",
+        APP_ENV: "staging",
+      }),
+    ).toMatchObject({
+      name: "preview",
+      isProduction: false,
+      mismatch: "declared-vs-railway",
     });
-    expect(env.name).toBe("production");
-    expect(env.noindex).toBe(false);
   });
 
   it("an unfamiliar Railway environment name (pr-123) is a noindexed preview", () => {
-    const env = resolveDeployEnv({
-      NODE_ENV: "production",
-      RAILWAY_ENVIRONMENT_NAME: "pr-123",
+    expect(
+      resolveDeployEnv({
+        RAILWAY_ENVIRONMENT_NAME: "pr-123",
+        NODE_ENV: "production",
+      }),
+    ).toMatchObject({
+      name: "preview",
+      noindex: true,
+      railwayEnv: "preview",
     });
-    expect(env.name).toBe("preview");
-    expect(env.noindex).toBe(true);
-  });
-
-  it("APP_ENV wins over RAILWAY_ENVIRONMENT_NAME and NODE_ENV", () => {
-    const env = resolveDeployEnv({
-      APP_ENV: "staging",
-      RAILWAY_ENVIRONMENT_NAME: "production",
-      NODE_ENV: "production",
-    });
-    expect(env.name).toBe("staging");
-    expect(env.source).toBe("APP_ENV");
   });
 
   it("a typo in APP_ENV (prod) never classifies as production", () => {
-    const env = resolveDeployEnv({ APP_ENV: "prod", NODE_ENV: "production" });
-    expect(env.name).toBe("preview");
-    expect(env.source).toBe("APP_ENV:unrecognized");
-    expect(env.noindex).toBe(true);
-  });
-
-  it("is case- and whitespace-insensitive", () => {
-    expect(resolveDeployEnv({ APP_ENV: "  Production " }).name).toBe(
-      "production",
-    );
-    expect(resolveDeployEnv({ APP_ENV: "", NODE_ENV: "test" }).name).toBe(
-      "test",
-    );
+    expect(
+      resolveDeployEnv({ APP_ENV: "prod", NODE_ENV: "production" }),
+    ).toMatchObject({
+      name: "preview",
+      mismatch: "declared-unrecognized",
+      noindex: true,
+    });
   });
 
   it("NODE_ENV=test → test; nothing set → development", () => {
     expect(resolveDeployEnv({ NODE_ENV: "test" })).toMatchObject({
       name: "test",
-      source: "NODE_ENV",
+      source: "node_env",
     });
     expect(resolveDeployEnv({})).toMatchObject({
       name: "development",
@@ -113,19 +123,12 @@ describe("resolveDeployEnv (BRAND_R0 classifier)", () => {
 describe("resolveGitSha", () => {
   it("prefers GIT_SHA over RAILWAY_GIT_COMMIT_SHA and lower-cases", () => {
     expect(
-      resolveGitSha({
-        GIT_SHA: "ABC1234",
-        RAILWAY_GIT_COMMIT_SHA: "91e4071f0017fa508bb9cf385abc066ede6b07e1",
-      }),
+      resolveGitSha({ GIT_SHA: "ABC1234", RAILWAY_GIT_COMMIT_SHA: SHA }),
     ).toBe("abc1234");
   });
 
   it("falls back to RAILWAY_GIT_COMMIT_SHA", () => {
-    expect(
-      resolveGitSha({
-        RAILWAY_GIT_COMMIT_SHA: "91e4071f0017fa508bb9cf385abc066ede6b07e1",
-      }),
-    ).toBe("91e4071f0017fa508bb9cf385abc066ede6b07e1");
+    expect(resolveGitSha({ RAILWAY_GIT_COMMIT_SHA: SHA })).toBe(SHA);
   });
 
   it("returns null when unset, blank, or not hex", () => {

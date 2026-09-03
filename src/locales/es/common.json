@@ -2376,6 +2376,7 @@
   },
   "envBanner": {
     "message": "{{env}}: solo datos de prueba. Este no es el Bright Boost real.",
+    "mismatch": "Configuración incoherente: esta versión no es la de producción. Solo datos de prueba.",
     "build": "compilación {{sha}}",
     "env": {
       "staging": "Sitio de pruebas (staging)",

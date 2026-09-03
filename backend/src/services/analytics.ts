@@ -8,6 +8,14 @@
  * If POSTHOG_KEY is unset, every call here silently no-ops so dev/test runs
  * cleanly without a key. Don't crash on a missing key.
  *
+ * BRAND_R0: the key must be labelled with the environment it belongs to
+ * (POSTHOG_KEY_ENV). The shared guard (shared/deploy-env) refuses the
+ * production key outside production, unlabeled keys outside production, any
+ * label that does not match the classified environment exactly, and any host
+ * whose environment declaration disagrees with Railway. Production with an
+ * unlabeled key keeps working as `enabled-unlabeled` (bootstrap compatibility
+ * only; removed once production is labelled — #860).
+ *
  * PRIVACY: same rules as src/lib/analytics.ts — distinctId is the DB user id,
  * properties are IDs and enums only. Never persist email, name, or free-text
  * content to PostHog.
@@ -16,6 +24,7 @@ import { PostHog } from "posthog-node";
 import {
   decideAnalytics,
   describeAnalyticsDecision,
+  SERVER_GUARD_VARS,
   type AnalyticsDecision,
   type AnalyticsStatus,
 } from "../utils/analyticsGuard";
@@ -23,11 +32,7 @@ import { resolveDeployEnv } from "../utils/deployEnv";
 
 const POSTHOG_KEY = process.env.POSTHOG_KEY;
 const POSTHOG_HOST = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
-// BRAND_R0: the environment the key was issued for (production | staging | …).
-// See utils/analyticsGuard.ts — an unlabeled key outside production is refused.
 const POSTHOG_KEY_ENV = process.env.POSTHOG_KEY_ENV;
-
-const GUARD_VARS = { key: "POSTHOG_KEY", keyEnv: "POSTHOG_KEY_ENV" };
 
 let client: PostHog | null = null;
 let decision: AnalyticsDecision | null = null;
@@ -36,32 +41,45 @@ let announced = false;
 /** Environment-guard verdict for this process (computed once, logged once). */
 export function getAnalyticsDecision(): AnalyticsDecision {
   if (decision) return decision;
-  const envName = resolveDeployEnv(process.env).name;
+  const env = resolveDeployEnv(process.env);
   decision = decideAnalytics({
-    envName,
+    env,
     key: POSTHOG_KEY,
     keyEnv: POSTHOG_KEY_ENV,
   });
   if (!announced) {
     announced = true;
-    const message = `[analytics] ${describeAnalyticsDecision(decision, GUARD_VARS, envName)}`;
-    if (decision.status === "refused") console.error(message);
-    else if (decision.status === "disabled") {
-      console.info(
-        "[analytics] No POSTHOG_KEY set — server-side analytics disabled (fine in local dev)",
-      );
-    } else console.info(message);
+    const message = `[analytics] ${describeAnalyticsDecision(decision, SERVER_GUARD_VARS, env.name)}`;
+    switch (decision.status) {
+      case "refused":
+        console.error(message);
+        break;
+      case "enabled-unlabeled":
+        console.warn(message);
+        break;
+      case "disabled":
+        console.info(
+          "[analytics] No POSTHOG_KEY set — server-side analytics disabled (fine in local dev)",
+        );
+        break;
+      default:
+        console.info(message);
+    }
   }
   return decision;
 }
 
-/** `enabled` | `disabled` | `refused` — surfaced on /health. */
+/** `enabled` | `enabled-unlabeled` | `disabled` | `refused` — surfaced on /health. */
 export function getAnalyticsStatus(): AnalyticsStatus {
   return getAnalyticsDecision().status;
 }
 
 export function getAnalyticsClient(): PostHog | null {
-  if (getAnalyticsDecision().status !== "enabled" || !POSTHOG_KEY) {
+  const status = getAnalyticsDecision().status;
+  if (
+    (status !== "enabled" && status !== "enabled-unlabeled") ||
+    !POSTHOG_KEY
+  ) {
     return null;
   }
   if (!client) {

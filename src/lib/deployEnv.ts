@@ -1,88 +1,62 @@
 /**
- * Browser-side deployment-environment classifier (BRAND_R0).
+ * Browser adapter for the shared deploy-environment contract (BRAND_R0).
  *
- * Mirrors `backend/src/utils/deployEnv.ts` for the Vite bundle. Values are
- * inlined at build time (`VITE_*`), so a staging build must be built with
- * `VITE_APP_ENV=staging` — see DEPLOYMENT.md and Dockerfile.frontend.
+ * Rules live in `shared/deploy-env/index.ts`. Inputs are inlined by Vite at
+ * build time: `VITE_RAILWAY_ENVIRONMENT_NAME` (forwarded automatically from
+ * Railway's `RAILWAY_ENVIRONMENT_NAME` build arg by `Dockerfile.frontend`),
+ * `VITE_APP_ENV` (the operator declaration) and `VITE_GIT_SHA`.
  *
- * Safe direction: an unrecognised `VITE_APP_ENV` classifies as `preview`
- * (banner shown, treated as non-production). An absent `VITE_APP_ENV` keeps
- * today's behaviour (a production build is production) so the current
- * production deploy does not regress; the deploy-target smoke refuses a
- * staging host that failed to declare itself.
+ * A declaration that disagrees with Railway is a configuration error: the
+ * bundle classifies as `preview`, the banner renders, analytics is refused,
+ * and strict deploy verification fails (`DT-010`).
  */
+import {
+  classifyDeployEnv,
+  normalizeGitSha,
+  type DeployEnv,
+} from "@shared/deploy-env";
 
-export type ClientDeployEnvName =
-  | "production"
-  | "staging"
-  | "preview"
-  | "development"
-  | "test";
+export type { DeployEnv };
 
-export interface ClientDeployEnv {
-  name: ClientDeployEnvName;
-  /** True when `VITE_APP_ENV` was present at build time. */
-  declared: boolean;
-  isProduction: boolean;
-  /** Lower-cased git SHA baked into the bundle (`VITE_GIT_SHA`), or null. */
-  gitSha: string | null;
-  /** The staging banner renders only for staging and preview hosts. */
+export interface ClientDeployEnv extends DeployEnv {
+  /** The staging banner renders for staging, preview, and any mismatch. */
   showBanner: boolean;
 }
 
 export interface ViteEnvLike {
   VITE_APP_ENV?: string;
+  VITE_RAILWAY_ENVIRONMENT_NAME?: string;
   VITE_GIT_SHA?: string;
   PROD?: boolean;
   MODE?: string;
 }
 
-const NAMES: readonly ClientDeployEnvName[] = [
-  "production",
-  "staging",
-  "preview",
-  "development",
-  "test",
-];
-
-function clean(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
-
-function isName(value: string): value is ClientDeployEnvName {
-  return (NAMES as readonly string[]).includes(value);
-}
+export const CLIENT_ENV_NAMES = {
+  declared: "VITE_APP_ENV",
+  railway: "VITE_RAILWAY_ENVIRONMENT_NAME",
+} as const;
 
 export function resolveClientGitSha(raw: string | undefined): string | null {
-  const sha = clean(raw);
-  if (!sha) return null;
-  return /^[0-9a-f]{7,40}$/i.test(sha) ? sha.toLowerCase() : null;
+  return normalizeGitSha(raw);
 }
 
 export function resolveClientDeployEnv(
   env: ViteEnvLike = import.meta.env as ViteEnvLike,
 ): ClientDeployEnv {
-  const gitSha = resolveClientGitSha(env.VITE_GIT_SHA);
-  const declaredRaw = clean(env.VITE_APP_ENV)?.toLowerCase();
-
-  let name: ClientDeployEnvName;
-  let declared: boolean;
-  if (declaredRaw) {
-    declared = true;
-    name = isName(declaredRaw) ? declaredRaw : "preview";
-  } else {
-    declared = false;
-    if (env.PROD) name = "production";
-    else if (env.MODE === "test") name = "test";
-    else name = "development";
-  }
-
+  const resolved = classifyDeployEnv(
+    {
+      railwayEnvironmentName: env.VITE_RAILWAY_ENVIRONMENT_NAME,
+      declaredEnv: env.VITE_APP_ENV,
+      nodeEnv: env.PROD ? "production" : env.MODE,
+      gitSha: env.VITE_GIT_SHA,
+    },
+    { names: CLIENT_ENV_NAMES },
+  );
   return {
-    name,
-    declared,
-    isProduction: name === "production",
-    gitSha,
-    showBanner: name === "staging" || name === "preview",
+    ...resolved,
+    showBanner:
+      resolved.name === "staging" ||
+      resolved.name === "preview" ||
+      resolved.mismatch !== "none",
   };
 }

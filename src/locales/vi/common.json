@@ -2022,6 +2022,7 @@
   },
   "envBanner": {
     "message": "{{env}} — chỉ có dữ liệu thử nghiệm. Đây không phải là Bright Boost thật.",
+    "mismatch": "Cấu hình không khớp — bản dựng này không phải bản chính thức. Chỉ có dữ liệu thử nghiệm.",
     "build": "bản dựng {{sha}}",
     "env": {
       "staging": "Trang thử nghiệm (staging)",

@@ -2,59 +2,64 @@
 
 # Environment matrix
 
-What each environment is, what it may touch, and how the repository controls tell them apart. Variable semantics are defined in [`DEPLOYMENT.md`](../../../DEPLOYMENT.md) and [`docs/analytics.md`](../../analytics.md).
+What each environment is, what it may touch, and how the repository controls tell them apart. Variable semantics and the deploy-environment contract are defined in [`DEPLOYMENT.md`](../../../DEPLOYMENT.md); analytics labels in [`docs/analytics.md`](../../analytics.md).
 
-## Classification
+## Classification (shared/deploy-env)
 
-| Environment              | Backend `env` (`/health`) | Decided by                                                        | `noindex` | Banner | Analytics                                                              |
-| ------------------------ | ------------------------- | ----------------------------------------------------------------- | --------- | ------ | ---------------------------------------------------------------------- |
-| Local dev                | `development`             | nothing set (`NODE_ENV` unset or `development`)                   | yes       | no     | disabled unless a key **and** `POSTHOG_KEY_ENV=development` are set    |
-| Unit tests / CI jobs     | `test`                    | `NODE_ENV=test`                                                   | yes       | no     | disabled (no key in CI)                                                |
-| Staging (target state)   | `staging`                 | `APP_ENV=staging` (and Railway environment named `staging`)       | yes       | yes    | staging PostHog project only, `POSTHOG_KEY_ENV=staging`                |
-| Preview (future PR envs) | `preview`                 | `APP_ENV=preview` or an unfamiliar Railway environment name       | yes       | yes    | disabled or a non-production key                                       |
-| Production               | `production`              | `APP_ENV=production` (today: `NODE_ENV=production`, nothing else) | no        | no     | production project key; label `POSTHOG_KEY_ENV=production` recommended |
+| Environment                       | `/health.env` | Decided by (`envSource`)                          | `declaredEnv` must be | `noindex` | Banner    | Analytics                                                                                                 |
+| --------------------------------- | ------------- | ------------------------------------------------- | --------------------- | --------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| Local dev                         | `development` | nothing set → `default`                           | (unset)               | yes       | no        | disabled unless a **non-production** key **and** `POSTHOG_KEY_ENV=development`                            |
+| Unit tests / CI jobs              | `test`        | `NODE_ENV=test` → `node_env`                      | (unset)               | yes       | no        | disabled (no key in CI)                                                                                   |
+| Staging (Railway `staging`)       | `staging`     | `RAILWAY_ENVIRONMENT_NAME=staging` → `railway`    | `staging`             | yes       | yes       | disabled until a staging PostHog project exists; then `POSTHOG_KEY_ENV=staging`                           |
+| Preview (future PR envs)          | `preview`     | any other Railway name → `railway`                | `preview`             | yes       | yes       | disabled or `POSTHOG_KEY_ENV=preview`                                                                     |
+| Production (Railway `production`) | `production`  | `RAILWAY_ENVIRONMENT_NAME=production` → `railway` | `production`          | no        | no        | production key + `POSTHOG_KEY_ENV=production` (`enabled`); unlabeled = `enabled-unlabeled` until labelled |
+| **Configuration mismatch**        | `preview`     | `railway` (Railway still decides)                 | disagrees             | yes       | yes (red) | `refused` (`environment-mismatch`)                                                                        |
 
-Precedence in the backend: `APP_ENV` → `RAILWAY_ENVIRONMENT_NAME` → `NODE_ENV`. An unrecognised `APP_ENV` classifies as `preview` (noindex), never production. Frontend: `VITE_APP_ENV` only; an absent value keeps a production build production (no regression) and is reported as _undeclared_ by the smoke.
+Railway is authoritative; the declaration must agree; a disagreement (or an unrecognised declaration) is a configuration error that can never behave as production. Outside Railway the declaration decides; `NODE_ENV` is only the fallback.
 
 ## Data and credentials
 
-| Environment | Database                                                              | Seed                                                               | Secrets                                                                  |
-| ----------- | --------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| Local       | Docker Postgres `localhost:5435` (`SETUP.md`)                         | `npm run seed` / `npm run db:init`; wipe allowed on loopback       | `.env`, `backend/.env` (gitignored)                                      |
-| CI          | `postgres:15` service, database `brightboost_test`                    | `npm run e2e:seed` (refuses non-test DB names, #742)               | Workflow env only; no repository secrets needed for required checks      |
-| Staging     | **Separate** Supabase project or persistent branch — never production | Synthetic fixtures only (`e2e:seed` shape); `RUN_SEED` stays unset | Railway staging environment variables, sealed separately from production |
-| Production  | Supabase production (`DATABASE_URL` + `DIRECT_URL`)                   | Never (`RUN_SEED` and `SEED_ALLOW_PRODUCTION` unset)               | Railway production variables, sealed                                     |
+| Environment | Database                                                                                                   | Fixtures                                                                                                                       | Secrets                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Local       | Docker Postgres `localhost:5435` (`SETUP.md`)                                                              | `npm run seed` / `npm run db:init`; wipe allowed on loopback                                                                   | `.env`, `backend/.env` (gitignored)                                                                                                 |
+| CI          | `postgres:15` service, database `brightboost_test`                                                         | `npm run e2e:seed` (refuses non-test DB names, #742)                                                                           | Workflow env only; no repository secrets needed for required checks                                                                 |
+| Staging     | **Separate Supabase project** `brightboost-staging` (`sduhifvagbznswdkjldw`, us-west-1) — never production | `scripts/staging-fixtures.mjs` (refuses the production ref, loopback, unknown hosts; never wipes; rotates synthetic passwords) | Railway `staging` environment variables, its own `SESSION_SECRET`; GitHub `staging` environment secret `RAILWAY_TOKEN`              |
+| Production  | Supabase production (`rjpztbtkdwwdmnbbrqmm`, us-west-2), daily physical backups                            | Never (`RUN_SEED`, `SEED_ALLOW_PRODUCTION`, `SEED_RESET` unset; the promotion job refuses if present)                          | Railway `production` variables (sealing = dashboard step); GitHub `production` environment secret `RAILWAY_TOKEN` gated by reviewer |
 
-Rule: staging never reads or copies production data. Any fixture lands through migrations plus `e2e:seed`-style synthetic seeding.
+Rule: staging never reads or copies production data. Any fixture lands through migrations plus the synthetic fixture command.
 
-## Domains and indexability (observed 2026-09-03)
+## Hosts (observed 2026-09-03)
 
-| Host                                    | Serves                           | Front                                                        | Indexable                                                             |
-| --------------------------------------- | -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| `brightboost.org`                       | Frontend (nginx image) → Railway | Cloudflare proxy (`Server: cloudflare`, `cf-ray`)            | yes (no robots.txt; SPA fallback answers `/robots.txt` with HTML 200) |
-| `www.brightboost.org`                   | —                                | **does not resolve**                                         | —                                                                     |
-| `fe-production-3552.up.railway.app`     | Frontend (nginx image)           | Railway edge                                                 | yes (duplicate of the apex — a canonical tag is a BRAND_R1 SEO item)  |
-| `brightboost-production.up.railway.app` | Backend API (Express, helmet)    | Railway edge                                                 | API only                                                              |
-| Staging host                            | **does not exist yet**           | Target: Cloudflare Access (deny by default) + `X-Robots-Tag` | never                                                                 |
+| Host                                     | Serves                                | Front                                                                                                | Indexable                                                             |
+| ---------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `brightboost.org`                        | Railway `glorious-friendship` / `FE`  | Cloudflare proxy (`Server: cloudflare`, `cf-ray`)                                                    | yes (no robots.txt; SPA fallback answers `/robots.txt` with HTML 200) |
+| `www.brightboost.org`                    | —                                     | **does not resolve**                                                                                 | —                                                                     |
+| `fe-production-3552.up.railway.app`      | Railway `FE` origin (nginx image)     | Railway edge                                                                                         | yes (duplicate of the apex — BRAND_R1 SEO item)                       |
+| `brightboost-production.up.railway.app`  | Railway `BE` origin (Express, helmet) | Railway edge                                                                                         | API only                                                              |
+| `fe-staging-staging-126a.up.railway.app` | Railway `FE-staging` (staging env)    | Railway edge only — Cloudflare Access is an operator step (no Cloudflare credential in this session) | never: `X-Robots-Tag: noindex, nofollow` at origin                    |
+| `be-staging-staging-99b2.up.railway.app` | Railway `BE-staging` (staging env)    | Railway edge                                                                                         | never                                                                 |
 
 ## Variables per service (target state)
 
-| Service                          | Production                                                                                                                                                     | Staging                                                                                                                                                                                                     |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend (`Dockerfile.backend`)   | `NODE_ENV=production`, `APP_ENV=production`, `POSTHOG_KEY_ENV=production`, existing table in `DEPLOYMENT.md`                                                   | `NODE_ENV=production`, `APP_ENV=staging`, staging `DATABASE_URL`/`DIRECT_URL`, staging `SESSION_SECRET`, staging `POSTHOG_KEY` + `POSTHOG_KEY_ENV=staging` (or no key), `FRONTEND_ORIGINS=<staging fe url>` |
-| Frontend (`Dockerfile.frontend`) | `VITE_API_BASE=/api`, `BACKEND_URL`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `VITE_POSTHOG_KEY_ENV=production`, `VITE_APP_ENV=production`, `ROBOTS_TAG` unset | `VITE_API_BASE=/api`, `BACKEND_URL=<staging backend>`, `VITE_APP_ENV=staging`, `ROBOTS_TAG="noindex, nofollow"`, staging `VITE_POSTHOG_KEY` + `VITE_POSTHOG_KEY_ENV=staging` (or no key)                    |
+| Service                          | Production                                                                                                                                                                                                                 | Staging                                                                                                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend (`Dockerfile.backend`)   | `NODE_ENV=production`, **`APP_ENV=production`**, **`POSTHOG_KEY_ENV=production`** (both set 2026-09-03T17:14Z, effective on the next deploy), existing table in `DEPLOYMENT.md`                                            | `NODE_ENV=production`, `APP_ENV=staging`, staging `DATABASE_URL`/`DIRECT_URL`, its own `SESSION_SECRET`, `FRONTEND_ORIGINS`/`FRONTEND_URL` = staging FE URL; **no** `POSTHOG_KEY` until a staging PostHog project exists (then `POSTHOG_KEY_ENV=staging`) |
+| Frontend (`Dockerfile.frontend`) | `VITE_API_BASE`, `BACKEND_URL`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, **`VITE_APP_ENV=production`**, **`VITE_POSTHOG_KEY_ENV=production`**, `ROBOTS_TAG` unset; `VITE_RAILWAY_ENVIRONMENT_NAME` forwarded automatically | `VITE_API_BASE=/api`, `BACKEND_URL=<staging BE URL>`, `VITE_APP_ENV=staging`, `ROBOTS_TAG="noindex, nofollow"`; no PostHog key                                                                                                                            |
 
-`VITE_*` values are build-time: changing one requires a clean rebuild of the frontend image (`docs/analytics.md`). `RAILWAY_GIT_COMMIT_SHA` is injected by Railway and flows into `/health.sha` and `<meta name="bb-git-sha">` without operator action.
+`VITE_*` values are build-time: changing one requires a clean rebuild of the frontend image. `RAILWAY_ENVIRONMENT_NAME` and `RAILWAY_GIT_COMMIT_SHA` are injected by Railway (runtime and build args) and flow into `/health` and the page metas without operator action.
 
-## Wire-level expectations (what the smoke checks)
+## Wire-level expectations (what the strict smoke checks)
 
-| Check                                | Production              | Staging                                   |
-| ------------------------------------ | ----------------------- | ----------------------------------------- |
-| `GET /` → `<meta name="bb-app-env">` | `production` or absent  | `staging`                                 |
-| `GET /` → `<meta name="bb-git-sha">` | expected SHA            | expected SHA                              |
-| `GET /` → `X-Robots-Tag`             | absent                  | contains `noindex`                        |
-| `GET /api/health` → `env` / `sha`    | `production` / SHA      | `staging` / SHA                           |
-| `GET /api/health` → `analytics`      | `enabled` or `disabled` | `enabled` or `disabled` — never `refused` |
-| `GET /api/health` → `X-Robots-Tag`   | absent                  | contains `noindex`                        |
+| Check                                                                | Production                                       | Staging                                     |
+| -------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------- |
+| `GET /` → `bb-app-env` (declaration)                                 | `production`                                     | `staging`                                   |
+| `GET /` → `bb-railway-env` / `bb-env-effective` / `bb-env-source`    | `production` / `production` / `railway`          | `staging` / `staging` / `railway`           |
+| `GET /` → `bb-env-mismatch`                                          | `none`                                           | `none`                                      |
+| `GET /` → `bb-git-sha`                                               | expected SHA                                     | expected SHA                                |
+| `GET /` → `X-Robots-Tag`                                             | absent                                           | contains `noindex`                          |
+| `GET /api/health` → `env` / `envSource` / `declaredEnv` / `mismatch` | `production` / `railway` / `production` / `none` | `staging` / `railway` / `staging` / `none`  |
+| `GET /api/health` → `sha`                                            | = page SHA = expected                            | = page SHA = expected                       |
+| `GET /api/health` → `analytics`                                      | `enabled` (labelled)                             | `disabled` (until a staging project exists) |
+| `GET /api/health` → `X-Robots-Tag`                                   | absent                                           | contains `noindex`                          |
 
-`node scripts/verify-deploy-target.mjs --url <host> --expect-env <env> --expect-sha <sha>` proves all rows; finding codes `DT-000` … `DT-008`.
+`node scripts/verify-deploy-target.mjs --url <host> --expect-env <env> --expect-sha <sha> --require-declared-env --expect-analytics <enabled|disabled>` proves every row; finding codes `DT-000` … `DT-013`.

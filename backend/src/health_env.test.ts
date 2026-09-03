@@ -4,7 +4,9 @@
  *
  * Proves, per environment, what `/health` reports and whether responses carry
  * `X-Robots-Tag`. Two-phase: the healthy production and staging shapes first,
- * then the shapes the deploy-target smoke must reject.
+ * then the shapes the deploy-target smoke must reject — including the
+ * consistency contract's central case, a Railway staging environment that
+ * inherited `APP_ENV=production`.
  */
 import {
   afterEach,
@@ -65,6 +67,7 @@ async function loadApp(
 beforeEach(() => {
   for (const key of MANAGED_KEYS) saved[key] = process.env[key];
   vi.spyOn(console, "info").mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -87,8 +90,9 @@ beforeAll(async () => {
 }, 120_000);
 
 describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
-  it("healthy production: env=production, sha, no X-Robots-Tag, analytics enabled", async () => {
+  it("healthy production: Railway + APP_ENV agree, labelled key → enabled, no X-Robots-Tag", async () => {
     const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "production",
       APP_ENV: "production",
       RAILWAY_GIT_COMMIT_SHA: SHA,
       POSTHOG_KEY: "phc_not_a_real_key",
@@ -99,16 +103,23 @@ describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
     expect(res.body).toMatchObject({
       status: "ok",
       env: "production",
-      envSource: "APP_ENV",
+      envSource: "railway",
+      declaredEnv: "production",
+      railwayEnv: "production",
+      railwayEnvironmentName: "production",
+      mismatch: "none",
+      configError: null,
       sha: SHA,
       noindex: false,
       analytics: "enabled",
     });
     expect(res.headers["x-robots-tag"]).toBeUndefined();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it("healthy staging: env=staging, X-Robots-Tag noindex on /health and /api/health", async () => {
+  it("healthy staging: Railway + APP_ENV agree, staging key → enabled, noindex on /health and /api/health", async () => {
     const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "staging",
       APP_ENV: "staging",
       GIT_SHA: SHA,
       POSTHOG_KEY: "phc_not_a_real_key",
@@ -120,12 +131,87 @@ describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
       expect(res.body).toMatchObject({
         status: "ok",
         env: "staging",
+        envSource: "railway",
+        declaredEnv: "staging",
+        mismatch: "none",
         sha: SHA,
         noindex: true,
         analytics: "enabled",
       });
       expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow");
     }
+  });
+
+  it("today's production (NODE_ENV only, unlabeled key) → production, analytics=enabled-unlabeled, warned once", async () => {
+    const app = await loadApp({ POSTHOG_KEY: "phc_not_a_real_key" });
+    // NODE_ENV is "test" under Vitest, so declare production outside Railway to
+    // model the pre-BRAND_R0 host without a Railway name.
+    const app2 = await loadApp({
+      APP_ENV: "production",
+      POSTHOG_KEY: "phc_not_a_real_key",
+    });
+    void app;
+    const res = await request(app2).get("/health");
+    expect(res.body).toMatchObject({
+      env: "production",
+      envSource: "declared",
+      declaredEnv: "production",
+      railwayEnv: null,
+      mismatch: "none",
+      noindex: false,
+      analytics: "enabled-unlabeled",
+    });
+    expect(res.headers["x-robots-tag"]).toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining("[analytics] enabled WITHOUT a label"),
+    );
+  });
+
+  it("SABOTAGE: Railway staging that inherited APP_ENV=production → preview, noindex, analytics refused, startup error", async () => {
+    const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "staging",
+      APP_ENV: "production",
+      RAILWAY_GIT_COMMIT_SHA: SHA,
+      POSTHOG_KEY: "phc_not_a_real_key",
+      POSTHOG_KEY_ENV: "production",
+    });
+    const res = await request(app).get("/api/health");
+    expect(res.body).toMatchObject({
+      env: "preview",
+      envSource: "railway",
+      declaredEnv: "production",
+      railwayEnv: "staging",
+      mismatch: "declared-vs-railway",
+      noindex: true,
+      analytics: "refused",
+    });
+    expect(res.body.configError).toContain(
+      "APP_ENV=production disagrees with RAILWAY_ENVIRONMENT_NAME",
+    );
+    expect(res.body.configError).not.toContain("phc_");
+    expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow");
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "[deploy-env] CONFIGURATION ERROR (declared-vs-railway)",
+      ),
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining("[analytics] REFUSED"),
+    );
+  });
+
+  it("SABOTAGE: Railway production with APP_ENV=staging → preview + noindex, never production", async () => {
+    const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "production",
+      APP_ENV: "staging",
+    });
+    const res = await request(app).get("/health");
+    expect(res.body).toMatchObject({
+      env: "preview",
+      mismatch: "declared-vs-railway",
+      noindex: true,
+    });
+    expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow");
   });
 
   it("the non-production header reaches API responses too (not only /health)", async () => {
@@ -140,8 +226,9 @@ describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
     expect(res.body.sha).toBe("unknown");
   });
 
-  it("staging that inherited the production PostHog key reports analytics=refused", async () => {
+  it("staging with the production-labelled key reports analytics=refused", async () => {
     const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "staging",
       APP_ENV: "staging",
       POSTHOG_KEY: "phc_not_a_real_key",
       POSTHOG_KEY_ENV: "production",
@@ -151,6 +238,17 @@ describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining("[analytics] REFUSED"),
     );
+  });
+
+  it("staging with a preview-labelled key (foreign non-production label) reports analytics=refused", async () => {
+    const app = await loadApp({
+      RAILWAY_ENVIRONMENT_NAME: "staging",
+      APP_ENV: "staging",
+      POSTHOG_KEY: "phc_not_a_real_key",
+      POSTHOG_KEY_ENV: "preview",
+    });
+    const res = await request(app).get("/health");
+    expect(res.body.analytics).toBe("refused");
   });
 
   it("staging with an unlabeled PostHog key reports analytics=refused", async () => {
@@ -173,7 +271,8 @@ describe("/health environment posture (BRAND_R0)", { timeout: 60_000 }, () => {
     const res = await request(app).get("/health");
     expect(res.body).toMatchObject({
       env: "staging",
-      envSource: "RAILWAY_ENVIRONMENT_NAME",
+      envSource: "railway",
+      declaredEnv: null,
       noindex: true,
     });
     expect(res.headers["x-robots-tag"]).toBe("noindex, nofollow");

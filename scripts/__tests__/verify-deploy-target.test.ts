@@ -1,10 +1,11 @@
 /* @vitest-environment node */
 /**
- * BRAND_R0 deploy-target smoke — two-phase proof.
+ * BRAND_R0 deploy-target smoke — two-phase proof for both modes.
  *
  * A local HTTP stand-in plays the deployed host (nginx SPA fallback shape:
  * unknown paths return index.html with 200). Healthy production and healthy
- * staging pass first; every sabotage then names its finding code.
+ * staging pass first, in compat and in strict mode; every sabotage then names
+ * its finding code.
  */
 import { createServer, type Server } from "node:http";
 import { spawn } from "node:child_process";
@@ -19,9 +20,17 @@ import {
 const SHA = "91e4071f0017fa508bb9cf385abc066ede6b07e1";
 const OTHER_SHA = "67b38c3d2f90c8acc4ea6122178226acbf8bab77";
 
+interface PageMetas {
+  declared: string | null;
+  railway: string | null;
+  effective: string | null;
+  source: string | null;
+  mismatch: string | null;
+  sha: string | null;
+}
+
 interface HostState {
-  metaEnv: string | null; // null = tag absent; "%VITE_APP_ENV%" = unreplaced placeholder
-  metaSha: string | null;
+  metas: PageMetas;
   pageRobots: string | null;
   health: null | {
     path: "/api/health" | "/health";
@@ -31,32 +40,32 @@ interface HostState {
 }
 
 const state: HostState = {
-  metaEnv: null,
-  metaSha: SHA,
-  pageRobots: null,
-  health: {
-    path: "/api/health",
-    robots: null,
-    body: {
-      status: "ok",
-      env: "production",
-      sha: SHA,
-      noindex: false,
-      analytics: "enabled",
-    },
+  metas: {
+    declared: null,
+    railway: null,
+    effective: null,
+    source: null,
+    mismatch: null,
+    sha: null,
   },
+  pageRobots: null,
+  health: null,
 };
 
+function meta(name: string, value: string | null): string {
+  return value === null ? "" : `<meta name="${name}" content="${value}" />`;
+}
+
 function html(): string {
-  const metas = [
-    state.metaEnv === null
-      ? ""
-      : `<meta\n      name="bb-app-env"\n      content="${state.metaEnv}"\n    />`,
-    state.metaSha === null
-      ? ""
-      : `<meta name="bb-git-sha" content="${state.metaSha}" />`,
-  ].join("\n");
-  return `<!doctype html><html lang="en"><head><title>BrightBoost</title>${metas}</head><body><div id="root"></div></body></html>`;
+  const m = state.metas;
+  return `<!doctype html><html lang="en"><head><title>BrightBoost</title>
+    ${meta("bb-app-env", m.declared)}
+    ${meta("bb-railway-env", m.railway)}
+    ${meta("bb-env-effective", m.effective)}
+    ${meta("bb-env-source", m.source)}
+    ${meta("bb-env-mismatch", m.mismatch)}
+    ${meta("bb-git-sha", m.sha)}
+    </head><body><div id="root"></div></body></html>`;
 }
 
 let server: Server;
@@ -73,7 +82,6 @@ beforeAll(async () => {
       res.end(JSON.stringify(state.health.body));
       return;
     }
-    // nginx SPA fallback: everything else is index.html with 200.
     res.statusCode = 200;
     res.setHeader("content-type", "text/html");
     if (state.pageRobots) res.setHeader("x-robots-tag", state.pageRobots);
@@ -90,8 +98,14 @@ afterAll(async () => {
 });
 
 function healthyProduction() {
-  state.metaEnv = "production";
-  state.metaSha = SHA;
+  state.metas = {
+    declared: "production",
+    railway: "production",
+    effective: "production",
+    source: "railway",
+    mismatch: "none",
+    sha: SHA,
+  };
   state.pageRobots = null;
   state.health = {
     path: "/api/health",
@@ -99,6 +113,10 @@ function healthyProduction() {
     body: {
       status: "ok",
       env: "production",
+      envSource: "railway",
+      declaredEnv: "production",
+      railwayEnv: "production",
+      mismatch: "none",
       sha: SHA,
       noindex: false,
       analytics: "enabled",
@@ -107,8 +125,14 @@ function healthyProduction() {
 }
 
 function healthyStaging() {
-  state.metaEnv = "staging";
-  state.metaSha = SHA;
+  state.metas = {
+    declared: "staging",
+    railway: "staging",
+    effective: "staging",
+    source: "railway",
+    mismatch: "none",
+    sha: SHA,
+  };
   state.pageRobots = "noindex, nofollow";
   state.health = {
     path: "/api/health",
@@ -116,6 +140,10 @@ function healthyStaging() {
     body: {
       status: "ok",
       env: "staging",
+      envSource: "railway",
+      declaredEnv: "staging",
+      railwayEnv: "staging",
+      mismatch: "none",
       sha: SHA,
       noindex: true,
       analytics: "enabled",
@@ -123,151 +151,261 @@ function healthyStaging() {
   };
 }
 
+/** The pre-BRAND_R0 production host: undeclared page, unlabeled analytics. */
+function bootstrapProduction() {
+  healthyProduction();
+  state.metas = {
+    declared: null,
+    railway: null,
+    effective: null,
+    source: null,
+    mismatch: null,
+    sha: SHA,
+  };
+  state.health!.path = "/health";
+  state.health!.body = {
+    status: "ok",
+    env: "production",
+    envSource: "node_env",
+    declaredEnv: null,
+    railwayEnv: null,
+    mismatch: "none",
+    sha: SHA,
+    noindex: false,
+    analytics: "enabled-unlabeled",
+  };
+}
+
 const codes = (r: Awaited<ReturnType<typeof checkDeployTarget>>) =>
   r.findings.map((f) => f.code).sort();
 
+const strictProd = {
+  baseUrl: "",
+  expectEnv: "production",
+  expectSha: SHA,
+  strict: true,
+  expectAnalytics: "enabled",
+};
+const strictStaging = {
+  baseUrl: "",
+  expectEnv: "staging",
+  expectSha: SHA,
+  strict: true,
+  expectAnalytics: "enabled",
+};
+
 describe("verify-deploy-target — phase 1: healthy hosts pass", () => {
-  it("healthy production passes with an exact SHA", async () => {
+  it("strict production passes", async () => {
     healthyProduction();
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "production",
-      expectSha: SHA,
-    });
+    const r = await checkDeployTarget({ ...strictProd, baseUrl });
     expect(codes(r)).toEqual([]);
-    expect(r.ok).toBe(true);
-    expect(r.observed.health?.path).toBe("/api/health");
+    expect(r.mode).toBe("strict");
   });
 
-  it("healthy production also passes when the page is undeclared (today's build) and health is on /health", async () => {
-    healthyProduction();
-    state.metaEnv = null;
-    state.health!.path = "/health";
+  it("strict staging passes (noindex on page and health, declared, consistent, sha known both sides)", async () => {
+    healthyStaging();
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toEqual([]);
+  });
+
+  it("strict staging with analytics intentionally disabled passes when expected", async () => {
+    healthyStaging();
+    state.health!.body.analytics = "disabled";
+    const r = await checkDeployTarget({
+      ...strictStaging,
+      baseUrl,
+      expectAnalytics: "disabled",
+    });
+    expect(codes(r)).toEqual([]);
+  });
+
+  it("compat mode accepts the pre-BRAND_R0 production host (undeclared page, unlabeled analytics, /health)", async () => {
+    bootstrapProduction();
     const r = await checkDeployTarget({
       baseUrl,
       expectEnv: "production",
       expectSha: SHA.slice(0, 7),
+      expectAnalytics: "enabled",
     });
     expect(codes(r)).toEqual([]);
+    expect(r.mode).toBe("compat");
     expect(r.observed.health?.path).toBe("/health");
-  });
-
-  it("healthy staging passes with noindex on page and health", async () => {
-    healthyStaging();
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
-    expect(codes(r)).toEqual([]);
-    expect(r.ok).toBe(true);
   });
 });
 
 describe("verify-deploy-target — phase 2: sabotage fails with the named code", () => {
-  it("staging missing noindex → DT-003 (page and health)", async () => {
+  it("SABOTAGE strict: undeclared production → DT-012 (page and health)", async () => {
+    bootstrapProduction();
+    state.health!.body.analytics = "enabled";
+    const r = await checkDeployTarget({ ...strictProd, baseUrl });
+    expect(codes(r)).toEqual(["DT-012", "DT-012"]);
+  });
+
+  it("SABOTAGE strict: unlabeled production analytics → DT-011", async () => {
+    healthyProduction();
+    state.health!.body.analytics = "enabled-unlabeled";
+    const r = await checkDeployTarget({ ...strictProd, baseUrl });
+    expect(codes(r)).toEqual(["DT-011"]);
+    // …but compat mode tolerates it for the bootstrap check.
+    const c = await checkDeployTarget({
+      baseUrl,
+      expectEnv: "production",
+      expectSha: SHA,
+      expectAnalytics: "enabled",
+    });
+    expect(codes(c)).toEqual([]);
+  });
+
+  it("SABOTAGE: configuration mismatch (copied APP_ENV=production on Railway staging) → DT-010 on both sides plus the effective-env findings", async () => {
+    healthyStaging();
+    state.metas = {
+      ...state.metas,
+      declared: "production",
+      effective: "preview",
+      mismatch: "declared-vs-railway",
+    };
+    state.health!.body = {
+      ...state.health!.body,
+      env: "preview",
+      declaredEnv: "production",
+      mismatch: "declared-vs-railway",
+      analytics: "refused",
+    };
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toContain("DT-010");
+    expect(codes(r).filter((c) => c === "DT-010")).toHaveLength(2);
+    expect(codes(r)).toContain("DT-008");
+    expect(codes(r)).toContain("DT-012");
+    expect(codes(r)).toContain("DT-001");
+    expect(codes(r)).toContain("DT-006");
+  });
+
+  it("SABOTAGE strict: frontend and backend disagree on environment → DT-009 (+ DT-006)", async () => {
+    healthyStaging();
+    state.health!.body = {
+      ...state.health!.body,
+      env: "production",
+      declaredEnv: "staging",
+      noindex: false,
+    };
+    state.health!.robots = null;
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toContain("DT-009");
+    expect(codes(r)).toContain("DT-006");
+  });
+
+  it("SABOTAGE strict: environment sources differ (frontend built without the Railway value) → DT-009", async () => {
+    healthyStaging();
+    state.metas = { ...state.metas, railway: null, source: "declared" };
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toEqual(["DT-009"]);
+  });
+
+  it("SABOTAGE strict: frontend and backend SHAs differ → DT-013 (+ the side that misses expected)", async () => {
+    healthyStaging();
+    state.metas.sha = OTHER_SHA;
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toEqual(["DT-002", "DT-013"]);
+  });
+
+  it("SABOTAGE: staging missing noindex → DT-003 (page and health)", async () => {
     healthyStaging();
     state.pageRobots = null;
     state.health!.robots = null;
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
     expect(codes(r)).toEqual(["DT-003", "DT-003"]);
   });
 
-  it("production accidentally noindexed → DT-004", async () => {
+  it("SABOTAGE: production accidentally noindexed → DT-004", async () => {
     healthyProduction();
     state.pageRobots = "noindex, nofollow";
     state.health!.body.noindex = true;
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "production",
-      expectSha: SHA,
-    });
+    const r = await checkDeployTarget({ ...strictProd, baseUrl });
     expect(codes(r)).toEqual(["DT-004", "DT-004"]);
   });
 
-  it("wrong deployed SHA → DT-002 (page) and DT-007 (health)", async () => {
+  it("SABOTAGE: wrong deployed SHA → DT-002 (page) and DT-007 (health)", async () => {
     healthyStaging();
-    state.metaSha = OTHER_SHA;
+    state.metas.sha = OTHER_SHA;
     state.health!.body.sha = OTHER_SHA;
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
     expect(codes(r)).toEqual(["DT-002", "DT-007"]);
   });
 
-  it("missing SHA (unknown / unreplaced placeholder) → DT-002 and DT-007", async () => {
+  it("SABOTAGE: unknown SHA on both sides → DT-002 and DT-007", async () => {
     healthyStaging();
-    state.metaSha = "%VITE_GIT_SHA%";
+    state.metas.sha = "%BB_GIT_SHA%";
     state.health!.body.sha = "unknown";
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
     expect(codes(r)).toEqual(["DT-002", "DT-007"]);
   });
 
-  it("staging that never declared itself (placeholder meta) → DT-001; wrong health env → DT-006", async () => {
-    healthyStaging();
-    state.metaEnv = "%VITE_APP_ENV%";
-    state.health!.body.env = "production";
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
-    expect(codes(r)).toEqual(["DT-001", "DT-006"]);
-  });
-
-  it("a production host whose page declares staging → DT-001", async () => {
-    healthyProduction();
-    state.metaEnv = "staging";
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "production",
-      expectSha: SHA,
-    });
-    expect(codes(r)).toEqual(["DT-001"]);
-  });
-
-  it("staging configured with production analytics → DT-008", async () => {
+  it("SABOTAGE: analytics refused → DT-008 in every mode", async () => {
     healthyStaging();
     state.health!.body.analytics = "refused";
-    const r = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
-    expect(codes(r)).toEqual(["DT-008"]);
+    expect(
+      codes(await checkDeployTarget({ ...strictStaging, baseUrl })),
+    ).toEqual(["DT-008"]);
+    expect(
+      codes(
+        await checkDeployTarget({
+          baseUrl,
+          expectEnv: "staging",
+          expectSha: SHA,
+        }),
+      ),
+    ).toEqual(["DT-008"]);
   });
 
-  it("health unreachable (SPA fallback swallows it) → DT-005; a pre-BRAND_R0 health → DT-006/DT-007", async () => {
+  it("SABOTAGE strict: analytics expectation unmet (disabled when enabled expected, and vice versa) → DT-011", async () => {
+    healthyStaging();
+    state.health!.body.analytics = "disabled";
+    expect(
+      codes(await checkDeployTarget({ ...strictStaging, baseUrl })),
+    ).toEqual(["DT-011"]);
+    state.health!.body.analytics = "enabled";
+    expect(
+      codes(
+        await checkDeployTarget({
+          ...strictStaging,
+          baseUrl,
+          expectAnalytics: "disabled",
+        }),
+      ),
+    ).toEqual(["DT-011"]);
+  });
+
+  it("SABOTAGE: health unreachable → DT-005; a pre-contract backend under strict → DT-006/DT-007/DT-010/DT-012", async () => {
     healthyStaging();
     state.health = null;
-    const r1 = await checkDeployTarget({
-      baseUrl,
-      expectEnv: "staging",
-      expectSha: SHA,
-    });
-    expect(codes(r1)).toEqual(["DT-005"]);
+    expect(
+      codes(await checkDeployTarget({ ...strictStaging, baseUrl })),
+    ).toEqual(["DT-005"]);
 
     healthyStaging();
     state.health!.body = {
       status: "ok",
       sharedEngine: "greatwork-engine-stub-730@0.0.0",
     };
-    const r2 = await checkDeployTarget({
+    const r = await checkDeployTarget({ ...strictStaging, baseUrl });
+    expect(codes(r)).toEqual([
+      "DT-006",
+      "DT-007",
+      "DT-010",
+      "DT-011",
+      "DT-012",
+    ]);
+  });
+
+  it("SABOTAGE compat: a production host whose page declares staging → DT-001", async () => {
+    healthyProduction();
+    state.metas = { ...state.metas, declared: "staging", effective: "staging" };
+    const r = await checkDeployTarget({
       baseUrl,
-      expectEnv: "staging",
+      expectEnv: "production",
       expectSha: SHA,
     });
-    expect(codes(r2)).toEqual(["DT-006", "DT-007"]);
+    expect(codes(r)).toEqual(["DT-001"]);
   });
 
   it("unreachable host → DT-000 and DT-005, never a throw", async () => {
@@ -290,29 +428,37 @@ describe("verify-deploy-target — phase 2: sabotage fails with the named code",
     await expect(
       checkDeployTarget({ baseUrl, expectEnv: "staging", expectSha: "xyz" }),
     ).rejects.toThrow(/--expect-sha/);
+    await expect(
+      checkDeployTarget({ baseUrl, expectEnv: "staging", strict: true }),
+    ).rejects.toThrow(/--expect-sha/);
+    await expect(
+      checkDeployTarget({
+        baseUrl,
+        expectEnv: "staging",
+        strict: true,
+        expectSha: SHA,
+      }),
+    ).rejects.toThrow(/--expect-analytics/);
   });
 });
 
 describe("helpers", () => {
-  it("readMeta handles multi-line tags and treats placeholders as absent", () => {
+  it("readMeta handles multi-line tags and treats placeholders/empties as absent", () => {
     expect(
       readMeta(
         '<meta\n  name="bb-app-env"\n  content="staging"\n/>',
         "bb-app-env",
       ),
-    ).toEqual({
-      present: true,
-      value: "staging",
-    });
+    ).toEqual({ present: true, value: "staging" });
     expect(
       readMeta(
-        '<meta name="bb-git-sha" content="%VITE_GIT_SHA%" />',
+        '<meta name="bb-git-sha" content="%BB_GIT_SHA%" />',
         "bb-git-sha",
       ),
-    ).toEqual({
-      present: true,
-      value: null,
-    });
+    ).toEqual({ present: true, value: null });
+    expect(
+      readMeta('<meta name="bb-app-env" content="" />', "bb-app-env"),
+    ).toEqual({ present: true, value: null });
     expect(readMeta("<html></html>", "bb-app-env")).toEqual({
       present: false,
       value: null,
@@ -346,7 +492,7 @@ describe("CLI exit codes", { timeout: 30_000 }, () => {
     });
   }
 
-  it("exit 0 on a healthy staging host, 1 with the code on sabotage, 2 on usage error", async () => {
+  it("exit 0 on a healthy strict staging host, 1 with the code on sabotage, 2 on usage error", async () => {
     healthyStaging();
     const healthy = await run([
       "--url",
@@ -355,6 +501,9 @@ describe("CLI exit codes", { timeout: 30_000 }, () => {
       "staging",
       "--expect-sha",
       SHA,
+      "--require-declared-env",
+      "--expect-analytics",
+      "enabled",
       "--json",
     ]);
     expect(healthy.status).toBe(0);
@@ -369,6 +518,9 @@ describe("CLI exit codes", { timeout: 30_000 }, () => {
       "staging",
       "--expect-sha",
       SHA,
+      "--require-declared-env",
+      "--expect-analytics",
+      "enabled",
       "--json",
     ]);
     expect(red.status).toBe(1);
@@ -376,8 +528,14 @@ describe("CLI exit codes", { timeout: 30_000 }, () => {
       JSON.parse(red.stdout).findings.map((f: { code: string }) => f.code),
     ).toContain("DT-003");
 
-    const usage = await run(["--url", baseUrl]);
+    const usage = await run([
+      "--url",
+      baseUrl,
+      "--expect-env",
+      "staging",
+      "--require-declared-env",
+    ]);
     expect(usage.status).toBe(2);
-    expect(usage.stderr).toMatch(/--expect-env/);
+    expect(usage.stderr).toMatch(/--expect-sha/);
   });
 });
