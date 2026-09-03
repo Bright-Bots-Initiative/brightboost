@@ -9,6 +9,10 @@ import {
   XP_PER_ACTIVITY,
   XP_PER_LEVEL_UP,
 } from "../services/game";
+// STEM Set 3 activity IDs — must all be completed before specialization.
+// Canonical source shared with the frontend (#855); the backend reads the
+// emitted artifact of the `file:../shared` dependency, never a hand copy.
+import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 
 const router = Router();
 
@@ -40,7 +44,8 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
 
     if (!avatar) {
       // No avatar exists - create one with backfilled XP from progress
-      const { avatar: backfilledAvatar } = await ensureAvatarWithBackfill(studentId);
+      const { avatar: backfilledAvatar } =
+        await ensureAvatarWithBackfill(studentId);
 
       // Refetch with abilities included
       avatar = await prisma.avatar.findUnique({
@@ -49,7 +54,9 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
       });
 
       if (avatar) {
-        console.log(`[/avatar/me] Backfilled avatar: level=${avatar.level}, xp=${avatar.xp}`);
+        console.log(
+          `[/avatar/me] Backfilled avatar: level=${avatar.level}, xp=${avatar.xp}`,
+        );
       }
     } else if (avatar.xp === 0) {
       // Avatar exists but xp=0 - check if we need to "repair" from progress
@@ -81,7 +88,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
           });
 
           console.log(
-            `[/avatar/me] Repaired avatar: level=${newLevel}, xp=${newXp} (completedCount=${completedCount})`
+            `[/avatar/me] Repaired avatar: level=${newLevel}, xp=${newXp} (completedCount=${completedCount})`,
           );
         }
       }
@@ -93,9 +100,6 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-// STEM Set 3 activity IDs — must all be completed before specialization
-const STEM_SET_3_IDS = ["set3-game-1", "set3-game-2", "set3-game-3", "set3-game-4", "set3-game-5"];
 
 async function isSet3Complete(studentId: string): Promise<boolean> {
   const completed = await prisma.progress.findMany({
@@ -145,7 +149,10 @@ router.post(
 
         // Unlock abilities for the current level
         const eligibleAbilities = await prisma.ability.findMany({
-          where: { archetype: archetype as any, reqLevel: { lte: updatedAvatar.level } },
+          where: {
+            archetype: archetype as any,
+            reqLevel: { lte: updatedAvatar.level },
+          },
         });
 
         if (eligibleAbilities.length > 0) {
@@ -156,7 +163,9 @@ router.post(
           });
           const existingIds = new Set(existingUnlocks.map((u) => u.abilityId));
 
-          const newAbilities = eligibleAbilities.filter((ab) => !existingIds.has(ab.id));
+          const newAbilities = eligibleAbilities.filter(
+            (ab) => !existingIds.has(ab.id),
+          );
           if (newAbilities.length > 0) {
             await prisma.unlockedAbility.createMany({
               data: newAbilities.map((ab) => ({

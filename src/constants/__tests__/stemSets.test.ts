@@ -7,8 +7,18 @@ import {
   isSet2Locked,
   isSet3Locked,
 } from "../stemSets";
+import * as sharedSetIds from "@shared/progression/stemSetIds";
 
 describe("STEM set canon and gating", () => {
+  // #855: the backend reads shared/progression/stemSetIds directly. If
+  // stemSets.ts ever re-declares its own arrays, the two sides can drift again
+  // and the specialization gate silently stops matching the frontend meter.
+  it("serves the shared canonical arrays rather than a second copy", () => {
+    expect(STEM_SET_1_IDS).toEqual(sharedSetIds.STEM_SET_1_IDS);
+    expect(STEM_SET_2_IDS).toEqual(sharedSetIds.STEM_SET_2_IDS);
+    expect(STEM_SET_3_IDS).toEqual(sharedSetIds.STEM_SET_3_IDS);
+  });
+
   it("has exactly 5 canonical Set 1 activity IDs", () => {
     expect(STEM_SET_1_IDS.length).toBe(5);
     expect(STEM_SET_1_IDS).toEqual([
