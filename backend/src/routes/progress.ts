@@ -1,3 +1,9 @@
+import {
+  BIOTRAIL_ACTIVITY_ID,
+  BIOTRAIL_SLUG,
+  BIOTRAIL_LESSON_ID,
+} from "@brightboost/greatwork-engine/dist/progression/advanced";
+import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 // backend/src/routes/progress.ts
 import express, { Router } from "express";
 import prisma from "../utils/prisma";
@@ -318,6 +324,41 @@ router.post(
 
     if (!activity) {
       return res.status(404).json({ error: "Activity not found" });
+    }
+
+    // The new advanced activity requires the matching saved specialty and Set 3.
+    // Bind to the actual activity identity; a forged moduleSlug cannot skip it.
+    if (activity.id === BIOTRAIL_ACTIVITY_ID || moduleSlug === BIOTRAIL_SLUG) {
+      if (
+        activity.id !== BIOTRAIL_ACTIVITY_ID ||
+        moduleSlug !== BIOTRAIL_SLUG ||
+        lessonId !== BIOTRAIL_LESSON_ID ||
+        activity.lessonId !== BIOTRAIL_LESSON_ID
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Activity does not belong to this advanced lesson" });
+      }
+      const [specialized, completed] = await Promise.all([
+        prisma.avatar.findUnique({
+          where: { studentId },
+          select: { stage: true, archetype: true },
+        }),
+        prisma.progress.findMany({
+          where: { studentId, status: "COMPLETED" },
+          select: { activityId: true },
+        }),
+      ]);
+      const completedIds = new Set(completed.map((p) => p.activityId));
+      if (
+        specialized?.stage !== "SPECIALIZED" ||
+        specialized.archetype !== "BIOTECH" ||
+        !STEM_SET_3_IDS.every((id) => completedIds.has(id))
+      ) {
+        return res.status(403).json({
+          error: "Complete Set 3 and choose Biotech before playing BioTrail",
+        });
+      }
     }
 
     // 1. Ensure avatar exists (with backfill if needed)
