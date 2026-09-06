@@ -13,6 +13,8 @@ const {
 // must not even instantiate a client (#700).
 let prisma = null;
 
+const { seedAdvanced } = require("./seedAdvanced.cjs");
+
 async function main() {
   // 0. Environment gate (#700) — refuse production targets BEFORE any write.
   // This seed is a demo/test fixture: it creates documented demo accounts and
@@ -4112,6 +4114,11 @@ async function main() {
       e.message,
     );
   }
+  const curriculumOwner = await prisma.user.findFirst({
+    where: { role: "TEACHER" },
+    select: { id: true },
+  });
+  if (curriculumOwner) await seedAdvanced(prisma, curriculumOwner.id);
 }
 
 main()

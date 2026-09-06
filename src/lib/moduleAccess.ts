@@ -1,3 +1,4 @@
+import { ADVANCED_SPECIALTIES } from "@shared/progression/advanced";
 /**
  * Centralized module-access logic for set-gated and specialization-locked content.
  *
@@ -68,6 +69,7 @@ import {
 // ── Specialization-gated module slugs ────────────────────────────────────
 // Add future specialization-only modules here.
 const SPECIALIZATION_MODULE_SLUGS = new Set([
+  ...Object.keys(ADVANCED_SPECIALTIES),
   "stem-1-intro", // "Quantum Explorers" — hidden until archetype chosen
 ]);
 
@@ -139,6 +141,8 @@ export function canAccessModule({
   slug: string;
   archetype: string | null;
 }): boolean {
+  if (Object.prototype.hasOwnProperty.call(ADVANCED_SPECIALTIES, slug))
+    return archetype === ADVANCED_SPECIALTIES[slug];
   if (!isSpecializationModuleSlug(slug)) return true;
   // Specialization modules require *any* archetype to be chosen
   return !!archetype;

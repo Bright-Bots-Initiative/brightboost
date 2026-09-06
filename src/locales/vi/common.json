@@ -2054,5 +2054,224 @@
         "restoreFailed": "Chúng tôi chưa khôi phục được {{baseline}}. Không có gì bạn tạo bị xóa."
       }
     }
+  },
+  "specialty": {
+    "back": "Back to my games",
+    "newChapter": "Your next chapter",
+    "milestone": "Beyond the foundation",
+    "title": "What will you discover next?",
+    "intro": "You have built, explored, and created. Now choose a specialty and make it your own.",
+    "locked": "Your specialty opens after Set 3.",
+    "progress": "You have completed {{count}} of {{total}} Set 3 games. You can preview the paths below.",
+    "chooseLabel": "Preview a specialty",
+    "previewLabel": "A little preview of your world",
+    "choose": "Choose {{name}}",
+    "familiar": "Your classes, creations, and familiar navigation stay right here.",
+    "comingTitle": "Your next discoveries are growing.",
+    "comingDescription": "New games for this specialty are being built. Your earlier games and creations are ready to revisit.",
+    "play": "Explore Adaptation Islands",
+    "revisit": "Revisit my games",
+    "fieldNote": "A question to take with you",
+    "setsComplete": "Foundation, Exploration, Mastery: complete",
+    "confirmTitle": "Make {{name}} your specialty?",
+    "confirmDescription": "This saves your specialty for your account. You can try the other previews before confirming. Once saved, the app does not yet support switching specialties.",
+    "keepExploring": "Keep exploring",
+    "confirm": "Yes, this is my specialty",
+    "saving": "Saving your choice…",
+    "saveError": "We could not save your choice. Your preview is still here. Try again.",
+    "loadError": "We could not check your specialty. Please try again.",
+    "loading": "Opening your next chapter…",
+    "retry": "Try again",
+    "inviteTitle": "You finished Set 3. A new chapter is open!",
+    "inviteDescription": "Choose AI/ML, Quantum, or Biotech to explore next.",
+    "inviteAction": "Choose my specialty",
+    "gameLocked": "BioTrail opens after Set 3 and a Biotech specialty choice. View my specialty.",
+    "previewMode": "Design preview",
+    "resetPreview": "Preview another specialty",
+    "previewLocked": "Show locked state",
+    "previewBack": "Back to specialty preview",
+    "tracks": {
+      "AI": {
+        "name": "AI / ML",
+        "role": "The pattern finder",
+        "description": "Teach a machine with examples. Help it notice patterns, then test what it learned.",
+        "verbs": "Teach · Test · Improve",
+        "companion": "Pattern pal",
+        "previewTitle": "Your own discovery lab",
+        "preview": "Red accents, a circuit badge, and prompts about training and testing welcome you into your AI lab.",
+        "welcome": "Welcome to your AI lab.",
+        "question": "What examples would help a machine learn something new?"
+      },
+      "QUANTUM": {
+        "name": "Quantum",
+        "role": "The possibility explorer",
+        "description": "Explore the tiny world of quantum science through light, patterns, and experiments.",
+        "verbs": "Wonder · Experiment · Discover",
+        "companion": "Quantum guide",
+        "previewTitle": "A world of possibilities",
+        "preview": "Violet accents, an atom badge, and experiment prompts give your quantum world its own feel.",
+        "welcome": "Your quantum journey begins.",
+        "question": "What could an experiment help you discover that your eyes cannot see?"
+      },
+      "BIOTECH": {
+        "name": "Biotech",
+        "role": "The nature-inspired inventor",
+        "description": "Learn from living things. Design tools and test ideas inspired by the natural world.",
+        "verbs": "Observe · Design · Grow",
+        "companion": "Field buddy",
+        "previewTitle": "Make yourself at home in nature",
+        "preview": "Leaf-green accents, a field buddy badge, and habitat adventures turn your next chapter into a living laboratory.",
+        "welcome": "Big ideas grow from little wonders.",
+        "question": "What can a leaf, a frog, or a seed teach an inventor?"
+      }
+    }
+  },
+  "biotrail": {
+    "title": "BioTrail: Adaptation Islands",
+    "tagline": "Build a nature-inspired explorer suit. Hop across islands, try new abilities, and discover what your design can do.",
+    "tag1": "Biomimicry",
+    "tag2": "Build + play",
+    "tag3": "4 connected islands",
+    "kicker": "Biotech · First expedition",
+    "reduced": "Less motion",
+    "map": "World map",
+    "stepsLabel": "Your creative journey",
+    "steps": {
+      "imagine": "Imagine",
+      "create": "Create",
+      "play": "Play",
+      "share": "Share",
+      "reflect": "Reflect"
+    },
+    "world": "World 01 · The living archipelago",
+    "mapTitle": "Small explorer. Big possibilities.",
+    "visited": "{{count}} / {{total}} islands visited",
+    "islandNumber": "Island {{number}}",
+    "revisit": "Revisit & redesign",
+    "explore": "Explore this island",
+    "lockedIsland": "Follow the open paths first",
+    "pathTitle": "One beginning. Two ways to explore.",
+    "pathDescription": "Start in Sprout Meadow. Choose either branch, then meet again at the Field Lab. You can come back for the other path.",
+    "myBuild": "My creation card",
+    "science": "These are engineered tools inspired by nature. Living things do not evolve new traits during one adventure; biological adaptations develop in populations over generations.",
+    "workshop": "The suit workshop",
+    "suggested": "A starting idea: try {{tool}}. You can change it and compare.",
+    "predict": "What do you predict this tool will change?",
+    "assist": "Untimed explorer mode",
+    "assistDescription": "Explore observations step by step. No fast jumps needed.",
+    "test": "Test my design",
+    "yourSuit": "Made by you",
+    "name": "Give your suit a name",
+    "defaultName": "My field explorer",
+    "toolNote": "You are building a tool, not changing an animal. Different designs help with different challenges.",
+    "observationCount": "Observation {{count}} of {{total}}",
+    "nextObservation": "Next observation",
+    "keepDiscovery": "Keep this discovery",
+    "discovery": "Field notes collected",
+    "resultTitle": "Look what your design can do.",
+    "resultQuestion": "What would you keep? What would you change?",
+    "tryOther": "Change a tool & try again",
+    "nextIsland": "Choose my next island",
+    "creationCard": "My field explorer · Creation card",
+    "reflect": "What did you notice?",
+    "unplugged": "Show your build to someone you trust. Together, draw a new tool on paper and point to the living thing that inspired it.",
+    "save": "Keep my build",
+    "print": "Print / show my card",
+    "finish": "Finish my expedition",
+    "finishing": "Saving expedition…",
+    "finished": "Expedition saved",
+    "localNote": "This build is kept on this device for your account. Printing lets you share it with someone beside you.",
+    "finishError": "Your expedition could not be recorded. Your build is still here. Try Finish again.",
+    "storage": {
+      "saved": "Your build is kept on this device.",
+      "error": "This device could not save your build. Keep this page open or print your card."
+    },
+    "edit": "Back to workshop",
+    "resume": "Resume",
+    "pause": "Pause",
+    "restart": "Return to my checkpoint",
+    "controls": "Move with ← → or A / D. Jump with Space / ↑. With gliding wings, hold Jump to fall slowly. Escape pauses. Reach the gold field station.",
+    "fieldLabel": "BioTrail field test",
+    "paused": "Take your time.",
+    "left": "Move left",
+    "right": "Move right",
+    "jump": "Jump",
+    "jumpGlide": "Jump / hold to glide",
+    "notices": {
+      "start": "Try your tool. There is no timer and you can always try again.",
+      "checkpoint": "Checkpoint reached. Your next try will start here.",
+      "checkpointReturn": "Back on safe ground. What will you try next?"
+    },
+    "reflections": {
+      "higher": "My spring legs help me jump higher.",
+      "slower": "My gliding wings help me fall more slowly.",
+      "changed": "I changed my design to fit the habitat."
+    },
+    "tools": {
+      "spring": {
+        "name": "Spring legs",
+        "description": "A spring-powered tool inspired by jumping animals.",
+        "effect": "Higher jumps · quick landing",
+        "nature": "Frogs use their long, strong hind legs to jump. Your suit uses springs to explore a similar movement."
+      },
+      "glide": {
+        "name": "Gliding wings",
+        "description": "A broad wing tool inspired by gliding animals and seeds.",
+        "effect": "Hold Jump · fall more slowly",
+        "nature": "Gliding animals use broad surfaces to slow their fall and travel through the air. Your wings borrow that idea."
+      }
+    },
+    "islands": {
+      "meadow": {
+        "name": "Sprout Meadow",
+        "challenge": "Practice short hops across flower beds and little stream gaps. Either tool can find a way."
+      },
+      "marsh": {
+        "name": "Ripple Marsh",
+        "challenge": "Tall stone ledges rise above the reeds. Spring legs can leap straight up; gliding wings use the little steps."
+      },
+      "canopy": {
+        "name": "Canopy Crossing",
+        "challenge": "Launch from high branches and hold Jump to glide across wide gaps. Spring legs can explore the lower tree stumps."
+      },
+      "lab": {
+        "name": "The Field Lab",
+        "challenge": "Explore a greenhouse of high shelves, long drops, and uneven steps. Combine your discoveries to reach the field station."
+      }
+    },
+    "observations": {
+      "spring": {
+        "title": "Borrow an idea from a frog.",
+        "text": "Long hind legs help frogs jump. Compare that idea with your suit: spring legs give a stronger jump, while gliding wings change the fall."
+      },
+      "glide": {
+        "title": "Spread out and slow down.",
+        "text": "A broad surface can help a gliding animal fall more slowly. Your wing tool uses that idea to cross a gap."
+      },
+      "compare": {
+        "title": "Change one thing. Notice what happens.",
+        "text": "Keep the same island and compare two tools. Spring legs jump higher. Gliding wings slow the fall when you hold Jump. Neither tool is best for every job."
+      },
+      "habitat": {
+        "title": "Let the habitat guide your design.",
+        "text": "Look at the gaps, platforms, and safe places to land. Imagine where each tool would be useful. Return to the workshop whenever you want to change it."
+      },
+      "design": {
+        "title": "An idea becomes an invention.",
+        "text": "An inventor observes nature, builds a tool, and tests it. What would you keep in your next design? What would you change?"
+      },
+      "marsh": {
+        "title": "One big jump or a few small steps?",
+        "text": "Spring legs can reach the tall ledge in one jump. The wings need the little steps. Try both routes and notice how your design changes the journey."
+      },
+      "canopy": {
+        "title": "Take the high route. Stay in the air.",
+        "text": "Hold Jump with gliding wings to float from one high branch to the next. With spring legs, use the lower stumps. Release Jump when you want the wings to fall faster."
+      },
+      "lab": {
+        "title": "Bring your discoveries together.",
+        "text": "The greenhouse has high shelves, a long drop, and uneven steps. Spring legs help with the climbs. Wings help with the crossing. Your route can change with your tool."
+      }
+    }
   }
 }

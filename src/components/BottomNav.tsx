@@ -46,7 +46,7 @@ export default function BottomNav() {
             onClick={() => navigate(item.path)}
             className={`flex flex-col items-center p-2 rounded-lg w-full ${
               isActive
-                ? "text-blue-600 bg-blue-50"
+                ? "specialty-nav-active text-blue-600 bg-blue-50"
                 : "text-gray-500 hover:bg-gray-50"
             }`}
             aria-label={item.label}

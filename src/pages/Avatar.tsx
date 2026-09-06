@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 // src/pages/Avatar.tsx — Kid-friendly "My Star" page with superpowers
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,11 +26,46 @@ type Stats = {
 };
 
 const SUPERPOWERS = [
-  { key: "heartPower" as const, emoji: "💖", colorBar: "bg-pink-400", colorBg: "bg-pink-50", colorText: "text-pink-700", colorBorder: "border-pink-200" },
-  { key: "brainJuice" as const, emoji: "🧠", colorBar: "bg-yellow-400", colorBg: "bg-yellow-50", colorText: "text-yellow-700", colorBorder: "border-yellow-200" },
-  { key: "lightningFast" as const, emoji: "⚡", colorBar: "bg-blue-400", colorBg: "bg-blue-50", colorText: "text-blue-700", colorBorder: "border-blue-200" },
-  { key: "superFocus" as const, emoji: "🎯", colorBar: "bg-green-400", colorBg: "bg-green-50", colorText: "text-green-700", colorBorder: "border-green-200" },
-  { key: "starPower" as const, emoji: "⭐", colorBar: "bg-purple-400", colorBg: "bg-purple-50", colorText: "text-purple-700", colorBorder: "border-purple-200" },
+  {
+    key: "heartPower" as const,
+    emoji: "💖",
+    colorBar: "bg-pink-400",
+    colorBg: "bg-pink-50",
+    colorText: "text-pink-700",
+    colorBorder: "border-pink-200",
+  },
+  {
+    key: "brainJuice" as const,
+    emoji: "🧠",
+    colorBar: "bg-yellow-400",
+    colorBg: "bg-yellow-50",
+    colorText: "text-yellow-700",
+    colorBorder: "border-yellow-200",
+  },
+  {
+    key: "lightningFast" as const,
+    emoji: "⚡",
+    colorBar: "bg-blue-400",
+    colorBg: "bg-blue-50",
+    colorText: "text-blue-700",
+    colorBorder: "border-blue-200",
+  },
+  {
+    key: "superFocus" as const,
+    emoji: "🎯",
+    colorBar: "bg-green-400",
+    colorBg: "bg-green-50",
+    colorText: "text-green-700",
+    colorBorder: "border-green-200",
+  },
+  {
+    key: "starPower" as const,
+    emoji: "⭐",
+    colorBar: "bg-purple-400",
+    colorBg: "bg-purple-50",
+    colorText: "text-purple-700",
+    colorBorder: "border-purple-200",
+  },
 ];
 
 const ARENA_BOOSTS = [
@@ -47,9 +83,37 @@ const SET_CONFIG = [
 ];
 
 const SPECIALIZATIONS = [
-  { key: "AI", label: "AI Explorer", labelEs: "Explorador de IA", icon: "🤖", color: "from-blue-500 to-indigo-500", borderColor: "border-blue-400", desc: "Build smart robots and teach machines to think!", descEs: "¡Construye robots inteligentes y enseña a las máquinas a pensar!" },
-  { key: "QUANTUM", label: "Quantum Voyager", labelEs: "Viajero Cuántico", icon: "🔮", color: "from-purple-500 to-violet-500", borderColor: "border-purple-400", desc: "Explore space math and unlock cosmic puzzles!", descEs: "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!" },
-  { key: "BIOTECH", label: "Bio Builder", labelEs: "Constructor Bio", icon: "🌿", color: "from-green-500 to-emerald-500", borderColor: "border-green-400", desc: "Discover living things and grow amazing gardens!", descEs: "¡Descubre seres vivos y cultiva jardines asombrosos!" },
+  {
+    key: "AI",
+    label: "AI Explorer",
+    labelEs: "Explorador de IA",
+    icon: "🤖",
+    color: "from-blue-500 to-indigo-500",
+    borderColor: "border-blue-400",
+    desc: "Build smart robots and teach machines to think!",
+    descEs: "¡Construye robots inteligentes y enseña a las máquinas a pensar!",
+  },
+  {
+    key: "QUANTUM",
+    label: "Quantum Voyager",
+    labelEs: "Viajero Cuántico",
+    icon: "🔮",
+    color: "from-purple-500 to-violet-500",
+    borderColor: "border-purple-400",
+    desc: "Explore space math and unlock cosmic puzzles!",
+    descEs:
+      "¡Explora las matemáticas espaciales y resuelve rompecabezas cósmicos!",
+  },
+  {
+    key: "BIOTECH",
+    label: "Bio Builder",
+    labelEs: "Constructor Bio",
+    icon: "🌿",
+    color: "from-green-500 to-emerald-500",
+    borderColor: "border-green-400",
+    desc: "Discover living things and grow amazing gardens!",
+    descEs: "¡Descubre seres vivos y cultiva jardines asombrosos!",
+  },
 ];
 
 export default function Avatar() {
@@ -59,7 +123,6 @@ export default function Avatar() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [avatar, setAvatar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +142,9 @@ export default function Avatar() {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [authApi]);
 
   if (loading) {
@@ -97,8 +162,13 @@ export default function Avatar() {
   }
 
   const s = stats ?? {
-    heartPower: 0, brainJuice: 0, lightningFast: 0, superFocus: 0, starPower: 0,
-    powerLevel: 0, stage: "Rookie",
+    heartPower: 0,
+    brainJuice: 0,
+    lightningFast: 0,
+    superFocus: 0,
+    starPower: 0,
+    powerLevel: 0,
+    stage: "Rookie",
     specialtyProgress: {
       set1: { current: 0, target: 15, complete: false },
       set2: { current: 0, target: 30, complete: false },
@@ -106,33 +176,24 @@ export default function Avatar() {
     },
   };
 
-  const stageEmoji = s.stage === "Legend" ? "👑" : s.stage === "Champion" ? "🏆" : s.stage === "Explorer" ? "🚀" : "🌟";
+  const stageEmoji =
+    s.stage === "Legend"
+      ? "👑"
+      : s.stage === "Champion"
+        ? "🏆"
+        : s.stage === "Explorer"
+          ? "🚀"
+          : "🌟";
   const loginIcon = (user as any)?.loginIcon;
   const xp = avatar?.avatar?.xp ?? avatar?.xp ?? 0;
   const level = avatar?.avatar?.level ?? avatar?.level ?? 1;
   const currentArchetype = getStudentArchetype(avatar);
 
-  async function handleSelectSpecialization(archetype: string) {
-    setSaving(true);
-    try {
-      await api.selectArchetype(archetype);
-      // Reload avatar to reflect selection
-      const refreshed = await api.getAvatar();
-      setAvatar(refreshed);
-    } catch (err) {
-      console.error("Failed to select specialization:", err);
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header: name + stage */}
       <div className="text-center space-y-1">
-        {loginIcon && (
-          <div className="text-6xl mb-2">{loginIcon}</div>
-        )}
+        {loginIcon && <div className="text-6xl mb-2">{loginIcon}</div>}
         <h1 className="text-3xl font-extrabold text-slate-800">
           {t("myStar.title")}
         </h1>
@@ -156,7 +217,9 @@ export default function Avatar() {
           <div className="flex justify-center gap-6 mt-3">
             <div className="text-center">
               <p className="text-xs text-slate-500">{t("myStar.stars")}</p>
-              <p className="text-lg font-bold text-slate-700">{xp} {"⭐"}</p>
+              <p className="text-lg font-bold text-slate-700">
+                {xp} {"⭐"}
+              </p>
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500">{t("myStar.levelLabel")}</p>
@@ -167,8 +230,18 @@ export default function Avatar() {
           {s.stage !== "Legend" && (
             <p className="text-xs text-orange-400 mt-2">
               {t("myStar.nextStage", {
-                next: s.powerLevel < 11 ? t("myStar.stage.explorer") : s.powerLevel < 26 ? t("myStar.stage.champion") : t("myStar.stage.legend"),
-                needed: s.powerLevel < 11 ? 11 - s.powerLevel : s.powerLevel < 26 ? 26 - s.powerLevel : 41 - s.powerLevel,
+                next:
+                  s.powerLevel < 11
+                    ? t("myStar.stage.explorer")
+                    : s.powerLevel < 26
+                      ? t("myStar.stage.champion")
+                      : t("myStar.stage.legend"),
+                needed:
+                  s.powerLevel < 11
+                    ? 11 - s.powerLevel
+                    : s.powerLevel < 26
+                      ? 26 - s.powerLevel
+                      : 41 - s.powerLevel,
               })}
             </p>
           )}
@@ -188,7 +261,8 @@ export default function Avatar() {
               key={sp.key}
               className={cn(
                 "rounded-xl border-2 p-3 flex items-center gap-3 transition-all",
-                sp.colorBg, sp.colorBorder,
+                sp.colorBg,
+                sp.colorBorder,
                 isMax && "ring-2 ring-yellow-400",
               )}
             >
@@ -204,7 +278,10 @@ export default function Avatar() {
                 </div>
                 <div className="h-4 bg-white/60 rounded-full overflow-hidden">
                   <div
-                    className={cn("h-full rounded-full transition-all duration-500", sp.colorBar)}
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      sp.colorBar,
+                    )}
                     style={{ width: `${(val / 10) * 100}%` }}
                   />
                 </div>
@@ -244,7 +321,8 @@ export default function Avatar() {
         </h2>
         {SET_CONFIG.map((set, idx) => {
           const sp = s.specialtyProgress[set.key];
-          const prev = idx > 0 ? s.specialtyProgress[SET_CONFIG[idx - 1].key] : null;
+          const prev =
+            idx > 0 ? s.specialtyProgress[SET_CONFIG[idx - 1].key] : null;
           const locked = idx > 0 && !prev?.complete;
           const pct = Math.min(100, (sp.current / sp.target) * 100);
           return (
@@ -252,7 +330,11 @@ export default function Avatar() {
               key={set.key}
               className={cn(
                 "rounded-xl border p-4 transition-all",
-                locked ? "opacity-50 bg-slate-50" : sp.complete ? "bg-green-50 border-green-300" : "bg-white border-slate-200",
+                locked
+                  ? "opacity-50 bg-slate-50"
+                  : sp.complete
+                    ? "bg-green-50 border-green-300"
+                    : "bg-white border-slate-200",
               )}
             >
               <div className="flex justify-between mb-2">
@@ -260,7 +342,11 @@ export default function Avatar() {
                   {t(`myStar.sets.${set.key}`)}
                 </span>
                 <span className="text-sm text-slate-500">
-                  {locked ? t("myStar.locked") : sp.complete ? t("myStar.complete") : `${sp.current}/${sp.target}`}
+                  {locked
+                    ? t("myStar.locked")
+                    : sp.complete
+                      ? t("myStar.complete")
+                      : `${sp.current}/${sp.target}`}
                 </span>
               </div>
               <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -289,11 +375,16 @@ export default function Avatar() {
           <Card className="border-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50">
             <CardContent className="py-5 text-center">
               <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-1">
-                {t("avatar.activeSpec")}
+                <Link to="/student/advanced">{t("avatar.activeSpec")} →</Link>
               </p>
               <p className="text-3xl font-black text-indigo-700">
-                {SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.icon ?? "⭐"}{" "}
-                {t(`avatar.spec.${currentArchetype}`, { defaultValue: SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)?.label })}
+                {SPECIALIZATIONS.find((sp) => sp.key === currentArchetype)
+                  ?.icon ?? "⭐"}{" "}
+                {t(`avatar.spec.${currentArchetype}`, {
+                  defaultValue: SPECIALIZATIONS.find(
+                    (sp) => sp.key === currentArchetype,
+                  )?.label,
+                })}
               </p>
             </CardContent>
           </Card>
@@ -302,33 +393,12 @@ export default function Avatar() {
             <p className="text-sm text-slate-600 text-center">
               {t("avatar.pickPath")}
             </p>
-            <div className="grid gap-3">
-              {SPECIALIZATIONS.map((spec) => (
-                <button
-                  key={spec.key}
-                  disabled={saving}
-                  onClick={() => handleSelectSpecialization(spec.key)}
-                  className={cn(
-                    "rounded-xl border-2 p-4 flex items-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]",
-                    "bg-white shadow-sm hover:shadow-md",
-                    spec.borderColor,
-                    saving && "opacity-50 cursor-not-allowed",
-                  )}
-                >
-                  <div className={cn("w-14 h-14 rounded-full bg-gradient-to-br flex items-center justify-center text-3xl flex-shrink-0", spec.color)}>
-                    {spec.icon}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-lg font-bold text-slate-800">
-                      {t(`avatar.spec.${spec.key}`, { defaultValue: spec.label })}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {t(`avatar.specDesc.${spec.key}`, { defaultValue: spec.desc })}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <Link
+              to="/student/specialty"
+              className="block rounded-xl bg-blue-600 px-5 py-4 text-center font-bold text-white"
+            >
+              {t("specialty.inviteAction")}
+            </Link>
           </>
         ) : (
           <Card className="border-2 border-slate-200 bg-slate-50">
@@ -338,7 +408,8 @@ export default function Avatar() {
                 {t("avatar.lockedMessage")}
               </p>
               <p className="text-xs text-slate-400">
-                {t("avatar.progress")}: {s.specialtyProgress.set3.current}/{s.specialtyProgress.set3.target}
+                {t("avatar.progress")}: {s.specialtyProgress.set3.current}/
+                {s.specialtyProgress.set3.target}
               </p>
             </CardContent>
           </Card>

@@ -1,3 +1,5 @@
+import { parseSpecialtyStatus, SPECIALTY_UPDATED } from "@/lib/specialty";
+import { STEM_SET_3_IDS } from "@shared/progression/stemSetIds";
 // src/services/api.ts
 import { useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
@@ -479,6 +481,13 @@ async function safeJson(res: Response) {
 }
 
 export const api = {
+  getSpecialtyStatus: async () => {
+    const res = await fetch(join(API_BASE, "/avatar/specialty-status"), {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new ApiError("Could not load specialty", res.status);
+    return parseSpecialtyStatus(await res.json());
+  },
   getModules: async (params?: { level?: string }) => {
     const url = new URL(join(API_BASE, "/modules"), window.location.origin);
     if (params?.level) {
@@ -578,6 +587,8 @@ export const api = {
         extractErrorMessage(body) || `Request failed: ${res.status}`,
       );
     }
+    if ((STEM_SET_3_IDS as readonly string[]).includes(data.activityId))
+      window.dispatchEvent(new Event(SPECIALTY_UPDATED));
     return body;
   },
 

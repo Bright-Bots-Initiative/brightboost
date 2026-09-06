@@ -16,6 +16,34 @@ import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/s
 
 const router = Router();
 
+// Read-only status: progression comes from the authenticated student's records.
+router.get("/avatar/specialty-status", requireAuth, async (req, res) => {
+  try {
+    const studentId = req.user!.id;
+    const [progress, avatar] = await Promise.all([
+      prisma.progress.findMany({
+        where: { studentId, status: "COMPLETED" },
+        select: { activityId: true },
+      }),
+      prisma.avatar.findUnique({
+        where: { studentId },
+        select: { stage: true, archetype: true },
+      }),
+    ]);
+    const ids = new Set(progress.map((p) => p.activityId));
+    const completed = STEM_SET_3_IDS.filter((id) => ids.has(id)).length;
+    res.json({
+      unlocked: completed === STEM_SET_3_IDS.length,
+      completed,
+      required: STEM_SET_3_IDS.length,
+      specialty: avatar?.stage === "SPECIALIZED" ? avatar.archetype : null,
+    });
+  } catch (error) {
+    console.error("Specialty status error:", error);
+    res.status(500).json({ error: "Could not load specialty status" });
+  }
+});
+
 // Get user XP - auto-backfill if no avatar exists
 router.get("/user/xp", requireAuth, async (req, res) => {
   try {

@@ -1,3 +1,4 @@
+import BioTrailActivity from "./BioTrailActivity";
 import type { ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
 
@@ -43,6 +44,9 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   sky_shield: SkyShieldGame, // "Sky Shield Patterns" (Set 2)
   fast_lane: FastLaneGame, // "Fast Lane Signals" (Set 2)
   qualify_tune_race: QualifyTuneRaceGame, // "Qualify, Tune, Race" (Set 2)
+
+  // Advanced Biotech: independently gated by server specialty state.
+  biotrail: BioTrailActivity,
 
   // ── Set 3 keys ──
   track_maker: TrackMakerGame, // "Boost Track Builder" (Set 3, gated)

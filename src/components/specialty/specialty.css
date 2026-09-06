@@ -1,0 +1,397 @@
+[data-specialty] {
+  --specialty-accent: #16694f;
+  --specialty-light: #e4f5e8;
+  --specialty-ink: #163e32;
+  --specialty-border: #9dceb0;
+}
+[data-specialty="AI"] {
+  --specialty-accent: #b72f3c;
+  --specialty-light: #fff0ef;
+  --specialty-ink: #6f1f2a;
+  --specialty-border: #eaa5ac;
+}
+[data-specialty="QUANTUM"] {
+  --specialty-accent: #7540b5;
+  --specialty-light: #f1eafa;
+  --specialty-ink: #45265e;
+  --specialty-border: #ceb0eb;
+}
+.specialty-student {
+  background: linear-gradient(150deg, #fff, var(--specialty-light));
+}
+.specialty-student .specialty-brand {
+  color: var(--specialty-accent);
+}
+.specialty-student .specialty-nav-active {
+  color: var(--specialty-accent);
+  background: var(--specialty-light);
+}
+.specialty-shell-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: var(--specialty-light);
+  color: var(--specialty-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.specialty-invitation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 22px;
+  background: #fff7d9;
+  border: 1px solid #e8d593;
+  border-radius: 18px;
+  margin-bottom: 20px;
+  color: #614b15;
+}
+.specialty-experience {
+  color: #203849;
+  padding: 10px 4px 30px;
+}
+.specialty-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #506274;
+  min-height: 44px;
+}
+.specialty-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 35px;
+  margin: 26px 0 36px;
+}
+.specialty-heading h1 {
+  font-size: clamp(32px, 4vw, 49px);
+  font-weight: 850;
+  letter-spacing: -1.5px;
+  line-height: 1.12;
+  max-width: 700px;
+  margin: 12px 0 16px;
+}
+.specialty-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  color: var(--specialty-accent);
+}
+.specialty-intro {
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 620px;
+  color: #526474;
+}
+.specialty-companion {
+  width: 175px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.specialty-companion img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin: auto;
+}
+.specialty-companion span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--specialty-light);
+  padding: 8px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--specialty-ink);
+}
+.specialty-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  border: 0;
+  padding: 0;
+}
+.specialty-card {
+  background: #fff;
+  border: 2px solid #dfe5e9;
+  border-radius: 24px;
+  padding: 22px 25px;
+  cursor: pointer;
+  position: relative;
+  transition:
+    border-color 0.16s,
+    box-shadow 0.16s;
+}
+.specialty-card:hover,
+.specialty-card[data-selected="true"] {
+  border-color: var(--specialty-accent);
+  box-shadow: 0 8px 24px #12382e0a;
+}
+.specialty-card[data-selected="true"] {
+  background: linear-gradient(180deg, var(--specialty-light), #fff 65%);
+}
+.specialty-card:focus-within {
+  outline: 3px solid var(--specialty-accent);
+  outline-offset: 4px;
+}
+.specialty-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.specialty-number {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #657687;
+  font-weight: 800;
+}
+.specialty-selection {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--specialty-border);
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+[data-selected="true"] .specialty-selection {
+  background: var(--specialty-accent);
+  border-color: var(--specialty-accent);
+}
+.specialty-symbol {
+  background: var(--specialty-light);
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  color: var(--specialty-accent);
+  margin: 22px 0;
+}
+.specialty-card-kicker {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 800;
+  color: var(--specialty-accent);
+}
+.specialty-card h2 {
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  font-weight: 850;
+  margin: 8px 0 12px;
+}
+.specialty-card > p:not(.specialty-card-kicker) {
+  font-size: 16px;
+  color: #526474;
+  line-height: 1.6;
+  min-height: 78px;
+}
+.specialty-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #e6edef;
+  padding-top: 18px;
+  margin-top: 18px;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--specialty-accent);
+}
+.specialty-preview {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--specialty-light);
+  border: 1px solid var(--specialty-border);
+  border-radius: 22px;
+  padding: 24px;
+  margin-top: 25px;
+}
+.specialty-preview-icon {
+  border-radius: 18px;
+  padding: 16px;
+  background: #fff;
+  color: var(--specialty-accent);
+}
+.specialty-preview h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 6px 0;
+}
+.specialty-preview p:not(.specialty-eyebrow) {
+  font-size: 14px;
+  color: #42596b;
+  line-height: 1.55;
+}
+.specialty-primary {
+  background: var(--specialty-accent) !important;
+  color: #fff !important;
+  min-height: 48px;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 750;
+  white-space: normal;
+}
+.specialty-primary:hover {
+  filter: brightness(0.93);
+}
+.specialty-footnote {
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #627181;
+  margin-top: 19px;
+}
+.specialty-notice {
+  display: flex;
+  gap: 12px;
+  background: #fff7df;
+  padding: 18px;
+  border-radius: 14px;
+  margin-bottom: 22px;
+  color: #624d16;
+}
+.specialty-notice p {
+  margin-top: 5px;
+}
+.specialty-hub {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+.specialty-mission {
+  border: 1px solid var(--specialty-border);
+  background: linear-gradient(130deg, var(--specialty-light), #fff);
+  padding: 38px;
+  border-radius: 26px;
+}
+.specialty-mission h2 {
+  font-size: 38px;
+  font-weight: 850;
+  margin: 20px 0;
+  line-height: 1.15;
+}
+.specialty-mission > p:not(.specialty-eyebrow) {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #4c6465;
+}
+.specialty-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 25px 0;
+}
+.specialty-tags span {
+  background: #fff;
+  border: 1px solid var(--specialty-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--specialty-ink);
+}
+.specialty-field-note {
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #dfe7e4;
+  border-radius: 26px;
+  color: var(--specialty-ink);
+}
+.specialty-field-note h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 20px 0 12px;
+}
+.specialty-field-note p {
+  line-height: 1.7;
+}
+.specialty-badge {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid #e5ebe7;
+  padding-top: 20px;
+  margin-top: 28px;
+  font-size: 13px;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .specialty-cards {
+    grid-template-columns: 1fr;
+  }
+  .specialty-heading {
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .specialty-heading h1 {
+    letter-spacing: -1px;
+  }
+  .specialty-companion {
+    width: 90px;
+  }
+  .specialty-companion img {
+    width: 90px;
+    height: 90px;
+  }
+  .specialty-companion span {
+    font-size: 10px;
+    padding: 6px;
+  }
+  .specialty-preview {
+    flex-wrap: wrap;
+  }
+  .specialty-preview-icon {
+    display: none;
+  }
+  .specialty-preview .specialty-primary {
+    width: 100%;
+  }
+  .specialty-hub {
+    grid-template-columns: 1fr;
+  }
+  .specialty-symbol {
+    float: left;
+    width: 70px;
+    height: 70px;
+    margin: 14px 18px 15px 0;
+  }
+  .specialty-card h2 {
+    margin-top: 4px;
+  }
+  .specialty-card-kicker {
+    margin-top: 18px;
+  }
+  .specialty-card > p:not(.specialty-card-kicker) {
+    clear: both;
+    min-height: 0;
+  }
+  .specialty-shell-badge {
+    font-size: 11px;
+    padding: 6px;
+  }
+  .specialty-mission {
+    padding: 25px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .specialty-experience * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

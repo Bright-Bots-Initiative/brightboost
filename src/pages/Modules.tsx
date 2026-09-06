@@ -12,6 +12,7 @@ import { AlertCircle } from "lucide-react";
 import { ActivityThumb } from "@/components/shared/ActivityThumb";
 import { ImageKey } from "@/theme/activityIllustrations";
 import { translateContentName } from "@/utils/localizedContent";
+import { BIOTRAIL_SLUG } from "@/lib/specialty";
 import {
   getStudentArchetype,
   canAccessModule,
@@ -363,7 +364,10 @@ export default function Modules() {
   }, []);
 
   const set1Modules = modules.filter(
-    (m) => !isSet2ModuleSlug(m.slug) && !isSet3ModuleSlug(m.slug),
+    (m) =>
+      !isSet2ModuleSlug(m.slug) &&
+      !isSet3ModuleSlug(m.slug) &&
+      m.slug !== BIOTRAIL_SLUG,
   );
   const set2Modules = modules.filter((m) => isSet2ModuleSlug(m.slug));
   const set3Modules = modules.filter((m) => isSet3ModuleSlug(m.slug));

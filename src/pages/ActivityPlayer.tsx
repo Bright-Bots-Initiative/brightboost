@@ -19,6 +19,7 @@ import { useGradeBand } from "@/hooks/useGradeBand";
 import { updatePersonalBestCache } from "@/hooks/usePersonalBest";
 import { applyG35StoryOverrides } from "@/components/games/gradeBandContent";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { useSpecialty } from "@/contexts/SpecialtyContext";
 import ModuleUnavailable from "@/components/modules/ModuleUnavailable";
 import { Check, Zap, Heart, Star, ArrowRight, TreePine } from "lucide-react";
 import {
@@ -75,6 +76,9 @@ export default function ActivityPlayer() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const gradeBand = useGradeBand();
+  const { data: specialtyStatus } = useSpecialty();
+  const offerSpecialty =
+    specialtyStatus?.unlocked && !specialtyStatus.specialty;
 
   const [loading, setLoading] = useState(true);
   // `undefined` = not loaded yet; `null` = the catalog has no such module
@@ -454,12 +458,32 @@ export default function ActivityPlayer() {
               )}
             </div>
 
+            {offerSpecialty && (
+              <div
+                role="status"
+                className="rounded-xl bg-emerald-50 p-4 text-emerald-900"
+              >
+                <h3 className="font-bold">{t("specialty.inviteTitle")}</h3>
+                <p>{t("specialty.inviteDescription")}</p>
+              </div>
+            )}
             <Button
               size="lg"
               className="w-full text-lg gap-2"
-              onClick={() => navigate(`/student/modules/${slug}`)}
+              onClick={() =>
+                navigate(
+                  offerSpecialty
+                    ? "/student/specialty"
+                    : `/student/modules/${slug}`,
+                )
+              }
             >
-              {t("activityPlayer.done")} <ArrowRight className="w-5 h-5" />
+              {t(
+                offerSpecialty
+                  ? "specialty.inviteAction"
+                  : "activityPlayer.done",
+              )}{" "}
+              <ArrowRight className="w-5 h-5" />
             </Button>
           </CardContent>
         </Card>

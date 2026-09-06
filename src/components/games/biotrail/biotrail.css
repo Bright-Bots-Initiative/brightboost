@@ -1,0 +1,630 @@
+.biotrail {
+  color: #25463d;
+  padding: 18px 0 30px;
+}
+.biotrail h1 {
+  font-weight: 850;
+  font-size: clamp(25px, 3.5vw, 38px);
+  letter-spacing: -1px;
+  line-height: 1.2;
+  margin-top: 8px;
+}
+.biotrail h2 {
+  font-weight: 850;
+  font-size: clamp(25px, 3vw, 34px);
+  letter-spacing: -0.7px;
+  line-height: 1.2;
+  margin: 12px 0 15px;
+}
+.biotrail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+}
+.biotrail-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.biotrail-header-actions label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.biotrail-spiral {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-bottom: 1px solid #d9e5db;
+  padding: 22px 0;
+  margin-bottom: 25px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #5b736b;
+}
+.biotrail-spiral span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.biotrail-spiral b {
+  display: grid;
+  place-items: center;
+  border: 1px solid #b3caba;
+  border-radius: 50%;
+  width: 23px;
+  height: 23px;
+  font-size: 10px;
+}
+.biotrail-welcome {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin: 26px 0;
+}
+.biotrail-welcome p:not(.specialty-eyebrow) {
+  max-width: 660px;
+  line-height: 1.6;
+  color: #5a7068;
+  font-size: 16px;
+}
+.biotrail-passport {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid #c8dbce;
+  padding: 13px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.biotrail-map {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 180px 180px;
+  gap: 15px 40px;
+  padding: 34px;
+  background: linear-gradient(145deg, #e2f0dc, #ebf5ed 55%, #dfedf4);
+  border: 1px solid #c8ddc7;
+  border-radius: 26px;
+}
+.biotrail-map-paths {
+  position: absolute;
+  inset: 70px 45px;
+  width: calc(100% - 90px);
+  height: calc(100% - 140px);
+  pointer-events: none;
+}
+.biotrail-map-paths path {
+  fill: none;
+  stroke: #99b797;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 3 12;
+}
+.biotrail-island {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 23px;
+  background: #fffef6;
+  border: 2px solid #88b693;
+  box-shadow: 0 7px 0 #bfd4bd;
+  transition: transform 0.15s;
+}
+.biotrail-island:hover:not(:disabled) {
+  transform: translateY(-4px);
+}
+.biotrail-island:disabled {
+  background: #e7eceb;
+  border-color: #b6c6bd;
+  box-shadow: 0 7px 0 #ced9d1;
+  color: #627769;
+}
+.biotrail-island:focus-visible {
+  outline: 3px solid #16694f;
+  outline-offset: 5px;
+}
+.biotrail-island-meadow {
+  grid-area: 1/1/3/2;
+  align-self: center;
+  min-height: 190px;
+}
+.biotrail-island-marsh {
+  grid-area: 2/2/3/3;
+}
+.biotrail-island-canopy {
+  grid-area: 1/2/2/3;
+}
+.biotrail-island-lab {
+  grid-area: 1/3/3/4;
+  align-self: center;
+  min-height: 190px;
+}
+.biotrail-island-orb {
+  width: 57px;
+  height: 57px;
+  background: #e4f2dc;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #397450;
+}
+.biotrail-island-marsh .biotrail-island-orb {
+  background: #e0f0f1;
+  color: #3d8584;
+}
+.biotrail-island-lab .biotrail-island-orb {
+  background: #ebe6f4;
+  color: #77719b;
+}
+.biotrail-island small {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 750;
+  margin-top: 5px;
+}
+.biotrail-island strong {
+  font-size: 19px;
+}
+.biotrail-island > span:last-child {
+  font-size: 11px;
+  font-weight: 700;
+}
+.biotrail-bottom-notes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 25px 0;
+}
+.biotrail-bottom-notes p {
+  max-width: 660px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.biotrail-bottom-notes strong {
+  display: block;
+}
+.biotrail-science {
+  padding: 14px 18px;
+  background: #f3f0e4;
+  border-radius: 12px;
+  color: #626144;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.biotrail-workshop {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 27px;
+}
+.biotrail-workshop > section > p:not(.specialty-eyebrow) {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #526c61;
+}
+.biotrail-tool-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 24px 0 16px;
+}
+.biotrail-tool {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  padding: 24px;
+  border: 2px solid #ccdcd1;
+  border-radius: 20px;
+  background: #fff;
+}
+.biotrail-tool[aria-pressed="true"] {
+  border-color: #217b59;
+  background: #ecf7e9;
+}
+.biotrail-tool strong {
+  font-size: 19px;
+}
+.biotrail-tool span {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #526c61;
+}
+.biotrail-tool small {
+  font-weight: 700;
+  color: #217b59;
+}
+.biotrail-tool > svg:last-child:not(:first-child) {
+  position: absolute;
+  right: 15px;
+  top: 20px;
+}
+.biotrail-hint {
+  background: #eef4ed;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px !important;
+  line-height: 1.6;
+}
+.biotrail-assist {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  cursor: pointer;
+}
+.biotrail-assist small {
+  display: block;
+  font-size: 12px;
+  color: #5b7066;
+  margin-top: 4px;
+}
+.biotrail input[type="checkbox"],
+.biotrail input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #1c7455;
+  flex-shrink: 0;
+}
+.biotrail-prediction {
+  border: 1px solid #cfddd3;
+  border-radius: 14px;
+  padding: 15px;
+  margin-top: 15px;
+}
+.biotrail-prediction legend {
+  font-size: 14px;
+  font-weight: 750;
+}
+.biotrail-prediction label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  font-size: 14px;
+}
+.biotrail-suit-card {
+  border-radius: 22px;
+  background: #e8f2e3;
+  padding: 28px;
+  align-self: start;
+}
+.biotrail-suit-icon {
+  margin: 8px auto 25px;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  background: #fff8df;
+  color: #3b8460;
+  border-radius: 32px;
+  box-shadow: 0 8px 0 #d1dfc7;
+}
+.biotrail-suit-card h3 {
+  font-size: 21px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.biotrail-suit-card p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+.biotrail-suit-card label {
+  font-size: 13px;
+  font-weight: 750;
+  display: block;
+  margin-bottom: 9px;
+}
+.biotrail-suit-card input {
+  border: 1px solid #9ebb9f;
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 15px;
+}
+.biotrail-field {
+  border: 1px solid #c2d9cb;
+  border-radius: 23px;
+  background: #fff;
+  overflow: hidden;
+}
+.biotrail-field-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+}
+.biotrail-field-toolbar button {
+  gap: 6px;
+}
+.biotrail-control-help {
+  padding: 0 18px 15px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5b7066;
+}
+.biotrail-stage {
+  position: relative;
+  outline-offset: -4px;
+}
+.biotrail-stage:focus-visible {
+  outline: 3px solid #18724e;
+}
+.biotrail-stage canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 2;
+}
+.biotrail-paused {
+  position: absolute;
+  inset: 0;
+  background: #1a483cd9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  gap: 20px;
+  font-size: 28px;
+  backdrop-filter: blur(3px);
+}
+.biotrail-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 18px;
+  background: #f1f7ef;
+}
+.biotrail-controls > div {
+  display: flex;
+  gap: 10px;
+}
+.biotrail-control {
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #abc6b4;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px 18px;
+  min-width: 60px;
+  min-height: 52px;
+  font-weight: 750;
+  box-shadow: 0 3px 0 #c6d8cb;
+}
+.biotrail-control:active {
+  background: #d7edda;
+}
+.biotrail-control span {
+  font-size: 12px;
+}
+.biotrail-field-notice {
+  padding: 12px 18px;
+  font-size: 13px;
+}
+.biotrail-observation,
+.biotrail-result {
+  text-align: center;
+  padding: 35px;
+  max-width: 770px;
+  margin: 25px auto;
+  border: 1px solid #c7dccb;
+  border-radius: 24px;
+  background: #fff;
+}
+.biotrail-observation .specialty-eyebrow,
+.biotrail-result .specialty-eyebrow {
+  justify-content: center;
+}
+.biotrail-observation > p:not(.specialty-eyebrow),
+.biotrail-result > p:not(.specialty-eyebrow) {
+  font-size: 18px;
+  line-height: 1.7;
+  margin: 20px 0;
+}
+.biotrail-result-icon {
+  width: 90px;
+  height: 90px;
+  display: grid;
+  place-items: center;
+  background: #e2f4db;
+  border-radius: 50%;
+  margin: 0 auto 25px;
+}
+.biotrail-keepsake {
+  max-width: 720px;
+  margin: 25px auto;
+  padding: 35px;
+  background: #fffdf2;
+  border: 2px solid #d9d3a8;
+  border-radius: 24px;
+}
+.biotrail-keepsake > p {
+  line-height: 1.7;
+  margin: 15px 0;
+}
+.biotrail-keepsake fieldset {
+  border-top: 1px solid #dcd9bc;
+  padding: 20px 0;
+  margin: 20px 0 0;
+}
+.biotrail-keepsake legend {
+  font-size: 18px;
+  font-weight: 800;
+}
+.biotrail-reflection {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  margin: 8px 0;
+  border: 1px solid #e5e4cf;
+  border-radius: 10px;
+}
+.biotrail-unplugged {
+  font-size: 14px;
+  padding: 18px;
+  background: #eeefdb;
+  border-radius: 12px;
+}
+.biotrail-keep-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.biotrail-keep-actions button {
+  gap: 7px;
+  min-height: 45px;
+}
+.biotrail-local-note {
+  font-size: 12px;
+  color: #626e55;
+}
+.biotrail-save-status {
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+@media (max-width: 700px) {
+  .biotrail-header,
+  .biotrail-welcome,
+  .biotrail-bottom-notes {
+    flex-wrap: wrap;
+  }
+  .biotrail-map {
+    gap: 18px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 150px);
+    padding: 24px;
+  }
+  .biotrail-island-meadow {
+    grid-area: 1/1/2/3;
+    min-height: 145px;
+  }
+  .biotrail-island-canopy {
+    grid-area: 2/1/3/2;
+  }
+  .biotrail-island-marsh {
+    grid-area: 2/2/3/3;
+  }
+  .biotrail-island-lab {
+    grid-area: 3/1/4/3;
+    min-height: 145px;
+  }
+  .biotrail-map-paths {
+    display: none;
+  }
+  .biotrail-island-orb {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+  .biotrail-island-orb svg {
+    width: 25px;
+  }
+  .biotrail-island strong {
+    font-size: 16px;
+  }
+  .biotrail-workshop {
+    grid-template-columns: 1fr;
+  }
+  .biotrail-suit-card {
+    order: -1;
+    padding: 18px;
+  }
+  .biotrail-suit-icon {
+    float: right;
+    width: 75px;
+    height: 75px;
+    margin: 0 0 15px 15px;
+  }
+  .biotrail-suit-icon svg {
+    width: 40px;
+  }
+  .biotrail-tool-grid {
+    gap: 10px;
+  }
+  .biotrail-tool {
+    padding: 17px;
+  }
+  .biotrail-field-toolbar {
+    flex-wrap: wrap;
+  }
+  .biotrail-controls {
+    padding: 12px;
+  }
+  .biotrail-control {
+    padding: 12px;
+  }
+  .biotrail-control span {
+    display: none;
+  }
+  .biotrail-spiral {
+    gap: 10px;
+    font-size: 10px;
+  }
+  .biotrail-observation .biotrail-suit-icon {
+    float: none;
+    margin: 12px auto 25px;
+  }
+  .biotrail-keepsake {
+    padding: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .biotrail * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media print {
+  body:has(.biotrail-keepsake) * {
+    visibility: hidden !important;
+  }
+  .biotrail-keepsake,
+  .biotrail-keepsake * {
+    visibility: visible !important;
+  }
+  .biotrail-keepsake {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  .biotrail-keep-actions,
+  .biotrail-keep-actions * {
+    display: none !important;
+  }
+  .biotrail-reflection:has(input:not(:checked)) {
+    display: none;
+  }
+}

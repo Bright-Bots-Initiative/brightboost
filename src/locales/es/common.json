@@ -2408,5 +2408,224 @@
         "restoreFailed": "Todavía no pudimos restaurar {{baseline}}. No se borró nada de lo que hiciste."
       }
     }
+  },
+  "specialty": {
+    "back": "Volver a mis juegos",
+    "newChapter": "Tu próximo capítulo",
+    "milestone": "Más allá de los fundamentos",
+    "title": "¿Qué descubrirás ahora?",
+    "intro": "Has construido, explorado y creado. Ahora elige una especialidad y hazla tuya.",
+    "locked": "Tu especialidad se abre después del Set 3.",
+    "progress": "Has completado {{count}} de {{total}} juegos del Set 3. Puedes explorar las opciones.",
+    "chooseLabel": "Explorar una especialidad",
+    "previewLabel": "Un vistazo a tu mundo",
+    "choose": "Elegir {{name}}",
+    "familiar": "Tus clases, creaciones y navegación siguen en su lugar.",
+    "comingTitle": "Tus próximos descubrimientos están creciendo.",
+    "comingDescription": "Estamos creando nuevos juegos para esta especialidad. Puedes volver a tus juegos y creaciones anteriores.",
+    "play": "Explorar las Islas de Adaptación",
+    "revisit": "Volver a mis juegos",
+    "fieldNote": "Una pregunta para llevar contigo",
+    "setsComplete": "Fundamentos, Exploración y Dominio: completos",
+    "confirmTitle": "¿Elegir {{name}} como tu especialidad?",
+    "confirmDescription": "Esto guarda tu especialidad en tu cuenta. Puedes explorar las otras opciones antes de confirmar. Una vez guardada, la aplicación aún no permite cambiarla.",
+    "keepExploring": "Seguir explorando",
+    "confirm": "Sí, esta es mi especialidad",
+    "saving": "Guardando tu elección…",
+    "saveError": "No pudimos guardar tu elección. Tu vista previa sigue aquí. Inténtalo de nuevo.",
+    "loadError": "No pudimos consultar tu especialidad. Inténtalo de nuevo.",
+    "loading": "Abriendo tu próximo capítulo…",
+    "retry": "Intentar de nuevo",
+    "inviteTitle": "¡Terminaste el Set 3! Se abre un nuevo capítulo.",
+    "inviteDescription": "Elige IA/AA, Cuántica o Biotecnología para seguir explorando.",
+    "inviteAction": "Elegir mi especialidad",
+    "gameLocked": "BioTrail se abre después del Set 3 al elegir Biotecnología. Ver mi especialidad.",
+    "previewMode": "Vista previa del diseño",
+    "resetPreview": "Explorar otra especialidad",
+    "previewLocked": "Mostrar estado bloqueado",
+    "previewBack": "Volver a las especialidades",
+    "tracks": {
+      "AI": {
+        "name": "IA / AA",
+        "role": "Quien encuentra patrones",
+        "description": "Enseña a una máquina con ejemplos. Ayúdala a encontrar patrones y prueba lo que aprendió.",
+        "verbs": "Enseñar · Probar · Mejorar",
+        "companion": "Amigo de patrones",
+        "previewTitle": "Tu propio laboratorio de descubrimientos",
+        "preview": "Los detalles rojos, una insignia de circuitos y preguntas sobre entrenamiento y pruebas te dan la bienvenida a tu laboratorio de IA.",
+        "welcome": "Bienvenido a tu laboratorio de IA.",
+        "question": "¿Qué ejemplos ayudarían a una máquina a aprender algo nuevo?"
+      },
+      "QUANTUM": {
+        "name": "Cuántica",
+        "role": "Quien explora posibilidades",
+        "description": "Explora el diminuto mundo de la ciencia cuántica con luz, patrones y experimentos.",
+        "verbs": "Preguntar · Experimentar · Descubrir",
+        "companion": "Guía cuántico",
+        "previewTitle": "Un mundo de posibilidades",
+        "preview": "Tonos violetas, una insignia de átomo y preguntas para experimentar dan vida a tu mundo cuántico.",
+        "welcome": "Tu viaje cuántico comienza.",
+        "question": "¿Qué podría revelar un experimento que tus ojos no pueden ver?"
+      },
+      "BIOTECH": {
+        "name": "Biotecnología",
+        "role": "Quien inventa con la naturaleza",
+        "description": "Aprende de los seres vivos. Diseña herramientas y prueba ideas inspiradas en la naturaleza.",
+        "verbs": "Observar · Diseñar · Crecer",
+        "companion": "Amigo de campo",
+        "previewTitle": "Siéntete en casa en la naturaleza",
+        "preview": "Tonos verdes, una insignia de campo y aventuras por hábitats convierten tu próximo capítulo en un laboratorio vivo.",
+        "welcome": "Las grandes ideas nacen de pequeñas maravillas.",
+        "question": "¿Qué pueden enseñar una hoja, una rana o una semilla a quien inventa?"
+      }
+    }
+  },
+  "biotrail": {
+    "title": "BioTrail: Islas de Adaptación",
+    "tagline": "Construye un traje explorador inspirado en la naturaleza. Recorre islas, prueba habilidades y descubre qué puede hacer tu diseño.",
+    "tag1": "Biomímesis",
+    "tag2": "Crear + jugar",
+    "tag3": "4 islas conectadas",
+    "kicker": "Biotecnología · Primera expedición",
+    "reduced": "Menos movimiento",
+    "map": "Mapa del mundo",
+    "stepsLabel": "Tu viaje creativo",
+    "steps": {
+      "imagine": "Imaginar",
+      "create": "Crear",
+      "play": "Jugar",
+      "share": "Compartir",
+      "reflect": "Reflexionar"
+    },
+    "world": "Mundo 01 · El archipiélago vivo",
+    "mapTitle": "Pequeño explorador. Grandes posibilidades.",
+    "visited": "{{count}} / {{total}} islas visitadas",
+    "islandNumber": "Isla {{number}}",
+    "revisit": "Volver y rediseñar",
+    "explore": "Explorar esta isla",
+    "lockedIsland": "Sigue primero los caminos abiertos",
+    "pathTitle": "Un comienzo. Dos maneras de explorar.",
+    "pathDescription": "Empieza en el Prado Brote. Elige una rama y llega al Laboratorio de Campo. Puedes volver por el otro camino.",
+    "myBuild": "Mi tarjeta de creación",
+    "science": "Estas herramientas de ingeniería se inspiran en la naturaleza. Los seres vivos no evolucionan nuevos rasgos durante una aventura; las adaptaciones biológicas surgen en poblaciones a lo largo de generaciones.",
+    "workshop": "El taller de trajes",
+    "suggested": "Una idea para empezar: {{tool}}. Puedes cambiarla y comparar.",
+    "predict": "¿Qué crees que cambiará esta herramienta?",
+    "assist": "Modo explorador sin prisa",
+    "assistDescription": "Explora observaciones paso a paso. No hacen falta saltos rápidos.",
+    "test": "Probar mi diseño",
+    "yourSuit": "Hecho por ti",
+    "name": "Ponle nombre a tu traje",
+    "defaultName": "Mi explorador de campo",
+    "toolNote": "Estás construyendo una herramienta, no cambiando un animal. Distintos diseños ayudan con distintos retos.",
+    "observationCount": "Observación {{count}} de {{total}}",
+    "nextObservation": "Siguiente observación",
+    "keepDiscovery": "Guardar este descubrimiento",
+    "discovery": "Observaciones de campo reunidas",
+    "resultTitle": "Mira lo que puede hacer tu diseño.",
+    "resultQuestion": "¿Qué conservarías? ¿Qué cambiarías?",
+    "tryOther": "Cambiar una herramienta y probar",
+    "nextIsland": "Elegir mi próxima isla",
+    "creationCard": "Mi explorador de campo · Tarjeta de creación",
+    "reflect": "¿Qué observaste?",
+    "unplugged": "Muestra tu creación a alguien de confianza. Dibujen juntos una nueva herramienta en papel y señalen el ser vivo que la inspiró.",
+    "save": "Guardar mi diseño",
+    "print": "Imprimir / mostrar mi tarjeta",
+    "finish": "Terminar mi expedición",
+    "finishing": "Guardando la expedición…",
+    "finished": "Expedición guardada",
+    "localNote": "Este diseño se guarda en este dispositivo para tu cuenta. Puedes imprimirlo para compartirlo con alguien a tu lado.",
+    "finishError": "No pudimos registrar tu expedición. Tu diseño sigue aquí. Vuelve a pulsar Terminar.",
+    "storage": {
+      "saved": "Tu diseño está guardado en este dispositivo.",
+      "error": "Este dispositivo no pudo guardar tu diseño. Mantén esta página abierta o imprime tu tarjeta."
+    },
+    "edit": "Volver al taller",
+    "resume": "Continuar",
+    "pause": "Pausar",
+    "restart": "Volver a mi punto seguro",
+    "controls": "Muévete con ← → o A / D. Salta con Espacio / ↑. Con alas, mantén Saltar para caer despacio. Escape pausa. Llega a la estación dorada.",
+    "fieldLabel": "Prueba de campo de BioTrail",
+    "paused": "Tómate tu tiempo.",
+    "left": "Ir a la izquierda",
+    "right": "Ir a la derecha",
+    "jump": "Saltar",
+    "jumpGlide": "Saltar / mantener para planear",
+    "notices": {
+      "start": "Prueba tu herramienta. No hay reloj y siempre puedes volver a intentar.",
+      "checkpoint": "Llegaste a un punto seguro. Tu próximo intento empezará aquí.",
+      "checkpointReturn": "De nuevo en tierra firme. ¿Qué probarás ahora?"
+    },
+    "reflections": {
+      "higher": "Mis patas con resortes me ayudan a saltar más alto.",
+      "slower": "Mis alas me ayudan a caer más despacio.",
+      "changed": "Cambié mi diseño para adaptarlo al hábitat."
+    },
+    "tools": {
+      "spring": {
+        "name": "Patas con resortes",
+        "description": "Una herramienta con resortes inspirada en animales que saltan.",
+        "effect": "Saltos más altos · aterrizaje rápido",
+        "nature": "Las ranas saltan con sus patas traseras largas y fuertes. Tu traje usa resortes para explorar un movimiento parecido."
+      },
+      "glide": {
+        "name": "Alas para planear",
+        "description": "Alas anchas inspiradas en animales planeadores y semillas.",
+        "effect": "Mantén Saltar · cae más despacio",
+        "nature": "Los animales planeadores usan superficies amplias para caer más despacio y desplazarse por el aire. Tus alas toman esa idea."
+      }
+    },
+    "islands": {
+      "meadow": {
+        "name": "Prado Brote",
+        "challenge": "Practica saltos cortos entre flores y pequeños arroyos. Puedes encontrar un camino con cualquiera de las dos herramientas."
+      },
+      "marsh": {
+        "name": "Pantano Ondas",
+        "challenge": "Las plataformas de piedra se elevan sobre los juncos. Las patas con resortes saltan directamente; las alas planeadoras usan los escalones pequeños."
+      },
+      "canopy": {
+        "name": "Cruce de Copas",
+        "challenge": "Salta desde las ramas altas y mantén pulsado Saltar para planear sobre los espacios amplios. Las patas con resortes pueden explorar los troncos de abajo."
+      },
+      "lab": {
+        "name": "Laboratorio de Campo",
+        "challenge": "Explora un invernadero con estantes altos, descensos largos y escalones desiguales. Combina tus descubrimientos para llegar a la estación de campo."
+      }
+    },
+    "observations": {
+      "spring": {
+        "title": "Toma una idea de una rana.",
+        "text": "Las patas traseras largas ayudan a las ranas a saltar. Compáralas con tu traje: los resortes dan un salto más fuerte y las alas cambian la caída."
+      },
+      "glide": {
+        "title": "Extiéndete y baja despacio.",
+        "text": "Una superficie amplia ayuda a un animal planeador a caer más despacio. Tus alas usan esa idea para cruzar un hueco."
+      },
+      "compare": {
+        "title": "Cambia una cosa. Observa qué pasa.",
+        "text": "Compara dos herramientas en la misma isla. Los resortes saltan más alto. Las alas frenan la caída al mantener Saltar. Ninguna herramienta es la mejor para todo."
+      },
+      "habitat": {
+        "title": "Deja que el hábitat guíe tu diseño.",
+        "text": "Mira los huecos, plataformas y lugares seguros. Imagina dónde sería útil cada herramienta. Vuelve al taller cuando quieras cambiarla."
+      },
+      "design": {
+        "title": "Una idea se convierte en un invento.",
+        "text": "Quien inventa observa la naturaleza, construye y prueba una herramienta. ¿Qué conservarías en tu próximo diseño? ¿Qué cambiarías?"
+      },
+      "marsh": {
+        "title": "¿Un salto grande o varios pasos pequeños?",
+        "text": "Las patas con resortes llegan a la plataforma alta de un salto. Las alas necesitan los escalones pequeños. Prueba ambos caminos y observa cómo tu diseño cambia el recorrido."
+      },
+      "canopy": {
+        "title": "Elige el camino alto. Quédate en el aire.",
+        "text": "Mantén pulsado Saltar con las alas planeadoras para ir de una rama alta a la siguiente. Con las patas con resortes, usa los troncos de abajo. Suelta Saltar para descender más rápido con las alas."
+      },
+      "lab": {
+        "title": "Combina tus descubrimientos.",
+        "text": "El invernadero tiene estantes altos, un descenso largo y escalones desiguales. Las patas con resortes ayudan a subir. Las alas ayudan a cruzar. Tu camino puede cambiar según la herramienta."
+      }
+    }
   }
 }

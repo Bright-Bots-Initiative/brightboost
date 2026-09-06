@@ -32,6 +32,11 @@ import AudiencePlaceholder from "./pages/AudiencePlaceholder";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
 import Avatar from "./pages/Avatar";
+import { SpecialtyProvider } from "./contexts/SpecialtyContext";
+const Specialty = lazy(() => import("./pages/Specialty"));
+const AdvancedPreview = import.meta.env.DEV
+  ? lazy(() => import("./pages/dev/AdvancedPreview"))
+  : () => null;
 import PlayHub from "./pages/PlayHub";
 import ActivityPlayer from "./pages/ActivityPlayer";
 import CreateChallenge from "./pages/CreateChallenge";
@@ -104,9 +109,11 @@ import "./App.css";
 
 // Layout Wrappers
 const StudentRoot = () => (
-  <StudentLayout>
-    <Outlet />
-  </StudentLayout>
+  <SpecialtyProvider>
+    <StudentLayout>
+      <Outlet />
+    </StudentLayout>
+  </SpecialtyProvider>
 );
 
 const TeacherRoot = () => (
@@ -194,6 +201,16 @@ function App() {
                   }
                 />
               )}
+              {import.meta.env.DEV && (
+                <Route
+                  path="/dev/advanced"
+                  element={
+                    <Suspense fallback={null}>
+                      <AdvancedPreview />
+                    </Suspense>
+                  }
+                />
+              )}
               <Route path="/for-reviewers" element={<ForReviewers />} />
               {/* Free Access Plans detail pages — reached from the homepage
                   "Learn more" buttons. Public, persona-routed CTAs. */}
@@ -269,6 +286,22 @@ function App() {
                   element={<ActivityPlayer />}
                 />
                 <Route path="join" element={<JoinClass />} />
+                <Route
+                  path="specialty"
+                  element={
+                    <Suspense fallback={null}>
+                      <Specialty />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="advanced"
+                  element={
+                    <Suspense fallback={null}>
+                      <Specialty />
+                    </Suspense>
+                  }
+                />
                 <Route path="avatar" element={<Avatar />} />
                 <Route path="play" element={<PlayHub />} />
                 <Route path="create-challenge" element={<CreateChallenge />} />
