@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { isSessionAuth } from "./token";
 
 export type UserRole = "teacher" | "student" | "admin";
 
@@ -28,13 +29,20 @@ export function authenticateToken(
 
   if (!token) return next(); // No token, proceed as guest (requireAuth will catch if needed)
 
-  jwt.verify(token, SESSION_SECRET, (err: any, user: any) => {
+  jwt.verify(token, SESSION_SECRET, (err: any, payload: any) => {
     if (err) {
       // If the token is invalid, we return 403 Forbidden
       return res.status(403).json({ error: "forbidden_invalid_token" });
     }
 
-    req.user = user as { id: string; role: UserRole };
+    // #872: copy only the claims the app understands. `auth` is the
+    // server-issued session provenance; a token without it is a legacy
+    // session and gets no credential authority (`auth` stays undefined).
+    req.user = {
+      id: payload.id as string,
+      role: payload.role as UserRole,
+      auth: isSessionAuth(payload.auth) ? payload.auth : undefined,
+    };
     next();
   });
 }
@@ -64,6 +72,16 @@ export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
   }
 
   next();
+}
+
+/**
+ * #872: true for K-2 classroom sessions (icon login with or without a PIN).
+ * Anyone holding a class code can start one, so such a session must never
+ * read or change the family's home login details.
+ */
+export function isClassroomSession(req: Request): boolean {
+  const auth = req.user?.auth;
+  return auth === "class_code" || auth === "class_code_pin";
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {

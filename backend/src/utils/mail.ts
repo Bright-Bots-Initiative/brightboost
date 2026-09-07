@@ -55,10 +55,16 @@ async function sendViaSMTP(options: MailOptions): Promise<boolean> {
   }
 }
 
-export async function sendMail(options: MailOptions): Promise<void> {
+/**
+ * Resolves `true` when the message was handed to a provider (or, outside
+ * production, written to the console), `false` when it was dropped. Callers
+ * that must not proceed without delivery (#872 home-access invitations) use
+ * the result; fire-and-forget callers may ignore it.
+ */
+export async function sendMail(options: MailOptions): Promise<boolean> {
   if (process.env.SMTP_HOST) {
     const sent = await sendViaSMTP(options);
-    if (sent) return;
+    if (sent) return true;
     // Fall through to console fallback if SMTP failed
   }
 
@@ -66,13 +72,60 @@ export async function sendMail(options: MailOptions): Promise<void> {
     console.warn(
       `[MAIL] No email provider configured. Email to ${options.to} was not delivered.`,
     );
-  } else {
-    console.log(`\n[MAIL] ─── Dev Mode Email ───`);
-    console.log(`  To:      ${options.to}`);
-    console.log(`  Subject: ${options.subject}`);
-    console.log(`  Body:\n${options.html}`);
-    console.log(`[MAIL] ────────────────────\n`);
+    return false;
   }
+
+  console.log(`\n[MAIL] ─── Dev Mode Email ───`);
+  console.log(`  To:      ${options.to}`);
+  console.log(`  Subject: ${options.subject}`);
+  console.log(`  Body:\n${options.html}`);
+  console.log(`[MAIL] ────────────────────\n`);
+  return true;
+}
+
+/**
+ * #872: invite a parent or guardian to set up home access for a student.
+ * The link carries a single-use token that expires in 72 hours. Returns
+ * whether the message was delivered so the caller can roll the invite back.
+ */
+export async function sendHomeAccessInviteEmail(
+  email: string,
+  acceptUrl: string,
+  studentFirstName: string,
+): Promise<boolean> {
+  const safeName = studentFirstName.replace(/[<>&"']/g, "");
+  return sendMail({
+    to: email,
+    subject: "BrightBoost — Set up home access",
+    html: `
+      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="font-size: 22px; color: #1e40af; margin: 0;">BrightBoost</h1>
+          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">K-8 STEM Learning Platform</p>
+        </div>
+        <p style="font-size: 15px; line-height: 1.6;">Hi,</p>
+        <p style="font-size: 15px; line-height: 1.6;">
+          ${safeName}'s teacher invited you to set up a home login so ${safeName} can
+          keep learning at home. Choose the email and password you will use to sign in:
+        </p>
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${acceptUrl}"
+             style="display: inline-block; padding: 12px 32px; background-color: #1e40af; color: #ffffff; font-weight: bold; font-size: 15px; text-decoration: none; border-radius: 8px;">
+            Set Up Home Access
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
+          This link works once and expires in 72 hours. If you were not expecting it,
+          you can ignore this email — nothing changes on the account.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center;">
+          BrightBoost &mdash; Bright Bots Initiative<br />
+          This is an automated message. Please do not reply.
+        </p>
+      </div>
+    `.trim(),
+  });
 }
 
 /**

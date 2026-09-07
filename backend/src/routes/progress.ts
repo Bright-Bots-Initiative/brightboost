@@ -13,7 +13,7 @@ const ProgressStatus = {
   COMPLETED: "COMPLETED",
 } as const;
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
-import { requireAuth } from "../utils/auth";
+import { isClassroomSession, requireAuth } from "../utils/auth";
 import {
   canWriteProgressFor,
   requireStudentReadAccess,
@@ -248,6 +248,11 @@ router.get(
             avatarUrl: true,
             createdAt: true,
             updatedAt: true,
+            // #872: AuthContext re-hydrates `user` from this endpoint; the
+            // student settings card needs the home-access state to survive a
+            // page reload (login and class-login return it too).
+            homeAccessEnabled: true,
+            accountMode: true,
           },
         })
       : Promise.resolve(null);
@@ -267,7 +272,12 @@ router.get(
       : Promise.resolve([]);
 
     const [user, progress] = await Promise.all([userPromise, progressPromise]);
-    res.json({ user, progress });
+    // #872: a classroom session (icon / PIN login, reachable by anyone holding
+    // the class code) must not read the family's home login email.
+    res.json({
+      user: user && isClassroomSession(req) ? { ...user, email: null } : user,
+      progress,
+    });
   }),
 );
 

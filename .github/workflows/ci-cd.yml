@@ -181,6 +181,31 @@ jobs:
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
 
+      # Both Prisma trees must carry the same migrations; only the root tree
+      # is applied above, so prove the backend copy is byte-identical.
+      - name: Verify migration trees are identical
+        run: diff -r prisma/migrations backend/prisma/migrations
+
+      # Authorization regressions that need real PostgreSQL semantics (unique
+      # constraints, row locks, transactions): backend/src/**/*.db.test.ts.
+      # They bind to TEST_DATABASE_URL (name must carry a test/e2e token).
+      # REQUIRE_TEST_DATABASE turns a missing URL into a failure rather than a
+      # skip, so a green step means the suites executed.
+      - name: Install backend dependencies
+        run: cd backend && npm ci
+
+      # OQ-03: npm ci replaces backend/node_modules, so regenerate its client.
+      - name: Generate Prisma client (backend)
+        run: cd backend && npm run db:generate
+
+      - name: Run PostgreSQL-backed authorization regressions
+        run: cd backend && REQUIRE_TEST_DATABASE=1 npx vitest run db.test
+        env:
+          SESSION_SECRET: ci-only-session-secret-not-production
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
+
   # #671: bounded real-flow E2E (complements test:e2e:ci shell smoke + verify:ci-gate).
   # Provisions Postgres, migrates, seeds, boots backend + frontend, runs login →
   # student completion → teacher dashboard evidence. Does not replace the fast gates.

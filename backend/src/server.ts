@@ -33,6 +33,7 @@ import adminMetricsRouter from "./routes/adminMetrics";
 // TEMPORARY — remove after Slack webhook verification is confirmed working.
 import slackTestRouter from "./routes/slack-test";
 import { devRoleShim, authenticateToken } from "./utils/auth";
+import { classroomResponseGuard } from "./utils/classroomResponseGuard";
 import { preventHpp, nocache } from "./utils/security";
 import { notifySlack } from "./utils/slack";
 import { shutdownAnalytics } from "./services/analytics";
@@ -190,6 +191,8 @@ app.use("/context", contextRouter);
 // without triggering a "jwt malformed" error in authenticateToken.
 app.use(devRoleShim);
 app.use(authenticateToken);
+// #872: classroom sessions never receive home-login credential fields.
+app.use(classroomResponseGuard);
 
 app.use("/api", modulesRouter);
 app.use("/api", progressRouter);

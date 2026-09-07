@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { useApi, ApiError } from "../services/api";
 import { api as directApi } from "../services/api";
+import { postHomeAccess } from "../services/homeAccessApi";
 import {
   Users,
   Zap,
@@ -47,7 +48,16 @@ interface CourseDetail {
   gradeBand?: string;
   kind?: "class" | "home";
   enrollmentCount: number;
-  students: { id: string; name: string; email: string; enrolledAt: string }[];
+  students: {
+    id: string;
+    name: string;
+    email: string;
+    enrolledAt: string;
+    // #872: home-access state per student. `canInviteHomeAccess` is true only
+    // for a never-bound account (no login of its own yet).
+    homeAccessEnabled?: boolean;
+    canInviteHomeAccess?: boolean;
+  }[];
   createdAt: string;
 }
 
@@ -186,6 +196,18 @@ const TeacherClassDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // #872: home-access invitation (teacher re-enters their password; the
+  // parent completes setup from the emailed link).
+  const [inviteStudentId, setInviteStudentId] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePassword, setInvitePassword] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteNotice, setInviteNotice] = useState<{
+    studentId: string;
+    kind: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   // Assignments with stats
   const [assignments, setAssignments] = useState<AssignmentWithStats[]>([]);
@@ -370,6 +392,48 @@ const TeacherClassDetail: React.FC = () => {
       // error toast from useApi
     }
   }, [id, api]);
+
+  // -------------------------------------------------------------------
+  // #872: send a home-access invitation for a never-bound student
+  // -------------------------------------------------------------------
+
+  const openInvite = (studentId: string) => {
+    setInviteStudentId(studentId);
+    setInviteEmail("");
+    setInvitePassword("");
+    setInviteNotice(null);
+  };
+
+  const sendHomeAccessInvite = async (studentId: string) => {
+    if (!id) return;
+    setInviteBusy(true);
+    setInviteNotice(null);
+    try {
+      await postHomeAccess(
+        `/teacher/courses/${id}/students/${studentId}/home-access/invite`,
+        { adultEmail: inviteEmail.trim(), currentPassword: invitePassword },
+        localStorage.getItem("bb_access_token"),
+      );
+      setInviteNotice({
+        studentId,
+        kind: "ok",
+        text: t("teacher.classDetail.homeAccess.sent"),
+      });
+      setInviteStudentId(null);
+      setInvitePassword("");
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "";
+      setInviteNotice({
+        studentId,
+        kind: "error",
+        text: t(`teacher.classDetail.homeAccess.errors.${code}`, {
+          defaultValue: t("teacher.classDetail.homeAccess.errors.generic"),
+        }),
+      });
+    } finally {
+      setInviteBusy(false);
+    }
+  };
 
   // -------------------------------------------------------------------
   // Launch session wizard helpers
@@ -788,17 +852,110 @@ const TeacherClassDetail: React.FC = () => {
                   <th className="py-2 px-3 font-medium">
                     {t("teacher.classDetail.enrolled")}
                   </th>
+                  <th className="py-2 px-3 font-medium">
+                    {t("teacher.classDetail.homeAccess.column")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {course.students.map((s) => (
-                  <tr key={s.id} className="border-b hover:bg-gray-50">
-                    <td className="py-2 px-3 font-medium">{s.name}</td>
-                    <td className="py-2 px-3">{s.email}</td>
-                    <td className="py-2 px-3 text-xs text-gray-400">
-                      {new Date(s.enrolledAt).toLocaleDateString()}
-                    </td>
-                  </tr>
+                  <React.Fragment key={s.id}>
+                    <tr className="border-b hover:bg-gray-50">
+                      <td className="py-2 px-3 font-medium">{s.name}</td>
+                      <td className="py-2 px-3">{s.email}</td>
+                      <td className="py-2 px-3 text-xs text-gray-400">
+                        {new Date(s.enrolledAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-2 px-3 text-xs">
+                        {s.homeAccessEnabled ? (
+                          <span className="text-green-700 font-medium">
+                            {t("teacher.classDetail.homeAccess.enabled")}
+                          </span>
+                        ) : s.canInviteHomeAccess ? (
+                          <button
+                            type="button"
+                            onClick={() => openInvite(s.id)}
+                            className="px-2 py-1 rounded-md bg-brightboost-lightblue/40 text-brightboost-navy hover:bg-brightboost-lightblue transition-colors"
+                          >
+                            {t("teacher.classDetail.homeAccess.invite")}
+                          </button>
+                        ) : (
+                          <span className="text-gray-400">
+                            {t("teacher.classDetail.homeAccess.notAvailable")}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                    {inviteStudentId === s.id && (
+                      <tr className="border-b bg-blue-50/40">
+                        <td colSpan={4} className="py-3 px-3">
+                          <form
+                            className="flex flex-wrap items-end gap-3"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              void sendHomeAccessInvite(s.id);
+                            }}
+                          >
+                            <label className="flex flex-col text-xs text-gray-600 gap-1">
+                              {t("teacher.classDetail.homeAccess.adultEmail")}
+                              <input
+                                type="email"
+                                required
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                className="px-2 py-1.5 border rounded-md text-sm min-w-[220px]"
+                                placeholder="parent@example.com"
+                              />
+                            </label>
+                            <label className="flex flex-col text-xs text-gray-600 gap-1">
+                              {t("teacher.classDetail.homeAccess.yourPassword")}
+                              <input
+                                type="password"
+                                required
+                                value={invitePassword}
+                                onChange={(e) =>
+                                  setInvitePassword(e.target.value)
+                                }
+                                className="px-2 py-1.5 border rounded-md text-sm min-w-[180px]"
+                                autoComplete="current-password"
+                              />
+                            </label>
+                            <button
+                              type="submit"
+                              disabled={inviteBusy}
+                              className="px-3 py-1.5 text-sm bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy disabled:opacity-50 transition-colors"
+                            >
+                              {inviteBusy
+                                ? t("teacher.classDetail.homeAccess.sending")
+                                : t("teacher.classDetail.homeAccess.send")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setInviteStudentId(null)}
+                              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                            >
+                              {t("teacher.classDetail.homeAccess.cancel")}
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    )}
+                    {inviteNotice?.studentId === s.id && (
+                      <tr className="border-b">
+                        <td
+                          colSpan={4}
+                          className={`py-2 px-3 text-xs ${
+                            inviteNotice.kind === "ok"
+                              ? "text-green-700"
+                              : "text-red-600"
+                          }`}
+                          role="status"
+                        >
+                          {inviteNotice.text}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
