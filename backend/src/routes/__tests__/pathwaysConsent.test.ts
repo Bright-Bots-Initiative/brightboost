@@ -340,7 +340,7 @@ describe("#874 history boundary helpers", () => {
     expect(r.score).toBe(91);
   });
 
-  it("BND-9: track boundaries keep earlier consent, add new tracks at the act, drop unlisted ones", () => {
+  it("BND-9: track boundaries keep earlier consent (even for unlisted tracks) and add new tracks at the act", () => {
     const first = withTrackBoundaries(null, ["a", "b"], new Date("2026-06-01"));
     expect(first).toEqual({
       a: "2026-06-01T00:00:00.000Z",
@@ -352,9 +352,13 @@ describe("#874 history boundary helpers", () => {
       new Date("2026-07-01"),
     );
     expect(later).toEqual({
+      a: "2026-06-01T00:00:00.000Z", // unlisted now, consent retained
       b: "2026-06-01T00:00:00.000Z",
       c: "2026-07-01T00:00:00.000Z",
     });
+    expect(
+      withTrackBoundaries({ a: 5, b: "x" }, ["c"], new Date("2026-07-01")),
+    ).toEqual({ b: "x", c: "2026-07-01T00:00:00.000Z" });
     // Editing the cohort's tracks alone yields no boundary for the new track.
     const accepted = new Date("2026-06-01");
     expect(boundariesOf(["a", "b", "c"], accepted, first)).toEqual([

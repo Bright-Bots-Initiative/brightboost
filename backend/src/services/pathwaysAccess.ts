@@ -107,9 +107,11 @@ export type TrackBoundaries = Record<string, string>;
 
 /**
  * The tracks a learner is consenting to share, each with its boundary. A
- * track already in `existing` keeps its earlier boundary; a track the cohort
- * added since starts at `at` (the learner's re-entry of the join code, or the
- * acceptance itself); a track the cohort no longer lists is dropped.
+ * track already in `existing` keeps its earlier boundary — even one the
+ * cohort does not list right now, so a temporarily unlisted track does not
+ * lose the learner's consent; `boundariesOf` hides it while unlisted. A track
+ * the cohort added since starts at `at` (the learner's re-entry of the join
+ * code, or the acceptance itself).
  */
 export function withTrackBoundaries(
   existing: unknown,
@@ -121,9 +123,11 @@ export function withTrackBoundaries(
       ? (existing as Record<string, unknown>)
       : {};
   const out: TrackBoundaries = {};
+  for (const [t, iso] of Object.entries(prev)) {
+    if (typeof iso === "string") out[t] = iso;
+  }
   for (const t of trackIds) {
-    const kept = prev[t];
-    out[t] = typeof kept === "string" ? kept : at.toISOString();
+    if (typeof out[t] !== "string") out[t] = at.toISOString();
   }
   return out;
 }

@@ -156,3 +156,9 @@ positive last-active assertion, the legacy code-login path and the decline path 
 Recorded, not changed: application-vs-database clock skew on the `createdAt >= since` fast path;
 homework revised without a fresh submission event stays withheld; Prettier reflow of two
 facilitator pages is what `format:check` requires for changed files.
+
+Delta review of 02742307: **APPROVE** (all eight findings addressed or recorded; the per-track
+mechanism judged monotone-narrowing, the migration SQL correct). Follow-up: `withTrackBoundaries`
+keeps consent for tracks a cohort temporarily unlists (`boundariesOf` hides them meanwhile);
+recorded as owner decisions — re-entering the join code has no UI today, and the home-access
+gate is an equality test (a second adult-controlled login address stays matchable).

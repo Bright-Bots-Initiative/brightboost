@@ -60,7 +60,8 @@ moment. A revoked learner cannot restart through the join code — only a fresh 
 shares nothing new: a track the learner never consented to is not visible, however old or new
 its work. The learner consents to an added track by re-entering the join code (idempotent for the
 original acceptance moment), and that track's boundary is the re-entry moment. A track the cohort
-no longer lists is hidden. Rows written by operator SQL without a snapshot fall back to the
+no longer lists is hidden while unlisted; the learner's earlier consent to it stays in the
+snapshot and applies again if the cohort lists it again. Rows written by operator SQL without a snapshot fall back to the
 cohort's current tracks at the acceptance moment — set the snapshot in the backfill (below).
 
 Known residuals: `createdAt` is a database default while `acceptedAt` is set by the application,
@@ -74,7 +75,10 @@ A classroom student whose home login was bound by a parent (#872) can carry the 
 its login address. An account that is managed by a parent **and** whose login email is the parent's
 address never matches a Pathways invitation by email: it lists none, cannot accept or decline one,
 and joining by code does not adopt an invitation addressed to the adult. A home login that carries
-the learner's own address (a different parent email, or none) matches normally.
+the learner's own address (a different parent email, or none) matches normally. Known limit: the
+gate is an equality test — an adult who sets the child's login email to a second address they also
+control leaves the account matchable on that address (the invitation still only reaches an account
+that adult controls).
 
 ## Rollout: legacy rows fail closed
 
@@ -106,4 +110,7 @@ Record the backfill in the ops log. There is no audit row for a direct SQL chang
 ## Not yet delivered
 
 Pathways invitations are not emailed; the learner sees them on the Pathways home after signing in
-with the invited account. Email delivery is a follow-up.
+with the invited account. Email delivery is a follow-up. Re-entering the join code — which confirms
+a legacy row and consents to tracks added to a cohort — is reachable only through
+`POST /api/pathways/enroll` today; no screen posts it, so until a UI exists a facilitator gains no
+visibility into existing learners' work on an added track (owner decision; fails closed).
