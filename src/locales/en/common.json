@@ -3027,7 +3027,8 @@
         "home_access_already_configured": "This account already has a home login.",
         "email_in_use": "That email is already used by another account. Choose a different one.",
         "passwordMismatch": "Passwords do not match.",
-        "generic": "Could not set up home access. Please try again."
+        "generic": "Could not set up home access. Please try again.",
+        "invalidInput": "Check the email and password: the password needs at least 8 characters with an uppercase letter, a lowercase letter, and a number."
       }
     }
   }

@@ -74,6 +74,16 @@ export function devRoleShim(req: Request, _res: Response, next: NextFunction) {
   next();
 }
 
+/**
+ * #872: true for K-2 classroom sessions (icon login with or without a PIN).
+ * Anyone holding a class code can start one, so such a session must never
+ * read or change the family's home login details.
+ */
+export function isClassroomSession(req: Request): boolean {
+  const auth = req.user?.auth;
+  return auth === "class_code" || auth === "class_code_pin";
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ error: "unauthorized" });

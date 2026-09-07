@@ -13,7 +13,7 @@ const ProgressStatus = {
   COMPLETED: "COMPLETED",
 } as const;
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
-import { requireAuth } from "../utils/auth";
+import { isClassroomSession, requireAuth } from "../utils/auth";
 import {
   canWriteProgressFor,
   requireStudentReadAccess,
@@ -272,7 +272,12 @@ router.get(
       : Promise.resolve([]);
 
     const [user, progress] = await Promise.all([userPromise, progressPromise]);
-    res.json({ user, progress });
+    // #872: a classroom session (icon / PIN login, reachable by anyone holding
+    // the class code) must not read the family's home login email.
+    res.json({
+      user: user && isClassroomSession(req) ? { ...user, email: null } : user,
+      progress,
+    });
   }),
 );
 

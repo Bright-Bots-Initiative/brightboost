@@ -694,4 +694,57 @@ describe("#872 session provenance is server-issued", () => {
       prismaMock.enrollment.findUnique.mock.calls[0][0].include.student.select;
     expect(select).not.toHaveProperty("email");
   });
+
+  it("HA-26: a classroom session cannot read the home email through /profile or /get-progress", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: STUDENT_ID,
+      name: "Ada",
+      email: "home@example.com",
+      role: "student",
+      school: null,
+      subject: null,
+      avatarUrl: null,
+      createdAt: new Date("2026-01-01"),
+      homeAccessEnabled: true,
+      accountMode: "CLASS_CODE_PLUS_HOME_ACCESS",
+    });
+    for (const session of [classroom, classroomPin]) {
+      const profile = await request(app)
+        .get("/api/profile")
+        .set(bearer(session));
+      expect(profile.status).toBe(200);
+      expect(profile.body.email).toBeNull();
+      expect(profile.body.homeAccessEnabled).toBe(true);
+
+      const hydrate = await request(app)
+        .get("/api/get-progress?excludeProgress=true")
+        .set(bearer(session));
+      expect(hydrate.status).toBe(200);
+      expect(hydrate.body.user.email).toBeNull();
+      expect(JSON.stringify(hydrate.body)).not.toContain("home@example.com");
+    }
+  });
+
+  it("HA-27: the home (password) session still sees its own email", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: STUDENT_ID,
+      name: "Ada",
+      email: "home@example.com",
+      role: "student",
+      school: null,
+      subject: null,
+      avatarUrl: null,
+      createdAt: new Date("2026-01-01"),
+      homeAccessEnabled: true,
+      accountMode: "CLASS_CODE_PLUS_HOME_ACCESS",
+    });
+    const profile = await request(app)
+      .get("/api/profile")
+      .set(bearer(homeStudent));
+    expect(profile.body.email).toBe("home@example.com");
+    const hydrate = await request(app)
+      .get("/api/get-progress?excludeProgress=true")
+      .set(bearer(homeStudent));
+    expect(hydrate.body.user.email).toBe("home@example.com");
+  });
 });

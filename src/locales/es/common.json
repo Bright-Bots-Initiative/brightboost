@@ -2694,7 +2694,8 @@
         "home_access_already_configured": "Esta cuenta ya tiene un inicio de sesión de casa.",
         "email_in_use": "Ese correo ya lo usa otra cuenta. Elige uno diferente.",
         "passwordMismatch": "Las contraseñas no coinciden.",
-        "generic": "No se pudo configurar el acceso desde casa. Inténtalo de nuevo."
+        "generic": "No se pudo configurar el acceso desde casa. Inténtalo de nuevo.",
+        "invalidInput": "Revisa el correo y la contraseña: la contraseña necesita al menos 8 caracteres con una letra mayúscula, una minúscula y un número."
       }
     }
   }

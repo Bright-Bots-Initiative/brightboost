@@ -82,6 +82,17 @@ const HomeAccessAccept: React.FC = () => {
       setError(errorText("passwordMismatch"));
       return;
     }
+    // Same rule the server enforces, checked here so a parent gets the hint
+    // before a failed attempt counts against the proof-route limiter.
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      setError(errorText("invalidInput"));
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch(join(API_BASE, "/auth/home-access/accept"), {
@@ -92,9 +103,8 @@ const HomeAccessAccept: React.FC = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const code = typeof data.error === "string" ? data.error : "generic";
-        // Validation messages from the server are already human-readable.
         // Stable codes map to copy; a server validation message (English
-        // Zod text) is replaced by the localized generic rules hint.
+        // Zod text) is replaced by the localized rules hint.
         setError(errorText(/^[a-z_]+$/.test(code) ? code : "invalidInput"));
         return;
       }

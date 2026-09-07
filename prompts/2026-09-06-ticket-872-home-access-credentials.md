@@ -69,7 +69,11 @@ The post-commit review found three things the tests had not: the session re-hydr
 endpoint (`GET /get-progress`) omitted `homeAccessEnabled`, so the update form vanished after
 a reload; class-login echoed the account email, which after binding is half of the family's
 credential pair; and the Pathways routes shared the `/login` rate-limit bucket. All three were
-fixed in the follow-up commit with tests for the first two.
+fixed in the follow-up commit with tests for the first two. A second pass found that the
+locale key for the accept page's validation hint had not actually landed (a shell quoting
+failure swallowed the script) and that the same classroom session could still read the home
+email through `/profile` and `/get-progress`; both endpoints now withhold `email` for
+classroom-provenance sessions (HA-26/27) and the key exists in both languages.
 
 ## Lessons
 
