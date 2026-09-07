@@ -62,9 +62,12 @@ its work. The learner consents to an added track by confirming it from the Pathw
 "Review and confirm" prompt, or Join or confirm a cohort; idempotent for the original
 acceptance moment), and that track's boundary is the confirmation moment. A track the cohort
 no longer lists is hidden while unlisted; the learner's earlier consent to it stays in the
-snapshot and applies again if the cohort lists it again. A trusted row written without a snapshot
-(operator SQL that skipped it) shares nothing until the learner confirms from the Pathways home,
-which writes the snapshot — set the snapshot in the backfill (below) to avoid that prompt.
+snapshot and applies again if the cohort lists it again. A trusted row whose snapshot covers none of
+the cohort's current tracks — written without a snapshot (operator SQL that skipped it), or holding
+only tracks the cohort no longer lists — shares nothing at all: it is left out of every facilitator
+surface, and the roster counts it with the "not yet confirmed" rows rather than naming it, until the
+learner confirms from the Pathways home (which writes the snapshot). Set the snapshot in the
+backfill (below) to avoid that prompt. The cohort list's learner total still counts such rows.
 
 Known residuals: `createdAt` is a database default while `acceptedAt` is set by the application,
 so a clock skew between the two could show a row started moments before acceptance as
