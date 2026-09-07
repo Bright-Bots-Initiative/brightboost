@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
-import { requireAuth } from "../utils/auth";
+import { isClassroomSession, requireAuth } from "../utils/auth";
 import { resolveStudentReadGrant } from "../utils/authorization";
 import { logAudit } from "../utils/audit";
 import { sensitiveOpsLimiter } from "../utils/security";
@@ -45,7 +45,8 @@ router.get("/profile", requireAuth, async (req: Request, res: Response) => {
     const profile = {
       id: user.id,
       name: user.name,
-      email: user.email,
+      // #872: a classroom session never sees the family's home login email.
+      email: isClassroomSession(req) ? null : user.email,
       school: user.school || undefined,
       subject: user.subject || undefined,
       role: user.role,
@@ -106,7 +107,9 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
     const profile = {
       id: user.id,
       name: user.name,
-      email: user.email,
+      // #872: a classroom session never sees the family's home login email,
+      // not even its own account's.
+      email: isClassroomSession(req) ? null : user.email,
       role: user.role,
       school: user.school,
       subject: user.subject,
@@ -159,7 +162,8 @@ router.post(
       const profile = {
         id: updatedUser.id,
         name: updatedUser.name,
-        email: updatedUser.email,
+        // #872: same rule as the reads — no home email to a classroom session.
+        email: isClassroomSession(req) ? null : updatedUser.email,
         school: updatedUser.school || undefined,
         subject: updatedUser.subject || undefined,
         role: updatedUser.role,

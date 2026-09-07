@@ -247,3 +247,20 @@ unconfirmed rows, never named); the revoke path takes the same writer lock; the 
 uses the two-key form. Recorded nits: a failed re-read after a 409 shows the fetch error rather
 than the "cohort changed" notice (code retained); `cy.realPress` under Electron is proven by
 the `e2e-flows` job itself (7/7 on 95ab686d and 7ab48eb6).
+
+### 2026-09-07 — resolve PR #915 after #913 merged
+
+Owner prompt to Codex: "resolve conflicts on 915".
+
+Merged main `b015615ee5874b6e5f81a7975a224ee378d6166f` into the existing PR
+branch. The `auth.ts` resolution retains both service imports, the Pathways
+password limiter and password-provenance tokens, one enrollment creation using
+`selfRegisteredEnrollmentData`, and the trusted-status login filter. Home-access
+proof routes and the Pathways confirmation flow remain present. This request
+authorizes updating the PR branch; it does not authorize merging or deployment.
+
+Added `DB-874-25` to exercise registration through the mounted API against the
+designated test database: verify the signed password session and exactly one
+persisted enrollment with current consent boundaries. The existing required
+PostgreSQL CI job discovers this regression. Read-only Codex review approved the
+resolution and test delta; no external review requests were made.

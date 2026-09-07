@@ -15,6 +15,35 @@ export const authLimiter = rateLimit({
 });
 
 /**
+ * #872: Pathways register / code-login verify a bcrypt password and therefore
+ * mint `password` session provenance, so they must be throttled — but in a
+ * bucket of their own, so a cohort behind one NAT cannot exhaust the /login
+ * allowance (and vice versa). Same shape as authLimiter; #885 owns tuning a
+ * dedicated Pathways attempt limit.
+ */
+export const pathwaysPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts, please try again later." },
+});
+
+/**
+ * #872: public home-access proof routes (invite preview + accept). Their own
+ * bucket for the same reason; successful requests are not counted so a family
+ * completing setup on a shared network is never locked out by neighbours.
+ */
+export const homeAccessProofLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: "Too many attempts, please try again later." },
+});
+
+/**
  * 🛡️ Sentinel: Rate limiter for sensitive state-changing operations.
  * Applies to profile updates, avatar creation, etc.
  * Limit: 50 requests per 15 minutes per IP.

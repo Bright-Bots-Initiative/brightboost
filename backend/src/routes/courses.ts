@@ -25,7 +25,11 @@ const setupIconsSchema = z.object({
     z.object({
       studentId: z.string().min(1),
       icon: z.string().min(1).max(4), // emoji
-      pin: z.string().length(4).regex(/^\d{4}$/).optional(),
+      pin: z
+        .string()
+        .length(4)
+        .regex(/^\d{4}$/)
+        .optional(),
     }),
   ),
 });
@@ -123,7 +127,20 @@ router.get(
       where: { id: req.params.courseId, teacherId: req.user!.id },
       include: {
         enrollments: {
-          include: { student: { select: { id: true, name: true, email: true } } },
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                homeAccessEnabled: true,
+                // Read only to derive `canInviteHomeAccess` below; the hash
+                // is dropped before anything is returned.
+                password: true,
+              },
+            },
+          },
         },
       },
     });
@@ -132,19 +149,30 @@ router.get(
       return res.status(404).json({ error: "Course not found" });
     }
 
+    // #872: narrow immediately so no later spread can leak a password hash.
+    // A home-access invitation is only possible for a never-bound student
+    // account (no login of its own yet).
+    const students = course.enrollments.map((e) => ({
+      id: e.student.id,
+      name: e.student.name,
+      email: e.student.email,
+      enrolledAt: e.enrolledAt,
+      homeAccessEnabled: e.student.homeAccessEnabled,
+      canInviteHomeAccess:
+        e.student.role === "student" &&
+        e.student.email === null &&
+        e.student.password === null &&
+        !e.student.homeAccessEnabled,
+    }));
+
     res.json({
       id: course.id,
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
       kind: course.kind,
-      enrollmentCount: course.enrollments.length,
-      students: course.enrollments.map((e) => ({
-        id: e.student.id,
-        name: e.student.name,
-        email: e.student.email,
-        enrolledAt: e.enrolledAt,
-      })),
+      enrollmentCount: students.length,
+      students,
       createdAt: course.createdAt,
     });
   },
@@ -298,12 +326,25 @@ router.delete(
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Delete related records first, then the course
+    // Delete related records first, then the course. #872: every unused
+    // home-access invitation issued from this class is revoked in the same
+    // transaction (the Enrollment FK also nulls their provenance), so no
+    // emailed token outlives the relationship that authorized it.
+    // Lock-order invariant: invitation acceptance share-locks the Enrollment
+    // row BEFORE it touches the invite row, and this transaction can only
+    // reach a HomeAccessInvite row (FK SET NULL, or the explicit revocation
+    // below) AFTER it holds that row's Enrollment. Never add a
+    // HomeAccessInvite write before `enrollment.deleteMany` here — that would
+    // create a lock cycle with acceptance.
     await prisma.$transaction([
       prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
       prisma.enrollment.deleteMany({ where: { courseId: course.id } }),
       prisma.assignment.deleteMany({ where: { courseId: course.id } }),
       prisma.course.delete({ where: { id: course.id } }),
+      prisma.homeAccessInvite.updateMany({
+        where: { courseId: course.id, usedAt: null, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
     ]);
 
     res.json({ message: "Course deleted" });
@@ -382,7 +423,9 @@ router.get(
     const enrollments = await prisma.enrollment.findMany({
       where: { studentId: req.user!.id },
       include: {
-        course: { select: { id: true, name: true, gradeBand: true, kind: true } },
+        course: {
+          select: { id: true, name: true, gradeBand: true, kind: true },
+        },
       },
     });
 
@@ -520,7 +563,10 @@ router.post(
         });
       }
 
-      res.json({ message: "Icons updated", count: parsed.data.students.length });
+      res.json({
+        message: "Icons updated",
+        count: parsed.data.students.length,
+      });
     } catch (error) {
       console.error("Setup icons error:", error);
       res.status(500).json({ error: "Internal server error" });

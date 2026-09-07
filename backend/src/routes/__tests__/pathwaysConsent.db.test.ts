@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { runTag, bindTestDatabase } from "../../__tests__/helpers/testDb";
 
 /**
@@ -45,6 +46,7 @@ describe.skipIf(!dbUrl)(
       ghost: `nobody-${tag}@p.test`,
       homeAdult: `parent-${tag}@p.test`,
       homeOwn: `casey2-${tag}@p.test`,
+      registered: `registered-${tag}@p.test`,
     };
     const joinCode = `JN${tag}`.toUpperCase().slice(0, 12);
 
@@ -418,6 +420,10 @@ describe.skipIf(!dbUrl)(
     });
 
     afterAll(async () => {
+      const registered = await prisma.user.findUnique({
+        where: { email: emails.registered },
+        select: { id: true },
+      });
       const userIds = [
         ids.fac,
         ids.fac2,
@@ -435,6 +441,7 @@ describe.skipIf(!dbUrl)(
         ids.race3,
         ids.race4,
         ids.race5,
+        ...(registered ? [registered.id] : []),
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -1774,6 +1781,58 @@ describe.skipIf(!dbUrl)(
         200,
       );
       expect((await learnerDetail(ids.home2)).status).toBe(200);
+    });
+
+    it("DB-874-25: registration preserves consent and password sessions after the #872 merge", async () => {
+      const cohort = await prisma.pathwayCohort.findUniqueOrThrow({
+        where: { id: ids.cohort },
+      });
+      expect(cohort.trackIds.length).toBeGreaterThan(0);
+      const startedAt = Date.now();
+      const res = await request(app)
+        .post("/api/auth/register-pathways")
+        .set(newIp())
+        .send({
+          cohortCode: joinCode,
+          displayName: "New Learner",
+          email: emails.registered,
+          password: PASSWORD,
+          birthYear: 2009,
+        });
+      const finishedAt = Date.now();
+      expect(res.status).toBe(201);
+      expect(res.body.user).not.toHaveProperty("password");
+      const claims = jwt.verify(
+        res.body.token,
+        process.env.SESSION_SECRET || "default_dev_secret",
+      );
+      expect(claims).toMatchObject({
+        id: res.body.user.id,
+        role: "student",
+        auth: "password",
+      });
+
+      const rows = await prisma.pathwayEnrollment.findMany({
+        where: { userId: res.body.user.id },
+      });
+      expect(rows).toHaveLength(1);
+      const [row] = rows;
+      expect(row).toMatchObject({
+        cohortId: ids.cohort,
+        status: "active",
+        source: "self_register",
+      });
+      expect(row.acceptedAt).not.toBeNull();
+      expect(row.acceptedAt!.getTime()).toBeGreaterThanOrEqual(startedAt);
+      expect(row.acceptedAt!.getTime()).toBeLessThanOrEqual(finishedAt);
+      expect(row.trackBoundaries).toEqual(
+        Object.fromEntries(
+          cohort.trackIds.map((track) => [
+            track,
+            row.acceptedAt!.toISOString(),
+          ]),
+        ),
+      );
     });
   },
 );

@@ -76,6 +76,8 @@ model User {
   pulseResponses  PulseResponse[]
   feedbacks       Feedback[]
   resetTokens     PasswordResetToken[]
+  homeAccessInvites     HomeAccessInvite[] @relation("HomeAccessInviteStudent")
+  homeAccessInvitesSent HomeAccessInvite[] @relation("HomeAccessInviteInviter")
   creations       Creation[]    // Phase 0 — kid-authored creations
 
   // Teacher Enablement Relations
@@ -387,6 +389,7 @@ model Enrollment {
 
   student  User   @relation(fields: [studentId], references: [id])
   course   Course @relation(fields: [courseId], references: [id])
+  homeAccessInvites HomeAccessInvite[]
 
   @@unique([studentId, courseId])
   // Index for filtering enrollments by course
@@ -543,6 +546,30 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+// #872 home-access invitation (single-use token hash; see root schema).
+model HomeAccessInvite {
+  id           String    @id @default(cuid())
+  studentId    String
+  invitedById  String
+  courseId     String?
+  enrollmentId String?
+  adultEmail   String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  student    User        @relation("HomeAccessInviteStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  invitedBy  User        @relation("HomeAccessInviteInviter", fields: [invitedById], references: [id])
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([expiresAt])
+  @@index([enrollmentId])
+  @@index([courseId])
 }
 
 model Feedback {
