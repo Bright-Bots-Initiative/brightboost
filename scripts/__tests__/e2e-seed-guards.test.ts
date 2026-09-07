@@ -50,6 +50,16 @@ type MockPrisma = {
   lesson: ModelMock;
   activity: ModelMock;
   progress: ModelMock;
+  // Pathways consent fixtures (#874)
+  pathwayCohort: ModelMock;
+  pathwayEnrollment: ModelMock;
+  pathwayInvite: ModelMock;
+  pathwayMilestone: ModelMock;
+  pathwayXpEvent: ModelMock;
+  pathwayBadge: ModelMock;
+  pathwayDailyGoal: ModelMock;
+  pathwayGamification: ModelMock;
+  pathwayOnboarding: ModelMock;
   $disconnect: MockFn;
 };
 
@@ -93,6 +103,15 @@ function createMockPrisma(): MockPrisma {
     lesson: createModel(),
     activity: createModel(),
     progress: createModel(),
+    pathwayCohort: createModel(),
+    pathwayEnrollment: createModel(),
+    pathwayInvite: createModel(),
+    pathwayMilestone: createModel(),
+    pathwayXpEvent: createModel(),
+    pathwayBadge: createModel(),
+    pathwayDailyGoal: createModel(),
+    pathwayGamification: createModel(),
+    pathwayOnboarding: createModel(),
     $disconnect: vi.fn(async () => {}),
   };
 }
@@ -115,6 +134,15 @@ function prismaCallCount(prisma: MockPrisma): number {
     prisma.lesson,
     prisma.activity,
     prisma.progress,
+    prisma.pathwayCohort,
+    prisma.pathwayEnrollment,
+    prisma.pathwayInvite,
+    prisma.pathwayMilestone,
+    prisma.pathwayXpEvent,
+    prisma.pathwayBadge,
+    prisma.pathwayDailyGoal,
+    prisma.pathwayGamification,
+    prisma.pathwayOnboarding,
   ];
   for (const model of models) {
     n += model.findMany.mock.calls.length;
@@ -367,6 +395,28 @@ describe("e2e-seed destructive-write guards (round 3)", () => {
     expect(logs.join("\n")).toMatch(/SKIPPING E2E001/);
     expect(logs.join("\n")).toMatch(survivingId);
     expect(logs.join("\n")).toMatch(/real@school\.edu/);
+  });
+
+  it("14: the Pathways reset is scoped to E2EPW* cohorts owned by @e2e.invalid facilitators and the fixed learner emails", async () => {
+    process.env.E2E_TEACHER_EMAIL = "t@e2e.invalid";
+    const prisma = createMockPrisma();
+    await seed.resetE2E(prisma);
+    const cohortWhere = prisma.pathwayCohort.findMany.mock.calls[0]?.[0]?.where;
+    expect(cohortWhere).toMatchObject({
+      joinCode: { in: ["E2EPW1", "E2EPW2"] },
+      facilitator: { email: { endsWith: "@e2e.invalid" } },
+    });
+    const userWhere = prisma.user.findMany.mock.calls[0]?.[0]?.where;
+    expect(userWhere?.email?.in).toEqual([
+      "pathways-facilitator@e2e.invalid",
+      "pathways-legacy@e2e.invalid",
+      "pathways-trusted@e2e.invalid",
+      "pathways-revoked@e2e.invalid",
+    ]);
+    // Nothing matched → nothing deleted.
+    expect(prisma.pathwayCohort.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.pathwayEnrollment.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.pathwayMilestone.deleteMany).not.toHaveBeenCalled();
   });
 
   it("13: E2E001 owned by t@e2e.invalid is still deleted", async () => {

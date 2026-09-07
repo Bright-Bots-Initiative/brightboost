@@ -12,7 +12,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PATHWAY_TRACKS } from "@/constants/pathwayTracks";
-import { Shield, Compass, ArrowRight, CheckCircle2, AlertTriangle } from "lucide-react";
+import {
+  Shield,
+  Compass,
+  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+  KeyRound,
+} from "lucide-react";
 import {
   NextTaskCard,
   computeNextTask,
@@ -21,20 +28,35 @@ import {
 } from "./NextTaskCard";
 import GamificationStrip from "./gamification/GamificationStrip";
 import DailyGoalsCard from "./gamification/DailyGoalsCard";
+import PendingInvitations from "./PendingInvitations";
 import { useGamification } from "./gamification/useGamification";
 import { useOnboarding } from "./onboarding/useOnboarding";
 
 interface HomeData {
-  user?: { name?: string | null; ageBand?: string | null; userType?: string | null; streak?: number };
+  user?: {
+    name?: string | null;
+    ageBand?: string | null;
+    userType?: string | null;
+    streak?: number;
+  };
   enrollments?: Array<{
     cohortId: string;
     cohortName: string;
     band: string;
     trackIds: string[];
     sitePartner: string | null;
+    /** #874: what this learner has consented to share with the cohort */
+    consent?: { accepted: boolean; newTracks: string[] };
   }>;
-  milestones?: Array<NextTaskMilestone & { id: string; score: number | null; createdAt?: string }>;
+  milestones?: Array<
+    NextTaskMilestone & { id: string; score: number | null; createdAt?: string }
+  >;
+  /** the server could not load enrollments; treat consent state as unknown */
+  degraded?: boolean;
 }
+
+/** Set once the welcome flow was offered (or consent was just confirmed). */
+const WELCOME_REDIRECT_KEY = "bb_pathways_welcome_offered";
 
 export default function PathwaysHome() {
   const navigate = useNavigate();
@@ -42,6 +64,9 @@ export default function PathwaysHome() {
   const [homeData, setHomeData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // #874: bumped when the learner accepts a cohort invitation so the home
+  // payload (enrollments) reloads without a full page refresh.
+  const [refreshKey, setRefreshKey] = useState(0);
   const { state: gamification, goals, loading: gamLoading } = useGamification();
   const { state: onboarding, loading: onboardingLoading } = useOnboarding();
 
@@ -50,10 +75,37 @@ export default function PathwaysHome() {
   // onboarding fetch AND the home data so we don't flash content.
   useEffect(() => {
     if (onboardingLoading || loading) return;
-    if (onboarding && !onboarding.completedAt && !onboarding.skillsTourViewed && !onboarding.avatarChosen) {
+    // #874: a returning learner with sharing to confirm (a legacy cohort, or
+    // tracks a cohort added) must reach the prompts on this page — never
+    // trap them in the first-visit welcome flow.
+    const rows = homeData?.enrollments ?? [];
+    const consentPending = rows.some(
+      (e) =>
+        e.consent && (!e.consent.accepted || e.consent.newTracks.length > 0),
+    );
+    // Unknown state (a degraded payload) is not sent away either.
+    if (consentPending || homeData?.degraded) return;
+    let offered = false;
+    try {
+      offered = sessionStorage.getItem(WELCOME_REDIRECT_KEY) === "1";
+    } catch {
+      offered = false;
+    }
+    if (offered) return; // one-shot per session: never bounce a learner back
+    if (
+      onboarding &&
+      !onboarding.completedAt &&
+      !onboarding.skillsTourViewed &&
+      !onboarding.avatarChosen
+    ) {
+      try {
+        sessionStorage.setItem(WELCOME_REDIRECT_KEY, "1");
+      } catch {
+        // storage unavailable: the redirect simply is not one-shot
+      }
       navigate("/pathways/welcome", { replace: true });
     }
-  }, [onboardingLoading, loading, onboarding, navigate]);
+  }, [onboardingLoading, loading, onboarding, navigate, homeData]);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,13 +117,16 @@ export default function PathwaysHome() {
     (async () => {
       try {
         const res = await fetch("/api/pathways/student/home", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+          },
           signal: ac.signal,
         });
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           throw new Error(
-            (body && (body.error || body.message)) || `${res.status} ${res.statusText}`,
+            (body && (body.error || body.message)) ||
+              `${res.status} ${res.statusText}`,
           );
         }
         if (!cancelled) {
@@ -80,9 +135,12 @@ export default function PathwaysHome() {
         }
       } catch (err) {
         if (cancelled) return;
-        const msg = err instanceof Error
-          ? err.name === "AbortError" ? "timeout" : err.message
-          : "fetch failed";
+        const msg =
+          err instanceof Error
+            ? err.name === "AbortError"
+              ? "timeout"
+              : err.message
+            : "fetch failed";
         setError(msg);
       } finally {
         clearTimeout(timeout);
@@ -95,13 +153,15 @@ export default function PathwaysHome() {
       clearTimeout(timeout);
       ac.abort();
     };
-  }, []);
+  }, [refreshKey]);
 
   // Stabilize references so useMemo below isn't recomputed on every render.
   const milestones = useMemo(() => homeData?.milestones ?? [], [homeData]);
   const enrollments = useMemo(() => homeData?.enrollments ?? [], [homeData]);
   const completed = milestones.filter((m) => m.status === "completed").length;
-  const inProgress = milestones.filter((m) => m.status === "in_progress").length;
+  const inProgress = milestones.filter(
+    (m) => m.status === "in_progress",
+  ).length;
   const cohort = enrollments[0];
   const band = homeData?.user?.ageBand ?? "explorer";
 
@@ -122,7 +182,9 @@ export default function PathwaysHome() {
               <p className="font-semibold text-slate-900 dark:text-slate-100">
                 Couldn't load your dashboard
               </p>
-              <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">{error}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">
+                {error}
+              </p>
               <button
                 onClick={() => window.location.reload()}
                 className="mt-3 px-4 py-1.5 rounded-lg border bg-white border-slate-200 text-sm hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -157,11 +219,70 @@ export default function PathwaysHome() {
               {cohort.sitePartner && ` • ${cohort.sitePartner}`}
             </p>
           )}
+          {/* #874: the learner's own way in — never automatic */}
+          <button
+            type="button"
+            onClick={() => navigate("/pathways/join")}
+            className="mt-4 inline-flex items-center gap-2 px-4 rounded-lg bg-white/15 hover:bg-white/25 text-white text-sm font-medium min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            data-testid="join-cohort-button"
+          >
+            <KeyRound className="w-4 h-4" aria-hidden="true" />
+            {t("pathways.home.consent.joinButton")}
+          </button>
         </div>
         <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 opacity-10">
           <Shield className="w-full h-full" />
         </div>
       </div>
+
+      {/* #874: cohort invitations wait for the learner's own acceptance */}
+      <PendingInvitations onChanged={() => setRefreshKey((k) => k + 1)} />
+
+      {/* #874: sharing this learner has not confirmed yet — a cohort from
+          before consent tracking, or tracks a cohort added since. */}
+      {enrollments
+        .filter(
+          (e) =>
+            e.consent &&
+            (!e.consent.accepted || e.consent.newTracks.length > 0),
+        )
+        .map((e) => (
+          <section
+            key={e.cohortId}
+            className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/30 p-4 sm:p-5"
+            aria-labelledby={`consent-${e.cohortId}`}
+            data-testid={`consent-prompt-${e.cohortId}`}
+          >
+            <h2
+              id={`consent-${e.cohortId}`}
+              className="font-semibold text-slate-900 dark:text-slate-100"
+            >
+              {e.consent?.accepted
+                ? t("pathways.home.consent.newTracksTitle", {
+                    cohort: e.cohortName,
+                  })
+                : t("pathways.home.consent.legacyTitle", {
+                    cohort: e.cohortName,
+                  })}
+            </h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">
+              {e.consent?.accepted
+                ? t("pathways.home.consent.newTracksBody")
+                : t("pathways.home.consent.legacyBody")}
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/pathways/join?cohortId=${encodeURIComponent(e.cohortId)}`,
+                )
+              }
+              className="mt-3 inline-flex items-center gap-2 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500"
+            >
+              {t("pathways.home.consent.review")}
+            </button>
+          </section>
+        ))}
 
       {/* Gamification: level, streak, badges pinned above everything else */}
       <GamificationStrip state={gamification} loading={gamLoading} />
@@ -187,9 +308,18 @@ export default function PathwaysHome() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <StatCard label={t("pathways.home.stats.completed")} value={completed} />
-        <StatCard label={t("pathways.home.stats.inProgress")} value={inProgress} />
-        <StatCard label={t("pathways.home.stats.streak")} value={homeData?.user?.streak ?? 0} />
+        <StatCard
+          label={t("pathways.home.stats.completed")}
+          value={completed}
+        />
+        <StatCard
+          label={t("pathways.home.stats.inProgress")}
+          value={inProgress}
+        />
+        <StatCard
+          label={t("pathways.home.stats.streak")}
+          value={homeData?.user?.streak ?? 0}
+        />
       </div>
 
       {/* Active Tracks */}
@@ -198,51 +328,71 @@ export default function PathwaysHome() {
           {t("pathways.home.sections.yourTracks")}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {PATHWAY_TRACKS.filter((track) => track.status === "active").map((track) => {
-            const trackMilestones = milestones.filter((m) => m.trackSlug === track.slug);
-            const trackCompleted = trackMilestones.filter((m) => m.status === "completed").length;
-            const pct =
-              track.modules.length > 0
-                ? Math.round((trackCompleted / track.modules.length) * 100)
-                : 0;
-            const trackName = t(`pathways.tracks.items.${track.slug}.name`, track.name);
-            const trackTagline = t(`pathways.tracks.items.${track.slug}.tagline`, track.tagline);
+          {PATHWAY_TRACKS.filter((track) => track.status === "active").map(
+            (track) => {
+              const trackMilestones = milestones.filter(
+                (m) => m.trackSlug === track.slug,
+              );
+              const trackCompleted = trackMilestones.filter(
+                (m) => m.status === "completed",
+              ).length;
+              const pct =
+                track.modules.length > 0
+                  ? Math.round((trackCompleted / track.modules.length) * 100)
+                  : 0;
+              const trackName = t(
+                `pathways.tracks.items.${track.slug}.name`,
+                track.name,
+              );
+              const trackTagline = t(
+                `pathways.tracks.items.${track.slug}.tagline`,
+                track.tagline,
+              );
 
-            return (
-              <button
-                key={track.slug}
-                onClick={() => navigate(`/pathways/tracks/${track.slug}`)}
-                className="flex items-center gap-4 p-4 rounded-xl border bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800/50 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors text-left group shadow-sm"
-              >
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: track.color + "20" }}
+              return (
+                <button
+                  key={track.slug}
+                  onClick={() => navigate(`/pathways/tracks/${track.slug}`)}
+                  className="flex items-center gap-4 p-4 rounded-xl border bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-800/50 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors text-left group shadow-sm"
                 >
-                  <Shield className="w-6 h-6" style={{ color: track.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 dark:text-slate-200 group-hover:text-indigo-700 dark:group-hover:text-white">
-                    {trackName}
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">{trackTagline}</p>
-                  <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, backgroundColor: track.color }}
+                  <div
+                    className="w-12 h-12 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: track.color + "20" }}
+                  >
+                    <Shield
+                      className="w-6 h-6"
+                      style={{ color: track.color }}
                     />
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-1">
-                    {t("pathways.home.modulesProgress", {
-                      done: trackCompleted,
-                      total: track.modules.length,
-                      pct,
-                    })}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-400" />
-              </button>
-            );
-          })}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-slate-200 group-hover:text-indigo-700 dark:group-hover:text-white">
+                      {trackName}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                      {trackTagline}
+                    </p>
+                    <div className="mt-2 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: track.color,
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      {t("pathways.home.modulesProgress", {
+                        done: trackCompleted,
+                        total: track.modules.length,
+                        pct,
+                      })}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-400" />
+                </button>
+              );
+            },
+          )}
         </div>
       </div>
 
@@ -256,7 +406,9 @@ export default function PathwaysHome() {
             {milestones.slice(0, 5).map((m) => {
               const moduleName = t(
                 `pathways.tracks.modules.${m.moduleSlug}.name`,
-                m.moduleSlug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+                m.moduleSlug
+                  .replace(/-/g, " ")
+                  .replace(/\b\w/g, (c: string) => c.toUpperCase()),
               ) as string;
               return (
                 <div
@@ -269,7 +421,9 @@ export default function PathwaysHome() {
                     <Compass className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-800 dark:text-slate-300">{moduleName}</p>
+                    <p className="text-sm text-slate-800 dark:text-slate-300">
+                      {moduleName}
+                    </p>
                     <p className="text-[10px] text-slate-500">
                       {m.trackSlug} • {m.status}
                       {m.score ? ` • ${m.score}%` : ""}
@@ -288,8 +442,12 @@ export default function PathwaysHome() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="p-3 sm:p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700/50 text-center shadow-sm">
-      <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-tight">{label}</p>
+      <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+        {value}
+      </p>
+      <p className="text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-tight">
+        {label}
+      </p>
     </div>
   );
 }
@@ -302,17 +460,26 @@ function PathwaysHomeSkeleton() {
       <div className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-800" />
       <div className="grid grid-cols-3 gap-4">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-20 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div
+            key={i}
+            className="h-20 rounded-xl bg-slate-200 dark:bg-slate-800"
+          />
         ))}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         {[0, 1].map((i) => (
-          <div key={i} className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div
+            key={i}
+            className="h-24 rounded-xl bg-slate-200 dark:bg-slate-800"
+          />
         ))}
       </div>
       <div className="space-y-2">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-12 rounded-lg bg-slate-100 dark:bg-slate-700/60" />
+          <div
+            key={i}
+            className="h-12 rounded-lg bg-slate-100 dark:bg-slate-700/60"
+          />
         ))}
       </div>
     </div>

@@ -3694,10 +3694,18 @@ async function main() {
 
     // Enroll Marcus and Aisha
     for (const u of [marcus, aisha]) {
+      // #874: seeded learners joined by code, so the relationship is trusted
+      // (acceptedAt set). Without it the facilitator dashboard would show
+      // nothing for them.
       await prisma.pathwayEnrollment.upsert({
         where: { userId_cohortId: { userId: u.id, cohortId: cohort.id } },
-        create: { userId: u.id, cohortId: cohort.id },
-        update: {},
+        create: {
+          userId: u.id,
+          cohortId: cohort.id,
+          source: "join_code",
+          acceptedAt: new Date("2026-05-04"),
+        },
+        update: { source: "join_code", acceptedAt: new Date("2026-05-04") },
       });
     }
 
@@ -3865,8 +3873,14 @@ async function main() {
           userId: gu.id,
           cohortId: endedCohort.id,
           status: "completed",
+          source: "join_code",
+          acceptedAt: new Date(2025, 9, 6),
         },
-        update: { status: "completed" },
+        update: {
+          status: "completed",
+          source: "join_code",
+          acceptedAt: new Date(2025, 9, 6),
+        },
       });
       // Realistic completion milestones (each module completed during the Fall pilot).
       // Section-level fields filled in so the facilitator outcomes report shows

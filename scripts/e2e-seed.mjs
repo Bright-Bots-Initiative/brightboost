@@ -33,6 +33,24 @@ const STUDENT_NAMES = [
 const MODULE_SLUG = "e2e-quiz-module";
 const COURSE_NAME = "E2E Class";
 
+// Pathways consent fixtures (#874): a facilitator, two cohorts with fixed
+// join codes, and three learners whose relationships differ only in consent.
+// Everything is keyed by @e2e.invalid emails and the E2EPW* codes so reset is
+// scoped and can never touch a real cohort.
+const PATHWAYS = {
+  facilitatorEmail: "pathways-facilitator@e2e.invalid",
+  learners: {
+    legacy: "pathways-legacy@e2e.invalid", // active row, acceptedAt null
+    trusted: "pathways-trusted@e2e.invalid", // accepted 2026-08-01, one track
+    revoked: "pathways-revoked@e2e.invalid", // removed by the facilitator
+  },
+  cohorts: [
+    { joinCode: "E2EPW1", name: "E2E Pathways Cohort" },
+    { joinCode: "E2EPW2", name: "E2E Second Cohort" },
+  ],
+  acceptedAt: new Date("2026-08-01T12:00:00.000Z"),
+};
+
 export function isProductionShapedDatabaseUrl(urlString) {
   let parsed;
   try {
@@ -152,8 +170,188 @@ export function assertE2ETeacherEmail() {
   return email;
 }
 
+async function resetPathwaysE2E(prisma) {
+  const emails = [
+    PATHWAYS.facilitatorEmail,
+    ...Object.values(PATHWAYS.learners),
+  ];
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails } },
+    select: { id: true },
+  });
+  const userIds = users.map((u) => u.id);
+  const cohorts = await prisma.pathwayCohort.findMany({
+    where: {
+      joinCode: { in: PATHWAYS.cohorts.map((c) => c.joinCode) },
+      facilitator: { email: { endsWith: "@e2e.invalid" } },
+    },
+    select: { id: true },
+  });
+  const cohortIds = cohorts.map((c) => c.id);
+  if (userIds.length > 0) {
+    await prisma.pathwayXpEvent.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayBadge.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayDailyGoal.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayGamification.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayOnboarding.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayMilestone.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+    await prisma.pathwayEnrollment.deleteMany({
+      where: { userId: { in: userIds } },
+    });
+  }
+  if (cohortIds.length > 0) {
+    await prisma.pathwayInvite.deleteMany({
+      where: { cohortId: { in: cohortIds } },
+    });
+    await prisma.pathwayEnrollment.deleteMany({
+      where: { cohortId: { in: cohortIds } },
+    });
+    await prisma.pathwayCohort.deleteMany({ where: { id: { in: cohortIds } } });
+  }
+  if (userIds.length > 0) {
+    await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+  }
+}
+
+async function seedPathways(prisma, passwordHash) {
+  const facilitator = await prisma.user.create({
+    data: {
+      name: "E2E Facilitator",
+      email: PATHWAYS.facilitatorEmail,
+      password: passwordHash,
+      role: "teacher",
+    },
+  });
+  const created = [];
+  for (const c of PATHWAYS.cohorts) {
+    created.push(
+      await prisma.pathwayCohort.create({
+        data: {
+          name: c.name,
+          band: "launch",
+          facilitatorId: facilitator.id,
+          trackIds: ["cyber-launch"],
+          joinCode: c.joinCode,
+          status: "active",
+        },
+      }),
+    );
+  }
+  const [primary] = created;
+
+  const learner = async (email, name) =>
+    prisma.user.create({
+      data: {
+        name,
+        email,
+        password: passwordHash,
+        role: "student",
+        userType: "pathways",
+        ageBand: "launch",
+        birthYear: 2009,
+      },
+    });
+  const legacy = await learner(PATHWAYS.learners.legacy, "E2E Legacy Learner");
+  const trusted = await learner(
+    PATHWAYS.learners.trusted,
+    "E2E Trusted Learner",
+  );
+  const revoked = await learner(
+    PATHWAYS.learners.revoked,
+    "E2E Revoked Learner",
+  );
+
+  // Legacy: a row from before consent tracking, with private prior work.
+  await prisma.pathwayEnrollment.create({
+    data: {
+      userId: legacy.id,
+      cohortId: primary.id,
+      status: "active",
+      source: "legacy",
+    },
+  });
+  await prisma.pathwayMilestone.create({
+    data: {
+      userId: legacy.id,
+      trackSlug: "cyber-launch",
+      moduleSlug: "cyber-foundations",
+      status: "completed",
+      score: 91,
+      completedAt: new Date("2026-01-15T00:00:00.000Z"),
+      createdAt: new Date("2026-01-10T00:00:00.000Z"),
+      homeworkSubmitted: true,
+      homeworkResponse: "E2E-PRIVATE-HOMEWORK",
+    },
+  });
+  await prisma.$executeRawUnsafe(
+    `UPDATE "PathwayMilestone" SET "updatedAt" = '2026-01-15' WHERE "userId" = $1`,
+    legacy.id,
+  );
+
+  // Trusted: accepted on 2026-08-01 for the one track listed then, with a
+  // completed onboarding so the home does not redirect.
+  await prisma.pathwayEnrollment.create({
+    data: {
+      userId: trusted.id,
+      cohortId: primary.id,
+      status: "active",
+      source: "join_code",
+      acceptedAt: PATHWAYS.acceptedAt,
+      trackBoundaries: { "cyber-launch": PATHWAYS.acceptedAt.toISOString() },
+    },
+  });
+  await prisma.pathwayOnboarding.create({
+    data: {
+      userId: trusted.id,
+      avatarChosen: true,
+      skillsTourViewed: true,
+      completedAt: new Date("2026-08-01T12:05:00.000Z"),
+    },
+  });
+
+  // Revoked: the facilitator removed this learner; the code is not a way back.
+  await prisma.pathwayEnrollment.create({
+    data: {
+      userId: revoked.id,
+      cohortId: primary.id,
+      status: "revoked",
+      source: "join_code",
+      acceptedAt: new Date("2026-07-01T00:00:00.000Z"),
+      revokedAt: new Date("2026-07-15T00:00:00.000Z"),
+      trackBoundaries: { "cyber-launch": "2026-07-01T00:00:00.000Z" },
+    },
+  });
+  await prisma.pathwayOnboarding.create({
+    data: {
+      userId: revoked.id,
+      avatarChosen: true,
+      skillsTourViewed: true,
+      completedAt: new Date("2026-07-01T00:05:00.000Z"),
+    },
+  });
+
+  return {
+    facilitatorId: facilitator.id,
+    cohortIds: created.map((c) => c.id),
+    learnerIds: { legacy: legacy.id, trusted: trusted.id, revoked: revoked.id },
+  };
+}
+
 export async function resetE2E(prisma) {
   const teacherEmail = assertE2ETeacherEmail();
+  await resetPathwaysE2E(prisma);
 
   // Clear E2E001 courses owned by @e2e.invalid teachers only.
   // Unscoped join-code deletes would destroy a real class issued E2E001.
@@ -316,6 +514,8 @@ async function seed(prisma) {
     },
   });
 
+  const pathways = await seedPathways(prisma, passwordHash);
+
   const ids = {
     teacherId: teacher.id,
     courseId: course.id,
@@ -323,6 +523,7 @@ async function seed(prisma) {
     moduleSlug: MODULE_SLUG,
     lessonId: lesson.id,
     activityId: activity.id,
+    pathways,
   };
 
   console.log("[e2e-seed] Seed complete.");
@@ -331,6 +532,9 @@ async function seed(prisma) {
   console.log(`  studentIds=${ids.studentIds.join(",")}`);
   console.log(`  lessonId=${ids.lessonId}`);
   console.log(`  activityId=${ids.activityId}`);
+  console.log(
+    `  pathways: facilitator=${pathways.facilitatorId} cohorts=${pathways.cohortIds.join(",")} learners=${Object.values(pathways.learnerIds).join(",")}`,
+  );
   console.log("  Export for Cypress:");
   console.log(`    CYPRESS_STUDENT_ID=${ids.studentIds[0]}`);
   console.log(`    CYPRESS_LESSON_ID=${ids.lessonId}`);

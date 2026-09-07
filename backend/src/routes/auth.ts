@@ -14,6 +14,10 @@ import { generateToken } from "../utils/token";
 import { nameSchema, safeString, emailSchema } from "../validation/schemas";
 import { sendPasswordResetEmail } from "../utils/mail";
 import {
+  TRUSTED_STATUSES,
+  selfRegisteredEnrollmentData,
+} from "../services/pathwaysAccess";
+import {
   acceptHomeAccessInvite,
   readHomeAccessInvite,
 } from "../services/homeAccess";
@@ -348,9 +352,10 @@ router.post(
         },
       });
 
-      // Enroll in cohort
+      // Enroll in cohort. #874: registering with the cohort code is the
+      // learner's own act, so this relationship is trusted from the start.
       await prisma.pathwayEnrollment.create({
-        data: { userId: user.id, cohortId: cohort.id },
+        data: selfRegisteredEnrollmentData(user.id, cohort.id, cohort.trackIds),
       });
 
       await logAudit("PATHWAYS_REGISTER", user.id, {
@@ -407,8 +412,15 @@ router.post(
     });
     if (!cohort) return res.status(404).json({ error: "Invalid code." });
 
+    // #874: a revoked learner can no longer sign in through this cohort's
+    // code. Legacy rows (not yet re-confirmed) still can — this is the
+    // learner's own login path, not facilitator visibility.
     const enrollment = await prisma.pathwayEnrollment.findFirst({
-      where: { userId, cohortId: cohort.id },
+      where: {
+        userId,
+        cohortId: cohort.id,
+        status: { in: [...TRUSTED_STATUSES] },
+      },
       include: { user: true },
     });
     if (!enrollment)

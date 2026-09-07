@@ -93,6 +93,7 @@ model User {
   // Pathways Relations
   pathwayCohorts      PathwayCohort[]      // facilitator's cohorts
   pathwayEnrollments  PathwayEnrollment[]
+  pathwayInvitesSent  PathwayInvite[]      @relation("PathwayInviteInviter")
   pathwayMilestones   PathwayMilestone[]
   pathwayLabAttempts  PathwayLabAttempt[]
   pathwayXpEvents     PathwayXpEvent[]
@@ -762,23 +763,63 @@ model PathwayCohort {
   updatedAt     DateTime @default(now()) @updatedAt
 
   enrollments   PathwayEnrollment[]
+  invites       PathwayInvite[]
   ctfTeams      PathwayCtfTeam[]
 
   @@index([facilitatorId])
   @@index([status])
 }
 
+// #874 — an enrollment is an *access relationship*. A facilitator may see a
+// learner's history only through a trusted row: status active|completed AND
+// acceptedAt set (the learner joined by code, self-registered, or accepted an
+// invitation). Rows that predate this rule carry source "legacy" and no
+// acceptedAt, so they grant no facilitator visibility until the learner
+// re-enters the join code.
 model PathwayEnrollment {
-  id         String        @id @default(cuid())
-  userId     String
-  cohortId   String
-  user       User          @relation(fields: [userId], references: [id])
-  cohort     PathwayCohort @relation(fields: [cohortId], references: [id])
-  enrolledAt DateTime      @default(now())
-  status     String        @default("active") // active | completed | dropped
+  id          String        @id @default(cuid())
+  userId      String
+  cohortId    String
+  user        User          @relation(fields: [userId], references: [id])
+  cohort      PathwayCohort @relation(fields: [cohortId], references: [id])
+  enrolledAt  DateTime      @default(now())
+  status      String        @default("active") // active | completed | dropped | revoked
+  source      String        @default("legacy") // join_code | self_register | facilitator_invite | legacy
+  acceptedAt  DateTime?     // learner consent moment; null = untrusted
+  revokedAt   DateTime?
+  invitedById String?
+  // #874: the tracks this learner consented to share, each with its own
+  // boundary (ISO timestamp): the acceptance moment, or the join-code
+  // re-entry that added a track later. Editing a cohort's trackIds never
+  // widens an existing relationship.
+  trackBoundaries Json?
 
   @@unique([userId, cohortId])
   @@index([cohortId])
+  @@index([userId])
+}
+
+// #874 — a facilitator's invitation to an email address. Stored for every
+// invite regardless of whether an account exists (so the roster never reveals
+// account existence); it becomes an enrollment only when the authenticated
+// learner whose account email matches accepts it.
+model PathwayInvite {
+  id           String        @id @default(cuid())
+  cohortId     String
+  cohort       PathwayCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  email        String        // normalised lower-case, as typed by the facilitator
+  invitedById  String
+  invitedBy    User          @relation("PathwayInviteInviter", fields: [invitedById], references: [id])
+  status       String        @default("pending") // pending | accepted | declined | revoked
+  expiresAt    DateTime
+  acceptedById String?
+  acceptedAt   DateTime?
+  declinedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime      @default(now())
+
+  @@unique([cohortId, email])
+  @@index([email, status])
 }
 
 model PathwayMilestone {
@@ -791,6 +832,10 @@ model PathwayMilestone {
   completedAt DateTime?
   artifacts   Json?
   createdAt   DateTime  @default(now())
+  // #874: history boundary for facilitators — a milestone is visible to a
+  // cohort only if it was touched at or after the learner's acceptance.
+  // `@default(now())` so the column can be added to populated tables.
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   // Section-level progress for the Cyber Launch 6-section flow
   // (hook, reading, lesson, practice, homework, quiz). Modules that don't

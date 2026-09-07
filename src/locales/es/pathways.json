@@ -49,7 +49,68 @@
         "yourTracks": "Tus Rutas",
         "recentActivity": "Actividad Reciente"
       },
-      "modulesProgress": "{{done}}/{{total}} módulos • {{pct}}%"
+      "modulesProgress": "{{done}}/{{total}} módulos • {{pct}}%",
+      "invitations": {
+        "title": "Te invitaron a un grupo",
+        "body": "Un facilitador invitó a esta cuenta. Al aceptar, compartes tu progreso en las rutas de ese grupo a partir de hoy; nada se comparte hasta que aceptes.",
+        "from": "De {{name}}",
+        "accept": "Aceptar",
+        "decline": "Rechazar",
+        "error": "No se pudo actualizar la invitación. Inténtalo de nuevo.",
+        "tracks": "Al aceptar compartes tu progreso en: {{tracks}}"
+      },
+      "consent": {
+        "joinButton": "Unirse a un grupo o confirmar",
+        "legacyTitle": "Confirma el compartir con {{cohort}}",
+        "legacyBody": "Tu facilitador no puede ver tu progreso hasta que confirmes. No se comparte nada anterior a hoy.",
+        "newTracksTitle": "{{cohort}} agregó rutas nuevas",
+        "newTracksBody": "Revisa y confirma para compartir tu progreso en las rutas nuevas a partir de hoy.",
+        "review": "Revisar y confirmar"
+      }
+    },
+    "join": {
+      "title": "Unirse a un grupo o confirmar",
+      "intro": "Ingresa el código que compartió tu facilitador. Verás exactamente qué se compartiría antes de que algo cambie.",
+      "codeLabel": "Código del grupo",
+      "codePlaceholder": "p. ej. AB12CD",
+      "preview": "Ver detalles",
+      "loading": "Revisando el código…",
+      "loadingCohort": "Cargando tu grupo…",
+      "previewTitle": "Revisa antes de confirmar",
+      "facilitator": "Facilitador: {{name}}",
+      "bands": {
+        "launch": "Nivel Launch (16–17 años)",
+        "explorer": "Nivel Explorer (14–15 años)"
+      },
+      "tracksTitle": "Rutas",
+      "trackNew": "Nueva: se comparte desde que confirmes",
+      "trackSince": "Ya se comparte desde el {{date}}",
+      "stateNone": "Todavía no estás en este grupo. Al confirmar te unes y compartes tu progreso en las rutas de abajo a partir de hoy.",
+      "stateLegacy": "Ya estás en este grupo, pero aún no has confirmado el compartir. Tu facilitador no puede ver tu progreso hasta que confirmes.",
+      "stateTrusted": "Ya compartes con este grupo. Se agregaron rutas nuevas; al confirmar compartes tu progreso en ellas a partir de hoy.",
+      "stateNothingNew": "Ya compartes todo lo que cubre este grupo. No hay nada nuevo que confirmar.",
+      "stateRevoked": "Tu facilitador te quitó de este grupo. El código no puede restaurar el acceso; pide a tu facilitador una invitación nueva.",
+      "boundaryNote": "Lo nuevo se comparte desde que confirmes. Lo que hiciste antes sigue siendo privado, y las rutas que confirmaste antes conservan su fecha de inicio original.",
+      "confirm": "Confirmar y compartir desde hoy",
+      "confirming": "Confirmando…",
+      "back": "Volver",
+      "cancel": "Cancelar",
+      "changedNotice": "Este grupo cambió desde que lo viste. Revisa los detalles actualizados y confirma de nuevo; no se compartió nada.",
+      "doneTitle": "Todo listo",
+      "doneBody": "Ahora compartes tu progreso en {{cohort}} a partir de hoy.",
+      "doneNothing": "Nada cambió: ya compartías todo lo que cubre este grupo.",
+      "backHome": "Volver al inicio de Pathways",
+      "errors": {
+        "invalidCode": "Ese código no corresponde a ningún grupo. Revísalo e inténtalo de nuevo.",
+        "notFound": "No encontramos ese grupo en tu cuenta.",
+        "session": "Tu sesión caducó. Inicia sesión de nuevo para continuar; tu código se conserva aquí.",
+        "signIn": "Iniciar sesión",
+        "revoked": "Tu facilitador te quitó de este grupo; el código no puede restaurar el acceso.",
+        "network": "No pudimos conectar con Bright Boost. Revisa tu conexión e inténtalo de nuevo.",
+        "server": "Algo salió mal. Inténtalo de nuevo.",
+        "retry": "Intentar de nuevo",
+        "rateLimited": "Demasiados intentos por ahora. Espera unos minutos e inténtalo de nuevo."
+      }
     },
     "about": {
       "hero": {
@@ -348,6 +409,20 @@
             "name": "Estudiante",
             "completed": "Módulos",
             "lastActive": "Última Actividad"
+          },
+          "legacyNotice": "{{count}} inscripción(es) anteriores al seguimiento de consentimiento están ocultas hasta que el estudiante confirme el compartir (inicio de Pathways → Unirse a un grupo o confirmar).",
+          "invites": {
+            "title": "Invitaciones pendientes de aceptación",
+            "sent": "Invitación registrada. El estudiante la verá la próxima vez que inicie sesión con esa cuenta y aparecerá aquí después de aceptarla.",
+            "failed": "No se pudo enviar la invitación.",
+            "invalidEmail": "Ingresa un correo electrónico válido.",
+            "withdraw": "Retirar",
+            "expires": "Caduca el {{date}}",
+            "status": {
+              "pending": "Pendiente",
+              "declined": "Rechazada",
+              "expired": "Caducada"
+            }
           }
         },
         "modules": {
@@ -431,7 +506,8 @@
         "cohorts": "Inscripciones en Grupos",
         "enrolledOn": "Inscrito {{date}}",
         "milestones": "Progreso de Módulos",
-        "noMilestones": "Aún no hay actividad en módulos."
+        "noMilestones": "Aún no hay actividad en módulos.",
+        "historyWithheld": "Se muestra la actividad desde que este estudiante se unió a tu grupo. El trabajo anterior sigue siendo privado."
       },
       "reports": {
         "title": "Reportes",

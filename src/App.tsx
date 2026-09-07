@@ -92,6 +92,7 @@ import WelcomeCompleteStep from "./components/pathways/onboarding/WelcomeComplet
 import GlossaryPage from "./components/pathways/glossary/GlossaryPage";
 import ModulePlayer from "./components/pathways/ModulePlayer";
 import PathwaysProfile from "./components/pathways/PathwaysProfile";
+import JoinCohort from "./components/pathways/JoinCohort";
 import PathwaysAbout from "./components/pathways/PathwaysAbout";
 import ProgramOverviewPage from "./components/pathways/facilitator/ProgramOverview";
 import FacilitatorLayout from "./components/pathways/facilitator/FacilitatorLayout";
@@ -412,6 +413,8 @@ function App() {
                 <Route path="challenges/:slug" element={<ChallengePage />} />
                 <Route path="glossary" element={<GlossaryPage />} />
                 <Route path="profile" element={<PathwaysProfile />} />
+                {/* #874: join or confirm a cohort — the learner's own consent */}
+                <Route path="join" element={<JoinCohort />} />
               </Route>
 
               {/* Pathways: facilitator routes — sibling of /pathways, owns its own

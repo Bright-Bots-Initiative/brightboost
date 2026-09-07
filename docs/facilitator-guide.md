@@ -42,14 +42,14 @@ Help learners create their ISC2 accounts during Week 5 so they are ready to sche
 
 ### What "On Track" Looks Like
 
-| Week | On Track |
-|------|----------|
-| 1 | Learner completed Cyber Foundations module, participated in discussion |
-| 2 | Learner completed all 5 Digital Safety Sim scenarios |
-| 3 | Learner completed Network Basics module and packet-tracing activity |
-| 4 | Learner completed Threat Detective investigation and wrote incident report |
-| 5 | Learner explored Career Map, identified 2 roles of interest, created ISC2 account |
-| 6 | Learner completed capstone security plan and presented to the group |
+| Week | On Track                                                                          |
+| ---- | --------------------------------------------------------------------------------- |
+| 1    | Learner completed Cyber Foundations module, participated in discussion            |
+| 2    | Learner completed all 5 Digital Safety Sim scenarios                              |
+| 3    | Learner completed Network Basics module and packet-tracing activity               |
+| 4    | Learner completed Threat Detective investigation and wrote incident report        |
+| 5    | Learner explored Career Map, identified 2 roles of interest, created ISC2 account |
+| 6    | Learner completed capstone security plan and presented to the group               |
 
 ---
 
@@ -59,7 +59,7 @@ Help learners create their ISC2 accounts during Week 5 so they are ready to sche
 2. **Go to the facilitator dashboard** — click "Dashboard" in the top navigation
 3. **Create a new cohort** — click "Create Cohort," name it (e.g., "Spring 2026 Cyber Launch — Eastside"), select the Cyber Launch curriculum, and choose the start date
 4. **Copy the join code** — the system generates a 6-character code when the cohort is created
-5. **Share the join code with learners** — write it on a whiteboard, print it on a handout, or text it. Learners enter this code when they create their accounts to join your cohort
+5. **Share the join code with learners** — write it on a whiteboard, print it on a handout, or text it. Learners enter this code when they create their accounts to join your cohort. A learner who already has an account joins from their Pathways home: **Join or confirm a cohort** → enter the code → review what will be shared → **Confirm**. You can also invite a learner who already has an account by typing their email on the roster tab; they appear on your roster only after they accept the invitation while signed in to that account. Either way you see their work in this cohort's tracks from the moment they confirm, not their earlier history. If you add a track to the cohort later, each learner sees a **Review and confirm** prompt on their home and you see that track's work only after they confirm it
 6. **Verify band enrollment** — after learners join, check the cohort roster in your dashboard. Each learner should show as "Explorer" (14-15) or "Launch" (16-17) based on their age. If a learner is in the wrong band, click their name and update their age band
 7. **If a learner does not have a device** — the platform works on any device with a browser. If your site has loaner laptops or tablets, assign one. If not, pair learners to share a device. Two learners per device is workable. Three is too many
 
@@ -96,7 +96,7 @@ Learners complete the Cyber Foundations module: five interactive slides covering
 
 ### Watch For
 
-- Learners who cannot log in — help them reset passwords or re-enter the cohort code
+- Learners who cannot log in — help them reset passwords; a learner who is on your roster but hidden as "not yet confirmed" needs to confirm sharing from their Pathways home (**Join or confirm a cohort**, or the **Review and confirm** prompt)
 - Learners who seem intimidated by the word "cybersecurity" — normalize it, remind them no prior knowledge is expected
 - Learners who finish fast and look bored — ask them to help someone else or explore the career section
 
@@ -384,14 +384,14 @@ Go to the facilitator dashboard, select your cohort, and click "Export Progress 
 
 ### ISC2 CC Exam Details
 
-| Detail | Info |
-|--------|------|
-| Questions | 100 multiple choice |
-| Time | 2 hours |
-| Passing score | 700 out of 1000 |
-| Cost | Free (voucher at isc2.org/certifications/cc) |
-| Prerequisites | None |
-| Experience required | None |
+| Detail              | Info                                         |
+| ------------------- | -------------------------------------------- |
+| Questions           | 100 multiple choice                          |
+| Time                | 2 hours                                      |
+| Passing score       | 700 out of 1000                              |
+| Cost                | Free (voucher at isc2.org/certifications/cc) |
+| Prerequisites       | None                                         |
+| Experience required | None                                         |
 
 ### Career Roles — Plain Descriptions
 
@@ -416,13 +416,13 @@ Go to the facilitator dashboard, select your cohort, and click "Export Progress 
 
 ### What Comes After CC
 
-| Next Step | What It Is | Cost |
-|-----------|-----------|------|
-| CompTIA Security+ | Broader security certification, widely required for government and DoD jobs | ~$400 (vouchers sometimes available) |
-| Cisco CyberOps Associate | Network security operations focus, strong for SOC analyst roles | ~$330 |
-| Community college programs | 1-2 year cybersecurity associate degrees, often with financial aid | Varies |
-| Bootcamps | 12-24 week intensive programs, some with job placement guarantees | $5K-$15K (ISAs sometimes available) |
+| Next Step                  | What It Is                                                                  | Cost                                 |
+| -------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
+| CompTIA Security+          | Broader security certification, widely required for government and DoD jobs | ~$400 (vouchers sometimes available) |
+| Cisco CyberOps Associate   | Network security operations focus, strong for SOC analyst roles             | ~$330                                |
+| Community college programs | 1-2 year cybersecurity associate degrees, often with financial aid          | Varies                               |
+| Bootcamps                  | 12-24 week intensive programs, some with job placement guarantees           | $5K-$15K (ISAs sometimes available)  |
 
 ---
 
-*This guide is part of the BrightBoost Pathways program. For platform support, contact your BrightBoost program manager or visit the facilitator dashboard help section.*
+_This guide is part of the BrightBoost Pathways program. For platform support, contact your BrightBoost program manager or visit the facilitator dashboard help section._
