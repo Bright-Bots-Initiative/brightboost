@@ -342,6 +342,7 @@ router.get(
 router.post(
   "/pathways/enroll",
   requireAuth,
+  consentPreviewLimiter,
   async (req: Request, res: Response) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const ref = consentRefOf(body);
@@ -361,15 +362,8 @@ router.post(
         preview: result.preview,
       });
     } catch (error) {
-      if (
-        error instanceof PathwaysAccessError &&
-        error.code === "preview_changed"
-      ) {
-        const preview = await previewCohortConsent(req.user!.id, ref).catch(
-          () => null,
-        );
-        return res.status(409).json({ error: "preview_changed", preview });
-      }
+      // No preview in the reply: the client fetches the fresh one through
+      // the limited preview route, so this route never doubles as a lookup.
       answerAccessError(res, error);
     }
   },

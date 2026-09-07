@@ -62,8 +62,9 @@ its work. The learner consents to an added track by confirming it from the Pathw
 "Review and confirm" prompt, or Join or confirm a cohort; idempotent for the original
 acceptance moment), and that track's boundary is the confirmation moment. A track the cohort
 no longer lists is hidden while unlisted; the learner's earlier consent to it stays in the
-snapshot and applies again if the cohort lists it again. Rows written by operator SQL without a snapshot fall back to the
-cohort's current tracks at the acceptance moment — set the snapshot in the backfill (below).
+snapshot and applies again if the cohort lists it again. A trusted row written without a snapshot
+(operator SQL that skipped it) shares nothing until the learner confirms from the Pathways home,
+which writes the snapshot — set the snapshot in the backfill (below) to avoid that prompt.
 
 Known residuals: `createdAt` is a database default while `acceptedAt` is set by the application,
 so a clock skew between the two could show a row started moments before acceptance as
@@ -127,8 +128,10 @@ confirm** prompt) is the learner's own act of consent, in two steps:
 2. **Confirm** — `POST /api/pathways/enroll { joinCode | cohortId, version }`. Inside one
    transaction the server re-reads the cohort and the row and recomputes the version; if the
    cohort's tracks changed since the preview it answers `409 preview_changed` with a fresh preview
-   and the learner must confirm again — the grant can only ever be what was previewed. A request
-   without `version` is refused (`400 preview_required`). A new relationship or a confirmed legacy
+   and the learner must confirm again — the grant can only ever be what was previewed (the 409 carries
+   no preview; the client re-reads it through the same per-account-limited preview route, which the
+   confirm route shares). A request without `version` is refused (`400 preview_required`) whenever
+   there is something to grant. A new relationship or a confirmed legacy
    row gets its boundary now; a trusted row keeps its earlier boundaries and adds the newly listed
    tracks at now; a row with nothing new is an idempotent no-op (`changed: false`); a revoked row
    stays revoked (`403`) — only a fresh invitation restores access. The learner's session is the

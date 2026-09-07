@@ -108,7 +108,8 @@
         "revoked": "Tu facilitador te quitó de este grupo; el código no puede restaurar el acceso.",
         "network": "No pudimos conectar con Bright Boost. Revisa tu conexión e inténtalo de nuevo.",
         "server": "Algo salió mal. Inténtalo de nuevo.",
-        "retry": "Intentar de nuevo"
+        "retry": "Intentar de nuevo",
+        "rateLimited": "Demasiados intentos por ahora. Espera unos minutos e inténtalo de nuevo."
       }
     },
     "about": {

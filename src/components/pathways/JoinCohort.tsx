@@ -40,6 +40,7 @@ type FailureKind =
   | "notFound"
   | "session"
   | "revoked"
+  | "rateLimited"
   | "network"
   | "server";
 
@@ -118,6 +119,11 @@ export default function JoinCohort() {
         setPhase("enter");
         return;
       }
+      if (res.status === 429) {
+        setFailure("rateLimited");
+        setPhase("enter");
+        return;
+      }
       if (!res.ok) {
         setFailure("server");
         setPhase("enter");
@@ -160,11 +166,15 @@ export default function JoinCohort() {
         changed?: boolean;
         error?: string;
       } | null;
-      if (res.status === 409 && data?.preview) {
-        // The cohort changed since the preview: show what it is now and ask
-        // again. Nothing was shared.
-        setPreview(data.preview);
+      if (res.status === 409) {
+        // The cohort changed since the preview: nothing was shared. Fetch
+        // what it is now and ask again.
+        await loadPreview();
         setChangedNotice(true);
+        return;
+      }
+      if (res.status === 429) {
+        setFailure("rateLimited");
         setPhase("preview");
         return;
       }
@@ -348,7 +358,7 @@ export default function JoinCohort() {
             id="join-preview-title"
             ref={previewHeading}
             tabIndex={-1}
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+            className="text-lg font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
           >
             {t("pathways.join.previewTitle")}
           </h2>
@@ -452,7 +462,7 @@ export default function JoinCohort() {
             id="join-done-title"
             ref={doneHeading}
             tabIndex={-1}
-            className="text-lg font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+            className="text-lg font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded"
           >
             {t("pathways.join.doneTitle")}
           </h2>

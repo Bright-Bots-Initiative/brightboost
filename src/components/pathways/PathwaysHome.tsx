@@ -83,9 +83,8 @@ export default function PathwaysHome() {
       (e) =>
         e.consent && (!e.consent.accepted || e.consent.newTracks.length > 0),
     );
-    // Unknown state (degraded payload) and a learner with no cohort at all
-    // are not sent away either: the join action on this page is their way in.
-    if (consentPending || homeData?.degraded || rows.length === 0) return;
+    // Unknown state (a degraded payload) is not sent away either.
+    if (consentPending || homeData?.degraded) return;
     let offered = false;
     try {
       offered = sessionStorage.getItem(WELCOME_REDIRECT_KEY) === "1";

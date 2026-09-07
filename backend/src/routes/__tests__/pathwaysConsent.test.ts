@@ -366,15 +366,14 @@ describe("#874 history boundary helpers", () => {
       { trackIds: ["b"], since: accepted },
     ]);
     // A snapshot can never predate the acceptance; a missing snapshot
-    // (operator-written row) falls back to the cohort's tracks at acceptance.
+    // (operator-written row) consents to nothing until the learner confirms.
     expect(
       boundariesOf(["a"], new Date("2026-06-15"), {
         a: "2026-06-01T00:00:00.000Z",
       }),
     ).toEqual([{ trackIds: ["a"], since: new Date("2026-06-15") }]);
-    expect(boundariesOf(["a"], accepted, null)).toEqual([
-      { trackIds: ["a"], since: accepted },
-    ]);
+    expect(boundariesOf(["a"], accepted, null)).toEqual([]);
+    expect(boundariesOf(["a"], accepted, {})).toEqual([]);
   });
 
   it("BND-10: only an account whose login email is its parent's address is excluded from invitation matching", () => {

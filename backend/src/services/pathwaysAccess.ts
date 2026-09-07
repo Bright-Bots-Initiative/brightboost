@@ -139,8 +139,9 @@ export function withTrackBoundaries(
 /**
  * Boundaries for one trusted relationship: one per track the learner
  * consented to that the cohort still lists, never earlier than the
- * acceptance. A row without a snapshot (written by operator SQL) falls back
- * to the cohort's current tracks at the acceptance moment.
+ * acceptance. A row without a snapshot has consented to no track yet — it
+ * shares nothing until the learner confirms (which writes the snapshot), so
+ * a cohort that gains a track can never widen it unasked.
  */
 export function boundariesOf(
   cohortTrackIds: readonly string[],
@@ -151,20 +152,16 @@ export function boundariesOf(
     snapshot && typeof snapshot === "object"
       ? (snapshot as Record<string, unknown>)
       : null;
+  if (!snap) return [];
   const out: Boundary[] = [];
   for (const t of cohortTrackIds) {
-    if (snap) {
-      const iso = snap[t];
-      if (typeof iso !== "string") continue; // never consented to this track
-      const since = new Date(iso);
-      out.push({
-        trackIds: [t],
-        since:
-          isNaN(since.getTime()) || since < acceptedAt ? acceptedAt : since,
-      });
-    } else {
-      out.push({ trackIds: [t], since: acceptedAt });
-    }
+    const iso = snap[t];
+    if (typeof iso !== "string") continue; // never consented to this track
+    const since = new Date(iso);
+    out.push({
+      trackIds: [t],
+      since: isNaN(since.getTime()) || since < acceptedAt ? acceptedAt : since,
+    });
   }
   return out;
 }
@@ -603,13 +600,13 @@ function effectiveBoundaries(
 ): Map<string, string> {
   const out = new Map<string, string>();
   if (!row || !isTrustedEnrollment(row)) return out;
-  const entries = snapshotEntries(row);
-  if (entries.length === 0) {
-    const since = row.acceptedAt!.toISOString();
-    for (const t of cohortTrackIds) out.set(t, since);
-    return out;
+  for (const b of boundariesOf(
+    cohortTrackIds,
+    row.acceptedAt!,
+    row.trackBoundaries,
+  )) {
+    out.set(b.trackIds[0], b.since.toISOString());
   }
-  for (const [slug, iso] of entries) out.set(slug, iso);
   return out;
 }
 
@@ -622,7 +619,7 @@ export function buildConsentPreview(
     ? "none"
     : row.status === "revoked"
       ? "revoked"
-      : row.acceptedAt
+      : isTrustedEnrollment(row)
         ? "trusted"
         : "legacy";
   if (state === "revoked") {
@@ -691,10 +688,14 @@ async function lockEnrollmentRow(
   userId: string,
   cohortId: string,
 ) {
+  // A transaction-scoped advisory lock on the (learner, cohort) pair: unlike
+  // a row lock it also serializes writers before the row exists (two first
+  // joins, a first join racing an invitation acceptance).
+  // `pg_advisory_xact_lock` returns void, which Prisma cannot deserialize;
+  // the IS NULL projection yields a boolean column instead.
+  const key = `${userId}:${cohortId}`;
   await tx.$queryRaw`
-    SELECT "id" FROM "PathwayEnrollment"
-    WHERE "userId" = ${userId} AND "cohortId" = ${cohortId}
-    FOR UPDATE`;
+    SELECT pg_advisory_xact_lock(hashtext(${key}::text)) IS NULL AS locked`;
 }
 
 async function resolveConsentCohort(
@@ -784,7 +785,11 @@ export async function confirmCohortConsent(
       const before = buildConsentPreview(userId, cohort, existing);
       let row: EnrollmentRow;
       let changed = false;
-      if (existing?.acceptedAt && before.newSharing.length === 0) {
+      if (
+        existing &&
+        isTrustedEnrollment(existing) &&
+        before.newSharing.length === 0
+      ) {
         // Nothing new to share: idempotent. Re-read so the reply reflects a
         // revocation that committed after the first read.
         row = await tx.pathwayEnrollment.findUniqueOrThrow({
@@ -810,7 +815,7 @@ export async function confirmCohortConsent(
             },
           });
           changed = true;
-        } else if (existing.acceptedAt) {
+        } else if (isTrustedEnrollment(existing)) {
           // Already trusted: the consent moment is unchanged; the tracks the
           // cohort listed since start their boundary now. Count-guarded so a
           // revocation that committed after the first read is never
@@ -833,16 +838,16 @@ export async function confirmCohortConsent(
           }
           changed = true;
         } else {
-          // A legacy row: this confirmation is its consent moment.
+          // A row that is not trusted: a legacy row (no consent moment yet)
+          // or one whose status lapsed. This confirmation is its consent
+          // moment — an existing acceptance moment is kept. Count-guarded so
+          // a revocation that committed after the first read is never
+          // overwritten; re-read so the reply reflects it.
           const confirmed = await tx.pathwayEnrollment.updateMany({
-            where: {
-              id: existing.id,
-              status: { not: "revoked" },
-              acceptedAt: null,
-            },
+            where: { id: existing.id, status: { not: "revoked" } },
             data: {
-              acceptedAt: now,
-              source: "join_code",
+              acceptedAt: existing.acceptedAt ?? now,
+              source: existing.acceptedAt ? existing.source : "join_code",
               status: "active",
               trackBoundaries: withTrackBoundaries(
                 existing.trackBoundaries,
@@ -854,12 +859,10 @@ export async function confirmCohortConsent(
           row = await tx.pathwayEnrollment.findUniqueOrThrow({
             where: { id: existing.id },
           });
-          if (confirmed.count !== 1 && row.status === "revoked") {
+          if (confirmed.count !== 1 || row.status === "revoked") {
             throw new PathwaysAccessError("enrollment_revoked", 403);
           }
-          // count 0 with a non-revoked row: a concurrent confirmation already
-          // did this — `row` is the fresh, trusted state.
-          changed = confirmed.count === 1;
+          changed = true;
         }
       }
       await closePendingInvitesForUser(tx, userId, cohort.id, now);

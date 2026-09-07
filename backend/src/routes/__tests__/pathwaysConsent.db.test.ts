@@ -1066,10 +1066,22 @@ describe.skipIf(!dbUrl)(
         .set(as("conf"))
         .send({ joinCode, version: "not-what-was-shown" });
       expect(wrong.status).toBe(409);
-      expect(wrong.body.error).toBe("preview_changed");
-      expect(wrong.body.preview.enrollment.state).toBe("none");
+      expect(wrong.body).toEqual({ error: "preview_changed" }); // no preview echoed
+      // Another learner's version for the same cohort is not this learner's.
+      const theirs = await request(app)
+        .get(`/api/pathways/enroll/preview?joinCode=${joinCode}`)
+        .set(as("other"));
+      expect(theirs.status).toBe(200);
+      const borrowed = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("conf"))
+        .send({ joinCode, version: theirs.body.version });
+      expect(borrowed.status).toBe(409);
       expect(
         await prisma.pathwayEnrollment.count({ where: { userId: ids.conf } }),
+      ).toBe(0);
+      expect(
+        await prisma.pathwayEnrollment.count({ where: { userId: ids.other } }),
       ).toBe(0);
       await facilitatorSeesNothingOf(ids.conf, "Cody Confirm");
     });
@@ -1095,27 +1107,29 @@ describe.skipIf(!dbUrl)(
           .set(as("conf"))
           .send({ joinCode, version: stale.body.version });
         expect(refused.status).toBe(409);
-        expect(refused.body.error).toBe("preview_changed");
-        expect(
-          refused.body.preview.tracks
-            .map((x: { slug: string }) => x.slug)
-            .sort(),
-        ).toEqual(["cyber-launch", "other-track"]);
-        expect([...refused.body.preview.newSharing].sort()).toEqual([
-          "cyber-launch",
-          "other-track",
-        ]);
+        expect(refused.body).toEqual({ error: "preview_changed" });
         expect(
           await prisma.pathwayEnrollment.count({ where: { userId: ids.conf } }),
         ).toBe(0);
         await facilitatorSeesNothingOf(ids.conf, "Cody Confirm");
+        // The client re-reads the fresh preview through the preview route.
+        const fresh = await request(app)
+          .get(`/api/pathways/enroll/preview?joinCode=${joinCode}`)
+          .set(as("conf"));
+        expect(
+          fresh.body.tracks.map((x: { slug: string }) => x.slug).sort(),
+        ).toEqual(["cyber-launch", "other-track"]);
+        expect([...fresh.body.newSharing].sort()).toEqual([
+          "cyber-launch",
+          "other-track",
+        ]);
 
         const ok = await request(app)
           .post("/api/pathways/enroll")
           .set(as("conf"))
           .send({
             joinCode: joinCode.toLowerCase(),
-            version: refused.body.preview.version,
+            version: fresh.body.version,
           });
         expect(ok.status).toBe(200);
         expect(ok.body.changed).toBe(true);
@@ -1215,7 +1229,7 @@ describe.skipIf(!dbUrl)(
             ).toEqual(["cyber-launch"]);
           } else {
             expect(row, `round ${i}: nothing written`).toBeNull();
-            expect(confirm.body.error).toBe("preview_changed");
+            expect(confirm.body).toEqual({ error: "preview_changed" });
           }
         }
       } finally {
@@ -1338,8 +1352,10 @@ describe.skipIf(!dbUrl)(
         row.acceptedAt!.getTime(),
       );
 
-      // The operator-backfill shape: trusted, no snapshot → every listed
-      // track counts as consented at acceptance; nothing is asked again.
+      // A trusted row written without a snapshot (operator SQL that skipped
+      // it) shares nothing — a cohort that gains a track cannot widen it —
+      // and the learner is asked; confirming writes the snapshot (now) and
+      // keeps the acceptance moment.
       const acceptedAt = new Date("2026-06-01T00:00:00.000Z");
       await prisma.pathwayEnrollment.create({
         data: {
@@ -1350,6 +1366,16 @@ describe.skipIf(!dbUrl)(
           acceptedAt,
         },
       });
+      await prisma.pathwayMilestone.create({
+        data: {
+          userId: ids.race5,
+          trackSlug: "cyber-launch",
+          moduleSlug: "cyber-foundations",
+          status: "in_progress",
+          hookCompleted: true,
+        },
+      });
+      expect((await learnerDetail(ids.race5)).body.milestones).toHaveLength(0);
       const home = await request(app)
         .get("/api/pathways/student/home")
         .set(as(ids.race5));
@@ -1357,18 +1383,28 @@ describe.skipIf(!dbUrl)(
         home.body.enrollments.find(
           (e: { cohortId: string }) => e.cohortId === ids.cohort,
         ).consent,
-      ).toEqual({ accepted: true, newTracks: [] });
-      const quiet = await request(app)
+      ).toEqual({ accepted: true, newTracks: ["cyber-launch"] });
+      const asked = await request(app)
         .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
         .set(as(ids.race5));
-      expect(quiet.body.reason).toBe("nothing_new");
-      expect(quiet.body.tracks).toEqual([
-        {
-          slug: "cyber-launch",
-          consentedSince: acceptedAt.toISOString(),
-          requested: false,
-        },
-      ]);
+      expect(asked.body.enrollment.state).toBe("trusted");
+      expect(asked.body.newSharing).toEqual(["cyber-launch"]);
+      const confirmed = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as(ids.race5))
+        .send({ cohortId: ids.cohort, version: asked.body.version });
+      expect(confirmed.status).toBe(200);
+      const after = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.race5, cohortId: ids.cohort } },
+      });
+      expect(after.acceptedAt?.getTime()).toBe(acceptedAt.getTime());
+      const bounds5 = after.trackBoundaries as Record<string, string>;
+      expect(Object.keys(bounds5)).toEqual(["cyber-launch"]);
+      expect(new Date(bounds5["cyber-launch"]).getTime()).toBeGreaterThan(
+        acceptedAt.getTime(),
+      );
+      // The milestone predates the boundary and was not touched since: hidden.
+      expect((await learnerDetail(ids.race5)).body.milestones).toHaveLength(0);
     });
 
     it("DB-874-7: a legacy enrollment grants no visibility until the learner re-enters the join code", async () => {

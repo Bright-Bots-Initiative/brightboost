@@ -108,7 +108,8 @@
         "revoked": "Your facilitator removed you from this cohort; the code cannot restore access.",
         "network": "We couldn't reach Bright Boost. Check your connection and try again.",
         "server": "Something went wrong. Please try again.",
-        "retry": "Try again"
+        "retry": "Try again",
+        "rateLimited": "Too many attempts for now. Wait a few minutes and try again."
       }
     },
     "about": {

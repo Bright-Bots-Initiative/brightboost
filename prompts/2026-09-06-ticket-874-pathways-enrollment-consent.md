@@ -219,3 +219,23 @@ PostgreSQL suite 30/30 (DB-874-18…24 new: read-only preview, wrong/missing ver
 preview after a track change, duplicate, own-rows-only cohort id, confirm racing a track change
 ×6, confirm racing an invitation acceptance, confirm racing a revocation, prior boundaries kept,
 snapshot-less trusted row); mocked 16/16; Cypress live stack: see the PR.
+
+### Opus review of 95ab686d (consent-confirmation flow)
+
+Model self-report `claude-opus-5[1m]`, no runtime evidence. Verdict: material findings, no
+blocker (it could not break the pinned-read grant, a stale version never grants, a duplicate
+never writes). Dispositions in the follow-up commit: the confirm route now runs behind the same
+per-account limiter as the preview and no longer echoes a preview on 409 (the client re-reads it
+through the limited route) — closing the unlimited lookup oracle; a trusted row without a
+snapshot shares nothing and is asked to confirm (no fallback to the cohort's current tracks, so
+a cohort gaining a track can never widen it unasked; DB-874-24, BND-9); the onboarding redirect
+is no longer suppressed for learners with no enrollment; the row lock is a transaction-scoped
+advisory lock keyed by (learner, cohort) so it also serializes writers before the row exists; the
+learner's state and every branch follow the trust predicate (a lapsed status re-activates on
+confirm); `consentedSince` is clamped like the facilitator boundary; 429 renders its own EN/ES
+message without a retry; the focus targets show a ring for pointer-driven focus moves; the
+Cypress spec signs each role in once, runs with `retries: 0`, restores the cohort in `after()`
+and makes the Spanish case self-contained; DB-874-18 also proves another learner's version is
+refused. Recorded: `cypress-real-events` works under Electron in the `e2e-flows` job (7/7 on
+95ab686d); the review noted the tree was not frozen when a tests-only commit (7ab48eb6) landed
+mid-review — it touched only a root unit test the review had not covered.

@@ -234,7 +234,6 @@ async function seedPathways(prisma, passwordHash) {
       role: "teacher",
     },
   });
-  const [cohort, second] = [];
   const created = [];
   for (const c of PATHWAYS.cohorts) {
     created.push(
@@ -251,8 +250,6 @@ async function seedPathways(prisma, passwordHash) {
     );
   }
   const [primary] = created;
-  void cohort;
-  void second;
 
   const learner = async (email, name) =>
     prisma.user.create({
