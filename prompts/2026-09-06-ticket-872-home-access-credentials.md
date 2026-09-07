@@ -156,3 +156,17 @@ claim); `routes/courses.ts` (revocation in the delete transaction); `docs/ops/ho
 ### Rating
 
 4/5 — the first design proved "who wins", not "who may still win".
+
+### Opus final review of 54bf03e7 (2026-09-07)
+
+Verdict: material findings, no blocker; model self-reported `claude-opus-5[1m]`, no runtime
+evidence of the model id. Dispositions in the follow-up commit: EN/ES copy for
+`invite_revoked` on the accept page (was falling back to the generic "try again");
+the four new `db-check` steps registered in `scripts/ci-required-steps.json`, with the
+fail-not-skip flag moved into the guarded run string; the deadlock comment restated as the
+real invariant (deletion reaches an invite row only after holding its Enrollment); a lost
+compare-and-swap re-reads the row so the holder gets the precise reason; a P2003 on issuance
+maps to 404; the mocked suite now discriminates `tx.$queryRaw` from the global client; and
+DB-872-16 executes the migration's fail-closed UPDATE against existing rows. Recorded, not
+changed: the supersede is per student across classes and not atomic under simultaneous
+issuance (both tokens carry identical authority; exactly one binding remains possible).

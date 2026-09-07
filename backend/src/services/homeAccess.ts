@@ -173,25 +173,38 @@ export async function createHomeAccessInvite(params: {
   // A fresh invitation supersedes every earlier unused one for this student
   // (a mis-addressed email must not stay claimable), in the same transaction
   // that issues the new token.
-  const [, invite] = await prisma.$transaction([
-    prisma.homeAccessInvite.updateMany({
-      where: { studentId: student.id, usedAt: null, revokedAt: null },
-      data: { revokedAt: now },
-    }),
-    prisma.homeAccessInvite.create({
-      data: {
-        studentId: student.id,
-        invitedById: params.teacherId,
-        // The exact relationship instance that authorizes this invitation.
-        courseId: course.id,
-        enrollmentId: enrollment.id,
-        adultEmail: params.adultEmail,
-        tokenHash: hashInviteToken(token),
-        expiresAt: new Date(now.getTime() + HOME_ACCESS_INVITE_TTL_MS),
-      },
-      select: { id: true, expiresAt: true },
-    }),
-  ]);
+  let invite: { id: string; expiresAt: Date };
+  try {
+    [, invite] = await prisma.$transaction([
+      prisma.homeAccessInvite.updateMany({
+        where: { studentId: student.id, usedAt: null, revokedAt: null },
+        data: { revokedAt: now },
+      }),
+      prisma.homeAccessInvite.create({
+        data: {
+          studentId: student.id,
+          invitedById: params.teacherId,
+          // The exact relationship instance that authorizes this invitation.
+          courseId: course.id,
+          enrollmentId: enrollment.id,
+          adultEmail: params.adultEmail,
+          tokenHash: hashInviteToken(token),
+          expiresAt: new Date(now.getTime() + HOME_ACCESS_INVITE_TTL_MS),
+        },
+        select: { id: true, expiresAt: true },
+      }),
+    ]);
+  } catch (e) {
+    // The enrollment vanished between the read above and this write (FK
+    // violation): the relationship no longer exists, so answer as such.
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2003"
+    ) {
+      throw new HomeAccessError("student_not_enrolled", 404);
+    }
+    throw e;
+  }
 
   return {
     token,
@@ -237,8 +250,9 @@ async function relationshipStillAuthorizes(
 ): Promise<boolean> {
   if (!invite.enrollmentId || !invite.courseId) return false;
   if (lock) {
-    // Lock order (Enrollment → Course → User) matches class deletion, which
-    // removes enrollments before the course row, so the two cannot deadlock.
+    // Lock order Enrollment → Course → User. Class deletion can only reach
+    // an invite row after it holds that row's Enrollment (FK SET NULL, then
+    // the explicit revocation), so acceptance and deletion cannot cycle.
     const enrollment = await db.$queryRaw<{ id: string }[]>`
       SELECT "id" FROM "Enrollment"
       WHERE "id" = ${invite.enrollmentId}
@@ -332,7 +346,19 @@ export async function acceptHomeAccessInvite(rawInput: unknown) {
           },
           data: { usedAt: now },
         });
-        if (claimed.count !== 1) throw new HomeAccessError("invite_used", 409);
+        if (claimed.count !== 1) {
+          // Lost the compare-and-swap. Re-read under the transaction so the
+          // holder gets the precise reason (used / revoked / expired); if the
+          // row still looks claimable, its provenance moved — revoked.
+          const current = await tx.homeAccessInvite.findUnique({
+            where: { id: invite.id },
+            include: {
+              student: { select: { id: true, name: true, loginIcon: true } },
+            },
+          });
+          assertClaimable(current, now);
+          throw new HomeAccessError("invite_revoked", 410);
+        }
 
         const bound = await tx.user.updateMany({
           where: { id: invite.studentId, ...NEVER_BOUND_STUDENT },

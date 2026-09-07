@@ -41,6 +41,11 @@ Not built yet: a route to revoke a single invitation or to remove a single enrol
 teacher supersedes a mis-sent invitation by re-inviting, or ends it by deleting the class. Any
 future soft-removal of an enrollment (`status` / `leftAt`) must also revoke its invitations.
 
+Known residuals: the supersede is per student, not per class — a second teacher's invitation
+kills the first teacher's unused one (fails closed; the owner should confirm this reach). Two
+issuances for the same student that run at the same instant may both leave a live token; both
+carry identical authority and the never-bound guard still allows exactly one binding.
+
 ## Rollout considerations (owner decisions; nothing here assumes them)
 
 - **SMTP** must be configured for invitation mail. Without delivery the invite route answers 503

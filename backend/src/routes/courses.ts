@@ -329,10 +329,13 @@ router.delete(
     // Delete related records first, then the course. #872: every unused
     // home-access invitation issued from this class is revoked in the same
     // transaction (the Enrollment FK also nulls their provenance), so no
-    // emailed token outlives the relationship that authorized it. The
-    // revocation write stays LAST: invitation acceptance share-locks the
-    // Enrollment, Course and inviter rows before it claims the invite row, so
-    // taking the invite lock before the enrollment delete would deadlock.
+    // emailed token outlives the relationship that authorized it.
+    // Lock-order invariant: invitation acceptance share-locks the Enrollment
+    // row BEFORE it touches the invite row, and this transaction can only
+    // reach a HomeAccessInvite row (FK SET NULL, or the explicit revocation
+    // below) AFTER it holds that row's Enrollment. Never add a
+    // HomeAccessInvite write before `enrollment.deleteMany` here — that would
+    // create a lock cycle with acceptance.
     await prisma.$transaction([
       prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
       prisma.enrollment.deleteMany({ where: { courseId: course.id } }),

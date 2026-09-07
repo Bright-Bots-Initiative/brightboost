@@ -26,6 +26,16 @@
     { "job": "db-check", "run": "npx prisma migrate deploy" },
     { "job": "db-check", "run": "npx prisma generate" },
     { "job": "db-check", "run": "npm run test:db" },
+    {
+      "job": "db-check",
+      "run": "diff -r prisma/migrations backend/prisma/migrations"
+    },
+    { "job": "db-check", "run": "cd backend && npm ci" },
+    { "job": "db-check", "run": "cd backend && npm run db:generate" },
+    {
+      "job": "db-check",
+      "run": "cd backend && REQUIRE_TEST_DATABASE=1 npx vitest run db.test"
+    },
     { "job": "e2e-flows", "run": "cd backend && npm run db:generate" },
     { "job": "e2e-flows", "run": "npx prisma generate" },
     { "job": "e2e-flows", "run": "npx prisma migrate deploy" },

@@ -3024,6 +3024,7 @@
         "invite_not_found": "This invitation link is not valid. Ask the teacher to send a new one.",
         "invite_used": "This invitation was already used. If you set up home access, sign in with that email and password.",
         "invite_expired": "This invitation has expired. Ask the teacher to send a new one.",
+        "invite_revoked": "This invitation is no longer valid because the class or the student's enrollment changed. Ask the teacher to send a new one.",
         "home_access_already_configured": "This account already has a home login.",
         "email_in_use": "That email is already used by another account. Choose a different one.",
         "passwordMismatch": "Passwords do not match.",

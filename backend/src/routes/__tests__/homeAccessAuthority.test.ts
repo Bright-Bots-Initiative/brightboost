@@ -115,9 +115,14 @@ beforeEach(async () => {
   teacherHash = teacherHash || (await bcrypt.hash(TEACHER_PASSWORD, 4));
   studentHash = studentHash || (await bcrypt.hash(STUDENT_PASSWORD, 4));
   mailMock.sendHomeAccessInviteEmail.mockResolvedValue(true);
+  // The interactive-transaction client shares every model mock but has its
+  // OWN $queryRaw: the share-locked reads must run on the transaction's
+  // connection, so a regression to the global client shows up as a call on
+  // `prismaMock.$queryRaw` (unmocked → undefined → the accept path breaks).
+  txQueryRaw.mockReset();
   prismaMock.$transaction.mockImplementation(async (arg: unknown) =>
     typeof arg === "function"
-      ? (arg as (tx: typeof prismaMock) => Promise<unknown>)(prismaMock)
+      ? (arg as (tx: typeof txClient) => Promise<unknown>)(txClient)
       : Promise.all(arg as Promise<unknown>[]),
   );
   prismaMock.homeAccessInvite.updateMany.mockResolvedValue({ count: 1 });
@@ -125,12 +130,15 @@ beforeEach(async () => {
   // The issuing relationship is intact unless a test says otherwise: the
   // unlocked pre-check and each of the three share-locked reads find a row.
   prismaMock.enrollment.findFirst.mockResolvedValue({ id: "enr-1" });
-  prismaMock.$queryRaw.mockResolvedValue([{ id: "row" }]);
+  txQueryRaw.mockResolvedValue([{ id: "row" }]);
 });
 
-/** The SQL text of the n-th $queryRaw call (tagged-template form). */
+const txQueryRaw = vi.fn();
+const txClient = { ...prismaMock, $queryRaw: txQueryRaw };
+
+/** The SQL text of the n-th locked read (tagged-template form). */
 const rawSql = (n: number) =>
-  (prismaMock.$queryRaw.mock.calls[n][0] as readonly string[]).join("?");
+  (txQueryRaw.mock.calls[n][0] as readonly string[]).join("?");
 
 describe("#872 the old self-service binding route is gone", () => {
   it("HA-1: a classroom session posting replacement credentials gets 410 and writes nothing", async () => {
@@ -563,14 +571,15 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
   it("HA-17e: the relationship is re-verified under lock inside the accepting transaction", async () => {
     prismaMock.homeAccessInvite.findUnique.mockResolvedValue(inviteRow());
     // Pre-check passes; under lock the course is no longer the inviter's.
-    prismaMock.$queryRaw
+    txQueryRaw
       .mockResolvedValueOnce([{ id: "enr-1" }])
       .mockResolvedValueOnce([]);
     const res = await acceptWith();
     expect(res.status).toBe(410);
     expect(res.body).toEqual({ error: "invite_revoked" });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(2);
+    expect(txQueryRaw).toHaveBeenCalledTimes(2);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled(); // never the global client
     expect(rawSql(0)).toMatch(/FROM "Enrollment"[\s\S]*FOR SHARE/);
     expect(rawSql(1)).toMatch(/FROM "Course"[\s\S]*FOR SHARE/);
     // Nothing was claimed or bound: the transaction threw before both writes.
@@ -593,6 +602,21 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
     expect(res.body).not.toHaveProperty("tokenHash");
   });
 
+  it("HA-17f: a lost compare-and-swap re-reads the row and reports the precise reason, binding nothing", async () => {
+    prismaMock.homeAccessInvite.findUnique
+      .mockResolvedValueOnce(inviteRow()) // pre-check
+      .mockResolvedValueOnce(inviteRow({ revokedAt: new Date() })); // re-read under the transaction
+    prismaMock.homeAccessInvite.updateMany.mockResolvedValue({ count: 0 });
+    const res = await acceptWith();
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: "invite_revoked" });
+    expect(prismaMock.homeAccessInvite.findUnique).toHaveBeenCalledTimes(2);
+    expect(prismaMock.user.updateMany).not.toHaveBeenCalled();
+    await expect(
+      prismaMock.$transaction.mock.results[0].value,
+    ).rejects.toThrow();
+  });
+
   it("HA-18: a valid token binds exactly the invited student, never a body-supplied one", async () => {
     prismaMock.homeAccessInvite.findUnique.mockResolvedValue(inviteRow());
 
@@ -609,8 +633,10 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
 
-    // Enrollment, Course and inviter are share-locked, in that order, first.
-    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(3);
+    // Enrollment, Course and inviter are share-locked, in that order, first —
+    // on the transaction's connection, never the global client.
+    expect(txQueryRaw).toHaveBeenCalledTimes(3);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
     expect(rawSql(0)).toMatch(/FROM "Enrollment"[\s\S]*FOR SHARE/);
     expect(rawSql(1)).toMatch(/FROM "Course"[\s\S]*FOR SHARE/);
     expect(rawSql(2)).toMatch(/FROM "User"[\s\S]*'teacher'[\s\S]*FOR SHARE/);

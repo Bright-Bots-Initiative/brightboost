@@ -3,6 +3,8 @@ import request from "supertest";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { runTag, bindTestDatabase } from "../../__tests__/helpers/testDb";
 import { hashInviteToken } from "../../services/homeAccess";
 
@@ -692,5 +694,41 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
     const kid11 = await user(ids.kid11);
     expect(kid11.email).toBeNull();
     expect(kid11.homeAccessEnabled).toBe(false);
+  });
+
+  it("DB-872-16: the correction migration's fail-closed UPDATE revokes provenance-less pending rows and nothing else", async () => {
+    // The statement as shipped in the migration (the backend tree; CI proves
+    // both trees identical), applied to rows that already exist:
+    // kid11's pending row has no provenance, kid10's used row lost its
+    // provenance to the class deletion.
+    const rel =
+      "prisma/migrations/20260907090000_home_access_invite_relationship/migration.sql";
+    const file = [
+      path.resolve(process.cwd(), rel),
+      path.resolve(process.cwd(), "backend", rel),
+    ].find((p) => fs.existsSync(p));
+    expect(file).toBeDefined();
+    const update = fs
+      .readFileSync(file!, "utf8")
+      .match(/UPDATE "HomeAccessInvite"[\s\S]*?;/)?.[0];
+    expect(update).toBeDefined();
+    const pendingBefore = await inviteRowOf(ids.kid11);
+    expect(pendingBefore.revokedAt).toBeNull();
+    const usedBefore = await inviteRowOf(ids.kid10);
+    expect(usedBefore.usedAt).not.toBeNull();
+    expect(usedBefore.enrollmentId).toBeNull();
+
+    await prisma.$executeRawUnsafe(update!);
+
+    expect((await inviteRowOf(ids.kid11)).revokedAt).not.toBeNull();
+    const usedAfter = await inviteRowOf(ids.kid10);
+    expect(usedAfter.revokedAt).toBeNull();
+    expect(usedAfter.usedAt?.getTime()).toBe(usedBefore.usedAt?.getTime());
+    // Rows that still carry provenance are untouched (kid3's fresh, used one).
+    const withProvenance = await prisma.homeAccessInvite.findFirst({
+      where: { studentId: ids.kid6, usedAt: { not: null } },
+    });
+    expect(withProvenance?.enrollmentId).not.toBeNull();
+    expect(withProvenance?.revokedAt).toBeNull();
   });
 });

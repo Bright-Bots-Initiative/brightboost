@@ -2691,6 +2691,7 @@
         "invite_not_found": "Este enlace de invitación no es válido. Pide al maestro que envíe uno nuevo.",
         "invite_used": "Esta invitación ya se usó. Si configuraste el acceso desde casa, inicia sesión con ese correo y contraseña.",
         "invite_expired": "Esta invitación ha caducado. Pide al maestro que envíe una nueva.",
+        "invite_revoked": "Esta invitación ya no es válida porque la clase o la inscripción del estudiante cambió. Pide al maestro que envíe una nueva.",
         "home_access_already_configured": "Esta cuenta ya tiene un inicio de sesión de casa.",
         "email_in_use": "Ese correo ya lo usa otra cuenta. Elige uno diferente.",
         "passwordMismatch": "Las contraseñas no coinciden.",
