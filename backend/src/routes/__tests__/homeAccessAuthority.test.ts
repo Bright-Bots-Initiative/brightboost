@@ -642,4 +642,56 @@ describe("#872 session provenance is server-issued", () => {
     expect(res.status).toBe(200);
     expect(decode(res.body.token).auth).toBe("password");
   });
+
+  it("HA-24: the session re-hydration payload carries the home-access state", async () => {
+    // AuthContext refreshes `user` from GET /get-progress; without the flag a
+    // reload would show a bound student the "ask your teacher" guidance.
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: STUDENT_ID,
+      name: "Ada",
+      email: "home@example.com",
+      role: "student",
+      homeAccessEnabled: true,
+      accountMode: "CLASS_CODE_PLUS_HOME_ACCESS",
+    });
+    const res = await request(app)
+      .get("/api/get-progress?excludeProgress=true")
+      .set(bearer(homeStudent));
+    expect(res.status).toBe(200);
+    expect(res.body.user.homeAccessEnabled).toBe(true);
+    const select = prismaMock.user.findUnique.mock.calls[0][0].select;
+    expect(select.homeAccessEnabled).toBe(true);
+    expect(select).not.toHaveProperty("password");
+  });
+
+  it("HA-25: class-login never echoes the account email", async () => {
+    // Anyone holding the class code reaches this route without a PIN; after
+    // binding, `email` would be half of the family's home credential pair.
+    prismaMock.enrollment.findUnique.mockResolvedValue({
+      student: {
+        id: STUDENT_ID,
+        name: "Ada",
+        role: "student",
+        loginIcon: "🐱",
+        loginPin: null,
+        level: "Explorer",
+        xp: 0,
+        streak: 0,
+        avatarUrl: null,
+        preferredLanguage: "en",
+        homeAccessEnabled: true,
+      },
+    });
+    const res = await request(app)
+      .post("/api/auth/class-login")
+      .set(fromNewIp())
+      .send({ courseId: COURSE_ID, studentId: STUDENT_ID });
+    expect(res.status).toBe(200);
+    expect(res.body.user).not.toHaveProperty("email");
+    expect(res.body.user).not.toHaveProperty("loginPin");
+    expect(res.body.user.homeAccessEnabled).toBe(true);
+    const select =
+      prismaMock.enrollment.findUnique.mock.calls[0][0].include.student.select;
+    expect(select).not.toHaveProperty("email");
+  });
 });

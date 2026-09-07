@@ -135,7 +135,8 @@ router.get(
                 email: true,
                 role: true,
                 homeAccessEnabled: true,
-                // Only read to derive `canInviteHomeAccess`; never returned.
+                // Read only to derive `canInviteHomeAccess` below; the hash
+                // is dropped before anything is returned.
                 password: true,
               },
             },
@@ -148,27 +149,30 @@ router.get(
       return res.status(404).json({ error: "Course not found" });
     }
 
+    // #872: narrow immediately so no later spread can leak a password hash.
+    // A home-access invitation is only possible for a never-bound student
+    // account (no login of its own yet).
+    const students = course.enrollments.map((e) => ({
+      id: e.student.id,
+      name: e.student.name,
+      email: e.student.email,
+      enrolledAt: e.enrolledAt,
+      homeAccessEnabled: e.student.homeAccessEnabled,
+      canInviteHomeAccess:
+        e.student.role === "student" &&
+        e.student.email === null &&
+        e.student.password === null &&
+        !e.student.homeAccessEnabled,
+    }));
+
     res.json({
       id: course.id,
       name: course.name,
       joinCode: course.joinCode,
       gradeBand: course.gradeBand,
       kind: course.kind,
-      enrollmentCount: course.enrollments.length,
-      students: course.enrollments.map((e) => ({
-        id: e.student.id,
-        name: e.student.name,
-        email: e.student.email,
-        enrolledAt: e.enrolledAt,
-        homeAccessEnabled: e.student.homeAccessEnabled,
-        // #872: a home-access invitation is only possible for a never-bound
-        // student account (no login of its own yet).
-        canInviteHomeAccess:
-          e.student.role === "student" &&
-          e.student.email === null &&
-          e.student.password === null &&
-          !e.student.homeAccessEnabled,
-      })),
+      enrollmentCount: students.length,
+      students,
       createdAt: course.createdAt,
     });
   },

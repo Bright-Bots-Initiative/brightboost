@@ -248,6 +248,11 @@ router.get(
             avatarUrl: true,
             createdAt: true,
             updatedAt: true,
+            // #872: AuthContext re-hydrates `user` from this endpoint; the
+            // student settings card needs the home-access state to survive a
+            // page reload (login and class-login return it too).
+            homeAccessEnabled: true,
+            accountMode: true,
           },
         })
       : Promise.resolve(null);

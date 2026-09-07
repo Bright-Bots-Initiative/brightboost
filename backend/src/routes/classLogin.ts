@@ -109,7 +109,10 @@ router.post(
             select: {
               id: true,
               name: true,
-              email: true,
+              // #872: `email` is deliberately not selected. Once a family has
+              // bound a home login it is half of that credential pair and the
+              // parent's contact address; anyone holding the class code can
+              // reach this route without a PIN. The K-2 UI never uses it.
               role: true,
               loginIcon: true,
               loginPin: true,
@@ -118,6 +121,7 @@ router.post(
               streak: true,
               avatarUrl: true,
               preferredLanguage: true,
+              homeAccessEnabled: true,
             },
           },
         },

@@ -65,6 +65,12 @@ email signups and Pathways registrants, so the gate became "never bound" (no ema
 password, flag off). It also caught the mount-order trap: the public accept routes must sit
 on the pre-token router or a stale classroom token would 403 the parent's accept page.
 
+The post-commit review found three things the tests had not: the session re-hydration
+endpoint (`GET /get-progress`) omitted `homeAccessEnabled`, so the update form vanished after
+a reload; class-login echoed the account email, which after binding is half of the family's
+credential pair; and the Pathways routes shared the `/login` rate-limit bucket. All three were
+fixed in the follow-up commit with tests for the first two.
+
 ## Lessons
 
 Provenance has to be stamped where the proof is verified (login/class-login), not inferred

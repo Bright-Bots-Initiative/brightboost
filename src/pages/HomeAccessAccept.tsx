@@ -93,7 +93,9 @@ const HomeAccessAccept: React.FC = () => {
       if (!res.ok) {
         const code = typeof data.error === "string" ? data.error : "generic";
         // Validation messages from the server are already human-readable.
-        setError(/^[a-z_]+$/.test(code) ? errorText(code) : String(data.error));
+        // Stable codes map to copy; a server validation message (English
+        // Zod text) is replaced by the localized generic rules hint.
+        setError(errorText(/^[a-z_]+$/.test(code) ? code : "invalidInput"));
         return;
       }
       setSuccess(true);

@@ -3,7 +3,11 @@ import { z } from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
-import { authLimiter } from "../utils/security";
+import {
+  authLimiter,
+  homeAccessProofLimiter,
+  pathwaysPasswordLimiter,
+} from "../utils/security";
 import { logAudit } from "../utils/audit";
 import { trackServer } from "../services/analytics";
 import { generateToken } from "../utils/token";
@@ -291,7 +295,7 @@ const registerPathwaysSchema = z.object({
 // like /login (#885 owns a dedicated Pathways attempt limit).
 router.post(
   "/auth/register-pathways",
-  authLimiter,
+  pathwaysPasswordLimiter,
   async (req: Request, res: Response) => {
     try {
       const data = registerPathwaysSchema.parse(req.body);
@@ -384,7 +388,7 @@ router.post(
 // throttled like /login.
 router.post(
   "/auth/pathways-code-login",
-  authLimiter,
+  pathwaysPasswordLimiter,
   async (req: Request, res: Response) => {
     const { cohortCode, userId, password } = req.body;
     if (!cohortCode || !userId || !password) {
@@ -459,7 +463,7 @@ router.get("/auth/cohort-roster/:code", async (req: Request, res: Response) => {
 // GET /auth/home-access/invite/:token — what the accept page may show
 router.get(
   "/auth/home-access/invite/:token",
-  authLimiter,
+  homeAccessProofLimiter,
   async (req: Request, res: Response) => {
     try {
       const info = await readHomeAccessInvite(String(req.params.token));
@@ -473,7 +477,7 @@ router.get(
 // POST /auth/home-access/accept — bind the home login with the emailed token
 router.post(
   "/auth/home-access/accept",
-  authLimiter,
+  homeAccessProofLimiter,
   async (req: Request, res: Response) => {
     try {
       const result = await acceptHomeAccessInvite(req.body);
