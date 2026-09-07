@@ -73,7 +73,11 @@ fixed in the follow-up commit with tests for the first two. A second pass found 
 locale key for the accept page's validation hint had not actually landed (a shell quoting
 failure swallowed the script) and that the same classroom session could still read the home
 email through `/profile` and `/get-progress`; both endpoints now withhold `email` for
-classroom-provenance sessions (HA-26/27) and the key exists in both languages.
+classroom-provenance sessions (HA-26/27) and the key exists in both languages. Two further
+passes found the same value on `/users/:id`, `/edit-profile` and the avatar handlers, so the
+fix became structural: `classroomResponseGuard` rewrites every JSON reply to a classroom
+session so `email` / `parentEmail` are null at any depth (HA-28/29), with the per-route
+nulling kept as defence in depth.
 
 ## Lessons
 
