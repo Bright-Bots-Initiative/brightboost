@@ -3,6 +3,7 @@ import request from "supertest";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { runTag, bindTestDatabase } from "../../__tests__/helpers/testDb";
@@ -723,19 +724,38 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
     expect(provenancedBefore.revokedAt).toBeNull();
     expect(provenancedBefore.enrollmentId).not.toBeNull();
 
-    await prisma.$executeRawUnsafe(update!);
-
-    expect((await inviteRowOf(ids.kid11)).revokedAt).not.toBeNull();
-    const usedAfter = await inviteRowOf(ids.kid10);
-    expect(usedAfter.revokedAt).toBeNull();
-    expect(usedAfter.usedAt?.getTime()).toBe(usedBefore.usedAt?.getTime());
-    // Rows that still carry provenance are untouched: the pending one (the
-    // enrollmentId guard) and a used one (the usedAt guard).
-    expect((await inviteRowOf(ids.kid2)).revokedAt).toBeNull();
-    const withProvenance = await prisma.homeAccessInvite.findFirst({
-      where: { studentId: ids.kid6, usedAt: { not: null } },
-    });
-    expect(withProvenance?.enrollmentId).not.toBeNull();
-    expect(withProvenance?.revokedAt).toBeNull();
+    // The statement is table-wide, and the test database is shared with the
+    // other PostgreSQL suites: execute and assert inside one transaction,
+    // then roll it back so nothing outside this suite's rows is touched.
+    const ROLLBACK = "rollback-after-assertions";
+    const latest = (
+      tx: Prisma.TransactionClient,
+      studentId: string,
+      usedAt?: { not: null },
+    ) =>
+      tx.homeAccessInvite.findFirstOrThrow({
+        where: { studentId, ...(usedAt ? { usedAt } : {}) },
+        orderBy: { createdAt: "desc" },
+      });
+    await prisma
+      .$transaction(async (tx) => {
+        await tx.$executeRawUnsafe(update!);
+        expect((await latest(tx, ids.kid11)).revokedAt).not.toBeNull();
+        const usedAfter = await latest(tx, ids.kid10);
+        expect(usedAfter.revokedAt).toBeNull();
+        expect(usedAfter.usedAt?.getTime()).toBe(usedBefore.usedAt?.getTime());
+        // Rows that still carry provenance are untouched: the pending one
+        // (the enrollmentId guard) and a used one (the usedAt guard).
+        expect((await latest(tx, ids.kid2)).revokedAt).toBeNull();
+        const withProvenance = await latest(tx, ids.kid6, { not: null });
+        expect(withProvenance.enrollmentId).not.toBeNull();
+        expect(withProvenance.revokedAt).toBeNull();
+        throw new Error(ROLLBACK);
+      })
+      .catch((e: Error) => {
+        if (e.message !== ROLLBACK) throw e;
+      });
+    // Rolled back: the shared database is exactly as it was.
+    expect((await inviteRowOf(ids.kid11)).revokedAt).toBeNull();
   });
 });
