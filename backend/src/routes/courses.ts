@@ -25,7 +25,11 @@ const setupIconsSchema = z.object({
     z.object({
       studentId: z.string().min(1),
       icon: z.string().min(1).max(4), // emoji
-      pin: z.string().length(4).regex(/^\d{4}$/).optional(),
+      pin: z
+        .string()
+        .length(4)
+        .regex(/^\d{4}$/)
+        .optional(),
     }),
   ),
 });
@@ -123,7 +127,19 @@ router.get(
       where: { id: req.params.courseId, teacherId: req.user!.id },
       include: {
         enrollments: {
-          include: { student: { select: { id: true, name: true, email: true } } },
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                homeAccessEnabled: true,
+                // Only read to derive `canInviteHomeAccess`; never returned.
+                password: true,
+              },
+            },
+          },
         },
       },
     });
@@ -144,6 +160,14 @@ router.get(
         name: e.student.name,
         email: e.student.email,
         enrolledAt: e.enrolledAt,
+        homeAccessEnabled: e.student.homeAccessEnabled,
+        // #872: a home-access invitation is only possible for a never-bound
+        // student account (no login of its own yet).
+        canInviteHomeAccess:
+          e.student.role === "student" &&
+          e.student.email === null &&
+          e.student.password === null &&
+          !e.student.homeAccessEnabled,
       })),
       createdAt: course.createdAt,
     });
@@ -382,7 +406,9 @@ router.get(
     const enrollments = await prisma.enrollment.findMany({
       where: { studentId: req.user!.id },
       include: {
-        course: { select: { id: true, name: true, gradeBand: true, kind: true } },
+        course: {
+          select: { id: true, name: true, gradeBand: true, kind: true },
+        },
       },
     });
 
@@ -520,7 +546,10 @@ router.post(
         });
       }
 
-      res.json({ message: "Icons updated", count: parsed.data.students.length });
+      res.json({
+        message: "Icons updated",
+        count: parsed.data.students.length,
+      });
     } catch (error) {
       console.error("Setup icons error:", error);
       res.status(500).json({ error: "Internal server error" });

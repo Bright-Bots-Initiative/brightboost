@@ -78,6 +78,8 @@ model User {
   pulseResponses  PulseResponse[]
   feedbacks       Feedback[]
   resetTokens     PasswordResetToken[]
+  homeAccessInvites     HomeAccessInvite[] @relation("HomeAccessInviteStudent")
+  homeAccessInvitesSent HomeAccessInvite[] @relation("HomeAccessInviteInviter")
   creations       Creation[]    // Phase 0 — kid-authored creations
 
   // Teacher Enablement Relations
@@ -548,6 +550,27 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+// #872 — single-use, time-limited invitation for a parent/guardian to bind a
+// home login (email + password) to a class-code-only student. Created only by
+// the teacher (or home-group parent) who owns a Course the student is enrolled
+// in; only the token hash is stored (mirror PasswordResetToken).
+model HomeAccessInvite {
+  id          String    @id @default(cuid())
+  studentId   String
+  invitedById String
+  adultEmail  String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  student   User @relation("HomeAccessInviteStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  invitedBy User @relation("HomeAccessInviteInviter", fields: [invitedById], references: [id])
+
+  @@index([studentId])
+  @@index([expiresAt])
 }
 
 model Feedback {

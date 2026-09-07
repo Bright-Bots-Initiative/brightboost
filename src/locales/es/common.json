@@ -552,6 +552,26 @@
       "made": {
         "title": "Lo que han creado",
         "empty": "Aún no se ha compartido ninguna creación."
+      },
+      "homeAccess": {
+        "column": "Acceso desde casa",
+        "enabled": "Activado",
+        "notAvailable": "Tiene su propio acceso",
+        "invite": "Invitar a padre/madre",
+        "adultEmail": "Correo del padre, madre o tutor",
+        "yourPassword": "Tu contraseña (para confirmar)",
+        "send": "Enviar invitación",
+        "sending": "Enviando...",
+        "cancel": "Cancelar",
+        "sent": "Invitación enviada. El enlace funciona una vez y caduca en 72 horas.",
+        "errors": {
+          "reauthentication_required": "Cierra sesión y vuelve a iniciarla antes de enviar invitaciones de acceso desde casa.",
+          "invalid_current_password": "Esa contraseña no es correcta.",
+          "home_access_already_configured": "Este estudiante ya tiene su propio inicio de sesión.",
+          "student_not_enrolled": "Este estudiante no está en esta clase.",
+          "mail_unavailable": "El correo no está configurado en este servidor, así que no se pudo enviar la invitación.",
+          "generic": "No se pudo enviar la invitación."
+        }
       }
     },
     "resources": {
@@ -2625,6 +2645,56 @@
       "lab": {
         "title": "Combina tus descubrimientos.",
         "text": "El invernadero tiene estantes altos, un descenso largo y escalones desiguales. Las patas con resortes ayudan a subir. Las alas ayudan a cruzar. Tu camino puede cambiar según la herramienta."
+      }
+    }
+  },
+  "homeAccess": {
+    "title": "Acceso desde casa",
+    "setup": {
+      "body": "Tu maestro o un adulto configura el acceso desde casa. Pide a tu maestro que envíe una invitación de acceso desde casa al correo de tu padre, madre o tutor.",
+      "recovery": "¿Ya tienes un inicio de sesión de casa? Cierra sesión y luego inicia sesión con ese correo y contraseña para cambiarlo."
+    },
+    "classroomNotice": "El acceso desde casa está activado. Los datos del inicio de sesión de casa solo se pueden cambiar después de iniciar sesión con el correo y la contraseña de casa.",
+    "manage": {
+      "title": "Actualizar inicio de sesión de casa",
+      "description": "Escribe la contraseña actual para cambiar el correo de casa, la contraseña o el correo del padre, madre o tutor.",
+      "currentPassword": "Contraseña actual",
+      "newEmail": "Nuevo correo de inicio de sesión de casa (opcional)",
+      "newPassword": "Nueva contraseña (opcional)",
+      "parentEmail": "Correo del padre, madre o tutor (opcional)",
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "success": "Inicio de sesión de casa actualizado.",
+      "nothing": "Escribe algo para cambiar."
+    },
+    "errors": {
+      "reauthentication_required": "Inicia sesión con el correo y la contraseña de casa para cambiar los datos del inicio de sesión de casa.",
+      "invalid_current_password": "Esa contraseña actual no es correcta.",
+      "email_in_use": "Ese correo ya lo usa otra cuenta.",
+      "home_access_not_enabled": "El acceso desde casa no está configurado para esta cuenta.",
+      "generic": "No se pudieron guardar los cambios del inicio de sesión de casa."
+    },
+    "accept": {
+      "title": "Configurar el acceso desde casa",
+      "intro": "Elige el correo y la contraseña que {{name}} usará para iniciar sesión en casa.",
+      "emailLabel": "Correo de inicio de sesión de casa",
+      "passwordLabel": "Contraseña",
+      "confirmLabel": "Confirmar contraseña",
+      "passwordHint": "Al menos 8 caracteres con una letra mayúscula, una minúscula y un número.",
+      "submit": "Configurar el acceso desde casa",
+      "submitting": "Configurando...",
+      "success": "El acceso desde casa está listo. Inicia sesión con el correo y la contraseña que elegiste.",
+      "goToLogin": "Ir a iniciar sesión",
+      "loading": "Revisando tu invitación...",
+      "missingToken": "A este enlace le falta el código de invitación. Pide al maestro que envíe una nueva invitación.",
+      "errors": {
+        "invite_not_found": "Este enlace de invitación no es válido. Pide al maestro que envíe uno nuevo.",
+        "invite_used": "Esta invitación ya se usó. Si configuraste el acceso desde casa, inicia sesión con ese correo y contraseña.",
+        "invite_expired": "Esta invitación ha caducado. Pide al maestro que envíe una nueva.",
+        "home_access_already_configured": "Esta cuenta ya tiene un inicio de sesión de casa.",
+        "email_in_use": "Ese correo ya lo usa otra cuenta. Elige uno diferente.",
+        "passwordMismatch": "Las contraseñas no coinciden.",
+        "generic": "No se pudo configurar el acceso desde casa. Inténtalo de nuevo."
       }
     }
   }

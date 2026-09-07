@@ -60,6 +60,7 @@ import ShowcaseMode from "./pages/ShowcaseMode";
 import StudentClassLogin from "./pages/StudentClassLogin";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import HomeAccessAccept from "./pages/HomeAccessAccept";
 import ForReviewers from "./pages/ForReviewers";
 import TryDemo from "./pages/TryDemo";
 import Waterworks from "./pages/Waterworks";
@@ -152,6 +153,11 @@ function App() {
               <Route path="/student/signup" element={<StudentSignup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              {/* #872: parent/guardian completes a home-access invitation */}
+              <Route
+                path="/home-access/accept"
+                element={<HomeAccessAccept />}
+              />
               <Route path="/showcase" element={<ShowcaseMode isPublic />} />
               {/* Public zero-signup playable demo — the homepage growth
                   lever from docs/audits/k8-engagement-audit.md Part 3.

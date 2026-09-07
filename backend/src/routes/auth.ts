@@ -9,6 +9,11 @@ import { trackServer } from "../services/analytics";
 import { generateToken } from "../utils/token";
 import { nameSchema, safeString, emailSchema } from "../validation/schemas";
 import { sendPasswordResetEmail } from "../utils/mail";
+import {
+  acceptHomeAccessInvite,
+  readHomeAccessInvite,
+} from "../services/homeAccess";
+import { answerHomeAccessError } from "./homeAccess";
 
 const router = Router();
 
@@ -89,7 +94,7 @@ router.post(
         signup_method: "email",
       });
 
-      const token = generateToken(user);
+      const token = generateToken(user, "password");
       const { password, ...userWithoutPassword } = user;
 
       res.status(201).json({
@@ -147,7 +152,7 @@ router.post(
         signup_method: "email",
       });
 
-      const token = generateToken(user);
+      const token = generateToken(user, "password");
       const { password, ...userWithoutPassword } = user;
 
       res.status(201).json({
@@ -219,7 +224,7 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
 
     trackServer(user.id, "login", { role: user.role });
 
-    const token = generateToken(user);
+    const token = generateToken(user, "password");
     const { password, ...userWithoutPassword } = user;
 
     res.json({
@@ -282,95 +287,104 @@ const registerPathwaysSchema = z.object({
   birthYear: z.number().int().min(1990).max(2015),
 });
 
-router.post("/auth/register-pathways", async (req: Request, res: Response) => {
-  try {
-    const data = registerPathwaysSchema.parse(req.body);
+// #872: this route issues password-provenance sessions, so it is throttled
+// like /login (#885 owns a dedicated Pathways attempt limit).
+router.post(
+  "/auth/register-pathways",
+  authLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const data = registerPathwaysSchema.parse(req.body);
 
-    // Look up cohort
-    const cohort = await prisma.pathwayCohort.findFirst({
-      where: {
-        joinCode: {
-          equals: data.cohortCode.trim().toUpperCase(),
-          mode: "insensitive",
+      // Look up cohort
+      const cohort = await prisma.pathwayCohort.findFirst({
+        where: {
+          joinCode: {
+            equals: data.cohortCode.trim().toUpperCase(),
+            mode: "insensitive",
+          },
         },
-      },
-    });
-    if (!cohort) {
-      return res.status(404).json({ error: "Invalid cohort code." });
-    }
-
-    // Generate placeholder email if not provided
-    const email =
-      data.email ||
-      `student_${Math.random().toString(36).substring(2, 8)}@brightboost.local`;
-
-    // Check if email already exists
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return res.status(409).json({
-        error:
-          "An account with this email already exists. Try logging in instead.",
       });
-    }
+      if (!cohort) {
+        return res.status(404).json({ error: "Invalid cohort code." });
+      }
 
-    // Derive age band from birth year
-    const currentYear = new Date().getFullYear();
-    const age = currentYear - data.birthYear;
-    let ageBand: string;
-    if (age >= 16) ageBand = "launch";
-    else ageBand = "explorer";
+      // Generate placeholder email if not provided
+      const email =
+        data.email ||
+        `student_${Math.random().toString(36).substring(2, 8)}@brightboost.local`;
 
-    // Create user
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const user = await prisma.user.create({
-      data: {
-        name: data.displayName,
+      // Check if email already exists
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing) {
+        return res.status(409).json({
+          error:
+            "An account with this email already exists. Try logging in instead.",
+        });
+      }
+
+      // Derive age band from birth year
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - data.birthYear;
+      let ageBand: string;
+      if (age >= 16) ageBand = "launch";
+      else ageBand = "explorer";
+
+      // Create user
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      const user = await prisma.user.create({
+        data: {
+          name: data.displayName,
+          email,
+          password: hashedPassword,
+          role: "student",
+          userType: "pathways",
+          ageBand,
+          birthYear: data.birthYear,
+        },
+      });
+
+      // Enroll in cohort
+      await prisma.pathwayEnrollment.create({
+        data: { userId: user.id, cohortId: cohort.id },
+      });
+
+      await logAudit("PATHWAYS_REGISTER", user.id, {
         email,
-        password: hashedPassword,
+        cohortId: cohort.id,
+      });
+
+      trackServer(user.id, "account_registered", {
         role: "student",
-        userType: "pathways",
-        ageBand,
-        birthYear: data.birthYear,
-      },
-    });
+        signup_method: "cohort_code",
+      });
 
-    // Enroll in cohort
-    await prisma.pathwayEnrollment.create({
-      data: { userId: user.id, cohortId: cohort.id },
-    });
+      const token = generateToken(user, "password");
+      const { password, ...userWithoutPassword } = user;
 
-    await logAudit("PATHWAYS_REGISTER", user.id, {
-      email,
-      cohortId: cohort.id,
-    });
-
-    trackServer(user.id, "account_registered", {
-      role: "student",
-      signup_method: "cohort_code",
-    });
-
-    const token = generateToken(user);
-    const { password, ...userWithoutPassword } = user;
-
-    res.status(201).json({
-      user: userWithoutPassword,
-      token,
-      cohort: { id: cohort.id, name: cohort.name, band: cohort.band },
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({ error: error.errors[0]?.message ?? "Invalid input" });
+      res.status(201).json({
+        user: userWithoutPassword,
+        token,
+        cohort: { id: cohort.id, name: cohort.name, band: cohort.band },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res
+          .status(400)
+          .json({ error: error.errors[0]?.message ?? "Invalid input" });
+      }
+      console.error("Pathways registration error:", error);
+      res.status(500).json({ error: "Registration failed. Please try again." });
     }
-    console.error("Pathways registration error:", error);
-    res.status(500).json({ error: "Registration failed. Please try again." });
-  }
-});
+  },
+);
 
 // POST /auth/pathways-code-login — Pathways student login via cohort code + name + password
+// #872: verifies a bcrypt password, so it mints `password` provenance and is
+// throttled like /login.
 router.post(
   "/auth/pathways-code-login",
+  authLimiter,
   async (req: Request, res: Response) => {
     const { cohortCode, userId, password } = req.body;
     if (!cohortCode || !userId || !password) {
@@ -402,7 +416,7 @@ router.post(
     const isValid = await bcrypt.compare(password, enrollment.user.password);
     if (!isValid) return res.status(401).json({ error: "Invalid password." });
 
-    const token = generateToken(enrollment.user);
+    const token = generateToken(enrollment.user, "password");
     const { password: _, ...userWithoutPassword } = enrollment.user;
     res.json({
       user: userWithoutPassword,
@@ -435,6 +449,45 @@ router.get("/auth/cohort-roster/:code", async (req: Request, res: Response) => {
     })),
   });
 });
+
+// ---------------------------------------------------------------------------
+// #872 — home-access first-time binding (proof based, no session required).
+// These live on the public router so a stale token in the parent's browser
+// cannot 403 the accept page (authenticateToken rejects invalid tokens).
+// ---------------------------------------------------------------------------
+
+// GET /auth/home-access/invite/:token — what the accept page may show
+router.get(
+  "/auth/home-access/invite/:token",
+  authLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const info = await readHomeAccessInvite(String(req.params.token));
+      res.json(info);
+    } catch (error) {
+      answerHomeAccessError(res, error);
+    }
+  },
+);
+
+// POST /auth/home-access/accept — bind the home login with the emailed token
+router.post(
+  "/auth/home-access/accept",
+  authLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await acceptHomeAccessInvite(req.body);
+      await logAudit("HOME_ACCESS_ENABLED", result.studentId, {
+        email: result.email,
+        adultEmail: result.adultEmail,
+        ip: req.ip,
+      });
+      res.json({ ok: true });
+    } catch (error) {
+      answerHomeAccessError(res, error);
+    }
+  },
+);
 
 // POST /forgot-password
 const forgotPasswordSchema = z.object({

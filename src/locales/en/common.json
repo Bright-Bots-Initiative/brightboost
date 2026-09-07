@@ -556,6 +556,26 @@
       "made": {
         "title": "What they've made",
         "empty": "No creations shared yet."
+      },
+      "homeAccess": {
+        "column": "Home access",
+        "enabled": "On",
+        "notAvailable": "Has own login",
+        "invite": "Invite parent",
+        "adultEmail": "Parent or guardian email",
+        "yourPassword": "Your password (to confirm)",
+        "send": "Send invitation",
+        "sending": "Sending...",
+        "cancel": "Cancel",
+        "sent": "Invitation sent. The link works once and expires in 72 hours.",
+        "errors": {
+          "reauthentication_required": "Please sign out and sign in again before sending home-access invitations.",
+          "invalid_current_password": "That password is not right.",
+          "home_access_already_configured": "This student already has a login of their own.",
+          "student_not_enrolled": "This student is not in this class.",
+          "mail_unavailable": "Email is not set up on this server, so the invitation could not be sent.",
+          "generic": "Could not send the invitation."
+        }
       }
     },
     "resources": {
@@ -2958,6 +2978,56 @@
       "lab": {
         "title": "Bring your discoveries together.",
         "text": "The greenhouse has high shelves, a long drop, and uneven steps. Spring legs help with the climbs. Wings help with the crossing. Your route can change with your tool."
+      }
+    }
+  },
+  "homeAccess": {
+    "title": "Home Access",
+    "setup": {
+      "body": "Your teacher or a grown-up sets up home access. Ask your teacher to send a home-access invitation to your parent or guardian's email.",
+      "recovery": "Already have a home login? Sign out, then sign in with that email and password to change it."
+    },
+    "classroomNotice": "Home access is on. Home login details can only be changed after signing in with the home email and password.",
+    "manage": {
+      "title": "Update home login",
+      "description": "Enter the current password to change the home email, password, or parent email.",
+      "currentPassword": "Current password",
+      "newEmail": "New home login email (optional)",
+      "newPassword": "New password (optional)",
+      "parentEmail": "Parent or guardian email (optional)",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "success": "Home login updated.",
+      "nothing": "Enter something to change."
+    },
+    "errors": {
+      "reauthentication_required": "Sign in with the home email and password to change home login details.",
+      "invalid_current_password": "That current password is not right.",
+      "email_in_use": "That email is already used by another account.",
+      "home_access_not_enabled": "Home access is not set up for this account.",
+      "generic": "Could not save home login changes."
+    },
+    "accept": {
+      "title": "Set Up Home Access",
+      "intro": "Choose the email and password {{name}} will use to sign in at home.",
+      "emailLabel": "Home login email",
+      "passwordLabel": "Password",
+      "confirmLabel": "Confirm password",
+      "passwordHint": "At least 8 characters with an uppercase letter, a lowercase letter, and a number.",
+      "submit": "Set up home access",
+      "submitting": "Setting up...",
+      "success": "Home access is ready. Sign in with the email and password you chose.",
+      "goToLogin": "Go to sign in",
+      "loading": "Checking your invitation...",
+      "missingToken": "This link is missing its invitation code. Ask the teacher to send a new invitation.",
+      "errors": {
+        "invite_not_found": "This invitation link is not valid. Ask the teacher to send a new one.",
+        "invite_used": "This invitation was already used. If you set up home access, sign in with that email and password.",
+        "invite_expired": "This invitation has expired. Ask the teacher to send a new one.",
+        "home_access_already_configured": "This account already has a home login.",
+        "email_in_use": "That email is already used by another account. Choose a different one.",
+        "passwordMismatch": "Passwords do not match.",
+        "generic": "Could not set up home access. Please try again."
       }
     }
   }

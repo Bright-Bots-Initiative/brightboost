@@ -160,7 +160,12 @@ router.post(
         ip: req.ip,
       });
 
-      const token = generateToken(student);
+      // #872: the token records how this session authenticated. Neither
+      // classroom flavour ever gains credential-management authority.
+      const token = generateToken(
+        student,
+        student.loginPin ? "class_code_pin" : "class_code",
+      );
 
       // Return user without sensitive fields
       const { loginPin, ...userWithoutPin } = student;
