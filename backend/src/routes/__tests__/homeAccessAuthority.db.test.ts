@@ -717,6 +717,11 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
     const usedBefore = await inviteRowOf(ids.kid10);
     expect(usedBefore.usedAt).not.toBeNull();
     expect(usedBefore.enrollmentId).toBeNull();
+    // kid2's expired-but-unused invitation still carries its provenance.
+    const provenancedBefore = await inviteRowOf(ids.kid2);
+    expect(provenancedBefore.usedAt).toBeNull();
+    expect(provenancedBefore.revokedAt).toBeNull();
+    expect(provenancedBefore.enrollmentId).not.toBeNull();
 
     await prisma.$executeRawUnsafe(update!);
 
@@ -724,7 +729,9 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
     const usedAfter = await inviteRowOf(ids.kid10);
     expect(usedAfter.revokedAt).toBeNull();
     expect(usedAfter.usedAt?.getTime()).toBe(usedBefore.usedAt?.getTime());
-    // Rows that still carry provenance are untouched (kid3's fresh, used one).
+    // Rows that still carry provenance are untouched: the pending one (the
+    // enrollmentId guard) and a used one (the usedAt guard).
+    expect((await inviteRowOf(ids.kid2)).revokedAt).toBeNull();
     const withProvenance = await prisma.homeAccessInvite.findFirst({
       where: { studentId: ids.kid6, usedAt: { not: null } },
     });

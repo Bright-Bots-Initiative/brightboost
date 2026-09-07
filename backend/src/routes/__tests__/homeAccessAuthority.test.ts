@@ -134,6 +134,9 @@ beforeEach(async () => {
 });
 
 const txQueryRaw = vi.fn();
+// Spread at module evaluation: the model mocks stay in sync only because they
+// are shared object references. Mock methods on `prismaMock.<model>`; never
+// replace a whole top-level key, or `txClient` will not see it.
 const txClient = { ...prismaMock, $queryRaw: txQueryRaw };
 
 /** The SQL text of the n-th locked read (tagged-template form). */
