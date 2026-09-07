@@ -42,7 +42,8 @@ interface WeeklyReport {
     status: string;
     score: number | null;
     completedAt: string | null;
-    createdAt: string;
+    createdAt: string | null;
+    updatedAt: string;
     user?: { name: string | null };
   }>;
 }
@@ -63,18 +64,31 @@ export default function Dashboard() {
     // of an indefinite "Loading…" state.
     const ac = new AbortController();
     const timeout = setTimeout(() => ac.abort(), 10000);
-    const headers = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+    };
 
-    fetch("/api/pathways/facilitator/reports/weekly", { headers, signal: ac.signal })
+    fetch("/api/pathways/facilitator/reports/weekly", {
+      headers,
+      signal: ac.signal,
+    })
       .then(async (r) => {
         const body = await r.json().catch(() => null);
         if (!r.ok) {
-          throw new Error((body && (body.error || body.message)) || `${r.status} ${r.statusText}`);
+          throw new Error(
+            (body && (body.error || body.message)) ||
+              `${r.status} ${r.statusText}`,
+          );
         }
         return body;
       })
       .then((w) => {
-        if (w && typeof w === "object" && Array.isArray(w.inactiveLearners) && Array.isArray(w.recentActivity)) {
+        if (
+          w &&
+          typeof w === "object" &&
+          Array.isArray(w.inactiveLearners) &&
+          Array.isArray(w.recentActivity)
+        ) {
           setWeekly(w as WeeklyReport);
         } else {
           setWeekly(null);
@@ -149,7 +163,9 @@ export default function Dashboard() {
         <Card className="text-center py-16">
           <CardBody>
             <Users className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t("pathways.facilitator.empty.title")}</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+              {t("pathways.facilitator.empty.title")}
+            </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 max-w-md mx-auto">
               {t("pathways.facilitator.empty.subtitle")}
             </p>
@@ -185,7 +201,9 @@ export default function Dashboard() {
                   <CardBody className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{c.name}</p>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                          {c.name}
+                        </p>
                         {c.sitePartner && (
                           <p className="text-xs text-slate-600 dark:text-slate-400 truncate mt-0.5">
                             {c.sitePartner}
@@ -223,7 +241,10 @@ export default function Dashboard() {
                         <p className="font-bold text-slate-900 dark:text-slate-100 text-lg">
                           {c._count?.enrollments ?? 0}
                           {c.maxEnrollment && (
-                            <span className="text-slate-500 font-normal text-sm"> / {c.maxEnrollment}</span>
+                            <span className="text-slate-500 font-normal text-sm">
+                              {" "}
+                              / {c.maxEnrollment}
+                            </span>
                           )}
                         </p>
                       </div>
@@ -288,7 +309,11 @@ export default function Dashboard() {
                   : undefined
               }
               icon={<AlertTriangle className="w-4 h-4" />}
-              accentClass={weekly.inactiveLearners.length > 0 ? "border-amber-300 dark:border-amber-800/30" : ""}
+              accentClass={
+                weekly.inactiveLearners.length > 0
+                  ? "border-amber-300 dark:border-amber-800/30"
+                  : ""
+              }
             />
             <StatTile
               label={t("pathways.facilitator.dashboard.capstonesInProgress")}
@@ -373,21 +398,33 @@ export default function Dashboard() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-800 dark:text-slate-200">
-                      <span className="font-medium">{m.user?.name ?? t("pathways.facilitator.dashboard.aLearner")}</span>{" "}
+                      <span className="font-medium">
+                        {m.user?.name ??
+                          t("pathways.facilitator.dashboard.aLearner")}
+                      </span>{" "}
                       <span className="text-slate-600 dark:text-slate-400">
                         {m.status === "completed"
                           ? t("pathways.facilitator.dashboard.completedModule")
-                          : t("pathways.facilitator.dashboard.startedModule")}{" "}
+                          : t(
+                              "pathways.facilitator.dashboard.startedModule",
+                            )}{" "}
                       </span>
                       <span className="text-slate-800 dark:text-slate-200">
-                        {m.moduleSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                        {m.moduleSlug
+                          .replace(/-/g, " ")
+                          .replace(/\b\w/g, (c) => c.toUpperCase())}
                       </span>
                       {m.score !== null && (
-                        <span className="text-slate-500 dark:text-slate-500"> · {m.score}%</span>
+                        <span className="text-slate-500 dark:text-slate-500">
+                          {" "}
+                          · {m.score}%
+                        </span>
                       )}
                     </p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      {new Date(m.completedAt ?? m.createdAt).toLocaleDateString()}
+                      {new Date(
+                        m.completedAt ?? m.updatedAt,
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                   <CalendarDays className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600" />
@@ -399,7 +436,8 @@ export default function Dashboard() {
                 to="/pathways/facilitator/reports"
                 className="inline-flex items-center gap-1 text-sm text-indigo-700 dark:text-indigo-400 hover:underline"
               >
-                {t("pathways.facilitator.dashboard.viewFullReport")} <ChevronRight className="w-3.5 h-3.5" />
+                {t("pathways.facilitator.dashboard.viewFullReport")}{" "}
+                <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </CardHeader>
           </Card>
@@ -416,7 +454,10 @@ function DashboardSkeleton() {
         <div className="h-6 w-48 mb-3 rounded bg-slate-200 dark:bg-slate-800" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-44" />
+            <div
+              key={i}
+              className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-44"
+            />
           ))}
         </div>
       </div>
@@ -424,7 +465,10 @@ function DashboardSkeleton() {
         <div className="h-6 w-40 mb-3 rounded bg-slate-200 dark:bg-slate-800" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-24" />
+            <div
+              key={i}
+              className="rounded-xl border bg-white border-slate-200 dark:bg-slate-800/40 dark:border-slate-700 h-24"
+            />
           ))}
         </div>
       </div>

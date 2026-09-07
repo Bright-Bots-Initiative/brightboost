@@ -80,55 +80,188 @@ export function isTrustedEnrollment(e: {
 }
 
 // ── History boundary ────────────────────────────────────────────────────────
+//
+// Strict post-consent sharing. A facilitator sees, for each admitted
+// milestone, only the facts that provably happened at or after the learner's
+// acceptance. A row's `updatedAt` proves that *something* happened after
+// consent — not that its contents were earned then — so it admits the row but
+// never its historical values. Field-level provenance comes from:
+//   - `completedAt`, written by the learner routes at the moment of completion
+//     → status "completed" and the completion date;
+//   - PathwayXpEvent rows the learner routes write at the moment of each act,
+//     keyed by module slug with the track recorded in metadata: `section`
+//     (metadata.section = hook|reading|lesson|practice|homework), `quiz`, and
+//     `homework` (the free-text submission route) — each awarded only on the
+//     first false→true transition, so an event proves the act and the row's
+//     current flag proves it still stands.
+// Everything without provenance is withheld — never guessed, relabelled or
+// reset: a score (any learner route can refresh `completedAt` without writing
+// one), artifacts, cumulative time, the pre-consent start date, quiz scores
+// (no route writes them), and homework text unless the submission itself is
+// post-consent. The learner's own rows and routes are untouched.
 
 export type Boundary = { trackIds: readonly string[]; since: Date };
 
-type MilestoneLike = {
-  trackSlug: string;
-  createdAt: Date;
-  updatedAt: Date;
+type MilestoneRow = Prisma.PathwayMilestoneGetPayload<object>;
+
+/** A milestone as a facilitator may see it. */
+export type VisibleMilestone = Omit<
+  MilestoneRow,
+  "createdAt" | "timeSpentMinutes"
+> & {
+  createdAt: Date | null;
+  timeSpentMinutes: number | null;
+  /** true when the row predates consent and historical values were withheld */
+  historyWithheld: boolean;
 };
 
-export function milestoneVisible(m: MilestoneLike, b: Boundary): boolean {
-  return b.trackIds.includes(m.trackSlug) && m.updatedAt >= b.since;
+/** Post-consent acts proven by the learner's own XP events, for one module. */
+export type ModuleEvidence = {
+  /** section keys (hook|reading|lesson|practice|homework) with a `section` event */
+  sections: ReadonlySet<string>;
+  /** a `quiz` event */
+  quiz: boolean;
+  /** a `homework` event — the free-text submission route */
+  homework: boolean;
+};
+
+export type ProvenanceEvent = {
+  source: string;
+  sourceRefId: string | null;
+  metadata: unknown;
+  createdAt: Date;
+};
+
+export const PROVENANCE_SOURCES = ["section", "quiz", "homework"] as const;
+
+/** Evidence for one (track, module) from events dated at/after `since`. */
+export function moduleEvidence(
+  events: ProvenanceEvent[],
+  trackSlug: string,
+  moduleSlug: string,
+  since: Date,
+): ModuleEvidence {
+  const sections = new Set<string>();
+  let quiz = false;
+  let homework = false;
+  for (const ev of events) {
+    if (ev.sourceRefId !== moduleSlug || ev.createdAt < since) continue;
+    const meta = (ev.metadata ?? null) as {
+      section?: unknown;
+      trackSlug?: unknown;
+    } | null;
+    // Events are keyed by module slug alone; the track recorded at award
+    // time must match this row, or the act is not proven for it.
+    if (meta?.trackSlug !== trackSlug) continue;
+    if (ev.source === "section") {
+      if (typeof meta.section === "string") sections.add(meta.section);
+    } else if (ev.source === "quiz") {
+      quiz = true;
+    } else if (ev.source === "homework") {
+      homework = true;
+    }
+  }
+  return { sections, quiz, homework };
+}
+
+/** Admission: the row is on the cohort's tracks and was touched at/after consent. */
+export function milestoneAdmitted(
+  m: { trackSlug: string; createdAt: Date; updatedAt: Date },
+  b: Boundary,
+): boolean {
+  return (
+    b.trackIds.includes(m.trackSlug) &&
+    (m.createdAt >= b.since || m.updatedAt >= b.since)
+  );
+}
+
+/**
+ * Project one admitted row for a facilitator whose earliest admitting
+ * acceptance is `since`. A row created at/after `since` is entirely
+ * post-consent and is shown whole. An older row shows only proven post-consent
+ * facts; its status is "completed" only if the completion itself happened at
+ * or after `since`, otherwise "in_progress" (post-consent activity exists,
+ * nothing more is claimed). A flag is shown only when it is currently set
+ * AND a post-consent event proves it was earned.
+ */
+export function projectMilestone(
+  m: MilestoneRow,
+  since: Date,
+  evidence: ModuleEvidence,
+): VisibleMilestone {
+  if (m.createdAt >= since) return { ...m, historyWithheld: false };
+  const completedSince =
+    m.status === "completed" &&
+    m.completedAt !== null &&
+    m.completedAt >= since;
+  const proven = (flag: boolean, key: string) =>
+    flag && evidence.sections.has(key);
+  const homeworkSubmitted =
+    m.homeworkSubmitted &&
+    (evidence.homework || evidence.sections.has("homework"));
+  return {
+    ...m,
+    createdAt: null,
+    status: completedSince ? "completed" : "in_progress",
+    score: null,
+    artifacts: null,
+    completedAt: completedSince ? m.completedAt : null,
+    hookCompleted: proven(m.hookCompleted, "hook"),
+    readingCompleted: proven(m.readingCompleted, "reading"),
+    lessonCompleted: proven(m.lessonCompleted, "lesson"),
+    practiceCompleted: proven(m.practiceCompleted, "practice"),
+    quizCompleted: m.quizCompleted && evidence.quiz,
+    quizScore: null,
+    homeworkSubmitted,
+    homeworkResponse:
+      m.homeworkSubmitted && evidence.homework ? m.homeworkResponse : null,
+    timeSpentMinutes: null,
+    historyWithheld: true,
+  };
 }
 
 /**
  * Milestones a facilitator may see for one learner, given every trusted
- * (cohort) boundary that learner has with this facilitator. A milestone is
- * visible if any boundary admits it; detail fields are withheld unless the
- * milestone was created at or after the earliest admitting acceptance.
+ * (cohort) boundary that learner has with this facilitator and the learner's
+ * provenance events. A row is admitted if any boundary admits it; the
+ * projection uses the earliest admitting acceptance.
  */
-export function visibleMilestones<T extends MilestoneLike>(
-  milestones: T[],
+export function visibleMilestones(
+  milestones: MilestoneRow[],
   boundaries: Boundary[],
-): T[] {
-  const out: T[] = [];
+  events: ProvenanceEvent[],
+): VisibleMilestone[] {
+  const out: VisibleMilestone[] = [];
   for (const m of milestones) {
-    const admitting = boundaries.filter((b) => milestoneVisible(m, b));
+    const admitting = boundaries.filter((b) => milestoneAdmitted(m, b));
     if (admitting.length === 0) continue;
-    const earliest = admitting.reduce(
+    const since = admitting.reduce(
       (min, b) => (b.since < min ? b.since : min),
       admitting[0].since,
     );
-    out.push(redactMilestone(m, earliest));
+    out.push(
+      projectMilestone(
+        m,
+        since,
+        moduleEvidence(events, m.trackSlug, m.moduleSlug, since),
+      ),
+    );
   }
   return out;
 }
 
-/** Withhold free-text / artifact detail for work started before consent. */
-export function redactMilestone<T extends { createdAt: Date }>(
-  m: T,
-  since: Date,
-): T {
-  if (m.createdAt >= since) return m;
-  const copy = { ...m } as T & {
-    artifacts?: unknown;
-    homeworkResponse?: string | null;
-  };
-  if ("artifacts" in copy) copy.artifacts = null;
-  if ("homeworkResponse" in copy) copy.homeworkResponse = null;
-  return copy;
+/**
+ * Mean of the scores that are actually visible, or null when none are. A
+ * withheld score must not count as zero: that would report a false low.
+ */
+export function averageVisibleScore(
+  milestones: { score: number | null }[],
+): number | null {
+  const scored = milestones.filter((m) => m.score !== null);
+  if (scored.length === 0) return null;
+  return Math.round(
+    scored.reduce((sum, m) => sum + (m.score as number), 0) / scored.length,
+  );
 }
 
 export function lastActiveOf(
@@ -247,25 +380,44 @@ export async function loadFacilitatorScope(
 }
 
 /** Boundary-filtered milestones per learner for a scope. */
-export async function loadVisibleMilestones(scope: FacilitatorScope) {
-  if (scope.userIds.length === 0) {
-    return new Map<string, Prisma.PathwayMilestoneGetPayload<object>[]>();
-  }
+export async function loadVisibleMilestones(
+  scope: FacilitatorScope,
+): Promise<Map<string, VisibleMilestone[]>> {
+  const byUser = new Map<string, VisibleMilestone[]>();
+  if (scope.userIds.length === 0) return byUser;
   // Nothing older than the earliest acceptance in scope can be visible, so
-  // push that bound into the query instead of filtering it away in memory.
+  // push that bound into both queries instead of filtering it away in memory.
   const earliest = Array.from(scope.sinceByUser.values()).reduce(
     (min, d) => (d < min ? d : min),
     new Date(8640000000000000),
   );
-  const rows = await prisma.pathwayMilestone.findMany({
-    where: { userId: { in: scope.userIds }, updatedAt: { gte: earliest } },
-  });
-  const byUser = new Map<string, typeof rows>();
+  const [rows, events] = await Promise.all([
+    prisma.pathwayMilestone.findMany({
+      where: { userId: { in: scope.userIds }, updatedAt: { gte: earliest } },
+    }),
+    prisma.pathwayXpEvent.findMany({
+      where: {
+        userId: { in: scope.userIds },
+        source: { in: [...PROVENANCE_SOURCES] },
+        createdAt: { gte: earliest },
+      },
+      select: {
+        userId: true,
+        source: true,
+        sourceRefId: true,
+        metadata: true,
+        createdAt: true,
+      },
+    }),
+  ]);
   for (const userId of scope.userIds) {
-    const mine = rows.filter((m) => m.userId === userId);
     byUser.set(
       userId,
-      visibleMilestones(mine, scope.boundariesByUser.get(userId) ?? []),
+      visibleMilestones(
+        rows.filter((m) => m.userId === userId),
+        scope.boundariesByUser.get(userId) ?? [],
+        events.filter((e) => e.userId === userId),
+      ),
     );
   }
   return byUser;
@@ -393,11 +545,12 @@ async function closePendingInvitesForUser(
 ) {
   const user = await tx.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { email: true, homeAccessEnabled: true },
   });
-  if (!user?.email) return;
+  const email = matchableEmail(user);
+  if (!email) return;
   await tx.pathwayInvite.updateMany({
-    where: { cohortId, email: user.email.toLowerCase(), status: "pending" },
+    where: { cohortId, email, status: "pending" },
     data: { status: "accepted", acceptedById: userId, acceptedAt: now },
   });
 }
@@ -546,12 +699,25 @@ export async function revokeEnrollment(cohortId: string, userId: string) {
 
 // ── Learner-side invitations ────────────────────────────────────────────────
 
+/**
+ * The address an invitation may be matched against. A home-access login
+ * (#872) puts an *adult's* email on a minor's classroom account; an
+ * invitation addressed to that adult must never be listable or acceptable
+ * by the child's account, so such accounts match nothing.
+ */
+function matchableEmail(
+  user: { email: string | null; homeAccessEnabled: boolean } | null,
+): string | null {
+  if (!user?.email || user.homeAccessEnabled) return null;
+  return user.email.toLowerCase();
+}
+
 async function learnerEmail(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { email: true, homeAccessEnabled: true },
   });
-  return user?.email ? user.email.toLowerCase() : null;
+  return matchableEmail(user);
 }
 
 export async function listInvitationsForLearner(userId: string) {

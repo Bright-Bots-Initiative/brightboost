@@ -50,7 +50,7 @@ interface Milestone {
   status: string;
   score: number | null;
   completedAt: string | null;
-  createdAt: string;
+  createdAt: string | null;
   hookCompleted?: boolean;
   readingCompleted?: boolean;
   lessonCompleted?: boolean;
@@ -59,6 +59,8 @@ interface Milestone {
   homeworkResponse?: string | null;
   quizCompleted?: boolean;
   quizScore?: number | null;
+  /** #874: the row predates the learner's consent; only post-consent facts are shown */
+  historyWithheld?: boolean;
 }
 
 interface LearnerDetailData {
@@ -152,12 +154,14 @@ export default function LearnerDetail() {
     );
 
   const completed = data.milestones.filter((m) => m.status === "completed");
+  // #874: a withheld score is not a zero — average only the visible ones.
+  const scored = completed.filter((m) => m.score !== null);
   const avgScore =
-    completed.length > 0
+    scored.length > 0
       ? Math.round(
-          completed.reduce((s, m) => s + (m.score ?? 0), 0) / completed.length,
+          scored.reduce((s, m) => s + (m.score ?? 0), 0) / scored.length,
         )
-      : 0;
+      : null;
 
   return (
     <div className="space-y-5">
@@ -210,7 +214,7 @@ export default function LearnerDetail() {
         />
         <SimpleStat
           label={t("pathways.facilitator.learnerDetail.avgScore")}
-          value={`${avgScore}%`}
+          value={avgScore !== null ? `${avgScore}%` : "—"}
           icon={
             <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-400" />
           }
@@ -393,6 +397,11 @@ export default function LearnerDetail() {
                         : ""}
                     </span>
                   </div>
+                  {m.historyWithheld && (
+                    <p className="mt-1 ml-7 text-xs text-slate-500 dark:text-slate-500">
+                      {t("pathways.facilitator.learnerDetail.historyWithheld")}
+                    </p>
+                  )}
                   {m.homeworkResponse && (
                     <details className="mt-2 ml-7">
                       <summary className="text-xs text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer inline-flex items-center gap-1">

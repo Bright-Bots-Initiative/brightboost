@@ -1,4 +1,4 @@
-> **Canonical for:** Pathways enrollment consent and legacy-row backfill. Last verified against code: 2026-09-06.
+> **Canonical for:** Pathways enrollment consent and legacy-row backfill. Last verified against code: 2026-09-07.
 
 # Pathways enrollment consent (#874)
 
@@ -22,11 +22,41 @@ invitation is the way back.
 
 ## History boundary
 
-For each trusted (learner, cohort) relationship a facilitator sees a milestone only if it belongs to
-one of the cohort's tracks and was last touched (`updatedAt`) at or after that learner's
-`acceptedAt`. `artifacts` and `homeworkResponse` are withheld for milestones started before
-acceptance (this also withholds homework submitted later on such a module — known limitation).
+Consent is "from today on", and it is enforced field by field. For each trusted (learner, cohort)
+relationship a facilitator sees a milestone only if it belongs to one of the cohort's tracks and was
+touched (`createdAt` or `updatedAt`) at or after that learner's `acceptedAt`. A milestone _created_
+at or after acceptance is shown whole. A milestone that predates acceptance is **projected**
+(`historyWithheld: true`): only facts with post-consent provenance are shown, everything else is
+withheld — never guessed, relabelled or reset.
+
+| Field                                                              | Shown for a pre-consent row when                                                                                                  |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `status = completed`, `completedAt`                                | the row is completed **and** `completedAt` is at/after acceptance                                                                 |
+| `hook/reading/lesson/practiceCompleted`                            | the flag is set **and** a `section` XP event for that track and module (matching `metadata.section`) is dated at/after acceptance |
+| `quizCompleted`                                                    | the flag is set **and** a `quiz` XP event for that track and module is at/after acceptance                                        |
+| `homeworkSubmitted`                                                | the flag is set **and** a `homework` or `section` (homework) event is at/after acceptance                                         |
+| `homeworkResponse`                                                 | `homeworkSubmitted` is shown **and** the `homework` event (the submission itself) is post-consent                                 |
+| `score`, `artifacts`, `timeSpentMinutes`, `quizScore`, `createdAt` | never (`null`)                                                                                                                    |
+
+`updatedAt` alone is not evidence: a time-only or section-only update admits the row (the facilitator
+sees post-consent activity as `in_progress`) but reveals none of its older values. XP events carry
+`metadata.trackSlug` so an act in another track never credits a same-named module. Averages
+(`averageScore`, the export's "Avg Score", `moduleStats.avgScore`) use visible scores only and are
+`null` / blank — not 0 — when none is visible. Deliberate under-claims: a score re-posted on a
+pre-consent module and homework text revised without a new submission stay withheld. The learner's
+own routes and views are untouched.
+
 XP, badges and CTF activity are counted since acceptance; the lifetime longest streak is not shared.
+Every acceptance is its own boundary: after a revocation, a fresh invitation starts a new boundary
+(work from the earlier relationship becomes history); re-accepting an already accepted invitation
+keeps the original moment. A revoked learner cannot restart through the join code — only a fresh
+invitation.
+
+## Home-access accounts
+
+A classroom student whose home login was bound by a parent (#872, `homeAccessEnabled`) carries the
+adult's email. Such an account never matches a Pathways invitation by email: it lists none, cannot
+accept one, and joining by code does not adopt an invitation addressed to the adult.
 
 ## Rollout: legacy rows fail closed
 

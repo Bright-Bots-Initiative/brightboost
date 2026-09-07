@@ -54,9 +54,12 @@ vi.mock("@prisma/client", async (importOriginal) => ({
 
 import app from "../../server";
 import {
+  averageVisibleScore,
   isTrustedEnrollment,
-  redactMilestone,
+  moduleEvidence,
+  projectMilestone,
   visibleMilestones,
+  type ProvenanceEvent,
 } from "../../services/pathwaysAccess";
 
 const bearer = (claims: { id: string; role: string }) => ({
@@ -164,67 +167,180 @@ describe("#874 accept route", () => {
 
 describe("#874 history boundary helpers", () => {
   const since = new Date("2026-06-01");
-  const m = (
-    over: Partial<{
-      trackSlug: string;
-      createdAt: Date;
-      updatedAt: Date;
-      artifacts: unknown;
-      homeworkResponse: string | null;
-    }>,
-  ) => ({
+  type Row = Parameters<typeof projectMilestone>[0];
+  const row = (over: Partial<Row> = {}): Row => ({
+    id: "m-1",
+    userId: "learner-1",
     trackSlug: "cyber-launch",
+    moduleSlug: "phishing-101",
+    status: "completed",
+    score: 91,
+    completedAt: new Date("2026-05-02"),
+    artifacts: { a: 1 },
     createdAt: new Date("2026-05-01"),
     updatedAt: new Date("2026-05-02"),
-    artifacts: { a: 1 },
+    hookCompleted: true,
+    readingCompleted: true,
+    lessonCompleted: true,
+    practiceCompleted: true,
+    homeworkSubmitted: true,
     homeworkResponse: "text",
+    quizCompleted: true,
+    quizScore: 80,
+    timeSpentMinutes: 30,
     ...over,
   });
+  const ev = (
+    source: string,
+    section?: string,
+    over: Partial<ProvenanceEvent> = {},
+  ): ProvenanceEvent => ({
+    source,
+    sourceRefId: "phishing-101",
+    metadata: { trackSlug: "cyber-launch", ...(section ? { section } : {}) },
+    createdAt: new Date("2026-06-05"),
+    ...over,
+  });
+  const boundary = [{ trackIds: ["cyber-launch"], since }];
 
-  it("BND-1: only milestones in the cohort's tracks touched since acceptance are visible", () => {
+  it("BND-1: only milestones in the cohort's tracks touched since acceptance are admitted", () => {
     const rows = [
-      m({}), // old, untouched → hidden
-      m({ updatedAt: new Date("2026-06-05") }), // touched after → visible (redacted)
-      m({
+      row({ id: "old" }), // old, untouched → hidden
+      row({ id: "touched", updatedAt: new Date("2026-06-05") }), // touched after → admitted, projected
+      row({
+        id: "new",
         createdAt: new Date("2026-06-03"),
         updatedAt: new Date("2026-06-04"),
-      }), // new → visible, full
-      m({
+      }), // new → whole
+      row({
+        id: "other",
         trackSlug: "other",
         createdAt: new Date("2026-06-03"),
         updatedAt: new Date("2026-06-04"),
       }), // other track → hidden
     ];
-    const out = visibleMilestones(rows, [
-      { trackIds: ["cyber-launch"], since },
-    ]);
-    expect(out).toHaveLength(2);
-    expect(out[0].homeworkResponse).toBeNull();
-    expect(out[0].artifacts).toBeNull();
+    const out = visibleMilestones(rows, boundary, []);
+    expect(out.map((m) => m.id)).toEqual(["touched", "new"]);
+    expect(out[0].historyWithheld).toBe(true);
+    expect(out[1].historyWithheld).toBe(false);
+    expect(out[1].score).toBe(91);
     expect(out[1].homeworkResponse).toBe("text");
   });
 
-  it("BND-2: with two relationships the earliest acceptance decides redaction", () => {
-    const row = m({
+  it("BND-2: a pre-consent row touched after consent reveals no historical value", () => {
+    const [m] = visibleMilestones(
+      [row({ updatedAt: new Date("2026-06-05") })],
+      boundary,
+      [],
+    );
+    expect(m).toMatchObject({
+      status: "in_progress",
+      score: null,
+      completedAt: null,
+      artifacts: null,
+      createdAt: null,
+      hookCompleted: false,
+      readingCompleted: false,
+      lessonCompleted: false,
+      practiceCompleted: false,
+      homeworkSubmitted: false,
+      homeworkResponse: null,
+      quizCompleted: false,
+      quizScore: null,
+      timeSpentMinutes: null,
+      historyWithheld: true,
+    });
+    expect(m.updatedAt).toEqual(new Date("2026-06-05"));
+  });
+
+  it("BND-3: a post-consent completion shows the completion, never the score", () => {
+    const [m] = visibleMilestones(
+      [
+        row({
+          completedAt: new Date("2026-06-07"),
+          updatedAt: new Date("2026-06-07"),
+        }),
+      ],
+      boundary,
+      [],
+    );
+    expect(m.status).toBe("completed");
+    expect(m.completedAt).toEqual(new Date("2026-06-07"));
+    expect(m.score).toBeNull();
+    expect(m.artifacts).toBeNull();
+  });
+
+  it("BND-4: a flag is shown only when set AND proven by a post-consent event for this track", () => {
+    const events = [
+      ev("section", "hook"),
+      ev("section", "reading", {
+        metadata: { trackSlug: "other-track", section: "reading" },
+      }), // wrong track
+      ev("section", "lesson", { createdAt: new Date("2026-05-20") }), // before consent
+      ev("section", "practice", { sourceRefId: "another-module" }), // other module
+      ev("quiz", "quiz"),
+      ev("section", "homework"),
+    ];
+    const [m] = visibleMilestones(
+      [row({ updatedAt: new Date("2026-06-05") })],
+      boundary,
+      events,
+    );
+    expect(m.hookCompleted).toBe(true);
+    expect(m.readingCompleted).toBe(false);
+    expect(m.lessonCompleted).toBe(false);
+    expect(m.practiceCompleted).toBe(false);
+    expect(m.quizCompleted).toBe(true);
+    expect(m.quizScore).toBeNull();
+    expect(m.homeworkSubmitted).toBe(true);
+    expect(m.homeworkResponse).toBeNull(); // the flag proves the act, not the text
+  });
+
+  it("BND-5: an unset flag stays false despite an event; homework text needs the submission event", () => {
+    const [m] = visibleMilestones(
+      [row({ updatedAt: new Date("2026-06-05"), hookCompleted: false })],
+      boundary,
+      [ev("section", "hook"), ev("homework")],
+    );
+    expect(m.hookCompleted).toBe(false);
+    expect(m.homeworkSubmitted).toBe(true);
+    expect(m.homeworkResponse).toBe("text");
+  });
+
+  it("BND-6: with two relationships the earliest acceptance decides the projection", () => {
+    const r = row({
       createdAt: new Date("2026-05-15"),
       updatedAt: new Date("2026-06-10"),
     });
     const out = visibleMilestones(
-      [row],
+      [r],
       [
         { trackIds: ["cyber-launch"], since: new Date("2026-06-01") },
         { trackIds: ["cyber-launch"], since: new Date("2026-05-10") },
       ],
+      [],
     );
     expect(out).toHaveLength(1);
-    expect(out[0].homeworkResponse).toBe("text"); // created after the earliest acceptance
+    expect(out[0].historyWithheld).toBe(false);
+    expect(out[0].homeworkResponse).toBe("text");
   });
 
-  it("BND-3: redaction never mutates the input", () => {
-    const row = m({});
-    const out = redactMilestone(row, since);
-    expect(out).not.toBe(row);
-    expect(row.homeworkResponse).toBe("text");
+  it("BND-7: projection never mutates the input", () => {
+    const r = row({ updatedAt: new Date("2026-06-05") });
+    const out = projectMilestone(
+      r,
+      since,
+      moduleEvidence([], "cyber-launch", "phishing-101", since),
+    );
+    expect(out).not.toBe(r);
+    expect(r.homeworkResponse).toBe("text");
+    expect(r.score).toBe(91);
+  });
+
+  it("BND-8: averages exclude withheld scores instead of counting them as zero", () => {
+    expect(averageVisibleScore([{ score: null }, { score: 80 }])).toBe(80);
+    expect(averageVisibleScore([{ score: null }])).toBeNull();
+    expect(averageVisibleScore([])).toBeNull();
   });
 
   it("TRUST-1: trusted means active/completed AND accepted", () => {

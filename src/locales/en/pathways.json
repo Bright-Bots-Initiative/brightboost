@@ -460,7 +460,8 @@
         "cohorts": "Cohort Enrollments",
         "enrolledOn": "Enrolled {{date}}",
         "milestones": "Module Progress",
-        "noMilestones": "No module activity yet."
+        "noMilestones": "No module activity yet.",
+        "historyWithheld": "Showing activity since this learner joined your cohort. Earlier work stays private."
       },
       "reports": {
         "title": "Reports",

@@ -25,7 +25,13 @@ interface WeeklyReport {
   newEnrollments: number;
   inactiveLearners: { id: string; name: string | null }[];
   capstonesInProgress: number;
-  recentActivity: Array<{ moduleSlug: string; user?: { name: string | null }; score: number | null; completedAt: string | null; createdAt: string }>;
+  recentActivity: Array<{
+    moduleSlug: string;
+    user?: { name: string | null };
+    score: number | null;
+    completedAt: string | null;
+    createdAt: string | null;
+  }>;
 }
 
 interface OutcomesReport {
@@ -36,7 +42,8 @@ interface OutcomesReport {
   modulesCompleted: number;
   capstonesProduced: number;
   externalCourseworkStarted: number;
-  averageScore: number;
+  /** null when no completion in scope has a visible score (#874) */
+  averageScore: number | null;
 }
 
 interface EngagementReport {
@@ -55,11 +62,19 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+    const auth = {
+      Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+    };
     Promise.all([
-      fetch("/api/pathways/facilitator/reports/weekly", { headers: auth }).then((r) => r.json()),
-      fetch("/api/pathways/facilitator/reports/outcomes", { headers: auth }).then((r) => r.json()),
-      fetch("/api/pathways/facilitator/reports/engagement", { headers: auth }).then((r) => r.json()),
+      fetch("/api/pathways/facilitator/reports/weekly", { headers: auth }).then(
+        (r) => r.json(),
+      ),
+      fetch("/api/pathways/facilitator/reports/outcomes", {
+        headers: auth,
+      }).then((r) => r.json()),
+      fetch("/api/pathways/facilitator/reports/engagement", {
+        headers: auth,
+      }).then((r) => r.json()),
     ])
       .then(([w, o, e]) => {
         setWeekly(w);
@@ -70,7 +85,12 @@ export default function Reports() {
       .finally(() => setLoading(false));
   }, []);
 
-  const reports: { key: ReportKey; label: string; icon: React.ReactNode; description: string }[] = [
+  const reports: {
+    key: ReportKey;
+    label: string;
+    icon: React.ReactNode;
+    description: string;
+  }[] = [
     {
       key: "weekly",
       label: t("pathways.facilitator.reports.types.weekly.label"),
@@ -87,7 +107,9 @@ export default function Reports() {
       key: "engagement",
       label: t("pathways.facilitator.reports.types.engagement.label"),
       icon: <TrendingUp className="w-4 h-4" />,
-      description: t("pathways.facilitator.reports.types.engagement.description"),
+      description: t(
+        "pathways.facilitator.reports.types.engagement.description",
+      ),
     },
     {
       key: "cohort",
@@ -103,7 +125,10 @@ export default function Reports() {
       ["Window", `${weekly.windowDays} days`],
       ["Modules Completed", weekly.modulesCompleted.toString()],
       ["New Enrollments", weekly.newEnrollments.toString()],
-      ["Inactive Learners", weekly.inactiveLearners.map((l) => l.name).join("; ")],
+      [
+        "Inactive Learners",
+        weekly.inactiveLearners.map((l) => l.name).join("; "),
+      ],
       ["Capstones In Progress", weekly.capstonesInProgress.toString()],
     ];
     downloadCsv("weekly_activity_report.csv", rows);
@@ -116,7 +141,11 @@ export default function Reports() {
   };
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-600 dark:text-slate-400">{t("pathways.common.loading")}</div>;
+    return (
+      <div className="text-center py-20 text-slate-600 dark:text-slate-400">
+        {t("pathways.common.loading")}
+      </div>
+    );
   }
 
   return (
@@ -150,7 +179,9 @@ export default function Reports() {
           />
           <StatTile
             label={t("pathways.facilitator.reports.summary.avgScore")}
-            value={`${outcomes.averageScore}%`}
+            value={
+              outcomes.averageScore !== null ? `${outcomes.averageScore}%` : "—"
+            }
             icon={<GraduationCap className="w-4 h-4" />}
           />
         </div>
@@ -171,29 +202,51 @@ export default function Reports() {
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className={isActive ? "text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-400"}>
+                <span
+                  className={
+                    isActive
+                      ? "text-indigo-700 dark:text-indigo-300"
+                      : "text-slate-600 dark:text-slate-400"
+                  }
+                >
                   {r.icon}
                 </span>
-                <p className={`text-sm font-semibold ${isActive ? "text-indigo-800 dark:text-indigo-200" : "text-slate-900 dark:text-slate-100"}`}>
+                <p
+                  className={`text-sm font-semibold ${isActive ? "text-indigo-800 dark:text-indigo-200" : "text-slate-900 dark:text-slate-100"}`}
+                >
                   {r.label}
                 </p>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">{r.description}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {r.description}
+              </p>
             </button>
           );
         })}
       </div>
 
       {/* Selected report body */}
-      {active === "weekly" && weekly && <WeeklyView w={weekly} onExport={exportWeekly} />}
-      {active === "outcomes" && outcomes && <OutcomesView o={outcomes} onExport={exportOutcomes} />}
-      {active === "engagement" && engagement && <EngagementView e={engagement} />}
+      {active === "weekly" && weekly && (
+        <WeeklyView w={weekly} onExport={exportWeekly} />
+      )}
+      {active === "outcomes" && outcomes && (
+        <OutcomesView o={outcomes} onExport={exportOutcomes} />
+      )}
+      {active === "engagement" && engagement && (
+        <EngagementView e={engagement} />
+      )}
       {active === "cohort" && <CohortReportNote />}
     </div>
   );
 }
 
-function WeeklyView({ w, onExport }: { w: WeeklyReport; onExport: () => void }) {
+function WeeklyView({
+  w,
+  onExport,
+}: {
+  w: WeeklyReport;
+  onExport: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <Card>
@@ -203,7 +256,9 @@ function WeeklyView({ w, onExport }: { w: WeeklyReport; onExport: () => void }) 
             {t("pathways.facilitator.reports.types.weekly.label")}
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            {t("pathways.facilitator.reports.windowDays", { days: w.windowDays })}
+            {t("pathways.facilitator.reports.windowDays", {
+              days: w.windowDays,
+            })}
           </p>
         </div>
         <button
@@ -215,10 +270,22 @@ function WeeklyView({ w, onExport }: { w: WeeklyReport; onExport: () => void }) 
       </CardHeader>
       <CardBody className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <KV label={t("pathways.facilitator.dashboard.modulesCompleted")} value={w.modulesCompleted} />
-          <KV label={t("pathways.facilitator.dashboard.newEnrollments")} value={w.newEnrollments} />
-          <KV label={t("pathways.facilitator.dashboard.needsFollowUp")} value={w.inactiveLearners.length} />
-          <KV label={t("pathways.facilitator.dashboard.capstonesInProgress")} value={w.capstonesInProgress} />
+          <KV
+            label={t("pathways.facilitator.dashboard.modulesCompleted")}
+            value={w.modulesCompleted}
+          />
+          <KV
+            label={t("pathways.facilitator.dashboard.newEnrollments")}
+            value={w.newEnrollments}
+          />
+          <KV
+            label={t("pathways.facilitator.dashboard.needsFollowUp")}
+            value={w.inactiveLearners.length}
+          />
+          <KV
+            label={t("pathways.facilitator.dashboard.capstonesInProgress")}
+            value={w.capstonesInProgress}
+          />
         </div>
         {w.inactiveLearners.length > 0 && (
           <div>
@@ -237,7 +304,13 @@ function WeeklyView({ w, onExport }: { w: WeeklyReport; onExport: () => void }) 
   );
 }
 
-function OutcomesView({ o, onExport }: { o: OutcomesReport; onExport: () => void }) {
+function OutcomesView({
+  o,
+  onExport,
+}: {
+  o: OutcomesReport;
+  onExport: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <Card>
@@ -254,14 +327,38 @@ function OutcomesView({ o, onExport }: { o: OutcomesReport; onExport: () => void
       </CardHeader>
       <CardBody>
         <div className="grid sm:grid-cols-2 gap-3">
-          <KV label={t("pathways.facilitator.reports.outcomes.totalCohorts")} value={o.totalCohorts} />
-          <KV label={t("pathways.facilitator.reports.outcomes.activeCohorts")} value={o.activeCohorts} />
-          <KV label={t("pathways.facilitator.reports.outcomes.endedCohorts")} value={o.endedCohorts} />
-          <KV label={t("pathways.facilitator.reports.outcomes.totalEnrolled")} value={o.totalEnrolled} />
-          <KV label={t("pathways.facilitator.reports.outcomes.modulesCompleted")} value={o.modulesCompleted} />
-          <KV label={t("pathways.facilitator.reports.outcomes.capstones")} value={o.capstonesProduced} />
-          <KV label={t("pathways.facilitator.reports.outcomes.cisco")} value={o.externalCourseworkStarted} />
-          <KV label={t("pathways.facilitator.reports.outcomes.avgScore")} value={`${o.averageScore}%`} />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.totalCohorts")}
+            value={o.totalCohorts}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.activeCohorts")}
+            value={o.activeCohorts}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.endedCohorts")}
+            value={o.endedCohorts}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.totalEnrolled")}
+            value={o.totalEnrolled}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.modulesCompleted")}
+            value={o.modulesCompleted}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.capstones")}
+            value={o.capstonesProduced}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.cisco")}
+            value={o.externalCourseworkStarted}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.outcomes.avgScore")}
+            value={o.averageScore !== null ? `${o.averageScore}%` : "—"}
+          />
         </div>
       </CardBody>
     </Card>
@@ -280,9 +377,18 @@ function EngagementView({ e }: { e: EngagementReport }) {
       </CardHeader>
       <CardBody className="space-y-4">
         <div className="grid sm:grid-cols-3 gap-3">
-          <KV label={t("pathways.facilitator.reports.engagement.totalLearners")} value={e.totalLearners} />
-          <KV label={t("pathways.facilitator.reports.engagement.active7")} value={e.activeLast7Days} />
-          <KV label={t("pathways.facilitator.reports.engagement.active30")} value={e.activeLast30Days} />
+          <KV
+            label={t("pathways.facilitator.reports.engagement.totalLearners")}
+            value={e.totalLearners}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.engagement.active7")}
+            value={e.activeLast7Days}
+          />
+          <KV
+            label={t("pathways.facilitator.reports.engagement.active30")}
+            value={e.activeLast30Days}
+          />
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-medium mb-2">
@@ -324,14 +430,20 @@ function CohortReportNote() {
 function KV({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50">
-      <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 font-medium">{label}</p>
-      <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">{value}</p>
+      <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 font-medium">
+        {label}
+      </p>
+      <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+        {value}
+      </p>
     </div>
   );
 }
 
 function downloadCsv(filename: string, rows: string[][]) {
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const csv = rows
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

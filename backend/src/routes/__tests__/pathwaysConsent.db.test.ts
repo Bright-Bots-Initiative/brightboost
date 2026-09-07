@@ -28,6 +28,7 @@ describe.skipIf(!dbUrl)(
       joiner: `join-${tag}`, // joins by code
       twin: `twin-${tag}`, // joins by code twice at once
       rev: `rev-${tag}`, // invited, accepted, removed, re-invited
+      home: `home-${tag}`, // #872 home-access login: the email is an adult's
       cohort: `coh-${tag}`,
       cohort2: `coh2-${tag}`,
     };
@@ -35,6 +36,7 @@ describe.skipIf(!dbUrl)(
       learner: `marcus-${tag}@p.test`,
       other: `aisha-${tag}@p.test`,
       ghost: `nobody-${tag}@p.test`,
+      homeAdult: `parent-${tag}@p.test`,
     };
     const joinCode = `JN${tag}`.toUpperCase().slice(0, 12);
 
@@ -77,6 +79,51 @@ describe.skipIf(!dbUrl)(
       request(app)
         .post(`/api/pathways/student/invitations/${inviteId}/accept`)
         .set(as(who));
+
+    /** The learner's own section route (mounted, real middleware). */
+    const section = (
+      who: string,
+      moduleSlug: string,
+      key: string,
+      completed: boolean,
+      extra: { trackSlug?: string; timeSpentMinutes?: number } = {},
+    ) =>
+      request(app)
+        .patch("/api/pathways/student/milestones/section")
+        .set(as(who))
+        .send({
+          trackSlug: extra.trackSlug ?? "cyber-launch",
+          moduleSlug,
+          section: key,
+          completed,
+          ...(extra.timeSpentMinutes !== undefined
+            ? { timeSpentMinutes: extra.timeSpentMinutes }
+            : {}),
+        });
+
+    const visibleModule = async (
+      userId: string,
+      moduleSlug: string,
+      who = "fac",
+    ) => {
+      const detail = await learnerDetail(userId, who);
+      expect(detail.status).toBe(200);
+      return detail.body.milestones.find(
+        (m: { moduleSlug: string }) => m.moduleSlug === moduleSlug,
+      );
+    };
+
+    /** No facilitator surface may carry a pre-consent value of the learner. */
+    async function noHistoryLeaks() {
+      for (const path of facilitatorSurfaces()) {
+        const res = await request(app).get(path).set(as("fac"));
+        expect(res.status, path).toBe(200);
+        expect(res.text, path).not.toContain("PRIVATE-");
+        expect(res.text, path).not.toContain("2026-01-1");
+        expect(res.text, path).not.toMatch(/"score":91/);
+        expect(res.text, path).not.toMatch(/"timeSpentMinutes":42/);
+      }
+    }
 
     /** Every facilitator surface that could show a learner. */
     const facilitatorSurfaces = (cohort = ids.cohort) => [
@@ -188,6 +235,20 @@ describe.skipIf(!dbUrl)(
           userType: "pathways",
         },
       });
+      // A classroom student whose home login (#872) was bound by a parent:
+      // the account's email belongs to the adult, not to the learner.
+      await prisma.user.create({
+        data: {
+          id: ids.home,
+          name: "Casey Kid",
+          role: "student",
+          email: emails.homeAdult,
+          password: hash,
+          homeAccessEnabled: true,
+          managedByParent: true,
+          parentEmail: emails.homeAdult,
+        },
+      });
       await prisma.pathwayCohort.createMany({
         data: [
           {
@@ -268,6 +329,7 @@ describe.skipIf(!dbUrl)(
       tokens.joiner = await login(`jordan-${tag}@p.test`);
       tokens.twin = await login(`taylor-${tag}@p.test`);
       tokens.rev = await login(`riley-${tag}@p.test`);
+      tokens.home = await login(emails.homeAdult);
     });
 
     afterAll(async () => {
@@ -280,6 +342,7 @@ describe.skipIf(!dbUrl)(
         ids.joiner,
         ids.twin,
         ids.rev,
+        ids.home,
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -288,6 +351,13 @@ describe.skipIf(!dbUrl)(
         where: { userId: { in: userIds } },
       });
       await prisma.pathwayGamification.deleteMany({
+        where: { userId: { in: userIds } },
+      });
+      // The learner routes award badges and daily-goal progress as side effects.
+      await prisma.pathwayBadge.deleteMany({
+        where: { userId: { in: userIds } },
+      });
+      await prisma.pathwayDailyGoal.deleteMany({
         where: { userId: { in: userIds } },
       });
       await prisma.pathwayMilestone.deleteMany({
@@ -459,23 +529,53 @@ describe.skipIf(!dbUrl)(
         ),
       ).not.toContain(ids.learner);
 
-      // Work touched after acceptance becomes visible, with detail fields
-      // withheld because the module was started before consent.
-      await prisma.pathwayMilestone.update({
-        where: {
-          userId_trackSlug_moduleSlug: {
-            userId: ids.learner,
-            trackSlug: "cyber-launch",
-            moduleSlug: "cyber-foundations",
-          },
-        },
-        data: { timeSpentMinutes: 42 },
-      });
+      // Work touched after acceptance is admitted, but a module started
+      // before consent reveals no historical value. A time-only update
+      // through the learner's own route (no section changes hands) proves
+      // activity — not the score, the completion date, the flags, the
+      // start date or the totals.
+      const touch = await section(
+        "learner",
+        "cyber-foundations",
+        "hook",
+        false,
+        { timeSpentMinutes: 42 },
+      );
+      expect(touch.status).toBe(200);
       const later = await learnerDetail(ids.learner);
       expect(later.body.milestones).toHaveLength(1);
-      expect(later.body.milestones[0].score).toBe(91);
-      expect(later.body.milestones[0].homeworkResponse).toBeNull();
-      expect(later.body.milestones[0].artifacts).toBeNull();
+      expect(later.body.milestones[0]).toMatchObject({
+        moduleSlug: "cyber-foundations",
+        status: "in_progress",
+        score: null,
+        completedAt: null,
+        artifacts: null,
+        createdAt: null,
+        hookCompleted: false,
+        homeworkSubmitted: false,
+        homeworkResponse: null,
+        quizCompleted: false,
+        quizScore: null,
+        timeSpentMinutes: null,
+        historyWithheld: true,
+      });
+      await noHistoryLeaks();
+
+      // The learner's own view is untouched: full history, module continuable.
+      const mine = await request(app)
+        .get("/api/pathways/student/milestones")
+        .set(as("learner"));
+      expect(mine.status).toBe(200);
+      expect(
+        mine.body.find(
+          (m: { moduleSlug: string }) => m.moduleSlug === "cyber-foundations",
+        ),
+      ).toMatchObject({
+        status: "completed",
+        score: 91,
+        homeworkResponse: "PRIVATE-HOMEWORK-TEXT",
+        timeSpentMinutes: 42,
+      });
 
       // A milestone on a track outside this cohort stays invisible.
       await prisma.pathwayMilestone.create({
@@ -494,6 +594,211 @@ describe.skipIf(!dbUrl)(
 
       // Another facilitator, whose cohort the learner never joined, sees nothing.
       expect((await learnerDetail(ids.learner, "fac2")).status).toBe(404);
+    });
+
+    it("DB-874-6b: a section completed after acceptance is shown — and only that section", async () => {
+      expect(
+        (await section("learner", "cyber-foundations", "hook", true)).status,
+      ).toBe(200);
+      const m = await visibleModule(ids.learner, "cyber-foundations");
+      expect(m).toMatchObject({
+        hookCompleted: true,
+        readingCompleted: false,
+        lessonCompleted: false,
+        practiceCompleted: false,
+        // set on the row since January, but no post-consent act proves it
+        homeworkSubmitted: false,
+        homeworkResponse: null,
+        quizCompleted: false,
+        status: "in_progress",
+        score: null,
+        completedAt: null,
+        timeSpentMinutes: null,
+        historyWithheld: true,
+      });
+      await noHistoryLeaks();
+
+      // A withheld score is not a zero: the export average is blank, not 0.
+      const csv = await request(app)
+        .get(`/api/pathways/facilitator/cohorts/${ids.cohort}/export`)
+        .set(as("fac"));
+      expect(csv.status).toBe(200);
+      const line = csv.text.split("\n").find((l) => l.includes("Marcus Prior"));
+      expect(line).toBeDefined();
+      const cells = line!.split(",");
+      expect(cells[3]).toBe('"0"');
+      expect(cells[4]).toBe('""');
+    });
+
+    it("DB-874-6c: finishing a pre-consent module after acceptance shows the completion, never the old score or homework", async () => {
+      for (const key of ["reading", "lesson", "practice", "quiz"]) {
+        expect(
+          (await section("learner", "cyber-foundations", key, true)).status,
+          key,
+        ).toBe(200);
+      }
+      const row = await prisma.pathwayMilestone.findUniqueOrThrow({
+        where: {
+          userId_trackSlug_moduleSlug: {
+            userId: ids.learner,
+            trackSlug: "cyber-launch",
+            moduleSlug: "cyber-foundations",
+          },
+        },
+      });
+      expect(row.status).toBe("completed"); // the section route closed it
+      expect(row.score).toBe(91); // the learner's own record is intact
+
+      const m = await visibleModule(ids.learner, "cyber-foundations");
+      expect(m.status).toBe("completed");
+      expect(new Date(m.completedAt).getTime()).toBeGreaterThan(
+        Date.now() - 60_000,
+      );
+      expect(m).toMatchObject({
+        score: null,
+        artifacts: null,
+        hookCompleted: true,
+        readingCompleted: true,
+        lessonCompleted: true,
+        practiceCompleted: true,
+        quizCompleted: true,
+        quizScore: null,
+        homeworkSubmitted: false,
+        homeworkResponse: null,
+        historyWithheld: true,
+      });
+      await noHistoryLeaks();
+
+      // Aggregates count the completion but never a withheld score as 0.
+      const outcomes = await request(app)
+        .get("/api/pathways/facilitator/reports/outcomes")
+        .set(as("fac"));
+      expect(outcomes.status).toBe(200);
+      expect(outcomes.body.modulesCompleted).toBe(1);
+      expect(outcomes.body.averageScore).toBeNull();
+      expect(outcomes.body.scoredCompletions).toBe(0);
+      const cohortReport = await request(app)
+        .get(`/api/pathways/facilitator/reports/cohort/${ids.cohort}`)
+        .set(as("fac"));
+      expect(cohortReport.status).toBe(200);
+      expect(cohortReport.body.moduleStats["cyber-foundations"]).toEqual({
+        completed: 1,
+        avgScore: null,
+        count: 0,
+      });
+
+      // Re-posting the old module with a score after consent still shows no
+      // score: a score on a pre-consent row has no provenance of its own.
+      const repost = await request(app)
+        .post("/api/pathways/student/milestones")
+        .set(as("learner"))
+        .send({
+          trackSlug: "cyber-launch",
+          moduleSlug: "cyber-foundations",
+          status: "completed",
+          score: 77,
+        });
+      expect(repost.status).toBe(200);
+      expect(
+        (await visibleModule(ids.learner, "cyber-foundations")).score,
+      ).toBeNull();
+    });
+
+    it("DB-874-6d: post-consent homework text is shown; an un-completed section loses its credit", async () => {
+      // Withdraw the January submission, then submit again after consent.
+      expect(
+        (await section("learner", "cyber-foundations", "homework", false))
+          .status,
+      ).toBe(200);
+      const resubmit = await request(app)
+        .post("/api/pathways/student/milestones/homework")
+        .set(as("learner"))
+        .send({
+          trackSlug: "cyber-launch",
+          moduleSlug: "cyber-foundations",
+          response: "POST-CONSENT-HOMEWORK",
+        });
+      expect(resubmit.status).toBe(200);
+      let m = await visibleModule(ids.learner, "cyber-foundations");
+      expect(m).toMatchObject({
+        homeworkSubmitted: true,
+        homeworkResponse: "POST-CONSENT-HOMEWORK",
+        status: "in_progress", // the learner reopened the module
+        completedAt: null,
+        hookCompleted: true,
+      });
+
+      // Un-completing a section removes the credit even though the
+      // post-consent event that earned it still exists.
+      expect(
+        (await section("learner", "cyber-foundations", "hook", false)).status,
+      ).toBe(200);
+      m = await visibleModule(ids.learner, "cyber-foundations");
+      expect(m.hookCompleted).toBe(false);
+      await noHistoryLeaks();
+    });
+
+    it("DB-874-6e: a module started after acceptance is shown whole", async () => {
+      expect(
+        (
+          await section("learner", "phishing-defense", "hook", true, {
+            timeSpentMinutes: 5,
+          })
+        ).status,
+      ).toBe(200);
+      const m = await visibleModule(ids.learner, "phishing-defense");
+      expect(m).toMatchObject({
+        status: "in_progress",
+        hookCompleted: true,
+        timeSpentMinutes: 5,
+        historyWithheld: false,
+      });
+      expect(m.createdAt).not.toBeNull();
+    });
+
+    it("DB-874-6f: an act in another track never credits a same-named module in this cohort's track", async () => {
+      // A pre-consent row in the cohort's track with the lesson already done.
+      await prisma.pathwayMilestone.create({
+        data: {
+          userId: ids.learner,
+          trackSlug: "cyber-launch",
+          moduleSlug: "network-basics",
+          status: "in_progress",
+          lessonCompleted: true,
+          createdAt: new Date("2026-01-20"),
+        },
+      });
+      await prisma.$executeRawUnsafe(
+        `UPDATE "PathwayMilestone" SET "updatedAt" = '2026-01-20' WHERE "userId" = $1 AND "moduleSlug" = 'network-basics'`,
+        ids.learner,
+      );
+      // The same module slug completed in a different track after consent…
+      expect(
+        (
+          await section("learner", "network-basics", "lesson", true, {
+            trackSlug: "other-track",
+          })
+        ).status,
+      ).toBe(200);
+      // …and the cohort-track row touched (time only) so it is admitted.
+      expect(
+        (
+          await section("learner", "network-basics", "hook", false, {
+            timeSpentMinutes: 3,
+          })
+        ).status,
+      ).toBe(200);
+      const m = await visibleModule(ids.learner, "network-basics");
+      expect(m).toMatchObject({
+        lessonCompleted: false,
+        hookCompleted: false,
+        historyWithheld: true,
+      });
+      expect(
+        (await learnerDetail(ids.learner)).body.milestones.map(
+          (x: { trackSlug: string }) => x.trackSlug,
+        ),
+      ).not.toContain("other-track");
     });
 
     it("DB-874-7: a legacy enrollment grants no visibility until the learner re-enters the join code", async () => {
@@ -702,6 +1007,20 @@ describe.skipIf(!dbUrl)(
         200,
       );
       expect((await learnerDetail(ids.rev)).status).toBe(200);
+      // Work done inside the first relationship is fully visible then.
+      const posted = await request(app)
+        .post("/api/pathways/student/milestones")
+        .set(as("rev"))
+        .send({
+          trackSlug: "cyber-launch",
+          moduleSlug: "cyber-foundations",
+          status: "completed",
+          score: 88,
+        });
+      expect(posted.status).toBe(200);
+      expect((await visibleModule(ids.rev, "cyber-foundations")).score).toBe(
+        88,
+      );
 
       const del = await request(app)
         .delete(
@@ -729,6 +1048,49 @@ describe.skipIf(!dbUrl)(
       expect(row.revokedAt).toBeNull();
       expect(row.acceptedAt).not.toBeNull();
       expect((await learnerDetail(ids.rev)).status).toBe(200);
+      // The new acceptance is a new boundary: the earlier completion is
+      // untouched since then (hidden), and once touched it is history.
+      expect((await learnerDetail(ids.rev)).body.milestones).toHaveLength(0);
+      expect(
+        (
+          await section("rev", "cyber-foundations", "hook", true, {
+            timeSpentMinutes: 2,
+          })
+        ).status,
+      ).toBe(200);
+      expect(await visibleModule(ids.rev, "cyber-foundations")).toMatchObject({
+        status: "in_progress",
+        score: null,
+        completedAt: null,
+        hookCompleted: true,
+        timeSpentMinutes: null,
+        historyWithheld: true,
+      });
+    });
+
+    it("DB-874-16: an invitation addressed to a home-access adult is never matched to the child's account", async () => {
+      expect((await invite(emails.homeAdult)).status).toBe(202);
+      const list = await myInvitations("home");
+      expect(list.status).toBe(200);
+      expect(list.body.invitations).toHaveLength(0);
+      const inv = await prisma.pathwayInvite.findUniqueOrThrow({
+        where: {
+          cohortId_email: { cohortId: ids.cohort, email: emails.homeAdult },
+        },
+      });
+      expect((await accept("home", inv.id)).status).toBe(404);
+      // Joining by code is the learner's own act; it must not adopt the
+      // adult's invitation as if the learner had been the addressee.
+      const join = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("home"))
+        .send({ joinCode });
+      expect(join.status).toBe(200);
+      const after = await prisma.pathwayInvite.findUniqueOrThrow({
+        where: { id: inv.id },
+      });
+      expect(after.status).toBe("pending");
+      expect(after.acceptedById).toBeNull();
     });
   },
 );

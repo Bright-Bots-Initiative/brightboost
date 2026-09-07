@@ -79,3 +79,61 @@ created the relationship or when the learner agreed to it.
 ## Rating
 
 4/5
+
+---
+
+## Correction pass — 2026-09-07 (PR #915, reviewed head 16c3b48a)
+
+### Prompt (excerpt)
+
+```
+Enforce the promise to share progress from acceptance onward. Current code admits a whole
+milestone by updatedAt and only strips homeworkResponse/artifacts; time-only or section-only
+updates reveal old scores, completion dates, section history and totals. Policy: strict
+post-consent sharing; derive facilitator-visible activity from post-consent events / field-level
+provenance; updatedAt is not evidence; withhold where provenance is unavailable. Replace the DB
+test expectation that shows score 91 after a timeSpentMinutes change with a regression proving
+historical values are withheld. Ask Opus to challenge the historical-data provenance design first.
+```
+
+### Opus design challenge
+
+Model self-report: "Opus 5 (1M context), claude-opus-5[1m]"; the agent stated it found **no
+runtime evidence** of its model id (environment carried only agent/effort/session ids) — recorded
+as a self-description, not independent verification. Material findings and dispositions:
+
+- `completedAt >= since` is not provenance for `score`/`artifacts` (the section route completes a
+  module without writing a score; POST with `status: completed` and no score refreshes
+  `completedAt`) → for pre-consent rows `score` and `artifacts` are always withheld.
+- Section flags: require row flag **and** post-consent event (un-completing must drop credit);
+  events were keyed by module slug only, so the track is now recorded in event metadata and must
+  match; `section: "homework"` emits source `section` → treated as homework evidence.
+- `quizScore` has no writer anywhere → always `null` for projected rows.
+- Keep time-only rows as stripped `in_progress` (engagement charts use `updatedAt`).
+- `createdAt` of a pre-consent row is itself a leak → `null`.
+- Return a declared `VisibleMilestone` DTO, keep `visibleMilestones` pure with an event index.
+- `m.score ?? 0` averages report a false low → visible scores only, `null` when none.
+- Cross-PR (#913 × #915): a home-access binding writes an adult's email onto a child's account,
+  which would let the child's account list/accept Pathways invitations addressed to the adult →
+  home-access-bound accounts match no invitation (`matchableEmail`), with a regression.
+- CI: backend `npm ci` wipes the generated client, so the backend client is regenerated before the
+  suites; `REQUIRE_TEST_DATABASE` makes a missing URL fail instead of skip; migration trees diffed.
+
+### What changed
+
+`services/pathwaysAccess.ts` (projection: `projectMilestone`, `moduleEvidence`,
+`averageVisibleScore`, `VisibleMilestone`; `matchableEmail`), `routes/pathways.ts` (track in
+XP metadata, averages), facilitator pages (withheld label, null averages, activity date),
+EN/ES key `learnerDetail.historyWithheld`, `docs/ops/pathways-enrollment-consent.md`,
+`.github/workflows/ci-cd.yml`, `__tests__/helpers/testDb.ts`.
+
+### Evidence
+
+- RED (reviewed-head service + routes, new suite): 8 of 21 PostgreSQL cases fail
+  (DB-874-6, 6b–6f, 15, 16 — score 91 and January dates visible, cross-track credit, no fresh
+  boundary, adult-addressed invitation acceptable by the child's account).
+- GREEN: 21/21 PostgreSQL cases; 14 mocked cases (8 of them the boundary helpers BND-1…8).
+
+### Rating
+
+4/5 — the first design treated a row as the unit of consent; the unit is the fact.

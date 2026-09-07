@@ -34,6 +34,7 @@ import {
   declineInvitation,
   enrollByJoinCode,
   inviteLearnerByEmail,
+  averageVisibleScore,
   lastActiveOf,
   listCohortInvites,
   listInvitationsForLearner,
@@ -567,12 +568,15 @@ router.patch(
         section === "quiz"
           ? XP_AWARDS.QUIZ_COMPLETE
           : XP_AWARDS.SECTION_COMPLETE;
+      // The track is recorded with the act: milestones are unique per
+      // (track, module), and facilitator visibility (#874) must not credit a
+      // same-named module in another track.
       sideEffects.award = await awardXp(
         userId,
         xpAmount,
         xpSource,
         moduleSlug,
-        { section },
+        { section, trackSlug },
       );
       await updateDailyGoalProgress(userId, "section");
 
@@ -679,6 +683,7 @@ router.post(
         XP_AWARDS.HOMEWORK_SUBMITTED,
         "homework",
         moduleSlug,
+        { trackSlug },
       );
       await updateDailyGoalProgress(userId, "section");
 
@@ -1665,20 +1670,14 @@ router.get(
       ...scope.enrollments.map((e) => {
         const userMs = visible.get(e.userId) ?? [];
         const completed = userMs.filter((m) => m.status === "completed");
-        const avgScore =
-          completed.length > 0
-            ? Math.round(
-                completed.reduce((s, m) => s + (m.score ?? 0), 0) /
-                  completed.length,
-              )
-            : 0;
+        const avgScore = averageVisibleScore(completed);
         const lastActive = lastActiveOf(userMs);
         return [
           e.user.name ?? "",
           e.user.email ?? "",
           e.user.ageBand ?? "",
           String(completed.length),
-          String(avgScore),
+          avgScore === null ? "" : String(avgScore),
           lastActive ? lastActive.toISOString().slice(0, 10) : "",
           e.status,
         ];
@@ -2157,22 +2156,26 @@ router.get(
     });
     const visible = await loadVisibleMilestones(scope);
     const milestones = Array.from(visible.values()).flat();
+    // `count` is the number of completions with a visible score; a withheld
+    // score (#874) is excluded from the mean rather than counted as zero.
     const moduleStats: Record<
       string,
-      { completed: number; avgScore: number; count: number }
+      { completed: number; avgScore: number | null; count: number }
     > = {};
     for (const m of milestones) {
       if (m.status === "completed") {
         const stats = moduleStats[m.moduleSlug] ?? {
           completed: 0,
-          avgScore: 0,
+          avgScore: null,
           count: 0,
         };
         stats.completed += 1;
-        stats.count += 1;
-        stats.avgScore = Math.round(
-          (stats.avgScore * (stats.count - 1) + (m.score ?? 0)) / stats.count,
-        );
+        if (m.score !== null) {
+          stats.count += 1;
+          stats.avgScore = Math.round(
+            ((stats.avgScore ?? 0) * (stats.count - 1) + m.score) / stats.count,
+          );
+        }
         moduleStats[m.moduleSlug] = stats;
       }
     }
@@ -2222,13 +2225,9 @@ router.get(
       modulesCompleted: completed.length,
       capstonesProduced: capstones,
       externalCourseworkStarted: certExternal,
-      averageScore:
-        completed.length > 0
-          ? Math.round(
-              completed.reduce((s, m) => s + (m.score ?? 0), 0) /
-                completed.length,
-            )
-          : 0,
+      // Mean over completions with a visible score; null when none (#874).
+      averageScore: averageVisibleScore(completed),
+      scoredCompletions: completed.filter((m) => m.score !== null).length,
     });
   },
 );

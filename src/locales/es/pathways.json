@@ -453,7 +453,8 @@
         "cohorts": "Inscripciones en Grupos",
         "enrolledOn": "Inscrito {{date}}",
         "milestones": "Progreso de Módulos",
-        "noMilestones": "Aún no hay actividad en módulos."
+        "noMilestones": "Aún no hay actividad en módulos.",
+        "historyWithheld": "Se muestra la actividad desde que este estudiante se unió a tu grupo. El trabajo anterior sigue siendo privado."
       },
       "reports": {
         "title": "Reportes",

@@ -17,7 +17,9 @@
  * `beforeAll` (as above), or call this inside `vi.hoisted(...)` when the app
  * is imported statically. A static `import app` plus a module-scope call
  * would bind too late and run against whatever DATABASE_URL was already set.
- * It returns `null` — and the suite skips — when `TEST_DATABASE_URL` is unset.
+ * It returns `null` — and the suite skips — when `TEST_DATABASE_URL` is unset,
+ * unless `REQUIRE_TEST_DATABASE` is set (CI's db-check job), in which case a
+ * missing URL is a failure: a skipped suite must never read as a green one.
  *
  * Safety: the database name must carry a bounded `test` / `tests` / `e2e`
  * token (same rule as scripts/lib/db-target.mjs). Anything else is refused
@@ -48,7 +50,14 @@ export function isDesignatedTestDbUrl(url: string): boolean {
 
 export function bindTestDatabase(): string | null {
   const url = process.env.TEST_DATABASE_URL;
-  if (!url) return null;
+  if (!url) {
+    if (process.env.REQUIRE_TEST_DATABASE) {
+      throw new Error(
+        "REQUIRE_TEST_DATABASE is set but TEST_DATABASE_URL is missing; the database-backed suites did not run",
+      );
+    }
+    return null;
+  }
   if (!isDesignatedTestDbUrl(url)) {
     throw new Error(
       `refusing TEST_DATABASE_URL: database name must contain a test/e2e token (e.g. brightboost_test); got "${describeDbUrl(url)?.database ?? "?"}"`,
