@@ -89,6 +89,7 @@ model User {
   // Pathways Relations
   pathwayCohorts      PathwayCohort[]
   pathwayEnrollments  PathwayEnrollment[]
+  pathwayInvitesSent  PathwayInvite[]      @relation("PathwayInviteInviter")
   pathwayMilestones   PathwayMilestone[]
   pathwayLabAttempts  PathwayLabAttempt[]
   pathwayXpEvents     PathwayXpEvent[]
@@ -716,23 +717,50 @@ model PathwayCohort {
   updatedAt     DateTime @default(now()) @updatedAt
 
   enrollments   PathwayEnrollment[]
+  invites       PathwayInvite[]
   ctfTeams      PathwayCtfTeam[]
 
   @@index([facilitatorId])
   @@index([status])
 }
 
+// #874 access relationship; see root schema for the trust rule.
 model PathwayEnrollment {
-  id         String        @id @default(cuid())
-  userId     String
-  cohortId   String
-  user       User          @relation(fields: [userId], references: [id])
-  cohort     PathwayCohort @relation(fields: [cohortId], references: [id])
-  enrolledAt DateTime      @default(now())
-  status     String        @default("active")
+  id          String        @id @default(cuid())
+  userId      String
+  cohortId    String
+  user        User          @relation(fields: [userId], references: [id])
+  cohort      PathwayCohort @relation(fields: [cohortId], references: [id])
+  enrolledAt  DateTime      @default(now())
+  status      String        @default("active")
+  source      String        @default("legacy")
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  invitedById String?
 
   @@unique([userId, cohortId])
   @@index([cohortId])
+  @@index([userId])
+}
+
+// #874 facilitator invitation to an email address; see root schema.
+model PathwayInvite {
+  id           String        @id @default(cuid())
+  cohortId     String
+  cohort       PathwayCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  email        String
+  invitedById  String
+  invitedBy    User          @relation("PathwayInviteInviter", fields: [invitedById], references: [id])
+  status       String        @default("pending")
+  expiresAt    DateTime
+  acceptedById String?
+  acceptedAt   DateTime?
+  declinedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime      @default(now())
+
+  @@unique([cohortId, email])
+  @@index([email, status])
 }
 
 model PathwayMilestone {
@@ -745,6 +773,7 @@ model PathwayMilestone {
   completedAt DateTime?
   artifacts   Json?
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 
   hookCompleted     Boolean @default(false)
   readingCompleted  Boolean @default(false)

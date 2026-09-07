@@ -49,7 +49,15 @@
         "yourTracks": "Tus Rutas",
         "recentActivity": "Actividad Reciente"
       },
-      "modulesProgress": "{{done}}/{{total}} módulos • {{pct}}%"
+      "modulesProgress": "{{done}}/{{total}} módulos • {{pct}}%",
+      "invitations": {
+        "title": "Te invitaron a un grupo",
+        "body": "Un facilitador invitó a esta cuenta. Al aceptar, compartes tu progreso en las rutas de ese grupo a partir de hoy; nada se comparte hasta que aceptes.",
+        "from": "De {{name}}",
+        "accept": "Aceptar",
+        "decline": "Rechazar",
+        "error": "No se pudo actualizar la invitación. Inténtalo de nuevo."
+      }
     },
     "about": {
       "hero": {
@@ -348,6 +356,21 @@
             "name": "Estudiante",
             "completed": "Módulos",
             "lastActive": "Última Actividad"
+          },
+          "inviteSent": "Invitación enviada. El estudiante aparecerá aquí después de aceptarla con la sesión de esa cuenta.",
+          "legacyNotice": "{{count}} inscripción(es) anteriores al seguimiento de consentimiento están ocultas hasta que el estudiante vuelva a ingresar el código de unión.",
+          "invites": {
+            "title": "Invitaciones pendientes de aceptación",
+            "sent": "Invitación enviada. El estudiante aparecerá aquí después de aceptarla con la sesión de esa cuenta.",
+            "failed": "No se pudo enviar la invitación.",
+            "invalidEmail": "Ingresa un correo electrónico válido.",
+            "withdraw": "Retirar",
+            "expires": "Caduca el {{date}}",
+            "status": {
+              "pending": "Pendiente",
+              "declined": "Rechazada",
+              "expired": "Caducada"
+            }
           }
         },
         "modules": {

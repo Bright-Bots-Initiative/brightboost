@@ -271,7 +271,12 @@ export interface AwardResult {
   leveledUp: boolean;
   tier: LevelTier;
   /** Badges earned as a side effect of this award (level up, streak ride). */
-  newBadges: Array<{ slug: BadgeSlug; name: string; description: string; icon: string }>;
+  newBadges: Array<{
+    slug: BadgeSlug;
+    name: string;
+    description: string;
+    icon: string;
+  }>;
 }
 
 export async function awardXp(
@@ -300,9 +305,10 @@ export async function awardXp(
       amount,
       source,
       sourceRefId: sourceRefId ?? null,
-      metadata: metadata === undefined
-        ? Prisma.JsonNull
-        : (metadata as Prisma.InputJsonValue),
+      metadata:
+        metadata === undefined
+          ? Prisma.JsonNull
+          : (metadata as Prisma.InputJsonValue),
     },
   });
 
@@ -393,9 +399,10 @@ export async function awardBadge(
     data: {
       userId,
       slug,
-      metadata: metadata === undefined
-        ? Prisma.JsonNull
-        : (metadata as Prisma.InputJsonValue),
+      metadata:
+        metadata === undefined
+          ? Prisma.JsonNull
+          : (metadata as Prisma.InputJsonValue),
     },
   });
 
@@ -403,7 +410,13 @@ export async function awardBadge(
     badgeName: def.name,
   });
 
-  return { slug, name: def.name, description: def.description, icon: def.icon, award };
+  return {
+    slug,
+    name: def.name,
+    description: def.description,
+    icon: def.icon,
+    award,
+  };
 }
 
 // ─── Streak system ─────────────────────────────────────────────────────────
@@ -459,7 +472,9 @@ export async function recordActivity(userId: string): Promise<ActivityResult> {
 
   // gap >= 2. Use a freeze if it's a 2-day gap and one is available.
   // (We don't burn freezes on 3+ day gaps — those reset.)
-  const fresh = await prisma.pathwayGamification.findUnique({ where: { userId } });
+  const fresh = await prisma.pathwayGamification.findUnique({
+    where: { userId },
+  });
   if (gap === 2 && (fresh?.streakFreezesAvailable ?? 0) > 0) {
     await prisma.pathwayGamification.update({
       where: { userId },
@@ -486,7 +501,9 @@ async function applyStreak(
   newStreak: number,
   freezeUsed: boolean,
 ): Promise<ActivityResult> {
-  const state = await prisma.pathwayGamification.findUnique({ where: { userId } });
+  const state = await prisma.pathwayGamification.findUnique({
+    where: { userId },
+  });
   const longest = Math.max(state?.longestStreak ?? 0, newStreak);
   const today = toUtcDate(new Date());
 
@@ -526,7 +543,12 @@ async function applyStreak(
     if (b) milestoneBadges.push(b);
   }
 
-  return { streak: newStreak, longestStreak: longest, freezeUsed, milestoneBadges };
+  return {
+    streak: newStreak,
+    longestStreak: longest,
+    freezeUsed,
+    milestoneBadges,
+  };
 }
 
 async function maybeRefreshFreezes(
@@ -632,7 +654,12 @@ export async function getOrCreateDailyGoals(userId: string) {
 }
 
 async function commitGoals(
-  goalsRow: { id: string; allComplete: boolean; bonusAwarded: boolean; userId: string },
+  goalsRow: {
+    id: string;
+    allComplete: boolean;
+    bonusAwarded: boolean;
+    userId: string;
+  },
   goals: DailyGoalItem[],
 ) {
   const allComplete = goals.every((g) => g.completed);
@@ -660,7 +687,9 @@ export async function updateDailyGoalProgress(
   action: "section" | "lab",
 ) {
   const goalsRow = await getOrCreateDailyGoals(userId);
-  const goals = (goalsRow.goals as unknown as DailyGoalItem[]).map((g) => ({ ...g }));
+  const goals = (goalsRow.goals as unknown as DailyGoalItem[]).map((g) => ({
+    ...g,
+  }));
   let dirty = false;
 
   for (const g of goals) {
@@ -684,7 +713,9 @@ export async function updateDailyGoalProgress(
 /** Internal — bumps the XP-earned daily goal alongside any XP award. */
 async function updateDailyGoalForXp(userId: string, amount: number) {
   const goalsRow = await getOrCreateDailyGoals(userId);
-  const goals = (goalsRow.goals as unknown as DailyGoalItem[]).map((g) => ({ ...g }));
+  const goals = (goalsRow.goals as unknown as DailyGoalItem[]).map((g) => ({
+    ...g,
+  }));
   let dirty = false;
   for (const g of goals) {
     if (g.completed) continue;
@@ -705,13 +736,32 @@ export interface CohortGamificationSummary {
   avgLevel: number;
   totalXp: number;
   topBadge: { slug: string; name: string; count: number } | null;
-  streakBuckets: { zero: number; oneToThree: number; fourToSeven: number; eightToFourteen: number; fifteenPlus: number };
+  streakBuckets: {
+    zero: number;
+    oneToThree: number;
+    fourToSeven: number;
+    eightToFourteen: number;
+    fifteenPlus: number;
+  };
   dailyGoalRateToday: { complete: number; total: number };
-  topByXpThisWeek: Array<{ userId: string; name: string | null; email: string | null; xp: number }>;
+  topByXpThisWeek: Array<{
+    userId: string;
+    name: string | null;
+    email: string | null;
+    xp: number;
+  }>;
 }
 
+/**
+ * @param since #874 history boundary per learner (their acceptance into the
+ *   cohort). When given, XP totals, levels and badges count only what was
+ *   earned at or after that moment — cohort membership is not consent to a
+ *   learner's whole prior record. Streaks and today's goals are present-tense
+ *   activity and are reported as-is.
+ */
 export async function summarizeCohortGamification(
   userIds: string[],
+  since?: Map<string, Date>,
 ): Promise<CohortGamificationSummary> {
   const enrolled = userIds.length;
   if (enrolled === 0) {
@@ -736,11 +786,35 @@ export async function summarizeCohortGamification(
     where: { userId: { in: userIds } },
   });
 
-  // Treat unseeded students as level 1 / streak 0 in the aggregate.
-  const totalLevel = gam.reduce((sum, g) => sum + g.currentLevel, 0) +
-    (enrolled - gam.length); // each missing user contributes 1
-  const avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
-  const totalXp = gam.reduce((sum, g) => sum + g.totalXp, 0);
+  let avgLevel: number;
+  let totalXp: number;
+  if (since) {
+    // Boundary-scoped: XP earned since each learner's acceptance, levelled
+    // with the same curve the learner sees.
+    const xpSince = new Map<string, number>();
+    const events = await prisma.pathwayXpEvent.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, amount: true, createdAt: true },
+    });
+    for (const ev of events) {
+      const from = since.get(ev.userId);
+      if (from && ev.createdAt >= from) {
+        xpSince.set(ev.userId, (xpSince.get(ev.userId) ?? 0) + ev.amount);
+      }
+    }
+    totalXp = Array.from(xpSince.values()).reduce((s, x) => s + x, 0);
+    const totalLevel = userIds.reduce(
+      (sum, uid) => sum + calculateLevel(xpSince.get(uid) ?? 0),
+      0,
+    );
+    avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
+  } else {
+    // Treat unseeded students as level 1 / streak 0 in the aggregate.
+    const totalLevel =
+      gam.reduce((sum, g) => sum + g.currentLevel, 0) + (enrolled - gam.length); // each missing user contributes 1
+    avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
+    totalXp = gam.reduce((sum, g) => sum + g.totalXp, 0);
+  }
 
   const streakBuckets = {
     zero: 0,
@@ -760,10 +834,14 @@ export async function summarizeCohortGamification(
 
   const badges = await prisma.pathwayBadge.findMany({
     where: { userId: { in: userIds } },
-    select: { slug: true },
+    select: { slug: true, userId: true, earnedAt: true },
   });
   const badgeCounts = new Map<string, number>();
-  for (const b of badges) badgeCounts.set(b.slug, (badgeCounts.get(b.slug) ?? 0) + 1);
+  for (const b of badges) {
+    const from = since?.get(b.userId);
+    if (since && (!from || b.earnedAt < from)) continue;
+    badgeCounts.set(b.slug, (badgeCounts.get(b.slug) ?? 0) + 1);
+  }
   let topBadge: { slug: string; name: string; count: number } | null = null;
   for (const [slug, count] of badgeCounts) {
     if (!topBadge || count > topBadge.count) {

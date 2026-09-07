@@ -49,7 +49,15 @@
         "yourTracks": "Your Tracks",
         "recentActivity": "Recent Activity"
       },
-      "modulesProgress": "{{done}}/{{total}} modules • {{pct}}%"
+      "modulesProgress": "{{done}}/{{total}} modules • {{pct}}%",
+      "invitations": {
+        "title": "You're invited to a cohort",
+        "body": "A facilitator invited this account. Accepting shares your progress in that cohort's tracks from today on; nothing is shared until you accept.",
+        "from": "From {{name}}",
+        "accept": "Accept",
+        "decline": "Decline",
+        "error": "Could not update the invitation. Please try again."
+      }
     },
     "about": {
       "hero": {
@@ -355,6 +363,21 @@
             "name": "Learner",
             "completed": "Modules",
             "lastActive": "Last Active"
+          },
+          "inviteSent": "Invitation sent. The learner appears here after they accept it while signed in to that account.",
+          "legacyNotice": "{{count}} enrollment(s) from before consent tracking are hidden until the learner re-enters the join code.",
+          "invites": {
+            "title": "Invitations awaiting acceptance",
+            "sent": "Invitation sent. The learner appears here after they accept it while signed in to that account.",
+            "failed": "Could not send the invitation.",
+            "invalidEmail": "Enter a valid email address.",
+            "withdraw": "Withdraw",
+            "expires": "Expires {{date}}",
+            "status": {
+              "pending": "Pending",
+              "declined": "Declined",
+              "expired": "Expired"
+            }
           }
         },
         "modules": {

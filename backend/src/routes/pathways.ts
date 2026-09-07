@@ -26,8 +26,34 @@ import {
   flagsMatch,
   CTF_CHALLENGES_SERVER,
 } from "../data/ctfChallenges";
+import {
+  PathwaysAccessError,
+  TRUSTED_ENROLLMENT_WHERE,
+  acceptInvitation,
+  countUnconfirmedLegacy,
+  declineInvitation,
+  enrollByJoinCode,
+  inviteLearnerByEmail,
+  lastActiveOf,
+  listCohortInvites,
+  listInvitationsForLearner,
+  loadFacilitatorScope,
+  loadVisibleMilestones,
+  revokeEnrollment,
+  revokeInvite,
+} from "../services/pathwaysAccess";
+import { calculateLevel } from "../services/gamification";
 
 const router = Router();
+
+/** #874: relationship/consent errors carry their own status + code. */
+function answerAccessError(res: Response, error: unknown) {
+  if (error instanceof PathwaysAccessError) {
+    return res.status(error.status).json({ error: error.code });
+  }
+  console.error("Pathways access error:", error);
+  return res.status(500).json({ error: "Internal server error" });
+}
 
 /**
  * Race a Prisma promise against a server-side timeout. Without this, a hung
@@ -70,9 +96,27 @@ const DEFAULT_DAILY_GOALS = {
   id: "ephemeral",
   date: new Date().toISOString().slice(0, 10),
   goals: [
-    { slug: "complete_section", label: "Complete 1 section", target: 1, current: 0, completed: false },
-    { slug: "earn_xp", label: "Earn 50 XP", target: 50, current: 0, completed: false },
-    { slug: "try_lab_or_quiz", label: "Try 1 lab or quiz", target: 1, current: 0, completed: false },
+    {
+      slug: "complete_section",
+      label: "Complete 1 section",
+      target: 1,
+      current: 0,
+      completed: false,
+    },
+    {
+      slug: "earn_xp",
+      label: "Earn 50 XP",
+      target: 50,
+      current: 0,
+      completed: false,
+    },
+    {
+      slug: "try_lab_or_quiz",
+      label: "Try 1 lab or quiz",
+      target: 1,
+      current: 0,
+      completed: false,
+    },
   ],
   allComplete: false,
   bonusAwarded: false,
@@ -117,7 +161,8 @@ router.post(
   requireRole("teacher"),
   async (req: Request, res: Response) => {
     const parsed = createCohortSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const joinCode = randomJoinCode();
     const cohort = await prisma.pathwayCohort.create({
@@ -128,7 +173,9 @@ router.post(
         facilitatorId: req.user!.id,
         trackIds: parsed.data.trackIds,
         joinCode,
-        startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : null,
+        startDate: parsed.data.startDate
+          ? new Date(parsed.data.startDate)
+          : null,
         endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
         description: parsed.data.description,
         maxEnrollment: parsed.data.maxEnrollment ?? 25,
@@ -162,16 +209,29 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
+    // #874: only trusted (learner-accepted) enrollments are learners here.
+    // Outstanding invitations are listed by the address the facilitator typed,
+    // identically whether or not an account exists; legacy rows that predate
+    // consent are a count, not names.
     const cohort = await prisma.pathwayCohort.findFirst({
       where: { id: req.params.id, facilitatorId: req.user!.id },
       include: {
         enrollments: {
-          include: { user: { select: { id: true, name: true, email: true, ageBand: true } } },
+          where: TRUSTED_ENROLLMENT_WHERE,
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, ageBand: true },
+            },
+          },
         },
       },
     });
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-    res.json(cohort);
+    const [pendingInvites, unconfirmedLegacyCount] = await Promise.all([
+      listCohortInvites(cohort.id),
+      countUnconfirmedLegacy(cohort.id),
+    ]);
+    res.json({ ...cohort, pendingInvites, unconfirmedLegacyCount });
   },
 );
 
@@ -182,24 +242,16 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohort = await prisma.pathwayCohort.findFirst({
-      where: { id: req.params.id, facilitatorId: req.user!.id },
-      include: {
-        enrollments: {
-          where: { status: "active" },
-          include: { user: { select: { id: true, name: true, ageBand: true } } },
-        },
-      },
-    });
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
+    // #874: trusted learners only, and each learner's milestones are scoped to
+    // this cohort's tracks and to activity since their acceptance.
+    const scope = await loadFacilitatorScope(req.user!.id, req.params.id);
+    if (!scope) return res.status(404).json({ error: "Cohort not found" });
+    const cohort = scope.cohorts[0];
 
-    const userIds = cohort.enrollments.map((e) => e.user.id);
-    const [milestones, onboardings] = await Promise.all([
-      prisma.pathwayMilestone.findMany({
-        where: { userId: { in: userIds } },
-      }),
+    const [visible, onboardings] = await Promise.all([
+      loadVisibleMilestones(scope),
       prisma.pathwayOnboarding.findMany({
-        where: { userId: { in: userIds } },
+        where: { userId: { in: scope.userIds } },
         select: {
           userId: true,
           completedAt: true,
@@ -210,27 +262,30 @@ router.get(
     ]);
     const onboardingByUser = new Map(onboardings.map((o) => [o.userId, o]));
 
-    const learners = cohort.enrollments.map((e) => {
-      const userMilestones = milestones.filter((m) => m.userId === e.user.id);
-      const completed = userMilestones.filter((m) => m.status === "completed").length;
+    const learners = scope.enrollments.map((e) => {
+      const userMilestones = visible.get(e.userId) ?? [];
+      const completed = userMilestones.filter(
+        (m) => m.status === "completed",
+      ).length;
       const total = userMilestones.length;
-      const ob = onboardingByUser.get(e.user.id);
+      const ob = onboardingByUser.get(e.userId);
       // "completed" if completedAt set; "in_progress" if any flag is true but
       // not completed; "not_started" otherwise. Facilitators use this to spot
       // students who skipped Skills 101.
-      let onboardingStatus: "completed" | "in_progress" | "not_started" = "not_started";
+      let onboardingStatus: "completed" | "in_progress" | "not_started" =
+        "not_started";
       if (ob?.completedAt) onboardingStatus = "completed";
-      else if (ob && (ob.avatarChosen || ob.skillsTourViewed)) onboardingStatus = "in_progress";
+      else if (ob && (ob.avatarChosen || ob.skillsTourViewed))
+        onboardingStatus = "in_progress";
 
       return {
-        ...e.user,
+        id: e.user.id,
+        name: e.user.name,
+        ageBand: e.user.ageBand,
         milestones: userMilestones,
         completedCount: completed,
         totalModules: total,
-        lastActive: userMilestones.reduce((latest: Date | null, m) => {
-          const d = m.completedAt ?? m.createdAt;
-          return !latest || d > latest ? d : latest;
-        }, null),
+        lastActive: lastActiveOf(userMilestones),
         onboardingStatus,
       };
     });
@@ -250,18 +305,66 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const { joinCode } = req.body;
-    if (!joinCode) return res.status(400).json({ error: "Join code required" });
+    if (!joinCode || typeof joinCode !== "string") {
+      return res.status(400).json({ error: "Join code required" });
+    }
 
-    const cohort = await prisma.pathwayCohort.findUnique({ where: { joinCode } });
-    if (!cohort) return res.status(404).json({ error: "Invalid join code" });
+    // #874: joining by code is the learner's own act of consent — it creates
+    // (or confirms a legacy) trusted relationship. A revoked row is refused;
+    // the facilitator removed this learner and the shared code is not a new
+    // invitation.
+    try {
+      const { cohort, enrollment } = await enrollByJoinCode(
+        req.user!.id,
+        joinCode,
+      );
+      res.json({ enrolled: true, cohortName: cohort.name, enrollment });
+    } catch (error) {
+      answerAccessError(res, error);
+    }
+  },
+);
 
-    const enrollment = await prisma.pathwayEnrollment.upsert({
-      where: { userId_cohortId: { userId: req.user!.id, cohortId: cohort.id } },
-      create: { userId: req.user!.id, cohortId: cohort.id },
-      update: {},
-    });
+// ── Student: invitations from facilitators (#874) ────────────────────────
 
-    res.json({ enrolled: true, cohortName: cohort.name, enrollment });
+router.get(
+  "/pathways/student/invitations",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      res.json({ invitations: await listInvitationsForLearner(req.user!.id) });
+    } catch (error) {
+      answerAccessError(res, error);
+    }
+  },
+);
+
+router.post(
+  "/pathways/student/invitations/:id/accept",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await acceptInvitation(
+        req.user!.id,
+        String(req.params.id),
+      );
+      res.json({ accepted: true, ...result });
+    } catch (error) {
+      answerAccessError(res, error);
+    }
+  },
+);
+
+router.post(
+  "/pathways/student/invitations/:id/decline",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      await declineInvitation(req.user!.id, String(req.params.id));
+      res.json({ declined: true });
+    } catch (error) {
+      answerAccessError(res, error);
+    }
   },
 );
 
@@ -329,7 +432,8 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const parsed = milestoneSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const milestone = await prisma.pathwayMilestone.upsert({
       where: {
@@ -351,7 +455,8 @@ router.post(
       update: {
         status: parsed.data.status,
         score: parsed.data.score,
-        completedAt: parsed.data.status === "completed" ? new Date() : undefined,
+        completedAt:
+          parsed.data.status === "completed" ? new Date() : undefined,
         artifacts: parsed.data.artifacts,
       },
     });
@@ -407,8 +512,10 @@ router.patch(
   requireAuth,
   async (req: Request, res: Response) => {
     const parsed = sectionProgressSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
-    const { trackSlug, moduleSlug, section, completed, timeSpentMinutes } = parsed.data;
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    const { trackSlug, moduleSlug, section, completed, timeSpentMinutes } =
+      parsed.data;
     const userId = req.user!.id;
 
     // Read-before-write so we can detect the false→true transition that
@@ -417,7 +524,9 @@ router.patch(
       where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
     });
 
-    const data: Record<string, unknown> = { [SECTION_COLUMN[section]]: completed };
+    const data: Record<string, unknown> = {
+      [SECTION_COLUMN[section]]: completed,
+    };
     if (timeSpentMinutes && timeSpentMinutes > 0) {
       data.timeSpentMinutes = { increment: timeSpentMinutes };
     }
@@ -438,13 +547,28 @@ router.patch(
 
     // Gamification: only award XP when the section is *transitioning* from
     // incomplete → complete (idempotent against double-PATCH from clients).
-    const wasComplete = before ? (before as Record<string, unknown>)[SECTION_COLUMN[section]] === true : false;
-    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+    const wasComplete = before
+      ? (before as Record<string, unknown>)[SECTION_COLUMN[section]] === true
+      : false;
+    const sideEffects: GamificationSideEffects = {
+      award: null,
+      badges: [],
+      moduleCompleted: false,
+    };
 
     if (completed && !wasComplete) {
       const xpSource = section === "quiz" ? "quiz" : "section";
-      const xpAmount = section === "quiz" ? XP_AWARDS.QUIZ_COMPLETE : XP_AWARDS.SECTION_COMPLETE;
-      sideEffects.award = await awardXp(userId, xpAmount, xpSource, moduleSlug, { section });
+      const xpAmount =
+        section === "quiz"
+          ? XP_AWARDS.QUIZ_COMPLETE
+          : XP_AWARDS.SECTION_COMPLETE;
+      sideEffects.award = await awardXp(
+        userId,
+        xpAmount,
+        xpSource,
+        moduleSlug,
+        { section },
+      );
       await updateDailyGoalProgress(userId, "section");
 
       // Reader badge — all reading sections complete in some module.
@@ -458,7 +582,9 @@ router.patch(
       // Check if all six section flags are true and the module hasn't been
       // marked completed yet — then award MODULE_COMPLETE + cyber_curious.
       const after = await prisma.pathwayMilestone.findUnique({
-        where: { userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug } },
+        where: {
+          userId_trackSlug_moduleSlug: { userId, trackSlug, moduleSlug },
+        },
       });
       if (
         after &&
@@ -481,7 +607,9 @@ router.patch(
           moduleSlug,
         );
         if (onceModule) sideEffects.moduleCompleted = true;
-        const curious = await awardBadge(userId, "cyber_curious", { moduleSlug });
+        const curious = await awardBadge(userId, "cyber_curious", {
+          moduleSlug,
+        });
         if (curious) sideEffects.badges.push(curious);
       }
     }
@@ -508,7 +636,8 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const parsed = homeworkSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     const { trackSlug, moduleSlug, response } = parsed.data;
     const userId = req.user!.id;
 
@@ -534,7 +663,11 @@ router.post(
       },
     });
 
-    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+    const sideEffects: GamificationSideEffects = {
+      award: null,
+      badges: [],
+      moduleCompleted: false,
+    };
     if (!wasSubmitted) {
       sideEffects.award = await awardXp(
         userId,
@@ -558,9 +691,13 @@ router.post(
           moduleSlug,
         );
         if (moduleOnce) sideEffects.moduleCompleted = true;
-        const capstone = await awardBadge(userId, "capstone_creator", { moduleSlug });
+        const capstone = await awardBadge(userId, "capstone_creator", {
+          moduleSlug,
+        });
         if (capstone) sideEffects.badges.push(capstone);
-        const curious = await awardBadge(userId, "cyber_curious", { moduleSlug });
+        const curious = await awardBadge(userId, "cyber_curious", {
+          moduleSlug,
+        });
         if (curious) sideEffects.badges.push(curious);
       }
     }
@@ -588,7 +725,8 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const parsed = labAttemptSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     const { labSlug, mode, score, hintsUsed, output } = parsed.data;
     const userId = req.user!.id;
 
@@ -614,7 +752,11 @@ router.post(
       },
     });
 
-    const sideEffects: GamificationSideEffects = { award: null, badges: [], moduleCompleted: false };
+    const sideEffects: GamificationSideEffects = {
+      award: null,
+      badges: [],
+      moduleCompleted: false,
+    };
 
     // LAB_COMPLETE: once per (user, lab) — awardXpOnce keyed on the lab slug.
     sideEffects.award = await awardXpOnce(
@@ -627,10 +769,16 @@ router.post(
 
     // LAB_HIGH_SCORE: fires repeatedly, each time the student beats prior best.
     if (isNewBest && prevBest !== null) {
-      const hs = await awardXp(userId, XP_AWARDS.LAB_HIGH_SCORE, "lab_high_score", labSlug, {
-        prev: prevBest.score,
-        next: score,
-      });
+      const hs = await awardXp(
+        userId,
+        XP_AWARDS.LAB_HIGH_SCORE,
+        "lab_high_score",
+        labSlug,
+        {
+          prev: prevBest.score,
+          next: score,
+        },
+      );
       // Surface the most-recent award if we didn't already (first-time path
       // would have returned a non-null awardXpOnce above).
       if (!sideEffects.award) sideEffects.award = hs;
@@ -853,7 +1001,12 @@ router.post(
     } catch (err) {
       // Activity ticks are best-effort; never block the client on them.
       console.error("[pathways/gamification/me/activity] failed:", err);
-      res.status(200).json({ streak: 0, longestStreak: 0, freezeUsed: false, degraded: true });
+      res.status(200).json({
+        streak: 0,
+        longestStreak: 0,
+        freezeUsed: false,
+        degraded: true,
+      });
     }
   },
 );
@@ -910,13 +1063,15 @@ router.post(
   requireAuth,
   async (req: Request, res: Response) => {
     const parsed = submitSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
     const userId = req.user!.id;
     const slug = req.params.slug;
     const { submittedFlag, teamId } = parsed.data;
 
     const challenge = getServerChallenge(slug);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+    if (!challenge)
+      return res.status(404).json({ error: "Challenge not found" });
 
     const isCorrect = flagsMatch(submittedFlag, challenge.flag);
 
@@ -975,19 +1130,27 @@ router.post(
     });
 
     // XP + daily-goal tick (CTF counts toward "try 1 lab or quiz").
-    const xpAward = await awardXp(userId, challenge.xpReward, "ctf_solve", slug, {
-      category: challenge.category,
-      difficulty: challenge.difficulty,
-      hintsUsed,
-      totalAttempts: userAttempts.length,
-    });
+    const xpAward = await awardXp(
+      userId,
+      challenge.xpReward,
+      "ctf_solve",
+      slug,
+      {
+        category: challenge.category,
+        difficulty: challenge.difficulty,
+        hintsUsed,
+        totalAttempts: userAttempts.length,
+      },
+    );
     await updateDailyGoalProgress(userId, "lab");
     await recordActivity(userId);
 
     // Badge logic (idempotent — awardBadge is unique-keyed).
     const newBadges: BadgeAwardResult[] = [];
 
-    const totalSolves = await prisma.pathwayCtfSolve.count({ where: { userId } });
+    const totalSolves = await prisma.pathwayCtfSolve.count({
+      where: { userId },
+    });
     if (totalSolves === 1) {
       const b = await awardBadge(userId, "first_flag");
       if (b) newBadges.push(b);
@@ -1051,7 +1214,8 @@ router.post(
     const userId = req.user!.id;
     const slug = req.params.slug;
     const challenge = getServerChallenge(slug);
-    if (!challenge) return res.status(404).json({ error: "Challenge not found" });
+    if (!challenge)
+      return res.status(404).json({ error: "Challenge not found" });
 
     // Already solved? Hints stay available for replay support.
     // Highest hints previously used by this user on this challenge.
@@ -1062,7 +1226,12 @@ router.post(
     });
     const currentHints = last?.hintsUsed ?? 0;
     if (currentHints >= 3) {
-      return res.json({ hint: null, hintsUsed: 3, hintsRemaining: 0, hintsExhausted: true });
+      return res.json({
+        hint: null,
+        hintsUsed: 3,
+        hintsRemaining: 0,
+        hintsExhausted: true,
+      });
     }
 
     const newCount = currentHints + 1;
@@ -1093,16 +1262,19 @@ router.post(
   "/pathways/teams",
   requireAuth,
   async (_req: Request, res: Response) => {
-    res
-      .status(501)
-      .json({ error: "Team mode is launching in the next update. Solo play is fully supported." });
+    res.status(501).json({
+      error:
+        "Team mode is launching in the next update. Solo play is fully supported.",
+    });
   },
 );
 router.post(
   "/pathways/teams/join",
   requireAuth,
   async (_req: Request, res: Response) => {
-    res.status(501).json({ error: "Team mode is launching in the next update." });
+    res
+      .status(501)
+      .json({ error: "Team mode is launching in the next update." });
   },
 );
 router.get(
@@ -1173,7 +1345,9 @@ router.patch(
     const { completed, ...patch } = parsed.data;
 
     try {
-      const before = await prisma.pathwayOnboarding.findUnique({ where: { userId } });
+      const before = await prisma.pathwayOnboarding.findUnique({
+        where: { userId },
+      });
       const data: Record<string, unknown> = { ...patch };
       let justCompleted = false;
       if (completed && !before?.completedAt) {
@@ -1236,9 +1410,12 @@ router.post(
       });
 
       let badgeAwarded: BadgeAwardResult | null = null;
-      if (totalViewed === 25) badgeAwarded = await awardBadge(userId, "word_collector");
-      if (totalViewed === 50) badgeAwarded = await awardBadge(userId, "vocab_builder");
-      if (totalViewed === 100) badgeAwarded = await awardBadge(userId, "cyber_linguist");
+      if (totalViewed === 25)
+        badgeAwarded = await awardBadge(userId, "word_collector");
+      if (totalViewed === 50)
+        badgeAwarded = await awardBadge(userId, "vocab_builder");
+      if (totalViewed === 100)
+        badgeAwarded = await awardBadge(userId, "cyber_linguist");
 
       res.json({ alreadyViewed: false, totalViewed, badgeAwarded });
     } catch (err) {
@@ -1288,7 +1465,8 @@ router.put(
   requireRole("teacher"),
   async (req: Request, res: Response) => {
     const parsed = updateCohortSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const cohort = await ownedCohort(req.params.id, req.user!.id);
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
@@ -1296,12 +1474,20 @@ router.put(
     const data: Record<string, unknown> = {};
     if (parsed.data.name !== undefined) data.name = parsed.data.name;
     if (parsed.data.band !== undefined) data.band = parsed.data.band;
-    if (parsed.data.sitePartner !== undefined) data.sitePartner = parsed.data.sitePartner;
-    if (parsed.data.trackIds !== undefined) data.trackIds = parsed.data.trackIds;
-    if (parsed.data.startDate !== undefined) data.startDate = parsed.data.startDate ? new Date(parsed.data.startDate) : null;
-    if (parsed.data.endDate !== undefined) data.endDate = parsed.data.endDate ? new Date(parsed.data.endDate) : null;
-    if (parsed.data.description !== undefined) data.description = parsed.data.description;
-    if (parsed.data.maxEnrollment !== undefined) data.maxEnrollment = parsed.data.maxEnrollment;
+    if (parsed.data.sitePartner !== undefined)
+      data.sitePartner = parsed.data.sitePartner;
+    if (parsed.data.trackIds !== undefined)
+      data.trackIds = parsed.data.trackIds;
+    if (parsed.data.startDate !== undefined)
+      data.startDate = parsed.data.startDate
+        ? new Date(parsed.data.startDate)
+        : null;
+    if (parsed.data.endDate !== undefined)
+      data.endDate = parsed.data.endDate ? new Date(parsed.data.endDate) : null;
+    if (parsed.data.description !== undefined)
+      data.description = parsed.data.description;
+    if (parsed.data.maxEnrollment !== undefined)
+      data.maxEnrollment = parsed.data.maxEnrollment;
 
     const updated = await prisma.pathwayCohort.update({
       where: { id: cohort.id },
@@ -1349,7 +1535,9 @@ router.post(
     // Retry on collision (extremely rare)
     let joinCode = randomJoinCode();
     for (let i = 0; i < 5; i++) {
-      const conflict = await prisma.pathwayCohort.findUnique({ where: { joinCode } });
+      const conflict = await prisma.pathwayCohort.findUnique({
+        where: { joinCode },
+      });
       if (!conflict) break;
       joinCode = randomJoinCode();
     }
@@ -1368,12 +1556,15 @@ router.post(
   requireRole("teacher"),
   async (req: Request, res: Response) => {
     const parsed = noteSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!parsed.success)
+      return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const cohort = await ownedCohort(req.params.id, req.user!.id);
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
 
-    const existing = (cohort.notes as Array<{ text: string; author: string; ts: string }>) ?? [];
+    const existing =
+      (cohort.notes as Array<{ text: string; author: string; ts: string }>) ??
+      [];
     const author = await prisma.user.findUnique({
       where: { id: req.user!.id },
       select: { name: true },
@@ -1391,31 +1582,45 @@ router.post(
   },
 );
 
-// Add learner by email (must already have a user account)
+// Invite a learner by email (#874). Records an invitation for the typed
+// address — never looks the address up, never creates an enrollment, and
+// answers the same way whether or not an account exists. The relationship
+// starts only when the invited account accepts (or joins by code).
 router.post(
   "/pathways/facilitator/cohorts/:id/learners",
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const { email } = req.body;
-    if (!email || typeof email !== "string") return res.status(400).json({ error: "Email required" });
-
-    const cohort = await ownedCohort(req.params.id, req.user!.id);
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    if (!user) return res.status(404).json({ error: "No learner account found for that email. The learner must register first." });
-
-    const enrollment = await prisma.pathwayEnrollment.upsert({
-      where: { userId_cohortId: { userId: user.id, cohortId: cohort.id } },
-      create: { userId: user.id, cohortId: cohort.id },
-      update: { status: "active" },
-    });
-    res.status(201).json(enrollment);
+    try {
+      await inviteLearnerByEmail({
+        cohortId: req.params.id,
+        facilitatorId: req.user!.id,
+        rawEmail: req.body?.email,
+      });
+      res.status(202).json({ invited: true });
+    } catch (error) {
+      answerAccessError(res, error);
+    }
   },
 );
 
-// Remove learner from cohort
+// Withdraw an outstanding invitation
+router.delete(
+  "/pathways/facilitator/cohorts/:id/invites/:inviteId",
+  requireAuth,
+  requireRole("teacher"),
+  async (req: Request, res: Response) => {
+    const cohort = await ownedCohort(req.params.id, req.user!.id);
+    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
+    const ok = await revokeInvite(cohort.id, String(req.params.inviteId));
+    if (!ok) return res.status(404).json({ error: "invite_not_found" });
+    res.status(204).end();
+  },
+);
+
+// Remove learner from cohort. #874: the row is kept as `revoked` so a stale
+// join or acceptance cannot silently re-activate it; the learner's progress
+// stays theirs and stops being visible here.
 router.delete(
   "/pathways/facilitator/cohorts/:id/learners/:userId",
   requireAuth,
@@ -1424,9 +1629,7 @@ router.delete(
     const cohort = await ownedCohort(req.params.id, req.user!.id);
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
 
-    await prisma.pathwayEnrollment.deleteMany({
-      where: { cohortId: cohort.id, userId: req.params.userId },
-    });
+    await revokeEnrollment(cohort.id, String(req.params.userId));
     res.status(204).end();
   },
 );
@@ -1437,29 +1640,34 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohort = await prisma.pathwayCohort.findFirst({
-      where: { id: req.params.id, facilitatorId: req.user!.id },
-      include: { enrollments: { include: { user: true } } },
-    });
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-
-    const userIds = cohort.enrollments.map((e) => e.user.id);
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: { userId: { in: userIds } },
-    });
+    // #874: trusted learners only; milestones scoped to this cohort's tracks
+    // and to activity since acceptance.
+    const scope = await loadFacilitatorScope(req.user!.id, req.params.id);
+    if (!scope) return res.status(404).json({ error: "Cohort not found" });
+    const cohort = scope.cohorts[0];
+    const visible = await loadVisibleMilestones(scope);
 
     const rows = [
-      ["Name", "Email", "Band", "Modules Completed", "Avg Score", "Last Active", "Enrollment Status"],
-      ...cohort.enrollments.map((e) => {
-        const userMs = milestones.filter((m) => m.userId === e.user.id);
+      [
+        "Name",
+        "Email",
+        "Band",
+        "Modules Completed",
+        "Avg Score",
+        "Last Active",
+        "Enrollment Status",
+      ],
+      ...scope.enrollments.map((e) => {
+        const userMs = visible.get(e.userId) ?? [];
         const completed = userMs.filter((m) => m.status === "completed");
-        const avgScore = completed.length > 0
-          ? Math.round(completed.reduce((s, m) => s + (m.score ?? 0), 0) / completed.length)
-          : 0;
-        const lastActive = userMs.reduce<Date | null>((latest, m) => {
-          const d = m.completedAt ?? m.createdAt;
-          return !latest || d > latest ? d : latest;
-        }, null);
+        const avgScore =
+          completed.length > 0
+            ? Math.round(
+                completed.reduce((s, m) => s + (m.score ?? 0), 0) /
+                  completed.length,
+              )
+            : 0;
+        const lastActive = lastActiveOf(userMs);
         return [
           e.user.name ?? "",
           e.user.email ?? "",
@@ -1471,7 +1679,9 @@ router.get(
         ];
       }),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
@@ -1490,16 +1700,14 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      include: {
-        enrollments: {
-          include: { user: { select: { id: true, name: true, email: true, ageBand: true } } },
-        },
-      },
-    });
+    // #874: a learner appears only through a trusted enrollment; untrusted
+    // rows are dropped entirely, not relabelled. Milestones are the union of
+    // what each trusted (cohort) relationship admits.
+    const scope = await loadFacilitatorScope(req.user!.id);
+    if (!scope) return res.json([]);
+    const cohortById = new Map(scope.cohorts.map((c) => [c.id, c]));
 
-    // Flatten enrollments and collapse per-user (user may be in multiple cohorts)
+    // Collapse per-user (a learner may be in several of this facilitator's cohorts)
     const byUserId = new Map<
       string,
       {
@@ -1511,41 +1719,40 @@ router.get(
         enrollmentStatuses: string[];
       }
     >();
-    for (const cohort of cohorts) {
-      for (const e of cohort.enrollments) {
-        const existing = byUserId.get(e.user.id);
-        if (existing) {
-          existing.cohorts.push({ id: cohort.id, name: cohort.name, status: cohort.status });
-          existing.enrollmentStatuses.push(e.status);
-        } else {
-          byUserId.set(e.user.id, {
-            id: e.user.id,
-            name: e.user.name,
-            email: e.user.email,
-            ageBand: e.user.ageBand,
-            cohorts: [{ id: cohort.id, name: cohort.name, status: cohort.status }],
-            enrollmentStatuses: [e.status],
-          });
-        }
+    for (const e of scope.enrollments) {
+      const cohort = cohortById.get(e.cohortId)!;
+      const existing = byUserId.get(e.userId);
+      if (existing) {
+        existing.cohorts.push({
+          id: cohort.id,
+          name: cohort.name,
+          status: cohort.status,
+        });
+        existing.enrollmentStatuses.push(e.status);
+      } else {
+        byUserId.set(e.userId, {
+          id: e.user.id,
+          name: e.user.name,
+          email: e.user.email,
+          ageBand: e.user.ageBand,
+          cohorts: [
+            { id: cohort.id, name: cohort.name, status: cohort.status },
+          ],
+          enrollmentStatuses: [e.status],
+        });
       }
     }
-    const userIds = Array.from(byUserId.keys());
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: { userId: { in: userIds } },
-    });
+    const visible = await loadVisibleMilestones(scope);
 
     const learners = Array.from(byUserId.values()).map((u) => {
-      const ms = milestones.filter((m) => m.userId === u.id);
+      const ms = visible.get(u.id) ?? [];
       const completed = ms.filter((m) => m.status === "completed").length;
-      const lastActive = ms.reduce<Date | null>((latest, m) => {
-        const d = m.completedAt ?? m.createdAt;
-        return !latest || d > latest ? d : latest;
-      }, null);
+      const lastActive = lastActiveOf(ms);
       const enrollmentStatus = u.enrollmentStatuses.includes("active")
         ? "active"
         : u.enrollmentStatuses.includes("completed")
           ? "completed"
-          : u.enrollmentStatuses[0] ?? "inactive";
+          : (u.enrollmentStatuses[0] ?? "inactive");
       return {
         id: u.id,
         name: u.name,
@@ -1568,27 +1775,43 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    // Verify the learner is in one of this facilitator's cohorts
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      select: { id: true, name: true, status: true },
-    });
-    const cohortIds = cohorts.map((c) => c.id);
-    const enrollments = await prisma.pathwayEnrollment.findMany({
-      where: { userId: req.params.userId, cohortId: { in: cohortIds } },
-      include: { cohort: { select: { id: true, name: true, status: true } } },
-    });
-    if (enrollments.length === 0) return res.status(404).json({ error: "Learner not found in your cohorts" });
+    // #874: the learner must hold a trusted enrollment in one of this
+    // facilitator's cohorts; pending, declined, revoked and legacy rows grant
+    // nothing. Birth year is not a facilitator field (ageBand is enough), and
+    // milestones are bounded by the trusted relationships.
+    const userId = String(req.params.userId);
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const mine = scope?.enrollments.filter((e) => e.userId === userId) ?? [];
+    if (!scope || mine.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Learner not found in your cohorts" });
+    }
+    const cohortById = new Map(scope.cohorts.map((c) => [c.id, c]));
 
     const user = await prisma.user.findUnique({
-      where: { id: req.params.userId },
-      select: { id: true, name: true, email: true, ageBand: true, birthYear: true },
+      where: { id: userId },
+      select: { id: true, name: true, email: true, ageBand: true },
     });
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: { userId: req.params.userId },
-    });
+    const visible = await loadVisibleMilestones(scope);
 
-    res.json({ user, enrollments, milestones });
+    res.json({
+      user,
+      enrollments: mine.map((e) => {
+        const c = cohortById.get(e.cohortId)!;
+        return {
+          id: e.id,
+          userId: e.userId,
+          cohortId: e.cohortId,
+          status: e.status,
+          enrolledAt: e.enrolledAt,
+          acceptedAt: e.acceptedAt,
+          source: e.source,
+          cohort: { id: c.id, name: c.name, status: c.status },
+        };
+      }),
+      milestones: visible.get(userId) ?? [],
+    });
   },
 );
 
@@ -1599,15 +1822,13 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohort = await ownedCohort(req.params.id, req.user!.id);
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-
-    const enrollments = await prisma.pathwayEnrollment.findMany({
-      where: { cohortId: cohort.id },
-      select: { userId: true },
-    });
+    // #874: trusted learners only; XP, levels and badges counted since each
+    // learner's acceptance.
+    const scope = await loadFacilitatorScope(req.user!.id, req.params.id);
+    if (!scope) return res.status(404).json({ error: "Cohort not found" });
     const summary = await summarizeCohortGamification(
-      enrollments.map((e) => e.userId),
+      scope.userIds,
+      scope.sinceByUser,
     );
     res.json(summary);
   },
@@ -1618,16 +1839,12 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohort = await ownedCohort(req.params.id, req.user!.id);
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-
-    const enrollments = await prisma.pathwayEnrollment.findMany({
-      where: { cohortId: cohort.id },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
-    const userIds = enrollments.map((e) => e.userId);
+    // #874: trusted learners only; solves and attempts counted since each
+    // learner's acceptance into this cohort.
+    const scope = await loadFacilitatorScope(req.user!.id, req.params.id);
+    if (!scope) return res.status(404).json({ error: "Cohort not found" });
+    const enrollments = scope.enrollments;
+    const userIds = scope.userIds;
 
     if (userIds.length === 0) {
       return res.json({
@@ -1638,7 +1855,9 @@ router.get(
       });
     }
 
-    const [solves, attempts] = await Promise.all([
+    const sinceOf = (userId: string) =>
+      scope.sinceByUser.get(userId) ?? new Date(8640000000000000);
+    const [solvesAll, attemptsAll] = await Promise.all([
       prisma.pathwayCtfSolve.findMany({
         where: { userId: { in: userIds } },
         select: {
@@ -1646,13 +1865,23 @@ router.get(
           challengeSlug: true,
           category: true,
           hintsUsed: true,
+          solvedAt: true,
         },
       }),
       prisma.pathwayCtfAttempt.findMany({
         where: { userId: { in: userIds } },
-        select: { userId: true, challengeSlug: true, isCorrect: true },
+        select: {
+          userId: true,
+          challengeSlug: true,
+          isCorrect: true,
+          submittedAt: true,
+        },
       }),
     ]);
+    const solves = solvesAll.filter((s) => s.solvedAt >= sinceOf(s.userId));
+    const attempts = attemptsAll.filter(
+      (a) => a.submittedAt >= sinceOf(a.userId),
+    );
 
     // Per-student breakdown.
     const perStudent = enrollments.map((e) => {
@@ -1696,7 +1925,8 @@ router.get(
       solves.length === 0
         ? 0
         : Math.round(
-            (solves.reduce((sum, s) => sum + s.hintsUsed, 0) / solves.length) * 10,
+            (solves.reduce((sum, s) => sum + s.hintsUsed, 0) / solves.length) *
+              10,
           ) / 10;
 
     res.json({
@@ -1714,38 +1944,47 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    // Verify the learner is in one of this facilitator's cohorts.
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      select: { id: true },
-    });
-    const cohortIds = cohorts.map((c) => c.id);
-    const ok = await prisma.pathwayEnrollment.findFirst({
-      where: { userId: req.params.userId, cohortId: { in: cohortIds } },
-      select: { id: true },
-    });
-    if (!ok) return res.status(404).json({ error: "Learner not found in your cohorts" });
+    // #874: the learner must hold a trusted enrollment with this facilitator;
+    // XP, level and badges are counted from the earliest acceptance, and the
+    // lifetime longest streak is not shared (current streak is present-tense).
+    const userId = String(req.params.userId);
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const since = scope?.sinceByUser.get(userId);
+    if (!scope || !since) {
+      return res
+        .status(404)
+        .json({ error: "Learner not found in your cohorts" });
+    }
 
-    const userId = req.params.userId;
     const state = await prisma.pathwayGamification.upsert({
       where: { userId },
       create: { userId },
       update: {},
     });
     const badges = await prisma.pathwayBadge.findMany({
-      where: { userId },
+      where: { userId, earnedAt: { gte: since } },
       orderBy: { earnedAt: "desc" },
     });
+    const xpSince = await prisma.pathwayXpEvent.aggregate({
+      where: { userId, createdAt: { gte: since } },
+      _sum: { amount: true },
+    });
     const recentEvents = await prisma.pathwayXpEvent.findMany({
-      where: { userId },
+      where: { userId, createdAt: { gte: since } },
       orderBy: { createdAt: "desc" },
       take: 20,
     });
+    const totalXp = xpSince._sum.amount ?? 0;
+    const currentLevel = calculateLevel(totalXp);
     res.json({
       state: {
-        ...state,
-        levelTier: getLevelTier(state.currentLevel),
-        xpProgress: xpToNextLevel(state.totalXp, state.currentLevel),
+        userId,
+        totalXp,
+        currentLevel,
+        currentStreak: state.currentStreak,
+        longestStreak: null,
+        levelTier: getLevelTier(currentLevel),
+        xpProgress: xpToNextLevel(totalXp, currentLevel),
       },
       badges: badges.map((b) => ({
         slug: b.slug,
@@ -1768,43 +2007,66 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      select: { id: true, trackIds: true, name: true, status: true },
-    });
+    // #874: trusted enrollments and boundary-scoped milestones only.
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const cohorts = scope?.cohorts ?? [];
     // Per-track: which cohorts use it, total enrolled, completion stats
-    const trackUsage: Record<string, { cohorts: { id: string; name: string; status: string }[]; learnerCount: number; completionCount: number }> = {};
+    const trackUsage: Record<
+      string,
+      {
+        cohorts: { id: string; name: string; status: string }[];
+        learnerCount: number;
+        completionCount: number;
+      }
+    > = {};
     for (const cohort of cohorts) {
       for (const trackId of cohort.trackIds) {
-        if (!trackUsage[trackId]) trackUsage[trackId] = { cohorts: [], learnerCount: 0, completionCount: 0 };
-        trackUsage[trackId].cohorts.push({ id: cohort.id, name: cohort.name, status: cohort.status });
+        if (!trackUsage[trackId])
+          trackUsage[trackId] = {
+            cohorts: [],
+            learnerCount: 0,
+            completionCount: 0,
+          };
+        trackUsage[trackId].cohorts.push({
+          id: cohort.id,
+          name: cohort.name,
+          status: cohort.status,
+        });
       }
     }
+    if (!scope) return res.json(trackUsage);
 
-    // Cross-cohort milestone counts per track
-    const cohortIds = cohorts.map((c) => c.id);
-    const enrollments = await prisma.pathwayEnrollment.findMany({
-      where: { cohortId: { in: cohortIds } },
-      select: { userId: true, cohort: { select: { trackIds: true } } },
-    });
+    // Cross-cohort learner counts per track (trusted relationships only)
+    const cohortById = new Map(cohorts.map((c) => [c.id, c]));
     const trackUserIds: Record<string, Set<string>> = {};
-    for (const e of enrollments) {
-      for (const trackId of e.cohort.trackIds) {
+    for (const e of scope.enrollments) {
+      for (const trackId of cohortById.get(e.cohortId)!.trackIds) {
         if (!trackUserIds[trackId]) trackUserIds[trackId] = new Set();
         trackUserIds[trackId].add(e.userId);
       }
     }
     for (const [trackId, uids] of Object.entries(trackUserIds)) {
-      if (!trackUsage[trackId]) trackUsage[trackId] = { cohorts: [], learnerCount: 0, completionCount: 0 };
+      if (!trackUsage[trackId])
+        trackUsage[trackId] = {
+          cohorts: [],
+          learnerCount: 0,
+          completionCount: 0,
+        };
       trackUsage[trackId].learnerCount = uids.size;
     }
 
-    const allMilestones = await prisma.pathwayMilestone.findMany({
-      where: { status: "completed", userId: { in: enrollments.map((e) => e.userId) } },
-    });
-    for (const m of allMilestones) {
-      if (!trackUsage[m.trackSlug]) trackUsage[m.trackSlug] = { cohorts: [], learnerCount: 0, completionCount: 0 };
-      trackUsage[m.trackSlug].completionCount += 1;
+    const visible = await loadVisibleMilestones(scope);
+    for (const ms of visible.values()) {
+      for (const m of ms) {
+        if (m.status !== "completed") continue;
+        if (!trackUsage[m.trackSlug])
+          trackUsage[m.trackSlug] = {
+            cohorts: [],
+            learnerCount: 0,
+            completionCount: 0,
+          };
+        trackUsage[m.trackSlug].completionCount += 1;
+      }
     }
 
     res.json(trackUsage);
@@ -1820,50 +2082,50 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
+    // #874: trusted learners and boundary-scoped milestones only.
     const since = new Date(Date.now() - 7 * 86400000);
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      include: {
-        enrollments: { select: { userId: true, enrolledAt: true } },
-      },
-    });
-    const userIds = cohorts.flatMap((c) => c.enrollments.map((e) => e.userId));
-
-    const milestones = await prisma.pathwayMilestone.findMany({
-      where: {
-        userId: { in: userIds },
-        completedAt: { gte: since },
-      },
-    });
-    const newEnrollments = cohorts.flatMap((c) =>
-      c.enrollments.filter((e) => e.enrolledAt >= since),
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const visible = scope ? await loadVisibleMilestones(scope) : new Map();
+    const all = Array.from(visible.values()).flat();
+    const nameOf = new Map(
+      (scope?.enrollments ?? []).map((e) => [e.userId, e.user.name]),
     );
-    const recentMs = await prisma.pathwayMilestone.findMany({
-      where: { userId: { in: userIds } },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      include: { user: { select: { name: true } } },
-    });
 
-    // Learners with no activity in the last 7 days
-    const allRecent = await prisma.pathwayMilestone.findMany({
-      where: { userId: { in: userIds }, OR: [{ createdAt: { gte: since } }, { completedAt: { gte: since } }] },
-      select: { userId: true },
-    });
-    const activeUserIds = new Set(allRecent.map((m) => m.userId));
-    const inactiveLearners = await prisma.user.findMany({
-      where: { id: { in: userIds.filter((id) => !activeUserIds.has(id)) } },
-      select: { id: true, name: true },
-    });
+    const milestones = all.filter(
+      (m) => m.completedAt && m.completedAt >= since,
+    );
+    // "New" means the learner accepted the relationship in the window.
+    const newEnrollments = (scope?.enrollments ?? []).filter(
+      (e) => e.acceptedAt >= since,
+    );
+    const recentMs = [...all]
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+      .slice(0, 10)
+      .map((m) => ({ ...m, user: { name: nameOf.get(m.userId) ?? null } }));
+
+    // Learners with no visible activity in the last 7 days
+    const activeUserIds = new Set(
+      all
+        .filter(
+          (m) =>
+            m.updatedAt >= since || (m.completedAt && m.completedAt >= since),
+        )
+        .map((m) => m.userId),
+    );
+    const inactiveLearners = (scope?.userIds ?? [])
+      .filter((id) => !activeUserIds.has(id))
+      .map((id) => ({ id, name: nameOf.get(id) ?? null }));
 
     res.json({
       windowDays: 7,
       modulesCompleted: milestones.length,
       newEnrollments: newEnrollments.length,
       inactiveLearners,
-      capstonesInProgress: await prisma.pathwayMilestone.count({
-        where: { userId: { in: userIds }, moduleSlug: "capstone-security-plan", status: "in_progress" },
-      }),
+      capstonesInProgress: all.filter(
+        (m) =>
+          m.moduleSlug === "capstone-security-plan" &&
+          m.status === "in_progress",
+      ).length,
       recentActivity: recentMs,
     });
   },
@@ -1874,21 +2136,38 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohort = await prisma.pathwayCohort.findFirst({
-      where: { id: req.params.id, facilitatorId: req.user!.id },
-      include: { enrollments: { include: { user: { select: { id: true, name: true, ageBand: true } } } } },
+    // #874: trusted learners and boundary-scoped milestones only.
+    const scope = await loadFacilitatorScope(req.user!.id, req.params.id);
+    if (!scope) return res.status(404).json({ error: "Cohort not found" });
+    const cohort = await prisma.pathwayCohort.findUniqueOrThrow({
+      where: { id: scope.cohorts[0].id },
+      select: {
+        id: true,
+        name: true,
+        sitePartner: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+      },
     });
-    if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-
-    const userIds = cohort.enrollments.map((e) => e.user.id);
-    const milestones = await prisma.pathwayMilestone.findMany({ where: { userId: { in: userIds } } });
-    const moduleStats: Record<string, { completed: number; avgScore: number; count: number }> = {};
+    const visible = await loadVisibleMilestones(scope);
+    const milestones = Array.from(visible.values()).flat();
+    const moduleStats: Record<
+      string,
+      { completed: number; avgScore: number; count: number }
+    > = {};
     for (const m of milestones) {
       if (m.status === "completed") {
-        const stats = moduleStats[m.moduleSlug] ?? { completed: 0, avgScore: 0, count: 0 };
+        const stats = moduleStats[m.moduleSlug] ?? {
+          completed: 0,
+          avgScore: 0,
+          count: 0,
+        };
         stats.completed += 1;
         stats.count += 1;
-        stats.avgScore = Math.round(((stats.avgScore * (stats.count - 1)) + (m.score ?? 0)) / stats.count);
+        stats.avgScore = Math.round(
+          (stats.avgScore * (stats.count - 1) + (m.score ?? 0)) / stats.count,
+        );
         moduleStats[m.moduleSlug] = stats;
       }
     }
@@ -1901,8 +2180,10 @@ router.get(
         endDate: cohort.endDate,
         status: cohort.status,
       },
-      enrolledCount: cohort.enrollments.length,
-      completedEnrollments: cohort.enrollments.filter((e) => e.status === "completed").length,
+      enrolledCount: scope.enrollments.length,
+      completedEnrollments: scope.enrollments.filter(
+        (e) => e.status === "completed",
+      ).length,
       moduleStats,
     });
   },
@@ -1913,16 +2194,20 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      include: { enrollments: true },
-    });
-    const userIds = cohorts.flatMap((c) => c.enrollments.map((e) => e.userId));
+    // #874: trusted enrollments and boundary-scoped milestones only.
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const cohorts = scope?.cohorts ?? [];
+    const userIds = (scope?.enrollments ?? []).map((e) => e.userId);
 
-    const allMs = await prisma.pathwayMilestone.findMany({ where: { userId: { in: userIds } } });
+    const visible = scope ? await loadVisibleMilestones(scope) : new Map();
+    const allMs = Array.from(visible.values()).flat();
     const completed = allMs.filter((m) => m.status === "completed");
-    const capstones = completed.filter((m) => m.moduleSlug === "capstone-security-plan").length;
-    const certExternal = completed.filter((m) => m.moduleSlug === "cisco-netacad-link").length;
+    const capstones = completed.filter(
+      (m) => m.moduleSlug === "capstone-security-plan",
+    ).length;
+    const certExternal = completed.filter(
+      (m) => m.moduleSlug === "cisco-netacad-link",
+    ).length;
 
     res.json({
       totalCohorts: cohorts.length,
@@ -1932,9 +2217,13 @@ router.get(
       modulesCompleted: completed.length,
       capstonesProduced: capstones,
       externalCourseworkStarted: certExternal,
-      averageScore: completed.length > 0
-        ? Math.round(completed.reduce((s, m) => s + (m.score ?? 0), 0) / completed.length)
-        : 0,
+      averageScore:
+        completed.length > 0
+          ? Math.round(
+              completed.reduce((s, m) => s + (m.score ?? 0), 0) /
+                completed.length,
+            )
+          : 0,
     });
   },
 );
@@ -1944,12 +2233,11 @@ router.get(
   requireAuth,
   requireRole("teacher"),
   async (req: Request, res: Response) => {
-    const cohorts = await prisma.pathwayCohort.findMany({
-      where: { facilitatorId: req.user!.id },
-      include: { enrollments: { select: { userId: true } } },
-    });
-    const userIds = cohorts.flatMap((c) => c.enrollments.map((e) => e.userId));
-    const allMs = await prisma.pathwayMilestone.findMany({ where: { userId: { in: userIds } } });
+    // #874: trusted learners and boundary-scoped milestones only.
+    const scope = await loadFacilitatorScope(req.user!.id);
+    const userIds = scope?.userIds ?? [];
+    const visible = scope ? await loadVisibleMilestones(scope) : new Map();
+    const allMs = Array.from(visible.values()).flat();
 
     // Bucket activity by day for the last 30 days
     const buckets: Record<string, number> = {};
@@ -1962,18 +2250,29 @@ router.get(
       const ts = (m.completedAt ?? m.createdAt).toISOString().slice(0, 10);
       if (buckets[ts] !== undefined) buckets[ts] += 1;
     }
-    const series = Object.entries(buckets).map(([date, count]) => ({ date, count }));
+    const series = Object.entries(buckets).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
     res.json({
       totalLearners: userIds.length,
       activeLast7Days: new Set(
         allMs
-          .filter((m) => (m.completedAt ?? m.createdAt) >= new Date(Date.now() - 7 * 86400000))
+          .filter(
+            (m) =>
+              (m.completedAt ?? m.createdAt) >=
+              new Date(Date.now() - 7 * 86400000),
+          )
           .map((m) => m.userId),
       ).size,
       activeLast30Days: new Set(
         allMs
-          .filter((m) => (m.completedAt ?? m.createdAt) >= new Date(Date.now() - 30 * 86400000))
+          .filter(
+            (m) =>
+              (m.completedAt ?? m.createdAt) >=
+              new Date(Date.now() - 30 * 86400000),
+          )
           .map((m) => m.userId),
       ).size,
       dailyActivity: series,

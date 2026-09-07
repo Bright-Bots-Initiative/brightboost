@@ -34,7 +34,14 @@ import {
 import Card, { CardBody, CardHeader, StatTile } from "../shared/Card";
 import { StatusPill } from "../FacilitatorLayout";
 
-type TabKey = "overview" | "roster" | "modules" | "engagement" | "calendar" | "notes" | "settings";
+type TabKey =
+  | "overview"
+  | "roster"
+  | "modules"
+  | "engagement"
+  | "calendar"
+  | "notes"
+  | "settings";
 
 interface Cohort {
   id: string;
@@ -57,8 +64,23 @@ interface Cohort {
     userId: string;
     enrolledAt: string;
     status: string;
-    user: { id: string; name: string | null; email: string | null; ageBand: string | null };
+    user: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      ageBand: string | null;
+    };
   }>;
+  // #874: invitations by email (as typed) awaiting the learner's acceptance,
+  // and rows from before consent tracking that grant no visibility yet.
+  pendingInvites?: Array<{
+    id: string;
+    email: string;
+    status: "pending" | "declined" | "expired" | string;
+    expiresAt: string;
+    createdAt: string;
+  }>;
+  unconfirmedLegacyCount?: number;
 }
 
 interface CohortProgress {
@@ -67,7 +89,12 @@ interface CohortProgress {
     id: string;
     name: string | null;
     ageBand: string | null;
-    milestones: Array<{ moduleSlug: string; status: string; score: number | null; completedAt: string | null }>;
+    milestones: Array<{
+      moduleSlug: string;
+      status: string;
+      score: number | null;
+      completedAt: string | null;
+    }>;
     completedCount: number;
     totalModules: number;
     lastActive: string | null;
@@ -75,7 +102,11 @@ interface CohortProgress {
   }>;
 }
 
-function OnboardingDot({ status }: { status?: "completed" | "in_progress" | "not_started" }) {
+function OnboardingDot({
+  status,
+}: {
+  status?: "completed" | "in_progress" | "not_started";
+}) {
   const s = status ?? "not_started";
   const cls =
     s === "completed"
@@ -107,14 +138,20 @@ export default function CohortDetail() {
   const [tab, setTab] = useState<TabKey>("overview");
   const [loading, setLoading] = useState(true);
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+  const auth = {
+    Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+  };
 
   const loadCohort = useCallback(async () => {
     if (!id) return;
     try {
       const [c, p] = await Promise.all([
-        fetch(`/api/pathways/cohorts/${id}`, { headers: auth }).then((r) => r.json()),
-        fetch(`/api/pathways/facilitator/cohort/${id}/progress`, { headers: auth }).then((r) => r.json()),
+        fetch(`/api/pathways/cohorts/${id}`, { headers: auth }).then((r) =>
+          r.json(),
+        ),
+        fetch(`/api/pathways/facilitator/cohort/${id}/progress`, {
+          headers: auth,
+        }).then((r) => r.json()),
       ]);
       setCohort(c);
       setProgress(p);
@@ -130,18 +167,33 @@ export default function CohortDetail() {
     loadCohort();
     // Hash routing for deep-link to roster
     const h = window.location.hash.slice(1);
-    if (["overview", "roster", "modules", "calendar", "notes", "settings"].includes(h)) {
+    if (
+      [
+        "overview",
+        "roster",
+        "modules",
+        "calendar",
+        "notes",
+        "settings",
+      ].includes(h)
+    ) {
       setTab(h as TabKey);
     }
   }, [loadCohort]);
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-600 dark:text-slate-400">{t("pathways.common.loading")}</div>;
+    return (
+      <div className="text-center py-20 text-slate-600 dark:text-slate-400">
+        {t("pathways.common.loading")}
+      </div>
+    );
   }
   if (!cohort) {
     return (
       <div className="text-center py-20">
-        <p className="text-slate-600 dark:text-slate-400">{t("pathways.facilitator.detail.notFound")}</p>
+        <p className="text-slate-600 dark:text-slate-400">
+          {t("pathways.facilitator.detail.notFound")}
+        </p>
         <button
           onClick={() => navigate("/pathways/facilitator/cohorts")}
           className="mt-3 text-sm text-indigo-700 dark:text-indigo-400 hover:underline"
@@ -156,7 +208,10 @@ export default function CohortDetail() {
     { key: "overview", label: t("pathways.facilitator.detail.tabs.overview") },
     { key: "roster", label: t("pathways.facilitator.detail.tabs.roster") },
     { key: "modules", label: t("pathways.facilitator.detail.tabs.modules") },
-    { key: "engagement", label: t("pathways.facilitator.detail.tabs.engagement", "Engagement") },
+    {
+      key: "engagement",
+      label: t("pathways.facilitator.detail.tabs.engagement", "Engagement"),
+    },
     { key: "calendar", label: t("pathways.facilitator.detail.tabs.calendar") },
     { key: "notes", label: t("pathways.facilitator.detail.tabs.notes") },
     { key: "settings", label: t("pathways.facilitator.detail.tabs.settings") },
@@ -168,18 +223,23 @@ export default function CohortDetail() {
         onClick={() => navigate("/pathways/facilitator/cohorts")}
         className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
       >
-        <ArrowLeft className="w-4 h-4" /> {t("pathways.facilitator.create.backToCohorts")}
+        <ArrowLeft className="w-4 h-4" />{" "}
+        {t("pathways.facilitator.create.backToCohorts")}
       </button>
 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{cohort.name}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {cohort.name}
+            </h1>
             <StatusPill status={cohort.status} />
           </div>
           {cohort.sitePartner && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{cohort.sitePartner}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              {cohort.sitePartner}
+            </p>
           )}
         </div>
       </div>
@@ -207,13 +267,21 @@ export default function CohortDetail() {
         })}
       </div>
 
-      {tab === "overview" && <OverviewTab cohort={cohort} progress={progress} />}
-      {tab === "roster" && <RosterTab cohort={cohort} progress={progress} onReload={loadCohort} />}
+      {tab === "overview" && (
+        <OverviewTab cohort={cohort} progress={progress} />
+      )}
+      {tab === "roster" && (
+        <RosterTab cohort={cohort} progress={progress} onReload={loadCohort} />
+      )}
       {tab === "modules" && <ModulesTab cohort={cohort} progress={progress} />}
-      {tab === "engagement" && <EngagementTab cohortId={cohort.id} progress={progress} />}
+      {tab === "engagement" && (
+        <EngagementTab cohortId={cohort.id} progress={progress} />
+      )}
       {tab === "calendar" && <CalendarTab cohort={cohort} />}
       {tab === "notes" && <NotesTab cohort={cohort} onReload={loadCohort} />}
-      {tab === "settings" && <SettingsTab cohort={cohort} onReload={loadCohort} />}
+      {tab === "settings" && (
+        <SettingsTab cohort={cohort} onReload={loadCohort} />
+      )}
     </div>
   );
 }
@@ -233,7 +301,12 @@ interface CohortEngagement {
     fifteenPlus: number;
   };
   dailyGoalRateToday: { complete: number; total: number };
-  topByXpThisWeek: Array<{ userId: string; name: string | null; email: string | null; xp: number }>;
+  topByXpThisWeek: Array<{
+    userId: string;
+    name: string | null;
+    email: string | null;
+    xp: number;
+  }>;
 }
 
 interface CohortChallenges {
@@ -264,7 +337,9 @@ function EngagementTab({
 
   useEffect(() => {
     fetch(`/api/pathways/facilitator/cohorts/${cohortId}/gamification`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+      },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
@@ -327,7 +402,10 @@ function EngagementTab({
 
   const dgPct =
     data.dailyGoalRateToday.total > 0
-      ? Math.round((data.dailyGoalRateToday.complete / data.dailyGoalRateToday.total) * 100)
+      ? Math.round(
+          (data.dailyGoalRateToday.complete / data.dailyGoalRateToday.total) *
+            100,
+        )
       : 0;
 
   // Surface basic intervention alerts client-side from existing progress data
@@ -352,7 +430,9 @@ function EngagementTab({
         <MetricCell
           label="Top badge"
           value={data.topBadge?.name ?? "—"}
-          secondary={data.topBadge ? `${data.topBadge.count} earned` : undefined}
+          secondary={
+            data.topBadge ? `${data.topBadge.count} earned` : undefined
+          }
         />
       </div>
 
@@ -363,11 +443,36 @@ function EngagementTab({
             Streak distribution
           </p>
           <div className="space-y-2">
-            <StreakBar label="No streak" value={data.streakBuckets.zero} total={data.enrolled} color="bg-slate-400" />
-            <StreakBar label="1–3 days" value={data.streakBuckets.oneToThree} total={data.enrolled} color="bg-amber-400" />
-            <StreakBar label="4–7 days" value={data.streakBuckets.fourToSeven} total={data.enrolled} color="bg-orange-500" />
-            <StreakBar label="8–14 days" value={data.streakBuckets.eightToFourteen} total={data.enrolled} color="bg-indigo-500" />
-            <StreakBar label="15+ days" value={data.streakBuckets.fifteenPlus} total={data.enrolled} color="bg-emerald-500" />
+            <StreakBar
+              label="No streak"
+              value={data.streakBuckets.zero}
+              total={data.enrolled}
+              color="bg-slate-400"
+            />
+            <StreakBar
+              label="1–3 days"
+              value={data.streakBuckets.oneToThree}
+              total={data.enrolled}
+              color="bg-amber-400"
+            />
+            <StreakBar
+              label="4–7 days"
+              value={data.streakBuckets.fourToSeven}
+              total={data.enrolled}
+              color="bg-orange-500"
+            />
+            <StreakBar
+              label="8–14 days"
+              value={data.streakBuckets.eightToFourteen}
+              total={data.enrolled}
+              color="bg-indigo-500"
+            />
+            <StreakBar
+              label="15+ days"
+              value={data.streakBuckets.fifteenPlus}
+              total={data.enrolled}
+              color="bg-emerald-500"
+            />
           </div>
         </div>
       </Card>
@@ -389,7 +494,9 @@ function EngagementTab({
                   key={row.userId}
                   className="flex items-center gap-3 text-sm"
                 >
-                  <span className="w-6 text-right text-slate-500 font-mono">#{i + 1}</span>
+                  <span className="w-6 text-right text-slate-500 font-mono">
+                    #{i + 1}
+                  </span>
                   <Link
                     to={`/pathways/facilitator/learners/${row.userId}`}
                     className="flex-1 min-w-0 truncate text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
@@ -427,7 +534,9 @@ function EngagementTab({
                   </Link>
                   <span className="text-xs text-slate-500 ml-2">
                     last active{" "}
-                    {l.lastActive ? new Date(l.lastActive).toLocaleDateString() : "never"}
+                    {l.lastActive
+                      ? new Date(l.lastActive).toLocaleDateString()
+                      : "never"}
                   </span>
                 </li>
               ))}
@@ -445,7 +554,9 @@ function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
 
   useEffect(() => {
     fetch(`/api/pathways/facilitator/cohorts/${cohortId}/challenges`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+      },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
@@ -479,12 +590,20 @@ function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
         <MetricCell
           label="Avg hints / solve"
           value={data.averageHintsPerSolve.toFixed(1)}
-          secondary={data.averageHintsPerSolve > 2 ? "high — consider group instruction" : undefined}
+          secondary={
+            data.averageHintsPerSolve > 2
+              ? "high — consider group instruction"
+              : undefined
+          }
         />
         <MetricCell
           label="Most attempted"
           value={data.mostAttempted?.slug ?? "—"}
-          secondary={data.mostAttempted ? `${data.mostAttempted.attempts} attempts` : undefined}
+          secondary={
+            data.mostAttempted
+              ? `${data.mostAttempted.attempts} attempts`
+              : undefined
+          }
         />
       </div>
 
@@ -495,7 +614,9 @@ function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
             Per-student flags
           </p>
           {data.perStudent.length === 0 ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">No learners enrolled.</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              No learners enrolled.
+            </p>
           ) : (
             <>
               {/* Mobile: card list */}
@@ -515,11 +636,22 @@ function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
                       </span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-1 text-[10px] text-slate-600 dark:text-slate-400">
-                      <CatBadge label="crypto" n={s.byCategory.cryptography ?? 0} />
+                      <CatBadge
+                        label="crypto"
+                        n={s.byCategory.cryptography ?? 0}
+                      />
                       <CatBadge label="web" n={s.byCategory.web ?? 0} />
-                      <CatBadge label="forensics" n={s.byCategory.forensics ?? 0} />
-                      <CatBadge label="networks" n={s.byCategory.networks ?? 0} />
-                      <span className="ml-auto text-slate-500">{s.attempts} attempts</span>
+                      <CatBadge
+                        label="forensics"
+                        n={s.byCategory.forensics ?? 0}
+                      />
+                      <CatBadge
+                        label="networks"
+                        n={s.byCategory.networks ?? 0}
+                      />
+                      <span className="ml-auto text-slate-500">
+                        {s.attempts} attempts
+                      </span>
                     </div>
                   </Link>
                 ))}
@@ -540,7 +672,10 @@ function EngagementChallengesPanel({ cohortId }: { cohortId: string }) {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {data.perStudent.map((s) => (
-                    <tr key={s.userId} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                    <tr
+                      key={s.userId}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                    >
                       <td className="py-2 pr-3">
                         <Link
                           to={`/pathways/facilitator/learners/${s.userId}`}
@@ -611,7 +746,9 @@ function MetricCell({
         {value}
       </p>
       {secondary && (
-        <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">{secondary}</p>
+        <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">
+          {secondary}
+        </p>
       )}
     </div>
   );
@@ -631,9 +768,14 @@ function StreakBar({
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-20 text-xs text-slate-600 dark:text-slate-400 shrink-0">{label}</span>
+      <span className="w-20 text-xs text-slate-600 dark:text-slate-400 shrink-0">
+        {label}
+      </span>
       <div className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full ${color} rounded-full`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <span className="text-xs font-mono text-slate-700 dark:text-slate-300 w-10 text-right shrink-0">
         {value}
@@ -644,7 +786,13 @@ function StreakBar({
 
 // ─── Overview Tab ───────────────────────────────────────────────────────
 
-function OverviewTab({ cohort, progress }: { cohort: Cohort; progress: CohortProgress | null }) {
+function OverviewTab({
+  cohort,
+  progress,
+}: {
+  cohort: Cohort;
+  progress: CohortProgress | null;
+}) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -652,7 +800,10 @@ function OverviewTab({ cohort, progress }: { cohort: Cohort; progress: CohortPro
     ? progress.learners.reduce((sum, l) => sum + l.completedCount, 0)
     : 0;
   const possibleCompletion = progress ? progress.learners.length * 7 : 0;
-  const pct = possibleCompletion > 0 ? Math.round((totalCompletion / possibleCompletion) * 100) : 0;
+  const pct =
+    possibleCompletion > 0
+      ? Math.round((totalCompletion / possibleCompletion) * 100)
+      : 0;
 
   const copy = () => {
     navigator.clipboard?.writeText(cohort.joinCode).then(() => {
@@ -676,12 +827,18 @@ function OverviewTab({ cohort, progress }: { cohort: Cohort; progress: CohortPro
         />
         <StatTile
           label={t("pathways.facilitator.detail.overview.startDate")}
-          value={cohort.startDate ? new Date(cohort.startDate).toLocaleDateString() : "—"}
+          value={
+            cohort.startDate
+              ? new Date(cohort.startDate).toLocaleDateString()
+              : "—"
+          }
           icon={<Clock className="w-4 h-4" />}
         />
         <StatTile
           label={t("pathways.facilitator.detail.overview.endDate")}
-          value={cohort.endDate ? new Date(cohort.endDate).toLocaleDateString() : "—"}
+          value={
+            cohort.endDate ? new Date(cohort.endDate).toLocaleDateString() : "—"
+          }
           icon={<Clock className="w-4 h-4" />}
         />
       </div>
@@ -701,8 +858,14 @@ function OverviewTab({ cohort, progress }: { cohort: Cohort; progress: CohortPro
               onClick={copy}
               className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-700/50 dark:text-indigo-300 text-xs font-medium hover:bg-indigo-50 dark:hover:bg-indigo-800/30"
             >
-              {copied ? <CheckCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? t("pathways.facilitator.detail.overview.copied") : t("pathways.common.copy")}
+              {copied ? (
+                <CheckCheck className="w-3.5 h-3.5" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+              {copied
+                ? t("pathways.facilitator.detail.overview.copied")
+                : t("pathways.common.copy")}
             </button>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
@@ -732,10 +895,16 @@ function OverviewTab({ cohort, progress }: { cohort: Cohort; progress: CohortPro
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {t(`pathways.tracks.items.${slug}.name`, track?.name ?? slug)}
+                      {t(
+                        `pathways.tracks.items.${slug}.name`,
+                        track?.name ?? slug,
+                      )}
                     </p>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      {track?.modules.length ?? 0} {t("pathways.tracks.modulesCount", { count: track?.modules.length ?? 0 })}
+                      {track?.modules.length ?? 0}{" "}
+                      {t("pathways.tracks.modulesCount", {
+                        count: track?.modules.length ?? 0,
+                      })}
                     </p>
                   </div>
                 </div>
@@ -777,40 +946,86 @@ function RosterTab({
   const { t } = useTranslation();
   const [addEmail, setAddEmail] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
+  const [addNotice, setAddNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+  const auth = {
+    Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+  };
 
+  // #874: this sends an invitation. The response is the same whether or not
+  // an account exists for the address; the learner appears on the roster only
+  // after accepting while signed in as that account.
   const addLearner = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
+    setAddNotice(null);
     if (!addEmail.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/pathways/facilitator/cohorts/${cohort.id}/learners`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...auth },
-        body: JSON.stringify({ email: addEmail.trim() }),
-      });
+      const res = await fetch(
+        `/api/pathways/facilitator/cohorts/${cohort.id}/learners`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...auth },
+          body: JSON.stringify({ email: addEmail.trim() }),
+        },
+      );
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "Failed to add learner");
+        throw new Error(
+          d.error === "invalid_email"
+            ? (t(
+                "pathways.facilitator.detail.roster.invites.invalidEmail",
+              ) as string)
+            : (t(
+                "pathways.facilitator.detail.roster.invites.failed",
+              ) as string),
+        );
       }
       setAddEmail("");
+      setAddNotice(
+        t("pathways.facilitator.detail.roster.invites.sent") as string,
+      );
       onReload();
     } catch (err: unknown) {
-      setAddError(err instanceof Error ? err.message : "Failed to add learner");
+      setAddError(
+        err instanceof Error
+          ? err.message
+          : (t("pathways.facilitator.detail.roster.invites.failed") as string),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  const withdrawInvite = async (inviteId: string) => {
+    await fetch(
+      `/api/pathways/facilitator/cohorts/${cohort.id}/invites/${inviteId}`,
+      {
+        method: "DELETE",
+        headers: auth,
+      },
+    );
+    onReload();
+  };
+
   const removeLearner = async (userId: string, name: string | null) => {
-    if (!window.confirm(t("pathways.facilitator.detail.roster.confirmRemove", { name: name ?? "this learner" }))) return;
-    await fetch(`/api/pathways/facilitator/cohorts/${cohort.id}/learners/${userId}`, {
-      method: "DELETE",
-      headers: auth,
-    });
+    if (
+      !window.confirm(
+        t("pathways.facilitator.detail.roster.confirmRemove", {
+          name: name ?? "this learner",
+        }),
+      )
+    )
+      return;
+    await fetch(
+      `/api/pathways/facilitator/cohorts/${cohort.id}/learners/${userId}`,
+      {
+        method: "DELETE",
+        headers: auth,
+      },
+    );
     onReload();
   };
 
@@ -833,17 +1048,34 @@ function RosterTab({
             type="email"
             value={addEmail}
             onChange={(e) => setAddEmail(e.target.value)}
-            placeholder={t("pathways.facilitator.detail.roster.addEmailPlaceholder") as string}
+            placeholder={
+              t(
+                "pathways.facilitator.detail.roster.addEmailPlaceholder",
+              ) as string
+            }
             className="w-full px-3 py-2 rounded-lg border bg-white border-slate-200 text-sm text-slate-900 placeholder-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          {addError && <p className="text-xs text-red-700 dark:text-red-400 mt-1">{addError}</p>}
+          {addError && (
+            <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+              {addError}
+            </p>
+          )}
+          {addNotice && (
+            <p
+              className="text-xs text-emerald-700 dark:text-emerald-400 mt-1"
+              role="status"
+            >
+              {addNotice}
+            </p>
+          )}
         </div>
         <button
           type="submit"
           disabled={submitting}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white text-sm font-medium"
         >
-          <Plus className="w-4 h-4" /> {t("pathways.facilitator.detail.roster.addLearner")}
+          <Plus className="w-4 h-4" />{" "}
+          {t("pathways.facilitator.detail.roster.addLearner")}
         </button>
         <button
           type="button"
@@ -853,6 +1085,56 @@ function RosterTab({
           <Download className="w-4 h-4" /> {t("pathways.common.exportCsv")}
         </button>
       </form>
+
+      {/* #874: rows from before consent tracking are counted, not named. */}
+      {(cohort.unconfirmedLegacyCount ?? 0) > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
+          {t("pathways.facilitator.detail.roster.legacyNotice", {
+            count: cohort.unconfirmedLegacyCount,
+          })}
+        </div>
+      )}
+
+      {/* #874: outstanding invitations, shown by the address as typed. */}
+      {(cohort.pendingInvites?.length ?? 0) > 0 && (
+        <Card>
+          <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            {t("pathways.facilitator.detail.roster.invites.title")}
+          </div>
+          <ul className="divide-y divide-slate-200 dark:divide-slate-700/50">
+            {cohort.pendingInvites!.map((inv) => (
+              <li
+                key={inv.id}
+                className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm"
+              >
+                <span className="font-mono text-slate-900 dark:text-slate-100 break-all">
+                  {inv.email}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                  {t(
+                    `pathways.facilitator.detail.roster.invites.status.${inv.status}`,
+                    {
+                      defaultValue: inv.status,
+                    },
+                  )}
+                </span>
+                <span className="text-xs text-slate-500 flex-1">
+                  {t("pathways.facilitator.detail.roster.invites.expires", {
+                    date: new Date(inv.expiresAt).toLocaleDateString(),
+                  })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => withdrawInvite(inv.id)}
+                  className="text-xs px-2 py-1 rounded text-slate-600 hover:text-red-700 hover:bg-red-50 dark:text-slate-300 dark:hover:text-red-400 dark:hover:bg-red-900/20 min-h-[44px]"
+                >
+                  {t("pathways.facilitator.detail.roster.invites.withdraw")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {cohort.enrollments.length === 0 ? (
         <Card>
@@ -883,14 +1165,20 @@ function RosterTab({
                     </div>
                     <button
                       onClick={() => removeLearner(e.user.id, e.user.name)}
-                      aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
+                      aria-label={
+                        t(
+                          "pathways.facilitator.detail.roster.removeLearner",
+                        ) as string
+                      }
                       className="shrink-0 p-2 -m-1 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-slate-500 hover:text-red-700 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                   {e.user.name && e.user.email && (
-                    <p className="text-xs text-slate-600 dark:text-slate-500 truncate">{e.user.email}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-500 truncate">
+                      {e.user.email}
+                    </p>
                   )}
                   <div className="mt-3 flex items-center justify-between text-xs">
                     <span className="text-slate-700 dark:text-slate-300">
@@ -900,7 +1188,9 @@ function RosterTab({
                       <span className="text-slate-500">/7 modules</span>
                     </span>
                     <span className="text-slate-600 dark:text-slate-500">
-                      {lp?.lastActive ? new Date(lp.lastActive).toLocaleDateString() : "—"}
+                      {lp?.lastActive
+                        ? new Date(lp.lastActive).toLocaleDateString()
+                        : "—"}
                     </span>
                   </div>
                 </div>
@@ -913,9 +1203,15 @@ function RosterTab({
             <table className="w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 <tr>
-                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.name")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.completed")}</th>
-                  <th className="px-5 py-3">{t("pathways.facilitator.detail.roster.col.lastActive")}</th>
+                  <th className="px-5 py-3">
+                    {t("pathways.facilitator.detail.roster.col.name")}
+                  </th>
+                  <th className="px-5 py-3">
+                    {t("pathways.facilitator.detail.roster.col.completed")}
+                  </th>
+                  <th className="px-5 py-3">
+                    {t("pathways.facilitator.detail.roster.col.lastActive")}
+                  </th>
                   <th className="px-5 py-3"></th>
                 </tr>
               </thead>
@@ -923,7 +1219,10 @@ function RosterTab({
                 {cohort.enrollments.map((e) => {
                   const lp = progress?.learners.find((l) => l.id === e.user.id);
                   return (
-                    <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <tr
+                      key={e.id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2">
                           <OnboardingDot status={lp?.onboardingStatus} />
@@ -934,18 +1233,27 @@ function RosterTab({
                             {e.user.name ?? e.user.email}
                           </Link>
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-500 ml-4">{e.user.email}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-500 ml-4">
+                          {e.user.email}
+                        </p>
                       </td>
                       <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
-                        {lp?.completedCount ?? 0}<span className="text-slate-500">/7</span>
+                        {lp?.completedCount ?? 0}
+                        <span className="text-slate-500">/7</span>
                       </td>
                       <td className="px-5 py-3 text-xs text-slate-600 dark:text-slate-500">
-                        {lp?.lastActive ? new Date(lp.lastActive).toLocaleDateString() : "—"}
+                        {lp?.lastActive
+                          ? new Date(lp.lastActive).toLocaleDateString()
+                          : "—"}
                       </td>
                       <td className="px-5 py-3 text-right">
                         <button
                           onClick={() => removeLearner(e.user.id, e.user.name)}
-                          aria-label={t("pathways.facilitator.detail.roster.removeLearner") as string}
+                          aria-label={
+                            t(
+                              "pathways.facilitator.detail.roster.removeLearner",
+                            ) as string
+                          }
                           className="p-1.5 rounded text-slate-500 hover:text-red-700 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -975,7 +1283,13 @@ const CYBER_MODULE_SLUGS = [
   "capstone-security-plan",
 ];
 
-function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProgress | null }) {
+function ModulesTab({
+  cohort,
+  progress,
+}: {
+  cohort: Cohort;
+  progress: CohortProgress | null;
+}) {
   const { t } = useTranslation();
   const enrolled = cohort.enrollments.length;
 
@@ -997,7 +1311,8 @@ function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProg
       }
     }
     const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : null;
-    const completionPct = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
+    const completionPct =
+      enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
     return { slug, i, completed, inProgress, avgScore, completionPct };
   });
 
@@ -1025,14 +1340,19 @@ function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProg
                 </p>
                 <p className="text-slate-900 dark:text-slate-100 font-semibold">
                   {r.completed}/{enrolled}
-                  <span className="text-slate-500 font-normal"> ({r.completionPct}%)</span>
+                  <span className="text-slate-500 font-normal">
+                    {" "}
+                    ({r.completionPct}%)
+                  </span>
                 </p>
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
                   {t("pathways.facilitator.detail.modules.col.inProgress")}
                 </p>
-                <p className="text-slate-700 dark:text-slate-300">{r.inProgress}</p>
+                <p className="text-slate-700 dark:text-slate-300">
+                  {r.inProgress}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
@@ -1052,10 +1372,18 @@ function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProg
         <table className="w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/80 text-left text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
             <tr>
-              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.module")}</th>
-              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.completed")}</th>
-              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.inProgress")}</th>
-              <th className="px-5 py-3">{t("pathways.facilitator.detail.modules.col.avgScore")}</th>
+              <th className="px-5 py-3">
+                {t("pathways.facilitator.detail.modules.col.module")}
+              </th>
+              <th className="px-5 py-3">
+                {t("pathways.facilitator.detail.modules.col.completed")}
+              </th>
+              <th className="px-5 py-3">
+                {t("pathways.facilitator.detail.modules.col.inProgress")}
+              </th>
+              <th className="px-5 py-3">
+                {t("pathways.facilitator.detail.modules.col.avgScore")}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-700/50">
@@ -1073,11 +1401,17 @@ function ModulesTab({ cohort, progress }: { cohort: Cohort; progress: CohortProg
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-900 dark:text-slate-100 font-medium">{r.completed}/{enrolled}</span>
-                    <span className="text-xs text-slate-500">({r.completionPct}%)</span>
+                    <span className="text-slate-900 dark:text-slate-100 font-medium">
+                      {r.completed}/{enrolled}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      ({r.completionPct}%)
+                    </span>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-slate-700 dark:text-slate-300">{r.inProgress}</td>
+                <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
+                  {r.inProgress}
+                </td>
                 <td className="px-5 py-3 text-slate-700 dark:text-slate-300">
                   {r.avgScore !== null ? `${r.avgScore}%` : "—"}
                 </td>
@@ -1134,15 +1468,28 @@ function CalendarTab({ cohort }: { cohort: Cohort }) {
         ) : (
           <ol className="space-y-3">
             {sessions.map((s) => (
-              <li key={s.week} className="flex items-center gap-4 p-3 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50">
+              <li
+                key={s.week}
+                className="flex items-center gap-4 p-3 rounded-lg bg-slate-50 border border-slate-200 dark:bg-slate-900/50 dark:border-slate-700/50"
+              >
                 <div className="w-12 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">{t("pathways.facilitator.detail.calendar.week")}</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{s.week}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {t("pathways.facilitator.detail.calendar.week")}
+                  </p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {s.week}
+                  </p>
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{s.focus}</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                    {s.focus}
+                  </p>
                   <p className="text-xs text-slate-600 dark:text-slate-500 mt-0.5">
-                    {s.date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                    {s.date.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
               </li>
@@ -1156,13 +1503,21 @@ function CalendarTab({ cohort }: { cohort: Cohort }) {
 
 // ─── Notes Tab ─────────────────────────────────────────────────────────
 
-function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }) {
+function NotesTab({
+  cohort,
+  onReload,
+}: {
+  cohort: Cohort;
+  onReload: () => void;
+}) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const notes = cohort.notes ?? [];
 
-  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+  const auth = {
+    Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+  };
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1193,7 +1548,9 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={3}
-              placeholder={t("pathways.facilitator.detail.notes.placeholder") as string}
+              placeholder={
+                t("pathways.facilitator.detail.notes.placeholder") as string
+              }
               className="w-full px-3 py-2 rounded-lg border bg-white border-slate-200 text-sm text-slate-900 placeholder-slate-400 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
             <div className="flex justify-end">
@@ -1202,7 +1559,8 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
                 disabled={submitting || !draft.trim()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-400 text-white text-sm font-medium"
               >
-                <StickyNote className="w-3.5 h-3.5" /> {t("pathways.facilitator.detail.notes.save")}
+                <StickyNote className="w-3.5 h-3.5" />{" "}
+                {t("pathways.facilitator.detail.notes.save")}
               </button>
             </div>
           </form>
@@ -1220,7 +1578,9 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
           {[...notes].reverse().map((n, i) => (
             <Card key={i}>
               <CardBody className="space-y-1">
-                <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line">{n.text}</p>
+                <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line">
+                  {n.text}
+                </p>
                 <p className="text-[11px] text-slate-500">
                   {n.author} · {new Date(n.ts).toLocaleString()}
                 </p>
@@ -1235,10 +1595,18 @@ function NotesTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }
 
 // ─── Settings Tab ──────────────────────────────────────────────────────
 
-function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => void }) {
+function SettingsTab({
+  cohort,
+  onReload,
+}: {
+  cohort: Cohort;
+  onReload: () => void;
+}) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState<string | null>(null);
-  const auth = { Authorization: `Bearer ${localStorage.getItem("bb_access_token")}` };
+  const auth = {
+    Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
+  };
 
   const action = async (path: string, key: string, confirmMsg?: string) => {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -1254,7 +1622,14 @@ function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => voi
     }
   };
 
-  const lifecycleButtons: { path: string; key: string; label: string; icon: React.ReactNode; visible: boolean; danger?: boolean }[] = [
+  const lifecycleButtons: {
+    path: string;
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    visible: boolean;
+    danger?: boolean;
+  }[] = [
     {
       path: "start",
       key: "start",
@@ -1299,20 +1674,32 @@ function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => voi
         </CardHeader>
         <CardBody>
           <div className="flex flex-wrap gap-2">
-            {lifecycleButtons.filter((b) => b.visible).map((b) => (
-              <button
-                key={b.key}
-                onClick={() => action(b.path, b.key, b.danger ? (t("pathways.facilitator.detail.settings.confirmArchive") as string) : undefined)}
-                disabled={busy === b.key}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  b.danger
-                    ? "border bg-white border-red-200 text-red-700 hover:bg-red-50 dark:bg-slate-800 dark:border-red-800/30 dark:text-red-400 dark:hover:bg-red-900/20"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                }`}
-              >
-                {b.icon} {b.label}
-              </button>
-            ))}
+            {lifecycleButtons
+              .filter((b) => b.visible)
+              .map((b) => (
+                <button
+                  key={b.key}
+                  onClick={() =>
+                    action(
+                      b.path,
+                      b.key,
+                      b.danger
+                        ? (t(
+                            "pathways.facilitator.detail.settings.confirmArchive",
+                          ) as string)
+                        : undefined,
+                    )
+                  }
+                  disabled={busy === b.key}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    b.danger
+                      ? "border bg-white border-red-200 text-red-700 hover:bg-red-50 dark:bg-slate-800 dark:border-red-800/30 dark:text-red-400 dark:hover:bg-red-900/20"
+                      : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  }`}
+                >
+                  {b.icon} {b.label}
+                </button>
+              ))}
           </div>
         </CardBody>
       </Card>
@@ -1332,11 +1719,21 @@ function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => voi
               {cohort.joinCode}
             </code>
             <button
-              onClick={() => action("regenerate-code", "regen", t("pathways.facilitator.detail.settings.confirmRegen") as string)}
+              onClick={() =>
+                action(
+                  "regenerate-code",
+                  "regen",
+                  t(
+                    "pathways.facilitator.detail.settings.confirmRegen",
+                  ) as string,
+                )
+              }
               disabled={busy === "regen"}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 text-sm text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${busy === "regen" ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${busy === "regen" ? "animate-spin" : ""}`}
+              />
               {t("pathways.facilitator.detail.settings.regenerateCode")}
             </button>
           </div>
@@ -1347,7 +1744,9 @@ function SettingsTab({ cohort, onReload }: { cohort: Cohort; onReload: () => voi
         <CardHeader>
           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <AlertCircle className="w-4 h-4" />
-            <h3 className="font-semibold">{t("pathways.facilitator.detail.settings.dataTitle")}</h3>
+            <h3 className="font-semibold">
+              {t("pathways.facilitator.detail.settings.dataTitle")}
+            </h3>
           </div>
         </CardHeader>
         <CardBody>
