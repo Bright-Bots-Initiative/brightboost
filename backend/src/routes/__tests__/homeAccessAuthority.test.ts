@@ -747,4 +747,40 @@ describe("#872 session provenance is server-issued", () => {
       .set(bearer(homeStudent));
     expect(hydrate.body.user.email).toBe("home@example.com");
   });
+
+  it("HA-28: the sibling profile endpoints follow the same rule", async () => {
+    const row = {
+      id: STUDENT_ID,
+      name: "Ada",
+      email: "home@example.com",
+      role: "student",
+      school: null,
+      subject: null,
+      avatarUrl: null,
+      createdAt: new Date("2026-01-01"),
+    };
+    prismaMock.user.findUnique.mockResolvedValue(row);
+    prismaMock.user.update.mockResolvedValue(row);
+
+    for (const session of [classroom, classroomPin]) {
+      const self = await request(app)
+        .get(`/api/users/${STUDENT_ID}`)
+        .set(bearer(session));
+      expect(self.status).toBe(200);
+      expect(self.body.email).toBeNull();
+
+      const edited = await request(app)
+        .post("/api/edit-profile")
+        .set(bearer(session))
+        .send({});
+      expect(edited.status).toBe(200);
+      expect(edited.body.user.email).toBeNull();
+      expect(JSON.stringify(edited.body)).not.toContain("home@example.com");
+    }
+
+    const home = await request(app)
+      .get(`/api/users/${STUDENT_ID}`)
+      .set(bearer(homeStudent));
+    expect(home.body.email).toBe("home@example.com");
+  });
 });
