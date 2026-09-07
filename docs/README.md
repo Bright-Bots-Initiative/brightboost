@@ -11,7 +11,7 @@ Start at the repo [`README.md`](../README.md). From there, every canonical topic
 | [`agents/`](agents/)                         | Agent bootstrap, always-on rules, skills, learned notes, MCP notes |
 | [`guides/`](guides/)                         | Human deep-dives: local-dev, parallel clones, AI coding practices  |
 | [`internship-program/`](internship-program/) | Canonical cohort standard, plan template, anonymized lessons       |
-| [`ops/`](ops/)                               | CI jobs, branch protection, deployment pipeline inventory          |
+| [`ops/`](ops/)                               | CI jobs, branch protection, deployment pipeline, staff capability  |
 | [`pilot/`](pilot/)                           | Partner / evaluator / pilot readiness material and demo accounts   |
 | [`frontend/`](frontend/)                     | Frontend dashboard and accessibility notes                         |
 | [`games/`](games/)                           | Game design notes                                                  |

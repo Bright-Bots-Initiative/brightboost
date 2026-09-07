@@ -2,6 +2,11 @@
  * Internal A/B Testing dashboard — team tool, not student-facing.
  * Lists experiments, creates new ones, inspects side-by-side results,
  * and allows completing an experiment with a written conclusion.
+ *
+ * #873: staff only (admin role). The route is guarded by ProtectedRoute and
+ * every API call behind it requires the server-side staff capability; a
+ * teacher account gets 403 from the backend regardless of what the client
+ * renders.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -97,7 +102,9 @@ function ComparisonBar({
             style={{ width: `${(controlValue / max) * 100}%` }}
           />
         </div>
-        <span className="text-xs font-mono text-right">{format(controlValue)}</span>
+        <span className="text-xs font-mono text-right">
+          {format(controlValue)}
+        </span>
       </div>
       <div className="grid grid-cols-[70px_1fr_90px] items-center gap-2">
         <span className="text-xs text-slate-500">Variant</span>
@@ -107,7 +114,9 @@ function ComparisonBar({
             style={{ width: `${(variantValue / max) * 100}%` }}
           />
         </div>
-        <span className="text-xs font-mono text-right">{format(variantValue)}</span>
+        <span className="text-xs font-mono text-right">
+          {format(variantValue)}
+        </span>
       </div>
     </div>
   );
@@ -204,7 +213,9 @@ function NewExperimentForm({
         />
       </div>
       <div className="space-y-2">
-        <Label>Traffic split: {trafficSplit}% variant / {100 - trafficSplit}% control</Label>
+        <Label>
+          Traffic split: {trafficSplit}% variant / {100 - trafficSplit}% control
+        </Label>
         <Slider
           value={[trafficSplit]}
           min={0}
@@ -252,9 +263,15 @@ function ExperimentDetail({
     loadResults();
   }, [loadResults]);
 
-  const setStatus = async (status: ExperimentStatus, extra?: Record<string, unknown>) => {
+  const setStatus = async (
+    status: ExperimentStatus,
+    extra?: Record<string, unknown>,
+  ) => {
     try {
-      const updated = await api.put(`/experiments/${experiment.id}`, { status, ...extra });
+      const updated = await api.put(`/experiments/${experiment.id}`, {
+        status,
+        ...extra,
+      });
       onUpdated(updated);
     } catch (err) {
       toast({
@@ -267,7 +284,10 @@ function ExperimentDetail({
 
   const complete = async () => {
     if (!conclusion.trim()) {
-      toast({ title: "Please write a conclusion first", variant: "destructive" });
+      toast({
+        title: "Please write a conclusion first",
+        variant: "destructive",
+      });
       return;
     }
     await setStatus("completed", { conclusion });
@@ -290,7 +310,9 @@ function ExperimentDetail({
             <h2 className="text-xl font-bold">{experiment.name}</h2>
             <code className="text-xs text-slate-500">{experiment.slug}</code>
           </div>
-          <Badge variant={statusVariant(experiment.status)}>{experiment.status}</Badge>
+          <Badge variant={statusVariant(experiment.status)}>
+            {experiment.status}
+          </Badge>
         </div>
         <div className="text-sm text-slate-700">
           <strong>Hypothesis:</strong> {experiment.hypothesis}
@@ -308,10 +330,14 @@ function ExperimentDetail({
 
         <div className="flex flex-wrap gap-2 pt-2">
           {experiment.status === "draft" && (
-            <Button onClick={() => setStatus("running")}>Start experiment</Button>
+            <Button onClick={() => setStatus("running")}>
+              Start experiment
+            </Button>
           )}
           {experiment.status === "running" && !completing && (
-            <Button onClick={() => setCompleting(true)}>Complete experiment</Button>
+            <Button onClick={() => setCompleting(true)}>
+              Complete experiment
+            </Button>
           )}
           {experiment.status !== "archived" && (
             <Button variant="outline" onClick={() => setStatus("archived")}>
@@ -431,7 +457,9 @@ export default function ExperimentDashboard() {
 
   const handleUpdated = (updated: Experiment) => {
     setExperiments((prev) =>
-      prev ? prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)) : prev,
+      prev
+        ? prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e))
+        : prev,
     );
   };
 
@@ -458,14 +486,17 @@ export default function ExperimentDashboard() {
         <div>
           <h1 className="text-2xl font-bold">A/B Experiments</h1>
           <p className="text-sm text-slate-500">
-            Internal team dashboard for running lightweight tests on the platform.
+            Internal team dashboard for running lightweight tests on the
+            platform.
           </p>
         </div>
         <div className="flex gap-2">
           <Link to="/teacher/dashboard">
             <Button variant="outline">Teacher dashboard</Button>
           </Link>
-          {!creating && <Button onClick={() => setCreating(true)}>New experiment</Button>}
+          {!creating && (
+            <Button onClick={() => setCreating(true)}>New experiment</Button>
+          )}
         </div>
       </div>
 
@@ -496,7 +527,9 @@ export default function ExperimentDashboard() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold">{exp.name}</h3>
-                    <Badge variant={statusVariant(exp.status)}>{exp.status}</Badge>
+                    <Badge variant={statusVariant(exp.status)}>
+                      {exp.status}
+                    </Badge>
                   </div>
                   <code className="text-xs text-slate-500">{exp.slug}</code>
                   <p className="text-sm text-slate-700 mt-2 line-clamp-2">

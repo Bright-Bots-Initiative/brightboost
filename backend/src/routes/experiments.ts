@@ -1,10 +1,20 @@
 /**
  * A/B Testing API — lightweight experiment framework for internal team use.
- * Interns create experiments, games consume variants, dashboard aggregates results.
+ * Staff create and manage experiments, games consume variants, the dashboard
+ * aggregates results.
+ *
+ * #873: experiments are global — one row changes the traffic split every
+ * learner sees — so listing, creating, updating (and the Slack notifications a
+ * status change triggers) and reading results require the explicit staff
+ * capability (`requireStaff`, role `admin`, re-read from the database). A
+ * publicly registered teacher never holds it, and being `createdBy` on a row
+ * grants nothing. Learner routes (variant assignment, event tracking) stay open
+ * to every authenticated user and keep their side effects.
  */
 import { Router, Request, Response } from "express";
 import prisma from "../utils/prisma";
-import { requireAuth, requireRole } from "../utils/auth";
+import { requireAuth } from "../utils/auth";
+import { requireStaff } from "../utils/staff";
 import { notifySlack } from "../utils/slack";
 import { z } from "zod";
 
@@ -13,7 +23,11 @@ const router = Router();
 // ── Validation ──────────────────────────────────────────────────────────
 
 const createExperimentSchema = z.object({
-  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, "slug must be kebab-case"),
+  slug: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, "slug must be kebab-case"),
   name: z.string().min(1).max(200),
   hypothesis: z.string().min(1).max(1000),
   metric: z.string().min(1).max(100),
@@ -42,7 +56,7 @@ const MILESTONE_THRESHOLDS = new Set([25, 50, 100]);
 router.get(
   "/experiments",
   requireAuth,
-  requireRole("teacher"),
+  requireStaff,
   async (_req: Request, res: Response) => {
     const experiments = await prisma.experiment.findMany({
       orderBy: { createdAt: "desc" },
@@ -59,7 +73,7 @@ router.get(
 router.post(
   "/experiments",
   requireAuth,
-  requireRole("teacher"),
+  requireStaff,
   async (req: Request, res: Response) => {
     const parsed = createExperimentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -90,7 +104,7 @@ router.post(
 router.put(
   "/experiments/:id",
   requireAuth,
-  requireRole("teacher"),
+  requireStaff,
   async (req: Request, res: Response) => {
     const parsed = updateExperimentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -144,7 +158,10 @@ router.get(
 
     // Only running experiments split traffic. Otherwise, everyone is control.
     if (experiment.status !== "running") {
-      return res.json({ variant: "control", experimentStatus: experiment.status });
+      return res.json({
+        variant: "control",
+        experimentStatus: experiment.status,
+      });
     }
 
     const userId = req.user!.id;
@@ -216,7 +233,7 @@ router.post(
 router.get(
   "/experiments/:id/results",
   requireAuth,
-  requireRole("teacher"),
+  requireStaff,
   async (req: Request, res: Response) => {
     const experiment = await prisma.experiment.findUnique({
       where: { id: req.params.id },
@@ -231,19 +248,28 @@ router.get(
       }),
       prisma.experimentEvent.findMany({
         where: { experimentId: experiment.id },
-        select: { variant: true, eventName: true, eventValue: true, userId: true },
+        select: {
+          variant: true,
+          eventName: true,
+          eventValue: true,
+          userId: true,
+        },
       }),
     ]);
 
     const buildSide = (variant: "control" | "variant") => {
-      const users = assignments.find((a) => a.variant === variant)?._count._all ?? 0;
+      const users =
+        assignments.find((a) => a.variant === variant)?._count._all ?? 0;
       const variantEvents = events.filter((e) => e.variant === variant);
 
       const eventCounts: Record<string, number> = {};
       const metricValues: number[] = [];
       for (const e of variantEvents) {
         eventCounts[e.eventName] = (eventCounts[e.eventName] ?? 0) + 1;
-        if (e.eventName === experiment.metric && typeof e.eventValue === "number") {
+        if (
+          e.eventName === experiment.metric &&
+          typeof e.eventValue === "number"
+        ) {
           metricValues.push(e.eventValue);
         }
       }
