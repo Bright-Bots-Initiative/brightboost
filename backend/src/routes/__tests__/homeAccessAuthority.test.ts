@@ -783,4 +783,37 @@ describe("#872 session provenance is server-issued", () => {
       .set(bearer(homeStudent));
     expect(home.body.email).toBe("home@example.com");
   });
+
+  it("HA-29: the response guard withholds credential fields from every JSON reply to a classroom session", async () => {
+    // Avatar changes are ordinary K-2 activity that echo the user row; the
+    // structural guard (not a per-route fix) must strip email and parentEmail.
+    prismaMock.user.update.mockResolvedValue({
+      id: STUDENT_ID,
+      name: "Ada",
+      email: "home@example.com",
+      role: "student",
+      avatarUrl: "https://example.com/a.png",
+    });
+    for (const session of [classroom, classroomPin]) {
+      const patched = await request(app)
+        .patch("/api/user/avatar")
+        .set(bearer(session))
+        .send({ avatarUrl: "https://example.com/a.png" });
+      expect(patched.status).toBe(200);
+      expect(patched.body.user.email).toBeNull();
+      expect(patched.text).not.toContain("home@example.com");
+
+      const removed = await request(app)
+        .delete("/api/user/avatar")
+        .set(bearer(session));
+      expect(removed.status).toBe(200);
+      expect(removed.body.user.email).toBeNull();
+    }
+
+    // The home session is untouched by the guard.
+    const home = await request(app)
+      .delete("/api/user/avatar")
+      .set(bearer(homeStudent));
+    expect(home.body.user.email).toBe("home@example.com");
+  });
 });
