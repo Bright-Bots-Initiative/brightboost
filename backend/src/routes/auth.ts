@@ -341,7 +341,7 @@ router.post("/auth/register-pathways", async (req: Request, res: Response) => {
     // Enroll in cohort. #874: registering with the cohort code is the
     // learner's own act, so this relationship is trusted from the start.
     await prisma.pathwayEnrollment.create({
-      data: selfRegisteredEnrollmentData(user.id, cohort.id),
+      data: selfRegisteredEnrollmentData(user.id, cohort.id, cohort.trackIds),
     });
 
     await logAudit("PATHWAYS_REGISTER", user.id, {

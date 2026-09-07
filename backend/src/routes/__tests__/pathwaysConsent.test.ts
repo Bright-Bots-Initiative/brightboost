@@ -55,10 +55,13 @@ vi.mock("@prisma/client", async (importOriginal) => ({
 import app from "../../server";
 import {
   averageVisibleScore,
+  boundariesOf,
   isTrustedEnrollment,
+  matchableEmail,
   moduleEvidence,
   projectMilestone,
   visibleMilestones,
+  withTrackBoundaries,
   type ProvenanceEvent,
 } from "../../services/pathwaysAccess";
 
@@ -335,6 +338,73 @@ describe("#874 history boundary helpers", () => {
     expect(out).not.toBe(r);
     expect(r.homeworkResponse).toBe("text");
     expect(r.score).toBe(91);
+  });
+
+  it("BND-9: track boundaries keep earlier consent, add new tracks at the act, drop unlisted ones", () => {
+    const first = withTrackBoundaries(null, ["a", "b"], new Date("2026-06-01"));
+    expect(first).toEqual({
+      a: "2026-06-01T00:00:00.000Z",
+      b: "2026-06-01T00:00:00.000Z",
+    });
+    const later = withTrackBoundaries(
+      first,
+      ["b", "c"],
+      new Date("2026-07-01"),
+    );
+    expect(later).toEqual({
+      b: "2026-06-01T00:00:00.000Z",
+      c: "2026-07-01T00:00:00.000Z",
+    });
+    // Editing the cohort's tracks alone yields no boundary for the new track.
+    const accepted = new Date("2026-06-01");
+    expect(boundariesOf(["a", "b", "c"], accepted, first)).toEqual([
+      { trackIds: ["a"], since: accepted },
+      { trackIds: ["b"], since: accepted },
+    ]);
+    // A snapshot can never predate the acceptance; a missing snapshot
+    // (operator-written row) falls back to the cohort's tracks at acceptance.
+    expect(
+      boundariesOf(["a"], new Date("2026-06-15"), {
+        a: "2026-06-01T00:00:00.000Z",
+      }),
+    ).toEqual([{ trackIds: ["a"], since: new Date("2026-06-15") }]);
+    expect(boundariesOf(["a"], accepted, null)).toEqual([
+      { trackIds: ["a"], since: accepted },
+    ]);
+  });
+
+  it("BND-10: only an account whose login email is its parent's address is excluded from invitation matching", () => {
+    const base = {
+      email: "Kid@Example.com",
+      homeAccessEnabled: true,
+      managedByParent: true,
+      parentEmail: null as string | null,
+    };
+    expect(
+      matchableEmail({ ...base, parentEmail: "kid@example.com" }),
+    ).toBeNull();
+    expect(matchableEmail({ ...base, parentEmail: "mom@example.com" })).toBe(
+      "kid@example.com",
+    );
+    expect(matchableEmail({ ...base, parentEmail: null })).toBe(
+      "kid@example.com",
+    );
+    expect(
+      matchableEmail({
+        ...base,
+        managedByParent: false,
+        parentEmail: "kid@example.com",
+      }),
+    ).toBe("kid@example.com");
+    expect(
+      matchableEmail({
+        ...base,
+        homeAccessEnabled: false,
+        parentEmail: "kid@example.com",
+      }),
+    ).toBe("kid@example.com");
+    expect(matchableEmail({ ...base, email: null })).toBeNull();
+    expect(matchableEmail(null)).toBeNull();
   });
 
   it("BND-8: averages exclude withheld scores instead of counting them as zero", () => {

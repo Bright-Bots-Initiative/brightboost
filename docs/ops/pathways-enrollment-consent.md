@@ -47,16 +47,34 @@ pre-consent module and homework text revised without a new submission stay withh
 own routes and views are untouched.
 
 XP, badges and CTF activity are counted since acceptance; the lifetime longest streak is not shared.
-Every acceptance is its own boundary: after a revocation, a fresh invitation starts a new boundary
-(work from the earlier relationship becomes history); re-accepting an already accepted invitation
-keeps the original moment. A revoked learner cannot restart through the join code — only a fresh
-invitation.
+The learner-level gamification view returns XP events without their `metadata` (it names the
+track of every act, including tracks outside the facilitator's cohorts). Every acceptance is its
+own boundary: after a revocation, a fresh invitation starts a new boundary (work from the earlier
+relationship becomes history); re-accepting an already accepted invitation keeps the original
+moment. A revoked learner cannot restart through the join code — only a fresh invitation.
+
+### Consent is per track
+
+`PathwayEnrollment.trackBoundaries` snapshots the cohort's tracks at the moment of consent
+(`{ "<trackSlug>": "<ISO boundary>" }`). A facilitator editing the cohort's `trackIds` afterwards
+shares nothing new: a track the learner never consented to is not visible, however old or new
+its work. The learner consents to an added track by re-entering the join code (idempotent for the
+original acceptance moment), and that track's boundary is the re-entry moment. A track the cohort
+no longer lists is hidden. Rows written by operator SQL without a snapshot fall back to the
+cohort's current tracks at the acceptance moment — set the snapshot in the backfill (below).
+
+Known residuals: `createdAt` is a database default while `acceptedAt` is set by the application,
+so a clock skew between the two could show a row started moments before acceptance as
+post-consent; run both on synchronised clocks. Homework revised after acceptance without a fresh
+submission event stays withheld (see above).
 
 ## Home-access accounts
 
-A classroom student whose home login was bound by a parent (#872, `homeAccessEnabled`) carries the
-adult's email. Such an account never matches a Pathways invitation by email: it lists none, cannot
-accept one, and joining by code does not adopt an invitation addressed to the adult.
+A classroom student whose home login was bound by a parent (#872) can carry the adult's email as
+its login address. An account that is managed by a parent **and** whose login email is the parent's
+address never matches a Pathways invitation by email: it lists none, cannot accept or decline one,
+and joining by code does not adopt an invitation addressed to the adult. A home login that carries
+the learner's own address (a different parent email, or none) matches normally.
 
 ## Rollout: legacy rows fail closed
 
@@ -69,11 +87,18 @@ An operator who can vouch for specific rows may backfill deliberately. Run again
 environment, one cohort at a time, only for learners the operator has verified joined by code:
 
 ```sql
-UPDATE "PathwayEnrollment"
-SET "acceptedAt" = "enrolledAt", "source" = 'join_code'
-WHERE "source" = 'legacy'
-  AND "cohortId" = '<cohort id>'
-  AND "userId" IN ('<verified user id>', '<verified user id>');
+UPDATE "PathwayEnrollment" e
+SET "acceptedAt" = e."enrolledAt",
+    "source" = 'join_code',
+    "trackBoundaries" = (
+      SELECT jsonb_object_agg(t, to_jsonb(to_char(e."enrolledAt", 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')))
+      FROM unnest(c."trackIds") AS t
+    )
+FROM "PathwayCohort" c
+WHERE c."id" = e."cohortId"
+  AND e."source" = 'legacy'
+  AND e."cohortId" = '<cohort id>'
+  AND e."userId" IN ('<verified user id>', '<verified user id>');
 ```
 
 Record the backfill in the ops log. There is no audit row for a direct SQL change.

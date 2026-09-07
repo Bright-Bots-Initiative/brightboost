@@ -750,6 +750,11 @@ model PathwayEnrollment {
   acceptedAt  DateTime?     // learner consent moment; null = untrusted
   revokedAt   DateTime?
   invitedById String?
+  // #874: the tracks this learner consented to share, each with its own
+  // boundary (ISO timestamp): the acceptance moment, or the join-code
+  // re-entry that added a track later. Editing a cohort's trackIds never
+  // widens an existing relationship.
+  trackBoundaries Json?
 
   @@unique([userId, cohortId])
   @@index([cohortId])

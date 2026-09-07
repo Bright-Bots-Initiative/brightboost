@@ -1973,8 +1973,17 @@ router.get(
       where: { userId, createdAt: { gte: since } },
       _sum: { amount: true },
     });
+    // #874: no `metadata` — it names the track of every act, including
+    // tracks outside this facilitator's cohorts.
     const recentEvents = await prisma.pathwayXpEvent.findMany({
       where: { userId, createdAt: { gte: since } },
+      select: {
+        id: true,
+        amount: true,
+        source: true,
+        sourceRefId: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 20,
     });

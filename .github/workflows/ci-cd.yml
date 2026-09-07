@@ -199,9 +199,8 @@ jobs:
         run: cd backend && npm run db:generate
 
       - name: Run PostgreSQL-backed authorization regressions
-        run: cd backend && npx vitest run db.test
+        run: cd backend && REQUIRE_TEST_DATABASE=1 npx vitest run db.test
         env:
-          REQUIRE_TEST_DATABASE: "1"
           SESSION_SECRET: ci-only-session-secret-not-production
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/brightboost_test

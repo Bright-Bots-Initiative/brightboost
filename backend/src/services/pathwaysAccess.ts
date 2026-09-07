@@ -102,6 +102,65 @@ export function isTrustedEnrollment(e: {
 
 export type Boundary = { trackIds: readonly string[]; since: Date };
 
+/** trackSlug → ISO boundary, stored on PathwayEnrollment.trackBoundaries. */
+export type TrackBoundaries = Record<string, string>;
+
+/**
+ * The tracks a learner is consenting to share, each with its boundary. A
+ * track already in `existing` keeps its earlier boundary; a track the cohort
+ * added since starts at `at` (the learner's re-entry of the join code, or the
+ * acceptance itself); a track the cohort no longer lists is dropped.
+ */
+export function withTrackBoundaries(
+  existing: unknown,
+  trackIds: readonly string[],
+  at: Date,
+): TrackBoundaries {
+  const prev =
+    existing && typeof existing === "object"
+      ? (existing as Record<string, unknown>)
+      : {};
+  const out: TrackBoundaries = {};
+  for (const t of trackIds) {
+    const kept = prev[t];
+    out[t] = typeof kept === "string" ? kept : at.toISOString();
+  }
+  return out;
+}
+
+/**
+ * Boundaries for one trusted relationship: one per track the learner
+ * consented to that the cohort still lists, never earlier than the
+ * acceptance. A row without a snapshot (written by operator SQL) falls back
+ * to the cohort's current tracks at the acceptance moment.
+ */
+export function boundariesOf(
+  cohortTrackIds: readonly string[],
+  acceptedAt: Date,
+  snapshot: unknown,
+): Boundary[] {
+  const snap =
+    snapshot && typeof snapshot === "object"
+      ? (snapshot as Record<string, unknown>)
+      : null;
+  const out: Boundary[] = [];
+  for (const t of cohortTrackIds) {
+    if (snap) {
+      const iso = snap[t];
+      if (typeof iso !== "string") continue; // never consented to this track
+      const since = new Date(iso);
+      out.push({
+        trackIds: [t],
+        since:
+          isNaN(since.getTime()) || since < acceptedAt ? acceptedAt : since,
+      });
+    } else {
+      out.push({ trackIds: [t], since: acceptedAt });
+    }
+  }
+  return out;
+}
+
 type MilestoneRow = Prisma.PathwayMilestoneGetPayload<object>;
 
 /** A milestone as a facilitator may see it. */
@@ -202,7 +261,11 @@ export function projectMilestone(
   return {
     ...m,
     createdAt: null,
-    status: completedSince ? "completed" : "in_progress",
+    status: completedSince
+      ? "completed"
+      : m.status === "not_started"
+        ? "not_started"
+        : "in_progress",
     score: null,
     artifacts: null,
     completedAt: completedSince ? m.completedAt : null,
@@ -343,6 +406,7 @@ export async function loadFacilitatorScope(
           enrolledAt: true,
           acceptedAt: true,
           source: true,
+          trackBoundaries: true,
           user: { select: SCOPE_USER_SELECT },
         },
       },
@@ -358,7 +422,7 @@ export async function loadFacilitatorScope(
       if (!e.acceptedAt) continue; // typed as nullable; the where excludes it
       enrollments.push({ ...e, acceptedAt: e.acceptedAt });
       const list = boundariesByUser.get(e.userId) ?? [];
-      list.push({ trackIds: c.trackIds, since: e.acceptedAt });
+      list.push(...boundariesOf(c.trackIds, e.acceptedAt, e.trackBoundaries));
       boundariesByUser.set(e.userId, list);
       const prev = sinceByUser.get(e.userId);
       if (!prev || e.acceptedAt < prev) sinceByUser.set(e.userId, e.acceptedAt);
@@ -453,7 +517,7 @@ export async function enrollByJoinCode(
 }> {
   const cohort = await prisma.pathwayCohort.findUnique({
     where: { joinCode },
-    select: { id: true, name: true },
+    select: { id: true, name: true, trackIds: true },
   });
   if (!cohort) throw new PathwaysAccessError("invalid_join_code", 404);
 
@@ -479,11 +543,25 @@ export async function enrollByJoinCode(
             status: "active",
             source: "join_code",
             acceptedAt: now,
+            trackBoundaries: withTrackBoundaries(null, cohort.trackIds, now),
           },
         });
       } else if (existing.acceptedAt) {
-        // Already trusted: idempotent. Re-read so the reply reflects any
-        // revocation that committed after the first read.
+        // Already trusted: the consent moment is unchanged (idempotent), but
+        // re-entering the code is the learner's consent for any track the
+        // cohort added since — those start their boundary now. Count-guarded
+        // so a revocation that committed after the first read is never
+        // overwritten; re-read so the reply reflects it.
+        await tx.pathwayEnrollment.updateMany({
+          where: { id: existing.id, status: { not: "revoked" } },
+          data: {
+            trackBoundaries: withTrackBoundaries(
+              existing.trackBoundaries,
+              cohort.trackIds,
+              now,
+            ),
+          },
+        });
         row = await tx.pathwayEnrollment.findUniqueOrThrow({
           where: { id: existing.id },
         });
@@ -497,7 +575,12 @@ export async function enrollByJoinCode(
             status: { not: "revoked" },
             acceptedAt: null,
           },
-          data: { acceptedAt: now, source: "join_code", status: "active" },
+          data: {
+            acceptedAt: now,
+            source: "join_code",
+            status: "active",
+            trackBoundaries: withTrackBoundaries(null, cohort.trackIds, now),
+          },
         });
         row = await tx.pathwayEnrollment.findUniqueOrThrow({
           where: { id: existing.id },
@@ -511,7 +594,7 @@ export async function enrollByJoinCode(
       await closePendingInvitesForUser(tx, userId, cohort.id, now);
       return row;
     });
-    return { cohort, enrollment };
+    return { cohort: { id: cohort.id, name: cohort.name }, enrollment };
   } catch (e) {
     // Two simultaneous first joins: the loser's create hits the unique key
     // after the transaction rolled back. Re-run once; it now finds the row.
@@ -527,13 +610,19 @@ export async function enrollByJoinCode(
 }
 
 /** Enrollment created while the learner registers with a cohort code. */
-export function selfRegisteredEnrollmentData(userId: string, cohortId: string) {
+export function selfRegisteredEnrollmentData(
+  userId: string,
+  cohortId: string,
+  trackIds: readonly string[],
+) {
+  const now = new Date();
   return {
     userId,
     cohortId,
     status: "active",
     source: "self_register",
-    acceptedAt: new Date(),
+    acceptedAt: now,
+    trackBoundaries: withTrackBoundaries(null, trackIds, now),
   };
 }
 
@@ -545,7 +634,7 @@ async function closePendingInvitesForUser(
 ) {
   const user = await tx.user.findUnique({
     where: { id: userId },
-    select: { email: true, homeAccessEnabled: true },
+    select: MATCHABLE_USER_SELECT,
   });
   const email = matchableEmail(user);
   if (!email) return;
@@ -701,21 +790,44 @@ export async function revokeEnrollment(cohortId: string, userId: string) {
 
 /**
  * The address an invitation may be matched against. A home-access login
- * (#872) puts an *adult's* email on a minor's classroom account; an
- * invitation addressed to that adult must never be listable or acceptable
- * by the child's account, so such accounts match nothing.
+ * (#872) can put an *adult's* email on a minor's classroom account: the
+ * account is managed by a parent and its login email is that parent's
+ * address. An invitation addressed to that adult must never be listable or
+ * acceptable by the child's account, so such accounts match nothing. A
+ * learner whose home login carries their own address (parent email differs,
+ * or no parent) matches normally.
  */
-function matchableEmail(
-  user: { email: string | null; homeAccessEnabled: boolean } | null,
+export function matchableEmail(
+  user: {
+    email: string | null;
+    homeAccessEnabled: boolean;
+    managedByParent: boolean;
+    parentEmail: string | null;
+  } | null,
 ): string | null {
-  if (!user?.email || user.homeAccessEnabled) return null;
-  return user.email.toLowerCase();
+  if (!user?.email) return null;
+  const email = user.email.toLowerCase();
+  if (
+    user.homeAccessEnabled &&
+    user.managedByParent &&
+    user.parentEmail?.toLowerCase() === email
+  ) {
+    return null;
+  }
+  return email;
 }
+
+const MATCHABLE_USER_SELECT = {
+  email: true,
+  homeAccessEnabled: true,
+  managedByParent: true,
+  parentEmail: true,
+} as const;
 
 async function learnerEmail(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, homeAccessEnabled: true },
+    select: MATCHABLE_USER_SELECT,
   });
   return matchableEmail(user);
 }
@@ -777,6 +889,11 @@ export async function acceptInvitation(userId: string, inviteId: string) {
   if (invite.expiresAt <= now) {
     throw new PathwaysAccessError("invite_expired", 410);
   }
+  const cohort = await prisma.pathwayCohort.findUnique({
+    where: { id: invite.cohortId },
+    select: { trackIds: true },
+  });
+  const trackIds = cohort?.trackIds ?? [];
 
   const result = await prisma.$transaction(async (tx) => {
     const claimed = await tx.pathwayInvite.updateMany({
@@ -790,12 +907,19 @@ export async function acceptInvitation(userId: string, inviteId: string) {
     // original consent moment; only a missing or revoked row starts now.
     const existing = await tx.pathwayEnrollment.findUnique({
       where: { userId_cohortId: { userId, cohortId: invite.cohortId } },
-      select: { acceptedAt: true, status: true },
+      select: { acceptedAt: true, status: true, trackBoundaries: true },
     });
-    const keepAcceptedAt =
-      existing?.acceptedAt && existing.status !== "revoked"
-        ? existing.acceptedAt
-        : now;
+    const stillTrusted =
+      !!existing?.acceptedAt && existing.status !== "revoked";
+    const keepAcceptedAt = stillTrusted ? existing!.acceptedAt! : now;
+    // A fresh relationship (or one re-established after revocation) snapshots
+    // the cohort's tracks from now; a still-trusted one keeps its earlier
+    // boundaries and adds any track the cohort listed since.
+    const trackBoundaries = withTrackBoundaries(
+      stillTrusted ? existing!.trackBoundaries : null,
+      trackIds,
+      now,
+    );
     await tx.pathwayEnrollment.upsert({
       where: { userId_cohortId: { userId, cohortId: invite.cohortId } },
       create: {
@@ -805,6 +929,7 @@ export async function acceptInvitation(userId: string, inviteId: string) {
         source: "facilitator_invite",
         acceptedAt: now,
         invitedById: invite.invitedById,
+        trackBoundaries,
       },
       update: {
         status: "active",
@@ -812,6 +937,7 @@ export async function acceptInvitation(userId: string, inviteId: string) {
         acceptedAt: keepAcceptedAt,
         revokedAt: null,
         invitedById: invite.invitedById,
+        trackBoundaries,
       },
     });
     return { alreadyAccepted: false, cohortId: invite.cohortId };

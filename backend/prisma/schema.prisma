@@ -737,6 +737,7 @@ model PathwayEnrollment {
   acceptedAt  DateTime?
   revokedAt   DateTime?
   invitedById String?
+  trackBoundaries Json?
 
   @@unique([userId, cohortId])
   @@index([cohortId])

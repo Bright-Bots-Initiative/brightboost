@@ -29,6 +29,7 @@ describe.skipIf(!dbUrl)(
       twin: `twin-${tag}`, // joins by code twice at once
       rev: `rev-${tag}`, // invited, accepted, removed, re-invited
       home: `home-${tag}`, // #872 home-access login: the email is an adult's
+      home2: `home2-${tag}`, // home-access login with the learner's own email
       cohort: `coh-${tag}`,
       cohort2: `coh2-${tag}`,
     };
@@ -37,6 +38,7 @@ describe.skipIf(!dbUrl)(
       other: `aisha-${tag}@p.test`,
       ghost: `nobody-${tag}@p.test`,
       homeAdult: `parent-${tag}@p.test`,
+      homeOwn: `casey2-${tag}@p.test`,
     };
     const joinCode = `JN${tag}`.toUpperCase().slice(0, 12);
 
@@ -114,14 +116,24 @@ describe.skipIf(!dbUrl)(
     };
 
     /** No facilitator surface may carry a pre-consent value of the learner. */
-    async function noHistoryLeaks() {
-      for (const path of facilitatorSurfaces()) {
+    async function noHistoryLeaks(userId = ids.learner) {
+      const paths = [
+        ...facilitatorSurfaces(),
+        `/api/pathways/facilitator/learners/${userId}`,
+        `/api/pathways/facilitator/learners/${userId}/gamification`,
+      ];
+      for (const path of paths) {
         const res = await request(app).get(path).set(as("fac"));
         expect(res.status, path).toBe(200);
         expect(res.text, path).not.toContain("PRIVATE-");
         expect(res.text, path).not.toContain("2026-01-1");
         expect(res.text, path).not.toMatch(/"score":91/);
         expect(res.text, path).not.toMatch(/"timeSpentMinutes":42/);
+        if (path.endsWith("/export")) {
+          // CSV cells are quoted values, not JSON pairs.
+          expect(res.text, path).not.toMatch(/"91"/);
+          expect(res.text, path).not.toMatch(/"42"/);
+        }
       }
     }
 
@@ -249,6 +261,20 @@ describe.skipIf(!dbUrl)(
           parentEmail: emails.homeAdult,
         },
       });
+      // A home-access login whose address is the learner's own: the parent
+      // relationship names a different address, so invitations still match.
+      await prisma.user.create({
+        data: {
+          id: ids.home2,
+          name: "Casey Own",
+          role: "student",
+          email: emails.homeOwn,
+          password: hash,
+          homeAccessEnabled: true,
+          managedByParent: true,
+          parentEmail: `guardian2-${tag}@p.test`,
+        },
+      });
       await prisma.pathwayCohort.createMany({
         data: [
           {
@@ -330,6 +356,7 @@ describe.skipIf(!dbUrl)(
       tokens.twin = await login(`taylor-${tag}@p.test`);
       tokens.rev = await login(`riley-${tag}@p.test`);
       tokens.home = await login(emails.homeAdult);
+      tokens.home2 = await login(emails.homeOwn);
     });
 
     afterAll(async () => {
@@ -343,6 +370,7 @@ describe.skipIf(!dbUrl)(
         ids.twin,
         ids.rev,
         ids.home,
+        ids.home2,
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -618,6 +646,26 @@ describe.skipIf(!dbUrl)(
       });
       await noHistoryLeaks();
 
+      // Last activity is the post-consent touch, never a January date.
+      const acceptedAt = (
+        await prisma.pathwayEnrollment.findUniqueOrThrow({
+          where: {
+            userId_cohortId: { userId: ids.learner, cohortId: ids.cohort },
+          },
+        })
+      ).acceptedAt!;
+      const progress = await request(app)
+        .get(`/api/pathways/facilitator/cohort/${ids.cohort}/progress`)
+        .set(as("fac"));
+      expect(progress.status).toBe(200);
+      const mine = progress.body.learners.find(
+        (l: { id: string }) => l.id === ids.learner,
+      );
+      expect(mine).toBeDefined();
+      expect(new Date(mine.lastActive).getTime()).toBeGreaterThanOrEqual(
+        acceptedAt.getTime(),
+      );
+
       // A withheld score is not a zero: the export average is blank, not 0.
       const csv = await request(app)
         .get(`/api/pathways/facilitator/cohorts/${ids.cohort}/export`)
@@ -799,6 +847,84 @@ describe.skipIf(!dbUrl)(
           (x: { trackSlug: string }) => x.trackSlug,
         ),
       ).not.toContain("other-track");
+      // The act in the other track earned XP, but its track is not disclosed.
+      const gam = await request(app)
+        .get(`/api/pathways/facilitator/learners/${ids.learner}/gamification`)
+        .set(as("fac"));
+      expect(gam.status).toBe(200);
+      expect(gam.text).not.toContain("other-track");
+      expect(gam.body.recentEvents.length).toBeGreaterThan(0);
+      for (const ev of gam.body.recentEvents) {
+        expect(ev).not.toHaveProperty("metadata");
+      }
+    });
+
+    it("DB-874-6g: adding a track to the cohort never widens an existing relationship; re-entering the code consents from then on", async () => {
+      // Work in a track the cohort does not (yet) list, with a score.
+      const posted = await request(app)
+        .post("/api/pathways/student/milestones")
+        .set(as("learner"))
+        .send({
+          trackSlug: "other-track",
+          moduleSlug: "elsewhere-2",
+          status: "completed",
+          score: 66,
+        });
+      expect(posted.status).toBe(200);
+      const setTracks = (trackIds: string[]) =>
+        request(app)
+          .put(`/api/pathways/facilitator/cohorts/${ids.cohort}`)
+          .set(as("fac"))
+          .send({ trackIds });
+      expect((await setTracks(["cyber-launch", "other-track"])).status).toBe(
+        200,
+      );
+      const tracksOf = async () =>
+        (await learnerDetail(ids.learner)).body.milestones.map(
+          (x: { trackSlug: string }) => x.trackSlug,
+        );
+      // The facilitator flipped a field; the learner consented to nothing new.
+      expect(await tracksOf()).not.toContain("other-track");
+      await noHistoryLeaks();
+
+      // Re-entering the join code is the learner's consent for the added
+      // track — from now on, so the earlier completion stays history.
+      const rejoin = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("learner"))
+        .send({ joinCode });
+      expect(rejoin.status).toBe(200);
+      const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: {
+          userId_cohortId: { userId: ids.learner, cohortId: ids.cohort },
+        },
+      });
+      const boundaries = row.trackBoundaries as Record<string, string>;
+      expect(new Date(boundaries["cyber-launch"]).getTime()).toBe(
+        row.acceptedAt!.getTime(),
+      );
+      expect(new Date(boundaries["other-track"]).getTime()).toBeGreaterThan(
+        row.acceptedAt!.getTime(),
+      );
+      expect(await tracksOf()).not.toContain("other-track"); // untouched since
+      expect(
+        (
+          await section("learner", "elsewhere-2", "hook", true, {
+            trackSlug: "other-track",
+          })
+        ).status,
+      ).toBe(200);
+      expect(await visibleModule(ids.learner, "elsewhere-2")).toMatchObject({
+        trackSlug: "other-track",
+        status: "in_progress",
+        score: null,
+        hookCompleted: true,
+        historyWithheld: true,
+      });
+
+      // Removing the track from the cohort hides it again.
+      expect((await setTracks(["cyber-launch"])).status).toBe(200);
+      expect(await tracksOf()).not.toContain("other-track");
     });
 
     it("DB-874-7: a legacy enrollment grants no visibility until the learner re-enters the join code", async () => {
@@ -814,6 +940,13 @@ describe.skipIf(!dbUrl)(
         home.body.enrollments.map((e: { cohortId: string }) => e.cohortId),
       ).toContain(ids.cohort);
 
+      // …and can still sign in through the cohort code before re-confirming.
+      const codeLogin = await request(app)
+        .post("/api/auth/pathways-code-login")
+        .set(newIp())
+        .send({ cohortCode: joinCode, userId: ids.legacy, password: PASSWORD });
+      expect(codeLogin.status).toBe(200);
+
       const joined = await request(app)
         .post("/api/pathways/enroll")
         .set(as("legacy"))
@@ -826,6 +959,9 @@ describe.skipIf(!dbUrl)(
       });
       expect(row.acceptedAt).not.toBeNull();
       expect(row.source).toBe("join_code");
+      expect(row.trackBoundaries).toEqual({
+        "cyber-launch": row.acceptedAt!.toISOString(),
+      });
       expect((await learnerDetail(ids.legacy)).status).toBe(200);
       expect((await roster()).body.unconfirmedLegacyCount).toBe(0);
     });
@@ -1079,6 +1215,13 @@ describe.skipIf(!dbUrl)(
         },
       });
       expect((await accept("home", inv.id)).status).toBe(404);
+      expect(
+        (
+          await request(app)
+            .post(`/api/pathways/student/invitations/${inv.id}/decline`)
+            .set(as("home"))
+        ).status,
+      ).toBe(404);
       // Joining by code is the learner's own act; it must not adopt the
       // adult's invitation as if the learner had been the addressee.
       const join = await request(app)
@@ -1091,6 +1234,17 @@ describe.skipIf(!dbUrl)(
       });
       expect(after.status).toBe("pending");
       expect(after.acceptedById).toBeNull();
+    });
+
+    it("DB-874-17: a home-access login that carries the learner's own address still receives invitations", async () => {
+      expect((await invite(emails.homeOwn)).status).toBe(202);
+      const list = await myInvitations("home2");
+      expect(list.status).toBe(200);
+      expect(list.body.invitations).toHaveLength(1);
+      expect((await accept("home2", list.body.invitations[0].id)).status).toBe(
+        200,
+      );
+      expect((await learnerDetail(ids.home2)).status).toBe(200);
     });
   },
 );

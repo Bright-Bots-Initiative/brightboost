@@ -137,3 +137,22 @@ EN/ES key `learnerDetail.historyWithheld`, `docs/ops/pathways-enrollment-consent
 ### Rating
 
 4/5 — the first design treated a row as the unit of consent; the unit is the fact.
+
+### Opus final review of 2149afdd (2026-09-07)
+
+Verdict: material findings, no blocker; model self-reported `claude-opus-5[1m]`, no runtime
+evidence of the model id. Dispositions in the follow-up commit: the home-access exclusion now
+applies only to accounts managed by a parent whose login email _is_ the parent's address (a
+learner's own home login still receives invitations; DB-874-17, BND-10); the learner
+gamification view no longer returns XP-event `metadata`, which the correction had started
+populating with the track of every act (DB-874-6f); editing a cohort's `trackIds` can no longer
+widen an existing relationship — `PathwayEnrollment.trackBoundaries` snapshots the consented
+tracks with per-track boundaries, re-entering the join code consents to added tracks from then
+on, and migration `20260907100000_pathway_enrollment_track_boundaries` backfills accepted rows
+(DB-874-6g, BND-9); the four `db-check` steps are registered in `scripts/ci-required-steps.json`
+with the fail-not-skip flag in the guarded run string; `not_started` is no longer relabelled;
+the leak sweep covers the learner detail and gamification surfaces and CSV-shaped values, with a
+positive last-active assertion, the legacy code-login path and the decline path proven.
+Recorded, not changed: application-vs-database clock skew on the `createdAt >= since` fast path;
+homework revised without a fresh submission event stays withheld; Prettier reflow of two
+facilitator pages is what `format:check` requires for changed files.
