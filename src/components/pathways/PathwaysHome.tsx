@@ -18,6 +18,7 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertTriangle,
+  KeyRound,
 } from "lucide-react";
 import {
   NextTaskCard,
@@ -44,11 +45,18 @@ interface HomeData {
     band: string;
     trackIds: string[];
     sitePartner: string | null;
+    /** #874: what this learner has consented to share with the cohort */
+    consent?: { accepted: boolean; newTracks: string[] };
   }>;
   milestones?: Array<
     NextTaskMilestone & { id: string; score: number | null; createdAt?: string }
   >;
+  /** the server could not load enrollments; treat consent state as unknown */
+  degraded?: boolean;
 }
+
+/** Set once the welcome flow was offered (or consent was just confirmed). */
+const WELCOME_REDIRECT_KEY = "bb_pathways_welcome_offered";
 
 export default function PathwaysHome() {
   const navigate = useNavigate();
@@ -67,15 +75,38 @@ export default function PathwaysHome() {
   // onboarding fetch AND the home data so we don't flash content.
   useEffect(() => {
     if (onboardingLoading || loading) return;
+    // #874: a returning learner with sharing to confirm (a legacy cohort, or
+    // tracks a cohort added) must reach the prompts on this page — never
+    // trap them in the first-visit welcome flow.
+    const rows = homeData?.enrollments ?? [];
+    const consentPending = rows.some(
+      (e) =>
+        e.consent && (!e.consent.accepted || e.consent.newTracks.length > 0),
+    );
+    // Unknown state (degraded payload) and a learner with no cohort at all
+    // are not sent away either: the join action on this page is their way in.
+    if (consentPending || homeData?.degraded || rows.length === 0) return;
+    let offered = false;
+    try {
+      offered = sessionStorage.getItem(WELCOME_REDIRECT_KEY) === "1";
+    } catch {
+      offered = false;
+    }
+    if (offered) return; // one-shot per session: never bounce a learner back
     if (
       onboarding &&
       !onboarding.completedAt &&
       !onboarding.skillsTourViewed &&
       !onboarding.avatarChosen
     ) {
+      try {
+        sessionStorage.setItem(WELCOME_REDIRECT_KEY, "1");
+      } catch {
+        // storage unavailable: the redirect simply is not one-shot
+      }
       navigate("/pathways/welcome", { replace: true });
     }
-  }, [onboardingLoading, loading, onboarding, navigate]);
+  }, [onboardingLoading, loading, onboarding, navigate, homeData]);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,6 +220,16 @@ export default function PathwaysHome() {
               {cohort.sitePartner && ` • ${cohort.sitePartner}`}
             </p>
           )}
+          {/* #874: the learner's own way in — never automatic */}
+          <button
+            type="button"
+            onClick={() => navigate("/pathways/join")}
+            className="mt-4 inline-flex items-center gap-2 px-4 rounded-lg bg-white/15 hover:bg-white/25 text-white text-sm font-medium min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            data-testid="join-cohort-button"
+          >
+            <KeyRound className="w-4 h-4" aria-hidden="true" />
+            {t("pathways.home.consent.joinButton")}
+          </button>
         </div>
         <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 opacity-10">
           <Shield className="w-full h-full" />
@@ -197,6 +238,52 @@ export default function PathwaysHome() {
 
       {/* #874: cohort invitations wait for the learner's own acceptance */}
       <PendingInvitations onChanged={() => setRefreshKey((k) => k + 1)} />
+
+      {/* #874: sharing this learner has not confirmed yet — a cohort from
+          before consent tracking, or tracks a cohort added since. */}
+      {enrollments
+        .filter(
+          (e) =>
+            e.consent &&
+            (!e.consent.accepted || e.consent.newTracks.length > 0),
+        )
+        .map((e) => (
+          <section
+            key={e.cohortId}
+            className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/30 p-4 sm:p-5"
+            aria-labelledby={`consent-${e.cohortId}`}
+            data-testid={`consent-prompt-${e.cohortId}`}
+          >
+            <h2
+              id={`consent-${e.cohortId}`}
+              className="font-semibold text-slate-900 dark:text-slate-100"
+            >
+              {e.consent?.accepted
+                ? t("pathways.home.consent.newTracksTitle", {
+                    cohort: e.cohortName,
+                  })
+                : t("pathways.home.consent.legacyTitle", {
+                    cohort: e.cohortName,
+                  })}
+            </h2>
+            <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">
+              {e.consent?.accepted
+                ? t("pathways.home.consent.newTracksBody")
+                : t("pathways.home.consent.legacyBody")}
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/pathways/join?cohortId=${encodeURIComponent(e.cohortId)}`,
+                )
+              }
+              className="mt-3 inline-flex items-center gap-2 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500"
+            >
+              {t("pathways.home.consent.review")}
+            </button>
+          </section>
+        ))}
 
       {/* Gamification: level, streak, badges pinned above everything else */}
       <GamificationStrip state={gamification} loading={gamLoading} />

@@ -162,3 +162,60 @@ mechanism judged monotone-narrowing, the migration SQL correct). Follow-up: `wit
 keeps consent for tracks a cohort temporarily unlists (`boundariesOf` hides them meanwhile);
 recorded as owner decisions — re-entering the join code has no UI today, and the home-access
 gate is an equality test (a second adult-controlled login address stays matchable).
+
+---
+
+## Consent-confirmation UI pass — 2026-09-07 (PR #915)
+
+### Prompt (excerpt)
+
+```
+Complete the authenticated Pathways confirmation flow. Add a discoverable "Join or confirm a
+cohort" action on the Pathways home, usable for legacy learners, learners joining another
+cohort, and learners confirming newly added tracks. Preview must be read-only; the server must
+ensure the confirmed grant contains only the cohort and tracks the learner actually previewed;
+if cohort configuration changes between preview and confirmation, refresh and require
+confirmation again. Repeated submissions idempotent; revoked stays revoked. EN/ES, accessible,
+browser-level tests on the real API and a disposable PostgreSQL database. Fix commitlint.
+```
+
+### Opus design challenge (preview/confirmation boundary)
+
+Model self-report `claude-opus-5[1m]`, no runtime evidence. Verdict "needs changes"; dispositions:
+
+- Grant computed from a different read than the one the version verified → the confirmation
+  runs in ONE transaction, reads cohort + row once and grants exactly that read (pinned).
+- Lost update on `trackBoundaries` (two tabs, confirm vs invitation accept) → every writer
+  of a (learner, cohort) row takes `SELECT … FOR UPDATE` on it first; invitation acceptance
+  reads the cohort's tracks inside that lock (DB-874-21/22/23).
+- P2002 retry re-entered without re-verifying → the retry re-runs the whole verified sequence.
+- Case-insensitive code on preview but not confirm → one resolver for both (DB-874-19).
+- A code alone reveals facilitator + site partner + tracks; codes are 31-bit `Math.random` →
+  site partner only once a row exists, per-account preview limiter; facilitator name kept
+  (owner asked for it); CSPRNG join codes recorded as a follow-up.
+- Revoked preview leaked current cohort configuration → minimal payload (no tracks/version).
+- Home `consent` over-claimed for snapshot-less rows → mirrors `boundariesOf`; `accepted`
+  from the trust predicate (DB-874-24).
+- Onboarding redirect traps (post-confirm bounce, degraded payload, no enrollments) →
+  one-shot per session, suppressed on pending consent / degraded / empty.
+- Legacy confirm discarded prior boundaries → merged (DB-874-24).
+- Invitation card grants blind → tracks listed on the card; tracks read under the lock.
+- Idempotent duplicate: `200 changed:false` whenever nothing is pending (DB-874-20).
+- HMAC unnecessary (comparison token; bearer auth, no ambient credential) — plain SHA-256.
+
+### What changed
+
+`GET /api/pathways/enroll/preview` (read-only, per-account limiter), `POST /api/pathways/enroll`
+now requires the preview `version` (409 `preview_changed` + fresh preview on change; 400
+`preview_required`; revoked → 403 first), `consentSummary` on the home payload,
+`/pathways/join` page (`JoinCohort.tsx`), home prompts + button, invitation card tracks, EN/ES
+copy (`pathways.join.*`, `pathways.home.consent.*`), roster notice + facilitator guide + ops doc,
+seed fixtures (`E2EPW1`/`E2EPW2`, legacy/trusted/revoked learners), Cypress
+`pathways-consent.cy.ts` in the `e2e-flows` job.
+
+### Evidence
+
+PostgreSQL suite 30/30 (DB-874-18…24 new: read-only preview, wrong/missing version, stale
+preview after a track change, duplicate, own-rows-only cohort id, confirm racing a track change
+×6, confirm racing an invitation acceptance, confirm racing a revocation, prior boundaries kept,
+snapshot-less trusted row); mocked 16/16; Cypress live stack: see the PR.

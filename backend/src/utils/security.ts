@@ -57,6 +57,20 @@ const creationLimit = (productionLimit: number, error: string) =>
     message: { error },
   });
 
+/**
+ * #874: a learner previewing cohort join codes. Keyed by account, not IP (a
+ * classroom shares one address), and low enough that a 6-character code
+ * space cannot be scanned for cohort or facilitator names.
+ */
+export const consentPreviewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: process.env.NODE_ENV === "test" ? 200 : 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: creationRateLimitKey,
+  message: { error: "too_many_previews" },
+});
+
 /** A child should only need a few new artifacts in one working session. */
 export const creationCreateLimiter = creationLimit(
   10,

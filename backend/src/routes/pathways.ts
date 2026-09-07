@@ -5,6 +5,7 @@
 import { Router, Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
+import { consentPreviewLimiter } from "../utils/security";
 import { requireAuth, requireRole } from "../utils/auth";
 import { z } from "zod";
 import {
@@ -32,7 +33,9 @@ import {
   acceptInvitation,
   countUnconfirmedLegacy,
   declineInvitation,
-  enrollByJoinCode,
+  confirmCohortConsent,
+  consentSummary,
+  previewCohortConsent,
   inviteLearnerByEmail,
   averageVisibleScore,
   lastActiveOf,
@@ -304,28 +307,69 @@ router.get(
   },
 );
 
-// ── Student: enroll via join code ────────────────────────────────────────
+// ── Student: join or confirm a cohort — preview, then confirm (#874) ─────
 
+const consentRefOf = (source: Record<string, unknown>) => ({
+  joinCode: typeof source.joinCode === "string" ? source.joinCode : undefined,
+  cohortId: typeof source.cohortId === "string" ? source.cohortId : undefined,
+});
+
+// Read-only: what confirming would share for this learner. Nothing is
+// written, no invitation is consumed, nothing becomes visible.
+router.get(
+  "/pathways/enroll/preview",
+  requireAuth,
+  consentPreviewLimiter,
+  async (req: Request, res: Response) => {
+    const ref = consentRefOf(req.query as Record<string, unknown>);
+    if (!ref.joinCode && !ref.cohortId) {
+      return res.status(400).json({ error: "consent_ref_required" });
+    }
+    try {
+      res.json(await previewCohortConsent(req.user!.id, ref));
+    } catch (error) {
+      answerAccessError(res, error);
+    }
+  },
+);
+
+// The learner's own act of consent, for exactly what the preview showed: a
+// new trusted relationship, a confirmed legacy row, or new boundaries for
+// tracks the cohort listed since. Requires the preview's version; a cohort
+// that changed since answers 409 with a fresh preview. A revoked row is
+// refused — the facilitator removed this learner and the shared code is not
+// a new invitation.
 router.post(
   "/pathways/enroll",
   requireAuth,
   async (req: Request, res: Response) => {
-    const { joinCode } = req.body;
-    if (!joinCode || typeof joinCode !== "string") {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const ref = consentRefOf(body);
+    if (!ref.joinCode && !ref.cohortId) {
       return res.status(400).json({ error: "Join code required" });
     }
-
-    // #874: joining by code is the learner's own act of consent — it creates
-    // (or confirms a legacy) trusted relationship. A revoked row is refused;
-    // the facilitator removed this learner and the shared code is not a new
-    // invitation.
+    // A missing version is decided by the service, after the revoked check:
+    // a removed learner is told so whatever their client sent.
+    const version = typeof body.version === "string" ? body.version : "";
     try {
-      const { cohort, enrollment } = await enrollByJoinCode(
-        req.user!.id,
-        joinCode,
-      );
-      res.json({ enrolled: true, cohortName: cohort.name, enrollment });
+      const result = await confirmCohortConsent(req.user!.id, ref, version);
+      res.json({
+        enrolled: true,
+        changed: result.changed,
+        cohortName: result.cohort.name,
+        enrollment: result.enrollment,
+        preview: result.preview,
+      });
     } catch (error) {
+      if (
+        error instanceof PathwaysAccessError &&
+        error.code === "preview_changed"
+      ) {
+        const preview = await previewCohortConsent(req.user!.id, ref).catch(
+          () => null,
+        );
+        return res.status(409).json({ error: "preview_changed", preview });
+      }
       answerAccessError(res, error);
     }
   },
@@ -412,6 +456,9 @@ router.get(
           band: e.cohort.band,
           trackIds: e.cohort.trackIds,
           sitePartner: e.cohort.sitePartner,
+          // #874: what this learner has consented to share with the cohort —
+          // a legacy row (nothing yet) or tracks the cohort listed since.
+          consent: consentSummary(e, e.cohort.trackIds),
         })),
         milestones,
         recentActivity: milestones.slice(0, 5),

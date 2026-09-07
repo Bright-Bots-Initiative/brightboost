@@ -59,7 +59,7 @@ Help learners create their ISC2 accounts during Week 5 so they are ready to sche
 2. **Go to the facilitator dashboard** — click "Dashboard" in the top navigation
 3. **Create a new cohort** — click "Create Cohort," name it (e.g., "Spring 2026 Cyber Launch — Eastside"), select the Cyber Launch curriculum, and choose the start date
 4. **Copy the join code** — the system generates a 6-character code when the cohort is created
-5. **Share the join code with learners** — write it on a whiteboard, print it on a handout, or text it. Learners enter this code when they create their accounts to join your cohort. You can also invite a learner who already has an account by typing their email on the roster tab; they appear on your roster only after they accept the invitation while signed in to that account, and you see their work in this cohort's tracks from that moment on, not their earlier history
+5. **Share the join code with learners** — write it on a whiteboard, print it on a handout, or text it. Learners enter this code when they create their accounts to join your cohort. A learner who already has an account joins from their Pathways home: **Join or confirm a cohort** → enter the code → review what will be shared → **Confirm**. You can also invite a learner who already has an account by typing their email on the roster tab; they appear on your roster only after they accept the invitation while signed in to that account. Either way you see their work in this cohort's tracks from the moment they confirm, not their earlier history. If you add a track to the cohort later, each learner sees a **Review and confirm** prompt on their home and you see that track's work only after they confirm it
 6. **Verify band enrollment** — after learners join, check the cohort roster in your dashboard. Each learner should show as "Explorer" (14-15) or "Launch" (16-17) based on their age. If a learner is in the wrong band, click their name and update their age band
 7. **If a learner does not have a device** — the platform works on any device with a browser. If your site has loaner laptops or tablets, assign one. If not, pair learners to share a device. Two learners per device is workable. Three is too many
 
@@ -96,7 +96,7 @@ Learners complete the Cyber Foundations module: five interactive slides covering
 
 ### Watch For
 
-- Learners who cannot log in — help them reset passwords or re-enter the cohort code
+- Learners who cannot log in — help them reset passwords; a learner who is on your roster but hidden as "not yet confirmed" needs to confirm sharing from their Pathways home (**Join or confirm a cohort**, or the **Review and confirm** prompt)
 - Learners who seem intimidated by the word "cybersecurity" — normalize it, remind them no prior knowledge is expected
 - Learners who finish fast and look bored — ask them to help someone else or explore the career section
 

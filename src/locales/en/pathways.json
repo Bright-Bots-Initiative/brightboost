@@ -56,7 +56,59 @@
         "from": "From {{name}}",
         "accept": "Accept",
         "decline": "Decline",
-        "error": "Could not update the invitation. Please try again."
+        "error": "Could not update the invitation. Please try again.",
+        "tracks": "Accepting shares your progress in: {{tracks}}"
+      },
+      "consent": {
+        "joinButton": "Join or confirm a cohort",
+        "legacyTitle": "Confirm sharing with {{cohort}}",
+        "legacyBody": "Your facilitator can't see your progress until you confirm. Nothing from before today is shared.",
+        "newTracksTitle": "{{cohort}} added new tracks",
+        "newTracksBody": "Review and confirm to share your progress in the new tracks from today on.",
+        "review": "Review and confirm"
+      }
+    },
+    "join": {
+      "title": "Join or confirm a cohort",
+      "intro": "Enter the code your facilitator shared. You'll see exactly what would be shared before anything changes.",
+      "codeLabel": "Cohort code",
+      "codePlaceholder": "e.g. AB12CD",
+      "preview": "Preview",
+      "loading": "Checking the code…",
+      "loadingCohort": "Loading your cohort…",
+      "previewTitle": "Review before you confirm",
+      "facilitator": "Facilitator: {{name}}",
+      "bands": {
+        "launch": "Launch band (ages 16–17)",
+        "explorer": "Explorer band (ages 14–15)"
+      },
+      "tracksTitle": "Tracks",
+      "trackNew": "New — sharing starts when you confirm",
+      "trackSince": "Already sharing since {{date}}",
+      "stateNone": "You are not in this cohort yet. Confirming joins it and shares your progress in the tracks below from today on.",
+      "stateLegacy": "You are already in this cohort, but you have not confirmed sharing yet. Your facilitator cannot see your progress until you confirm.",
+      "stateTrusted": "You already share with this cohort. It added new tracks; confirming shares your progress in them from today on.",
+      "stateNothingNew": "You already share everything this cohort covers. There is nothing new to confirm.",
+      "stateRevoked": "Your facilitator removed you from this cohort. The code cannot restore access — ask your facilitator for a new invitation.",
+      "boundaryNote": "New sharing starts when you confirm. Anything you did before stays private, and tracks you confirmed earlier keep their original start date.",
+      "confirm": "Confirm and share from today",
+      "confirming": "Confirming…",
+      "back": "Back",
+      "cancel": "Cancel",
+      "changedNotice": "This cohort changed since you looked. Review the updated details and confirm again — nothing was shared.",
+      "doneTitle": "You're all set",
+      "doneBody": "You now share your progress in {{cohort}} from today on.",
+      "doneNothing": "Nothing changed — you were already sharing everything this cohort covers.",
+      "backHome": "Back to Pathways home",
+      "errors": {
+        "invalidCode": "That code doesn't match a cohort. Check it and try again.",
+        "notFound": "We couldn't find that cohort on your account.",
+        "session": "Your session has expired. Sign in again to continue — your code is kept here.",
+        "signIn": "Sign in",
+        "revoked": "Your facilitator removed you from this cohort; the code cannot restore access.",
+        "network": "We couldn't reach Bright Boost. Check your connection and try again.",
+        "server": "Something went wrong. Please try again.",
+        "retry": "Try again"
       }
     },
     "about": {
@@ -364,7 +416,7 @@
             "completed": "Modules",
             "lastActive": "Last Active"
           },
-          "legacyNotice": "{{count}} enrollment(s) from before consent tracking are hidden until the learner re-enters the join code.",
+          "legacyNotice": "{{count}} enrollment(s) from before consent tracking are hidden until the learner confirms sharing (Pathways home → Join or confirm a cohort).",
           "invites": {
             "title": "Invitations awaiting acceptance",
             "sent": "Invitation recorded. The learner sees it the next time they sign in with that account and appears here after accepting.",

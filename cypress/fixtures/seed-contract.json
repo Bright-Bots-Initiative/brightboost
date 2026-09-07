@@ -4,9 +4,15 @@
     "emailDomain": "@e2e.invalid"
   },
   "students": [
-    { "name": "E2E Student One" },
-    { "name": "E2E Student Two" },
-    { "name": "E2E Student Three" }
+    {
+      "name": "E2E Student One"
+    },
+    {
+      "name": "E2E Student Two"
+    },
+    {
+      "name": "E2E Student Three"
+    }
   ],
   "activity": {
     "title": "E2E Quiz Activity",
@@ -19,9 +25,18 @@
           "es": "¿De qué color es el cielo en un día despejado?"
         },
         "choices": [
-          { "en": "Blue", "es": "Azul" },
-          { "en": "Green", "es": "Verde" },
-          { "en": "Purple", "es": "Morado" }
+          {
+            "en": "Blue",
+            "es": "Azul"
+          },
+          {
+            "en": "Green",
+            "es": "Verde"
+          },
+          {
+            "en": "Purple",
+            "es": "Morado"
+          }
         ],
         "answerIndex": 0
       },
@@ -32,9 +47,18 @@
           "es": "¿Cuántas patas suele tener un perro?"
         },
         "choices": [
-          { "en": "Two", "es": "Dos" },
-          { "en": "Four", "es": "Cuatro" },
-          { "en": "Six", "es": "Seis" }
+          {
+            "en": "Two",
+            "es": "Dos"
+          },
+          {
+            "en": "Four",
+            "es": "Cuatro"
+          },
+          {
+            "en": "Six",
+            "es": "Seis"
+          }
         ],
         "answerIndex": 1
       },
@@ -45,9 +69,18 @@
           "es": "¿Qué necesitan las plantas para crecer?"
         },
         "choices": [
-          { "en": "Water and light", "es": "Agua y luz" },
-          { "en": "Rocks only", "es": "Solo rocas" },
-          { "en": "Nothing", "es": "Nada" }
+          {
+            "en": "Water and light",
+            "es": "Agua y luz"
+          },
+          {
+            "en": "Rocks only",
+            "es": "Solo rocas"
+          },
+          {
+            "en": "Nothing",
+            "es": "Nada"
+          }
         ],
         "answerIndex": 0
       }
@@ -58,5 +91,25 @@
     "students": 3,
     "activities": 1,
     "questions": 3
+  },
+  "pathways": {
+    "facilitatorEmail": "pathways-facilitator@e2e.invalid",
+    "learners": {
+      "legacy": "pathways-legacy@e2e.invalid",
+      "trusted": "pathways-trusted@e2e.invalid",
+      "revoked": "pathways-revoked@e2e.invalid"
+    },
+    "cohorts": [
+      {
+        "joinCode": "E2EPW1",
+        "name": "E2E Pathways Cohort"
+      },
+      {
+        "joinCode": "E2EPW2",
+        "name": "E2E Second Cohort"
+      }
+    ],
+    "privateHomework": "E2E-PRIVATE-HOMEWORK",
+    "legacyScore": 91
   }
 }

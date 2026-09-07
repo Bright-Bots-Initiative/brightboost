@@ -27,6 +27,7 @@
  * badges and CTF activity are filtered by their own timestamps the same way.
  */
 import { Prisma } from "@prisma/client";
+import crypto from "crypto";
 import { z } from "zod";
 import prisma from "../utils/prisma";
 
@@ -37,7 +38,10 @@ export type PathwaysAccessErrorCode =
   | "invite_not_found"
   | "invite_expired"
   | "invite_not_pending"
-  | "invalid_email";
+  | "invalid_email"
+  | "consent_ref_required"
+  | "preview_required"
+  | "preview_changed";
 
 export class PathwaysAccessError extends Error {
   constructor(
@@ -504,68 +508,285 @@ export async function countUnconfirmedLegacy(cohortId: string) {
 
 // ── Learner-initiated consent ───────────────────────────────────────────────
 
+// ── Learner-initiated consent: preview, then confirm ───────────────────────
+//
+// The learner previews exactly what a confirmation would share — the cohort,
+// its facilitator, the tracks, and which of them are new for this learner —
+// and confirms with the preview's `version`. The server recomputes the
+// version from what it reads inside the confirming transaction, so the grant
+// can only ever cover the cohort and tracks the learner actually saw: a
+// cohort whose tracks changed since the preview answers 409 with a fresh
+// preview and needs a new confirmation. Preview writes nothing; confirmation
+// is the learner's own act of consent (a trusted row, a confirmed legacy row,
+// or new boundaries for tracks the cohort listed since). A revoked row stays
+// revoked. Nothing here is reachable without the learner's session.
+
+export type ConsentRef = { joinCode?: string; cohortId?: string };
+
+export type ConsentPreview = {
+  cohort: {
+    id: string;
+    name: string;
+    band: string;
+    sitePartner: string | null;
+    facilitatorName: string | null;
+  };
+  tracks: { slug: string; consentedSince: string | null; requested: boolean }[];
+  enrollment: {
+    state: "none" | "legacy" | "trusted" | "revoked";
+    acceptedAt: string | null;
+    source: string | null;
+  };
+  /** track slugs a confirmation would start sharing from now on */
+  newSharing: string[];
+  canConfirm: boolean;
+  reason: "enrollment_revoked" | "nothing_new" | null;
+  version: string;
+};
+
+const CONSENT_COHORT_SELECT = {
+  id: true,
+  name: true,
+  band: true,
+  sitePartner: true,
+  trackIds: true,
+  facilitator: { select: { name: true } },
+} as const;
+type ConsentCohort = Prisma.PathwayCohortGetPayload<{
+  select: typeof CONSENT_COHORT_SELECT;
+}>;
+type EnrollmentRow = Prisma.PathwayEnrollmentGetPayload<object>;
+
+function snapshotEntries(row: EnrollmentRow | null): [string, string][] {
+  const raw = row?.trackBoundaries;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  return Object.entries(raw as Record<string, unknown>)
+    .filter((e): e is [string, string] => typeof e[1] === "string")
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
 /**
- * Join (or confirm) a cohort by code. Creates a trusted row, confirms a legacy
- * row, is idempotent for an already-accepted row, and refuses a revoked row —
- * the facilitator removed this learner, and the shared code is not a new
- * invitation. Any pending invitation for this account's email in the cohort
- * is closed as accepted, since joining is the stronger act of consent.
+ * Identifies exactly which (cohort, tracks, existing consent) a preview
+ * showed. Not a secret: it proves consistency, not authority — the session
+ * is the authority, and a mismatch only ever refuses a grant.
  */
-export async function enrollByJoinCode(
+export function consentVersion(
   userId: string,
-  joinCode: string,
+  cohortId: string,
+  trackIds: readonly string[],
+  row: EnrollmentRow | null,
+): string {
+  return crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify([
+        userId,
+        cohortId,
+        [...trackIds].sort(),
+        row?.status ?? null,
+        row?.acceptedAt?.toISOString() ?? null,
+        snapshotEntries(row),
+      ]),
+    )
+    .digest("hex");
+}
+
+/**
+ * The boundary each currently listed track has for a trusted row — the same
+ * rule `boundariesOf` applies for facilitators: the snapshot's entries, or,
+ * for a row without a snapshot (operator-written), every listed track at
+ * the acceptance moment. Empty for rows that are not trusted.
+ */
+function effectiveBoundaries(
+  row: EnrollmentRow | null,
+  cohortTrackIds: readonly string[],
+): Map<string, string> {
+  const out = new Map<string, string>();
+  if (!row || !isTrustedEnrollment(row)) return out;
+  const entries = snapshotEntries(row);
+  if (entries.length === 0) {
+    const since = row.acceptedAt!.toISOString();
+    for (const t of cohortTrackIds) out.set(t, since);
+    return out;
+  }
+  for (const [slug, iso] of entries) out.set(slug, iso);
+  return out;
+}
+
+export function buildConsentPreview(
+  userId: string,
+  cohort: ConsentCohort,
+  row: EnrollmentRow | null,
+): ConsentPreview {
+  const state: ConsentPreview["enrollment"]["state"] = !row
+    ? "none"
+    : row.status === "revoked"
+      ? "revoked"
+      : row.acceptedAt
+        ? "trusted"
+        : "legacy";
+  if (state === "revoked") {
+    // Nothing can be granted, so nothing about the cohort as it is now is
+    // shown — only that this relationship ended and how it can come back.
+    return {
+      cohort: {
+        id: cohort.id,
+        name: cohort.name,
+        band: cohort.band,
+        sitePartner: null,
+        facilitatorName: null,
+      },
+      tracks: [],
+      enrollment: { state, acceptedAt: null, source: row?.source ?? null },
+      newSharing: [],
+      canConfirm: false,
+      reason: "enrollment_revoked",
+      version: "",
+    };
+  }
+  const consented = effectiveBoundaries(row, cohort.trackIds);
+  const tracks = cohort.trackIds.map((slug) => {
+    const since = consented.get(slug) ?? null;
+    return { slug, consentedSince: since, requested: since === null };
+  });
+  const newSharing = tracks.filter((t) => t.requested).map((t) => t.slug);
+  const canConfirm = newSharing.length > 0;
+  return {
+    cohort: {
+      id: cohort.id,
+      name: cohort.name,
+      band: cohort.band,
+      // The site partner is shown once the learner has a relationship here;
+      // a code alone shows the cohort, its band, tracks and facilitator.
+      sitePartner: row ? cohort.sitePartner : null,
+      facilitatorName: cohort.facilitator.name,
+    },
+    tracks,
+    enrollment: {
+      state,
+      acceptedAt: row?.acceptedAt?.toISOString() ?? null,
+      source: row?.source ?? null,
+    },
+    newSharing,
+    canConfirm,
+    reason: canConfirm ? null : "nothing_new",
+    version: consentVersion(userId, cohort.id, cohort.trackIds, row),
+  };
+}
+
+/**
+ * The cohort a preview or confirmation is about, and this learner's row in
+ * it. By join code (any case, trimmed) for joining; by cohort id only when
+ * the learner already has a row there (the home's "confirm sharing" prompt),
+ * so an id never reveals a cohort the learner has no relationship with.
+ */
+/**
+ * Serialize writers of one (learner, cohort) row: a confirmation, an
+ * invitation acceptance or a revocation that runs at the same time waits
+ * here, and the read that follows sees what it committed — so no writer can
+ * overwrite another's boundaries from a stale read.
+ */
+async function lockEnrollmentRow(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  cohortId: string,
+) {
+  await tx.$queryRaw`
+    SELECT "id" FROM "PathwayEnrollment"
+    WHERE "userId" = ${userId} AND "cohortId" = ${cohortId}
+    FOR UPDATE`;
+}
+
+async function resolveConsentCohort(
+  db: Prisma.TransactionClient,
+  userId: string,
+  ref: ConsentRef,
+  lock = false,
+): Promise<{ cohort: ConsentCohort; row: EnrollmentRow | null }> {
+  // Both "not found" answers are the same status and code, so an id cannot
+  // be used to learn which cohorts exist.
+  let cohort: ConsentCohort | null = null;
+  if (ref.joinCode && ref.joinCode.trim()) {
+    cohort = await db.pathwayCohort.findFirst({
+      where: {
+        joinCode: {
+          equals: ref.joinCode.trim().toUpperCase(),
+          mode: "insensitive",
+        },
+      },
+      select: CONSENT_COHORT_SELECT,
+    });
+    if (!cohort) throw new PathwaysAccessError("invalid_join_code", 404);
+  } else if (ref.cohortId) {
+    const member = await db.pathwayEnrollment.findUnique({
+      where: { userId_cohortId: { userId, cohortId: ref.cohortId } },
+      select: { id: true },
+    });
+    cohort = member
+      ? await db.pathwayCohort.findUnique({
+          where: { id: ref.cohortId },
+          select: CONSENT_COHORT_SELECT,
+        })
+      : null;
+    if (!cohort) throw new PathwaysAccessError("invalid_join_code", 404);
+  } else {
+    throw new PathwaysAccessError("consent_ref_required", 400);
+  }
+  if (lock) await lockEnrollmentRow(db, userId, cohort.id);
+  const row = await db.pathwayEnrollment.findUnique({
+    where: { userId_cohortId: { userId, cohortId: cohort.id } },
+  });
+  return { cohort, row };
+}
+
+/** Read-only: what confirming would share. Writes nothing, consumes nothing. */
+export async function previewCohortConsent(
+  userId: string,
+  ref: ConsentRef,
+): Promise<ConsentPreview> {
+  const { cohort, row } = await resolveConsentCohort(prisma, userId, ref);
+  return buildConsentPreview(userId, cohort, row);
+}
+
+/**
+ * Confirm what the preview identified by `version` showed. Inside one
+ * transaction: re-read the cohort and the learner's row; a revoked row is
+ * refused; when nothing is left to share the call is an idempotent no-op
+ * (a duplicate submit cannot grant anything); otherwise the version must
+ * match what is read now — a cohort whose tracks changed since the preview
+ * answers 409 so the learner sees the change and confirms again. The grant
+ * is then exactly the tracks read here. Any pending invitation for this
+ * account in the cohort is closed, as with acceptance.
+ */
+export async function confirmCohortConsent(
+  userId: string,
+  ref: ConsentRef,
+  version: string,
   retried = false,
 ): Promise<{
   cohort: { id: string; name: string };
-  enrollment: Prisma.PathwayEnrollmentGetPayload<object>;
+  enrollment: EnrollmentRow;
+  changed: boolean;
+  preview: ConsentPreview;
 }> {
-  const cohort = await prisma.pathwayCohort.findUnique({
-    where: { joinCode },
-    select: { id: true, name: true, trackIds: true },
-  });
-  if (!cohort) throw new PathwaysAccessError("invalid_join_code", 404);
-
   const now = new Date();
   try {
-    const enrollment = await prisma.$transaction(async (tx) => {
-      // Read and decide inside the transaction; the confirming write is
-      // count-guarded so a revocation that lands between the read and the
-      // write can never be overwritten back to active.
-      const existing = await tx.pathwayEnrollment.findUnique({
-        where: { userId_cohortId: { userId, cohortId: cohort.id } },
-      });
+    return await prisma.$transaction(async (tx) => {
+      const { cohort, row: existing } = await resolveConsentCohort(
+        tx,
+        userId,
+        ref,
+        true,
+      );
       if (existing?.status === "revoked") {
         throw new PathwaysAccessError("enrollment_revoked", 403);
       }
-
-      let row: Prisma.PathwayEnrollmentGetPayload<object>;
-      if (!existing) {
-        row = await tx.pathwayEnrollment.create({
-          data: {
-            userId,
-            cohortId: cohort.id,
-            status: "active",
-            source: "join_code",
-            acceptedAt: now,
-            trackBoundaries: withTrackBoundaries(null, cohort.trackIds, now),
-          },
-        });
-      } else if (existing.acceptedAt) {
-        // Already trusted: the consent moment is unchanged (idempotent), but
-        // re-entering the code is the learner's consent for any track the
-        // cohort added since — those start their boundary now. Count-guarded
-        // so a revocation that committed after the first read is never
-        // overwritten; re-read so the reply reflects it.
-        await tx.pathwayEnrollment.updateMany({
-          where: { id: existing.id, status: { not: "revoked" } },
-          data: {
-            trackBoundaries: withTrackBoundaries(
-              existing.trackBoundaries,
-              cohort.trackIds,
-              now,
-            ),
-          },
-        });
+      const before = buildConsentPreview(userId, cohort, existing);
+      let row: EnrollmentRow;
+      let changed = false;
+      if (existing?.acceptedAt && before.newSharing.length === 0) {
+        // Nothing new to share: idempotent. Re-read so the reply reflects a
+        // revocation that committed after the first read.
         row = await tx.pathwayEnrollment.findUniqueOrThrow({
           where: { id: existing.id },
         });
@@ -573,44 +794,110 @@ export async function enrollByJoinCode(
           throw new PathwaysAccessError("enrollment_revoked", 403);
         }
       } else {
-        const confirmed = await tx.pathwayEnrollment.updateMany({
-          where: {
-            id: existing.id,
-            status: { not: "revoked" },
-            acceptedAt: null,
-          },
-          data: {
-            acceptedAt: now,
-            source: "join_code",
-            status: "active",
-            trackBoundaries: withTrackBoundaries(null, cohort.trackIds, now),
-          },
-        });
-        row = await tx.pathwayEnrollment.findUniqueOrThrow({
-          where: { id: existing.id },
-        });
-        if (confirmed.count !== 1 && row.status === "revoked") {
-          throw new PathwaysAccessError("enrollment_revoked", 403);
+        if (!version) throw new PathwaysAccessError("preview_required", 400);
+        if (version !== before.version) {
+          throw new PathwaysAccessError("preview_changed", 409);
         }
-        // count 0 with a non-revoked row means a concurrent join already
-        // confirmed it — `row` is the fresh, trusted state.
+        if (!existing) {
+          row = await tx.pathwayEnrollment.create({
+            data: {
+              userId,
+              cohortId: cohort.id,
+              status: "active",
+              source: "join_code",
+              acceptedAt: now,
+              trackBoundaries: withTrackBoundaries(null, cohort.trackIds, now),
+            },
+          });
+          changed = true;
+        } else if (existing.acceptedAt) {
+          // Already trusted: the consent moment is unchanged; the tracks the
+          // cohort listed since start their boundary now. Count-guarded so a
+          // revocation that committed after the first read is never
+          // overwritten; re-read so the reply reflects it.
+          await tx.pathwayEnrollment.updateMany({
+            where: { id: existing.id, status: { not: "revoked" } },
+            data: {
+              trackBoundaries: withTrackBoundaries(
+                existing.trackBoundaries,
+                cohort.trackIds,
+                now,
+              ),
+            },
+          });
+          row = await tx.pathwayEnrollment.findUniqueOrThrow({
+            where: { id: existing.id },
+          });
+          if (row.status === "revoked") {
+            throw new PathwaysAccessError("enrollment_revoked", 403);
+          }
+          changed = true;
+        } else {
+          // A legacy row: this confirmation is its consent moment.
+          const confirmed = await tx.pathwayEnrollment.updateMany({
+            where: {
+              id: existing.id,
+              status: { not: "revoked" },
+              acceptedAt: null,
+            },
+            data: {
+              acceptedAt: now,
+              source: "join_code",
+              status: "active",
+              trackBoundaries: withTrackBoundaries(
+                existing.trackBoundaries,
+                cohort.trackIds,
+                now,
+              ),
+            },
+          });
+          row = await tx.pathwayEnrollment.findUniqueOrThrow({
+            where: { id: existing.id },
+          });
+          if (confirmed.count !== 1 && row.status === "revoked") {
+            throw new PathwaysAccessError("enrollment_revoked", 403);
+          }
+          // count 0 with a non-revoked row: a concurrent confirmation already
+          // did this — `row` is the fresh, trusted state.
+          changed = confirmed.count === 1;
+        }
       }
       await closePendingInvitesForUser(tx, userId, cohort.id, now);
-      return row;
+      return {
+        cohort: { id: cohort.id, name: cohort.name },
+        enrollment: row,
+        changed,
+        preview: buildConsentPreview(userId, cohort, row),
+      };
     });
-    return { cohort: { id: cohort.id, name: cohort.name }, enrollment };
   } catch (e) {
     // Two simultaneous first joins: the loser's create hits the unique key
-    // after the transaction rolled back. Re-run once; it now finds the row.
+    // after the transaction rolled back. Re-run once; it now finds the row
+    // and, with nothing left to share, answers idempotently.
     if (
       !retried &&
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
     ) {
-      return enrollByJoinCode(userId, joinCode, true);
+      return confirmCohortConsent(userId, ref, version, true);
     }
     throw e;
   }
+}
+
+/** Per-enrollment consent summary for the learner's own home. */
+export function consentSummary(
+  row: EnrollmentRow,
+  cohortTrackIds: readonly string[],
+): { accepted: boolean; newTracks: string[] } {
+  if (!isTrustedEnrollment(row)) {
+    return { accepted: false, newTracks: [...cohortTrackIds] };
+  }
+  const consented = effectiveBoundaries(row, cohortTrackIds);
+  return {
+    accepted: true,
+    newTracks: cohortTrackIds.filter((t) => !consented.has(t)),
+  };
 }
 
 /** Enrollment created while the learner registers with a cohort code. */
@@ -851,6 +1138,7 @@ export async function listInvitationsForLearner(userId: string) {
           name: true,
           band: true,
           sitePartner: true,
+          trackIds: true,
           facilitator: { select: { name: true } },
         },
       },
@@ -863,6 +1151,7 @@ export async function listInvitationsForLearner(userId: string) {
     cohortName: r.cohort.name,
     band: r.cohort.band,
     sitePartner: r.cohort.sitePartner,
+    trackIds: r.cohort.trackIds,
     facilitatorName: r.cohort.facilitator.name,
     invitedAt: r.createdAt,
     expiresAt: r.expiresAt,
@@ -893,13 +1182,15 @@ export async function acceptInvitation(userId: string, inviteId: string) {
   if (invite.expiresAt <= now) {
     throw new PathwaysAccessError("invite_expired", 410);
   }
-  const cohort = await prisma.pathwayCohort.findUnique({
-    where: { id: invite.cohortId },
-    select: { trackIds: true },
-  });
-  const trackIds = cohort?.trackIds ?? [];
-
   const result = await prisma.$transaction(async (tx) => {
+    // The tracks this acceptance shares are read here, under the same row
+    // lock every other writer of this (learner, cohort) row takes.
+    await lockEnrollmentRow(tx, userId, invite.cohortId);
+    const cohort = await tx.pathwayCohort.findUnique({
+      where: { id: invite.cohortId },
+      select: { trackIds: true },
+    });
+    const trackIds = cohort?.trackIds ?? [];
     const claimed = await tx.pathwayInvite.updateMany({
       where: { id: invite.id, status: "pending", expiresAt: { gt: now } },
       data: { status: "accepted", acceptedById: userId, acceptedAt: now },

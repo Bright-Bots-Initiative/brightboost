@@ -30,6 +30,12 @@ describe.skipIf(!dbUrl)(
       rev: `rev-${tag}`, // invited, accepted, removed, re-invited
       home: `home-${tag}`, // #872 home-access login: the email is an adult's
       home2: `home2-${tag}`, // home-access login with the learner's own email
+      conf: `conf-${tag}`, // joins through preview + confirm
+      race1: `rc1-${tag}`, // confirm racing a facilitator track change
+      race2: `rc2-${tag}`, // confirm racing an invitation acceptance
+      race3: `rc3-${tag}`, // confirm racing a revocation
+      race4: `rc4-${tag}`, // legacy row that already carries boundaries
+      race5: `rc5-${tag}`, // trusted row written without a snapshot
       cohort: `coh-${tag}`,
       cohort2: `coh2-${tag}`,
     };
@@ -81,6 +87,20 @@ describe.skipIf(!dbUrl)(
       request(app)
         .post(`/api/pathways/student/invitations/${inviteId}/accept`)
         .set(as(who));
+
+    /** The learner's own consent: preview, then confirm exactly what was shown. */
+    const joinByCode = async (who: string, code = joinCode) => {
+      const preview = await request(app)
+        .get(
+          `/api/pathways/enroll/preview?joinCode=${encodeURIComponent(code)}`,
+        )
+        .set(as(who));
+      if (preview.status !== 200) return preview;
+      return request(app)
+        .post("/api/pathways/enroll")
+        .set(as(who))
+        .send({ joinCode: code, version: preview.body.version });
+    };
 
     /** The learner's own section route (mounted, real middleware). */
     const section = (
@@ -261,6 +281,34 @@ describe.skipIf(!dbUrl)(
           parentEmail: emails.homeAdult,
         },
       });
+      for (const [id, name] of [
+        [ids.race1, "Rae One"],
+        [ids.race2, "Rae Two"],
+        [ids.race3, "Rae Three"],
+        [ids.race4, "Rae Four"],
+        [ids.race5, "Rae Five"],
+      ] as const) {
+        await prisma.user.create({
+          data: {
+            id,
+            name,
+            role: "student",
+            email: `${id}@p.test`,
+            password: hash,
+            userType: "pathways",
+          },
+        });
+      }
+      await prisma.user.create({
+        data: {
+          id: ids.conf,
+          name: "Cody Confirm",
+          role: "student",
+          email: `cody-${tag}@p.test`,
+          password: hash,
+          userType: "pathways",
+        },
+      });
       // A home-access login whose address is the learner's own: the parent
       // relationship names a different address, so invitations still match.
       await prisma.user.create({
@@ -357,6 +405,16 @@ describe.skipIf(!dbUrl)(
       tokens.rev = await login(`riley-${tag}@p.test`);
       tokens.home = await login(emails.homeAdult);
       tokens.home2 = await login(emails.homeOwn);
+      tokens.conf = await login(`cody-${tag}@p.test`);
+      for (const id of [
+        ids.race1,
+        ids.race2,
+        ids.race3,
+        ids.race4,
+        ids.race5,
+      ]) {
+        tokens[id] = await login(`${id}@p.test`);
+      }
     });
 
     afterAll(async () => {
@@ -371,6 +429,12 @@ describe.skipIf(!dbUrl)(
         ids.rev,
         ids.home,
         ids.home2,
+        ids.conf,
+        ids.race1,
+        ids.race2,
+        ids.race3,
+        ids.race4,
+        ids.race5,
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -887,12 +951,18 @@ describe.skipIf(!dbUrl)(
       expect(await tracksOf()).not.toContain("other-track");
       await noHistoryLeaks();
 
-      // Re-entering the join code is the learner's consent for the added
-      // track — from now on, so the earlier completion stays history.
-      const rejoin = await request(app)
-        .post("/api/pathways/enroll")
-        .set(as("learner"))
-        .send({ joinCode });
+      // The home flags the added track; confirming (preview, then confirm)
+      // is the learner's consent for it — from now on, so the earlier
+      // completion stays history.
+      const homeNow = await request(app)
+        .get("/api/pathways/student/home")
+        .set(as("learner"));
+      expect(
+        homeNow.body.enrollments.find(
+          (e: { cohortId: string }) => e.cohortId === ids.cohort,
+        ).consent,
+      ).toEqual({ accepted: true, newTracks: ["other-track"] });
+      const rejoin = await joinByCode("learner");
       expect(rejoin.status).toBe(200);
       const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
         where: {
@@ -927,6 +997,380 @@ describe.skipIf(!dbUrl)(
       expect(await tracksOf()).not.toContain("other-track");
     });
 
+    it("DB-874-18: the preview is read-only and shows the cohort, never another learner; confirming needs the preview", async () => {
+      const before = {
+        rows: await prisma.pathwayEnrollment.count(),
+        pending: await prisma.pathwayInvite.count({
+          where: { status: "pending" },
+        }),
+      };
+      const p = await request(app)
+        .get(`/api/pathways/enroll/preview?joinCode=${joinCode.toLowerCase()}`)
+        .set(as("conf"));
+      expect(p.status).toBe(200);
+      expect(p.body).toMatchObject({
+        cohort: {
+          id: ids.cohort,
+          name: `Cohort ${tag}`,
+          band: "launch",
+          facilitatorName: "Coach",
+        },
+        enrollment: { state: "none", acceptedAt: null, source: null },
+        newSharing: ["cyber-launch"],
+        canConfirm: true,
+        reason: null,
+      });
+      expect(p.body.tracks).toEqual([
+        { slug: "cyber-launch", consentedSince: null, requested: true },
+      ]);
+      expect(typeof p.body.version).toBe("string");
+      for (const id of [ids.learner, ids.joiner, ids.legacy, ids.twin]) {
+        expect(p.text).not.toContain(id);
+      }
+      expect(p.text).not.toContain("Marcus");
+      expect(await prisma.pathwayEnrollment.count()).toBe(before.rows);
+      expect(
+        await prisma.pathwayInvite.count({ where: { status: "pending" } }),
+      ).toBe(before.pending);
+      await facilitatorSeesNothingOf(ids.conf, "Cody Confirm");
+
+      // An unknown code, a cohort the learner has no row in, no reference.
+      expect(
+        (
+          await request(app)
+            .get("/api/pathways/enroll/preview?joinCode=NOPE99")
+            .set(as("conf"))
+        ).status,
+      ).toBe(404);
+      expect(
+        (
+          await request(app)
+            .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+            .set(as("conf"))
+        ).status,
+      ).toBe(404);
+      expect(
+        (await request(app).get("/api/pathways/enroll/preview").set(as("conf")))
+          .status,
+      ).toBe(400);
+
+      // Confirming needs the preview's version — and the right one.
+      const noVersion = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("conf"))
+        .send({ joinCode });
+      expect(noVersion.status).toBe(400);
+      expect(noVersion.body).toEqual({ error: "preview_required" });
+      const wrong = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("conf"))
+        .send({ joinCode, version: "not-what-was-shown" });
+      expect(wrong.status).toBe(409);
+      expect(wrong.body.error).toBe("preview_changed");
+      expect(wrong.body.preview.enrollment.state).toBe("none");
+      expect(
+        await prisma.pathwayEnrollment.count({ where: { userId: ids.conf } }),
+      ).toBe(0);
+      await facilitatorSeesNothingOf(ids.conf, "Cody Confirm");
+    });
+
+    it("DB-874-19: a cohort that changes between preview and confirmation grants nothing unseen; renewed consent covers exactly what is shown", async () => {
+      const setTracks = (trackIds: string[]) =>
+        request(app)
+          .put(`/api/pathways/facilitator/cohorts/${ids.cohort}`)
+          .set(as("fac"))
+          .send({ trackIds });
+      const stale = await request(app)
+        .get(`/api/pathways/enroll/preview?joinCode=${joinCode}`)
+        .set(as("conf"));
+      expect(stale.body.tracks.map((x: { slug: string }) => x.slug)).toEqual([
+        "cyber-launch",
+      ]);
+      expect((await setTracks(["cyber-launch", "other-track"])).status).toBe(
+        200,
+      );
+      try {
+        const refused = await request(app)
+          .post("/api/pathways/enroll")
+          .set(as("conf"))
+          .send({ joinCode, version: stale.body.version });
+        expect(refused.status).toBe(409);
+        expect(refused.body.error).toBe("preview_changed");
+        expect(
+          refused.body.preview.tracks
+            .map((x: { slug: string }) => x.slug)
+            .sort(),
+        ).toEqual(["cyber-launch", "other-track"]);
+        expect([...refused.body.preview.newSharing].sort()).toEqual([
+          "cyber-launch",
+          "other-track",
+        ]);
+        expect(
+          await prisma.pathwayEnrollment.count({ where: { userId: ids.conf } }),
+        ).toBe(0);
+        await facilitatorSeesNothingOf(ids.conf, "Cody Confirm");
+
+        const ok = await request(app)
+          .post("/api/pathways/enroll")
+          .set(as("conf"))
+          .send({
+            joinCode: joinCode.toLowerCase(),
+            version: refused.body.preview.version,
+          });
+        expect(ok.status).toBe(200);
+        expect(ok.body.changed).toBe(true);
+        const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+          where: {
+            userId_cohortId: { userId: ids.conf, cohortId: ids.cohort },
+          },
+        });
+        expect(Object.keys(row.trackBoundaries as object).sort()).toEqual([
+          "cyber-launch",
+          "other-track",
+        ]);
+        expect(row.source).toBe("join_code");
+        expect(row.acceptedAt).not.toBeNull();
+        expect((await learnerDetail(ids.conf)).status).toBe(200);
+      } finally {
+        expect((await setTracks(["cyber-launch"])).status).toBe(200);
+      }
+    });
+
+    it("DB-874-20: a duplicate confirmation is a harmless no-op; a cohort id previews only the learner's own rows", async () => {
+      const p = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as("conf"));
+      expect(p.status).toBe(200);
+      expect(p.body.enrollment.state).toBe("trusted");
+      expect(p.body.reason).toBe("nothing_new");
+      expect(p.body.canConfirm).toBe(false);
+      const before = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.conf, cohortId: ids.cohort } },
+      });
+      const again = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("conf"))
+        .send({ cohortId: ids.cohort, version: p.body.version });
+      expect(again.status).toBe(200);
+      expect(again.body.changed).toBe(false);
+      // With nothing pending, even a stale version can grant nothing.
+      const stale = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("conf"))
+        .send({ joinCode, version: "stale" });
+      expect(stale.status).toBe(200);
+      expect(stale.body.changed).toBe(false);
+      const after = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.conf, cohortId: ids.cohort } },
+      });
+      expect(after.acceptedAt?.getTime()).toBe(before.acceptedAt?.getTime());
+      expect(after.trackBoundaries).toEqual(before.trackBoundaries);
+      // Another facilitator's cohort id is not a preview target for this learner.
+      expect(
+        (
+          await request(app)
+            .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort2}`)
+            .set(as("conf"))
+        ).status,
+      ).toBe(404);
+    });
+
+    it("DB-874-21: a facilitator track change racing a confirmation never grants an unseen track", async () => {
+      const setTracks = (trackIds: string[]) =>
+        request(app)
+          .put(`/api/pathways/facilitator/cohorts/${ids.cohort}`)
+          .set(as("fac"))
+          .send({ trackIds });
+      const outcomes: number[] = [];
+      try {
+        for (let i = 0; i < 6; i++) {
+          expect((await setTracks(["cyber-launch"])).status).toBe(200);
+          await prisma.pathwayEnrollment.deleteMany({
+            where: { userId: ids.race1, cohortId: ids.cohort },
+          });
+          const seen = await request(app)
+            .get(`/api/pathways/enroll/preview?joinCode=${joinCode}`)
+            .set(as(ids.race1));
+          expect(seen.body.newSharing).toEqual(["cyber-launch"]);
+          const [confirm, put] = await Promise.all([
+            request(app)
+              .post("/api/pathways/enroll")
+              .set(as(ids.race1))
+              .send({ joinCode, version: seen.body.version }),
+            setTracks(["cyber-launch", "other-track"]),
+          ]);
+          expect(put.status, `round ${i}: put`).toBe(200);
+          expect([200, 409], `round ${i}: confirm`).toContain(confirm.status);
+          outcomes.push(confirm.status);
+          const row = await prisma.pathwayEnrollment.findUnique({
+            where: {
+              userId_cohortId: { userId: ids.race1, cohortId: ids.cohort },
+            },
+          });
+          if (confirm.status === 200) {
+            // Granted exactly what was previewed — never the added track.
+            expect(
+              Object.keys(row!.trackBoundaries as object),
+              `round ${i}`,
+            ).toEqual(["cyber-launch"]);
+          } else {
+            expect(row, `round ${i}: nothing written`).toBeNull();
+            expect(confirm.body.error).toBe("preview_changed");
+          }
+        }
+      } finally {
+        expect((await setTracks(["cyber-launch"])).status).toBe(200);
+      }
+      expect(outcomes).toHaveLength(6);
+    });
+
+    it("DB-874-22: a confirmation racing an invitation acceptance loses no consent", async () => {
+      const email = `${ids.race2}@p.test`;
+      await prisma.pathwayEnrollment.create({
+        data: {
+          userId: ids.race2,
+          cohortId: ids.cohort,
+          status: "active",
+          source: "legacy",
+        },
+      });
+      expect((await invite(email)).status).toBe(202);
+      const inv = await prisma.pathwayInvite.findUniqueOrThrow({
+        where: { cohortId_email: { cohortId: ids.cohort, email } },
+      });
+      const seen = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as(ids.race2));
+      expect(seen.body.enrollment.state).toBe("legacy");
+      const [confirm, accepted] = await Promise.all([
+        request(app)
+          .post("/api/pathways/enroll")
+          .set(as(ids.race2))
+          .send({ cohortId: ids.cohort, version: seen.body.version }),
+        accept(ids.race2, inv.id),
+      ]);
+      // Whichever commits first wins the transition; the other sees the
+      // result (a no-op confirmation, or an invitation that is no longer
+      // pending) — and no consent is lost either way.
+      expect(confirm.status).toBe(200);
+      expect([200, 409]).toContain(accepted.status);
+      if (accepted.status === 409) {
+        expect(accepted.body).toEqual({ error: "invite_not_pending" });
+        expect(confirm.body.changed).toBe(true);
+      }
+      const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.race2, cohortId: ids.cohort } },
+      });
+      expect(row.status).toBe("active");
+      expect(row.acceptedAt).not.toBeNull();
+      expect(Object.keys(row.trackBoundaries as object)).toEqual([
+        "cyber-launch",
+      ]);
+      expect(
+        (
+          await prisma.pathwayInvite.findUniqueOrThrow({
+            where: { id: inv.id },
+          })
+        ).status,
+      ).toBe("accepted");
+      expect((await learnerDetail(ids.race2)).status).toBe(200);
+    });
+
+    it("DB-874-23: a confirmation racing a revocation ends revoked in every ordering", async () => {
+      await prisma.pathwayEnrollment.create({
+        data: {
+          userId: ids.race3,
+          cohortId: ids.cohort,
+          status: "active",
+          source: "legacy",
+        },
+      });
+      const seen = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as(ids.race3));
+      const [confirm, removed] = await Promise.all([
+        request(app)
+          .post("/api/pathways/enroll")
+          .set(as(ids.race3))
+          .send({ cohortId: ids.cohort, version: seen.body.version }),
+        request(app)
+          .delete(
+            `/api/pathways/facilitator/cohorts/${ids.cohort}/learners/${ids.race3}`,
+          )
+          .set(as("fac")),
+      ]);
+      expect(removed.status).toBe(204);
+      expect([200, 403]).toContain(confirm.status);
+      const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.race3, cohortId: ids.cohort } },
+      });
+      expect(row.status).toBe("revoked");
+      if (confirm.status === 403) expect(row.acceptedAt).toBeNull();
+      await facilitatorSeesNothingOf(ids.race3, "Rae Three");
+    });
+
+    it("DB-874-24: a legacy row keeps the boundaries it already carries; a snapshot-less trusted row asks for nothing", async () => {
+      await prisma.pathwayEnrollment.create({
+        data: {
+          userId: ids.race4,
+          cohortId: ids.cohort,
+          status: "active",
+          source: "legacy",
+          trackBoundaries: { "old-track": "2026-01-01T00:00:00.000Z" },
+        },
+      });
+      const seen = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as(ids.race4));
+      expect(seen.body.enrollment.state).toBe("legacy");
+      expect(seen.body.newSharing).toEqual(["cyber-launch"]);
+      const ok = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as(ids.race4))
+        .send({ cohortId: ids.cohort, version: seen.body.version });
+      expect(ok.status).toBe(200);
+      const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.race4, cohortId: ids.cohort } },
+      });
+      const bounds = row.trackBoundaries as Record<string, string>;
+      expect(bounds["old-track"]).toBe("2026-01-01T00:00:00.000Z");
+      expect(new Date(bounds["cyber-launch"]).getTime()).toBe(
+        row.acceptedAt!.getTime(),
+      );
+
+      // The operator-backfill shape: trusted, no snapshot → every listed
+      // track counts as consented at acceptance; nothing is asked again.
+      const acceptedAt = new Date("2026-06-01T00:00:00.000Z");
+      await prisma.pathwayEnrollment.create({
+        data: {
+          userId: ids.race5,
+          cohortId: ids.cohort,
+          status: "active",
+          source: "join_code",
+          acceptedAt,
+        },
+      });
+      const home = await request(app)
+        .get("/api/pathways/student/home")
+        .set(as(ids.race5));
+      expect(
+        home.body.enrollments.find(
+          (e: { cohortId: string }) => e.cohortId === ids.cohort,
+        ).consent,
+      ).toEqual({ accepted: true, newTracks: [] });
+      const quiet = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as(ids.race5));
+      expect(quiet.body.reason).toBe("nothing_new");
+      expect(quiet.body.tracks).toEqual([
+        {
+          slug: "cyber-launch",
+          consentedSince: acceptedAt.toISOString(),
+          requested: false,
+        },
+      ]);
+    });
+
     it("DB-874-7: a legacy enrollment grants no visibility until the learner re-enters the join code", async () => {
       await facilitatorSeesNothingOf(ids.legacy, "Legacy Lee");
       const r = await roster();
@@ -947,11 +1391,31 @@ describe.skipIf(!dbUrl)(
         .send({ cohortCode: joinCode, userId: ids.legacy, password: PASSWORD });
       expect(codeLogin.status).toBe(200);
 
+      // The home marks the row as not yet confirmed…
+      const homeBefore = await request(app)
+        .get("/api/pathways/student/home")
+        .set(as("legacy"));
+      expect(
+        homeBefore.body.enrollments.find(
+          (e: { cohortId: string }) => e.cohortId === ids.cohort,
+        ).consent,
+      ).toEqual({ accepted: false, newTracks: ["cyber-launch"] });
+      // …and the learner confirms from there, by cohort id, without the code.
+      const preview = await request(app)
+        .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+        .set(as("legacy"));
+      expect(preview.status).toBe(200);
+      expect(preview.body).toMatchObject({
+        enrollment: { state: "legacy", acceptedAt: null, source: "legacy" },
+        newSharing: ["cyber-launch"],
+        canConfirm: true,
+      });
       const joined = await request(app)
         .post("/api/pathways/enroll")
         .set(as("legacy"))
-        .send({ joinCode });
+        .send({ cohortId: ids.cohort, version: preview.body.version });
       expect(joined.status).toBe(200);
+      expect(joined.body.changed).toBe(true);
       const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
         where: {
           userId_cohortId: { userId: ids.legacy, cohortId: ids.cohort },
@@ -959,6 +1423,14 @@ describe.skipIf(!dbUrl)(
       });
       expect(row.acceptedAt).not.toBeNull();
       expect(row.source).toBe("join_code");
+      const homeAfter = await request(app)
+        .get("/api/pathways/student/home")
+        .set(as("legacy"));
+      expect(
+        homeAfter.body.enrollments.find(
+          (e: { cohortId: string }) => e.cohortId === ids.cohort,
+        ).consent,
+      ).toEqual({ accepted: true, newTracks: [] });
       expect(row.trackBoundaries).toEqual({
         "cyber-launch": row.acceptedAt!.toISOString(),
       });
@@ -967,16 +1439,10 @@ describe.skipIf(!dbUrl)(
     });
 
     it("DB-874-8: joining by code creates a trusted relationship and is idempotent", async () => {
-      const first = await request(app)
-        .post("/api/pathways/enroll")
-        .set(as("joiner"))
-        .send({ joinCode });
+      const first = await joinByCode("joiner");
       expect(first.status).toBe(200);
       const acceptedAt = first.body.enrollment.acceptedAt as string;
-      const second = await request(app)
-        .post("/api/pathways/enroll")
-        .set(as("joiner"))
-        .send({ joinCode });
+      const second = await joinByCode("joiner");
       expect(second.status).toBe(200);
       expect(second.body.enrollment.acceptedAt).toBe(acceptedAt);
       expect((await learnerDetail(ids.joiner)).status).toBe(200);
@@ -998,10 +1464,7 @@ describe.skipIf(!dbUrl)(
       expect(row.revokedAt).not.toBeNull();
       await facilitatorSeesNothingOf(ids.joiner, "Jordan Join");
 
-      const rejoin = await request(app)
-        .post("/api/pathways/enroll")
-        .set(as("joiner"))
-        .send({ joinCode });
+      const rejoin = await joinByCode("joiner");
       expect(rejoin.status).toBe(403);
       expect(rejoin.body).toEqual({ error: "enrollment_revoked" });
 
@@ -1060,11 +1523,7 @@ describe.skipIf(!dbUrl)(
       ).toBe(0);
     });
     it("DB-874-12: two simultaneous first joins by the same learner yield one trusted row and no error", async () => {
-      const join = () =>
-        request(app)
-          .post("/api/pathways/enroll")
-          .set(as("twin"))
-          .send({ joinCode });
+      const join = () => joinByCode("twin");
       const [a, b] = await Promise.all([join(), join()]);
       expect([a.status, b.status]).toEqual([200, 200]);
       const rows = await prisma.pathwayEnrollment.findMany({
@@ -1169,6 +1628,42 @@ describe.skipIf(!dbUrl)(
       });
       expect(revokedInvite.status).toBe("revoked");
       await facilitatorSeesNothingOf(ids.rev, "Riley Return");
+      // The code is not a way back: the preview says so and confirmation
+      // refuses, by code and by cohort id alike.
+      const revokedPreview = await request(app)
+        .get(`/api/pathways/enroll/preview?joinCode=${joinCode}`)
+        .set(as("rev"));
+      expect(revokedPreview.status).toBe(200);
+      expect(revokedPreview.body).toMatchObject({
+        enrollment: { state: "revoked" },
+        canConfirm: false,
+        reason: "enrollment_revoked",
+        newSharing: [],
+        tracks: [],
+        version: "",
+      });
+      expect(revokedPreview.body.cohort.facilitatorName).toBeNull();
+      expect(
+        (
+          await request(app)
+            .get(`/api/pathways/enroll/preview?cohortId=${ids.cohort}`)
+            .set(as("rev"))
+        ).body.enrollment.state,
+      ).toBe("revoked");
+      const refused = await request(app)
+        .post("/api/pathways/enroll")
+        .set(as("rev"))
+        .send({ joinCode, version: "any-version-is-refused" });
+      expect(refused.status).toBe(403);
+      expect(
+        (
+          await prisma.pathwayEnrollment.findUniqueOrThrow({
+            where: {
+              userId_cohortId: { userId: ids.rev, cohortId: ids.cohort },
+            },
+          })
+        ).status,
+      ).toBe("revoked");
 
       // The fresh invitation is the way back.
       expect((await invite(email)).status).toBe(202);
@@ -1224,10 +1719,7 @@ describe.skipIf(!dbUrl)(
       ).toBe(404);
       // Joining by code is the learner's own act; it must not adopt the
       // adult's invitation as if the learner had been the addressee.
-      const join = await request(app)
-        .post("/api/pathways/enroll")
-        .set(as("home"))
-        .send({ joinCode });
+      const join = await joinByCode("home");
       expect(join.status).toBe(200);
       const after = await prisma.pathwayInvite.findUniqueOrThrow({
         where: { id: inv.id },

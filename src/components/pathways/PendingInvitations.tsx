@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { UserPlus } from "lucide-react";
+import { PATHWAY_TRACKS } from "@/constants/pathwayTracks";
 
 interface Invitation {
   id: string;
@@ -16,10 +17,15 @@ interface Invitation {
   cohortName: string;
   band: string;
   sitePartner: string | null;
+  /** the cohort's tracks: what accepting shares, from today on */
+  trackIds?: string[];
   facilitatorName: string;
   invitedAt: string;
   expiresAt: string;
 }
+
+const trackName = (slug: string) =>
+  PATHWAY_TRACKS.find((t) => t.slug === slug)?.name ?? slug;
 
 const authHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("bb_access_token")}`,
@@ -109,6 +115,13 @@ export default function PendingInvitations({
                       name: inv.facilitatorName,
                     })}
                   </p>
+                  {(inv.trackIds?.length ?? 0) > 0 && (
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {t("pathways.home.invitations.tracks", {
+                        tracks: (inv.trackIds ?? []).map(trackName).join(", "),
+                      })}
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

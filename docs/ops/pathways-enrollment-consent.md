@@ -58,8 +58,9 @@ moment. A revoked learner cannot restart through the join code — only a fresh 
 `PathwayEnrollment.trackBoundaries` snapshots the cohort's tracks at the moment of consent
 (`{ "<trackSlug>": "<ISO boundary>" }`). A facilitator editing the cohort's `trackIds` afterwards
 shares nothing new: a track the learner never consented to is not visible, however old or new
-its work. The learner consents to an added track by re-entering the join code (idempotent for the
-original acceptance moment), and that track's boundary is the re-entry moment. A track the cohort
+its work. The learner consents to an added track by confirming it from the Pathways home (the
+"Review and confirm" prompt, or Join or confirm a cohort; idempotent for the original
+acceptance moment), and that track's boundary is the confirmation moment. A track the cohort
 no longer lists is hidden while unlisted; the learner's earlier consent to it stays in the
 snapshot and applies again if the cohort lists it again. Rows written by operator SQL without a snapshot fall back to the
 cohort's current tracks at the acceptance moment — set the snapshot in the backfill (below).
@@ -84,7 +85,7 @@ that adult controls).
 
 The migration `20260906130000_pathway_enrollment_consent` marks every existing enrollment
 `source = 'legacy'` with `acceptedAt = NULL`. On deploy, facilitator dashboards show existing
-learners only after each learner re-enters the join code (the roster shows an "unconfirmed" count
+learners only after each learner confirms sharing from the Pathways home (the roster shows an "unconfirmed" count
 and the learner keeps learning meanwhile). Nothing is silently trusted.
 
 An operator who can vouch for specific rows may backfill deliberately. Run against the target
@@ -110,7 +111,29 @@ Record the backfill in the ops log. There is no audit row for a direct SQL chang
 ## Not yet delivered
 
 Pathways invitations are not emailed; the learner sees them on the Pathways home after signing in
-with the invited account. Email delivery is a follow-up. Re-entering the join code — which confirms
-a legacy row and consents to tracks added to a cohort — is reachable only through
-`POST /api/pathways/enroll` today; no screen posts it, so until a UI exists a facilitator gains no
-visibility into existing learners' work on an added track (owner decision; fails closed).
+with the invited account. Email delivery is a follow-up.
+
+## Join or confirm a cohort (learner UI)
+
+`/pathways/join` (Pathways home → **Join or confirm a cohort**, or the per-cohort **Review and
+confirm** prompt) is the learner's own act of consent, in two steps:
+
+1. **Preview** — `GET /api/pathways/enroll/preview?joinCode=…` (or `?cohortId=…` for a cohort the
+   learner already has a row in). Read-only: no enrollment write, no invitation consumed, nothing
+   becomes visible. It returns the cohort (name, band, site partner, facilitator name), each of
+   the cohort's tracks with the learner's existing boundary or "requested", the learner's state
+   (`none` | `legacy` | `trusted` | `revoked`), and a `version` that identifies exactly that
+   (cohort, tracks, existing consent).
+2. **Confirm** — `POST /api/pathways/enroll { joinCode | cohortId, version }`. Inside one
+   transaction the server re-reads the cohort and the row and recomputes the version; if the
+   cohort's tracks changed since the preview it answers `409 preview_changed` with a fresh preview
+   and the learner must confirm again — the grant can only ever be what was previewed. A request
+   without `version` is refused (`400 preview_required`). A new relationship or a confirmed legacy
+   row gets its boundary now; a trusted row keeps its earlier boundaries and adds the newly listed
+   tracks at now; a row with nothing new is an idempotent no-op (`changed: false`); a revoked row
+   stays revoked (`403`) — only a fresh invitation restores access. The learner's session is the
+   identity; the code is never enough on its own.
+
+The home marks a legacy row and a cohort with unconfirmed added tracks (`consent` per
+enrollment) and does not send such a returning learner into the first-visit welcome flow. The
+roster's "not yet confirmed" count clears as learners confirm.
