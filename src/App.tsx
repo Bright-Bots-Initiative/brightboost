@@ -318,11 +318,12 @@ function App() {
                 />
               </Route>
 
-              {/* Admin: internal A/B testing dashboard — teacher/facilitator only */}
+              {/* Admin: internal A/B testing dashboard — staff (admin role) only,
+                  matching the backend staff capability (#873) */}
               <Route
                 path="/admin/experiments"
                 element={
-                  <ProtectedRoute requiredRole="teacher">
+                  <ProtectedRoute requiredRole="admin">
                     <ExperimentDashboard />
                   </ProtectedRoute>
                 }
