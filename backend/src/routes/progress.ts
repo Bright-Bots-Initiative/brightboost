@@ -14,6 +14,10 @@ const ProgressStatus = {
 } as const;
 type ProgressStatus = (typeof ProgressStatus)[keyof typeof ProgressStatus];
 import { requireAuth } from "../utils/auth";
+import {
+  canWriteProgressFor,
+  requireStudentReadAccess,
+} from "../utils/authorization";
 import { gameActionLimiter } from "../utils/security";
 import {
   checkUnlocks,
@@ -622,40 +626,45 @@ router.post(
 
 // Legacy / Comprehensive Routes (with validation)
 
-router.get("/progress/:studentId", requireAuth, async (req, res) => {
-  const studentId = req.params.studentId;
-
-  // 🛡️ Sentinel: Validate student ID format
-  const parseId = idSchema.safeParse(studentId);
-  if (!parseId.success) {
-    return res.status(400).json({ error: "Invalid student ID format" });
-  }
-
-  // Authorization check: User can only access their own progress, unless they are admin/teacher
-  if (req.user!.id !== studentId && req.user!.role === "student") {
-    return res.status(403).json({ error: "forbidden" });
-  }
-
-  const moduleSlug = (req.query.module as string) || "stem-1";
-
-  // 🛡️ Sentinel: Validate module slug format
-  const parseSlug = slugSchema.safeParse(moduleSlug);
-  if (!parseSlug.success) {
-    return res.status(400).json({ error: "Invalid module slug format" });
-  }
-
-  try {
-    const result = await getAggregatedProgress(studentId, moduleSlug);
-    res.json(result);
-  } catch (e: any) {
-    // 🛡️ Sentinel: Only expose safe "GameError" messages.
-    if (e instanceof GameError) {
-      return res.status(400).json({ error: e.message });
+// #871: aggregate progress is readable by the student, staff, or a teacher
+// who owns a class / home group the student is enrolled in (see
+// utils/authorization.ts). Format validation runs first so a malformed id is
+// a 400 for everyone; the grant check runs before any data lookup.
+router.get(
+  "/progress/:studentId",
+  requireAuth,
+  (req, res, next) => {
+    const parseId = idSchema.safeParse(req.params.studentId);
+    if (!parseId.success) {
+      return res.status(400).json({ error: "Invalid student ID format" });
     }
-    console.error("Get progress error:", e);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    next();
+  },
+  requireStudentReadAccess("studentId"),
+  async (req, res) => {
+    const studentId = req.params.studentId;
+
+    const moduleSlug = (req.query.module as string) || "stem-1";
+
+    // 🛡️ Sentinel: Validate module slug format
+    const parseSlug = slugSchema.safeParse(moduleSlug);
+    if (!parseSlug.success) {
+      return res.status(400).json({ error: "Invalid module slug format" });
+    }
+
+    try {
+      const result = await getAggregatedProgress(studentId, moduleSlug);
+      res.json(result);
+    } catch (e: any) {
+      // 🛡️ Sentinel: Only expose safe "GameError" messages.
+      if (e instanceof GameError) {
+        return res.status(400).json({ error: e.message });
+      }
+      console.error("Get progress error:", e);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
 
 router.post(
   "/progress/checkpoint",
@@ -666,13 +675,18 @@ router.post(
     if (!parse.success)
       return res.status(400).json({ error: parse.error.flatten() });
 
-    // Authorization check
-    if (req.user!.id !== parse.data.studentId && req.user!.role === "student") {
+    // #871: checkpoint writes are self-only. A teacher's or staff member's
+    // read grant on a learner never becomes a write grant, and the body's
+    // studentId can never redirect the write to another account.
+    if (!canWriteProgressFor(req.user!, parse.data.studentId)) {
       return res.status(403).json({ error: "forbidden" });
     }
 
     try {
-      const saved = await upsertCheckpoint(parse.data);
+      const saved = await upsertCheckpoint({
+        ...parse.data,
+        studentId: req.user!.id,
+      });
       res.json({
         ok: true,
         id: saved.id,
