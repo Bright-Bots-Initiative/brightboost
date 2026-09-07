@@ -4,12 +4,19 @@
  * Suites that need real database semantics (unique constraints, transactions,
  * concurrent writers) opt in with:
  *
- *   const dbUrl = vi.hoisted(() => bindTestDatabase());
- *   describe.skipIf(!dbUrl)("...", () => { ... });
+ *   const dbUrl = bindTestDatabase();            // module scope, before the app
+ *   describe.skipIf(!dbUrl)("...", () => {
+ *     beforeAll(async () => {
+ *       app = (await import("../../server")).default; // dynamic import
+ *     });
+ *   });
  *
  * `bindTestDatabase()` returns the designated test URL and points
- * `DATABASE_URL` / `DIRECT_URL` at it *before* the app's PrismaClient is
- * constructed (call it inside `vi.hoisted`, which runs ahead of imports).
+ * `DATABASE_URL` / `DIRECT_URL` at it. It must run *before* the app's
+ * PrismaClient is constructed: either import the app dynamically inside
+ * `beforeAll` (as above), or call this inside `vi.hoisted(...)` when the app
+ * is imported statically. A static `import app` plus a module-scope call
+ * would bind too late and run against whatever DATABASE_URL was already set.
  * It returns `null` — and the suite skips — when `TEST_DATABASE_URL` is unset.
  *
  * Safety: the database name must carry a bounded `test` / `tests` / `e2e`

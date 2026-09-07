@@ -79,6 +79,9 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
     // denied caller learns nothing about the id.
     const grant = await resolveStudentReadGrant(req.user!, targetUserId);
     if (!grant) {
+      // Capitalised "Forbidden" is this route's pre-existing wire contract
+      // (the progress routes answer lower-case "forbidden"); the policy is
+      // the same.
       return res.status(403).json({ error: "Forbidden" });
     }
 

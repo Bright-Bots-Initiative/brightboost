@@ -10,9 +10,12 @@ import request from "supertest";
  * answers the single relationship question the policy asks, so each case
  * below states exactly which relationship exists.
  *
- * RED evidence (pre-fix main 72746e87): PROF-2/PROF-3/PROG-2/PROG-3 and
- * CKPT-2/CKPT-3 fail — any teacher received 200 with the target's email, and
- * teachers/admins could write another learner's checkpoint.
+ * RED evidence (this suite against the pre-fix routes from main 72746e87):
+ * 9 of 20 cases fail — PROF-2/3/5/7/10, PROG-2/4 and CKPT-2/3. Any teacher
+ * received 200 with the target's email (and the same 200/404 split exposed
+ * whether an id existed), enrollment removal changed nothing, and teachers
+ * and admins could write another learner's checkpoint. Student-to-student
+ * denial (PROF-6, PROG-3, CKPT-4) already held on the baseline.
  */
 
 const prismaMock = vi.hoisted(() => ({
