@@ -3,6 +3,7 @@
 - Never commit `.env*` values or secrets. Tracked `.env*` exceptions are allowlisted under issue **#754** with expiry — do not extend the allowlist to silence a check; rotate/untrack is #754's job.
 - Never paste secrets into docs, fixtures, tests, commit messages, or PR bodies.
 - Identity for self-referential actions comes from `req.user` (session), never from body- or param-supplied user IDs (class-join IDOR class of bugs).
+- Reads of another user's profile or progress go through `backend/src/utils/authorization.ts` (self, staff, or teacher owning a class/home group the target is enrolled in). Do not compare roles inline; a read grant never implies a write grant (**#871**).
 - New routers **default-deny**: require auth unless a route is explicitly public.
 - Validate inputs with Zod (including `.max()` on strings/numbers processed by expensive paths). Mirror signup constraints on login.
 - Configure CORS against an allowlist; do not ship `cors()` wide open.

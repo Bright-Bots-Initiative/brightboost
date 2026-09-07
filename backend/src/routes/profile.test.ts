@@ -8,6 +8,9 @@ const prismaMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  enrollment: {
+    findFirst: vi.fn(),
+  },
   auditLog: {
     create: vi.fn(),
   },
@@ -83,7 +86,10 @@ describe("Profile Routes", () => {
   });
 
   describe("GET /api/users/:id", () => {
-    it("should allow teacher to view student profile", async () => {
+    it("should allow a teacher to view a student enrolled in their class (#871)", async () => {
+      // The teacher owns a course the student is enrolled in.
+      // @ts-ignore
+      prismaMock.enrollment.findFirst.mockResolvedValue({ id: "enr-1" });
       // Mock finding the student
       // @ts-ignore
       prismaMock.user.findUnique.mockImplementation(({ where }) => {
@@ -98,6 +104,32 @@ describe("Profile Routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(mockStudent.id);
+      // Relationship was checked against this teacher and this student.
+      expect(prismaMock.enrollment.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            studentId: "student-456",
+            course: { teacherId: "user-123" },
+          }),
+        }),
+      );
+    });
+
+    it("should forbid a teacher from viewing a student outside their classes (#871)", async () => {
+      // @ts-ignore
+      prismaMock.enrollment.findFirst.mockResolvedValue(null);
+      // @ts-ignore
+      prismaMock.user.findUnique.mockResolvedValue(mockStudent);
+
+      const response = await request(app)
+        .get("/api/users/student-456")
+        .set("x-user-id", "user-123")
+        .set("x-role", "teacher");
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ error: "Forbidden" });
+      // Denied before any lookup of the target: nothing about the student leaks.
+      expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
     });
 
     it("should allow admin to view any profile", async () => {

@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireAuth } from "../utils/auth";
+import { resolveStudentReadGrant } from "../utils/authorization";
 import { logAudit } from "../utils/audit";
 import { sensitiveOpsLimiter } from "../utils/security";
 import { nameSchema, safeString, idSchema } from "../validation/schemas";
@@ -65,8 +66,6 @@ router.get("/profile", requireAuth, async (req: Request, res: Response) => {
 // 🛡️ Sentinel: Ported from dead code in user.ts and secured.
 router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
   try {
-    const requesterId = req.user!.id;
-    const requesterRole = req.user!.role;
     const targetUserId = req.params.id;
 
     // 🛡️ Sentinel: Validate user ID format
@@ -75,14 +74,11 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid user ID format" });
     }
 
-    // Authorization Check
-    const isSelf = requesterId === targetUserId;
-    const isTeacher = requesterRole === "teacher";
-    const isAdmin = requesterRole === "admin";
-
-    // 🛡️ Sentinel: MVP Logic - Allow any teacher to view any student.
-    // TODO: In production, verify that the student belongs to the teacher's class.
-    if (!isSelf && !isTeacher && !isAdmin) {
+    // #871: self, staff, or a teacher who owns a class / home group the
+    // target is enrolled in. Resolved before any lookup of the target so a
+    // denied caller learns nothing about the id.
+    const grant = await resolveStudentReadGrant(req.user!, targetUserId);
+    if (!grant) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
