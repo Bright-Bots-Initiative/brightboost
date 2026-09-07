@@ -26,7 +26,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
   },
   course: { findFirst: vi.fn() },
-  enrollment: { findUnique: vi.fn() },
+  enrollment: { findUnique: vi.fn(), findFirst: vi.fn() },
   homeAccessInvite: {
     create: vi.fn(),
     findUnique: vi.fn(),
@@ -35,6 +35,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   auditLog: { create: vi.fn() },
   $transaction: vi.fn(),
+  $queryRaw: vi.fn(),
 }));
 
 vi.mock("../../utils/prisma", () => ({ default: prismaMock }));
@@ -114,12 +115,22 @@ beforeEach(async () => {
   teacherHash = teacherHash || (await bcrypt.hash(TEACHER_PASSWORD, 4));
   studentHash = studentHash || (await bcrypt.hash(STUDENT_PASSWORD, 4));
   mailMock.sendHomeAccessInviteEmail.mockResolvedValue(true);
-  prismaMock.$transaction.mockImplementation(
-    async (fn: (tx: typeof prismaMock) => Promise<unknown>) => fn(prismaMock),
+  prismaMock.$transaction.mockImplementation(async (arg: unknown) =>
+    typeof arg === "function"
+      ? (arg as (tx: typeof prismaMock) => Promise<unknown>)(prismaMock)
+      : Promise.all(arg as Promise<unknown>[]),
   );
   prismaMock.homeAccessInvite.updateMany.mockResolvedValue({ count: 1 });
   prismaMock.user.updateMany.mockResolvedValue({ count: 1 });
+  // The issuing relationship is intact unless a test says otherwise: the
+  // unlocked pre-check and each of the three share-locked reads find a row.
+  prismaMock.enrollment.findFirst.mockResolvedValue({ id: "enr-1" });
+  prismaMock.$queryRaw.mockResolvedValue([{ id: "row" }]);
 });
+
+/** The SQL text of the n-th $queryRaw call (tagged-template form). */
+const rawSql = (n: number) =>
+  (prismaMock.$queryRaw.mock.calls[n][0] as readonly string[]).join("?");
 
 describe("#872 the old self-service binding route is gone", () => {
   it("HA-1: a classroom session posting replacement credentials gets 410 and writes nothing", async () => {
@@ -398,6 +409,18 @@ describe("#872 first-time binding — invite", () => {
     expect(created.invitedById).toBe(TEACHER_ID);
     expect(created.adultEmail).toBe("parent@example.com"); // normalised
     expect(created.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+    // Bound to the exact relationship instance that authorized it.
+    expect(created.courseId).toBe(COURSE_ID);
+    expect(created.enrollmentId).toBe("enr-1");
+    // A fresh invitation supersedes every earlier unused one, in one transaction.
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+    const supersede = prismaMock.homeAccessInvite.updateMany.mock.calls[0][0];
+    expect(supersede.where).toEqual({
+      studentId: STUDENT_ID,
+      usedAt: null,
+      revokedAt: null,
+    });
+    expect(supersede.data.revokedAt).toBeInstanceOf(Date);
 
     const [to, acceptUrl, firstName] =
       mailMock.sendHomeAccessInviteEmail.mock.calls[0];
@@ -450,10 +473,21 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
     tokenHash: hashInviteToken(RAW),
     expiresAt: new Date(Date.now() + 3600 * 1000),
     usedAt: null,
+    revokedAt: null,
+    courseId: COURSE_ID,
+    enrollmentId: "enr-1",
     createdAt: new Date(),
     student: { id: STUDENT_ID, name: "Ada Lovelace", loginIcon: "🐱" },
     ...over,
   });
+
+  const acceptWith = (token = RAW) =>
+    request(app)
+      .post("/api/auth/home-access/accept")
+      .set(fromNewIp())
+      .send({ token, email: "home@example.com", password: "HomePass123" });
+  const preview = (token = RAW) =>
+    request(app).get(`/api/auth/home-access/invite/${token}`).set(fromNewIp());
 
   it("HA-17: unknown, expired and used tokens are refused with no write", async () => {
     prismaMock.homeAccessInvite.findUnique.mockResolvedValue(null);
@@ -482,8 +516,69 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
     expect(replayed.status).toBe(409);
     expect(replayed.body).toEqual({ error: "invite_used" });
 
+    prismaMock.homeAccessInvite.findUnique.mockResolvedValue(
+      inviteRow({ revokedAt: new Date() }),
+    );
+    expect((await preview()).status).toBe(410);
+    const revoked = await acceptWith();
+    expect(revoked.status).toBe(410);
+    expect(revoked.body).toEqual({ error: "invite_revoked" });
+
     expect(prismaMock.user.updateMany).not.toHaveBeenCalled();
     expect(prismaMock.homeAccessInvite.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("HA-17c: an invitation without relationship provenance fails closed, before any lookup", async () => {
+    prismaMock.homeAccessInvite.findUnique.mockResolvedValue(
+      inviteRow({ enrollmentId: null, courseId: null }),
+    );
+    expect((await preview()).status).toBe(410);
+    const res = await acceptWith();
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: "invite_revoked" });
+    expect(prismaMock.enrollment.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(prismaMock.user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("HA-17d: preview and accept require the exact issuing relationship, still owned by the inviting teacher", async () => {
+    prismaMock.homeAccessInvite.findUnique.mockResolvedValue(inviteRow());
+    prismaMock.enrollment.findFirst.mockResolvedValue(null);
+    expect((await preview()).status).toBe(410);
+    const res = await acceptWith();
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: "invite_revoked" });
+    // The predicate names the row, the pair, the course owner and the role.
+    expect(prismaMock.enrollment.findFirst.mock.calls[0][0].where).toEqual({
+      id: "enr-1",
+      studentId: STUDENT_ID,
+      courseId: COURSE_ID,
+      course: { teacherId: TEACHER_ID, teacher: { role: "teacher" } },
+    });
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(prismaMock.homeAccessInvite.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("HA-17e: the relationship is re-verified under lock inside the accepting transaction", async () => {
+    prismaMock.homeAccessInvite.findUnique.mockResolvedValue(inviteRow());
+    // Pre-check passes; under lock the course is no longer the inviter's.
+    prismaMock.$queryRaw
+      .mockResolvedValueOnce([{ id: "enr-1" }])
+      .mockResolvedValueOnce([]);
+    const res = await acceptWith();
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({ error: "invite_revoked" });
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(2);
+    expect(rawSql(0)).toMatch(/FROM "Enrollment"[\s\S]*FOR SHARE/);
+    expect(rawSql(1)).toMatch(/FROM "Course"[\s\S]*FOR SHARE/);
+    // Nothing was claimed or bound: the transaction threw before both writes.
+    expect(prismaMock.homeAccessInvite.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.user.updateMany).not.toHaveBeenCalled();
+    await expect(
+      prismaMock.$transaction.mock.results[0].value,
+    ).rejects.toThrow();
   });
 
   it("HA-17b: the accept page sees only the student's first name and the invited email", async () => {
@@ -514,8 +609,20 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
 
+    // Enrollment, Course and inviter are share-locked, in that order, first.
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(3);
+    expect(rawSql(0)).toMatch(/FROM "Enrollment"[\s\S]*FOR SHARE/);
+    expect(rawSql(1)).toMatch(/FROM "Course"[\s\S]*FOR SHARE/);
+    expect(rawSql(2)).toMatch(/FROM "User"[\s\S]*'teacher'[\s\S]*FOR SHARE/);
+    // The claim is a compare-and-swap against the verified provenance.
     const claim = prismaMock.homeAccessInvite.updateMany.mock.calls[0][0];
-    expect(claim.where).toMatchObject({ id: "inv-9", usedAt: null });
+    expect(claim.where).toMatchObject({
+      id: "inv-9",
+      enrollmentId: "enr-1",
+      courseId: COURSE_ID,
+      usedAt: null,
+      revokedAt: null,
+    });
     expect(claim.data.usedAt).toBeInstanceOf(Date);
 
     const bind = prismaMock.user.updateMany.mock.calls[0][0];

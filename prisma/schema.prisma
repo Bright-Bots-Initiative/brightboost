@@ -390,7 +390,10 @@ model Enrollment {
   
   student  User   @relation(fields: [studentId], references: [id])
   course   Course @relation(fields: [courseId], references: [id])
-  
+  // #872: home-access invitations are bound to this row's id (FK SetNull on
+  // delete). Any future soft-removal (status / leftAt) must also revoke them.
+  homeAccessInvites HomeAccessInvite[]
+
   @@unique([studentId, courseId])
   // Index for filtering enrollments by course
   @@index([courseId])
@@ -557,20 +560,32 @@ model PasswordResetToken {
 // the teacher (or home-group parent) who owns a Course the student is enrolled
 // in; only the token hash is stored (mirror PasswordResetToken).
 model HomeAccessInvite {
-  id          String    @id @default(cuid())
-  studentId   String
-  invitedById String
-  adultEmail  String
-  tokenHash   String    @unique
-  expiresAt   DateTime
-  usedAt      DateTime?
-  createdAt   DateTime  @default(now())
+  id           String    @id @default(cuid())
+  studentId    String
+  invitedById  String
+  // The exact relationship instance that authorized issuance. The FK nulls
+  // `enrollmentId` when that Enrollment row is deleted, and a null value is
+  // never claimable — a removed-and-recreated enrollment is a new row, so an
+  // old token cannot revive. `courseId` and `invitedById` are re-verified
+  // (course still owned by the inviter, inviter still a teacher) when the
+  // invitation is previewed or accepted.
+  courseId     String?
+  enrollmentId String?
+  adultEmail   String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  revokedAt    DateTime? // explicit revocation (class deletion, provenance-less rows)
+  createdAt    DateTime  @default(now())
 
-  student   User @relation("HomeAccessInviteStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  invitedBy User @relation("HomeAccessInviteInviter", fields: [invitedById], references: [id])
+  student    User        @relation("HomeAccessInviteStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  invitedBy  User        @relation("HomeAccessInviteInviter", fields: [invitedById], references: [id])
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
 
   @@index([studentId])
   @@index([expiresAt])
+  @@index([enrollmentId])
+  @@index([courseId])
 }
 
 model Feedback {

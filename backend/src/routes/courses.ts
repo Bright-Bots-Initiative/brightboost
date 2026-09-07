@@ -326,12 +326,22 @@ router.delete(
       return res.status(404).json({ error: "Course not found" });
     }
 
-    // Delete related records first, then the course
+    // Delete related records first, then the course. #872: every unused
+    // home-access invitation issued from this class is revoked in the same
+    // transaction (the Enrollment FK also nulls their provenance), so no
+    // emailed token outlives the relationship that authorized it. The
+    // revocation write stays LAST: invitation acceptance share-locks the
+    // Enrollment, Course and inviter rows before it claims the invite row, so
+    // taking the invite lock before the enrollment delete would deadlock.
     await prisma.$transaction([
       prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
       prisma.enrollment.deleteMany({ where: { courseId: course.id } }),
       prisma.assignment.deleteMany({ where: { courseId: course.id } }),
       prisma.course.delete({ where: { id: course.id } }),
+      prisma.homeAccessInvite.updateMany({
+        where: { courseId: course.id, usedAt: null, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
     ]);
 
     res.json({ message: "Course deleted" });
