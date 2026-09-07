@@ -27,6 +27,7 @@ describe.skipIf(!dbUrl)(
       legacy: `leg-${tag}`, // legacy enrollment row (no acceptedAt)
       joiner: `join-${tag}`, // joins by code
       twin: `twin-${tag}`, // joins by code twice at once
+      rev: `rev-${tag}`, // invited, accepted, removed, re-invited
       cohort: `coh-${tag}`,
       cohort2: `coh2-${tag}`,
     };
@@ -177,6 +178,16 @@ describe.skipIf(!dbUrl)(
           userType: "pathways",
         },
       });
+      await prisma.user.create({
+        data: {
+          id: ids.rev,
+          name: "Riley Return",
+          role: "student",
+          email: `riley-${tag}@p.test`,
+          password: hash,
+          userType: "pathways",
+        },
+      });
       await prisma.pathwayCohort.createMany({
         data: [
           {
@@ -256,6 +267,7 @@ describe.skipIf(!dbUrl)(
       tokens.legacy = await login(`lee-${tag}@p.test`);
       tokens.joiner = await login(`jordan-${tag}@p.test`);
       tokens.twin = await login(`taylor-${tag}@p.test`);
+      tokens.rev = await login(`riley-${tag}@p.test`);
     });
 
     afterAll(async () => {
@@ -267,6 +279,7 @@ describe.skipIf(!dbUrl)(
         ids.legacy,
         ids.joiner,
         ids.twin,
+        ids.rev,
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -679,6 +692,43 @@ describe.skipIf(!dbUrl)(
         },
       });
       expect(after.acceptedAt?.getTime()).toBe(before.acceptedAt?.getTime());
+    });
+    it("DB-874-15: a learner removed after accepting an invitation can be re-invited and returns", async () => {
+      const email = `riley-${tag}@p.test`;
+      expect((await invite(email)).status).toBe(202);
+      const first = await myInvitations("rev");
+      expect(first.body.invitations).toHaveLength(1);
+      expect((await accept("rev", first.body.invitations[0].id)).status).toBe(
+        200,
+      );
+      expect((await learnerDetail(ids.rev)).status).toBe(200);
+
+      const del = await request(app)
+        .delete(
+          `/api/pathways/facilitator/cohorts/${ids.cohort}/learners/${ids.rev}`,
+        )
+        .set(as("fac"));
+      expect(del.status).toBe(204);
+      const revokedInvite = await prisma.pathwayInvite.findUniqueOrThrow({
+        where: { cohortId_email: { cohortId: ids.cohort, email } },
+      });
+      expect(revokedInvite.status).toBe("revoked");
+      await facilitatorSeesNothingOf(ids.rev, "Riley Return");
+
+      // The fresh invitation is the way back.
+      expect((await invite(email)).status).toBe(202);
+      const again = await myInvitations("rev");
+      expect(again.body.invitations).toHaveLength(1);
+      expect((await accept("rev", again.body.invitations[0].id)).status).toBe(
+        200,
+      );
+      const row = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: { userId_cohortId: { userId: ids.rev, cohortId: ids.cohort } },
+      });
+      expect(row.status).toBe("active");
+      expect(row.revokedAt).toBeNull();
+      expect(row.acceptedAt).not.toBeNull();
+      expect((await learnerDetail(ids.rev)).status).toBe(200);
     });
   },
 );

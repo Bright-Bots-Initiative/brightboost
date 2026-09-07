@@ -2252,8 +2252,9 @@ router.get(
       buckets[day] = 0;
     }
     for (const m of allMs) {
-      // #874: chart the last touch, never a pre-consent creation date.
-      const ts = (m.completedAt ?? m.updatedAt).toISOString().slice(0, 10);
+      // #874: chart the last touch only. A completion date can predate the
+      // learner's consent even when the milestone itself is admitted.
+      const ts = m.updatedAt.toISOString().slice(0, 10);
       if (buckets[ts] !== undefined) buckets[ts] += 1;
     }
     const series = Object.entries(buckets).map(([date, count]) => ({
@@ -2265,20 +2266,12 @@ router.get(
       totalLearners: userIds.length,
       activeLast7Days: new Set(
         allMs
-          .filter(
-            (m) =>
-              (m.completedAt ?? m.updatedAt) >=
-              new Date(Date.now() - 7 * 86400000),
-          )
+          .filter((m) => m.updatedAt >= new Date(Date.now() - 7 * 86400000))
           .map((m) => m.userId),
       ).size,
       activeLast30Days: new Set(
         allMs
-          .filter(
-            (m) =>
-              (m.completedAt ?? m.updatedAt) >=
-              new Date(Date.now() - 30 * 86400000),
-          )
+          .filter((m) => m.updatedAt >= new Date(Date.now() - 30 * 86400000))
           .map((m) => m.userId),
       ).size,
       dailyActivity: series,

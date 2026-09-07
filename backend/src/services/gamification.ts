@@ -754,14 +754,15 @@ export interface CohortGamificationSummary {
 
 /**
  * @param since #874 history boundary per learner (their acceptance into the
- *   cohort). When given, XP totals, levels and badges count only what was
- *   earned at or after that moment — cohort membership is not consent to a
- *   learner's whole prior record. Streaks and today's goals are present-tense
- *   activity and are reported as-is.
+ *   cohort). XP totals, levels, badges and the weekly leaderboard count only
+ *   what was earned at or after that moment — cohort membership is not
+ *   consent to a learner's whole prior record. Streaks and today's goals are
+ *   present-tense activity and are reported as-is. Required: there is no
+ *   unbounded facilitator view.
  */
 export async function summarizeCohortGamification(
   userIds: string[],
-  since?: Map<string, Date>,
+  since: Map<string, Date>,
 ): Promise<CohortGamificationSummary> {
   const enrolled = userIds.length;
   if (enrolled === 0) {
@@ -786,35 +787,26 @@ export async function summarizeCohortGamification(
     where: { userId: { in: userIds } },
   });
 
-  let avgLevel: number;
-  let totalXp: number;
-  if (since) {
-    // Boundary-scoped: XP earned since each learner's acceptance, levelled
-    // with the same curve the learner sees.
-    const xpSince = new Map<string, number>();
-    const events = await prisma.pathwayXpEvent.findMany({
-      where: { userId: { in: userIds } },
-      select: { userId: true, amount: true, createdAt: true },
-    });
-    for (const ev of events) {
-      const from = since.get(ev.userId);
-      if (from && ev.createdAt >= from) {
-        xpSince.set(ev.userId, (xpSince.get(ev.userId) ?? 0) + ev.amount);
-      }
+  // Boundary-scoped: XP earned since each learner's acceptance, levelled
+  // with the same curve the learner sees. Cached lifetime totals are never
+  // shown to a facilitator.
+  const xpSince = new Map<string, number>();
+  const events = await prisma.pathwayXpEvent.findMany({
+    where: { userId: { in: userIds } },
+    select: { userId: true, amount: true, createdAt: true },
+  });
+  for (const ev of events) {
+    const from = since.get(ev.userId);
+    if (from && ev.createdAt >= from) {
+      xpSince.set(ev.userId, (xpSince.get(ev.userId) ?? 0) + ev.amount);
     }
-    totalXp = Array.from(xpSince.values()).reduce((s, x) => s + x, 0);
-    const totalLevel = userIds.reduce(
-      (sum, uid) => sum + calculateLevel(xpSince.get(uid) ?? 0),
-      0,
-    );
-    avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
-  } else {
-    // Treat unseeded students as level 1 / streak 0 in the aggregate.
-    const totalLevel =
-      gam.reduce((sum, g) => sum + g.currentLevel, 0) + (enrolled - gam.length); // each missing user contributes 1
-    avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
-    totalXp = gam.reduce((sum, g) => sum + g.totalXp, 0);
   }
+  const totalXp = Array.from(xpSince.values()).reduce((s, x) => s + x, 0);
+  const totalLevel = userIds.reduce(
+    (sum, uid) => sum + calculateLevel(xpSince.get(uid) ?? 0),
+    0,
+  );
+  const avgLevel = Math.round((totalLevel / enrolled) * 10) / 10;
 
   const streakBuckets = {
     zero: 0,
@@ -838,8 +830,8 @@ export async function summarizeCohortGamification(
   });
   const badgeCounts = new Map<string, number>();
   for (const b of badges) {
-    const from = since?.get(b.userId);
-    if (since && (!from || b.earnedAt < from)) continue;
+    const from = since.get(b.userId);
+    if (!from || b.earnedAt < from) continue;
     badgeCounts.set(b.slug, (badgeCounts.get(b.slug) ?? 0) + 1);
   }
   let topBadge: { slug: string; name: string; count: number } | null = null;
@@ -864,24 +856,11 @@ export async function summarizeCohortGamification(
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
   const weeklyXp = new Map<string, number>();
-  if (since) {
-    const recent = await prisma.pathwayXpEvent.findMany({
-      where: { userId: { in: userIds }, createdAt: { gte: sevenDaysAgo } },
-      select: { userId: true, amount: true, createdAt: true },
-    });
-    for (const ev of recent) {
-      const from = since.get(ev.userId);
-      if (from && ev.createdAt >= from) {
-        weeklyXp.set(ev.userId, (weeklyXp.get(ev.userId) ?? 0) + ev.amount);
-      }
+  for (const ev of events) {
+    const from = since.get(ev.userId);
+    if (from && ev.createdAt >= from && ev.createdAt >= sevenDaysAgo) {
+      weeklyXp.set(ev.userId, (weeklyXp.get(ev.userId) ?? 0) + ev.amount);
     }
-  } else {
-    const weekly = await prisma.pathwayXpEvent.groupBy({
-      by: ["userId"],
-      where: { userId: { in: userIds }, createdAt: { gte: sevenDaysAgo } },
-      _sum: { amount: true },
-    });
-    for (const w of weekly) weeklyXp.set(w.userId, w._sum.amount ?? 0);
   }
   const userInfo = await prisma.user.findMany({
     where: { id: { in: userIds } },

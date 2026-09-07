@@ -330,7 +330,14 @@ export async function enrollByJoinCode(
           },
         });
       } else if (existing.acceptedAt) {
-        row = existing; // already trusted: idempotent
+        // Already trusted: idempotent. Re-read so the reply reflects any
+        // revocation that committed after the first read.
+        row = await tx.pathwayEnrollment.findUniqueOrThrow({
+          where: { id: existing.id },
+        });
+        if (row.status === "revoked") {
+          throw new PathwaysAccessError("enrollment_revoked", 403);
+        }
       } else {
         const confirmed = await tx.pathwayEnrollment.updateMany({
           where: {
@@ -417,13 +424,40 @@ export async function inviteLearnerByEmail(params: {
   });
   if (!cohort) throw new PathwaysAccessError("cohort_not_found", 404);
 
-  // An accepted invitation stays accepted: the relationship already exists
-  // and re-accepting must not move the learner's consent moment forward.
+  // An accepted invitation whose learner still holds a trusted row stays
+  // accepted (re-accepting could not move their consent moment anyway, but
+  // there is nothing for them to accept). If that learner was removed since,
+  // the invitation is refreshed to pending: a fresh invitation is the way
+  // back for a revoked learner. This reads only ids already on the invite
+  // row — never the typed address — so it adds no account-existence oracle.
   const current = await prisma.pathwayInvite.findUnique({
     where: { cohortId_email: { cohortId: cohort.id, email } },
-    select: { id: true, email: true, status: true, expiresAt: true },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      expiresAt: true,
+      acceptedById: true,
+    },
   });
-  if (current?.status === "accepted") return current;
+  if (current?.status === "accepted" && current.acceptedById) {
+    const stillTrusted = await prisma.pathwayEnrollment.findFirst({
+      where: {
+        userId: current.acceptedById,
+        cohortId: cohort.id,
+        ...TRUSTED_ENROLLMENT_WHERE,
+      },
+      select: { id: true },
+    });
+    if (stillTrusted) {
+      return {
+        id: current.id,
+        email: current.email,
+        status: current.status,
+        expiresAt: current.expiresAt,
+      };
+    }
+  }
 
   const expiresAt = new Date(Date.now() + PATHWAY_INVITE_TTL_MS);
   // Re-inviting refreshes a pending / expired / declined / revoked invite.
@@ -495,11 +529,14 @@ export async function revokeEnrollment(cohortId: string, userId: string) {
       select: { email: true },
     });
     if (user?.email) {
+      // Includes the accepted invitation that created this relationship, so
+      // a later re-invite starts a fresh pending one instead of finding
+      // "already accepted".
       await tx.pathwayInvite.updateMany({
         where: {
           cohortId,
           email: user.email.toLowerCase(),
-          status: { in: ["pending", "declined"] },
+          status: { in: ["pending", "declined", "accepted"] },
         },
         data: { status: "revoked", revokedAt: now },
       });
