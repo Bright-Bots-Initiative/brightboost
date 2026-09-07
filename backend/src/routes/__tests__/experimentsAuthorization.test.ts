@@ -15,10 +15,11 @@ import jwt from "jsonwebtoken";
  * cause no mutation and no notification.
  *
  * RED evidence (this suite against the pre-fix route from main 72746e87):
- * 4 of 10 cases fail — EX-6, EX-7, EX-8 and EX-11. A teacher received the
- * experiment list with 200, changed another creator's traffic split with 200,
- * flipping status to "running" posted to Slack, and a token that merely
- * claimed `admin` passed `requireRole` without any database check.
+ * 6 of 12 cases fail — EX-6, EX-7, EX-8, EX-11, EX-12 and EX-13. A teacher
+ * received the experiment list with 200 and changed another creator's traffic
+ * split with 200 (Slack posted on the "running" transition), and any token or
+ * dev-shim identity that merely said `admin` passed `requireRole` with no
+ * database check — including ids that do not exist.
  */
 
 const SECRET = process.env.SESSION_SECRET || "default_dev_secret";
@@ -117,6 +118,7 @@ const ADMIN_ROUTES = [
 
 function expectNoAdminSideEffects() {
   expect(prismaMock.experiment.findMany).not.toHaveBeenCalled();
+  expect(prismaMock.experiment.findUnique).not.toHaveBeenCalled();
   expect(prismaMock.experiment.create).not.toHaveBeenCalled();
   expect(prismaMock.experiment.update).not.toHaveBeenCalled();
   expect(prismaMock.experimentEvent.findMany).not.toHaveBeenCalled();
@@ -246,14 +248,42 @@ describe("#873 administrative experiment routes", () => {
     expect(results.body.experiment.slug).toBe(EXPERIMENT.slug);
   });
 
-  it("EX-11: request fields and dev headers cannot grant the capability", async () => {
+  it("EX-11: request body fields cannot grant the capability", async () => {
     const res = await request(app)
       .put(`/api/experiments/${EXPERIMENT.id}`)
       .set(bearer(TEACHER))
-      .set("x-role", "admin")
-      .set("x-user-id", ADMIN.id)
       .send({ status: "running", role: "admin", createdBy: TEACHER.id });
     expect(res.status).toBe(403);
+    expectNoAdminSideEffects();
+  });
+
+  it("EX-12: the dev/test role shim cannot manufacture staff", async () => {
+    // With the shim enabled and no bearer token, x-role/x-user-id become the
+    // identity. A claimed admin role still has to exist as admin in the
+    // database; an unknown or non-admin id is refused with no work done.
+    process.env.ALLOW_DEV_ROLE_HEADER = "1";
+    try {
+      for (const id of ["no-such-user", TEACHER.id]) {
+        for (const route of ADMIN_ROUTES) {
+          const res = await route
+            .req()
+            .set("x-role", "admin")
+            .set("x-user-id", id);
+          expect(res.status, `${route.name} as ${id}`).toBe(403);
+        }
+      }
+    } finally {
+      delete process.env.ALLOW_DEV_ROLE_HEADER;
+    }
+    expectNoAdminSideEffects();
+  });
+
+  it("EX-13: an admin token for an account that no longer exists is refused", async () => {
+    const ghost = { id: "deleted-admin", role: "admin", auth: "password" };
+    for (const route of ADMIN_ROUTES) {
+      const res = await route.req().set(bearer(ghost));
+      expect(res.status, route.name).toBe(403);
+    }
     expectNoAdminSideEffects();
   });
 });

@@ -34,7 +34,7 @@ notification or mutation.
 - `docs/ops/staff-capability.md` (new canonical doc): what staff gates, and the SQL grant /
   revoke runbook (no admin account exists in any seed, so the dashboard is unusable until an
   operator grants the role).
-- `backend/src/routes/__tests__/experimentsAuthorization.test.ts`: 11 cases with real JWTs
+- `backend/src/routes/__tests__/experimentsAuthorization.test.ts`: 12 cases with real JWTs
   through the mounted app; Slack mocked; denied requests assert no mutation and no
   notification; staff path asserts the notification fires; learner routes keep assignment,
   event and milestone side effects.

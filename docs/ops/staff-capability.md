@@ -19,7 +19,13 @@ stay open to every authenticated user.
 - No signup path issues `admin`; `POST /signup/teacher` and `POST /signup/student` hardcode
   their roles. No request field, header or body value can grant the capability.
 - `requireStaff` re-reads `User.role` from the database on every call, so demoting an account
-  takes effect immediately rather than when its 7-day JWT expires.
+  takes effect immediately rather than when its 7-day JWT expires. `GET /api/admin/metrics`
+  still uses `requireRole("admin")`, which trusts the token claim; a demoted admin keeps that
+  read-only scoreboard until the token expires (follow-up: move it to `requireStaff`).
+- Development and test only: with `ALLOW_DEV_ROLE_HEADER=1` and no bearer token, the
+  `x-role` / `x-user-id` headers become the identity. `requireStaff` still requires the named
+  account to be `admin` in the database, so the shim can impersonate an existing admin but
+  cannot create one.
 - Owning a record (for example `Experiment.createdBy`) grants nothing.
 
 ## Granting or revoking
