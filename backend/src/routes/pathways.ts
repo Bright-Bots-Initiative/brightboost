@@ -28,23 +28,24 @@ import {
   CTF_CHALLENGES_SERVER,
 } from "../data/ctfChallenges";
 import {
-  PathwaysAccessError,
-  TRUSTED_ENROLLMENT_WHERE,
   acceptInvitation,
-  countUnconfirmedLegacy,
-  declineInvitation,
+  averageVisibleScore,
+  boundariesOf,
   confirmCohortConsent,
   consentSummary,
-  previewCohortConsent,
+  countUnconfirmedLegacy,
+  declineInvitation,
   inviteLearnerByEmail,
-  averageVisibleScore,
   lastActiveOf,
   listCohortInvites,
   listInvitationsForLearner,
   loadFacilitatorScope,
   loadVisibleMilestones,
+  PathwaysAccessError,
+  previewCohortConsent,
   revokeEnrollment,
   revokeInvite,
+  TRUSTED_ENROLLMENT_WHERE,
 } from "../services/pathwaysAccess";
 import { calculateLevel } from "../services/gamification";
 
@@ -236,11 +237,26 @@ router.get(
       },
     });
     if (!cohort) return res.status(404).json({ error: "Cohort not found" });
-    const [pendingInvites, unconfirmedLegacyCount] = await Promise.all([
+    // A trusted row whose snapshot covers none of this cohort's tracks shares
+    // nothing yet (the learner has to confirm from the Pathways home): it is
+    // counted with the unconfirmed rows, never named.
+    const enrollments = cohort.enrollments.filter(
+      (e) =>
+        e.acceptedAt !== null &&
+        boundariesOf(cohort.trackIds, e.acceptedAt, e.trackBoundaries).length >
+          0,
+    );
+    const [pendingInvites, legacyCount] = await Promise.all([
       listCohortInvites(cohort.id),
       countUnconfirmedLegacy(cohort.id),
     ]);
-    res.json({ ...cohort, pendingInvites, unconfirmedLegacyCount });
+    res.json({
+      ...cohort,
+      enrollments,
+      pendingInvites,
+      unconfirmedLegacyCount:
+        legacyCount + (cohort.enrollments.length - enrollments.length),
+    });
   },
 );
 

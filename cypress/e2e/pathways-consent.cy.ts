@@ -105,6 +105,7 @@ describe(
     });
     after(() => {
       // Leave the primary cohort as seeded for whatever runs next.
+      if (!contract || !sessions.facilitator) return;
       const [primary] = contract.pathways.cohorts;
       cohortIdByName(session("facilitator"), primary.name).then((id) =>
         api(

@@ -425,9 +425,15 @@ export async function loadFacilitatorScope(
   for (const c of cohorts) {
     for (const e of c.enrollments) {
       if (!e.acceptedAt) continue; // typed as nullable; the where excludes it
+      // A relationship whose snapshot covers none of the cohort's tracks
+      // (no snapshot yet, or only tracks the cohort no longer lists) shares
+      // nothing at all — not even identity or gamification — until the
+      // learner confirms.
+      const bounds = boundariesOf(c.trackIds, e.acceptedAt, e.trackBoundaries);
+      if (bounds.length === 0) continue;
       enrollments.push({ ...e, acceptedAt: e.acceptedAt });
       const list = boundariesByUser.get(e.userId) ?? [];
-      list.push(...boundariesOf(c.trackIds, e.acceptedAt, e.trackBoundaries));
+      list.push(...bounds);
       boundariesByUser.set(e.userId, list);
       const prev = sinceByUser.get(e.userId);
       if (!prev || e.acceptedAt < prev) sinceByUser.set(e.userId, e.acceptedAt);
@@ -693,9 +699,11 @@ async function lockEnrollmentRow(
   // joins, a first join racing an invitation acceptance).
   // `pg_advisory_xact_lock` returns void, which Prisma cannot deserialize;
   // the IS NULL projection yields a boolean column instead.
-  const key = `${userId}:${cohortId}`;
   await tx.$queryRaw`
-    SELECT pg_advisory_xact_lock(hashtext(${key}::text)) IS NULL AS locked`;
+    SELECT pg_advisory_xact_lock(
+      hashtext(${userId}::text),
+      hashtext(${cohortId}::text)
+    ) IS NULL AS locked`;
 }
 
 async function resolveConsentCohort(
@@ -1056,6 +1064,9 @@ export async function revokeInvite(cohortId: string, inviteId: string) {
 export async function revokeEnrollment(cohortId: string, userId: string) {
   const now = new Date();
   await prisma.$transaction(async (tx) => {
+    // Same writer lock as confirmation and acceptance: a revocation never
+    // interleaves with a grant on this (learner, cohort) pair.
+    await lockEnrollmentRow(tx, userId, cohortId);
     await tx.pathwayEnrollment.updateMany({
       where: { cohortId, userId, status: { not: "revoked" } },
       data: { status: "revoked", revokedAt: now },

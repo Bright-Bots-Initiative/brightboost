@@ -1375,7 +1375,8 @@ describe.skipIf(!dbUrl)(
           hookCompleted: true,
         },
       });
-      expect((await learnerDetail(ids.race5)).body.milestones).toHaveLength(0);
+      // …on no surface at all, not even identity or gamification.
+      await facilitatorSeesNothingOf(ids.race5, "Rae Five");
       const home = await request(app)
         .get("/api/pathways/student/home")
         .set(as(ids.race5));

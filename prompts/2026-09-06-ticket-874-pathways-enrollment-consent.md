@@ -239,3 +239,11 @@ and makes the Spanish case self-contained; DB-874-18 also proves another learner
 refused. Recorded: `cypress-real-events` works under Electron in the `e2e-flows` job (7/7 on
 95ab686d); the review noted the tree was not frozen when a tests-only commit (7ab48eb6) landed
 mid-review — it touched only a root unit test the review had not covered.
+
+Delta review of 227cdba0: **APPROVE** with one residual, fixed in the next commit — a trusted
+row whose snapshot covers none of the cohort's tracks is now left out of the facilitator scope
+entirely (no identity, gamification or CTF surface) and off the roster (counted with the
+unconfirmed rows, never named); the revoke path takes the same writer lock; the advisory lock
+uses the two-key form. Recorded nits: a failed re-read after a 409 shows the fetch error rather
+than the "cohort changed" notice (code retained); `cy.realPress` under Electron is proven by
+the `e2e-flows` job itself (7/7 on 95ab686d and 7ab48eb6).
