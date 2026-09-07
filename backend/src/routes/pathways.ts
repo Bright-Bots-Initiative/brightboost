@@ -195,7 +195,12 @@ router.get(
   async (req: Request, res: Response) => {
     const cohorts = await prisma.pathwayCohort.findMany({
       where: { facilitatorId: req.user!.id },
-      include: { _count: { select: { enrollments: true } } },
+      // #874: the count is trusted (learner-accepted) enrollments only.
+      include: {
+        _count: {
+          select: { enrollments: { where: TRUSTED_ENROLLMENT_WHERE } },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json(cohorts);
@@ -2247,7 +2252,8 @@ router.get(
       buckets[day] = 0;
     }
     for (const m of allMs) {
-      const ts = (m.completedAt ?? m.createdAt).toISOString().slice(0, 10);
+      // #874: chart the last touch, never a pre-consent creation date.
+      const ts = (m.completedAt ?? m.updatedAt).toISOString().slice(0, 10);
       if (buckets[ts] !== undefined) buckets[ts] += 1;
     }
     const series = Object.entries(buckets).map(([date, count]) => ({
@@ -2261,7 +2267,7 @@ router.get(
         allMs
           .filter(
             (m) =>
-              (m.completedAt ?? m.createdAt) >=
+              (m.completedAt ?? m.updatedAt) >=
               new Date(Date.now() - 7 * 86400000),
           )
           .map((m) => m.userId),
@@ -2270,7 +2276,7 @@ router.get(
         allMs
           .filter(
             (m) =>
-              (m.completedAt ?? m.createdAt) >=
+              (m.completedAt ?? m.updatedAt) >=
               new Date(Date.now() - 30 * 86400000),
           )
           .map((m) => m.userId),

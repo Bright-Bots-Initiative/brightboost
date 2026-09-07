@@ -364,11 +364,10 @@
             "completed": "Modules",
             "lastActive": "Last Active"
           },
-          "inviteSent": "Invitation sent. The learner appears here after they accept it while signed in to that account.",
           "legacyNotice": "{{count}} enrollment(s) from before consent tracking are hidden until the learner re-enters the join code.",
           "invites": {
             "title": "Invitations awaiting acceptance",
-            "sent": "Invitation sent. The learner appears here after they accept it while signed in to that account.",
+            "sent": "Invitation recorded. The learner sees it the next time they sign in with that account and appears here after accepting.",
             "failed": "Could not send the invitation.",
             "invalidEmail": "Enter a valid email address.",
             "withdraw": "Withdraw",

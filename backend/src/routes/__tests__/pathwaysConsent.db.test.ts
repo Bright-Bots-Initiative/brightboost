@@ -26,6 +26,7 @@ describe.skipIf(!dbUrl)(
       other: `oth-${tag}`, // a different account; must not be able to accept
       legacy: `leg-${tag}`, // legacy enrollment row (no acceptedAt)
       joiner: `join-${tag}`, // joins by code
+      twin: `twin-${tag}`, // joins by code twice at once
       cohort: `coh-${tag}`,
       cohort2: `coh2-${tag}`,
     };
@@ -166,6 +167,16 @@ describe.skipIf(!dbUrl)(
           },
         ],
       });
+      await prisma.user.create({
+        data: {
+          id: ids.twin,
+          name: "Taylor Twin",
+          role: "student",
+          email: `taylor-${tag}@p.test`,
+          password: hash,
+          userType: "pathways",
+        },
+      });
       await prisma.pathwayCohort.createMany({
         data: [
           {
@@ -228,12 +239,23 @@ describe.skipIf(!dbUrl)(
         },
       });
 
+      // Recent but still pre-acceptance: inside the 7-day leaderboard window.
+      await prisma.pathwayXpEvent.create({
+        data: {
+          userId: ids.learner,
+          amount: 40,
+          source: "section",
+          createdAt: new Date(Date.now() - 86400000),
+        },
+      });
+
       tokens.fac = await login(`coach-${tag}@p.test`);
       tokens.fac2 = await login(`coach2-${tag}@p.test`);
       tokens.learner = await login(emails.learner);
       tokens.other = await login(emails.other);
       tokens.legacy = await login(`lee-${tag}@p.test`);
       tokens.joiner = await login(`jordan-${tag}@p.test`);
+      tokens.twin = await login(`taylor-${tag}@p.test`);
     });
 
     afterAll(async () => {
@@ -244,6 +266,7 @@ describe.skipIf(!dbUrl)(
         ids.other,
         ids.legacy,
         ids.joiner,
+        ids.twin,
       ];
       await prisma.pathwayInvite.deleteMany({
         where: { cohortId: { in: [ids.cohort, ids.cohort2] } },
@@ -412,6 +435,16 @@ describe.skipIf(!dbUrl)(
       expect(gam.body.state.totalXp).toBe(0);
       expect(gam.body.state.longestStreak).toBeNull();
       expect(gam.body.recentEvents).toHaveLength(0);
+      const cohortGam = await request(app)
+        .get(`/api/pathways/facilitator/cohorts/${ids.cohort}/gamification`)
+        .set(as("fac"));
+      expect(cohortGam.status).toBe(200);
+      expect(cohortGam.body.totalXp).toBe(0);
+      expect(
+        (cohortGam.body.topByXpThisWeek as Array<{ userId: string }>).map(
+          (r) => r.userId,
+        ),
+      ).not.toContain(ids.learner);
 
       // Work touched after acceptance becomes visible, with detail fields
       // withheld because the module was started before consent.
@@ -571,6 +604,81 @@ describe.skipIf(!dbUrl)(
       expect(
         await prisma.pathwayInvite.count({ where: { cohortId: ids.cohort2 } }),
       ).toBe(0);
+    });
+    it("DB-874-12: two simultaneous first joins by the same learner yield one trusted row and no error", async () => {
+      const join = () =>
+        request(app)
+          .post("/api/pathways/enroll")
+          .set(as("twin"))
+          .send({ joinCode });
+      const [a, b] = await Promise.all([join(), join()]);
+      expect([a.status, b.status]).toEqual([200, 200]);
+      const rows = await prisma.pathwayEnrollment.findMany({
+        where: { cohortId: ids.cohort, userId: ids.twin },
+      });
+      expect(rows).toHaveLength(1);
+      expect(rows[0].acceptedAt).not.toBeNull();
+      expect(a.body.enrollment.acceptedAt).toBe(b.body.enrollment.acceptedAt);
+    });
+
+    it("DB-874-13: the cohort list counts trusted enrollments only", async () => {
+      // An unconfirmed legacy row and a revoked row must not be counted.
+      await prisma.pathwayEnrollment.create({
+        data: {
+          userId: ids.other,
+          cohortId: ids.cohort,
+          status: "active",
+          source: "legacy",
+        },
+      });
+      const expected = await prisma.pathwayEnrollment.count({
+        where: {
+          cohortId: ids.cohort,
+          status: { in: ["active", "completed"] },
+          acceptedAt: { not: null },
+        },
+      });
+      const total = await prisma.pathwayEnrollment.count({
+        where: { cohortId: ids.cohort },
+      });
+      expect(total).toBeGreaterThan(expected);
+
+      const list = await request(app)
+        .get("/api/pathways/cohorts")
+        .set(as("fac"));
+      expect(list.status).toBe(200);
+      const mine = (
+        list.body as Array<{ id: string; _count: { enrollments: number } }>
+      ).find((c) => c.id === ids.cohort);
+      expect(mine?._count.enrollments).toBe(expected);
+    });
+
+    it("DB-874-14: re-inviting an accepted learner neither resets the invite nor moves their consent moment", async () => {
+      const before = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: {
+          userId_cohortId: { userId: ids.learner, cohortId: ids.cohort },
+        },
+      });
+      expect((await invite(emails.learner)).status).toBe(202);
+      const inv = await prisma.pathwayInvite.findUniqueOrThrow({
+        where: {
+          cohortId_email: { cohortId: ids.cohort, email: emails.learner },
+        },
+      });
+      expect(inv.status).toBe("accepted");
+      const r = await roster();
+      expect(
+        (r.body.pendingInvites as Array<{ email: string }>).map((p) => p.email),
+      ).not.toContain(emails.learner);
+      // The learner sees nothing to accept, and a replayed accept keeps acceptedAt.
+      expect((await myInvitations("learner")).body.invitations).toHaveLength(0);
+      expect((await accept("learner", inv.id)).status).toBe(200);
+      const after = await prisma.pathwayEnrollment.findUniqueOrThrow({
+        where: {
+          userId_cohortId: { userId: ids.learner, cohortId: ids.cohort },
+        },
+      });
+      expect(after.acceptedAt?.getTime()).toBe(before.acceptedAt?.getTime());
     });
   },
 );

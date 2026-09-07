@@ -859,25 +859,41 @@ export async function summarizeCohortGamification(
     total: enrolled,
   };
 
-  // XP earned in the last 7 days, per user — for the top-10 list.
+  // XP earned in the last 7 days, per user — for the top-10 list. With a
+  // boundary, only XP earned at or after each learner's acceptance counts.
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7);
-  const weekly = await prisma.pathwayXpEvent.groupBy({
-    by: ["userId"],
-    where: { userId: { in: userIds }, createdAt: { gte: sevenDaysAgo } },
-    _sum: { amount: true },
-  });
+  const weeklyXp = new Map<string, number>();
+  if (since) {
+    const recent = await prisma.pathwayXpEvent.findMany({
+      where: { userId: { in: userIds }, createdAt: { gte: sevenDaysAgo } },
+      select: { userId: true, amount: true, createdAt: true },
+    });
+    for (const ev of recent) {
+      const from = since.get(ev.userId);
+      if (from && ev.createdAt >= from) {
+        weeklyXp.set(ev.userId, (weeklyXp.get(ev.userId) ?? 0) + ev.amount);
+      }
+    }
+  } else {
+    const weekly = await prisma.pathwayXpEvent.groupBy({
+      by: ["userId"],
+      where: { userId: { in: userIds }, createdAt: { gte: sevenDaysAgo } },
+      _sum: { amount: true },
+    });
+    for (const w of weekly) weeklyXp.set(w.userId, w._sum.amount ?? 0);
+  }
   const userInfo = await prisma.user.findMany({
     where: { id: { in: userIds } },
     select: { id: true, name: true, email: true },
   });
   const userMap = new Map(userInfo.map((u) => [u.id, u]));
-  const topByXpThisWeek = weekly
-    .map((w) => ({
-      userId: w.userId,
-      name: userMap.get(w.userId)?.name ?? null,
-      email: userMap.get(w.userId)?.email ?? null,
-      xp: w._sum.amount ?? 0,
+  const topByXpThisWeek = Array.from(weeklyXp.entries())
+    .map(([userId, xp]) => ({
+      userId,
+      name: userMap.get(userId)?.name ?? null,
+      email: userMap.get(userId)?.email ?? null,
+      xp,
     }))
     .filter((r) => r.xp > 0)
     .sort((a, b) => b.xp - a.xp)

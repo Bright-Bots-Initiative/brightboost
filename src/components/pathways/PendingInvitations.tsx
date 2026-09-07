@@ -60,7 +60,8 @@ export default function PendingInvitations({
         `/api/pathways/student/invitations/${encodeURIComponent(id)}/${action}`,
         { method: "POST", headers: authHeaders() },
       );
-      if (!res.ok) {
+      // 409: a duplicate click — the sibling request already transitioned it.
+      if (!res.ok && res.status !== 409) {
         setError(t("pathways.home.invitations.error"));
         return;
       }

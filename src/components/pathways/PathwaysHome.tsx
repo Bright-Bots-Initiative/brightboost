@@ -123,7 +123,6 @@ export default function PathwaysHome() {
       clearTimeout(timeout);
       ac.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshKey is the reload trigger
   }, [refreshKey]);
 
   // Stabilize references so useMemo below isn't recomputed on every render.

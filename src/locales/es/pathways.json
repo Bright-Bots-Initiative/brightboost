@@ -357,11 +357,10 @@
             "completed": "Módulos",
             "lastActive": "Última Actividad"
           },
-          "inviteSent": "Invitación enviada. El estudiante aparecerá aquí después de aceptarla con la sesión de esa cuenta.",
           "legacyNotice": "{{count}} inscripción(es) anteriores al seguimiento de consentimiento están ocultas hasta que el estudiante vuelva a ingresar el código de unión.",
           "invites": {
             "title": "Invitaciones pendientes de aceptación",
-            "sent": "Invitación enviada. El estudiante aparecerá aquí después de aceptarla con la sesión de esa cuenta.",
+            "sent": "Invitación registrada. El estudiante la verá la próxima vez que inicie sesión con esa cuenta y aparecerá aquí después de aceptarla.",
             "failed": "No se pudo enviar la invitación.",
             "invalidEmail": "Ingresa un correo electrónico válido.",
             "withdraw": "Retirar",

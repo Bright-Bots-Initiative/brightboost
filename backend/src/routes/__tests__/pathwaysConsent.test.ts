@@ -25,6 +25,7 @@ const prismaMock = vi.hoisted(() => ({
   pathwayCohort: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
   pathwayInvite: {
     upsert: vi.fn(),
+    findUnique: vi.fn(), // accepted-invite check; unset → not accepted
     findFirst: vi.fn(),
     findMany: vi.fn(),
     updateMany: vi.fn(),

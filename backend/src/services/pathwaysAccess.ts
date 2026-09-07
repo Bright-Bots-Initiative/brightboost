@@ -251,8 +251,14 @@ export async function loadVisibleMilestones(scope: FacilitatorScope) {
   if (scope.userIds.length === 0) {
     return new Map<string, Prisma.PathwayMilestoneGetPayload<object>[]>();
   }
+  // Nothing older than the earliest acceptance in scope can be visible, so
+  // push that bound into the query instead of filtering it away in memory.
+  const earliest = Array.from(scope.sinceByUser.values()).reduce(
+    (min, d) => (d < min ? d : min),
+    new Date(8640000000000000),
+  );
   const rows = await prisma.pathwayMilestone.findMany({
-    where: { userId: { in: scope.userIds } },
+    where: { userId: { in: scope.userIds }, updatedAt: { gte: earliest } },
   });
   const byUser = new Map<string, typeof rows>();
   for (const userId of scope.userIds) {
@@ -285,30 +291,36 @@ export async function countUnconfirmedLegacy(cohortId: string) {
  * invitation. Any pending invitation for this account's email in the cohort
  * is closed as accepted, since joining is the stronger act of consent.
  */
-export async function enrollByJoinCode(userId: string, joinCode: string) {
+export async function enrollByJoinCode(
+  userId: string,
+  joinCode: string,
+  retried = false,
+): Promise<{
+  cohort: { id: string; name: string };
+  enrollment: Prisma.PathwayEnrollmentGetPayload<object>;
+}> {
   const cohort = await prisma.pathwayCohort.findUnique({
     where: { joinCode },
     select: { id: true, name: true },
   });
   if (!cohort) throw new PathwaysAccessError("invalid_join_code", 404);
 
-  const existing = await prisma.pathwayEnrollment.findUnique({
-    where: { userId_cohortId: { userId, cohortId: cohort.id } },
-  });
-  if (existing?.status === "revoked") {
-    throw new PathwaysAccessError("enrollment_revoked", 403);
-  }
-
   const now = new Date();
-  const enrollment = await prisma.$transaction(async (tx) => {
-    const row = existing
-      ? await tx.pathwayEnrollment.update({
-          where: { id: existing.id },
-          data: existing.acceptedAt
-            ? {}
-            : { acceptedAt: now, source: "join_code", status: "active" },
-        })
-      : await tx.pathwayEnrollment.create({
+  try {
+    const enrollment = await prisma.$transaction(async (tx) => {
+      // Read and decide inside the transaction; the confirming write is
+      // count-guarded so a revocation that lands between the read and the
+      // write can never be overwritten back to active.
+      const existing = await tx.pathwayEnrollment.findUnique({
+        where: { userId_cohortId: { userId, cohortId: cohort.id } },
+      });
+      if (existing?.status === "revoked") {
+        throw new PathwaysAccessError("enrollment_revoked", 403);
+      }
+
+      let row: Prisma.PathwayEnrollmentGetPayload<object>;
+      if (!existing) {
+        row = await tx.pathwayEnrollment.create({
           data: {
             userId,
             cohortId: cohort.id,
@@ -317,11 +329,42 @@ export async function enrollByJoinCode(userId: string, joinCode: string) {
             acceptedAt: now,
           },
         });
-    await closePendingInvitesForUser(tx, userId, cohort.id, now);
-    return row;
-  });
-
-  return { cohort, enrollment };
+      } else if (existing.acceptedAt) {
+        row = existing; // already trusted: idempotent
+      } else {
+        const confirmed = await tx.pathwayEnrollment.updateMany({
+          where: {
+            id: existing.id,
+            status: { not: "revoked" },
+            acceptedAt: null,
+          },
+          data: { acceptedAt: now, source: "join_code", status: "active" },
+        });
+        row = await tx.pathwayEnrollment.findUniqueOrThrow({
+          where: { id: existing.id },
+        });
+        if (confirmed.count !== 1 && row.status === "revoked") {
+          throw new PathwaysAccessError("enrollment_revoked", 403);
+        }
+        // count 0 with a non-revoked row means a concurrent join already
+        // confirmed it — `row` is the fresh, trusted state.
+      }
+      await closePendingInvitesForUser(tx, userId, cohort.id, now);
+      return row;
+    });
+    return { cohort, enrollment };
+  } catch (e) {
+    // Two simultaneous first joins: the loser's create hits the unique key
+    // after the transaction rolled back. Re-run once; it now finds the row.
+    if (
+      !retried &&
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      return enrollByJoinCode(userId, joinCode, true);
+    }
+    throw e;
+  }
 }
 
 /** Enrollment created while the learner registers with a cohort code. */
@@ -374,7 +417,16 @@ export async function inviteLearnerByEmail(params: {
   });
   if (!cohort) throw new PathwaysAccessError("cohort_not_found", 404);
 
+  // An accepted invitation stays accepted: the relationship already exists
+  // and re-accepting must not move the learner's consent moment forward.
+  const current = await prisma.pathwayInvite.findUnique({
+    where: { cohortId_email: { cohortId: cohort.id, email } },
+    select: { id: true, email: true, status: true, expiresAt: true },
+  });
+  if (current?.status === "accepted") return current;
+
   const expiresAt = new Date(Date.now() + PATHWAY_INVITE_TTL_MS);
+  // Re-inviting refreshes a pending / expired / declined / revoked invite.
   const invite = await prisma.pathwayInvite.upsert({
     where: { cohortId_email: { cohortId: cohort.id, email } },
     create: {
@@ -384,8 +436,6 @@ export async function inviteLearnerByEmail(params: {
       status: "pending",
       expiresAt,
     },
-    // Re-inviting refreshes a pending/expired/declined/revoked invite; an
-    // accepted one stays accepted (the enrollment already exists).
     update: {
       invitedById: params.facilitatorId,
       expiresAt,
@@ -533,6 +583,16 @@ export async function acceptInvitation(userId: string, inviteId: string) {
     if (claimed.count !== 1) {
       throw new PathwaysAccessError("invite_not_pending", 409);
     }
+    // A learner who already holds a trusted (non-revoked) row keeps their
+    // original consent moment; only a missing or revoked row starts now.
+    const existing = await tx.pathwayEnrollment.findUnique({
+      where: { userId_cohortId: { userId, cohortId: invite.cohortId } },
+      select: { acceptedAt: true, status: true },
+    });
+    const keepAcceptedAt =
+      existing?.acceptedAt && existing.status !== "revoked"
+        ? existing.acceptedAt
+        : now;
     await tx.pathwayEnrollment.upsert({
       where: { userId_cohortId: { userId, cohortId: invite.cohortId } },
       create: {
@@ -546,7 +606,7 @@ export async function acceptInvitation(userId: string, inviteId: string) {
       update: {
         status: "active",
         source: "facilitator_invite",
-        acceptedAt: now,
+        acceptedAt: keepAcceptedAt,
         revokedAt: null,
         invitedById: invite.invitedById,
       },

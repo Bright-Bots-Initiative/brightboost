@@ -65,7 +65,11 @@ real address and a typo.
 The pre-implementation Opus review reshaped the design: invitation table keyed by email,
 `updatedAt` as the boundary clock with detail redaction, join-code must not resurrect
 revoked rows, and legacy rows fail closed with a documented operator backfill rather than
-silent trust.
+silent trust. The post-commit review then caught three real defects: the join-code path read
+and decided outside its transaction (a double-click could 500 and a racing revocation could be
+overwritten), the cohort list still counted untrusted rows, and the weekly XP leaderboard showed
+pre-consent XP; all three were fixed with new PostgreSQL cases, along with re-invite no longer
+resetting an accepted invitation and the invite copy no longer claiming an email was sent.
 
 ## Lessons
 
