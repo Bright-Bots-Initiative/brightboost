@@ -26,13 +26,41 @@ const fileFilter = (
   }
 };
 
+// #881 (DEP-01): the byte limit alone bounds only the file. A single request
+// can still carry unlimited fields, parts and header pairs, and a deeply
+// nested field name costs CPU before any handler runs. This route consumes
+// exactly one part - the `avatar` file - so every other dimension is bounded
+// to what the client actually sends and rejected by busboy before buffering.
 const upload = multer({
   storage,
   fileFilter,
   limits: {
     fileSize: 300 * 1024, // 300KB limit
+    files: 1,
+    fields: 0,
+    // busboy emits `partsLimit` when the counter *reaches* this value
+    // (`if (++parts === partsLimit)`), unlike `files`/`fields`, which reject
+    // the part that would exceed them. 2 is therefore the value that admits
+    // exactly one part and stops the parser on a second. AV-1 guards it.
+    parts: 2,
+    fieldNameSize: 100,
+    fieldSize: 1024,
+    headerPairs: 20,
   },
 });
+
+// Stable, user-facing text for each bound. Multer's own messages are internal
+// strings; mapping them keeps the response contract independent of the library
+// and keeps the wording at the K-2 reading bar.
+const UPLOAD_LIMIT_MESSAGES: Record<string, string> = {
+  LIMIT_FILE_SIZE: "File too large. Maximum size is 300KB.",
+  LIMIT_FILE_COUNT: "Too many files. Upload one avatar image.",
+  LIMIT_PART_COUNT: "Too many form parts. Upload one avatar image.",
+  LIMIT_FIELD_COUNT: "Unexpected form fields. Upload one avatar image.",
+  LIMIT_FIELD_KEY: "Form field name is too long.",
+  LIMIT_FIELD_VALUE: "Form field value is too long.",
+  LIMIT_UNEXPECTED_FILE: 'Unexpected file field. Use the "avatar" field.',
+};
 
 // Validation schema for PATCH avatar URL
 const patchAvatarSchema = z.object({
@@ -56,12 +84,10 @@ const patchAvatarSchema = z.object({
 function handleUpload(req: Request, res: Response, next: NextFunction) {
   upload.single("avatar")(req, res, (err: any) => {
     if (err instanceof multer.MulterError) {
-      if (err.code === "LIMIT_FILE_SIZE") {
-        return res
-          .status(400)
-          .json({ error: "File too large. Maximum size is 300KB." });
-      }
-      return res.status(400).json({ error: err.message });
+      return res.status(400).json({
+        error: UPLOAD_LIMIT_MESSAGES[err.code] ?? err.message,
+        code: err.code,
+      });
     }
     if (err) {
       return res
