@@ -64,11 +64,23 @@ describe.skipIf(!dbUrl)(
         "X-Forwarded-For": `${block}.${(Math.floor(ipSeq / 2) % 250) + 1}`,
       };
     };
-    const complete = (studentId: string, activityId: string) =>
+    /** Sent immediately (supertest only fires on then/await); carries a game result. */
+    const complete = (studentId: string, activityId: string, score: number) =>
       request(app)
         .post("/api/progress/complete-activity")
         .set(asStudent(studentId))
-        .send({ moduleSlug: ids.slug, activityId, timeSpentS: 40 });
+        .send({
+          moduleSlug: ids.slug,
+          activityId,
+          timeSpentS: 40,
+          result: {
+            gameKey: "move_measure",
+            score,
+            total: 40,
+            streakMax: score,
+          },
+        })
+        .then((r) => r);
 
     const timed = async <T>(p: Promise<T>) => {
       const t0 = Date.now();
@@ -138,7 +150,9 @@ describe.skipIf(!dbUrl)(
           title: `Game ${i}`,
           kind: "INTERACT",
           order: i + 1,
-          content: "{}",
+          // Every activity declares the game so each completion also runs the
+          // personal-best reconciliation transaction under the same pool.
+          content: JSON.stringify({ gameKey: "move_measure" }),
         })),
       });
       await prisma.avatar.createMany({
@@ -172,12 +186,14 @@ describe.skipIf(!dbUrl)(
     });
 
     it("DB-849-1: thirty concurrent completions queue on two connections, all answer, and award exactly once each", async () => {
-      const single = await timed(complete(ids.burst, ids.activities[0]));
+      const single = await timed(complete(ids.burst, ids.activities[0], 0));
       expect(single.v.status).toBe(200);
 
       const t0 = Date.now();
       const results = await Promise.all(
-        ids.activities.slice(1).map((a) => timed(complete(ids.burst, a))),
+        ids.activities
+          .slice(1)
+          .map((a, i) => timed(complete(ids.burst, a, i + 1))),
       );
       const wall = Date.now() - t0;
       const latencies = results.map((r) => r.ms);
@@ -208,6 +224,25 @@ describe.skipIf(!dbUrl)(
           where: { studentId: ids.burst, status: "COMPLETED" },
         }),
       ).toBe(30);
+      // The personal-best transaction ran once per completion under the same
+      // two-connection pool: exactly 30 plays, best = the highest score sent.
+      const best = await prisma.gamePersonalBest.findUniqueOrThrow({
+        where: {
+          studentId_gameKey: { studentId: ids.burst, gameKey: "move_measure" },
+        },
+      });
+      expect(best.playCount).toBe(30);
+      expect(best.bestScore).toBe(29);
+      expect(best.bestStreak).toBe(29);
+      expect(
+        [single, ...results].filter((r) => r.v.body.isNewHighScore).length,
+      ).toBeGreaterThanOrEqual(1);
+      expect(
+        [single, ...results].filter(
+          (r) =>
+            r.v.body.isNewHighScore && r.v.body.personalBest?.bestScore === 29,
+        ).length,
+      ).toBe(1);
     });
 
     it("DB-849-2: with the Avatar row held for 3 s, queued completions outlast Prisma's default maxWait and still succeed under the configured one", async () => {
@@ -231,7 +266,7 @@ describe.skipIf(!dbUrl)(
       const t0 = Date.now();
       const pending = ids.activities
         .slice(0, 8)
-        .map((a) => timed(complete(ids.held, a)));
+        .map((a, i) => timed(complete(ids.held, a, i + 1)));
       await new Promise((r) => setTimeout(r, 3000));
       release();
       await held;
@@ -254,6 +289,13 @@ describe.skipIf(!dbUrl)(
           where: { studentId: ids.held, status: "COMPLETED" },
         }),
       ).toBe(8);
+      const best = await prisma.gamePersonalBest.findUniqueOrThrow({
+        where: {
+          studentId_gameKey: { studentId: ids.held, gameKey: "move_measure" },
+        },
+      });
+      expect(best.playCount).toBe(8);
+      expect(best.bestScore).toBe(8);
     }, 30000);
   },
 );

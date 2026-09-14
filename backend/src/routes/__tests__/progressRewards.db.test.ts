@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { runTag, bindTestDatabase } from "../../__tests__/helpers/testDb";
 
@@ -54,6 +54,13 @@ describe.skipIf(!dbUrl)(
       "fresh",
       "repair",
       "replay",
+      "hist",
+      "fresh0",
+      "bfrace",
+      "samerow",
+      "samefresh",
+      "pbtimeout",
+      "pbcommit",
     ];
 
     let app: typeof import("../../server").default;
@@ -69,11 +76,17 @@ describe.skipIf(!dbUrl)(
         "X-Forwarded-For": `${block}.${(Math.floor(ipSeq / 2) % 250) + 1}`,
       };
     };
+    /**
+     * A completion request that has actually been SENT. supertest's Test only
+     * fires when it is awaited or then'd, so a contested case must start each
+     * request explicitly before asserting that it is pending.
+     */
     const complete = (studentId: string, activityId: string, timeSpentS = 45) =>
       request(app)
         .post("/api/progress/complete-activity")
         .set(asStudent(studentId))
-        .send({ moduleSlug: ids.slug, activityId, timeSpentS });
+        .send({ moduleSlug: ids.slug, activityId, timeSpentS })
+        .then((r) => r);
 
     const completedRow = (studentId: string, activityId: string) => ({
       studentId,
@@ -123,6 +136,8 @@ describe.skipIf(!dbUrl)(
     }
 
     const raiseFn = `raise_877_${tag.replace(/[^a-z0-9]/gi, "")}`;
+    const sleepFn = `sleep_877_${tag.replace(/[^a-z0-9]/gi, "")}`;
+    const sleep6Fn = `sleep6_877_${tag.replace(/[^a-z0-9]/gi, "")}`;
 
     beforeAll(async () => {
       process.env.ALLOW_DEV_ROLE_HEADER = "1";
@@ -175,8 +190,8 @@ describe.skipIf(!dbUrl)(
           title: `Game ${i}`,
           kind: "INTERACT",
           order: i + 1,
-          // The last activity declares a game so replays carry a personal best.
-          content: i === 7 ? JSON.stringify({ gameKey: "move_measure" }) : "{}",
+          // The last two activities declare a game so plays carry a personal best.
+          content: i >= 6 ? JSON.stringify({ gameKey: "move_measure" }) : "{}",
         })),
       });
       await prisma.ability.createMany({
@@ -198,14 +213,29 @@ describe.skipIf(!dbUrl)(
         ],
       });
       await prisma.$executeRawUnsafe(
-        `CREATE OR REPLACE FUNCTION ${raiseFn}() RETURNS trigger AS $$ BEGIN RAISE EXCEPTION 'injected fault (#877 test)'; END; $$ LANGUAGE plpgsql;`,
+        `CREATE OR REPLACE FUNCTION ${raiseFn}() RETURNS trigger AS $fn$ BEGIN RAISE EXCEPTION 'injected fault (#877 test)'; END; $fn$ LANGUAGE plpgsql;`,
       );
-    });
+      // Delays one statement by 2 s: opens a window inside a request's
+      // transaction so another request can commit in between.
+      await prisma.$executeRawUnsafe(
+        `CREATE OR REPLACE FUNCTION ${sleepFn}() RETURNS trigger AS $fn$ BEGIN PERFORM pg_sleep(2); RETURN NEW; END; $fn$ LANGUAGE plpgsql;`,
+      );
+      // Runs one statement past the 5 s interactive-transaction timeout.
+      await prisma.$executeRawUnsafe(
+        `CREATE OR REPLACE FUNCTION ${sleep6Fn}() RETURNS trigger AS $fn$ BEGIN PERFORM pg_sleep(6); RETURN NEW; END; $fn$ LANGUAGE plpgsql;`,
+      );
+    }, 30000);
 
     afterAll(async () => {
       const all = STUDENTS.map(student);
       await prisma.$executeRawUnsafe(
         `DROP FUNCTION IF EXISTS ${raiseFn}() CASCADE;`,
+      );
+      await prisma.$executeRawUnsafe(
+        `DROP FUNCTION IF EXISTS ${sleepFn}() CASCADE;`,
+      );
+      await prisma.$executeRawUnsafe(
+        `DROP FUNCTION IF EXISTS ${sleep6Fn}() CASCADE;`,
       );
       // Order matters: Unit.teacherId → User and GamePersonalBest → User are
       // RESTRICT, so curriculum and records go before the users.
@@ -224,7 +254,7 @@ describe.skipIf(!dbUrl)(
         where: { id: { in: [ids.abilityA, ids.abilityB] } },
       });
       await prisma.$disconnect();
-    });
+    }, 30000);
 
     it("DB-878-1: two distinct completions contesting one level boundary award it once and keep both stat gains, including capped values", async () => {
       const sid = student("boundary");
@@ -511,6 +541,7 @@ describe.skipIf(!dbUrl)(
       const r1 = complete(sid, ids.activities[1]);
       const r2 = complete(sid, ids.activities[1]);
       expect(await stillPending(r1, 400)).toBe(true);
+      expect(await stillPending(r2, 50)).toBe(true);
       lock.release();
       await lock.done;
       const [a, b] = await Promise.all([r1, r2]);
@@ -576,7 +607,10 @@ describe.skipIf(!dbUrl)(
         });
       });
       await lock.acquired;
-      const repair = request(app).get("/api/avatar/me").set(asStudent(sid));
+      const repair = request(app)
+        .get("/api/avatar/me")
+        .set(asStudent(sid))
+        .then((r) => r);
       expect(await stillPending(repair, 400)).toBe(true);
       lock.release();
       await lock.done;
@@ -648,5 +682,314 @@ describe.skipIf(!dbUrl)(
           .xp,
       ).toBe(50);
     });
+
+    it("DB-BACKFILL-1: historical completions with no avatar: the backfilled levels and the transaction's own level change are each reported once", async () => {
+      const sid = student("hist");
+      // Three historical completions and no avatar: the backfill creates
+      // level 1 + ⌊3/2⌋ = 2 with 150 + 100 XP; this completion is the fourth,
+      // so its own transaction crosses to level 3.
+      await prisma.progress.createMany({
+        data: [0, 1, 2].map((i) => completedRow(sid, ids.activities[i])),
+      });
+      const res = await complete(sid, ids.activities[3]);
+      expect(res.status).toBe(200);
+      expect(res.body.reward).toMatchObject({
+        xpDelta: 50 + 100 + 250,
+        levelDelta: 1 + 1,
+      });
+      const avatar = await prisma.avatar.findUniqueOrThrow({
+        where: { studentId: sid },
+      });
+      expect(avatar).toMatchObject({ level: 3, xp: 400 });
+    });
+
+    it("DB-BACKFILL-2: a learner with no avatar and no history reports only the transaction's own reward", async () => {
+      const sid = student("fresh0");
+      const res = await complete(sid, ids.activities[1]);
+      expect(res.status).toBe(200);
+      expect(res.body.reward).toMatchObject({ xpDelta: 50, levelDelta: 0 });
+      const avatar = await prisma.avatar.findUniqueOrThrow({
+        where: { studentId: sid },
+      });
+      expect(avatar).toMatchObject({ level: 1, xp: 50 });
+    });
+
+    it("DB-BACKFILL-3: a level another completion earns between the backfill and the lock is not attributed to the backfilling request", async () => {
+      const sid = student("bfrace");
+      // One historical completion: the backfill creates level 1 with 50 XP.
+      await prisma.progress.create({
+        data: completedRow(sid, ids.activities[0]),
+      });
+      // Request A creates the avatar, then sleeps 2 s INSIDE its transaction
+      // (on its Progress insert): after the avatar exists and before it takes
+      // the Avatar lock. Request B completes another activity in that window
+      // and earns level 2.
+      await prisma.$executeRawUnsafe(
+        `CREATE TRIGGER trg_877_bf BEFORE INSERT ON "Progress" FOR EACH ROW WHEN (NEW."studentId" = '${sid}' AND NEW."activityId" = '${ids.activities[2]}') EXECUTE FUNCTION ${sleepFn}();`,
+      );
+      try {
+        const a = complete(sid, ids.activities[2]);
+        for (let i = 0; i < 200; i++) {
+          if (await prisma.avatar.findUnique({ where: { studentId: sid } })) {
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 25));
+        }
+        const b = await complete(sid, ids.activities[1]);
+        expect(b.status).toBe(200);
+        expect(b.body.reward).toMatchObject({ xpDelta: 150, levelDelta: 1 });
+        const ra = await a;
+        expect(ra.status).toBe(200);
+        // A's own transaction crossed no boundary (count 3 → level 2, which B
+        // already reached) and its backfill created level 1, so A reports no
+        // level. Pre-fix: levelDelta 1 (B's level-up attributed to A).
+        expect(ra.body.reward).toMatchObject({
+          xpDelta: 50 + 50,
+          levelDelta: 0,
+        });
+      } finally {
+        await prisma.$executeRawUnsafe(
+          `DROP TRIGGER IF EXISTS trg_877_bf ON "Progress";`,
+        );
+      }
+      const avatar = await prisma.avatar.findUniqueOrThrow({
+        where: { studentId: sid },
+      });
+      expect(avatar).toMatchObject({ level: 2, xp: 50 + 150 + 50 });
+    }, 20000);
+
+    it("DB-850-2: the same activity completed twice with NO existing row, while contested, awards once", async () => {
+      const sid = student("samerow");
+      await prisma.avatar.create({
+        data: {
+          studentId: sid,
+          stage: "GENERAL",
+          level: 1,
+          xp: 0,
+          energy: 50,
+          hp: 50,
+        },
+      });
+      const lock = holdAvatarLock(sid);
+      await lock.acquired;
+      const r1 = complete(sid, ids.activities[1]);
+      const r2 = complete(sid, ids.activities[1]);
+      expect(await stillPending(r1, 400)).toBe(true);
+      expect(await stillPending(r2, 50)).toBe(true);
+      lock.release();
+      await lock.done;
+      const [a, b] = await Promise.all([r1, r2]);
+      expect([a.status, b.status]).toEqual([200, 200]);
+      expect([a.body.reward.xpDelta, b.body.reward.xpDelta].sort()).toEqual([
+        0, 50,
+      ]);
+      expect(
+        (await prisma.avatar.findUniqueOrThrow({ where: { studentId: sid } }))
+          .xp,
+      ).toBe(50);
+      expect(await prisma.progress.count({ where: { studentId: sid } })).toBe(
+        1,
+      );
+    });
+
+    it("DB-850-3: the same activity completed twice by a learner with NO avatar awards once and creates one avatar (not lock-controlled: no row exists to hold)", async () => {
+      const sid = student("samefresh");
+      const [a, b] = await Promise.all([
+        complete(sid, ids.activities[1]),
+        complete(sid, ids.activities[1]),
+      ]);
+      expect([a.status, b.status]).toEqual([200, 200]);
+      expect([a.body.reward.xpDelta, b.body.reward.xpDelta].sort()).toEqual([
+        0, 50,
+      ]);
+      expect(await prisma.avatar.count({ where: { studentId: sid } })).toBe(1);
+      expect(
+        await prisma.avatar.findUniqueOrThrow({ where: { studentId: sid } }),
+      ).toMatchObject({ level: 1, xp: 50 });
+      expect(
+        await prisma.progress.count({
+          where: { studentId: sid, status: "COMPLETED" },
+        }),
+      ).toBe(1);
+    });
+
+    it("DB-850-4: a real P2028 inside the existing-record personal-best transaction rolls it back (fields and playCount unchanged), the replay still answers, and the flags are truthful", async () => {
+      const sid = student("pbtimeout");
+      await prisma.avatar.create({
+        data: {
+          studentId: sid,
+          stage: "GENERAL",
+          level: 1,
+          xp: 50,
+          energy: 50,
+          hp: 50,
+        },
+      });
+      await prisma.progress.create({
+        data: completedRow(sid, ids.activities[7]),
+      });
+      await prisma.gamePersonalBest.create({
+        data: {
+          studentId: sid,
+          gameKey: "move_measure",
+          bestScore: 5,
+          lastScore: 5,
+          bestStreak: 2,
+          bestRoundsCompleted: 1,
+          playCount: 1,
+        },
+      });
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      // The reconciliation's first write runs 6 s, past the 5 s transaction
+      // timeout, so the transaction expires while it is in flight (the shape a
+      // slow pooler produces); Prisma then reports P2028 and rolls it back.
+      await prisma.$executeRawUnsafe(
+        `CREATE TRIGGER trg_877_pbslow BEFORE UPDATE ON "GamePersonalBest" FOR EACH ROW WHEN (NEW."studentId" = '${sid}') EXECUTE FUNCTION ${sleep6Fn}();`,
+      );
+      try {
+        const res = await request(app)
+          .post("/api/progress/complete-activity")
+          .set(asStudent(sid))
+          .send({
+            moduleSlug: ids.slug,
+            activityId: ids.activities[7],
+            timeSpentS: 20,
+            result: {
+              gameKey: "move_measure",
+              score: 9,
+              total: 10,
+              streakMax: 7,
+            },
+          }); // ~6 s: the first write outlives the transaction, then P2028
+        expect(res.status).toBe(200);
+        expect(res.body.reward.xpDelta).toBe(0);
+        expect(res.body.personalBest).toBeNull();
+        expect(res.body.isNewHighScore).toBe(false);
+        expect(res.body.isNewBestStreak).toBe(false);
+        expect(
+          warn.mock.calls.some(
+            (c) =>
+              String(c[0]).includes("P2028") &&
+              String(c[0]).includes("pool/transaction limit"),
+          ),
+        ).toBe(true);
+      } finally {
+        await prisma.$executeRawUnsafe(
+          `DROP TRIGGER IF EXISTS trg_877_pbslow ON "GamePersonalBest";`,
+        );
+        warn.mockRestore();
+      }
+      // Nothing of the rolled-back transaction persisted: not the predicated
+      // best-field writes, not lastScore, not playCount.
+      const row = await prisma.gamePersonalBest.findUniqueOrThrow({
+        where: {
+          studentId_gameKey: { studentId: sid, gameKey: "move_measure" },
+        },
+      });
+      expect(row).toMatchObject({
+        bestScore: 5,
+        lastScore: 5,
+        bestStreak: 2,
+        playCount: 1,
+      });
+      // The next replay reconciles normally.
+      const again = await request(app)
+        .post("/api/progress/complete-activity")
+        .set(asStudent(sid))
+        .send({
+          moduleSlug: ids.slug,
+          activityId: ids.activities[7],
+          timeSpentS: 20,
+          result: {
+            gameKey: "move_measure",
+            score: 9,
+            total: 10,
+            streakMax: 7,
+          },
+        });
+      expect(again.status).toBe(200);
+      expect(again.body.isNewHighScore).toBe(true);
+      expect(again.body.personalBest).toMatchObject({
+        bestScore: 9,
+        playCount: 2,
+      });
+    }, 30000);
+
+    it("DB-850-5: when the personal-best transaction times out after a first completion, the authoritative reward is committed and the reply says so truthfully", async () => {
+      const sid = student("pbcommit");
+      await prisma.avatar.create({
+        data: {
+          studentId: sid,
+          stage: "GENERAL",
+          level: 1,
+          xp: 0,
+          energy: 50,
+          hp: 50,
+        },
+      });
+      // An existing record for this game from an earlier play of activity 7.
+      await prisma.progress.create({
+        data: completedRow(sid, ids.activities[7]),
+      });
+      await prisma.gamePersonalBest.create({
+        data: {
+          studentId: sid,
+          gameKey: "move_measure",
+          bestScore: 5,
+          lastScore: 5,
+          bestStreak: 2,
+          bestRoundsCompleted: 1,
+          playCount: 1,
+        },
+      });
+      await prisma.$executeRawUnsafe(
+        `CREATE TRIGGER trg_877_pbslow2 BEFORE UPDATE ON "GamePersonalBest" FOR EACH ROW WHEN (NEW."studentId" = '${sid}') EXECUTE FUNCTION ${sleep6Fn}();`,
+      );
+      try {
+        // A FIRST completion of activity 6 (same game): the reward transaction
+        // commits, then the personal-best transaction blocks and times out.
+        const res = await request(app)
+          .post("/api/progress/complete-activity")
+          .set(asStudent(sid))
+          .send({
+            moduleSlug: ids.slug,
+            activityId: ids.activities[6],
+            timeSpentS: 20,
+            result: {
+              gameKey: "move_measure",
+              score: 9,
+              total: 10,
+              streakMax: 7,
+            },
+          });
+        expect(res.status).toBe(200);
+        expect(res.body.reward).toMatchObject({
+          xpDelta: 50 + 100,
+          levelDelta: 1,
+        });
+        expect(res.body.progress.status).toBe("COMPLETED");
+        expect(res.body.personalBest).toBeNull();
+        expect(res.body.isNewHighScore).toBe(false);
+        expect(res.body.isNewBestStreak).toBe(false);
+      } finally {
+        await prisma.$executeRawUnsafe(
+          `DROP TRIGGER IF EXISTS trg_877_pbslow2 ON "GamePersonalBest";`,
+        );
+      }
+      expect(
+        await prisma.avatar.findUniqueOrThrow({ where: { studentId: sid } }),
+      ).toMatchObject({ level: 2, xp: 150 });
+      expect(
+        await prisma.progress.count({
+          where: { studentId: sid, status: "COMPLETED" },
+        }),
+      ).toBe(2);
+      const row = await prisma.gamePersonalBest.findUniqueOrThrow({
+        where: {
+          studentId_gameKey: { studentId: sid, gameKey: "move_measure" },
+        },
+      });
+      expect(row).toMatchObject({ bestScore: 5, lastScore: 5, playCount: 1 });
+    }, 30000);
   },
 );

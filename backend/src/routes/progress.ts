@@ -600,10 +600,14 @@ router.post(
     const hpDelta = (avatarAfter.hp || 0) - (avatarLocked.hp || 0);
     const newAbilitiesDelta = newAbilities;
 
-    // If avatar was backfilled, add backfilled XP to delta for accurate display
+    // A backfill is this request's own doing: report the XP and the levels
+    // it created ON TOP of the transaction's own deltas. Never derive the
+    // level delta from the final level: another completion may have crossed
+    // a boundary between the backfill and this request's lock, and that
+    // level belongs to that reply (DB-BACKFILL-3).
     if (wasBackfilled) {
       xpDelta += backfilledXp;
-      levelDelta = avatarAfter.level - 1; // Show level gained from level 1
+      levelDelta += avatarBefore.level - 1;
     }
 
     // 5. Upsert Game Personal Best (when gameKey is present) — shared with the

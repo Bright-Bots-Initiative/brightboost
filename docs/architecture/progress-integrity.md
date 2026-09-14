@@ -82,6 +82,13 @@ Any throw inside rolls back the claim together with the rewards; the request
 answers a JSON 500 and the client's retry re-claims and awards exactly once.
 Nothing partial is ever answered as success.
 
+**Response deltas.** `xpDelta` / `levelDelta` are the transaction's own change
+against the locked snapshot. When the request also created the learner's
+avatar (backfill from historical completions), the XP and levels that backfill
+created are added on top; the level delta is never derived from the final
+level, because another completion may cross a boundary between the backfill
+and this request's lock, and that level belongs to the other reply.
+
 **Lock order and deadlocks.** Every completion takes the Progress row (step 2)
 and then the Avatar row (step 3), then inserts into `UnlockedAbility`. Two
 completions therefore never wait on each other in a cycle: the same activity
