@@ -22,6 +22,8 @@ const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -29,7 +31,13 @@ const prismaMock = vi.hoisted(() => ({
     upsert: vi.fn(),
     count: vi.fn(),
   },
-  avatar: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+  avatar: {
+    findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
+    update: vi.fn(),
+    create: vi.fn(),
+  },
   activity: { findUnique: vi.fn() },
   ability: { findMany: vi.fn() },
   unlockedAbility: { findMany: vi.fn(), createMany: vi.fn() },
@@ -40,6 +48,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(),
 }));
 
@@ -128,9 +137,12 @@ const complete = (body: Record<string, unknown>) =>
 
 function armHappyCompletion() {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR);
+  prismaMock.$queryRaw.mockResolvedValue([AVATAR]);
+  prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
   prismaMock.avatar.update.mockResolvedValue({ ...AVATAR, xp: 150 });
   prismaMock.progress.findUnique.mockResolvedValue(null);
-  prismaMock.progress.create.mockResolvedValue(CREATED_ROW);
+  prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+  prismaMock.progress.findUniqueOrThrow.mockResolvedValue(CREATED_ROW);
   prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
   prismaMock.progress.count.mockResolvedValue(1);
   prismaMock.ability.findMany.mockResolvedValue([]);
@@ -257,21 +269,21 @@ describe("#876 — POST /progress/complete-activity validates the curriculum cha
   it("CA-1: a module slug the activity does not belong to answers 400 before any write", async () => {
     const res = await complete({ moduleSlug: "k2-stem-track-maker" });
     expect(res.status).toBe(400);
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
   });
 
   it("CA-2: a lesson id the activity does not belong to answers 400 before any write", async () => {
     const res = await complete({ lessonId: "some-other-lesson" });
     expect(res.status).toBe(400);
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
   });
 
   it("CA-3: an omitted lesson id is persisted from the activity, not as null", async () => {
     const res = await complete({ lessonId: undefined });
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.create).toHaveBeenCalledTimes(1);
-    const data = prismaMock.progress.create.mock.calls[0][0].data;
+    expect(prismaMock.progress.createMany).toHaveBeenCalledTimes(1);
+    const data = prismaMock.progress.createMany.mock.calls[0][0].data;
     expect(data.lessonId).toBe("lesson-1");
     expect(data.moduleSlug).toBe("test-module");
   });
@@ -282,7 +294,7 @@ describe("#876 — POST /progress/complete-activity validates the curriculum cha
     });
     expect(res.status).toBe(400);
     expect(String(res.body.error)).toContain("gameKey");
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
     expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
   });
 
@@ -295,7 +307,7 @@ describe("#876 — POST /progress/complete-activity validates the curriculum cha
       result: { gameKey: "sequence_drag_drop", score: 3 },
     });
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.progress.createMany).toHaveBeenCalledTimes(1);
   });
 
   it("CA-6: an activity that declares no game refuses a result.gameKey", async () => {
@@ -308,7 +320,7 @@ describe("#876 — POST /progress/complete-activity validates the curriculum cha
       result: { gameKey: "move_measure", score: 1 },
     });
     expect(res.status).toBe(400);
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
   });
 
   it("CA-7: a quiz result without a gameKey still completes an activity that declares no game", async () => {

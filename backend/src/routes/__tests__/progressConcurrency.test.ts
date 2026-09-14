@@ -16,12 +16,21 @@ import request from "supertest";
  * both requests awarded XP), CREATE-1 times out (loser's P2002 was an
  * unhandled rejection and the request got no response), ATOMIC-1/2 fail (no
  * conditional write exists), VAL-1 fails (malformed gameKey accepted).
+ *
+ * #877/#878 moved the claim and every reward into one interactive
+ * transaction: the row is ensured with createMany (INSERT … ON CONFLICT DO
+ * NOTHING, so the P2002 branch is gone), claimed with the same predicated
+ * updateMany, then the Avatar row is read FOR UPDATE ($queryRaw) and the
+ * post-claim row is re-read with findUniqueOrThrow. The properties pinned
+ * below are unchanged; the mocked seams follow that shape.
  */
 
 const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -30,6 +39,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
     create: vi.fn(),
   },
@@ -43,6 +54,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
@@ -126,7 +138,9 @@ function completeActivity(body: Record<string, unknown>) {
 
 function armHappyAvatar() {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR);
+  prismaMock.$queryRaw.mockResolvedValue([AVATAR]); // the locked row
   prismaMock.avatar.update.mockResolvedValue({ ...AVATAR, xp: 150 });
+  prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 }); // no level claim
   prismaMock.ability.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
 }
@@ -171,6 +185,9 @@ beforeEach(() => {
     }
   });
   prismaMock.activity.findUnique.mockResolvedValue(ACTIVITY);
+  prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+  prismaMock.progress.updateMany.mockResolvedValue({ count: 1 }); // default: the claim wins
+  prismaMock.progress.findUniqueOrThrow.mockResolvedValue(COMPLETED_ROW);
   armHappyAvatar();
   armQuietPersonalBest();
 });
@@ -239,13 +256,9 @@ describe("#821 — concurrent first completion with no existing row", () => {
     prismaMock.progress.findUnique
       .mockResolvedValueOnce(null) // initial read: no row yet
       .mockResolvedValue(COMPLETED_ROW); // loser's re-read sees the winner's row
-    const p2002 = Object.assign(
-      new Error(
-        "Unique constraint failed on the fields: (`studentId`,`activityId`)",
-      ),
-      { code: "P2002" },
-    );
-    prismaMock.progress.create.mockRejectedValueOnce(p2002);
+    // #877: the winner's row is committed, so this request's insert is
+    // skipped (ON CONFLICT DO NOTHING) and its predicated claim matches nothing.
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 0 });
 
     const res = await completeActivity(BODY);
 
@@ -265,10 +278,8 @@ describe("#821 — concurrent first completion with no existing row", () => {
     prismaMock.progress.findUnique
       .mockResolvedValueOnce(null) // initial read: no row yet
       .mockResolvedValue(IN_PROGRESS_ROW); // re-read: the checkpoint's row
-    const p2002 = Object.assign(new Error("Unique constraint failed"), {
-      code: "P2002",
-    });
-    prismaMock.progress.create.mockRejectedValueOnce(p2002);
+    // #877: the insert is skipped (the checkpoint's row exists) and the
+    // predicated claim moves that row to COMPLETED.
     prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
 
     const res = await completeActivity(BODY);
@@ -282,7 +293,8 @@ describe("#821 — concurrent first completion with no existing row", () => {
     ).toHaveLength(1);
     const claim = prismaMock.progress.updateMany.mock.calls[0][0];
     expect(claim.where).toEqual({
-      id: IN_PROGRESS_ROW.id,
+      studentId: "student-123",
+      activityId: "valid-activity",
       status: { not: "COMPLETED" },
     });
   }, 5000);
@@ -292,12 +304,7 @@ describe("#821 — concurrent first completion with no existing row", () => {
     // before this request's claim lands — the claim matches zero rows.
     prismaMock.progress.findUnique
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(IN_PROGRESS_ROW) // P2002 re-read
       .mockResolvedValue(COMPLETED_ROW); // post-claim re-read
-    const p2002 = Object.assign(new Error("Unique constraint failed"), {
-      code: "P2002",
-    });
-    prismaMock.progress.create.mockRejectedValueOnce(p2002);
     prismaMock.progress.updateMany.mockResolvedValue({ count: 0 });
 
     const res = await completeActivity(BODY);
@@ -311,7 +318,7 @@ describe("#821 — concurrent first completion with no existing row", () => {
 
   it("CREATE-2: a non-P2002 create failure surfaces as a JSON 500, not a hang", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
-    prismaMock.progress.create.mockRejectedValueOnce(new Error("db down"));
+    prismaMock.progress.createMany.mockRejectedValueOnce(new Error("db down"));
 
     const res = await completeActivity(BODY);
 
@@ -407,7 +414,7 @@ describe("#809 — atomic personal-best reconciliation", () => {
 
   it("PIN-1: first-completion write failure reports false flags and null best (#809 item 5)", async () => {
     prismaMock.progress.findUnique.mockResolvedValueOnce(null);
-    prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue(COMPLETED_ROW);
     prismaMock.gamePersonalBest.findUnique.mockResolvedValue(null);
     prismaMock.gamePersonalBest.create.mockRejectedValue(new Error("db down"));
 
@@ -423,7 +430,7 @@ describe("#809 — atomic personal-best reconciliation", () => {
 describe("#809 — gameKey validation", () => {
   it("VAL-1: rejects a malformed gameKey with 400", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
-    prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue(COMPLETED_ROW);
 
     const res = await completeActivity({
       ...BODY,
@@ -443,7 +450,7 @@ describe("#809 — gameKey validation", () => {
         content: JSON.stringify({ gameKey: key }),
       });
       prismaMock.progress.findUnique.mockResolvedValue(null);
-      prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
+      prismaMock.progress.findUniqueOrThrow.mockResolvedValue(COMPLETED_ROW);
       const res = await completeActivity({
         ...BODY,
         result: { gameKey: key, score: 1 },
@@ -500,7 +507,7 @@ describe("#832 — post-#827 hardening residuals", () => {
     // response xpDelta would carry backfilledXp on top of the plain award.
     prismaMock.progress.count.mockResolvedValue(4);
     prismaMock.progress.findUnique.mockResolvedValueOnce(null);
-    prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue(COMPLETED_ROW);
 
     const res = await completeActivity(BODY);
 

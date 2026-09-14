@@ -16,6 +16,8 @@ const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -24,6 +26,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
     create: vi.fn(),
   },
@@ -37,6 +41,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
@@ -203,10 +208,14 @@ function setupFirstCompletionMocks(
       : Promise.all(arg as Promise<unknown>[]),
   );
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
+  // #877/#878: the locked row the rewards are computed from, and no level claim.
+  prismaMock.$queryRaw.mockResolvedValue([AVATAR_BEFORE]);
+  prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
   prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
   prismaMock.progress.findUnique.mockResolvedValue(null);
-  prismaMock.progress.create.mockResolvedValue(progressRow);
+  prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+  prismaMock.progress.findUniqueOrThrow.mockResolvedValue(progressRow);
   prismaMock.progress.count.mockResolvedValue(1);
   prismaMock.ability.findMany.mockResolvedValue([]);
   prismaMock.unlockedAbility.findMany.mockResolvedValue([]);
@@ -303,6 +312,12 @@ function armPersonalBestDb(initial: Record<string, unknown> | null) {
 
 function setupReplayMocks(existingBest: Record<string, unknown> | null) {
   prismaMock.avatar.findUnique.mockResolvedValue(AVATAR_BEFORE);
+  prismaMock.$queryRaw.mockResolvedValue([AVATAR_BEFORE]);
+  prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+  prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+  prismaMock.progress.findUniqueOrThrow.mockResolvedValue(
+    COMPLETED_PROGRESS_ROW,
+  );
   prismaMock.avatar.update.mockResolvedValue(AVATAR_AFTER);
   prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
   prismaMock.progress.findUnique.mockResolvedValue(COMPLETED_PROGRESS_ROW);
@@ -591,7 +606,7 @@ describe("POST /api/progress/complete-activity replay personal best (#640)", () 
     expect(prismaMock.avatar.update).not.toHaveBeenCalled();
     expect(prismaMock.avatar.create).not.toHaveBeenCalled();
     expect(prismaMock.unlockedAbility.createMany).not.toHaveBeenCalled();
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
 
     // Every repeat still reconciled the record (playCount is the play counter,
     // XP is not) and only the better run moved the stored best — read back

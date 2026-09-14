@@ -8,17 +8,24 @@ const prismaMock = vi.hoisted(() => ({
   },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     count: vi.fn(),
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
   },
   activity: {
     findUnique: vi.fn(),
   },
+  $queryRaw: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
 vi.mock("@prisma/client", () => {
@@ -51,15 +58,28 @@ describe("Game Action Rate Limiting", () => {
       xp: 0,
       level: 1,
     });
-    prismaMock.progress.create.mockResolvedValue({
-      id: "prog-1",
-      status: "COMPLETED",
-    });
     prismaMock.avatar.update.mockResolvedValue({
       energy: 100,
       hp: 100,
       xp: 0,
       level: 1,
+    });
+    // #877/#878: the reward transaction's call shape (see the mocked-seam
+    // note at the top of progressConcurrency.test.ts).
+    prismaMock.$transaction.mockImplementation((arg: unknown) =>
+      typeof arg === "function"
+        ? (arg as (tx: unknown) => unknown)(prismaMock)
+        : Promise.all(arg as Promise<unknown>[]),
+    );
+    prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.$queryRaw.mockResolvedValue([
+      { id: "avatar-1", energy: 100, hp: 100, xp: 0, level: 1 },
+    ]);
+    prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
+      id: "prog-1",
+      status: "COMPLETED",
     });
     prismaMock.activity.findUnique.mockResolvedValue({
       id: "act-1",

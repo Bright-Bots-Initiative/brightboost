@@ -104,8 +104,13 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
         const newXp = Math.max(avatar.xp, expectedXp);
 
         if (newLevel > avatar.level || newXp > avatar.xp) {
-          await prisma.avatar.update({
-            where: { studentId },
+          // #877/#878: the repair is conditional on the row still being what
+          // was read (xp 0 at that level). A completion that commits between
+          // the read and this write moves xp off 0, so the absolute repair
+          // matches nothing instead of overwriting the newer reward; the
+          // refetch below then reports the committed state.
+          await prisma.avatar.updateMany({
+            where: { studentId, xp: 0, level: avatar.level },
             data: { level: newLevel, xp: newXp },
           });
 
