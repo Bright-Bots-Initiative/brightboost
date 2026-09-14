@@ -95,12 +95,9 @@ router.post(
       res.status(201).json(assignment);
     } catch (err: any) {
       if (err?.code === "P2002") {
-        return res
-          .status(409)
-          .json({
-            error:
-              "This benchmark is already assigned for this course and kind",
-          });
+        return res.status(409).json({
+          error: "This benchmark is already assigned for this course and kind",
+        });
       }
       console.error("Error assigning benchmark:", err);
       res.status(500).json({ error: "Failed to assign benchmark" });
