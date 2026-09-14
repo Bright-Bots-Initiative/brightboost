@@ -1,5 +1,6 @@
 // backend/src/routes/progress.ts
 import express, { Router } from "express";
+import type { Avatar } from "@prisma/client";
 import prisma from "../utils/prisma";
 
 const ProgressStatus = {
@@ -175,7 +176,18 @@ async function reconcilePersonalBest(
       return await updateExisting();
     }
   } catch (e) {
-    console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+    const code = (e as { code?: string })?.code;
+    if (code === "P2024" || code === "P2028") {
+      // #849: pool exhaustion (P2024) or the interactive transaction timing
+      // out (P2028) is a capacity signal, not a data problem — name it so it
+      // is observable instead of folded into a generic upsert failure. The
+      // reply contract is unchanged: a record, not a reward, so null + false.
+      console.warn(
+        `[complete-activity] GamePersonalBest reconciliation hit a pool/transaction limit (${code}); record not persisted`,
+      );
+    } else {
+      console.warn("[complete-activity] Failed to upsert GamePersonalBest:", e);
+    }
     return empty;
   }
 }
@@ -437,89 +449,141 @@ router.post(
       return respondRewardFree(existing);
     }
 
-    // 2. Claim the transition into COMPLETED atomically (#821). The database
-    // picks exactly one winner under concurrency: a racing loser's updateMany
-    // matches zero rows (its read was stale) and a racing loser's create hits
-    // the (studentId, activityId) unique key with P2002. Both answer through
-    // the reward-free path — XP, game_completed, and unlock checks are
-    // winner-only, so one physical completion can never award twice.
-    let finalProgress;
+    // Award size is server-authoritative: roundsCompleted is clamped to the
+    // rounds the activity content declares.
+    let xpAward = XP_PER_ACTIVITY;
+    if (result?.roundsCompleted !== undefined) {
+      let totalRoundsFromContent = 0;
+      try {
+        const parsed = JSON.parse(activity.content || "{}");
+        if (Array.isArray(parsed.rounds)) {
+          totalRoundsFromContent = parsed.rounds.length;
+        }
+      } catch {
+        console.warn(
+          "[complete-activity] Failed to parse activity.content for totalRounds",
+        );
+      }
+      if (totalRoundsFromContent > 0) {
+        const rc = Math.min(
+          Math.max(result.roundsCompleted, 0),
+          totalRoundsFromContent,
+        );
+        xpAward = Math.round((rc / totalRoundsFromContent) * XP_PER_ACTIVITY);
+        xpAward = Math.min(Math.max(xpAward, 0), XP_PER_ACTIVITY);
+      }
+    }
+    const energyGain = 5;
+    const hpGain = 2;
+    const statGains = calculateStatGains({
+      score: result?.score,
+      total: result?.total,
+      timeSpentS,
+    });
 
-    // Claims row.id's transition into COMPLETED. Returns the winner's row, or
-    // null when a racing COMPLETION already owns it. The reconstructed row
-    // deliberately skips a re-read (updateMany returns only a count):
-    // updatedAt — and a concurrent checkpoint's timeSpentS increment — reflect
-    // the pre-claim read; no current consumer reads those from this response.
-    const claimCompletion = async (row: NonNullable<typeof existing>) => {
-      const claimed = await prisma.progress.updateMany({
-        where: { id: row.id, status: { not: ProgressStatus.COMPLETED } },
+    // 2. Claim the completion and apply EVERY authoritative reward in one
+    // interactive transaction (#877 / #878).
+    //
+    // - The row is ensured with INSERT … ON CONFLICT DO NOTHING (createMany +
+    //   skipDuplicates), never completed by that insert, so there is exactly
+    //   one claim path: a predicated updateMany. The database picks one
+    //   winner under concurrency; a loser matches zero rows and has written
+    //   nothing (#821's guarantee, now without a P2002 branch).
+    // - The winner then locks its Avatar row (SELECT … FOR UPDATE) for the
+    //   rest of the transaction. Every stat is computed from that locked row,
+    //   never from the pre-transaction read, so two different activities for
+    //   one learner queue here and the second sees the first's committed
+    //   values (#878). The level transition and ability grants run on the
+    //   same tx (checkUnlocks receives it).
+    // - Any throw rolls back the claim together with the rewards, so a retry
+    //   re-claims and awards exactly once (#877). Nothing partial is ever
+    //   answered as success; the app's error middleware answers a JSON 500.
+    //
+    // Lock order is Progress row (claim) → Avatar row (FOR UPDATE) →
+    // UnlockedAbility inserts, identical for every completion, so two
+    // completions cannot wait on each other in a cycle. GamePersonalBest and
+    // analytics run after commit and take no part in this transaction.
+    const outcome = await prisma.$transaction(async (tx) => {
+      await tx.progress.createMany({
+        data: {
+          studentId,
+          moduleSlug,
+          lessonId,
+          activityId,
+          status: ProgressStatus.IN_PROGRESS,
+          timeSpentS: 0,
+        },
+        skipDuplicates: true,
+      });
+      const claimed = await tx.progress.updateMany({
+        where: {
+          studentId,
+          activityId,
+          status: { not: ProgressStatus.COMPLETED },
+        },
         data: {
           status: ProgressStatus.COMPLETED,
           timeSpentS: { increment: timeSpentS || 0 },
           ...(gs !== undefined ? { gameSpecific: gs } : {}),
         },
       });
-      if (claimed.count === 0) return null;
+      if (claimed.count === 0) return { won: false as const };
+
+      const lockedRows = await tx.$queryRaw<
+        Avatar[]
+      >`SELECT * FROM "Avatar" WHERE "studentId" = ${studentId} FOR UPDATE`;
+      const locked = lockedRows[0];
+      if (!locked) {
+        throw new Error("Avatar row missing while awarding rewards");
+      }
+
+      const rewarded = await tx.avatar.update({
+        where: { id: locked.id },
+        data: {
+          xp: { increment: xpAward },
+          energy: Math.min(100, (locked.energy || 0) + energyGain),
+          hp: Math.min(100, (locked.hp || 0) + hpGain),
+          speed: Math.min(STAT_MAX, (locked.speed || 0) + statGains.speed),
+          control: Math.min(
+            STAT_MAX,
+            (locked.control || 0) + statGains.control,
+          ),
+          focus: Math.min(STAT_MAX, (locked.focus || 0) + statGains.focus),
+        },
+      });
+
+      const unlock = await checkUnlocks(studentId, rewarded, tx);
+      const avatarAfter = unlock?.avatar ?? rewarded;
+
+      // The claim just wrote this row inside the transaction, so a miss here
+      // is a genuine inconsistency and throws (P2025 → rollback → 500).
+      const row = await tx.progress.findUniqueOrThrow({
+        where: { studentId_activityId: { studentId, activityId } },
+      });
       return {
-        ...row,
-        status: ProgressStatus.COMPLETED,
-        timeSpentS: (row.timeSpentS || 0) + (timeSpentS || 0),
-        ...(gs !== undefined ? { gameSpecific: gs } : {}),
+        won: true as const,
+        locked,
+        avatarAfter,
+        newAbilities: unlock?.newAbilitiesCount ?? 0,
+        row,
       };
-    };
+    });
 
-    if (existing) {
-      finalProgress = await claimCompletion(existing);
-      if (!finalProgress) {
-        const row = await prisma.progress.findUnique({
-          where: { id: existing.id },
-        });
-        return respondRewardFree(row ?? existing);
-      }
-    } else {
-      try {
-        finalProgress = await prisma.progress.create({
-          data: {
-            studentId,
-            moduleSlug,
-            lessonId,
-            activityId,
-            status: ProgressStatus.COMPLETED,
-            timeSpentS: timeSpentS || 0,
-            ...(gs !== undefined ? { gameSpecific: gs } : {}),
-          },
-        });
-      } catch (e) {
-        if ((e as { code?: string })?.code !== "P2002") throw e;
-        const row = await prisma.progress.findUnique({
-          where: { studentId_activityId: { studentId, activityId } },
-        });
-        // P2002 implies the duplicate row is committed (a conflicting INSERT
-        // blocks on an in-flight duplicate and errors only after it commits),
-        // so a missing row here means a concurrent delete (e.g. a User
-        // cascade) — surface that to the backstop rather than invent a row.
-        if (!row) throw e;
-        if (row.status !== ProgressStatus.COMPLETED) {
-          // #827 review B1: the create lost to a NON-completing writer (a
-          // checkpoint upsert), not to a completion. This request still owns
-          // the completion — claim the row it lost to instead of discarding
-          // the play as "already completed".
-          finalProgress = await claimCompletion(row);
-          if (!finalProgress) {
-            const latest = await prisma.progress.findUnique({
-              where: { id: row.id },
-            });
-            return respondRewardFree(latest ?? row);
-          }
-        } else {
-          return respondRewardFree(row);
-        }
-      }
+    if (!outcome.won) {
+      // A racing completion owns this activity; answer as a replay. The row
+      // exists: the loser's insert cannot have been skipped unless a
+      // committed row was there, and a concurrent delete is a User cascade.
+      const row = await prisma.progress.findUnique({
+        where: { studentId_activityId: { studentId, activityId } },
+      });
+      if (!row) throw new Error("Progress row missing after a lost claim");
+      return respondRewardFree(row);
     }
+    const { locked: avatarLocked, avatarAfter, newAbilities } = outcome;
+    const finalProgress = outcome.row;
 
-    // Server-side mirror of game_completed — fires once per (student, activity)
-    // because only the atomic-claim winner reaches this line (#821); idempotent
-    // re-completions and racing losers short-circuit above.
+    // Server-side mirror of game_completed — fires once per (student,
+    // activity): only the claim winner reaches this line, after commit.
     trackServer(studentId, "game_completed", {
       module_slug: moduleSlug,
       activity_id: activityId,
@@ -528,96 +592,13 @@ router.post(
       time_spent_seconds: timeSpentS || 0,
     });
 
-    // 3. Apply Rewards & Check Unlocks
-    let avatarAfter: any = avatarBefore;
-    let newAbilitiesFromUnlock = 0;
-
-    // Calculate XP award based on roundsCompleted (if provided)
-    let xpAward = XP_PER_ACTIVITY;
-    if (result?.roundsCompleted !== undefined) {
-      // Parse activity.content to get totalRounds from server (source of truth)
-      let totalRoundsFromContent = 0;
-      try {
-        const parsed = JSON.parse(activity.content || "{}");
-        if (Array.isArray(parsed.rounds)) {
-          totalRoundsFromContent = parsed.rounds.length;
-        }
-      } catch {
-        // If parsing fails, use default XP
-        console.warn(
-          "[complete-activity] Failed to parse activity.content for totalRounds",
-        );
-      }
-
-      if (totalRoundsFromContent > 0) {
-        // Clamp roundsCompleted to server-known totalRounds (prevents cheating)
-        const rc = Math.min(
-          Math.max(result.roundsCompleted, 0),
-          totalRoundsFromContent,
-        );
-        xpAward = Math.round((rc / totalRoundsFromContent) * XP_PER_ACTIVITY);
-        xpAward = Math.min(Math.max(xpAward, 0), XP_PER_ACTIVITY); // Final clamp
-      }
-    }
-
-    try {
-      // Award XP + Energy + HP
-      const energyGain = 5;
-      const hpGain = 2;
-      const currentEnergy = avatarBefore.energy || 0;
-      const currentHp = avatarBefore.hp || 0;
-
-      // Calculate stat gains (only meaningful for GENERAL avatars)
-      const statGains = calculateStatGains({
-        score: result?.score,
-        total: result?.total,
-        timeSpentS,
-      });
-
-      // Build update data
-      const updateData: any = {
-        xp: { increment: xpAward },
-        energy: Math.min(100, currentEnergy + energyGain),
-        hp: Math.min(100, currentHp + hpGain),
-      };
-
-      // Apply stat gains (clamped to STAT_MAX)
-      // Stats accrue for all avatars, but are most meaningful for GENERAL
-      const currentSpeed = (avatarBefore as any).speed || 0;
-      const currentControl = (avatarBefore as any).control || 0;
-      const currentFocus = (avatarBefore as any).focus || 0;
-
-      updateData.speed = Math.min(STAT_MAX, currentSpeed + statGains.speed);
-      updateData.control = Math.min(
-        STAT_MAX,
-        currentControl + statGains.control,
-      );
-      updateData.focus = Math.min(STAT_MAX, currentFocus + statGains.focus);
-
-      // ⚡ Bolt Optimization: Capture updated avatar to avoid refetching in checkUnlocks
-      const updatedAvatar = await prisma.avatar.update({
-        where: { studentId },
-        data: updateData,
-      });
-
-      // Check for level up (may add more XP and unlocks)
-      const unlockResult = await checkUnlocks(studentId, updatedAvatar);
-      if (unlockResult) {
-        avatarAfter = unlockResult.avatar;
-        newAbilitiesFromUnlock = unlockResult.newAbilitiesCount;
-      } else {
-        avatarAfter = updatedAvatar;
-      }
-    } catch (e) {
-      console.warn("Could not give rewards to avatar", e);
-    }
-
-    // 4. Calculate Deltas
-    let xpDelta = avatarAfter.xp - avatarBefore.xp;
-    let levelDelta = avatarAfter.level - avatarBefore.level;
-    const energyDelta = (avatarAfter.energy || 0) - (avatarBefore.energy || 0);
-    const hpDelta = (avatarAfter.hp || 0) - (avatarBefore.hp || 0);
-    const newAbilitiesDelta = newAbilitiesFromUnlock;
+    // 4. Deltas against the LOCKED pre-reward snapshot, so a simultaneous
+    // completion's XP or level change can never be attributed to this reply.
+    let xpDelta = avatarAfter.xp - avatarLocked.xp;
+    let levelDelta = avatarAfter.level - avatarLocked.level;
+    const energyDelta = (avatarAfter.energy || 0) - (avatarLocked.energy || 0);
+    const hpDelta = (avatarAfter.hp || 0) - (avatarLocked.hp || 0);
+    const newAbilitiesDelta = newAbilities;
 
     // If avatar was backfilled, add backfilled XP to delta for accurate display
     if (wasBackfilled) {
@@ -627,6 +608,8 @@ router.post(
 
     // 5. Upsert Game Personal Best (when gameKey is present) — shared with the
     // replay path above so a record is reconciled on every play-through (#640).
+    // A record, not a reward: it stays outside the authoritative transaction
+    // and best-effort, exactly as before.
     const { personalBest, isNewHighScore, isNewBestStreak } =
       await reconcilePersonalBest(studentId, result);
 

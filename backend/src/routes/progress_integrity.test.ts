@@ -8,6 +8,9 @@ const prismaMock = vi.hoisted(() => ({
   },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -15,6 +18,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
   },
   activity: {
@@ -27,6 +32,8 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     createMany: vi.fn(),
   },
+  $queryRaw: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
 vi.mock("../utils/prisma", () => ({
@@ -87,7 +94,7 @@ describe("Progress Integrity Security", () => {
       expect(response.body.error).toBe("Activity not found");
 
       // Ensure creation was NOT called
-      expect(prismaMock.progress.create).not.toHaveBeenCalled();
+      expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
     });
 
     it("should ALLOW completing an EXISTING activity", async () => {
@@ -117,18 +124,39 @@ describe("Progress Integrity Security", () => {
         Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
       });
 
-      prismaMock.progress.create.mockResolvedValue({
-        id: "prog-1",
-        studentId,
-        activityId: "valid-activity",
-        status: "COMPLETED",
-      });
-
-      prismaMock.avatar.update.mockResolvedValue({
+      const rewardedAvatar = {
         id: "avatar-1",
         studentId,
         xp: 150,
         level: 1,
+      };
+      prismaMock.avatar.update.mockResolvedValue(rewardedAvatar);
+      // #877/#878: the reward transaction's call shape (see the mocked-seam
+      // note at the top of progressConcurrency.test.ts).
+      prismaMock.$transaction.mockImplementation((arg: unknown) =>
+        typeof arg === "function"
+          ? (arg as (tx: unknown) => unknown)(prismaMock)
+          : Promise.all(arg as Promise<unknown>[]),
+      );
+      prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+      prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.$queryRaw.mockResolvedValue([
+        {
+          id: "avatar-1",
+          studentId,
+          archetype: "AI",
+          xp: 100,
+          energy: 100,
+          hp: 100,
+          level: 1,
+        },
+      ]);
+      prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+      prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
+        id: "prog-1",
+        studentId,
+        activityId: "valid-activity",
+        status: "COMPLETED",
       });
 
       prismaMock.progress.count.mockResolvedValue(1);

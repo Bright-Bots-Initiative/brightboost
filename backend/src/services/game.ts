@@ -1,6 +1,6 @@
 // backend/src/services/game.ts
 import prisma from "../utils/prisma";
-import type { Avatar } from "@prisma/client";
+import type { Avatar, Prisma } from "@prisma/client";
 
 // XP constants
 export const XP_PER_ACTIVITY = 50;
@@ -11,21 +11,38 @@ export const STAT_MAX = 100;
 
 type AbilityRow = { id: string };
 
+/**
+ * The Prisma handle a reward operation runs on: the global client, or the
+ * `tx` of an interactive transaction (#877/#878 — every write of the
+ * authoritative reward operation must run inside the same transaction).
+ */
+export type Db = Prisma.TransactionClient | typeof prisma;
+
+/**
+ * Level = 1 + ⌊completed activities / 2⌋. The advance is *claimed*, not
+ * written: `updateMany` matches only while the stored level is still below
+ * the computed one, so two callers that both compute the same level can
+ * award the level bonus once (#878). Inside complete-activity the avatar
+ * row is additionally locked for the whole transaction, so the count this
+ * reads already includes the caller's own committed-in-transaction claim
+ * and nothing else can interleave.
+ */
 export async function checkUnlocks(
   studentId: string,
   preloadedAvatar?: Avatar | null,
+  db: Db = prisma,
 ): Promise<{ avatar: Avatar; newAbilitiesCount: number } | undefined> {
   let avatar = preloadedAvatar;
 
   // ⚡ Bolt Optimization: Use preloaded avatar if available to save a query
   const queries: [Promise<number>, Promise<Avatar | null>?] = [
-    prisma.progress.count({
+    db.progress.count({
       where: { studentId, status: "COMPLETED" },
     }),
   ];
 
   if (!avatar) {
-    queries.push(prisma.avatar.findUnique({ where: { studentId } }));
+    queries.push(db.avatar.findUnique({ where: { studentId } }));
   }
 
   const results = await Promise.all(queries);
@@ -40,12 +57,19 @@ export async function checkUnlocks(
   let newAbilitiesCount = 0;
 
   if (newLevel > avatar.level) {
-    // Update avatar level
-    const updatedAvatar = await prisma.avatar.update({
-      where: { id: avatar.id },
+    // Claim the level transition: only the caller that still sees a lower
+    // stored level moves it and takes the bonus.
+    const claimed = await db.avatar.updateMany({
+      where: { id: avatar.id, level: { lt: newLevel } },
       data: { level: newLevel, xp: { increment: XP_PER_LEVEL_UP } },
     });
-    avatar = updatedAvatar;
+    // Re-read the row the claim just targeted; a miss is a genuine
+    // inconsistency (P2025) and propagates to the caller's transaction.
+    avatar = await db.avatar.findUniqueOrThrow({ where: { id: avatar.id } });
+    if (claimed.count === 0) {
+      // Someone else advanced the level first; nothing more to grant here.
+      return { avatar, newAbilitiesCount: 0 };
+    }
 
     // ONLY unlock abilities if avatar is SPECIALIZED with an archetype
     // GENERAL avatars (archetype=null) do not get abilities
@@ -53,12 +77,12 @@ export async function checkUnlocks(
       const archetype = avatar.archetype;
       const avatarId = avatar.id;
 
-      const eligibleAbilities = await prisma.ability.findMany({
+      const eligibleAbilities = await db.ability.findMany({
         where: { archetype, reqLevel: { lte: newLevel } },
       });
 
       if (eligibleAbilities.length > 0) {
-        const existingUnlocks = await prisma.unlockedAbility.findMany({
+        const existingUnlocks = await db.unlockedAbility.findMany({
           where: {
             avatarId,
             abilityId: { in: eligibleAbilities.map((a: AbilityRow) => a.id) },
@@ -74,14 +98,17 @@ export async function checkUnlocks(
         );
 
         if (newUnlocks.length > 0) {
-          await prisma.unlockedAbility.createMany({
+          const granted = await db.unlockedAbility.createMany({
             data: newUnlocks.map((ab: AbilityRow) => ({
               avatarId,
               abilityId: ab.id,
               equipped: false,
             })),
+            // (avatarId, abilityId) is unique; a grant that raced another
+            // writer (#888's select-archetype) is not an error here.
+            skipDuplicates: true,
           });
-          newAbilitiesCount = newUnlocks.length;
+          newAbilitiesCount = granted.count;
         }
       }
     }

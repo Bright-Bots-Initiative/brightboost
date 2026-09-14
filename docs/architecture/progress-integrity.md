@@ -1,4 +1,4 @@
-> **Canonical for:** progress writers, completion authority, and the set-lock boundary. Last verified against code: 2026-09-14.
+> **Canonical for:** progress writers, completion authority, and the set-lock boundary. Last verified against code: 2026-09-14 (#876, #877/#878).
 
 # Progress integrity
 
@@ -10,10 +10,10 @@ deliberately stops.
 
 ## Writers
 
-| Route                                  | Writes                                       | Must hold before any write                                                                                                                                                                                                  |
-| -------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/progress/complete-activity` | `COMPLETED`, rewards, personal best          | Activity exists (404); body `moduleSlug` and `lessonId` match its Lesson → Unit → Module chain (400); BioTrail prerequisite (400/403); `result.gameKey` names the activity's declared game or a registry alias of it (400). |
-| `POST /api/progress/checkpoint`        | `IN_PROGRESS` create, `timeSpentS` increment | Self only (#871, 403); `completed: true` refused (400); same chain and BioTrail checks as above.                                                                                                                            |
+| Route                                  | Writes                                                                       | Must hold before any write                                                                                                                                                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/progress/complete-activity` | `COMPLETED`, rewards, level, abilities (one transaction), then personal best | Activity exists (404); body `moduleSlug` and `lessonId` match its Lesson → Unit → Module chain (400); BioTrail prerequisite (400/403); `result.gameKey` names the activity's declared game or a registry alias of it (400). |
+| `POST /api/progress/checkpoint`        | `IN_PROGRESS` create, `timeSpentS` increment                                 | Self only (#871, 403); `completed: true` refused (400); same chain and BioTrail checks as above.                                                                                                                            |
 
 Both writers persist the chain's own `moduleSlug` and `lessonId`, never the
 body's, and both go through `resolveActivityForWrite` and
@@ -56,6 +56,49 @@ schema is separate work (see #876).
   `set3-game-2`, `set3-game-4` and `set3-game-5` have no Activity row, so no
   writer can produce a row for them; specialization stays locked until each
   placeholder is replaced by a shipped game (`shared/progression/stemSetIds.ts`).
+
+## The reward transaction and its locks (#877 / #878)
+
+A completion's authoritative rewards are one interactive transaction in
+`POST /api/progress/complete-activity`:
+
+1. Ensure the Progress row exists as `IN_PROGRESS` (`INSERT … ON CONFLICT DO
+NOTHING`); this never completes anything.
+2. Claim the transition with a predicated `updateMany` (status not
+   `COMPLETED`). Zero rows means a racing completion owns it: nothing has
+   been written and the request answers as a replay.
+3. Lock the learner's Avatar row with `SELECT … FOR UPDATE`. Every stat
+   below is computed from that locked row, never from the pre-transaction
+   read, and the response deltas are taken against it.
+4. Base reward (XP increment, clamped energy/HP/speed/control/focus).
+5. Level: `checkUnlocks` runs on the same transaction, counts completed rows
+   (which now include this claim), and claims the transition with a guarded
+   `updateMany` (`level < computed`), so the bonus and any ability grants
+   happen once per boundary.
+6. Commit. Analytics and the personal best (`GamePersonalBest`, a record, not
+   a reward) run afterwards and never join this transaction.
+
+Any throw inside rolls back the claim together with the rewards; the request
+answers a JSON 500 and the client's retry re-claims and awards exactly once.
+Nothing partial is ever answered as success.
+
+**Lock order and deadlocks.** Every completion takes the Progress row (step 2)
+and then the Avatar row (step 3), then inserts into `UnlockedAbility`. Two
+completions therefore never wait on each other in a cycle: the same activity
+serialises on the Progress row and the loser claims nothing; different
+activities serialise on the Avatar row. Should PostgreSQL ever detect a
+deadlock with another writer (40P01), or the pool or transaction limits trip
+(P2024 / P2028, see `backend/src/utils/prisma.ts`), the transaction is
+rolled back, the request answers 500 and the retry is idempotent.
+
+**Other Avatar writers, and what each assumes.**
+
+| Writer                                    | Discipline                                                                                                                                                           |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| complete-activity reward transaction      | Row lock for the transaction; deltas from the locked snapshot.                                                                                                       |
+| `GET /avatar/me` repair                   | Conditional `updateMany` (`xp = 0` at the observed level): a reward committed between read and write makes it match nothing.                                         |
+| `ensureAvatarWithBackfill` (first avatar) | Create; a P2002 loser re-reads the winner's row and reports no backfill.                                                                                             |
+| `POST /avatar/select-archetype` (#888)    | Not changed here: still an unconditional update plus grants; its own ticket owns the GENERAL → SPECIALIZED claim. The Avatar row lock above is the pattern to reuse. |
 
 ## Follow-up
 

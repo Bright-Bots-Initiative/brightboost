@@ -10,6 +10,8 @@ const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -18,6 +20,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
     create: vi.fn(),
   },
@@ -31,6 +35,7 @@ const prismaMock = vi.hoisted(() => ({
     updateMany: vi.fn(),
     upsert: vi.fn(),
   },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(), // armed dual-mode (array | interactive) in each suite setup
 }));
 
@@ -132,7 +137,7 @@ function completeActivity(body: Record<string, unknown>) {
 
 function expectNoProgressWrites() {
   expect(prismaMock.progress.findUnique).not.toHaveBeenCalled();
-  expect(prismaMock.progress.create).not.toHaveBeenCalled();
+  expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
   expect(prismaMock.progress.update).not.toHaveBeenCalled();
 }
 
@@ -140,6 +145,19 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.avatar.findUnique.mockResolvedValue(AVATAR);
+    // #877/#878: the locked row, no level claim, and the ensured row.
+    prismaMock.$queryRaw.mockResolvedValue([AVATAR]);
+    prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+    prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      timeSpentS: 12,
+    });
     prismaMock.avatar.update.mockResolvedValue({ ...AVATAR, xp: 150 });
     prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
     prismaMock.progress.count.mockResolvedValue(1);
@@ -162,7 +180,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
   it("T2-1-01 / AC-1 / C1-01: POST move_measure → 200 → Progress row gameSpecific deep-equals what was sent", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
-    prismaMock.progress.create.mockResolvedValue({
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
       id: "prog-1",
       studentId: "student-123",
       activityId: "valid-activity",
@@ -183,9 +201,11 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
 
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.create).toHaveBeenCalled();
-    // A1-03 mock strategy: create data is the Progress row write (§14.4 "read the row").
-    const row = prismaMock.progress.create.mock.calls[0][0].data;
+    expect(prismaMock.progress.createMany).toHaveBeenCalled();
+    // A1-03 mock strategy: the claim's data is the Progress row write (§14.4
+    // "read the row"); #877 moved telemetry onto the claim (the ensured row
+    // never carries it).
+    const row = prismaMock.progress.updateMany.mock.calls[0][0].data;
     // AC-1: deep-equals what was sent.
     expect(row.gameSpecific).toEqual(validMoveMeasure);
     // C1-01 / E-8: stored value is the re-parsed registry object (same for a clean payload).
@@ -211,7 +231,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
         content: JSON.stringify({ gameKey }),
       });
       prismaMock.progress.findUnique.mockResolvedValue(null);
-      prismaMock.progress.create.mockResolvedValue({
+      prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
         id: "prog-1",
         studentId: "student-123",
         activityId: "valid-activity",
@@ -232,8 +252,8 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       });
 
       expect(res.status).toBe(200);
-      expect(prismaMock.progress.create).toHaveBeenCalled();
-      const row = prismaMock.progress.create.mock.calls[0][0].data;
+      expect(prismaMock.progress.createMany).toHaveBeenCalled();
+      const row = prismaMock.progress.updateMany.mock.calls[0][0].data;
       // AC-1: deep-equals what was sent (and the re-parsed registry value).
       expect(row.gameSpecific).toEqual(payload);
       expect(row.gameSpecific).toEqual(expected);
@@ -247,7 +267,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
   it("T2-1-03 / E-1: POST without gameSpecific → 200, column null (omitted on create), no error", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null);
-    prismaMock.progress.create.mockResolvedValue({
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
       id: "prog-1",
       studentId: "student-123",
       activityId: "valid-activity",
@@ -264,9 +284,13 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
 
     expect(res.status).toBe(200);
-    expect(prismaMock.progress.create).toHaveBeenCalled();
-    const row = prismaMock.progress.create.mock.calls[0][0].data;
-    // Omit from create ⇒ column stays null (Prisma default); never write null explicitly.
+    expect(prismaMock.progress.createMany).toHaveBeenCalled();
+    // Omitted ⇒ neither the ensured row nor the claim writes the column
+    // (Prisma default null); never write null explicitly.
+    expect(
+      prismaMock.progress.createMany.mock.calls[0][0].data,
+    ).not.toHaveProperty("gameSpecific");
+    const row = prismaMock.progress.updateMany.mock.calls[0][0].data;
     expect(row).not.toHaveProperty("gameSpecific");
     expect(res.body.progress).not.toHaveProperty("gameSpecific");
   });
@@ -354,7 +378,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
 
     // First completion stores telemetry.
     prismaMock.progress.findUnique.mockResolvedValueOnce(null);
-    prismaMock.progress.create.mockResolvedValue({
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
       id: "prog-1",
       studentId: "student-123",
       activityId: "valid-activity",
@@ -375,7 +399,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     });
     expect(first.status).toBe(200);
     expect(
-      prismaMock.progress.create.mock.calls[0][0].data.gameSpecific,
+      prismaMock.progress.updateMany.mock.calls[0][0].data.gameSpecific,
     ).toEqual(expected);
 
     // Old client re-completes without gameSpecific — must not null stored value.
@@ -398,7 +422,7 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
     expect(second.status).toBe(200);
     expect(second.body.message).toBe("Already completed");
     expect(prismaMock.progress.update).not.toHaveBeenCalled();
-    expect(prismaMock.progress.create).toHaveBeenCalledTimes(1);
+    expect(prismaMock.progress.createMany).toHaveBeenCalledTimes(1);
     expect(second.body.progress).not.toHaveProperty("gameSpecific");
   });
 
@@ -875,14 +899,14 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       '[complete-activity] Unregistered gameKey "not_a_registered_game" (no gameSpecific registry entry)',
     );
     expect(JSON.stringify(res.body)).not.toContain("dash");
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
     warnSpy.mockRestore();
   });
 
   it("C2-04 / §5.9.2: unregistered gameKey without gameSpecific does not warn (happy path)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     prismaMock.progress.findUnique.mockResolvedValue(null);
-    prismaMock.progress.create.mockResolvedValue({
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
       id: "prog-1",
       studentId: "student-123",
       activityId: "valid-activity",

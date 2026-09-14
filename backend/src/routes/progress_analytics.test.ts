@@ -16,6 +16,9 @@ const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -23,6 +26,8 @@ const prismaMock = vi.hoisted(() => ({
   },
   avatar: {
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
     create: vi.fn(),
   },
@@ -35,6 +40,8 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
     upsert: vi.fn(),
   },
+  $queryRaw: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
 vi.mock("../utils/prisma", () => ({ default: prismaMock }));
@@ -90,6 +97,26 @@ describe("game_completed server-side mirror", () => {
     // Shared happy-path mocks for the reward pipeline.
     prismaMock.avatar.findUnique.mockResolvedValue(AVATAR);
     prismaMock.avatar.update.mockResolvedValue({ ...AVATAR, xp: 150 });
+    // #877/#878: the reward transaction's call shape (see the mocked-seam
+    // note at the top of progressConcurrency.test.ts).
+    prismaMock.$transaction.mockImplementation((arg: unknown) =>
+      typeof arg === "function"
+        ? (arg as (tx: unknown) => unknown)(prismaMock)
+        : Promise.all(arg as Promise<unknown>[]),
+    );
+    prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+    prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.$queryRaw.mockResolvedValue([AVATAR]);
+    prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
+      id: "prog-1",
+      studentId: "student-123",
+      moduleSlug: "test-module",
+      lessonId: "lesson-1",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+      timeSpentS: 12,
+    });
     prismaMock.activity.findUnique.mockResolvedValue(VALID_ACTIVITY);
     prismaMock.progress.count.mockResolvedValue(1);
     prismaMock.ability.findMany.mockResolvedValue([]);
@@ -103,7 +130,7 @@ describe("game_completed server-side mirror", () => {
 
   it("fires game_completed on a genuine first completion", async () => {
     prismaMock.progress.findUnique.mockResolvedValue(null); // never completed before
-    prismaMock.progress.create.mockResolvedValue({
+    prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
       id: "prog-1",
       studentId: "student-123",
       activityId: "valid-activity",
@@ -159,6 +186,6 @@ describe("game_completed server-side mirror", () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Already completed");
     expect(gameCompletedCalls()).toHaveLength(0);
-    expect(prismaMock.progress.create).not.toHaveBeenCalled();
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
   });
 });

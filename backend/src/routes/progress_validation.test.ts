@@ -6,6 +6,9 @@ const prismaMock = vi.hoisted(() => ({
   progress: {
     findFirst: vi.fn(),
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     count: vi.fn(),
@@ -13,6 +16,8 @@ const prismaMock = vi.hoisted(() => ({
   avatar: {
     update: vi.fn(),
     findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    updateMany: vi.fn(),
   },
   activity: {
     findUnique: vi.fn(),
@@ -28,6 +33,8 @@ const prismaMock = vi.hoisted(() => ({
   user: {
     findUnique: vi.fn(),
   },
+  $queryRaw: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
 vi.mock("@prisma/client", () => {
@@ -104,13 +111,29 @@ describe("Progress Route Input Validation", () => {
       // @ts-ignore
       prismaMock.progress.findUnique.mockResolvedValue(null);
       // @ts-ignore
-      prismaMock.progress.create.mockResolvedValue({
+      prismaMock.avatar.update.mockResolvedValue({
+        id: "student-123",
+        level: 1,
+        xp: 50,
+      });
+      // #877/#878: the reward transaction's call shape (see the mocked-seam
+      // note at the top of progressConcurrency.test.ts).
+      prismaMock.$transaction.mockImplementation((arg: unknown) =>
+        typeof arg === "function"
+          ? (arg as (tx: unknown) => unknown)(prismaMock)
+          : Promise.all(arg as Promise<unknown>[]),
+      );
+      prismaMock.progress.createMany.mockResolvedValue({ count: 1 });
+      prismaMock.progress.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.$queryRaw.mockResolvedValue([
+        { id: "student-123", level: 1, archetype: "AI", xp: 0 },
+      ]);
+      prismaMock.avatar.updateMany.mockResolvedValue({ count: 0 });
+      prismaMock.progress.findUniqueOrThrow.mockResolvedValue({
         id: "new-progress",
         status: "COMPLETED",
         timeSpentS: 10,
       });
-      // @ts-ignore
-      prismaMock.avatar.update.mockResolvedValue({});
       // @ts-ignore
       prismaMock.activity.findUnique.mockResolvedValue({
         id: "test-activity",
