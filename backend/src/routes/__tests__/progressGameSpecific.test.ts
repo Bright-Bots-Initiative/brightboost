@@ -58,7 +58,9 @@ const VALID_ACTIVITY = {
   title: "Test Activity",
   kind: "INFO",
   order: 1,
-  content: "{}",
+  // #876: the writers resolve the curriculum chain and the declared game.
+  content: JSON.stringify({ gameKey: "move_measure" }),
+  Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
 };
 
 const AVATAR = {
@@ -203,6 +205,11 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       const payload = validByKey[gameKey];
       const expected = GAME_SPECIFIC_SCHEMAS[gameKey].parse(payload);
 
+      // #876: the activity must declare the game the result names.
+      prismaMock.activity.findUnique.mockResolvedValue({
+        ...VALID_ACTIVITY,
+        content: JSON.stringify({ gameKey }),
+      });
       prismaMock.progress.findUnique.mockResolvedValue(null);
       prismaMock.progress.create.mockResolvedValue({
         id: "prog-1",
@@ -882,6 +889,11 @@ describe("POST /api/progress/complete-activity gameSpecific persistence", () => 
       status: "COMPLETED",
     });
 
+    // #876: the activity must declare the game the result names.
+    prismaMock.activity.findUnique.mockResolvedValue({
+      ...VALID_ACTIVITY,
+      content: JSON.stringify({ gameKey: "fast_lane" }),
+    });
     const res = await completeActivity({
       moduleSlug: "test-module",
       lessonId: "lesson-1",

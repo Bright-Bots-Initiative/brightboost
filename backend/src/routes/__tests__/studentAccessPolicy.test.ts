@@ -22,6 +22,7 @@ const prismaMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   enrollment: { findFirst: vi.fn() },
   progress: { upsert: vi.fn(), findMany: vi.fn() },
+  activity: { findUnique: vi.fn() },
   unit: { findMany: vi.fn() },
   auditLog: { create: vi.fn() },
 }));
@@ -311,6 +312,18 @@ describe("#871 checkpoint writes — POST /api/progress/checkpoint", () => {
   });
 
   it("CKPT-1: a student writes their own checkpoint", async () => {
+    // #876: the checkpoint resolves the activity through its chain first.
+    prismaMock.activity.findUnique.mockResolvedValue({
+      id: "act-1",
+      lessonId: "lesson-1",
+      content: "{}",
+      Lesson: { id: "lesson-1", Unit: { Module: { slug: "stem-1" } } },
+    });
+    prismaMock.progress.upsert.mockResolvedValue({
+      id: "prog-1",
+      timeSpentS: 30,
+      status: "IN_PROGRESS",
+    });
     const res = await request(app)
       .post("/api/progress/checkpoint")
       .set(as(STUDENT))

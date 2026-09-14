@@ -57,6 +57,12 @@ beforeEach(() => {
   mocks.prisma.activity.findUnique.mockResolvedValue({
     id: BIOTRAIL_ACTIVITY_ID,
     lessonId: BIOTRAIL_LESSON_ID,
+    content: JSON.stringify({ gameKey: "biotrail" }),
+    // #876: the writer resolves the curriculum chain.
+    Lesson: {
+      id: BIOTRAIL_LESSON_ID,
+      Unit: { Module: { slug: BIOTRAIL_SLUG } },
+    },
   });
   mocks.prisma.avatar.findUnique.mockResolvedValue({
     stage: "SPECIALIZED",

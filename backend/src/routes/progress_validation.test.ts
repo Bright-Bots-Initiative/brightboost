@@ -112,7 +112,16 @@ describe("Progress Route Input Validation", () => {
       // @ts-ignore
       prismaMock.avatar.update.mockResolvedValue({});
       // @ts-ignore
-      prismaMock.activity.findUnique.mockResolvedValue({ id: "test-activity" });
+      prismaMock.activity.findUnique.mockResolvedValue({
+        id: "test-activity",
+        lessonId: "test-lesson",
+        content: "{}",
+        // #876: the writer resolves the curriculum chain.
+        Lesson: {
+          id: "test-lesson",
+          Unit: { Module: { slug: "test-module" } },
+        },
+      });
 
       const response = await request(app)
         .post("/api/progress/complete-activity")

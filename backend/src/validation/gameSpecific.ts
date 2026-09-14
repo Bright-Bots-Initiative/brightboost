@@ -64,3 +64,52 @@ export type RegisteredGameKey = keyof typeof GAME_SPECIFIC_SCHEMAS;
 export function isRegisteredGameKey(k: string): k is RegisteredGameKey {
   return Object.prototype.hasOwnProperty.call(GAME_SPECIFIC_SCHEMAS, k);
 }
+
+/**
+ * #876 — result-key compatibility.
+ *
+ * An activity declares the game it runs in `Activity.content.gameKey`; the
+ * frontend registry (src/components/games/gameRegistry.ts) routes that key to
+ * a component, and the component reports its own key in `result.gameKey`.
+ * Legacy content keys are routed to the current implementation of the same
+ * game, so a submitted key is compatible with the declared key when the two
+ * are equal or sit in the same alias group. The groups below are a guarded
+ * duplicate of the registry's alias section (docs/architecture/shared-code.md:
+ * similar data, different purpose, so guarded rather than shared);
+ * `validation/__tests__/gameKeyAliases.test.ts` fails when the two drift.
+ */
+export const GAME_KEY_ALIASES: ReadonlyArray<ReadonlyArray<string>> = [
+  ["boost_path_planner", "sequence_drag_drop"],
+  ["rhymo_rhyme_rocket", "rhyme_ride_unity"],
+  ["buddy_garden_sort", "bounce_buds_unity"],
+];
+
+export function isCompatibleGameKey(
+  declared: string,
+  submitted: string,
+): boolean {
+  if (declared === submitted) return true;
+  return GAME_KEY_ALIASES.some(
+    (group) => group.includes(declared) && group.includes(submitted),
+  );
+}
+
+/**
+ * The game an activity declares, read from its stored content JSON;
+ * `undefined` when the activity declares none (INFO, quiz, legacy text).
+ */
+export function declaredGameKey(
+  content: string | null | undefined,
+): string | undefined {
+  if (!content) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(content);
+    const key =
+      parsed && typeof parsed === "object"
+        ? (parsed as { gameKey?: unknown }).gameKey
+        : undefined;
+    return typeof key === "string" ? key : undefined;
+  } catch {
+    return undefined;
+  }
+}

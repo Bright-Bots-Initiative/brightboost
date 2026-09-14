@@ -64,7 +64,9 @@ const VALID_ACTIVITY = {
   title: "Test Activity",
   kind: "INFO",
   order: 1,
-  content: "{}",
+  // #876: the writers resolve the curriculum chain and the declared game.
+  content: JSON.stringify({ gameKey: "move_measure" }),
+  Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
 };
 
 const AVATAR_BEFORE = {

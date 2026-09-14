@@ -1,9 +1,3 @@
-import {
-  BIOTRAIL_ACTIVITY_ID,
-  BIOTRAIL_SLUG,
-  BIOTRAIL_LESSON_ID,
-} from "@brightboost/greatwork-engine/dist/progression/advanced";
-import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 // backend/src/routes/progress.ts
 import express, { Router } from "express";
 import prisma from "../utils/prisma";
@@ -34,9 +28,17 @@ import {
 } from "../validation/schemas";
 import {
   GAME_SPECIFIC_SCHEMAS,
+  declaredGameKey,
+  isCompatibleGameKey,
   isRegisteredGameKey,
 } from "../validation/gameSpecific";
-import { upsertCheckpoint, getAggregatedProgress } from "../services/progress";
+import {
+  ProgressWriteError,
+  assertAdvancedEligibility,
+  getAggregatedProgress,
+  resolveActivityForWrite,
+  upsertCheckpoint,
+} from "../services/progress";
 import { trackServer } from "../services/analytics";
 import { GameError } from "../utils/errors";
 
@@ -311,7 +313,13 @@ router.post(
       return res.status(400).json({ error: parse.error.flatten() });
     }
 
-    const { moduleSlug, lessonId, activityId, timeSpentS, result } = parse.data;
+    const {
+      moduleSlug: requestedSlug,
+      lessonId: requestedLessonId,
+      activityId,
+      timeSpentS,
+      result,
+    } = parse.data;
 
     // Re-parse: superRefine validates but does not transform (E-8 / G-009).
     const gs =
@@ -321,56 +329,61 @@ router.post(
         ? GAME_SPECIFIC_SCHEMAS[result.gameKey].parse(result.gameSpecific)
         : undefined;
 
-    // 0. Fetch Existing Progress and Activity concurrently
-    // ⚡ Bolt Optimization: Parallelize independent DB reads to reduce latency
-    // 🛡️ Sentinel: Verify activity existence to prevent Game Integrity/Infinite Leveling exploit
-    const [existing, activity] = await Promise.all([
-      prisma.progress.findUnique({
-        where: {
-          studentId_activityId: {
-            studentId,
-            activityId,
+    // 0. Fetch existing progress and resolve the activity concurrently.
+    // #876: the activity is resolved through its curriculum chain — an id no
+    // Activity carries (an orphan, or a reserved Set 3 placeholder) is 404,
+    // a forged module slug or lesson id is 400, both before any write — and
+    // the chain's own identifiers are what get persisted. BioTrail's
+    // prerequisite (matching earned specialty + Set 3) is applied here too,
+    // bound to the activity identity so a forged slug cannot skip it.
+    const gate = await (async () => {
+      const [existing, resolved] = await Promise.all([
+        prisma.progress.findUnique({
+          where: {
+            studentId_activityId: {
+              studentId,
+              activityId,
+            },
           },
-        },
-      }),
-      prisma.activity.findUnique({ where: { id: activityId } }),
-    ]);
-
-    if (!activity) {
-      return res.status(404).json({ error: "Activity not found" });
-    }
-
-    // The new advanced activity requires the matching saved specialty and Set 3.
-    // Bind to the actual activity identity; a forged moduleSlug cannot skip it.
-    if (activity.id === BIOTRAIL_ACTIVITY_ID || moduleSlug === BIOTRAIL_SLUG) {
-      if (
-        activity.id !== BIOTRAIL_ACTIVITY_ID ||
-        moduleSlug !== BIOTRAIL_SLUG ||
-        lessonId !== BIOTRAIL_LESSON_ID ||
-        activity.lessonId !== BIOTRAIL_LESSON_ID
-      ) {
-        return res
-          .status(400)
-          .json({ error: "Activity does not belong to this advanced lesson" });
-      }
-      const [specialized, completed] = await Promise.all([
-        prisma.avatar.findUnique({
-          where: { studentId },
-          select: { stage: true, archetype: true },
         }),
-        prisma.progress.findMany({
-          where: { studentId, status: "COMPLETED" },
-          select: { activityId: true },
+        resolveActivityForWrite({
+          activityId,
+          moduleSlug: requestedSlug,
+          lessonId: requestedLessonId,
         }),
       ]);
-      const completedIds = new Set(completed.map((p) => p.activityId));
-      if (
-        specialized?.stage !== "SPECIALIZED" ||
-        specialized.archetype !== "BIOTECH" ||
-        !STEM_SET_3_IDS.every((id) => completedIds.has(id))
-      ) {
-        return res.status(403).json({
-          error: "Complete Set 3 and choose Biotech before playing BioTrail",
+      await assertAdvancedEligibility(
+        studentId,
+        resolved.activity,
+        resolved.moduleSlug,
+        resolved.lessonId,
+      );
+      return { existing, resolved };
+    })().catch((e: unknown) => {
+      if (e instanceof ProgressWriteError) return e;
+      throw e;
+    });
+    if (gate instanceof ProgressWriteError) {
+      return res.status(gate.status).json({ error: gate.message });
+    }
+    const { existing } = gate;
+    const { activity, moduleSlug, lessonId } = gate.resolved;
+
+    // #876: a result may only describe the game this activity declares (or a
+    // registry alias of it). Telemetry validation and GamePersonalBest are
+    // keyed by result.gameKey, so an unrelated key would credit a record to a
+    // game the learner did not play. Score units are the game's own; nothing
+    // here compares score with total.
+    const declaredKey = declaredGameKey(activity.content);
+    if (result?.gameKey !== undefined) {
+      if (!declaredKey) {
+        return res.status(400).json({
+          error: "This activity does not accept a game result (result.gameKey)",
+        });
+      }
+      if (!isCompatibleGameKey(declaredKey, result.gameKey)) {
+        return res.status(400).json({
+          error: "result.gameKey does not name this activity's game",
         });
       }
     }
@@ -676,14 +689,28 @@ router.get(
   },
 );
 
+// #876 (PROG-01): a checkpoint keeps time on an activity the learner is
+// playing. It never completes one — POST /progress/complete-activity is the
+// only writer of COMPLETED, because rewards, the level formula, the specialty
+// gate and avatar backfill all trust that status.
 router.post(
   "/progress/checkpoint",
   requireAuth,
   gameActionLimiter,
-  async (req, res) => {
+  answerAsyncErrors(async (req, res) => {
     const parse = checkpointSchema.safeParse(req.body);
     if (!parse.success)
       return res.status(400).json({ error: parse.error.flatten() });
+
+    // The field stays declared in the schema so Zod cannot strip it, and a
+    // stale client that still sends it fails loudly instead of believing it
+    // completed something.
+    if (parse.data.completed === true) {
+      return res.status(400).json({
+        error:
+          "Checkpoints cannot complete an activity; use POST /progress/complete-activity",
+      });
+    }
 
     // #871: checkpoint writes are self-only. A teacher's or staff member's
     // read grant on a learner never becomes a write grant, and the body's
@@ -693,25 +720,42 @@ router.post(
     }
 
     try {
-      const saved = await upsertCheckpoint({
-        ...parse.data,
-        studentId: req.user!.id,
+      const studentId = req.user!.id;
+      const { activity, moduleSlug, lessonId } = await resolveActivityForWrite({
+        activityId: parse.data.activityId,
+        moduleSlug: parse.data.moduleSlug,
+        lessonId: parse.data.lessonId,
       });
-      res.json({
+      await assertAdvancedEligibility(
+        studentId,
+        activity,
+        moduleSlug,
+        lessonId,
+      );
+      const saved = await upsertCheckpoint({
+        studentId,
+        moduleSlug,
+        lessonId,
+        activityId: activity.id,
+        timeSpentS: parse.data.timeSpentS,
+      });
+      return res.json({
         ok: true,
         id: saved.id,
         timeSpentS: saved.timeSpentS,
         status: saved.status,
       });
-    } catch (e: any) {
+    } catch (e) {
+      if (e instanceof ProgressWriteError) {
+        return res.status(e.status).json({ error: e.message });
+      }
       // 🛡️ Sentinel: Only expose safe "GameError" messages.
       if (e instanceof GameError) {
         return res.status(400).json({ error: e.message });
       }
-      console.error("Checkpoint error:", e);
-      res.status(500).json({ error: "Internal server error" });
+      throw e; // answered as a JSON 500 by the app's error middleware
     }
-  },
+  }),
 );
 
 // Note: Assessment schema is missing, disabling this route for now or removing if unused

@@ -63,7 +63,9 @@ const VALID_ACTIVITY = {
   title: "Test Activity",
   kind: "INFO",
   order: 1,
-  content: "{}",
+  // #876: the writers resolve the curriculum chain and the declared game.
+  content: JSON.stringify({ gameKey: "tank_trek" }),
+  Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
 };
 
 const AVATAR = {
@@ -77,9 +79,9 @@ const AVATAR = {
 };
 
 function gameCompletedCalls() {
-  return (trackServer as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(
-    (c) => c[1] === "game_completed",
-  );
+  return (
+    trackServer as unknown as { mock: { calls: unknown[][] } }
+  ).mock.calls.filter((c) => c[1] === "game_completed");
 }
 
 describe("game_completed server-side mirror", () => {
