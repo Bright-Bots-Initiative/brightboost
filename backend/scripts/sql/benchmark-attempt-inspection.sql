@@ -21,8 +21,10 @@
 -- leaves it wrong. Deleting the attempt (a retake) is the other option; note
 -- a deleted PRE attempt re-locks that learner's POST.
 --
--- Casts are guarded: an index that is not a short non-negative integer (a
--- huge historical value, a negative, a string) is reported as a bad index,
+-- Casts are guarded: an index is cast only when the JSON value is a number
+-- AND its text is a short non-negative integer. Anything else (a huge
+-- historical value, a negative, a string — including a numeric string such
+-- as "1", which ->> would otherwise render as 1) is reported as a bad index,
 -- never cast.
 
 WITH canon AS (
@@ -44,7 +46,8 @@ answers AS (
   SELECT c.attempt_id,
          x.ord,
          x.val->>'questionId' AS question_id,
-         CASE WHEN (x.val->>'selectedIndex') ~ '^[0-9]{1,6}$'
+         CASE WHEN jsonb_typeof(x.val->'selectedIndex') = 'number'
+               AND (x.val->>'selectedIndex') ~ '^[0-9]{1,6}$'
               THEN (x.val->>'selectedIndex')::int END AS selected_index
   FROM canon c
   CROSS JOIN LATERAL jsonb_array_elements(
@@ -56,7 +59,8 @@ questions AS (
          q.val->>'id' AS question_id,
          CASE WHEN jsonb_typeof(q.val->'choices') = 'array'
               THEN jsonb_array_length(q.val->'choices') ELSE 0 END AS choice_count,
-         CASE WHEN (q.val->>'correctIndex') ~ '^[0-9]{1,6}$'
+         CASE WHEN jsonb_typeof(q.val->'correctIndex') = 'number'
+               AND (q.val->>'correctIndex') ~ '^[0-9]{1,6}$'
               THEN (q.val->>'correctIndex')::int END AS correct_index
   FROM canon c
   CROSS JOIN LATERAL jsonb_array_elements(

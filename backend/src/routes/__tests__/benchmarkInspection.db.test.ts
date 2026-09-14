@@ -58,6 +58,7 @@ describe.skipIf(!dbUrl)(
       "total",
       "score",
       "json",
+      "numstr",
     ];
 
     let prisma: typeof import("../../utils/prisma").default;
@@ -199,6 +200,9 @@ describe.skipIf(!dbUrl)(
             [ans("q1", 1e20), ans("q2", "abc"), ...CANONICAL.slice(2)],
             2,
           ),
+          // A numeric STRING index: ->> renders it as 1 and the regex would
+          // pass it, but the submission schema never accepts a string.
+          attempt("numstr", [ans("q1", "1"), ...CANONICAL.slice(1)], 2),
           attempt("total", CANONICAL, 3, 4),
           attempt("score", CANONICAL, 5),
           attempt("json", { not: "an array" }, 0),
@@ -275,6 +279,15 @@ describe.skipIf(!dbUrl)(
       expect(reasons("json")).toEqual(
         expect.arrayContaining(["malformed json"]),
       );
+
+      // The numeric string is flagged as a bad index; the four numeric
+      // indexes beside it are accepted (exactly one bad index is counted).
+      expect(reasons("numstr")).toEqual([
+        "choice index out of range or not an integer",
+      ]);
+      expect(mine.get(ids.attempt("numstr"))?.bad_index).toBe(1);
+      expect(mine.get(ids.attempt("numstr"))?.unknown_ids).toBe(0);
+      expect(mine.get(ids.attempt("numstr"))?.missing_questions).toBe(0);
       expect(
         mine.get(ids.attempt("json"))?.repair_first_answer_score,
       ).toBeNull();
