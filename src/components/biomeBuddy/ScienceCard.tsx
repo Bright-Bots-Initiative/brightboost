@@ -1,7 +1,7 @@
 /**
- * Biome Buddy — the science card that pops when an option is picked
- * (design §4): one kid sentence up front, the formal term in parentheses,
- * what THIS part changes in THIS biome (in words, not just bars), and a
+ * Biome Buddy — optional science opened by a picker's About button:
+ * one kid sentence up front, the formal term in parentheses,
+ * this part's contribution in this biome (separate from the selection delta), and a
  * "Tell me more" expander with the deeper seven-part science. Bottom-sheet
  * on phones so the live stat bars stay visible behind it.
  */
@@ -111,16 +111,11 @@ export default function ScienceCard({
                   className={`rounded-full px-3 py-1 text-sm font-extrabold ${v > 0 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}`}
                 >
                   <span aria-hidden>{STAT_EMOJI[stat]} </span>
-                  {L(STAT_LABEL[stat])}{" "}
-                  {v > 0
-                    ? t("biomeBuddy.stat.up", {
-                        defaultValue: "up {{n}}",
-                        n: v,
-                      })
-                    : t("biomeBuddy.stat.down", {
-                        defaultValue: "down {{n}}",
-                        n: Math.abs(v),
-                      })}
+                  {t("biomeBuddy.science.contribution", {
+                    defaultValue: "{{stat}} contribution: {{n}}",
+                    stat: L(STAT_LABEL[stat]),
+                    n: v > 0 ? `+${v}` : String(v),
+                  })}
                 </li>
               );
             })}

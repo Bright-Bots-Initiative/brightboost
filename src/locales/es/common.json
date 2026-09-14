@@ -2239,7 +2239,11 @@
       "unlockTitle": "¡Nueva parte para cambiar: {{category}}!",
       "unlockTry": "¡Pruébala!",
       "lockedTeaser": "Cambia una parte y prueba tu Buddy para abrir {{next}}.",
-      "lockedNow": "Ahora mismo: {{list}}."
+      "lockedNow": "Ahora mismo: {{list}}.",
+      "undo": "Deshacer cambio",
+      "undone": "Tu versión anterior está de vuelta.",
+      "aboutPart": "Acerca de {{part}}",
+      "sameBars": "Un nuevo aspecto: estas cuatro barras no cambiaron."
     },
     "science": {
       "term": "también se llama: {{term}}",
@@ -2253,7 +2257,8 @@
       "where": "Dónde en el mundo",
       "affects": "Qué más cambia",
       "deeper": "La ciencia más a fondo",
-      "gotIt": "¡Entendido!"
+      "gotIt": "¡Entendido!",
+      "contribution": "Aporte a {{stat}}: {{n}}"
     },
     "stat": {
       "band": {
@@ -2282,7 +2287,13 @@
       "gotIt": "¡Entendido!",
       "next": "Siguiente ▶",
       "introNoMove": "Cambiaste una parte, pero estas cuatro barras no se movieron en este hogar. Toca siguiente para ver qué significa.",
-      "noMoveBody": "Tu parte nueva no movió estas barras aquí, pero cambió cómo se ve tu Buddy y para qué está hecho. Me pregunto en qué hogar sí importaría."
+      "noMoveBody": "Tu parte nueva no movió estas barras aquí, pero cambió cómo se ve tu Buddy y para qué está hecho. Me pregunto en qué hogar sí importaría.",
+      "beforeVersion": "Antes",
+      "afterVersion": "Esta prueba",
+      "legacyHeading": "Tu prueba guardada {{where}}",
+      "legacy": "Esta prueba guardó las barras, pero no el aspecto exacto de tu Buddy. Sigue experimentando para guardar nuevas comparaciones.",
+      "restore": "Volver a la versión anterior",
+      "identityOnly": "¡Le diste a tu Buddy un nuevo nombre o aspecto! Estas cuatro barras siguen funcionando igual."
     },
     "name": {
       "heading": "¡Ponle nombre a tu Buddy!",
@@ -2333,6 +2344,17 @@
       "notice3": "Probar y aprender explica cada barra que se movió, en frases para niños, con la ciencia debajo.",
       "notice4": "Comparte un Buddy por enlace; el enlace solo lleva la receta, y al abrirlo recibes una copia para remezclar.",
       "note": "Esto es un prototipo: todo lo que construyas se queda en este navegador y no se envía a ningún sitio. El enlace no está listado, pero no es privado."
+    },
+    "water": {
+      "title": "Prueba el estanque",
+      "compare": "El mismo estanque, el mismo tiempo. ¿Qué cambia cuando tu Buddy se mueve?",
+      "newHome": "¡Tu Buddy tiene un nuevo hogar! Prueba otro cambio aquí para comparar cómo nada en el estanque.",
+      "observation": "Agilidad: {{n}}. {{why}}",
+      "model": "Este pequeño recorrido muestra la barra de Agilidad de tu Buddy. Todas sus partes pueden afectar el movimiento. ¡Los animales reales se mueven de muchas más formas!",
+      "watch": "Mira cómo se mueven",
+      "pause": "Pausar recorrido",
+      "resume": "Continuar recorrido",
+      "replay": "Ver otra vez"
     }
   },
   "safeExploration": {

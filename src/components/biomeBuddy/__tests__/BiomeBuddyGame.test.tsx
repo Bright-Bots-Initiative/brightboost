@@ -110,7 +110,7 @@ describe("BiomeBuddyGame loop", () => {
     expect(loadDraft()?.recipe.biome).toBe("water");
   });
 
-  it("Guided opens only Eyes + Movement (the other pickers are not rendered); picking opens a focus-managed science card and moves the bars", () => {
+  it("Guided opens only Eyes + Movement (the other pickers are not rendered); picking keeps focus in the builder; About opens a focus-managed science card", () => {
     render(<BiomeBuddyGame />);
     startGuided();
     chooseBiome("Earth");
@@ -125,6 +125,8 @@ describe("BiomeBuddyGame loop", () => {
       .getByRole("meter", { name: /^Sight:/ })
       .getAttribute("aria-valuenow");
     pick("Eyes", "No eyes");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(button("About No eyes"));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(within(dialog).getByText("No eyes")).toBeInTheDocument();
@@ -136,17 +138,17 @@ describe("BiomeBuddyGame loop", () => {
     expect(
       within(dialog).getByText(/What this part does in the Earth/),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText(/Hearing up/)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/Hearing contribution: \+15/),
+    ).toBeInTheDocument();
     closeScience();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     const after = screen
       .getByRole("meter", { name: /^Sight:/ })
       .getAttribute("aria-valuenow");
     expect(Number(after)).toBeLessThan(Number(before));
-    // focus returned to the chip that opened the card
-    expect(document.activeElement).toBe(
-      screen.getByRole("radio", { name: "Eyes: No eyes" }),
-    );
+    // focus returned to the explicit About button
+    expect(document.activeElement).toBe(button("About No eyes"));
   });
 
   it("radiogroups use a roving tabindex and arrow keys move focus without selecting", () => {
@@ -183,12 +185,11 @@ describe("BiomeBuddyGame loop", () => {
     expect(document.activeElement).toBe(words[1]);
   });
 
-  it("Test & Learn explains each moved bar, ends on a wondering nudge, then Name & Save; a tested change opens the next Guided picker", () => {
+  it("Test & Learn explains each moved bar, ends on a wondering nudge, then back to Create; a tested change opens the next Guided picker", () => {
     render(<BiomeBuddyGame />);
     startGuided();
     chooseBiome("Water");
     pick("Movement", "Fins");
-    closeScience();
     fireEvent.click(button("Test it! 🔬"));
     const dialog = screen.getByRole("dialog");
     expect(
@@ -210,7 +211,7 @@ describe("BiomeBuddyGame loop", () => {
     expect(screen.getByTestId("wonder").textContent).toMatch(/I wonder/);
     fireEvent.click(within(dialog).getByRole("button", { name: "Got it!" }));
 
-    // unlock announce (scaffolding announces itself), then Name & Save
+    // The inline unlock announcement keeps the builder available.
     expect(screen.getByText("New part to change: Ears!")).toBeInTheDocument();
     fireEvent.click(button("Try it!"));
     expect(loadProgress().guidedTestsCompleted).toBe(1);
@@ -256,7 +257,6 @@ describe("BiomeBuddyGame loop", () => {
     // Revise: keep building, change a part, save again → same record updated
     fireEvent.click(button("Keep building 🔧"));
     pick("Body Covering", "Hard shell");
-    closeScience();
     fireEvent.click(button("Save"));
     const again = loadGallery();
     expect(again).toHaveLength(1);
@@ -269,10 +269,10 @@ describe("BiomeBuddyGame loop", () => {
     fireEvent.click(button(/Grades 6–8/));
     chooseBiome("Air");
     pick("Movement", "Wings");
-    closeScience();
     fireEvent.click(button("Test it! 🔬"));
     finishWalkthrough();
-    // unnamed → Name screen; save so the gallery holds real bytes to compare
+    // Naming and saving are explicit; the gallery holds real bytes to compare
+    fireEvent.click(button("Name & Save"));
     fireEvent.click(button("Save it! 💾"));
     const galleryBefore = localStorage.getItem(GALLERY_KEY);
     expect(galleryBefore).not.toBeNull();
@@ -295,7 +295,6 @@ describe("BiomeBuddyGame loop", () => {
     chooseBiome("Earth");
     fireEvent.click(button("Test it! 🔬"));
     finishWalkthrough();
-    fireEvent.click(button("Keep building 🔧"));
     fireEvent.click(button("Test it! 🔬"));
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText(/the bars stayed put/)).toBeInTheDocument();
@@ -317,7 +316,6 @@ describe("BiomeBuddyGame loop", () => {
     fireEvent.click(button(/Grades 3–5/));
     chooseBiome("Earth");
     pick("Body Covering", "Smooth scales"); // same agility as short fur in Earth
-    closeScience();
     fireEvent.click(button("Test it! 🔬"));
     const dialog = screen.getByRole("dialog");
     expect(
@@ -335,7 +333,7 @@ describe("BiomeBuddyGame loop", () => {
     );
     expect(screen.getByTestId("wonder")).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Got it!" }));
-    expect(screen.getByText("Name your Buddy!")).toBeInTheDocument();
+    expect(button("Test it! 🔬")).toBeInTheDocument();
   });
 
   it("gallery: reopen restores the recipe; delete asks first and removes exactly that Buddy", () => {
@@ -343,7 +341,6 @@ describe("BiomeBuddyGame loop", () => {
     fireEvent.click(button(/Grades 3–5/));
     chooseBiome("Water");
     pick("Nose & Breathing", "Gills & water-nose");
-    closeScience();
     fireEvent.click(button("Name & Save"));
     fireEvent.click(button("Save it! 💾"));
     fireEvent.click(button("My Buddies"));
@@ -383,15 +380,14 @@ describe("BiomeBuddyGame loop", () => {
     fireEvent.click(button(/Grades 3–5/));
     chooseBiome("Earth");
     pick("Eyes", "No eyes");
+    fireEvent.click(button("About No eyes"));
     const dialog = screen.getByRole("dialog");
     const close = within(dialog).getByRole("button", { name: "Close" });
     const focusables = within(dialog).getAllByRole("button");
     expect(focusables[focusables.length - 1]).toBe(close);
     fireEvent.click(close);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(document.activeElement).toBe(
-      screen.getByRole("radio", { name: "Eyes: No eyes" }),
-    );
+    expect(document.activeElement).toBe(button("About No eyes"));
   });
 
   it("survives corrupt storage on mount and keeps working", () => {
@@ -448,7 +444,6 @@ describe("BiomeBuddyGame loop", () => {
     fireEvent.click(button(/Grades 3–5/));
     chooseBiome("Air");
     pick("Eyes", "Compound eyes");
-    closeScience();
     first.unmount();
     render(<BiomeBuddyGame />);
     expect(
@@ -476,7 +471,6 @@ describe("BiomeBuddyGame loop", () => {
     // into the build (this fails if the remix effect aliases the prop).
     source.traits.eyes = "no_eyes";
     pick("Movement", "Wings");
-    closeScience();
     expect(
       screen.getByRole("radio", { name: "Eyes: Wide-set eyes" }),
     ).toHaveAttribute("aria-checked", "true");
@@ -511,7 +505,6 @@ describe("BiomeBuddyGame loop", () => {
     startGuided();
     chooseBiome("Earth");
     pick("Eyes", "Compound eyes");
-    closeScience();
     fireEvent.click(button("Test it! 🔬"));
     finishWalkthrough();
     fireEvent.click(button("Try it!"));

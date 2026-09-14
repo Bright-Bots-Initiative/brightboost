@@ -1,6 +1,6 @@
 # Biome Buddy — build-a-creature organism lab (refined design doc)
 
-> Status: **reviewable prototype landed (v1 loop + backend-free share)** — see §13. Everything before §13 is the refined design this prototype was built from; where the prototype deliberately stops short of the design (v2/v3 backend sections), §13 says so.
+> Status: **reviewable prototype landed (v1 loop + backend-free share)** — see §13 and the experiment update in §15. Everything before §13 is the refined design this prototype was built from; where the prototype deliberately stops short of the design (v2/v3 backend sections), §13 says so.
 > Working title: **Biome Buddy** (placeholder — matches the "Bounce & Buds / Buddy Garden" naming family; rename freely).
 > Bar: `docs/design-principles.md` (and the Safe Exploration Contract from docs PR #847, once it lands on main). Precedents: `docs/games/waterworks-design.md` (standalone showcase, pure sim, device-local storage) and `docs/games/set3-track-maker-design.md` (creation-type game with backend gallery).
 > Persistence target: a `Creation` (`type: "biome_buddy"`) once graduated from the standalone prototype.
@@ -235,3 +235,31 @@ JSON = { v: 1, b: <biome>, t: [eyes, ears, nose, movement, covering], p: <patter
 3. Fire biome kid-facing name: the prototype shows "Fire · Desert & volcano". Keep, or rename the biome label outright? Ids stay `fire` either way.
 4. Stat label for `agility` at K–2 ("Speedy Moves"?) — content-only change, decide with copy review.
 5. Should a Guided (K–2) remix of a shared Buddy open all pickers, or honour the child's unlock ladder? The prototype honours the ladder (locked parts keep the shared choice).
+
+## 15. Experiment experience update (2026-09-14)
+
+The standalone loop now returns directly to Create after Test & Learn. Naming
+and saving remain available through **Name & Save**. Guided unlocks are announced
+inline, with the same tested-change progression rule.
+
+- Picking a part updates the Buddy without opening a modal. Inline feedback shows
+  the whole recipe's actual clamped stat delta; **About [part]** opens the existing
+  science card, whose numbers are explicitly labelled as contributions.
+- Each new experiment records validated full before/after recipes (including home,
+  name, and pattern). Reopening **Last test** renders those snapshots. Derived bars
+  are recomputed on storage reads. Older bar-only tests remain readable without a
+  fabricated appearance; an exact baseline is established for subsequent tests.
+- **Undo change** restores up to 20 prior recipes, including home/name/pattern
+  edits, and survives draft reload. History resets for a new build, gallery open,
+  or remix. **Go back to before** restores the experiment baseline and is itself
+  undoable. Neither action changes a Buddy's gallery id or the Guided counter.
+- Water tests add **Try the pond**: a four-second, repeatable visual illustration
+  of the existing agility model, with pause/replay and equivalent static results
+  for reduced motion. Two Water recipes use the same pond and duration. A prior
+  recipe from another home stays labelled with its original home and is not
+  silently moved into a Water comparison. The swim is illustrative, not a
+  measurement of real animal speed or a new scoring system.
+
+The trait matrix, four homes, five functional categories plus pattern, recipe/share
+wire format, device-local persistence, and backend isolation remain as in §13.
+New UI copy is complete in English and Spanish.

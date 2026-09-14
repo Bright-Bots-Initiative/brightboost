@@ -19,7 +19,7 @@
  * the `animate` prop. Pointer events are off so art never blocks controls.
  */
 import { useId } from "react";
-import type { Biome, BuddyRecipe, Pattern } from "./biomeBuddyModel";
+import type { Biome, BuddyRecipe, Pattern, Picker } from "./biomeBuddyModel";
 
 export type SpriteSize = "sm" | "md" | "lg";
 
@@ -701,6 +701,7 @@ export interface BuddySpriteProps {
   label?: string;
   animate?: boolean;
   className?: string;
+  highlight?: Picker;
 }
 
 export default function BuddySprite({
@@ -709,6 +710,7 @@ export default function BuddySprite({
   label,
   animate = true,
   className = "",
+  highlight,
 }: BuddySpriteProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const clipId = `bb-body-${uid}`;
@@ -728,6 +730,7 @@ export default function BuddySprite({
       aria-hidden={decorative ? true : undefined}
       aria-labelledby={decorative ? undefined : titleId}
       data-sprite={spriteKey(recipe)}
+      data-highlight={highlight}
       focusable="false"
       style={{ pointerEvents: "none", display: "block" }}
     >

@@ -2572,7 +2572,11 @@
       "unlockTitle": "New part to change: {{category}}!",
       "unlockTry": "Try it!",
       "lockedTeaser": "Change a part and test your Buddy to open {{next}}.",
-      "lockedNow": "Right now: {{list}}."
+      "lockedNow": "Right now: {{list}}.",
+      "undo": "Undo change",
+      "undone": "Your previous version is back.",
+      "aboutPart": "About {{part}}",
+      "sameBars": "A new look — these four bars stayed the same."
     },
     "science": {
       "term": "also called: {{term}}",
@@ -2586,7 +2590,8 @@
       "where": "Where in the world",
       "affects": "What else it changes",
       "deeper": "The deeper science",
-      "gotIt": "Got it!"
+      "gotIt": "Got it!",
+      "contribution": "{{stat}} contribution: {{n}}"
     },
     "stat": {
       "band": {
@@ -2615,7 +2620,13 @@
       "gotIt": "Got it!",
       "next": "Next ▶",
       "introNoMove": "You changed a part, but these four bars stayed put in this home. Tap next to see what that means.",
-      "noMoveBody": "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?"
+      "noMoveBody": "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?",
+      "beforeVersion": "Before",
+      "afterVersion": "This test",
+      "legacyHeading": "Your saved test {{where}}",
+      "legacy": "This test saved the bars, but not the Buddy's exact look. Keep experimenting to save new comparisons.",
+      "restore": "Go back to before",
+      "identityOnly": "You gave your Buddy a new name or look! These four bars still work the same way."
     },
     "name": {
       "heading": "Name your Buddy!",
@@ -2666,6 +2677,17 @@
       "notice3": "Test & Learn explains each bar that moved, in kid sentences, with the science underneath.",
       "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
       "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
+    },
+    "water": {
+      "title": "Try the pond",
+      "compare": "Same pond, same time. What changes when your Buddy moves?",
+      "newHome": "Your Buddy has a new home! Try one more change here to compare two pond swims.",
+      "observation": "Agility: {{n}}. {{why}}",
+      "model": "This little swim shows your Buddy's Agility bar. All its parts can affect movement. Real animals move in many more ways!",
+      "watch": "Watch them move",
+      "pause": "Pause swim",
+      "resume": "Continue swim",
+      "replay": "Watch again"
     }
   },
   "safeExploration": {

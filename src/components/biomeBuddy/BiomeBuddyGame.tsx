@@ -22,6 +22,7 @@ import {
   cloneRecipe,
   computeStats,
   diffBuilds,
+  recordExperiment,
   nextUnlock,
   recipeKey,
   starterRecipe,
@@ -62,6 +63,7 @@ import CreateScreen from "./screens/CreateScreen";
 import NameScreen, { type SaveNote } from "./screens/NameScreen";
 import TestLearnScreen from "./screens/TestLearnScreen";
 import TitleScreen from "./screens/TitleScreen";
+import type { TraitChange } from "./TraitFeedback";
 
 type Screen = "title" | "choose" | "create" | "name";
 
@@ -107,11 +109,20 @@ export default function BiomeBuddyGame({
   const [lastTest, setLastTest] = useState<TestSummary | null>(
     initialDraft?.lastTest ?? null,
   );
+  const [testBaseline, setTestBaseline] = useState<BuddyRecipe | null>(
+    initialDraft?.baseline ?? initialDraft?.lastTest?.snapshot?.after ?? null,
+  );
+  const choosingFirstHome = useRef(false);
   const [hasActiveBuild, setHasActiveBuild] = useState(!!initialDraft);
   const [screen, setScreen] = useState<Screen>(
     initialDraft ? "create" : "title",
   );
   const [gallery, setGallery] = useState<SavedBuddy[]>(() => loadGallery());
+  const [undoHistory, setUndoHistory] = useState<BuddyRecipe[]>(
+    initialDraft?.undo ?? [],
+  );
+  const [recentChange, setRecentChange] = useState<TraitChange | null>(null);
+  const [restoreNote, setRestoreNote] = useState("");
 
   // ---- session state ----
   const [science, setScience] = useState<{
@@ -150,8 +161,19 @@ export default function BiomeBuddyGame({
     lastTested,
     lastTest,
     band,
+    undo: undoHistory,
+    baseline: testBaseline,
   });
-  latestRef.current = { recipe, currentId, named, lastTested, lastTest, band };
+  latestRef.current = {
+    recipe,
+    currentId,
+    named,
+    lastTested,
+    lastTest,
+    band,
+    undo: undoHistory,
+    baseline: testBaseline,
+  };
   const persistDraft = useCallback(() => {
     const s = latestRef.current;
     return saveDraft({
@@ -161,6 +183,8 @@ export default function BiomeBuddyGame({
       lastTested: s.lastTested,
       lastTest: s.lastTest,
       named: s.named,
+      undo: s.undo,
+      baseline: s.baseline,
     });
   }, []);
   useEffect(() => {
@@ -172,6 +196,8 @@ export default function BiomeBuddyGame({
     lastTested,
     lastTest,
     band,
+    undoHistory,
+    testBaseline,
     hasActiveBuild,
     persistDraft,
   ]);
@@ -241,12 +267,25 @@ export default function BiomeBuddyGame({
       // in place before anything replaces it.
       if (latestRef.current.currentId) persistBuddy();
       setRecipe(next);
+      setUndoHistory([]);
+      setRecentChange(null);
+      setRestoreNote("");
       setCurrentId(opts.id);
       setNamed(opts.named);
       setLastTested(
-        opts.tested ? { biome: next.biome, traits: { ...next.traits } } : null,
+        opts.lastTest?.snapshot?.after ??
+          (opts.tested
+            ? { biome: next.biome, traits: { ...next.traits } }
+            : null),
       );
       setLastTest(opts.lastTest);
+      setTestBaseline(
+        opts.lastTest?.snapshot?.after ??
+          (opts.lastTest ? null : cloneRecipe(next)),
+      );
+      choosingFirstHome.current = false;
+      setPendingUnlock(null);
+      setUnlockAnnounce(null);
       setWalkthrough(null);
       setScience(null);
       activate();
@@ -282,6 +321,7 @@ export default function BiomeBuddyGame({
         lastTest: null,
         tested: false,
       });
+      choosingFirstHome.current = true;
       setScreen("choose");
     },
     [commitProgress, replaceBuild],
@@ -306,23 +346,60 @@ export default function BiomeBuddyGame({
     [replaceBuild],
   );
 
+  const updateBuild = useCallback((next: BuddyRecipe) => {
+    const s = latestRef.current;
+    if (recipeKey(s.recipe) === recipeKey(next)) return;
+    const undo = [...s.undo, cloneRecipe(s.recipe)].slice(-20);
+    latestRef.current = { ...s, recipe: next, undo };
+    setUndoHistory(undo);
+    setRecipe(next);
+    setScience(null);
+    setRecentChange(null);
+    setRestoreNote("");
+  }, []);
+
+  const onUndo = useCallback(() => {
+    const s = latestRef.current;
+    const previous = s.undo[s.undo.length - 1];
+    if (!previous) return;
+    const undo = s.undo.slice(0, -1);
+    const recipe = cloneRecipe(previous);
+    latestRef.current = { ...s, recipe, undo };
+    setUndoHistory(undo);
+    setRecipe(recipe);
+    setRecentChange(null);
+    setScience(null);
+    setRestoreNote(
+      t("biomeBuddy.create.undone", {
+        defaultValue: "Your previous version is back.",
+      }),
+    );
+  }, [t]);
+
   const onPick = useCallback(
-    (picker: Picker, option: string, opener: HTMLElement | null = null) => {
-      setRecipe((r) =>
+    (picker: Picker, option: string) => {
+      const before = cloneRecipe(latestRef.current.recipe);
+      const after: BuddyRecipe =
         picker === "pattern"
-          ? { ...r, pattern: option as Pattern }
-          : { ...r, traits: { ...r.traits, [picker]: option } },
-      );
-      setScience({ picker, option, opener });
+          ? { ...before, pattern: option as Pattern }
+          : { ...before, traits: { ...before.traits, [picker]: option } };
+      if (recipeKey(before) === recipeKey(after)) return;
+      updateBuild(after);
+      setRecentChange({ picker, option, before, after: cloneRecipe(after) });
     },
-    [],
+    [updateBuild],
   );
 
   const onTest = useCallback(() => {
     const s = latestRef.current;
-    const summary = diffBuilds(s.lastTested, s.recipe);
+    // Older drafts did not preserve a full baseline. Keep their bar-only
+    // comparison honest; the next experiment has an exact baseline again.
+    const summary = s.baseline
+      ? recordExperiment(s.baseline, s.recipe)
+      : diffBuilds(s.lastTested, s.recipe);
     setWalkthrough({ summary, fresh: true });
     setLastTest(summary);
+    setTestBaseline(cloneRecipe(s.recipe));
     setLastTested({ biome: s.recipe.biome, traits: { ...s.recipe.traits } });
     setWonderIndex((i) => i + 1);
     // Guided ladder: a TESTED CHANGE opens the next picker — iteration, never
@@ -347,8 +424,22 @@ export default function BiomeBuddyGame({
       setUnlockAnnounce(pendingUnlock);
       setPendingUnlock(null);
     }
-    setScreen(latestRef.current.named ? "create" : "name");
+    setScreen("create");
   }, [walkthrough, pendingUnlock, persistBuddy]);
+
+  const onRestoreBefore = useCallback(() => {
+    const before = walkthrough?.summary.snapshot?.before;
+    if (!before) return;
+    updateBuild(cloneRecipe(before));
+    setWalkthrough(null);
+    setPendingUnlock(null);
+    setScreen("create");
+    setRestoreNote(
+      t("biomeBuddy.create.undone", {
+        defaultValue: "Your previous version is back.",
+      }),
+    );
+  }, [walkthrough, updateBuild, t]);
 
   const onSaveFromName = useCallback(() => {
     persistBuddy();
@@ -387,7 +478,7 @@ export default function BiomeBuddyGame({
         <TitleScreen
           gallery={gallery}
           resumeName={hasActiveBuild ? name : null}
-          onResume={() => setScreen(named || lastTested ? "create" : "choose")}
+          onResume={() => setScreen("create")}
           onStart={startBand}
           onOpen={openBuddy}
           onDelete={setConfirmDelete}
@@ -398,8 +489,17 @@ export default function BiomeBuddyGame({
       {screen === "choose" && (
         <ChooseScreen
           biome={recipe.biome}
-          onBiome={(biome: Biome) => setRecipe((r) => ({ ...r, biome }))}
-          onSelect={() => setScreen("create")}
+          onBiome={(biome: Biome) =>
+            updateBuild({ ...latestRef.current.recipe, biome })
+          }
+          onSelect={() => {
+            if (choosingFirstHome.current) {
+              setTestBaseline(cloneRecipe(latestRef.current.recipe));
+              setUndoHistory([]);
+              choosingFirstHome.current = false;
+            }
+            setScreen("create");
+          }}
           onBack={goTitle}
         />
       )}
@@ -413,6 +513,13 @@ export default function BiomeBuddyGame({
           name={name}
           saved={currentId !== null}
           onPick={onPick}
+          onLearn={(picker, option, opener) =>
+            setScience({ picker, option, opener })
+          }
+          recentChange={recentChange}
+          canUndo={undoHistory.length > 0}
+          onUndo={onUndo}
+          restoreNote={restoreNote}
           onTest={onTest}
           onName={() => setScreen("name")}
           onSave={persistBuddy}
@@ -431,10 +538,16 @@ export default function BiomeBuddyGame({
           recipe={recipe}
           name={name}
           onAdjective={(id: NameAdjective) =>
-            setRecipe((r) => ({ ...r, name: { ...r.name, adjective: id } }))
+            updateBuild({
+              ...latestRef.current.recipe,
+              name: { ...latestRef.current.recipe.name, adjective: id },
+            })
           }
           onNoun={(id: NameNoun) =>
-            setRecipe((r) => ({ ...r, name: { ...r.name, noun: id } }))
+            updateBuild({
+              ...latestRef.current.recipe,
+              name: { ...latestRef.current.recipe.name, noun: id },
+            })
           }
           onSave={onSaveFromName}
           saved={currentId !== null}
@@ -472,23 +585,16 @@ export default function BiomeBuddyGame({
 
       {walkthrough && (
         <TestLearnScreen
-          recipe={recipe}
-          name={name}
           summary={walkthrough.summary}
           wonder={wonder}
           onGotIt={onGotIt}
+          onRestoreBefore={onRestoreBefore}
           reduced={reducedEffects}
         />
       )}
 
       {unlockAnnounce && !walkthrough && (
-        <Overlay
-          labelledBy="bb-unlock-title"
-          onClose={() => setUnlockAnnounce(null)}
-        >
-          <div className="text-5xl" aria-hidden>
-            🎉
-          </div>
+        <div className="mx-auto max-w-xl rounded-2xl bg-[#fff4c2] p-4 my-3 flex flex-wrap items-center justify-center gap-3 text-center">
           <h3
             id="bb-unlock-title"
             className="text-xl font-extrabold text-[#3a2e22]"
@@ -499,7 +605,7 @@ export default function BiomeBuddyGame({
               category: unlockLabel(unlockAnnounce),
             })}
           </h3>
-          <div className="text-5xl" aria-hidden>
+          <div className="text-3xl" aria-hidden>
             {unlockEmoji(unlockAnnounce)}
           </div>
           <button
@@ -509,11 +615,10 @@ export default function BiomeBuddyGame({
               setScreen("create");
             }}
             className="bb-primary min-h-14 px-8 rounded-full bg-teal-700 text-white font-extrabold text-lg active:scale-95"
-            data-autofocus
           >
             {t("biomeBuddy.create.unlockTry", { defaultValue: "Try it!" })}
           </button>
-        </Overlay>
+        </div>
       )}
 
       {confirmDelete && (
