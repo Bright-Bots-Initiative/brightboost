@@ -3,6 +3,11 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireRole } from "../utils/auth";
+import { timeSpentSchema } from "../validation/schemas";
+import {
+  scoreBenchmarkSubmission,
+  type BenchmarkQuestion,
+} from "../services/benchmarkScoring";
 
 const router = Router();
 
@@ -13,11 +18,21 @@ const assignSchema = z.object({
   kind: z.enum(["PRE", "POST"]),
 });
 
+// #879: bounded before it is scored. Templates are short (a K-2 readiness
+// check is a handful of questions), so 200 answers is generous; the scorer
+// then requires exactly one answer per canonical question.
+const MAX_BENCHMARK_ANSWERS = 200;
 const submitSchema = z.object({
   answers: z
-    .array(z.object({ questionId: z.string(), selectedIndex: z.number().int().min(0) }))
-    .min(1),
-  timeSpentS: z.number().int().min(0),
+    .array(
+      z.object({
+        questionId: z.string().min(1).max(100),
+        selectedIndex: z.number().int().min(0).max(100),
+      }),
+    )
+    .min(1)
+    .max(MAX_BENCHMARK_ANSWERS),
+  timeSpentS: timeSpentSchema,
 });
 
 const statusSchema = z.object({
@@ -34,7 +49,13 @@ router.get(
     try {
       const templates = await prisma.benchmarkTemplate.findMany({
         orderBy: { createdAt: "asc" },
-        select: { id: true, title: true, gradeRange: true, subject: true, createdAt: true },
+        select: {
+          id: true,
+          title: true,
+          gradeRange: true,
+          subject: true,
+          createdAt: true,
+        },
       });
       res.json(templates);
     } catch (err) {
@@ -56,13 +77,17 @@ router.post(
       if (!course) return res.status(404).json({ error: "Course not found" });
 
       const parsed = assignSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+      if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.issues });
 
       const { templateId, kind } = parsed.data;
 
       // Verify template exists
-      const template = await prisma.benchmarkTemplate.findUnique({ where: { id: templateId } });
-      if (!template) return res.status(404).json({ error: "Template not found" });
+      const template = await prisma.benchmarkTemplate.findUnique({
+        where: { id: templateId },
+      });
+      if (!template)
+        return res.status(404).json({ error: "Template not found" });
 
       const assignment = await prisma.benchmarkAssignment.create({
         data: { courseId: course.id, templateId, kind },
@@ -70,7 +95,12 @@ router.post(
       res.status(201).json(assignment);
     } catch (err: any) {
       if (err?.code === "P2002") {
-        return res.status(409).json({ error: "This benchmark is already assigned for this course and kind" });
+        return res
+          .status(409)
+          .json({
+            error:
+              "This benchmark is already assigned for this course and kind",
+          });
       }
       console.error("Error assigning benchmark:", err);
       res.status(500).json({ error: "Failed to assign benchmark" });
@@ -93,7 +123,9 @@ router.get(
       const assignments = await prisma.benchmarkAssignment.findMany({
         where: { courseId: course.id },
         include: {
-          template: { select: { id: true, title: true, gradeRange: true, subject: true } },
+          template: {
+            select: { id: true, title: true, gradeRange: true, subject: true },
+          },
           attempts: { select: { score: true, totalQuestions: true } },
         },
         orderBy: { createdAt: "asc" },
@@ -105,12 +137,18 @@ router.get(
         const completedCount = a.attempts.length;
         const avgScore =
           completedCount > 0
-            ? Math.round((a.attempts.reduce((s, t) => s + t.score, 0) / completedCount) * 10) / 10
+            ? Math.round(
+                (a.attempts.reduce((s, t) => s + t.score, 0) / completedCount) *
+                  10,
+              ) / 10
             : null;
         const avgPercent =
           completedCount > 0 && a.attempts[0]?.totalQuestions > 0
             ? Math.round(
-                (a.attempts.reduce((s, t) => s + t.score / t.totalQuestions, 0) /
+                (a.attempts.reduce(
+                  (s, t) => s + t.score / t.totalQuestions,
+                  0,
+                ) /
                   completedCount) *
                   1000,
               ) / 10
@@ -149,14 +187,16 @@ router.patch(
       if (!course) return res.status(404).json({ error: "Course not found" });
 
       const parsed = statusSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+      if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.issues });
 
       const updated = await prisma.benchmarkAssignment.updateMany({
         where: { id: req.params.id, courseId: course.id },
         data: { status: parsed.data.status },
       });
 
-      if (updated.count === 0) return res.status(404).json({ error: "Assignment not found" });
+      if (updated.count === 0)
+        return res.status(404).json({ error: "Assignment not found" });
       res.json({ ok: true });
     } catch (err) {
       console.error("Error updating benchmark:", err);
@@ -178,13 +218,17 @@ router.get(
       const course = await prisma.course.findFirst({
         where: { id: req.params.courseId, teacherId: req.user!.id },
         include: {
-          enrollments: { include: { student: { select: { id: true, name: true } } } },
+          enrollments: {
+            include: { student: { select: { id: true, name: true } } },
+          },
         },
       });
       if (!course) return res.status(404).json({ error: "Course not found" });
 
       // Resolve template
-      let templateId = req.query.templateId ? String(req.query.templateId) : null;
+      let templateId = req.query.templateId
+        ? String(req.query.templateId)
+        : null;
 
       if (!templateId) {
         // Auto-select: most recently assigned template for this course
@@ -195,18 +239,27 @@ router.get(
         });
         if (!latest) {
           return res.json({
-            templateId: null, templateTitle: null,
-            preAssignmentId: null, postAssignmentId: null,
-            hasPreAssignment: false, hasPostAssignment: false,
-            hasPreAttempts: false, hasPostAttempts: false,
-            classSummary: null, students: [], skills: [],
+            templateId: null,
+            templateTitle: null,
+            preAssignmentId: null,
+            postAssignmentId: null,
+            hasPreAssignment: false,
+            hasPostAssignment: false,
+            hasPreAttempts: false,
+            hasPostAttempts: false,
+            classSummary: null,
+            students: [],
+            skills: [],
           });
         }
         templateId = latest.templateId;
       }
 
-      const template = await prisma.benchmarkTemplate.findUnique({ where: { id: templateId } });
-      if (!template) return res.status(404).json({ error: "Template not found" });
+      const template = await prisma.benchmarkTemplate.findUnique({
+        where: { id: templateId },
+      });
+      if (!template)
+        return res.status(404).json({ error: "Template not found" });
 
       // Find PRE and POST assignments for this template+course
       const assignments = await prisma.benchmarkAssignment.findMany({
@@ -236,11 +289,30 @@ router.get(
       const enrolledCount = course.enrollments.length;
 
       // Class summary
-      const prePercents = preAttempts.map((a) => (a.score / a.totalQuestions) * 100);
-      const postPercents = postAttempts.map((a) => (a.score / a.totalQuestions) * 100);
-      const avgPre = prePercents.length > 0 ? Math.round(prePercents.reduce((s, v) => s + v, 0) / prePercents.length * 10) / 10 : null;
-      const avgPost = postPercents.length > 0 ? Math.round(postPercents.reduce((s, v) => s + v, 0) / postPercents.length * 10) / 10 : null;
-      const delta = avgPre !== null && avgPost !== null ? Math.round((avgPost - avgPre) * 10) / 10 : null;
+      const prePercents = preAttempts.map(
+        (a) => (a.score / a.totalQuestions) * 100,
+      );
+      const postPercents = postAttempts.map(
+        (a) => (a.score / a.totalQuestions) * 100,
+      );
+      const avgPre =
+        prePercents.length > 0
+          ? Math.round(
+              (prePercents.reduce((s, v) => s + v, 0) / prePercents.length) *
+                10,
+            ) / 10
+          : null;
+      const avgPost =
+        postPercents.length > 0
+          ? Math.round(
+              (postPercents.reduce((s, v) => s + v, 0) / postPercents.length) *
+                10,
+            ) / 10
+          : null;
+      const delta =
+        avgPre !== null && avgPost !== null
+          ? Math.round((avgPost - avgPre) * 10) / 10
+          : null;
 
       // Student detail — sorted by name ascending
       const students = course.enrollments
@@ -248,9 +320,18 @@ router.get(
           const pre = preByStudent.get(e.studentId);
           const post = postByStudent.get(e.studentId);
           const totalQ = pre?.totalQuestions ?? post?.totalQuestions ?? 0;
-          const prePercent = pre && totalQ > 0 ? Math.round((pre.score / totalQ) * 1000) / 10 : null;
-          const postPercent = post && totalQ > 0 ? Math.round((post.score / totalQ) * 1000) / 10 : null;
-          const studentDelta = prePercent !== null && postPercent !== null ? Math.round((postPercent - prePercent) * 10) / 10 : null;
+          const prePercent =
+            pre && totalQ > 0
+              ? Math.round((pre.score / totalQ) * 1000) / 10
+              : null;
+          const postPercent =
+            post && totalQ > 0
+              ? Math.round((post.score / totalQ) * 1000) / 10
+              : null;
+          const studentDelta =
+            prePercent !== null && postPercent !== null
+              ? Math.round((postPercent - prePercent) * 10) / 10
+              : null;
           return {
             id: e.studentId,
             name: e.student.name,
@@ -265,13 +346,23 @@ router.get(
         .sort((a, b) => a.name.localeCompare(b.name));
 
       // Skill breakdown — aggregate isCorrect by skillTag across PRE and POST
-      type SkillBucket = { preCorrect: number; preTotal: number; postCorrect: number; postTotal: number };
+      type SkillBucket = {
+        preCorrect: number;
+        preTotal: number;
+        postCorrect: number;
+        postTotal: number;
+      };
       const skillMap = new Map<string, SkillBucket>();
 
       const addToSkill = (answers: any[], kind: "pre" | "post") => {
         for (const a of answers) {
           const tag = a.skillTag ?? "unknown";
-          const bucket = skillMap.get(tag) ?? { preCorrect: 0, preTotal: 0, postCorrect: 0, postTotal: 0 };
+          const bucket = skillMap.get(tag) ?? {
+            preCorrect: 0,
+            preTotal: 0,
+            postCorrect: 0,
+            postTotal: 0,
+          };
           if (kind === "pre") {
             bucket.preTotal++;
             if (a.isCorrect) bucket.preCorrect++;
@@ -287,10 +378,36 @@ router.get(
       for (const a of postAttempts) addToSkill(a.answers as any[], "post");
 
       const skills = [...skillMap.entries()].map(([skillTag, b]) => {
-        const preRate = b.preTotal > 0 ? Math.round((b.preCorrect / b.preTotal) * 1000) / 10 : null;
-        const postRate = b.postTotal > 0 ? Math.round((b.postCorrect / b.postTotal) * 1000) / 10 : null;
-        const skillDelta = preRate !== null && postRate !== null ? Math.round((postRate - preRate) * 10) / 10 : null;
-        return { skillTag, preCorrectRate: preRate, postCorrectRate: postRate, delta: skillDelta, questionCount: (new Set([...preAttempts.flatMap((a) => (a.answers as any[]).filter((ans: any) => ans.skillTag === skillTag).map((ans: any) => ans.questionId)), ...postAttempts.flatMap((a) => (a.answers as any[]).filter((ans: any) => ans.skillTag === skillTag).map((ans: any) => ans.questionId))])).size };
+        const preRate =
+          b.preTotal > 0
+            ? Math.round((b.preCorrect / b.preTotal) * 1000) / 10
+            : null;
+        const postRate =
+          b.postTotal > 0
+            ? Math.round((b.postCorrect / b.postTotal) * 1000) / 10
+            : null;
+        const skillDelta =
+          preRate !== null && postRate !== null
+            ? Math.round((postRate - preRate) * 10) / 10
+            : null;
+        return {
+          skillTag,
+          preCorrectRate: preRate,
+          postCorrectRate: postRate,
+          delta: skillDelta,
+          questionCount: new Set([
+            ...preAttempts.flatMap((a) =>
+              (a.answers as any[])
+                .filter((ans: any) => ans.skillTag === skillTag)
+                .map((ans: any) => ans.questionId),
+            ),
+            ...postAttempts.flatMap((a) =>
+              (a.answers as any[])
+                .filter((ans: any) => ans.skillTag === skillTag)
+                .map((ans: any) => ans.questionId),
+            ),
+          ]).size,
+        };
       });
 
       res.json({
@@ -331,15 +448,23 @@ router.get(
       const enrollment = await prisma.enrollment.findFirst({
         where: { studentId: req.user!.id, courseId: req.params.courseId },
       });
-      if (!enrollment) return res.status(403).json({ error: "Not enrolled in this course" });
+      if (!enrollment)
+        return res.status(403).json({ error: "Not enrolled in this course" });
 
       const assignments = await prisma.benchmarkAssignment.findMany({
         where: { courseId: req.params.courseId, status: "OPEN" },
         include: {
-          template: { select: { id: true, title: true, gradeRange: true, subject: true } },
+          template: {
+            select: { id: true, title: true, gradeRange: true, subject: true },
+          },
           attempts: {
             where: { studentId: req.user!.id },
-            select: { id: true, score: true, totalQuestions: true, createdAt: true },
+            select: {
+              id: true,
+              score: true,
+              totalQuestions: true,
+              createdAt: true,
+            },
           },
         },
         orderBy: { createdAt: "asc" },
@@ -355,7 +480,8 @@ router.get(
 
       const result = assignments.map((a) => {
         const myAttempt = a.attempts[0] ?? null;
-        const locked = a.kind === "POST" && !preAttemptsByTemplate.get(a.templateId);
+        const locked =
+          a.kind === "POST" && !preAttemptsByTemplate.get(a.templateId);
         return {
           id: a.id,
           kind: a.kind,
@@ -385,28 +511,53 @@ router.get(
         include: { template: true, course: { include: { enrollments: true } } },
       });
 
-      if (!assignment) return res.status(404).json({ error: "Assignment not found" });
-      if (assignment.status !== "OPEN") return res.status(400).json({ error: "Benchmark is closed" });
+      if (!assignment)
+        return res.status(404).json({ error: "Assignment not found" });
+      if (assignment.status !== "OPEN")
+        return res.status(400).json({ error: "Benchmark is closed" });
 
-      const enrolled = assignment.course.enrollments.some((e) => e.studentId === req.user!.id);
-      if (!enrolled) return res.status(403).json({ error: "Not enrolled in this course" });
+      const enrolled = assignment.course.enrollments.some(
+        (e) => e.studentId === req.user!.id,
+      );
+      if (!enrolled)
+        return res.status(403).json({ error: "Not enrolled in this course" });
 
       // Check for existing attempt
       const existing = await prisma.benchmarkAttempt.findUnique({
-        where: { assignmentId_studentId: { assignmentId: assignment.id, studentId: req.user!.id } },
+        where: {
+          assignmentId_studentId: {
+            assignmentId: assignment.id,
+            studentId: req.user!.id,
+          },
+        },
       });
-      if (existing) return res.status(409).json({ error: "Already completed", attempt: existing });
+      if (existing)
+        return res
+          .status(409)
+          .json({ error: "Already completed", attempt: existing });
 
       // POST lock: require PRE completion first
       if (assignment.kind === "POST") {
         const preAssignment = await prisma.benchmarkAssignment.findFirst({
-          where: { courseId: assignment.courseId, templateId: assignment.templateId, kind: "PRE" },
+          where: {
+            courseId: assignment.courseId,
+            templateId: assignment.templateId,
+            kind: "PRE",
+          },
         });
         if (preAssignment) {
           const preAttempt = await prisma.benchmarkAttempt.findUnique({
-            where: { assignmentId_studentId: { assignmentId: preAssignment.id, studentId: req.user!.id } },
+            where: {
+              assignmentId_studentId: {
+                assignmentId: preAssignment.id,
+                studentId: req.user!.id,
+              },
+            },
           });
-          if (!preAttempt) return res.status(403).json({ error: "Complete the PRE benchmark first" });
+          if (!preAttempt)
+            return res
+              .status(403)
+              .json({ error: "Complete the PRE benchmark first" });
         }
       }
 
@@ -443,45 +594,45 @@ router.post(
         include: { template: true, course: { include: { enrollments: true } } },
       });
 
-      if (!assignment) return res.status(404).json({ error: "Assignment not found" });
-      if (assignment.status !== "OPEN") return res.status(400).json({ error: "Benchmark is closed" });
+      if (!assignment)
+        return res.status(404).json({ error: "Assignment not found" });
+      if (assignment.status !== "OPEN")
+        return res.status(400).json({ error: "Benchmark is closed" });
 
-      const enrolled = assignment.course.enrollments.some((e) => e.studentId === req.user!.id);
-      if (!enrolled) return res.status(403).json({ error: "Not enrolled in this course" });
+      const enrolled = assignment.course.enrollments.some(
+        (e) => e.studentId === req.user!.id,
+      );
+      if (!enrolled)
+        return res.status(403).json({ error: "Not enrolled in this course" });
 
       const parsed = submitSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+      if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.issues });
 
       const { answers: rawAnswers, timeSpentS } = parsed.data;
-      const questions = assignment.template.questions as any[];
+      const questions = assignment.template.questions as BenchmarkQuestion[];
 
       if (questions.length === 0) {
         return res.status(400).json({ error: "Benchmark has no questions" });
       }
 
-      // Build answer map for quick lookup
-      const qMap = new Map(questions.map((q: any) => [q.id, q]));
-
-      // Score and enrich answers
-      let score = 0;
-      const enrichedAnswers = rawAnswers.map((a) => {
-        const q = qMap.get(a.questionId) as any;
-        const isCorrect = q ? a.selectedIndex === q.correctIndex : false;
-        if (isCorrect) score++;
-        return {
-          questionId: a.questionId,
-          selectedIndex: a.selectedIndex,
-          isCorrect,
-          skillTag: q?.skillTag ?? "unknown",
-        };
-      });
+      // #879: score the template's canonical question set once each. The
+      // submission must answer every question exactly once with an index into
+      // that question's choices; a duplicate, unknown, missing or out-of-range
+      // answer refuses the whole submission before any write, so a persisted
+      // score is always between 0 and totalQuestions and the growth report's
+      // percentages stay in range. Answers are stored in template order.
+      const scored = scoreBenchmarkSubmission(questions, rawAnswers);
+      if (!scored.ok) {
+        return res.status(400).json({ error: scored.error });
+      }
 
       const attempt = await prisma.benchmarkAttempt.create({
         data: {
           assignmentId: assignment.id,
           studentId: req.user!.id,
-          answers: enrichedAnswers,
-          score,
+          answers: scored.answers,
+          score: scored.score,
           totalQuestions: questions.length,
           timeSpentS,
         },
