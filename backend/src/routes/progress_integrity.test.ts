@@ -112,6 +112,9 @@ describe("Progress Integrity Security", () => {
         title: "Test Activity",
         kind: "INFO",
         order: 1,
+        content: "{}",
+        // #876: the writer resolves the curriculum chain.
+        Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
       });
 
       prismaMock.progress.create.mockResolvedValue({

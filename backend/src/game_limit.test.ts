@@ -61,7 +61,13 @@ describe("Game Action Rate Limiting", () => {
       xp: 0,
       level: 1,
     });
-    prismaMock.activity.findUnique.mockResolvedValue({ id: "act-1" });
+    prismaMock.activity.findUnique.mockResolvedValue({
+      id: "act-1",
+      lessonId: "lesson-1",
+      content: "{}",
+      // #876: the writer resolves the curriculum chain.
+      Lesson: { id: "lesson-1", Unit: { Module: { slug: "stem-1" } } },
+    });
 
     // Blast 5 requests (allowed in test env)
     for (let i = 0; i < 5; i++) {

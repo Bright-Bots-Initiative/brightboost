@@ -35,20 +35,17 @@ describe("upsertCheckpoint", () => {
     lessonId: "lesson-1",
     activityId: "activity-1",
     timeSpentS: 30,
-    completed: true,
   };
 
-  it("OPTIMIZED: should use upsert instead of findFirst+create/update", async () => {
-    // Mock upsert
+  it("#876: creates the row IN_PROGRESS and only adds time on update, in one upsert", async () => {
     vi.mocked(prisma.progress.upsert).mockResolvedValue({
       id: "upserted-id",
       ...mockData,
-      status: ProgressStatus.COMPLETED,
+      status: ProgressStatus.IN_PROGRESS,
     } as any);
 
     await upsertCheckpoint(mockData);
 
-    // Verify upsert is called with correct arguments
     expect(prisma.progress.upsert).toHaveBeenCalledWith({
       where: {
         studentId_activityId: {
@@ -61,12 +58,11 @@ describe("upsertCheckpoint", () => {
         moduleSlug: mockData.moduleSlug,
         lessonId: mockData.lessonId,
         activityId: mockData.activityId,
-        status: ProgressStatus.COMPLETED,
+        status: ProgressStatus.IN_PROGRESS,
         timeSpentS: mockData.timeSpentS,
       },
       update: {
         timeSpentS: { increment: mockData.timeSpentS },
-        status: ProgressStatus.COMPLETED,
       },
     });
 
@@ -76,25 +72,24 @@ describe("upsertCheckpoint", () => {
     expect(prisma.progress.update).not.toHaveBeenCalled();
   });
 
-  it("OPTIMIZED: should not update status if not completed in request", async () => {
-    const incompleteData = { ...mockData, completed: false };
-
+  it("#876: a stray `completed` flag never becomes a completion (RED on pre-fix main: create.status was COMPLETED)", async () => {
     vi.mocked(prisma.progress.upsert).mockResolvedValue({
       id: "upserted-id",
-      ...incompleteData,
+      ...mockData,
       status: ProgressStatus.IN_PROGRESS,
     } as any);
 
-    await upsertCheckpoint(incompleteData);
+    await upsertCheckpoint({
+      ...mockData,
+      completed: true,
+    } as Parameters<typeof upsertCheckpoint>[0]);
 
-    expect(prisma.progress.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        update: {
-          timeSpentS: { increment: incompleteData.timeSpentS },
-          // status should NOT be present here
-        },
-      }),
-    );
+    const args = vi.mocked(prisma.progress.upsert).mock.calls[0][0];
+    expect(args.create.status).toBe(ProgressStatus.IN_PROGRESS);
+    expect(args.update).not.toHaveProperty("status");
+    expect(args.update).toEqual({
+      timeSpentS: { increment: mockData.timeSpentS },
+    });
   });
 });
 

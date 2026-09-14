@@ -72,7 +72,9 @@ const ACTIVITY = {
   title: "Test Activity",
   kind: "INFO",
   order: 1,
-  content: "{}",
+  // #876: the writers resolve the curriculum chain and the declared game.
+  content: JSON.stringify({ gameKey: "move_measure" }),
+  Lesson: { id: "lesson-1", Unit: { Module: { slug: "test-module" } } },
 };
 
 const AVATAR = {
@@ -435,6 +437,11 @@ describe("#809 — gameKey validation", () => {
     // Self-maintaining (#827 review N8): iterate the real registry so a new
     // game key that fails the pattern is caught here, not in production.
     for (const key of Object.keys(GAME_SPECIFIC_SCHEMAS)) {
+      // #876: the activity must declare the game the result names.
+      prismaMock.activity.findUnique.mockResolvedValue({
+        ...ACTIVITY,
+        content: JSON.stringify({ gameKey: key }),
+      });
       prismaMock.progress.findUnique.mockResolvedValue(null);
       prismaMock.progress.create.mockResolvedValue(COMPLETED_ROW);
       const res = await completeActivity({

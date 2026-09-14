@@ -62,6 +62,9 @@ export const checkpointSchema = z.object({
   lessonId: z.string().max(100),
   activityId: z.string().max(100),
   timeSpentS: timeSpentSchema,
+  // #876: kept in the schema so Zod does not strip it; the checkpoint route
+  // refuses `true` outright — POST /progress/complete-activity is the only
+  // writer of COMPLETED.
   completed: z.boolean().optional(),
 });
 
