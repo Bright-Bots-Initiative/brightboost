@@ -91,8 +91,8 @@ export default function ChooseScreen({
         </button>
       </div>
 
-      {/* Preview panel with side navigation (arrows drop below the panel on
-          narrow phones so the description keeps a readable measure). */}
+      {/* Keep the scenery clear; its description follows below the preview.
+          Side arrows drop below the picture on narrow phones. */}
       <div className="bb-choose-panel w-full">
         <button
           type="button"
@@ -108,27 +108,7 @@ export default function ChooseScreen({
           biome={biome}
           className="bb-choose-scene min-w-0"
           minHeight={220}
-        >
-          <div className="bb-choose-card m-2 sm:m-6 rounded-3xl bg-white/90 backdrop-blur-sm p-3 sm:p-4 text-[#3a2e22] flex flex-col gap-2">
-            <h3 className="text-lg sm:text-xl font-extrabold leading-tight">
-              <span aria-hidden>{BIOME_EMOJI[biome]} </span>
-              {L(info.label)}
-              <span className="block sm:inline text-sm font-bold text-[#5a4c38]">
-                <span className="hidden sm:inline"> · </span>
-                {L(info.subtitle)}
-              </span>
-            </h3>
-            <p className="text-sm sm:text-base font-bold leading-snug">
-              {L(info.description)}
-            </p>
-            <p className="text-xs sm:text-sm font-bold text-[#5a4c38]">
-              {t("biomeBuddy.choose.animalsHere", {
-                defaultValue: "Who lives here:",
-              })}{" "}
-              {L(info.fauna)}
-            </p>
-          </div>
-        </BiomeScene>
+        />
         <button
           type="button"
           onClick={() => step(1)}
@@ -139,6 +119,25 @@ export default function ChooseScreen({
         >
           ▶
         </button>
+      </div>
+      <div className="w-full px-2 text-[#3a2e22] flex flex-col gap-2">
+        <h3 className="text-lg sm:text-xl font-extrabold leading-tight">
+          <span aria-hidden>{BIOME_EMOJI[biome]} </span>
+          {L(info.label)}
+          <span className="block sm:inline text-sm font-bold text-[#5a4c38]">
+            <span className="hidden sm:inline"> · </span>
+            {L(info.subtitle)}
+          </span>
+        </h3>
+        <p className="text-sm sm:text-base font-bold leading-snug">
+          {L(info.description)}
+        </p>
+        <p className="text-xs sm:text-sm font-bold text-[#5a4c38]">
+          {t("biomeBuddy.choose.animalsHere", {
+            defaultValue: "Who lives here:",
+          })}{" "}
+          {L(info.fauna)}
+        </p>
       </div>
     </div>
   );

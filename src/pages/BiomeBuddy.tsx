@@ -9,6 +9,10 @@
  *    (biomebuddy:* keys). No PII is collected on this page.
  *  - Unlinked from student progression, Creations, companions, analytics.
  *
+ * New entry: `?new=1` opens home selection even with an existing draft. The
+ * draft stays intact while browsing; Select commits the fresh build. Select
+ * or My Buddies removes the flag so a later refresh resumes normal behavior.
+ *
  * Remix entry: `/biome-buddy#r=<share payload>` seeds a NEW build from a
  * validated COPY of a shared recipe ("Make my own version"). The fragment is
  * replaced out of the URL right away so a refresh or back-swipe does not
@@ -111,14 +115,30 @@ function useRemixFromHash(): { recipe: BuddyRecipe | null; invalid: boolean } {
         ? { recipe: result.recipe, invalid: false }
         : { recipe: null, invalid: true },
     );
-    navigate(location.pathname + location.search, { replace: true });
+    const search = new URLSearchParams(location.search);
+    search.delete("new"); // an explicit remix takes precedence over a fresh start
+    navigate(location.pathname + (search.size ? `?${search}` : ""), {
+      replace: true,
+    });
   }, [location.hash, location.pathname, location.search, navigate]);
   return state;
 }
 
 export default function BiomeBuddy() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const remix = useRemixFromHash();
+  const search = new URLSearchParams(location.search);
+  const startNew = search.get("new") === "1" && !readShareParam(location.hash);
+  const finishNewEntry = () => {
+    if (search.get("new") !== "1") return;
+    search.delete("new");
+    navigate(
+      location.pathname + (search.size ? `?${search}` : "") + location.hash,
+      { replace: true },
+    );
+  };
   // The live region exists from first paint so a later message is announced.
   const note = remix.recipe
     ? t("biomeBuddy.shell.remixNote", {
@@ -140,7 +160,11 @@ export default function BiomeBuddy() {
       >
         {note}
       </p>
-      <BiomeBuddyGame remixRecipe={remix.recipe} />
+      <BiomeBuddyGame
+        remixRecipe={remix.recipe}
+        startNew={startNew}
+        onNewEntryHandled={finishNewEntry}
+      />
     </BiomeBuddyShell>
   );
 }

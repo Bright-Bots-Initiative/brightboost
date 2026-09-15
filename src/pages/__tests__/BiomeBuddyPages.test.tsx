@@ -16,7 +16,10 @@ import {
 } from "@/components/biomeBuddy/biomeBuddyModel";
 import {
   GALLERY_KEY,
+  loadDraft,
   loadGallery,
+  saveBuddy,
+  saveDraft,
 } from "@/components/biomeBuddy/biomeBuddyStorage";
 
 const listeners: Record<string, Array<() => void>> = {};
@@ -219,7 +222,7 @@ describe("/biome-buddy/share", () => {
     const remix = screen.getByTestId("share-remix");
     expect(remix.getAttribute("href")).toBe(`/biome-buddy#r=${enc}`);
     expect(screen.getByTestId("share-new").getAttribute("href")).toBe(
-      "/biome-buddy",
+      "/biome-buddy?new=1",
     );
     fireEvent.click(remix);
     // now in the game as a copy; saving creates a NEW record, the link is unchanged
@@ -260,6 +263,12 @@ describe("/biome-buddy/share", () => {
 });
 
 describe("/biome-buddy/review", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    fakeI18n.language = "en";
+    fakeI18n.resolvedLanguage = "en";
+  });
+
   it("shows the reviewer intro and enters the real experience; the example link is a valid share", () => {
     renderAt("/biome-buddy/review");
     expect(screen.getByText("Biome Buddy Prototype")).toBeInTheDocument();
@@ -274,6 +283,80 @@ describe("/biome-buddy/review", () => {
       `/biome-buddy/share#r=${encodeShare(REVIEW_SAMPLE_RECIPE)}`,
     );
     fireEvent.click(screen.getByTestId("review-start"));
-    expect(screen.getByText("What will you build?")).toBeInTheDocument();
+    expect(screen.getByText("Where will your Buddy live?")).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    expect(loadDraft()).toBeNull();
+  });
+
+  it("Start opens home choices with an existing draft; selecting starts fresh and refresh resumes the new work", () => {
+    const previous = { ...REVIEW_SAMPLE_RECIPE, biome: "air" as const };
+    saveBuddy({ id: "bb-previous", recipe: previous, savedAt: 1 });
+    saveDraft({
+      id: "bb-previous",
+      band: "g35",
+      recipe: previous,
+      named: true,
+      lastTest: null,
+      lastTested: null,
+    });
+    const { unmount } = renderAt("/biome-buddy/review");
+    fireEvent.click(screen.getByTestId("review-start"));
+    expect(
+      screen.getByRole("radiogroup", { name: "Homes" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Water" }));
+    expect(loadDraft()?.recipe).toEqual(previous);
+    fireEvent.click(screen.getByRole("button", { name: /Select Water/ }));
+    expect(loadDraft()).toMatchObject({
+      id: null,
+      band: "g35",
+      recipe: starterRecipe("water"),
+      baseline: starterRecipe("water"),
+      undo: [],
+    });
+    expect(loadGallery()[0].recipe).toEqual(previous);
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/biome-buddy$/);
+    fireEvent.click(screen.getByRole("button", { name: /Home: Water/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Fire" }));
+    fireEvent.click(screen.getByRole("button", { name: /Select Fire/ }));
+    const edited = loadDraft();
+    unmount();
+    renderAt("/biome-buddy");
+    expect(
+      screen.getByRole("button", { name: /Home: Fire/ }),
+    ).toBeInTheDocument();
+    expect(loadDraft()).toEqual(edited);
+  });
+
+  it("browsing new homes and going back keeps an unfinished Buddy available to resume", () => {
+    saveDraft({
+      id: null,
+      band: "g35",
+      recipe: REVIEW_SAMPLE_RECIPE,
+      named: false,
+      lastTest: null,
+      lastTested: null,
+      undo: [starterRecipe("water")],
+      baseline: starterRecipe("water"),
+    });
+    const previous = loadDraft();
+    const { unmount } = renderAt("/biome-buddy?new=1");
+    fireEvent.click(screen.getByRole("button", { name: "Next home" }));
+    expect(loadDraft()).toEqual(previous);
+    // Refresh while choosing still opens home choices, without overwriting the draft.
+    const choosingUrl = screen.getByTestId("location").textContent!;
+    unmount();
+    renderAt(choosingUrl);
+    expect(
+      screen.getByRole("radiogroup", { name: "Homes" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "My Buddies" }));
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/biome-buddy$/);
+    fireEvent.click(screen.getByRole("button", { name: /Keep building/ }));
+    expect(loadDraft()).toEqual(previous);
+    expect(
+      screen.getByRole("button", { name: /Home: Water/ }),
+    ).toBeInTheDocument();
   });
 });
