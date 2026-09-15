@@ -26,6 +26,7 @@ import {
   isCategory,
   isOptionOf,
   isStat,
+  recordExperiment,
   validateRecipe,
   type Band,
   type BuddyRecipe,
@@ -63,6 +64,10 @@ export interface SavedBuddy {
 }
 
 export interface DraftState {
+  /** Bounded recipe history; absent on older drafts. Never crosses builds. */
+  undo?: BuddyRecipe[];
+  /** Exact starting recipe for the next experiment; null for legacy drafts. */
+  baseline?: BuddyRecipe | null;
   id: string | null; // gallery id once first-saved; null = never saved
   band: Band;
   recipe: BuddyRecipe;
@@ -146,6 +151,28 @@ function coerceChange(value: unknown): StatChange | null {
 export function coerceTestSummary(value: unknown): TestSummary | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const raw = value as Record<string, unknown>;
+  if (raw.snapshot !== undefined) {
+    if (
+      !raw.snapshot ||
+      typeof raw.snapshot !== "object" ||
+      Array.isArray(raw.snapshot)
+    )
+      return null;
+    const snapshot = raw.snapshot as Record<string, unknown>;
+    if (
+      snapshot.version !== 1 ||
+      Object.keys(snapshot).some(
+        (key) => !["version", "before", "after"].includes(key),
+      )
+    )
+      return null;
+    const before = validateRecipe(snapshot.before);
+    const after = validateRecipe(snapshot.after);
+    if (!before.ok || !after.ok) return null;
+    // Derived numbers never override validated inputs. This also repairs a
+    // stale/tampered cached summary when the exact recipes are available.
+    return recordExperiment(before.recipe, after.recipe);
+  }
   if (!isBiome(raw.biome)) return null;
   const before = coerceStatBlock(raw.before);
   const after = coerceStatBlock(raw.after);
@@ -263,6 +290,7 @@ export function loadDraft(
     const validated = validateRecipe(parsed.recipe);
     if (!validated.ok) return null;
     if (!isBand(parsed.band)) return null;
+    const baseline = validateRecipe(parsed.baseline);
     let lastTested: DraftState["lastTested"] = null;
     if (parsed.lastTested && typeof parsed.lastTested === "object") {
       const candidate = validateRecipe({
@@ -276,6 +304,17 @@ export function loadDraft(
         };
     }
     return {
+      ...(parsed.baseline !== undefined
+        ? { baseline: baseline.ok ? baseline.recipe : null }
+        : {}),
+      ...(Array.isArray(parsed.undo)
+        ? {
+            undo: parsed.undo.slice(-20).flatMap((entry) => {
+              const result = validateRecipe(entry);
+              return result.ok ? [result.recipe] : [];
+            }),
+          }
+        : {}),
       id: isId(parsed.id) ? parsed.id : null,
       band: parsed.band,
       recipe: validated.recipe,

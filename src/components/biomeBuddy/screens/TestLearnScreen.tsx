@@ -10,9 +10,11 @@
  *     says what that means (looks / built-for changed, not these four bars);
  *   - nothing changed at all → one "same parts, same home" card.
  */
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   BIOME_EMOJI,
+  PICKERS,
+  recipeKey,
   STAT_EMOJI,
   TRAITS,
   type BuddyRecipe,
@@ -24,6 +26,7 @@ import {
   BIOME_INFO,
   STAT_LABEL,
   scienceFor,
+  renderBuddyName,
   whyFor,
   type Localized,
 } from "../biomeBuddyContent";
@@ -31,15 +34,54 @@ import BiomeScene from "../BiomeScene";
 import BuddySprite from "../BuddySprite";
 import Overlay from "../Overlay";
 import StatBars from "../StatBars";
+import WaterExperiment from "../WaterExperiment";
 import { useBuddyLocale } from "../useBuddyLocale";
 
 export interface TestLearnScreenProps {
-  recipe: BuddyRecipe;
-  name: string;
   summary: TestSummary;
   wonder: Localized;
   onGotIt: () => void;
+  onRestoreBefore: () => void;
   reduced: boolean;
+}
+
+function ExperimentVersion({
+  recipe,
+  label,
+}: {
+  recipe: BuddyRecipe;
+  label: string;
+}) {
+  const { lang, L } = useBuddyLocale();
+  return (
+    <div
+      className="min-w-0 flex flex-col gap-2"
+      data-testid="experiment-version"
+    >
+      <p className="font-extrabold text-[#3a2e22]">{label}</p>
+      <BiomeScene biome={recipe.biome} minHeight={128}>
+        <div className="flex justify-center">
+          <BuddySprite recipe={recipe} size="md" animate={false} />
+        </div>
+      </BiomeScene>
+      <p className="text-sm font-extrabold text-[#3a2e22]">
+        {renderBuddyName(recipe.name, lang)} ·{" "}
+        {L(BIOME_INFO[recipe.biome].label)}
+      </p>
+      <p className="text-xs font-medium text-[#5a4c38]">
+        {PICKERS.map((picker) =>
+          L(
+            scienceFor(
+              picker,
+              (picker === "pattern"
+                ? recipe.pattern
+                : recipe.traits[picker]) as never,
+            ).label,
+          ),
+        ).join(" · ")}
+      </p>
+    </div>
+  );
 }
 
 function WhyRow({
@@ -92,22 +134,31 @@ function WhyRow({
 }
 
 export default function TestLearnScreen({
-  recipe,
-  name,
   summary,
   wonder,
   onGotIt,
+  onRestoreBefore,
   reduced,
 }: TestLearnScreenProps) {
-  const { t, L } = useBuddyLocale();
+  const { t, L, lang } = useBuddyLocale();
   const [page, setPage] = useState(0);
   const headingId = useId();
-  const info = BIOME_INFO[recipe.biome];
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const info = BIOME_INFO[summary.biome];
+  const snapshot = summary.snapshot;
   const where = L(info.inPhrase);
   const noMovement = summary.changes.length === 0;
   const total = 1 + (noMovement ? 1 : summary.changes.length);
   const last = page === total - 1;
   const change = page > 0 && !noMovement ? summary.changes[page - 1] : null;
+  const identityChanged =
+    summary.unchanged &&
+    snapshot &&
+    recipeKey(snapshot.before) !== recipeKey(snapshot.after);
+
+  useEffect(() => {
+    if (page > 0) headingRef.current?.focus();
+  }, [page]);
 
   return (
     <Overlay
@@ -116,22 +167,59 @@ export default function TestLearnScreen({
       wide
       className="bb-testlearn"
     >
-      <BiomeScene biome={recipe.biome} className="w-full" minHeight={150}>
-        <div className="flex items-center justify-center min-h-[150px]">
-          <BuddySprite recipe={recipe} size="md" animate={!reduced} />
-        </div>
-      </BiomeScene>
-
       {page === 0 && (
         <>
-          <h3 id={headingId} className="text-xl font-extrabold text-[#3a2e22]">
-            {t("biomeBuddy.test.heading", {
-              defaultValue: "Here's how {{name}} does {{where}}!",
-              name,
-              where,
-            })}
-            <span aria-hidden> {BIOME_EMOJI[recipe.biome]}</span>
+          <h3
+            ref={headingRef}
+            tabIndex={-1}
+            data-autofocus
+            id={headingId}
+            className="text-xl font-extrabold text-[#3a2e22]"
+          >
+            {snapshot
+              ? t("biomeBuddy.test.heading", {
+                  defaultValue: "Here's how {{name}} does {{where}}!",
+                  name: renderBuddyName(snapshot.after.name, lang),
+                  where,
+                })
+              : t("biomeBuddy.test.legacyHeading", {
+                  defaultValue: "Your saved test {{where}}",
+                  where,
+                })}
+            <span aria-hidden> {BIOME_EMOJI[summary.biome]}</span>
           </h3>
+          {snapshot ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <ExperimentVersion
+                  recipe={snapshot.before}
+                  label={t("biomeBuddy.test.beforeVersion", {
+                    defaultValue: "Before",
+                  })}
+                />
+                <ExperimentVersion
+                  recipe={snapshot.after}
+                  label={t("biomeBuddy.test.afterVersion", {
+                    defaultValue: "This test",
+                  })}
+                />
+              </div>
+              {snapshot.after.biome === "water" && (
+                <WaterExperiment
+                  before={snapshot.before}
+                  after={snapshot.after}
+                  reduced={reduced}
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-sm font-bold text-[#5a4c38]">
+              {t("biomeBuddy.test.legacy", {
+                defaultValue:
+                  "This test saved the bars, but not the Buddy's exact look. Keep experimenting to save new comparisons.",
+              })}
+            </p>
+          )}
           <p className="text-sm font-bold text-[#5a4c38]">
             {summary.unchanged
               ? t("biomeBuddy.test.introSame", {
@@ -160,28 +248,43 @@ export default function TestLearnScreen({
 
       {page > 0 && noMovement && (
         <>
-          <h3 id={headingId} className="text-xl font-extrabold text-[#3a2e22]">
+          <h3
+            ref={headingRef}
+            tabIndex={-1}
+            id={headingId}
+            className="text-xl font-extrabold text-[#3a2e22]"
+          >
             {t("biomeBuddy.test.unchangedTitle", {
               defaultValue: "Nothing moved this time",
             })}
           </h3>
           <p className="font-bold text-[#3a2e22]" data-testid="no-move-body">
-            {summary.unchanged
-              ? t("biomeBuddy.test.unchangedBody", {
+            {identityChanged
+              ? t("biomeBuddy.test.identityOnly", {
                   defaultValue:
-                    "That's useful to know too! Same parts in the same home do the same things.",
+                    "You gave your Buddy a new name or look! These four bars still work the same way.",
                 })
-              : t("biomeBuddy.test.noMoveBody", {
-                  defaultValue:
-                    "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?",
-                })}
+              : summary.unchanged
+                ? t("biomeBuddy.test.unchangedBody", {
+                    defaultValue:
+                      "That's useful to know too! Same parts in the same home do the same things.",
+                  })
+                : t("biomeBuddy.test.noMoveBody", {
+                    defaultValue:
+                      "Your new part didn't move these bars here — but it changed how your Buddy looks and what it's built for. I wonder which home would make it matter?",
+                  })}
           </p>
         </>
       )}
 
       {change && (
         <>
-          <h3 id={headingId} className="text-xl font-extrabold text-[#3a2e22]">
+          <h3
+            ref={headingRef}
+            tabIndex={-1}
+            id={headingId}
+            className="text-xl font-extrabold text-[#3a2e22]"
+          >
             <span aria-hidden>{STAT_EMOJI[change.stat]} </span>
             {t(
               change.delta > 0
@@ -235,6 +338,20 @@ export default function TestLearnScreen({
           </p>
         </div>
       )}
+
+      {last &&
+        snapshot &&
+        recipeKey(snapshot.before) !== recipeKey(snapshot.after) && (
+          <button
+            type="button"
+            onClick={onRestoreBefore}
+            className="min-h-11 px-4 rounded-full bg-white border-2 border-[#e1d0a6] font-bold text-[#3a2e22]"
+          >
+            {t("biomeBuddy.test.restore", {
+              defaultValue: "Go back to before",
+            })}
+          </button>
+        )}
 
       <div className="w-full flex items-center justify-between gap-2">
         <button

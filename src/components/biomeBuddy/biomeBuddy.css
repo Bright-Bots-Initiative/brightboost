@@ -85,6 +85,71 @@
   transform-origin: center;
 }
 
+/* A steady outline identifies the most recently changed part, without motion. */
+.bb-sprite[data-highlight="eyes"] [data-layer="eyes"],
+.bb-sprite[data-highlight="ears"] [data-layer="ears"],
+.bb-sprite[data-highlight="nose"] [data-layer="nose"],
+.bb-sprite[data-highlight="movement"] [data-layer^="movement"],
+.bb-sprite[data-highlight="covering"] [data-layer="body"],
+.bb-sprite[data-highlight="pattern"] [data-layer="pattern"] {
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 3px #b8520c);
+}
+
+.bb-water-lane {
+  position: relative;
+  height: 76px;
+  border-radius: 1rem;
+  border: 2px solid #7bbacf;
+  background: repeating-linear-gradient(
+    0deg,
+    #bde8f4 0 16px,
+    #d7f2fa 17px 19px
+  );
+  overflow: hidden;
+  margin: 0.25rem 0;
+}
+
+.bb-water-track {
+  position: absolute;
+  inset: 4px 72px 4px 4px;
+}
+
+.bb-water-swimmer {
+  position: absolute;
+  left: var(--bb-swim-end);
+}
+
+.bb-water-reed {
+  position: absolute;
+  right: 4px;
+  bottom: 8px;
+  font-size: 28px;
+}
+
+@keyframes bb-swim {
+  from {
+    left: 0;
+  }
+  to {
+    left: var(--bb-swim-end);
+  }
+}
+
+.bb-water-lanes[data-state="ready"] .bb-water-swimmer {
+  left: 0;
+}
+.bb-water-lanes[data-state="playing"] .bb-water-swimmer,
+.bb-water-lanes[data-state="paused"] .bb-water-swimmer {
+  animation: bb-swim 4s linear both;
+}
+.bb-water-lanes[data-state="paused"] .bb-water-swimmer {
+  animation-play-state: paused;
+}
+.bb-water-lanes[data-reduced="true"] .bb-water-swimmer {
+  animation: none;
+  left: var(--bb-swim-end);
+}
+
 .bb-meter-fill--animate {
   transition: width 420ms cubic-bezier(0.34, 1.2, 0.64, 1);
 }
@@ -119,6 +184,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .bb-water-lanes .bb-water-swimmer {
+    animation: none;
+    left: var(--bb-swim-end);
+  }
+  .bb-water-controls {
+    display: none;
+  }
   .bb-page .bb-sprite--bob .bb-sprite-body,
   .bb-page .bb-pop,
   .bb-page .animate-pop,
@@ -161,6 +233,10 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.bb-testlearn {
+  max-width: 48rem;
 }
 
 /* Visible dismiss: panel corner, last in the tab order; the content's top

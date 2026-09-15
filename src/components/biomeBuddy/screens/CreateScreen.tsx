@@ -25,6 +25,7 @@ import BiomeScene from "../BiomeScene";
 import BuddySprite from "../BuddySprite";
 import ProgressDots from "../ProgressDots";
 import StatBars from "../StatBars";
+import TraitFeedback, { type TraitChange } from "../TraitFeedback";
 import { onRadioArrowKeys, radioTabIndex } from "../radioKeys";
 import { useBuddyLocale } from "../useBuddyLocale";
 
@@ -36,6 +37,11 @@ export interface CreateScreenProps {
   name: string;
   saved: boolean;
   onPick: (picker: Picker, option: string, opener: HTMLElement) => void;
+  onLearn: (picker: Picker, option: string, opener: HTMLElement) => void;
+  recentChange: TraitChange | null;
+  canUndo: boolean;
+  onUndo: () => void;
+  restoreNote: string;
   onTest: () => void;
   onName: () => void;
   onSave: () => void;
@@ -73,6 +79,11 @@ export default function CreateScreen({
   name,
   saved,
   onPick,
+  onLearn,
+  recentChange,
+  canUndo,
+  onUndo,
+  restoreNote,
   onTest,
   onName,
   onSave,
@@ -124,6 +135,14 @@ export default function CreateScreen({
           <span>{biomeLabel}</span>
         </button>
         <div className="flex-1" />
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="min-h-11 px-4 rounded-full bg-white font-bold text-[#3a2e22] shadow disabled:opacity-50"
+        >
+          {t("biomeBuddy.create.undo", { defaultValue: "Undo change" })}
+        </button>
         {lastTest && (
           <button
             type="button"
@@ -155,6 +174,13 @@ export default function CreateScreen({
           {t("biomeBuddy.common.myBuddies", { defaultValue: "My Buddies" })}
         </button>
       </div>
+      <p
+        role="status"
+        aria-live="polite"
+        className="text-sm font-bold text-[#3a2e22]"
+      >
+        {restoreNote}
+      </p>
 
       <div className="bb-create-layout w-full">
         {/* Side: the Buddy in its home, the live bars, and the actions right
@@ -169,6 +195,7 @@ export default function CreateScreen({
                 size="lg"
                 label={spriteLabel}
                 animate={!reduced}
+                highlight={recentChange?.picker}
               />
             </div>
           </BiomeScene>
@@ -215,13 +242,27 @@ export default function CreateScreen({
                 className="rounded-2xl bg-white/70 p-3"
                 aria-labelledby={`bb-picker-${picker}`}
               >
-                <h3
-                  id={`bb-picker-${picker}`}
-                  className="text-base font-extrabold text-[#3a2e22] flex items-center gap-2 mb-2"
-                >
-                  <span aria-hidden>{emoji}</span>
-                  {label}
-                </h3>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <h3
+                    id={`bb-picker-${picker}`}
+                    className="text-base font-extrabold text-[#3a2e22] flex items-center gap-2 mb-2"
+                  >
+                    <span aria-hidden>{emoji}</span>
+                    {label}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={(event) =>
+                      onLearn(picker, current, event.currentTarget)
+                    }
+                    className="min-h-11 px-3 rounded-full bg-white text-sm font-bold text-[#3a2e22] border-2 border-[#e1d0a6]"
+                  >
+                    {t("biomeBuddy.create.aboutPart", {
+                      defaultValue: "About {{part}}",
+                      part: L(cardFor(picker, current).label),
+                    })}
+                  </button>
+                </div>
                 <div
                   role="radiogroup"
                   aria-label={t("biomeBuddy.create.groupAria", {
@@ -260,6 +301,9 @@ export default function CreateScreen({
                     );
                   })}
                 </div>
+                {recentChange?.picker === picker && (
+                  <TraitFeedback change={recentChange} />
+                )}
               </section>
             );
           })}

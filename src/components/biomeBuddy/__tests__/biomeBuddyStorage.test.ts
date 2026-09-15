@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   diffBuilds,
+  recordExperiment,
   starterRecipe,
   type BuddyRecipe,
   type TestSummary,
@@ -86,6 +87,67 @@ describe("ids", () => {
     const storage = fakeStorage();
     saveBuddy(buddy(a), storage);
     expect(loadGallery(storage).map((x) => x.id)).toEqual([a]);
+  });
+});
+
+describe("exact experiment snapshots", () => {
+  it("clones both recipes and recomputes derived bars when loading", () => {
+    const before = starterRecipe("water");
+    const after = starterRecipe("water");
+    after.traits.movement = "fins";
+    const summary = recordExperiment(before, after);
+    const original = structuredClone(summary);
+    before.pattern = "stripes";
+    after.name.adjective = "brave";
+    after.traits.movement = "claws";
+    expect(summary).toEqual(original);
+    expect(
+      coerceTestSummary({
+        ...summary,
+        after: { ...summary.after, agility: 1 },
+        biome: "fire",
+        changes: [],
+      }),
+    ).toEqual(original);
+    expect(
+      coerceTestSummary({
+        ...summary,
+        snapshot: {
+          ...summary.snapshot,
+          after: {
+            ...after,
+            traits: { ...after.traits, movement: "laser_fins" },
+          },
+        },
+      }),
+    ).toBeNull();
+    expect(
+      coerceTestSummary({
+        ...summary,
+        snapshot: { ...summary.snapshot, version: 99 },
+      }),
+    ).toBeNull();
+    expect(coerceTestSummary(realSummary())?.snapshot).toBeUndefined();
+  });
+
+  it("validates a full baseline and bounds undo while retaining the usable draft", () => {
+    const storage = fakeStorage();
+    const draft = {
+      ...validDraft(),
+      baseline: starterRecipe("water"),
+      undo: Array.from({ length: 25 }, () => starterRecipe("earth")),
+    };
+    saveDraft(draft, storage);
+    expect(loadDraft(storage)?.baseline).toEqual(draft.baseline);
+    expect(loadDraft(storage)?.undo).toHaveLength(20);
+    storage.data[DRAFT_KEY] = JSON.stringify({
+      ...draft,
+      baseline: { ...draft.baseline, biome: "lava" },
+      undo: [draft.undo[0], { biome: "lava" }],
+    });
+    expect(loadDraft(storage)?.baseline).toBeNull();
+    expect(loadDraft(storage)?.undo).toEqual([draft.undo[0]]);
+    expect(loadDraft(storage)?.recipe).toEqual(draft.recipe);
   });
 });
 

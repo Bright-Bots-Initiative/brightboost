@@ -579,6 +579,12 @@ export interface StatChange {
 }
 
 export interface TestSummary {
+  /** Complete, immutable test inputs. Older device-local tests have bars only. */
+  snapshot?: {
+    version: 1;
+    before: BuddyRecipe;
+    after: BuddyRecipe;
+  };
   biome: Biome;
   before: StatBlock;
   after: StatBlock;
@@ -642,6 +648,22 @@ export function diffBuilds(
 }
 
 // ── Bands + Guided unlock ladder ────────────────────────────────────────────
+
+/** Record the actual experiment, including identity-only choices, without
+ *  changing the v1 share recipe or the stat/unlock rules. */
+export function recordExperiment(
+  before: BuddyRecipe,
+  after: BuddyRecipe,
+): TestSummary {
+  return {
+    ...diffBuilds(before, after),
+    snapshot: {
+      version: 1,
+      before: cloneRecipe(before),
+      after: cloneRecipe(after),
+    },
+  };
+}
 
 export const BANDS = ["k2", "g35", "g68"] as const;
 export type Band = (typeof BANDS)[number];
