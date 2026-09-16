@@ -68,6 +68,10 @@ import type { TraitChange } from "./TraitFeedback";
 type Screen = "title" | "choose" | "create" | "name";
 
 export interface BiomeBuddyGameProps {
+  /** Enter home selection for a new Buddy instead of resuming the draft. */
+  startNew?: boolean;
+  /** Clear the entry intent after selecting a home or returning to My Buddies. */
+  onNewEntryHandled?: () => void;
   /** A validated recipe to start a NEW build from ("Make my own version").
    *  The game copies it — the shared snapshot is never touched. */
   remixRecipe?: BuddyRecipe | null;
@@ -83,6 +87,8 @@ function upsert(list: SavedBuddy[], buddy: SavedBuddy): SavedBuddy[] {
 
 export default function BiomeBuddyGame({
   remixRecipe = null,
+  startNew = false,
+  onNewEntryHandled,
 }: BiomeBuddyGameProps) {
   const { t, lang, L } = useBuddyLocale();
   const { reducedEffects } = useReducedGameEffects();
@@ -112,10 +118,14 @@ export default function BiomeBuddyGame({
   const [testBaseline, setTestBaseline] = useState<BuddyRecipe | null>(
     initialDraft?.baseline ?? initialDraft?.lastTest?.snapshot?.after ?? null,
   );
-  const choosingFirstHome = useRef(false);
+  // Browse a new home separately: the current draft stays resumable until
+  // Select commits the new build, including when changing levels on the title.
+  const [newHome, setNewHome] = useState<{ biome: Biome; band: Band } | null>(
+    startNew ? { biome: "earth", band } : null,
+  );
   const [hasActiveBuild, setHasActiveBuild] = useState(!!initialDraft);
   const [screen, setScreen] = useState<Screen>(
-    initialDraft ? "create" : "title",
+    startNew ? "choose" : initialDraft ? "create" : "title",
   );
   const [gallery, setGallery] = useState<SavedBuddy[]>(() => loadGallery());
   const [undoHistory, setUndoHistory] = useState<BuddyRecipe[]>(
@@ -283,7 +293,7 @@ export default function BiomeBuddyGame({
         opts.lastTest?.snapshot?.after ??
           (opts.lastTest ? null : cloneRecipe(next)),
       );
-      choosingFirstHome.current = false;
+      setNewHome(null);
       setPendingUnlock(null);
       setUnlockAnnounce(null);
       setWalkthrough(null);
@@ -311,27 +321,20 @@ export default function BiomeBuddyGame({
   }, [remixRecipe, replaceBuild]);
 
   // ---- navigation / actions ----
-  const startBand = useCallback(
-    (nextBand: Band) => {
-      setBand(nextBand);
-      commitProgress({ ...progressRef.current, band: nextBand });
-      replaceBuild(starterRecipe("earth"), {
-        id: null,
-        named: false,
-        lastTest: null,
-        tested: false,
-      });
-      choosingFirstHome.current = true;
-      setScreen("choose");
-    },
-    [commitProgress, replaceBuild],
-  );
+  const startBand = useCallback((nextBand: Band) => {
+    setNewHome({ biome: "earth", band: nextBand });
+    setScreen("choose");
+  }, []);
 
   const goTitle = useCallback(() => {
     if (hasActiveBuildRef.current) persistDraft();
+    if (newHome) {
+      setNewHome(null);
+      onNewEntryHandled?.();
+    }
     refreshGallery();
     setScreen("title");
-  }, [persistDraft, refreshGallery]);
+  }, [persistDraft, refreshGallery, newHome, onNewEntryHandled]);
 
   const openBuddy = useCallback(
     (buddy: SavedBuddy) => {
@@ -488,15 +491,22 @@ export default function BiomeBuddyGame({
 
       {screen === "choose" && (
         <ChooseScreen
-          biome={recipe.biome}
-          onBiome={(biome: Biome) =>
-            updateBuild({ ...latestRef.current.recipe, biome })
-          }
+          biome={newHome?.biome ?? recipe.biome}
+          onBiome={(biome: Biome) => {
+            if (newHome) setNewHome({ ...newHome, biome });
+            else updateBuild({ ...latestRef.current.recipe, biome });
+          }}
           onSelect={() => {
-            if (choosingFirstHome.current) {
-              setTestBaseline(cloneRecipe(latestRef.current.recipe));
-              setUndoHistory([]);
-              choosingFirstHome.current = false;
+            if (newHome) {
+              setBand(newHome.band);
+              commitProgress({ ...progressRef.current, band: newHome.band });
+              replaceBuild(starterRecipe(newHome.biome), {
+                id: null,
+                named: false,
+                lastTest: null,
+                tested: false,
+              });
+              onNewEntryHandled?.();
             }
             setScreen("create");
           }}

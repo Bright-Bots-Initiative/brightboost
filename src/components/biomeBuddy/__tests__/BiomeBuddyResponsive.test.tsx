@@ -164,7 +164,11 @@ describe("Biome Buddy layout contracts", () => {
     expect(next.className).toMatch(/bb-choose-arrow/);
     const panel = prev.parentElement as HTMLElement;
     expect(panel.className).toMatch(/bb-choose-panel/);
-    expect(panel.querySelector(".bb-choose-scene")).not.toBeNull();
+    const scene = panel.querySelector(".bb-choose-scene") as HTMLElement;
+    expect(scene).not.toBeNull();
+    const description = screen.getByText("Who lives here:", { exact: false });
+    expect(description.closest(".bb-scene")).toBeNull();
+    expect(scene.textContent).toBe("");
     // the primary action precedes both the secondary and the preview in DOM
     // order, so it is the first thing after the choice and never wraps below
     const select = screen.getByRole("button", { name: /^Select / });

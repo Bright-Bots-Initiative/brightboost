@@ -9,7 +9,7 @@
  * Primary actions:
  *   Make my own version → /biome-buddy#r=<same payload> (a COPY; this page
  *   and the link are never mutated)
- *   Build a new Buddy   → /biome-buddy
+ *   Build a new Buddy   → /biome-buddy?new=1
  */
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -319,7 +319,7 @@ export default function BiomeBuddyShare() {
           })}
         </p>
         <Link
-          to="/biome-buddy"
+          to="/biome-buddy?new=1"
           className="bb-btn inline-flex items-center justify-center min-h-11 px-5 rounded-full bg-white font-bold text-[#3a2e22] shadow active:scale-95"
           data-testid="share-new"
         >
