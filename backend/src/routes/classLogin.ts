@@ -2,7 +2,11 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
-import { authLimiter } from "../utils/security";
+import {
+  classDiscoveryLimiter,
+  classLoginAccountLimiter,
+  classLoginIpLimiter,
+} from "../utils/security";
 import { logAudit } from "../utils/audit";
 import { generateToken } from "../utils/token";
 
@@ -28,7 +32,9 @@ const classLoginSchema = z.object({
 
 router.get(
   "/classes/by-code/:code",
-  authLimiter,
+  // #875: discovery is not authentication. Its own bucket, counting only
+  // failed lookups, so a class loading one valid code costs nothing.
+  classDiscoveryLimiter,
   async (req: Request, res: Response) => {
     try {
       const code = req.params.code.toUpperCase().trim();
@@ -86,7 +92,11 @@ router.get(
 
 router.post(
   "/auth/class-login",
-  authLimiter,
+  // #875: wrong answers are bounded twice — per address, and per child so the
+  // PIN stays unguessable however many addresses the guesses arrive from.
+  // Successful sign-ins consume neither, so a whole class gets in.
+  classLoginIpLimiter,
+  classLoginAccountLimiter,
   async (req: Request, res: Response) => {
     try {
       const parsed = classLoginSchema.safeParse(req.body);
