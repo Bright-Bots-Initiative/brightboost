@@ -327,6 +327,9 @@
     "footer": "BrightBoost là một dự án của Sáng kiến Bright Bots. Có câu hỏi? Sử dụng nút phản hồi trong ứng dụng hoặc liên hệ người điều phối thí điểm."
   },
   "auth": {
+    "sessionUnavailable": "Không thể kiểm tra đăng nhập. Phiên của bạn đã được lưu. Hãy thử lại.",
+    "sessionRetry": "Thử lại",
+    "sessionChecking": "Đang kiểm tra…",
     "forgotPassword": "Quên mật khẩu?",
     "forgotTitle": "Đặt lại mật khẩu",
     "forgotDesc": "Nhập email và chúng tôi sẽ gửi liên kết đặt lại.",
@@ -1431,6 +1434,9 @@
     }
   },
   "games": {
+    "moveMeasure": {
+      "jumpHint": "Giữ nút hoặc phím Cách/Enter, rồi thả khi vào vùng xanh!"
+    },
     "learning": {
       "wordsToKnow": "Từ cần biết"
     },

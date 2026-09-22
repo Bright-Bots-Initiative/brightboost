@@ -195,7 +195,7 @@ function BigBtn({
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { gradient: string }) {
   return (
     <button
-      className={`bg-gradient-to-r ${gradient} text-white text-xl font-bold px-12 py-5 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-transform min-w-[200px]`}
+      className={`bg-gradient-to-r ${gradient} text-white text-xl font-bold px-12 py-5 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-transform min-w-[200px] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-sky-700`}
       {...props}
     >
       {children}
@@ -250,6 +250,7 @@ function MoveMeasurePlayfield({
   const [jDone, setJDone] = useState(false);
   const jRaf = useRef(0);
   const jDir = useRef(1);
+  const jumpInput = useRef<string | null>(null);
   // Toss — starts at 0 (not perfect). Player has to slide to find the sweet spot.
   const [tVal, setTVal] = useState(0);
   const [tDone, setTDone] = useState(false);
@@ -366,12 +367,41 @@ function MoveMeasurePlayfield({
     return () => cancelAnimationFrame(jRaf.current);
   }, [phase, jHold, jDone, impEvent, isRetry]);
 
-  const relJump = useCallback(() => {
-    if (!jDone) {
-      cancelAnimationFrame(jRaf.current);
-      setJDone(true);
-    }
-  }, [jDone]);
+  const startJump = (source: string) => {
+    if (jDone || jumpInput.current !== null) return;
+    jumpInput.current = source;
+    setJLevel(0);
+    setJHold(true);
+  };
+
+  const relJump = (source: string) => {
+    if (jumpInput.current !== source || jDone) return;
+    jumpInput.current = null;
+    cancelAnimationFrame(jRaf.current);
+    setJHold(false);
+    setJDone(true);
+  };
+
+  const cancelJump = useCallback(() => {
+    if (jumpInput.current === null) return;
+    jumpInput.current = null;
+    cancelAnimationFrame(jRaf.current);
+    setJHold(false);
+    setJLevel(0);
+  }, []);
+
+  useEffect(() => {
+    if (!jHold) return;
+    const onVisibilityChange = () => {
+      if (document.hidden) cancelJump();
+    };
+    window.addEventListener("blur", cancelJump);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("blur", cancelJump);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [jHold, cancelJump]);
 
   useEffect(() => {
     if (!jDone) return;
@@ -725,7 +755,7 @@ function MoveMeasurePlayfield({
           "games.moveMeasure.jumpTitle",
           "Jump",
           "games.moveMeasure.jumpHint",
-          "Hold the button, release in the green zone!",
+          "Hold the button or Space/Enter, then release in the green zone!",
           t("games.moveMeasure.event2", { defaultValue: "Event 2 of 3" }),
         )}
         <div className="max-w-sm mx-auto">
@@ -737,23 +767,55 @@ function MoveMeasurePlayfield({
             stopped={jDone}
           />
         </div>
-        {!jDone && !jHold && (
+        {!jDone && (
           <BigBtn
-            gradient="from-sky-400 to-sky-500"
-            onPointerDown={() => setJHold(true)}
+            type="button"
+            gradient={
+              jHold
+                ? "from-emerald-400 to-emerald-500"
+                : "from-sky-400 to-sky-500"
+            }
+            style={{ touchAction: "none" }}
+            aria-pressed={jHold}
+            onKeyDown={(event) => {
+              if (event.key !== " " && event.key !== "Enter") return;
+              event.preventDefault();
+              if (!event.repeat) startJump(`key:${event.key}`);
+            }}
+            onKeyUp={(event) => {
+              if (event.key !== " " && event.key !== "Enter") return;
+              event.preventDefault();
+              relJump(`key:${event.key}`);
+            }}
+            onPointerDown={(event) => {
+              if (event.button !== 0 || jumpInput.current !== null) return;
+              startJump(`pointer:${event.pointerId}`);
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+            }}
+            onPointerUp={(event) => relJump(`pointer:${event.pointerId}`)}
+            onPointerCancel={(event) => {
+              if (jumpInput.current === `pointer:${event.pointerId}`)
+                cancelJump();
+            }}
+            onLostPointerCapture={(event) => {
+              if (jumpInput.current === `pointer:${event.pointerId}`)
+                cancelJump();
+            }}
+            onBlur={cancelJump}
+            onClick={(event) => {
+              // Assistive technology can activate a button without key/pointer events.
+              if (event.detail !== 0) return;
+              if (jumpInput.current === "virtual") relJump("virtual");
+              else startJump("virtual");
+            }}
           >
-            {t("games.moveMeasure.holdMe", { defaultValue: "HOLD ME!" })}
-          </BigBtn>
-        )}
-        {!jDone && jHold && (
-          <BigBtn
-            gradient="from-emerald-400 to-emerald-500"
-            onPointerUp={relJump}
-            onPointerLeave={relJump}
-          >
-            <span className="streak-fire">
-              {t("games.moveMeasure.release", { defaultValue: "RELEASE!" })}
-            </span>
+            {jHold ? (
+              <span className="streak-fire">
+                {t("games.moveMeasure.release", { defaultValue: "RELEASE!" })}
+              </span>
+            ) : (
+              t("games.moveMeasure.holdMe", { defaultValue: "HOLD ME!" })
+            )}
           </BigBtn>
         )}
         {sc !== null && (

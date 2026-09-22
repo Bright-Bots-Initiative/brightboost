@@ -327,6 +327,9 @@
     "footer": "BrightBoost is a project of the Bright Bots Initiative. Questions? Use the feedback button inside the app or contact your pilot coordinator."
   },
   "auth": {
+    "sessionUnavailable": "We couldn’t check your sign-in. Your session is saved. Please try again.",
+    "sessionRetry": "Retry",
+    "sessionChecking": "Checking…",
     "forgotPassword": "Forgot password?",
     "forgotTitle": "Reset Your Password",
     "forgotDesc": "Enter your email and we'll send you a reset link.",
@@ -1751,7 +1754,7 @@
       "dashTitle": "Dash!",
       "dashHint": "Tap when the marker hits the green zone!",
       "jumpTitle": "Jump!",
-      "jumpHint": "Hold and release in the green zone!",
+      "jumpHint": "Hold the button or Space/Enter, then release in the green zone!",
       "tossTitle": "Toss!",
       "tossHint": "Slide to set your angle, then release!",
       "compareTitle": "Compare Your Results",
