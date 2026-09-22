@@ -327,6 +327,9 @@
     "footer": "BrightBoost 是 Bright Bots Initiative 的一个项目。有问题？请使用应用内的反馈按钮或联系你的试用协调员。"
   },
   "auth": {
+    "sessionUnavailable": "暂时无法检查登录状态。你的会话已保留，请重试。",
+    "sessionRetry": "重试",
+    "sessionChecking": "正在检查…",
     "forgotPassword": "忘记密码？",
     "forgotTitle": "重置密码",
     "forgotDesc": "输入你的邮箱，我们会发送重置链接。",
@@ -1683,7 +1686,7 @@
       "dashTitle": "冲刺！",
       "dashHint": "指针到达绿色区域时点击！",
       "jumpTitle": "跳跃！",
-      "jumpHint": "按住，在指针到达绿色区域时松开！",
+      "jumpHint": "按住按钮或空格键/回车键，在指针到达绿色区域时松开！",
       "tossTitle": "投掷！",
       "tossHint": "滑动调整角度，然后松开！",
       "compareTitle": "比较你的结果",

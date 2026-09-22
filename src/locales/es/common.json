@@ -327,6 +327,9 @@
     "footer": "BrightBoost es un proyecto de la Iniciativa Bright Bots. ¿Preguntas? Usa el botón de opinión dentro de la app o contacta a tu coordinador de piloto."
   },
   "auth": {
+    "sessionUnavailable": "No pudimos comprobar tu inicio de sesión. Tu sesión está guardada. Inténtalo de nuevo.",
+    "sessionRetry": "Reintentar",
+    "sessionChecking": "Comprobando…",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "forgotTitle": "Restablecer Contraseña",
     "forgotDesc": "Ingresa tu correo electrónico y te enviaremos un enlace de restablecimiento.",
@@ -1673,7 +1676,7 @@
       "dashTitle": "¡Corre!",
       "dashHint": "¡Toca cuando el marcador llegue a la zona verde!",
       "jumpTitle": "¡Salta!",
-      "jumpHint": "¡Mantén presionado y suelta en la zona verde!",
+      "jumpHint": "¡Mantén presionado el botón o Espacio/Intro y suelta en la zona verde!",
       "tossTitle": "¡Lanza!",
       "tossHint": "¡Desliza para elegir el ángulo y suelta!",
       "compareTitle": "Compara tus Resultados",
