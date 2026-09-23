@@ -203,6 +203,12 @@ They are not part of `test:e2e:ci`, `test:e2e:ci:flows`, or any required CI job.
 
 **Inventory:** `cypress/e2e/legacy/k2InstantQuiz.cy.js` is a **#623 keeper** among the quarantined tree — do not bulk-delete it when touching the old suite.
 
+### Accessibility and performance are not asserted by any Cypress suite
+
+No runnable Cypress spec runs an automated accessibility audit (axe / WCAG rules) or enforces a page-load performance budget. Some specs check one specific behaviour — for example keyboard operation in `pathways-consent.cy.ts` — but nothing audits a page. `cypress-axe` is still declared in `devDependencies` and imported by nothing; the support entry `cypress/support/e2e.ts` loads only `./commands` and `cypress-real-events`.
+
+The fossil `classRoster.cy.ts` used to call `checkAccessibility` and `checkPerformance` behind `typeof cy.… === "function"` guards. Those commands were defined only in a Cypress 9-era default support file that `supportFile` never pointed at, so every guard was false and each call site logged a "ready for activation" line instead of checking anything. That never-loaded file and the dead guards have been removed. The removed performance command subtracted event start from event end (handler duration, not time-to-load) and treated a missing paint entry as `0`, so it could not fail — do not restore it as a budget. Real coverage needs a spec in the default `specPattern`, baselined against a live stack first.
+
 ## Scripts cheat sheet
 
 | Script                                 | Purpose                                                                    |
