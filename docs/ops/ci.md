@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-23.
 
 # CI jobs and Cypress gates
 
@@ -199,9 +199,14 @@ Previous-generation specs live under `cypress/e2e/legacy/` and are **excluded** 
 npm run test:e2e:legacy
 ```
 
-They are not part of `test:e2e:ci`, `test:e2e:ci:flows`, or any required CI job. Do not “fix” fossils in #671 — quarantine only.
+They are not part of `test:e2e:ci`, `test:e2e:ci:flows`, or any required CI job. Do not “fix” fossils in #671 — quarantine only. That rule forbids repairing a fossil to make it pass; it does not forbid removing a single fossil whose feature never shipped in the shape it tests.
 
 **Inventory:** `cypress/e2e/legacy/k2InstantQuiz.cy.js` is a **#623 keeper** among the quarantined tree — do not bulk-delete it when touching the old suite.
+
+**Removed fossils:**
+
+- `cypress/e2e/legacy/classRoster.cy.ts` — its data assertions checked the `cy.intercept` bodies the same file defined, and every UI assertion was gated on a `data-cy` selector the product never renders. It stubbed `/api/teacher/classes` and `/api/classes`; the teacher classes page calls `/api/teacher/courses` (`src/pages/TeacherClasses.tsx`). Coverage for that page needs a new spec against the seeded stack, not a repair of this one.
+- `cypress/support/index.js` — defined the accessibility and performance custom commands that only `classRoster.cy.ts` called. `supportFile` is `cypress/support/e2e.ts`, which never imported it, so neither command was ever registered at runtime.
 
 ## Scripts cheat sheet
 
