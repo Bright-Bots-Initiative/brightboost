@@ -235,6 +235,7 @@ function MoveMeasurePlayfield({
   const [scores, setScores] = useState<Scores>({ dash: 0, jump: 0, toss: 0 });
   const [impEvent, setImpEvent] = useState<EventKey | null>(null);
   const [impScore, setImpScore] = useState(0);
+  const [impMeasurement, setImpMeasurement] = useState(0);
   const [cmpAns, setCmpAns] = useState<string | null>(null);
   const [exitAns, setExitAns] = useState<string | null>(null);
   const [diffCorrect, setDiffCorrect] = useState(false);
@@ -320,15 +321,16 @@ function MoveMeasurePlayfield({
     if (!dashDone) return;
     const sc = zoneScore(dashPos, GZ_DASH.s, GZ_DASH.e);
     const measured = dashMeasurement(dashPos);
+    if (isRetry) {
+      setImpScore(sc);
+      setImpMeasurement(measured);
+      const t = setTimeout(() => setPhase("exitTicket"), 1200);
+      return () => clearTimeout(t);
+    }
     setMeasurements((m) => ({
       ...m,
       dash: measured,
     }));
-    if (isRetry) {
-      setImpScore(sc);
-      const t = setTimeout(() => setPhase("exitTicket"), 1200);
-      return () => clearTimeout(t);
-    }
     setScores((p) => ({ ...p, dash: sc }));
     const t = setTimeout(() => {
       if (config.enablePredict) {
@@ -407,15 +409,16 @@ function MoveMeasurePlayfield({
     if (!jDone) return;
     const sc = zoneScore(jLevel, GZ_JUMP.s, GZ_JUMP.e);
     const measured = jumpMeasurement(jLevel);
+    if (isRetry) {
+      setImpScore(sc);
+      setImpMeasurement(measured);
+      const t = setTimeout(() => setPhase("exitTicket"), 1200);
+      return () => clearTimeout(t);
+    }
     setMeasurements((m) => ({
       ...m,
       jump: measured,
     }));
-    if (isRetry) {
-      setImpScore(sc);
-      const t = setTimeout(() => setPhase("exitTicket"), 1200);
-      return () => clearTimeout(t);
-    }
     setScores((p) => ({ ...p, jump: sc }));
     const t = setTimeout(() => {
       if (config.enablePredict) {
@@ -434,15 +437,16 @@ function MoveMeasurePlayfield({
     if (!tDone) return;
     const sc = tossScore(tVal);
     const measured = tossMeasurement(tVal);
+    if (isRetry) {
+      setImpScore(sc);
+      setImpMeasurement(measured);
+      const t = setTimeout(() => setPhase("exitTicket"), 1200);
+      return () => clearTimeout(t);
+    }
     setMeasurements((m) => ({
       ...m,
       toss: measured,
     }));
-    if (isRetry) {
-      setImpScore(sc);
-      const t = setTimeout(() => setPhase("exitTicket"), 1200);
-      return () => clearTimeout(t);
-    }
     setScores((p) => ({ ...p, toss: sc }));
     const t = setTimeout(() => {
       if (config.enablePredict) {
@@ -1241,7 +1245,7 @@ function MoveMeasurePlayfield({
                 </p>
                 {config.compareMeasurements && (
                   <p className="text-xs text-slate-500">
-                    {measurements[impEvent!].toFixed(config.decimalPlaces)} m
+                    {impMeasurement.toFixed(config.decimalPlaces)} m
                   </p>
                 )}
               </div>
