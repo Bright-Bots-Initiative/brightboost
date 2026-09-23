@@ -1,6 +1,10 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useGradeBand, __resetGradeBandCache } from "@/hooks/useGradeBand";
+import {
+  useGradeBand,
+  useGradeBandState,
+  __resetGradeBandCache,
+} from "@/hooks/useGradeBand";
 import { api } from "@/services/api";
 
 vi.mock("@/services/api", () => ({
@@ -54,5 +58,82 @@ describe("useGradeBand", () => {
     const { result } = renderHook(() => useGradeBand());
     await waitFor(() => expect(api.getStudentCourses).toHaveBeenCalled());
     expect(result.current).toBe("k2");
+  });
+
+  // #866: a synchronous throw used to escape the effect and unmount the tree
+  // instead of settling to `failed` like an async rejection does.
+  describe("when the courses call throws synchronously", () => {
+    const throwSync = () => {
+      throw new Error("sync");
+    };
+
+    it("settles to failed with the k2 fallback instead of throwing", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "x" }));
+      (api.getStudentCourses as ReturnType<typeof vi.fn>).mockImplementation(
+        throwSync,
+      );
+      const { result } = renderHook(() => useGradeBandState());
+      await waitFor(() => expect(result.current.status).toBe("failed"));
+      expect(result.current.band).toBe("k2");
+    });
+
+    it("keeps useGradeBand on k2", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "x" }));
+      (api.getStudentCourses as ReturnType<typeof vi.fn>).mockImplementation(
+        throwSync,
+      );
+      const { result } = renderHook(() => ({
+        band: useGradeBand(),
+        state: useGradeBandState(),
+      }));
+      await waitFor(() => expect(result.current.state.status).toBe("failed"));
+      expect(result.current.band).toBe("k2");
+    });
+
+    it("settles to failed when getStudentCourses is missing from the api", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "x" }));
+      const original = api.getStudentCourses;
+      Reflect.deleteProperty(api, "getStudentCourses");
+      try {
+        const { result } = renderHook(() => useGradeBandState());
+        await waitFor(() => expect(result.current.status).toBe("failed"));
+        expect(result.current.band).toBe("k2");
+      } finally {
+        api.getStudentCourses = original;
+      }
+    });
+
+    it("shares one request between consumers mounted in the same commit", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "x" }));
+      (api.getStudentCourses as ReturnType<typeof vi.fn>).mockImplementation(
+        throwSync,
+      );
+      const { result } = renderHook(() => [
+        useGradeBandState(),
+        useGradeBandState(),
+      ]);
+      await waitFor(() => {
+        expect(result.current[0].status).toBe("failed");
+        expect(result.current[1].status).toBe("failed");
+      });
+      expect(api.getStudentCourses).toHaveBeenCalledTimes(1);
+    });
+
+    it("re-requests on a reloadKey bump and resolves once the call succeeds", async () => {
+      localStorage.setItem("user", JSON.stringify({ id: "x" }));
+      (api.getStudentCourses as ReturnType<typeof vi.fn>)
+        .mockImplementationOnce(throwSync)
+        .mockResolvedValue([{ gradeBand: "g3_5" }]);
+      const { result, rerender } = renderHook(
+        ({ reloadKey }) => useGradeBandState(reloadKey),
+        { initialProps: { reloadKey: 0 } },
+      );
+      await waitFor(() => expect(result.current.status).toBe("failed"));
+
+      rerender({ reloadKey: 1 });
+      await waitFor(() => expect(result.current.status).toBe("resolved"));
+      expect(result.current.band).toBe("g3_5");
+      expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+    });
   });
 });
