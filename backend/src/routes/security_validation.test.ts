@@ -64,23 +64,15 @@ describe("Security Validation", () => {
         password: "Password123",
       });
 
-      // Verify that create was called with lowercased email
-      // Note: If this fails (i.e. validation not yet implemented), it will call with mixed case
-      // or verification will fail.
-      if (response.status === 201) {
-        expect(prismaMock.user.create).toHaveBeenCalledWith(
-          expect.objectContaining({
-            data: expect.objectContaining({
-              email: "student@test.com",
-            }),
+      // Mixed-case input must reach prisma.user.create already lower-cased.
+      expect(response.status).toBe(201);
+      expect(prismaMock.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: "student@test.com",
           }),
-        );
-      } else {
-        // If it fails for other reasons (like validation error), strict check is tricky
-        // But for TDD, we expect this to FAIL initially or PASS if we implement it.
-        // Wait, current code does NOT lowercase. So this test should FAIL expectation if we run it now.
-        // Or rather, prismaMock.user.create will be called with "Student@Test.com".
-      }
+        }),
+      );
     });
 
     it("should lowercase email on login", async () => {
