@@ -246,7 +246,14 @@ export const handler = async (
     const existingUserQuery = "SELECT id FROM users WHERE email = $1";
     const existingUserResult = await db.query(existingUserQuery, [email]);
 
-    if (existingUserResult.rows.length > 0) {
+    // "User" rows written by the Prisma seed or the Express backend have no
+    // `users` counterpart, so the email must be checked in both tables.
+    const existingSchemaUserQuery = 'SELECT id FROM "User" WHERE email = $1';
+    const emailTaken =
+      existingUserResult.rows.length > 0 ||
+      (await db.query(existingSchemaUserQuery, [email])).rows.length > 0;
+
+    if (emailTaken) {
       return {
         statusCode: 409,
         headers,
@@ -257,21 +264,11 @@ export const handler = async (
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    try {
-      const insertUserNewSchemaQuery = `
-        INSERT INTO "User" (id, name, email, password, role, "updatedAt")
-        VALUES ($1, $2, $3, $4, 'student', NOW())
-      `;
-      const tempId = `${email}-${Math.floor(Math.random() * 1000)}`;
-      await db.query(insertUserNewSchemaQuery, [
-        tempId,
-        name,
-        email,
-        hashedPassword,
-      ]);
-    } catch (e) {
-      console.error("Error inserting new user schema entry", e);
-    }
+    const insertUserNewSchemaQuery = `
+      INSERT INTO "User" (id, name, email, password, role, "updatedAt")
+      VALUES ($1, $2, $3, $4, 'student', NOW())
+    `;
+    const tempId = `${email}-${Math.floor(Math.random() * 1000)}`;
 
     const insertUserQuery = `
       INSERT INTO users (name, email, password, role, created_at, updated_at)
@@ -279,12 +276,39 @@ export const handler = async (
       RETURNING id, name, email, role, created_at
     `;
 
-    const insertResult = await db.query(insertUserQuery, [
-      name,
-      email,
-      hashedPassword,
-      "STUDENT",
-    ]);
+    // Other lambdas read "User" (profile, edit-profile) or `users` (login),
+    // so both rows are written in one transaction or not at all.
+    const client = await db.connect();
+    let rollbackError: Error | undefined;
+    let insertResult;
+    try {
+      await client.query("BEGIN");
+      await client.query(insertUserNewSchemaQuery, [
+        tempId,
+        name,
+        email,
+        hashedPassword,
+      ]);
+      insertResult = await client.query(insertUserQuery, [
+        name,
+        email,
+        hashedPassword,
+        "STUDENT",
+      ]);
+      await client.query("COMMIT");
+    } catch (error) {
+      // A failed ROLLBACK must not replace the original error, which the
+      // outer catch maps to a status (duplicate key -> 409).
+      await client.query("ROLLBACK").catch((e: Error) => {
+        console.error("Student signup rollback failed:", e);
+        rollbackError = e;
+      });
+      throw error;
+    } finally {
+      // Passing the rollback error makes the pool discard a client that may
+      // still be inside the transaction instead of reusing it.
+      client.release(rollbackError);
+    }
 
     const newUser = insertResult.rows[0];
 
