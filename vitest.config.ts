@@ -26,7 +26,6 @@ export default defineConfig({
       // #815 guard sandbox: never collect its copied suite as a second run.
       "**/.bb-guard-sandbox-*/**",
       "**/cypress/e2e/**",
-      "**/cypress/support/*.js",
       "**/.{idea,git,cache,output,temp}/**",
       "**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
     ],
@@ -38,12 +37,7 @@ export default defineConfig({
         "cypress/support/**/*.ts",
         "src/test/dataDashPoolSync*.ts",
       ],
-      exclude: [
-        "**/__tests__/**",
-        "**/*.test.{ts,tsx}",
-        "**/types.ts",
-        "cypress/support/*.js",
-      ],
+      exclude: ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/types.ts"],
       thresholds: {
         lines: 90,
         branches: 90,
