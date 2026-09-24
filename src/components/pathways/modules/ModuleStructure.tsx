@@ -30,16 +30,31 @@ import {
   ArrowLeft,
   ShieldCheck,
 } from "lucide-react";
-import type { ModuleContent, ReadingSection, LessonScene, PracticeItem } from "./cyberLaunchContent";
+import type {
+  ModuleContent,
+  ReadingSection,
+  LessonScene,
+  PracticeItem,
+} from "./cyberLaunchContent";
 
 const TRACK_SLUG = "cyber-launch";
 
-const SECTIONS = ["hook", "reading", "lesson", "practice", "homework", "quiz"] as const;
+const SECTIONS = [
+  "hook",
+  "reading",
+  "lesson",
+  "practice",
+  "homework",
+  "quiz",
+] as const;
 export type SectionKey = (typeof SECTIONS)[number];
 
 // Internal `hook` keys remain for schema/API consistency, but the student
 // never sees that word — it's relabeled as "Why It Matters" everywhere.
-const SECTION_META: Record<SectionKey, { label: string; icon: typeof BookOpen }> = {
+const SECTION_META: Record<
+  SectionKey,
+  { label: string; icon: typeof BookOpen }
+> = {
   hook: { label: "Why It Matters", icon: Sparkles },
   reading: { label: "Read", icon: BookOpen },
   lesson: { label: "Lesson", icon: PlayCircle },
@@ -90,28 +105,62 @@ function authHeader(): Record<string, string> {
 }
 
 interface GamificationSideEffects {
-  award: { newLevel?: number; leveledUp?: boolean; tier?: { tier: string; color: string } } | null;
-  badges: Array<{ slug: string; name: string; description: string; icon: string }>;
+  award: {
+    newLevel?: number;
+    leveledUp?: boolean;
+    tier?: { tier: string; color: string };
+  } | null;
+  badges: Array<{
+    slug: string;
+    name: string;
+    description: string;
+    icon: string;
+  }>;
   moduleCompleted: boolean;
 }
 
 type Celebrate = (
   events:
     | { type: "level"; newLevel: number; tier: string }
-    | { type: "badge"; slug: string; name: string; description: string; icon: string }
+    | {
+        type: "badge";
+        slug: string;
+        name: string;
+        description: string;
+        icon: string;
+      }
     | Array<
         | { type: "level"; newLevel: number; tier: string }
-        | { type: "badge"; slug: string; name: string; description: string; icon: string }
+        | {
+            type: "badge";
+            slug: string;
+            name: string;
+            description: string;
+            icon: string;
+          }
       >,
 ) => void;
 
-function emitFromGamification(payload: GamificationSideEffects | undefined, celebrate: Celebrate) {
+function emitFromGamification(
+  payload: GamificationSideEffects | undefined,
+  celebrate: Celebrate,
+) {
   if (!payload) return;
   const events: Array<
     | { type: "level"; newLevel: number; tier: string }
-    | { type: "badge"; slug: string; name: string; description: string; icon: string }
+    | {
+        type: "badge";
+        slug: string;
+        name: string;
+        description: string;
+        icon: string;
+      }
   > = [];
-  if (payload.award?.leveledUp && payload.award.newLevel && payload.award.tier) {
+  if (
+    payload.award?.leveledUp &&
+    payload.award.newLevel &&
+    payload.award.tier
+  ) {
     events.push({
       type: "level",
       newLevel: payload.award.newLevel,
@@ -131,24 +180,32 @@ function emitFromGamification(payload: GamificationSideEffects | undefined, cele
 }
 
 /**
- * Best-effort PATCH; failures are non-fatal. When the server responds with
- * gamification side-effects (level-up or badges) we hand them to the
- * celebration context for the overlay.
+ * PATCH one section's completion. Failures are non-blocking — the learner
+ * keeps going — but not silent: the returned promise rejects on a network
+ * error, a non-2xx status, or a body that is not JSON, so the caller can
+ * surface it. When the server responds with gamification side-effects
+ * (level-up or badges) we hand them to the celebration context for the
+ * overlay.
  */
-function persistSection(
+async function persistSection(
   moduleSlug: string,
   section: SectionKey,
   completed: boolean,
   celebrate: Celebrate,
-) {
-  fetch("/api/pathways/student/milestones/section", {
+): Promise<void> {
+  const r = await fetch("/api/pathways/student/milestones/section", {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify({ trackSlug: TRACK_SLUG, moduleSlug, section, completed }),
-  })
-    .then((r) => r.json())
-    .then((body) => emitFromGamification(body?.gamification, celebrate))
-    .catch(() => {});
+    body: JSON.stringify({
+      trackSlug: TRACK_SLUG,
+      moduleSlug,
+      section,
+      completed,
+    }),
+  });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  const body = await r.json();
+  emitFromGamification(body?.gamification, celebrate);
 }
 
 export default function ModuleStructure({
@@ -160,25 +217,58 @@ export default function ModuleStructure({
   initialHomework,
 }: ModuleStructureProps) {
   const sections = useMemo<SectionKey[]>(
-    () => (content.skipQuiz ? ["hook", "reading", "lesson", "practice", "homework"] : [...SECTIONS]),
+    () =>
+      content.skipQuiz
+        ? ["hook", "reading", "lesson", "practice", "homework"]
+        : [...SECTIONS],
     [content.skipQuiz],
   );
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [progress, setProgress] = useState<SectionProgress>({ ...ZERO_PROGRESS, ...initialProgress });
+  const [progress, setProgress] = useState<SectionProgress>({
+    ...ZERO_PROGRESS,
+    ...initialProgress,
+  });
   const current = sections[currentIdx];
   const { celebrate } = useCelebrate();
 
   // Quiz unlocks only after the first five sections are complete (or the
   // skip-quiz capstone reaches its final section).
   const quizUnlocked =
-    progress.hook && progress.reading && progress.lesson && progress.practice && progress.homework;
+    progress.hook &&
+    progress.reading &&
+    progress.lesson &&
+    progress.practice &&
+    progress.homework;
+
+  // Sections whose PATCH has been sent this mount (or that arrived complete).
+  // Held in a ref, not read from `progress`, so two presses in one batch
+  // can't both see a stale `false`; kept out of the setProgress updater
+  // because React may run an updater more than once, or not at all.
+  const sentSections = useRef(
+    new Set(SECTIONS.filter((s) => initialProgress?.[s])),
+  );
+  // Sections whose most recent PATCH failed, shown until a retry succeeds.
+  const [unsaved, setUnsaved] = useState<SectionKey[]>([]);
+  const [retrying, setRetrying] = useState(false);
+
+  // Never rejects: the outcome is recorded in `unsaved`.
+  const saveSection = (section: SectionKey) =>
+    persistSection(content.slug, section, true, celebrate).then(
+      () => setUnsaved((u) => u.filter((s) => s !== section)),
+      () => setUnsaved((u) => (u.includes(section) ? u : [...u, section])),
+    );
 
   const markCompleted = (section: SectionKey) => {
-    setProgress((p) => {
-      if (p[section]) return p; // idempotent
-      persistSection(content.slug, section, true, celebrate);
-      return { ...p, [section]: true };
-    });
+    if (!sentSections.current.has(section)) {
+      sentSections.current.add(section);
+      saveSection(section);
+    }
+    setProgress((p) => (p[section] ? p : { ...p, [section]: true }));
+  };
+
+  const retryUnsaved = () => {
+    setRetrying(true);
+    Promise.all(unsaved.map(saveSection)).then(() => setRetrying(false));
   };
 
   const goNext = () => {
@@ -212,7 +302,9 @@ export default function ModuleStructure({
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <span className="text-xs text-slate-500">~{content.totalMinutes} min</span>
+          <span className="text-xs text-slate-500">
+            ~{content.totalMinutes} min
+          </span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight">{content.title}</h1>
 
@@ -224,6 +316,26 @@ export default function ModuleStructure({
           quizUnlocked={quizUnlocked}
           onSelect={goTo}
         />
+
+        {unsaved.length > 0 && (
+          <div role="alert" className="flex flex-wrap items-center gap-2">
+            <p className="text-xs text-red-600 dark:text-red-400">
+              Couldn't save your progress for:{" "}
+              {sections
+                .filter((s) => unsaved.includes(s))
+                .map((s) => SECTION_META[s].label)
+                .join(", ")}
+            </p>
+            <button
+              type="button"
+              onClick={retryUnsaved}
+              disabled={retrying}
+              className="px-2 py-2 min-h-[44px] text-xs font-medium text-red-600 underline dark:text-red-400 disabled:opacity-40"
+            >
+              {retrying ? "Retrying…" : "Retry"}
+            </button>
+          </div>
+        )}
 
         {/* Section content */}
         {current === "hook" && (
@@ -341,7 +453,13 @@ function ProgressBar({
               className={`${base} ${cls}`}
             >
               <span className="relative">
-                {isLocked ? <Lock className="w-4 h-4" /> : isDone ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
+                {isLocked ? (
+                  <Lock className="w-4 h-4" />
+                ) : isDone ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Icon className="w-4 h-4" />
+                )}
               </span>
               <span>{meta.label}</span>
             </button>
@@ -376,13 +494,23 @@ function SectionHeader({
           <h2 className="text-lg font-bold">{title}</h2>
           <span className="text-xs text-slate-500">~{estMinutes} min</span>
         </div>
-        {subtitle && <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-function NextButton({ label = "Next →", onClick }: { label?: string; onClick: () => void }) {
+function NextButton({
+  label = "Next →",
+  onClick,
+}: {
+  label?: string;
+  onClick: () => void;
+}) {
   return (
     <div className="flex justify-end pt-2">
       <button
@@ -398,8 +526,13 @@ function NextButton({ label = "Next →", onClick }: { label?: string; onClick: 
 function LockedNotice() {
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-200">
-      <p className="font-semibold">Quiz is locked until the earlier sections are complete.</p>
-      <p className="text-xs mt-1">Finish Hook, Reading, Lesson, Practice, and Homework first — then come back.</p>
+      <p className="font-semibold">
+        Quiz is locked until the earlier sections are complete.
+      </p>
+      <p className="text-xs mt-1">
+        Finish Hook, Reading, Lesson, Practice, and Homework first — then come
+        back.
+      </p>
     </div>
   );
 }
@@ -417,7 +550,10 @@ function renderInline(text: string): React.ReactNode[] {
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={i} className="font-semibold text-slate-900 dark:text-slate-100">
+        <strong
+          key={i}
+          className="font-semibold text-slate-900 dark:text-slate-100"
+        >
           {part.slice(2, -2)}
         </strong>
       );
@@ -451,14 +587,23 @@ function HookSection({
   const { hook } = content;
   return (
     <div className="space-y-4">
-      <SectionHeader icon={Sparkles} title={hook.title} estMinutes={hook.estMinutes} />
+      <SectionHeader
+        icon={Sparkles}
+        title={hook.title}
+        estMinutes={hook.estMinutes}
+      />
       <div className="space-y-3 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
         {hook.paragraphs.map((p, i) => (
           <p key={i}>{renderInline(p)}</p>
         ))}
-        <p className="text-indigo-700 dark:text-indigo-300 font-medium italic">{hook.closer}</p>
+        <p className="text-indigo-700 dark:text-indigo-300 font-medium italic">
+          {hook.closer}
+        </p>
       </div>
-      <NextButton label={done ? "Continue →" : "I'm ready →"} onClick={onContinue} />
+      <NextButton
+        label={done ? "Continue →" : "I'm ready →"}
+        onClick={onContinue}
+      />
     </div>
   );
 }
@@ -498,7 +643,10 @@ function ReadingSectionView({
           ))}
         </ul>
       </div>
-      <NextButton label={done ? "Continue →" : "Done reading →"} onClick={onContinue} />
+      <NextButton
+        label={done ? "Continue →" : "Done reading →"}
+        onClick={onContinue}
+      />
     </div>
   );
 }
@@ -506,7 +654,9 @@ function ReadingSectionView({
 function ReadingSectionBlock({ section }: { section: ReadingSection }) {
   return (
     <div>
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2">{section.heading}</h3>
+      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-2">
+        {section.heading}
+      </h3>
       <div className="space-y-2 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
         {section.paragraphs.map((p, i) => (
           <p key={i}>{renderInline(p)}</p>
@@ -532,12 +682,18 @@ function ReadingSectionBlock({ section }: { section: ReadingSection }) {
       )}
       {section.keyTerms && section.keyTerms.length > 0 && (
         <div className="mt-3 rounded-lg bg-slate-100 dark:bg-slate-800/60 p-3">
-          <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Key terms</p>
+          <p className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            Key terms
+          </p>
           <dl className="text-sm space-y-1">
             {section.keyTerms.map((kt) => (
               <div key={kt.term}>
-                <dt className="inline font-semibold text-slate-900 dark:text-slate-200">{kt.term}:</dt>{" "}
-                <dd className="inline text-slate-700 dark:text-slate-400">{kt.definition}</dd>
+                <dt className="inline font-semibold text-slate-900 dark:text-slate-200">
+                  {kt.term}:
+                </dt>{" "}
+                <dd className="inline text-slate-700 dark:text-slate-400">
+                  {kt.definition}
+                </dd>
               </div>
             ))}
           </dl>
@@ -565,8 +721,15 @@ function LessonSectionView({
 
   return (
     <div className="space-y-4">
-      <SectionHeader icon={PlayCircle} title="Lesson" estMinutes={lesson.estMinutes} subtitle={lesson.intro} />
-      <div className="text-xs text-slate-500">Scene {sceneIdx + 1} of {totalScenes}</div>
+      <SectionHeader
+        icon={PlayCircle}
+        title="Lesson"
+        estMinutes={lesson.estMinutes}
+        subtitle={lesson.intro}
+      />
+      <div className="text-xs text-slate-500">
+        Scene {sceneIdx + 1} of {totalScenes}
+      </div>
       <LessonSceneView scene={lesson.scenes[sceneIdx]} />
       <div className="flex items-center justify-between pt-2 gap-3">
         <button
@@ -608,7 +771,9 @@ function LessonSceneView({ scene }: { scene: LessonScene }) {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/40">
       <div className="flex flex-wrap items-center gap-2 mb-1">
-        <h3 className="font-bold text-slate-900 dark:text-slate-100">{scene.title}</h3>
+        <h3 className="font-bold text-slate-900 dark:text-slate-100">
+          {scene.title}
+        </h3>
         {scene.accessibleEntry && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
             <ShieldCheck className="w-3 h-3" />
@@ -616,10 +781,14 @@ function LessonSceneView({ scene }: { scene: LessonScene }) {
           </span>
         )}
       </div>
-      <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed">{scene.body}</p>
+      <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed">
+        {scene.body}
+      </p>
       {scene.choice && (
         <div className="mt-4 space-y-2">
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{scene.choice.prompt}</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {scene.choice.prompt}
+          </p>
           {scene.choice.options.map((opt, i) => (
             <button
               key={i}
@@ -630,9 +799,13 @@ function LessonSceneView({ scene }: { scene: LessonScene }) {
                   : "border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50"
               }`}
             >
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{opt.label}</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {opt.label}
+              </p>
               {picked === i && (
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">{opt.feedback}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">
+                  {opt.feedback}
+                </p>
               )}
             </button>
           ))}
@@ -656,18 +829,32 @@ function PracticeSectionView({
   const { practice } = content;
   return (
     <div className="space-y-4">
-      <SectionHeader icon={Lightbulb} title="Practice" estMinutes={practice.estMinutes} subtitle={practice.intro} />
+      <SectionHeader
+        icon={Lightbulb}
+        title="Practice"
+        estMinutes={practice.estMinutes}
+        subtitle={practice.intro}
+      />
       <div className="space-y-4">
         {practice.items.map((item, i) => (
           <PracticeItemView key={i} item={item} index={i} />
         ))}
       </div>
-      <NextButton label={done ? "Continue →" : "Done with practice →"} onClick={onContinue} />
+      <NextButton
+        label={done ? "Continue →" : "Done with practice →"}
+        onClick={onContinue}
+      />
     </div>
   );
 }
 
-function PracticeItemView({ item, index }: { item: PracticeItem; index: number }) {
+function PracticeItemView({
+  item,
+  index,
+}: {
+  item: PracticeItem;
+  index: number;
+}) {
   const [picked, setPicked] = useState<Set<number>>(new Set());
 
   return (
@@ -675,7 +862,11 @@ function PracticeItemView({ item, index }: { item: PracticeItem; index: number }
       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
         {index + 1}. {item.prompt}
       </p>
-      {item.detail && <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{item.detail}</p>}
+      {item.detail && (
+        <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
+          {item.detail}
+        </p>
+      )}
       <div className="space-y-1.5 mt-2">
         {item.options.map((opt, i) => {
           const chosen = picked.has(i);
@@ -691,15 +882,21 @@ function PracticeItemView({ item, index }: { item: PracticeItem; index: number }
                   : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{opt.label}</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {opt.label}
+              </p>
               {chosen && (
-                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1.5">{opt.feedback}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1.5">
+                  {opt.feedback}
+                </p>
               )}
             </button>
           );
         })}
       </div>
-      <p className="text-[11px] text-slate-500 mt-2">Tap any option to see the reasoning. Multiple may be correct.</p>
+      <p className="text-[11px] text-slate-500 mt-2">
+        Tap any option to see the reasoning. Multiple may be correct.
+      </p>
     </div>
   );
 }
@@ -740,7 +937,8 @@ function HomeworkSectionView({
       const body = await res.json().catch(() => null);
       if (!res.ok) {
         throw new Error(
-          (body && (body.error || body.message)) || `${res.status} ${res.statusText}`,
+          (body && (body.error || body.message)) ||
+            `${res.status} ${res.statusText}`,
         );
       }
       emitFromGamification(body?.gamification, celebrate);
@@ -772,9 +970,16 @@ function HomeworkSectionView({
         onChange={(e) => setResponse(e.target.value)}
         onFocus={(e) => {
           // On mobile the soft keyboard hides the input — bring it back into view.
-          if (typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches) {
+          if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(max-width: 768px)").matches
+          ) {
             setTimeout(
-              () => e.currentTarget?.scrollIntoView({ behavior: "smooth", block: "center" }),
+              () =>
+                e.currentTarget?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                }),
               150,
             );
           }
@@ -784,24 +989,32 @@ function HomeworkSectionView({
         className="w-full rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
       />
       <p className="text-[11px] text-slate-500">
-        Saved when you submit. Your facilitator can review your response from their dashboard.
+        Saved when you submit. Your facilitator can review your response from
+        their dashboard.
       </p>
       {error && (
-        <p className="text-xs text-red-600 dark:text-red-400">Couldn't submit: {error}</p>
+        <p className="text-xs text-red-600 dark:text-red-400">
+          Couldn't submit: {error}
+        </p>
       )}
       <div className="flex items-center justify-end gap-3">
         {submittedOk && !error && (
-          <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Submitted ✓</span>
+          <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+            Submitted ✓
+          </span>
         )}
         <button
           onClick={onSubmit}
           disabled={submitting || response.trim().length === 0}
           className="px-5 py-3 sm:py-2 min-h-[44px] rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] disabled:bg-slate-300 disabled:text-slate-500 disabled:active:scale-100 dark:disabled:bg-slate-700 text-white text-sm font-medium transition-all"
         >
-          {submitting ? "Submitting…" : isCapstone ? "Submit capstone →" : "Submit homework →"}
+          {submitting
+            ? "Submitting…"
+            : isCapstone
+              ? "Submit capstone →"
+              : "Submit homework →"}
         </button>
       </div>
     </div>
   );
 }
-
