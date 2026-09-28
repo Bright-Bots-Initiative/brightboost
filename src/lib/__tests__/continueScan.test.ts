@@ -303,3 +303,53 @@ describe("flattenModule ordering", () => {
     ]);
   });
 });
+
+describe("bounded structure prefetch (#907)", () => {
+  it("starts at most three allowed structures and keeps priority when a later one wins the network race", async () => {
+    const finishes = new Map<string, (value: unknown) => void>();
+    const loadModule = vi.fn(
+      (slug: string) =>
+        new Promise((resolve) => {
+          finishes.set(slug, resolve);
+        }),
+    );
+    const scan = scanForNextActivity({
+      slugPriority: ["hidden", "first", "second", "third", "fourth"],
+      progress: [],
+      isAllowed: (slug) => slug !== "hidden",
+      loadModule,
+      prefetch: 3,
+    });
+    await Promise.resolve();
+    expect(loadModule.mock.calls.map(([slug]) => slug)).toEqual([
+      "first",
+      "second",
+      "third",
+    ]);
+    finishes.get("second")!(moduleFixture("second", ["b1"]));
+    finishes.get("first")!(moduleFixture("first", ["a1"]));
+    expect((await scan)?.nextOne?.activityId).toBe("a1");
+    expect(loadModule).toHaveBeenCalledTimes(3);
+    finishes.get("third")!(moduleFixture("third", ["c1"]));
+  });
+
+  it("uses an already-prefetched structure after the prior module is complete", async () => {
+    const loadModule = loaderFor();
+    const result = await scanForNextActivity({
+      slugPriority: ["mod-b", "mod-a"],
+      progress: ["b1", "b2"].map((activityId) => ({
+        moduleSlug: "mod-b",
+        activityId,
+        status: "COMPLETED",
+      })),
+      loadModule,
+      isAllowed: ALLOW_ALL,
+      prefetch: 3,
+    });
+    expect(result?.completedModules).toEqual([
+      { slug: "mod-b", title: "mod-b title" },
+    ]);
+    expect(result?.nextOne?.activityId).toBe("a1");
+    expect(loadModule).toHaveBeenCalledTimes(2);
+  });
+});

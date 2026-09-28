@@ -488,18 +488,23 @@ export const api = {
     if (!res.ok) throw new ApiError("Could not load specialty", res.status);
     return parseSpecialtyStatus(await res.json());
   },
-  getModules: async (params?: { level?: string }) => {
+  getModules: async (params?: { level?: string; signal?: AbortSignal }) => {
     const url = new URL(join(API_BASE, "/modules"), window.location.origin);
     if (params?.level) {
       url.searchParams.append("level", params.level);
     }
     const res = await fetch(url.toString(), {
       headers: getHeaders(),
+      signal: params?.signal,
     });
+    if (!res.ok) throw new ApiError("Could not load modules", res.status);
     return res.json();
   },
 
-  getProgress: async (options?: { excludeUser?: boolean }) => {
+  getProgress: async (options?: {
+    excludeUser?: boolean;
+    signal?: AbortSignal;
+  }) => {
     const url = new URL(
       join(API_BASE, "/get-progress"),
       window.location.origin,
@@ -510,20 +515,26 @@ export const api = {
 
     const res = await fetch(url.toString(), {
       headers: getHeaders(),
+      signal: options?.signal,
     });
+    if (!res.ok) throw new ApiError("Could not load progress", res.status);
     return res.json();
   },
 
-  getModule: async (slug: string, options?: { structureOnly?: boolean }) => {
+  getModule: async (
+    slug: string,
+    options?: { structureOnly?: boolean; signal?: AbortSignal },
+  ) => {
     const cacheKey = options?.structureOnly ? `${slug}:structure` : slug;
 
     // cache hit
     const cached = moduleCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < MODULE_TTL_MS) return cached.data;
+    if (!options?.signal && cached && Date.now() - cached.ts < MODULE_TTL_MS)
+      return cached.data;
 
     // in-flight dedupe
     const existing = moduleInFlight.get(cacheKey);
-    if (existing) return existing;
+    if (!options?.signal && existing) return existing;
 
     const p = (async () => {
       const endpoint = options?.structureOnly
@@ -532,6 +543,7 @@ export const api = {
 
       const res = await fetch(join(API_BASE, endpoint), {
         headers: getHeaders(),
+        signal: options?.signal,
       });
 
       if (!res.ok) {
@@ -549,10 +561,12 @@ export const api = {
       }
 
       const data = await res.json();
-      moduleCache.set(cacheKey, { ts: Date.now(), data });
+      if (!options?.signal) moduleCache.set(cacheKey, { ts: Date.now(), data });
       return data;
     })();
 
+    // A caller-owned request must not cancel or populate another session's cache.
+    if (options?.signal) return p;
     moduleInFlight.set(cacheKey, p);
     try {
       return await p;
@@ -592,11 +606,13 @@ export const api = {
     return body;
   },
 
-  getAvatar: async () => {
+  getAvatar: async (options?: { signal?: AbortSignal }) => {
     const res = await fetch(join(API_BASE, "/avatar/me"), {
       headers: getHeaders(),
+      signal: options?.signal,
     });
-    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new ApiError("Could not load avatar", res.status);
+    const data = await res.json();
     // Backend returns { avatar }, but many frontend callers expect the avatar object directly.
     return data?.avatar ?? null;
   },
@@ -678,11 +694,13 @@ export const api = {
     return res.json();
   },
 
-  getStudentCourses: async () => {
+  getStudentCourses: async (options?: { signal?: AbortSignal }) => {
     const res = await fetch(join(API_BASE, "/student/courses"), {
       headers: getHeaders(),
+      signal: options?.signal,
     });
-    return res.json().catch(() => []);
+    if (!res.ok) throw new ApiError("Could not load courses", res.status);
+    return res.json();
   },
 
   /**
@@ -690,11 +708,31 @@ export const api = {
    * policy (#856) reads this so an assignment can lift a set lock for the
    * module it targets.
    */
-  getStudentAssignments: async () => {
+  getStudentAssignments: async (options?: { signal?: AbortSignal }) => {
     const res = await fetch(join(API_BASE, "/student/assignments"), {
       headers: getHeaders(),
+      signal: options?.signal,
     });
-    return res.json().catch(() => []);
+    if (!res.ok) throw new ApiError("Could not load assignments", res.status);
+    return res.json();
+  },
+
+  getStudentBenchmarks: async (
+    courseId: string,
+    options?: { signal?: AbortSignal },
+  ) => {
+    const res = await fetch(
+      join(
+        API_BASE,
+        `/student/courses/${encodeURIComponent(courseId)}/benchmarks`,
+      ),
+      {
+        headers: getHeaders(),
+        signal: options?.signal,
+      },
+    );
+    if (!res.ok) throw new ApiError("Could not load benchmarks", res.status);
+    return res.json();
   },
 
   getStudentAssignedModules: async () => {

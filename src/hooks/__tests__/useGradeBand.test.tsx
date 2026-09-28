@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useGradeBand,
@@ -58,6 +58,55 @@ describe("useGradeBand", () => {
     const { result } = renderHook(() => useGradeBand());
     await waitFor(() => expect(api.getStudentCourses).toHaveBeenCalled());
     expect(result.current).toBe("k2");
+  });
+
+  it("shares courses and only cancels when the final consumer leaves (#907)", async () => {
+    let finish!: (value: any[]) => void;
+    vi.mocked(api.getStudentCourses).mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const first = renderHook(() => useGradeBandState());
+    const second = renderHook(() => useGradeBandState());
+    await waitFor(() => expect(api.getStudentCourses).toHaveBeenCalledTimes(1));
+    const signal = vi.mocked(api.getStudentCourses).mock.calls[0][0]?.signal;
+    first.unmount();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(signal?.aborted).toBe(false);
+    await act(async () => {
+      finish([{ gradeBand: "g3_5", courseId: "c", courseName: "Class" }]);
+    });
+    expect(second.result.current.band).toBe("g3_5");
+    expect(second.result.current.courses?.[0].courseId).toBe("c");
+    second.unmount();
+  });
+
+  it("aborts an abandoned course request and rejects its late response (#907)", async () => {
+    let finish!: (value: any[]) => void;
+    vi.mocked(api.getStudentCourses).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const first = renderHook(() => useGradeBandState());
+    await waitFor(() => expect(api.getStudentCourses).toHaveBeenCalledOnce());
+    const signal = vi.mocked(api.getStudentCourses).mock.calls[0][0]?.signal;
+    first.unmount();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      finish([{ gradeBand: "g3_5" }]);
+    });
+    vi.mocked(api.getStudentCourses).mockResolvedValue([]);
+    const second = renderHook(() => useGradeBandState());
+    await waitFor(() => expect(second.result.current.status).toBe("resolved"));
+    expect(second.result.current.band).toBe("k2");
+    expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
   });
 
   // #866: a synchronous throw used to escape the effect and unmount the tree

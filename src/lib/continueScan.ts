@@ -156,6 +156,8 @@ export interface ScanForNextActivityOptions {
   isCancelled?: () => boolean;
   /** Non-fatal load failures, reported the way the dashboard used to log them. */
   onLoadError?: (slug: string, error: unknown) => void;
+  /** Bounded lookahead; selection still waits in canonical priority order. */
+  prefetch?: number;
 }
 
 /**
@@ -171,16 +173,45 @@ export async function scanForNextActivity({
   isAllowed,
   isCancelled,
   onLoadError,
+  prefetch = 1,
 }: ScanForNextActivityOptions): Promise<ContinueScanResult | null> {
   let nextOne: NextActivity | null = null;
   let upNext: NextActivity[] = [];
   const completedModules: CompletedModule[] = [];
 
-  for (const slug of slugPriority) {
-    if (!isAllowed(slug)) continue;
+  const allowed = slugPriority.filter(isAllowed);
+  const width = Number.isFinite(prefetch)
+    ? Math.max(1, Math.min(3, Math.floor(prefetch)))
+    : 1;
+  // The existing loader accepts heterogeneous curriculum JSON; preserve its
+  // shape across the prefetch boundary until flattenModule reads it.
+  const pending = new Map<number, Promise<PromiseSettledResult<any>>>();
+  const fillWindow = (from: number) => {
+    for (let i = from; i < Math.min(allowed.length, from + width); i++) {
+      if (isCancelled?.() || pending.has(i)) continue;
+      // Observe speculative failures immediately, even if an earlier target
+      // wins before this promise is consumed.
+      pending.set(
+        i,
+        Promise.resolve()
+          .then(() => loadModule(allowed[i]))
+          .then(
+            (value) => ({ status: "fulfilled" as const, value }),
+            (reason) => ({ status: "rejected" as const, reason }),
+          ),
+      );
+    }
+  };
+  for (let index = 0; index < allowed.length; index++) {
+    if (isCancelled?.()) return null;
+    fillWindow(index);
+    const slug = allowed[index];
     try {
-      const deep = await loadModule(slug);
+      const result = await pending.get(index)!;
+      pending.delete(index);
       if (isCancelled?.()) return null;
+      if (result.status === "rejected") throw result.reason;
+      const deep = result.value;
 
       const ordered = flattenModule(deep);
       if (ordered.length === 0) continue;
@@ -209,6 +240,7 @@ export async function scanForNextActivity({
         completedModules.push({ slug, title: deep.title || slug });
       }
     } catch (e) {
+      if (isCancelled?.()) return null;
       // Skip module on fetch failure
       onLoadError?.(slug, e);
     }

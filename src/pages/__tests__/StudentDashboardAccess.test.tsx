@@ -200,7 +200,9 @@ describe("StudentDashboard — Continue can never target refused content", () =>
       catalogEntry(G35_SLUG, "Data Dash", "G3-5"),
     ]);
     vi.mocked(api.getProgress).mockResolvedValue({ progress: [] });
-    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "g3_5" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValue([
+      { courseId: "g35-class", courseName: "Grade 3–5", gradeBand: "g3_5" },
+    ]);
 
     renderDashboard();
 
