@@ -67,6 +67,7 @@
     "goToModules": "Ir a Módulos",
     "play": "Jugar",
     "playActivity": "Jugar {{activity}}",
+    "retry": "Intentar de nuevo",
     "unavailableTitle": "Tablero no disponible",
     "unavailableDesc": "No se pudo cargar tu progreso de aprendizaje.",
     "locked": "Bloqueado",
@@ -1667,7 +1668,13 @@
       "finish": "Terminar"
     },
     "gotchaGears": {
-      "title": "Atrapa Engranajes"
+      "title": "Atrapa Engranajes",
+      "correct": "¡Lo lograste!",
+      "wrong": "¡Ese no!",
+      "missed": "¡Se escapó! ¡Intenta atraparlo más rápido!",
+      "gameOver": "¡Buen esfuerzo!",
+      "scoreLabel": "Engranajes atrapados",
+      "finish": "Terminar"
     },
     "moveMeasure": {
       "title": "Mueve, Mide y Mejora",

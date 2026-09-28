@@ -67,6 +67,7 @@
     "goToModules": "去看模块",
     "play": "玩",
     "playActivity": "玩 {{activity}}",
+    "retry": "重试",
     "unavailableTitle": "仪表盘不可用",
     "unavailableDesc": "无法加载你的学习进度。",
     "levelUnlockedAria": "等级 {{level}} 已解锁",
@@ -1643,7 +1644,13 @@
       "finish": "完成"
     },
     "gotchaGears": {
-      "title": "齿轮大作战"
+      "title": "齿轮大作战",
+      "correct": "答对了！",
+      "wrong": "不是这个！",
+      "missed": "错过了！试着再快一点！",
+      "gameOver": "你很努力！",
+      "scoreLabel": "接住的齿轮",
+      "finish": "完成"
     },
     "mazeMaps": {
       "chapterLabel": "人工智能实验室",

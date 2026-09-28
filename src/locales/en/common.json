@@ -67,6 +67,7 @@
     "goToModules": "Go to Modules",
     "play": "Play",
     "playActivity": "Play {{activity}}",
+    "retry": "Try again",
     "unavailableTitle": "Dashboard unavailable",
     "unavailableDesc": "Could not load your learning progress.",
     "levelUnlockedAria": "Level {{level}} Unlocked",
@@ -1711,7 +1712,13 @@
       "finish": "Finish"
     },
     "gotchaGears": {
-      "title": "Gotcha Gears"
+      "title": "Gotcha Gears",
+      "correct": "Got it!",
+      "wrong": "Not that one!",
+      "missed": "Missed! Try to catch faster!",
+      "gameOver": "Great Effort!",
+      "scoreLabel": "Gears Caught",
+      "finish": "Finish"
     },
     "mazeMaps": {
       "chapterLabel": "AI Lab",

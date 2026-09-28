@@ -63,21 +63,36 @@ export function buildGotchaCompletionPayload(params: {
   score: number;
   roundsLength: number;
   maxStreak: number;
-  roundIdx: number;
+  roundsCompleted: number;
+  correctCount: number;
+  attempts: number;
 }): GameResult {
   return {
     gameKey: "gotcha_gears_unity",
     score: params.score,
     total: params.roundsLength,
     streakMax: params.maxStreak,
-    roundsCompleted: params.roundIdx + 1,
+    roundsCompleted: params.roundsCompleted,
+    // Points retain their arcade/personal-best unit. Accuracy counts choices;
+    // unfinished rounds remain in its denominator, so stopping early cannot
+    // turn one catch into perfect mastery. Wrong picks and misses are attempts.
+    accuracy:
+      params.roundsLength > 0
+        ? (100 * params.correctCount) /
+          Math.max(params.roundsLength, params.attempts)
+        : 0,
+    gameSpecific: {
+      correctCount: params.correctCount,
+      attempts: params.attempts,
+      requiredRounds: params.roundsLength,
+    },
   };
 }
 
 const FIELD_W = 560;
 const FIELD_H = 420;
-const GEAR_H = 52;        // gear pill height
-const GEAR_MIN_W = 100;   // min pill width — ensures labels are readable
+const GEAR_H = 52; // gear pill height
+const GEAR_MIN_W = 100; // min pill width — ensures labels are readable
 
 // ── Falling-gear play field ───────────────────────────────────────────────
 
@@ -95,17 +110,16 @@ function GearField({
     >
       {/* Decorative cogs in background */}
       <div className="absolute inset-0 opacity-5 pointer-events-none text-8xl flex items-center justify-center gap-8">
-        <span>{"⚙️"}</span><span>{"🔧"}</span><span>{"⚙️"}</span>
+        <span>{"⚙️"}</span>
+        <span>{"🔧"}</span>
+        <span>{"⚙️"}</span>
       </div>
 
       {gears.map((g) => (
         <button
           key={g.id}
-          className={`absolute flex items-center gap-1.5 rounded-full font-bold text-sm shadow-lg transition-transform hover:scale-110 active:scale-90 cursor-pointer px-3 py-1 whitespace-nowrap ${
-            g.correct
-              ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white border-2 border-amber-300"
-              : "bg-gradient-to-r from-slate-200 to-slate-300 text-slate-800 border-2 border-slate-200"
-          }`}
+          type="button"
+          className="absolute flex items-center gap-1.5 rounded-full font-bold text-sm shadow-lg transition-transform hover:scale-110 active:scale-90 cursor-pointer px-3 py-1 whitespace-nowrap bg-gradient-to-r from-slate-200 to-slate-300 text-slate-800 border-2 border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-800"
           style={{
             minWidth: GEAR_MIN_W,
             height: GEAR_H,
@@ -135,7 +149,9 @@ function GotchaGearsCore({
 
   const rounds = useMemo(() => {
     const band = getGradeBand(config);
-    const raw = config?.rounds?.length ? config.rounds : GOTCHA_GEARS_CONTENT[band];
+    const raw = config?.rounds?.length
+      ? config.rounds
+      : GOTCHA_GEARS_CONTENT[band];
     return raw.map((r: any) => ({
       clue: resolveField(t, r.clueText ?? r.clue),
       correct: resolveField(t, r.correctLabel ?? r.correctAnswer),
@@ -151,121 +167,176 @@ function GotchaGearsCore({
 
   const [roundIdx, setRoundIdx] = useState(0);
   const [lives, setLives] = useState(maxLives);
+  const livesRef = useRef(maxLives);
+  const stats = useRef({
+    score: 0,
+    streak: 0,
+    maxStreak: 0,
+    correctCount: 0,
+    attempts: 0,
+    roundsCompleted: 0,
+  });
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [maxStreak, setMaxStreak] = useState(0);
   const [gears, setGears] = useState<FallingGear[]>([]);
-  const [feedback, setFeedback] = useState<{ text: string; type: "correct" | "wrong" } | null>(null);
+  const gearsRef = useRef<FallingGear[]>([]);
+  const [feedback, setFeedback] = useState<{
+    text: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   const [gameOver, setGameOver] = useState(false);
   const [roundComplete, setRoundComplete] = useState(false);
-
-  const animRef = useRef<number>(0);
+  const resolved = useRef(false);
+  const finished = useRef(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const round = rounds[roundIdx];
 
-  // Spawn gears for current round
-  const spawnGears = useCallback(() => {
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+    },
+    [],
+  );
+
+  const finishGame = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    onFinish(
+      buildGotchaCompletionPayload({
+        ...stats.current,
+        roundsLength: rounds.length,
+      }),
+    );
+  }, [rounds.length, onFinish]);
+
+  const advanceRound = useCallback(() => {
+    if (livesRef.current <= 0 || finished.current) return;
+    if (roundIdx + 1 >= rounds.length) finishGame();
+    else setRoundIdx(roundIdx + 1);
+  }, [roundIdx, rounds.length, finishGame]);
+
+  const endRound = useCallback(
+    (delay: number) => {
+      resolved.current = true;
+      stats.current.roundsCompleted++;
+      setRoundComplete(true);
+      timers.current.push(
+        setTimeout(() => {
+          setFeedback(null);
+          advanceRound();
+        }, delay),
+      );
+    },
+    [advanceRound],
+  );
+
+  const loseLife = useCallback(() => {
+    livesRef.current--;
+    setLives(livesRef.current);
+    stats.current.streak = 0;
+    setStreak(0);
+    if (livesRef.current <= 0) setGameOver(true);
+  }, []);
+
+  // Spawn each round once. Animation and clicks use the same current gear list
+  // so rapid input cannot count one gear twice before React renders again.
+  useEffect(() => {
     if (!round) return;
-    const labels = [round.correct, ...round.distractors].sort(() => Math.random() - 0.5);
+    const labels = [round.correct, ...round.distractors].sort(
+      () => Math.random() - 0.5,
+    );
     const speed = Math.min(baseSpeed + roundIdx * speedRamp, maxSpeed);
-    // Spread gears evenly across the field with jitter
-    const slotWidth = 90 / labels.length; // percent-based slots
-    const newGears: FallingGear[] = labels.map((label, i) => ({
-      id: `${roundIdx}-${i}-${Date.now()}`,
+    const slotWidth = 90 / labels.length;
+    const next = labels.map((label, i) => ({
+      id: `${roundIdx}-${i}`,
       label,
       correct: label === round.correct,
       x: 5 + slotWidth * i + slotWidth / 2 + (Math.random() * 6 - 3),
       y: -GEAR_H - Math.random() * 50,
       speed: speed * (0.85 + Math.random() * 0.3),
     }));
-    setGears(newGears);
+    gearsRef.current = next;
+    setGears(next);
+    resolved.current = false;
     setRoundComplete(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, roundIdx, baseSpeed, speedRamp]);
+  }, [round, roundIdx, baseSpeed, speedRamp, maxSpeed]);
 
-  useEffect(() => {
-    spawnGears();
-  }, [spawnGears]);
-
-  // Animate gears falling
   useEffect(() => {
     if (gameOver || roundComplete) return;
+    let frame = 0;
     const animate = () => {
-      setGears((prev) => {
-        let allGone = true;
-        const next = prev.map((g) => {
-          const ny = g.y + g.speed;
-          if (ny < FIELD_H + GEAR_H) allGone = false;
-          return { ...g, y: ny };
+      if (resolved.current || finished.current) return;
+      const next = gearsRef.current.map((g) => ({ ...g, y: g.y + g.speed }));
+      if (next.length > 0 && next.every((g) => g.y >= FIELD_H + GEAR_H)) {
+        stats.current.attempts++;
+        loseLife();
+        gearsRef.current = [];
+        setGears([]);
+        setFeedback({
+          text:
+            round?.hint ||
+            t("games.gotchaGears.missed", {
+              defaultValue: "Missed! Try to catch faster!",
+            }),
+          type: "wrong",
         });
-        // If all gears fell off screen without being caught
-        if (allGone && prev.length > 0) {
-          // Miss — lose a life
-          setStreak(0);
-          setLives((l) => {
-            const nl = l - 1;
-            if (nl <= 0) setGameOver(true);
-            return nl;
-          });
-          setFeedback({ text: round?.hint || t("games.gotchaGears.missed", { defaultValue: "Missed! Try to catch faster!" }), type: "wrong" });
-          setTimeout(() => {
-            setFeedback(null);
-            advanceRound();
-          }, 1200);
-          return [];
-        }
-        return next;
-      });
-      animRef.current = requestAnimationFrame(animate);
+        endRound(1200);
+        return;
+      }
+      gearsRef.current = next;
+      setGears(next);
+      frame = requestAnimationFrame(animate);
     };
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameOver, roundComplete, roundIdx]);
-
-  const advanceRound = useCallback(() => {
-    if (roundIdx + 1 >= rounds.length) {
-      finishGame();
-    } else {
-      setRoundIdx((r) => r + 1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundIdx, rounds.length]);
-
-  const finishGame = useCallback(() => {
-    onFinish(buildGotchaCompletionPayload({ score, roundsLength: rounds.length, maxStreak, roundIdx }));
-  }, [score, rounds.length, maxStreak, roundIdx, onFinish]);
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [gameOver, roundComplete, round, loseLife, endRound, t]);
 
   const handleCatch = useCallback(
     (gearId: string) => {
-      const gear = gears.find((g) => g.id === gearId);
+      if (resolved.current || finished.current || livesRef.current <= 0) return;
+      const gear = gearsRef.current.find((g) => g.id === gearId);
       if (!gear) return;
-
+      stats.current.attempts++;
       if (gear.correct) {
+        stats.current.score += calculateGotchaCatchScore(stats.current.streak);
+        stats.current.streak++;
+        stats.current.maxStreak = Math.max(
+          stats.current.maxStreak,
+          stats.current.streak,
+        );
+        stats.current.correctCount++;
+        setScore(stats.current.score);
+        setStreak(stats.current.streak);
+        gearsRef.current = [];
         setGears([]);
-        setRoundComplete(true);
-        const ns = streak + 1;
-        setScore((s) => s + calculateGotchaCatchScore(streak));
-        setStreak(ns);
-        setMaxStreak((m) => Math.max(m, ns));
-        setFeedback({ text: ns > 1 ? `${t("games.gotchaGears.correct", { defaultValue: "Got it!" })} x${ns}` : t("games.gotchaGears.correct", { defaultValue: "Got it!" }), type: "correct" });
-        setTimeout(() => {
-          setFeedback(null);
-          advanceRound();
-        }, 800);
-      } else {
-        // Remove wrong gear, lose streak
-        setGears((prev) => prev.filter((g) => g.id !== gearId));
-        setStreak(0);
-        setLives((l) => {
-          const nl = l - 1;
-          if (nl <= 0) setGameOver(true);
-          return nl;
+        const text = t("games.gotchaGears.correct", {
+          defaultValue: "Got it!",
         });
-        setFeedback({ text: round?.hint || t("games.gotchaGears.wrong", { defaultValue: "Not that one!" }), type: "wrong" });
-        setTimeout(() => setFeedback(null), 1200);
+        setFeedback({
+          text:
+            stats.current.streak > 1
+              ? `${text} x${stats.current.streak}`
+              : text,
+          type: "correct",
+        });
+        endRound(800);
+      } else {
+        gearsRef.current = gearsRef.current.filter((g) => g.id !== gearId);
+        setGears(gearsRef.current);
+        loseLife();
+        setFeedback({
+          text:
+            round?.hint ||
+            t("games.gotchaGears.wrong", { defaultValue: "Not that one!" }),
+          type: "wrong",
+        });
+        if (livesRef.current <= 0) {
+          resolved.current = true;
+          stats.current.roundsCompleted++;
+        }
       }
     },
-    [gears, streak, round, advanceRound, t],
+    [round, loseLife, endRound, t],
   );
 
   if (gameOver) {
@@ -276,7 +347,10 @@ function GotchaGearsCore({
           {t("games.gotchaGears.gameOver", { defaultValue: "Great Effort!" })}
         </h3>
         <p className="text-lg text-slate-600">
-          {t("games.gotchaGears.scoreLabel", { defaultValue: "Gears Caught" })}: <span className="font-bold text-amber-600">{score}</span>
+          {t("games.gotchaGears.scoreLabel", { defaultValue: "Gears Caught" })}:{" "}
+          <span className="font-bold text-amber-600">
+            {stats.current.correctCount}
+          </span>
         </p>
         <button
           className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
@@ -321,6 +395,7 @@ function GotchaGearsCore({
       {/* Feedback */}
       {feedback && (
         <div
+          role="status"
           className={`text-center py-2 rounded-xl font-bold text-sm ${
             feedback.type === "correct"
               ? "bg-green-100 text-green-800 bounce-in"
@@ -346,20 +421,37 @@ export default function GotchaGearsGame({
   const { t } = useTranslation();
   const gameConfig: GotchaGearsConfig = config?.rounds?.length
     ? config
-    : { gameKey: "gotcha_gears_unity", rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)] };
+    : {
+        gameKey: "gotcha_gears_unity",
+        rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)],
+      };
 
   // TODO: add translations for the story, tips in briefing
   const briefing: MissionBriefing = {
     title: pickLocale({ en: "Gear Grab!" }, "Gear Grab!"),
-    story: pickLocale({
-      en: "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
-    }, "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground."),
+    story: pickLocale(
+      {
+        en: "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
+      },
+      "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
+    ),
     icon: "⚙️",
     chapterLabel: "Gotcha Gears",
     themeColor: "amber",
-    tips: pickLocale({
-      en: ["Read the clue carefully", "Tap the correct gear", "Streaks earn bonus points!"]
-    }, ["Read the clue carefully", "Tap the correct gear", "Streaks earn bonus points!"])
+    tips: pickLocale(
+      {
+        en: [
+          "Read the clue carefully",
+          "Tap the correct gear",
+          "Streaks earn bonus points!",
+        ],
+      },
+      [
+        "Read the clue carefully",
+        "Tap the correct gear",
+        "Streaks earn bonus points!",
+      ],
+    ),
   };
 
   return (
@@ -368,6 +460,8 @@ export default function GotchaGearsGame({
       title={t("games.gotchaGears.title", { defaultValue: "Gotcha Gears" })}
       briefing={briefing}
       onComplete={onComplete!}
+      useReportedAccuracy
+      scoreDisplay="points"
     >
       {({ onFinish, reducedEffects: _reducedEffects }) => (
         <GotchaGearsCore config={gameConfig} onFinish={onFinish} />

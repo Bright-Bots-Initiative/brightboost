@@ -20,6 +20,17 @@ const runResultSchema = z
  * Shapes derived from A2-01 inventory — not speculative.
  */
 export const GAME_SPECIFIC_SCHEMAS = {
+  gotcha_gears_unity: z
+    .object({
+      correctCount: smallInt(1000),
+      attempts: smallInt(10000),
+      requiredRounds: z.number().int().min(1).max(1000),
+    })
+    .strict()
+    .refine(
+      (v) => v.correctCount <= v.requiredRounds && v.correctCount <= v.attempts,
+      "Correct catches cannot exceed required rounds or attempts",
+    ),
   move_measure: z
     .object({
       dash: smallInt(10),

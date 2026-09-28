@@ -16,7 +16,9 @@ describe("Gotcha Gears helpers", () => {
         score: 80,
         roundsLength: 6,
         maxStreak: 4,
-        roundIdx: 5,
+        roundsCompleted: 6,
+        correctCount: 4,
+        attempts: 7,
       }),
     ).toMatchObject({
       gameKey: "gotcha_gears_unity",

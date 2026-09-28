@@ -67,6 +67,7 @@
     "goToModules": "Đến trang bài học",
     "play": "Chơi",
     "playActivity": "Chơi {{activity}}",
+    "retry": "Thử lại",
     "unavailableTitle": "Bảng điều khiển không khả dụng",
     "unavailableDesc": "Không thể tải tiến trình học tập của con.",
     "levelUnlockedAria": "Cấp độ {{level}} Đã mở khóa",
@@ -1434,6 +1435,15 @@
     }
   },
   "games": {
+    "gotchaGears": {
+      "title": "Bắt bánh răng",
+      "correct": "Đúng rồi!",
+      "wrong": "Không phải cái đó!",
+      "missed": "Bỏ lỡ rồi! Hãy bắt nhanh hơn nhé!",
+      "gameOver": "Bạn đã rất cố gắng!",
+      "scoreLabel": "Bánh răng đã bắt",
+      "finish": "Hoàn thành"
+    },
     "moveMeasure": {
       "jumpHint": "Giữ nút hoặc phím Cách/Enter, rồi thả khi vào vùng xanh!"
     },
