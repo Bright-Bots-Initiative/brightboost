@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { api } from "@/services/api";
+import { AuthContext } from "@/contexts/AuthContext";
 
 export interface PersonalBest {
   bestScore: number;
@@ -7,67 +8,118 @@ export interface PersonalBest {
   playCount: number;
 }
 
-const cache = new Map<string, PersonalBest>();
+export interface PersonalBestSession {
+  readonly userId: string;
+  readonly token: string;
+}
 
-/**
- * Fetches the personal-best record for a specific gameKey.
- * Caches per session so repeated mounts don't re-fetch.
- */
+/** Capture the identity BEFORE issuing a request, never when it resolves. */
+export function getPersonalBestSession(): PersonalBestSession | null {
+  try {
+    const token = localStorage.getItem("bb_access_token");
+    const user: unknown = JSON.parse(localStorage.getItem("user") || "null");
+    const id =
+      user && typeof user === "object" && "id" in user ? user.id : null;
+    return token && typeof id === "string" && id ? { userId: id, token } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isPersonalBestSessionCurrent(
+  session: PersonalBestSession | null,
+): boolean {
+  const current = getPersonalBestSession();
+  return (
+    current?.userId === session?.userId && current?.token === session?.token
+  );
+}
+
+function keyFor(session: PersonalBestSession, gameKey: string): string {
+  // A re-login has a fresh session even if it belongs to the same child.
+  // This key stays in memory; never log or persist it.
+  return JSON.stringify([session.userId, session.token, gameKey]);
+}
+
+let revision = 0;
+const cache = new Map<string, { best: PersonalBest; revision: number }>();
+
+/** User- and session-scoped records, including late-response isolation. */
 export function usePersonalBest(gameKey: string): PersonalBest | null {
-  const [pb, setPb] = useState<PersonalBest | null>(cache.get(gameKey) ?? null);
+  // Re-render with sign-in/out even when the game remains mounted. Standalone
+  // public games also work without a provider and must not issue auth requests.
+  useContext(AuthContext);
+  const session = getPersonalBestSession();
+  const userId = session?.userId;
+  const token = session?.token;
+  const key = session ? keyFor(session, gameKey) : null;
+  const [state, setState] = useState<{
+    key: string | null;
+    best: PersonalBest | null;
+  }>(() => ({
+    key,
+    best: key ? (cache.get(key)?.best ?? null) : null,
+  }));
 
   useEffect(() => {
-    if (cache.has(gameKey)) {
-      setPb(cache.get(gameKey)!);
+    if (!userId || !token || !key) {
+      setState({ key: null, best: null });
       return;
     }
-    // Anonymous visitors (e.g. the public /try demo) can't have personal
-    // bests — skip the authenticated fetch entirely so public surfaces
-    // stay free of 401s. GameShell hides its PB chips when pb is null.
-    if (!localStorage.getItem("bb_access_token")) {
-      return;
-    }
+    const owner = { userId, token };
+    const cached = cache.get(key);
+    setState({ key, best: cached?.best ?? null });
+    if (cached) return;
     let cancelled = false;
-    api
+    const startedAt = revision;
+    void api
       .getGamePersonalBests()
       .then((bests) => {
-        if (cancelled) return;
+        if (cancelled || !isPersonalBestSessionCurrent(owner)) return;
         for (const b of bests) {
-          cache.set(b.gameKey, {
-            bestScore: b.bestScore,
-            bestStreak: b.bestStreak,
-            playCount: b.playCount,
+          const recordKey = keyFor(owner, b.gameKey);
+          // A completion that resolved after this GET began is newer evidence.
+          if ((cache.get(recordKey)?.revision ?? -1) > startedAt) continue;
+          cache.set(recordKey, {
+            best: {
+              bestScore: b.bestScore,
+              bestStreak: b.bestStreak,
+              playCount: b.playCount,
+            },
+            revision: startedAt,
           });
         }
-        setPb(cache.get(gameKey) ?? null);
+        setState({ key, best: cache.get(key)?.best ?? null });
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [gameKey]);
+  }, [gameKey, key, userId, token]);
 
-  return pb;
+  // Never paint A's state for even one frame after a change to B/anonymous.
+  return key && state.key === key ? state.best : null;
 }
 
-/**
- * Sync the session cache from the record the server actually persisted (#640).
- *
- * Call this after a completion POST resolves, with the `personalBest` row from
- * the response. The backend reconciles GamePersonalBest on replays as well as
- * first completions, so this keeps the "Best" chip and the "New Record!" claim
- * measured against the persisted value instead of the one cached at first
- * mount — which never expired and so froze for the whole session.
- */
-export function updatePersonalBestCache(gameKey: string, best: PersonalBest) {
-  cache.set(gameKey, {
-    bestScore: best.bestScore,
-    bestStreak: best.bestStreak,
-    playCount: best.playCount,
+/** Adopt only the server record belonging to the request's original session. */
+export function updatePersonalBestCache(
+  gameKey: string,
+  best: PersonalBest,
+  session: PersonalBestSession | null = getPersonalBestSession(),
+) {
+  if (!session || !isPersonalBestSessionCurrent(session)) return;
+  cache.set(keyFor(session, gameKey), {
+    best: {
+      bestScore: best.bestScore,
+      bestStreak: best.bestStreak,
+      playCount: best.playCount,
+    },
+    revision: ++revision,
   });
 }
 
-/** Test-only: drop the module-level cache between cases. */
+/** Test-only: drop cached records between independent cases. */
 export function __resetPersonalBestCache() {
   cache.clear();
+  revision = 0;
 }

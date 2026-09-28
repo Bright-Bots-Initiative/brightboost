@@ -16,7 +16,11 @@ import TankTrekGame from "@/components/games/TankTrekGame";
 import QuantumQuestGame from "@/components/games/QuantumQuestGame";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { useGradeBand } from "@/hooks/useGradeBand";
-import { updatePersonalBestCache } from "@/hooks/usePersonalBest";
+import {
+  updatePersonalBestCache,
+  getPersonalBestSession,
+  isPersonalBestSessionCurrent,
+} from "@/hooks/usePersonalBest";
 import { applyG35StoryOverrides } from "@/components/games/gradeBandContent";
 import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { useSpecialty } from "@/contexts/SpecialtyContext";
@@ -330,6 +334,7 @@ export default function ActivityPlayer() {
     // POSTs server-side, and the second request is pure duplicate traffic.
     if (completingRef.current) return false;
     completingRef.current = true;
+    const completionSession = getPersonalBestSession();
     const timeSpentS = getTimeSpentS();
     try {
       const res = await api.completeActivity({
@@ -339,11 +344,16 @@ export default function ActivityPlayer() {
         timeSpentS,
         result,
       });
+      if (!isPersonalBestSessionCurrent(completionSession)) return false;
       // #640: trust the persisted record, not the value cached at first mount.
       // The backend reconciles GamePersonalBest on replays too, so this keeps
       // the next "Best" chip / "New Record!" claim honest for the whole session.
       if (res?.personalBest?.gameKey) {
-        updatePersonalBestCache(res.personalBest.gameKey, res.personalBest);
+        updatePersonalBestCache(
+          res.personalBest.gameKey,
+          res.personalBest,
+          completionSession,
+        );
       }
       track({
         kind: "game_completed",
@@ -371,6 +381,7 @@ export default function ActivityPlayer() {
       }
       return true;
     } catch {
+      if (!isPersonalBestSessionCurrent(completionSession)) return false;
       // Release the latch so the student can retry a failed save; a
       // successful save keeps it latched (the results screen replaces the game).
       completingRef.current = false;
