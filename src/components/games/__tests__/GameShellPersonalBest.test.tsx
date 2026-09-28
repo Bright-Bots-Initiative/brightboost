@@ -62,6 +62,7 @@ describe("GameShell personal-best claim (#640)", () => {
     localStorage.clear();
     __resetPersonalBestCache();
     localStorage.setItem("bb_access_token", "test-token");
+    localStorage.setItem("user", JSON.stringify({ id: "student-123" }));
     vi.stubGlobal(
       "matchMedia",
       vi.fn().mockReturnValue({

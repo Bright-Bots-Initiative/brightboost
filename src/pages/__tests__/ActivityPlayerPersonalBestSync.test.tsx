@@ -1,4 +1,5 @@
 import {
+  act,
   render,
   renderHook,
   screen,
@@ -92,7 +93,9 @@ describe("ActivityPlayer personal-best cache sync (#640)", () => {
     __resetGradeBandCache();
     __resetPersonalBestCache();
     localStorage.clear();
+    sessionStorage.clear();
     localStorage.setItem("bb_access_token", "test-token");
+    localStorage.setItem("user", JSON.stringify({ id: "student-123" }));
     vi.mocked(api.getModule).mockResolvedValue(mockModule);
     vi.mocked(api.getStudentCourses).mockResolvedValue([]);
     // Nothing cached from the server on a cold read — only the completion
@@ -158,5 +161,30 @@ describe("ActivityPlayer personal-best cache sync (#640)", () => {
     const { result } = renderHook(() => usePersonalBest(GAME_KEY));
     await waitFor(() => expect(api.getGamePersonalBests).toHaveBeenCalled());
     expect(result.current).toBeNull();
+  });
+
+  it("rejects A's late completion after B signs in (#902)", async () => {
+    let finish!: (value: any) => void;
+    vi.mocked(api.completeActivity).mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    renderPlayer();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Mark Complete" }),
+    );
+    await waitFor(() => expect(api.completeActivity).toHaveBeenCalledOnce());
+    localStorage.setItem("user", JSON.stringify({ id: "student-b" }));
+    localStorage.setItem("bb_access_token", "token-b");
+    await act(async () => {
+      finish({ personalBest: PERSISTED_BEST, reward: { xpDelta: 50 } });
+    });
+    const { result } = renderHook(() => usePersonalBest(GAME_KEY));
+    await waitFor(() =>
+      expect(api.getGamePersonalBests).toHaveBeenCalledOnce(),
+    );
+    expect(result.current).toBeNull();
+    expect(sessionStorage.getItem("bb_session_completions")).toBeNull();
   });
 });

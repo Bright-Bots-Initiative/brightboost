@@ -22,8 +22,8 @@ import {
   Check,
   Rocket,
 } from "lucide-react";
-import { api, useApi } from "@/services/api";
-import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
+import { withRequestDeadline } from "@/lib/requestDeadline";
 import { cn } from "@/lib/utils";
 import { translateContentName } from "@/utils/localizedContent";
 import {
@@ -84,15 +84,16 @@ export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const authApi = useApi();
-  // #856: the scan waits for the band instead of running once on the k2
-  // default and again after it resolves — that both removes the double load
-  // and stops a 3-5 student's own G3-5 content from being filtered out of
-  // "Play Next" on the first pass. A failed band keeps the historical k2
-  // default here: this surface only orders content, it never tells a child
-  // their module is "for bigger kids".
-  const { band: gradeBand, status: bandStatus } = useGradeBandState();
+  const [reloadKey, setReloadKey] = useState(0);
+  const {
+    band: gradeBand,
+    status: bandStatus,
+    courses,
+  } = useGradeBandState(reloadKey);
+  const sessionKey = JSON.stringify([
+    user?.id,
+    localStorage.getItem("bb_access_token"),
+  ]);
 
   const [avatar, setAvatar] = useState<any>(null);
   const [, setModules] = useState<any[]>([]);
@@ -103,7 +104,11 @@ export default function StudentDashboard() {
     [],
   );
   const [completedActivitiesCount, setCompletedActivitiesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [primaryLoading, setLoading] = useState(true);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const loading =
+    primaryLoading || loadedFor !== sessionKey || bandStatus === "pending";
   const [assignedSessions, setAssignedSessions] = useState<
     AssignedSessionView[]
   >([]);
@@ -148,20 +153,55 @@ export default function StudentDashboard() {
   }, [avatar?.xp]);
 
   useEffect(() => {
-    // Hold until the band settles: scanning on the k2 default would drop a
-    // 3-5 student's own content from "Play Next" for the first pass.
-    if (bandStatus === "pending") return;
+    const controller = new AbortController();
     let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
+    setNextOne(null);
+    setUpNext([]);
+    setCompletedModules([]);
+    setAssignedSessions([]);
+    setAvatar(null);
+    setProgressList([]);
+    setCompletedActivitiesCount(0);
+    if (bandStatus === "pending") return;
+    if (bandStatus === "failed") {
+      setLoadError(true);
+      setLoadedFor(sessionKey);
+      setLoading(false);
+      return;
+    }
     async function load() {
-      setLoading(true);
       try {
-        const [av, mods, prog] = await Promise.all([
-          api.getAvatar(),
-          api.getModules(),
-          api.getProgress({ excludeUser: true }),
+        // Assignments are required by access policy, but can load alongside
+        // progress/catalog/avatar. Optional surveys and benchmarks run below.
+        const [av, mods, prog, rawSessions] = await Promise.all([
+          withRequestDeadline(
+            (signal) => api.getAvatar({ signal }),
+            controller.signal,
+          ),
+          withRequestDeadline(
+            (signal) => api.getModules({ signal }),
+            controller.signal,
+          ),
+          withRequestDeadline(
+            (signal) => api.getProgress({ excludeUser: true, signal }),
+            controller.signal,
+          ),
+          withRequestDeadline(
+            (signal) => api.getStudentAssignments({ signal }),
+            controller.signal,
+          ),
         ]);
         if (cancelled) return;
-
+        if (
+          !Array.isArray(mods) ||
+          !Array.isArray(prog?.progress) ||
+          !Array.isArray(rawSessions)
+        ) {
+          throw new Error("Invalid dashboard response");
+        }
+        const sessions: AssignedSession[] = rawSessions;
         setAvatar(av);
 
         const allMods = Array.isArray(mods) ? mods : [];
@@ -175,18 +215,6 @@ export default function StudentDashboard() {
           .filter((p: any) => p?.status === "COMPLETED")
           .map((p: any) => String(p.activityId));
         setCompletedActivitiesCount(completedActivityIds.length);
-
-        // Assigned sessions (pilot mode) load BEFORE the Continue scan: a
-        // teacher assignment lifts the set lock for its target (#856 policy E),
-        // so the scan needs them to make the same decision the student sees.
-        let sessions: AssignedSession[] = [];
-        try {
-          const raw = await api.getStudentAssignments();
-          if (Array.isArray(raw)) sessions = raw;
-        } catch {
-          // No sessions or not enrolled — that's fine
-        }
-        if (cancelled) return;
 
         const assignedModuleSlugs = new Set(
           sessions
@@ -227,91 +255,113 @@ export default function StudentDashboard() {
         const slugPriority = buildModuleSlugPriority(allMods, progList);
 
         // Scan modules in priority order to find first incomplete activity
+        let scanFailed = false;
         const scan = await scanForNextActivity({
           slugPriority,
           progress: progList,
-          loadModule: (slug) => api.getModule(slug, { structureOnly: true }),
+          loadModule: (slug) =>
+            withRequestDeadline(
+              (signal) => api.getModule(slug, { structureOnly: true, signal }),
+              controller.signal,
+            ),
+          prefetch: 3,
           isAllowed,
           isCancelled: () => cancelled,
-          onLoadError: (slug, e) =>
-            console.warn(`Failed to fetch module ${slug}:`, e),
+          onLoadError: () => {
+            scanFailed = true;
+          },
         });
         if (cancelled || !scan) return;
+        if (!scan.nextOne && scanFailed)
+          throw new Error("Could not resolve the next activity");
 
         setNextOne(scan.nextOne);
         setUpNext(scan.upNext);
         setCompletedModules(scan.completedModules);
-
-        // Load enrolled courses for pulse surveys
-        try {
-          const courses = await authApi.get("/student/courses");
-          if (!cancelled && Array.isArray(courses)) {
-            setEnrolledCourses(
-              courses.map((c: any) => ({ id: c.courseId, name: c.courseName })),
-            );
-            // Build set of already-completed pulse keys from localStorage
-            const doneKeys = new Set<string>();
-            for (const c of courses) {
-              if (localStorage.getItem(`bb_pulse_pre_${c.courseId}`))
-                doneKeys.add(`pre_${c.courseId}`);
-              if (localStorage.getItem(`bb_pulse_post_${c.courseId}`))
-                doneKeys.add(`post_${c.courseId}`);
-            }
-            setPulseDoneKeys(doneKeys);
-          }
-        } catch {
-          // Not enrolled in any courses — that's fine
-        }
-
-        // Load benchmarks for enrolled courses (API-driven)
-        try {
-          const courses = await authApi.get("/student/courses");
-          if (!cancelled && Array.isArray(courses)) {
-            const allBenchmarks: typeof studentBenchmarks = [];
-            for (const c of courses) {
-              try {
-                const bms = await authApi.get(
-                  `/student/courses/${c.courseId}/benchmarks`,
-                );
-                if (Array.isArray(bms)) {
-                  for (const b of bms) {
-                    allBenchmarks.push({
-                      id: b.id,
-                      kind: b.kind,
-                      courseName: c.courseName,
-                      courseId: c.courseId,
-                      templateTitle: b.template?.title ?? "Benchmark",
-                      completed: !!b.completed,
-                      locked: !!b.locked,
-                    });
-                  }
-                }
-              } catch {
-                /* skip */
-              }
-            }
-            if (!cancelled) setStudentBenchmarks(allBenchmarks);
-          }
-        } catch {
-          /* skip */
-        }
-      } catch (e) {
-        console.error(e);
-        toast({
-          title: t("dashboard.unavailableTitle"),
-          description: t("dashboard.unavailableDesc"),
-          variant: "destructive",
-        });
+      } catch {
+        if (!cancelled) setLoadError(true);
       } finally {
-        if (!cancelled) setLoading(false);
+        // Stop any speculative structures after the selected target is known.
+        controller.abort();
+        if (!cancelled) {
+          setLoadedFor(sessionKey);
+          setLoading(false);
+        }
       }
     }
-    load();
+    void load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
-    // The band is waited on above rather than defaulted, so this runs once.
-  }, [toast, t, authApi, gradeBand, bandStatus]);
+  }, [gradeBand, bandStatus, sessionKey, reloadKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    setEnrolledCourses([]);
+    setStudentBenchmarks([]);
+    setPulseDoneKeys(new Set());
+    setPulseTarget(null);
+    if (!courses) return;
+    setEnrolledCourses(
+      courses.map((c) => ({ id: c.courseId, name: c.courseName })),
+    );
+    const doneKeys = new Set<string>();
+    for (const course of courses) {
+      if (localStorage.getItem(`bb_pulse_pre_${course.courseId}`))
+        doneKeys.add(`pre_${course.courseId}`);
+      if (localStorage.getItem(`bb_pulse_post_${course.courseId}`))
+        doneKeys.add(`post_${course.courseId}`);
+    }
+    setPulseDoneKeys(doneKeys);
+
+    // Independent optional work, at most three requests at once. One failed or
+    // stalled course cannot hold the primary action or discard other courses.
+    let nextCourse = 0;
+    const results: (typeof studentBenchmarks)[] = courses.map(() => []);
+    const loadBenchmarks = async () => {
+      while (!signal.aborted && nextCourse < courses.length) {
+        const index = nextCourse++;
+        const course = courses[index];
+        try {
+          const benchmarks = await withRequestDeadline(
+            (requestSignal) =>
+              api.getStudentBenchmarks(course.courseId, {
+                signal: requestSignal,
+              }),
+            signal,
+          );
+          if (signal.aborted) return;
+          if (Array.isArray(benchmarks)) {
+            results[index] = benchmarks.map(
+              (b: {
+                id: string;
+                kind: string;
+                template?: { title?: string } | null;
+                completed?: boolean;
+                locked?: boolean;
+              }) => ({
+                id: b.id,
+                kind: b.kind,
+                courseName: course.courseName,
+                courseId: course.courseId,
+                templateTitle:
+                  b.template?.title ?? t("benchmark.student.sectionTitle"),
+                completed: !!b.completed,
+                locked: !!b.locked,
+              }),
+            );
+            setStudentBenchmarks(results.flat());
+          }
+        } catch {
+          /* Optional; other courses and the primary action still work. */
+        }
+      }
+    };
+    for (let i = 0; i < Math.min(3, courses.length); i++) void loadBenchmarks();
+    return () => controller.abort();
+  }, [courses, sessionKey, t]);
 
   const goToNext = () => {
     if (!nextOne) return navigate(MODULES_INDEX_PATH);
@@ -364,7 +414,21 @@ export default function StudentDashboard() {
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
       {/* Hero Action — the ONE thing a kid should click */}
-      {!loading && (
+      {!loading && loadError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-slate-200 bg-white p-5 space-y-3"
+        >
+          <h2 className="text-xl font-bold">
+            {t("dashboard.unavailableTitle")}
+          </h2>
+          <p>{t("dashboard.unavailableDesc")}</p>
+          <Button onClick={() => setReloadKey((key) => key + 1)}>
+            {t("dashboard.retry")}
+          </Button>
+        </div>
+      )}
+      {!loading && !loadError && (
         <button
           onClick={() => {
             if (nextOne) goToNext();
@@ -826,7 +890,7 @@ export default function StudentDashboard() {
               {t("dashboard.loadingActivities")}
             </p>
           </div>
-        ) : !nextOne && upNext.length === 0 ? (
+        ) : loadError ? null : !nextOne && upNext.length === 0 ? (
           <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
               {t("dashboard.caughtUp")}

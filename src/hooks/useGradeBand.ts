@@ -1,133 +1,136 @@
-/**
- * Hook to determine the current student's grade band from their enrolled courses.
- * Returns "k2" (default) or "g3_5" based on the highest-band class they're enrolled in.
- */
+/** One session-scoped course result for grade eligibility and dashboard extras. */
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
+import { withRequestDeadline } from "@/lib/requestDeadline";
 
 export type GradeBand = "k2" | "g3_5";
-
-/**
- * Whether the band is still being resolved, is known, or could not be loaded.
- *
- * Content decisions (story overrides, quiz variant, game config) deliberately
- * run on the `k2` default while this is `pending` or `failed` — the youngest
- * band is the safe scaffolded default. **Access** decisions must not: treating
- * an unresolved band as `k2` would tell a 3-5 child their own G3-5 module is
- * "made for bigger kids", reporting an infrastructure failure as a learner
- * outcome (design principle 9 / accessibility contract §6). #856 consumes
- * `useGradeBandState` for exactly that reason.
- */
 export type GradeBandStatus = "pending" | "resolved" | "failed";
-
-// Cache keyed by user so a logout → login as a different student in the same
-// tab never serves the previous student's band.
-let cachedBand: { userKey: string; band: GradeBand } | null = null;
-
-// In-flight dedupe: a page can mount several consumers (ActivityPlayer wants
-// the band for content banding while the access policy wants it for the gate),
-// and each used to issue its own `/student/courses` request. They now share
-// one, so the band is resolved — and can fail — exactly once per attempt.
-let inFlight: { userKey: string; promise: Promise<GradeBand> } | null = null;
+export type StudentCourse = {
+  courseId: string;
+  courseName: string;
+  gradeBand?: string;
+};
+type BandState = {
+  band: GradeBand;
+  status: GradeBandStatus;
+  courses: StudentCourse[] | null;
+};
+const pending: BandState = { band: "k2", status: "pending", courses: null };
+const CACHE_TTL_MS = 60_000;
+let cached: { key: string; courses: StudentCourse[]; at: number } | null = null;
+type CourseRequest = {
+  promise: Promise<StudentCourse[]>;
+  controller: AbortController;
+  consumers: number;
+};
+const inFlight = new Map<string, CourseRequest>();
 
 function currentUserKey(): string {
   try {
-    const raw = localStorage.getItem("user");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.id) return String(parsed.id);
-    }
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    // Memory-only; never persist or log the session key.
+    return JSON.stringify([
+      user?.id ?? "anonymous",
+      localStorage.getItem("bb_access_token"),
+    ]);
   } catch {
-    // fall through to anonymous
+    return "anonymous";
   }
-  return "anonymous";
 }
 
-/** Test-only escape hatch to clear the module-level cache between cases. */
-export function __resetGradeBandCache() {
-  cachedBand = null;
-  inFlight = null;
+function cachedCourses(key: string): StudentCourse[] | null {
+  return cached?.key === key && Date.now() - cached.at < CACHE_TTL_MS
+    ? cached.courses
+    : null;
 }
 
-/** One shared load per user per attempt; resolves the band, caches on success. */
-function loadBand(userKey: string): Promise<GradeBand> {
-  if (inFlight?.userKey === userKey) return inFlight.promise;
-  // The call is deferred into a callback so a synchronous throw becomes a
-  // rejection of `promise` (settling to `failed`) instead of escaping the
-  // effect before `inFlight` is set; a non-promise return no longer throws.
-  const promise = Promise.resolve()
-    .then(() => api.getStudentCourses())
-    .then((courses: any[]) => {
-      // Use the highest grade band from any enrolled course
-      const hasG35 = courses?.some((c: any) => c.gradeBand === "g3_5");
-      const resolved: GradeBand = hasG35 ? "g3_5" : "k2";
-      cachedBand = { userKey, band: resolved };
-      return resolved;
-    });
-  inFlight = { userKey, promise };
-  // Clear the slot either way so a retry after a failure actually re-requests.
-  promise
+function resolved(courses: StudentCourse[]): BandState {
+  return {
+    band: courses.some((c) => c.gradeBand === "g3_5") ? "g3_5" : "k2",
+    status: "resolved",
+    courses,
+  };
+}
+
+function loadCourses(key: string): CourseRequest {
+  const existing = inFlight.get(key);
+  if (existing && !existing.controller.signal.aborted) return existing;
+  const controller = new AbortController();
+  const request: CourseRequest = {
+    controller,
+    consumers: 0,
+    // Deferring the API call also turns a synchronous throw into a rejection.
+    promise: withRequestDeadline(
+      (signal) => api.getStudentCourses({ signal }),
+      controller.signal,
+    ).then((courses) => {
+      if (
+        !Array.isArray(courses) ||
+        courses.some((course) => !course || typeof course !== "object")
+      ) {
+        throw new Error("Invalid course list");
+      }
+      if (currentUserKey() === key && !controller.signal.aborted)
+        cached = { key, courses, at: Date.now() };
+      return courses;
+    }),
+  };
+  inFlight.set(key, request);
+  void request.promise
     .catch(() => undefined)
     .finally(() => {
-      if (inFlight?.promise === promise) inFlight = null;
+      if (inFlight.get(key) === request) inFlight.delete(key);
     });
-  return promise;
+  return request;
 }
 
-/**
- * The band plus how far its resolution got.
- *
- * `band` keeps the historical contract: `k2` until (and unless) the student's
- * courses say otherwise, so content consumers can ignore `status` entirely.
- *
- * Known gap, deliberately deferred (#856 follow-up): a `/student/courses`
- * outage still quietly narrows a 3-5 student's **dashboard** to the k2 view,
- * so their G3-5 content drops out of "Play Next" with no explanation. The
- * deep-link surfaces refuse to guess and surface a system problem instead, but
- * the dashboard only orders content and has no error surface of its own, so it
- * keeps the historical default rather than blocking the whole page.
- *
- * @param reloadKey bump to retry after a `failed` status.
- */
-export function useGradeBandState(reloadKey = 0): {
-  band: GradeBand;
-  status: GradeBandStatus;
-} {
-  const userKey = currentUserKey();
-  const cached = cachedBand?.userKey === userKey ? cachedBand : null;
-  const [state, setState] = useState<{
-    band: GradeBand;
-    status: GradeBandStatus;
-  }>(
-    cached
-      ? { band: cached.band, status: "resolved" }
-      : { band: "k2", status: "pending" },
-  );
+/** Test-only escape hatch; production caches expire and requests are cancellable. */
+export function __resetGradeBandCache() {
+  cached = null;
+  for (const request of inFlight.values()) request.controller.abort();
+  inFlight.clear();
+}
 
+/** Content may use the k2 fallback; access decisions must wait for resolved. */
+export function useGradeBandState(reloadKey = 0): BandState {
+  const key = currentUserKey();
+  const [state, setState] = useState<{ key: string; value: BandState }>(() => {
+    const courses = cachedCourses(key);
+    return { key, value: courses ? resolved(courses) : pending };
+  });
   useEffect(() => {
-    if (cachedBand?.userKey === userKey) {
-      setState({ band: cachedBand.band, status: "resolved" });
+    const courses = cachedCourses(key);
+    if (courses) {
+      setState({ key, value: resolved(courses) });
       return;
     }
     let cancelled = false;
-    setState((prev) =>
-      prev.status === "pending" ? prev : { band: "k2", status: "pending" },
-    );
-    loadBand(userKey)
-      .then((resolved) => {
-        if (!cancelled) setState({ band: resolved, status: "resolved" });
+    setState({ key, value: pending });
+    const request = loadCourses(key);
+    request.consumers++;
+    void request.promise
+      .then((loaded) => {
+        if (!cancelled && currentUserKey() === key)
+          setState({ key, value: resolved(loaded) });
       })
       .catch(() => {
-        // Content keeps the k2 default; access consumers must read `status`
-        // and refuse to turn this failure into a learner-facing denial.
-        if (!cancelled) setState({ band: "k2", status: "failed" });
+        if (!cancelled && currentUserKey() === key)
+          setState({ key, value: { ...pending, status: "failed" } });
       });
     return () => {
       cancelled = true;
+      request.consumers--;
+      // StrictMode re-subscribes in the same commit. Abort only once the last
+      // consumer is gone, so one page cannot cancel another page's shared load.
+      queueMicrotask(() => {
+        if (request.consumers === 0) {
+          request.controller.abort();
+          if (inFlight.get(key) === request) inFlight.delete(key);
+        }
+      });
     };
-  }, [userKey, reloadKey]);
-
-  return state;
+  }, [key, reloadKey]);
+  return state.key === key ? state.value : pending;
 }
 
 export function useGradeBand(): GradeBand {

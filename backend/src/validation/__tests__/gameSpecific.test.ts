@@ -9,8 +9,9 @@ import {
   type RegisteredGameKey,
 } from "../gameSpecific";
 
-/** A2-01 inventoried gameKeys (remember.md). */
+/** A2-01 plus #895 Gotcha Gears gameKeys (remember.md). */
 const INVENTORIED_KEYS = [
+  "gotcha_gears_unity",
   "move_measure",
   "quantum_quest",
   "tank_trek",
@@ -28,6 +29,7 @@ const validMoveMeasure = {
 };
 
 const validByKey: Record<RegisteredGameKey, unknown> = {
+  gotcha_gears_unity: { correctCount: 1, attempts: 4, requiredRounds: 7 },
   move_measure: validMoveMeasure,
   quantum_quest: {
     maxStreak: 3,
@@ -248,5 +250,19 @@ describe("R-4/R-5 guard bite (local loose copy)", () => {
     expect(prodSource).not.toMatch(/z\.record\b/);
     expect(prodSource).not.toMatch(/z\.unknown\b/);
     expect(prodSource).not.toContain(".passthrough(");
+  });
+});
+
+describe("Gotcha Gears telemetry (#895)", () => {
+  it.each([
+    { correctCount: -1, attempts: 3, requiredRounds: 7 },
+    { correctCount: 8, attempts: 8, requiredRounds: 7 },
+    { correctCount: 2, attempts: 1, requiredRounds: 7 },
+    { correctCount: 0, attempts: 0, requiredRounds: 0 },
+    { correctCount: 1.5, attempts: 3, requiredRounds: 7 },
+  ])("rejects impossible counts: %j", (payload) => {
+    expect(
+      GAME_SPECIFIC_SCHEMAS.gotcha_gears_unity.safeParse(payload).success,
+    ).toBe(false);
   });
 });

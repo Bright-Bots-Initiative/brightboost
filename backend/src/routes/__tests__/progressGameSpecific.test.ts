@@ -78,8 +78,9 @@ const AVATAR = {
   level: 1,
 };
 
-/** A2-01 inventoried payloads (remember.md) — self-contained for route suite. */
+/** A2-01 plus #895 Gotcha Gears payloads (remember.md) — self-contained for route suite. */
 const validByKey: Record<RegisteredGameKey, unknown> = {
+  gotcha_gears_unity: { correctCount: 1, attempts: 4, requiredRounds: 7 },
   move_measure: {
     dash: 3,
     jump: 4,
@@ -113,8 +114,9 @@ const validMoveMeasure = validByKey.move_measure as {
   exitCorrect: boolean;
 };
 
-/** A2-01 inventoried gameKeys (remember.md) — T2-1-02 must cover each. */
+/** A2-01 plus #895 Gotcha Gears gameKeys (remember.md) — T2-1-02 must cover each. */
 const A2_01_KEYS = [
+  "gotcha_gears_unity",
   "move_measure",
   "quantum_quest",
   "tank_trek",
