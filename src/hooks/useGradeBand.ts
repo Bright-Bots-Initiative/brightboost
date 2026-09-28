@@ -52,13 +52,18 @@ export function __resetGradeBandCache() {
 /** One shared load per user per attempt; resolves the band, caches on success. */
 function loadBand(userKey: string): Promise<GradeBand> {
   if (inFlight?.userKey === userKey) return inFlight.promise;
-  const promise = api.getStudentCourses().then((courses: any[]) => {
-    // Use the highest grade band from any enrolled course
-    const hasG35 = courses?.some((c: any) => c.gradeBand === "g3_5");
-    const resolved: GradeBand = hasG35 ? "g3_5" : "k2";
-    cachedBand = { userKey, band: resolved };
-    return resolved;
-  });
+  // The call is deferred into a callback so a synchronous throw becomes a
+  // rejection of `promise` (settling to `failed`) instead of escaping the
+  // effect before `inFlight` is set; a non-promise return no longer throws.
+  const promise = Promise.resolve()
+    .then(() => api.getStudentCourses())
+    .then((courses: any[]) => {
+      // Use the highest grade band from any enrolled course
+      const hasG35 = courses?.some((c: any) => c.gradeBand === "g3_5");
+      const resolved: GradeBand = hasG35 ? "g3_5" : "k2";
+      cachedBand = { userKey, band: resolved };
+      return resolved;
+    });
   inFlight = { userKey, promise };
   // Clear the slot either way so a retry after a failure actually re-requests.
   promise
