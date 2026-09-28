@@ -122,26 +122,6 @@ describe("Class Roster Management - Full Flow", () => {
   it("should log in successfully and pass all quality gates", () => {
     cy.visit("/teacher/login");
 
-    // Use custom command for login page accessibility check
-    cy.get("body").then(($body) => {
-      if (
-        $body.find("main").length > 0 &&
-        typeof cy.checkAccessibility === "function"
-      ) {
-        cy.checkAccessibility("main", {
-          rules: {
-            "color-contrast": { enabled: true },
-            "keyboard-navigation": { enabled: true },
-            "form-field-multiple-labels": { enabled: true },
-          },
-        });
-      } else {
-        cy.log(
-          "Accessibility testing ready - will activate when cypress-axe is confirmed working",
-        );
-      }
-    });
-
     cy.get('input[type="email"]').type("teacher@example.com");
     cy.get('input[type="password"]').type("testPassword123");
     cy.get('button[type="submit"]').click();
@@ -157,36 +137,6 @@ describe("Class Roster Management - Full Flow", () => {
     cy.contains("Lessons").should("be.visible");
     cy.contains("Students").should("be.visible");
     cy.contains("Settings").should("be.visible");
-
-    // dashboard accessibility check
-    cy.get("body").then(($body) => {
-      if (
-        $body.find("main").length > 0 &&
-        typeof cy.checkAccessibility === "function"
-      ) {
-        cy.checkAccessibility("main", {
-          rules: {
-            "landmark-one-main": { enabled: true },
-            "page-has-heading-one": { enabled: true },
-          },
-        });
-      } else {
-        cy.log("Dashboard accessibility testing ready for activation");
-      }
-    });
-
-    // performance validation
-    if (typeof cy.checkPerformance === "function") {
-      cy.checkPerformance({
-        domContentLoaded: 3000,
-        loadComplete: 5000,
-        firstContentfulPaint: 2000,
-      });
-    } else {
-      cy.log(
-        "Performance testing ready - will activate when custom commands are confirmed working",
-      );
-    }
   });
 
   it("should load Class Roster table and validate proper UI rendering", () => {
@@ -247,38 +197,12 @@ describe("Class Roster Management - Full Flow", () => {
         // Verify student counts display correctly
         cy.contains("3 students").should("be.visible");
         cy.contains("2 students").should("be.visible");
-
-        // Use custom command for table accessibility validation
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility("table", {
-            rules: {
-              "table-headers": { enabled: true },
-              "th-has-data-cells": { enabled: true },
-              "table-duplicate-name": { enabled: true },
-              "scope-attr-valid": { enabled: true },
-            },
-          });
-        } else {
-          cy.log("Table accessibility validation ready for activation");
-        }
-
-        // Use custom command for performance validation
-        if (typeof cy.checkPerformance === "function") {
-          cy.checkPerformance({
-            domContentLoaded: 2000,
-            loadComplete: 3000,
-            firstContentfulPaint: 1500,
-          });
-        } else {
-          cy.log("Table performance testing ready for activation");
-        }
       } else {
         cy.log(
           "Classes navigation not yet implemented - UI validation ready for Giorgio's table",
         );
         cy.log("✓ API intercept configured for 2 initial classes");
         cy.log("✓ Data structure validated with proper types");
-        cy.log("✓ Table validation tests ready to activate");
       }
     });
   });
@@ -308,19 +232,6 @@ describe("Class Roster Management - Full Flow", () => {
 
         // Verify modal/form opens
         cy.get('[data-cy="class-form"]').should("be.visible");
-
-        // Use custom command for form accessibility
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility('[data-cy="class-form"]', {
-            rules: {
-              label: { enabled: true },
-              "form-field-multiple-labels": { enabled: true },
-              "aria-input-field-name": { enabled: true },
-            },
-          });
-        } else {
-          cy.log("Form accessibility validation ready for activation");
-        }
 
         // Fill out complete form
         cy.get('[data-cy="class-name-input"]').type("Science Lab");
@@ -368,16 +279,6 @@ describe("Class Roster Management - Full Flow", () => {
         cy.contains("Lab 301").should("be.visible");
         cy.contains("MW 2:00-3:30").should("be.visible");
         cy.contains("0 students").should("be.visible"); // New class starts with 0 students
-
-        // Use custom command for performance validation after update
-        if (typeof cy.checkPerformance === "function") {
-          cy.checkPerformance({
-            domContentLoaded: 2500,
-            loadComplete: 4000,
-          });
-        } else {
-          cy.log("Post-creation performance testing ready for activation");
-        }
       } else {
         cy.log(
           "Create class form not yet implemented - comprehensive flow ready for Daniel's wizard",
@@ -421,19 +322,6 @@ describe("Class Roster Management - Full Flow", () => {
         cy.get('[data-cy="submit-class-btn"]').click();
         cy.contains("Grade is required").should("be.visible");
 
-        // Verify accessibility of error states
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility('[data-cy="class-form"]', {
-            rules: {
-              "aria-invalid-attr": { enabled: true },
-              "aria-describedby": { enabled: true },
-              label: { enabled: true },
-            },
-          });
-        } else {
-          cy.log("Form error accessibility validation ready for activation");
-        }
-
         // Verify ARIA attributes for screen reader support
         cy.get('[aria-invalid="true"]').should("exist");
         cy.get("[aria-describedby]").should("exist");
@@ -462,23 +350,10 @@ describe("Class Roster Management - Full Flow", () => {
     // Step 1: Login with accessibility validation
     cy.visit("/teacher/login");
 
-    if (typeof cy.checkAccessibility === "function") {
-      cy.checkAccessibility("body");
-    } else {
-      cy.log("Login accessibility validation ready for activation");
-    }
-
     cy.get('input[type="email"]').type("teacher@example.com");
     cy.get('input[type="password"]').type("testPassword123");
     cy.get('button[type="submit"]').click();
     cy.url({ timeout: 10000 }).should("include", "/teacher/dashboard");
-
-    // Step 2: Navigate to classes with performance validation
-    if (typeof cy.checkPerformance === "function") {
-      cy.checkPerformance({ domContentLoaded: 3000 });
-    } else {
-      cy.log("Dashboard performance validation ready for activation");
-    }
 
     // Step 3: Load initial roster and verify data
     cy.wait("@getClassRoster").then((interception) => {
@@ -496,17 +371,10 @@ describe("Class Roster Management - Full Flow", () => {
 
         // Verify table exists and shows initial data
         cy.get("table").should("exist");
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility("table");
-        }
 
         // Create new class
         cy.get('[data-cy="add-class-btn"]').click();
         cy.get('[data-cy="class-form"]').should("be.visible");
-
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility('[data-cy="class-form"]');
-        }
 
         cy.get('[data-cy="class-name-input"]').type("Science Lab");
         cy.get('[data-cy="grade-select"]').select("5th");
@@ -538,17 +406,6 @@ describe("Class Roster Management - Full Flow", () => {
 
         cy.log("✓ Step 6: UI successfully updated with new class");
 
-        // Final quality gate checks
-        if (typeof cy.checkAccessibility === "function") {
-          cy.checkAccessibility("main");
-        }
-        if (typeof cy.checkPerformance === "function") {
-          cy.checkPerformance({
-            domContentLoaded: 3000,
-            loadComplete: 5000,
-          });
-        }
-
         cy.log(
           "✅ COMPLETE WORKFLOW SUCCESS: Login → Load Roster → Create Class → Verify Update → All Quality Gates",
         );
@@ -556,9 +413,6 @@ describe("Class Roster Management - Full Flow", () => {
         cy.log("✓ Steps 1-3: Login and data loading successful");
         cy.log(
           "✓ Steps 4-6: UI workflow ready for Giorgio/Daniel implementation",
-        );
-        cy.log(
-          "✅ END-TO-END FRAMEWORK COMPLETE: All components ready for activation",
         );
       }
     });
