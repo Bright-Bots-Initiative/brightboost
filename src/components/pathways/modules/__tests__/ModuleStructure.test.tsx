@@ -4,12 +4,16 @@
  * A section's completion flag gates the quiz, module completion, XP and
  * badges server-side. These tests pin that each completed section is sent
  * exactly once, that a failed save is shown to the learner instead of being
- * swallowed, and that Retry re-sends only what is still unsaved.
+ * swallowed, that Retry re-sends only what is still unsaved, and — with the
+ * real ModulePlayer rendered — that the parent's "Module Complete" screen
+ * never replaces the shell while a failure and its Retry are showing.
  */
 import { StrictMode } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import ModuleStructure, { type SectionKey } from "../ModuleStructure";
+import ModulePlayer from "../../ModulePlayer";
 import type { ModuleContent } from "../cyberLaunchContent";
 
 const celebrateSpy = vi.hoisted(() => vi.fn());
@@ -17,8 +21,59 @@ vi.mock("../../gamification/CelebrationContext", () => ({
   useCelebrate: () => ({ celebrate: celebrateSpy }),
 }));
 
+// English strings from the real locale file, so assertions read as a learner
+// sees them. A string second argument is i18next's default value.
+vi.mock("react-i18next", async () => {
+  const en = (await import("@/locales/en/pathways.json")).default;
+  return {
+    useTranslation: () => ({
+      t: (key: string, opts?: string | Record<string, unknown>) => {
+        let value: unknown = en;
+        for (const k of key.split("."))
+          value = (value as Record<string, unknown> | undefined)?.[k];
+        const vars = typeof opts === "object" ? opts : {};
+        const text =
+          typeof value === "string"
+            ? value
+            : typeof opts === "string"
+              ? opts
+              : key;
+        return text.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k]));
+      },
+    }),
+  };
+});
+
+// ModulePlayer lazy-loads the module router; swap it for the shell over the
+// fixture below so the real parent drives completion without real content.
+const player = vi.hoisted(() => ({ skipQuiz: false }));
+vi.mock("../CyberLaunchModules", async () => {
+  const { default: Shell } = await import("../ModuleStructure");
+  return {
+    default: ({
+      onComplete,
+      onBack,
+    }: {
+      onComplete: (score: number) => void;
+      onBack: () => void;
+    }) => (
+      <Shell
+        content={{ ...CONTENT, skipQuiz: player.skipQuiz }}
+        onBack={onBack}
+        onComplete={onComplete}
+        renderQuiz={({ onQuizComplete }) => (
+          <button type="button" onClick={() => onQuizComplete(80)}>
+            Finish quiz
+          </button>
+        )}
+      />
+    ),
+  };
+});
+
 const SECTION_URL = "/api/pathways/student/milestones/section";
 const HOMEWORK_URL = "/api/pathways/student/milestones/homework";
+const MILESTONE_URL = "/api/pathways/student/milestones";
 
 const CONTENT: ModuleContent = {
   slug: "test-module",
@@ -93,11 +148,12 @@ describe("ModuleStructure section persistence", () => {
   beforeEach(() => {
     celebrateSpy.mockClear();
     replies = {};
+    player.skipQuiz = false;
     fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation((input, init) => {
         const url = String(input);
-        if (url === HOMEWORK_URL) return ok();
+        if (url !== SECTION_URL) return ok();
         const { section } = JSON.parse(String(init?.body)) as {
           section: SectionKey;
         };
@@ -119,6 +175,21 @@ describe("ModuleStructure section persistence", () => {
       );
   }
 
+  // Section PATCHes and ModulePlayer's completion POST, in the order sent.
+  function saveOrder(): string[] {
+    return fetchSpy.mock.calls.flatMap(([input, init]) => {
+      const body = JSON.parse(String(init?.body ?? "{}")) as {
+        section?: SectionKey;
+        status?: string;
+        score?: number;
+      };
+      if (String(input) === SECTION_URL) return [String(body.section)];
+      if (String(input) === MILESTONE_URL && body.status === "completed")
+        return [`completed:${body.score}`];
+      return [];
+    });
+  }
+
   function renderModule(
     props: Partial<React.ComponentProps<typeof ModuleStructure>> = {},
   ) {
@@ -135,8 +206,38 @@ describe("ModuleStructure section persistence", () => {
     );
   }
 
+  // The real completion parent: it replaces the shell with "Module Complete"
+  // once onComplete's POST settles.
+  function renderPlayer() {
+    return render(
+      <StrictMode>
+        <MemoryRouter
+          initialEntries={["/pathways/tracks/cyber-launch/cyber-foundations"]}
+        >
+          <Routes>
+            <Route
+              path="/pathways/tracks/:trackSlug/:moduleSlug"
+              element={<ModulePlayer />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+  }
+
   const click = (name: string) =>
     fireEvent.click(screen.getByRole("button", { name }));
+
+  async function completeFirstFive(submit = "Submit homework →") {
+    fireEvent.click(await screen.findByRole("button", { name: "I'm ready →" }));
+    click("Done reading →");
+    click("Finish lesson →");
+    click("Done with practice →");
+    fireEvent.change(screen.getByPlaceholderText("Type here"), {
+      target: { value: "My answer" },
+    });
+    click(submit);
+  }
 
   it("sends exactly one PATCH per completed section under StrictMode", async () => {
     renderModule();
@@ -256,5 +357,66 @@ describe("ModuleStructure section persistence", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
     );
     expect(sectionCalls()).toEqual(["hook", "hook", "reading", "reading"]);
+  });
+
+  it("hands the parent the score only after the quiz save lands", async () => {
+    let release!: () => void;
+    replies.quiz = [
+      () => new Promise((resolve) => (release = () => resolve(ok()))),
+    ];
+    renderPlayer();
+    await completeFirstFive();
+    fireEvent.click(await screen.findByRole("button", { name: "Finish quiz" }));
+    await waitFor(() => expect(sectionCalls()).toContain("quiz"));
+    expect(saveOrder()).not.toContain("completed:80");
+
+    release();
+    expect(await screen.findByText("Module Complete")).toBeInTheDocument();
+    expect(saveOrder()).toEqual([
+      "hook",
+      "reading",
+      "lesson",
+      "practice",
+      "homework",
+      "quiz",
+      "completed:80",
+    ]);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("keeps a failed quiz save visible and retryable instead of showing Module Complete", async () => {
+    replies.quiz = [serverError];
+    renderPlayer();
+    await completeFirstFive();
+    fireEvent.click(await screen.findByRole("button", { name: "Finish quiz" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't save your progress for: Quiz");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(screen.queryByText("Module Complete")).not.toBeInTheDocument();
+    expect(saveOrder()).not.toContain("completed:80");
+
+    click("Retry");
+    expect(await screen.findByText("Module Complete")).toBeInTheDocument();
+    expect(saveOrder().slice(-3)).toEqual(["quiz", "quiz", "completed:80"]);
+  });
+
+  it("holds the capstone's completion while an earlier section is unsaved", async () => {
+    player.skipQuiz = true;
+    replies.hook = [serverError];
+    renderPlayer();
+    await completeFirstFive("Submit capstone →");
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "Couldn't save your progress for: Why It Matters",
+    );
+    await waitFor(() => expect(sectionCalls()).toContain("homework"));
+    expect(screen.queryByText("Module Complete")).not.toBeInTheDocument();
+    expect(saveOrder()).not.toContain("completed:100");
+
+    click("Retry");
+    expect(await screen.findByText("Module Complete")).toBeInTheDocument();
+    expect(saveOrder().slice(-2)).toEqual(["hook", "completed:100"]);
   });
 });

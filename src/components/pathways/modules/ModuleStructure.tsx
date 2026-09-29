@@ -15,6 +15,7 @@
  * a render-prop so the existing per-module scenarios/scoring keep working.
  */
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCelebrate } from "../gamification/CelebrationContext";
 import GlossaryTerm from "../glossary/GlossaryTerm";
 import {
@@ -180,12 +181,12 @@ function emitFromGamification(
 }
 
 /**
- * PATCH one section's completion. Failures are non-blocking — the learner
- * keeps going — but not silent: the returned promise rejects on a network
- * error, a non-2xx status, or a body that is not JSON, so the caller can
- * surface it. When the server responds with gamification side-effects
- * (level-up or badges) we hand them to the celebration context for the
- * overlay.
+ * PATCH one section's completion. Failures don't stop the learner moving
+ * between sections, but they are not silent: the returned promise rejects
+ * on a network error, a non-2xx status, or a body that is not JSON, so the
+ * caller can surface it. When the server responds with gamification
+ * side-effects (level-up or badges) we hand them to the celebration context
+ * for the overlay.
  */
 async function persistSection(
   moduleSlug: string,
@@ -230,6 +231,7 @@ export default function ModuleStructure({
   });
   const current = sections[currentIdx];
   const { celebrate } = useCelebrate();
+  const { t } = useTranslation();
 
   // Quiz unlocks only after the first five sections are complete (or the
   // skip-quiz capstone reaches its final section).
@@ -250,13 +252,42 @@ export default function ModuleStructure({
   // Sections whose most recent PATCH failed, shown until a retry succeeds.
   const [unsaved, setUnsaved] = useState<SectionKey[]>([]);
   const [retrying, setRetrying] = useState(false);
+  // Latest save attempt per section, resolving to whether it saved.
+  const saves = useRef(new Map<SectionKey, Promise<boolean>>());
+  // Final score held back from onComplete until every save has landed.
+  const pendingScore = useRef<number | null>(null);
 
-  // Never rejects: the outcome is recorded in `unsaved`.
-  const saveSection = (section: SectionKey) =>
-    persistSection(content.slug, section, true, celebrate).then(
-      () => setUnsaved((u) => u.filter((s) => s !== section)),
-      () => setUnsaved((u) => (u.includes(section) ? u : [...u, section])),
+  // Never rejects: resolves to whether it saved; failures go in `unsaved`.
+  const saveSection = (section: SectionKey) => {
+    const attempt = persistSection(content.slug, section, true, celebrate).then(
+      () => {
+        setUnsaved((u) => u.filter((s) => s !== section));
+        return true;
+      },
+      () => {
+        setUnsaved((u) => (u.includes(section) ? u : [...u, section]));
+        return false;
+      },
     );
+    saves.current.set(section, attempt);
+    return attempt;
+  };
+
+  // The parent swaps this shell for its completion screen on onComplete,
+  // which would take the failure notice and its Retry with it — so hand the
+  // score over only once every section sent this mount has saved.
+  const finishWhenSaved = () =>
+    Promise.all(saves.current.values()).then((results) => {
+      const score = pendingScore.current;
+      if (score === null || !results.every(Boolean)) return;
+      pendingScore.current = null;
+      onComplete(score);
+    });
+
+  const finish = (score: number) => {
+    pendingScore.current = score;
+    finishWhenSaved();
+  };
 
   const markCompleted = (section: SectionKey) => {
     if (!sentSections.current.has(section)) {
@@ -268,7 +299,10 @@ export default function ModuleStructure({
 
   const retryUnsaved = () => {
     setRetrying(true);
-    Promise.all(unsaved.map(saveSection)).then(() => setRetrying(false));
+    Promise.all(unsaved.map(saveSection)).then(() => {
+      setRetrying(false);
+      finishWhenSaved();
+    });
   };
 
   const goNext = () => {
@@ -283,12 +317,12 @@ export default function ModuleStructure({
 
   const handleQuizComplete = (score: number) => {
     markCompleted("quiz");
-    onComplete(score);
+    finish(score);
   };
 
   const handleCapstoneComplete = () => {
     // Capstone has no quiz — completing all 5 sections is the submission.
-    onComplete(100);
+    finish(100);
   };
 
   return (
@@ -320,11 +354,12 @@ export default function ModuleStructure({
         {unsaved.length > 0 && (
           <div role="alert" className="flex flex-wrap items-center gap-2">
             <p className="text-xs text-red-600 dark:text-red-400">
-              Couldn't save your progress for:{" "}
-              {sections
-                .filter((s) => unsaved.includes(s))
-                .map((s) => SECTION_META[s].label)
-                .join(", ")}
+              {t("pathways.moduleShell.saveFailed", {
+                sections: sections
+                  .filter((s) => unsaved.includes(s))
+                  .map((s) => SECTION_META[s].label)
+                  .join(", "),
+              })}
             </p>
             <button
               type="button"
@@ -332,7 +367,9 @@ export default function ModuleStructure({
               disabled={retrying}
               className="px-2 py-2 min-h-[44px] text-xs font-medium text-red-600 underline dark:text-red-400 disabled:opacity-40"
             >
-              {retrying ? "Retrying…" : "Retry"}
+              {retrying
+                ? t("pathways.moduleShell.retrying")
+                : t("pathways.moduleShell.retry")}
             </button>
           </div>
         )}
