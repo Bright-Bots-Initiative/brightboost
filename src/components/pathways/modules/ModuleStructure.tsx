@@ -357,7 +357,7 @@ export default function ModuleStructure({
               {t("pathways.moduleShell.saveFailed", {
                 sections: sections
                   .filter((s) => unsaved.includes(s))
-                  .map((s) => SECTION_META[s].label)
+                  .map((s) => t(`pathways.moduleShell.sections.${s}`))
                   .join(", "),
               })}
             </p>

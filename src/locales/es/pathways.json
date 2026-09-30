@@ -251,6 +251,19 @@
       "loading": "Cargando módulo…",
       "backToTrackCta": "Volver a la Ruta"
     },
+    "moduleShell": {
+      "saveFailed": "No se pudo guardar tu progreso de: {{sections}}",
+      "retry": "Reintentar",
+      "retrying": "Reintentando…",
+      "sections": {
+        "hook": "Por Qué Importa",
+        "reading": "Lectura",
+        "lesson": "Lección",
+        "practice": "Práctica",
+        "homework": "Tarea",
+        "quiz": "Quiz"
+      }
+    },
     "profile": {
       "learner": "Estudiante",
       "completed": "Completados",

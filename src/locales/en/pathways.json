@@ -254,7 +254,15 @@
     "moduleShell": {
       "saveFailed": "Couldn't save your progress for: {{sections}}",
       "retry": "Retry",
-      "retrying": "Retrying…"
+      "retrying": "Retrying…",
+      "sections": {
+        "hook": "Why It Matters",
+        "reading": "Read",
+        "lesson": "Lesson",
+        "practice": "Practice",
+        "homework": "Homework",
+        "quiz": "Quiz"
+      }
     },
     "profile": {
       "learner": "Learner",
