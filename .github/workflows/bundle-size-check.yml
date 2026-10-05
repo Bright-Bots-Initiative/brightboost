@@ -24,11 +24,4 @@ jobs:
         run: npm run build
 
       - name: Check bundle size
-        run: |
-          BUNDLE_SIZE=$(du -sm dist | cut -f1)
-          echo "Bundle size: ${BUNDLE_SIZE}MB"
-          if [ $BUNDLE_SIZE -gt 400 ]; then
-            echo "❌ Bundle size ${BUNDLE_SIZE}MB exceeds 400MB limit"
-            exit 1
-          fi
-          echo "✅ Bundle size ${BUNDLE_SIZE}MB is within limits"
+        run: node scripts/check-bundle-size.js

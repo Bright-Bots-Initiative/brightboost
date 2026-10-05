@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import BrightBoostRobot from "../components/BrightBoostRobot";
 import { Plus, Users, Copy, Check, Zap, Trash2 } from "lucide-react";
@@ -36,8 +36,10 @@ interface CourseListItem {
 const ClassesPage: React.FC = () => {
   const { t } = useTranslation();
   const api = useApi();
-  const [courses, setCourses] = useState<CourseListItem[]>([]);
+  const [courses, setCourses] = useState<CourseListItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const loadVersion = useRef<symbol | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -47,24 +49,33 @@ const ClassesPage: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const courseToDelete = courses.find((c) => c.id === deleteId);
+  const courseToDelete = courses?.find((c) => c.id === deleteId);
 
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
+    const version = Symbol();
+    loadVersion.current = version;
     setIsLoading(true);
+    setLoadFailed(false);
     try {
       const response = await api.get("/teacher/courses");
-      setCourses(Array.isArray(response) ? response : []);
+      if (!Array.isArray(response)) throw new Error("Invalid course list");
+      if (version === loadVersion.current) setCourses(response);
     } catch {
-      setCourses([]);
+      if (version === loadVersion.current) setLoadFailed(true);
     } finally {
-      setIsLoading(false);
+      if (version === loadVersion.current) setIsLoading(false);
     }
-  };
+  }, [api]);
 
   useEffect(() => {
-    loadCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api]);
+    // A new authenticated API belongs to a new session. Do not retain another
+    // account's rows; ordinary refreshes below retain this account's data.
+    setCourses(null);
+    void loadCourses();
+    return () => {
+      loadVersion.current = null;
+    };
+  }, [loadCourses]);
 
   // Parents arriving from signup (?create=home) land straight in the
   // home-group create flow. Clear the param so back/refresh doesn't reopen it.
@@ -92,7 +103,7 @@ const ClassesPage: React.FC = () => {
         grade_band: course.gradeBand,
         group_kind: newKind,
       });
-      setCourses((prev) => [course, ...prev]);
+      setCourses((prev) => [course, ...(prev ?? [])]);
       setNewName("");
       setNewBand("k2");
       setNewKind("class");
@@ -121,7 +132,7 @@ const ClassesPage: React.FC = () => {
         (err instanceof Error && /404/.test(err.message));
       if (!is404) return;
     }
-    setCourses((prev) => prev.filter((c) => c.id !== courseId));
+    setCourses((prev) => prev?.filter((c) => c.id !== courseId) ?? null);
   };
 
   return (
@@ -134,16 +145,52 @@ const ClassesPage: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-1">{t("teacher.classes.subtitle")}</p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {t("teacher.classes.newClass")}
-        </button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            onClick={() => void loadCourses()}
+            disabled={isLoading}
+            className="px-4 py-2 border border-brightboost-blue text-brightboost-blue rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+          >
+            {t("teacher.classes.refresh")}
+          </button>
+          <button
+            onClick={() => setCreateOpen(true)}
+            disabled={isLoading}
+            className="flex items-center px-4 py-2 bg-brightboost-blue text-white rounded-md hover:bg-brightboost-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brightboost-blue"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {t("teacher.classes.newClass")}
+          </button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {loadFailed && (
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-red-800"
+        >
+          <p>
+            {t(
+              courses === null
+                ? "teacher.classes.loadFailed"
+                : "teacher.classes.refreshFailed",
+            )}
+          </p>
+          <button
+            onClick={() => void loadCourses()}
+            disabled={isLoading}
+            className="mt-2 min-h-[44px] underline font-semibold focus:outline-none focus:ring-2 focus:ring-red-800"
+          >
+            {t("common.tryAgain")}
+          </button>
+        </div>
+      )}
+      {isLoading && courses !== null && (
+        <p role="status" className="mb-4 text-gray-600">
+          {t("common.loading")}
+        </p>
+      )}
+      {isLoading && courses === null ? (
         <div className="bg-white p-6 rounded-lg shadow-md" aria-busy="true">
           <div className="h-6 bg-gray-300 animate-pulse w-1/3 mb-4 rounded" />
           <div className="space-y-2">
@@ -152,7 +199,7 @@ const ClassesPage: React.FC = () => {
             ))}
           </div>
         </div>
-      ) : courses.length === 0 ? (
+      ) : courses === null ? null : courses.length === 0 ? (
         <section className="bg-white rounded-lg shadow-md p-8 text-center">
           <BrightBoostRobot size="lg" />
           <h2 className="text-xl text-brightboost-navy mt-4">

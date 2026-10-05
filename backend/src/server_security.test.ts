@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 
+const notifySlack = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+// Never deliver notifications while probing the real server's public routes.
+vi.mock("./utils/slack", () => ({ notifySlack }));
+
 // Mock Prisma
 const prismaMock = vi.hoisted(() => ({
   user: {
@@ -35,6 +39,17 @@ describe("Server Security Headers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  it.each(["ping", "welcome"])(
+    "does not expose the Slack %s test endpoint (#884)",
+    async (endpoint) => {
+      const response = await request(app)
+        .post(`/api/slack-test/${endpoint}`)
+        .send({});
+      expect(response.status).toBe(404);
+      expect(notifySlack).not.toHaveBeenCalled();
+    },
+  );
 
   it("should have correct Strict-Transport-Security header", async () => {
     const response = await request(app).get("/health");

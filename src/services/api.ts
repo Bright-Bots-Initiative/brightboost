@@ -31,6 +31,31 @@ const extractErrorMessage = (data: any): string => {
   return "";
 };
 
+/** Shared status handling for authenticated hooks and direct course requests. */
+const readApiJson = async (response: Response) => {
+  if (!response.ok) {
+    if (response.status === 401)
+      throw new ApiError(t("api.sessionExpired"), 401);
+    if (response.status === 403)
+      throw new ApiError(t("api.dashboardUnavailable"), 403);
+    // Parse error body safely — backend may return HTML for unknown routes
+    const text = await response.text();
+    let errorMsg = t("api.apiRequestFailed");
+    try {
+      const errorData = JSON.parse(text);
+      errorMsg = extractErrorMessage(errorData) || errorMsg;
+    } catch {
+      // non-JSON response (e.g. HTML 404) — use status text
+      errorMsg = `${t("api.apiRequestFailed")}: ${response.status} ${response.statusText}`;
+    }
+    throw new ApiError(errorMsg, response.status);
+  }
+
+  return await response.json();
+};
+
+export type CourseBandResult = { id: string; gradeBand: "k2" | "g3_5" };
+
 const resolveApiBase = (): string => {
   const { VITE_API_BASE, VITE_AWS_API_URL, VITE_API_URL } = import.meta.env;
 
@@ -345,25 +370,7 @@ export const useApi = () => {
           headers,
         });
 
-        if (!response.ok) {
-          if (response.status === 401)
-            throw new ApiError(t("api.sessionExpired"), 401);
-          if (response.status === 403)
-            throw new ApiError(t("api.dashboardUnavailable"), 403);
-          // Parse error body safely — backend may return HTML for unknown routes
-          const text = await response.text();
-          let errorMsg = t("api.apiRequestFailed");
-          try {
-            const errorData = JSON.parse(text);
-            errorMsg = extractErrorMessage(errorData) || errorMsg;
-          } catch {
-            // non-JSON response (e.g. HTML 404) — use status text
-            errorMsg = `${t("api.apiRequestFailed")}: ${response.status} ${response.statusText}`;
-          }
-          throw new ApiError(errorMsg, response.status);
-        }
-
-        return await response.json();
+        return await readApiJson(response);
       } catch (error) {
         // Only retry on network errors or 5xx — never retry 4xx client errors
         const isClientError =
@@ -644,7 +651,10 @@ export const api = {
     return res.json();
   },
 
-  updateCourseBand: async (courseId: string, gradeBand: string) => {
+  updateCourseBand: async (
+    courseId: string,
+    gradeBand: string,
+  ): Promise<CourseBandResult> => {
     const res = await fetch(
       join(API_BASE, `/teacher/courses/${courseId}/band`),
       {
@@ -653,7 +663,14 @@ export const api = {
         body: JSON.stringify({ gradeBand }),
       },
     );
-    return res.json();
+    const data = await readApiJson(res);
+    if (
+      data?.id !== courseId ||
+      (data.gradeBand !== "k2" && data.gradeBand !== "g3_5")
+    ) {
+      throw new Error(t("api.apiRequestFailed"));
+    }
+    return { id: data.id, gradeBand: data.gradeBand };
   },
 
   getCourseAssignments: async (courseId: string) => {
@@ -661,7 +678,7 @@ export const api = {
       join(API_BASE, `/teacher/courses/${courseId}/module-assignments`),
       { headers: getHeaders() },
     );
-    return res.json();
+    return readApiJson(res);
   },
 
   assignModuleToClass: async (
@@ -677,7 +694,7 @@ export const api = {
         body: JSON.stringify({ moduleVariantId, ...opts }),
       },
     );
-    return res.json();
+    return readApiJson(res);
   },
 
   removeModuleAssignment: async (courseId: string, assignmentId: string) => {
@@ -691,7 +708,7 @@ export const api = {
         headers: getHeaders(),
       },
     );
-    return res.json();
+    return readApiJson(res);
   },
 
   getStudentCourses: async (options?: { signal?: AbortSignal }) => {

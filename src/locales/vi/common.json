@@ -385,7 +385,8 @@
     "done": "Xong",
     "replay": "Chơi lại",
     "logOut": "Đăng xuất",
-    "changeLanguage": "Đổi ngôn ngữ"
+    "changeLanguage": "Đổi ngôn ngữ",
+    "tryAgain": "Thử lại"
   },
   "teacher": {
     "admin": "Quản trị Giáo viên",
@@ -494,7 +495,10 @@
       "createDescHome": "Give your home group a name. Your child joins using the generated code.",
       "classNameHome": "Home group name",
       "classNamePlaceholderHome": "e.g. The Garcia Kids",
-      "createGroupHome": "Create Home Group"
+      "createGroupHome": "Create Home Group",
+      "refresh": "Làm mới",
+      "loadFailed": "Không thể tải các lớp học và nhóm gia đình của bạn. Vui lòng thử lại.",
+      "refreshFailed": "Không thể làm mới các lớp học và nhóm gia đình của bạn. Danh sách đã tải gần nhất vẫn được hiển thị."
     },
     "classDetail": {
       "students": "{{count}} học sinh",
@@ -553,7 +557,8 @@
       "made": {
         "title": "What they've made",
         "empty": "No creations shared yet."
-      }
+      },
+      "bandSaveFailed": "Không thể xác nhận thay đổi nhóm lớp. Cài đặt được xác nhận gần nhất vẫn được chọn."
     },
     "resources": {
       "title": "Trung tâm tài nguyên",
