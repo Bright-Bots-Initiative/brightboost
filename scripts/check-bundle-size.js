@@ -1,67 +1,48 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-function checkBundleSize() {
-  const distPath = path.join(__dirname, "../dist");
+// #816: preserve the enforced CI deployment-footprint budget. Compressed
+// entry/route budgets are separate work (#908), not this directory-size gate.
+const MAX_DIST_BYTES = 400 * 1024 * 1024;
+const distPath = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : fileURLToPath(new URL("../dist", import.meta.url));
 
-  if (!fs.existsSync(distPath)) {
-    console.error("❌ Build directory not found. Run npm run build first.");
-    process.exit(1);
+function directoryBytes(directory) {
+  let bytes = 0;
+  for (const entry of fs.readdirSync(directory)) {
+    const target = path.join(directory, entry);
+    const stat = fs.lstatSync(target);
+    if (stat.isDirectory()) bytes += directoryBytes(target);
+    else if (stat.isFile()) bytes += stat.size;
+    else throw new Error(`Unsupported build entry: ${target}`);
   }
-
-  let totalSize = 0;
-  const files = [];
-
-  function getDirectorySize(dirPath) {
-    const items = fs.readdirSync(dirPath);
-
-    for (const item of items) {
-      const itemPath = path.join(dirPath, item);
-      const stats = fs.statSync(itemPath);
-
-      if (stats.isDirectory()) {
-        getDirectorySize(itemPath);
-      } else {
-        const sizeKB = Math.round(stats.size / 1024);
-        totalSize += sizeKB;
-        files.push({ name: item, size: sizeKB });
-      }
-    }
-  }
-
-  getDirectorySize(distPath);
-
-  console.log("📦 Bundle Size Analysis");
-  console.log("======================");
-  console.log(`Total bundle size: ${totalSize} KB`);
-
-  const largestFiles = files.sort((a, b) => b.size - a.size).slice(0, 10);
-
-  console.log("\n🔍 Largest files:");
-  largestFiles.forEach((file) => {
-    console.log(`  ${file.name}: ${file.size} KB`);
-  });
-
-  const WARNING_THRESHOLD = 2000; // 2MB
-  const ERROR_THRESHOLD = 5000; // 5MB
-
-  if (totalSize > ERROR_THRESHOLD) {
-    console.log(
-      `\n❌ Bundle size (${totalSize} KB) exceeds error threshold (${ERROR_THRESHOLD} KB)`,
-    );
-    process.exit(1);
-  } else if (totalSize > WARNING_THRESHOLD) {
-    console.log(
-      `\n⚠️  Bundle size (${totalSize} KB) exceeds warning threshold (${WARNING_THRESHOLD} KB)`,
-    );
-  } else {
-    console.log(
-      `\n✅ Bundle size (${totalSize} KB) is within acceptable limits`,
-    );
-  }
-
-  console.log("\n📝 Note: This is a basic size check. For delta comparison,");
-  console.log("   implement baseline comparison in your CI/CD pipeline.");
+  return bytes;
 }
 
-checkBundleSize();
+try {
+  if (process.argv.length > 3)
+    throw new Error(
+      "Usage: node scripts/check-bundle-size.js [build-directory]",
+    );
+  const bytes = directoryBytes(distPath);
+  if (bytes === 0) {
+    console.error(
+      "BUNDLE_EMPTY: build directory contains no content; run npm run build first.",
+    );
+    process.exitCode = 1;
+  } else if (bytes > MAX_DIST_BYTES) {
+    console.error(
+      `BUNDLE_TOO_LARGE: ${bytes} bytes exceeds ${MAX_DIST_BYTES} bytes (400 MiB).`,
+    );
+    process.exitCode = 1;
+  } else {
+    console.log(
+      `BUNDLE_OK: ${bytes} bytes; limit ${MAX_DIST_BYTES} bytes (400 MiB).`,
+    );
+  }
+} catch (error) {
+  console.error(`BUNDLE_READ_ERROR: ${error.message}`);
+  process.exitCode = 2;
+}

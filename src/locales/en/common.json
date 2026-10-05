@@ -389,7 +389,8 @@
     "done": "Done",
     "replay": "Replay",
     "logOut": "Log Out",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "tryAgain": "Try again"
   },
   "teacher": {
     "admin": "Teacher Admin",
@@ -501,7 +502,10 @@
       "createDescHome": "Give your home group a name. Your child joins using the generated code.",
       "classNameHome": "Home group name",
       "classNamePlaceholderHome": "e.g. The Garcia Kids",
-      "createGroupHome": "Create Home Group"
+      "createGroupHome": "Create Home Group",
+      "refresh": "Refresh",
+      "loadFailed": "Couldn't load your classes and home groups. Please try again.",
+      "refreshFailed": "Couldn't refresh your classes and home groups. The last loaded list is still shown."
     },
     "classDetail": {
       "students": "{{count}} students",
@@ -580,7 +584,8 @@
           "mail_unavailable": "Email is not set up on this server, so the invitation could not be sent.",
           "generic": "Could not send the invitation."
         }
-      }
+      },
+      "bandSaveFailed": "Couldn't confirm the grade-band change. The last confirmed setting is still selected."
     },
     "resources": {
       "title": "Resource Hub",

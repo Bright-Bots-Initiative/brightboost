@@ -385,7 +385,8 @@
     "done": "完成",
     "replay": "重播",
     "logOut": "退出登录",
-    "changeLanguage": "切换语言"
+    "changeLanguage": "切换语言",
+    "tryAgain": "重试"
   },
   "teacher": {
     "admin": "老师管理",
@@ -494,7 +495,10 @@
       "createDescHome": "Give your home group a name. Your child joins using the generated code.",
       "classNameHome": "Home group name",
       "classNamePlaceholderHome": "e.g. The Garcia Kids",
-      "createGroupHome": "Create Home Group"
+      "createGroupHome": "Create Home Group",
+      "refresh": "刷新",
+      "loadFailed": "无法加载你的班级和家庭小组。请重试。",
+      "refreshFailed": "无法刷新你的班级和家庭小组。仍显示上次加载的列表。"
     },
     "classDetail": {
       "students": "{{count}} 名学生",
@@ -553,7 +557,8 @@
       "made": {
         "title": "What they've made",
         "empty": "No creations shared yet."
-      }
+      },
+      "bandSaveFailed": "无法确认年级段更改。仍选中上次确认的设置。"
     },
     "resources": {
       "title": "资源中心",

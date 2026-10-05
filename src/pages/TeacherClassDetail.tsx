@@ -24,6 +24,7 @@ import {
   type ModuleAccessGradeBand,
 } from "@/lib/moduleAccess";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
+import CourseGradeBandSelect from "@/components/teacher/CourseGradeBandSelect";
 import PrepareSessionLink from "@/components/teacher/PrepareSessionLink";
 import CreationStatusChip, {
   type CreationStatus,
@@ -262,8 +263,10 @@ const TeacherClassDetail: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     (async () => {
       setLoading(true);
+      setError(null);
       try {
         const [
           courseData,
@@ -284,6 +287,7 @@ const TeacherClassDetail: React.FC = () => {
           api.get(`/teacher/courses/${id}/attention`).catch(() => null),
           api.get(`/creations?courseId=${id}`).catch(() => []),
         ]);
+        if (cancelled) return;
         setCourse(courseData);
         setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
         setPulse(pulseData);
@@ -293,6 +297,7 @@ const TeacherClassDetail: React.FC = () => {
         setAttention(attentionData);
         setCreations(Array.isArray(creationData) ? creationData : []);
       } catch (err) {
+        if (cancelled) return;
         const is404 =
           (err instanceof ApiError && err.status === 404) ||
           (err instanceof Error &&
@@ -303,9 +308,12 @@ const TeacherClassDetail: React.FC = () => {
             : t("teacher.classDetail.failedLoad"),
         );
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [id, api, t]);
 
   // -------------------------------------------------------------------
@@ -632,31 +640,20 @@ const TeacherClassDetail: React.FC = () => {
                 )}
               </button>
             </span>
-            <span className="flex items-center gap-1">
-              <select
+            <div className="flex items-center gap-1">
+              <CourseGradeBandSelect
+                key={course.id}
+                courseId={course.id}
                 value={course.gradeBand || "k2"}
-                onChange={async (e) => {
-                  try {
-                    await directApi.updateCourseBand(course.id, e.target.value);
-                    setCourse((prev: any) =>
-                      prev ? { ...prev, gradeBand: e.target.value } : prev,
-                    );
-                  } catch {
-                    /* ignore */
-                  }
-                }}
-                className="text-xs bg-white border border-gray-200 rounded px-2 py-1 font-medium"
-              >
-                <option value="k2">
-                  {t("teacher.classDetail.bandK2", { defaultValue: "K-2" })}
-                </option>
-                <option value="g3_5">
-                  {t("teacher.classDetail.bandG35", {
-                    defaultValue: "Grades 3-5",
-                  })}
-                </option>
-              </select>
-            </span>
+                onSaved={(confirmed) =>
+                  setCourse((prev) =>
+                    prev?.id === confirmed.id
+                      ? { ...prev, gradeBand: confirmed.gradeBand }
+                      : prev,
+                  )
+                }
+              />
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">

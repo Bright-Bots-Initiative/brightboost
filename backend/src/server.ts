@@ -30,8 +30,6 @@ import homeAccessRouter from "./routes/homeAccess";
 import creationsRouter from "./routes/creations";
 import experimentsRouter from "./routes/experiments";
 import adminMetricsRouter from "./routes/adminMetrics";
-// TEMPORARY — remove after Slack webhook verification is confirmed working.
-import slackTestRouter from "./routes/slack-test";
 import { devRoleShim, authenticateToken } from "./utils/auth";
 import { classroomResponseGuard } from "./utils/classroomResponseGuard";
 import { preventHpp, nocache } from "./utils/security";
@@ -180,8 +178,6 @@ app.use(express.json({ limit: "50kb" }));
 // Public routes (Auth + Class Login) - Mount before auth middleware to ensure access
 app.use("/api", authRouter);
 app.use("/api", classLoginRouter);
-// TEMPORARY — Slack webhook verification. Remove after confirming.
-app.use(slackTestRouter);
 
 // Public route for Task Ranker integration
 app.use("/context", contextRouter);

@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29; deployment footprint check 2026-10-05.
 
 # CI jobs and Cypress gates
 
@@ -28,6 +28,24 @@ that set are in [Required checks on `main`](#required-checks-on-main) below.
 | `npm run test:e2e:ci` / shell smoke step | Frontend shell failed to mount (no backend required)                                          |
 | `verify:ci-gate`                         | Two-phase sabotage proof failed (healthy shell did not pass, or sabotaged shell did not fail) |
 | `e2e-flows`                              | Seeded stack or real product flow failed (auth, persistence, or teacher-visible evidence)     |
+
+## Deployment footprint check
+
+`scripts/check-bundle-size.js` is the shared executable for local CI-17 and
+`.github/workflows/bundle-size-check.yml` (#816). `npm run check-bundle-size`
+builds first; the workflow invokes the same script after its build step.
+
+The budget remains the currently enforced CI limit of **400 MiB** for the entire
+uncompressed `dist/` deployment. Both paths now sum regular-file bytes exactly,
+including nested assets, rather than using filesystem-dependent `du` allocation
+or rounding each file. The obsolete, non-executable local 5 MB limit is removed.
+This is a deployment footprint limit; compressed entry/route budgets remain #908.
+
+The command reports `BUNDLE_OK` on success, exits 1 with `BUNDLE_TOO_LARGE` or
+`BUNDLE_EMPTY` for an over-budget or empty build, and exits 2 with
+`BUNDLE_READ_ERROR` for unreadable/unsupported input. Its optional directory
+argument permits isolated fixture checks; omitting it always checks this
+checkout's `dist/`, regardless of the caller's working directory.
 
 ## Required checks on `main`
 

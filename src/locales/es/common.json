@@ -385,7 +385,8 @@
     "done": "Listo",
     "replay": "Repetir",
     "logOut": "Cerrar Sesión",
-    "changeLanguage": "Cambiar idioma"
+    "changeLanguage": "Cambiar idioma",
+    "tryAgain": "Volver a intentar"
   },
   "teacher": {
     "admin": "Panel del Maestro",
@@ -497,7 +498,10 @@
       "createDescHome": "Dale un nombre a tu grupo en casa. Tu hijo se une con el código generado.",
       "classNameHome": "Nombre del grupo en casa",
       "classNamePlaceholderHome": "p. ej. Los niños García",
-      "createGroupHome": "Crear grupo en casa"
+      "createGroupHome": "Crear grupo en casa",
+      "refresh": "Actualizar",
+      "loadFailed": "No se pudieron cargar tus clases y grupos familiares. Vuelve a intentarlo.",
+      "refreshFailed": "No se pudieron actualizar tus clases y grupos familiares. Se sigue mostrando la última lista cargada."
     },
     "classDetail": {
       "students": "{{count}} estudiantes",
@@ -576,7 +580,8 @@
           "mail_unavailable": "El correo no está configurado en este servidor, así que no se pudo enviar la invitación.",
           "generic": "No se pudo enviar la invitación."
         }
-      }
+      },
+      "bandSaveFailed": "No se pudo confirmar el cambio de nivel escolar. Sigue seleccionado el último nivel confirmado."
     },
     "resources": {
       "title": "Centro de Recursos",
