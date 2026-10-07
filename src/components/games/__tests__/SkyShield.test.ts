@@ -1,11 +1,25 @@
-import { describe, expect, it } from "vitest";
-import {
+import { createElement, type ComponentProps } from "react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import SkyShieldGame, {
   buildSkyShieldCompletionPayload,
   mkChallenge,
   mkPattern,
   PT,
 } from "../SkyShieldGame";
 import { SKY_SHIELD_CONTENT } from "../gradeBandContent";
+import type GameShell from "../shared/GameShell";
+
+vi.mock("react-i18next", async () => {
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
+});
+// Keep the real playfield, phase transitions and scorer; isolate shell routing,
+// so the playfield's completion payload reaches onComplete unchanged.
+vi.mock("../shared/GameShell", () => ({
+  default: ({ children, onComplete }: ComponentProps<typeof GameShell>) =>
+    children({ onFinish: onComplete, reducedEffects: false }),
+}));
 
 const TEST_BANDS = [
   ["k2", SKY_SHIELD_CONTENT.k2],
@@ -142,4 +156,159 @@ describe("Sky Shield helpers", () => {
       expect(starsFor(pct)).toBe(3);
     },
   );
+});
+
+// ── g3-5 challenge catch re-entrancy (#800) ─────────────────────────────────
+//
+// These drive the real g3-5 playfield. Everything the driver needs is read off
+// the screen, because each lane is drawn with its own emoji; Math.random is not
+// stubbed (mkChallenge needs varying values to place its mystery drops).
+//
+// Reverting the #800 fix in SkyShieldGame's g3-5 `doCatch` (the `g35Ready`
+// entry guard and latch, and `disabled={!g35Ready}` on its two Catch buttons)
+// makes both tests below fail.
+
+const G35 = SKY_SHIELD_CONTENT.g3_5;
+/** SkyShieldGame's LABELS: lane `i` is drawn as `LANE_EMOJI[i]`. */
+const LANE_EMOJI = ["🔵", "🟡", "🩷"];
+/** SkyShieldGame's delay from feedback to the next round, outside g3-5's challenge. */
+const ROUND_ADVANCE_MS = 900;
+/** SkyShieldGame's delay from a g3-5 challenge catch to the next round. */
+const G35_ADVANCE_MS = 1200;
+/** The pattern phase shows a lane at 400 ms, then every 700 ms, and asks 500 ms later. */
+const PATTERN_REVEAL_MS = 400 + 700 * (G35.patternLength - 1) + 500;
+/** Gap between the two taps of a double tap; well inside G35_ADVANCE_MS. */
+const TAP_GAP_MS = 300;
+const PREDICT_PROMPT = "Which lane will the light fall into?";
+
+function advance(ms: number) {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+const button = (name: string | RegExp) => screen.getByRole("button", { name });
+const click = (name: string | RegExp) => fireEvent.click(button(name));
+
+/** Lanes of the lane emoji drawn outside a button, in document order. */
+function shownLanes(): number[] {
+  return screen
+    .queryAllByText(
+      (content, el) => LANE_EMOJI.includes(content) && !el?.closest("button"),
+    )
+    .map((el) => LANE_EMOJI.indexOf(el.textContent ?? ""));
+}
+
+/** The HUD's score and streak (the streak is only drawn from 2 up). */
+function hud() {
+  const score = screen.getByText(/^Score: \d+$/).textContent ?? "";
+  const streak = screen.queryByText(/^🔥 \d+x$/)?.textContent ?? "0";
+  return {
+    score: Number(score.match(/\d+/)?.[0]),
+    streak: Number(streak.match(/\d+/)?.[0]),
+  };
+}
+
+function renderG35() {
+  const onComplete = vi.fn();
+  render(
+    createElement(SkyShieldGame, { config: { gradeBand: "g3_5" }, onComplete }),
+  );
+  click("Let's Go!");
+  return onComplete;
+}
+
+/** Plays practice, pattern and scan without a mistake, then opens the challenge. */
+function playFlawlesslyToChallenge() {
+  for (let i = 0; i < G35.practiceRounds; i++) {
+    click(LANE_EMOJI[shownLanes()[0]]); // shield under the falling light
+    click("Catch!");
+    advance(ROUND_ADVANCE_MS);
+  }
+  for (let i = 0; i < G35.patternRounds; i++) {
+    advance(PATTERN_REVEAL_MS);
+    // The sequence is its base pattern twice, so the next lane is its first.
+    click(LANE_EMOJI[shownLanes()[0]]);
+    advance(ROUND_ADVANCE_MS);
+  }
+  for (let i = 0; i < G35.patternLength / 2; i++) {
+    click(/Scan/);
+    click(LANE_EMOJI[shownLanes()[0]]); // the revealed colour
+    advance(ROUND_ADVANCE_MS);
+  }
+  click("Start Challenge");
+}
+
+describe("Sky Shield g3-5 challenge catch is not re-entrant (#800)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("scores a double-tapped catch once and disables Catch until the next round", () => {
+    renderG35();
+    playFlawlesslyToChallenge();
+
+    // Round 1 is never a mystery drop: mkChallenge places those at index >= 2.
+    expect(
+      screen.getByText(`Challenge (1/${G35.challengeRounds})`),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(PREDICT_PROMPT)).not.toBeInTheDocument();
+    // 3 catches, 3 predictions and 4 scans, all correct.
+    const before = hud();
+    expect(before).toEqual({ score: 150, streak: 10 });
+
+    click(LANE_EMOJI[shownLanes()[0]]);
+    click("Catch!");
+    expect(button("Catch!")).toBeDisabled();
+    advance(TAP_GAP_MS);
+    click("Catch!");
+
+    expect(hud()).toEqual({
+      score: before.score + PT.catch,
+      streak: before.streak + 1,
+    });
+    expect(button("Catch!")).toBeDisabled();
+
+    advance(G35_ADVANCE_MS - TAP_GAP_MS);
+    expect(
+      screen.getByText(`Challenge (2/${G35.challengeRounds})`),
+    ).toBeInTheDocument();
+    expect(button("Catch!")).toBeEnabled();
+  });
+
+  it("reports a clean run's total and round count when every challenge catch is double-tapped", () => {
+    const onComplete = renderG35();
+    playFlawlesslyToChallenge();
+
+    for (let round = 1; round <= G35.challengeRounds; round++) {
+      expect(
+        screen.getByText(`Challenge (${round}/${G35.challengeRounds})`),
+      ).toBeInTheDocument();
+      if (screen.queryByText(PREDICT_PROMPT)) {
+        click(LANE_EMOJI[0]); // any prediction; only the denominator is pinned
+        // A second tap last round would have scheduled a second round advance
+        // that fires now and clears this round's prediction.
+        advance(TAP_GAP_MS);
+        expect(button(/Scan/)).toBeEnabled();
+        click(/Scan/);
+      }
+      click("Catch!");
+      advance(TAP_GAP_MS);
+      click("Catch!");
+      advance(G35_ADVANCE_MS - TAP_GAP_MS);
+    }
+
+    click(LANE_EMOJI[G35.exitAnswer]);
+    click("See Results");
+    click("Finish");
+
+    // Same as the flawless run modelled above: total 370, 25 scored rounds + exit ticket.
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete.mock.calls[0][0]).toMatchObject({
+      total: PERFECT_TOTALS.g3_5,
+      roundsCompleted: perfectRunPoints("g3_5").length + 1,
+    });
+  });
 });

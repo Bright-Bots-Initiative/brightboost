@@ -714,6 +714,8 @@ function SkyShieldPlayfield({
     };
 
     const doCatch = () => {
+      if (!g35Ready) return;
+      setG35Ready(false);
       const caught = shield === d.lane;
       bump(PT.catch, caught);
       showFb(caught ? "ok" : "miss");
@@ -769,6 +771,7 @@ function SkyShieldPlayfield({
             <LanePicker onPick={setShield} />
 
             <BigBtn
+              disabled={!g35Ready}
               onClick={doCatch}
               cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
             >
@@ -813,6 +816,7 @@ function SkyShieldPlayfield({
               </div>
             )}
             <BigBtn
+              disabled={!g35Ready}
               onClick={doCatch}
               cls="bg-gradient-to-r from-emerald-500 to-emerald-600"
             >
