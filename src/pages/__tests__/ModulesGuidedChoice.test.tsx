@@ -292,4 +292,73 @@ describe("Modules page — guided choice wiring", () => {
     await user.click(screen.getByTestId("guided-continue"));
     expect(navigate).toHaveBeenCalledWith(`/student/modules/${BOUNCE}`);
   });
+
+  it("#900: opens an assigned Set 2 card while its unassigned neighbor stays locked", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getModules).mockResolvedValue([
+      catalogRecord(MAZE, "Maze Maps"),
+      catalogRecord("k2-stem-sky-shield", "Sky Shield"),
+    ]);
+    vi.mocked(api.getStudentAssignments).mockResolvedValue([
+      { id: "assignment-1", moduleSlug: MAZE },
+    ]);
+    await renderPage();
+
+    const start = screen.getByRole("button", {
+      name: "Start Learning Maze Maps",
+    });
+    expect(start.closest(".border-2")).toHaveTextContent(
+      "Your teacher picked this one for you.",
+    );
+    expect(
+      screen.queryByRole("button", { name: "Start Learning Sky Shield" }),
+    ).toBeNull();
+    await user.click(start);
+    expect(navigate).toHaveBeenLastCalledWith(`/student/modules/${MAZE}`);
+    await user.click(screen.getByTestId("guided-continue"));
+    expect(navigate).toHaveBeenLastCalledWith(`/student/modules/${MAZE}`);
+  });
+
+  it("#900: updates assigned cards before an optional Continue scan finishes", async () => {
+    vi.mocked(api.getModules).mockResolvedValue([
+      catalogRecord(MAZE, "Maze Maps"),
+    ]);
+    vi.mocked(api.getStudentAssignments).mockResolvedValue([
+      { id: "a", moduleSlug: MAZE },
+    ]);
+    vi.mocked(api.getModule).mockImplementation(() => new Promise(() => {}));
+    render(<Modules />);
+    expect(
+      await screen.findByRole("button", { name: "Start Learning Maze Maps" }),
+    ).toBeEnabled();
+    expect(screen.queryByTestId("guided-choice")).toBeNull();
+  });
+
+  it("#900: assignments cannot expose hidden, unpublished, wrong-grade or specialty content", async () => {
+    const records = [
+      catalogRecord(BOUNCE, "Bounce Buds"),
+      catalogRecord(TRACK, "Hidden Track"),
+      { ...catalogRecord(MAZE, "Wrong Grade"), level: "G3-5" },
+      { ...catalogRecord(GOTCHA, "Unpublished"), published: false },
+      catalogRecord("stem-1-intro", "Specialty Only"),
+    ];
+    vi.mocked(api.getModules).mockResolvedValue(records);
+    vi.mocked(api.getStudentAssignments).mockResolvedValue(
+      records.map((m) => ({ id: m.id, moduleSlug: m.slug })),
+    );
+    await renderPage();
+    for (const title of [
+      "Hidden Track",
+      "Wrong Grade",
+      "Unpublished",
+      "Specialty Only",
+    ]) {
+      expect(
+        screen.queryByRole("button", { name: `Start Learning ${title}` }),
+      ).toBeNull();
+    }
+    expect(
+      screen.getByRole("button", { name: "Start Learning Bounce Buds" }),
+    ).toBeEnabled();
+  });
 });

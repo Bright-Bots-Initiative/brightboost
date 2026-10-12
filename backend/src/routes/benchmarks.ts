@@ -4,6 +4,7 @@ import { z } from "zod";
 import prisma from "../utils/prisma";
 import { requireRole } from "../utils/auth";
 import { timeSpentSchema } from "../validation/schemas";
+import { completedPreTemplates } from "../services/benchmarkPrerequisites";
 import {
   scoreBenchmarkSubmission,
   type BenchmarkQuestion,
@@ -467,18 +468,15 @@ router.get(
         orderBy: { createdAt: "asc" },
       });
 
-      // Check PRE completion for POST lock logic
-      const preAttemptsByTemplate = new Map<string, boolean>();
-      for (const a of assignments) {
-        if (a.kind === "PRE" && a.attempts.length > 0) {
-          preAttemptsByTemplate.set(a.templateId, true);
-        }
-      }
+      const completedPres = await completedPreTemplates(
+        req.user!.id,
+        req.params.courseId,
+        assignments.filter((a) => a.kind === "POST").map((a) => a.templateId),
+      );
 
       const result = assignments.map((a) => {
         const myAttempt = a.attempts[0] ?? null;
-        const locked =
-          a.kind === "POST" && !preAttemptsByTemplate.get(a.templateId);
+        const locked = a.kind === "POST" && !completedPres.has(a.templateId);
         return {
           id: a.id,
           kind: a.kind,
@@ -535,27 +533,15 @@ router.get(
 
       // POST lock: require PRE completion first
       if (assignment.kind === "POST") {
-        const preAssignment = await prisma.benchmarkAssignment.findFirst({
-          where: {
-            courseId: assignment.courseId,
-            templateId: assignment.templateId,
-            kind: "PRE",
-          },
-        });
-        if (preAssignment) {
-          const preAttempt = await prisma.benchmarkAttempt.findUnique({
-            where: {
-              assignmentId_studentId: {
-                assignmentId: preAssignment.id,
-                studentId: req.user!.id,
-              },
-            },
-          });
-          if (!preAttempt)
-            return res
-              .status(403)
-              .json({ error: "Complete the PRE benchmark first" });
-        }
+        const completedPres = await completedPreTemplates(
+          req.user!.id,
+          assignment.courseId,
+          [assignment.templateId],
+        );
+        if (!completedPres.has(assignment.templateId))
+          return res
+            .status(403)
+            .json({ error: "Complete the PRE benchmark first" });
       }
 
       // Sanitize questions — strip correctIndex
@@ -605,6 +591,20 @@ router.post(
       const parsed = submitSchema.safeParse(req.body);
       if (!parsed.success)
         return res.status(400).json({ error: parsed.error.issues });
+
+      // Recheck at the write boundary: the browser's earlier question read
+      // is not proof, and clients can submit directly without that read.
+      if (assignment.kind === "POST") {
+        const completedPres = await completedPreTemplates(
+          req.user!.id,
+          assignment.courseId,
+          [assignment.templateId],
+        );
+        if (!completedPres.has(assignment.templateId))
+          return res
+            .status(403)
+            .json({ error: "Complete the PRE benchmark first" });
+      }
 
       const { answers: rawAnswers, timeSpentS } = parsed.data;
       const questions = assignment.template.questions as BenchmarkQuestion[];

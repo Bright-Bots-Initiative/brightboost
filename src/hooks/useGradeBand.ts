@@ -24,6 +24,7 @@ type CourseRequest = {
   consumers: number;
 };
 const inFlight = new Map<string, CourseRequest>();
+const invalidationListeners = new Set<(key: string) => void>();
 
 function currentUserKey(): string {
   try {
@@ -84,6 +85,15 @@ function loadCourses(key: string): CourseRequest {
   return request;
 }
 
+/** Refresh membership after a confirmed enrollment change, including mounted consumers. */
+export function invalidateGradeBandCache() {
+  const key = currentUserKey();
+  if (cached?.key === key) cached = null;
+  inFlight.get(key)?.controller.abort();
+  inFlight.delete(key);
+  for (const listener of invalidationListeners) listener(key);
+}
+
 /** Test-only escape hatch; production caches expire and requests are cancellable. */
 export function __resetGradeBandCache() {
   cached = null;
@@ -99,35 +109,74 @@ export function useGradeBandState(reloadKey = 0): BandState {
     return { key, value: courses ? resolved(courses) : pending };
   });
   useEffect(() => {
-    const courses = cachedCourses(key);
-    if (courses) {
-      setState({ key, value: resolved(courses) });
-      return;
-    }
     let cancelled = false;
-    setState({ key, value: pending });
-    const request = loadCourses(key);
-    request.consumers++;
-    void request.promise
-      .then((loaded) => {
-        if (!cancelled && currentUserKey() === key)
-          setState({ key, value: resolved(loaded) });
-      })
-      .catch(() => {
-        if (!cancelled && currentUserKey() === key)
-          setState({ key, value: { ...pending, status: "failed" } });
-      });
+    let generation = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    let release: (() => void) | undefined;
+
+    function refresh(invalidated = false) {
+      clearTimeout(timer);
+      release?.();
+      release = undefined;
+      const run = ++generation;
+      if (cancelled || currentUserKey() !== key) return;
+      const courses = cachedCourses(key);
+      if (courses) {
+        setState({ key, value: resolved(courses) });
+        // A mounted consumer also expires: TTL must not depend on navigation.
+        timer = setTimeout(
+          () => refresh(),
+          Math.max(1, CACHE_TTL_MS - (Date.now() - cached!.at)),
+        );
+        return;
+      }
+      // Background freshness must not unmount an activity every minute.
+      // An explicit enrollment change invalidates the old answer immediately.
+      setState((previous) =>
+        !invalidated &&
+        previous.key === key &&
+        previous.value.status === "resolved"
+          ? previous
+          : { key, value: pending },
+      );
+      const request = loadCourses(key);
+      request.consumers++;
+      release = () => {
+        request.consumers--;
+        // StrictMode re-subscribes in the same commit. One consumer must not
+        // cancel a shared request still needed by another mounted surface.
+        queueMicrotask(() => {
+          if (request.consumers === 0) {
+            request.controller.abort();
+            if (inFlight.get(key) === request) inFlight.delete(key);
+          }
+        });
+      };
+      const isCurrent = () =>
+        !cancelled && generation === run && currentUserKey() === key;
+      void request.promise
+        .then((loaded) => {
+          if (isCurrent()) setState({ key, value: resolved(loaded) });
+        })
+        .catch(() => {
+          if (isCurrent())
+            setState({ key, value: { ...pending, status: "failed" } });
+        })
+        .finally(() => {
+          // Bound freshness and retries without spinning on an unavailable API.
+          if (isCurrent()) timer = setTimeout(() => refresh(), CACHE_TTL_MS);
+        });
+    }
+    const onInvalidate = (changedKey: string) => {
+      if (changedKey === key) refresh(true);
+    };
+    invalidationListeners.add(onInvalidate);
+    refresh();
     return () => {
       cancelled = true;
-      request.consumers--;
-      // StrictMode re-subscribes in the same commit. Abort only once the last
-      // consumer is gone, so one page cannot cancel another page's shared load.
-      queueMicrotask(() => {
-        if (request.consumers === 0) {
-          request.controller.abort();
-          if (inFlight.get(key) === request) inFlight.delete(key);
-        }
-      });
+      clearTimeout(timer);
+      invalidationListeners.delete(onInvalidate);
+      release?.();
     };
   }, [key, reloadKey]);
   return state.key === key ? state.value : pending;

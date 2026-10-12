@@ -5,6 +5,7 @@ import { useApi } from "../services/api";
 import { Users, ArrowRight } from "lucide-react";
 import PulseSurveyDialog from "@/components/student/PulseSurveyDialog";
 import { track } from "../lib/analytics";
+import { invalidateGradeBandCache } from "@/hooks/useGradeBand";
 
 const JoinClass: React.FC = () => {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ const JoinClass: React.FC = () => {
       const result = await api.post("/student/join-course", {
         joinCode: joinCode.trim().toUpperCase(),
       });
+      invalidateGradeBandCache();
       track({
         kind: "student_joined_class",
         class_id: result.courseId as string,

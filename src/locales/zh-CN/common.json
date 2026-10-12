@@ -830,6 +830,8 @@
     "families": "个家庭"
   },
   "modules": {
+    "teacherPicksAvailable": "老师选的游戏可以玩了",
+    "assignedSetMessage": "老师为你选的游戏已经可以玩了。完成前一组即可解锁其他游戏。",
     "title": "STEM 模块",
     "startLearning": "开始学习",
     "comingSoon": "即将推出！",

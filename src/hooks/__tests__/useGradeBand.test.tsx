@@ -4,6 +4,7 @@ import {
   useGradeBand,
   useGradeBandState,
   __resetGradeBandCache,
+  invalidateGradeBandCache,
 } from "@/hooks/useGradeBand";
 import { api } from "@/services/api";
 
@@ -107,6 +108,76 @@ describe("useGradeBand", () => {
     await waitFor(() => expect(second.result.current.status).toBe("resolved"));
     expect(second.result.current.band).toBe("k2");
     expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+  });
+
+  it("#898: invalidation refreshes mounted consumers together and ignores the old response", async () => {
+    let finishOld!: (courses: unknown[]) => void;
+    vi.mocked(api.getStudentCourses).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishOld = resolve;
+      }),
+    );
+    const first = renderHook(() => useGradeBandState());
+    const second = renderHook(() => useGradeBandState());
+    await waitFor(() => expect(api.getStudentCourses).toHaveBeenCalledTimes(1));
+    const oldSignal = vi.mocked(api.getStudentCourses).mock.calls[0][0]?.signal;
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "g3_5" }]);
+    act(() => invalidateGradeBandCache());
+    await waitFor(() => expect(first.result.current.band).toBe("g3_5"));
+    expect(second.result.current.band).toBe("g3_5");
+    expect(oldSignal?.aborted).toBe(true);
+    expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      finishOld([{ gradeBand: "k2" }]);
+    });
+    expect(first.result.current.band).toBe("g3_5");
+    first.unmount();
+    second.unmount();
+    const cached = renderHook(() => useGradeBandState());
+    expect(cached.result.current.band).toBe("g3_5");
+    expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+  });
+
+  it("#898: background refresh keeps a confirmed game accessible while the request is pending", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(api.getStudentCourses).mockResolvedValue([
+        { gradeBand: "g3_5" },
+      ]);
+      const view = renderHook(() => useGradeBandState());
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      expect(view.result.current.status).toBe("resolved");
+      let finish!: (courses: unknown[]) => void;
+      vi.mocked(api.getStudentCourses).mockReturnValueOnce(
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+      expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+      expect(view.result.current).toMatchObject({
+        status: "resolved",
+        band: "g3_5",
+      });
+      await act(async () => {
+        finish([{ gradeBand: "k2" }]);
+      });
+      expect(view.result.current).toMatchObject({
+        status: "resolved",
+        band: "k2",
+      });
+      view.unmount();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(120_000);
+      });
+      expect(api.getStudentCourses).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // #866: a synchronous throw used to escape the effect and unmount the tree

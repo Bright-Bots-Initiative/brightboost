@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
 import { consentPreviewLimiter } from "../utils/security";
 import { requireAuth, requireRole } from "../utils/auth";
+import { spreadsheetCsvCell } from "../utils/spreadsheetCsv";
 import { z } from "zod";
 import {
   XP_AWARDS,
@@ -1741,8 +1742,8 @@ router.get(
       }),
     ];
     const csv = rows
-      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+      .map((r) => r.map(spreadsheetCsvCell).join(","))
+      .join("\r\n");
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",

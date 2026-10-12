@@ -830,6 +830,8 @@
     "families": "gia đình"
   },
   "modules": {
+    "teacherPicksAvailable": "Có trò chơi do giáo viên chọn",
+    "assignedSetMessage": "Các trò chơi giáo viên chọn đã sẵn sàng. Hoàn thành bộ trước để mở các trò chơi còn lại.",
     "title": "Bài học STEM",
     "startLearning": "Bắt đầu học",
     "comingSoon": "Sắp ra mắt!",
