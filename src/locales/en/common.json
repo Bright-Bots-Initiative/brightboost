@@ -891,6 +891,8 @@
     "families": "families"
   },
   "modules": {
+    "teacherPicksAvailable": "Teacher picks available",
+    "assignedSetMessage": "Your teacher’s picks are ready to play. Finish the earlier set to open the other games.",
     "title": "STEM Modules",
     "startLearning": "Start Learning",
     "comingSoon": "Coming Soon!",

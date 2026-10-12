@@ -15,7 +15,8 @@ import { translateContentName } from "@/utils/localizedContent";
 import { BIOTRAIL_SLUG } from "@/lib/specialty";
 import {
   getStudentArchetype,
-  canAccessModule,
+  resolveModuleAccess,
+  type ModuleAccessTarget,
   isSet2ModuleSlug,
   isSet3ModuleSlug,
   checkSet2Locked,
@@ -193,6 +194,15 @@ export default function Modules() {
   const [set2Done, setSet2Done] = useState(0);
   const [set3Done, setSet3Done] = useState(0);
   const [guided, setGuided] = useState<GuidedChoiceResult | null>(null);
+  const [cardAccessInputs, setCardAccessInputs] = useState<{
+    completedActivityIds: string[];
+    archetype: string | null;
+    assignedModuleSlugs: ReadonlySet<string>;
+  }>({
+    completedActivityIds: [],
+    archetype: null,
+    assignedModuleSlugs: new Set(),
+  });
   // Frozen once per mount so the surprise pick cannot shift under a re-render.
   const [seedUserId] = useState(readSeedUserId);
   const [seedDateBucket] = useState(todayBucket);
@@ -224,16 +234,28 @@ export default function Modules() {
       setSet3Done(countCompletedInSet(completedIds, STEM_SET_3_IDS));
 
       const all = Array.isArray(data) ? data : [];
+      setCardAccessInputs({
+        completedActivityIds: completedIds,
+        archetype,
+        assignedModuleSlugs: new Set(),
+      });
 
-      // The set sections keep exactly the filter and order they had (#697's
-      // territory — this change adds a choice layer above them, it does not
-      // redesign the page).
+      // Keep the existing sections and order; use the shared eligibility
+      // policy so assignments never widen grade or release access.
       const visible = all
-        .filter(
-          (m: any) =>
-            canAccessModule({ slug: m.slug, archetype }) &&
-            !HIDDEN_MODULE_SLUGS.has(m.slug),
-        )
+        .filter((m: ModuleAccessTarget & { slug: string }) => {
+          const access = resolveModuleAccess({
+            slug: m.slug,
+            module: m,
+            hiddenSlugs: HIDDEN_MODULE_SLUGS,
+            completedActivityIds: completedIds,
+            archetype,
+            gradeBand: GUIDED_CHOICE_BAND,
+          });
+          // Keep progression-locked cards visible, but assignments must never
+          // surface hidden, unpublished, wrong-grade or specialty-only content.
+          return access.allowed || access.reason === "locked_set";
+        })
         .sort(byCanonicalOrder);
       setModules(visible);
       setError(null);
@@ -294,6 +316,13 @@ export default function Modules() {
           .map((s) => s?.moduleSlug)
           .filter((s): s is string => typeof s === "string" && !!s),
       );
+      // Cards use the same override as guided choice and deep links, without
+      // waiting for the optional, potentially slow Continue scan.
+      setCardAccessInputs({
+        completedActivityIds: completedIds,
+        archetype,
+        assignedModuleSlugs,
+      });
 
       // The catalog list, ordered but NOT pre-filtered: the resolver reports a
       // reason for every refusal, which is the point of having one.
@@ -371,6 +400,22 @@ export default function Modules() {
   );
   const set2Modules = modules.filter((m) => isSet2ModuleSlug(m.slug));
   const set3Modules = modules.filter((m) => isSet3ModuleSlug(m.slug));
+  const cardAccess = (module: ModuleAccessTarget & { slug: string }) =>
+    resolveModuleAccess({
+      ...cardAccessInputs,
+      module,
+      slug: module.slug,
+      hiddenSlugs: HIDDEN_MODULE_SLUGS,
+      gradeBand: GUIDED_CHOICE_BAND,
+    });
+  const set2HasAssigned = set2Modules.some(
+    (m) =>
+      cardAccessInputs.assignedModuleSlugs.has(m.slug) && cardAccess(m).allowed,
+  );
+  const set3HasAssigned = set3Modules.some(
+    (m) =>
+      cardAccessInputs.assignedModuleSlugs.has(m.slug) && cardAccess(m).allowed,
+  );
 
   const handleLockedClick = () => {
     toast({
@@ -484,6 +529,10 @@ export default function Modules() {
                       module={m}
                       navigate={navigate}
                       t={t}
+                      locked={!cardAccess(m).allowed}
+                      teacherAssigned={cardAccessInputs.assignedModuleSlugs.has(
+                        m.slug,
+                      )}
                       strand={strand}
                     />
                   );
@@ -499,8 +548,16 @@ export default function Modules() {
                 {t("modules.set2Label", { defaultValue: "Set 2: Exploration" })}
                 {set2Locked && (
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                    <Lock className="h-3 w-3" />
-                    {t("modules.locked", { defaultValue: "Locked" })}
+                    {set2HasAssigned ? (
+                      <BookOpen className="h-3 w-3" />
+                    ) : (
+                      <Lock className="h-3 w-3" />
+                    )}
+                    {t(
+                      set2HasAssigned
+                        ? "modules.teacherPicksAvailable"
+                        : "modules.locked",
+                    )}
                   </span>
                 )}
                 {!set2Locked && set2Done >= STEM_SET_2_IDS.length && (
@@ -510,10 +567,12 @@ export default function Modules() {
 
               {set2Locked && (
                 <p className="text-sm text-slate-500 -mt-2 mb-4">
-                  {t("modules.set2LockedMessage", {
-                    defaultValue:
-                      "Complete Set 1 STEM Games to unlock the next challenge set.",
-                  })}
+                  {set2HasAssigned
+                    ? t("modules.assignedSetMessage")
+                    : t("modules.set2LockedMessage", {
+                        defaultValue:
+                          "Complete Set 1 STEM Games to unlock the next challenge set.",
+                      })}
                 </p>
               )}
 
@@ -529,7 +588,10 @@ export default function Modules() {
                       module={m}
                       navigate={navigate}
                       t={t}
-                      locked={set2Locked}
+                      locked={!cardAccess(m).allowed}
+                      teacherAssigned={cardAccessInputs.assignedModuleSlugs.has(
+                        m.slug,
+                      )}
                       strand={strand}
                       onLockedClick={handleLockedClick}
                     />
@@ -546,8 +608,16 @@ export default function Modules() {
                 {t("modules.set3Label", { defaultValue: "Set 3: Mastery" })}
                 {set3Locked && (
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                    <Lock className="h-3 w-3" />
-                    {t("modules.locked", { defaultValue: "Locked" })}
+                    {set3HasAssigned ? (
+                      <BookOpen className="h-3 w-3" />
+                    ) : (
+                      <Lock className="h-3 w-3" />
+                    )}
+                    {t(
+                      set3HasAssigned
+                        ? "modules.teacherPicksAvailable"
+                        : "modules.locked",
+                    )}
                   </span>
                 )}
                 {!set3Locked && set3Done >= STEM_SET_3_IDS.length && (
@@ -557,10 +627,12 @@ export default function Modules() {
 
               {set3Locked && (
                 <p className="text-sm text-slate-500 -mt-2 mb-4">
-                  {t("modules.set3LockedMessage", {
-                    defaultValue:
-                      "Complete Set 2 STEM Games to unlock the mastery set.",
-                  })}
+                  {set3HasAssigned
+                    ? t("modules.assignedSetMessage")
+                    : t("modules.set3LockedMessage", {
+                        defaultValue:
+                          "Complete Set 2 STEM Games to unlock the mastery set.",
+                      })}
                 </p>
               )}
 
@@ -576,7 +648,10 @@ export default function Modules() {
                       module={m}
                       navigate={navigate}
                       t={t}
-                      locked={set3Locked}
+                      locked={!cardAccess(m).allowed}
+                      teacherAssigned={cardAccessInputs.assignedModuleSlugs.has(
+                        m.slug,
+                      )}
                       strand={strand}
                       onLockedClick={handleSet3LockedClick}
                     />
@@ -685,6 +760,7 @@ function ModuleCard({
   navigate,
   t,
   locked = false,
+  teacherAssigned = false,
   strand,
   onLockedClick,
 }: {
@@ -692,6 +768,7 @@ function ModuleCard({
   navigate: (path: string) => void;
   t: (key: string, opts?: any) => string;
   locked?: boolean;
+  teacherAssigned?: boolean;
   strand?: string;
   onLockedClick?: () => void;
 }) {
@@ -732,6 +809,11 @@ function ModuleCard({
           >
             {strand}
           </span>
+        )}
+        {teacherAssigned && !locked && (
+          <p className="text-sm font-medium text-brightboost-navy">
+            {t("modules.guidedChoice.whyTeacher")}
+          </p>
         )}
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-between">

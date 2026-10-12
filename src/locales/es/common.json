@@ -853,6 +853,8 @@
     "families": "familias"
   },
   "modules": {
+    "teacherPicksAvailable": "Juegos elegidos por tu docente disponibles",
+    "assignedSetMessage": "Los juegos que eligió tu docente están listos. Termina el conjunto anterior para abrir los demás juegos.",
     "title": "Módulos STEM",
     "startLearning": "Comenzar",
     "comingSoon": "¡Próximamente!",
