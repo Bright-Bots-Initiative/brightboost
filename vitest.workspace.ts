@@ -54,7 +54,41 @@ if (pathHasSpace) {
   );
 }
 
-// More info at: https://storybook.js.org/docs/writing-tests/test-addon
-export default defineWorkspace(
-  pathHasSpace ? ["vitest.config.ts"] : ["vitest.config.ts", storybookProject],
-);
+// #720 inline projects keep the Storybook sandbox's three-file config contract.
+// The browser suite is mandatory even when a spaced path skips Storybook.
+const engineProject = {
+  resolve: { alias: { "@shared": path.resolve(dirname, "shared") } },
+  test: {
+    name: "greatwork-engine",
+    environment: "node",
+    include: [
+      "shared/greatwork-engine/index.test.ts",
+      "shared/greatwork-engine/__tests__/engine.test.ts",
+      "scripts/__tests__/shared-freshness.test.ts",
+    ],
+    globalSetup: ["scripts/greatwork/parity-setup.ts"],
+    passWithNoTests: false,
+  },
+};
+const engineBrowserProject = {
+  resolve: { alias: { "@shared": path.resolve(dirname, "shared") } },
+  test: {
+    name: "greatwork-engine-browser",
+    include: ["shared/greatwork-engine/__tests__/engine.browser.test.ts"],
+    globalSetup: ["scripts/greatwork/parity-setup.ts"],
+    passWithNoTests: false,
+    browser: {
+      enabled: true,
+      headless: true,
+      name: "chromium",
+      provider: "playwright",
+    },
+  },
+};
+
+export default defineWorkspace([
+  "vitest.config.ts",
+  engineProject,
+  engineBrowserProject,
+  ...(pathHasSpace ? [] : [storybookProject]),
+]);

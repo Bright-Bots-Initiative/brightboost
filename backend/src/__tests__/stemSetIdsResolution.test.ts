@@ -22,21 +22,10 @@ import { beforeAll, describe, expect, it } from "vitest";
  * throws MODULE_NOT_FOUND only in production. Nothing else in the suite can
  * see either failure.
  *
- * Hence: build `shared/dist` in `beforeAll` (idempotent — a parallel worker
- * running sharedEngineProbe.emit.test.ts rebuilds it too) and load the canon
- * only afterwards, then require it from a file at the real emit depth,
- * `backend/dist/src/routes/`.
- *
- * Scope, stated plainly so nobody over-trusts this file: that build
- * ESTABLISHES freshness, it does not ASSERT it. Phase 1 compares the child
- * process's output against this file's own imported canon, and both read the
- * same built artifact — so a `shared/dist` stale against
- * `shared/progression/*.ts` is self-consistent here and passes (verified by
- * deleting the build and staling the artifact: this file stayed green, the
- * behavioural half `routes/__tests__/stemSetIdCanon.test.ts` went red). The
- * property THIS file owns is resolution: does the shipped specifier load at
- * the real emit depth. A repo-wide `shared/dist` freshness guard remains the
- * open decision in `docs/architecture/shared-code.md`.
+ * #720 now verifies shared/dist without rebuilding it in each parallel worker.
+ * Freshness is checked by scripts/verify-shared-freshness.mjs; this suite keeps
+ * owning the real emitted-depth resolution and wrong-specifier regression.
+ * Explicitly run npm run build:shared before tests after changing shared code.
  *
  * `@shared/*` is deliberately NOT used here: `backend/tsconfig.json` carries
  * no such path, and the boundary is that the backend consumes the built
@@ -62,7 +51,11 @@ const PKG_LINK = path.join(
   "@brightboost",
   "greatwork-engine",
 );
-const SHARED_TSCONFIG = path.join(REPO_ROOT, "shared", "tsconfig.json");
+const SHARED_VERIFY = path.join(
+  REPO_ROOT,
+  "scripts",
+  "verify-shared-freshness.mjs",
+);
 const EMITTED_CANON = path.join(
   REPO_ROOT,
   "shared",
@@ -148,10 +141,10 @@ describe("shared set-ID module resolves from the backend's emit depth", () => {
     if (!existsSync(TSC_BIN)) {
       throw new Error("Missing backend TypeScript. Run: cd backend ; npm ci");
     }
-    // Build shared/dist (idempotent) so nothing here reads a dist that a
-    // parallel worker is midway through writing.
-    execFileSync(process.execPath, [TSC_BIN, "-p", SHARED_TSCONFIG], {
-      cwd: BACKEND_DIR,
+    // #720: compare fresh temporary emit; do not rewrite shared/dist from a
+    // parallel test worker. The root build command owns canonical compilation.
+    execFileSync(process.execPath, [SHARED_VERIFY], {
+      cwd: REPO_ROOT,
       stdio: "pipe",
     });
     if (!existsSync(EMITTED_CANON)) {

@@ -22,6 +22,9 @@ export default defineConfig({
     // Vitest defaults exclude **/cypress/**; allow colocated support unit tests (#677 A2-03).
     exclude: [
       "**/node_modules/**",
+      // #720 owns the engine in Node + real-browser projects; never double collect.
+      "shared/greatwork-engine/**/*.test.ts",
+      "scripts/__tests__/shared-freshness.test.ts",
       "**/dist/**",
       // #815 guard sandbox: never collect its copied suite as a second run.
       "**/.bb-guard-sandbox-*/**",

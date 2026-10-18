@@ -8,16 +8,17 @@
     "db:migrate": "prisma migrate deploy --schema=../prisma/schema.prisma",
     "build:web": "cd .. && npm install && npm run build",
     "build": "npm run build:web && npm run build:shared && npm run db:generate && tsc -p .",
-    "build:shared": "tsc -p ../shared/tsconfig.json",
+    "build:shared": "node ../scripts/build-shared.mjs",
     "build:railway": "npm run build:shared && npm run db:generate && tsc -p .",
     "prepare": "npm run build:shared",
     "start": "npm run predeploy && node dist/src/server.js",
-    "prestart:dev": "npm run build:shared",
+    "prestart:dev": "npm run verify:shared",
     "start:dev": "ts-node src/server.ts",
-    "predev": "npm run build:shared",
+    "predev": "npm run verify:shared",
     "dev": "ts-node src/server.ts",
     "predeploy": "sh scripts/predeploy.sh",
-    "typecheck": "npm run build:shared && tsc --noEmit"
+    "typecheck": "npm run build:shared && tsc --noEmit",
+    "verify:shared": "node ../scripts/verify-shared-freshness.mjs"
   },
   "dependencies": {
     "@brightboost/greatwork-engine": "file:../shared",
