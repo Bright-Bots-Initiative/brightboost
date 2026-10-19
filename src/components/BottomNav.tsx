@@ -18,7 +18,7 @@ export default function BottomNav() {
     {
       label: t("nav.classes"),
       icon: Users,
-      path: "/student/join",
+      path: "/student/classes",
       testId: "nav-classes",
     },
     {
@@ -38,7 +38,10 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 pb-6 md:pb-2 flex justify-around items-center z-50">
       {navItems.map((item) => {
-        const isActive = location.pathname.startsWith(item.path);
+        const isActive =
+          location.pathname.startsWith(item.path) ||
+          (item.testId === "nav-classes" &&
+            location.pathname === "/student/join");
         return (
           <button
             key={item.label}

@@ -1,0 +1,9 @@
+{
+  "title": "Bright Boost couldn’t load this page",
+  "message": "Check your connection, then reload the page. If it still won’t load, try again later.",
+  "storageTitle": "Check your browser settings",
+  "storageMessage": "Your browser is blocking storage needed for sign-in. Allow site storage, then reload the page.",
+  "reload": "Reload page",
+  "home": "Go to home",
+  "loading": "Loading Bright Boost…"
+}

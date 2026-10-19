@@ -24,7 +24,12 @@ function normalizeLocale(code: string): string {
   return lc;
 }
 
-const stored = localStorage.getItem(LANGUAGE_KEY);
+let stored: string | null = null;
+try {
+  stored = localStorage.getItem(LANGUAGE_KEY);
+} catch {
+  /* Keep localization available when browser storage is denied. */
+}
 const initialLang = stored ? normalizeLocale(stored) : "en";
 
 i18n.use(initReactI18next).init({
@@ -84,7 +89,11 @@ export async function changeLanguage(lng: string) {
   const canonical = normalizeLocale(lng);
   await ensureLocaleLoaded(canonical);
   await i18n.changeLanguage(canonical);
-  localStorage.setItem(LANGUAGE_KEY, canonical);
+  try {
+    localStorage.setItem(LANGUAGE_KEY, canonical);
+  } catch {
+    /* Language changes still work for this page without persistence. */
+  }
 }
 
 export const SUPPORTED_LANGUAGES = [

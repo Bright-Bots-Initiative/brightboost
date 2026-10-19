@@ -1,8 +1,5 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
 import "./index.css";
-import { initAnalytics } from "./lib/analytics";
+import { bootstrap } from "./bootstrap";
 import {
   GREAT_WORK_ENGINE_STUB_ID,
   describeGreatWorkEngine,
@@ -18,14 +15,14 @@ if (rootEl) {
   });
 }
 
-initAnalytics();
-
-const renderApp = () => {
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
-};
-
-import("./i18n").then(() => renderApp());
+if (rootEl) {
+  bootstrap(rootEl, async () => {
+    await import("./i18n");
+    const [{ default: App }, { initAnalytics }] = await Promise.all([
+      import("./App"),
+      import("./lib/analytics"),
+    ]);
+    initAnalytics();
+    return App;
+  });
+}

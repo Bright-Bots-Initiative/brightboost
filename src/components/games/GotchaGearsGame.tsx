@@ -8,23 +8,31 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
-import { pickLocale, resolveText } from "@/utils/localizedContent";
+import {
+  pickLocale,
+  resolveText,
+  type LocalizedField,
+} from "@/utils/localizedContent";
+import type { TFunction } from "i18next";
 import "./shared/game-effects.css";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface GearRound {
-  clueText: string | { en?: string; es?: string; i18nKey?: string };
-  correctLabel: string | { en?: string; es?: string; i18nKey?: string };
-  distractors: (string | { en?: string; es?: string; i18nKey?: string })[];
-  hint?: string | { en?: string; es?: string; i18nKey?: string };
+  clueText?: LocalizedField;
+  correctLabel?: LocalizedField;
+  distractors: LocalizedField[] | Partial<Record<string, string[]>>;
+  hint?: LocalizedField;
   // Legacy field names
-  clue?: string | { en?: string; es?: string; i18nKey?: string };
-  correctAnswer?: string | { en?: string; es?: string; i18nKey?: string };
+  clue?: LocalizedField;
+  correctAnswer?: LocalizedField;
 }
 
 interface GotchaGearsConfig {
-  gameKey: string;
+  gameKey?: string;
+  gradeBand?: GradeBand;
+  roundsGradeBand?: GradeBand;
+  roundsByBand?: Partial<Record<GradeBand, GearRound[]>>;
   settings?: {
     lives?: number;
     speed?: number;
@@ -45,14 +53,56 @@ interface FallingGear {
 
 // ── Built-in content (grade-band aware) ──────────────────────────────────
 
-import { getGradeBand, GOTCHA_GEARS_CONTENT } from "./gradeBandContent";
+import {
+  getGradeBand,
+  GOTCHA_GEARS_CONTENT,
+  type GradeBand,
+} from "./gradeBandContent";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function resolveField(t: any, field: unknown): string {
+function resolveField(t: TFunction, field: LocalizedField): string {
   if (!field) return "";
   if (typeof field === "string") return field;
-  return resolveText(t, field as any, "");
+  return resolveText(t, field, "");
+}
+
+function isKey(field: LocalizedField, key: string) {
+  return !!field && typeof field === "object" && field.i18nKey === key;
+}
+
+// Recognize only the unchanged legacy seed. Existing databases do not need a
+// reseed; edited/custom rounds retain their authored meaning unless band-tagged.
+function isLegacyK2Seed(rounds: GearRound[]) {
+  return (
+    rounds.length === 7 &&
+    rounds.every((round, index) => {
+      const prefix = `content.gotchaGame.r${index + 1}`;
+      return (
+        isKey(round.clueText, `${prefix}.clue`) &&
+        isKey(round.correctLabel, `${prefix}.correct`) &&
+        isKey(round.hint, `${prefix}.hint`) &&
+        Array.isArray(round.distractors) &&
+        round.distractors.length === 2 &&
+        round.distractors.every((field, i) =>
+          isKey(field, `${prefix}.d${i + 1}`),
+        )
+      );
+    })
+  );
+}
+
+function selectRounds(config: GotchaGearsConfig): GearRound[] {
+  const band = getGradeBand(config);
+  const authored = config.roundsByBand?.[band];
+  if (authored?.length) return authored;
+  if (config.rounds?.length) {
+    const roundsBand =
+      config.roundsGradeBand ??
+      (isLegacyK2Seed(config.rounds) ? "k2" : undefined);
+    if (!roundsBand || roundsBand === band) return config.rounds;
+  }
+  return GOTCHA_GEARS_CONTENT[band];
 }
 
 export function calculateGotchaCatchScore(streak: number): number {
@@ -148,14 +198,13 @@ function GotchaGearsCore({
   const { t } = useTranslation();
 
   const rounds = useMemo(() => {
-    const band = getGradeBand(config);
-    const raw = config?.rounds?.length
-      ? config.rounds
-      : GOTCHA_GEARS_CONTENT[band];
-    return raw.map((r: any) => ({
+    return selectRounds(config).map((r) => ({
       clue: resolveField(t, r.clueText ?? r.clue),
       correct: resolveField(t, r.correctLabel ?? r.correctAnswer),
-      distractors: (r.distractors ?? []).map((d: any) => resolveField(t, d)),
+      distractors: (Array.isArray(r.distractors)
+        ? r.distractors
+        : pickLocale(r.distractors ?? {}, [])
+      ).map((d) => resolveField(t, d)),
       hint: resolveField(t, r.hint),
     }));
   }, [config, t]);
@@ -415,16 +464,11 @@ export default function GotchaGearsGame({
   config,
   onComplete,
 }: {
-  config?: any;
+  config?: GotchaGearsConfig;
   onComplete?: (result: GameResult) => void;
 }) {
   const { t } = useTranslation();
-  const gameConfig: GotchaGearsConfig = config?.rounds?.length
-    ? config
-    : {
-        gameKey: "gotcha_gears_unity",
-        rounds: GOTCHA_GEARS_CONTENT[getGradeBand(config)],
-      };
+  const gameConfig: GotchaGearsConfig = config ?? {};
 
   // TODO: add translations for the story, tips in briefing
   const briefing: MissionBriefing = {

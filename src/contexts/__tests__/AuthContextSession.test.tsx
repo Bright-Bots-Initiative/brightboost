@@ -87,11 +87,56 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
 describe("session validation resilience (#904)", () => {
+  it.each(["{broken", "null", "[]", '{"role":{}}'])(
+    "repairs corrupt cached identity %s from the authenticated server (#905)",
+    async (cached) => {
+      localStorage.setItem("user", cached);
+      fetchMock.mockResolvedValue(response(200, { user: first }));
+      mount();
+      await act(async () => {});
+      expectSession();
+    },
+  );
+
+  it("shows actionable recovery when browser storage is denied (#905)", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("Blocked", "SecurityError");
+    });
+    mount();
+    expect(screen.getByRole("button", { name: "Reload page" })).toBeEnabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/browser.*storage/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows recovery when saving a validated session fails (#905)", async () => {
+    const pending = deferred<Response>();
+    fetchMock.mockReturnValue(pending.promise);
+    mount();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Full", "QuotaExceededError");
+    });
+    await settle(() => pending.resolve(response(200, { user: first })));
+    expect(screen.getByRole("button", { name: "Reload page" })).toBeEnabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(/browser.*storage/i);
+  });
+
+  it("contains storage denial during session validation (#905)", async () => {
+    const pending = deferred<Response>();
+    fetchMock.mockReturnValue(pending.promise);
+    mount();
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("Blocked", "SecurityError");
+    });
+    await settle(() => pending.resolve(response(200, { user: first })));
+    expect(screen.getByRole("button", { name: "Reload page" })).toBeEnabled();
+  });
+
   it("refreshes the current session on success", async () => {
     const pending = deferred<Response>();
     fetchMock.mockReturnValue(pending.promise);

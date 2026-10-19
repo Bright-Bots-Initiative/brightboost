@@ -1,0 +1,9 @@
+{
+  "title": "Bright Boost no pudo cargar esta página",
+  "message": "Revisa tu conexión y vuelve a cargar la página. Si todavía no carga, inténtalo más tarde.",
+  "storageTitle": "Revisa la configuración de tu navegador",
+  "storageMessage": "Tu navegador está bloqueando el almacenamiento necesario para iniciar sesión. Permite el almacenamiento del sitio y vuelve a cargar la página.",
+  "reload": "Volver a cargar",
+  "home": "Ir al inicio",
+  "loading": "Cargando Bright Boost…"
+}

@@ -955,7 +955,8 @@
       "done": "Done",
       "replay": "Replay",
       "checkAvatarUpgrades": "Check Avatar Upgrades"
-    }
+    },
+    "soon": "Soon"
   },
   "nav": {
     "learn": "Learn",
@@ -3071,5 +3072,17 @@
         "invalidInput": "Check the email and password: the password needs at least 8 characters with an uppercase letter, a lowercase letter, and a number."
       }
     }
+  },
+  "studentClasses": {
+    "title": "Your classes",
+    "description": "These are the classes you’ve joined.",
+    "joinAnother": "Join another class",
+    "join": "Join a class",
+    "empty": "You haven’t joined a class yet.",
+    "emptyHelp": "Ask your teacher for a class code to get started.",
+    "loading": "Loading your classes…",
+    "failed": "We couldn’t load your classes. Please try again.",
+    "retry": "Try again",
+    "back": "Back to classes"
   }
 }

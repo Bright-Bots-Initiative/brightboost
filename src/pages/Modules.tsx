@@ -712,6 +712,7 @@ function SetStep({
   total: number;
   status: "complete" | "active" | "locked" | "coming";
 }) {
+  const { t } = useTranslation();
   const ring =
     status === "complete"
       ? "border-green-500 bg-green-50 text-green-700"
@@ -746,7 +747,7 @@ function SetStep({
           {label}
         </p>
         <p className="text-slate-400">
-          {status === "coming" ? "Soon" : `${done}/${total}`}
+          {status === "coming" ? t("modules.soon") : `${done}/${total}`}
         </p>
       </div>
     </div>

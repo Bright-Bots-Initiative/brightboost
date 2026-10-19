@@ -50,6 +50,7 @@ import TeacherClassDetail from "./pages/TeacherClassDetail";
 import TeacherSettings from "./pages/TeacherSettings";
 import TeacherStudentRoster from "./pages/TeacherStudentRoster";
 import JoinClass from "./pages/JoinClass";
+import StudentClasses from "./pages/StudentClasses";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import TeacherModulePrep from "./pages/TeacherModulePrep";
@@ -293,6 +294,7 @@ function App() {
                   element={<ActivityPlayer />}
                 />
                 <Route path="join" element={<JoinClass />} />
+                <Route path="classes" element={<StudentClasses />} />
                 <Route
                   path="specialty"
                   element={

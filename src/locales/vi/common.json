@@ -888,7 +888,14 @@
       "done": "Xong",
       "replay": "Chơi lại",
       "checkAvatarUpgrades": "Xem nâng cấp nhân vật"
-    }
+    },
+    "set2LockedToastTitle": "Bộ 2 đang bị khóa",
+    "set3Label": "Bộ 3",
+    "set3LockedMessage": "Hoàn thành các trò chơi STEM của Bộ 2 để mở khóa bộ Thông thạo.",
+    "set3LockedToastTitle": "Bộ 3 đang bị khóa",
+    "set3ComingSoon": "Bộ 3: Thông thạo — Sắp ra mắt",
+    "set3ComingSoonDesc": "Các thử thách mới đang được xây dựng. Hãy đón chờ nhé!",
+    "soon": "Sắp ra mắt"
   },
   "nav": {
     "learn": "Học",
@@ -2296,5 +2303,17 @@
         "text": "The greenhouse has high shelves, a long drop, and uneven steps. Spring legs help with the climbs. Wings help with the crossing. Your route can change with your tool."
       }
     }
+  },
+  "studentClasses": {
+    "title": "Lớp học của em",
+    "description": "Đây là các lớp em đã tham gia.",
+    "joinAnother": "Tham gia lớp khác",
+    "join": "Tham gia một lớp",
+    "empty": "Em chưa tham gia lớp nào.",
+    "emptyHelp": "Hãy xin mã lớp từ giáo viên để bắt đầu.",
+    "loading": "Đang tải các lớp của em…",
+    "failed": "Không thể tải các lớp của em. Vui lòng thử lại.",
+    "retry": "Thử lại",
+    "back": "Quay lại các lớp"
   }
 }

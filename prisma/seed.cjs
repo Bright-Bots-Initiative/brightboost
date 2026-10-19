@@ -1094,6 +1094,7 @@ async function main() {
 
   const gotchaGameContent = JSON.stringify({
     gameKey: "gotcha_gears_unity",
+    roundsGradeBand: "k2",
     settings: {
       lives: 3,
       roundTimeS: 12,
