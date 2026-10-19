@@ -70,58 +70,121 @@ export const GOTCHA_GEARS_CONTENT: Record<GradeBand, GearRoundContent[]> = {
   ],
   g3_5: [
     {
-      clueText: { en: "I process data to make decisions" },
-      correctLabel: { en: "CPU" },
-      distractors: { en: ["Battery", "Speaker", "Fan"] },
-      hint: { en: "The brain of a computer!" },
+      clueText: {
+        en: "I process data to make decisions",
+        es: "Proceso datos para tomar decisiones",
+      },
+      correctLabel: { en: "CPU", es: "CPU" },
+      distractors: {
+        en: ["Battery", "Speaker", "Fan"],
+        es: ["Batería", "Altavoz", "Ventilador"],
+      },
+      hint: {
+        en: "The brain of a computer!",
+        es: "¡El cerebro de una computadora!",
+      },
     },
     {
-      clueText: { en: "I store data even when power is off" },
-      correctLabel: { en: "Hard Drive" },
-      distractors: { en: ["Screen", "Keyboard", "Mouse"] },
-      hint: { en: "Where do files live permanently?" },
+      clueText: {
+        en: "I store data even when power is off",
+        es: "Guardo datos incluso cuando no hay electricidad",
+      },
+      correctLabel: { en: "Hard Drive", es: "Disco duro" },
+      distractors: {
+        en: ["Screen", "Keyboard", "Mouse"],
+        es: ["Pantalla", "Teclado", "Ratón"],
+      },
+      hint: {
+        en: "Where do files live permanently?",
+        es: "¿Dónde se guardan los archivos de forma permanente?",
+      },
     },
     {
-      clueText: { en: "I detect changes in temperature, light, or motion" },
-      correctLabel: { en: "Sensor" },
-      distractors: { en: ["Printer", "Charger", "Cable"] },
-      hint: { en: "How do robots know what's around them?" },
+      clueText: {
+        en: "I detect changes in temperature, light, or motion",
+        es: "Detecto cambios de temperatura, luz o movimiento",
+      },
+      correctLabel: { en: "Sensor", es: "Sensor" },
+      distractors: {
+        en: ["Printer", "Charger", "Cable"],
+        es: ["Impresora", "Cargador", "Cable"],
+      },
+      hint: {
+        en: "How do robots know what's around them?",
+        es: "¿Cómo saben los robots qué hay a su alrededor?",
+      },
     },
     {
-      clueText: { en: "I convert electrical signals into movement" },
-      correctLabel: { en: "Actuator" },
-      distractors: { en: ["Microphone", "Filter", "Lens"] },
-      hint: { en: "What turns signals into action?" },
+      clueText: {
+        en: "I convert electrical signals into movement",
+        es: "Convierto señales eléctricas en movimiento",
+      },
+      correctLabel: { en: "Actuator", es: "Actuador" },
+      distractors: {
+        en: ["Microphone", "Filter", "Lens"],
+        es: ["Micrófono", "Filtro", "Lente"],
+      },
+      hint: {
+        en: "What turns signals into action?",
+        es: "¿Qué convierte las señales en acciones?",
+      },
     },
     {
       clueText: {
         en: "I repeat a set of instructions until a condition is met",
+        es: "Repito instrucciones hasta que se cumple una condición",
       },
-      correctLabel: { en: "Loop" },
-      distractors: { en: ["Variable", "Comment", "Import"] },
-      hint: { en: "Think about doing something over and over!" },
+      correctLabel: { en: "Loop", es: "Bucle" },
+      distractors: {
+        en: ["Variable", "Comment", "Import"],
+        es: ["Variable", "Comentario", "Importación"],
+      },
+      hint: {
+        en: "Think about doing something over and over!",
+        es: "¡Piensa en hacer algo una y otra vez!",
+      },
     },
     {
       clueText: {
         en: "I protect a system by checking inputs before processing",
+        es: "Protejo un sistema revisando los datos antes de procesarlos",
       },
-      correctLabel: { en: "Validation" },
-      distractors: { en: ["Encryption", "Compression", "Rendering"] },
-      hint: { en: "Making sure data is correct before using it!" },
+      correctLabel: { en: "Validation", es: "Validación" },
+      distractors: {
+        en: ["Encryption", "Compression", "Rendering"],
+        es: ["Cifrado", "Compresión", "Renderizado"],
+      },
+      hint: {
+        en: "Making sure data is correct before using it!",
+        es: "¡Comprobar que los datos sean correctos antes de usarlos!",
+      },
     },
     {
       clueText: {
         en: "I allow two systems to communicate using a shared protocol",
+        es: "Permito que dos sistemas se comuniquen usando un protocolo común",
       },
-      correctLabel: { en: "API" },
-      distractors: { en: ["URL", "DNS", "RAM"] },
-      hint: { en: "A bridge between programs!" },
+      correctLabel: { en: "API", es: "API" },
+      distractors: { en: ["URL", "DNS", "RAM"], es: ["URL", "DNS", "RAM"] },
+      hint: {
+        en: "A bridge between programs!",
+        es: "¡Un puente entre programas!",
+      },
     },
     {
-      clueText: { en: "I find and fix errors in code by testing step by step" },
-      correctLabel: { en: "Debugging" },
-      distractors: { en: ["Compiling", "Deploying", "Formatting"] },
-      hint: { en: "Like being a code detective!" },
+      clueText: {
+        en: "I find and fix errors in code by testing step by step",
+        es: "Encuentro y corrijo errores en el código mediante pruebas paso a paso",
+      },
+      correctLabel: { en: "Debugging", es: "Depuración" },
+      distractors: {
+        en: ["Compiling", "Deploying", "Formatting"],
+        es: ["Compilación", "Despliegue", "Formato"],
+      },
+      hint: {
+        en: "Like being a code detective!",
+        es: "¡Como un detective del código!",
+      },
     },
   ],
 };

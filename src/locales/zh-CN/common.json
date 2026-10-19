@@ -888,7 +888,14 @@
       "done": "完成",
       "replay": "重玩",
       "checkAvatarUpgrades": "查看头像升级"
-    }
+    },
+    "set2LockedToastTitle": "第2套尚未解锁",
+    "set3Label": "第3套",
+    "set3LockedMessage": "完成第2套 STEM 游戏，即可解锁精通挑战。",
+    "set3LockedToastTitle": "第3套尚未解锁",
+    "set3ComingSoon": "第3套：精通 — 即将推出",
+    "set3ComingSoonDesc": "新的挑战正在制作中，敬请期待！",
+    "soon": "即将推出"
   },
   "nav": {
     "learn": "学习",
@@ -2472,5 +2479,17 @@
         "text": "The greenhouse has high shelves, a long drop, and uneven steps. Spring legs help with the climbs. Wings help with the crossing. Your route can change with your tool."
       }
     }
+  },
+  "studentClasses": {
+    "title": "你的班级",
+    "description": "这些是你已加入的班级。",
+    "joinAnother": "加入其他班级",
+    "join": "加入班级",
+    "empty": "你还没有加入班级。",
+    "emptyHelp": "向老师获取班级代码，即可开始。",
+    "loading": "正在加载你的班级…",
+    "failed": "无法加载你的班级，请重试。",
+    "retry": "重试",
+    "back": "返回班级"
   }
 }

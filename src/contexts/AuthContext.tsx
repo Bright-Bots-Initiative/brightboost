@@ -10,6 +10,7 @@ import React, {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { join } from "../services/api";
+import RecoveryScreen from "@/components/RecoveryScreen";
 import {
   identifyUser,
   resetAnalytics,
@@ -39,6 +40,17 @@ interface User {
   homeAccessEnabled?: boolean;
   accountMode?: string;
   loginIcon?: string;
+}
+
+function isCachedUser(value: unknown): value is User {
+  if (!value || typeof value !== "object") return false;
+  const user = value as Partial<User>;
+  return (
+    typeof user.id === "string" &&
+    !!user.id &&
+    typeof user.name === "string" &&
+    typeof user.role === "string"
+  );
 }
 
 interface AuthContextType {
@@ -71,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { t } = useTranslation();
   const [sessionUnavailable, setSessionUnavailable] = useState(false);
+  const [storageUnavailable, setStorageUnavailable] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const validation = useRef<SessionValidation | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -99,9 +112,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     validation.current = attempt;
     setIsCheckingSession(true);
-    const isCurrent = () =>
-      validation.current === attempt &&
-      localStorage.getItem("bb_access_token") === checkedToken;
+    const isCurrent = () => {
+      if (validation.current !== attempt) return false;
+      try {
+        return localStorage.getItem("bb_access_token") === checkedToken;
+      } catch {
+        setStorageUnavailable(true);
+        return false;
+      }
+    };
 
     attempt.timeout = setTimeout(() => {
       if (validation.current !== attempt) return;
@@ -136,15 +155,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           res.status === 401 ||
           (res.status === 403 && data?.error === "forbidden_invalid_token")
         ) {
-          localStorage.removeItem("user");
-          localStorage.removeItem("bb_access_token");
           setUser(null);
           setToken(null);
+          try {
+            localStorage.removeItem("user");
+            localStorage.removeItem("bb_access_token");
+          } catch {
+            setStorageUnavailable(true);
+          }
           setSessionUnavailable(false);
           resetAnalytics();
-        } else if (res.ok && data?.user) {
+        } else if (res.ok && isCachedUser(data?.user)) {
           setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          try {
+            localStorage.setItem("user", JSON.stringify(data.user));
+          } catch {
+            setStorageUnavailable(true);
+          }
           setSessionUnavailable(false);
         } else {
           setSessionUnavailable(true);
@@ -163,13 +190,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("bb_access_token");
-    if (storedToken) {
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      setUser(userData);
-      setToken(storedToken);
-      validateSession(storedToken);
-    } else {
+    try {
+      const storedToken = localStorage.getItem("bb_access_token");
+      if (storedToken) {
+        const savedUser = localStorage.getItem("user");
+        let userData: unknown = null;
+        try {
+          userData = JSON.parse(savedUser || "null");
+        } catch {
+          /* The authenticated server can repair a corrupt cached identity. */
+        }
+        if (isCachedUser(userData)) setUser(userData);
+        else localStorage.removeItem("user");
+        setToken(storedToken);
+        validateSession(storedToken);
+      } else {
+        setIsLoading(false);
+      }
+    } catch {
+      setStorageUnavailable(true);
       setIsLoading(false);
     }
     return cancelValidation;
@@ -180,8 +219,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setSessionUnavailable(false);
     setIsCheckingSession(false);
     setIsLoading(false);
-    if (token) localStorage.setItem("bb_access_token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
+    try {
+      if (token) localStorage.setItem("bb_access_token", token);
+      localStorage.setItem("user", JSON.stringify(userData));
+    } catch {
+      setStorageUnavailable(true);
+      return;
+    }
 
     // Analytics: identify + fire `login` for every successful auth (signup
     // pages also call this; they additionally fire `account_registered`).
@@ -223,10 +267,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(false);
     setShouldRedirect(false);
     setNextPath(undefined);
-    localStorage.removeItem("bb_access_token");
-    localStorage.removeItem("user");
     setToken(null);
     setUser(null);
+    try {
+      localStorage.removeItem("bb_access_token");
+      localStorage.removeItem("user");
+    } catch {
+      setStorageUnavailable(true);
+    }
     resetAnalytics();
     navigate("/");
   }, [navigate, cancelValidation]);
@@ -239,10 +287,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...patch };
-      localStorage.setItem("user", JSON.stringify(updated));
+      try {
+        localStorage.setItem("user", JSON.stringify(updated));
+      } catch {
+        setStorageUnavailable(true);
+      }
       return updated;
     });
   }, []);
+
+  if (storageUnavailable) return <RecoveryScreen reason="storage" />;
 
   return (
     <AuthContext.Provider

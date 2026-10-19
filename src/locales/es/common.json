@@ -911,7 +911,14 @@
       "done": "Listo",
       "replay": "Repetir",
       "checkAvatarUpgrades": "Ver Mejoras de Avatar"
-    }
+    },
+    "set2LockedToastTitle": "El conjunto 2 está bloqueado",
+    "set3Label": "Conjunto 3",
+    "set3LockedMessage": "Completa los juegos STEM del conjunto 2 para desbloquear el conjunto de dominio.",
+    "set3LockedToastTitle": "El conjunto 3 está bloqueado",
+    "set3ComingSoon": "Conjunto 3: Dominio — Próximamente",
+    "set3ComingSoonDesc": "Estamos preparando nuevos retos. ¡Vuelve pronto!",
+    "soon": "Próximamente"
   },
   "nav": {
     "learn": "Aprender",
@@ -2738,5 +2745,17 @@
         "invalidInput": "Revisa el correo y la contraseña: la contraseña necesita al menos 8 caracteres con una letra mayúscula, una minúscula y un número."
       }
     }
+  },
+  "studentClasses": {
+    "title": "Tus clases",
+    "description": "Estas son las clases a las que te has unido.",
+    "joinAnother": "Unirse a otra clase",
+    "join": "Unirse a una clase",
+    "empty": "Todavía no te has unido a una clase.",
+    "emptyHelp": "Pide a tu docente un código de clase para empezar.",
+    "loading": "Cargando tus clases…",
+    "failed": "No pudimos cargar tus clases. Inténtalo de nuevo.",
+    "retry": "Intentar de nuevo",
+    "back": "Volver a las clases"
   }
 }

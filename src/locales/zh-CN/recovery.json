@@ -1,0 +1,9 @@
+{
+  "title": "Bright Boost 无法加载此页面",
+  "message": "请检查网络连接，然后重新加载页面。如果仍然无法加载，请稍后再试。",
+  "storageTitle": "请检查浏览器设置",
+  "storageMessage": "浏览器阻止了登录所需的网站存储。请允许网站存储数据，然后重新加载页面。",
+  "reload": "重新加载页面",
+  "home": "返回首页",
+  "loading": "正在加载 Bright Boost…"
+}

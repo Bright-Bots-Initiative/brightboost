@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useApi } from "../services/api";
 import { Users, ArrowRight } from "lucide-react";
@@ -11,6 +11,8 @@ const JoinClass: React.FC = () => {
   const { t } = useTranslation();
   const api = useApi();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromClasses = location.state?.returnTo === "/student/classes";
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,11 +56,19 @@ const JoinClass: React.FC = () => {
   };
 
   const handlePulseDone = () => {
-    navigate("/student/dashboard");
+    navigate(fromClasses ? "/student/classes" : "/student/dashboard");
   };
 
   return (
     <div className="max-w-md mx-auto mt-12">
+      {fromClasses && (
+        <Link
+          to="/student/classes"
+          className="mb-4 inline-flex min-h-11 items-center rounded px-2 font-semibold text-brightboost-navy underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {t("studentClasses.back")}
+        </Link>
+      )}
       <div className="bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-6">
           <Users className="w-12 h-12 text-brightboost-blue mx-auto mb-3" />
