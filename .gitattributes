@@ -15,6 +15,7 @@
 # auto-detection on purpose.
 
 *.ts     text eol=lf
+*.mts    text eol=lf
 *.tsx    text eol=lf
 *.js     text eol=lf
 *.jsx    text eol=lf

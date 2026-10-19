@@ -27,3 +27,11 @@ review and deployment-trigger verification before publication or merge.
 The full application check exposed that the shell-smoke sandbox omitted the new
 predev verification dependencies. Copy those two scripts into both sandbox phases;
 retain the guard, stale-output refusal and real healthy/sabotage browser proof.
+
+## October 19 integration resume
+
+Resume the engine-only integration after the disk-space interruption. Reconcile
+with main after #944, preserve the selected engine contract, and run actual
+application checks. Repair the missing .mts LF checkout rule exposed by the
+Windows rebase, with a clean-checkout red/green proof. Do not restart unrelated
+Docker services or publish, deploy, or merge without the remaining gates.
