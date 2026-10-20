@@ -9,6 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "../contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { getStudentArchetype } from "@/lib/moduleAccess";
+import {
+  STEM_SET_1_IDS,
+  STEM_SET_2_IDS,
+  STEM_SET_3_IDS,
+} from "@/constants/stemSets";
 
 type Stats = {
   heartPower: number;
@@ -77,9 +82,9 @@ const ARENA_BOOSTS = [
 ];
 
 const SET_CONFIG = [
-  { key: "set1" as const, target: 15 },
-  { key: "set2" as const, target: 30 },
-  { key: "set3" as const, target: 50 },
+  { key: "set1" as const },
+  { key: "set2" as const },
+  { key: "set3" as const },
 ];
 
 const SPECIALIZATIONS = [
@@ -170,9 +175,9 @@ export default function Avatar() {
     powerLevel: 0,
     stage: "Rookie",
     specialtyProgress: {
-      set1: { current: 0, target: 15, complete: false },
-      set2: { current: 0, target: 30, complete: false },
-      set3: { current: 0, target: 50, complete: false },
+      set1: { current: 0, target: STEM_SET_1_IDS.length, complete: false },
+      set2: { current: 0, target: STEM_SET_2_IDS.length, complete: false },
+      set3: { current: 0, target: STEM_SET_3_IDS.length, complete: false },
     },
   };
 
