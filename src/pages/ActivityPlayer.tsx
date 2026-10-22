@@ -74,6 +74,15 @@ function shuffledIndices(n: number): number[] {
   return arr;
 }
 
+// #791 reward-free replay; `message` source: respondRewardFree, backend/src/routes/progress.ts
+function isRewardFreeReplay(res: any): boolean {
+  return (
+    typeof res?.message === "string" &&
+    res.message.startsWith("Already completed") &&
+    !res.reward?.xpDelta
+  );
+}
+
 export default function ActivityPlayer() {
   const { slug, lessonId, activityId } = useParams();
   const navigate = useNavigate();
@@ -369,7 +378,9 @@ export default function ActivityPlayer() {
         title: t("activity.completed"),
         description: res.reward?.xpDelta
           ? t("activityPlayer.points", { count: res.reward.xpDelta })
-          : t("activity.saved"),
+          : isRewardFreeReplay(res)
+            ? t("activityPlayer.alreadyCounted")
+            : t("activity.saved"),
       });
 
       // Track session completions for break-time interstitial
@@ -396,6 +407,7 @@ export default function ActivityPlayer() {
 
   if (completionData) {
     const { reward } = completionData;
+    const isReplay = isRewardFreeReplay(completionData);
     const isLevelUp = (reward?.levelDelta || 0) > 0;
     const rewardToken = ACTIVITY_VISUAL_TOKENS["reward"];
 
@@ -419,13 +431,23 @@ export default function ActivityPlayer() {
 
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-2">
-                <div className="text-gray-500 text-lg">
-                  {t("activityPlayer.youEarned")}
-                </div>
-                <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
-                  <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
-                  {t("activityPlayer.points", { count: reward?.xpDelta ?? 0 })}
-                </div>
+                {isReplay ? (
+                  <div className="text-2xl font-black text-brightboost-navy">
+                    {t("activityPlayer.alreadyCounted")}
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-gray-500 text-lg">
+                      {t("activityPlayer.youEarned")}
+                    </div>
+                    <div className="text-4xl font-black text-brightboost-navy bg-brightboost-yellow/25 px-6 py-3 rounded-full flex items-center justify-center gap-2">
+                      <Star className="w-8 h-8 fill-brightboost-navy text-brightboost-navy" />
+                      {t("activityPlayer.points", {
+                        count: reward?.xpDelta ?? 0,
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
 
               {isLevelUp && (

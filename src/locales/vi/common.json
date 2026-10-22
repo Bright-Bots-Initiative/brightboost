@@ -1008,6 +1008,7 @@
     "complete": "Hoàn thành hoạt động!",
     "youEarned": "Con đã kiếm được",
     "points": "+{{count}} điểm",
+    "alreadyCounted": "Điểm đã được tính rồi — chơi lại hay lắm!",
     "levelUp": "LÊN CẤP!",
     "gettingStronger": "Con đang mạnh hơn rồi!",
     "unlocked": "Mở khóa {{count}} khả năng mới!",
