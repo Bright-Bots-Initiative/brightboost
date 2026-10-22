@@ -1031,6 +1031,7 @@
     "complete": "¡Actividad Completada!",
     "youEarned": "Ganaste",
     "points": "+{{count}} puntos",
+    "alreadyCounted": "Tus puntos ya se contaron — ¡buena repetición!",
     "levelUp": "¡SUBISTE DE NIVEL! 🆙",
     "gettingStronger": "¡Te estás haciendo más fuerte!",
     "unlocked": "¡Desbloqueaste {{count}} nueva habilidad!",

@@ -1008,6 +1008,7 @@
     "complete": "活动完成！",
     "youEarned": "你获得了",
     "points": "+{{count}} 分",
+    "alreadyCounted": "分数已经算过啦——重玩真棒！",
     "levelUp": "升级啦！ 🆙",
     "gettingStronger": "你越来越强了！",
     "unlocked": "解锁了 {{count}} 个新能力！",

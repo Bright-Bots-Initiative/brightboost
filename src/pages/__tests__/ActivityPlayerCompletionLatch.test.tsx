@@ -17,6 +17,10 @@ import ActivityPlayer from "@/pages/ActivityPlayer";
 import { api } from "@/services/api";
 import { __resetGradeBandCache } from "@/hooks/useGradeBand";
 import { __resetPersonalBestCache } from "@/hooks/usePersonalBest";
+import en from "@/locales/en/common.json";
+import es from "@/locales/es/common.json";
+import viLocale from "@/locales/vi/common.json";
+import zhCN from "@/locales/zh-CN/common.json";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -33,8 +37,10 @@ vi.mock("react-i18next", async () => {
   return enMock();
 });
 
+// Hoisted so the #791 tests can read the toast copy; cleared in beforeEach.
+const toastSpy = vi.hoisted(() => vi.fn());
 vi.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastSpy }),
 }));
 
 const mockTextActivity = {
@@ -157,5 +163,92 @@ describe("completion latch (#832 item 4)", () => {
       ).toBeNull(),
     );
     expect(api.completeActivity).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * #791 — a replay is reward-free on purpose; the results screen and toast
+ * must say so instead of "You earned +0 points" / "Awesome, saved!". The
+ * i18n mock does not interpolate, so these check which copy is shown, not
+ * a rendered count.
+ */
+describe("replay results copy (#791)", () => {
+  const ALREADY_COUNTED = "Already counted — nice replay!";
+
+  function reply(message: string | undefined, xpDelta: number) {
+    return {
+      ...COMPLETION_RESPONSE,
+      ...(message === undefined ? {} : { message }),
+      reward: { ...COMPLETION_RESPONSE.reward, xpDelta },
+    };
+  }
+
+  async function completeWith(response: unknown) {
+    vi.mocked(api.completeActivity).mockResolvedValue(response);
+    renderPlayer();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Mark Complete" }),
+    );
+    await screen.findByRole("heading", { name: "Activity Complete!" });
+  }
+
+  function completionToastDescription() {
+    const call = toastSpy.mock.calls.find(
+      ([arg]) => arg?.title === "Activity Completed!",
+    );
+    return call?.[0].description;
+  }
+
+  function expectReplayCopy() {
+    expect(screen.getByText(ALREADY_COUNTED)).toBeInTheDocument();
+    expect(screen.queryByText("You earned")).toBeNull();
+    expect(screen.queryByText(/points/)).toBeNull();
+    expect(completionToastDescription()).toBe(ALREADY_COUNTED);
+  }
+
+  function expectEarnedCopy() {
+    expect(screen.getByText("You earned")).toBeInTheDocument();
+    expect(screen.getByText(/points/)).toBeInTheDocument();
+    expect(screen.queryByText(ALREADY_COUNTED)).toBeNull();
+  }
+
+  it("REPLAY-1: an already-completed reply shows already-counted copy, not +0 points", async () => {
+    await completeWith(reply("Already completed", 0));
+    expectReplayCopy();
+  });
+
+  it("REPLAY-2: a first completion that earned XP still shows the points", async () => {
+    await completeWith(COMPLETION_RESPONSE);
+    expectEarnedCopy();
+    expect(completionToastDescription()).toEqual(
+      expect.stringContaining("points"),
+    );
+  });
+
+  it("REPLAY-3: a backfilled replay that added XP still shows the points", async () => {
+    await completeWith(reply("Already completed (avatar backfilled)", 50));
+    expectEarnedCopy();
+    expect(completionToastDescription()).toEqual(
+      expect.stringContaining("points"),
+    );
+  });
+
+  it("REPLAY-4: a backfilled replay that added no XP gets the replay copy", async () => {
+    await completeWith(reply("Already completed (avatar backfilled)", 0));
+    expectReplayCopy();
+  });
+
+  it("REPLAY-5: a 0-XP first completion (no message) keeps today's copy", async () => {
+    await completeWith(reply(undefined, 0));
+    expectEarnedCopy();
+    expect(completionToastDescription()).toBe("Awesome, saved!");
+  });
+
+  it("REPLAY-6: es, vi and zh-CN carry their own already-counted string", () => {
+    expect(en.activityPlayer.alreadyCounted).toBe(ALREADY_COUNTED);
+    for (const locale of [es, viLocale, zhCN]) {
+      expect(locale.activityPlayer.alreadyCounted).toBeTruthy();
+      expect(locale.activityPlayer.alreadyCounted).not.toBe(ALREADY_COUNTED);
+    }
   });
 });
