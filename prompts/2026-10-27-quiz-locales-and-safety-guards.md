@@ -28,6 +28,8 @@ Chromium installation prerequisite.
   the English bundle.
 - Register the existing Chromium install command and prove its removal
   fails the real CI manifest.
+- Pin the three Playwright-installing jobs to Ubuntu 24.04 after hosted CI
+  demonstrated that Playwright 1.57 rejects the new Ubuntu 26.04 runner.
 
 ## Verification
 
