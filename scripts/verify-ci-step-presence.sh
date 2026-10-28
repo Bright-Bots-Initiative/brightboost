@@ -16,6 +16,12 @@
 
 set -euo pipefail
 
+# Check before path resolution: a minimal PATH may also lack dirname.
+if ! command -v node >/dev/null 2>&1; then
+  echo "ERROR: node is required to parse the workflow YAML" >&2
+  exit 2
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # U1-04: injectable paths for unit tests (default = production locations).
@@ -33,10 +39,6 @@ if [[ ! -f "$WORKFLOW" ]]; then
 fi
 if [[ ! -f "$CORE" ]]; then
   echo "ERROR: missing core module $CORE" >&2
-  exit 2
-fi
-if ! command -v node >/dev/null 2>&1; then
-  echo "ERROR: node is required to parse the workflow YAML" >&2
   exit 2
 fi
 
