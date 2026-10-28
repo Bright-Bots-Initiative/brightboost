@@ -39,7 +39,8 @@ jobs:
         run: npm run build
 
   build-and-test:
-    runs-on: ubuntu-latest
+    # Playwright 1.57 supports Ubuntu 24.04; ubuntu-latest can select 26.04.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
         with:

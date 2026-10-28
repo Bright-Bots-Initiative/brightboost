@@ -2,10 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import {
-  resolveText,
-  resolveChoiceList,
-} from "@/utils/localizedContent";
+import { resolveText, resolveChoiceList } from "@/utils/localizedContent";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import type { LegacyListQuizProps } from "./types";
 
@@ -27,9 +24,7 @@ export default function LegacyListQuiz({
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const allAnswered = questions.every(
-    (q) => typeof answers[q.id] === "number",
-  );
+  const allAnswered = questions.every((q) => typeof answers[q.id] === "number");
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
@@ -72,7 +67,8 @@ export default function LegacyListQuiz({
                 >
                   {(() => {
                     const resolved = resolveChoiceList(t, q.choices);
-                    const order = shuffleMap[q.id] ?? q.choices.map((_, i) => i);
+                    const order =
+                      shuffleMap[q.id] ?? q.choices.map((_, i) => i);
                     return order.map((origIdx) => {
                       const selected = answers[q.id] === origIdx;
                       return (
@@ -85,7 +81,10 @@ export default function LegacyListQuiz({
                           // choice a comfortable K-2 tap target.
                           className={`justify-start text-left h-auto min-h-[44px] py-3 whitespace-normal ${isWrong && selected ? "border-red-500 text-red-600 bg-red-50" : ""}`}
                           onClick={() => {
-                            setAnswers((prev) => ({ ...prev, [q.id]: origIdx }));
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [q.id]: origIdx,
+                            }));
                             if (isWrong) {
                               setIncorrectIds((prev) =>
                                 prev.filter((id) => id !== q.id),
@@ -120,7 +119,10 @@ export default function LegacyListQuiz({
                   (q) => answers[q.id] !== q.answerIndex,
                 );
                 if (incorrect.length === 0) {
-                  onComplete();
+                  onComplete({
+                    score: questions.length,
+                    total: questions.length,
+                  });
                   return;
                 }
                 setSubmitted(true);

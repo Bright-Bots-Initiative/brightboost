@@ -53,7 +53,10 @@ export type LegacyListQuizProps = {
   setAnswers: Dispatch<SetStateAction<Record<string, number>>>;
   setSubmitted: Dispatch<SetStateAction<boolean>>;
   setIncorrectIds: Dispatch<SetStateAction<string[]>>;
-  onComplete: () => void | Promise<boolean>;
+  onComplete: (result: {
+    score: number;
+    total: number;
+  }) => void | Promise<boolean>;
   isQuizOnly: boolean;
   onBackToStory: () => void;
   onBackToModule: () => void;

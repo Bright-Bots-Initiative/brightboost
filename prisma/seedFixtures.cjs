@@ -133,7 +133,8 @@ function evaluateSeedTarget(env = {}) {
  *   SEED_RESET=false  → no wipe
  *   NODE_ENV=production → no wipe (unchanged; this is the Railway path)
  *   non-local DATABASE_URL → no wipe (new)
- *   otherwise → wipe (local dev default)
+ *   local database with a bounded test/tests/e2e name token → wipe
+ *   otherwise → no wipe (a loopback host can be a production tunnel)
  *
  * @param {Record<string, string | undefined>} env
  * @returns {{ shouldWipe: boolean, reason: string }}
@@ -157,7 +158,29 @@ function evaluateSeedWipe(env = {}) {
       reason: `DATABASE_URL is not a local database — ${ALLOW_PRODUCTION_ENV} permits writing, never deleting; set SEED_RESET=true to wipe on purpose`,
     };
   }
-  return { shouldWipe: true, reason: "local target, SEED_RESET unset" };
+  // #807: host locality alone is not evidence that data is disposable.
+  // Match scripts/lib/db-target.mjs's bounded test/e2e tokens. The seed is
+  // CommonJS, so keep this small check local rather than importing its ESM CLI helper.
+  let database = "";
+  try {
+    database = decodeURIComponent(new URL(env.DATABASE_URL).pathname.slice(1));
+  } catch {
+    // Missing, malformed, or undecodable names never authorize deletion.
+  }
+  if (
+    /[\\/]/.test(database) ||
+    !/(^|[_-])(test|tests|e2e)([_-]|$)/i.test(database)
+  ) {
+    return {
+      shouldWipe: false,
+      reason:
+        "database name is not a designated test/e2e database — set SEED_RESET=true to wipe on purpose",
+    };
+  }
+  return {
+    shouldWipe: true,
+    reason: "local test/e2e database, SEED_RESET unset",
+  };
 }
 
 /**

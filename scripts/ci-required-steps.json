@@ -18,6 +18,10 @@
     },
     { "job": "build-and-test", "run": "npm run agent:check" },
     { "job": "build-and-test", "run": "npm run docs:check" },
+    {
+      "job": "build-and-test",
+      "run": "npx playwright install --with-deps chromium"
+    },
     { "job": "build-and-test", "run": "npm test -- --watch=false" },
     { "job": "build-and-test", "run": "npm run verify:storybook-empty-suite" },
     { "job": "build-and-test", "run": "npm run verify:ci-gate" },

@@ -788,7 +788,7 @@ export default function ActivityPlayer() {
         setAnswers={setAnswers}
         setSubmitted={setSubmitted}
         setIncorrectIds={setIncorrectIds}
-        onComplete={() => handleComplete()}
+        onComplete={(result) => handleComplete(result)}
         isQuizOnly={isQuizOnly}
         onBackToStory={() => setMode("story")}
         onBackToModule={() => navigate(`/student/modules/${slug}`)}

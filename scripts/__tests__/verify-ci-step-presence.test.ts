@@ -75,6 +75,40 @@ describe("verify-ci-step-presence.sh (U1-04 + review Bug A + round 3)", () => {
     expect(output).toMatch(/PASS: CI step-presence guard has teeth/);
   });
 
+  it("#811: removing Chromium installation fails the real manifest and names the missing command", async () => {
+    const core = await loadCore();
+    const workflow = readFileSync(
+      path.join(repoRoot, ".github/workflows/ci-cd.yml"),
+      "utf8",
+    );
+    const required = core.loadRequiredSteps(
+      path.join(repoRoot, "scripts/ci-required-steps.json"),
+    );
+    expect(core.checkRequiredPresent(workflow, required).ok).toBe(true);
+    const command = "npx playwright install --with-deps chromium";
+    const sabotaged = core.removeStepsMatching(workflow, {
+      job: "build-and-test",
+      run: command,
+    });
+    expect(sabotaged.removedCount).toBe(1);
+    const dir = mkdtempSync(path.join(tmpdir(), "ci-chromium-"));
+    tempDirs.push(dir);
+    const workflowPath = path.join(dir, "ci-cd.yml");
+    writeFileSync(workflowPath, sabotaged.text);
+    const { status, output } = await runStepPresence({
+      ...process.env,
+      CI_STEP_PRESENCE_WORKFLOW: workflowPath,
+      CI_STEP_PRESENCE_MANIFEST: path.join(
+        repoRoot,
+        "scripts/ci-required-steps.json",
+      ),
+    });
+    expect(status, output).toBe(1);
+    expect(output).toContain(
+      `MISSING required step: build-and-test run: ${command}`,
+    );
+  });
+
   it("property false: required step commented out → exit 1 (Bug A regression)", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "ci-step-presence-"));
     tempDirs.push(dir);
