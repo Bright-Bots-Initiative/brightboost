@@ -1,4 +1,4 @@
-> **Canonical for:** deployment. Last verified against code: 2026-09-01.
+> **Canonical for:** deployment. Last verified against code: 2026-09-01; seed wipe guard 2026-10-27.
 
 # BrightBoost Deployment Guide
 
@@ -113,13 +113,19 @@ Since #700 the seed carries its own gate as well: it refuses to write when `NODE
 
 The seed can also **wipe** before reseeding: `matchTurn`, `match`, `unlockedAbility`, `ability`, `progress`, `avatar`, `activity`, `lesson`, `unit`, `userBadge`, `badge`, `module`, `user`. That is governed by `SEED_RESET`, not by the write gate — **`SEED_ALLOW_PRODUCTION=true` permits writing, never deleting.** Precedence:
 
-| Condition                                    | Wipe?                                       |
-| -------------------------------------------- | ------------------------------------------- |
-| `SEED_RESET=true`                            | **yes** — explicit request, wins everywhere |
-| `SEED_RESET=false`                           | no                                          |
-| `NODE_ENV=production`                        | no (the Railway path)                       |
-| `DATABASE_URL` is not a loopback host        | no                                          |
-| otherwise (local target, `SEED_RESET` unset) | yes — the local-dev default                 |
+| Condition                                                    | Wipe?                                                           |
+| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `SEED_RESET=true`                                            | **yes** — explicit request, wins everywhere                     |
+| `SEED_RESET=false`                                           | no                                                              |
+| `NODE_ENV=production`                                        | no (the Railway path)                                           |
+| `DATABASE_URL` is not a loopback host                        | no                                                              |
+| database name has no bounded `test`, `tests`, or `e2e` token | no — includes ordinary names reached through a localhost tunnel |
+| otherwise (local test database, `SEED_RESET` unset)          | yes — disposable test-data default                              |
+
+The database-name check uses whole tokens separated by `_` or `-`: `brightboost_test`
+and `e2e_local` qualify; `brightboost`, `postgres`, and `contest` do not. Missing or
+malformed names also skip cleanup. This changes only automatic deletion: the write
+gate and explicit `SEED_RESET=true`/`false` decisions remain separate.
 
 The seed announces the decision on its first lines, before it connects: `Cleanup: enabled — …` or `Cleanup: skipped — …`. Treat `SEED_RESET=true` against anything but a throwaway database as a destructive operation.
 
@@ -135,7 +141,7 @@ The seed announces the decision on its first lines, before it connects: `Cleanup
 Warnings:
 
 - The seed find-or-creates demo accounts **and refreshes their password hashes** on every run (`prisma/seed.cjs` — "Always refresh password hash on seed").
-- Seed cleanup wipes data on a local target with `SEED_RESET` unset, and anywhere with `SEED_RESET=true`. See the `SEED_RESET` table above.
+- Seed cleanup automatically wipes only a local designated test database with `SEED_RESET` unset, and wipes an otherwise permitted target with `SEED_RESET=true`. See the `SEED_RESET` table above.
 - Do not set `RUN_SEED=true` against a populated production database unless you intend both.
 
 Local dev and CI are unchanged: neither path calls `predeploy.sh`; contributors should continue running seed directly (`npm run seed`) when needed. If we add a future DB-backed CI job, it should call seed directly and must not route through `predeploy.sh`.

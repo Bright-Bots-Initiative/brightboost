@@ -48,7 +48,9 @@ function renderLegacyQuiz(options: RenderLegacyOptions = {}) {
       <LegacyListQuiz
         title="Test Quiz"
         questions={options.questions ?? threeQuestionFixture}
-        shuffleMap={options.shuffleMap ?? identityShuffleMap(threeQuestionFixture)}
+        shuffleMap={
+          options.shuffleMap ?? identityShuffleMap(threeQuestionFixture)
+        }
         answers={answers}
         submitted={submitted}
         incorrectIds={incorrectIds}
@@ -111,7 +113,9 @@ describe("LegacyListQuiz", () => {
     renderLegacyQuiz();
 
     expect(screen.getByText("What is Boost trying to do?")).toBeInTheDocument();
-    expect(screen.getByText("Which tool helps Boost plan?")).toBeInTheDocument();
+    expect(
+      screen.getByText("Which tool helps Boost plan?"),
+    ).toBeInTheDocument();
     expect(screen.getByText("What color is Boost?")).toBeInTheDocument();
   });
 
@@ -185,7 +189,9 @@ describe("LegacyListQuiz", () => {
 
     clickChoice("Reach the charging station");
 
-    expect(within(q1Section).queryByText("(Try again!)")).not.toBeInTheDocument();
+    expect(
+      within(q1Section).queryByText("(Try again!)"),
+    ).not.toBeInTheDocument();
     expect(
       within(q1Section).queryByText(/Read the first slide again/),
     ).not.toBeInTheDocument();
@@ -196,9 +202,21 @@ describe("LegacyListQuiz", () => {
     answerAllCorrect();
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 3, total: 3 });
     expect(getSubmitted()).toBe(false);
     expect(screen.queryByText("(Try again!)")).not.toBeInTheDocument();
+  });
+
+  it("#792: submits the final correct result after a wrong attempt with shuffled choices", () => {
+    const { onComplete } = renderLegacyQuiz({
+      shuffleMap: reversedShuffleMap(threeQuestionFixture),
+    });
+    answerAllWrong();
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(onComplete).not.toHaveBeenCalled();
+    answerAllCorrect();
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 3, total: 3 });
   });
 
   it("Reset clears answers, submitted state, incorrect markers, and hints", () => {
@@ -214,8 +232,12 @@ describe("LegacyListQuiz", () => {
 
     expect(getSubmitted()).toBe(false);
     expect(screen.queryByText("(Try again!)")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Read the first slide again/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Think about navigation/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Read the first slide again/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Think about navigation/),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
     for (const label of [
       "Reach the charging station",

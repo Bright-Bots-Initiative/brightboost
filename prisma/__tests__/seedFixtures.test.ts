@@ -43,6 +43,7 @@ const {
 } = require_("../seedFixtures.cjs");
 
 const LOCAL_URL = "postgresql://u:p@127.0.0.1:5435/brightboost";
+const LOCAL_TEST_URL = "postgresql://u:p@127.0.0.1:5435/brightboost_test";
 const REMOTE_URL = "postgresql://u:p@db.example.supabase.co:5432/postgres";
 
 const ROOT_SEED = path.resolve(here, "../seed.cjs");
@@ -352,8 +353,10 @@ describe("write permission is not delete permission (#700 review B1)", () => {
     ).toBe(false);
   });
 
-  it("still wipes a local target by default, and honours SEED_RESET both ways", () => {
-    expect(evaluateSeedWipe({ DATABASE_URL: LOCAL_URL }).shouldWipe).toBe(true);
+  it("wipes a designated local test database by default, and honours SEED_RESET both ways", () => {
+    expect(evaluateSeedWipe({ DATABASE_URL: LOCAL_TEST_URL }).shouldWipe).toBe(
+      true,
+    );
     expect(
       evaluateSeedWipe({ DATABASE_URL: LOCAL_URL, SEED_RESET: "false" })
         .shouldWipe,
@@ -366,6 +369,68 @@ describe("write permission is not delete permission (#700 review B1)", () => {
         SEED_RESET: "true",
       }).shouldWipe,
     ).toBe(true);
+  });
+
+  it("#807: a loopback tunnel never makes an ordinary database disposable", () => {
+    for (const host of ["localhost", "127.0.0.1", "[::1]"]) {
+      for (const database of [
+        "brightboost",
+        "postgres",
+        "contest",
+        "testimony",
+      ]) {
+        const env = {
+          DATABASE_URL: `postgresql://u:p@${host}:5435/${database}`,
+        };
+        // A local write remains allowed; deletion is a separate decision.
+        expect(evaluateSeedTarget(env).allowed).toBe(true);
+        expect(evaluateSeedWipe(env)).toEqual({
+          shouldWipe: false,
+          reason: expect.stringMatching(/database name.*test\/e2e/i),
+        });
+        expect(
+          evaluateSeedWipe({ ...env, SEED_ALLOW_PRODUCTION: "true" })
+            .shouldWipe,
+        ).toBe(false);
+        expect(
+          evaluateSeedWipe({ ...env, SEED_RESET: "true" }).shouldWipe,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("#807: only a bounded test/e2e token in the database name enables automatic cleanup", () => {
+    for (const database of [
+      "test",
+      "brightboost_test",
+      "brightboost-tests",
+      "e2e_local",
+      "BB_TEST",
+      "brightboost_%74est",
+    ]) {
+      expect(
+        evaluateSeedWipe({
+          DATABASE_URL: `postgresql://u:p@localhost:5435/${database}`,
+        }).shouldWipe,
+      ).toBe(true);
+    }
+    for (const url of [
+      undefined,
+      "",
+      "not-a-url",
+      "postgresql://localhost/",
+      "postgresql://test:test@localhost/brightboost?schema=test",
+      "postgresql://localhost/test/prod",
+      "postgresql://localhost/test%2Fprod",
+      "postgresql://localhost/test%5Cprod",
+      "postgresql://localhost/test%ZZ",
+      "postgresql://db.example/brightboost_test",
+    ]) {
+      expect(
+        evaluateSeedWipe({ DATABASE_URL: url }).shouldWipe,
+        String(url),
+      ).toBe(false);
+    }
   });
 
   it("decides the wipe before the Prisma client is constructed", () => {
@@ -650,12 +715,12 @@ describe("seed process refuses to run in production (#700)", () => {
   });
 
   it("exits non-zero and never prints 'Database cleaned.' when the wipe fails (#812)", async () => {
-    // Loopback so the wipe gate authorises the wipe, port 1 so the very first
+    // Designated local test DB so the wipe gate authorises the wipe, port 1 so the very first
     // deleteMany is refused instantly — no database required. Before the fix
     // this run printed "Database cleaned." over a DB it had never touched.
     const env = {
       ...process.env,
-      DATABASE_URL: "postgresql://u:p@127.0.0.1:1/brightboost",
+      DATABASE_URL: "postgresql://u:p@127.0.0.1:1/brightboost_test",
     };
     delete env.NODE_ENV;
     delete env.SEED_RESET;

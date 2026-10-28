@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ActivityPlayer from "@/pages/ActivityPlayer";
 import { api } from "@/services/api";
 import { __resetGradeBandCache } from "@/hooks/useGradeBand";
+import { track } from "@/lib/analytics";
+
+vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -118,12 +121,62 @@ describe("ActivityPlayer quiz variant gate", () => {
     vi.resetAllMocks();
     __resetGradeBandCache();
     localStorage.clear();
+    sessionStorage.clear();
     vi.mocked(api.getModule).mockResolvedValue(mockModule);
     vi.mocked(api.getStudentCourses).mockResolvedValue([]);
   });
 
+  it.each([false, true])(
+    "#792: sends the legacy result to persistence and analytics (quiz-only=%s)",
+    async (quizOnly) => {
+      const activity = quizOnly ? mockQuizOnlyActivity : mockQuizActivity;
+      vi.mocked(api.getModule).mockResolvedValue({
+        ...mockModule,
+        units: [{ lessons: [{ id: "l-1", activities: [activity] }] }],
+      });
+      vi.mocked(api.getStudentCourses).mockResolvedValue([
+        { gradeBand: "g3_5" },
+      ]);
+      vi.mocked(api.completeActivity).mockResolvedValue({
+        reward: { xpDelta: 50 },
+        avatar: { level: 1, xp: 50 },
+      });
+      renderPlayer(activity.id);
+      if (!quizOnly) await enterQuizFromStory();
+      const submit = await screen.findByRole("button", { name: "Submit" });
+      fireEvent.click(
+        screen.getByRole("button", { name: quizOnly ? "B" : "3", exact: true }),
+      );
+      fireEvent.click(submit);
+      expect(api.completeActivity).not.toHaveBeenCalled();
+      fireEvent.click(
+        screen.getByRole("button", { name: quizOnly ? "A" : "4", exact: true }),
+      );
+      fireEvent.click(submit);
+      await waitFor(() =>
+        expect(api.completeActivity).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            activityId: activity.id,
+            result: { score: 1, total: 1 },
+          }),
+        ),
+      );
+      await waitFor(() =>
+        expect(track).toHaveBeenCalledWith(
+          expect.objectContaining({
+            kind: "game_completed",
+            activity_id: activity.id,
+            score: 1,
+          }),
+        ),
+      );
+    },
+  );
+
   it("k2 band mounts instant quiz stub", async () => {
-    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([{ gradeBand: "k2" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([
+      { gradeBand: "k2" },
+    ]);
 
     renderPlayer();
     await enterQuizFromStory();
@@ -131,17 +184,23 @@ describe("ActivityPlayer quiz variant gate", () => {
     await waitFor(() => {
       expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   it("g3_5 band mounts LegacyListQuiz with Submit", async () => {
-    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([{ gradeBand: "g3_5" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([
+      { gradeBand: "g3_5" },
+    ]);
 
     renderPlayer();
     await enterQuizFromStory();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Submit" }),
+      ).toBeInTheDocument();
     });
     expect(screen.queryByTestId("instant-quiz")).not.toBeInTheDocument();
   });
@@ -160,7 +219,9 @@ describe("ActivityPlayer quiz variant gate", () => {
         },
       ],
     });
-    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([{ gradeBand: "k2" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([
+      { gradeBand: "k2" },
+    ]);
 
     renderPlayer("a-3");
 
@@ -170,7 +231,9 @@ describe("ActivityPlayer quiz variant gate", () => {
     fireEvent.click(screen.getByText("Start Quiz"));
 
     expect(screen.queryByTestId("instant-quiz")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   it("quiz-only activity auto-enters with k2 instant variant", async () => {
@@ -187,7 +250,9 @@ describe("ActivityPlayer quiz variant gate", () => {
         },
       ],
     });
-    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([{ gradeBand: "k2" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([
+      { gradeBand: "k2" },
+    ]);
 
     renderPlayer("a-2");
 
@@ -218,7 +283,9 @@ describe("ActivityPlayer quiz variant gate", () => {
     renderPlayer("a-2");
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Submit" }),
+      ).toBeInTheDocument();
     });
     expect(screen.getByText("Quiz only question?")).toBeInTheDocument();
     expect(screen.queryByTestId("instant-quiz")).not.toBeInTheDocument();
@@ -234,12 +301,16 @@ describe("ActivityPlayer quiz variant gate", () => {
     await waitFor(() => {
       expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   // covered-by AC-5.2
   it("E-5: variant frozen when band flips k2 to g3_5 after quiz entry", async () => {
-    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([{ gradeBand: "k2" }]);
+    vi.mocked(api.getStudentCourses).mockResolvedValueOnce([
+      { gradeBand: "k2" },
+    ]);
 
     renderPlayer();
     await enterQuizFromStory();
@@ -255,7 +326,9 @@ describe("ActivityPlayer quiz variant gate", () => {
     await waitFor(() => {
       expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps instant variant on replay after activity remount", async () => {
@@ -273,7 +346,9 @@ describe("ActivityPlayer quiz variant gate", () => {
     await waitFor(() => {
       expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   it("re-freezes instant variant when quiz-only activity reload completes after variant reset", async () => {
@@ -305,7 +380,9 @@ describe("ActivityPlayer quiz variant gate", () => {
     await waitFor(() => {
       expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Submit" }),
+    ).not.toBeInTheDocument();
   });
 
   it("g3_5 keeps legacy variant on replay after activity remount", async () => {
@@ -314,14 +391,18 @@ describe("ActivityPlayer quiz variant gate", () => {
     const first = renderPlayer();
     await enterQuizFromStory();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Submit" }),
+      ).toBeInTheDocument();
     });
     first.unmount();
 
     renderPlayer();
     await enterQuizFromStory();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Submit" }),
+      ).toBeInTheDocument();
     });
     expect(screen.queryByTestId("instant-quiz")).not.toBeInTheDocument();
   });

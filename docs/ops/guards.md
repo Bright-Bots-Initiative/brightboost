@@ -1,4 +1,4 @@
-> **Canonical for:** executable guard registry. Last verified against code: 2026-08-29.
+> **Canonical for:** executable guard registry. Last verified against code: 2026-08-29; Chromium prerequisite coverage 2026-10-27.
 
 # Executable guards
 
@@ -144,7 +144,8 @@ Protects the independent "does the production bundle compile" signal from being 
 **`build-and-test`** — `npm run lint`, `npm run format:check`, `npm run typecheck`,
 `cd backend && npm run typecheck`, `bash scripts/check-prisma-drift.sh`,
 `bash scripts/verify-ci-step-presence.sh`, `node scripts/verify-type-program-membership.mjs`,
-`npm run agent:check`, `npm run docs:check`, `npm test -- --watch=false`,
+`npm run agent:check`, `npm run docs:check`, `npx playwright install --with-deps chromium`,
+`npm test -- --watch=false`,
 `npm run verify:storybook-empty-suite`, `npm run verify:ci-gate`, `npm run test:e2e:ci`,
 `npm run build`.
 Protects the static checks, guard wiring, unit/Storybook tests, shell smoke, and the build.
@@ -163,10 +164,16 @@ wait, and the real-flow Cypress subset — the required check cannot go green wi
 them silently deleted.
 
 Deliberately not registered: dependency installs (`npm ci`, `cd backend && npm ci`),
-`npx cypress install`, `npx playwright install`, apt package installs, and `uses:` steps
+`npx cypress install`, apt package installs, and `uses:` steps
 (checkout, setup-node, upload-artifact). Removing a prerequisite fails the job loudly at
 the next step; the manifest registers the commands whose removal would instead leave the
 job green while proving less.
+
+Chromium installation is registered under #811 because some browser guards skip
+when its binary is missing. The existing parity step **CI-08** runs the same
+command before tests; no new step ID is needed. The real-manifest regression
+removes the installation from a temporary workflow copy and requires exit 1
+naming the missing command. Exhaustive sabotage also covers this entry.
 
 Registration is manual today: adding a job to `ci-cd.yml` with no manifest entry does **not**
 fail the guard. Closing that class is #783, not this row.
