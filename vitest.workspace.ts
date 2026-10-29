@@ -26,6 +26,20 @@ function checkoutPathHasSpace(): boolean {
   return dirname.includes(" ") || process.cwd().includes(" ");
 }
 
+// Serial verification prevents concurrent browser/Node projects on small machines.
+// Defaults and the path-with-spaces contract stay unchanged.
+const serialVerification = process.env.BB_TEST_SERIAL === "1";
+function serialSchedule(groupOrder: number) {
+  return serialVerification
+    ? {
+        fileParallelism: false,
+        maxWorkers: 1,
+        minWorkers: 1,
+        sequence: { groupOrder },
+      }
+    : {};
+}
+
 const storybookProject = {
   extends: "vite.config.ts",
   plugins: [
@@ -35,6 +49,7 @@ const storybookProject = {
   ],
   test: {
     name: "storybook",
+    ...serialSchedule(3),
     browser: {
       enabled: true,
       headless: true,
@@ -60,6 +75,7 @@ const engineProject = {
   resolve: { alias: { "@shared": path.resolve(dirname, "shared") } },
   test: {
     name: "greatwork-engine",
+    ...serialSchedule(1),
     environment: "node",
     include: [
       "shared/greatwork-engine/index.test.ts",
@@ -74,6 +90,7 @@ const engineBrowserProject = {
   resolve: { alias: { "@shared": path.resolve(dirname, "shared") } },
   test: {
     name: "greatwork-engine-browser",
+    ...serialSchedule(2),
     include: ["shared/greatwork-engine/__tests__/engine.browser.test.ts"],
     globalSetup: ["scripts/greatwork/parity-setup.ts"],
     passWithNoTests: false,

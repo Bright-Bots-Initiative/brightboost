@@ -35,3 +35,11 @@ with main after #944, preserve the selected engine contract, and run actual
 application checks. Repair the missing .mts LF checkout rule exposed by the
 Windows rebase, with a clean-checkout red/green proof. Do not restart unrelated
 Docker services or publish, deploy, or merge without the remaining gates.
+
+## October 28 relocation and release request
+
+Owner requested relocating the integration workspace to the secondary drive and
+releasing the verified version. Preserve all evidence and reconcile current main.
+Add opt-in `BB_TEST_SERIAL=1` scheduling to run the same tests and browser projects
+sequentially on memory-constrained machines. Default CI behavior and assertions
+remain unchanged. Do not bypass push hooks, required checks, or independent review.
