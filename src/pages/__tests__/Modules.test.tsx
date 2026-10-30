@@ -1,5 +1,5 @@
 // src/pages/__tests__/Modules.test.tsx
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Modules from "../Modules";
 import { BrowserRouter } from "react-router-dom";
@@ -48,14 +48,24 @@ vi.mock("@/components/ModulesSkeleton", () => ({
   ModulesSkeleton: () => <div data-testid="modules-skeleton">Loading...</div>,
 }));
 
+// The real thumbnail is an inline SVG with nothing to query, so the mock
+// exposes which illustration the card asked for.
+vi.mock("@/components/shared/ActivityThumb", () => ({
+  ActivityThumb: ({ imageKey }: any) => (
+    <div data-testid="activity-thumb" data-image-key={imageKey} />
+  ),
+}));
+
 describe("Modules Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     HIDDEN_MODULE_SLUGS.add("k2-stem-track-maker");
+    HIDDEN_MODULE_SLUGS.add("k2-stem-echo-avenue");
   });
 
   afterEach(() => {
     HIDDEN_MODULE_SLUGS.add("k2-stem-track-maker");
+    HIDDEN_MODULE_SLUGS.add("k2-stem-echo-avenue");
   });
 
   it("shows loading skeleton initially", async () => {
@@ -177,5 +187,54 @@ describe("Modules Page", () => {
       screen.getByLabelText("Start Learning Boost Track Builder"),
     ).toBeInTheDocument();
     expect(screen.queryByText("Set 3: Mastery — Coming Soon")).toBeNull();
+  });
+
+  it("dresses Echo Avenue as a Set 3 game after the hidden release flag is removed (#862)", async () => {
+    HIDDEN_MODULE_SLUGS.delete("k2-stem-track-maker");
+    HIDDEN_MODULE_SLUGS.delete("k2-stem-echo-avenue");
+    // Echo Avenue is listed first so the page, not the feed, sets the order.
+    (api.getModules as any).mockResolvedValue([
+      {
+        id: "echo-module",
+        title: "Echo Avenue",
+        description: "Listen and answer",
+        slug: "k2-stem-echo-avenue",
+        level: "K-2",
+      },
+      {
+        id: "track-module",
+        title: "Boost Track Builder",
+        description: "Build and ride a track",
+        slug: "k2-stem-track-maker",
+        level: "K-2",
+      },
+    ]);
+    (api.getProgress as any).mockResolvedValue({
+      progress: STEM_SET_2_IDS.map((activityId) => ({
+        activityId,
+        status: "COMPLETED",
+      })),
+    });
+
+    render(
+      <BrowserRouter>
+        <Modules />
+      </BrowserRouter>,
+    );
+
+    const cards = await screen.findAllByTestId("card");
+    expect(cards).toHaveLength(2);
+    expect(
+      within(cards[0]).getByText("Boost Track Builder"),
+    ).toBeInTheDocument();
+    const echoCard = cards[1];
+    expect(within(echoCard).getByText("Echo Avenue")).toBeInTheDocument();
+    expect(screen.queryByText("Set 3: Mastery — Coming Soon")).toBeNull();
+
+    expect(within(echoCard).getByText("AI")).toBeInTheDocument();
+    expect(within(echoCard).getByTestId("activity-thumb")).toHaveAttribute(
+      "data-image-key",
+      "type_game",
+    );
   });
 });

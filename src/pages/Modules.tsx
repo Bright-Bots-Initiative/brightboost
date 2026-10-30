@@ -59,6 +59,7 @@ const MODULE_THUMBNAILS: Record<string, ImageKey> = {
   "k2-stem-fast-lane": "type_game",
   "k2-stem-qualify-tune-race": "type_game",
   "k2-stem-track-maker": "type_game",
+  "k2-stem-echo-avenue": "type_game",
   "stem-1-intro": "type_game",
 };
 
@@ -77,6 +78,7 @@ const MODULE_ORDER: Record<string, number> = {
   "k2-stem-qualify-tune-race": 14,
   // Set 3
   "k2-stem-track-maker": 20,
+  "k2-stem-echo-avenue": 22,
   // Legacy / hidden
   "k2-stem-sequencing": 90,
   // Specialization modules come after public content
@@ -101,6 +103,7 @@ const SLUG_TO_SET2_ID: Record<string, StemSet2GameId> = {
 
 const SLUG_TO_SET3_ID: Record<string, StemSet3GameId> = {
   "k2-stem-track-maker": "track-maker",
+  "k2-stem-echo-avenue": "echo-avenue",
 };
 
 /**
