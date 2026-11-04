@@ -937,12 +937,11 @@ export default function SkyShieldGame({
 }) {
   const { t } = useTranslation();
   const band = getGradeBand(config);
-  // TODO: add translation keys for the story, tips in briefing
   const briefing: MissionBriefing = {
     title: pickLocale(
       {
         en: "Sky Shield Patterns",
-        es: "Patrones del Cielo",
+        es: "Escudo del Cielo",
         vi: "Mẫu Lá Chắn Bầu Trời",
         "zh-CN": "天空护盾图案",
       },
@@ -950,6 +949,7 @@ export default function SkyShieldGame({
     ),
     story: pickLocale(
       {
+        es: "¡Caen gotas de luz del cielo! Observa el patrón y coloca tu escudo para proteger la tierra.",
         en: "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
       },
       "Light drops are falling from the sky! Watch the pattern and place your shield to protect the land.",
@@ -957,6 +957,11 @@ export default function SkyShieldGame({
     icon: "🛡️",
     tips: pickLocale(
       {
+        es: [
+          "Observa en qué carril cae la luz.",
+          "Busca un patrón que se repita.",
+          "Escanea las luces misteriosas antes de elegir.",
+        ],
         en: [
           "Watch which lane the light falls in",
           "Look for repeating patterns",
@@ -978,7 +983,7 @@ export default function SkyShieldGame({
   return (
     <GameShell
       gameKey="sky_shield"
-      title="Sky Shield Patterns"
+      title={briefing.title}
       briefing={briefing}
       onComplete={onComplete ?? (() => {})}
     >

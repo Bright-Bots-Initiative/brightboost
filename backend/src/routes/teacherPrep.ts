@@ -3,6 +3,8 @@ import type { Request, Response } from "express";
 import prisma from "../utils/prisma";
 import { requireRole } from "../utils/auth";
 
+import { SPANISH_PREP } from "../data/teacherPrepEs";
+
 const router = Router();
 
 // ── Module prep content (static data per module) ────────────────────────────
@@ -241,9 +243,23 @@ router.get(
         where: { teacherId_moduleSlug: { teacherId, moduleSlug } },
       });
 
+      const translated =
+        req.query.lang === "es" ? SPANISH_PREP[moduleSlug] : undefined;
+      let guide = prepData;
+      if (translated) {
+        const { pacingLabels, ...copy } = translated;
+        guide = {
+          ...prepData,
+          ...copy,
+          pacingGuide: prepData.pacingGuide.map((step, i) => ({
+            ...step,
+            label: pacingLabels[i],
+          })),
+        };
+      }
       res.json({
         moduleSlug,
-        ...prepData,
+        ...guide,
         checklist: checklist
           ? { items: checklist.items, completedAt: checklist.completedAt }
           : null,

@@ -73,6 +73,42 @@ describe("teacher prep catalog (#K2 adult support)", () => {
     expect(res.status).toBe(404);
   });
 
+  it.each([
+    ["k2-stem-rhyme-ride", "Rima"],
+    ["k2-stem-bounce-buds", "Célula"],
+    ["k2-stem-gotcha-gears", "Depurar"],
+  ])(
+    "serves the full Spanish guide for %s with its original pacing",
+    async (slug, term) => {
+      const r = await request(app)
+        .get("/api/teacher/prep/" + slug + "?lang=es")
+        .set("x-test-role", "teacher");
+      expect(r.status).toBe(200);
+      const en = MODULE_PREP_DATA[slug];
+      expect(r.body.vocabulary.map((v: { term: string }) => v.term)).toContain(
+        term,
+      );
+      for (const key of [
+        "objectives",
+        "vocabulary",
+        "prerequisites",
+        "misconceptions",
+        "discussionBefore",
+        "discussionAfter",
+        "turnAndTalk",
+        "materials",
+      ] as const) {
+        expect(r.body[key]).toHaveLength(en[key].length);
+        expect(r.body[key]).not.toEqual(en[key]);
+      }
+      expect(
+        r.body.pacingGuide.map((v: { minutes: number }) => v.minutes),
+      ).toEqual(en.pacingGuide.map((v) => v.minutes));
+      expect(r.body.pacingGuide[0].label).toMatch(/^Calentamiento/);
+      expect(r.body.checklist).toBeNull();
+    },
+  );
+
   it("GET /api/teacher/prep/:slug serves an active module's prep data", async () => {
     const res = await request(app)
       .get("/api/teacher/prep/k2-stem-rhyme-ride")

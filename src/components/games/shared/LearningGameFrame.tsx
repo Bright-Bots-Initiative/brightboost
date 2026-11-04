@@ -3,7 +3,10 @@ import { useTranslation } from "react-i18next";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
 import { useReducedGameEffects } from "./useReducedGameEffects";
 import { ControlInstructions } from "./ControlInstructions";
-import { mergeControlInstructions, type ControlInstructionsModel } from "./controlInstructionsData";
+import {
+  mergeControlInstructions,
+  type ControlInstructionsModel,
+} from "./controlInstructionsData";
 
 type LearningGameFrameProps = {
   title: string;
@@ -25,9 +28,12 @@ export function LearningGameFrame({
   children,
 }: LearningGameFrameProps) {
   const { t } = useTranslation();
-  const titleId = `${title.replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").toLowerCase()}-title`;
+  const titleId = `${title
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase()}-title`;
   const instructionRegionId = `${titleId}-instructions`;
-  const resolvedInstructions = mergeControlInstructions(controlInstructions);
+  const resolvedInstructions = mergeControlInstructions(controlInstructions, t);
   const { reducedEffects, source, setReducedEffects } = useReducedGameEffects();
 
   return (
@@ -46,11 +52,15 @@ export function LearningGameFrame({
       <div className="mb-4 rounded-xl border bg-slate-50 p-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 id={titleId} className="text-2xl font-bold">{title}</h2>
+            <h2 id={titleId} className="text-2xl font-bold">
+              {title}
+            </h2>
             <p className="text-sm text-slate-700">{objective}</p>
             {vocabulary.length > 0 ? (
               <p className="mt-2 text-sm text-slate-600">
-                <span className="font-semibold">{t("games.learning.wordsToKnow")}:</span>{" "}
+                <span className="font-semibold">
+                  {t("games.learning.wordsToKnow")}:
+                </span>{" "}
                 {vocabulary.join(", ")}
               </p>
             ) : null}
@@ -68,10 +78,16 @@ export function LearningGameFrame({
       </div>
 
       <div className="space-y-4">
-        <ControlInstructions id={instructionRegionId} instructions={resolvedInstructions} />
+        <ControlInstructions
+          id={instructionRegionId}
+          instructions={resolvedInstructions}
+        />
         <div
           role="region"
-          aria-label={`${title} game area`}
+          aria-label={t("games.shared.area", {
+            title,
+            defaultValue: "{{title}} game area",
+          })}
           aria-describedby={instructionRegionId}
           tabIndex={-1}
         >

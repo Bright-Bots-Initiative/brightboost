@@ -26,46 +26,88 @@ export interface GearRoundContent {
 export const GOTCHA_GEARS_CONTENT: Record<GradeBand, GearRoundContent[]> = {
   k2: [
     {
-      clueText: { en: "I help a robot think and learn" },
-      correctLabel: { en: "AI Brain" },
-      distractors: { en: ["Hammer", "Paintbrush"] },
-      hint: { en: "Think about what makes a robot smart!" },
+      clueText: {
+        en: "I help a robot think and learn",
+        es: "Ayudo al robot a pensar y aprender",
+      },
+      correctLabel: { en: "AI Brain", es: "Cerebro de IA" },
+      distractors: { en: ["Hammer", "Paintbrush"], es: ["Martillo", "Pincel"] },
+      hint: {
+        en: "Think about what makes a robot smart!",
+        es: "¿Qué hace que un robot sea inteligente?",
+      },
     },
     {
-      clueText: { en: "I store information like a library" },
-      correctLabel: { en: "Memory Chip" },
-      distractors: { en: ["Wheel", "Speaker"] },
-      hint: { en: "Where do computers keep things?" },
+      clueText: {
+        en: "I store information like a library",
+        es: "Guardo información como una biblioteca",
+      },
+      correctLabel: { en: "Memory Chip", es: "Chip de memoria" },
+      distractors: { en: ["Wheel", "Speaker"], es: ["Rueda", "Altavoz"] },
+      hint: {
+        en: "Where do computers keep things?",
+        es: "¿Dónde guarda sus cosas una computadora?",
+      },
     },
     {
-      clueText: { en: "I tell the robot what to do step by step" },
-      correctLabel: { en: "Program" },
-      distractors: { en: ["Snack", "Balloon"] },
-      hint: { en: "It's like a recipe for computers!" },
+      clueText: {
+        en: "I tell the robot what to do step by step",
+        es: "Le digo al robot qué hacer paso a paso",
+      },
+      correctLabel: { en: "Program", es: "Programa" },
+      distractors: { en: ["Snack", "Balloon"], es: ["Merienda", "Globo"] },
+      hint: {
+        en: "It's like a recipe for computers!",
+        es: "¡Es como una receta para computadoras!",
+      },
     },
     {
-      clueText: { en: "I help a robot see the world" },
-      correctLabel: { en: "Camera Sensor" },
-      distractors: { en: ["Pillow", "Crayon"] },
-      hint: { en: "What do YOUR eyes do?" },
+      clueText: {
+        en: "I help a robot see the world",
+        es: "Ayudo al robot a ver lo que lo rodea",
+      },
+      correctLabel: { en: "Camera Sensor", es: "Sensor de cámara" },
+      distractors: { en: ["Pillow", "Crayon"], es: ["Almohada", "Crayón"] },
+      hint: { en: "What do YOUR eyes do?", es: "¿Para qué usas los ojos?" },
     },
     {
-      clueText: { en: "I protect the robot from mistakes" },
-      correctLabel: { en: "Debug Tool" },
-      distractors: { en: ["Umbrella", "Toy Car"] },
-      hint: { en: "Finding and fixing errors!" },
+      clueText: {
+        en: "I protect the robot from mistakes",
+        es: "Ayudo a encontrar y corregir errores",
+      },
+      correctLabel: { en: "Debug Tool", es: "Herramienta de depuración" },
+      distractors: {
+        en: ["Umbrella", "Toy Car"],
+        es: ["Paraguas", "Carrito de juguete"],
+      },
+      hint: {
+        en: "Finding and fixing errors!",
+        es: "¿Qué usarías para corregir un error?",
+      },
     },
     {
-      clueText: { en: "I move the robot's arms and wheels" },
-      correctLabel: { en: "Motor" },
-      distractors: { en: ["Book", "Flower"] },
-      hint: { en: "What makes things spin and move?" },
+      clueText: {
+        en: "I move the robot's arms and wheels",
+        es: "Muevo los brazos y las ruedas del robot",
+      },
+      correctLabel: { en: "Motor", es: "Motor" },
+      distractors: { en: ["Book", "Flower"], es: ["Libro", "Flor"] },
+      hint: {
+        en: "What makes things spin and move?",
+        es: "¿Qué hace que las ruedas giren?",
+      },
     },
     {
-      clueText: { en: "I let robots talk to each other" },
-      correctLabel: { en: "Antenna" },
-      distractors: { en: ["Spoon", "Hat"] },
-      hint: { en: "Think about how signals travel!" },
+      clueText: {
+        en: "I let robots talk to each other",
+        es: "Permito que los robots se comuniquen",
+      },
+      correctLabel: { en: "Antenna", es: "Antena" },
+      distractors: { en: ["Spoon", "Hat"], es: ["Cuchara", "Sombrero"] },
+      hint: {
+        en: "Think about how signals travel!",
+        es: "¿Por dónde llegan las señales?",
+      },
     },
   ],
   g3_5: [

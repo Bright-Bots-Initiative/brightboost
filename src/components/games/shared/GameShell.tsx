@@ -142,6 +142,7 @@ function useCountUp(target: number, duration = 800) {
 // ── Achievement toast ──────────────────────────────────────────────────────
 
 function AchievementBadge({ name, index }: { name: string; index: number }) {
+  const { t } = useTranslation();
   return (
     <div
       className="bounce-in flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 border border-purple-200 rounded-xl shadow-md"
@@ -152,7 +153,11 @@ function AchievementBadge({ name, index }: { name: string; index: number }) {
       </div>
       <div>
         <p className="text-xs font-bold text-purple-800">{name}</p>
-        <p className="text-[10px] text-purple-500">Achievement Unlocked!</p>
+        <p className="text-[10px] text-purple-500">
+          {t("games.shared.achievement", {
+            defaultValue: "Achievement Unlocked!",
+          })}
+        </p>
       </div>
     </div>
   );
@@ -488,6 +493,7 @@ export default function GameShell({
   const instructionsId = `${gameKey}-control-instructions`;
   const activeInstructions = mergeControlInstructions(
     briefing?.controlInstructions,
+    t,
   );
 
   const handleFinish = useCallback(
@@ -672,7 +678,10 @@ export default function GameShell({
       <div
         ref={gameRegionRef}
         role="region"
-        aria-label={`${title} game area`}
+        aria-label={t("games.shared.area", {
+          title,
+          defaultValue: "{{title}} game area",
+        })}
         aria-describedby={instructionsId}
         tabIndex={-1}
       >

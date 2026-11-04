@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import * as React from "react";
 import { Eye, EyeOff, TriangleAlert } from "lucide-react";
 import { cn } from "../../lib/utils";
@@ -13,6 +14,7 @@ export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputE
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, label, error, toggleAriaLabel, ...props }, ref) => {
+    const { t } = useTranslation();
     const [showPassword, setShowPassword] = React.useState(false);
     const [capsLock, setCapsLock] = React.useState(false);
     const generatedId = React.useId();
@@ -79,7 +81,13 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full p-1"
             aria-label={
               toggleAriaLabel ||
-              (showPassword ? "Hide password" : "Show password")
+              (showPassword
+                ? t("studentLogin.form.hidePassword", {
+                    defaultValue: "Hide password",
+                  })
+                : t("studentLogin.form.showPassword", {
+                    defaultValue: "Show password",
+                  }))
             }
           >
             {showPassword ? (
@@ -100,7 +108,9 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             role="alert"
           >
             <TriangleAlert className="h-3 w-3 mr-1" aria-hidden="true" />
-            Caps Lock is on
+            {t("studentLogin.form.capsLockOn", {
+              defaultValue: "Caps Lock is on",
+            })}
           </p>
         )}
       </div>

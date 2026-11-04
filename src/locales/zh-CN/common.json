@@ -214,7 +214,8 @@
       "showPassword": "显示密码",
       "hidePassword": "隐藏密码",
       "submitButton": "登录",
-      "loggingIn": "登录中..."
+      "loggingIn": "登录中...",
+      "capsLockOn": "大写锁定已开启"
     },
     "footer": {
       "noAccount": "还没有账号？",
@@ -1582,7 +1583,24 @@
       "playAgain": "再玩一次",
       "finish": "完成",
       "firstTry": "一次就对！",
-      "perfectScore": "满分！"
+      "perfectScore": "满分！",
+      "howToPlay": "怎么玩",
+      "area": "{{title}}游戏区",
+      "keyboard": "键盘",
+      "touch": "触屏",
+      "buttons": "按钮",
+      "screenReader": "屏幕阅读器",
+      "keyboardHint": "按 Tab 键切换控件，按回车键或空格键选择。",
+      "touchHint": "轻点按钮或卡片进行选择。",
+      "buttonsHint": "每一步都按屏幕上的提示操作。",
+      "effects": "减少特效",
+      "on": "开",
+      "off": "关",
+      "effectsHelp": "减少动态、粒子和视觉效果。设置来源：{{source}}。",
+      "manual": "手动",
+      "system": "系统",
+      "default": "默认",
+      "achievement": "已解锁成就！"
     },
     "tankTrek": {
       "title": "坦克冒险",

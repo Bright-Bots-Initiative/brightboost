@@ -214,7 +214,8 @@
       "showPassword": "Show password",
       "hidePassword": "Hide password",
       "submitButton": "Login",
-      "loggingIn": "Logging in..."
+      "loggingIn": "Logging in...",
+      "capsLockOn": "Caps Lock is on"
     },
     "footer": {
       "noAccount": "Don't have an account?",
@@ -1643,7 +1644,24 @@
       "playAgain": "Play Again",
       "finish": "Finish",
       "firstTry": "First Try!",
-      "perfectScore": "Perfect Score!"
+      "perfectScore": "Perfect Score!",
+      "howToPlay": "How to play",
+      "area": "{{title}} game area",
+      "keyboard": "Keyboard",
+      "touch": "Touch",
+      "buttons": "Buttons",
+      "screenReader": "Screen reader",
+      "keyboardHint": "Use Tab to move between controls and Enter or Space to choose.",
+      "touchHint": "Tap buttons or cards to make your choice.",
+      "buttonsHint": "Follow the on-screen prompts to play each step.",
+      "effects": "Reduced effects",
+      "on": "On",
+      "off": "Off",
+      "effectsHelp": "Reduces motion, particles, and visual intensity for smoother play. Source: {{source}}.",
+      "manual": "Manual",
+      "system": "System",
+      "default": "Default",
+      "achievement": "Achievement Unlocked!"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -2103,7 +2121,10 @@
       "mismatch": "These don't match — try retyping.",
       "emailInvalid": "That doesn't look like a valid email address.",
       "passwordTooShort": "Use at least 8 characters.",
-      "generic": "We couldn't create your account. Please try again."
+      "generic": "We couldn't create your account. Please try again.",
+      "passwordPolicy": "Use 8–100 characters with an uppercase letter, a lowercase letter, and a number.",
+      "nameInvalid": "Check your name and try again.",
+      "tooMany": "Too many attempts. Wait a few minutes and try again."
     },
     "terms": {
       "prefix": "I agree to the",
