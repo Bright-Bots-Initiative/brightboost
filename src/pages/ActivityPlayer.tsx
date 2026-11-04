@@ -83,6 +83,24 @@ function isRewardFreeReplay(res: any): boolean {
   );
 }
 
+// randomUUID requires HTTPS; getRandomValues also works on school LAN origins.
+function newAttemptId(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20),
+  ].join("-");
+}
+
 export default function ActivityPlayer() {
   const { slug, lessonId, activityId } = useParams();
   const navigate = useNavigate();
@@ -172,6 +190,11 @@ export default function ActivityPlayer() {
     returnObjects: true,
   }) as string[];
 
+  const play = useRef<{
+    activityId: string;
+    id: string;
+    band: typeof gradeBand;
+  } | null>(null);
   const startMsRef = useRef<number>(Date.now());
   /** #809: latches while a completion POST is in flight; released on failure. */
   const completingRef = useRef(false);
@@ -259,9 +282,20 @@ export default function ActivityPlayer() {
   // game can start and a completion can be posted. `activity` is only non-null
   // once access is allowed.
   useEffect(() => {
-    if (!activity) return;
+    if (!activity) {
+      play.current = null;
+      return;
+    }
+    // A rerender (including StrictMode effect replay) is still the same play.
+    if (play.current?.activityId === String(activity.id)) return;
+    play.current = {
+      activityId: String(activity.id),
+      id: newAttemptId(),
+      band: gradeBand,
+    };
     track({
       kind: "game_started",
+      attempt_id: play.current.id,
       game_id: content?.gameKey || String(activity.id),
       module_slug: String(slug),
       activity_id: String(activity.id),
@@ -337,10 +371,15 @@ export default function ActivityPlayer() {
     streakMax?: number;
     roundsCompleted?: number;
   }): Promise<boolean> => {
-    if (!slug || !lessonId || !activityId) return false;
+    if (
+      !slug ||
+      !lessonId ||
+      !activityId ||
+      play.current?.activityId !== String(activityId)
+    )
+      return false;
     // #809: one submission per play-through. A double-tap on Finish (or a
-    // game firing onFinish twice) otherwise POSTs twice — playCount counts
-    // POSTs server-side, and the second request is pure duplicate traffic.
+    // game firing onFinish twice) should not send redundant HTTP requests.
     if (completingRef.current) return false;
     completingRef.current = true;
     const completionSession = getPersonalBestSession();
@@ -348,6 +387,8 @@ export default function ActivityPlayer() {
     try {
       const res = await api.completeActivity({
         moduleSlug: slug,
+        attemptId: play.current.id,
+        gradeBand: play.current.band,
         lessonId: String(lessonId),
         activityId: String(activityId),
         timeSpentS,
@@ -364,15 +405,6 @@ export default function ActivityPlayer() {
           completionSession,
         );
       }
-      track({
-        kind: "game_completed",
-        game_id: result?.gameKey || content?.gameKey || String(activityId),
-        module_slug: String(slug),
-        activity_id: String(activityId),
-        score: result?.score,
-        time_spent_seconds: timeSpentS,
-        grade_band: gradeBand,
-      });
       setCompletionData(res);
       toast({
         title: t("activity.completed"),

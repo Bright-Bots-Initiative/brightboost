@@ -1,7 +1,7 @@
 /**
  * Backend analytics shim — PostHog Node SDK wrapper.
  *
- * The server-side mirror of high-value funnel events lives here. The client
+ * Captures funnel events, including canonical curriculum finishes. The client
  * may drop events when a tab closes mid-flow; the server is the source of
  * truth for the scoreboard.
  *

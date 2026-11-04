@@ -161,14 +161,8 @@ describe("ActivityPlayer quiz variant gate", () => {
           }),
         ),
       );
-      await waitFor(() =>
-        expect(track).toHaveBeenCalledWith(
-          expect.objectContaining({
-            kind: "game_completed",
-            activity_id: activity.id,
-            score: 1,
-          }),
-        ),
+      expect(track).not.toHaveBeenCalledWith(
+        expect.objectContaining({ kind: "game_completed" }),
       );
     },
   );

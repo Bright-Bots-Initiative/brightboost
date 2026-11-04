@@ -331,6 +331,8 @@ router.post(
       activityId,
       timeSpentS,
       result,
+      attemptId,
+      gradeBand,
     } = parse.data;
 
     // Re-parse: superRefine validates but does not transform (E-8 / G-009).
@@ -407,23 +409,70 @@ router.post(
       backfilledXp,
     } = await ensureAvatarWithBackfill(studentId);
 
-    // Reward-free reply shared by every non-winning path (#821): an
-    // already-completed read, a lost claim, and a lost create all answer the
-    // same way. Telemetry stays last-write-wins (§5.2.3; omitted gameSpecific
-    // never nulls a stored value, E-3), GamePersonalBest IS reconciled (#640:
-    // a record, not a reward — retries and double submissions return xpDelta 0
-    // while a better replay still moves bestScore), and the avatar-backfill
-    // edge case reports the backfilled XP exactly as before.
+    // Progress identifies a learner's first completion; a finish receipt identifies
+    // one completed play of that activity, even if the response never arrives.
+    const eventProps = (progressId: string) => ({
+      progress_id: progressId,
+      module_slug: moduleSlug,
+      activity_id: activityId,
+      game_id: result?.gameKey || declaredKey || activityId,
+      score: result?.score,
+      time_spent_seconds: timeSpentS || 0,
+      ...(attemptId ? { attempt_id: attemptId } : {}),
+      ...(gradeBand ? { grade_band: gradeBand } : {}),
+    });
+
     const respondRewardFree = async (row: NonNullable<typeof existing>) => {
-      let replayed = row;
-      if (gs !== undefined) {
+      let replayed = row,
+        duplicate = false;
+      if (attemptId) {
+        // A racing or retried HTTP request must not increment playCount, replace
+        // telemetry, or emit a replay. The unique key arbitrates across servers.
+        const receipt = {
+          data: { progressId: row.id, attemptId, isReplay: true },
+          skipDuplicates: true,
+        };
+        if (gs !== undefined) {
+          const saved = await prisma.$transaction(async (tx) => {
+            const claim = await tx.activityFinishReceipt.createMany(receipt);
+            if (!claim.count) return null;
+            return tx.progress.update({
+              where: { id: row.id },
+              data: { gameSpecific: gs },
+            });
+          });
+          duplicate = saved === null;
+          replayed = saved ?? row;
+        } else {
+          duplicate = !(await prisma.activityFinishReceipt.createMany(receipt))
+            .count;
+        }
+        if (!duplicate)
+          trackServer(studentId, "game_attempt_completed", {
+            ...eventProps(row.id),
+            is_replay: true,
+          });
+      } else if (gs !== undefined) {
+        // Legacy clients do not identify plays. Preserve their record behavior.
         replayed = await prisma.progress.update({
           where: { id: row.id },
           data: { gameSpecific: gs },
         });
       }
 
-      const replayBest = await reconcilePersonalBest(studentId, result);
+      const replayBest = duplicate
+        ? {
+            personalBest: result?.gameKey
+              ? await prisma.gamePersonalBest.findUnique({
+                  where: {
+                    studentId_gameKey: { studentId, gameKey: result.gameKey },
+                  },
+                })
+              : null,
+            isNewHighScore: false,
+            isNewBestStreak: false,
+          }
+        : await reconcilePersonalBest(studentId, result);
 
       return res.json({
         message: wasBackfilled
@@ -560,6 +609,12 @@ router.post(
       const row = await tx.progress.findUniqueOrThrow({
         where: { studentId_activityId: { studentId, activityId } },
       });
+      // Commit the first play's receipt WITH the reward. A concurrent retry
+      // can never observe COMPLETED without also seeing its own receipt.
+      if (attemptId)
+        await tx.activityFinishReceipt.createMany({
+          data: { progressId: row.id, attemptId, isReplay: false },
+        });
       return {
         won: true as const,
         locked,
@@ -582,15 +637,13 @@ router.post(
     const { locked: avatarLocked, avatarAfter, newAbilities } = outcome;
     const finalProgress = outcome.row;
 
-    // Server-side mirror of game_completed — fires once per (student,
-    // activity): only the claim winner reaches this line, after commit.
-    trackServer(studentId, "game_completed", {
-      module_slug: moduleSlug,
-      activity_id: activityId,
-      game_id: result?.gameKey || activityId,
-      score: result?.score,
-      time_spent_seconds: timeSpentS || 0,
-    });
+    // Only the winning committed Progress transition emits a first completion.
+    trackServer(studentId, "game_completed", eventProps(finalProgress.id));
+    if (attemptId)
+      trackServer(studentId, "game_attempt_completed", {
+        ...eventProps(finalProgress.id),
+        is_replay: false,
+      });
 
     // 4. Deltas against the LOCKED pre-reward snapshot, so a simultaneous
     // completion's XP or level change can never be attributed to this reply.

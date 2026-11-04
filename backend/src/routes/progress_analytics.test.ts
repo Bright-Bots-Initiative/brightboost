@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 
-// Regression guard for the `game_completed` server-side mirror.
+// Regression guard for the `game_completed` server capture.
 //
 // Diagnosed 2026-06-14: `game_completed` was showing zero data in PostHog.
 // Root cause was H1 (benign) — no genuine first completions had occurred yet,
@@ -24,6 +24,7 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
     count: vi.fn(),
   },
+  activityFinishReceipt: { createMany: vi.fn() },
   avatar: {
     findUnique: vi.fn(),
     findUniqueOrThrow: vi.fn(),
@@ -54,7 +55,7 @@ vi.mock("@prisma/client", () => ({
   },
 }));
 
-// Spy on the analytics shim so we can assert the mirror fires.
+// Spy on the analytics shim so we can assert what is sent.
 vi.mock("../services/analytics", () => ({
   trackServer: vi.fn(),
   shutdownAnalytics: vi.fn(),
@@ -91,7 +92,7 @@ function gameCompletedCalls() {
   ).mock.calls.filter((c) => c[1] === "game_completed");
 }
 
-describe("game_completed server-side mirror", () => {
+describe("game_completed server capture", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Shared happy-path mocks for the reward pipeline.
@@ -161,6 +162,59 @@ describe("game_completed server-side mirror", () => {
       }),
     );
     expect(gameCompletedCalls()).toHaveLength(1);
+  });
+
+  it("captures one first completion and two finished attempts when a lost response is retried and then replayed", async () => {
+    const first = "38fcd2ab-951d-41ec-bcab-a88a8110780d";
+    const replay = "928b7d9c-890b-49d0-8fd6-1336facd9f16";
+    const receipts = new Set<string>();
+    const row = {
+      id: "prog-1",
+      studentId: "student-123",
+      activityId: "valid-activity",
+      status: "COMPLETED",
+    };
+    prismaMock.progress.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValue(row);
+    prismaMock.activityFinishReceipt.createMany.mockImplementation(
+      async ({ data }) => {
+        const key = data.progressId + ":" + data.attemptId;
+        if (receipts.has(key)) return { count: 0 };
+        receipts.add(key);
+        return { count: 1 };
+      },
+    );
+    let ip = 0;
+    const post = (attemptId: string) =>
+      request(app)
+        .post("/api/progress/complete-activity")
+        .set("X-Forwarded-For", "192.0.2." + ++ip)
+        .set("Authorization", "Bearer mock-token-for-mvp")
+        .send({
+          moduleSlug: "test-module",
+          activityId: row.activityId,
+          attemptId,
+          gradeBand: "k2",
+        });
+    for (const id of [first, first, replay, replay])
+      expect((await post(id)).status).toBe(200);
+    expect(receipts.size).toBe(2);
+    expect(gameCompletedCalls()).toHaveLength(1);
+    expect(gameCompletedCalls()[0][2]).toMatchObject({
+      progress_id: row.id,
+      attempt_id: first,
+      grade_band: "k2",
+    });
+    const attempts = vi
+      .mocked(trackServer)
+      .mock.calls.filter(([, kind]) => kind === "game_attempt_completed");
+    expect(
+      attempts.map(([, , props]) => [props?.attempt_id, props?.is_replay]),
+    ).toEqual([
+      [first, false],
+      [replay, true],
+    ]);
   });
 
   it("does NOT fire game_completed on a re-completion (idempotent)", async () => {

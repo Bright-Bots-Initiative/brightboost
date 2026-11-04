@@ -121,7 +121,7 @@ export default function AdminMetrics() {
     {
       label: "Games completed",
       value: formatNumber(data.gamesCompleted),
-      hint: `Completion rate ${data.completionRate}% · target >50%`,
+      hint: `${data.completionRate}% of learner–activity progress records · target >50%`,
     },
   ];
 
@@ -174,8 +174,8 @@ export default function AdminMetrics() {
             Look in PostHog for
           </h2>
           <p className="text-xs text-slate-500 mb-3">
-            Funnels, retention, and per-cohort breakdowns live in PostHog —
-            this page intentionally shows DB totals only. See{" "}
+            Funnels, retention, and per-cohort breakdowns live in PostHog — this
+            page intentionally shows DB totals only. See{" "}
             <Link to="/admin/experiments" className="text-blue-700 underline">
               /admin/experiments
             </Link>{" "}
@@ -185,30 +185,31 @@ export default function AdminMetrics() {
             <li className="flex items-baseline gap-2">
               <ExternalLink className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
               <span>
-                <strong>Signup → first game</strong>: funnel from
-                {" "}<code>account_registered</code> → <code>game_started</code> (target &gt;70%).
+                <strong>Signup → first game</strong>: funnel from{" "}
+                <code>account_registered</code> → <code>game_started</code>{" "}
+                (target &gt;70%).
               </span>
             </li>
             <li className="flex items-baseline gap-2">
               <ExternalLink className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
               <span>
-                <strong>Teacher → class created → first student</strong>:
-                funnel from <code>account_registered</code> (role=teacher) →
-                {" "}<code>class_created</code> → <code>student_joined_class</code>.
+                <strong>Teacher → class created → first student</strong>: funnel
+                from <code>account_registered</code> (role=teacher) →{" "}
+                <code>class_created</code> → <code>student_joined_class</code>.
               </span>
             </li>
             <li className="flex items-baseline gap-2">
               <ExternalLink className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
               <span>
-                <strong>Week-2 retention</strong>: weekly retention cohort on
-                {" "}<code>login</code> (target &gt;40%).
+                <strong>Week-2 retention</strong>: weekly retention cohort on{" "}
+                <code>login</code> (target &gt;40%).
               </span>
             </li>
             <li className="flex items-baseline gap-2">
               <ExternalLink className="w-3.5 h-3.5 mt-0.5 text-slate-400 shrink-0" />
               <span>
-                <strong>Most-played games</strong>:{" "}
-                <code>game_started</code> broken down by <code>game_id</code>.
+                <strong>Most-played games</strong>: <code>game_started</code>{" "}
+                broken down by <code>game_id</code>.
               </span>
             </li>
           </ul>
