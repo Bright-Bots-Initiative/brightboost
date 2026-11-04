@@ -14,19 +14,37 @@ export const authLimiter = rateLimit({
   message: { error: "Too many login/signup attempts, please try again later." },
 });
 
-/**
- * #872: Pathways register / code-login verify a bcrypt password and therefore
- * mint `password` session provenance, so they must be throttled — but in a
- * bucket of their own, so a cohort behind one NAT cannot exhaust the /login
- * allowance (and vice versa). Same shape as authLimiter; #885 owns tuning a
- * dedicated Pathways attempt limit.
- */
-export const pathwaysPasswordLimiter = rateLimit({
+// #885: keep these stores independent of teacher login, K–2 sign-in, and
+// each other. Only validated, normalized fields reach the keyed limiters.
+const pathwaysLimits = {
   windowMs: 15 * 60 * 1000,
-  limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many attempts, please try again later." },
+};
+
+// A registration creates durable data. Keep a capacity limit even for
+// successes, sized for a cohort; a bad client cannot spend the login budget.
+export const pathwaysRegisterIpLimiter = rateLimit({
+  ...pathwaysLimits,
+  limit: 60,
+});
+export const pathwaysRegisterCodeLimiter = rateLimit({
+  ...pathwaysLimits,
+  limit: 90,
+  keyGenerator: (req: Request) => req.body.cohortCode,
+});
+export const pathwaysLoginIpLimiter = rateLimit({
+  ...pathwaysLimits,
+  limit: 60,
+  skipSuccessfulRequests: true,
+});
+export const pathwaysLoginAccountLimiter = rateLimit({
+  ...pathwaysLimits,
+  limit: 8,
+  skipSuccessfulRequests: true,
+  // The password belongs to the learner, even across multiple cohorts.
+  keyGenerator: (req: Request) => req.body.userId,
 });
 
 /**
