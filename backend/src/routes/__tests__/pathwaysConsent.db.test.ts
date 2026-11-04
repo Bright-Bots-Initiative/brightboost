@@ -1516,7 +1516,8 @@ describe.skipIf(!dbUrl)(
         .post("/api/auth/pathways-code-login")
         .set(newIp())
         .send({ cohortCode: joinCode, userId: ids.joiner, password: PASSWORD });
-      expect(codeLogin.status).toBe(404);
+      expect(codeLogin.status).toBe(401);
+      expect(codeLogin.body).toEqual({ error: "Invalid credentials" });
 
       // A fresh invitation is the way back: accepted → active again.
       expect((await invite(`jordan-${tag}@p.test`)).status).toBe(202);

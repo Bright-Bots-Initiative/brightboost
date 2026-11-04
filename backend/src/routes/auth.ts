@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
@@ -6,7 +6,10 @@ import prisma from "../utils/prisma";
 import {
   authLimiter,
   homeAccessProofLimiter,
-  pathwaysPasswordLimiter,
+  pathwaysRegisterIpLimiter,
+  pathwaysRegisterCodeLimiter,
+  pathwaysLoginIpLimiter,
+  pathwaysLoginAccountLimiter,
 } from "../utils/security";
 import { logAudit } from "../utils/audit";
 import { trackServer } from "../services/analytics";
@@ -287,28 +290,47 @@ router.post("/auth/lookup-code", async (req: Request, res: Response) => {
 });
 
 // POST /auth/register-pathways — register a Pathways student via cohort code
+const cohortCodeSchema = z.string().max(64).trim().min(1).toUpperCase();
 const registerPathwaysSchema = z.object({
-  cohortCode: z.string().min(1),
-  displayName: z.string().min(1).max(100),
-  email: z.string().email().optional().nullable(),
+  cohortCode: cohortCodeSchema,
+  displayName: z.string().max(100).trim().min(1),
+  email: z.string().max(254).email().optional().nullable(),
   password: z.string().min(6).max(100),
   birthYear: z.number().int().min(1990).max(2015),
 });
 
-// #872: this route issues password-provenance sessions, so it is throttled
-// like /login (#885 owns a dedicated Pathways attempt limit).
+const pathwaysLoginSchema = z.object({
+  cohortCode: cohortCodeSchema,
+  userId: z.string().max(128).trim().min(1),
+  password: loginSchema.shape.password,
+});
+
+function validatePathwaysBody(
+  schema: typeof pathwaysLoginSchema | typeof registerPathwaysSchema,
+) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ error: "Invalid input" });
+    req.body = parsed.data;
+    next();
+  };
+}
+
 router.post(
   "/auth/register-pathways",
-  pathwaysPasswordLimiter,
+  pathwaysRegisterIpLimiter,
+  validatePathwaysBody(registerPathwaysSchema),
+  pathwaysRegisterCodeLimiter,
   async (req: Request, res: Response) => {
     try {
-      const data = registerPathwaysSchema.parse(req.body);
+      const data: z.infer<typeof registerPathwaysSchema> = req.body;
 
       // Look up cohort
       const cohort = await prisma.pathwayCohort.findFirst({
         where: {
           joinCode: {
-            equals: data.cohortCode.trim().toUpperCase(),
+            equals: data.cohortCode,
             mode: "insensitive",
           },
         },
@@ -389,56 +411,51 @@ router.post(
 );
 
 // POST /auth/pathways-code-login — Pathways student login via cohort code + name + password
-// #872: verifies a bcrypt password, so it mints `password` provenance and is
-// throttled like /login.
 router.post(
   "/auth/pathways-code-login",
-  pathwaysPasswordLimiter,
-  async (req: Request, res: Response) => {
-    const { cohortCode, userId, password } = req.body;
-    if (!cohortCode || !userId || !password) {
-      return res
-        .status(400)
-        .json({ error: "Code, user, and password required." });
-    }
-
-    const cohort = await prisma.pathwayCohort.findFirst({
-      where: {
-        joinCode: {
-          equals: cohortCode.trim().toUpperCase(),
-          mode: "insensitive",
-        },
-      },
-    });
-    if (!cohort) return res.status(404).json({ error: "Invalid code." });
-
-    // #874: a revoked learner can no longer sign in through this cohort's
-    // code. Legacy rows (not yet re-confirmed) still can — this is the
-    // learner's own login path, not facilitator visibility.
-    const enrollment = await prisma.pathwayEnrollment.findFirst({
-      where: {
+  pathwaysLoginIpLimiter,
+  validatePathwaysBody(pathwaysLoginSchema),
+  pathwaysLoginAccountLimiter,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {
+        cohortCode,
         userId,
-        cohortId: cohort.id,
-        status: { in: [...TRUSTED_STATUSES] },
-      },
-      include: { user: true },
-    });
-    if (!enrollment)
-      return res.status(404).json({ error: "Not found in this cohort." });
-
-    if (!enrollment.user.password)
-      return res.status(401).json({ error: "No password set." });
-
-    const isValid = await bcrypt.compare(password, enrollment.user.password);
-    if (!isValid) return res.status(401).json({ error: "Invalid password." });
-
-    const token = generateToken(enrollment.user, "password");
-    const { password: _, ...userWithoutPassword } = enrollment.user;
-    res.json({
-      user: userWithoutPassword,
-      token,
-      cohort: { id: cohort.id, name: cohort.name, band: cohort.band },
-    });
+        password,
+      }: z.infer<typeof pathwaysLoginSchema> = req.body;
+      const cohort = await prisma.pathwayCohort.findFirst({
+        where: { joinCode: { equals: cohortCode, mode: "insensitive" } },
+      });
+      // #874: revoked relationships never authorize login; legacy active
+      // learners can still authenticate without exposing data to a facilitator.
+      const enrollment =
+        cohort &&
+        (await prisma.pathwayEnrollment.findFirst({
+          where: {
+            userId,
+            cohortId: cohort.id,
+            status: { in: [...TRUSTED_STATUSES] },
+          },
+          include: { user: true },
+        }));
+      const user = enrollment?.user;
+      const verified = await bcrypt.compare(
+        password,
+        user?.password || DUMMY_HASH,
+      );
+      if (!verified || !user?.password || !cohort) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      const token = generateToken(user, "password");
+      const { password: _, ...userWithoutPassword } = user;
+      return res.json({
+        user: userWithoutPassword,
+        token,
+        cohort: { id: cohort.id, name: cohort.name, band: cohort.band },
+      });
+    } catch (error) {
+      return next(error);
+    }
   },
 );
 
