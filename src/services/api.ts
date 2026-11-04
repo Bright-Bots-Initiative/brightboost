@@ -242,7 +242,6 @@ export const signupTeacher = async (
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
       let errorMessage = t("api.teacherSignupFailed");
       if (response.status === 401)
         errorMessage = t("api.invalidEmailOrPassword");
@@ -250,13 +249,19 @@ export const signupTeacher = async (
         errorMessage = t("api.emailAlreadyInUse");
       else if (response.status >= 500)
         errorMessage = t("api.serviceUnavailable");
-      else {
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = extractErrorMessage(errorData) || errorMessage;
-        } catch {
-          errorMessage = `${t("api.teacherSignupFailed")}: ${response.status} ${response.statusText}`;
-        }
+      else if (response.status === 429)
+        errorMessage = t("teacherSignup.errors.tooMany");
+      else if (response.status === 400) {
+        const detail = await response.json().catch(() => null);
+        const field = Array.isArray(detail?.error)
+          ? detail.error[0]?.path?.[0]
+          : undefined;
+        if (field === "password")
+          errorMessage = t("teacherSignup.errors.passwordPolicy");
+        if (field === "email")
+          errorMessage = t("teacherSignup.errors.emailInvalid");
+        if (field === "name")
+          errorMessage = t("teacherSignup.errors.nameInvalid");
       }
       throw new Error(errorMessage);
     }
@@ -282,6 +287,7 @@ export const signupTeacher = async (
         description: t("api.checkInternetConnection"),
         variant: "destructive",
       });
+      throw new Error(t("api.checkInternetConnection"));
     }
     throw error;
   }

@@ -214,7 +214,8 @@
       "showPassword": "Mostrar contraseña",
       "hidePassword": "Ocultar contraseña",
       "submitButton": "Iniciar sesión",
-      "loggingIn": "Iniciando sesión..."
+      "loggingIn": "Iniciando sesión...",
+      "capsLockOn": "El bloqueo de mayúsculas está activado"
     },
     "footer": {
       "noAccount": "¿No tienes una cuenta?",
@@ -1605,7 +1606,24 @@
       "playAgain": "Jugar de Nuevo",
       "finish": "Terminar",
       "firstTry": "¡Primer Intento!",
-      "perfectScore": "¡Puntuación Perfecta!"
+      "perfectScore": "¡Puntuación Perfecta!",
+      "howToPlay": "Cómo jugar",
+      "area": "Zona de juego: {{title}}",
+      "keyboard": "Teclado",
+      "touch": "Pantalla táctil",
+      "buttons": "Botones",
+      "screenReader": "Lector de pantalla",
+      "keyboardHint": "Usa Tab para moverte y pulsa Intro o la barra espaciadora para elegir.",
+      "touchHint": "Toca un botón o una tarjeta para elegir.",
+      "buttonsHint": "Sigue las indicaciones de la pantalla en cada paso.",
+      "effects": "Menos efectos",
+      "on": "Sí",
+      "off": "No",
+      "effectsHelp": "Reduce el movimiento, las partículas y la intensidad visual. Ajuste: {{source}}.",
+      "manual": "Manual",
+      "system": "Del sistema",
+      "default": "Predeterminado",
+      "achievement": "¡Nuevo logro!"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -1781,8 +1799,8 @@
       "challengePredict": "¿En qué carril caerá la luz?",
       "challengeLabel": "Desafío",
       "challengeReveal": "¡La luz es {{color}} y cae en el carril {{lane}}!",
-      "challengePredictCorrect": "✨ Excelente predicción, has descubierto el patrón!",
-      "challengePredictWrong": "🌟 No exactamente. Sigue observando el patrón!",
+      "challengePredictCorrect": "✨ ¡Buena predicción! ¡Descubriste el patrón!",
+      "challengePredictWrong": "🌟 Todavía no. Sigue observando el patrón.",
       "challengePatternReminder": "El patrón es",
       "exitWrong": "La respuesta es {{color}}. ¡El patrón se repite!",
       "colorBlue": "Azul",
@@ -1790,11 +1808,32 @@
       "colorPink": "Rosa",
       "challengeTitle": "Desafío Principal",
       "exitQuestion": "¿Qué sigue?",
-      "exitCorrect": "Correcto! {{color}} va a continuación!",
+      "exitCorrect": "¡Correcto! Sigue el color {{color}}.",
       "exitWrongA": "Azul",
       "exitWrongB": "Rojo",
       "celebTitle": "¡Encontraste el patrón!",
-      "celebDesc": "Observaste, predijiste y elegiste el escudo correcto."
+      "celebDesc": "Observaste, predijiste y elegiste el escudo correcto.",
+      "chapterLabel": "Laboratorio de patrones",
+      "practiceLabel": "Práctica: ¡atrapa la luz!",
+      "patternLabel": "Patrones: observa y predice",
+      "scanLabel": "Escanea y descubre el misterio",
+      "scan": "Escanear",
+      "catchGood": "¡La atrapaste!",
+      "catchMiss": "Prueba en otro carril.",
+      "predictGood": "¡Descubriste el patrón!",
+      "predictMiss": "Todavía no. ¡Sigue mirando!",
+      "scanGood": "¡Elegiste el color correcto!",
+      "scanMiss": "Era otro color. ¡Inténtalo de nuevo!",
+      "scanFirst": "Primero escanea la luz misteriosa.",
+      "catch": "¡Atrapa!",
+      "whichLane": "¿En qué carril caerá la próxima luz?",
+      "watching": "Observa el patrón…",
+      "pickColor": "¡Elige el escudo del mismo color!",
+      "exitTitle": "Pregunta final",
+      "seeResults": "Ver resultados",
+      "challenge": "Desafío",
+      "startChallenge": "Empezar el desafío",
+      "finish": "Terminar"
     },
     "fastLane": {
       "title": "Señales de Carril",
@@ -2798,5 +2837,41 @@
     "failed": "No pudimos cargar tus clases. Inténtalo de nuevo.",
     "retry": "Intentar de nuevo",
     "back": "Volver a las clases"
+  },
+  "teacherSignup": {
+    "pageTitle": "Registro de docentes",
+    "heading": "Crea tu cuenta de docente",
+    "subtitle": "Solo toma un minuto. Después podrás invitar a tu clase.",
+    "fields": {
+      "name": "Tu nombre",
+      "namePlaceholder": "Profe Rivera",
+      "email": "Correo de la escuela",
+      "emailPlaceholder": "docente@escuela.edu",
+      "emailHelp": "Aquí recibirás avisos de tu clase y de tu cuenta.",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Al menos 8 caracteres",
+      "confirmPassword": "Confirma tu contraseña",
+      "confirmPasswordPlaceholder": "Escribe tu contraseña de nuevo"
+    },
+    "errors": {
+      "mismatch": "Las contraseñas no coinciden. Vuelve a escribirlas.",
+      "emailInvalid": "Escribe un correo electrónico válido.",
+      "passwordTooShort": "Usa al menos 8 caracteres.",
+      "generic": "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      "passwordPolicy": "Usa entre 8 y 100 caracteres, con una mayúscula, una minúscula y un número.",
+      "nameInvalid": "Revisa el nombre e inténtalo de nuevo.",
+      "tooMany": "Hubo demasiados intentos. Espera unos minutos y vuelve a intentarlo."
+    },
+    "terms": {
+      "prefix": "Acepto los",
+      "tos": "Términos del servicio",
+      "and": "y la",
+      "privacy": "Política de privacidad"
+    },
+    "submit": "Crear mi cuenta de docente",
+    "submitting": "Creando tu cuenta…",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "logIn": "Inicia sesión",
+    "trust": "Protegemos los datos de tus estudiantes. Solo usamos tu correo para asuntos de tu cuenta."
   }
 }

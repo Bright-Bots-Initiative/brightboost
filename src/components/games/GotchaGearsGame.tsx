@@ -470,20 +470,30 @@ export default function GotchaGearsGame({
   const { t } = useTranslation();
   const gameConfig: GotchaGearsConfig = config ?? {};
 
-  // TODO: add translations for the story, tips in briefing
   const briefing: MissionBriefing = {
-    title: pickLocale({ en: "Gear Grab!" }, "Gear Grab!"),
+    title: pickLocale(
+      { en: "Gear Grab!", es: "¡Atrapa los engranajes!" },
+      "Gear Grab!",
+    ),
     story: pickLocale(
       {
+        es: "¡Los engranajes de Gearbot caen del cielo! Lee la pista y atrapa el engranaje correcto antes de que toque el suelo.",
         en: "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
       },
       "Gearbot's gears are falling from the sky! Read the clue and catch the right gear before it hits the ground.",
     ),
     icon: "⚙️",
-    chapterLabel: "Gotcha Gears",
+    chapterLabel: t("games.gotchaGears.title", {
+      defaultValue: "Gotcha Gears",
+    }),
     themeColor: "amber",
     tips: pickLocale(
       {
+        es: [
+          "Lee bien la pista.",
+          "Toca el engranaje correcto.",
+          "¡Acierta varias veces seguidas para ganar más puntos!",
+        ],
         en: [
           "Read the clue carefully",
           "Tap the correct gear",

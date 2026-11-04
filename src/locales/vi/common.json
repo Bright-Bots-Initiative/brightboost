@@ -214,7 +214,8 @@
       "showPassword": "Hiện mật khẩu",
       "hidePassword": "Ẩn mật khẩu",
       "submitButton": "Đăng nhập",
-      "loggingIn": "Đang đăng nhập..."
+      "loggingIn": "Đang đăng nhập...",
+      "capsLockOn": "Phím Caps Lock đang bật"
     },
     "footer": {
       "noAccount": "Chưa có tài khoản?",
@@ -1665,7 +1666,24 @@
       "playAgain": "Chơi lại",
       "finish": "Hoàn thành",
       "firstTry": "Đúng lần đầu!",
-      "perfectScore": "Điểm tuyệt đối!"
+      "perfectScore": "Điểm tuyệt đối!",
+      "howToPlay": "Cách chơi",
+      "area": "Khu vực chơi {{title}}",
+      "keyboard": "Bàn phím",
+      "touch": "Cảm ứng",
+      "buttons": "Nút bấm",
+      "screenReader": "Trình đọc màn hình",
+      "keyboardHint": "Nhấn Tab để di chuyển, rồi nhấn Enter hoặc phím cách để chọn.",
+      "touchHint": "Chạm vào nút hoặc thẻ để chọn.",
+      "buttonsHint": "Làm theo hướng dẫn trên màn hình ở từng bước.",
+      "effects": "Giảm hiệu ứng",
+      "on": "Bật",
+      "off": "Tắt",
+      "effectsHelp": "Giảm chuyển động, hạt và độ mạnh của hiệu ứng hình ảnh. Nguồn: {{source}}.",
+      "manual": "Thủ công",
+      "system": "Hệ thống",
+      "default": "Mặc định",
+      "achievement": "Đã mở khóa thành tích!"
     },
     "tankTrek": {
       "title": "Tank Trek",

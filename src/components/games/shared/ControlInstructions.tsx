@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type ControlInstructionsModel } from "./controlInstructionsData";
 
 type ControlInstructionsProps = {
@@ -36,6 +37,7 @@ export function ControlInstructions({
   instructions,
   className,
 }: ControlInstructionsProps) {
+  const { t } = useTranslation();
   const resolvedHeadingId = headingId ?? `${id ?? "game"}-instructions-heading`;
 
   return (
@@ -46,13 +48,27 @@ export function ControlInstructions({
       className={`rounded-xl border bg-blue-50/60 p-4 ${className ?? ""}`.trim()}
     >
       <h3 id={resolvedHeadingId} className="text-base font-bold text-slate-900">
-        How to play
+        {t("games.shared.howToPlay", { defaultValue: "How to play" })}
       </h3>
       <div className="mt-3 space-y-3">
-        <InstructionGroup label="Keyboard" items={instructions.keyboard} />
-        <InstructionGroup label="Touch" items={instructions.touch} />
-        <InstructionGroup label="Buttons" items={instructions.buttons} />
-        <InstructionGroup label="Screen reader" items={instructions.screenReader} />
+        <InstructionGroup
+          label={t("games.shared.keyboard", { defaultValue: "Keyboard" })}
+          items={instructions.keyboard}
+        />
+        <InstructionGroup
+          label={t("games.shared.touch", { defaultValue: "Touch" })}
+          items={instructions.touch}
+        />
+        <InstructionGroup
+          label={t("games.shared.buttons", { defaultValue: "Buttons" })}
+          items={instructions.buttons}
+        />
+        <InstructionGroup
+          label={t("games.shared.screenReader", {
+            defaultValue: "Screen reader",
+          })}
+          items={instructions.screenReader}
+        />
       </div>
     </section>
   );

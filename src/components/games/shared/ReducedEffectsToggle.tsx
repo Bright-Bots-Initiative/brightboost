@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { ReducedEffectsSource } from "./useReducedGameEffects";
@@ -21,14 +22,25 @@ export function ReducedEffectsToggle({
   onToggle,
 }: ReducedEffectsToggleProps) {
   const descriptionId = useId();
-  const sourceLabel =
-    source === "manual" ? "Manual" : source === "system" ? "System" : "Default";
-  const description = `Reduces motion, particles, and visual intensity for smoother play. Source: ${sourceLabel}.`;
+  const { t } = useTranslation();
+  const sourceLabel = t(`games.shared.${source}`, {
+    defaultValue:
+      source === "manual"
+        ? "Manual"
+        : source === "system"
+          ? "System"
+          : "Default",
+  });
+  const description = t("games.shared.effectsHelp", {
+    source: sourceLabel,
+    defaultValue:
+      "Reduces motion, particles, and visual intensity for smoother play. Source: {{source}}.",
+  });
 
   return (
     <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-1.5 shadow-sm sm:w-auto sm:self-end">
       <span className="text-xs font-medium text-slate-500">
-        ✨ Reduced effects
+        ✨ {t("games.shared.effects", { defaultValue: "Reduced effects" })}
       </span>
       <Button
         type="button"
@@ -40,7 +52,9 @@ export function ReducedEffectsToggle({
         title={description}
         onClick={() => onToggle(!reducedEffects)}
       >
-        {reducedEffects ? "On" : "Off"}
+        {reducedEffects
+          ? t("games.shared.on", { defaultValue: "On" })
+          : t("games.shared.off", { defaultValue: "Off" })}
       </Button>
       <p id={descriptionId} className="sr-only">
         {description}

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 /**
  * Shared login card wrapper — provides consistent styling for all login pages.
  */
@@ -16,6 +17,7 @@ export default function LoginCard({
   subtitle?: string;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-100 via-sky-50 to-white p-4 relative">
       <div className="absolute top-4 right-4 z-20">
@@ -25,14 +27,18 @@ export default function LoginCard({
         <div className="text-center">
           {icon && <div className="text-4xl mb-2">{icon}</div>}
           <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-          {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+          )}
         </div>
 
         {children}
 
         <div className="text-center">
           <Link to="/" className="text-sm text-indigo-600 hover:underline">
-            Back to Home
+            {t("studentLogin.footer.backHome", {
+              defaultValue: "Back to Home",
+            })}
           </Link>
         </div>
       </div>
@@ -63,8 +69,19 @@ export function LoginButton({
     >
       {loading && (
         <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
         </svg>
       )}
       {children}
