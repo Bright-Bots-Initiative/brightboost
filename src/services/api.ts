@@ -589,6 +589,8 @@ export const api = {
   },
 
   completeActivity: async (data: {
+    attemptId?: string;
+    gradeBand?: "k2" | "g3_5";
     moduleSlug: string;
     lessonId: string;
     activityId: string;

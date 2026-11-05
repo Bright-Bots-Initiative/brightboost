@@ -73,20 +73,18 @@ export type AnalyticsEvent =
     }
   | {
       kind: "game_started";
+      attempt_id: string;
       game_id: string;
       module_slug?: string;
       activity_id?: string;
       grade_band?: string;
     }
+  | { kind: "pvp_match_started"; game_id: "spacewar_pvp" }
   | {
-      kind: "game_completed";
-      game_id: string;
-      module_slug?: string;
-      activity_id?: string;
+      kind: "pvp_match_completed";
+      game_id: "spacewar_pvp";
       score?: number;
-      time_spent_seconds?: number;
-      quiz_score?: number;
-      grade_band?: string;
+      time_spent_seconds: number;
     }
   | {
       kind: "quiz_question_answered";

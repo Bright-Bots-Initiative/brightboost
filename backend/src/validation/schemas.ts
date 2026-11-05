@@ -71,6 +71,8 @@ export const checkpointSchema = z.object({
 export type CheckpointData = z.infer<typeof checkpointSchema>;
 
 export const completeActivitySchema = z.object({
+  attemptId: z.string().uuid().optional(),
+  gradeBand: z.enum(["k2", "g3_5"]).optional(),
   moduleSlug: slugSchema,
   lessonId: z.string().max(100).optional().nullable(),
   activityId: z.string().min(1, "Activity ID required").max(100),

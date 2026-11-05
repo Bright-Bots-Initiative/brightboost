@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
+import { once } from "node:events";
+import type { AddressInfo } from "node:net";
 import { runTag, bindTestDatabase } from "../../__tests__/helpers/testDb";
 
 /**
@@ -46,6 +48,7 @@ describe.skipIf(!dbUrl)(
     };
     const student = (k: string) => `s-877-${k}-${tag}`;
     const STUDENTS = [
+      "analytics",
       "boundary",
       "lvl",
       "base",
@@ -105,13 +108,15 @@ describe.skipIf(!dbUrl)(
       ) => Promise<void>,
     ) {
       let release: () => void = () => {};
-      let acquired: () => void = () => {};
-      const acquiredP = new Promise<void>((r) => (acquired = r));
+      let acquired: (pid: number) => void = () => {};
+      const acquiredP = new Promise<number>((r) => (acquired = r));
       const releaseP = new Promise<void>((r) => (release = r));
       const done = prisma.$transaction(
         async (tx) => {
-          await tx.$queryRaw`SELECT id FROM "Avatar" WHERE "studentId" = ${studentId} FOR UPDATE`;
-          acquired();
+          const [holder] = await tx.$queryRaw<
+            { pid: number }[]
+          >`SELECT pg_backend_pid() AS pid FROM "Avatar" WHERE "studentId" = ${studentId} FOR UPDATE`;
+          acquired(holder.pid);
           await releaseP;
           if (beforeRelease) await beforeRelease(tx);
         },
@@ -255,6 +260,135 @@ describe.skipIf(!dbUrl)(
       });
       await prisma.$disconnect();
     }, 30000);
+
+    it("DB-890: a tab closing during the commit, its retry, and a racing replay agree with stored identities", async () => {
+      const sid = student("analytics");
+      const activityId = ids.activities[6];
+      await prisma.avatar.create({
+        data: { studentId: sid, stage: "GENERAL" },
+      });
+      const first = "75015abf-c45a-4c39-8d03-868c5a1822f4";
+      const replay = "332d081b-c444-45cd-a798-0797de0a525a";
+      const body = (attemptId: string, score: number) => ({
+        moduleSlug: ids.slug,
+        activityId,
+        attemptId,
+        gradeBand: "k2",
+        result: { gameKey: "move_measure", score },
+      });
+      const post = (attemptId: string, score: number) =>
+        request(app)
+          .post("/api/progress/complete-activity")
+          .set(asStudent(sid))
+          .send(body(attemptId, score));
+      const analytics = await import("../../services/analytics");
+      const sink = vi
+        .spyOn(analytics, "trackServer")
+        .mockImplementation(() => {});
+      const server = app.listen(0, "127.0.0.1");
+      await once(server, "listening");
+      const { port } = server.address() as AddressInfo;
+      const lock = holdAvatarLock(sid);
+      const blocker = await lock.acquired;
+      const controller = new AbortController();
+      try {
+        const response = fetch(
+          "http://127.0.0.1:" + port + "/api/progress/complete-activity",
+          {
+            method: "POST",
+            headers: { ...asStudent(sid), "Content-Type": "application/json" },
+            body: JSON.stringify(body(first, 4)),
+            signal: controller.signal,
+          },
+        ).then(
+          () => "response",
+          (e: Error) => e.name,
+        );
+        // The route has received the POST and is waiting on our database lock.
+        // Close the HTTP connection before a response or a committed event exists.
+        await vi.waitFor(
+          async () => {
+            const [r] = await prisma.$queryRaw<
+              { waiting: boolean }[]
+            >`SELECT EXISTS (SELECT FROM pg_stat_activity WHERE ${blocker}::int = ANY(pg_blocking_pids(pid))) AS waiting`;
+            expect(r.waiting).toBe(true);
+          },
+          { timeout: 3000, interval: 25 },
+        );
+        expect(sink).not.toHaveBeenCalled();
+        controller.abort();
+        expect(await response).toBe("AbortError");
+        lock.release();
+        await lock.done;
+        await vi.waitFor(() =>
+          expect(sink).toHaveBeenCalledWith(
+            sid,
+            "game_completed",
+            expect.anything(),
+          ),
+        );
+        // The first handler reconciles the best after its reward commit.
+        await vi.waitFor(async () =>
+          expect(
+            await prisma.gamePersonalBest.findFirst({
+              where: { studentId: sid },
+            }),
+          ).toMatchObject({ playCount: 1 }),
+        );
+        expect((await post(first, 99)).body.reward.xpDelta).toBe(0);
+        const [one, two] = await Promise.all([
+          post(replay, 7),
+          post(replay, 7),
+        ]);
+        expect([one.status, two.status]).toEqual([200, 200]);
+        const progress = await prisma.progress.findUniqueOrThrow({
+          where: { studentId_activityId: { studentId: sid, activityId } },
+          include: { finishReceipts: true },
+        });
+        expect(progress.status).toBe("COMPLETED");
+        const persisted = progress.finishReceipts
+          .map((r) => r.attemptId)
+          .sort();
+        expect(persisted).toEqual([first, replay].sort());
+        expect(
+          progress.finishReceipts.find((r) => !r.isReplay)?.attemptId,
+        ).toBe(first);
+        expect(progress.finishReceipts.find((r) => r.isReplay)?.attemptId).toBe(
+          replay,
+        );
+        const events = sink.mock.calls.filter(([id]) => id === sid);
+        const completions = events.filter(([, e]) => e === "game_completed");
+        expect(completions).toHaveLength(1);
+        expect(completions[0][2]).toMatchObject({
+          progress_id: progress.id,
+          attempt_id: first,
+        });
+        const finishes = events.filter(
+          ([, e]) => e === "game_attempt_completed",
+        );
+        expect(finishes.map(([, , p]) => p?.attempt_id).sort()).toEqual(
+          persisted,
+        );
+        expect(
+          finishes.map(([, , p]) => [p?.attempt_id, p?.is_replay]),
+        ).toEqual([
+          [first, false],
+          [replay, true],
+        ]);
+        expect(
+          await prisma.gamePersonalBest.findFirst({
+            where: { studentId: sid },
+          }),
+        ).toMatchObject({ playCount: 2, bestScore: 7 });
+      } finally {
+        controller.abort();
+        lock.release();
+        await lock.done;
+        server.closeAllConnections();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+        sink.mockRestore();
+      }
+    }, 15000);
 
     it("DB-878-1: two distinct completions contesting one level boundary award it once and keep both stat gains, including capped values", async () => {
       const sid = student("boundary");

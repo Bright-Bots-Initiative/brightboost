@@ -201,11 +201,24 @@ model Progress {
 
   User       User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  finishReceipts ActivityFinishReceipt[]
+
   @@unique([studentId, activityId])
   // Index for counting completed activities (checkUnlocks)
   @@index([studentId, status])
   // Index for fetching progress by module (Module Map)
   @@index([studentId, moduleSlug])
+}
+
+// One committed finish per browser play. Retries reuse the same UUID.
+model ActivityFinishReceipt {
+  progressId String
+  attemptId  String   @db.Uuid
+  isReplay   Boolean
+  createdAt  DateTime @default(now())
+  progress   Progress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+
+  @@id([progressId, attemptId])
 }
 
 model WeeklySnapshot {

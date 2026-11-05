@@ -13,6 +13,11 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { track } from "@/lib/analytics";
+vi.mock("@/lib/analytics", async (original) => ({
+  ...(await original<typeof import("@/lib/analytics")>()),
+  track: vi.fn(),
+}));
 import ActivityPlayer from "@/pages/ActivityPlayer";
 import { api } from "@/services/api";
 import { __resetGradeBandCache } from "@/hooks/useGradeBand";
@@ -145,6 +150,33 @@ describe("completion latch (#832 item 4)", () => {
       await screen.findByRole("button", { name: "Mark Complete" }),
     );
     await waitFor(() => expect(api.completeActivity).toHaveBeenCalledTimes(2));
+    const [first, retry] = vi.mocked(api.completeActivity).mock.calls;
+    expect(first[0].attemptId).toMatch(/^[a-f0-9-]{36}$/);
+    expect(retry[0].attemptId).toBe(first[0].attemptId);
+    expect(track).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "game_started",
+        attempt_id: first[0].attemptId,
+      }),
+    );
+    expect(track).not.toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "game_completed" }),
+    );
+  });
+
+  it("closing an unfinished tab only starts a play; reopening starts a distinct play", async () => {
+    const first = renderPlayer();
+    await screen.findByRole("button", { name: "Mark Complete" });
+    first.unmount();
+    renderPlayer();
+    await screen.findByRole("button", { name: "Mark Complete" });
+    const starts = vi
+      .mocked(track)
+      .mock.calls.map(([action]) => action)
+      .filter((action) => action.kind === "game_started");
+    expect(starts).toHaveLength(2);
+    expect(new Set(starts.map((action) => action.attempt_id)).size).toBe(2);
+    expect(api.completeActivity).not.toHaveBeenCalled();
   });
 
   it("LATCH-3: a successful save replaces the flow with the results screen", async () => {
