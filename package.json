@@ -21,7 +21,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run --mode=ci",
-    "pretest:unit": "tsc -p shared/tsconfig.json",
+    "pretest:unit": "npm run verify:shared",
     "test:unit": "vitest run --project unit",
     "test:coverage:quiz": "vitest run --project unit --coverage",
     "test:coverage:ci-guard": "vitest run --project unit --coverage",
@@ -46,7 +46,13 @@
     "cy:open": "cypress open",
     "cy:run": "cypress run --browser chrome",
     "db:init": "prisma migrate deploy --schema prisma/schema.prisma && prisma db seed",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:shared": "node scripts/build-shared.mjs",
+    "verify:shared": "node scripts/verify-shared-freshness.mjs",
+    "pretest": "npm run verify:shared",
+    "predev": "npm run verify:shared",
+    "prelocal": "npm run verify:shared",
+    "test:engine": "npm run verify:shared && vitest run --project greatwork-engine --project greatwork-engine-browser"
   },
   "prisma": {
     "seed": "node prisma/seed.cjs"

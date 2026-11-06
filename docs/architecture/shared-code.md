@@ -57,8 +57,22 @@ source inside the linked package and then fails at runtime with
 `MODULE_NOT_FOUND` — the same "compiles, crashes" shape as the relative-path
 hazard above.
 
-## Decision required (nwalker) — frontend source vs backend emit
+## Freshness and parity — #720
 
-S-2 leaves a split: frontend compiles shared **source**; backend consumes shared **built** `dist`. That is the A4-shaped trade #730 §4 rejected. Confirm acceptance for #720 and whether a `shared/dist` freshness/parity guard belongs on #720 or a new issue. Full write-up: spike report “Decision required (nwalker) — S-2 vs #730 §7 A1”.
+The #720 issue and its handoff resolve the older S-2 question: keep frontend
+source / backend emit, and keep the freshness/parity guard in #720's scope.
+`npm run build:shared` now uses one compiler-selection path (root install first,
+backend fallback) rather than whichever package's `tsc` happens to be on PATH.
 
-**#855 raises the stakes on that decision.** When the only shared module was a stub, a stale `shared/dist` was a curiosity. Now the split runs under a live authorization gate: `POST /avatar/select-archetype` reads the emitted `dist` copy of the set IDs while the app's meter reads the source, so a stale `dist` means the two halves disagree about who may specialize — and the unit suite would agree with whichever half it happened to load. `backend/src/__tests__/stemSetIdsResolution.test.ts` builds `shared/dist` and compares it to the source, which contains the risk but does not remove the split. A freshness guard is no longer a #720-only concern.
+`npm run verify:shared` recompiles into a disjoint temporary directory and compares
+all emitted filenames and bytes, including `.d.ts` and progression output. It
+rejects missing, stale, or orphaned output and never rebuilds the working `dist`
+before checking it. Root `pretest`/development hooks and backend development hooks
+invoke the check. After changing shared sources, explicitly rebuild then verify.
+
+`npm run test:engine` runs source-versus-backend-package result/trace fixtures in
+Node and a real Chromium Vitest project. A registered browser test is not evidence
+of a browser pass; see the #720 review receipt for actual execution status.
+The existing progression resolution test remains a separate consumer regression.
+
+Draft mechanics and API extensions: [engine implementation](../games/greatwork-engine-720.md).

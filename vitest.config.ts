@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+// Optional local scheduling only: keep every project, test and assertion.
+const serialVerification = process.env.BB_TEST_SERIAL === "1";
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -13,6 +16,14 @@ export default defineConfig({
   },
   test: {
     name: "unit",
+    ...(serialVerification
+      ? {
+          fileParallelism: false,
+          maxWorkers: 1,
+          minWorkers: 1,
+          sequence: { groupOrder: 0 },
+        }
+      : {}),
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
@@ -22,6 +33,9 @@ export default defineConfig({
     // Vitest defaults exclude **/cypress/**; allow colocated support unit tests (#677 A2-03).
     exclude: [
       "**/node_modules/**",
+      // #720 owns the engine in Node + real-browser projects; never double collect.
+      "shared/greatwork-engine/**/*.test.ts",
+      "scripts/__tests__/shared-freshness.test.ts",
       "**/dist/**",
       // #815 guard sandbox: never collect its copied suite as a second run.
       "**/.bb-guard-sandbox-*/**",

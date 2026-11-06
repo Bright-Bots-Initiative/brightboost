@@ -21,7 +21,11 @@ const PKG_LINK = path.join(
   "@brightboost",
   "greatwork-engine",
 );
-const SHARED_TSCONFIG = path.join(REPO_ROOT, "shared", "tsconfig.json");
+const SHARED_VERIFY = path.join(
+  REPO_ROOT,
+  "scripts",
+  "verify-shared-freshness.mjs",
+);
 const EMITTED_PROBE = path.join(
   BACKEND_DIR,
   "dist",
@@ -39,7 +43,7 @@ const EMITTED_PROBE = path.join(
  * its real emit depth and requires the emitted artifact in a child Node process.
  */
 describe("sharedEngineProbe emitted-artifact resolution", () => {
-  // Two intentional `tsc` invocations (shared + probe emit). Default hookTimeout
+  // Freshness compilation plus the original probe emit. Default hookTimeout
   // (10s) is too low under a full parallel unit suite; this is sized for the work,
   // not a flake waiver (G-006).
   beforeAll(() => {
@@ -58,9 +62,10 @@ describe("sharedEngineProbe emitted-artifact resolution", () => {
     if (!existsSync(TSC_BIN)) {
       throw new Error("Missing backend TypeScript. Run: cd backend ; npm ci");
     }
-    // Build shared/dist (idempotent) so package `main`/`types` resolve.
-    execFileSync(process.execPath, [TSC_BIN, "-p", SHARED_TSCONFIG], {
-      cwd: BACKEND_DIR,
+    // #720: verify only. Parallel test workers must not rewrite shared/dist
+    // using a different compiler while another worker is loading it.
+    execFileSync(process.execPath, [SHARED_VERIFY], {
+      cwd: REPO_ROOT,
       stdio: "pipe",
     });
     // Emit the probe at its REAL depth: backend/dist/src/sharedEngineProbe.js

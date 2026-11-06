@@ -9,8 +9,13 @@
     "strict": true,
     "declaration": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "include": ["greatwork-engine/**/*", "progression/**/*"],
-  "exclude": ["greatwork-engine/**/*.test.ts", "progression/**/*.test.ts"]
+  "exclude": [
+    "greatwork-engine/**/*.test.ts",
+    "progression/**/*.test.ts",
+    "greatwork-engine/**/__tests__/**"
+  ]
 }

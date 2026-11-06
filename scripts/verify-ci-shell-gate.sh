@@ -75,6 +75,11 @@ make_sandbox() {
   SANDBOX_MAIN="$SANDBOX/src/main.tsx"
   cp -R "$REPO_ROOT/src" "$SANDBOX/src"
   cp -R "$REPO_ROOT/shared" "$SANDBOX/shared"
+  # #720: npm predev verifies shared emit in BOTH smoke phases. Carry its
+  # exact read-only dependencies; never disable the hook or rebuild stale emit.
+  mkdir -p "$SANDBOX/scripts/lib"
+  cp "$REPO_ROOT/scripts/verify-shared-freshness.mjs" "$SANDBOX/scripts/"
+  cp "$REPO_ROOT/scripts/lib/shared-compiler.mjs" "$SANDBOX/scripts/lib/"
   cp "$REPO_ROOT/index.html" "$SANDBOX/"
   cp "$REPO_ROOT"/*.json "$SANDBOX/"
   cp "$REPO_ROOT"/*.config.* "$SANDBOX/"
