@@ -2,6 +2,8 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enCommon from "./locales/en/common.json";
 import esCommon from "./locales/es/common.json";
+import enGreatWork from "./locales/en/greatWork.json";
+import esGreatWork from "./locales/es/greatWork.json";
 import enPathways from "./locales/en/pathways.json";
 import esPathways from "./locales/es/pathways.json";
 
@@ -34,8 +36,20 @@ const initialLang = stored ? normalizeLocale(stored) : "en";
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: { translation: { ...enCommon, ...enPathways } },
-    es: { translation: { ...esCommon, ...esPathways } },
+    en: {
+      translation: {
+        ...enCommon,
+        ...enPathways,
+        games: { ...enCommon.games, greatWork: enGreatWork },
+      },
+    },
+    es: {
+      translation: {
+        ...esCommon,
+        ...esPathways,
+        games: { ...esCommon.games, greatWork: esGreatWork },
+      },
+    },
     // vi and zh-CN added lazily below
   },
   lng: initialLang,
@@ -50,26 +64,38 @@ async function ensureLocaleLoaded(lng: string) {
   if (i18n.hasResourceBundle(lng, "translation")) return;
   try {
     if (lng === "vi") {
-      const [common, pathways] = await Promise.all([
+      const [common, pathways, greatWork] = await Promise.all([
         import("./locales/vi/common.json"),
         import("./locales/vi/pathways.json"),
+        // TODO: translate Great Work from its documented English fallback.
+        import("./locales/vi/greatWork.json"),
       ]);
       i18n.addResourceBundle(
         "vi",
         "translation",
-        { ...common.default, ...pathways.default },
+        {
+          ...common.default,
+          ...pathways.default,
+          games: { ...common.default.games, greatWork: greatWork.default },
+        },
         true,
         true,
       );
     } else if (lng === "zh-CN") {
-      const [common, pathways] = await Promise.all([
+      const [common, pathways, greatWork] = await Promise.all([
         import("./locales/zh-CN/common.json"),
         import("./locales/zh-CN/pathways.json"),
+        // TODO: translate Great Work from its documented English fallback.
+        import("./locales/zh-CN/greatWork.json"),
       ]);
       i18n.addResourceBundle(
         "zh-CN",
         "translation",
-        { ...common.default, ...pathways.default },
+        {
+          ...common.default,
+          ...pathways.default,
+          games: { ...common.default.games, greatWork: greatWork.default },
+        },
         true,
         true,
       );
