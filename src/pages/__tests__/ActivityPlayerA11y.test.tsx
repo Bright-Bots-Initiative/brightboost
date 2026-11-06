@@ -2,6 +2,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ActivityPlayer from "../ActivityPlayer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/services/api";
+import { __resetGradeBandCache } from "@/hooks/useGradeBand";
 import { vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
@@ -44,30 +45,33 @@ const mockQuizActivity = {
         prompt: "What is 2+2?",
         choices: ["3", "4", "5"],
         answerIndex: 1,
-      }
-    ]
-  })
+      },
+    ],
+  }),
 };
 
 const mockModule = {
   slug: "test-module",
-  units: [{
-    lessons: [{
-      id: "l-1",
-      activities: [mockQuizActivity]
-    }]
-  }]
+  units: [
+    {
+      lessons: [
+        {
+          id: "l-1",
+          activities: [mockQuizActivity],
+        },
+      ],
+    },
+  ],
 };
 
-// TODO(green-ci-recovery): The api mock's getModule needs to return a
-// promise. The current `vi.fn()` returns undefined → `.then(...)` throws
-// "Cannot read properties of undefined". Fix: in beforeEach,
-// `vi.mocked(api.getModule).mockResolvedValue(mockModule)`. The page also
-// fetches the avatar AND now hits useGradeBand → both already stubbed above.
-// Quarantined; the fix is small but the test predates the new fetch chain.
-describe.skip("ActivityPlayer Accessibility", () => {
+// The band is pinned to g3_5: these assertions are the legacy list quiz's
+// contract (labelled group, aria-pressed choices), which only g3_5 mounts.
+describe("ActivityPlayer Accessibility", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    __resetGradeBandCache();
+    localStorage.clear();
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "g3_5" }]);
   });
 
   it("renders quiz choices with accessible attributes", async () => {
@@ -75,12 +79,19 @@ describe.skip("ActivityPlayer Accessibility", () => {
 
     render(
       <TooltipProvider>
-        <MemoryRouter initialEntries={["/student/modules/test-module/lessons/l-1/activities/a-1"]}>
+        <MemoryRouter
+          initialEntries={[
+            "/student/modules/test-module/lessons/l-1/activities/a-1",
+          ]}
+        >
           <Routes>
-            <Route path="/student/modules/:slug/lessons/:lessonId/activities/:activityId" element={<ActivityPlayer />} />
+            <Route
+              path="/student/modules/:slug/lessons/:lessonId/activities/:activityId"
+              element={<ActivityPlayer />}
+            />
           </Routes>
         </MemoryRouter>
-      </TooltipProvider>
+      </TooltipProvider>,
     );
 
     // Wait for activity to load
