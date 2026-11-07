@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { isMirrorOf } from "@shared/greatwork-engine";
+import { canonicalize, isMirrorOf } from "@shared/greatwork-engine";
 import type { Molecule, RunResult } from "@shared/greatwork-engine";
 import { classifyRun } from "../greatWorkView";
 import { MirrorCompare } from "./MirrorCompare";
@@ -20,6 +20,12 @@ export function RunNote({
       .map((a) => t(`games.greatWork.elements.${a.element}`))
       .join(" + ") ?? "";
   const kind = classifyRun(result, target);
+  const namedProduct =
+    kind === "wrongProduct" && target
+      ? result?.produced.find(
+          (product) => product.canonical !== canonicalize(target.molecule),
+        )
+      : result?.produced[0];
   const reflected =
     target && result?.mirrored
       ? result.produced.find((p) => isMirrorOf(p.molecule, target.molecule))
@@ -31,7 +37,7 @@ export function RunNote({
     >
       <p role="status" aria-live="polite">
         {t(`games.greatWork.run.${invalid ? "checkParts" : kind}`, {
-          product: moleculeName(result?.produced[0]?.molecule),
+          product: moleculeName(namedProduct?.molecule),
           target: moleculeName(target?.molecule),
         })}
       </p>

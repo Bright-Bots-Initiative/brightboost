@@ -30,3 +30,18 @@ Retry completion: recover the completed parity evidence rather than rerunning
 failed setup blindly. Resolve the installed Husky entry point without bypassing
 hooks. Correct library-generated drag accessibility strings, demonstrate the
 Spanish keyboard regression before/after, and preserve all production gates.
+
+## 2026-11-07 UTC — finish the #721 technical review
+
+Owner request: “Finish #721’s review”. Inspect the published PR and the review-bot
+failure without treating green required CI as independent approval. Compare the
+unchanged personal-best suite on the candidate and base, record its reproducibility,
+and rerun the same hosted check once without weakening assertions.
+
+The review found two builder defects: a narrowed lesson instruction/part allowlist
+could leave a timer running, and mixed-output feedback could name the first product
+instead of the mismatched product. Add failing regression cases, minimally correct
+the affected control and feedback paths, and verify restoration still requires an
+explicit Run. Keep the engine, accounts, persistence, module catalogue, rebrand,
+review protections, and production deployment unchanged. Report automated review
+separately from the required independent maintainer approval and owner walkthrough.

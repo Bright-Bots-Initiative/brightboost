@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   DndContext,
   PointerSensor,
@@ -140,6 +146,11 @@ export function GreatWorkBuilder({
   }, [signature, configKey, controller]);
   const fits = programFitsConfig(program, config, allowList);
   const invalid = validateMachine(level, program).length > 0;
+  // A lesson may narrow its tools without changing the program or engine level.
+  // Stop before the next timer can advance or publish a now-disallowed run.
+  useLayoutEffect(() => {
+    if (!fits || invalid) controller.pause();
+  }, [controller, fits, invalid]);
   const running = snapshot.mode === "running";
   const locked = readOnly || running || !fits;
   const commit = (next: MachineSpec | null, record = true) => {
