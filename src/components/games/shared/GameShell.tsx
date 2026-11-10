@@ -582,6 +582,11 @@ export default function GameShell({
             <p className="text-base text-slate-600 leading-relaxed max-w-md mx-auto">
               {briefing.story}
             </p>
+            <ControlInstructions
+              id={instructionsId}
+              instructions={activeInstructions}
+              className="max-w-xl mx-auto text-left"
+            />
             {briefing.tips && briefing.tips.length > 0 && (
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-left max-w-sm mx-auto border border-white/50 shadow-sm">
                 <h3 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-1">
@@ -601,11 +606,6 @@ export default function GameShell({
                 </ul>
               </div>
             )}
-            <ControlInstructions
-              id={instructionsId}
-              instructions={activeInstructions}
-              className="max-w-xl mx-auto text-left"
-            />
             {personalBest && personalBest.bestScore > 0 && (
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full border border-white/50 shadow-sm text-sm">
                 <Trophy className="w-4 h-4 text-yellow-500" />
