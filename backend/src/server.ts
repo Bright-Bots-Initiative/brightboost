@@ -1,3 +1,5 @@
+// Express 4 must forward rejected handlers before any router is registered.
+import "express-async-errors";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import path from "path";
@@ -262,7 +264,13 @@ if (!frontendServed) {
 //
 // 4xx errors get their genuine status; everything else falls back to 500
 // with the generic body so we don't leak internals on unexpected throws.
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+export function handleError(
+  err: Error,
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (res.headersSent) return next(err);
   const errAny = err as Error & { status?: number; statusCode?: number };
   const status = errAny.status ?? errAny.statusCode ?? 500;
   if (status >= 400 && status < 500) {
@@ -273,7 +281,8 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   }
   console.error("Unhandled error:", err.message);
   res.status(500).json({ error: "Internal server error" });
-});
+}
+app.use(handleError);
 
 // Process-level error handlers
 process.on("unhandledRejection", (reason) => {
