@@ -7,7 +7,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, KeyRound, Loader2, UserPlus } from "lucide-react";
-import LoginCard, { LoginInput, LoginButton, LoginSection, LoginDivider } from "@/components/auth/LoginCard";
+import LoginCard, {
+  LoginInput,
+  LoginButton,
+  LoginSection,
+  LoginDivider,
+} from "@/components/auth/LoginCard";
 import { track } from "@/lib/analytics";
 
 const API = "/api";
@@ -88,7 +93,9 @@ const LoginSelection: React.FC = () => {
       if (data.type === "pathways_cohort") {
         setCodeResult(data);
         // Also load roster for returning users
-        const rosterRes = await fetch(`${API}/auth/cohort-roster/${code.trim()}`);
+        const rosterRes = await fetch(
+          `${API}/auth/cohort-roster/${code.trim()}`,
+        );
         const rosterData = await rosterRes.json();
         if (rosterData.students?.length > 0) {
           setRoster(rosterData.students);
@@ -144,7 +151,11 @@ const LoginSelection: React.FC = () => {
       const res = await fetch(`${API}/auth/pathways-code-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cohortCode: code.trim(), userId: selectedUser, password: rosterPassword }),
+        body: JSON.stringify({
+          cohortCode: code.trim(),
+          userId: selectedUser,
+          password: rosterPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
@@ -162,15 +173,23 @@ const LoginSelection: React.FC = () => {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-indigo-400 font-medium">Bright Boost Pathways</p>
-            <h1 className="text-2xl font-bold text-white mt-2">{codeResult.name}</h1>
-            <p className="text-sm text-slate-400 mt-1 capitalize">{codeResult.band} band</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-indigo-400 font-medium">
+              Bright Boost Pathways
+            </p>
+            <h1 className="text-2xl font-bold text-white mt-2">
+              {codeResult.name}
+            </h1>
+            <p className="text-sm text-slate-400 mt-1 capitalize">
+              {codeResult.band} band
+            </p>
           </div>
 
           {/* Returning user section */}
           {roster.length > 0 && (
             <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-5 space-y-4">
-              <h3 className="font-semibold text-slate-200 text-sm">Returning? Select your name:</h3>
+              <h3 className="font-semibold text-slate-200 text-sm">
+                Returning? Select your name:
+              </h3>
               <div className="grid grid-cols-2 gap-2">
                 {roster.map((s) => (
                   <button
@@ -207,47 +226,95 @@ const LoginSelection: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-3 text-slate-500 text-xs">
+          <div className="flex items-center gap-3 text-slate-400 text-xs">
             <div className="flex-1 h-px bg-slate-700" />
-            <span>{roster.length > 0 ? "or register as new" : "Create your account"}</span>
+            <span>
+              {roster.length > 0 ? "or register as new" : "Create your account"}
+            </span>
             <div className="flex-1 h-px bg-slate-700" />
           </div>
 
           {/* New registration */}
-          <form onSubmit={handlePathwaysRegister} className="rounded-xl border border-slate-700 bg-slate-800/80 p-5 space-y-4">
+          <form
+            onSubmit={handlePathwaysRegister}
+            className="rounded-xl border border-slate-700 bg-slate-800/80 p-5 space-y-4"
+          >
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Your Name</label>
-              <input type="text" required value={regName} onChange={(e) => setRegName(e.target.value)}
+              <label className="block text-xs text-slate-400 mb-1">
+                Your Name
+              </label>
+              <input
+                type="text"
+                required
+                value={regName}
+                onChange={(e) => setRegName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="What should we call you?" />
+                placeholder="What should we call you?"
+              />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Email (optional)</label>
-              <input type="email" value={regEmail} onChange={(e) => setRegEmail(e.target.value)}
+              <label className="block text-xs text-slate-400 mb-1">
+                Email (optional)
+              </label>
+              <input
+                type="email"
+                value={regEmail}
+                onChange={(e) => setRegEmail(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="So you can log in later with email" />
+                placeholder="So you can log in later with email"
+              />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Password</label>
-              <input type="password" required minLength={6} value={regPassword} onChange={(e) => setRegPassword(e.target.value)}
+              <label className="block text-xs text-slate-400 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="At least 6 characters" />
+                placeholder="At least 6 characters"
+              />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Birth Year</label>
-              <input type="number" required min={2005} max={2015} value={regBirthYear} onChange={(e) => setRegBirthYear(e.target.value)}
+              <label className="block text-xs text-slate-400 mb-1">
+                Birth Year
+              </label>
+              <input
+                type="number"
+                required
+                min={2005}
+                max={2015}
+                value={regBirthYear}
+                onChange={(e) => setRegBirthYear(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-lg bg-slate-700 border border-slate-600 text-white text-sm placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="e.g. 2010" />
+                placeholder="e.g. 2010"
+              />
             </div>
             {regError && <p className="text-red-400 text-xs">{regError}</p>}
-            <button type="submit" disabled={regLoading}
-              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              {regLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+            <button
+              type="submit"
+              disabled={regLoading}
+              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {regLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <UserPlus className="w-4 h-4" />
+              )}
               {regLoading ? "Creating account..." : "Join & Start Learning"}
             </button>
           </form>
 
-          <button onClick={() => { setCodeResult(null); setRoster([]); }} className="w-full text-center text-sm text-slate-500 hover:text-slate-300">
+          <button
+            onClick={() => {
+              setCodeResult(null);
+              setRoster([]);
+            }}
+            className="w-full text-center text-sm text-slate-400 hover:text-slate-300"
+          >
             Use a different code
           </button>
         </div>
@@ -257,7 +324,13 @@ const LoginSelection: React.FC = () => {
 
   // ── Main login page ──
   return (
-    <LoginCard icon="🎒" title={t("auth.studentWelcome", { defaultValue: "Student Login" })} subtitle={t("auth.selectHowToLogin", { defaultValue: "Sign in with email or join with a code" })}>
+    <LoginCard
+      icon="🎒"
+      title={t("auth.studentWelcome", { defaultValue: "Student Login" })}
+      subtitle={t("auth.selectHowToLogin", {
+        defaultValue: "Sign in with email or join with a code",
+      })}
+    >
       {/* Email Login */}
       <LoginSection>
         <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
@@ -265,11 +338,29 @@ const LoginSelection: React.FC = () => {
           {t("auth.emailLogin", { defaultValue: "Log in with Email" })}
         </div>
         <form onSubmit={handleEmailLogin} className="space-y-3">
-          <LoginInput type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" />
-          <LoginInput type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+          <LoginInput
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email address"
+          />
+          <LoginInput
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+          />
           {emailError && <p className="text-red-600 text-xs">{emailError}</p>}
-          <LoginButton type="submit" loading={emailLoading} disabled={emailLoading}>
-            {emailLoading ? "Signing in..." : t("auth.logInBtn", { defaultValue: "Log In" })}
+          <LoginButton
+            type="submit"
+            loading={emailLoading}
+            disabled={emailLoading}
+          >
+            {emailLoading
+              ? "Signing in..."
+              : t("auth.logInBtn", { defaultValue: "Log In" })}
           </LoginButton>
         </form>
       </LoginSection>
@@ -284,14 +375,24 @@ const LoginSelection: React.FC = () => {
         </div>
         <form onSubmit={handleCodeLookup} className="space-y-3">
           <LoginInput
-            type="text" required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
+            type="text"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="Class code or cohort code"
             maxLength={10}
             className="font-mono tracking-wider text-center uppercase"
           />
           {codeError && <p className="text-red-600 text-xs">{codeError}</p>}
-          <LoginButton type="submit" loading={codeLoading} disabled={codeLoading} className="bg-emerald-600 hover:bg-emerald-500">
-            {codeLoading ? "Looking up..." : t("auth.joinButton", { defaultValue: "Join" })}
+          <LoginButton
+            type="submit"
+            loading={codeLoading}
+            disabled={codeLoading}
+            className="bg-emerald-600 hover:bg-emerald-500"
+          >
+            {codeLoading
+              ? "Looking up..."
+              : t("auth.joinButton", { defaultValue: "Join" })}
           </LoginButton>
         </form>
       </LoginSection>
@@ -316,10 +417,18 @@ const LoginSelection: React.FC = () => {
 
       <div className="text-center space-y-2">
         <p className="text-xs text-slate-400">
-          {t("auth.teacherNote", { defaultValue: "Teacher?" })} <Link to="/teacher-login" className="text-indigo-600 hover:underline">Log in here</Link>
+          {t("auth.teacherNote", { defaultValue: "Teacher?" })}{" "}
+          <Link to="/teacher-login" className="text-indigo-600 hover:underline">
+            Log in here
+          </Link>
         </p>
-        <Link to="/pathways/about" className="block text-xs text-slate-400 hover:text-indigo-500">
-          {t("auth.pathwaysLink", { defaultValue: "Ages 14-17? Check out Bright Boost Pathways →" })}
+        <Link
+          to="/pathways/about"
+          className="block text-xs text-slate-400 hover:text-indigo-500"
+        >
+          {t("auth.pathwaysLink", {
+            defaultValue: "Ages 14-17? Check out Bright Boost Pathways →",
+          })}
         </Link>
       </div>
     </LoginCard>
