@@ -49,7 +49,11 @@ function coachingStory(language: "en" | "es"): Story {
   const scope = `storybook-sparbots-${language}`;
   return {
     args: { storageScope: scope },
-    parameters: { language, mobile: language === "es" },
+    parameters: {
+      language,
+      mobile: language === "es",
+      viewport: { defaultViewport: language === "es" ? "mobile1" : undefined },
+    },
     beforeEach: () => {
       localStorage.removeItem(storageKey(scope));
     },
