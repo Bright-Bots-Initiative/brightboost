@@ -21,6 +21,7 @@ import {
 import {
   SPECIALTIES,
   BIOTRAIL_PATH,
+  SPARBOTS_PATH,
   type Specialty,
   type SpecialtyStatus,
 } from "@/lib/specialty";
@@ -47,6 +48,12 @@ export function SpecialtyExperience({
   const active = data.specialty ?? preview;
   const Icon = SPECIALTY_ICONS[active];
   const chosen = data.unlocked && data.specialty !== null;
+  const game =
+    active === "AI"
+      ? { key: "sparbots", path: SPARBOTS_PATH }
+      : active === "BIOTECH"
+        ? { key: "biotrail", path: BIOTRAIL_PATH }
+        : null;
   async function commit() {
     if (saving) return;
     setSaving(true);
@@ -184,26 +191,16 @@ export function SpecialtyExperience({
               <Icon size={18} />
               {t(`specialty.tracks.${active}.name`)}
             </p>
-            <h2>
-              {t(
-                active === "BIOTECH"
-                  ? "biotrail.title"
-                  : "specialty.comingTitle",
-              )}
-            </h2>
+            <h2>{t(game ? `${game.key}.title` : "specialty.comingTitle")}</h2>
             <p>
-              {t(
-                active === "BIOTECH"
-                  ? "biotrail.tagline"
-                  : "specialty.comingDescription",
-              )}
+              {t(game ? `${game.key}.tagline` : "specialty.comingDescription")}
             </p>
-            {active === "BIOTECH" ? (
+            {game ? (
               <>
                 <div className="specialty-tags">
-                  <span>{t("biotrail.tag1")}</span>
-                  <span>{t("biotrail.tag2")}</span>
-                  <span>{t("biotrail.tag3")}</span>
+                  <span>{t(`${game.key}.tag1`)}</span>
+                  <span>{t(`${game.key}.tag2`)}</span>
+                  <span>{t(`${game.key}.tag3`)}</span>
                 </div>
                 {onPlay ? (
                   <Button className="specialty-primary" onClick={onPlay}>
@@ -213,7 +210,7 @@ export function SpecialtyExperience({
                 ) : (
                   <Link
                     className={`${buttonVariants()} specialty-primary`}
-                    to={BIOTRAIL_PATH}
+                    to={game.path}
                   >
                     {t("specialty.play")}
                     <ArrowRight size={19} />

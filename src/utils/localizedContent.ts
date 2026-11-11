@@ -7,6 +7,9 @@ import i18n from "../i18n";
  */
 const CONTENT_NAMES: Record<string, Record<string, string>> = {
   es: {
+    "SparBots: Training Tower": "SparBots: Torre de Entrenamiento",
+    "My First AI Playbook": "Mi primer libro de ejemplos de IA",
+    "Show, train, test, improve": "Mostrar, entrenar, probar, mejorar",
     // Game / activity names
     "Bounce & Buds": "Rebota y Amigos",
     "Gotcha Gears": "Engranajes Gotcha",
@@ -57,7 +60,8 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "STEM-1: Module 2 — Rhyme & Ride": "STEM-1: Bài 2 — Vần và Đi",
     "STEM-1: Module 3 — Bounce & Buds": "STEM-1: Bài 3 — Nảy và Bạn Bè",
     "STEM-1: Module 4 — Gotcha Gears": "STEM-1: Bài 4 — Bánh Răng Gotcha",
-    "K-2 Intro to AI, Quantum, and Bio": "K-2 Giới thiệu AI, Lượng tử và Sinh học",
+    "K-2 Intro to AI, Quantum, and Bio":
+      "K-2 Giới thiệu AI, Lượng tử và Sinh học",
     "Put steps in order to help Boost bake! 🥣🔥🧁":
       "Sắp xếp các bước để giúp Boost nướng bánh! 🥣🔥🧁",
     "Find the rhyming word! 🎵🚲": "Tìm từ có vần! 🎵🚲",
@@ -118,7 +122,12 @@ export function pickLocale<T>(map: Partial<Record<string, T>>, fallback: T): T {
   return map[lang] ?? map.en ?? fallback;
 }
 
-export type LocalizedField = string | { i18nKey: string } | Record<string, string> | undefined | null;
+export type LocalizedField =
+  | string
+  | { i18nKey: string }
+  | Record<string, string>
+  | undefined
+  | null;
 
 export function resolveText(
   t: TFunction,
@@ -135,7 +144,10 @@ export function resolveText(
     }
     // Locale map: { en: "Hello", es: "Hola" }
     if ("en" in field) {
-      return pickLocale(field as Record<string, string>, (field as any).en ?? fallback);
+      return pickLocale(
+        field as Record<string, string>,
+        (field as any).en ?? fallback,
+      );
     }
   }
   return fallback;

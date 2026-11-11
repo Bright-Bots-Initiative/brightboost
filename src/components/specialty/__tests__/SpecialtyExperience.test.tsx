@@ -69,4 +69,32 @@ describe("Specialty choice", () => {
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+  it.each([
+    [
+      "AI",
+      "SparBots: Training Tower",
+      "/student/modules/advanced-ai-sparbots/lessons/sparbots-training-tower/activities/sparbots",
+    ],
+    [
+      "BIOTECH",
+      "BioTrail: Adaptation Islands",
+      "/student/modules/advanced-biotech-biotrail/lessons/biotrail-field-lab/activities/biotrail",
+    ],
+  ] as const)(
+    "launches the first %s specialty game",
+    (specialty, title, path) => {
+      render(
+        <MemoryRouter>
+          <SpecialtyExperience
+            data={{ ...ready, specialty }}
+            onChoose={vi.fn()}
+          />
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: en.specialty.play }),
+      ).toHaveAttribute("href", path);
+    },
+  );
 });

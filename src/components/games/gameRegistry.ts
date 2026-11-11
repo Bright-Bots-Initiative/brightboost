@@ -1,4 +1,5 @@
 import BioTrailActivity from "./BioTrailActivity";
+import SparBotsActivity from "./SparBotsActivity";
 import type { ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
 
@@ -47,6 +48,7 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
 
   // Advanced Biotech: independently gated by server specialty state.
   biotrail: BioTrailActivity,
+  sparbots: SparBotsActivity,
 
   // ── Set 3 keys ──
   track_maker: TrackMakerGame, // "Boost Track Builder" (Set 3, gated)

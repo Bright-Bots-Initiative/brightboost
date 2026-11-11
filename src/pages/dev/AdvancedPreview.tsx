@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { SpecialtyExperience } from "@/components/specialty/SpecialtyExperience";
 import BioTrailGame from "@/components/games/biotrail/BioTrailGame";
+import SparBotsGame from "@/components/games/sparbots/SparBotsGame";
 import type { Specialty } from "@/lib/specialty";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -50,7 +51,11 @@ export default function AdvancedPreview() {
             >
               {t("specialty.previewBack")}
             </Button>
-            <BioTrailGame storageScope="preview" />
+            {specialty === "AI" ? (
+              <SparBotsGame storageScope="preview" />
+            ) : (
+              <BioTrailGame storageScope="preview" />
+            )}
           </>
         ) : (
           <SpecialtyExperience
