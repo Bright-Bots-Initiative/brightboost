@@ -354,7 +354,7 @@ const Index = () => {
               >
                 <span className="block whitespace-nowrap">
                   {t("home.h1First")}
-                </span>
+                </span>{" "}
                 <span className="block whitespace-nowrap">
                   {t("home.h1Second")}
                 </span>
