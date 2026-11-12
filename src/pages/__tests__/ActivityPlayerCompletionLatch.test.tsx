@@ -9,6 +9,7 @@
  * is what actually guarantees single-award. LATCH-1 therefore asserts the
  * POST count, not any reward semantics.
  */
+import { Profiler } from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -195,6 +196,49 @@ describe("completion latch (#832 item 4)", () => {
       ).toBeNull(),
     );
     expect(api.completeActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it("LATCH-4: a click in the commit that first renders Mark Complete posts once", async () => {
+    vi.mocked(api.completeActivity).mockResolvedValue(COMPLETION_RESPONSE);
+    // Profiler's onRender runs in the commit's layout phase, after the player's layout
+    // effects and before its passive ones: the earliest moment a person could click.
+    let clicked = false;
+    const clickOnFirstCommit = () => {
+      if (clicked) return;
+      const button = screen.queryByRole("button", { name: "Mark Complete" });
+      if (!button) return;
+      clicked = true;
+      button.click();
+    };
+
+    render(
+      <Profiler id="first-commit" onRender={clickOnFirstCommit}>
+        <TooltipProvider>
+          <MemoryRouter
+            initialEntries={[
+              "/student/modules/test-module/lessons/l-1/activities/a-1",
+            ]}
+          >
+            <Routes>
+              <Route
+                path="/student/modules/:slug/lessons/:lessonId/activities/:activityId"
+                element={<ActivityPlayer />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </Profiler>,
+    );
+
+    await waitFor(() => expect(clicked).toBe(true));
+    await waitFor(() => expect(api.completeActivity).toHaveBeenCalledTimes(1));
+    const [[payload]] = vi.mocked(api.completeActivity).mock.calls;
+    const starts = vi
+      .mocked(track)
+      .mock.calls.map(([action]) => action)
+      .filter((action) => action.kind === "game_started");
+    expect(starts).toHaveLength(1);
+    expect(payload.attemptId).toBe(starts[0].attempt_id);
   });
 });
 
