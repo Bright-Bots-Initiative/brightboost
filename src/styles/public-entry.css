@@ -1,0 +1,357 @@
+/*
+ * Public-entry scoped styles (rebrand slice 1).
+ *
+ * Everything the public entry surfaces need that a Tailwind utility cannot
+ * express, and nothing else. Every rule is scoped under `.bb-public`, which
+ * only the public entry pages set on their root element — there is no global
+ * element reset here and no prototype stylesheet is imported.
+ *
+ * Imported by the five public entry pages and by nothing else:
+ * src/pages/Index.tsx, ForTeachers.tsx, ForFamilies.tsx, Donate.tsx and
+ * FeedbackPage.tsx. Each of them sets `.bb-public` on its root element.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Focus is visible on every control.
+ *
+ * The ring is an `outline`, deliberately. Drawing it with `box-shadow` lets any
+ * decorative rule that also sets `box-shadow` (the pressed-depth primary
+ * action, for one) win the cascade on that property and erase the ring
+ * silently. `outline` cannot be overridden by a `box-shadow`, so the two can no
+ * longer collide by construction.
+ *
+ * Two rules, not one: the second raises specificity via `:is()` so it also
+ * beats Tailwind's `focus:outline-none` utility that the reused product
+ * components (LanguageToggle) carry.
+ * ------------------------------------------------------------------------- */
+.bb-public :focus-visible {
+  outline: var(--bb-focus-width) solid var(--bb-color-focus);
+  outline-offset: var(--bb-focus-offset);
+}
+
+.bb-public
+  :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--bb-focus-width) solid var(--bb-color-focus);
+  outline-offset: var(--bb-focus-offset);
+}
+
+/* On the navy footer a navy ring is invisible, so the ground flips it. */
+.bb-public [data-ground="dark"] {
+  --bb-color-focus: #8bd2ed;
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced motion. Nothing on these pages animates by design, but the shared
+ * chrome and the reused product components bring their own transitions, so the
+ * preference is honoured for the whole subtree rather than per component.
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .bb-public *,
+  .bb-public *::before,
+  .bb-public *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Anchor targets clear the sticky header.
+ *
+ * `PublicHeader` is `sticky top-0` and 57px tall: a 44px control row
+ * (`--bb-control-height`), 6px of padding above and below it, and a 1px bottom
+ * border. Without a scroll margin, both the browser's own fragment scroll and
+ * the homepage's one-shot `scrollIntoView` land the target's top edge at y=0 —
+ * underneath the header, so the heading a visitor followed the link for is the
+ * one thing they cannot read.
+ *
+ * The value is the header plus a small gap, written from the shipped control
+ * height so the two cannot drift apart silently: 2.75rem + 1.5rem = 68px,
+ * which leaves an 11px gap below a 57px header.
+ * ------------------------------------------------------------------------- */
+.bb-public :is(#hero, #for-adults, #plans, #access) {
+  scroll-margin-top: calc(var(--bb-control-height) + 1.5rem);
+}
+
+/* ---------------------------------------------------------------------------
+ * A long unbreakable token (a URL, an e-mail address in a link label) must not
+ * set a control's minimum width and drag the page sideways at 320px or at 200%
+ * zoom. `anywhere` rather than `break-word` because only `anywhere`
+ * participates in min-content sizing.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-public-action {
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
+ * The brand pair in the header.
+ *
+ * At 320px the row holds the wordmark, the language control and Sign in with
+ * nothing to spare, and the shipped version wrapped: the wordmark broke over
+ * two lines and "Sign in" followed it. The mascot is the one part of the pair
+ * that can yield, so below 360px it does; from 360px up it is back.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-brand-mark {
+  display: none;
+}
+
+@media (min-width: 360px) {
+  .bb-public .bb-brand-mark {
+    display: block;
+  }
+}
+
+/* The language trigger names the language in full, except where the row is
+ * too narrow to hold three labels. Measured on this build: the wordmark, the
+ * mascot, the trigger and "Iniciar sesión" need about 408px together, so
+ * Spanish overflowed 320px by 28px and left a 6px gutter at 390px with
+ * "Español" spelled out. Below 420px the trigger shows the two-letter code
+ * instead; the `aria-label` names the language in full either way, and the
+ * code is a prefix of that name, so the visible label still matches it. */
+.bb-public .bb-lang-code {
+  display: none;
+}
+
+@media (max-width: 419px) {
+  .bb-public .bb-lang-name {
+    display: none;
+  }
+
+  .bb-public .bb-lang-code {
+    display: inline;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The hero eyebrow.
+ *
+ * A rounded box rather than a pill. The label is two words too long for one
+ * line at 320px, and a pill whose text wraps inside it reads as a rendering
+ * fault rather than a label — a rectangle with a soft radius simply holds two
+ * lines.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-eyebrow {
+  display: inline-block;
+  max-width: 100%;
+  /* `anywhere` rather than `break-word`: only `anywhere` participates in
+     min-content sizing, and this label's min-content is what made the hero
+     column wider than a 390px screen at 200% text. */
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--bb-radius-md);
+  background: #ffffff;
+  color: var(--bb-blue-deep);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------------
+ * The one disclosure in the hero. Native `<details>`, so the keyboard and
+ * screen-reader behaviour is the platform's; only the box is ours. The summary
+ * carries a full 44px hit area.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-disclosure {
+  border: 1px solid var(--bb-color-border);
+  border-radius: var(--bb-radius-md);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 0.75rem;
+}
+
+.bb-public .bb-disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--bb-control-height);
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--bb-blue-deep);
+}
+
+.bb-public .bb-disclosure[open] {
+  padding-bottom: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * The playable panel (`src/components/home/PublicDemo.tsx`).
+ *
+ * The box is reserved before the game chunk arrives, so the loading state, the
+ * failure state, the briefing and the completion card all occupy the same
+ * height and nothing below the hero moves while the page settles. The minimum
+ * is measured from the briefing card itself at each width, not guessed.
+ *
+ * The panel is a raised sky surface, which is what makes the game's own white
+ * cards read as objects sitting on something rather than as more page.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-public-demo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Measured on this build at 320px, where the briefing wraps hardest. */
+  min-height: 900px;
+  padding: 0.75rem;
+  border: 1px solid var(--bb-color-border);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-color-surface-raised);
+  box-shadow: 0 10px 30px rgba(22, 36, 58, 0.12);
+}
+
+/* 360-639px: measured 824px at 390px. */
+@media (min-width: 360px) {
+  .bb-public .bb-public-demo {
+    min-height: 820px;
+  }
+}
+
+/* 640px and up: measured 834px at 768px, 1280px and 1440px. */
+@media (min-width: 640px) {
+  .bb-public .bb-public-demo {
+    min-height: 830px;
+    padding: 1rem;
+  }
+}
+
+/* The reservation is for the wait, not for the life of the panel: once the
+ * game has rendered (`data-ready`), the panel is as tall as what it holds, so
+ * the completion card does not float in half a screen of empty box. */
+.bb-public .bb-public-demo[data-ready="true"] {
+  min-height: 0;
+}
+
+/* When the game area is scrolled into view on the first play it must land
+ * below the sticky header rather than under it — and on a phone, where the
+ * area is taller than the viewport and the browser aligns its bottom edge
+ * instead, the last control (Reset) must not stop one pixel short. */
+.bb-public .bb-public-demo [role="region"] {
+  scroll-margin-top: calc(var(--bb-control-height) + 1.5rem);
+  scroll-margin-bottom: 1rem;
+}
+
+/* Every control a child taps inside the panel is a real target, including the
+ * shared game chrome that ships smaller ones (the reduced-effects switch, the
+ * in-game "How to play" summary). Size only — no game behaviour, no timing and
+ * no authenticated surface is touched, because the rule is scoped to a public
+ * entry page's demo panel. */
+.bb-public .bb-public-demo :is(button, summary) {
+  min-height: var(--bb-control-height);
+}
+
+.bb-public .bb-demo-status {
+  margin: 0;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.bb-public .bb-demo-complete {
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+ * The role segmented control and its panel.
+ *
+ * Two options, both always visible, both 44px, with the selected one filled
+ * rather than merely outlined — a selection a visitor has to compare two
+ * borders to read is not a selection. Colour and background only: the
+ * transition cannot move anything, so the control cannot shift under a tap.
+ * ------------------------------------------------------------------------- */
+.bb-public .bb-seg {
+  display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 2px solid var(--bb-color-border-strong);
+  border-radius: var(--bb-radius-md);
+  background: #ffffff;
+}
+
+.bb-public .bb-seg-option {
+  min-height: var(--bb-control-height);
+  padding: 0 1.25rem;
+  border-radius: calc(var(--bb-radius-md) - 0.25rem);
+  background: transparent;
+  color: var(--bb-blue-deep);
+  font-size: 1rem;
+  font-weight: 700;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.bb-public .bb-seg-option:hover {
+  background: var(--bb-color-accent-soft);
+}
+
+.bb-public .bb-seg-option[aria-checked="true"] {
+  background: var(--bb-navy-deep);
+  color: #ffffff;
+}
+
+.bb-public .bb-role-panel {
+  padding: 1.25rem;
+  border: 1px solid var(--bb-color-border);
+  border-radius: var(--bb-radius-lg);
+  background: #ffffff;
+}
+
+.bb-public .bb-role-point {
+  padding-top: 0.5rem;
+  border-top: 3px solid var(--bb-color-sky);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Compact grade-band discovery and one playable demo instance. */
+.bb-grade-card {
+  border: 1px solid var(--bb-color-border-strong);
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-color-surface-raised);
+  padding: 1rem;
+}
+.bb-grade-card.is-upcoming {
+  background: #f6f8fa;
+  color: var(--bb-color-text-muted);
+}
+.bb-grade-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--bb-color-border-strong);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.bb-demo-bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: var(--bb-radius-md);
+  background: var(--bb-color-surface-sunken);
+  margin-bottom: 0.6rem;
+}
+.bb-demo-band {
+  min-height: 44px;
+  border: 2px solid transparent;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--bb-radius-md);
+  background: white;
+  color: var(--bb-color-text);
+  font-weight: 750;
+}
+.bb-demo-band.is-selected {
+  border-color: var(--bb-blue-deep);
+  background: #e4f4fc;
+}
+.bb-demo-band:focus-visible {
+  outline: 3px solid var(--bb-color-focus);
+  outline-offset: 2px;
+}

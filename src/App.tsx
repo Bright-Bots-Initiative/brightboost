@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
   Outlet,
+  useLocation,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,7 +28,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LoginSelection from "./pages/LoginSelection";
 import SignupSelection from "./pages/SignupSelection";
 import Index from "./pages/Index";
-import HomeSectionRedirect from "./pages/HomeSectionRedirect";
+import ForTeachers from "./pages/ForTeachers";
+import ForFamilies from "./pages/ForFamilies";
+import Donate from "./pages/Donate";
+import FeedbackPage from "./pages/FeedbackPage";
 import AudiencePlaceholder from "./pages/AudiencePlaceholder";
 import Modules from "./pages/Modules";
 import ModuleDetail from "./pages/ModuleDetail";
@@ -106,6 +110,11 @@ import FacilitatorLearnersPage from "./components/pathways/facilitator/pages/Lea
 import FacilitatorLearnerDetailPage from "./components/pathways/facilitator/pages/LearnerDetail";
 import FacilitatorReportsPage from "./components/pathways/facilitator/pages/Reports";
 import FacilitatorSettingsPage from "./components/pathways/facilitator/pages/Settings";
+
+const TeachersRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={"/for-teachers" + search} replace />;
+};
 
 // Import styles
 import "./App.css";
@@ -220,27 +229,20 @@ function App() {
                 />
               )}
               <Route path="/for-reviewers" element={<ForReviewers />} />
+              <Route path="/for-teachers" element={<ForTeachers />} />
+              <Route path="/for-families" element={<ForFamilies />} />
               {/* Free Access Plans detail pages — reached from the homepage
                   "Learn more" buttons. Public, persona-routed CTAs. */}
               <Route path="/plans/:plan" element={<PlanDetail />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
-              <Route
-                path="/feedback"
-                element={<HomeSectionRedirect sectionId="feedback" />}
-              />
-              <Route
-                path="/donate"
-                element={<HomeSectionRedirect sectionId="donation" />}
-              />
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/donate" element={<Donate />} />
               <Route
                 path="/students"
                 element={<AudiencePlaceholder audience="Students" />}
               />
-              <Route
-                path="/teachers"
-                element={<AudiencePlaceholder audience="Teachers" />}
-              />
+              <Route path="/teachers" element={<TeachersRedirect />} />
               <Route path="/parents" element={<Parents />} />
               {/* Public print-friendly K-2 facilitator guide — linked from
                   /parents and Teacher Resources (single source, no copies). */}

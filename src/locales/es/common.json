@@ -1623,7 +1623,8 @@
       "manual": "Manual",
       "system": "Del sistema",
       "default": "Predeterminado",
-      "achievement": "¡Nuevo logro!"
+      "achievement": "¡Nuevo logro!",
+      "gameLabel": "Juego"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -3064,5 +3065,185 @@
     "finished": "Torre guardada",
     "finishError": "No se pudo guardar tu torre en BrightBoost. Intenta Terminar mi torre otra vez.",
     "gameLocked": "SparBots se abre después del Set 3 al elegir la especialidad de IA. Ver mi especialidad."
+  },
+  "donatePage": {
+    "meta": {
+      "title": "Apoya a Bright Boost — Bright Boost",
+      "description": "Donar es opcional y nunca es necesario para usar Bright Boost. Esta página lleva el único enlace de apoyo, dirigido a adultos."
+    },
+    "nav": {
+      "label": "Apoya a Bright Boost"
+    },
+    "title": "Apoya a Bright Boost",
+    "optional": "Donar es opcional y nunca es necesario para usar Bright Boost.",
+    "donateCta": "Donar",
+    "unavailable": "Todavía no hay un enlace de donación disponible."
+  },
+  "feedbackPage": {
+    "meta": {
+      "title": "Comentarios — Bright Boost",
+      "description": "Cuéntanos qué funciona y qué no. Este formulario se guarda solo en tu navegador."
+    },
+    "nav": {
+      "label": "Comentarios"
+    },
+    "title": "Comentarios",
+    "localOnly": "Este formulario se guarda solo en esta sesión del navegador. No envía ningún mensaje a Bright Bots Initiative.",
+    "audienceLegend": "Tipo de público para los comentarios",
+    "audienceTeacher": "Maestro",
+    "audienceStudent": "Estudiante",
+    "audienceParent": "Familia",
+    "audienceOrg": "Organización",
+    "messageLabel": "Comparte tus ideas",
+    "emailLabel": "Correo electrónico (opcional)",
+    "submit": "Enviar comentarios",
+    "confirmation": "¡Gracias! Tus comentarios quedaron guardados en esta sesión del navegador. Todavía falta conectar la persistencia en el servidor."
+  },
+  "forTeachers": {
+    "meta": {
+      "title": "Para maestros — Bright Boost",
+      "description": "Bright Boost es gratuito para las aulas. Crea una clase, comparte un código y prueba la demostración pública de K-2 — sin correos electrónicos de estudiantes."
+    },
+    "nav": {
+      "label": "Para maestros"
+    },
+    "eyebrow": "Para maestros",
+    "headline": "Crea una clase y mira lo que construyen.",
+    "lede": "Bright Boost es gratuito para las aulas. Creas una clase, compartes un código y tus estudiantes entran — sin correos electrónicos de estudiantes. Cada niño sí tiene su propia cuenta; los más pequeños entran con el código de la clase y un dibujo, en lugar de un correo y una contraseña.",
+    "newAccount": "Crear una cuenta de maestro",
+    "tryCta": "Probar la demostración",
+    "tryHelp": "La demostración pública es una actividad real de K–2 y no necesita cuenta.",
+    "existingAccount": "Entrar como maestro",
+    "firstTitle": "Lo primero que haces",
+    "step4": "Ve el progreso de tus estudiantes en tu panel de maestro."
+  },
+  "forFamilies": {
+    "meta": {
+      "title": "Para familias — Bright Boost",
+      "description": "Bright Boost es gratuito para las familias. Únete a la clase en la que ya está tu hijo o crea un grupo de hogar — siempre es un adulto quien abre la puerta."
+    },
+    "nav": {
+      "label": "Para familias"
+    },
+    "eyebrow": "Para familias",
+    "headline": "Dos caminos, según dónde esté ya tu hijo.",
+    "lede": "Bright Boost es gratuito para las familias. Los niños no crean sus propias cuentas — siempre es un adulto quien abre la puerta.",
+    "atSchoolTitle": "Tu hijo ya está en una clase",
+    "atSchoolBody": "Su maestro le da un código de clase. Los más pequeños entran con el código y un dibujo, no con una contraseña.",
+    "atSchoolCta": "Entrada para estudiantes",
+    "homeTitle": "Quieres empezar en casa",
+    "homeBody": "Creas un grupo de hogar y tu hijo se une con el código que te da.",
+    "homeCta": "Crear un grupo de hogar",
+    "noSelfSignup": "Los niños de kínder a 2.º grado no pueden registrarse solos.",
+    "guideTitle": "Acompañar a un niño pequeño",
+    "guideBody": "La guía para familias es una página: ten curiosidad con él, ayuda con la lectura solo si lo pide, y deja que los resultados inesperados queden como están.",
+    "guideCta": "La guía para familias"
+  },
+  "home": {
+    "meta": {
+      "title": "Bright Boost — Un mundo que construyes al aprender",
+      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia."
+    },
+    "eyebrow": "Plataforma de aprendizaje STEM gratuita",
+    "displayLine": "Juega. Construye. Conviértete.",
+    "h1": "Un mundo que construyes al aprender.",
+    "heroSentence": "Programa a Bolt en una misión de robótica. Elige entre retos para kínder a 2.º grado o para 3.º a 5.º grado.",
+    "secondaryCta": "Para maestros y familias",
+    "howItWorks": {
+      "summary": "Cómo funciona la demostración",
+      "point1": "Tres laberintos cortos, aquí mismo en esta página.",
+      "point2": "Sin cuenta y sin registro.",
+      "point3": "Funciona en el teléfono."
+    },
+    "demo": {
+      "loading": "Cargando el juego…",
+      "errorTitle": "El juego no se cargó",
+      "errorBody": "Algo falló de nuestro lado; no fue algo que hiciste. Vuelve a cargarlo o ábrelo en su propia página.",
+      "retry": "Reintentar",
+      "fullScreen": "Abrir en pantalla completa",
+      "openFull": "Abrir la demostración en pantalla completa",
+      "completeTitle": "¡Terminaste los tres laberintos!",
+      "starsLabel": "Estrellas ganadas:",
+      "playAgain": "Jugar otra vez",
+      "adultsLabel": "Para adultos",
+      "teacherLink": "Para maestros",
+      "familyLink": "Para familias",
+      "bandLabel": "Elige la edad de la misión",
+      "bandK2": "Kínder–2.º grado",
+      "bandG35": "3.º–5.º grado",
+      "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
+      "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
+      "staysLocal": "Esta práctica se queda en este dispositivo. Un adulto puede ayudarte a elegir cómo seguir aprendiendo.",
+      "adultEntry": "Para docentes y familias"
+    },
+    "roles": {
+      "title": "Para tu aula o tu familia",
+      "groupLabel": "Elige maestros o familias",
+      "bothPaths": "Ambas rutas:",
+      "teacherPath": "Rutas para maestros",
+      "familyPath": "Rutas para familias",
+      "teacher": {
+        "point1": "Crea una clase y comparte el código.",
+        "point2": "Inicia una sesión cuando la clase esté lista.",
+        "point3": "Mira lo que hicieron tus estudiantes.",
+        "primary": "Crear una cuenta de maestro",
+        "tertiary": "Iniciar sesión como maestro"
+      },
+      "family": {
+        "point1": "Únete a la clase en la que ya está tu hijo.",
+        "point2": "O crea un grupo de hogar propio.",
+        "point3": "Exploren los juegos juntos, gratis.",
+        "primary": "Únete con un código de clase",
+        "tertiary": "Crear un grupo de hogar"
+      }
+    },
+    "adults": {
+      "intro": "Los adultos tienen su propia entrada. Los niños nunca se registran por su cuenta.",
+      "teacherTitle": "Maestros",
+      "familyTitle": "Familias",
+      "plansTitle": "Planes de acceso gratuitos",
+      "plansBody": "Los planes de acceso de Bright Boost son gratuitos. Donar nunca es condición para aprender.",
+      "planLearner": "Estudiante",
+      "planClassroom": "Aula",
+      "planOrganization": "Organización"
+    },
+    "access": {
+      "title": "Disponibilidad y acceso",
+      "availability": "Ya hay experiencias de aprendizaje para kínder a 2.º grado y para 3.º a 5.º grado. Los grados 6.º a 8.º llegarán pronto. El contenido en español varía según la actividad."
+    },
+    "h1First": "Un mundo que construyes",
+    "h1Second": "al aprender.",
+    "bands": {
+      "heading": "Elige tu etapa de aprendizaje",
+      "k2": "Kínder–2.º grado",
+      "k2Description": "Explora las bases STEM con juegos prácticos.",
+      "g35": "3.º–5.º grado",
+      "g35Description": "Desarrolla tus ideas con desafíos más complejos.",
+      "g68": "6.º–8.º grado",
+      "g68Description": "Próximamente",
+      "available": "Disponible",
+      "coming": "Próximamente"
+    }
+  },
+  "publicChrome": {
+    "fromNonprofit": "Desde Bright Bots Initiative",
+    "nav": {
+      "homepageLabel": "Página principal",
+      "brand": "Bright Boost",
+      "signIn": "Iniciar sesión"
+    },
+    "footer": {
+      "label": "Pie de página",
+      "relationship": "Bright Boost es un programa de Bright Bots Initiative.",
+      "families": "Para familias",
+      "teachers": "Para maestros",
+      "reviewers": "Guía para evaluadores",
+      "pathways": "Pathways",
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "feedback": "Dar comentarios",
+      "contact": "Contacto",
+      "support": "Apoya a Bright Boost"
+    }
   }
 }

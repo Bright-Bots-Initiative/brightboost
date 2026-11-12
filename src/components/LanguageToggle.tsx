@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { changeLanguage, SUPPORTED_LANGUAGES } from "@/i18n";
 
 type LanguageToggleProps = {
-  variant?: "light" | "dark";
+  variant?: "light" | "dark" | "public";
+  renderedLanguage?: string;
   /** Restrict the menu to languages a page is complete in (e.g. a game whose
    *  content ships en + es only) so no child-visible surface mixes languages.
    *  Defaults to every supported language. */
@@ -13,6 +14,7 @@ type LanguageToggleProps = {
 const LanguageToggle = ({
   variant = "light",
   languages,
+  renderedLanguage,
 }: LanguageToggleProps) => {
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -33,13 +35,17 @@ const LanguageToggle = ({
   // When a page restricts the menu and the app language is not offered, the
   // page is rendering the first offered language — say so on the trigger.
   const currentLabel =
-    (offered.find((l) => l.code === currentLang) ?? offered[0])?.label ??
-    "English";
+    (
+      offered.find((l) => l.code === (renderedLanguage ?? currentLang)) ??
+      offered[0]
+    )?.label ?? "English";
 
   const triggerClass =
-    variant === "dark"
-      ? "bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 focus:ring-offset-slate-900 font-medium"
-      : "bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 font-medium";
+    variant === "public"
+      ? "inline-flex min-h-[var(--bb-control-height)] items-center justify-center rounded-[var(--bb-radius-md)] border-2 border-[color:var(--bb-color-border-strong)] bg-white px-3 py-2 text-sm font-bold text-brightboost-navy transition-colors hover:border-brightboost-navy hover:bg-[color:var(--bb-color-accent-soft)]"
+      : variant === "dark"
+        ? "bg-slate-800 text-slate-100 hover:bg-slate-700 border border-slate-700 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 focus:ring-offset-slate-900 font-medium"
+        : "bg-brightboost-yellow hover:bg-yellow-300 text-sm px-3 py-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 font-medium";
 
   const menuClass =
     variant === "dark"
@@ -62,7 +68,18 @@ const LanguageToggle = ({
         aria-label={`${currentLabel}: ${t("common.changeLanguage", { defaultValue: "Change language" })}`}
         aria-expanded={open}
       >
-        {currentLabel}
+        {variant === "public" ? (
+          <>
+            <span className="bb-lang-name">{currentLabel}</span>
+            <span className="bb-lang-code">
+              {(renderedLanguage ?? currentLang ?? "en")
+                .slice(0, 2)
+                .toUpperCase()}
+            </span>
+          </>
+        ) : (
+          currentLabel
+        )}
       </button>
       {open && (
         <div className={menuClass}>

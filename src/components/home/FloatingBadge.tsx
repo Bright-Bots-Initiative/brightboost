@@ -6,7 +6,11 @@ type FloatingBadgeProps = {
   className?: string;
 };
 
-const FloatingBadge: React.FC<FloatingBadgeProps> = ({ label, accent, className = "" }) => {
+const FloatingBadge: React.FC<FloatingBadgeProps> = ({
+  label,
+  accent,
+  className = "",
+}) => {
   return (
     <div
       className={`absolute rounded-[12px] border-2 bg-white px-3 py-1.5 text-xs md:text-sm font-bold text-brightboost-navy shadow-md ${className}`}

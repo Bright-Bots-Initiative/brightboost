@@ -1661,7 +1661,8 @@
       "manual": "Manual",
       "system": "System",
       "default": "Default",
-      "achievement": "Achievement Unlocked!"
+      "achievement": "Achievement Unlocked!",
+      "gameLabel": "Game"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -3297,5 +3298,185 @@
     "finished": "Tower saved",
     "finishError": "Your tower could not be saved to BrightBoost. Try Finish my tower again.",
     "gameLocked": "SparBots opens after Set 3 and an AI specialty choice. View my specialty."
+  },
+  "donatePage": {
+    "meta": {
+      "title": "Support Bright Boost — Bright Boost",
+      "description": "Giving is optional and never required to use Bright Boost. This page carries the one support link for adults."
+    },
+    "nav": {
+      "label": "Support Bright Boost"
+    },
+    "title": "Support Bright Boost",
+    "optional": "Donating is optional and never required to use Bright Boost.",
+    "donateCta": "Donate",
+    "unavailable": "A donation link is not available yet."
+  },
+  "feedbackPage": {
+    "meta": {
+      "title": "Feedback — Bright Boost",
+      "description": "Share what is working and what is not. This form is stored only in your browser."
+    },
+    "nav": {
+      "label": "Feedback"
+    },
+    "title": "Feedback",
+    "localOnly": "This form is stored only in this browser session. It does not send a message to Bright Bots Initiative.",
+    "audienceLegend": "Feedback audience type",
+    "audienceTeacher": "Teacher",
+    "audienceStudent": "Student",
+    "audienceParent": "Parent",
+    "audienceOrg": "Org",
+    "messageLabel": "Share your ideas",
+    "emailLabel": "Email (optional)",
+    "submit": "Send Feedback",
+    "confirmation": "Thank you! Your feedback was captured in this browser session. Backend persistence still needs to be connected."
+  },
+  "forTeachers": {
+    "meta": {
+      "title": "For Teachers — Bright Boost",
+      "description": "Bright Boost is free for classrooms. Create a class, share a join code, and try the public K-2 demo — no student e-mail addresses needed."
+    },
+    "nav": {
+      "label": "For teachers"
+    },
+    "eyebrow": "For teachers",
+    "headline": "Set up a class, then watch what they build.",
+    "lede": "Bright Boost is free for classrooms. You create a class, share a join code, and your students are in — no student e-mail addresses. Each child does have their own account; a young learner signs in with the class code and a picture instead of an e-mail and a password.",
+    "newAccount": "Create a teacher account",
+    "tryCta": "Try the demo",
+    "tryHelp": "The public demo is a real K–2 activity and needs no account.",
+    "existingAccount": "Sign in as a teacher",
+    "firstTitle": "What you do first",
+    "step4": "View student progress on your teacher dashboard."
+  },
+  "forFamilies": {
+    "meta": {
+      "title": "For Families — Bright Boost",
+      "description": "Bright Boost is free for families. Join a class your child is already in, or create a home group — an adult always opens the door."
+    },
+    "nav": {
+      "label": "For families"
+    },
+    "eyebrow": "For families",
+    "headline": "Two ways in, depending on where your child already is.",
+    "lede": "Bright Boost is free for families. Children do not create their own accounts — an adult always opens the door.",
+    "atSchoolTitle": "Your child is in a class already",
+    "atSchoolBody": "Their teacher gives them a class code. Young children sign in with the code and a picture, not a password.",
+    "atSchoolCta": "Child sign-in",
+    "homeTitle": "You want to start at home",
+    "homeBody": "You create a home group, and your child joins it with the code it gives you.",
+    "homeCta": "Create a home group",
+    "noSelfSignup": "Children in kindergarten through grade 2 cannot register themselves.",
+    "guideTitle": "Sitting with a young learner",
+    "guideBody": "The family guide is one page: be curious with them, help with reading only when asked, and let unexpected results stand.",
+    "guideCta": "The family guide"
+  },
+  "home": {
+    "meta": {
+      "title": "Bright Boost — A world you build by learning",
+      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family."
+    },
+    "eyebrow": "Free STEM learning platform",
+    "displayLine": "Play. Build. Become.",
+    "h1": "A world you build by learning.",
+    "heroSentence": "Program Bolt through a real robot mission. Choose a challenge for K–2 or grades 3–5.",
+    "secondaryCta": "For teachers and families",
+    "howItWorks": {
+      "summary": "How the demo works",
+      "point1": "Three short mazes, played right here on this page.",
+      "point2": "No account and no sign-up.",
+      "point3": "It works on a phone."
+    },
+    "demo": {
+      "loading": "Loading the game…",
+      "errorTitle": "The game did not load",
+      "errorBody": "Something went wrong on our side — nothing you did. Load it again, or open it on its own page.",
+      "retry": "Try again",
+      "fullScreen": "Open in full screen",
+      "openFull": "Open the full-screen demo",
+      "completeTitle": "You finished all three mazes!",
+      "starsLabel": "Stars earned:",
+      "playAgain": "Play again",
+      "adultsLabel": "For grown-ups",
+      "teacherLink": "For teachers",
+      "familyLink": "For families",
+      "bandLabel": "Choose a game level",
+      "bandK2": "Grades K–2",
+      "bandG35": "Grades 3–5",
+      "metaTitle": "Try Bright Boost — free STEM game, no signup",
+      "metaDescription": "Play a free Bright Boost robot mission for K–2 or grades 3–5. No account needed.",
+      "staysLocal": "This practice stays on this device. An adult can help you choose how to keep learning.",
+      "adultEntry": "For teachers and families"
+    },
+    "roles": {
+      "title": "For your classroom or family",
+      "groupLabel": "Choose teachers or families",
+      "bothPaths": "Both paths:",
+      "teacherPath": "Teacher paths",
+      "familyPath": "Family paths",
+      "teacher": {
+        "point1": "Create a class and share the join code.",
+        "point2": "Launch a session when the class is ready.",
+        "point3": "See what your students made.",
+        "primary": "Create a teacher account",
+        "tertiary": "Sign in as a teacher"
+      },
+      "family": {
+        "point1": "Join the class your child is already in.",
+        "point2": "Or create a home group of your own.",
+        "point3": "Explore the games together, for free.",
+        "primary": "Join with a class code",
+        "tertiary": "Create a home group"
+      }
+    },
+    "adults": {
+      "intro": "Adults get their own entry. Children never sign up for themselves.",
+      "teacherTitle": "Teachers",
+      "familyTitle": "Families",
+      "plansTitle": "Free access plans",
+      "plansBody": "Bright Boost's access plans are free. Giving is never a condition of learning.",
+      "planLearner": "Learner",
+      "planClassroom": "Classroom",
+      "planOrganization": "Organization"
+    },
+    "access": {
+      "title": "Availability and access",
+      "availability": "Learning experiences for K–2 and grades 3–5 are available now. Grades 6–8 are coming soon. English and Spanish availability varies by activity."
+    },
+    "h1First": "A world you build",
+    "h1Second": "by learning.",
+    "bands": {
+      "heading": "Three learning stages",
+      "k2": "Grades K–2",
+      "k2Description": "Explore STEM foundations with hands-on games.",
+      "g35": "Grades 3–5",
+      "g35Description": "Build on those ideas with more challenging missions.",
+      "g68": "Grades 6–8",
+      "g68Description": "Coming soon",
+      "available": "Available now",
+      "coming": "Coming soon"
+    }
+  },
+  "publicChrome": {
+    "fromNonprofit": "From Bright Bots Initiative",
+    "nav": {
+      "homepageLabel": "Homepage",
+      "brand": "Bright Boost",
+      "signIn": "Sign in"
+    },
+    "footer": {
+      "label": "Footer",
+      "relationship": "Bright Boost is a program of Bright Bots Initiative.",
+      "families": "For families",
+      "teachers": "For teachers",
+      "reviewers": "Evaluator guide",
+      "pathways": "Pathways",
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "feedback": "Give feedback",
+      "contact": "Contact",
+      "support": "Support Bright Boost"
+    }
   }
 }

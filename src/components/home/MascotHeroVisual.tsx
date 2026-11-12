@@ -11,7 +11,10 @@ const MascotHeroVisual: React.FC = () => {
       <div
         aria-hidden="true"
         className="absolute z-0 rounded-full w-[260px] h-[260px] md:w-[360px] md:h-[360px]"
-        style={{ background: "radial-gradient(circle, rgba(250,204,21,0.35) 0%, rgba(250,204,21,0.08) 45%, rgba(250,204,21,0) 70%)" }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(250,204,21,0.35) 0%, rgba(250,204,21,0.08) 45%, rgba(250,204,21,0) 70%)",
+        }}
       />
 
       <div className="relative z-10 mascot-bob">
@@ -34,7 +37,6 @@ const MascotHeroVisual: React.FC = () => {
           </div>
         )}
       </div>
-
 
       <FloatingBadge
         label="Always Free"

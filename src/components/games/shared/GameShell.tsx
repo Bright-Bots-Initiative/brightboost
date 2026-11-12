@@ -67,6 +67,8 @@ export interface MissionBriefing {
 
 interface GameShellProps {
   gameKey: string;
+  /** Never request learner records from a public demo, even with a stale auth token. */
+  publicDemo?: boolean;
   title: string;
   briefing?: MissionBriefing;
   children: (props: {
@@ -479,9 +481,10 @@ export default function GameShell({
   scoreDisplay = "fraction",
   formatBest,
   secondaryAction,
+  publicDemo = false,
 }: GameShellProps) {
   const { t } = useTranslation();
-  const personalBest = usePersonalBest(gameKey);
+  const personalBest = usePersonalBest(gameKey, { enabled: !publicDemo });
   const [phase, setPhase] = useState<"briefing" | "playing" | "results">(
     briefing ? "briefing" : "playing",
   );
@@ -522,21 +525,32 @@ export default function GameShell({
     [starThresholds, useReportedAccuracy],
   );
 
+  const mountPhase = useRef(phase);
+  const leftMountPhase = useRef(false);
+  const playScrolled = useRef(false);
   useEffect(() => {
+    if (phase !== mountPhase.current) leftMountPhase.current = true;
+    if (phase !== "playing") playScrolled.current = false;
+    // Public embedded games must not steal keyboard focus on initial page load.
+    if (publicDemo && !leftMountPhase.current) return;
     if (phase === "briefing") {
-      startButtonRef.current?.focus();
+      startButtonRef.current?.focus({ preventScroll: publicDemo });
       return;
     }
-
     if (phase === "playing") {
-      gameRegionRef.current?.focus();
+      gameRegionRef.current?.focus({ preventScroll: publicDemo });
+      if (publicDemo && !playScrolled.current) {
+        playScrolled.current = true;
+        gameRegionRef.current?.scrollIntoView({
+          block: "nearest",
+          behavior: "auto",
+        });
+      }
       return;
     }
-
-    if (phase === "results") {
-      resultsHeadingRef.current?.focus();
-    }
-  }, [phase]);
+    if (phase === "results")
+      resultsHeadingRef.current?.focus({ preventScroll: publicDemo });
+  }, [phase, publicDemo]);
 
   // ── Briefing ─────────────────────────────────────────────────────────
 
@@ -547,7 +561,11 @@ export default function GameShell({
         className="max-w-2xl mx-auto space-y-4"
         data-reduced-effects={reducedEffects ? "true" : "false"}
       >
-        <ActivityHeader title={title} visualKey="game" />
+        <ActivityHeader
+          title={title}
+          visualKey="game"
+          modeLabel={publicDemo ? t("games.shared.gameLabel") : undefined}
+        />
         <ReducedEffectsToggle
           reducedEffects={reducedEffects}
           source={source}
@@ -582,11 +600,23 @@ export default function GameShell({
             <p className="text-base text-slate-600 leading-relaxed max-w-md mx-auto">
               {briefing.story}
             </p>
-            <ControlInstructions
-              id={instructionsId}
-              instructions={activeInstructions}
-              className="max-w-xl mx-auto text-left"
-            />
+            {publicDemo ? (
+              <details className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-left">
+                <summary className="min-h-[32px] cursor-pointer text-sm font-semibold text-slate-700">
+                  {t("games.shared.howToPlay")}
+                </summary>
+                <ControlInstructions
+                  id={instructionsId}
+                  instructions={activeInstructions}
+                />
+              </details>
+            ) : (
+              <ControlInstructions
+                id={instructionsId}
+                instructions={activeInstructions}
+                className="max-w-xl mx-auto text-left"
+              />
+            )}
             {briefing.tips && briefing.tips.length > 0 && (
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-left max-w-sm mx-auto border border-white/50 shadow-sm">
                 <h3 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-1">
