@@ -3,9 +3,15 @@ export type Specialty = (typeof SPECIALTIES)[number];
 export function isSpecialty(value: unknown): value is Specialty {
   return SPECIALTIES.some((item) => item === value);
 }
-import { BIOTRAIL_SLUG } from "@shared/progression/advanced";
-export { BIOTRAIL_SLUG };
+import {
+  BIOTRAIL_SLUG,
+  SPARBOTS_SLUG,
+  SPARBOTS_LESSON_ID,
+  SPARBOTS_ACTIVITY_ID,
+} from "@shared/progression/advanced";
+export { BIOTRAIL_SLUG, SPARBOTS_SLUG };
 export const BIOTRAIL_PATH = `/student/modules/${BIOTRAIL_SLUG}/lessons/biotrail-field-lab/activities/biotrail`;
+export const SPARBOTS_PATH = `/student/modules/${SPARBOTS_SLUG}/lessons/${SPARBOTS_LESSON_ID}/activities/${SPARBOTS_ACTIVITY_ID}`;
 export const SPECIALTY_UPDATED = "brightboost:specialty-updated";
 export type SpecialtyStatus = {
   unlocked: boolean;

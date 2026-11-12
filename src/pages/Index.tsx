@@ -1,432 +1,488 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import GameBackground from "../components/GameBackground";
-import LanguageToggle from "../components/LanguageToggle";
+/**
+ * `/` — the Bright Boost homepage.
+ *
+ * Three groups, in this order: the hero, which contains the real game; the
+ * role panel, where an adult picks their own path; and access, which says who
+ * today's activities are for and links the free plans. Nothing else earns a
+ * band.
+ *
+ * The hero's second column is the GAME, not a picture of it. It is one
+ * instance of the shipped `TankTrekGame` running the same `DEMO_CONFIG` as
+ * `/try` (`src/components/home/PublicDemo.tsx`), loaded after the first paint
+ * and mounted with `publicDemo`, so a visitor plays three real mazes here
+ * without an account and without the page ever calling the API. A screenshot
+ * of a game is a claim about a game; this is the game.
+ *
+ * What this page deliberately no longer carries, and why each is a decision
+ * rather than an omission:
+ *
+ *  - **the hero screenshot** — replaced by the playable panel;
+ *  - **"See what learning looks like"** (a second game, as a still) — one
+ *    playable game says more than two pictures, and Rhyme Ride is still in the
+ *    authenticated learning surface, where it is played rather than pictured;
+ *  - **"Built differently for different ages"** — two columns of bullets and a
+ *    grades 6–8 paragraph, collapsed into the one availability line in the
+ *    access group. Saying nothing about grades 6–8 claims nothing about them;
+ *  - **the teacher/family cards** — replaced by the role panel, which asks the
+ *    question once and then shows one audience's actions;
+ *  - **the three-competing-CTA hero**, the Early Access Goal, the Free Access
+ *    Plans grid, the audience-card grid, the in-page feedback form and the
+ *    donation module — removed earlier in this slice, for the reasons recorded
+ *    in `docs/brand-refresh/rebrand-slice-1.md`.
+ *
+ * Metadata is client-rendered: the HTML that arrives from the server is
+ * `index.html`'s static title and description, and the effects below replace
+ * them after hydration. A crawler that does not execute JavaScript sees the
+ * static pair, so the static pair is kept byte-identical to `home.meta.title`
+ * and `home.meta.description` in English — the two must not describe this URL
+ * differently. Change one and change the other. Everything else (og:*,
+ * twitter:*, canonical, JSON-LD) exists only after hydration and is removed
+ * again on unmount; `index.html` carries none of it.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import PublicHeader from "@/components/home/PublicHeader";
+import PublicFooter from "@/components/home/PublicFooter";
+import PublicDemo from "@/components/home/PublicDemo";
+import RolePanel from "@/components/home/RolePanel";
+import {
+  PUBLIC_ACTION_QUIET,
+  PUBLIC_SKY_BAND,
+  usePublicPageMeta,
+  useRenderedLanguage,
+} from "@/components/home/publicEntry";
 import { track } from "@/lib/analytics";
-import MascotHeroVisual from "@/components/home/MascotHeroVisual";
+import "@/styles/public-entry.css";
 
-const HOMEPAGE_TITLE = "Bright Boost — Free K-8 STEM Learning for Students, Teachers & Families";
-const HOMEPAGE_DESCRIPTION =
-  "Bright Boost is a free STEM K-8 bilingual, classroom-friendly platform where students, teachers, and families explore playful learning challenges together.";
+const JSON_LD_ID = "bb-home-schema";
 
-type Audience = "teacher" | "student" | "parent" | "org";
+/**
+ * The legacy one-shot handoff the deleted `HomeSectionRedirect` used to write.
+ * `/donate` and `/feedback` are real pages now, so a stored value can only
+ * come from a tab opened before this change; it is read once, cleared
+ * immediately, and acted on only for the exact values below.
+ */
+const LEGACY_KEY = "bb-home-scroll";
+const LEGACY_DONATION = "donation";
+const LEGACY_FEEDBACK = "feedback";
 
-const secondaryLinks = [
-  { label: "Give Feedback", to: "/feedback", analytics: "feedback_clicked" as const },
-  { label: "Support Bright Boost", to: "/donate", analytics: "donation_clicked" as const },
-  { label: "Explore Pathways", to: "/pathways", analytics: undefined },
-];
+/**
+ * Fragments this page scrolls to itself. A browser only scrolls to a fragment
+ * that exists in the document it just parsed, and this document is empty until
+ * React renders — so on a direct load of `/#plans` or `/#for-adults` the
+ * browser finds nothing and the page opens at the top. Both are handled here.
+ */
+const SCROLL_TARGETS = ["plans", "for-adults"] as const;
 
-const audienceCards = [
-  { title: "Students", description: "Play through STEM missions and track your progress.", to: "/students", event: "student_page_clicked" as const },
-  { title: "Teachers", description: "Bring standards-friendly STEM exploration into your classroom.", to: "/teachers", event: "teacher_page_clicked" as const },
-  { title: "Parents", description: "Support fun STEM practice and confidence at home.", to: "/parents", event: "parent_page_clicked" as const },
-  { title: "Organizations", description: "Partner on pilots and bring access to more learners.", to: "/organizations", event: "organization_page_clicked" as const },
-];
+const PLANS = [
+  { slug: "learner", key: "home.adults.planLearner" },
+  { slug: "classroom", key: "home.adults.planClassroom" },
+  { slug: "organization", key: "home.adults.planOrganization" },
+] as const;
 
-const Index: React.FC = () => {
-  const [feedbackAudience, setFeedbackAudience] = useState<Audience>("teacher");
-  const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [feedbackEmail, setFeedbackEmail] = useState("");
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [donationAmount, setDonationAmount] = useState<string>("15");
-  const donationUrl = import.meta.env.VITE_DONATION_URL;
+const HOW_IT_WORKS = [
+  "home.howItWorks.point1",
+  "home.howItWorks.point2",
+  "home.howItWorks.point3",
+] as const;
+
+const Index = () => {
+  const [demoBand, setDemoBand] = useState<"k2" | "g3_5">("k2");
+  const { t } = useTranslation();
+  const lang = useRenderedLanguage();
+  const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  const title = t("home.meta.title");
+  const description = t("home.meta.description");
+
+  usePublicPageMeta(title, description, lang);
 
   useEffect(() => {
     track({ kind: "homepage_viewed" });
   }, []);
 
+  /* ---- Social metadata, canonical URL and JSON-LD --------------------------
+   *
+   * The structured data says exactly two things that are true and checkable:
+   * Bright Boost is an organization, and it is part of Bright Bots Initiative.
+   * It does NOT carry a `url` for the nonprofit — this origin is the product's,
+   * not the nonprofit's, and no verified address for the nonprofit exists in
+   * this repository — and it claims no educational level, rating, outcome or
+   * aggregate. Everything here is removed or restored on unmount. */
   useEffect(() => {
-    document.title = HOMEPAGE_TITLE;
+    const restore: Array<() => void> = [];
 
     const upsertMeta = (name: string, content: string, property = false) => {
-      const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
-      let el = document.head.querySelector(selector) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement("meta");
-        if (property) {
-          el.setAttribute("property", name);
-        } else {
-          el.setAttribute("name", name);
-        }
-        document.head.appendChild(el);
+      const attr = property ? "property" : "name";
+      const existing = document.head.querySelector(
+        `meta[${attr}="${name}"]`,
+      ) as HTMLMetaElement | null;
+      if (existing) {
+        const previous = existing.getAttribute("content");
+        existing.setAttribute("content", content);
+        restore.push(() => {
+          if (previous === null) existing.removeAttribute("content");
+          else existing.setAttribute("content", previous);
+        });
+        return;
       }
-      el.setAttribute("content", content);
+      const created = document.createElement("meta");
+      created.setAttribute(attr, name);
+      created.setAttribute("content", content);
+      document.head.appendChild(created);
+      restore.push(() => created.remove());
     };
 
-    upsertMeta("description", HOMEPAGE_DESCRIPTION);
-    upsertMeta("og:title", HOMEPAGE_TITLE, true);
-    upsertMeta("og:description", HOMEPAGE_DESCRIPTION, true);
-    upsertMeta("twitter:title", HOMEPAGE_TITLE);
-    upsertMeta("twitter:description", HOMEPAGE_DESCRIPTION);
+    upsertMeta("og:title", title, true);
+    upsertMeta("og:description", description, true);
+    upsertMeta("twitter:title", title);
+    upsertMeta("twitter:description", description);
 
-    const schemaId = "bb-home-schema";
-    const existing = document.getElementById(schemaId);
-    if (existing) existing.remove();
+    // Query-free canonical: `/` is the same page whatever a visitor arrived
+    // with, and a canonical carrying a campaign parameter splits the page.
+    const canonicalHref = `${window.location.origin}/`;
+    const existingCanonical = document.head.querySelector(
+      'link[rel="canonical"]',
+    ) as HTMLLinkElement | null;
+    if (existingCanonical) {
+      const previous = existingCanonical.getAttribute("href");
+      existingCanonical.setAttribute("href", canonicalHref);
+      restore.push(() => {
+        if (previous === null) existingCanonical.removeAttribute("href");
+        else existingCanonical.setAttribute("href", previous);
+      });
+    } else {
+      const created = document.createElement("link");
+      created.setAttribute("rel", "canonical");
+      created.setAttribute("href", canonicalHref);
+      document.head.appendChild(created);
+      restore.push(() => created.remove());
+    }
 
+    document.getElementById(JSON_LD_ID)?.remove();
     const schema = document.createElement("script");
-    schema.id = schemaId;
+    schema.id = JSON_LD_ID;
     schema.type = "application/ld+json";
-    schema.text = JSON.stringify([
-      {
-        "@context": "https://schema.org",
+    schema.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "Bright Boost",
+      url: canonicalHref,
+      parentOrganization: {
         "@type": "Organization",
         name: "Bright Bots Initiative",
-        url: window.location.origin,
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "EducationalOrganization",
-        name: "Bright Boost",
-        educationalLevel: "K-8",
-      },
-    ]);
+    });
     document.head.appendChild(schema);
+    restore.push(() => document.getElementById(JSON_LD_ID)?.remove());
 
     return () => {
-      const current = document.getElementById(schemaId);
-      if (current) current.remove();
+      for (const undo of restore.reverse()) undo();
     };
+  }, [title, description]);
+
+  /* ---- Fragment and one-shot storage handling ------------------------------
+   *
+   * Two jobs: `/#donation` and `/#feedback` used to be homepage sections and
+   * are pages now, so they redirect; `#plans` and `#for-adults` are anchors in
+   * this document, which the browser cannot reach on a direct load because the
+   * document is empty until React renders.
+   *
+   * Three rules keep it from looping: it runs ONCE per mount (never on a later
+   * client navigation, never on a hash change), the stored value is removed
+   * before it is acted on, and only the exact values above do anything at all.
+   * Every other value — and every other hash — is left alone.
+   *
+   * The scroll itself gets three bounded follow-ups, and no more. A scroll
+   * computed on the first frame is computed against a layout that is not final:
+   * the web font swaps in, the text above the target reflows, and the demo
+   * panel's reserved box is replaced by the slightly taller briefing. So the
+   * same `scrollIntoView` runs again when `document.fonts.ready` resolves,
+   * again on `load` if the document has not finished loading, and once more
+   * when the panel reports that the game is on screen. Each fires at most once
+   * and is then finished — no MutationObserver, no ResizeObserver, no polling,
+   * no timeout. The jump is instant (see `settleLegacyTarget`).
+   * `scroll-margin-top` on the targets
+   * (`src/styles/public-entry.css`) keeps the result clear of the sticky
+   * header. */
+  const legacyHandled = useRef(false);
+  /** The landing this mount owes, if any, and the two one-shot latches that
+   *  keep the after-the-demo correction to exactly one run. */
+  const legacyTarget = useRef<string | null>(null);
+  const demoReady = useRef(false);
+  const readySettled = useRef(false);
+
+  /**
+   * `behavior: "auto"`, always. A smooth programmatic scroll is an animation,
+   * and Chromium cancels it when the layout changes underneath — which is
+   * exactly what the lazy demo panel does a few hundred milliseconds in, so a
+   * `/#plans` load could finish at 7px instead of the document end. An instant
+   * jump is also what a native fragment navigation does, and what reduced
+   * motion was already getting.
+   */
+  const settleLegacyTarget = useCallback(() => {
+    const target = legacyTarget.current;
+    if (!target) return;
+    // `?.` and nothing else: after an unmount the element is gone and this is
+    // a no-op, which is why no follow-up needs tearing down.
+    document
+      .getElementById(target)
+      ?.scrollIntoView({ behavior: "auto", block: "start" });
   }, []);
+
+  /**
+   * The demo panel reserves its box before the game arrives, and the real
+   * briefing is a few pixels taller than the reservation — enough to leave a
+   * landing computed before the swap slightly short. This re-runs the same
+   * settle once, and only when this mount actually owed a landing.
+   */
+  const settleAfterDemoReady = useCallback(() => {
+    if (readySettled.current) return;
+    if (!demoReady.current || !legacyTarget.current) return;
+    readySettled.current = true;
+    settleLegacyTarget();
+  }, [settleLegacyTarget]);
+
+  const handleDemoReady = useCallback(() => {
+    demoReady.current = true;
+    settleAfterDemoReady();
+  }, [settleAfterDemoReady]);
 
   useEffect(() => {
-    const section = sessionStorage.getItem("bb-home-scroll");
-    if (section) {
-      sessionStorage.removeItem("bb-home-scroll");
-      requestAnimationFrame(() => {
-        document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+    if (legacyHandled.current) return;
+    legacyHandled.current = true;
+
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem(LEGACY_KEY);
+      if (stored !== null) sessionStorage.removeItem(LEGACY_KEY);
+    } catch {
+      stored = null;
     }
+
+    const target = stored ?? (hash ? hash.replace(/^#/, "") : null);
+    if (target === LEGACY_DONATION) {
+      navigate("/donate", { replace: true });
+      return;
+    }
+    if (target === LEGACY_FEEDBACK) {
+      navigate("/feedback", { replace: true });
+      return;
+    }
+    if (
+      target !== null &&
+      (SCROLL_TARGETS as readonly string[]).includes(target)
+    ) {
+      legacyTarget.current = target;
+      const settle = settleLegacyTarget;
+
+      requestAnimationFrame(settle);
+
+      const fonts: { ready?: Promise<unknown> } | undefined = document.fonts;
+      if (fonts?.ready) void fonts.ready.then(settle, () => {});
+      // A guard for the case where this component mounts BEFORE the document
+      // finishes loading, not a fix for anything on this page: `!== "complete"`
+      // rather than `=== "loading"` because by the time an effect runs the
+      // document is usually already `"interactive"`, and testing for
+      // `"loading"` would attach the listener essentially never.
+      //
+      // In THIS app it does not fire at all. `src/main.tsx` renders inside
+      // `import("./i18n").then(...)`, so React mounts after `load` (measured on
+      // the release build: `load` at 81-145ms, first `#root` child at
+      // 88-163ms) and `readyState` is already `"complete"` here. The reload
+      // that used to land 104px short was a geometry problem in the hero
+      // screenshot (gone now; the demo panel reserves its box before the game
+      // chunk arrives) — not a missing `load` listener.
+      if (document.readyState !== "complete") {
+        window.addEventListener("load", settle, { once: true });
+      }
+
+      // The panel usually reports ready long after this effect; when it has
+      // already done so, the correction belongs here instead. Either way it
+      // runs at most once.
+      settleAfterDemoReady();
+    }
+    // Anything else is ignored.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const feedbackTabs = useMemo(
-    () => [
-      { key: "teacher" as const, label: "Teacher" },
-      { key: "student" as const, label: "Student" },
-      { key: "parent" as const, label: "Parent" },
-      { key: "org" as const, label: "Org" },
-    ],
-    [],
-  );
-
-  const submitFeedback = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFeedbackSubmitted(true);
-    track({ kind: "feedback_submitted", audience: feedbackAudience });
-  };
-
-  const chunkyPrimary =
-    "button-shadow rounded-[12px] font-extrabold text-base md:text-lg px-6 py-3 text-white transition-all active:translate-y-[3px] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-offset-2";
-
   return (
-    <GameBackground>
-      <div className="relative z-10">
-        <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-white/70" aria-label="Homepage">
-          <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-3">
-            <Link to="/" className="font-extrabold text-brightboost-navy tracking-tight text-lg">
-              Bright Boost
-            </Link>
-            <div className="flex items-center gap-3">
-              <LanguageToggle />
-              <Link
-                to="/student-login"
-                className="button-shadow rounded-[12px] px-4 py-2 font-extrabold bg-brightboost-navy text-white text-sm hover:brightness-110 active:translate-y-[3px]"
+    <div className="bb-public flex min-h-screen flex-col bg-white text-[color:var(--bb-color-text)]">
+      <PublicHeader renderedLanguage={lang} />
+
+      <main className="flex-1">
+        {/* ── Hero · the intro and the game ──────────────────────────────
+            Two columns from `lg` (1024px) only. At 768px the previous
+            `md:grid-cols-2` squeezed the game into a ~250px column with
+            miniature controls, so below 1024px the intro stacks above a
+            full-width panel instead. There is ONE panel either way — the
+            column span moves it; nothing renders it twice. */}
+        <section
+          id="hero"
+          aria-labelledby="hero-heading"
+          style={PUBLIC_SKY_BAND}
+        >
+          <div className="mx-auto grid max-w-6xl gap-8 px-5 py-8 sm:px-6 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:py-10">
+            {/* Three grid children, in the order a phone reads them: what the
+                page is, then the game, then the two things an adult wants
+                after seeing it. From `lg` the panel spans both rows on the
+                right and the two intro blocks stack on the left, so the
+                desktop column is unchanged while the stacked layout no longer
+                pushes Start Mission a screen and a half down.
+
+                `min-w-0` on every child: a grid item is floored at its
+                min-content width unless it is told otherwise, so one
+                unbreakable label could make the column — and the page — wider
+                than the screen. It reflows instead. */}
+            <div className="flex min-w-0 flex-col lg:col-span-5 lg:row-start-1">
+              {/* A rounded box, not a pill: at 320px the label needs two
+                  lines, and a pill with a wrapped label reads as a mistake. */}
+              <p className="bb-eyebrow">{t("home.eyebrow")}</p>
+
+              {/* The tagline is a DISPLAY LINE, not the heading. Three
+                  abstract verbs tell a first-time visitor, a screen reader and
+                  a crawler nothing about what this is or who it serves, so the
+                  heading carries the meaning and is sized above it. */}
+              <p className="mt-4 text-[clamp(1.25rem,1.2vw+0.8rem,1.625rem)] font-extrabold leading-tight tracking-[-0.01em] text-[color:var(--bb-coral-deep)]">
+                {t("home.displayLine")}
+              </p>
+              <h1
+                id="hero-heading"
+                className="mt-1 text-[clamp(1.65rem,4vw,3.4rem)] font-extrabold leading-[1.07] tracking-[-0.035em]"
               >
-                Sign in
-              </Link>
+                <span className="block whitespace-nowrap">
+                  {t("home.h1First")}
+                </span>{" "}
+                <span className="block whitespace-nowrap">
+                  {t("home.h1Second")}
+                </span>
+              </h1>
+              <p className="mt-4 max-w-[62ch] text-lg leading-[1.65]">
+                {t("home.heroSentence")}
+              </p>
+            </div>
+
+            <div className="min-w-0 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+              <PublicDemo
+                onReady={handleDemoReady}
+                onBandChange={setDemoBand}
+              />
+              <p className="mt-3 text-center">
+                <Link
+                  to={demoBand === "g3_5" ? "/try?band=g3_5" : "/try"}
+                  className={PUBLIC_ACTION_QUIET}
+                >
+                  {t("home.demo.fullScreen")}
+                </Link>
+              </p>
+            </div>
+
+            {/* Below the panel on one column, under the intro on two.
+                `self-start` keeps it directly beneath the sentence instead of
+                being stretched down the height of the game beside it. */}
+            <div className="min-w-0 lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:self-start">
+              {/* One disclosure, native, for the three things an adult asks
+                  before letting a child tap something. Nothing needed to
+                  navigate this page is inside it. */}
+              <details className="bb-disclosure">
+                <summary>{t("home.howItWorks.summary")}</summary>
+                <ul className="m-0 mt-2 list-disc space-y-1 pl-5 leading-relaxed">
+                  {HOW_IT_WORKS.map((key) => (
+                    <li key={key}>{t(key)}</li>
+                  ))}
+                </ul>
+              </details>
+
+              <p className="mt-5">
+                <a href="#for-adults" className={PUBLIC_ACTION_QUIET}>
+                  {t("home.secondaryCta")}
+                </a>
+              </p>
             </div>
           </div>
-        </nav>
+        </section>
 
-        <main>
-          <section
-            id="hero"
-            aria-labelledby="hero-heading"
-            // No max-height here: the mobile single-column stack (pill +
-            // heading + copy + CTAs + signup line + secondary links +
-            // early-access pill + mascot) is taller than any fixed clamp,
-            // and overflow:visible made the excess render ON TOP of the
-            // next section. Content sizes itself; md:min-h keeps the
-            // desktop hero from looking shallow.
-            className="mx-auto max-w-6xl px-4 py-10 md:py-12 md:min-h-[500px]"
-            style={{ background: "linear-gradient(180deg,#BFE5F7 0%,#DCEEFB 55%,#EAF6FD 100%)" }}
+        {/* ── For your classroom or family ─────────────────────────────── */}
+        <RolePanel />
+
+        {/* ── Access · who it is for today, and the free plans ─────────── */}
+        <section
+          id="access"
+          aria-labelledby="access-heading"
+          className="mx-auto max-w-6xl px-5 py-10 sm:px-6"
+        >
+          <h2
+            id="access-heading"
+            className="text-2xl font-extrabold md:text-3xl"
           >
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div>
-                <p className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs uppercase tracking-[0.15em] bg-white text-brightboost-navy font-bold">
-                  <span className="w-2 h-2 rounded-full bg-brightboost-green" aria-hidden="true" />
-                  Free STEM Learning Platform
-                </p>
-                <h1 id="hero-heading" className="mt-4 text-[30px] md:text-[40px] leading-tight font-extrabold text-brightboost-navy">
-                  Build STEM confidence through playful learning
-                </h1>
-                <p className="mt-4 text-brightboost-navy/85 text-base md:text-lg font-semibold max-w-xl">
-                  Bright Boost helps students explore STEM through games, guided challenges, progress
-                  tracking, and classroom-friendly tools.
-                </p>
+            {t("home.access.title")}
+          </h2>
+          <p className="mt-2 max-w-[62ch] leading-relaxed">
+            {t("home.access.availability")}
+          </p>
 
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    to="/teacher-login"
-                    className={`${chunkyPrimary} bg-gradient-to-r from-[#46B1E6] to-[#2f92ca]`}
-                    onClick={() => track({ kind: "signup_clicked", audience: "teacher" })}
-                  >
-                    I’m a Teacher
-                  </Link>
-                  <Link
-                    to="/student-login"
-                    className={`${chunkyPrimary} bg-gradient-to-r from-purple-500 to-pink-500`}
-                    onClick={() => track({ kind: "signup_clicked", audience: "student" })}
-                  >
-                    I’m a Student!
-                  </Link>
+          <div
+            aria-label={t("home.bands.heading")}
+            className="mt-5 grid gap-3 sm:grid-cols-3"
+          >
+            {(["k2", "g35", "g68"] as const).map((band) => (
+              <div
+                key={band}
+                className={
+                  "bb-grade-card" + (band === "g68" ? " is-upcoming" : "")
+                }
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="m-0 text-lg font-extrabold">
+                    {t("home.bands." + band)}
+                  </h3>
+                  <span className="bb-grade-status">
+                    {t(
+                      band === "g68"
+                        ? "home.bands.coming"
+                        : "home.bands.available",
+                    )}
+                  </span>
                 </div>
-
-                {/* Curiosity path — distinct from the intent paths above.
-                    Full-width below the pair so the 375px hero stays a
-                    two-row CTA stack, not a button wall. */}
-                <Link
-                  to="/try"
-                  className={`${chunkyPrimary} mt-3 inline-flex w-full sm:w-auto items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-500`}
-                >
-                  ▶ Try a game — no signup
-                </Link>
-
-                <p className="mt-3 text-sm text-brightboost-navy">
-                  New to Bright Boost?{" "}
-                  <Link
-                    to="/signup"
-                    className="font-bold text-brightboost-blue underline underline-offset-2 hover:text-brightboost-blue/80"
-                  >
-                    Sign up free →
-                  </Link>
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-                  {secondaryLinks.map((item) => (
-                    <Link
-                      key={item.label}
-                      to={item.to}
-                      className="text-brightboost-navy font-semibold underline-offset-2 hover:underline"
-                      onClick={() => item.analytics && track({ kind: item.analytics })}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-
-                <p className="mt-4 inline-flex rounded-full bg-white/85 px-4 py-2 text-sm text-brightboost-navy font-semibold">
-                  🌱 Early access · join our first 1,000 users
+                <p className="mt-2 text-sm leading-relaxed">
+                  {t("home.bands." + band + "Description")}
                 </p>
               </div>
-
-              <MascotHeroVisual />
-            </div>
-          </section>
-
-          <section id="early-access" aria-labelledby="early-access-heading" className="mx-auto max-w-6xl px-4 py-14">
-            <h2 id="early-access-heading" className="text-2xl font-extrabold text-brightboost-navy">Early Access Goal</h2>
-            <Card className="mt-4 rounded-[18px] border-2 border-[#46B1E6]/20">
-              <CardContent>
-                <p className="inline-flex items-center gap-2 rounded-full bg-[#69D681]/20 px-3 py-1 text-xs font-bold text-brightboost-navy">
-                  🌱 Early access
-                </p>
-                <p className="mt-3 text-lg font-extrabold text-brightboost-navy">
-                  Join our first 1,000 users
-                </p>
-                <p className="mt-1 text-sm font-medium text-brightboost-navy/80 max-w-xl">
-                  Free for teachers, students, and families — help shape Bright
-                  Boost while your class gets early access to every game.
-                </p>
-                <Link
-                  to="/signup"
-                  className="mt-4 inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-[12px] font-extrabold bg-brightboost-navy text-white text-sm hover:brightness-110 active:translate-y-[2px] button-shadow"
-                >
-                  Sign up free →
-                </Link>
-              </CardContent>
-            </Card>
-          </section>
-
-          <section id="plans" aria-labelledby="plans-heading" className="mx-auto max-w-6xl px-4 py-14">
-            <h2 id="plans-heading" className="text-2xl font-extrabold text-brightboost-navy">Free Access Plans</h2>
-            <div className="grid md:grid-cols-3 gap-4 mt-4">
-              {[
-                { name: "Learner", details: "Hands-on STEM games, challenges, and personal progress tracking." },
-                { name: "Classroom", details: "Teacher-friendly tools, shared activities, and student progress visibility." },
-                { name: "Organization", details: "Support multiple classrooms and collaboration for outreach programs." },
-              ].map((plan) => (
-                <Card key={plan.name} className="rounded-[18px] border-2 border-[#46B1E6]/20">
-                  <CardHeader>
-                    <CardTitle className="text-brightboost-navy">{plan.name}</CardTitle>
-                    <span className="inline-flex rounded-full bg-[#69D681]/25 text-brightboost-navy px-3 py-1 text-xs font-bold w-fit">
-                      Always Free
-                    </span>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-brightboost-navy/85 font-medium">{plan.details}</p>
-                    <Link
-                      to={`/plans/${plan.name.toLowerCase()}`}
-                      className="mt-4 inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-[12px] font-extrabold bg-brightboost-navy text-white text-sm hover:bg-brightboost-navy/90"
-                      onClick={() => track({ kind: "free_plan_clicked", plan: plan.name.toLowerCase() })}
-                    >
-                      Learn more →
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          <section id="audience" aria-labelledby="audience-heading" className="mx-auto max-w-6xl px-4 py-14">
-            <h2 id="audience-heading" className="text-2xl font-extrabold text-brightboost-navy">Who Bright Boost Supports</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              {audienceCards.map((audience) => (
-                <Card key={audience.title} className="rounded-[18px] border border-sky-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-brightboost-navy">{audience.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm font-medium text-brightboost-navy/80">{audience.description}</p>
-                    <Link
-                      to={audience.to}
-                      className="inline-block mt-3 text-sm text-brightboost-blue font-bold underline"
-                      onClick={() => track({ kind: audience.event })}
-                    >
-                      Explore
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          <section id="feedback" aria-labelledby="feedback-heading" className="mx-auto max-w-6xl px-4 py-14">
-            <h2 id="feedback-heading" className="text-2xl font-extrabold text-brightboost-navy">Feedback</h2>
-            <Card className="mt-4 rounded-[18px]">
-              <CardContent className="pt-1">
-                <form className="space-y-4" onSubmit={submitFeedback}>
-                  <div className="flex flex-wrap gap-2" role="tablist" aria-label="Feedback audience type">
-                    {feedbackTabs.map((tab) => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        role="tab"
-                        aria-selected={feedbackAudience === tab.key}
-                        onClick={() => setFeedbackAudience(tab.key)}
-                        className={`rounded-full px-4 py-1.5 text-sm font-bold ${
-                          feedbackAudience === tab.key
-                            ? "bg-brightboost-navy text-white"
-                            : "bg-slate-100 text-brightboost-navy"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <label className="block">
-                    <span className="text-sm font-semibold text-brightboost-navy">Share your ideas</span>
-                    <textarea
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-brightboost-blue focus:outline-none"
-                      rows={4}
-                      value={feedbackMessage}
-                      onChange={(e) => setFeedbackMessage(e.target.value)}
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-sm font-semibold text-brightboost-navy">Email (optional)</span>
-                    <input
-                      type="email"
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-3 focus:ring-2 focus:ring-brightboost-blue focus:outline-none"
-                      value={feedbackEmail}
-                      onChange={(e) => setFeedbackEmail(e.target.value)}
-                    />
-                  </label>
-
-                  <Button type="submit" className="rounded-[12px] bg-brightboost-blue hover:bg-brightboost-blue/90 font-extrabold text-white">
-                    Send Feedback
-                  </Button>
-
-                  {feedbackSubmitted && (
-                    <p className="text-sm text-brightboost-navy font-semibold">
-                      Thank you! Your feedback was captured in this browser session. Backend persistence still needs to be connected.
-                    </p>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-          </section>
-
-          <section id="donation" aria-labelledby="donation-heading" className="mx-auto max-w-6xl px-4 py-14">
-            <h2 id="donation-heading" className="text-2xl font-extrabold text-brightboost-navy">Donation</h2>
-            <Card className="mt-4 rounded-[18px]">
-              <CardContent className="pt-1">
-                <div className="flex flex-wrap gap-2">
-                  {["5", "15", "50", "100", "Other"].map((amount) => (
-                    <button
-                      key={amount}
-                      type="button"
-                      onClick={() => setDonationAmount(amount)}
-                      className={`rounded-full px-4 py-2 text-sm font-bold ${
-                        donationAmount === amount
-                          ? "bg-brightboost-navy text-white"
-                          : "bg-slate-100 text-brightboost-navy"
-                      }`}
-                    >
-                      {amount === "Other" ? "Other" : `$${amount}`}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                  {donationUrl ? (
-                    <a
-                      href={donationUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-[12px] px-5 py-2.5 font-extrabold bg-[#FF9C81] text-brightboost-navy button-shadow"
-                      onClick={() => track({ kind: "donation_clicked" })}
-                    >
-                      Donate Once
-                    </a>
-                  ) : (
-                    <p className="text-sm text-brightboost-navy font-semibold">Donation link coming soon.</p>
-                  )}
-                  <a
-                    href={donationUrl || "#"}
-                    className="text-sm font-bold text-brightboost-navy underline"
-                    onClick={() => donationUrl && track({ kind: "donation_clicked", cadence: "monthly" })}
-                  >
-                    Give monthly
-                  </a>
-                </div>
-
-                <p className="mt-4 text-sm text-brightboost-navy font-semibold">
-                  Donating is optional and never required to use Bright Boost.
-                </p>
-              </CardContent>
-            </Card>
-          </section>
-        </main>
-
-        <footer className="bg-[#1C3D6C] text-white mt-8" aria-label="Footer">
-          <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <p className="font-semibold">Bright Boost by Bright Bots Initiative — playful STEM growth for every learner.</p>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Link to="/for-reviewers" className="hover:underline">Evaluator Guide</Link>
-              <Link to="/pathways/about" className="hover:underline">Pathways</Link>
-              <Link to="/privacy" className="hover:underline">Privacy</Link>
-              <Link to="/terms" className="hover:underline">Terms</Link>
-              <a href="mailto:hello@brightbots.org" className="hover:underline">Contact</a>
-            </div>
+            ))}
           </div>
-        </footer>
-      </div>
-    </GameBackground>
+
+          {/* The compact plans entry. `id="plans"` is also what the legacy
+              `/#plans` fragment and the stored handoff scroll to. */}
+          <div id="plans" className="mt-6">
+            <h3 className="text-xl font-extrabold">
+              {t("home.adults.plansTitle")}
+            </h3>
+            <p className="mt-1 max-w-[62ch] leading-relaxed">
+              {t("home.adults.plansBody")}
+            </p>
+            <ul className="m-0 mt-1 flex list-none flex-wrap gap-x-4 p-0">
+              {PLANS.map((plan) => (
+                <li key={plan.slug}>
+                  <Link
+                    to={`/plans/${plan.slug}`}
+                    className={PUBLIC_ACTION_QUIET}
+                    onClick={() =>
+                      track({ kind: "free_plan_clicked", plan: plan.slug })
+                    }
+                  >
+                    {t(plan.key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      </main>
+
+      <PublicFooter giving />
+    </div>
   );
 };
 

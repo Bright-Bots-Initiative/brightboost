@@ -1623,7 +1623,8 @@
       "manual": "Manual",
       "system": "Del sistema",
       "default": "Predeterminado",
-      "achievement": "¡Nuevo logro!"
+      "achievement": "¡Nuevo logro!",
+      "gameLabel": "Juego"
     },
     "tankTrek": {
       "title": "Tank Trek",
@@ -2873,5 +2874,376 @@
     "haveAccount": "¿Ya tienes una cuenta?",
     "logIn": "Inicia sesión",
     "trust": "Protegemos los datos de tus estudiantes. Solo usamos tu correo para asuntos de tu cuenta."
+  },
+  "sparbots": {
+    "title": "SparBots: Torre de Entrenamiento",
+    "kicker": "IA / Aprendizaje automático · Especialidad 01",
+    "tagline": "Pequeños bots. Grandes ideas.",
+    "tag1": "Enseña",
+    "tag2": "Prueba",
+    "tag3": "Mejora",
+    "intro": "Tú entrenas al bot. Muéstrale ejemplos. Mira cómo elige. Cambia una tarjeta y prueba otra vez.",
+    "world": "Te damos la bienvenida a la torre",
+    "start": "Conocer a mi compañero",
+    "tower": "Torre",
+    "reduced": "Menos movimiento",
+    "stepsLabel": "Nuestro ciclo de entrenamiento",
+    "steps": {
+      "meet": "Conocer",
+      "show": "Mostrar",
+      "corner": "Entrenar",
+      "spar": "Jugar",
+      "reflect": "Preguntar",
+      "card": "Guardar"
+    },
+    "screens": {
+      "tower": "Crea un bot. Enséñale a tu manera.",
+      "meet": "Conoce a tu compañero",
+      "show": "Enséñale a tu bot",
+      "corner": "Rincón de entrenamiento",
+      "spar": "Observa a tu bot",
+      "reflect": "Muestra el porqué",
+      "card": "La tarjeta de tu bot"
+    },
+    "floorNumber": "Piso {{number}}",
+    "partners": {
+      "pip": "Pip",
+      "tally": "Tally",
+      "juno": "Juno",
+      "shuffle": "Shuffle"
+    },
+    "floorIdeas": {
+      "pip": "Aprende con ejemplos",
+      "tally": "Encuentra la pista útil",
+      "juno": "Arregla una tarjeta confundida",
+      "shuffle": "Aprende cuando algo cambia"
+    },
+    "floorHints": {
+      "pip": "Los brazos de Pip muestran su próximo movimiento. Mira y luego crea tus ejemplos.",
+      "tally": "Tally tiene dos pistas. ¿Cuál ayuda? Prueba mirar la luz.",
+      "juno": "Estas tarjetas se mezclaron. ¿Qué podrías cambiar?",
+      "shuffle": "Shuffle cambia sus movimientos después de la primera ronda. Mira otra vez y enseña nuevos ejemplos."
+    },
+    "revisit": "Visitar otra vez",
+    "floorLocked": "Abre primero el piso de abajo",
+    "floorOpen": "Listo para explorar",
+    "myCard": "La tarjeta de mi bot",
+    "teacher": "Para una persona adulta",
+    "teacherGuide": "Túrnense para entrenar juntos. Cada turno les espera. Usen el rincón para pausar, cambiar un ejemplo y volver a probar. Solo se guardan ejemplos y cambios; los resultados del juego quedan en este dispositivo.",
+    "unplugged": "Lejos de la pantalla: dibujen tarjetas de posturas y movimientos. Otra persona busca ejemplos iguales y vota por un movimiento. ¿Qué pasa si dos tarjetas no coinciden?",
+    "imagine": "¿Qué tipo de bot crearás?",
+    "styles": {
+      "careful": "Prudente",
+      "bold": "Audaz",
+      "tricky": "Ingenioso"
+    },
+    "names": {
+      "comet": "Cometa",
+      "sprout": "Brote",
+      "pebble": "Piedrita"
+    },
+    "botName": "{{name}} {{style}}",
+    "rules": "Toque gana una chispa frente a Giro. Giro frente a Bloqueo. Bloqueo frente a Toque. Movimientos iguales: ¡un choque amistoso sin chispa!",
+    "partnerShows": "El compañero muestra: {{move}}",
+    "showExamples": "Mostrar seis ejemplos",
+    "practiceBeat": "Ejemplo {{number}} de 6",
+    "chooseMove": "Elige un movimiento",
+    "moves": {
+      "tap": "Toque",
+      "spin": "Giro",
+      "block": "Bloqueo"
+    },
+    "coachMoves": {
+      "tap": "Entrenar: Toque",
+      "spin": "Entrenar: Giro",
+      "block": "Entrenar: Bloqueo"
+    },
+    "poses": {
+      "up": "Brazos arriba",
+      "wide": "Brazos abiertos",
+      "low": "Brazos abajo"
+    },
+    "lights": {
+      "triangle": "Triángulo rojo",
+      "circle": "Círculo azul",
+      "square": "Cuadrado morado"
+    },
+    "clues": {
+      "pose": "Brazos",
+      "light": "Luz"
+    },
+    "practiceResult": "Elegiste {{move}}. {{result}}",
+    "outcomes": {
+      "bot": "¡Tu bot gana una chispa!",
+      "partner": "Tu compañero gana una chispa. ¿Qué podrías probar?",
+      "bump": "Un choque amistoso. ¡Prueba el siguiente turno!"
+    },
+    "keepCard": "Guardar esta tarjeta",
+    "toss": "Descartar esta tarjeta",
+    "deckFull": "Tu libro tiene 24 tarjetas. Descarta una en el rincón para dejar espacio.",
+    "cornerIntro": "Tu bot busca ejemplos iguales. ¿Qué podrías cambiar?",
+    "shift": "¡Las pistas de Shuffle cambiaron! Prueba seis ejemplos nuevos para ver sus movimientos.",
+    "noticeBeat": "Un turno para observar",
+    "train": "Entrenar y mirar",
+    "practiceAgain": "Mostrar seis más",
+    "saveVersion": "Guardar mi versión",
+    "restore": "Volver a la versión guardada",
+    "restored": "Tu libro guardado está de vuelta. La partida empieza de nuevo; tus pisos abiertos siguen abiertos.",
+    "finishEdit": "Prueba este cambio y guárdalo o vuelve atrás antes de entrenar.",
+    "bench": "Mis tarjetas de ejemplo",
+    "oneChange": "Cambia una cosa. Pruébala. Guárdala o vuelve atrás.",
+    "watchClue": "¿Qué pista debe mirar el bot?",
+    "playbook": "mi libro de ejemplos",
+    "cardNumber": "Tarjeta {{number}}",
+    "cardMove": "Movimiento de la tarjeta {{number}}",
+    "tossCard": "Descartar tarjeta {{number}}",
+    "addCard": "Añadir una tarjeta",
+    "previewCards": "Lo que elegirían estos ejemplos",
+    "noMove": "Esperar",
+    "trialSummary": "Estos son los movimientos que eligen tus ejemplos. ¿Guardarías este cambio?",
+    "undo": "Volver atrás",
+    "botPlays": "Tu bot elige con sus tarjetas. ¡Tú lo entrenas! Dos rondas de chispas abren el siguiente piso.",
+    "rounds": "Rondas: tu bot {{bot}} · compañero {{partner}}",
+    "yourSparks": "Chispas de tu bot",
+    "partnerSparks": "Chispas del compañero",
+    "sparks": "{{count}} / {{target}} chispas",
+    "beatResult": "Tu bot: {{bot}}. Compañero: {{partner}}. {{result}}",
+    "confidence": {
+      "all": "Estas tarjetas coincidentes están de acuerdo.",
+      "some": "Algunas tarjetas coincidentes no están de acuerdo.",
+      "new": "¡Esto es nuevo! Ninguna tarjeta coincide con la pista. El bot usa el movimiento más frecuente."
+    },
+    "usedCards": "Tarjetas para este movimiento: {{cards}}",
+    "none": "ninguna",
+    "tie": "Las tarjetas empataron. Un sorteo repetible eligió entre los movimientos empatados.",
+    "coachCall": "¡Esto es nuevo! Puedes elegir un movimiento una vez por ronda o dejar que el bot pruebe.",
+    "coachUsed": "La persona que entrena eligió este movimiento.",
+    "keepCoach": "¿Quieres enseñarle al bot este movimiento?",
+    "nextClue": "Esta es la siguiente pista",
+    "nextBeat": "Dejar que mi bot elija",
+    "pause": "Pausar en el rincón",
+    "roundEnd": {
+      "bot": "¡Chispas por todas partes!",
+      "partner": "¡Una nueva idea para probar!",
+      "draw": "¡Un empate amistoso!"
+    },
+    "tryAgainKindly": "Tus ejemplos están a salvo. Sigue entrenando y prueba tantas veces como quieras.",
+    "showWhy": "Mostrar el porqué",
+    "toCorner": "Volver al rincón",
+    "replay": "El último turno, otra vez",
+    "pickWhy": "¿Qué tarjeta ayudó a elegir este movimiento?",
+    "whoHelped": "¿Quién eligió este movimiento?",
+    "whyFound": "¡Encontraste un ejemplo que eligió este movimiento!",
+    "whyTry": "Mira los números de las tarjetas en el recuadro. ¿Cuál ayudó?",
+    "wonder": "¿Qué te gustaría probar ahora?",
+    "reflections": {
+      "examples": "Me pregunto qué cambiaría con un ejemplo nuevo.",
+      "clue": "Me pregunto qué cambiaría con otra pista.",
+      "change": "Me pregunto cómo ayudar cuando el compañero cambia."
+    },
+    "friendlyFinish": "Despídete con un gesto amistoso",
+    "finishes": {
+      "bow": "Una pequeña reverencia",
+      "handshake": "Un apretón de manos",
+      "dance": "Un baile alegre"
+    },
+    "keepDiscovery": "Guardar este descubrimiento",
+    "nameStyle": "Elige un estilo",
+    "nameBot": "Elige un nombre",
+    "cardSummary": "{{cards}} tarjetas de ejemplo · {{revisions}} cambios",
+    "watching": "Mi bot mira: {{clue}}",
+    "floorsVisited": "{{count}} de 4 pisos explorados",
+    "trained": "Tiene ejemplos",
+    "unknown": "Nuevo para mi bot",
+    "localOnly": "La tarjeta de tu bot queda en este dispositivo, para tu cuenta. Muéstrala a alguien cercano o imprímela.",
+    "print": "Imprimir mi tarjeta",
+    "nextFloor": "Elegir mi próximo piso",
+    "saved": "Tu versión está guardada en este dispositivo.",
+    "saveError": "No se pudo guardar tu versión. Sigue jugando e intenta Guardar mi versión otra vez.",
+    "finish": "Terminar mi torre",
+    "finishing": "Guardando mi torre…",
+    "finished": "Torre guardada",
+    "finishError": "No se pudo guardar tu torre en BrightBoost. Intenta Terminar mi torre otra vez.",
+    "gameLocked": "SparBots se abre después del Set 3 al elegir la especialidad de IA. Ver mi especialidad."
+  },
+  "donatePage": {
+    "meta": {
+      "title": "Apoya a Bright Boost — Bright Boost",
+      "description": "Donar es opcional y nunca es necesario para usar Bright Boost. Esta página lleva el único enlace de apoyo, dirigido a adultos."
+    },
+    "nav": {
+      "label": "Apoya a Bright Boost"
+    },
+    "title": "Apoya a Bright Boost",
+    "optional": "Donar es opcional y nunca es necesario para usar Bright Boost.",
+    "donateCta": "Donar",
+    "unavailable": "Todavía no hay un enlace de donación disponible."
+  },
+  "feedbackPage": {
+    "meta": {
+      "title": "Comentarios — Bright Boost",
+      "description": "Cuéntanos qué funciona y qué no. Este formulario se guarda solo en tu navegador."
+    },
+    "nav": {
+      "label": "Comentarios"
+    },
+    "title": "Comentarios",
+    "localOnly": "Este formulario se guarda solo en esta sesión del navegador. No envía ningún mensaje a Bright Bots Initiative.",
+    "audienceLegend": "Tipo de público para los comentarios",
+    "audienceTeacher": "Maestro",
+    "audienceStudent": "Estudiante",
+    "audienceParent": "Familia",
+    "audienceOrg": "Organización",
+    "messageLabel": "Comparte tus ideas",
+    "emailLabel": "Correo electrónico (opcional)",
+    "submit": "Enviar comentarios",
+    "confirmation": "¡Gracias! Tus comentarios quedaron guardados en esta sesión del navegador. Todavía falta conectar la persistencia en el servidor."
+  },
+  "forTeachers": {
+    "meta": {
+      "title": "Para maestros — Bright Boost",
+      "description": "Bright Boost es gratuito para las aulas. Crea una clase, comparte un código y prueba la demostración pública de K-2 — sin correos electrónicos de estudiantes."
+    },
+    "nav": {
+      "label": "Para maestros"
+    },
+    "eyebrow": "Para maestros",
+    "headline": "Crea una clase y mira lo que construyen.",
+    "lede": "Bright Boost es gratuito para las aulas. Creas una clase, compartes un código y tus estudiantes entran — sin correos electrónicos de estudiantes. Cada niño sí tiene su propia cuenta; los más pequeños entran con el código de la clase y un dibujo, en lugar de un correo y una contraseña.",
+    "newAccount": "Crear una cuenta de maestro",
+    "tryCta": "Probar la demostración",
+    "tryHelp": "La demostración pública es una actividad real de K–2 y no necesita cuenta.",
+    "existingAccount": "Entrar como maestro",
+    "firstTitle": "Lo primero que haces",
+    "step4": "Ve el progreso de tus estudiantes en tu panel de maestro."
+  },
+  "forFamilies": {
+    "meta": {
+      "title": "Para familias — Bright Boost",
+      "description": "Bright Boost es gratuito para las familias. Únete a la clase en la que ya está tu hijo o crea un grupo de hogar — siempre es un adulto quien abre la puerta."
+    },
+    "nav": {
+      "label": "Para familias"
+    },
+    "eyebrow": "Para familias",
+    "headline": "Dos caminos, según dónde esté ya tu hijo.",
+    "lede": "Bright Boost es gratuito para las familias. Los niños no crean sus propias cuentas — siempre es un adulto quien abre la puerta.",
+    "atSchoolTitle": "Tu hijo ya está en una clase",
+    "atSchoolBody": "Su maestro le da un código de clase. Los más pequeños entran con el código y un dibujo, no con una contraseña.",
+    "atSchoolCta": "Entrada para estudiantes",
+    "homeTitle": "Quieres empezar en casa",
+    "homeBody": "Creas un grupo de hogar y tu hijo se une con el código que te da.",
+    "homeCta": "Crear un grupo de hogar",
+    "noSelfSignup": "Los niños de kínder a 2.º grado no pueden registrarse solos.",
+    "guideTitle": "Acompañar a un niño pequeño",
+    "guideBody": "La guía para familias es una página: ten curiosidad con él, ayuda con la lectura solo si lo pide, y deja que los resultados inesperados queden como están.",
+    "guideCta": "La guía para familias"
+  },
+  "home": {
+    "meta": {
+      "title": "Bright Boost — Un mundo que construyes al aprender",
+      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia."
+    },
+    "eyebrow": "Plataforma de aprendizaje STEM gratuita",
+    "displayLine": "Juega. Construye. Conviértete.",
+    "h1": "Un mundo que construyes al aprender.",
+    "heroSentence": "Programa a Bolt en una misión de robótica. Elige entre retos para kínder a 2.º grado o para 3.º a 5.º grado.",
+    "secondaryCta": "Para maestros y familias",
+    "howItWorks": {
+      "summary": "Cómo funciona la demostración",
+      "point1": "Tres laberintos cortos, aquí mismo en esta página.",
+      "point2": "Sin cuenta y sin registro.",
+      "point3": "Funciona en el teléfono."
+    },
+    "demo": {
+      "loading": "Cargando el juego…",
+      "errorTitle": "El juego no se cargó",
+      "errorBody": "Algo falló de nuestro lado; no fue algo que hiciste. Vuelve a cargarlo o ábrelo en su propia página.",
+      "retry": "Reintentar",
+      "fullScreen": "Abrir en pantalla completa",
+      "openFull": "Abrir la demostración en pantalla completa",
+      "completeTitle": "¡Terminaste los tres laberintos!",
+      "starsLabel": "Estrellas ganadas:",
+      "playAgain": "Jugar otra vez",
+      "adultsLabel": "Para adultos",
+      "teacherLink": "Para maestros",
+      "familyLink": "Para familias",
+      "bandLabel": "Elige la edad de la misión",
+      "bandK2": "Kínder–2.º grado",
+      "bandG35": "3.º–5.º grado",
+      "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
+      "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
+      "staysLocal": "Esta práctica se queda en este dispositivo. Un adulto puede ayudarte a elegir cómo seguir aprendiendo.",
+      "adultEntry": "Para docentes y familias"
+    },
+    "roles": {
+      "title": "Para tu aula o tu familia",
+      "groupLabel": "Elige maestros o familias",
+      "bothPaths": "Ambas rutas:",
+      "teacherPath": "Rutas para maestros",
+      "familyPath": "Rutas para familias",
+      "teacher": {
+        "point1": "Crea una clase y comparte el código.",
+        "point2": "Inicia una sesión cuando la clase esté lista.",
+        "point3": "Mira lo que hicieron tus estudiantes.",
+        "primary": "Crear una cuenta de maestro",
+        "tertiary": "Iniciar sesión como maestro"
+      },
+      "family": {
+        "point1": "Únete a la clase en la que ya está tu hijo.",
+        "point2": "O crea un grupo de hogar propio.",
+        "point3": "Exploren los juegos juntos, gratis.",
+        "primary": "Únete con un código de clase",
+        "tertiary": "Crear un grupo de hogar"
+      }
+    },
+    "adults": {
+      "intro": "Los adultos tienen su propia entrada. Los niños nunca se registran por su cuenta.",
+      "teacherTitle": "Maestros",
+      "familyTitle": "Familias",
+      "plansTitle": "Planes de acceso gratuitos",
+      "plansBody": "Los planes de acceso de Bright Boost son gratuitos. Donar nunca es condición para aprender.",
+      "planLearner": "Estudiante",
+      "planClassroom": "Aula",
+      "planOrganization": "Organización"
+    },
+    "access": {
+      "title": "Disponibilidad y acceso",
+      "availability": "Ya hay experiencias de aprendizaje para kínder a 2.º grado y para 3.º a 5.º grado. Los grados 6.º a 8.º llegarán pronto. El contenido en español varía según la actividad."
+    },
+    "h1First": "Un mundo que construyes",
+    "h1Second": "al aprender.",
+    "bands": {
+      "heading": "Elige tu etapa de aprendizaje",
+      "k2": "Kínder–2.º grado",
+      "k2Description": "Explora las bases STEM con juegos prácticos.",
+      "g35": "3.º–5.º grado",
+      "g35Description": "Desarrolla tus ideas con desafíos más complejos.",
+      "g68": "6.º–8.º grado",
+      "g68Description": "Próximamente",
+      "available": "Disponible",
+      "coming": "Próximamente"
+    }
+  },
+  "publicChrome": {
+    "fromNonprofit": "Desde Bright Bots Initiative",
+    "nav": {
+      "homepageLabel": "Página principal",
+      "brand": "Bright Boost",
+      "signIn": "Iniciar sesión"
+    },
+    "footer": {
+      "label": "Pie de página",
+      "relationship": "Bright Boost es un programa de Bright Bots Initiative.",
+      "families": "Para familias",
+      "teachers": "Para maestros",
+      "reviewers": "Guía para evaluadores",
+      "pathways": "Pathways",
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "feedback": "Dar comentarios",
+      "contact": "Contacto",
+      "support": "Apoya a Bright Boost"
+    }
   }
 }

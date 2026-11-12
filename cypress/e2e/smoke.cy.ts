@@ -17,7 +17,7 @@ describe("P-01 unauthenticated visitor loads the app shell", () => {
     cy.contains("a", "Bright Boost").should("be.visible");
     cy.get("#hero-heading")
       .should("be.visible")
-      .and("contain.text", "Build STEM confidence through playful learning");
+      .and("contain.text", "A world you build by learning.");
 
     cy.then(() => {
       expect(

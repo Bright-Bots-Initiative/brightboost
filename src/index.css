@@ -381,3 +381,52 @@ select {
     display: none;
   }
 }
+
+/* Scoped public-entry palette, ported without changing existing game tokens. */
+:root {
+  /* Brand steps that can carry text / depth */
+  --bb-navy-deep: #142d50; /* pressed depth + hover under brightboost-navy */
+  /* Link and accent text. The prototype's #1d7fb8 was measured against WHITE
+     only (4.6:1); this design also puts quiet links and band chips on the sky
+     and sunken tints, where it fell to ~4.0:1 and axe reported a serious
+     colour-contrast violation on `/` and `/for-families`. This step clears
+     4.5:1 on every ground the public entry uses: 6.1:1 on #ffffff, 5.8:1 on
+     #f4fafd, 5.5:1 on #eef5fa, 5.4:1 on #e4f4fc, and 4.8:1 on #cfe9f8 — the
+     darkest point of the sky gradient. */
+  --bb-blue-deep: #186897;
+  --bb-coral-deep: #a63c22; /* 5.6:1 on white — warm text and list markers */
+
+  /* Surfaces */
+  --bb-color-surface-raised: #f4fafd; /* sky-tinted white (cards) */
+  --bb-color-surface-sunken: #eef5fa; /* section band */
+  --bb-color-sky: #cfe9f8; /* top of the entry band */
+  --bb-color-sky-soft: #e8f4fc; /* its fade */
+  --bb-color-accent-soft: #e4f4fc;
+
+  /* Ink */
+  --bb-color-text: #16243a; /* 14.9:1 on white */
+  --bb-color-text-muted: #4a5b70; /* 7.4:1 on white */
+
+  /* Lines */
+  --bb-color-border: #d7e3ee;
+  --bb-color-border-strong: #a9c2d8;
+
+  /* The one advisory tone these pages use */
+  --bb-color-warn-soft: #fdf3d8;
+  --bb-color-warn-border: #e3c66a;
+  --bb-color-warn-text: #6b4e07;
+
+  /* Focus. Drawn with `outline` (see src/styles/public-entry.css) so no
+     decorative box-shadow can win the cascade and erase the ring. */
+  --bb-color-focus: #1c3d6c;
+  --bb-focus-width: 3px;
+  --bb-focus-offset: 3px;
+
+  /* Shape */
+  --bb-radius-md: 0.75rem;
+  --bb-radius-lg: 1rem;
+
+  /* Controls: 44px is the platform tap floor, 48px the large public action. */
+  --bb-control-height: 2.75rem;
+  --bb-control-height-lg: 3rem;
+}

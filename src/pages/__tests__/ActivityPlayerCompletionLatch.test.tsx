@@ -9,7 +9,6 @@
  * is what actually guarantees single-award. LATCH-1 therefore asserts the
  * POST count, not any reward semantics.
  */
-import { Profiler } from "react";
 import {
   act,
   render,
@@ -17,9 +16,11 @@ import {
   waitFor,
   fireEvent,
 } from "@testing-library/react";
+import { Profiler } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { STEM_SET_1_IDS, STEM_SET_2_MODULE_SLUGS } from "@/constants/stemSets";
 import { track } from "@/lib/analytics";
 vi.mock("@/lib/analytics", async (original) => ({
   ...(await original<typeof import("@/lib/analytics")>()),
@@ -29,7 +30,6 @@ import ActivityPlayer from "@/pages/ActivityPlayer";
 import { api } from "@/services/api";
 import { __resetGradeBandCache } from "@/hooks/useGradeBand";
 import { __resetPersonalBestCache } from "@/hooks/usePersonalBest";
-import { STEM_SET_1_IDS, STEM_SET_2_MODULE_SLUGS } from "@/constants/stemSets";
 import en from "@/locales/en/common.json";
 import es from "@/locales/es/common.json";
 import viLocale from "@/locales/vi/common.json";
@@ -38,12 +38,12 @@ import zhCN from "@/locales/zh-CN/common.json";
 vi.mock("@/services/api", () => ({
   api: {
     getModule: vi.fn(),
+    getProgress: vi.fn(),
+    getStudentAssignments: vi.fn(),
     completeActivity: vi.fn(),
     getGamePersonalBests: vi.fn(),
     getStudentCourses: vi.fn().mockResolvedValue([]),
     getAvatar: vi.fn().mockResolvedValue({ archetype: null, stage: "GENERAL" }),
-    getProgress: vi.fn(),
-    getStudentAssignments: vi.fn(),
   },
 }));
 
@@ -207,36 +207,39 @@ describe("completion latch (#832 item 4)", () => {
     expect(api.completeActivity).toHaveBeenCalledTimes(1);
   });
 
-  it("LATCH-4: a click in the commit that first renders Mark Complete posts once", async () => {
-    // A Set 2 module's access waits on progress after the module loads, so the
-    // activity and its Mark Complete button first render in the same commit,
-    // the one that resolves access. Profiler's onRender clicks inside it, after
-    // the player's layout effects and before its passive ones.
+  it("LATCH-4: a click in the first commit that shows Mark Complete posts one completion", async () => {
+    // A Set 2 module's access waits on progress, which this test holds. Once
+    // it is released, the activity and its Mark Complete button first render
+    // in the same commit — the window in which a tap used to be dropped.
     const slug = STEM_SET_2_MODULE_SLUGS[0];
     vi.mocked(api.getModule).mockResolvedValue({
       ...mockModule,
-      id: `${slug}-id`,
       slug,
       level: "K-2",
       published: true,
     });
-    let releaseProgress!: (value: unknown) => void;
-    vi.mocked(api.getProgress).mockReturnValue(
-      new Promise((resolve) => {
-        releaseProgress = resolve;
-      }),
+    let releaseProgress: (v: unknown) => void = () => {};
+    vi.mocked(api.getProgress).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseProgress = resolve;
+        }),
     );
     vi.mocked(api.completeActivity).mockResolvedValue(COMPLETION_RESPONSE);
+
+    // Profiler's onRender runs inside the commit, before passive effects, so
+    // this clicks the button in the very commit that first paints it.
     let clicked = false;
-    const clickOnFirstCommit = () => {
+    const clickOnFirstSight = () => {
       if (clicked) return;
       const button = screen.queryByRole("button", { name: "Mark Complete" });
       if (!button) return;
       clicked = true;
       button.click();
     };
+
     render(
-      <Profiler id="first-commit" onRender={clickOnFirstCommit}>
+      <Profiler id="first-commit" onRender={clickOnFirstSight}>
         <TooltipProvider>
           <MemoryRouter
             initialEntries={[
@@ -253,6 +256,10 @@ describe("completion latch (#832 item 4)", () => {
         </TooltipProvider>
       </Profiler>,
     );
+
+    // The async act flushes in a macrotask, after getModule's settle chain
+    // has drained, so only the held progress request stands between the
+    // page and the activity.
     await act(async () => {});
     expect(api.getProgress).toHaveBeenCalled();
     expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
@@ -268,13 +275,14 @@ describe("completion latch (#832 item 4)", () => {
 
     expect(clicked).toBe(true);
     await waitFor(() => expect(api.completeActivity).toHaveBeenCalledTimes(1));
-    const [[payload]] = vi.mocked(api.completeActivity).mock.calls;
     const starts = vi
       .mocked(track)
       .mock.calls.map(([action]) => action)
       .filter((action) => action.kind === "game_started");
     expect(starts).toHaveLength(1);
-    expect(payload.attemptId).toBe(starts[0].attempt_id);
+    expect(vi.mocked(api.completeActivity).mock.calls[0][0].attemptId).toBe(
+      starts[0].attempt_id,
+    );
   });
 });
 

@@ -20,6 +20,13 @@ const runResultSchema = z
  * Shapes derived from A2-01 inventory — not speculative.
  */
 export const GAME_SPECIFIC_SCHEMAS = {
+  sparbots: z
+    .object({
+      cardsKept: smallInt(24),
+      revisions: smallInt(10000),
+      reflection: z.enum(["examples", "clue", "change"]),
+    })
+    .strict(),
   gotcha_gears_unity: z
     .object({
       correctCount: smallInt(1000),

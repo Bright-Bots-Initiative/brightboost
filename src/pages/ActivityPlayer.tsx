@@ -195,10 +195,6 @@ export default function ActivityPlayer() {
     id: string;
     band: typeof gradeBand;
   } | null>(null);
-  /** The activity whose play the effect below has registered; the page waits on it. */
-  const [startedActivityId, setStartedActivityId] = useState<string | null>(
-    null,
-  );
   const startMsRef = useRef<number>(Date.now());
   /** #809: latches while a completion POST is in flight; released on failure. */
   const completingRef = useRef(false);
@@ -288,7 +284,6 @@ export default function ActivityPlayer() {
   useEffect(() => {
     if (!activity) {
       play.current = null;
-      setStartedActivityId(null);
       return;
     }
     // A rerender (including StrictMode effect replay) is still the same play.
@@ -316,7 +311,6 @@ export default function ActivityPlayer() {
     setShowBreak(false);
     setQuizVariant(null);
     completingRef.current = false; // a fresh play-through may submit again
-    setStartedActivityId(String(activity.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activity]); // avoid accidental reruns
 
@@ -638,13 +632,6 @@ export default function ActivityPlayer() {
         </Card>
       </div>
     );
-  }
-
-  // The play is registered by the effect after this activity first renders.
-  // Until then the loading state stays, so no control that posts a completion
-  // or starts the quiz exists before its play does.
-  if (startedActivityId !== String(activity.id)) {
-    return <div className="p-6">{t("activityPlayer.loadingActivity")}</div>;
   }
 
   // INFO: story + quiz
