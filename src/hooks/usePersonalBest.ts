@@ -45,11 +45,14 @@ let revision = 0;
 const cache = new Map<string, { best: PersonalBest; revision: number }>();
 
 /** User- and session-scoped records, including late-response isolation. */
-export function usePersonalBest(gameKey: string): PersonalBest | null {
+export function usePersonalBest(
+  gameKey: string,
+  { enabled = true }: { enabled?: boolean } = {},
+): PersonalBest | null {
   // Re-render with sign-in/out even when the game remains mounted. Standalone
   // public games also work without a provider and must not issue auth requests.
   useContext(AuthContext);
-  const session = getPersonalBestSession();
+  const session = enabled ? getPersonalBestSession() : null;
   const userId = session?.userId;
   const token = session?.token;
   const key = session ? keyFor(session, gameKey) : null;
