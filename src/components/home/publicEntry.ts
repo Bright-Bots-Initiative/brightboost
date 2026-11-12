@@ -43,6 +43,14 @@ export function usePublicPageMeta(
   lang: PublicEntryLanguage,
 ): void {
   useEffect(() => {
+    // Public routes open at their introduction; homepage fragment handling
+    // owns the scroll position when a visitor follows a section link.
+    if (!window.location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, []);
+
+  useEffect(() => {
     const previousTitle = document.title;
     document.title = title;
 

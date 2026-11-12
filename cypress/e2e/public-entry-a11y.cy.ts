@@ -127,6 +127,14 @@ describe("public entry — accessibility", () => {
 });
 
 describe("public entry — legacy compatibility", () => {
+  it("opens the family introduction at the top after leaving a scrolled homepage", () => {
+    cy.visit("/#for-adults");
+    cy.contains("a", "Family paths").click();
+    cy.location("pathname").should("eq", "/for-families");
+    cy.window().its("scrollY").should("eq", 0);
+    cy.get("h1").should("be.visible");
+  });
+
   it("sends /teachers to the teacher landing", () => {
     cy.visit("/teachers");
     cy.location("pathname").should("eq", "/for-teachers");
