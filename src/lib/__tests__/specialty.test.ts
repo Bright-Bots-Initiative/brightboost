@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { parseSpecialtyStatus, BIOTRAIL_SLUG } from "../specialty";
+import {
+  parseSpecialtyStatus,
+  BIOTRAIL_SLUG,
+  SPARBOTS_SLUG,
+} from "../specialty";
 import { canAccessModule, resolveModuleAccess } from "../moduleAccess";
 describe("Advanced specialty policy", () => {
   it("requires the matching track even for teacher-assigned advanced content", () => {
@@ -18,6 +22,14 @@ describe("Advanced specialty policy", () => {
           assignedModuleSlugs: [BIOTRAIL_SLUG],
         }),
       ).toEqual({ allowed: false, reason: "not_specialized" });
+    }
+  });
+  it("opens SparBots only for AI, including assigned content", () => {
+    expect(canAccessModule({ slug: SPARBOTS_SLUG, archetype: "AI" })).toBe(
+      true,
+    );
+    for (const archetype of [null, "BIOTECH", "QUANTUM", "unknown"]) {
+      expect(canAccessModule({ slug: SPARBOTS_SLUG, archetype })).toBe(false);
     }
   });
   it("rejects incomplete or malformed server state instead of granting access", () => {

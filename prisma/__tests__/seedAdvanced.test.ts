@@ -27,7 +27,10 @@ describe("Advanced curriculum seed", () => {
     expect(prisma.lesson.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: BIOTRAIL_LESSON_ID } }),
     );
-    const calls = prisma.activity.upsert.mock.calls;
+    const calls = prisma.activity.upsert.mock.calls.filter(
+      ([args]) => args.where.id === BIOTRAIL_ACTIVITY_ID,
+    );
+    expect(calls).toHaveLength(2);
     expect(calls[0]).toEqual(calls[1]);
     expect(calls[0][0].create).toMatchObject({
       id: BIOTRAIL_ACTIVITY_ID,

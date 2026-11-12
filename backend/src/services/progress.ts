@@ -1,8 +1,4 @@
-import {
-  BIOTRAIL_ACTIVITY_ID,
-  BIOTRAIL_LESSON_ID,
-  BIOTRAIL_SLUG,
-} from "@brightboost/greatwork-engine/dist/progression/advanced";
+import { ADVANCED_ACTIVITIES } from "@brightboost/greatwork-engine/dist/progression/advanced";
 import { STEM_SET_3_IDS } from "@brightboost/greatwork-engine/dist/progression/stemSetIds";
 import prisma from "../utils/prisma";
 import { getModuleStructure } from "./module";
@@ -91,13 +87,13 @@ export async function resolveActivityForWrite(input: {
 
 /**
  * The one prerequisite the backend enforces on a learner's own progress
- * writes: the advanced BioTrail lesson requires the matching earned specialty
+ * writes: advanced lessons require the matching earned specialty
  * and a complete Set 3. Set 1/2/3 locks themselves stay presentation-only
  * (#856, owner-deferred) — see docs/architecture/progress-integrity.md.
  *
  * Bound to the activity identity, so a forged module slug cannot skip it.
  * Shared by both writers (#876): a locked learner cannot open even an
- * in-progress BioTrail row.
+ * in-progress advanced row.
  */
 export async function assertAdvancedEligibility(
   studentId: string,
@@ -105,14 +101,19 @@ export async function assertAdvancedEligibility(
   moduleSlug: string,
   lessonId: string,
 ): Promise<void> {
-  if (activity.id !== BIOTRAIL_ACTIVITY_ID && moduleSlug !== BIOTRAIL_SLUG) {
-    return;
-  }
+  const advanced = ADVANCED_ACTIVITIES.find(
+    (entry) =>
+      entry.activityId === activity.id ||
+      entry.slug === moduleSlug ||
+      entry.lessonId === lessonId ||
+      entry.lessonId === activity.lessonId,
+  );
+  if (!advanced) return;
   if (
-    activity.id !== BIOTRAIL_ACTIVITY_ID ||
-    moduleSlug !== BIOTRAIL_SLUG ||
-    lessonId !== BIOTRAIL_LESSON_ID ||
-    activity.lessonId !== BIOTRAIL_LESSON_ID
+    activity.id !== advanced.activityId ||
+    moduleSlug !== advanced.slug ||
+    lessonId !== advanced.lessonId ||
+    activity.lessonId !== advanced.lessonId
   ) {
     throw new ProgressWriteError(
       400,
@@ -132,12 +133,12 @@ export async function assertAdvancedEligibility(
   const completedIds = new Set(completed.map((p) => p.activityId));
   if (
     specialized?.stage !== "SPECIALIZED" ||
-    specialized.archetype !== "BIOTECH" ||
+    specialized.archetype !== advanced.specialty ||
     !STEM_SET_3_IDS.every((id) => completedIds.has(id))
   ) {
     throw new ProgressWriteError(
       403,
-      "Complete Set 3 and choose Biotech before playing BioTrail",
+      "Complete Set 3 and choose the matching specialty before playing",
     );
   }
 }

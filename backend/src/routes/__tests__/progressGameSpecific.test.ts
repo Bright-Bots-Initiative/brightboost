@@ -103,6 +103,7 @@ const validByKey: Record<RegisteredGameKey, unknown> = {
     exitCorrect: true,
   },
   boost_path_planner: { attempts: 2 },
+  sparbots: { cardsKept: 3, revisions: 2, reflection: "examples" },
 };
 
 const validMoveMeasure = validByKey.move_measure as {
@@ -122,6 +123,7 @@ const A2_01_KEYS = [
   "tank_trek",
   "qualify_tune_race",
   "boost_path_planner",
+  "sparbots",
 ] as const satisfies readonly RegisteredGameKey[];
 
 const REGISTRY_KEYS = Object.keys(GAME_SPECIFIC_SCHEMAS) as RegisteredGameKey[];

@@ -17,6 +17,7 @@ const INVENTORIED_KEYS = [
   "tank_trek",
   "qualify_tune_race",
   "boost_path_planner",
+  "sparbots",
 ] as const satisfies readonly RegisteredGameKey[];
 
 const validMoveMeasure = {
@@ -45,6 +46,7 @@ const validByKey: Record<RegisteredGameKey, unknown> = {
     exitCorrect: true,
   },
   boost_path_planner: { attempts: 2 },
+  sparbots: { cardsKept: 3, revisions: 2, reflection: "examples" },
 };
 
 /** Bounds match gameSpecific.ts (A2-04). */
@@ -54,6 +56,8 @@ const FIELD_BOUNDS: Array<{
   max: number;
   nest?: string;
 }> = [
+  { key: "sparbots", field: "cardsKept", max: 24 },
+  { key: "sparbots", field: "revisions", max: 10000 },
   { key: "move_measure", field: "dash", max: 10 },
   { key: "move_measure", field: "jump", max: 10 },
   { key: "move_measure", field: "toss", max: 10 },
