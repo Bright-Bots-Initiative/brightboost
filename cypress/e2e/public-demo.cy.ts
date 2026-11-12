@@ -123,6 +123,18 @@ describe("the homepage panel is the real Tank Trek", () => {
     });
   });
 
+  it("keeps the selected grade band when opening the full-screen demo", () => {
+    const apiCalls = watchApiCalls();
+    cy.visit("/");
+    cy.contains("button", "Grades 3–5").click();
+    cy.contains("a", "Open in full screen").click();
+    cy.location("search").should("eq", "?band=g3_5");
+    cy.contains("button", "Start Mission").click();
+    cy.contains("h3", "Level 1: Sequence Challenge").should("be.visible");
+    cy.get(GAME_AREA).should("have.length", 1);
+    cy.then(() => expect(apiCalls).to.have.length(0));
+  });
+
   /**
    * A token in the visitor's browser must not turn a public page into an
    * authenticated one. `usePersonalBest` fetches whenever `bb_access_token`

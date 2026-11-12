@@ -39,7 +39,7 @@
  * twitter:*, canonical, JSON-LD) exists only after hydration and is removed
  * again on unmount; `index.html` carries none of it.
  */
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PublicHeader from "@/components/home/PublicHeader";
@@ -88,6 +88,7 @@ const HOW_IT_WORKS = [
 ] as const;
 
 const Index = () => {
+  const [demoBand, setDemoBand] = useState<"k2" | "g3_5">("k2");
   const { t } = useTranslation();
   const lang = useRenderedLanguage();
   const navigate = useNavigate();
@@ -364,9 +365,15 @@ const Index = () => {
             </div>
 
             <div className="min-w-0 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
-              <PublicDemo onReady={handleDemoReady} />
+              <PublicDemo
+                onReady={handleDemoReady}
+                onBandChange={setDemoBand}
+              />
               <p className="mt-3 text-center">
-                <Link to="/try" className={PUBLIC_ACTION_QUIET}>
+                <Link
+                  to={demoBand === "g3_5" ? "/try?band=g3_5" : "/try"}
+                  className={PUBLIC_ACTION_QUIET}
+                >
                   {t("home.demo.fullScreen")}
                 </Link>
               </p>

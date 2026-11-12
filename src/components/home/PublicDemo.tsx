@@ -64,6 +64,7 @@ const loadTankTrek: LoadGame = () => import("@/components/games/TankTrekGame");
 
 export interface PublicDemoProps {
   loadGame?: LoadGame;
+  onBandChange?: (band: "k2" | "g3_5") => void;
   /** Extra class names for the outer panel (the homepage places it in a grid). */
   className?: string;
   /**
@@ -121,6 +122,7 @@ export default function PublicDemo({
   loadGame,
   className,
   onReady,
+  onBandChange,
 }: PublicDemoProps) {
   const { t } = useTranslation();
   const [armed, setArmed] = useState(false);
@@ -188,6 +190,7 @@ export default function PublicDemo({
   const switchDemoBand = (next: "k2" | "g3_5") => {
     if (next === demoBand) return;
     setDemoBand(next);
+    onBandChange?.(next);
     setFinished(null);
     startedFired.current = false;
     setPlayKey((n) => n + 1);
