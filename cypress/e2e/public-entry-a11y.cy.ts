@@ -17,8 +17,7 @@ import "cypress-axe";
  * throwing inside an intercept handler where the error would be hard to read.
  */
 const ALLOWED_HOSTS = [
-  "localhost",
-  "127.0.0.1",
+  new URL(Cypress.config("baseUrl")!).hostname,
   "fonts.googleapis.com",
   "fonts.gstatic.com",
 ];
