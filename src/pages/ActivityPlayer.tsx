@@ -195,6 +195,12 @@ export default function ActivityPlayer() {
     id: string;
     band: typeof gradeBand;
   } | null>(null);
+  // The activity whose play the effect below has registered. Its controls stay
+  // hidden until this matches, so a tap can never reach `handleComplete`
+  // before `play` names the activity (and would be silently dropped).
+  const [startedActivityId, setStartedActivityId] = useState<string | null>(
+    null,
+  );
   const startMsRef = useRef<number>(Date.now());
   /** #809: latches while a completion POST is in flight; released on failure. */
   const completingRef = useRef(false);
@@ -284,6 +290,7 @@ export default function ActivityPlayer() {
   useEffect(() => {
     if (!activity) {
       play.current = null;
+      setStartedActivityId(null);
       return;
     }
     // A rerender (including StrictMode effect replay) is still the same play.
@@ -311,6 +318,7 @@ export default function ActivityPlayer() {
     setShowBreak(false);
     setQuizVariant(null);
     completingRef.current = false; // a fresh play-through may submit again
+    setStartedActivityId(String(activity.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activity]); // avoid accidental reruns
 
@@ -632,6 +640,13 @@ export default function ActivityPlayer() {
         </Card>
       </div>
     );
+  }
+
+  // The play is registered by a passive effect, one commit after the activity
+  // first resolves. Until then keep the loading state: a control rendered in
+  // that gap would drop its click at the `play` guard in `handleComplete`.
+  if (startedActivityId !== String(activity.id)) {
+    return <div className="p-6">{t("activityPlayer.loadingActivity")}</div>;
   }
 
   // INFO: story + quiz
