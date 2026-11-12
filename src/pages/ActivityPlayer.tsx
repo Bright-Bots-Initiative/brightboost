@@ -280,9 +280,8 @@ export default function ActivityPlayer() {
 
   // Side effects of actually mounting an activity — the point past which a
   // game can start and a completion can be posted. `activity` is only non-null
-  // once access is allowed. A layout effect, so the play is registered inside
-  // the commit that renders its controls and no click can reach them first.
-  useLayoutEffect(() => {
+  // once access is allowed.
+  useEffect(() => {
     if (!activity) {
       play.current = null;
       return;
