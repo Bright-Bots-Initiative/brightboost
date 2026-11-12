@@ -10,7 +10,13 @@
  * POST count, not any reward semantics.
  */
 import { Profiler } from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +29,7 @@ import ActivityPlayer from "@/pages/ActivityPlayer";
 import { api } from "@/services/api";
 import { __resetGradeBandCache } from "@/hooks/useGradeBand";
 import { __resetPersonalBestCache } from "@/hooks/usePersonalBest";
+import { STEM_SET_1_IDS, STEM_SET_2_MODULE_SLUGS } from "@/constants/stemSets";
 import en from "@/locales/en/common.json";
 import es from "@/locales/es/common.json";
 import viLocale from "@/locales/vi/common.json";
@@ -35,6 +42,8 @@ vi.mock("@/services/api", () => ({
     getGamePersonalBests: vi.fn(),
     getStudentCourses: vi.fn().mockResolvedValue([]),
     getAvatar: vi.fn().mockResolvedValue({ archetype: null, stage: "GENERAL" }),
+    getProgress: vi.fn(),
+    getStudentAssignments: vi.fn(),
   },
 }));
 
@@ -199,9 +208,25 @@ describe("completion latch (#832 item 4)", () => {
   });
 
   it("LATCH-4: a click in the commit that first renders Mark Complete posts once", async () => {
+    // A Set 2 module's access waits on progress after the module loads, so the
+    // activity and its Mark Complete button first render in the same commit,
+    // the one that resolves access. Profiler's onRender clicks inside it, after
+    // the player's layout effects and before its passive ones.
+    const slug = STEM_SET_2_MODULE_SLUGS[0];
+    vi.mocked(api.getModule).mockResolvedValue({
+      ...mockModule,
+      id: `${slug}-id`,
+      slug,
+      level: "K-2",
+      published: true,
+    });
+    let releaseProgress!: (value: unknown) => void;
+    vi.mocked(api.getProgress).mockReturnValue(
+      new Promise((resolve) => {
+        releaseProgress = resolve;
+      }),
+    );
     vi.mocked(api.completeActivity).mockResolvedValue(COMPLETION_RESPONSE);
-    // Profiler's onRender runs in the commit's layout phase, after the player's layout
-    // effects and before its passive ones: the earliest moment a person could click.
     let clicked = false;
     const clickOnFirstCommit = () => {
       if (clicked) return;
@@ -210,13 +235,12 @@ describe("completion latch (#832 item 4)", () => {
       clicked = true;
       button.click();
     };
-
     render(
       <Profiler id="first-commit" onRender={clickOnFirstCommit}>
         <TooltipProvider>
           <MemoryRouter
             initialEntries={[
-              "/student/modules/test-module/lessons/l-1/activities/a-1",
+              `/student/modules/${slug}/lessons/l-1/activities/a-1`,
             ]}
           >
             <Routes>
@@ -229,8 +253,20 @@ describe("completion latch (#832 item 4)", () => {
         </TooltipProvider>
       </Profiler>,
     );
+    await act(async () => {});
+    expect(api.getProgress).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
 
-    await waitFor(() => expect(clicked).toBe(true));
+    await act(async () => {
+      releaseProgress({
+        progress: STEM_SET_1_IDS.map((activityId) => ({
+          activityId,
+          status: "COMPLETED",
+        })),
+      });
+    });
+
+    expect(clicked).toBe(true);
     await waitFor(() => expect(api.completeActivity).toHaveBeenCalledTimes(1));
     const [[payload]] = vi.mocked(api.completeActivity).mock.calls;
     const starts = vi
