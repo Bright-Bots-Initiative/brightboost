@@ -282,7 +282,7 @@ const Index = () => {
                 min-content width unless it is told otherwise, so one
                 unbreakable label could make the column — and the page — wider
                 than the screen. It reflows instead. */}
-            <div className="flex min-w-0 flex-col lg:col-span-5 lg:row-start-1">
+            <div className="flex min-w-0 flex-col [container-type:inline-size] lg:col-span-5 lg:row-start-1">
               {/* A rounded box, not a pill: at 320px the label needs two
                   lines, and a pill with a wrapped label reads as a mistake. */}
               <p className="bb-eyebrow">{t("home.eyebrow")}</p>
@@ -296,12 +296,20 @@ const Index = () => {
               </p>
               <h1
                 id="hero-heading"
-                className="mt-1 text-[clamp(1.65rem,4vw,3.4rem)] font-extrabold leading-[1.07] tracking-[-0.035em]"
+                // Desktop type follows this grid column, not the viewport.
+                // Spanish needs more room per line. The 1.65rem floor stays
+                // above the display line's 1.625rem ceiling; mobile can wrap.
+                className={
+                  "mt-1 text-[clamp(1.65rem,4vw,3.4rem)] font-extrabold leading-[1.07] tracking-[-0.035em] " +
+                  (lang === "es"
+                    ? "lg:text-[clamp(1.65rem,7.2cqw,3.4rem)]"
+                    : "lg:text-[clamp(1.65rem,10.8cqw,3.4rem)]")
+                }
               >
-                <span className="block whitespace-nowrap">
+                <span className="block lg:whitespace-nowrap">
                   {t("home.h1First")}
                 </span>{" "}
-                <span className="block whitespace-nowrap">
+                <span className="block lg:whitespace-nowrap">
                   {t("home.h1Second")}
                 </span>
               </h1>
