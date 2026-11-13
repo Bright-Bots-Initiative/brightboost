@@ -19,9 +19,35 @@
 import posthog from "posthog-js";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const POSTHOG_HOST =
-  (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ||
-  "https://us.i.posthog.com";
+const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
+
+/** An ingestion origin, never a dashboard URL or a value safe to echo raw. */
+function resolvePostHogHost(): string {
+  const raw = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
+  if (!raw) return DEFAULT_POSTHOG_HOST;
+  try {
+    const url = new URL(raw);
+    // Check the original shape too: URL parsing erases empty ?/# delimiters
+    // and dot paths. A root slash is harmless; any other path is not an origin.
+    if (
+      /^https:\/\/[^/?#\\\s]+\/?$/i.test(raw) &&
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      url.pathname === "/" &&
+      !url.search &&
+      !url.hash
+    ) {
+      return url.origin;
+    }
+  } catch {
+    // Do not log the parser error: it can include the rejected input.
+  }
+  console.warn(
+    "[analytics] Invalid VITE_POSTHOG_HOST; using the default ingestion host.",
+  );
+  return DEFAULT_POSTHOG_HOST;
+}
 
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
@@ -177,13 +203,15 @@ export type AnalyticsEvent =
     };
 
 let initialized = false;
+let initializationRequested = false;
 
 function disabled(): boolean {
   return !POSTHOG_KEY || !initialized;
 }
 
 export function initAnalytics(): void {
-  if (initialized) return;
+  if (initializationRequested) return;
+  initializationRequested = true;
   if (!POSTHOG_KEY) {
     // Use warn (not info) so prod consoles surface the disabled state
     // clearly — silent no-ops are the #1 PostHog-not-firing failure mode.
@@ -202,10 +230,11 @@ export function initAnalytics(): void {
   //   - missing key: [analytics] DISABLED — ...
   //   - present:     [analytics] Initializing PostHog → <host>
   //   - loaded:      [analytics] PostHog ready (events will flow)
-  console.info(`[analytics] Initializing PostHog → ${POSTHOG_HOST}`);
+  const host = resolvePostHogHost();
+  console.info(`[analytics] Initializing PostHog → ${host}`);
 
   posthog.init(POSTHOG_KEY, {
-    api_host: POSTHOG_HOST,
+    api_host: host,
     // We track explicit funnel events ourselves, not every DOM interaction.
     autocapture: false,
     capture_pageview: true,
