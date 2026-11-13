@@ -318,7 +318,7 @@
     },
     "privacy": {
       "title": "Bảo mật & Niềm tin",
-      "item1": "BrightBoost chỉ thu thập dữ liệu tiến trình học tập — không quảng cáo, không theo dõi bên thứ ba",
+      "item1": "Bản chơi thử công khai không yêu cầu tên hoặc tài khoản. Số lượt chơi ẩn danh và kết quả trò chơi được gửi đến PostHog, nhà cung cấp phân tích của chúng tôi.",
       "item2": "Thiết kế tuân thủ COPPA: tài khoản học sinh nhỏ (K-2) không yêu cầu email hoặc mật khẩu",
       "item3": "Tất cả dữ liệu có thể xuất hoặc xóa khi kết thúc thí điểm",
       "item4": "Nhật ký kiểm tra theo dõi đăng nhập, đăng ký và đặt lại mật khẩu"

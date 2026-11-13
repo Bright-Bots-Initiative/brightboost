@@ -318,7 +318,7 @@
     },
     "privacy": {
       "title": "Privacidad y Confianza",
-      "item1": "BrightBoost solo recopila datos de progreso de aprendizaje — sin anuncios, sin rastreo de terceros",
+      "item1": "El demo público no pide tu nombre ni requiere una cuenta. Enviamos recuentos de partidas anónimas y resultados a PostHog, nuestro proveedor de análisis.",
       "item2": "Diseño consciente de COPPA: las cuentas de primaria temprana (K-2) no requieren correo electrónico ni contraseñas",
       "item3": "Todos los datos pueden exportarse o eliminarse al final de un piloto",
       "item4": "El registro de auditoría rastrea inicios de sesión, registros y restablecimientos de contraseña"
@@ -2448,7 +2448,7 @@
       "notice2": "K–2 · Guiado abre dos partes primero y desbloquea más cada vez que un niño prueba un cambio.",
       "notice3": "Probar y aprender explica cada barra que se movió, en frases para niños, con la ciencia debajo.",
       "notice4": "Comparte un Buddy por enlace; el enlace solo lleva la receta, y al abrirlo recibes una copia para remezclar.",
-      "note": "Esto es un prototipo: todo lo que construyas se queda en este navegador y no se envía a ningún sitio. El enlace no está listado, pero no es privado."
+      "note": "Tus creaciones se guardan en este navegador. Un enlace compartido contiene una copia de una creación. La actividad del sitio se envía a nuestro proveedor de análisis. Este prototipo no está listado, pero no es privado."
     },
     "water": {
       "title": "Prueba el estanque",
@@ -2929,7 +2929,7 @@
     "floorOpen": "Listo para explorar",
     "myCard": "La tarjeta de mi bot",
     "teacher": "Para una persona adulta",
-    "teacherGuide": "Túrnense para entrenar juntos. Cada turno les espera. Usen el rincón para pausar, cambiar un ejemplo y volver a probar. Solo se guardan ejemplos y cambios; los resultados del juego quedan en este dispositivo.",
+    "teacherGuide": "Túrnense para entrenar juntos. Cada turno les espera. Usen el rincón para pausar, cambiar un ejemplo y volver a probar. Los ejemplos y las versiones se guardan en este dispositivo. Al completar la actividad, también se guarda en tu cuenta un resumen con tu reflexión; los resultados de cada partida se quedan aquí.",
     "unplugged": "Lejos de la pantalla: dibujen tarjetas de posturas y movimientos. Otra persona busca ejemplos iguales y vota por un movimiento. ¿Qué pasa si dos tarjetas no coinciden?",
     "imagine": "¿Qué tipo de bot crearás?",
     "styles": {
@@ -3173,7 +3173,7 @@
       "bandG35": "3.º–5.º grado",
       "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
       "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
-      "staysLocal": "Esta práctica se queda en este dispositivo. Un adulto puede ayudarte a elegir cómo seguir aprendiendo.",
+      "staysLocal": "Juega sin dar tu nombre ni crear una cuenta. Enviamos cuántas veces juegas y tus puntos a PostHog, que nos ayuda a contar.",
       "adultEntry": "Para docentes y familias"
     },
     "roles": {

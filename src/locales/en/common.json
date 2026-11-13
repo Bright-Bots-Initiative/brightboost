@@ -318,7 +318,7 @@
     },
     "privacy": {
       "title": "Privacy & Trust",
-      "item1": "BrightBoost collects only learning progress data — no ads, no third-party tracking",
+      "item1": "The public demo does not ask for your name or require an account. Anonymous play counts and game results go to PostHog, our analytics provider.",
       "item2": "COPPA-aware design: early learner accounts (K-2) don't require email or passwords",
       "item3": "All data can be exported or deleted at the end of a pilot",
       "item4": "Audit logging tracks login, signup, and password reset events"
@@ -2717,7 +2717,7 @@
       "notice2": "K–2 · Guided opens two parts first and unlocks more each time a child tests a change.",
       "notice3": "Test & Learn explains each bar that moved, in kid sentences, with the science underneath.",
       "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
-      "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
+      "note": "Your builds are saved in this browser. A shared link contains a copy of a build. Site activity is sent to our analytics provider. This prototype is unlisted, not private."
     },
     "water": {
       "title": "Try the pond",
@@ -3162,7 +3162,7 @@
     "floorOpen": "Ready to explore",
     "myCard": "My Bot Card",
     "teacher": "For a grown-up",
-    "teacherGuide": "Take turns coaching together. Every beat waits for you. Use Coach’s Corner to pause, change one example, and replay. Only examples and revisions are kept; match outcomes stay on this device.",
+    "teacherGuide": "Take turns coaching together. Every beat waits for you. Use Coach’s Corner to pause, change one example, and replay. Examples and versions are saved on this device. Completing the activity also saves a summary with your reflection to your account; individual match outcomes stay here.",
     "unplugged": "Away from the screen: draw pose cards and move cards. Let a partner match the examples and vote for a move. What happens when two cards disagree?",
     "imagine": "What kind of bot will you make?",
     "styles": {
@@ -3406,7 +3406,7 @@
       "bandG35": "Grades 3–5",
       "metaTitle": "Try Bright Boost — free STEM game, no signup",
       "metaDescription": "Play a free Bright Boost robot mission for K–2 or grades 3–5. No account needed.",
-      "staysLocal": "This practice stays on this device. An adult can help you choose how to keep learning.",
+      "staysLocal": "Play without a name or an account. We send play counts and scores to PostHog, our counting helper.",
       "adultEntry": "For teachers and families"
     },
     "roles": {

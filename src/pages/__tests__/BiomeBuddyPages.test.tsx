@@ -6,6 +6,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { enTranslate } from "@/test/i18nMock";
 import BiomeBuddy from "../BiomeBuddy";
 import BiomeBuddyShare from "../BiomeBuddyShare";
 import BiomeBuddyReview, { REVIEW_SAMPLE_RECIPE } from "../BiomeBuddyReview";
@@ -42,7 +43,8 @@ vi.mock("react-i18next", () => ({
       key: string,
       opts?: { defaultValue?: string; [k: string]: unknown },
     ) => {
-      let text = opts?.defaultValue || key;
+      let text = enTranslate(key);
+      if (text === key) text = opts?.defaultValue || key;
       for (const [name, value] of Object.entries(opts ?? {}))
         if (name !== "defaultValue")
           text = text.replaceAll(`{{${name}}}`, String(value));
@@ -278,6 +280,9 @@ describe("/biome-buddy/review", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/unlisted, not private/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Site activity is sent to our analytics provider/),
+    ).toBeInTheDocument();
     const example = screen.getByTestId("review-example");
     expect(example.getAttribute("href")).toBe(
       `/biome-buddy/share#r=${encodeShare(REVIEW_SAMPLE_RECIPE)}`,
