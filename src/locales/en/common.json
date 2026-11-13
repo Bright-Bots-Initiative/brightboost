@@ -3376,7 +3376,8 @@
   "home": {
     "meta": {
       "title": "Bright Boost — A world you build by learning",
-      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family."
+      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+      "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     },
     "eyebrow": "Free STEM learning platform",
     "displayLine": "Play. Build. Become.",

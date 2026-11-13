@@ -3143,7 +3143,8 @@
   "home": {
     "meta": {
       "title": "Bright Boost — Un mundo que construyes al aprender",
-      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia."
+      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+      "imageAlt": "La mascota de Bright Boost junto al lema en inglés A world you build by learning."
     },
     "eyebrow": "Plataforma de aprendizaje STEM gratuita",
     "displayLine": "Juega. Construye. Conviértete.",

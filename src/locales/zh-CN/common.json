@@ -2511,5 +2511,10 @@
     "failed": "无法加载你的班级，请重试。",
     "retry": "重试",
     "back": "返回班级"
+  },
+  "home": {
+    "meta": {
+      "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
+    }
   }
 }

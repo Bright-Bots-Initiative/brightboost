@@ -2406,5 +2406,10 @@
     "failed": "Không thể tải các lớp của em. Vui lòng thử lại.",
     "retry": "Thử lại",
     "back": "Quay lại các lớp"
+  },
+  "home": {
+    "meta": {
+      "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
+    }
   }
 }

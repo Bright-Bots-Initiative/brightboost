@@ -30,14 +30,12 @@
  *    donation module — removed earlier in this slice, for the reasons recorded
  *    in `docs/brand-refresh/rebrand-slice-1.md`.
  *
- * Metadata is client-rendered: the HTML that arrives from the server is
- * `index.html`'s static title and description, and the effects below replace
- * them after hydration. A crawler that does not execute JavaScript sees the
- * static pair, so the static pair is kept byte-identical to `home.meta.title`
- * and `home.meta.description` in English — the two must not describe this URL
- * differently. Change one and change the other. Everything else (og:*,
- * twitter:*, canonical, JSON-LD) exists only after hydration and is removed
- * again on unmount; `index.html` carries none of it.
+ * `index.html` ships title, description, Open Graph, Twitter and canonical
+ * metadata before JavaScript. Keep its English title/description byte-identical
+ * to `home.meta.title` / `home.meta.description`. `usePublicPageMeta` updates
+ * those same nodes after hydration, including language and route changes, and
+ * restores the static defaults on unmount. Only JSON-LD is added here after
+ * hydration and removed on unmount. Change the static and locale copy together.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -48,6 +46,7 @@ import PublicDemo from "@/components/home/PublicDemo";
 import RolePanel from "@/components/home/RolePanel";
 import {
   PUBLIC_ACTION_QUIET,
+  PUBLIC_SITE_ORIGIN,
   PUBLIC_SKY_BAND,
   usePublicPageMeta,
   useRenderedLanguage,
@@ -103,7 +102,7 @@ const Index = () => {
     track({ kind: "homepage_viewed" });
   }, []);
 
-  /* ---- Social metadata, canonical URL and JSON-LD --------------------------
+  /* ---- Organization JSON-LD -----------------------------------------------
    *
    * The structured data says exactly two things that are true and checkable:
    * Bright Boost is an organization, and it is part of Bright Bots Initiative.
@@ -112,55 +111,6 @@ const Index = () => {
    * this repository — and it claims no educational level, rating, outcome or
    * aggregate. Everything here is removed or restored on unmount. */
   useEffect(() => {
-    const restore: Array<() => void> = [];
-
-    const upsertMeta = (name: string, content: string, property = false) => {
-      const attr = property ? "property" : "name";
-      const existing = document.head.querySelector(
-        `meta[${attr}="${name}"]`,
-      ) as HTMLMetaElement | null;
-      if (existing) {
-        const previous = existing.getAttribute("content");
-        existing.setAttribute("content", content);
-        restore.push(() => {
-          if (previous === null) existing.removeAttribute("content");
-          else existing.setAttribute("content", previous);
-        });
-        return;
-      }
-      const created = document.createElement("meta");
-      created.setAttribute(attr, name);
-      created.setAttribute("content", content);
-      document.head.appendChild(created);
-      restore.push(() => created.remove());
-    };
-
-    upsertMeta("og:title", title, true);
-    upsertMeta("og:description", description, true);
-    upsertMeta("twitter:title", title);
-    upsertMeta("twitter:description", description);
-
-    // Query-free canonical: `/` is the same page whatever a visitor arrived
-    // with, and a canonical carrying a campaign parameter splits the page.
-    const canonicalHref = `${window.location.origin}/`;
-    const existingCanonical = document.head.querySelector(
-      'link[rel="canonical"]',
-    ) as HTMLLinkElement | null;
-    if (existingCanonical) {
-      const previous = existingCanonical.getAttribute("href");
-      existingCanonical.setAttribute("href", canonicalHref);
-      restore.push(() => {
-        if (previous === null) existingCanonical.removeAttribute("href");
-        else existingCanonical.setAttribute("href", previous);
-      });
-    } else {
-      const created = document.createElement("link");
-      created.setAttribute("rel", "canonical");
-      created.setAttribute("href", canonicalHref);
-      document.head.appendChild(created);
-      restore.push(() => created.remove());
-    }
-
     document.getElementById(JSON_LD_ID)?.remove();
     const schema = document.createElement("script");
     schema.id = JSON_LD_ID;
@@ -169,19 +119,15 @@ const Index = () => {
       "@context": "https://schema.org",
       "@type": "Organization",
       name: "Bright Boost",
-      url: canonicalHref,
+      url: `${PUBLIC_SITE_ORIGIN}/`,
       parentOrganization: {
         "@type": "Organization",
         name: "Bright Bots Initiative",
       },
     });
     document.head.appendChild(schema);
-    restore.push(() => document.getElementById(JSON_LD_ID)?.remove());
-
-    return () => {
-      for (const undo of restore.reverse()) undo();
-    };
-  }, [title, description]);
+    return () => schema.remove();
+  }, []);
 
   /* ---- Fragment and one-shot storage handling ------------------------------
    *
