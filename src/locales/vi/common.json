@@ -2411,5 +2411,15 @@
     "meta": {
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     }
+  },
+  "privacy": {
+    "usage": "Chúng tôi dùng dữ liệu tài khoản và học tập để cung cấp hoạt động giáo dục và theo dõi tiến độ. Chúng tôi dùng dữ liệu phân tích trang web để hiểu cách khách truy cập sử dụng trang và hiệu suất của trang.",
+    "analytics": {
+      "title": "Phân tích và nhà cung cấp dịch vụ",
+      "posthog": "PostHog nhận mã định danh trình duyệt được lưu trên thiết bị, lượt xem trang, thông tin trình duyệt và thiết bị, số liệu hiệu suất và sự kiện sử dụng. Kết quả bản chơi thử gồm trò chơi, điểm số, số sao và thời gian chơi; bản chơi thử không yêu cầu tên hay tài khoản. Sự kiện khi đăng nhập có mã tài khoản và vai trò. Bản ghi phiên với nội dung văn bản và ô nhập liệu được che chỉ chạy cho giáo viên và quản trị viên đã được xác định, không chạy cho khách ẩn danh hoặc học sinh.",
+      "fonts": "Google Fonts cung cấp phông chữ Montserrat và nhận yêu cầu tải bảng định kiểu và tệp phông chữ.",
+      "cloudflare": "Cloudflare Web Analytics nhận URL trang, mã định danh lượt tải trang và số liệu hiệu suất, gồm thời gian tải, thay đổi bố cục, bộ chọn phần tử và mức sử dụng bộ nhớ của trình duyệt.",
+      "requests": "Yêu cầu đến các nhà cung cấp này cũng mang thông tin kết nối, như địa chỉ IP và tiêu đề yêu cầu của trình duyệt."
+    }
   }
 }

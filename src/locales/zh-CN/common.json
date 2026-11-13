@@ -2516,5 +2516,15 @@
     "meta": {
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     }
+  },
+  "privacy": {
+    "usage": "我们使用账户和学习数据来提供教育活动并跟踪进度。我们使用网站分析数据来了解访客如何使用网站以及网站的运行表现。",
+    "analytics": {
+      "title": "分析与服务提供商",
+      "posthog": "PostHog 会接收存储在设备上的浏览器标识符、页面访问记录、浏览器和设备信息、性能指标以及使用事件。试玩结果包括游戏、得分、星数和游玩时间；试玩不要求姓名或账户。登录后的事件包含账户标识符和角色。仅对已识别的教师和管理员启动遮蔽文本和输入内容的会话录制，不录制匿名访客或学生的会话。",
+      "fonts": "Google Fonts 提供 Montserrat 字体，并接收对其样式表和字体文件的请求。",
+      "cloudflare": "Cloudflare Web Analytics 会接收页面网址、页面加载标识符和性能指标，包括加载时间、布局偏移、元素选择器和浏览器内存使用情况。",
+      "requests": "向这些提供商发送的请求还包含连接信息，例如您的 IP 地址和浏览器请求头。"
+    }
   }
 }

@@ -3247,5 +3247,15 @@
       "contact": "Contacto",
       "support": "Apoya a Bright Boost"
     }
+  },
+  "privacy": {
+    "usage": "Usamos los datos de las cuentas y del aprendizaje para ofrecer actividades educativas y seguir el progreso. Usamos analíticas del sitio para entender cómo lo usan las personas y cómo funciona.",
+    "analytics": {
+      "title": "Analíticas y proveedores de servicios",
+      "posthog": "PostHog recibe un identificador del navegador guardado en tu dispositivo, visitas a páginas, detalles del navegador y del dispositivo, mediciones de rendimiento y eventos de uso. Los resultados de la demo incluyen el juego, la puntuación, las estrellas y el tiempo de juego; la demo no pide nombre ni cuenta. Los eventos de sesiones con una cuenta incluyen su identificador y rol. Las grabaciones de sesión con texto y campos ocultos se activan solo para docentes y administradores identificados, no para visitantes anónimos ni estudiantes.",
+      "fonts": "Google Fonts proporciona la tipografía Montserrat y recibe solicitudes de sus hojas de estilo y archivos de fuentes.",
+      "cloudflare": "Cloudflare Web Analytics recibe la URL de la página, un identificador de carga y mediciones de rendimiento, como tiempos de carga, cambios de diseño, selectores de elementos y uso de memoria del navegador.",
+      "requests": "Las solicitudes a estos proveedores también incluyen información de conexión, como tu dirección IP y las cabeceras de solicitud del navegador."
+    }
   }
 }
