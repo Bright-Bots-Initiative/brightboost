@@ -267,11 +267,11 @@
   },
   "reviewers": {
     "backHome": "Về trang chủ",
-    "title": "Hướng dẫn đánh giá BrightBoost",
-    "subtitle": "Mọi thứ bạn cần để khám phá, đánh giá và chia sẻ phản hồi về BrightBoost — nền tảng học STEM song ngữ K-8 xây dựng nền tảng vững chắc và chuẩn bị học sinh cho các lộ trình công nghệ tiên tiến.",
+    "title": "Hướng dẫn đánh giá Bright Boost",
+    "subtitle": "Mọi thứ bạn cần để khám phá, đánh giá và chia sẻ phản hồi về Bright Boost — nền tảng học STEM song ngữ K-8 xây dựng nền tảng vững chắc và chuẩn bị học sinh cho các lộ trình công nghệ tiên tiến.",
     "whatIs": {
-      "title": "BrightBoost là gì?",
-      "body": "BrightBoost là nền tảng học STEM song ngữ (Tiếng Anh/Tiếng Tây Ban Nha) K-8 xây dựng nền tảng vững chắc và chuẩn bị học sinh cho các lộ trình công nghệ tiên tiến về AI, lượng tử và công nghệ sinh học. Nền tảng có các lộ trình phân cấp cho K-2, 3-5 và 6-8. Hiện tại bắt đầu với nội dung K-2 — biến các kỹ năng nền tảng như sắp xếp, mẫu hình và giải quyết vấn đề thành các trò chơi phiêu lưu tương tác. Giáo viên tạo lớp, giao bài học và theo dõi tiến trình học sinh. Học sinh chơi qua các hoạt động, kiếm XP và xây dựng sự tự tin. Lớp 3-5 và 6-8 sẽ được phát triển trong các phiên bản sau.",
+      "title": "Bright Boost là gì?",
+      "body": "Bright Boost là nền tảng học STEM K-8 giúp xây dựng nền tảng vững chắc và chuẩn bị cho học sinh các lộ trình công nghệ về AI, lượng tử và công nghệ sinh học. Hoạt động học tập cho K–2 và lớp 3–5 hiện đã có. Nội dung lớp 6–8 sẽ ra mắt sau. Khả năng sử dụng tiếng Anh và tiếng Tây Ban Nha tùy theo hoạt động. Giáo viên tạo lớp và theo dõi tiến bộ của học sinh. Học sinh tham gia hoạt động, nhận XP và xây dựng sự tự tin.",
       "feat1": "Học qua trò chơi",
       "feat2": "Tiến trình thời gian thực",
       "feat3": "Quản lý lớp học",
@@ -283,9 +283,10 @@
       "step1Desc": "Bài trình bày sẵn có cho thấy học sinh học gì, thành tích mẫu và hoạt động gia đình mang về nhà. Không cần đăng nhập.",
       "openShowcase": "Mở Trình diễn",
       "step2Title": "Thử giao diện Giáo viên (5 phút)",
-      "step2Desc": "Đăng nhập với tài khoản giáo viên thử nghiệm để xem quản lý lớp, tài nguyên, danh sách chuẩn bị và Trung tâm PD.",
+      "step2Desc": "Yêu cầu quyền truy cập đánh giá để khám phá quản lý lớp học, tài nguyên, danh sách chuẩn bị và trung tâm phát triển chuyên môn.",
       "step3Title": "Thử giao diện Học sinh (5 phút)",
-      "step3Desc": "Đăng nhập với tài khoản học sinh thử nghiệm để chơi qua bài học, kiếm XP và xem hệ thống nhân vật."
+      "step3Desc": "Yêu cầu nhóm cung cấp tài khoản học sinh để đánh giá hoạt động, XP và hình đại diện. Người lớn sắp xếp quyền truy cập.",
+      "requestAccess": "Yêu cầu quyền truy cập"
     },
     "teachers": {
       "title": "Giáo viên có thể làm gì",
@@ -306,9 +307,9 @@
     },
     "lookFor": {
       "title": "Những điều cần lưu ý khi đánh giá",
-      "intro": "Khi khám phá, đây là bốn góc nhìn giúp đánh giá BrightBoost cho bối cảnh của bạn:",
+      "intro": "Khi khám phá, đây là bốn góc nhìn giúp đánh giá Bright Boost cho bối cảnh của bạn:",
       "engagementTitle": "Sự tham gia của học sinh",
-      "engagementDesc": "Các hoạt động K-2 hiện tại có phù hợp lứa tuổi và tạo động lực không? Hệ thống XP/nhân vật có hấp dẫn không? Bạn có thấy điều này có thể mở rộng cho lớp 3-5 và 6-8?",
+      "engagementDesc": "Các hoạt động K–2 và lớp 3–5 có phù hợp với độ tuổi và tạo hứng thú không? Hệ thống XP và hình đại diện có tạo động lực không? Bạn có thấy khả năng mở rộng sang lớp 6–8 không?",
       "teacherUxTitle": "Trải nghiệm giáo viên",
       "teacherUxDesc": "Có dễ tạo lớp, giao bài và kiểm tra tiến trình không? Danh sách chuẩn bị có hữu ích cho việc lên kế hoạch bài dạy không?",
       "accessibilityTitle": "Tiếp cận & Công bằng",
@@ -325,8 +326,8 @@
     },
     "ctaPrompt": "Sẵn sàng trải nghiệm?",
     "ctaShowcase": "Xem Trình diễn",
-    "ctaTeacher": "Thử giao diện Giáo viên",
-    "footer": "BrightBoost là một dự án của Sáng kiến Bright Bots. Có câu hỏi? Sử dụng nút phản hồi trong ứng dụng hoặc liên hệ người điều phối thí điểm."
+    "ctaTeacher": "Yêu cầu quyền truy cập đánh giá",
+    "footer": "Bright Boost là dự án của Bright Bots Initiative. Để được truy cập đánh giá, hãy dùng các liên kết yêu cầu ở trên."
   },
   "auth": {
     "sessionUnavailable": "Không thể kiểm tra đăng nhập. Phiên của bạn đã được lưu. Hãy thử lại.",

@@ -267,11 +267,11 @@
   },
   "reviewers": {
     "backHome": "Back to Home",
-    "title": "BrightBoost Evaluator Guide",
-    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
+    "title": "Bright Boost Evaluator Guide",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on Bright Boost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
     "whatIs": {
-      "title": "What is BrightBoost?",
-      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned in future releases.",
+      "title": "What is Bright Boost?",
+      "body": "Bright Boost is a K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. Learning experiences for K–2 and grades 3–5 are available now. Grades 6–8 are coming soon. English and Spanish availability varies by activity. Teachers create classes and track student progress. Students play through activities, earn XP, and build confidence.",
       "feat1": "Game-Based Learning",
       "feat2": "Real-Time Progress",
       "feat3": "Classroom Management",
@@ -283,9 +283,10 @@
       "step1Desc": "A ready-made presentation showing what students learn, sample achievements, and family take-home activities. No login required.",
       "openShowcase": "Open Showcase",
       "step2Title": "Try the Teacher View (5 min)",
-      "step2Desc": "Log in with the demo teacher account to see class management, resources, the prep checklist, and the PD Hub.",
+      "step2Desc": "Request evaluator access to explore class management, resources, the prep checklist, and the PD Hub.",
       "step3Title": "Try the Student View (5 min)",
-      "step3Desc": "Log in with the demo student account to play through a module, earn XP, and see the avatar system."
+      "step3Desc": "Request an evaluator student account from the team to try activities, XP, and avatars. An adult arranges access.",
+      "requestAccess": "Request access"
     },
     "teachers": {
       "title": "What Teachers Can Do",
@@ -306,9 +307,9 @@
     },
     "lookFor": {
       "title": "What to Look For as a Partner",
-      "intro": "As you explore, here are four lenses that help evaluate BrightBoost for your context:",
+      "intro": "As you explore, here are four lenses that help evaluate Bright Boost for your context:",
       "engagementTitle": "Student Engagement",
-      "engagementDesc": "Are the current K-2 activities age-appropriate and motivating? Does the XP/avatar system feel rewarding? Can you see this scaling to 3-5 and 6-8?",
+      "engagementDesc": "Are the K–2 and grades 3–5 activities age-appropriate and motivating? Does the XP/avatar system feel rewarding? Can you see this expanding to grades 6–8?",
       "teacherUxTitle": "Teacher Usability",
       "teacherUxDesc": "Is it easy to create a class, assign work, and check progress? Does the prep checklist help with lesson planning?",
       "accessibilityTitle": "Accessibility & Equity",
@@ -325,8 +326,8 @@
     },
     "ctaPrompt": "Ready to see it in action?",
     "ctaShowcase": "Watch the Showcase",
-    "ctaTeacher": "Try the Teacher View",
-    "footer": "BrightBoost is a project of the Bright Bots Initiative. Questions? Use the feedback button inside the app or contact your pilot coordinator."
+    "ctaTeacher": "Request evaluator access",
+    "footer": "Bright Boost is a project of Bright Bots Initiative. For evaluator access, use the request links above."
   },
   "auth": {
     "sessionUnavailable": "We couldn’t check your sign-in. Your session is saved. Please try again.",
