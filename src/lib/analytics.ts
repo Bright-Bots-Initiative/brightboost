@@ -3,8 +3,10 @@
  * otherwise a silent no-op so local dev runs cleanly without a key.
  *
  * ANALYTICS PRIVACY RULES (K-8 product — COPPA-conscious)
- * - distinct_id is ALWAYS the database user ID, never email/name/PII
- * - Session recordings mask all inputs and text
+ * - Anonymous events use a browser ID; identified events use the DB user ID
+ * - Never identify with an email or name
+ * - Replay is off until a teacher/admin is identified; students are never recorded
+ * - Permitted recordings mask inputs/text; console capture and heatmaps are off
  * - Never track free-text content (homework, names, messages)
  * - Track behavior (events, counts, timings), not content
  * - When adding events, pass IDs and enums, not personal data
@@ -19,9 +21,35 @@
 import posthog from "posthog-js";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const POSTHOG_HOST =
-  (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ||
-  "https://us.i.posthog.com";
+const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
+
+/** An ingestion origin, never a dashboard URL or a value safe to echo raw. */
+function resolvePostHogHost(): string {
+  const raw = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
+  if (!raw) return DEFAULT_POSTHOG_HOST;
+  try {
+    const url = new URL(raw);
+    // Check the original shape too: URL parsing erases empty ?/# delimiters
+    // and dot paths. A root slash is harmless; any other path is not an origin.
+    if (
+      /^https:\/\/[^/?#\\\s]+\/?$/i.test(raw) &&
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      url.pathname === "/" &&
+      !url.search &&
+      !url.hash
+    ) {
+      return url.origin;
+    }
+  } catch {
+    // Do not log the parser error: it can include the rejected input.
+  }
+  console.warn(
+    "[analytics] Invalid VITE_POSTHOG_HOST; using the default ingestion host.",
+  );
+  return DEFAULT_POSTHOG_HOST;
+}
 
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
@@ -177,13 +205,31 @@ export type AnalyticsEvent =
     };
 
 let initialized = false;
+let initializationRequested = false;
+type Identity = {
+  userId: string;
+  role: AnalyticsRole;
+  props: Record<string, unknown>;
+};
+let pendingIdentity: Identity | null = null;
+let pendingReset = false;
+
+function applyIdentity({ userId, role, props }: Identity): void {
+  const mayRecord = role === "teacher" || role === "admin";
+  // Stop before identifying a child, including a teacher → student transition
+  // on a shared device. Extra properties cannot override the role argument.
+  if (!mayRecord) posthog.stopSessionRecording();
+  posthog.identify(userId, { ...props, role });
+  if (mayRecord) posthog.startSessionRecording();
+}
 
 function disabled(): boolean {
   return !POSTHOG_KEY || !initialized;
 }
 
 export function initAnalytics(): void {
-  if (initialized) return;
+  if (initializationRequested) return;
+  initializationRequested = true;
   if (!POSTHOG_KEY) {
     // Use warn (not info) so prod consoles surface the disabled state
     // clearly — silent no-ops are the #1 PostHog-not-firing failure mode.
@@ -202,17 +248,25 @@ export function initAnalytics(): void {
   //   - missing key: [analytics] DISABLED — ...
   //   - present:     [analytics] Initializing PostHog → <host>
   //   - loaded:      [analytics] PostHog ready (events will flow)
-  console.info(`[analytics] Initializing PostHog → ${POSTHOG_HOST}`);
+  const host = resolvePostHogHost();
+  console.info(`[analytics] Initializing PostHog → ${host}`);
 
   posthog.init(POSTHOG_KEY, {
-    api_host: POSTHOG_HOST,
+    api_host: host,
     // We track explicit funnel events ourselves, not every DOM interaction.
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
-    // Session replay is on, but the masking config below keeps it safe for
-    // a children's product — no input values, no rendered text.
-    disable_session_recording: false,
+    // Checked against posthog-js 1.379.3's installed PostHogConfig types.
+    // Client settings override remotely enabled capture for these features.
+    disable_session_recording: true,
+    capture_heatmaps: false,
+    capture_dead_clicks: false,
+    disable_surveys: true,
+    enable_recording_console_log: false,
+    // No anonymous/student/parent replay. Only identifyUser(teacher/admin)
+    // starts it, and resetAnalytics stops it before clearing the identity.
+    // Those permitted recordings still mask all inputs and rendered text.
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: "*",
@@ -220,6 +274,16 @@ export function initAnalytics(): void {
     persistence: "localStorage",
     loaded: () => {
       initialized = true;
+      if (pendingReset) {
+        posthog.stopSessionRecording();
+        posthog.reset();
+        pendingReset = false;
+      }
+      if (pendingIdentity) {
+        const identity = pendingIdentity;
+        pendingIdentity = null;
+        applyIdentity(identity);
+      }
       console.info("[analytics] PostHog ready (events will flow)");
     },
   });
@@ -231,13 +295,24 @@ export function identifyUser(
   role: AnalyticsRole,
   props: Record<string, unknown> = {},
 ): void {
-  if (disabled()) return;
-  posthog.identify(userId, { role, ...props });
+  if (!POSTHOG_KEY) return;
+  const identity = { userId, role, props: { ...props } };
+  if (!initialized) {
+    pendingIdentity = identity;
+    return;
+  }
+  applyIdentity(identity);
 }
 
 /** Clear the identified user on logout. */
 export function resetAnalytics(): void {
-  if (disabled()) return;
+  pendingIdentity = null;
+  if (!POSTHOG_KEY) return;
+  if (!initialized) {
+    pendingReset = true;
+    return;
+  }
+  posthog.stopSessionRecording();
   posthog.reset();
 }
 

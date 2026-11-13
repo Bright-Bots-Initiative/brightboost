@@ -1,10 +1,12 @@
 // src/pages/PrivacyPolicy.tsx
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import GameBackground from "../components/GameBackground";
 import LanguageToggle from "../components/LanguageToggle";
 
 const PrivacyPolicy: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <GameBackground>
       <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
@@ -38,11 +40,20 @@ const PrivacyPolicy: React.FC = () => {
               <h2 className="text-lg font-semibold mb-2">
                 How We Use Your Data
               </h2>
-              <p>
-                Your data is used exclusively for educational progress tracking.
-                We do not use your data for advertising, marketing, or any
-                purpose unrelated to your learning experience on this platform.
-              </p>
+              <p>{t("privacy.usage")}</p>
+            </section>
+
+            <section aria-labelledby="analytics-providers-heading">
+              <h2
+                id="analytics-providers-heading"
+                className="text-lg font-semibold mb-2"
+              >
+                {t("privacy.analytics.title")}
+              </h2>
+              <p>{t("privacy.analytics.posthog")}</p>
+              <p className="mt-2">{t("privacy.analytics.fonts")}</p>
+              <p className="mt-2">{t("privacy.analytics.cloudflare")}</p>
+              <p className="mt-2">{t("privacy.analytics.requests")}</p>
             </section>
 
             <section>

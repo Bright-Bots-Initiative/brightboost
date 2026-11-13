@@ -267,11 +267,11 @@
   },
   "reviewers": {
     "backHome": "Back to Home",
-    "title": "BrightBoost Evaluator Guide",
-    "subtitle": "Everything you need to explore, evaluate, and share feedback on BrightBoost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
+    "title": "Bright Boost Evaluator Guide",
+    "subtitle": "Everything you need to explore, evaluate, and share feedback on Bright Boost — a bilingual K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways.",
     "whatIs": {
-      "title": "What is BrightBoost?",
-      "body": "BrightBoost is a bilingual (English/Spanish) K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. The platform features tiered pathways for K-2, 3-5, and 6-8. The current rollout begins with K-2 content — turning foundational skills like sequencing, patterns, and problem-solving into interactive game-based adventures. Teachers create classes, assign modules, and track student progress. Students play through activities, earn XP, and build confidence. Grades 3-5 and 6-8 are planned in future releases.",
+      "title": "What is Bright Boost?",
+      "body": "Bright Boost is a K-8 STEM learning platform that builds strong foundations and prepares students for advanced technology pathways in AI, quantum, and biotech. Learning experiences for K–2 and grades 3–5 are available now. Grades 6–8 are coming soon. English and Spanish availability varies by activity. Teachers create classes and track student progress. Students play through activities, earn XP, and build confidence.",
       "feat1": "Game-Based Learning",
       "feat2": "Real-Time Progress",
       "feat3": "Classroom Management",
@@ -283,9 +283,10 @@
       "step1Desc": "A ready-made presentation showing what students learn, sample achievements, and family take-home activities. No login required.",
       "openShowcase": "Open Showcase",
       "step2Title": "Try the Teacher View (5 min)",
-      "step2Desc": "Log in with the demo teacher account to see class management, resources, the prep checklist, and the PD Hub.",
+      "step2Desc": "Request evaluator access to explore class management, resources, the prep checklist, and the PD Hub.",
       "step3Title": "Try the Student View (5 min)",
-      "step3Desc": "Log in with the demo student account to play through a module, earn XP, and see the avatar system."
+      "step3Desc": "Request an evaluator student account from the team to try activities, XP, and avatars. An adult arranges access.",
+      "requestAccess": "Request access"
     },
     "teachers": {
       "title": "What Teachers Can Do",
@@ -306,9 +307,9 @@
     },
     "lookFor": {
       "title": "What to Look For as a Partner",
-      "intro": "As you explore, here are four lenses that help evaluate BrightBoost for your context:",
+      "intro": "As you explore, here are four lenses that help evaluate Bright Boost for your context:",
       "engagementTitle": "Student Engagement",
-      "engagementDesc": "Are the current K-2 activities age-appropriate and motivating? Does the XP/avatar system feel rewarding? Can you see this scaling to 3-5 and 6-8?",
+      "engagementDesc": "Are the K–2 and grades 3–5 activities age-appropriate and motivating? Does the XP/avatar system feel rewarding? Can you see this expanding to grades 6–8?",
       "teacherUxTitle": "Teacher Usability",
       "teacherUxDesc": "Is it easy to create a class, assign work, and check progress? Does the prep checklist help with lesson planning?",
       "accessibilityTitle": "Accessibility & Equity",
@@ -318,15 +319,15 @@
     },
     "privacy": {
       "title": "Privacy & Trust",
-      "item1": "BrightBoost collects only learning progress data — no ads, no third-party tracking",
+      "item1": "The public demo does not ask for your name or require an account. Anonymous play counts and game results go to PostHog, our analytics provider.",
       "item2": "COPPA-aware design: early learner accounts (K-2) don't require email or passwords",
       "item3": "All data can be exported or deleted at the end of a pilot",
       "item4": "Audit logging tracks login, signup, and password reset events"
     },
     "ctaPrompt": "Ready to see it in action?",
     "ctaShowcase": "Watch the Showcase",
-    "ctaTeacher": "Try the Teacher View",
-    "footer": "BrightBoost is a project of the Bright Bots Initiative. Questions? Use the feedback button inside the app or contact your pilot coordinator."
+    "ctaTeacher": "Request evaluator access",
+    "footer": "Bright Boost is a project of Bright Bots Initiative. For evaluator access, use the request links above."
   },
   "auth": {
     "sessionUnavailable": "We couldn’t check your sign-in. Your session is saved. Please try again.",
@@ -2717,7 +2718,7 @@
       "notice2": "K–2 · Guided opens two parts first and unlocks more each time a child tests a change.",
       "notice3": "Test & Learn explains each bar that moved, in kid sentences, with the science underneath.",
       "notice4": "Share a Buddy by link; the link carries only the recipe, and opening it gives you a copy to remix.",
-      "note": "This is a prototype: everything you build stays in this browser, and nothing is sent anywhere. The link is unlisted, not private."
+      "note": "Your builds are saved in this browser. A shared link contains a copy of a build. Site activity is sent to our analytics provider. This prototype is unlisted, not private."
     },
     "water": {
       "title": "Try the pond",
@@ -3162,7 +3163,7 @@
     "floorOpen": "Ready to explore",
     "myCard": "My Bot Card",
     "teacher": "For a grown-up",
-    "teacherGuide": "Take turns coaching together. Every beat waits for you. Use Coach’s Corner to pause, change one example, and replay. Only examples and revisions are kept; match outcomes stay on this device.",
+    "teacherGuide": "Take turns coaching together. Every beat waits for you. Use Coach’s Corner to pause, change one example, and replay. Examples and versions are saved on this device. Completing the activity also saves a summary with your reflection to your account; individual match outcomes stay here.",
     "unplugged": "Away from the screen: draw pose cards and move cards. Let a partner match the examples and vote for a move. What happens when two cards disagree?",
     "imagine": "What kind of bot will you make?",
     "styles": {
@@ -3375,7 +3376,8 @@
   "home": {
     "meta": {
       "title": "Bright Boost — A world you build by learning",
-      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family."
+      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+      "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     },
     "eyebrow": "Free STEM learning platform",
     "displayLine": "Play. Build. Become.",
@@ -3406,7 +3408,7 @@
       "bandG35": "Grades 3–5",
       "metaTitle": "Try Bright Boost — free STEM game, no signup",
       "metaDescription": "Play a free Bright Boost robot mission for K–2 or grades 3–5. No account needed.",
-      "staysLocal": "This practice stays on this device. An adult can help you choose how to keep learning.",
+      "staysLocal": "Play without a name or an account. We send play counts and scores to PostHog, our counting helper.",
       "adultEntry": "For teachers and families"
     },
     "roles": {
@@ -3477,6 +3479,16 @@
       "feedback": "Give feedback",
       "contact": "Contact",
       "support": "Support Bright Boost"
+    }
+  },
+  "privacy": {
+    "usage": "We use account and learning data to run educational activities and track progress. We use website analytics to understand how visitors use the site and how it performs.",
+    "analytics": {
+      "title": "Analytics and service providers",
+      "posthog": "PostHog receives a browser identifier stored on your device, page visits, browser and device details, performance measurements, and usage events. Demo results include the game, score, stars, and play time; the demo asks for no name or account. Signed-in events include an account ID and role. Masked session recordings run only for identified teachers and administrators, not anonymous visitors or students.",
+      "fonts": "Google Fonts serves the Montserrat typeface and receives requests for its stylesheets and font files.",
+      "cloudflare": "Cloudflare Web Analytics receives the page URL, a page-load identifier, and performance measurements, including load timings, layout shifts, element selectors, and browser memory usage.",
+      "requests": "Requests to these providers also carry connection information, such as your IP address and browser request headers."
     }
   }
 }

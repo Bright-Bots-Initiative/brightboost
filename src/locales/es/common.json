@@ -267,11 +267,11 @@
   },
   "reviewers": {
     "backHome": "Volver al inicio",
-    "title": "Guía para Evaluadores de BrightBoost",
-    "subtitle": "Todo lo que necesitas para explorar, evaluar y compartir opiniones sobre BrightBoost — una plataforma bilingüe de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas.",
+    "title": "Guía para Evaluadores de Bright Boost",
+    "subtitle": "Todo lo que necesitas para explorar, evaluar y compartir opiniones sobre Bright Boost — una plataforma bilingüe de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas.",
     "whatIs": {
-      "title": "¿Qué es BrightBoost?",
-      "body": "BrightBoost es una plataforma bilingüe (inglés/español) de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas en IA, computación cuántica y biotecnología. La plataforma ofrece niveles escalonados para K-2, 3-5 y 6-8. El lanzamiento actual comienza con contenido K-2 — convirtiendo habilidades fundamentales como secuencias, patrones y resolución de problemas en aventuras interactivas basadas en juegos. Los maestros crean clases, asignan módulos y dan seguimiento al progreso. Los estudiantes juegan actividades, ganan XP y construyen confianza. Los grados 3-5 y 6-8 están planeados en futuras versiones.",
+      "title": "¿Qué es Bright Boost?",
+      "body": "Bright Boost es una plataforma de aprendizaje STEM K-8 que construye bases sólidas y prepara a los estudiantes para vías tecnológicas avanzadas en IA, computación cuántica y biotecnología. Las experiencias de aprendizaje para K–2 y los grados 3–5 ya están disponibles. Los grados 6–8 estarán disponibles próximamente. La disponibilidad en inglés y español varía según la actividad. Los docentes crean clases y siguen el progreso de los estudiantes. Los estudiantes juegan actividades, ganan XP y desarrollan confianza.",
       "feat1": "Aprendizaje con Juegos",
       "feat2": "Progreso en Tiempo Real",
       "feat3": "Gestión de Aula",
@@ -283,9 +283,10 @@
       "step1Desc": "Una presentación lista mostrando qué aprenden los estudiantes, logros de ejemplo y actividades para llevar a casa. No requiere inicio de sesión.",
       "openShowcase": "Abrir Exhibición",
       "step2Title": "Probar la Vista de Maestro (5 min)",
-      "step2Desc": "Inicia sesión con la cuenta demo de maestro para ver gestión de clases, recursos, la lista de preparación y el Centro PD.",
+      "step2Desc": "Solicita acceso de evaluación para explorar la gestión de clases, los recursos, la lista de preparación y el centro de desarrollo profesional.",
       "step3Title": "Probar la Vista de Estudiante (5 min)",
-      "step3Desc": "Inicia sesión con la cuenta demo de estudiante para jugar un módulo, ganar XP y ver el sistema de avatar."
+      "step3Desc": "Solicita al equipo una cuenta de estudiante para evaluar las actividades, los XP y los avatares. Un adulto organiza el acceso.",
+      "requestAccess": "Solicitar acceso"
     },
     "teachers": {
       "title": "Qué Pueden Hacer los Maestros",
@@ -306,9 +307,9 @@
     },
     "lookFor": {
       "title": "Qué Buscar como Evaluador",
-      "intro": "Al explorar, aquí hay cuatro perspectivas para evaluar BrightBoost en tu contexto:",
+      "intro": "Al explorar, aquí hay cuatro perspectivas para evaluar Bright Boost en tu contexto:",
       "engagementTitle": "Participación Estudiantil",
-      "engagementDesc": "¿Son las actividades actuales de K-2 apropiadas para la edad y motivadoras? ¿Se siente gratificante el sistema de XP/avatar? ¿Puedes ver esto escalando a 3-5 y 6-8?",
+      "engagementDesc": "¿Las actividades de K–2 y de los grados 3–5 son apropiadas y motivadoras para esas edades? ¿El sistema de XP y avatares resulta gratificante? ¿Puedes imaginar su ampliación a los grados 6–8?",
       "teacherUxTitle": "Facilidad para Maestros",
       "teacherUxDesc": "¿Es fácil crear una clase, asignar trabajo y revisar el progreso? ¿Ayuda la lista de preparación con la planificación?",
       "accessibilityTitle": "Accesibilidad y Equidad",
@@ -318,15 +319,15 @@
     },
     "privacy": {
       "title": "Privacidad y Confianza",
-      "item1": "BrightBoost solo recopila datos de progreso de aprendizaje — sin anuncios, sin rastreo de terceros",
+      "item1": "El demo público no pide tu nombre ni requiere una cuenta. Enviamos recuentos de partidas anónimas y resultados a PostHog, nuestro proveedor de análisis.",
       "item2": "Diseño consciente de COPPA: las cuentas de primaria temprana (K-2) no requieren correo electrónico ni contraseñas",
       "item3": "Todos los datos pueden exportarse o eliminarse al final de un piloto",
       "item4": "El registro de auditoría rastrea inicios de sesión, registros y restablecimientos de contraseña"
     },
     "ctaPrompt": "¿Listo para verlo en acción?",
     "ctaShowcase": "Ver la Exhibición",
-    "ctaTeacher": "Probar la Vista de Maestro",
-    "footer": "BrightBoost es un proyecto de la Iniciativa Bright Bots. ¿Preguntas? Usa el botón de opinión dentro de la app o contacta a tu coordinador de piloto."
+    "ctaTeacher": "Solicitar acceso de evaluación",
+    "footer": "Bright Boost es un proyecto de Bright Bots Initiative. Para obtener acceso de evaluación, usa los enlaces de solicitud de arriba."
   },
   "auth": {
     "sessionUnavailable": "No pudimos comprobar tu inicio de sesión. Tu sesión está guardada. Inténtalo de nuevo.",
@@ -2448,7 +2449,7 @@
       "notice2": "K–2 · Guiado abre dos partes primero y desbloquea más cada vez que un niño prueba un cambio.",
       "notice3": "Probar y aprender explica cada barra que se movió, en frases para niños, con la ciencia debajo.",
       "notice4": "Comparte un Buddy por enlace; el enlace solo lleva la receta, y al abrirlo recibes una copia para remezclar.",
-      "note": "Esto es un prototipo: todo lo que construyas se queda en este navegador y no se envía a ningún sitio. El enlace no está listado, pero no es privado."
+      "note": "Tus creaciones se guardan en este navegador. Un enlace compartido contiene una copia de una creación. La actividad del sitio se envía a nuestro proveedor de análisis. Este prototipo no está listado, pero no es privado."
     },
     "water": {
       "title": "Prueba el estanque",
@@ -2929,7 +2930,7 @@
     "floorOpen": "Listo para explorar",
     "myCard": "La tarjeta de mi bot",
     "teacher": "Para una persona adulta",
-    "teacherGuide": "Túrnense para entrenar juntos. Cada turno les espera. Usen el rincón para pausar, cambiar un ejemplo y volver a probar. Solo se guardan ejemplos y cambios; los resultados del juego quedan en este dispositivo.",
+    "teacherGuide": "Túrnense para entrenar juntos. Cada turno les espera. Usen el rincón para pausar, cambiar un ejemplo y volver a probar. Los ejemplos y las versiones se guardan en este dispositivo. Al completar la actividad, también se guarda en tu cuenta un resumen con tu reflexión; los resultados de cada partida se quedan aquí.",
     "unplugged": "Lejos de la pantalla: dibujen tarjetas de posturas y movimientos. Otra persona busca ejemplos iguales y vota por un movimiento. ¿Qué pasa si dos tarjetas no coinciden?",
     "imagine": "¿Qué tipo de bot crearás?",
     "styles": {
@@ -3142,7 +3143,8 @@
   "home": {
     "meta": {
       "title": "Bright Boost — Un mundo que construyes al aprender",
-      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia."
+      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+      "imageAlt": "La mascota de Bright Boost junto al lema en inglés A world you build by learning."
     },
     "eyebrow": "Plataforma de aprendizaje STEM gratuita",
     "displayLine": "Juega. Construye. Conviértete.",
@@ -3173,7 +3175,7 @@
       "bandG35": "3.º–5.º grado",
       "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
       "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
-      "staysLocal": "Esta práctica se queda en este dispositivo. Un adulto puede ayudarte a elegir cómo seguir aprendiendo.",
+      "staysLocal": "Juega sin dar tu nombre ni crear una cuenta. Enviamos cuántas veces juegas y tus puntos a PostHog, que nos ayuda a contar.",
       "adultEntry": "Para docentes y familias"
     },
     "roles": {
@@ -3244,6 +3246,16 @@
       "feedback": "Dar comentarios",
       "contact": "Contacto",
       "support": "Apoya a Bright Boost"
+    }
+  },
+  "privacy": {
+    "usage": "Usamos los datos de las cuentas y del aprendizaje para ofrecer actividades educativas y seguir el progreso. Usamos analíticas del sitio para entender cómo lo usan las personas y cómo funciona.",
+    "analytics": {
+      "title": "Analíticas y proveedores de servicios",
+      "posthog": "PostHog recibe un identificador del navegador guardado en tu dispositivo, visitas a páginas, detalles del navegador y del dispositivo, mediciones de rendimiento y eventos de uso. Los resultados de la demo incluyen el juego, la puntuación, las estrellas y el tiempo de juego; la demo no pide nombre ni cuenta. Los eventos de sesiones con una cuenta incluyen su identificador y rol. Las grabaciones de sesión con texto y campos ocultos se activan solo para docentes y administradores identificados, no para visitantes anónimos ni estudiantes.",
+      "fonts": "Google Fonts proporciona la tipografía Montserrat y recibe solicitudes de sus hojas de estilo y archivos de fuentes.",
+      "cloudflare": "Cloudflare Web Analytics recibe la URL de la página, un identificador de carga y mediciones de rendimiento, como tiempos de carga, cambios de diseño, selectores de elementos y uso de memoria del navegador.",
+      "requests": "Las solicitudes a estos proveedores también incluyen información de conexión, como tu dirección IP y las cabeceras de solicitud del navegador."
     }
   }
 }
