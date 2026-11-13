@@ -3,8 +3,10 @@
  * otherwise a silent no-op so local dev runs cleanly without a key.
  *
  * ANALYTICS PRIVACY RULES (K-8 product — COPPA-conscious)
- * - distinct_id is ALWAYS the database user ID, never email/name/PII
- * - Session recordings mask all inputs and text
+ * - Anonymous events use a browser ID; identified events use the DB user ID
+ * - Never identify with an email or name
+ * - Replay is off until a teacher/admin is identified; students are never recorded
+ * - Permitted recordings mask inputs/text; console capture and heatmaps are off
  * - Never track free-text content (homework, names, messages)
  * - Track behavior (events, counts, timings), not content
  * - When adding events, pass IDs and enums, not personal data
@@ -204,6 +206,22 @@ export type AnalyticsEvent =
 
 let initialized = false;
 let initializationRequested = false;
+type Identity = {
+  userId: string;
+  role: AnalyticsRole;
+  props: Record<string, unknown>;
+};
+let pendingIdentity: Identity | null = null;
+let pendingReset = false;
+
+function applyIdentity({ userId, role, props }: Identity): void {
+  const mayRecord = role === "teacher" || role === "admin";
+  // Stop before identifying a child, including a teacher → student transition
+  // on a shared device. Extra properties cannot override the role argument.
+  if (!mayRecord) posthog.stopSessionRecording();
+  posthog.identify(userId, { ...props, role });
+  if (mayRecord) posthog.startSessionRecording();
+}
 
 function disabled(): boolean {
   return !POSTHOG_KEY || !initialized;
@@ -239,9 +257,16 @@ export function initAnalytics(): void {
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
-    // Session replay is on, but the masking config below keeps it safe for
-    // a children's product — no input values, no rendered text.
-    disable_session_recording: false,
+    // Checked against posthog-js 1.379.3's installed PostHogConfig types.
+    // Client settings override remotely enabled capture for these features.
+    disable_session_recording: true,
+    capture_heatmaps: false,
+    capture_dead_clicks: false,
+    disable_surveys: true,
+    enable_recording_console_log: false,
+    // No anonymous/student/parent replay. Only identifyUser(teacher/admin)
+    // starts it, and resetAnalytics stops it before clearing the identity.
+    // Those permitted recordings still mask all inputs and rendered text.
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: "*",
@@ -249,6 +274,16 @@ export function initAnalytics(): void {
     persistence: "localStorage",
     loaded: () => {
       initialized = true;
+      if (pendingReset) {
+        posthog.stopSessionRecording();
+        posthog.reset();
+        pendingReset = false;
+      }
+      if (pendingIdentity) {
+        const identity = pendingIdentity;
+        pendingIdentity = null;
+        applyIdentity(identity);
+      }
       console.info("[analytics] PostHog ready (events will flow)");
     },
   });
@@ -260,13 +295,24 @@ export function identifyUser(
   role: AnalyticsRole,
   props: Record<string, unknown> = {},
 ): void {
-  if (disabled()) return;
-  posthog.identify(userId, { role, ...props });
+  if (!POSTHOG_KEY) return;
+  const identity = { userId, role, props: { ...props } };
+  if (!initialized) {
+    pendingIdentity = identity;
+    return;
+  }
+  applyIdentity(identity);
 }
 
 /** Clear the identified user on logout. */
 export function resetAnalytics(): void {
-  if (disabled()) return;
+  pendingIdentity = null;
+  if (!POSTHOG_KEY) return;
+  if (!initialized) {
+    pendingReset = true;
+    return;
+  }
+  posthog.stopSessionRecording();
   posthog.reset();
 }
 

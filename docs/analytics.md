@@ -1,5 +1,7 @@
 # Bright Boost Analytics
 
+> **Canonical for:** analytics events and capture policy. Last verified against code: 2026-11-13.
+
 Funnel instrumentation, scoreboard, and tooling notes for the K-8 product.
 
 ## Tooling
@@ -13,19 +15,23 @@ PostHog is the exploration tool — slice events by property, build funnels, run
 
 ## Environment variables
 
-Set in Railway for production; copy to `.env` locally if you want events to flow during dev.
+The owner manages deployed analytics configuration. Do not commit values or paste
+credentials, project identifiers, or dashboard/replay links into logs or examples.
 
-```
-# Frontend (public — safe to ship in the bundle)
-VITE_POSTHOG_KEY=phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-VITE_POSTHOG_HOST=https://us.i.posthog.com
+| Variable            | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `VITE_POSTHOG_KEY`  | Enables the frontend SDK when supplied at build time           |
+| `VITE_POSTHOG_HOST` | HTTPS ingestion origin; defaults to `https://us.i.posthog.com` |
+| `POSTHOG_KEY`       | Enables the backend analytics shim                             |
+| `POSTHOG_HOST`      | Backend ingestion host                                         |
 
-# Backend (same key)
-POSTHOG_KEY=phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-POSTHOG_HOST=https://us.i.posthog.com
-```
+The frontend accepts an HTTPS origin with an optional root slash, but no user info,
+other path, query, or fragment. An invalid host produces one warning naming
+`VITE_POSTHOG_HOST`, without its value, and uses the default. Initialization logs
+only the accepted origin. An unset host uses the default without a warning.
 
-When unset, the backend shim (`backend/src/services/analytics.ts`) silently no-ops at runtime and prints one info log so the absence is obvious. The frontend shim (`src/lib/analytics.ts`) prints a **warning** with a Railway/Dockerfile pointer when the key is missing — silent prod failures are the #1 thing that hides itself.
+Without a key, the backend shim silently no-ops and prints an informational log;
+the frontend prints one warning and does not initialize the SDK.
 
 ### Why the frontend env vars require a Docker rebuild
 
@@ -37,22 +43,39 @@ Vite **inlines `VITE_*` variables at BUILD time, not runtime**. That means:
 
 The backend Dockerfile reads `process.env.POSTHOG_KEY` at runtime, so backend env vars take effect on the next container start — no rebuild required.
 
-### Verifying the key reached the bundle
+### Verifying initialization without exposing configuration
 
-```bash
-# Local build with a probe key, then grep the dist output:
-VITE_POSTHOG_KEY=phc_probe_xyz npm run build
-grep -rl "phc_probe_xyz" dist/   # should print at least one chunk path
-```
-
-If the grep finds nothing, the build isn't inlining the variable — check Dockerfile.frontend's ARG list and the Railway service variables.
+Use the origin-only initialization log and the ready log to distinguish an enabled
+SDK from the missing-key warning. Do not search for or print a deployed key from a
+bundle. Tests use a noncredential in-memory marker and a mocked SDK.
 
 ## Privacy rules (COPPA-conscious)
 
 This is a children's product. **These rules are non-negotiable:**
 
-- `distinct_id` is ALWAYS the DB user id (`User.id`). Never email, name, or any PII.
-- Session recordings mask all input values (`maskAllInputs: true`) and all rendered text (`maskTextSelector: '*'`). Replays show interaction shape, not content.
+- Anonymous events use the SDK's browser identifier. After `identifyUser`, the
+  identifier is the DB user ID (`User.id`), never an email or name. PostHog can
+  associate earlier anonymous events with that later identified user.
+- Replay starts disabled (`disable_session_recording: true`). Only
+  `identifyUser` with the role `teacher` or `admin` starts recording. Anonymous
+  visitors, students, and parents are not recorded. Persisted SDK identity alone
+  does not enable recording on a new page load.
+- Identifying a student or parent stops recording before changing identity.
+  `resetAnalytics()` stops recording before resetting to an anonymous identity.
+  Calls made during SDK loading are applied after loading; reset cancels a
+  pending identification so a previous teacher cannot start a delayed recording.
+- Permitted recordings mask all input values (`maskAllInputs: true`) and rendered
+  text (`maskTextSelector: '*'`). Console capture is disabled for every role
+  (`enable_recording_console_log: false`).
+- Heatmaps (`capture_heatmaps: false`), dead-click capture
+  (`capture_dead_clicks: false`), and surveys (`disable_surveys: true`) are disabled
+  in the client configuration. These names were checked against the installed
+  `posthog-js` 1.379.3 types; `capture_heatmaps` is its primary heatmap control.
+- Anonymous pageviews, page-leave events, and explicit demo funnel events remain
+  enabled. Performance measurements may also be enabled by the provider's remote
+  configuration. Demo completion includes game ID, score, stars, and elapsed
+  seconds. The demo does not ask for a name or require an account. This is not a
+  promise that the browser makes no third-party requests.
 - Never track free-text content (homework answers, names typed into fields, messages).
 - Track behavior (counts, timings, IDs, enum values) — not content.
 - When adding a new event, pass IDs and enums, not personal data.
@@ -61,34 +84,34 @@ The comment block at the top of `src/lib/analytics.ts` enforces the same rules i
 
 ## Event taxonomy
 
-| Event                                       | When                                                                                                                                                                                               | Properties                                                                                                                        | Surface         |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `account_registered`                        | Signup success (email or cohort code)                                                                                                                                                              | `role`, `signup_method`                                                                                                           | client + server |
-| `login`                                     | Auth success (any method)                                                                                                                                                                          | `role`                                                                                                                            | client + server |
-| `class_created`                             | Teacher creates a class                                                                                                                                                                            | `class_id`, `grade_band`                                                                                                          | client + server |
-| `student_joined_class`                      | Student joins via class code                                                                                                                                                                       | `class_id`, `join_method`                                                                                                         | client + server |
-| `game_started`                              | One authorized curriculum activity opens (one per play).                                                                                                                                           | `attempt_id`, `game_id`, `module_slug`, `activity_id`, `grade_band`                                                               | client only     |
-| `game_completed`                            | First committed completion per (student, activity).                                                                                                                                                | `progress_id`, `attempt_id` (when supplied), `game_id`, `module_slug`, `activity_id`, `score`, `time_spent_seconds`, `grade_band` | server only     |
-| `game_attempt_completed`                    | One saved finish per (progress row, attempt ID); includes first plays and replays.                                                                                                                 | Same as `game_completed`, plus `is_replay`                                                                                        | server only     |
-| `pvp_match_started` / `pvp_match_completed` | Standalone Spacewar arena opens / a match ends; outside curriculum metrics.                                                                                                                        | `game_id=spacewar_pvp`; finishes include `score`, `time_spent_seconds`                                                            | client only     |
-| `demo_page_viewed`                          | Public `/try` route mounts                                                                                                                                                                         | `source`                                                                                                                          | client only     |
-| `demo_game_started`                         | First interaction inside the demo game area (the Start Mission tap in practice)                                                                                                                    | `game_id`                                                                                                                         | client only     |
-| `demo_game_completed`                       | Demo game finished (GameShell results → Finish)                                                                                                                                                    | `game_id`, `score`, `stars`, `time_spent_seconds`                                                                                 | client only     |
-| `demo_replayed`                             | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, sessions still visible in PostHog) | `game_id`                                                                                                                         | client only     |
-| `demo_signup_cta_clicked`                   | Conversion CTA tapped on `/try`                                                                                                                                                                    | `placement` (`results` \| `hero_teacher_whisper`)                                                                                 | client only     |
-| `experiment_previewed`                      | Safe Exploration controls enter `preview` (older band only)                                                                                                                                        | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
-| `experiment_tried`                          | A Safe Exploration run finishes with a learner outcome                                                                                                                                             | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
-| `experiment_kept`                           | Learner keeps the experiment (the one consequential action)                                                                                                                                        | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
-| `experiment_restored`                       | Learner returns to the preserved baseline ("Go back" / "Restore")                                                                                                                                  | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
-| `experiment_branched`                       | Learner saves the experiment as a new version, original untouched (older band only)                                                                                                                | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
-| `experiment_failed`                         | A Safe Exploration handler reports or throws an infrastructure failure                                                                                                                             | `surface_id`, `band`, `attempt`, `error_kind` (`recoverable` \| `unexpected`)                                                     | client only     |
-| `guided_alternatives_opened`                | Modules page: learner opens "Try a different game"                                                                                                                                                 | `pool_size`                                                                                                                       | client only     |
-| `guided_revisit_opened`                     | Modules page: learner opens "Play one again"                                                                                                                                                       | `pool_size`                                                                                                                       | client only     |
-| `guided_surprise_offered`                   | "Surprise me" discloses a destination — **before** any navigation                                                                                                                                  | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
-| `guided_surprise_rerolled`                  | Learner asks for a different destination ("Show me a different one")                                                                                                                               | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
-| `guided_surprise_accepted`                  | Learner accepts the disclosed destination and is navigated to it                                                                                                                                   | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
-| `guided_surprise_cancelled`                 | Learner declines the surprise; nothing was navigated to                                                                                                                                            | `pool_size`                                                                                                                       | client only     |
-| `guided_surprise_empty`                     | "Surprise me" had nothing to offer — a safe state, not a failure                                                                                                                                   | —                                                                                                                                 | client only     |
+| Event                                       | When                                                                                                                                                                                                           | Properties                                                                                                                        | Surface         |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `account_registered`                        | Signup success (email or cohort code)                                                                                                                                                                          | `role`, `signup_method`                                                                                                           | client + server |
+| `login`                                     | Auth success (any method)                                                                                                                                                                                      | `role`                                                                                                                            | client + server |
+| `class_created`                             | Teacher creates a class                                                                                                                                                                                        | `class_id`, `grade_band`                                                                                                          | client + server |
+| `student_joined_class`                      | Student joins via class code                                                                                                                                                                                   | `class_id`, `join_method`                                                                                                         | client + server |
+| `game_started`                              | One authorized curriculum activity opens (one per play).                                                                                                                                                       | `attempt_id`, `game_id`, `module_slug`, `activity_id`, `grade_band`                                                               | client only     |
+| `game_completed`                            | First committed completion per (student, activity).                                                                                                                                                            | `progress_id`, `attempt_id` (when supplied), `game_id`, `module_slug`, `activity_id`, `score`, `time_spent_seconds`, `grade_band` | server only     |
+| `game_attempt_completed`                    | One saved finish per (progress row, attempt ID); includes first plays and replays.                                                                                                                             | Same as `game_completed`, plus `is_replay`                                                                                        | server only     |
+| `pvp_match_started` / `pvp_match_completed` | Standalone Spacewar arena opens / a match ends; outside curriculum metrics.                                                                                                                                    | `game_id=spacewar_pvp`; finishes include `score`, `time_spent_seconds`                                                            | client only     |
+| `demo_page_viewed`                          | Public `/try` route mounts                                                                                                                                                                                     | `source`                                                                                                                          | client only     |
+| `demo_game_started`                         | First interaction inside the demo game area (the Start Mission tap in practice)                                                                                                                                | `game_id`                                                                                                                         | client only     |
+| `demo_game_completed`                       | Demo game finished (GameShell results → Finish)                                                                                                                                                                | `game_id`, `score`, `stars`, `time_spent_seconds`                                                                                 | client only     |
+| `demo_replayed`                             | "Play again" on the demo conversion screen (GameShell-internal replays on its results screen are not observable without modifying GameShell — known undercount, event-based sessions still visible in PostHog) | `game_id`                                                                                                                         | client only     |
+| `demo_signup_cta_clicked`                   | Conversion CTA tapped on `/try`                                                                                                                                                                                | `placement` (`results` \| `hero_teacher_whisper`)                                                                                 | client only     |
+| `experiment_previewed`                      | Safe Exploration controls enter `preview` (older band only)                                                                                                                                                    | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
+| `experiment_tried`                          | A Safe Exploration run finishes with a learner outcome                                                                                                                                                         | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
+| `experiment_kept`                           | Learner keeps the experiment (the one consequential action)                                                                                                                                                    | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
+| `experiment_restored`                       | Learner returns to the preserved baseline ("Go back" / "Restore")                                                                                                                                              | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
+| `experiment_branched`                       | Learner saves the experiment as a new version, original untouched (older band only)                                                                                                                            | `surface_id`, `band`, `attempt`                                                                                                   | client only     |
+| `experiment_failed`                         | A Safe Exploration handler reports or throws an infrastructure failure                                                                                                                                         | `surface_id`, `band`, `attempt`, `error_kind` (`recoverable` \| `unexpected`)                                                     | client only     |
+| `guided_alternatives_opened`                | Modules page: learner opens "Try a different game"                                                                                                                                                             | `pool_size`                                                                                                                       | client only     |
+| `guided_revisit_opened`                     | Modules page: learner opens "Play one again"                                                                                                                                                                   | `pool_size`                                                                                                                       | client only     |
+| `guided_surprise_offered`                   | "Surprise me" discloses a destination — **before** any navigation                                                                                                                                              | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
+| `guided_surprise_rerolled`                  | Learner asks for a different destination ("Show me a different one")                                                                                                                                           | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
+| `guided_surprise_accepted`                  | Learner accepts the disclosed destination and is navigated to it                                                                                                                                               | `module_slug`, `why_available`, `pool_size`, `reroll_count`, `date_bucket`                                                        | client only     |
+| `guided_surprise_cancelled`                 | Learner declines the surprise; nothing was navigated to                                                                                                                                                        | `pool_size`                                                                                                                       | client only     |
+| `guided_surprise_empty`                     | "Surprise me" had nothing to offer — a safe state, not a failure                                                                                                                                               | —                                                                                                                                 | client only     |
 
 `grade_band` values: `k2`, `g3_5`, `g6_8` (whatever the student's class is set to).
 
@@ -197,7 +220,7 @@ These steps happen in the PostHog dashboard, not in code. Do them once per envir
      WHERE the demo path leaks.
 2. **Retention cohort**: weekly retention on `login`.
 3. **Dashboard**: pin all of the above on a single "K-8 Funnel" dashboard so reviewers see them at a glance.
-4. **Session replay**: keep on. Confirm the masking config in `src/lib/analytics.ts` is taking effect by skimming a recording — all text and inputs should be solid blocks.
+4. **Session replay**: the client permits it only after teacher/admin identification. Confirm permitted recordings mask text and inputs. Anonymous/student replay, heatmaps, console capture, dead-click capture, and surveys must stay disabled by the client policy above. Project settings remain owner-managed.
 
 ## Adding a new event
 
@@ -210,16 +233,15 @@ These steps happen in the PostHog dashboard, not in code. Do them once per envir
 
 ## Verifying locally
 
-```bash
-# Without a key — should print a single info message, no errors
-unset VITE_POSTHOG_KEY POSTHOG_KEY
-npm run dev
+Run `npm run test:unit -- src/lib/__tests__/analytics.test.ts`. The suite checks
+host validation and sanitized logs, enabled-SDK anonymous/student behavior,
+teacher/admin recording, role transitions, delayed loading, reset ordering, and
+the retained anonymous demo payload. Its SDK mock makes no provider requests and
+uses no real key. No environment file or deployed configuration needs editing.
 
-# With a key — events should appear in PostHog Live Events within seconds
-echo 'VITE_POSTHOG_KEY=phc_xxx' >> .env.local
-npm run dev
-# Register a test account, start a game, watch PostHog
-```
+Browser entry checks permit the disclosed provider hosts and reject session-replay
+requests on anonymous visits. A keyless browser build alone is not proof of the
+enabled analytics policy; use the enabled-SDK tests as well.
 
 ## Baseline
 

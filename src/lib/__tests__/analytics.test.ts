@@ -89,3 +89,144 @@ describe("analytics ingestion host", () => {
     },
   );
 });
+
+function finishLoading() {
+  sdk.init.mock.calls[0][1].loaded();
+}
+
+describe("analytics recording policy", () => {
+  it("keeps anonymous recording, heatmaps, console capture, dead clicks and surveys off", async () => {
+    await initialize();
+    expect(sdk.init.mock.calls[0][1]).toMatchObject({
+      disable_session_recording: true,
+      capture_heatmaps: false,
+      capture_dead_clicks: false,
+      disable_surveys: true,
+      enable_recording_console_log: false,
+      session_recording: { maskAllInputs: true, maskTextSelector: "*" },
+    });
+    finishLoading();
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+  });
+
+  it.each(["student", "parent"] as const)(
+    "does not record a %s",
+    async (role) => {
+      const analytics = await initialize();
+      finishLoading();
+      analytics.identifyUser("fixture-user", role, { role: "admin" });
+      expect(sdk.identify).toHaveBeenCalledWith("fixture-user", { role });
+      expect(sdk.stopSessionRecording).toHaveBeenCalledTimes(1);
+      expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["teacher", "admin"] as const)(
+    "starts only after identifying a %s",
+    async (role) => {
+      const analytics = await initialize();
+      finishLoading();
+      expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+      analytics.identifyUser("fixture-user", role);
+      expect(sdk.identify).toHaveBeenCalledWith("fixture-user", { role });
+      expect(sdk.startSessionRecording).toHaveBeenCalledTimes(1);
+      expect(sdk.identify.mock.invocationCallOrder[0]).toBeLessThan(
+        sdk.startSessionRecording.mock.invocationCallOrder[0],
+      );
+    },
+  );
+
+  it("stops a teacher recording before identifying a student", async () => {
+    const analytics = await initialize();
+    finishLoading();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    analytics.identifyUser("fixture-student", "student");
+    expect(sdk.startSessionRecording).toHaveBeenCalledTimes(1);
+    expect(sdk.stopSessionRecording).toHaveBeenCalledTimes(1);
+    expect(sdk.stopSessionRecording.mock.invocationCallOrder[0]).toBeLessThan(
+      sdk.identify.mock.invocationCallOrder[1],
+    );
+  });
+
+  it("stops recording before reset creates a new anonymous identity", async () => {
+    const analytics = await initialize();
+    finishLoading();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    analytics.resetAnalytics();
+    expect(sdk.reset).toHaveBeenCalledTimes(1);
+    expect(sdk.stopSessionRecording).toHaveBeenCalledTimes(1);
+    expect(sdk.stopSessionRecording.mock.invocationCallOrder[0]).toBeLessThan(
+      sdk.reset.mock.invocationCallOrder[0],
+    );
+    analytics.track({ kind: "homepage_viewed" });
+    expect(sdk.capture).toHaveBeenCalledWith("homepage_viewed", {});
+    expect(sdk.startSessionRecording).toHaveBeenCalledTimes(1);
+  });
+
+  it("defers teacher identification and recording until the SDK has loaded", async () => {
+    const analytics = await initialize();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    expect(sdk.identify).not.toHaveBeenCalled();
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+    finishLoading();
+    expect(sdk.identify).toHaveBeenCalledWith("fixture-teacher", {
+      role: "teacher",
+    });
+    expect(sdk.startSessionRecording).toHaveBeenCalledTimes(1);
+  });
+
+  it("a reset during loading cancels queued recording and clears the persisted identity", async () => {
+    const analytics = await initialize();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    analytics.resetAnalytics();
+    finishLoading();
+    expect(sdk.identify).not.toHaveBeenCalled();
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+    expect(sdk.stopSessionRecording).toHaveBeenCalledTimes(1);
+    expect(sdk.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("a later student identity replaces a queued teacher identity", async () => {
+    const analytics = await initialize();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    analytics.identifyUser("fixture-student", "student");
+    finishLoading();
+    expect(sdk.identify).toHaveBeenCalledExactlyOnceWith("fixture-student", {
+      role: "student",
+    });
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+  });
+
+  it("retains the anonymous demo completion payload", async () => {
+    const analytics = await initialize();
+    finishLoading();
+    analytics.track({
+      kind: "demo_game_completed",
+      game_id: "tank_trek",
+      score: 9,
+      stars: 3,
+      time_spent_seconds: 42,
+    });
+    expect(sdk.capture).toHaveBeenCalledWith("demo_game_completed", {
+      game_id: "tank_trek",
+      score: 9,
+      stars: 3,
+      time_spent_seconds: 42,
+    });
+    expect(sdk.identify).not.toHaveBeenCalled();
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+  });
+
+  it("stays inert without analytics configured", async () => {
+    vi.stubEnv("VITE_POSTHOG_KEY", undefined);
+    const analytics = await initialize();
+    analytics.identifyUser("fixture-teacher", "teacher");
+    analytics.resetAnalytics();
+    analytics.track({ kind: "homepage_viewed" });
+    expect(sdk.init).not.toHaveBeenCalled();
+    expect(sdk.identify).not.toHaveBeenCalled();
+    expect(sdk.startSessionRecording).not.toHaveBeenCalled();
+    expect(sdk.reset).not.toHaveBeenCalled();
+    expect(sdk.capture).not.toHaveBeenCalled();
+  });
+});
