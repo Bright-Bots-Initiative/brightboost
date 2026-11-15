@@ -9,10 +9,18 @@
  * is what actually guarantees single-award. LATCH-1 therefore asserts the
  * POST count, not any reward semantics.
  */
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
+import { Profiler } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { STEM_SET_1_IDS, STEM_SET_2_MODULE_SLUGS } from "@/constants/stemSets";
 import { track } from "@/lib/analytics";
 vi.mock("@/lib/analytics", async (original) => ({
   ...(await original<typeof import("@/lib/analytics")>()),
@@ -30,6 +38,8 @@ import zhCN from "@/locales/zh-CN/common.json";
 vi.mock("@/services/api", () => ({
   api: {
     getModule: vi.fn(),
+    getProgress: vi.fn(),
+    getStudentAssignments: vi.fn(),
     completeActivity: vi.fn(),
     getGamePersonalBests: vi.fn(),
     getStudentCourses: vi.fn().mockResolvedValue([]),
@@ -195,6 +205,84 @@ describe("completion latch (#832 item 4)", () => {
       ).toBeNull(),
     );
     expect(api.completeActivity).toHaveBeenCalledTimes(1);
+  });
+
+  it("LATCH-4: a click in the first commit that shows Mark Complete posts one completion", async () => {
+    // A Set 2 module's access waits on progress, which this test holds. Once
+    // it is released, the activity and its Mark Complete button first render
+    // in the same commit — the window in which a tap used to be dropped.
+    const slug = STEM_SET_2_MODULE_SLUGS[0];
+    vi.mocked(api.getModule).mockResolvedValue({
+      ...mockModule,
+      slug,
+      level: "K-2",
+      published: true,
+    });
+    let releaseProgress: (v: unknown) => void = () => {};
+    vi.mocked(api.getProgress).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseProgress = resolve;
+        }),
+    );
+    vi.mocked(api.completeActivity).mockResolvedValue(COMPLETION_RESPONSE);
+
+    // Profiler's onRender runs inside the commit, before passive effects, so
+    // this clicks the button in the very commit that first paints it.
+    let clicked = false;
+    const clickOnFirstSight = () => {
+      if (clicked) return;
+      const button = screen.queryByRole("button", { name: "Mark Complete" });
+      if (!button) return;
+      clicked = true;
+      button.click();
+    };
+
+    render(
+      <Profiler id="first-commit" onRender={clickOnFirstSight}>
+        <TooltipProvider>
+          <MemoryRouter
+            initialEntries={[
+              `/student/modules/${slug}/lessons/l-1/activities/a-1`,
+            ]}
+          >
+            <Routes>
+              <Route
+                path="/student/modules/:slug/lessons/:lessonId/activities/:activityId"
+                element={<ActivityPlayer />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </TooltipProvider>
+      </Profiler>,
+    );
+
+    // The async act flushes in a macrotask, after getModule's settle chain
+    // has drained, so only the held progress request stands between the
+    // page and the activity.
+    await act(async () => {});
+    expect(api.getProgress).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
+
+    await act(async () => {
+      releaseProgress({
+        progress: STEM_SET_1_IDS.map((activityId) => ({
+          activityId,
+          status: "COMPLETED",
+        })),
+      });
+    });
+
+    expect(clicked).toBe(true);
+    await waitFor(() => expect(api.completeActivity).toHaveBeenCalledTimes(1));
+    const starts = vi
+      .mocked(track)
+      .mock.calls.map(([action]) => action)
+      .filter((action) => action.kind === "game_started");
+    expect(starts).toHaveLength(1);
+    expect(vi.mocked(api.completeActivity).mock.calls[0][0].attemptId).toBe(
+      starts[0].attempt_id,
+    );
   });
 });
 
