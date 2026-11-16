@@ -15,7 +15,16 @@
  * `src/components/home/__tests__/PublicDemo.test.tsx`.
  */
 import * as React from "react";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import {
@@ -498,15 +507,32 @@ describe("Index (public / route)", () => {
   });
 
   describe("metadata", () => {
-    it("sets title, description and a query-free canonical, then restores them", () => {
-      document.title = "previous title";
-      const { unmount } = renderPage("/?utm_campaign=spring");
+    let previousHead: string;
+    beforeEach(() => {
+      previousHead = document.head.innerHTML;
+      const html = readFileSync(
+        path.resolve(__dirname, "../../../index.html"),
+        "utf8",
+      );
+      document.head.innerHTML = new DOMParser().parseFromString(
+        html,
+        "text/html",
+      ).head.innerHTML;
+    });
+    afterEach(() => {
+      cleanup();
+      document.head.innerHTML = previousHead;
+    });
 
+    it("updates the static tags in place and restores them on unmount", () => {
+      const staticTags = [
+        ...document.head.querySelectorAll("title, meta, link"),
+      ];
+      const originalMarkup = staticTags.map((node) => node.outerHTML);
+      const { unmount } = renderPage("/?utm_campaign=spring");
       expect(document.title).toBe(
         "Bright Boost — A world you build by learning",
       );
-      // The approved lede, which is also what `index.html` ships statically —
-      // see `staticShellMeta.test.tsx` for the agreement between the two.
       expect(
         document.head
           .querySelector('meta[name="description"]')
@@ -519,19 +545,25 @@ describe("Index (public / route)", () => {
           .querySelector('meta[property="og:title"]')
           ?.getAttribute("content"),
       ).toBe("Bright Boost — A world you build by learning");
-
-      const canonical = document.head.querySelector('link[rel="canonical"]');
-      expect(canonical?.getAttribute("href")).toBe(
-        `${window.location.origin}/`,
-      );
-      expect(canonical?.getAttribute("href")).not.toContain("utm_campaign");
-
-      unmount();
-      expect(document.title).toBe("previous title");
-      expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
       expect(
-        document.head.querySelector('meta[property="og:title"]'),
-      ).toBeNull();
+        document.head
+          .querySelector('link[rel="canonical"]')
+          ?.getAttribute("href"),
+      ).toBe("https://brightboost.org/");
+      expect([...document.head.querySelectorAll("title, meta, link")]).toEqual(
+        staticTags,
+      );
+      expect(
+        document.head
+          .querySelector('meta[property="og:url"]')
+          ?.getAttribute("content"),
+      ).toBe("https://brightboost.org/");
+      unmount();
+      expect(
+        [...document.head.querySelectorAll("title, meta, link")].map(
+          (node) => node.outerHTML,
+        ),
+      ).toEqual(originalMarkup);
     });
 
     it("emits structured data with no education level and no invented nonprofit URL", () => {

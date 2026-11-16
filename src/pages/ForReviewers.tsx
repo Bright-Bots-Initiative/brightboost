@@ -29,6 +29,8 @@ const Section: React.FC<{
   </div>
 );
 
+const REVIEW_ACCESS_EMAIL = "fenixvisions@gmail.com";
+
 const ForReviewers: React.FC = () => {
   const { t } = useTranslation();
 
@@ -57,11 +59,9 @@ const ForReviewers: React.FC = () => {
         </div>
 
         <div className="space-y-5">
-          {/* What is BrightBoost */}
+          {/* What is Bright Boost */}
           <Section
-            icon={
-              <GraduationCap className="w-5 h-5 text-brightboost-blue" />
-            }
+            icon={<GraduationCap className="w-5 h-5 text-brightboost-blue" />}
             title={t("reviewers.whatIs.title")}
           >
             <p className="text-sm text-gray-700 leading-relaxed mb-3">
@@ -89,9 +89,7 @@ const ForReviewers: React.FC = () => {
 
           {/* How to Explore */}
           <Section
-            icon={
-              <Presentation className="w-5 h-5 text-brightboost-blue" />
-            }
+            icon={<Presentation className="w-5 h-5 text-brightboost-blue" />}
             title={t("reviewers.explore.title")}
           >
             <div className="space-y-3 text-sm text-gray-700">
@@ -122,13 +120,12 @@ const ForReviewers: React.FC = () => {
                     {t("reviewers.explore.step2Title")}
                   </p>
                   <p>{t("reviewers.explore.step2Desc")}</p>
-                  <div className="bg-gray-50 rounded-lg p-2 mt-1 font-mono text-xs">
-                    <p>
-                      {t("landing.demoTeacher")}:{" "}
-                      <strong>teacher@school.com</strong> /{" "}
-                      <strong>password123</strong>
-                    </p>
-                  </div>
+                  <a
+                    href={`mailto:${REVIEW_ACCESS_EMAIL}`}
+                    className="inline-flex items-center gap-1 text-brightboost-blue hover:underline mt-2 font-medium"
+                  >
+                    {t("reviewers.explore.requestAccess")}
+                  </a>
                 </div>
               </div>
               <div className="flex gap-3 items-start">
@@ -140,13 +137,12 @@ const ForReviewers: React.FC = () => {
                     {t("reviewers.explore.step3Title")}
                   </p>
                   <p>{t("reviewers.explore.step3Desc")}</p>
-                  <div className="bg-gray-50 rounded-lg p-2 mt-1 font-mono text-xs">
-                    <p>
-                      {t("landing.demoStudent")}:{" "}
-                      <strong>student@test.com</strong> /{" "}
-                      <strong>password</strong>
-                    </p>
-                  </div>
+                  <a
+                    href={`mailto:${REVIEW_ACCESS_EMAIL}`}
+                    className="inline-flex items-center gap-1 text-brightboost-blue hover:underline mt-2 font-medium"
+                  >
+                    {t("reviewers.explore.requestAccess")}
+                  </a>
                 </div>
               </div>
             </div>
@@ -154,9 +150,7 @@ const ForReviewers: React.FC = () => {
 
           {/* What Teachers Can Do */}
           <Section
-            icon={
-              <ClipboardCheck className="w-5 h-5 text-brightboost-blue" />
-            }
+            icon={<ClipboardCheck className="w-5 h-5 text-brightboost-blue" />}
             title={t("reviewers.teachers.title")}
           >
             <ul className="text-sm text-gray-700 space-y-1.5 list-disc list-inside">
@@ -185,9 +179,7 @@ const ForReviewers: React.FC = () => {
 
           {/* What to Look For */}
           <Section
-            icon={
-              <ShieldCheck className="w-5 h-5 text-brightboost-blue" />
-            }
+            icon={<ShieldCheck className="w-5 h-5 text-brightboost-blue" />}
             title={t("reviewers.lookFor.title")}
           >
             <p className="text-sm text-gray-700 mb-3">
@@ -214,9 +206,7 @@ const ForReviewers: React.FC = () => {
 
           {/* Privacy & Trust */}
           <Section
-            icon={
-              <ShieldCheck className="w-5 h-5 text-brightboost-green" />
-            }
+            icon={<ShieldCheck className="w-5 h-5 text-brightboost-green" />}
             title={t("reviewers.privacy.title")}
           >
             <ul className="text-sm text-gray-700 space-y-1.5 list-disc list-inside">
@@ -243,9 +233,7 @@ const ForReviewers: React.FC = () => {
 
           {/* CTA */}
           <div className="text-center pt-4 pb-8 space-y-3">
-            <p className="text-sm text-gray-600">
-              {t("reviewers.ctaPrompt")}
-            </p>
+            <p className="text-sm text-gray-600">{t("reviewers.ctaPrompt")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 to="/showcase"
@@ -253,12 +241,12 @@ const ForReviewers: React.FC = () => {
               >
                 {t("reviewers.ctaShowcase")}
               </Link>
-              <Link
-                to="/teacher-login"
+              <a
+                href={`mailto:${REVIEW_ACCESS_EMAIL}`}
                 className="rounded-xl px-6 py-3 bg-white border-2 border-brightboost-blue text-brightboost-navy font-bold hover:bg-brightboost-lightblue/20 transition-colors"
               >
                 {t("reviewers.ctaTeacher")}
-              </Link>
+              </a>
             </div>
           </div>
         </div>

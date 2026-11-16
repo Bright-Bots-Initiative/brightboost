@@ -1,6 +1,5 @@
 /**
- * Public entry — accessibility, legacy compatibility, and the promise that
- * these pages talk to nobody.
+ * Public entry — accessibility, legacy compatibility, and disclosed providers.
  *
  * `cypress-axe` is imported here rather than in `cypress/support/e2e.ts`: that
  * support file is shared by every spec, and this is the only one that needs
@@ -10,28 +9,41 @@
 import "cypress-axe";
 
 /**
- * The public entry pages request nothing off this origin except the Google
- * Fonts stylesheet and font files that `src/App.css` has always loaded (F1,
- * unchanged by this slice). Anything else — a donation processor, a tracker,
- * an image CDN — is a failure, and this records it per visit rather than
- * throwing inside an intercept handler where the error would be hard to read.
+ * Anonymous funnel analytics remain enabled when configured. Permit the
+ * disclosed provider hosts, but reject replay requests on these anonymous
+ * visits. The analytics unit tests exercise the enabled SDK configuration and
+ * role transitions even when the local browser build has no analytics key.
+ * Never put request queries or payloads in failures: they can contain IDs.
  */
 const ALLOWED_HOSTS = [
   new URL(Cypress.config("baseUrl")!).hostname,
   "fonts.googleapis.com",
   "fonts.gstatic.com",
+  "us.i.posthog.com",
+  "eu.i.posthog.com",
+  "us-assets.i.posthog.com",
+  "eu-assets.i.posthog.com",
+  "static.cloudflareinsights.com",
+  "cloudflareinsights.com",
 ];
 
 function watchForThirdPartyRequests(): string[] {
   const offenders: string[] = [];
   cy.intercept({ url: /.*/ }, (req) => {
-    let host = "";
     try {
-      host = new URL(req.url).hostname;
+      const url = new URL(req.url);
+      if (!ALLOWED_HOSTS.includes(url.hostname)) {
+        offenders.push(`${url.origin}${url.pathname}`);
+      }
+      if (
+        url.hostname.endsWith(".posthog.com") &&
+        url.pathname.startsWith("/s/")
+      ) {
+        offenders.push("Session replay request during an anonymous visit");
+      }
     } catch {
-      host = req.url;
+      offenders.push("Unparseable request URL");
     }
-    if (!ALLOWED_HOSTS.includes(host)) offenders.push(req.url);
   });
   return offenders;
 }

@@ -12,10 +12,13 @@
  *    `lang="en"` — while the visitor's saved `vi` preference is left alone and
  *    all four languages stay on offer.
  */
-import { render, screen, act, within } from "@testing-library/react";
+import { render, screen, act, cleanup, within } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Link } from "react-router-dom";
+import { StrictMode } from "react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import i18n, { changeLanguage } from "@/i18n";
 import GameShell from "@/components/games/shared/GameShell";
 import ForTeachers from "../ForTeachers";
@@ -138,7 +141,23 @@ describe("the shared game chrome in Spanish", () => {
 });
 
 describe("public entry pages with the real i18n instance", () => {
+  let previousHead: string;
+  beforeEach(() => {
+    previousHead = document.head.innerHTML;
+    const html = readFileSync(
+      path.resolve(__dirname, "../../../index.html"),
+      "utf8",
+    );
+    document.head.innerHTML = new DOMParser().parseFromString(
+      html,
+      "text/html",
+    ).head.innerHTML;
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  });
   afterEach(async () => {
+    cleanup();
+    document.head.innerHTML = previousHead;
+    vi.restoreAllMocks();
     await act(async () => {
       await i18n.changeLanguage("en");
     });
@@ -259,7 +278,7 @@ describe("public entry pages with the real i18n instance", () => {
   });
 
   /**
-   * A language change re-runs both metadata effects. The failure mode is not a
+   * A language change re-runs the shared metadata effect. The failure mode is not a
    * wrong string — it is a second `<title>`, a second description meta or a
    * second canonical left behind by the run that was replaced, and nothing
    * user-visible would reveal it. So the tags are counted, not sampled.
@@ -274,6 +293,17 @@ describe("public entry pages with the real i18n instance", () => {
       title: "Bright Boost — Un mundo que construyes al aprender",
       description:
         "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+    };
+    const staticTags = [...document.head.querySelectorAll("title, meta, link")];
+    const assertSameTags = () => {
+      expect([...document.head.querySelectorAll("title, meta, link")]).toEqual(
+        staticTags,
+      );
+      expect(
+        document.head
+          .querySelector('meta[name="twitter:image"]')
+          ?.getAttribute("content"),
+      ).toBe("https://brightboost.org/bright-boost-share-v2.png");
     };
     const readMeta = () => ({
       title: document.title,
@@ -295,9 +325,11 @@ describe("public entry pages with the real i18n instance", () => {
 
     await setLanguage("en");
     const { unmount } = render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Index />
-      </MemoryRouter>,
+      <StrictMode>
+        <MemoryRouter initialEntries={["/"]}>
+          <Index />
+        </MemoryRouter>
+      </StrictMode>,
     );
     expect(readMeta()).toEqual({
       title: enMeta.title,
@@ -310,7 +342,14 @@ describe("public entry pages with the real i18n instance", () => {
       schemas: 1,
     });
 
+    assertSameTags();
     await setLanguage("es");
+    assertSameTags();
+    expect(
+      document.head
+        .querySelector('meta[property="og:image:alt"]')
+        ?.getAttribute("content"),
+    ).toBe(i18n.t("home.meta.imageAlt"));
     expect(readMeta()).toEqual({
       title: esMeta.title,
       titles: 1,
@@ -323,13 +362,71 @@ describe("public entry pages with the real i18n instance", () => {
     });
 
     unmount();
+    assertSameTags();
     expect(
       document.head.querySelectorAll('link[rel="canonical"]'),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
     expect(
       document.head.querySelectorAll('meta[property="og:title"]'),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
+    expect(document.title).toBe(enMeta.title);
+    expect(
+      document.head
+        .querySelector('meta[property="og:title"]')
+        ?.getAttribute("content"),
+    ).toBe(enMeta.title);
     expect(document.getElementById("bb-home-schema")).toBeNull();
+  });
+
+  it("updates the same static tags when navigating to another public page", async () => {
+    await setLanguage("en");
+    const tags = [...document.head.querySelectorAll("title, meta, link")];
+    const user = userEvent.setup();
+    render(
+      <StrictMode>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <>
+                  <Index />
+                  <Link to="/for-teachers?source=demo#start">
+                    Next test page
+                  </Link>
+                </>
+              }
+            />
+            <Route path="/for-teachers" element={<ForTeachers />} />
+          </Routes>
+        </MemoryRouter>
+      </StrictMode>,
+    );
+    await user.click(screen.getByRole("link", { name: "Next test page" }));
+    expect(document.title).toBe(i18n.t("forTeachers.meta.title"));
+    expect(
+      document.head
+        .querySelector('meta[property="og:title"]')
+        ?.getAttribute("content"),
+    ).toBe(document.title);
+    expect(
+      document.head
+        .querySelector('meta[name="twitter:title"]')
+        ?.getAttribute("content"),
+    ).toBe(document.title);
+    expect(
+      document.head
+        .querySelector('link[rel="canonical"]')
+        ?.getAttribute("href"),
+    ).toBe("https://brightboost.org/for-teachers");
+    expect(
+      document.head
+        .querySelector('meta[property="og:url"]')
+        ?.getAttribute("content"),
+    ).toBe("https://brightboost.org/for-teachers");
+    expect([...document.head.querySelectorAll("title, meta, link")]).toEqual(
+      tags,
+    );
   });
 
   it("restores <html lang> on unmount", async () => {

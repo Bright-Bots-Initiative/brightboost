@@ -13,6 +13,10 @@
  */
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
+
+export const PUBLIC_SITE_ORIGIN = "https://brightboost.org";
+const SHARE_IMAGE_URL = `${PUBLIC_SITE_ORIGIN}/bright-boost-share-v2.png`;
 
 /**
  * The languages the public entry copy exists in. Everything else resolves
@@ -31,7 +35,8 @@ export function useRenderedLanguage(): PublicEntryLanguage {
 }
 
 /**
- * Document title, meta description and `<html lang>` for a public entry page.
+ * Update the static title, description, share tags, canonical and document
+ * language in place. No duplicate tags on hydration or language/route changes.
  *
  * Everything is restored on unmount (and re-applied on a language change), so
  * navigating away never leaves a stale title or a `lang` attribute claiming a
@@ -42,6 +47,11 @@ export function usePublicPageMeta(
   description: string,
   lang: PublicEntryLanguage,
 ): void {
+  const { pathname } = useLocation();
+  const { t } = useTranslation();
+  const imageAlt = t("home.meta.imageAlt");
+  // Keep the production origin even in previews, without query/hash attribution.
+  const canonicalHref = `${PUBLIC_SITE_ORIGIN}${pathname}`;
   useEffect(() => {
     // Public routes open at their introduction; homepage fragment handling
     // owns the scroll position when a visitor follows a section link.
@@ -54,17 +64,60 @@ export function usePublicPageMeta(
     const previousTitle = document.title;
     document.title = title;
 
-    let meta = document.head.querySelector(
-      'meta[name="description"]',
-    ) as HTMLMetaElement | null;
-    const metaWasCreated = meta === null;
-    const previousDescription = meta?.getAttribute("content") ?? null;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.setAttribute("name", "description");
-      document.head.appendChild(meta);
+    const restore: Array<() => void> = [];
+    const upsertMeta = (name: string, content: string, property = false) => {
+      const attr = property ? "property" : "name";
+      const existing = document.head.querySelector<HTMLMetaElement>(
+        `meta[${attr}="${name}"]`,
+      );
+      if (existing) {
+        const previous = existing.getAttribute("content");
+        existing.setAttribute("content", content);
+        restore.push(() => {
+          if (previous === null) existing.removeAttribute("content");
+          else existing.setAttribute("content", previous);
+        });
+      } else {
+        const created = document.createElement("meta");
+        created.setAttribute(attr, name);
+        created.setAttribute("content", content);
+        document.head.appendChild(created);
+        restore.push(() => created.remove());
+      }
+    };
+
+    upsertMeta("description", description);
+    upsertMeta("og:title", title, true);
+    upsertMeta("og:description", description, true);
+    upsertMeta("og:url", canonicalHref, true);
+    upsertMeta("og:type", "website", true);
+    upsertMeta("og:image", SHARE_IMAGE_URL, true);
+    upsertMeta("og:image:width", "1200", true);
+    upsertMeta("og:image:height", "630", true);
+    upsertMeta("og:image:alt", imageAlt, true);
+    upsertMeta("twitter:card", "summary_large_image");
+    upsertMeta("twitter:title", title);
+    upsertMeta("twitter:description", description);
+    upsertMeta("twitter:image", SHARE_IMAGE_URL);
+    upsertMeta("twitter:image:alt", imageAlt);
+
+    const existingCanonical = document.head.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
+    if (existingCanonical) {
+      const previous = existingCanonical.getAttribute("href");
+      existingCanonical.setAttribute("href", canonicalHref);
+      restore.push(() => {
+        if (previous === null) existingCanonical.removeAttribute("href");
+        else existingCanonical.setAttribute("href", previous);
+      });
+    } else {
+      const canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      canonical.setAttribute("href", canonicalHref);
+      document.head.appendChild(canonical);
+      restore.push(() => canonical.remove());
     }
-    meta.setAttribute("content", description);
 
     const root = document.documentElement;
     const previousLang = root.getAttribute("lang");
@@ -72,20 +125,14 @@ export function usePublicPageMeta(
 
     return () => {
       document.title = previousTitle;
-      if (metaWasCreated) {
-        meta?.remove();
-      } else if (previousDescription === null) {
-        meta?.removeAttribute("content");
-      } else {
-        meta?.setAttribute("content", previousDescription);
-      }
+      for (const undo of restore.reverse()) undo();
       if (previousLang === null) {
         root.removeAttribute("lang");
       } else {
         root.setAttribute("lang", previousLang);
       }
     };
-  }, [title, description, lang]);
+  }, [title, description, lang, canonicalHref, imageAlt]);
 }
 
 /**
