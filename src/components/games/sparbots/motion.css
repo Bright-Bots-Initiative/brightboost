@@ -1,0 +1,376 @@
+/* Presentation only: no animation advances a beat or delays a control. */
+.sparbots .sparbot {
+  --spar-direction: 1;
+  overflow: visible;
+}
+.sparbots .sparbot[data-partner="true"] {
+  --spar-direction: -1;
+}
+.sparbot-motion,
+.sparbot-body {
+  transform-origin: 110px 180px;
+}
+.sparbot-body {
+  animation: sparbot-breathe 3.6s ease-in-out infinite;
+}
+.sparbot-shadow {
+  transform-origin: 110px 199px;
+  animation: sparbot-shadow 3.6s ease-in-out infinite;
+}
+.sparbot-eyes {
+  transform-origin: 110px 77px;
+  animation: sparbot-blink 5s ease-in-out infinite;
+}
+.sparbot-antenna {
+  transform-origin: 110px 47px;
+  animation: sparbot-antenna 3.6s ease-in-out infinite;
+}
+.sparbot-arm-left {
+  transform-origin: 65px 102px;
+}
+.sparbot-arm-right {
+  transform-origin: 155px 102px;
+}
+.sparbot[data-motion="wave"] .sparbot-arm-right {
+  animation: sparbot-wave 1.6s ease-in-out;
+}
+.sparbot[data-motion="tap"] .sparbot-motion {
+  animation: sparbot-tap 850ms ease-in-out;
+}
+.sparbot[data-motion="spin"] .sparbot-motion {
+  transform-origin: 110px 110px;
+  animation: sparbot-spin 850ms ease-in-out;
+}
+.sparbot[data-motion="block"] .sparbot-motion {
+  animation: sparbot-block 850ms ease-in-out;
+}
+.sparbot-move-effect {
+  opacity: 0;
+  transform-origin: 110px 135px;
+  animation: sparbot-move-effect 850ms ease-out;
+}
+.sparbot[data-motion="train"] .sparbot-antenna {
+  animation: sparbot-learning 1.2s ease-in-out;
+}
+.sparbot[data-motion="bow"] .sparbot-motion {
+  animation: sparbot-bow 1.6s ease-in-out;
+}
+.sparbot[data-motion="dance"] .sparbot-motion {
+  animation: sparbot-dance 1.6s ease-in-out 2;
+}
+.sparbot[data-motion="handshake"] .sparbot-motion {
+  animation: sparbot-hello 1.6s ease-in-out;
+}
+.sparbot[data-motion="handshake"][data-partner="false"] .sparbot-arm-right,
+.sparbot[data-motion="handshake"][data-partner="true"] .sparbot-arm-left {
+  animation: sparbot-shake 1.6s ease-in-out;
+}
+.sparbots-avatar {
+  position: relative;
+  max-width: 240px;
+  margin: auto;
+}
+.sparbots-training {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sparbots-training span {
+  position: absolute;
+  top: 20%;
+  left: 18%;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 50px;
+  background: #fff9eb;
+  border: 2px solid #b35640;
+  border-radius: 8px;
+  opacity: 0;
+  animation: sparbot-train-card 900ms ease-in-out both;
+}
+.sparbots-training span:nth-child(2) {
+  animation-delay: 180ms;
+}
+.sparbots-training span:nth-child(3) {
+  animation-delay: 360ms;
+}
+.sparbots-practice-result {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.sparbots-practice-result .sparbot {
+  flex: 0 0 90px;
+  width: 90px;
+  margin: 0;
+}
+.sparbots-arena {
+  position: relative;
+  isolation: isolate;
+}
+.sparbots-arena > div:not(.sparbots-spark-flight) {
+  min-width: 0;
+}
+.sparbots-arena-caption {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+.sparbots .sparbots-move-label {
+  font-weight: 700;
+  margin: 4px 0;
+}
+.sparbots-spark-flight {
+  --spark-destination: 25%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.sparbots-spark-flight[data-outcome="partner"] {
+  --spark-destination: 75%;
+}
+.sparbots-spark-flight[data-outcome="bump"] {
+  --spark-destination: 50%;
+}
+.sparbots-spark-flight span {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  color: #92531b;
+  font-size: 30px;
+  opacity: 0;
+  animation: sparbot-spark 950ms 250ms ease-in-out both;
+}
+.sparbots-spark-flight span:nth-child(2) {
+  animation-delay: 350ms;
+  font-size: 20px;
+}
+.sparbots-spark-flight span:nth-child(3) {
+  animation-delay: 450ms;
+  font-size: 14px;
+}
+.sparbots-score[data-awarded="true"] {
+  animation: sparbot-score 1.3s ease-out;
+}
+.sparbots-next-clue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+.sparbots-next-clue .sparbot {
+  flex: 0 0 70px;
+  width: 70px;
+  margin: 0;
+}
+.sparbots-next-clue > div {
+  min-width: 0;
+}
+/* A learning clue holds still; movement belongs to the resolved beat above. */
+.sparbots-next-clue .sparbot * {
+  animation: none;
+}
+.sparbots-friendly-finish {
+  display: flex;
+  max-width: 340px;
+  margin: 18px auto;
+  padding: 12px;
+  background: #edf4f0;
+  border-radius: 24px;
+}
+.sparbots-friendly-finish .sparbot {
+  width: 50%;
+}
+.sparbots-round-end,
+.sparbots-bot-card,
+.sparbots-explain {
+  animation: sparbot-arrive 300ms ease-out;
+}
+.sparbots button:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+@keyframes sparbot-breathe {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes sparbot-shadow {
+  50% {
+    transform: scaleX(0.93);
+    opacity: 0.07;
+  }
+}
+@keyframes sparbot-blink {
+  0%,
+  43%,
+  47%,
+  100% {
+    transform: scaleY(1);
+  }
+  45% {
+    transform: scaleY(0.12);
+  }
+}
+@keyframes sparbot-antenna {
+  50% {
+    transform: rotate(7deg);
+  }
+}
+@keyframes sparbot-wave {
+  20%,
+  60% {
+    transform: rotate(-48deg);
+  }
+  40%,
+  80% {
+    transform: rotate(-22deg);
+  }
+}
+@keyframes sparbot-tap {
+  25% {
+    transform: translateX(calc(-5px * var(--spar-direction)));
+  }
+  50% {
+    transform: translateX(calc(15px * var(--spar-direction)))
+      rotate(calc(4deg * var(--spar-direction)));
+  }
+}
+@keyframes sparbot-spin {
+  50% {
+    transform: translateY(-10px) rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+@keyframes sparbot-block {
+  40%,
+  65% {
+    transform: scale(1.06, 0.94);
+  }
+}
+@keyframes sparbot-move-effect {
+  0%,
+  20%,
+  100% {
+    opacity: 0;
+  }
+  40%,
+  70% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+@keyframes sparbot-learning {
+  25%,
+  65% {
+    transform: rotate(-16deg);
+  }
+  45%,
+  85% {
+    transform: rotate(16deg);
+  }
+}
+@keyframes sparbot-train-card {
+  0% {
+    opacity: 0;
+    transform: translate(-15px, -8px) rotate(-18deg);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(50px, 55px) rotate(10deg) scale(0.3);
+  }
+}
+@keyframes sparbot-bow {
+  35%,
+  60% {
+    transform: translateY(8px) scaleY(0.83)
+      rotate(calc(8deg * var(--spar-direction)));
+  }
+}
+@keyframes sparbot-dance {
+  20%,
+  60% {
+    transform: translateY(-9px) rotate(-7deg);
+  }
+  40%,
+  80% {
+    transform: translateY(-3px) rotate(7deg);
+  }
+}
+@keyframes sparbot-hello {
+  25%,
+  75% {
+    transform: translateX(calc(13px * var(--spar-direction)));
+  }
+}
+@keyframes sparbot-shake {
+  30%,
+  60% {
+    transform: rotate(calc(-12deg * var(--spar-direction)));
+  }
+  45%,
+  75% {
+    transform: rotate(calc(8deg * var(--spar-direction)));
+  }
+}
+@keyframes sparbot-spark {
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--spark-destination);
+    top: 82%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+}
+@keyframes sparbot-score {
+  55%,
+  85% {
+    transform: scale(1.06);
+    color: #236c61;
+  }
+}
+@keyframes sparbot-arrive {
+  from {
+    opacity: 0.6;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Include pseudo-elements so future decorations cannot bypass the preference.
+   Base states keep all labels/meters visible and transient decorations hidden. */
+.sparbots[data-reduced-effects="true"] *,
+.sparbots[data-reduced-effects="true"] *::before,
+.sparbots[data-reduced-effects="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+.sparbots[data-reduced-effects="true"] button:active {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce), print {
+  .sparbots *,
+  .sparbots *::before,
+  .sparbots *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .sparbots button:active {
+    transform: none;
+  }
+}

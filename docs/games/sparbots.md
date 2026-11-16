@@ -1,6 +1,6 @@
 # SparBots: Training Tower
 
-> **Canonical for:** the first K–2 AI specialty game and its Safe Exploration Contract. Last verified against code: 2026-11-11.
+> **Canonical for:** the first K–2 AI specialty game and its Safe Exploration Contract. Last verified against code: 2026-11-15.
 
 Teach a tiny classifier with example cards, watch it choose, then revise the
 examples. Meet → Show → Train → Spar → Coach's Corner → Reflect → Bot Card
@@ -39,6 +39,20 @@ The supplied concept's title is provisional. Name clearance and a classroom
 playtest remain rollout checks. Memory/bluff floors, self-training, server
 gallery sharing and bot-versus-bot play are later releases.
 
+## Motion feedback
+
+The original SVG bots breathe, blink and greet the learner. Practice and sparring
+show distinct tap, spin and block actions; training cards flow toward the bot;
+sparks travel to the matching meter. Choosing a bow, handshake or dance previews
+that friendly finish with both bots, and the saved Bot Card repeats the choice.
+
+These are presentation-only CSS animations. Repeated beats restart their effects,
+controls stay usable throughout, and no animation or timer advances learning state.
+The arena labels the resolved beat; the separate next-clue bot holds its pose still.
+Text, shapes, native meters and announcements remain the source of each outcome.
+The Less motion control, system reduced-motion preference and print mode disable
+all effects. Transient decorations disappear; clues and outcomes remain visible.
+
 ## Review walkthrough
 
 Start the development app using the repository setup and open `/dev/advanced`.
@@ -49,15 +63,17 @@ Use the AI preview; it does not need a learner account or write platform progres
 3. Show six examples to Pip. Expect a keep/toss choice after each move.
 4. Change a card in the corner. Expect other edits to wait until Try / Keep / Go back.
 5. Try and restore the change. Expect the old card and an unchanged saved version.
-6. Train and step through a round. Expect the bot to act from its cards, with a visible explanation.
+6. Train and step through a round. Expect cards to flow into the bot, distinct move animations and sparks traveling to the matching meter. The next clue holds still and the explanation stays visible.
 7. Pause in the corner. Expect no clock, penalty or lost open floor.
 8. Repeat at narrow width and 200% zoom in Spanish. Expect readable controls without horizontal scrolling.
-9. Enable reduced motion and mute the device. Expect all clues and outcomes to remain visible.
+9. Enable Less motion during a move, then take another beat. Expect movement to stop immediately while all clues, outcomes and controls still work. Repeat with the system reduced-motion preference enabled.
 10. Use a screen reader to follow a beat and the shared experiment controls. Expect the outcome and the focused heading to make sense without duplicate instructions.
-11. Name and print the Bot Card. Expect only that card in print preview.
+11. Choose each friendly finish, including the same choice twice. Expect both bots to replay the bow, handshake or dance without changing progress.
+12. Name and print the Bot Card. Expect only that card, with stationary artwork, in print preview.
 
 Close the preview and remove only its `brightboost:sparbots:v1:preview` device
 draft to reset. Actual student access additionally requires seeded curriculum,
 all Set 3 completions and the saved AI specialty. Automated tests cover the
-four-floor loop, storage failures, server denials and EN/ES browser interaction;
+four-floor loop, storage failures, server denials and EN/ES browser interaction
+(including real CSS motion, a stationary next clue and Less motion);
 the screen-reader and print checks above still require a human review.

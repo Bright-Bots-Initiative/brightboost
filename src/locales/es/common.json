@@ -3019,6 +3019,8 @@
     "coachCall": "¡Esto es nuevo! Puedes elegir un movimiento una vez por ronda o dejar que el bot pruebe.",
     "coachUsed": "La persona que entrena eligió este movimiento.",
     "keepCoach": "¿Quieres enseñarle al bot este movimiento?",
+    "lastBeat": "Mira esta jugada",
+    "readyBeat": "Listos para probar",
     "nextClue": "Esta es la siguiente pista",
     "nextBeat": "Dejar que mi bot elija",
     "pause": "Pausar en el rincón",

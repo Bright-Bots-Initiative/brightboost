@@ -3252,6 +3252,8 @@
     "coachCall": "New to me! You can make one coach’s call this round, or let the bot try.",
     "coachUsed": "The coach chose this move.",
     "keepCoach": "Would you like to teach the bot this coach’s call?",
+    "lastBeat": "Watch this beat",
+    "readyBeat": "Ready to try",
     "nextClue": "Here is the next clue",
     "nextBeat": "Let my bot choose",
     "pause": "Pause in Coach’s Corner",
