@@ -234,7 +234,7 @@ The fossil `classRoster.cy.ts` used to call `checkAccessibility` and `checkPerfo
 
 ## Cold route transfer budgets (#906)
 
-The production Vite build measures deduplicated JavaScript and CSS at gzip level 9. It follows static dependencies of the entry, the unconditional bootstrap imports, and each route. A selected game, images, alternate locales and later navigation are outside these figures. These are local artifact sizes, not live timing or server encoding. Before splitting routes on `b6353549`, startup (and thus student login) already required **847.4 KiB**.
+The production Vite build measures deduplicated JavaScript and CSS at gzip level 9. It follows static dependencies of the entry, the unconditional bootstrap imports, and each route. A selected game, images, alternate locales and later navigation are outside these figures. These are local artifact sizes, not live timing or server encoding. Before splitting routes on `b6353549`, startup and student login both required **849.8 KiB** (870,144 bytes across nine assets in the clean production manifest).
 
 | Cold visit                               | Measured KiB | Budget KiB |
 | ---------------------------------------- | -----------: | ---------: |
