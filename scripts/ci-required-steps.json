@@ -27,6 +27,7 @@
     { "job": "build-and-test", "run": "npm run verify:ci-gate" },
     { "job": "build-and-test", "run": "npm run test:e2e:ci" },
     { "job": "build-and-test", "run": "npm run build" },
+    { "job": "build-and-test", "run": "node scripts/verify-built-routes.mjs" },
     { "job": "db-check", "run": "npx prisma migrate deploy" },
     { "job": "db-check", "run": "npx prisma generate" },
     { "job": "db-check", "run": "npm run test:db" },

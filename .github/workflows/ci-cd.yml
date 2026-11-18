@@ -124,6 +124,9 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Check built routes on a constrained connection
+        run: node scripts/verify-built-routes.mjs
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

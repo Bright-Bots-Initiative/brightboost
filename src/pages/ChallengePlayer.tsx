@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
 import { useApi } from "../services/api";
-import DataDashSortDiscoverGame from "../components/games/DataDashSortDiscoverGame";
-import TrackMakerGame from "../components/games/TrackMakerGame";
-import EchoAvenueGame from "../components/games/echoAvenue/EchoAvenueGame";
+const DataDashSortDiscoverGame = lazy(
+  () => import("../components/games/DataDashSortDiscoverGame"),
+);
+const TrackMakerGame = lazy(() => import("../components/games/TrackMakerGame"));
+const EchoAvenueGame = lazy(
+  () => import("../components/games/echoAvenue/EchoAvenueGame"),
+);
 
 // Phase 0 — play a saved (group-shared) creation. Fetches the single creation
 // (group-scoped + visibility enforced server-side) and renders the matching
