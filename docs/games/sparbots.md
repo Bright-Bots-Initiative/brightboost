@@ -1,6 +1,6 @@
 # SparBots: Training Tower
 
-> **Canonical for:** the first K–2 AI specialty game and its Safe Exploration Contract. Last verified against code: 2026-11-11.
+> **Canonical for:** the first K–2 AI specialty game and its Safe Exploration Contract. Last verified against code: 2026-11-17.
 
 Teach a tiny classifier with example cards, watch it choose, then revise the
 examples. Meet → Show → Train → Spar → Coach's Corner → Reflect → Bot Card
@@ -39,6 +39,25 @@ The supplied concept's title is provisional. Name clearance and a classroom
 playtest remain rollout checks. Memory/bluff floors, self-training, server
 gallery sharing and bot-versus-bot play are later releases.
 
+## Motion feedback
+
+The training cards show the same kind of clue the bot watches: arm poses or
+colored shapes. Each sparring beat shows the observed clue, who or what chose
+the move, and the move itself. A coach's call, a vote from other cards and an
+empty playbook each get their own explanation. One spark flies into the earned
+slot; a friendly bump leaves both scores alone. Two bots preview the chosen bow,
+handshake or dance, and the Bot Card repeats it.
+
+**Watch again** replays the resolved beat, including the last beat of a round.
+The score and the next clue stay put. A replay cannot take a turn, spend a
+coach's call, keep a card or change progress. Keyboard focus stays on the replay
+button. The longer card explanation follows the play controls.
+
+All motion is CSS. Idle bots settle within eight seconds; the spark moves by
+transform and opacity. The upcoming clue stays still. Less motion, the system
+reduced-motion preference and print keep the signals, decision, filled slots and
+counts visible without animation.
+
 ## Review walkthrough
 
 Start the development app using the repository setup and open `/dev/advanced`.
@@ -49,15 +68,18 @@ Use the AI preview; it does not need a learner account or write platform progres
 3. Show six examples to Pip. Expect a keep/toss choice after each move.
 4. Change a card in the corner. Expect other edits to wait until Try / Keep / Go back.
 5. Try and restore the change. Expect the old card and an unchanged saved version.
-6. Train and step through a round. Expect the bot to act from its cards, with a visible explanation.
-7. Pause in the corner. Expect no clock, penalty or lost open floor.
-8. Repeat at narrow width and 200% zoom in Spanish. Expect readable controls without horizontal scrolling.
-9. Enable reduced motion and mute the device. Expect all clues and outcomes to remain visible.
-10. Use a screen reader to follow a beat and the shared experiment controls. Expect the outcome and the focused heading to make sense without duplicate instructions.
-11. Name and print the Bot Card. Expect only that card in print preview.
+6. Train and step through a round. Expect the watched clues on the training cards, a clue → cards → move explanation, and one spark landing in its slot. The next clue holds still and the explanation stays visible.
+7. Press **Watch again** with Enter. Expect the same actions, scores and next clue. On a friendly bump, neither side gains a slot.
+8. Pause in the corner. Expect no clock, penalty or lost open floor.
+9. Repeat at narrow width and 200% zoom in Spanish. Expect readable controls without horizontal scrolling.
+10. Enable Less motion during a move, then take another beat. Expect movement to stop immediately while all clues, outcomes and controls still work. Repeat with the system reduced-motion preference enabled.
+11. Use a screen reader to follow a beat and the shared experiment controls. Expect the outcome and the focused heading to make sense without duplicate instructions.
+12. Choose each friendly finish, including the same choice twice. Expect both bots to replay the bow, handshake or dance without changing progress.
+13. Name and print the Bot Card. Expect only that card, with stationary artwork, in print preview.
 
 Close the preview and remove only its `brightboost:sparbots:v1:preview` device
 draft to reset. Actual student access additionally requires seeded curriculum,
 all Set 3 completions and the saved AI specialty. Automated tests cover the
-four-floor loop, storage failures, server denials and EN/ES browser interaction;
+four-floor loop, storage failures, server denials and EN/ES browser interaction
+(including replay, spark landing positions at two widths and Less motion);
 the screen-reader and print checks above still require a human review.

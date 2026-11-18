@@ -1,16 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SparBotsGame from "../SparBotsGame";
+import SparringArena from "../SparringArena";
 import {
   counter,
   FLOORS,
   newDraft,
+  newRound,
   parseDraft,
   practiceTell,
   referenceCards,
   serializeDraft,
   storageKey,
+  step,
+  tell,
+  type Draft,
   type Floor,
 } from "../model";
 import en from "@/locales/en/common.json";
@@ -202,6 +213,19 @@ describe("SparBots coaching journey", () => {
     ).toHaveAttribute("max", "5");
     click("Coach: Tap");
     expect(
+      within(
+        screen.getByRole("list", { name: en.sparbots.decisionPath }),
+      ).getByText(en.sparbots.coachPick),
+    ).toBeVisible();
+    const beforeReplay = localStorage.getItem(storageKey("coach"));
+    const sparks = screen.getByRole("meter", { name: "Your bot’s sparks" });
+    expect(sparks).toHaveAttribute("value", "1");
+    click("Watch again");
+    click("Watch again");
+    expect(sparks).toHaveAttribute("value", "1");
+    expect(screen.getByText("Replay · Beat 1")).toBeVisible();
+    expect(localStorage.getItem(storageKey("coach"))).toBe(beforeReplay);
+    expect(
       screen.getByRole("button", { name: "Let my bot choose" }),
     ).toBeDisabled();
     click("Keep this card");
@@ -215,6 +239,106 @@ describe("SparBots coaching journey", () => {
         ?.source,
     ).toBe("coach");
   });
+  it("replays a bump and a round-ending partner spark without changing either meter or opening another beat", () => {
+    const complete = vi.fn();
+    // Pip shows spin, block, tap. These cards tie on spin and lose otherwise.
+    const draft: Draft = {
+      ...newDraft(),
+      cards: referenceCards(0).map((card) => ({
+        ...card,
+        move: card.pose === "low" ? "tap" : "spin",
+      })),
+    };
+    localStorage.setItem(storageKey("replay"), serializeDraft(draft));
+    const { container } = render(
+      <SparBotsGame storageScope="replay" onComplete={complete} />,
+    );
+    click("Meet my partner");
+    click("Show six examples");
+    for (let i = 0; i < 6; i++) {
+      click("Spin");
+      click("Toss this card");
+    }
+    click("Train & watch");
+    const bot = screen.getByRole("meter", { name: en.sparbots.yourSparks });
+    const partner = screen.getByRole("meter", {
+      name: en.sparbots.partnerSparks,
+    });
+    const next = () => click("Let my bot choose");
+    next();
+    click("Watch again");
+    expect(bot).toHaveAttribute("value", "0");
+    expect(partner).toHaveAttribute("value", "0");
+    expect(container.querySelector(".sparbots-bump")).toBeInTheDocument();
+    expect(screen.getByText(en.sparbots.bumpLabel)).toBeVisible();
+    expect(container.querySelector(".sparbots-spark-flight")).toBeNull();
+    expect(screen.getByText("Replay · Beat 1")).toBeVisible();
+    next();
+    expect(partner).toHaveAttribute("value", "1");
+    expect(screen.queryByText("Replay · Beat 1")).not.toBeInTheDocument();
+    next();
+    next();
+    next();
+    expect(
+      screen.getByRole("heading", { name: en.sparbots.roundEnd.partner }),
+    ).toBeVisible();
+    click("Watch again");
+    expect(screen.getByText("Replay · Beat 5")).toBeVisible();
+    expect(bot).toHaveAttribute("value", "0");
+    expect(partner).toHaveAttribute("value", "3");
+    expect(screen.getByText("Spark for Pip!")).toBeVisible();
+    expect(
+      container.querySelector('[data-side="partner"] .sparbots-spark-flight')
+        ?.parentElement,
+    ).toBe(
+      container.querySelector(
+        '[data-side="partner"] .sparbots-socket:last-child',
+      ),
+    );
+    expect(
+      screen.queryByRole("button", { name: en.sparbots.nextBeat }),
+    ).not.toBeInTheDocument();
+    expect(complete).not.toHaveBeenCalled();
+  });
+  it.each([
+    [
+      referenceCards(1),
+      en.sparbots.cardNumber.replace("{{number}}", "1"),
+      en.sparbots.moves.block,
+    ],
+    [
+      referenceCards(1).slice(1, 2),
+      en.sparbots.otherCards,
+      en.sparbots.moves.tap,
+    ],
+    [[], en.sparbots.noCards, en.sparbots.noMove],
+  ] as const)(
+    "shows the actual source of a light-based decision (%#)",
+    (cards, source, move) => {
+      const draft: Draft = {
+        ...newDraft(1, 1),
+        cards: [...cards],
+        clue: "light",
+      };
+      const round = step(draft, newRound(), 3);
+      render(
+        <SparringArena
+          draft={draft}
+          round={round}
+          target={3}
+          nextSignal={tell(1, 0, 1)}
+          botName="Comet"
+          partnerName="Tally"
+        />,
+      );
+      const path = within(
+        screen.getByRole("list", { name: en.sparbots.decisionPath }),
+      );
+      expect(
+        path.getAllByRole("listitem").map((item) => item.textContent),
+      ).toEqual([en.sparbots.lights.triangle, source, move]);
+    },
+  );
   it("provides Spanish copy for the complete coaching vocabulary", () => {
     function leaves(value: Record<string, unknown>, prefix = ""): string[] {
       return Object.entries(value).flatMap(([key, v]) =>

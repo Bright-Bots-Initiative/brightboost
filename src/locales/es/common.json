@@ -2977,7 +2977,7 @@
     "outcomes": {
       "bot": "¡Tu bot gana una chispa!",
       "partner": "Tu compañero gana una chispa. ¿Qué podrías probar?",
-      "bump": "Un choque amistoso. ¡Prueba el siguiente turno!"
+      "bump": "¡Un choque amistoso! Esta vez no hay chispa."
     },
     "keepCard": "Guardar esta tarjeta",
     "toss": "Descartar esta tarjeta",
@@ -3020,6 +3020,18 @@
     "coachCall": "¡Esto es nuevo! Puedes elegir un movimiento una vez por ronda o dejar que el bot pruebe.",
     "coachUsed": "La persona que entrena eligió este movimiento.",
     "keepCoach": "¿Quieres enseñarle al bot este movimiento?",
+    "lastBeat": "Turno {{number}}",
+    "watchAgain": "Ver otra vez",
+    "sparkFor": "¡Chispa para {{name}}!",
+    "bumpLabel": "Choque amistoso · sin chispa",
+    "replayBeat": "Repetición · Turno {{number}}",
+    "decisionPath": "Cómo eligió el bot",
+    "coachPick": "Tú elegiste",
+    "noCards": "Sin tarjetas",
+    "emptyDecision": "Aún no hay tarjetas. Tu bot espera.",
+    "otherCards": "Otras tarjetas",
+    "votingCards": "{{count}} tarjetas",
+    "readyBeat": "Listos para probar",
     "nextClue": "Esta es la siguiente pista",
     "nextBeat": "Dejar que mi bot elija",
     "pause": "Pausar en el rincón",
