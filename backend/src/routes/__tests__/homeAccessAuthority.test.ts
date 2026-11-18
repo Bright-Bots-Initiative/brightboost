@@ -437,7 +437,10 @@ describe("#872 first-time binding — invite", () => {
       mailMock.sendHomeAccessInviteEmail.mock.calls[0];
     expect(to).toBe("parent@example.com");
     expect(firstName).toBe("Ada");
-    const rawToken = new URL(acceptUrl).searchParams.get("token")!;
+    expect(new URL(acceptUrl).search).toBe("");
+    const rawToken = new URLSearchParams(new URL(acceptUrl).hash.slice(1)).get(
+      "token",
+    )!;
     expect(rawToken).toMatch(/^[0-9a-f]{64}$/);
     expect(hashInviteToken(rawToken)).toBe(created.tokenHash);
     expect(acceptUrl).not.toContain(created.tokenHash);
@@ -498,7 +501,10 @@ describe("#872 first-time binding — accept with the emailed token (public)", (
       .set(fromNewIp())
       .send({ token, email: "home@example.com", password: "HomePass123" });
   const preview = (token = RAW) =>
-    request(app).get(`/api/auth/home-access/invite/${token}`).set(fromNewIp());
+    request(app)
+      .post("/api/auth/home-access/invite")
+      .set(fromNewIp())
+      .send({ token });
 
   it("HA-17: unknown, expired and used tokens are refused with no write", async () => {
     prismaMock.homeAccessInvite.findUnique.mockResolvedValue(null);

@@ -5,5 +5,7 @@
   "storageMessage": "浏览器阻止了登录所需的网站存储。请允许网站存储数据，然后重新加载页面。",
   "reload": "重新加载页面",
   "home": "返回首页",
-  "loading": "正在加载 Bright Boost…"
+  "loading": "正在加载 Bright Boost…",
+  "slowTitle": "Bright Boost 仍在加载",
+  "slowMessage": "你可以在这里等一会儿，也可以重新加载页面。"
 }

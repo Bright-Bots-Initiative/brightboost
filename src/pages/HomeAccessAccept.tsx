@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAccountLinkToken } from "../lib/useAccountLinkToken";
 import { useTranslation } from "react-i18next";
 import GameBackground from "../components/GameBackground";
 import LanguageToggle from "../components/LanguageToggle";
@@ -23,8 +24,7 @@ type InviteInfo = {
 
 const HomeAccessAccept: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const token = useAccountLinkToken();
 
   const [invite, setInvite] = useState<InviteInfo | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -50,12 +50,11 @@ const HomeAccessAccept: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(
-          join(
-            API_BASE,
-            `/auth/home-access/invite/${encodeURIComponent(token)}`,
-          ),
-        );
+        const res = await fetch(join(API_BASE, "/auth/home-access/invite"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
         if (!res.ok) {

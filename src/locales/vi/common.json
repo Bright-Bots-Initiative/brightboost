@@ -2408,6 +2408,9 @@
     "back": "Quay lại các lớp"
   },
   "home": {
+    "adults": {
+      "intro": "Giáo viên và gia đình tạo tài khoản cho học sinh từ mẫu giáo đến lớp 8. Học sinh có thể đăng nhập bằng mã lớp."
+    },
     "meta": {
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     }
@@ -2421,5 +2424,23 @@
       "cloudflare": "Cloudflare Web Analytics nhận URL trang, mã định danh lượt tải trang và số liệu hiệu suất, gồm thời gian tải, thay đổi bố cục, bộ chọn phần tử và mức sử dụng bộ nhớ của trình duyệt.",
       "requests": "Yêu cầu đến các nhà cung cấp này cũng mang thông tin kết nối, như địa chỉ IP và tiêu đề yêu cầu của trình duyệt."
     }
+  },
+  "signupSelection": {
+    "title": "Tạo tài khoản",
+    "subtitle": "Giáo viên và gia đình có thể thêm học sinh vào lớp hoặc nhóm học tại nhà.",
+    "teacherCard": {
+      "heading": "Tôi là giáo viên",
+      "blurb": "Đưa STEM từ mẫu giáo đến lớp 8 vào lớp học của bạn.",
+      "cta": "Đăng ký tài khoản giáo viên"
+    },
+    "parentCard": {
+      "heading": "Tôi là phụ huynh",
+      "blurb": "Tạo nhóm học tại nhà và cùng học với con.",
+      "cta": "Đăng ký để học tại nhà"
+    },
+    "haveAccount": "Bạn đã có tài khoản?",
+    "logIn": "Đăng nhập",
+    "classCodeNote": "Các em hãy dùng mã mà giáo viên hoặc gia đình đã đưa cho mình.",
+    "classCodeLink": "Đăng nhập bằng mã lớp"
   }
 }

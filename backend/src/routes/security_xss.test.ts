@@ -31,9 +31,9 @@ describe("Security: XSS Prevention", () => {
     vi.clearAllMocks();
   });
 
-  describe("POST /api/signup/student", () => {
+  describe("POST /api/signup/teacher", () => {
     it("should reject names containing HTML tags", async () => {
-      const response = await request(app).post("/api/signup/student").send({
+      const response = await request(app).post("/api/signup/teacher").send({
         name: "Student <script>alert(1)</script>",
         email: "xss@test.com",
         password: "Password123",
@@ -47,7 +47,7 @@ describe("Security: XSS Prevention", () => {
     });
 
     it("should reject names containing <", async () => {
-      const response = await request(app).post("/api/signup/student").send({
+      const response = await request(app).post("/api/signup/teacher").send({
         name: "Student <",
         email: "xss2@test.com",
         password: "Password123",
@@ -63,11 +63,11 @@ describe("Security: XSS Prevention", () => {
       prismaMock.user.create.mockResolvedValue({
         id: "user-123",
         email: "safe@test.com",
-        role: "student",
+        role: "teacher",
         name: "Safe Student",
       });
 
-      const response = await request(app).post("/api/signup/student").send({
+      const response = await request(app).post("/api/signup/teacher").send({
         name: "Safe Student",
         email: "safe@test.com",
         password: "Password123",

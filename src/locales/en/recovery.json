@@ -5,5 +5,7 @@
   "storageMessage": "Your browser is blocking storage needed for sign-in. Allow site storage, then reload the page.",
   "reload": "Reload page",
   "home": "Go to home",
-  "loading": "Loading Bright Boost…"
+  "loading": "Loading Bright Boost…",
+  "slowTitle": "Bright Boost is still loading",
+  "slowMessage": "You can wait here or reload the page."
 }

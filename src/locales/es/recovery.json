@@ -5,5 +5,7 @@
   "storageMessage": "Tu navegador está bloqueando el almacenamiento necesario para iniciar sesión. Permite el almacenamiento del sitio y vuelve a cargar la página.",
   "reload": "Volver a cargar",
   "home": "Ir al inicio",
-  "loading": "Cargando Bright Boost…"
+  "loading": "Cargando Bright Boost…",
+  "slowTitle": "Bright Boost aún se está cargando",
+  "slowMessage": "Puedes esperar aquí o volver a cargar la página."
 }

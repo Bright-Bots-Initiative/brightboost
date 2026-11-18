@@ -27,7 +27,9 @@ credentials, project identifiers, or dashboard/replay links into logs or example
 
 The frontend accepts an HTTPS origin with an optional root slash, but no user info,
 other path, query, or fragment. An invalid host produces one warning naming
-`VITE_POSTHOG_HOST`, without its value, and uses the default. Initialization logs
+`VITE_POSTHOG_HOST`, without its value, and uses the default. Vite removes rejected values before emitting public assets, including
+whole-object environment references. Rebuild and deploy the frontend to replace
+an older bundle. Initialization logs
 only the accepted origin. An unset host uses the default without a warning.
 
 Without a key, the backend shim silently no-ops and prints an informational log;
@@ -56,6 +58,11 @@ This is a children's product. **These rules are non-negotiable:**
 - Anonymous events use the SDK's browser identifier. After `identifyUser`, the
   identifier is the DB user ID (`User.id`), never an email or name. PostHog can
   associate earlier anonymous events with that later identified user.
+- Password-reset and family-invitation emails carry proof in the fragment. The entry
+  page removes it (including tokens in older query links) before loading external
+  resources. Requests use origin-only referrers. PostHog event and attribution URLs
+  retain their route and omit query strings, fragments and invitation proof paths.
+
 - Replay starts disabled (`disable_session_recording: true`). Only
   `identifyUser` with the role `teacher` or `admin` starts recording. Anonymous
   visitors, students, and parents are not recorded. Persisted SDK identity alone
@@ -280,7 +287,7 @@ Work through the layers in order — most of these failures fail silently, so do
 | Frontend shim (init, identify, track, reset) | `src/lib/analytics.ts`                                                                          |
 | Frontend init call                           | `src/main.tsx`                                                                                  |
 | Login + logout identification                | `src/contexts/AuthContext.tsx`                                                                  |
-| Signup events                                | `src/pages/TeacherSignup.tsx`, `src/pages/StudentSignup.tsx`, `src/pages/LoginSelection.tsx`    |
+| Signup events                                | `src/pages/TeacherSignup.tsx`, `src/pages/LoginSelection.tsx`                                   |
 | Class lifecycle                              | `src/pages/TeacherClasses.tsx`, `src/pages/JoinClass.tsx`                                       |
 | Game lifecycle                               | `src/pages/ActivityPlayer.tsx`                                                                  |
 | Backend shim                                 | `backend/src/services/analytics.ts`                                                             |

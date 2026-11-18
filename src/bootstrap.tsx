@@ -25,7 +25,10 @@ export function bootstrap(
   };
   window.addEventListener("vite:preloadError", onPreloadError);
   root.render(<LoadingScreen />);
-  const timeout = setTimeout(recover, 20_000);
+  // A slow import may still succeed. Only a rejected or stale import is terminal.
+  const timeout = setTimeout(() => {
+    if (!disposed && !failed) root.render(<RecoveryScreen reason="slow" />);
+  }, 20_000);
   void Promise.resolve()
     .then(loadApplication)
     .then((App) => {

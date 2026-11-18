@@ -2,6 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="referrer" content="strict-origin" />
+    <!-- Consume emailed proofs before external scripts and resource preloads. -->
+    <script id="account-link">
+      if (
+        /^\/(reset-password|home-access\/accept)\/?$/i.test(location.pathname)
+      ) {
+        const url = new URL(location.href);
+        const fragment = new URLSearchParams(url.hash.slice(1));
+        const token = fragment.get("token") || url.searchParams.get("token");
+        if (token) {
+          url.searchParams.delete("token");
+          if (fragment.has("token")) {
+            fragment.delete("token");
+            url.hash = fragment.toString();
+          }
+          const state = history.state || {};
+          history.replaceState(
+            { ...state, usr: { ...state.usr, accountLinkToken: token } },
+            "",
+            url,
+          );
+        }
+      }
+    </script>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"

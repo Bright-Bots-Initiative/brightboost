@@ -1,10 +1,8 @@
 /**
  * SignupSelection — role chooser for new users.
  *
- * Two distinct K-8 signup paths:
- *   - Teacher → /teacher/signup (email + password, then create class)
- *   - Student → /student/signup (email + password — students who only have a
- *     class code use /class-login instead, no signup needed for them)
+ * Teachers and guardians set up K–8 learners through their roster.
+ * Students with a code go directly to classroom sign-in.
  *
  * Uses LoginCard for visual consistency with the rest of the auth flow.
  * Fires `signup_role_selected` so the funnel shows where new users branch.
@@ -19,7 +17,7 @@ import { track } from "@/lib/analytics";
 interface RoleOption {
   // The analytics signal for the chosen path. A parent reuses the teacher
   // account type — `role` here is the funnel label, not a distinct auth role.
-  role: "teacher" | "student" | "parent";
+  role: "teacher" | "parent";
   to: string;
   emoji: string;
   headingKey: string;
@@ -49,15 +47,6 @@ const OPTIONS: RoleOption[] = [
     ctaKey: "signupSelection.parentCard.cta",
     accent: "from-emerald-500 to-teal-600",
   },
-  {
-    role: "student",
-    to: "/student/signup",
-    emoji: "🎒",
-    headingKey: "signupSelection.studentCard.heading",
-    blurbKey: "signupSelection.studentCard.blurb",
-    ctaKey: "signupSelection.studentCard.cta",
-    accent: "from-purple-500 to-pink-500",
-  },
 ];
 
 const SignupSelection: React.FC = () => {
@@ -74,7 +63,9 @@ const SignupSelection: React.FC = () => {
           <Link
             key={opt.role}
             to={opt.to}
-            onClick={() => track({ kind: "signup_role_selected", role: opt.role })}
+            onClick={() =>
+              track({ kind: "signup_role_selected", role: opt.role })
+            }
             className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-indigo-300 active:scale-[0.99] transition-all group"
           >
             <div className="flex items-center gap-4">

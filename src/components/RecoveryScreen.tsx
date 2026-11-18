@@ -40,11 +40,16 @@ export default function RecoveryScreen({
   reason = "load",
   onReload = () => window.location.reload(),
 }: {
-  reason?: "load" | "storage";
+  reason?: "load" | "storage" | "slow";
   onReload?: () => void;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const { copy, language } = recoveryCopy();
+  const [title, message] = {
+    load: [copy.title, copy.message],
+    storage: [copy.storageTitle, copy.storageMessage],
+    slow: [copy.slowTitle, copy.slowMessage],
+  }[reason];
   useEffect(() => {
     heading.current?.focus();
   }, []);
@@ -62,11 +67,9 @@ export default function RecoveryScreen({
           tabIndex={-1}
           className="text-2xl font-bold focus:outline-none"
         >
-          {reason === "storage" ? copy.storageTitle : copy.title}
+          {title}
         </h1>
-        <p className="text-lg leading-relaxed">
-          {reason === "storage" ? copy.storageMessage : copy.message}
-        </p>
+        <p className="text-lg leading-relaxed">{message}</p>
         <div className="flex flex-wrap gap-4">
           <button
             type="button"
