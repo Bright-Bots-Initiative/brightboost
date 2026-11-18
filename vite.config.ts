@@ -4,11 +4,38 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteCompression from "vite-plugin-compression";
+import {
+  analyticsIngestionOrigin,
+  INVALID_ANALYTICS_HOST_WARNING,
+} from "./src/lib/analyticsHost";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: "/", // Force absolute asset paths for nested routes
   plugins: [
+    {
+      name: "sanitize-analytics-host",
+      config({ root, envDir }, { mode }) {
+        const directory = path.resolve(root ?? process.cwd(), envDir ?? ".");
+        const raw = loadEnv(
+          mode,
+          directory,
+          "VITE_POSTHOG_HOST",
+        ).VITE_POSTHOG_HOST;
+        if (!raw) return;
+        const origin = analyticsIngestionOrigin(raw);
+        if (!origin) console.warn(INVALID_ANALYTICS_HOST_WARNING);
+        // Vite applies this define to direct reads and the serialized env object.
+        // A harmless invalid marker preserves the one-time visitor warning.
+        return {
+          define: {
+            "import.meta.env.VITE_POSTHOG_HOST": JSON.stringify(
+              origin ?? "invalid",
+            ),
+          },
+        };
+      },
+    },
     react(),
     mode === "development" && componentTagger(),
     visualizer({

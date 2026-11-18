@@ -19,36 +19,18 @@
  * the compiler catches typos in event names.
  */
 import posthog from "posthog-js";
+import {
+  analyticsIngestionOrigin,
+  DEFAULT_POSTHOG_HOST,
+  INVALID_ANALYTICS_HOST_WARNING,
+} from "./analyticsHost";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
-
-/** An ingestion origin, never a dashboard URL or a value safe to echo raw. */
 function resolvePostHogHost(): string {
   const raw = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
-  if (!raw) return DEFAULT_POSTHOG_HOST;
-  try {
-    const url = new URL(raw);
-    // Check the original shape too: URL parsing erases empty ?/# delimiters
-    // and dot paths. A root slash is harmless; any other path is not an origin.
-    if (
-      /^https:\/\/[^/?#\\\s]+\/?$/i.test(raw) &&
-      url.protocol === "https:" &&
-      !url.username &&
-      !url.password &&
-      url.pathname === "/" &&
-      !url.search &&
-      !url.hash
-    ) {
-      return url.origin;
-    }
-  } catch {
-    // Do not log the parser error: it can include the rejected input.
-  }
-  console.warn(
-    "[analytics] Invalid VITE_POSTHOG_HOST; using the default ingestion host.",
-  );
-  return DEFAULT_POSTHOG_HOST;
+  const origin = analyticsIngestionOrigin(raw);
+  if (raw && !origin) console.warn(INVALID_ANALYTICS_HOST_WARNING);
+  return origin ?? DEFAULT_POSTHOG_HOST;
 }
 
 // PostHog attaches URLs to events and to nested attribution properties, including

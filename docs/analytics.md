@@ -27,7 +27,9 @@ credentials, project identifiers, or dashboard/replay links into logs or example
 
 The frontend accepts an HTTPS origin with an optional root slash, but no user info,
 other path, query, or fragment. An invalid host produces one warning naming
-`VITE_POSTHOG_HOST`, without its value, and uses the default. Initialization logs
+`VITE_POSTHOG_HOST`, without its value, and uses the default. Vite removes rejected values before emitting public assets, including
+whole-object environment references. Rebuild and deploy the frontend to replace
+an older bundle. Initialization logs
 only the accepted origin. An unset host uses the default without a warning.
 
 Without a key, the backend shim silently no-ops and prints an informational log;
