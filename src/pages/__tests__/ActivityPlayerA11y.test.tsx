@@ -1,4 +1,10 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import ActivityPlayer from "../ActivityPlayer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { api } from "@/services/api";
@@ -124,5 +130,108 @@ describe("ActivityPlayer Accessibility", () => {
 
     const incorrectOption = screen.getByText("3");
     expect(incorrectOption).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+// Two questions, so the first feedback button reads "Next" rather than the
+// last-question "See how I did!".
+const k2FirstPrompt = "Which shape has three sides?";
+const k2FirstChoices = ["Square", "Triangle", "Circle"];
+
+const mockK2QuizActivity = {
+  id: "a-1",
+  title: "Quiz Activity",
+  kind: "INFO",
+  content: JSON.stringify({
+    type: "story_quiz",
+    slides: [{ id: "s1", text: "Intro slide" }],
+    questions: [
+      {
+        id: "q1",
+        prompt: k2FirstPrompt,
+        choices: k2FirstChoices,
+        answerIndex: 1,
+      },
+      {
+        id: "q2",
+        prompt: "Which one can fly?",
+        choices: ["Bird", "Fish"],
+        answerIndex: 0,
+      },
+    ],
+  }),
+};
+
+const mockK2Module = {
+  slug: "test-module",
+  units: [
+    {
+      lessons: [
+        {
+          id: "l-1",
+          activities: [mockK2QuizActivity],
+        },
+      ],
+    },
+  ],
+};
+
+// The band is pinned to k2: these assertions are the instant-feedback quiz's
+// contract (labelled group, choices without aria-pressed, a polite status
+// region, focus on Next), which only k2 mounts.
+describe("ActivityPlayer Accessibility — K-2 instant quiz", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    __resetGradeBandCache();
+    localStorage.clear();
+    vi.mocked(api.getStudentCourses).mockResolvedValue([{ gradeBand: "k2" }]);
+    (api.getModule as any).mockResolvedValue(mockK2Module);
+  });
+
+  it("labels the choices, announces feedback and focuses Next", async () => {
+    render(
+      <TooltipProvider>
+        <MemoryRouter
+          initialEntries={[
+            "/student/modules/test-module/lessons/l-1/activities/a-1",
+          ]}
+        >
+          <Routes>
+            <Route
+              path="/student/modules/:slug/lessons/:lessonId/activities/:activityId"
+              element={<ActivityPlayer />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </TooltipProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Intro slide")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start Quiz" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("instant-quiz")).toBeInTheDocument();
+    });
+
+    const group = screen.getByRole("group", { name: k2FirstPrompt });
+
+    // AC-3.3: choices are plain buttons named by their text, never toggles.
+    for (const choice of k2FirstChoices) {
+      const button = within(group).getByRole("button", { name: choice });
+      expect(button).not.toHaveAttribute("aria-pressed");
+    }
+
+    fireEvent.click(within(group).getByRole("button", { name: "Triangle" }));
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
+
+    for (const choice of k2FirstChoices) {
+      const button = within(group).getByRole("button", { name: choice });
+      expect(button).not.toHaveAttribute("aria-pressed");
+    }
   });
 });
