@@ -34,10 +34,14 @@ export function isSessionAuth(value: unknown): value is SessionAuth {
  * Shared utility used by auth routes and class-code login.
  */
 export const generateToken = (
-  user: { id: string; role: string },
+  user: { id: string; role: string; sessionVersion: number },
   auth: SessionAuth,
 ): string => {
-  return jwt.sign({ id: user.id, role: user.role, auth }, SESSION_SECRET, {
-    expiresIn: "7d",
-  });
+  return jwt.sign(
+    { id: user.id, role: user.role, auth, sv: user.sessionVersion },
+    SESSION_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
 };

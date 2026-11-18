@@ -106,7 +106,7 @@ router.post(
       });
 
       const token = generateToken(user, "password");
-      const { password, ...userWithoutPassword } = user;
+      const { password, sessionVersion, ...userWithoutPassword } = user;
 
       res.status(201).json({
         message: "Student account created",
@@ -164,7 +164,7 @@ router.post(
       });
 
       const token = generateToken(user, "password");
-      const { password, ...userWithoutPassword } = user;
+      const { password, sessionVersion, ...userWithoutPassword } = user;
 
       res.status(201).json({
         message: "Teacher account created",
@@ -236,7 +236,7 @@ router.post("/login", authLimiter, async (req: Request, res: Response) => {
     trackServer(user.id, "login", { role: user.role });
 
     const token = generateToken(user, "password");
-    const { password, ...userWithoutPassword } = user;
+    const { password, sessionVersion, ...userWithoutPassword } = user;
 
     res.json({
       message: "Login successful",
@@ -391,7 +391,7 @@ router.post(
       });
 
       const token = generateToken(user, "password");
-      const { password, ...userWithoutPassword } = user;
+      const { password, sessionVersion, ...userWithoutPassword } = user;
 
       res.status(201).json({
         user: userWithoutPassword,
@@ -447,7 +447,7 @@ router.post(
         return res.status(401).json({ error: "Invalid credentials" });
       }
       const token = generateToken(user, "password");
-      const { password: _, ...userWithoutPassword } = user;
+      const { password: _, sessionVersion, ...userWithoutPassword } = user;
       return res.json({
         user: userWithoutPassword,
         token,

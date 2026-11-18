@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import prisma from "./prisma";
 import { isSessionAuth } from "./token";
 
 export type UserRole = "teacher" | "student" | "admin";
@@ -16,7 +17,7 @@ if (
   );
 }
 
-export function authenticateToken(
+export async function authenticateToken(
   req: Request,
   res: Response,
   next: NextFunction,
@@ -29,22 +30,42 @@ export function authenticateToken(
 
   if (!token) return next(); // No token, proceed as guest (requireAuth will catch if needed)
 
-  jwt.verify(token, SESSION_SECRET, (err: any, payload: any) => {
-    if (err) {
-      // If the token is invalid, we return 403 Forbidden
+  let claims: jwt.JwtPayload | string;
+  try {
+    claims = jwt.verify(token, SESSION_SECRET, { algorithms: ["HS256"] });
+  } catch {
+    return res.status(403).json({ error: "forbidden_invalid_token" });
+  }
+  if (
+    typeof claims === "string" ||
+    typeof claims.id !== "string" ||
+    !["student", "teacher", "admin"].includes(claims.role)
+  ) {
+    return res.status(403).json({ error: "forbidden_invalid_token" });
+  }
+  // Pre-migration sessions represent epoch zero only; they lose authority at
+  // the first credential/role change just like tokens issued by this version.
+  const version = claims.sv === undefined ? 0 : claims.sv;
+  if (!Number.isSafeInteger(version) || version < 0 || version > 2147483647) {
+    return res.status(403).json({ error: "forbidden_invalid_token" });
+  }
+  try {
+    const account = await prisma.user.findFirst({
+      where: { id: claims.id, role: claims.role, sessionVersion: version },
+      select: { id: true },
+    });
+    if (!account)
       return res.status(403).json({ error: "forbidden_invalid_token" });
-    }
-
-    // #872: copy only the claims the app understands. `auth` is the
-    // server-issued session provenance; a token without it is a legacy
-    // session and gets no credential authority (`auth` stays undefined).
-    req.user = {
-      id: payload.id as string,
-      role: payload.role as UserRole,
-      auth: isSessionAuth(payload.auth) ? payload.auth : undefined,
-    };
-    next();
-  });
+  } catch {
+    // A temporary database outage is not a logout, and cannot authorize a request.
+    return res.status(503).json({ error: "session_check_unavailable" });
+  }
+  req.user = {
+    id: claims.id,
+    role: claims.role as UserRole,
+    auth: isSessionAuth(claims.auth) ? claims.auth : undefined,
+  };
+  next();
 }
 
 export function devRoleShim(req: Request, _res: Response, next: NextFunction) {

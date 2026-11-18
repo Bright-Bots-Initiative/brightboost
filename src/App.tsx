@@ -1,5 +1,5 @@
 // src/App.tsx
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LoadingScreen } from "./components/RecoveryScreen";
 import { Toaster } from "@/components/ui/toaster";
 
 const EchoSpike = import.meta.env.DEV
@@ -17,99 +18,149 @@ const EchoSpike = import.meta.env.DEV
   : () => null;
 
 // Import pages
-import TeacherLogin from "./pages/TeacherLogin";
-import TeacherDashboard from "./pages/TeacherDashboard";
-import StudentDashboard from "./pages/StudentDashboard";
-import TeacherSignup from "./pages/TeacherSignup";
+const TeacherLogin = lazy(() => import("./pages/TeacherLogin"));
+const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const TeacherSignup = lazy(() => import("./pages/TeacherSignup"));
 // StudentLogin replaced by LoginSelection at /student-login
-import StudentSignup from "./pages/StudentSignup";
-import NotFound from "./pages/NotFound";
+const StudentSignup = lazy(() => import("./pages/StudentSignup"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 import ProtectedRoute from "./components/ProtectedRoute";
-import LoginSelection from "./pages/LoginSelection";
-import SignupSelection from "./pages/SignupSelection";
-import Index from "./pages/Index";
-import ForTeachers from "./pages/ForTeachers";
-import ForFamilies from "./pages/ForFamilies";
-import Donate from "./pages/Donate";
-import FeedbackPage from "./pages/FeedbackPage";
-import AudiencePlaceholder from "./pages/AudiencePlaceholder";
-import Modules from "./pages/Modules";
-import ModuleDetail from "./pages/ModuleDetail";
-import Avatar from "./pages/Avatar";
+const LoginSelection = lazy(() => import("./pages/LoginSelection"));
+const SignupSelection = lazy(() => import("./pages/SignupSelection"));
+const Index = lazy(() => import("./pages/Index"));
+const ForTeachers = lazy(() => import("./pages/ForTeachers"));
+const ForFamilies = lazy(() => import("./pages/ForFamilies"));
+const Donate = lazy(() => import("./pages/Donate"));
+const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
+const AudiencePlaceholder = lazy(() => import("./pages/AudiencePlaceholder"));
+const Modules = lazy(() => import("./pages/Modules"));
+const ModuleDetail = lazy(() => import("./pages/ModuleDetail"));
+const Avatar = lazy(() => import("./pages/Avatar"));
 import { SpecialtyProvider } from "./contexts/SpecialtyContext";
 const Specialty = lazy(() => import("./pages/Specialty"));
 const AdvancedPreview = import.meta.env.DEV
   ? lazy(() => import("./pages/dev/AdvancedPreview"))
   : () => null;
-import PlayHub from "./pages/PlayHub";
-import ActivityPlayer from "./pages/ActivityPlayer";
-import CreateChallenge from "./pages/CreateChallenge";
-import ChallengePlayer from "./pages/ChallengePlayer";
-import StudentGallery from "./pages/StudentGallery";
-import TeacherGallery from "./pages/TeacherGallery";
-import StudentLayout from "./layouts/StudentLayout";
-import TeacherLayout from "./components/TeacherDashboard/TeacherLayout";
-import TeacherClasses from "./pages/TeacherClasses";
-import TeacherClassDetail from "./pages/TeacherClassDetail";
-import TeacherSettings from "./pages/TeacherSettings";
-import TeacherStudentRoster from "./pages/TeacherStudentRoster";
-import JoinClass from "./pages/JoinClass";
-import StudentClasses from "./pages/StudentClasses";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import TeacherModulePrep from "./pages/TeacherModulePrep";
-import TeacherResources from "./pages/TeacherResources";
-import TeacherPDHub from "./pages/TeacherPDHub";
-import CommunityImpactDashboard from "./pages/CommunityImpactDashboard";
-import ShowcaseMode from "./pages/ShowcaseMode";
-import StudentClassLogin from "./pages/StudentClassLogin";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import HomeAccessAccept from "./pages/HomeAccessAccept";
-import ForReviewers from "./pages/ForReviewers";
-import TryDemo from "./pages/TryDemo";
-import Waterworks from "./pages/Waterworks";
+const PlayHub = lazy(() => import("./pages/PlayHub"));
+const ActivityPlayer = lazy(() => import("./pages/ActivityPlayer"));
+const CreateChallenge = lazy(() => import("./pages/CreateChallenge"));
+const ChallengePlayer = lazy(() => import("./pages/ChallengePlayer"));
+const StudentGallery = lazy(() => import("./pages/StudentGallery"));
+const TeacherGallery = lazy(() => import("./pages/TeacherGallery"));
+const StudentLayout = lazy(() => import("./layouts/StudentLayout"));
+const TeacherLayout = lazy(
+  () => import("./components/TeacherDashboard/TeacherLayout"),
+);
+const TeacherClasses = lazy(() => import("./pages/TeacherClasses"));
+const TeacherClassDetail = lazy(() => import("./pages/TeacherClassDetail"));
+const TeacherSettings = lazy(() => import("./pages/TeacherSettings"));
+const TeacherStudentRoster = lazy(() => import("./pages/TeacherStudentRoster"));
+const JoinClass = lazy(() => import("./pages/JoinClass"));
+const StudentClasses = lazy(() => import("./pages/StudentClasses"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const TeacherModulePrep = lazy(() => import("./pages/TeacherModulePrep"));
+const TeacherResources = lazy(() => import("./pages/TeacherResources"));
+const TeacherPDHub = lazy(() => import("./pages/TeacherPDHub"));
+const CommunityImpactDashboard = lazy(
+  () => import("./pages/CommunityImpactDashboard"),
+);
+const ShowcaseMode = lazy(() => import("./pages/ShowcaseMode"));
+const StudentClassLogin = lazy(() => import("./pages/StudentClassLogin"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const HomeAccessAccept = lazy(() => import("./pages/HomeAccessAccept"));
+const ForReviewers = lazy(() => import("./pages/ForReviewers"));
+const TryDemo = lazy(() => import("./pages/TryDemo"));
+const Waterworks = lazy(() => import("./pages/Waterworks"));
 // Biome Buddy prototype: unlisted routes, lazy so its content tables never
 // ride in the main chunk.
 const BiomeBuddy = lazy(() => import("./pages/BiomeBuddy"));
 const BiomeBuddyShare = lazy(() => import("./pages/BiomeBuddyShare"));
 const BiomeBuddyReview = lazy(() => import("./pages/BiomeBuddyReview"));
-import PlanDetail from "./pages/PlanDetail";
-import Parents from "./pages/Parents";
-import ParentGuide from "./pages/ParentGuide";
-import StudentBenchmark from "./pages/StudentBenchmark";
-import StudentSettings from "./pages/StudentSettings";
-import ExperimentDashboard from "./components/admin/ExperimentDashboard";
-import AdminMetrics from "./pages/AdminMetrics";
+const PlanDetail = lazy(() => import("./pages/PlanDetail"));
+const Parents = lazy(() => import("./pages/Parents"));
+const ParentGuide = lazy(() => import("./pages/ParentGuide"));
+const StudentBenchmark = lazy(() => import("./pages/StudentBenchmark"));
+const StudentSettings = lazy(() => import("./pages/StudentSettings"));
+const ExperimentDashboard = lazy(
+  () => import("./components/admin/ExperimentDashboard"),
+);
+const AdminMetrics = lazy(() => import("./pages/AdminMetrics"));
 
 // Pathways (secondary-age program layer)
-import PathwaysLayout from "./components/pathways/PathwaysLayout";
-import PathwaysHome from "./components/pathways/PathwaysHome";
-import TracksOverview from "./components/pathways/TracksOverview";
-import TrackDetail from "./components/pathways/TrackDetail";
-import ChallengesPage from "./components/pathways/challenges/ChallengesPage";
-import ChallengePage from "./components/pathways/challenges/ChallengePage";
-import WelcomeAvatarStep from "./components/pathways/onboarding/WelcomeAvatarStep";
-import WelcomeSkillsStep from "./components/pathways/onboarding/WelcomeSkillsStep";
-import WelcomeMissionStep from "./components/pathways/onboarding/WelcomeMissionStep";
-import WelcomeGoalsStep from "./components/pathways/onboarding/WelcomeGoalsStep";
-import WelcomeCompleteStep from "./components/pathways/onboarding/WelcomeCompleteStep";
-import GlossaryPage from "./components/pathways/glossary/GlossaryPage";
-import ModulePlayer from "./components/pathways/ModulePlayer";
-import PathwaysProfile from "./components/pathways/PathwaysProfile";
-import JoinCohort from "./components/pathways/JoinCohort";
-import PathwaysAbout from "./components/pathways/PathwaysAbout";
-import ProgramOverviewPage from "./components/pathways/facilitator/ProgramOverview";
-import FacilitatorLayout from "./components/pathways/facilitator/FacilitatorLayout";
-import FacilitatorDashboardPage from "./components/pathways/facilitator/pages/Dashboard";
-import CohortsListPage from "./components/pathways/facilitator/pages/CohortsList";
-import CohortNewPage from "./components/pathways/facilitator/pages/CohortNew";
-import CohortDetailPage from "./components/pathways/facilitator/pages/CohortDetail";
-import FacilitatorTracksPage from "./components/pathways/facilitator/pages/Tracks";
-import FacilitatorLearnersPage from "./components/pathways/facilitator/pages/Learners";
-import FacilitatorLearnerDetailPage from "./components/pathways/facilitator/pages/LearnerDetail";
-import FacilitatorReportsPage from "./components/pathways/facilitator/pages/Reports";
-import FacilitatorSettingsPage from "./components/pathways/facilitator/pages/Settings";
+const PathwaysLayout = lazy(
+  () => import("./components/pathways/PathwaysLayout"),
+);
+const PathwaysHome = lazy(() => import("./components/pathways/PathwaysHome"));
+const TracksOverview = lazy(
+  () => import("./components/pathways/TracksOverview"),
+);
+const TrackDetail = lazy(() => import("./components/pathways/TrackDetail"));
+const ChallengesPage = lazy(
+  () => import("./components/pathways/challenges/ChallengesPage"),
+);
+const ChallengePage = lazy(
+  () => import("./components/pathways/challenges/ChallengePage"),
+);
+const WelcomeAvatarStep = lazy(
+  () => import("./components/pathways/onboarding/WelcomeAvatarStep"),
+);
+const WelcomeSkillsStep = lazy(
+  () => import("./components/pathways/onboarding/WelcomeSkillsStep"),
+);
+const WelcomeMissionStep = lazy(
+  () => import("./components/pathways/onboarding/WelcomeMissionStep"),
+);
+const WelcomeGoalsStep = lazy(
+  () => import("./components/pathways/onboarding/WelcomeGoalsStep"),
+);
+const WelcomeCompleteStep = lazy(
+  () => import("./components/pathways/onboarding/WelcomeCompleteStep"),
+);
+const GlossaryPage = lazy(
+  () => import("./components/pathways/glossary/GlossaryPage"),
+);
+const ModulePlayer = lazy(() => import("./components/pathways/ModulePlayer"));
+const PathwaysProfile = lazy(
+  () => import("./components/pathways/PathwaysProfile"),
+);
+const JoinCohort = lazy(() => import("./components/pathways/JoinCohort"));
+const PathwaysAbout = lazy(() => import("./components/pathways/PathwaysAbout"));
+const ProgramOverviewPage = lazy(
+  () => import("./components/pathways/facilitator/ProgramOverview"),
+);
+const FacilitatorLayout = lazy(
+  () => import("./components/pathways/facilitator/FacilitatorLayout"),
+);
+const FacilitatorDashboardPage = lazy(
+  () => import("./components/pathways/facilitator/pages/Dashboard"),
+);
+const CohortsListPage = lazy(
+  () => import("./components/pathways/facilitator/pages/CohortsList"),
+);
+const CohortNewPage = lazy(
+  () => import("./components/pathways/facilitator/pages/CohortNew"),
+);
+const CohortDetailPage = lazy(
+  () => import("./components/pathways/facilitator/pages/CohortDetail"),
+);
+const FacilitatorTracksPage = lazy(
+  () => import("./components/pathways/facilitator/pages/Tracks"),
+);
+const FacilitatorLearnersPage = lazy(
+  () => import("./components/pathways/facilitator/pages/Learners"),
+);
+const FacilitatorLearnerDetailPage = lazy(
+  () => import("./components/pathways/facilitator/pages/LearnerDetail"),
+);
+const FacilitatorReportsPage = lazy(
+  () => import("./components/pathways/facilitator/pages/Reports"),
+);
+const FacilitatorSettingsPage = lazy(
+  () => import("./components/pathways/facilitator/pages/Settings"),
+);
 
 const TeachersRedirect = () => {
   const { search } = useLocation();
@@ -134,13 +185,21 @@ const TeacherRoot = () => (
   </TeacherLayout>
 );
 
+function RouteContent({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>{children}</Routes>
+    </Suspense>
+  );
+}
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <TooltipProvider>
           <div className="app">
-            <Routes>
+            <RouteContent>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/teacher-login" element={<TeacherLogin />} />
@@ -187,7 +246,7 @@ function App() {
               <Route
                 path="/biome-buddy"
                 element={
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<LoadingScreen />}>
                     <BiomeBuddy />
                   </Suspense>
                 }
@@ -195,7 +254,7 @@ function App() {
               <Route
                 path="/biome-buddy/share"
                 element={
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<LoadingScreen />}>
                     <BiomeBuddyShare />
                   </Suspense>
                 }
@@ -203,7 +262,7 @@ function App() {
               <Route
                 path="/biome-buddy/review"
                 element={
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<LoadingScreen />}>
                     <BiomeBuddyReview />
                   </Suspense>
                 }
@@ -212,7 +271,7 @@ function App() {
                 <Route
                   path="/dev/echo-spike"
                   element={
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<LoadingScreen />}>
                       <EchoSpike />
                     </Suspense>
                   }
@@ -222,7 +281,7 @@ function App() {
                 <Route
                   path="/dev/advanced"
                   element={
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<LoadingScreen />}>
                       <AdvancedPreview />
                     </Suspense>
                   }
@@ -300,7 +359,7 @@ function App() {
                 <Route
                   path="specialty"
                   element={
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<LoadingScreen />}>
                       <Specialty />
                     </Suspense>
                   }
@@ -308,7 +367,7 @@ function App() {
                 <Route
                   path="advanced"
                   element={
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<LoadingScreen />}>
                       <Specialty />
                     </Suspense>
                   }
@@ -462,7 +521,7 @@ function App() {
 
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+            </RouteContent>
             <Toaster />
 
             {import.meta.env.VITE_APP_VERSION ? (

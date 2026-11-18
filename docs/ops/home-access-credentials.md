@@ -1,4 +1,4 @@
-> **Canonical for:** home-access credential binding (#872): invitation authority, revocation and rollout. Last verified against code: 2026-09-07.
+> **Canonical for:** home-access credential binding (#872): invitation authority, revocation and rollout. Last verified against code: 2026-11-17.
 
 # Home-access credentials (#872)
 
@@ -45,6 +45,12 @@ Known residuals: the supersede is per student, not per class — a second teache
 kills the first teacher's unused one (fails closed; the owner should confirm this reach). Two
 issuances for the same student that run at the same instant may both leave a live token; both
 carry identical authority and the never-bound guard still allows exactly one binding.
+
+## Revoking signed-in sessions (#883)
+
+A committed change to a password, login or parent email, role, classroom PIN, or home-access authority advances the account’s session version in PostgreSQL. All earlier password and classroom sessions fail their next authenticated request (403). A fresh login uses the new version. Ordinary profile edits keep the session valid; an unavailable database returns 503 so the client can retry. Saving home login details sends the learner back to sign in.
+
+Apply `20261117190000_session_revocation` **before** rolling out the API. Revocation is enforced once all API instances use the new middleware. Existing tokens without a version can finish their normal lifetime on unchanged accounts (version zero); the first relevant change invalidates them too.
 
 ## Rollout considerations (owner decisions; nothing here assumes them)
 

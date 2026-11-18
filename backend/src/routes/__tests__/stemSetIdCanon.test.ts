@@ -33,7 +33,13 @@ import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import request from "supertest";
 
 const prismaMock = vi.hoisted(() => ({
-  avatar: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+  $transaction: vi.fn(),
+  avatar: {
+    findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
+  },
   progress: { findMany: vi.fn(), count: vi.fn() },
   activity: { findMany: vi.fn(), count: vi.fn() },
   pulseResponse: { count: vi.fn() },
@@ -149,7 +155,10 @@ describe("POST /avatar/select-archetype — Set 3 specialization gate (#855)", (
       level: 3,
       xp: 300,
     });
-    prismaMock.avatar.update.mockResolvedValue({
+    prismaMock.$transaction.mockImplementation((run) => run(prismaMock));
+    prismaMock.avatar.createMany.mockResolvedValue({ count: 0 });
+    prismaMock.avatar.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.avatar.findUniqueOrThrow.mockResolvedValue({
       id: "avatar-1",
       studentId: "student-123",
       stage: "SPECIALIZED",
@@ -167,7 +176,7 @@ describe("POST /avatar/select-archetype — Set 3 specialization gate (#855)", (
     const res = await selectArchetype();
 
     expect(res.status).toBe(200);
-    expect(prismaMock.avatar.update).toHaveBeenCalledWith(
+    expect(prismaMock.avatar.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ stage: "SPECIALIZED" }),
       }),
@@ -182,7 +191,7 @@ describe("POST /avatar/select-archetype — Set 3 specialization gate (#855)", (
 
     expect(res.status).toBe(403);
     expect(res.body.error).toBe("Specialization locked");
-    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.avatar.updateMany).not.toHaveBeenCalled();
   });
 
   it("is not satisfied by dropping any single canonical Set 3 ID", async () => {

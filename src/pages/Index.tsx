@@ -8,8 +8,8 @@
  *
  * The hero's second column is the GAME, not a picture of it. It is one
  * instance of the shipped `TankTrekGame` running the same `DEMO_CONFIG` as
- * `/try` (`src/components/home/PublicDemo.tsx`), loaded after the first paint
- * and mounted with `publicDemo`, so a visitor plays three real mazes here
+ * `/try` (`src/components/home/PublicDemo.tsx`), with the briefing after first paint
+ * and the engine on Start. It is mounted with `publicDemo`, so a visitor plays three real mazes here
  * without an account and without the page ever calling the API. A screenshot
  * of a game is a claim about a game; this is the game.
  *

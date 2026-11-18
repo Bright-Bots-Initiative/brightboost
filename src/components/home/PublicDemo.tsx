@@ -13,10 +13,8 @@
  *  1. **One engine.** A single panel, placed with CSS grid rather than
  *     rendered twice for two breakpoints, so no second game exists off-screen
  *     keeping its own timers. "Play again" remounts THIS instance with a key.
- *  2. **Lazy, after the first paint.** The game chunk is imported from an
- *     effect, so the homepage's text and actions paint first and a visitor who
- *     never scrolls to the panel pays for it after everything else. The box
- *     reserves its height before the chunk arrives, so nothing below it moves.
+ *  2. **Play on demand.** The shared briefing paints on the homepage. The
+ *     maze engine is requested only when the visitor starts a mission.
  *  3. **A failure is never the learner's.** If the chunk cannot load, the
  *     panel says so in its own words, offers "Try again" (which re-imports)
  *     and a plain link to `/try`. It never renders as a lost game.
@@ -38,6 +36,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type ErrorInfo,
   type ReactNode,
 } from "react";
@@ -52,15 +51,48 @@ import {
   writeDemoBest,
 } from "@/components/games/tankTrekDemo";
 import { track } from "@/lib/analytics";
+import { TankTrekBriefing } from "@/components/games/TankTrekBriefing";
 import { PUBLIC_ACTION_PRIMARY, PUBLIC_ACTION_QUIET } from "./publicEntry";
 
-type GameModule = typeof import("@/components/games/TankTrekGame");
+type GameModule = Pick<
+  typeof import("@/components/games/TankTrekGame"),
+  "default"
+>;
 
 /** How the game chunk is fetched. A prop only so a test can resolve or reject
  *  it on demand; the page never passes one. */
 export type LoadGame = () => Promise<GameModule>;
 
-const loadTankTrek: LoadGame = () => import("@/components/games/TankTrekGame");
+// GameShell renders its children only in play mode. Start Mission is the one
+// tap that both loads and plays. A retry gets a fresh lazy component.
+function HomepageTankTrek({
+  config = DEMO_CONFIG,
+  onComplete,
+}: ComponentProps<GameModule["default"]>) {
+  const { t } = useTranslation();
+  const [Play] = useState(() =>
+    lazy(() =>
+      import("@/components/games/TankTrekGame").then((module) => ({
+        default: module.TankTrekCore,
+      })),
+    ),
+  );
+  return (
+    <TankTrekBriefing config={config} onComplete={onComplete} publicDemo>
+      {(onFinish) => (
+        <Suspense
+          fallback={
+            <p role="status" className="bb-demo-status">
+              {t("home.demo.loading")}
+            </p>
+          }
+        >
+          <Play config={config} onFinish={onFinish} />
+        </Suspense>
+      )}
+    </TankTrekBriefing>
+  );
+}
 
 export interface PublicDemoProps {
   loadGame?: LoadGame;
@@ -136,16 +168,15 @@ export default function PublicDemo({
   const startedFired = useRef(false);
   const startMsRef = useRef(Date.now());
 
-  const load = loadGame ?? loadTankTrek;
   const Game = useMemo(
-    () => lazy(load),
+    () => (loadGame ? lazy(loadGame) : HomepageTankTrek),
     // `attempt` is the point: a new lazy component is a new import.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [load, attempt],
+    [loadGame, attempt],
   );
 
   // After the first paint, not during it: the homepage's own content is what a
-  // visitor reads first, and the chunk is ~ the whole game.
+  // visitor reads first; showing the briefing never requests the maze engine.
   useEffect(() => {
     const frame = requestAnimationFrame(() => setArmed(true));
     return () => cancelAnimationFrame(frame);

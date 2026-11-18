@@ -1,4 +1,9 @@
 {
+  "homeAccess": {
+    "manage": {
+      "success": "Đã cập nhật thông tin đăng nhập ở nhà. Hãy đăng nhập lại bằng email và mật khẩu dùng ở nhà."
+    }
+  },
   "skipToContent": "Chuyển đến nội dung",
   "student": "Học sinh",
   "studentLayout": {
@@ -1452,6 +1457,11 @@
     }
   },
   "games": {
+    "practice": {
+      "retry": "Thử lại câu này nhé.",
+      "answer": "Đáp án là {{answer}}. Mình thử câu tiếp theo nhé.",
+      "letPass": "Hãy để {{word}} đi qua. Từ này không cùng vần."
+    },
     "gotchaGears": {
       "title": "Bắt bánh răng",
       "correct": "Đúng rồi!",

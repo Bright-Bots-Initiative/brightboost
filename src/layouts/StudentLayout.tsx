@@ -68,7 +68,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={logout}
+            onClick={() => logout()}
             className="text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 gap-1.5"
             aria-label={t("common.logOut")}
           >

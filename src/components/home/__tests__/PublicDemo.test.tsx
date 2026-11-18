@@ -118,7 +118,7 @@ describe("PublicDemo with the shipped Tank Trek", () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     // The real controls, not a picture of them.
     expect(
-      screen.getByRole("button", { name: /forward/i }),
+      await screen.findByRole("button", { name: /forward/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /run/i })).toBeInTheDocument();
   });
@@ -165,7 +165,7 @@ describe("PublicDemo with the shipped Tank Trek", () => {
       { timeout: 5000 },
     );
     await user.click(start);
-    await user.click(screen.getByRole("button", { name: /forward/i }));
+    await user.click(await screen.findByRole("button", { name: /forward/i }));
     view.unmount();
     expect(document.body.querySelector(".bb-public-demo")).toBeNull();
   });

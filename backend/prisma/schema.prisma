@@ -38,6 +38,9 @@ model User {
   bio       String   @default("No bio added")
   grade     Int?
 
+  // Authentication epoch, advanced by the credential/role update trigger.
+  sessionVersion Int @default(0)
+
   // K-2 Class Code Login
   loginIcon         String?  // emoji icon for K-2 class-code login
   loginPin          String?  // optional hashed 4-digit PIN

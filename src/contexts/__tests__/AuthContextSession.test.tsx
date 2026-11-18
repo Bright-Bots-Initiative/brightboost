@@ -46,7 +46,7 @@ function Probe() {
       <button onClick={() => auth.login("token-a", second)}>
         Replace same token
       </button>
-      <button onClick={auth.logout}>Sign out</button>
+      <button onClick={() => auth.logout()}>Sign out</button>
     </>
   );
 }

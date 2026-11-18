@@ -1,3 +1,4 @@
+import { routeBudgets } from "./src/build/routeBudgets.mjs";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -10,6 +11,7 @@ export default defineConfig(({ mode }) => ({
   base: "/", // Force absolute asset paths for nested routes
   plugins: [
     react(),
+    mode === "production" && routeBudgets(),
     mode === "development" && componentTagger(),
     visualizer({
       filename: "dist/bundle-report.html",

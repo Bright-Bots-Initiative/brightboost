@@ -1,4 +1,9 @@
 {
+  "homeAccess": {
+    "manage": {
+      "success": "家庭登录信息已更新。请使用家庭邮箱和密码重新登录。"
+    }
+  },
   "skipToContent": "跳到内容",
   "student": "学生",
   "studentLayout": {
@@ -1452,6 +1457,11 @@
     }
   },
   "games": {
+    "practice": {
+      "retry": "再试一次吧。",
+      "answer": "答案是{{answer}}。我们来试下一题吧。",
+      "letPass": "让“{{word}}”过去吧。它不押韵。"
+    },
     "learning": {
       "wordsToKnow": "需要认识的词"
     },

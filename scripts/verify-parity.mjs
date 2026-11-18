@@ -220,6 +220,12 @@ export const STEPS = [
     required: true,
   },
   {
+    id: "CI-30",
+    name: "Cold routes and chunk recovery in Chromium",
+    argv: ["node", "scripts/verify-built-routes.mjs"],
+    required: true,
+  },
+  {
     id: "CI-14",
     name: "Prisma migrate deploy",
     argv: ["npx", "prisma", "migrate", "deploy"],

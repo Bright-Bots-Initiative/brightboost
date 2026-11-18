@@ -437,7 +437,7 @@ export async function updateHomeCredentials(userId: string, rawInput: unknown) {
 
   try {
     const updated = await prisma.user.update({
-      where: { id: userId },
+      where: { id: userId, password: user.password },
       data,
       select: {
         id: true,
@@ -450,6 +450,12 @@ export async function updateHomeCredentials(userId: string, rawInput: unknown) {
     });
     return { user: updated, changedFields: Object.keys(data) };
   } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2025"
+    ) {
+      throw new HomeAccessError("invalid_current_password", 403);
+    }
     if (
       e instanceof Prisma.PrismaClientKnownRequestError &&
       e.code === "P2002"
