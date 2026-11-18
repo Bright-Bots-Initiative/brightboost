@@ -3212,7 +3212,7 @@
       }
     },
     "adults": {
-      "intro": "Los adultos tienen su propia entrada. Los niños nunca se registran por su cuenta.",
+      "intro": "Los docentes y las familias crean las cuentas de kínder a 8.º. Los estudiantes pueden entrar con un código de clase.",
       "teacherTitle": "Maestros",
       "familyTitle": "Familias",
       "plansTitle": "Planes de acceso gratuitos",
@@ -3269,5 +3269,23 @@
       "cloudflare": "Cloudflare Web Analytics recibe la URL de la página, un identificador de carga y mediciones de rendimiento, como tiempos de carga, cambios de diseño, selectores de elementos y uso de memoria del navegador.",
       "requests": "Las solicitudes a estos proveedores también incluyen información de conexión, como tu dirección IP y las cabeceras de solicitud del navegador."
     }
+  },
+  "signupSelection": {
+    "title": "Crear una cuenta",
+    "subtitle": "Los docentes y las familias pueden añadir estudiantes a una clase o a un grupo familiar.",
+    "teacherCard": {
+      "heading": "Soy docente",
+      "blurb": "Lleva el aprendizaje STEM de kínder a 8.º a tu aula.",
+      "cta": "Registrarme como docente"
+    },
+    "parentCard": {
+      "heading": "Soy madre, padre o tutor",
+      "blurb": "Crea un grupo familiar y aprende con tu hijo o hija.",
+      "cta": "Registrarme para aprender en casa"
+    },
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "logIn": "Iniciar sesión",
+    "classCodeNote": "Estudiantes, usen el código que les dio su docente o su familia.",
+    "classCodeLink": "Entrar con un código de clase"
   }
 }

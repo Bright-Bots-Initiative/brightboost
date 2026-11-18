@@ -285,7 +285,7 @@ Work through the layers in order — most of these failures fail silently, so do
 | Frontend shim (init, identify, track, reset) | `src/lib/analytics.ts`                                                                          |
 | Frontend init call                           | `src/main.tsx`                                                                                  |
 | Login + logout identification                | `src/contexts/AuthContext.tsx`                                                                  |
-| Signup events                                | `src/pages/TeacherSignup.tsx`, `src/pages/StudentSignup.tsx`, `src/pages/LoginSelection.tsx`    |
+| Signup events                                | `src/pages/TeacherSignup.tsx`, `src/pages/LoginSelection.tsx`                                   |
 | Class lifecycle                              | `src/pages/TeacherClasses.tsx`, `src/pages/JoinClass.tsx`                                       |
 | Game lifecycle                               | `src/pages/ActivityPlayer.tsx`                                                                  |
 | Backend shim                                 | `backend/src/services/analytics.ts`                                                             |

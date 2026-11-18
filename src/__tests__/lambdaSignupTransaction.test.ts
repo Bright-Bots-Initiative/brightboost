@@ -1,12 +1,8 @@
 /* @vitest-environment node */
 /**
- * Regression guard for the legacy Lambda signup handlers
- * (src/lambda/teacher-signup.ts, src/lambda/student-signup.ts).
- *
- * Each handler writes the Prisma-managed "User" table and the legacy `users`
- * table. They used to swallow a failed "User" insert and still return 201 with
- * a token; they now write both rows in one transaction and fail the signup,
- * with no token, when either insert fails.
+ * The retired student handler must deny requests without database access.
+ * Teacher signup writes the Prisma-managed and legacy user tables in one
+ * transaction and returns a token only after both writes succeed.
  *
  * `pg` is replaced by an in-memory fake that honours BEGIN / COMMIT / ROLLBACK,
  * so the assertions are about what ends up committed, not only about which
@@ -166,10 +162,15 @@ function signupEvent() {
   } as Parameters<typeof teacherSignup>[0];
 }
 
-describe.each([
-  { kind: "Teacher", handler: teacherSignup, role: "TEACHER" },
-  { kind: "Student", handler: studentSignup, role: "STUDENT" },
-])("$kind signup lambda", ({ kind, handler, role }) => {
+it("closes legacy public student signup without opening a database transaction", async () => {
+  fakeDb.reset();
+  const result = await studentSignup(signupEvent());
+  expect(result.statusCode).toBe(403);
+  expect(JSON.parse(result.body).error).toBe("adult_provisioning_required");
+  expect(fakeDb.transactionClients()).toHaveLength(0);
+});
+
+describe("Teacher signup lambda", () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -186,12 +187,12 @@ describe.each([
   });
 
   it("commits both rows in one transaction and returns 201 with a token", async () => {
-    const result = await handler(signupEvent());
+    const result = await teacherSignup(signupEvent());
 
     expect(result.statusCode).toBe(201);
     const body = JSON.parse(result.body);
     expect(body.token).toEqual(expect.any(String));
-    expect(body.user).toMatchObject({ email: EMAIL, role });
+    expect(body.user).toMatchObject({ email: EMAIL, role: "TEACHER" });
 
     expect(fakeDb.committed.User).toHaveLength(1);
     expect(fakeDb.committed.users).toHaveLength(1);
@@ -224,7 +225,7 @@ describe.each([
     async ({ failure, statusCode }) => {
       fakeDb.failOn['INSERT INTO "User"'] = failure;
 
-      const result = await handler(signupEvent());
+      const result = await teacherSignup(signupEvent());
 
       expect(result.statusCode).toBe(statusCode);
       expect(JSON.parse(result.body)).not.toHaveProperty("token");
@@ -239,7 +240,7 @@ describe.each([
       expect(fakeDb.committed.User).toHaveLength(0);
       expect(fakeDb.committed.users).toHaveLength(0);
       expect(consoleError).toHaveBeenCalledWith(
-        `${kind} signup error:`,
+        "Teacher signup error:",
         failure,
       );
     },
@@ -248,7 +249,7 @@ describe.each([
   it('a failed users insert rolls back the "User" row and returns no token', async () => {
     fakeDb.failOn["INSERT INTO users"] = new Error("users insert failed");
 
-    const result = await handler(signupEvent());
+    const result = await teacherSignup(signupEvent());
 
     expect(result.statusCode).toBe(500);
     expect(JSON.parse(result.body)).not.toHaveProperty("token");
@@ -272,7 +273,7 @@ describe.each([
     const rollbackFailure = new Error("Connection terminated unexpectedly");
     fakeDb.failOn["ROLLBACK"] = rollbackFailure;
 
-    const result = await handler(signupEvent());
+    const result = await teacherSignup(signupEvent());
 
     // The rollback error mentions "connection", which the handler maps to 503;
     // the duplicate-key insert error must win and map to 409.
@@ -287,7 +288,7 @@ describe.each([
   it('an email that exists only in "User" returns 409 without writing', async () => {
     fakeDb.committed.User.push({ id: "prisma-user", email: EMAIL });
 
-    const result = await handler(signupEvent());
+    const result = await teacherSignup(signupEvent());
 
     expect(result.statusCode).toBe(409);
     expect(JSON.parse(result.body)).toEqual({

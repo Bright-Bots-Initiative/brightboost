@@ -2513,6 +2513,9 @@
     "back": "返回班级"
   },
   "home": {
+    "adults": {
+      "intro": "幼儿园至八年级的学生账户由教师或家长创建。学生可以使用班级代码登录。"
+    },
     "meta": {
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     }
@@ -2526,5 +2529,23 @@
       "cloudflare": "Cloudflare Web Analytics 会接收页面网址、页面加载标识符和性能指标，包括加载时间、布局偏移、元素选择器和浏览器内存使用情况。",
       "requests": "向这些提供商发送的请求还包含连接信息，例如您的 IP 地址和浏览器请求头。"
     }
+  },
+  "signupSelection": {
+    "title": "创建账户",
+    "subtitle": "教师和家长可以将学生添加到班级或家庭学习小组。",
+    "teacherCard": {
+      "heading": "我是教师",
+      "blurb": "在课堂上开展幼儿园至八年级的 STEM 学习。",
+      "cta": "注册教师账户"
+    },
+    "parentCard": {
+      "heading": "我是家长",
+      "blurb": "创建家庭学习小组，与孩子一起学习。",
+      "cta": "注册并开始在家学习"
+    },
+    "haveAccount": "已有账户？",
+    "logIn": "登录",
+    "classCodeNote": "同学们，请使用老师或家人给你的班级代码。",
+    "classCodeLink": "使用班级代码登录"
   }
 }

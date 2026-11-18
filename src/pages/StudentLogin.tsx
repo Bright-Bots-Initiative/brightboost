@@ -147,12 +147,12 @@ const StudentLogin: React.FC = () => {
 
             <div className="mt-4 text-center">
               <p className="text-sm text-brightboost-navy">
-                {t("studentLogin.footer.noAccount")}{" "}
+                {t("signupSelection.classCodeNote")}{" "}
                 <Link
-                  to="/student/signup"
+                  to="/class-login"
                   className="text-brightboost-blue font-bold hover:underline transition-colors"
                 >
-                  {t("studentLogin.footer.signup")}
+                  {t("signupSelection.classCodeLink")}
                 </Link>
               </p>
               <p className="text-sm text-brightboost-navy mt-2">

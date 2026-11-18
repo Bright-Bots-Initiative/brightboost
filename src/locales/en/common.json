@@ -2082,8 +2082,8 @@
     }
   },
   "signupSelection": {
-    "title": "Create your account",
-    "subtitle": "Pick what fits you best.",
+    "title": "Set up an account",
+    "subtitle": "Teachers and families can add learners to a class or home group.",
     "teacherCard": {
       "heading": "I'm a Teacher",
       "blurb": "Bring K-8 STEM learning into your classroom.",
@@ -2094,15 +2094,10 @@
       "blurb": "Set up a home group and learn together with your child.",
       "cta": "Sign up & start at home"
     },
-    "studentCard": {
-      "heading": "I'm a Student",
-      "blurb": "Play STEM missions and track your progress.",
-      "cta": "Sign up as a Student"
-    },
     "haveAccount": "Already have an account?",
     "logIn": "Log in",
-    "classCodeNote": "Have a class code from your teacher?",
-    "classCodeLink": "Join your class"
+    "classCodeNote": "Students, use the code your teacher or family gave you.",
+    "classCodeLink": "Sign in with a class code"
   },
   "teacherSignup": {
     "pageTitle": "Sign up as a teacher",
@@ -3445,7 +3440,7 @@
       }
     },
     "adults": {
-      "intro": "Adults get their own entry. Children never sign up for themselves.",
+      "intro": "Teachers and families set up K–8 student accounts. Students can sign in with a class code.",
       "teacherTitle": "Teachers",
       "familyTitle": "Families",
       "plansTitle": "Free access plans",

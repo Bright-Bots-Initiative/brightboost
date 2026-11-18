@@ -56,43 +56,10 @@ describe("Authentication Flows", () => {
     });
   });
 
-  describe("Student Signup", () => {
-    beforeEach(() => {
-      cy.intercept("POST", "**/api/signup/student", {
-        fixture: "student_signup_success.json",
-      }).as("studentSignup");
-      cy.visit("/student/signup");
-    });
-
-    it("successfully signs up a student and redirects to dashboard", () => {
-      cy.get('input[type="text"]').type("Jane Student");
-      cy.get('input[type="email"]').type("jane.student@example.com");
-      cy.get('input[type="password"]').first().type("password123");
-      cy.get('input[type="password"]').last().type("password123");
-
-      cy.get('button[type="submit"]').click();
-      cy.wait("@studentSignup");
-
-      cy.url().should("include", "/student/dashboard");
-      cy.contains("Hello, Jane Student!").should("be.visible");
-    });
-
-    it("handles server errors gracefully", () => {
-      cy.intercept("POST", "**/api/signup/student", {
-        statusCode: 500,
-        body: { error: "Internal server error" },
-      }).as("studentSignupError");
-
-      cy.get('input[type="text"]').type("Jane Student");
-      cy.get('input[type="email"]').type("jane.student@example.com");
-      cy.get('input[type="password"]').first().type("password123");
-      cy.get('input[type="password"]').last().type("password123");
-
-      cy.get('button[type="submit"]').click();
-      cy.wait("@studentSignupError");
-
-      cy.contains("Internal server error").should("be.visible");
-    });
+  it("sends an old student signup link to class sign-in", () => {
+    cy.visit("/student/signup");
+    cy.location("pathname").should("eq", "/class-login");
+    cy.get('input[type="email"]').should("not.exist");
   });
 
   describe("Login", () => {

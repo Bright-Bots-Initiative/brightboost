@@ -44,12 +44,6 @@ const passwordSchema = z
   .regex(/[a-z]/, "Password must contain at least one lowercase letter")
   .regex(/[0-9]/, "Password must contain at least one number");
 
-const studentSignupSchema = z.object({
-  name: nameSchema,
-  email: emailSchema,
-  password: passwordSchema,
-});
-
 const teacherSignupSchema = z.object({
   name: nameSchema,
   email: emailSchema,
@@ -65,63 +59,11 @@ const loginSchema = z.object({
 
 // Routes
 
-// POST /signup/student
-router.post(
-  "/signup/student",
-  authLimiter,
-  async (req: Request, res: Response) => {
-    try {
-      const data = studentSignupSchema.parse(req.body);
-
-      const existingUser = await prisma.user.findUnique({
-        where: { email: data.email },
-      });
-
-      if (existingUser) {
-        return res.status(409).json({ message: "Email already in use" });
-      }
-
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-
-      const user = await prisma.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          password: hashedPassword,
-          role: "student",
-          level: "Explorer",
-          accountMode: "EMAIL_ONLY",
-        },
-      });
-
-      // 🛡️ Sentinel: Audit Log
-      await logAudit("USER_SIGNUP", user.id, {
-        email: user.email,
-        role: user.role,
-      });
-
-      trackServer(user.id, "account_registered", {
-        role: "student",
-        signup_method: "email",
-      });
-
-      const token = generateToken(user, "password");
-      const { password, ...userWithoutPassword } = user;
-
-      res.status(201).json({
-        message: "Student account created",
-        user: userWithoutPassword,
-        token,
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      console.error("Signup error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  },
-);
+// Older clients used this public route to create an unowned K–8 account.
+// Adults add learners through the authenticated class or home-group roster.
+router.post("/signup/student", authLimiter, (_req, res) => {
+  res.status(403).json({ error: "adult_provisioning_required" });
+});
 
 // POST /signup/teacher
 router.post(
