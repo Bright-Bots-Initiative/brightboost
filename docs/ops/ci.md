@@ -239,13 +239,13 @@ The production Vite build measures deduplicated JavaScript and CSS at gzip level
 | Cold visit                               | Measured KiB | Budget KiB |
 | ---------------------------------------- | -----------: | ---------: |
 | Startup                                  |        346.4 |        390 |
-| Landing                                  |        368.9 |        410 |
-| Student login                            |        352.4 |        400 |
+| Landing                                  |        385.0 |        410 |
+| Student login                            |        352.5 |        400 |
 | Class login                              |        355.2 |        400 |
 | Teacher login                            |        349.6 |        400 |
 | Student activity before selecting a game |        398.1 |        455 |
 
-`src/build/routeBudgets.mjs` fails the build for an oversized visit or a teacher/facilitator screen or unselected game in these graphs. After building, CI also opens each public entry and the playable demo in fresh Chromium sessions at 100 ms latency and 200 KB/s download, then blocks a route chunk and verifies that Reload restores the page. Run `node scripts/verify-built-routes.mjs` after `npm run build` with Playwright Chromium installed. The separate deployment footprint check still covers the entire distribution, including static game assets.
+`src/build/routeBudgets.mjs` fails the build for an oversized visit or a teacher/facilitator screen or unselected game in these graphs. After building, CI also opens each public entry and the playable demo in fresh Chromium sessions at 100 ms latency and 200 KB/s download, then blocks a route chunk and verifies that Reload restores the page. Run `node scripts/verify-built-routes.mjs` after `npm run build` with Playwright Chromium installed. The homepage includes the real Tank Trek briefing in its budget; the maze engine downloads on Start Mission. The separate deployment footprint check still covers the entire distribution, including static game assets.
 
 ## Scripts cheat sheet
 

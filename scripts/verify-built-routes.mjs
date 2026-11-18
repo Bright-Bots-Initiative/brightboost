@@ -44,7 +44,10 @@ try {
     });
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(host + url, { waitUntil: "domcontentloaded" });
-    if (url === "/") await page.locator("h1#hero-heading").waitFor();
+    if (url === "/") {
+      await page.locator("h1#hero-heading").waitFor();
+      await page.getByRole("button", { name: /start mission/i }).waitFor();
+    }
     if (url === "/class-login") await page.getByPlaceholder("ABC123").waitFor();
     if (url === "/teacher-login")
       await page.getByPlaceholder("teacher@school.com").waitFor();
@@ -71,6 +74,16 @@ try {
     assert.deepEqual(wrong, []);
     assert.deepEqual(errors, []);
     console.log("PASS constrained", url, "=>", new URL(page.url()).pathname);
+    if (url === "/") {
+      await page.getByRole("button", { name: /start mission/i }).click();
+      await page
+        .getByRole("button", { name: "Forward", exact: true })
+        .waitFor();
+      assert(
+        requests.some((x) => /\/TankTrekGame-/.test(x)),
+        "Start must load the Tank Trek engine",
+      );
+    }
     await context.close();
   }
   const { context, page } = await fresh();
