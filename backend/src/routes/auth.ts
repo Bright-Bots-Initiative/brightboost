@@ -489,18 +489,23 @@ router.get("/auth/cohort-roster/:code", async (req: Request, res: Response) => {
 // cannot 403 the accept page (authenticateToken rejects invalid tokens).
 // ---------------------------------------------------------------------------
 
-// GET /auth/home-access/invite/:token — what the accept page may show
+// The current frontend sends the proof in a request body so resource timing
+// entries cannot include it. Keep the GET route for clients already loaded.
+async function previewHomeAccessInvite(raw: unknown, res: Response) {
+  try {
+    const token = z.string().min(1).max(200).parse(raw);
+    res.json(await readHomeAccessInvite(token));
+  } catch (error) {
+    answerHomeAccessError(res, error);
+  }
+}
+router.post("/auth/home-access/invite", homeAccessProofLimiter, (req, res) =>
+  previewHomeAccessInvite(req.body?.token, res),
+);
 router.get(
   "/auth/home-access/invite/:token",
   homeAccessProofLimiter,
-  async (req: Request, res: Response) => {
-    try {
-      const info = await readHomeAccessInvite(String(req.params.token));
-      res.json(info);
-    } catch (error) {
-      answerHomeAccessError(res, error);
-    }
-  },
+  (req, res) => previewHomeAccessInvite(req.params.token, res),
 );
 
 // POST /auth/home-access/accept — bind the home login with the emailed token
@@ -558,7 +563,7 @@ router.post(
       });
 
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-      const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+      const resetUrl = `${frontendUrl}/reset-password#token=${encodeURIComponent(token)}`;
 
       await sendPasswordResetEmail(data.email, resetUrl);
 

@@ -56,6 +56,11 @@ This is a children's product. **These rules are non-negotiable:**
 - Anonymous events use the SDK's browser identifier. After `identifyUser`, the
   identifier is the DB user ID (`User.id`), never an email or name. PostHog can
   associate earlier anonymous events with that later identified user.
+- Password-reset and family-invitation emails carry proof in the fragment. The entry
+  page removes it (including tokens in older query links) before loading external
+  resources. Requests use origin-only referrers. PostHog event and attribution URLs
+  retain their route and omit query strings, fragments and invitation proof paths.
+
 - Replay starts disabled (`disable_session_recording: true`). Only
   `identifyUser` with the role `teacher` or `admin` starts recording. Anonymous
   visitors, students, and parents are not recorded. Persisted SDK identity alone

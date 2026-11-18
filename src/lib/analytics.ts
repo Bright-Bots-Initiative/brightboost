@@ -51,6 +51,20 @@ function resolvePostHogHost(): string {
   return DEFAULT_POSTHOG_HOST;
 }
 
+// PostHog attaches URLs to events and to nested attribution properties, including
+// referrers saved by an older client. Keep the route and the explicit funnel fields.
+function scrubAnalyticsUrls(properties: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(properties)) {
+    if (typeof value === "string" && /^(?:https?:\/\/|\/)/i.test(value)) {
+      properties[key] = value
+        .split(/[?#]/, 1)[0]
+        .replace(/(\/auth\/home-access\/invite)\/[^/]+$/i, "$1");
+    } else if (value && typeof value === "object") {
+      scrubAnalyticsUrls(value as Record<string, unknown>);
+    }
+  }
+}
+
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
 export type GradeBand = "k2" | "g3_5" | "g6_8";
 export type SignupMethod = "email" | "class_code" | "cohort_code";
@@ -257,6 +271,16 @@ export function initAnalytics(): void {
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
+    mask_personal_data_properties: true,
+    custom_personal_data_properties: ["token"],
+    before_send: (event) => {
+      if (event) {
+        scrubAnalyticsUrls(event.properties);
+        if (event.$set) scrubAnalyticsUrls(event.$set);
+        if (event.$set_once) scrubAnalyticsUrls(event.$set_once);
+      }
+      return event;
+    },
     // Checked against posthog-js 1.379.3's installed PostHogConfig types.
     // Client settings override remotely enabled capture for these features.
     disable_session_recording: true,
@@ -268,6 +292,8 @@ export function initAnalytics(): void {
     // starts it, and resetAnalytics stops it before clearing the identity.
     // Those permitted recordings still mask all inputs and rendered text.
     session_recording: {
+      recordBody: false,
+      recordHeaders: false,
       maskAllInputs: true,
       maskTextSelector: "*",
     },

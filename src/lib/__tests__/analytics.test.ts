@@ -95,6 +95,40 @@ function finishLoading() {
 }
 
 describe("analytics recording policy", () => {
+  it.each(["/reset-password", "/home-access/accept"])(
+    "removes account-link details from pageviews and saved referrers for %s",
+    async (path) => {
+      await initialize();
+      const config = sdk.init.mock.calls[0][1];
+      const clean = `https://school.example${path}`;
+      const url = `${clean}?token=private-marker#private-fragment`;
+      const result = config.before_send({
+        event: "$pageview",
+        properties: {
+          $current_url: url,
+          $referrer: url,
+          $session_entry_url: url,
+          $set: { $initial_referrer: url },
+          $set_once: { $initial_current_url: url },
+          game_id: "tank_trek",
+          score: 7,
+        },
+        $set_once: { $initial_referrer: url },
+      });
+      expect(result.properties).toMatchObject({
+        $current_url: clean,
+        $referrer: clean,
+        $session_entry_url: clean,
+        $set: { $initial_referrer: clean },
+        $set_once: { $initial_current_url: clean },
+        game_id: "tank_trek",
+        score: 7,
+      });
+      expect(result.$set_once.$initial_referrer).toBe(clean);
+      expect(config.before_send(null)).toBeNull();
+    },
+  );
+
   it("keeps anonymous recording, heatmaps, console capture, dead clicks and surveys off", async () => {
     await initialize();
     expect(sdk.init.mock.calls[0][1]).toMatchObject({
