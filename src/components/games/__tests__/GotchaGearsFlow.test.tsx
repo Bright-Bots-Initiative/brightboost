@@ -33,7 +33,10 @@ afterEach(() => {
 function start(settings = {}) {
   const complete = vi.fn();
   render(
-    <GotchaGearsGame config={{ rounds, settings }} onComplete={complete} />,
+    <GotchaGearsGame
+      config={{ gradeBand: "g3_5", rounds, settings }}
+      onComplete={complete}
+    />,
   );
   fireEvent.click(screen.getByRole("button", { name: /let.s go|start/i }));
   return complete;

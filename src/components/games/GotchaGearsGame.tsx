@@ -1,3 +1,8 @@
+import {
+  ANSWER_MS,
+  RETRY_MS,
+  usePracticeRound,
+} from "./shared/usePracticeRound";
 /**
  * Gotcha Gears — React catching game (replaces Unity version).
  *
@@ -209,6 +214,9 @@ function GotchaGearsCore({
     }));
   }, [config, t]);
 
+  const practice = usePracticeRound();
+  const isPractice = getGradeBand(config) === "k2";
+  const [attempt, setAttempt] = useState(0);
   const baseSpeed = config?.settings?.speed ?? 0.55;
   const speedRamp = config?.settings?.speedRamp ?? 0.04;
   const maxSpeed = config?.settings?.maxSpeed ?? 1.4;
@@ -260,9 +268,10 @@ function GotchaGearsCore({
 
   const advanceRound = useCallback(() => {
     if (livesRef.current <= 0 || finished.current) return;
+    practice.reset();
     if (roundIdx + 1 >= rounds.length) finishGame();
     else setRoundIdx(roundIdx + 1);
-  }, [roundIdx, rounds.length, finishGame]);
+  }, [roundIdx, rounds.length, finishGame, practice]);
 
   const endRound = useCallback(
     (delay: number) => {
@@ -287,6 +296,30 @@ function GotchaGearsCore({
     if (livesRef.current <= 0) setGameOver(true);
   }, []);
 
+  const practiceMiss = useCallback(() => {
+    resolved.current = true;
+    stats.current.streak = 0;
+    setStreak(0);
+    gearsRef.current = [];
+    setGears([]);
+    const retry = practice.miss() === "retry";
+    setFeedback({
+      text: retry
+        ? round.hint || t("games.practice.retry")
+        : t("games.practice.answer", { answer: round.correct }),
+      type: "wrong",
+    });
+    if (!retry) {
+      endRound(ANSWER_MS);
+      return;
+    }
+    setRoundComplete(true);
+    practice.after(RETRY_MS, () => {
+      setFeedback(null);
+      setAttempt((n) => n + 1);
+    });
+  }, [practice, round, t, endRound]);
+
   // Spawn each round once. Animation and clicks use the same current gear list
   // so rapid input cannot count one gear twice before React renders again.
   useEffect(() => {
@@ -308,7 +341,7 @@ function GotchaGearsCore({
     setGears(next);
     resolved.current = false;
     setRoundComplete(false);
-  }, [round, roundIdx, baseSpeed, speedRamp, maxSpeed]);
+  }, [round, roundIdx, attempt, baseSpeed, speedRamp, maxSpeed]);
 
   useEffect(() => {
     if (gameOver || roundComplete) return;
@@ -318,6 +351,10 @@ function GotchaGearsCore({
       const next = gearsRef.current.map((g) => ({ ...g, y: g.y + g.speed }));
       if (next.length > 0 && next.every((g) => g.y >= FIELD_H + GEAR_H)) {
         stats.current.attempts++;
+        if (isPractice) {
+          practiceMiss();
+          return;
+        }
         loseLife();
         gearsRef.current = [];
         setGears([]);
@@ -338,7 +375,16 @@ function GotchaGearsCore({
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [gameOver, roundComplete, round, loseLife, endRound, t]);
+  }, [
+    gameOver,
+    roundComplete,
+    round,
+    loseLife,
+    endRound,
+    t,
+    isPractice,
+    practiceMiss,
+  ]);
 
   const handleCatch = useCallback(
     (gearId: string) => {
@@ -370,6 +416,10 @@ function GotchaGearsCore({
         });
         endRound(800);
       } else {
+        if (isPractice) {
+          practiceMiss();
+          return;
+        }
         gearsRef.current = gearsRef.current.filter((g) => g.id !== gearId);
         setGears(gearsRef.current);
         loseLife();
@@ -385,7 +435,7 @@ function GotchaGearsCore({
         }
       }
     },
-    [round, loseLife, endRound, t],
+    [round, loseLife, endRound, t, isPractice, practiceMiss],
   );
 
   if (gameOver) {
@@ -428,11 +478,13 @@ function GotchaGearsCore({
             {"🔥"} x{streak}
           </span>
         )}
-        <span className="flex items-center gap-1 px-3 py-1 bg-pink-50 text-pink-700 rounded-full">
-          {Array.from({ length: Math.max(0, lives) }, (_, i) => (
-            <span key={i}>{"❤️"}</span>
-          ))}
-        </span>
+        {!isPractice && (
+          <span className="flex items-center gap-1 px-3 py-1 bg-pink-50 text-pink-700 rounded-full">
+            {Array.from({ length: Math.max(0, lives) }, (_, i) => (
+              <span key={i}>{"❤️"}</span>
+            ))}
+          </span>
+        )}
         <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
           {roundIdx + 1}/{rounds.length}
         </span>

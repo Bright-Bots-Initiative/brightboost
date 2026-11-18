@@ -1513,6 +1513,11 @@
     }
   },
   "games": {
+    "practice": {
+      "retry": "Try this one again.",
+      "answer": "The answer is {{answer}}. Let's try the next one.",
+      "letPass": "Let {{word}} pass. It does not rhyme."
+    },
     "learning": {
       "wordsToKnow": "Words to know"
     },

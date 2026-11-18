@@ -1475,6 +1475,11 @@
     }
   },
   "games": {
+    "practice": {
+      "retry": "Inténtalo otra vez.",
+      "answer": "La respuesta es {{answer}}. Vamos con la siguiente.",
+      "letPass": "Deja pasar {{word}}. No rima."
+    },
     "learning": {
       "wordsToKnow": "Palabras para aprender"
     },
