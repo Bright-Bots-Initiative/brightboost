@@ -288,9 +288,9 @@ describe("completion latch (#832 item 4)", () => {
 
 /**
  * #791 — a replay is reward-free on purpose; the results screen and toast
- * must say so instead of "You earned +0 points" / "Awesome, saved!". The
- * i18n mock does not interpolate, so these check which copy is shown, not
- * a rendered count.
+ * must say so instead of "You earned +0 points" / "Awesome, saved!". These
+ * check which copy is shown (the earned-points line or the already-counted
+ * line), not the rendered count.
  */
 describe("replay results copy (#791)", () => {
   const ALREADY_COUNTED = "Already counted — nice replay!";

@@ -13,34 +13,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SafeExplorationControls } from "../SafeExplorationControls";
 import type { SafeExplorationControlsProps } from "../SafeExplorationControls";
 
-// The shared `enMock` helper resolves real English copy but ignores
-// interpolation; these announcements are built from `{{baseline}}`, so the
-// mock here fills values too. The assertions stay on what a learner reads.
 vi.mock("react-i18next", async () => {
-  const { enTranslate } = await import("@/test/i18nMock");
-  const t = (key: string, values?: Record<string, string>) => {
-    let out = enTranslate(key);
-    if (values) {
-      for (const [name, value] of Object.entries(values)) {
-        out = out.split(`{{${name}}}`).join(String(value));
-      }
-    }
-    return out;
-  };
-  return {
-    initReactI18next: { type: "3rdParty" as const, init: () => {} },
-    I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
-    Trans: ({ children }: { children: React.ReactNode }) => children,
-    useTranslation: () => ({
-      t,
-      i18n: {
-        language: "en",
-        changeLanguage: () => Promise.resolve(),
-        on: () => {},
-        off: () => {},
-      },
-    }),
-  };
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
 });
 
 const trackMock = vi.hoisted(() => vi.fn());
