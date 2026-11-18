@@ -162,101 +162,46 @@ router.post(
         });
       }
 
-      // Check if avatar already exists
-      const existing = await prisma.avatar.findUnique({ where: { studentId } });
+      const result = await prisma.$transaction(async (tx) => {
+        // ON CONFLICT DO NOTHING also handles two first-ever choices. The
+        // conditional UPDATE serializes contenders on the same avatar row.
+        const inserted = await tx.avatar.createMany({
+          data: [{ studentId }],
+          skipDuplicates: true,
+        });
+        const claim = await tx.avatar.updateMany({
+          where: { studentId, stage: "GENERAL" },
+          data: { stage: "SPECIALIZED", archetype },
+        });
+        if (claim.count === 0) return null;
 
-      if (existing) {
-        // If already SPECIALIZED, reject - can't change archetype
-        if (existing.stage === "SPECIALIZED" && existing.archetype) {
-          return res.status(400).json({ error: "Avatar already specialized" });
-        }
-
-        // Upgrade GENERAL avatar to SPECIALIZED
-        const updatedAvatar = await prisma.avatar.update({
+        const { id, level } = await tx.avatar.findUniqueOrThrow({
           where: { studentId },
-          data: {
-            stage: "SPECIALIZED",
-            archetype: archetype as any,
-          },
+          select: { id: true, level: true },
         });
-
-        // Unlock abilities for the current level
-        const eligibleAbilities = await prisma.ability.findMany({
-          where: {
-            archetype: archetype as any,
-            reqLevel: { lte: updatedAvatar.level },
-          },
+        const abilities = await tx.ability.findMany({
+          where: { archetype, reqLevel: { lte: level } },
+          select: { id: true },
         });
-
-        if (eligibleAbilities.length > 0) {
-          // Check for existing unlocks (edge case)
-          const existingUnlocks = await prisma.unlockedAbility.findMany({
-            where: { avatarId: updatedAvatar.id },
-            select: { abilityId: true },
+        if (abilities.length) {
+          await tx.unlockedAbility.createMany({
+            data: abilities.map((ability) => ({
+              avatarId: id,
+              abilityId: ability.id,
+            })),
+            skipDuplicates: true,
           });
-          const existingIds = new Set(existingUnlocks.map((u) => u.abilityId));
-
-          const newAbilities = eligibleAbilities.filter(
-            (ab) => !existingIds.has(ab.id),
-          );
-          if (newAbilities.length > 0) {
-            await prisma.unlockedAbility.createMany({
-              data: newAbilities.map((ab) => ({
-                avatarId: updatedAvatar.id,
-                abilityId: ab.id,
-                equipped: false,
-              })),
-            });
-          }
         }
-
-        // Refetch with abilities
-        const finalAvatar = await prisma.avatar.findUnique({
+        const avatar = await tx.avatar.findUniqueOrThrow({
           where: { studentId },
           include: { unlockedAbilities: { include: { Ability: true } } },
         });
-
-        return res.json({ avatar: finalAvatar, upgraded: true });
-      }
-
-      // No avatar exists - create new SPECIALIZED avatar
-      const avatar = await prisma.avatar.create({
-        data: {
-          studentId,
-          stage: "SPECIALIZED",
-          archetype: archetype as any,
-          level: 1,
-          xp: 0,
-          hp: 100,
-          energy: 100,
-          speed: 0,
-          control: 0,
-          focus: 0,
-        },
+        return inserted.count ? { avatar } : { avatar, upgraded: true };
       });
 
-      // Unlock default abilities (reqLevel 1)
-      const defaults = await prisma.ability.findMany({
-        where: { archetype: archetype as any, reqLevel: 1 },
-      });
-
-      if (defaults.length > 0) {
-        await prisma.unlockedAbility.createMany({
-          data: defaults.map((ab) => ({
-            avatarId: avatar.id,
-            abilityId: ab.id,
-            equipped: false,
-          })),
-        });
-      }
-
-      // Refetch with abilities
-      const finalAvatar = await prisma.avatar.findUnique({
-        where: { studentId },
-        include: { unlockedAbilities: { include: { Ability: true } } },
-      });
-
-      res.json({ avatar: finalAvatar });
+      if (!result)
+        return res.status(400).json({ error: "Avatar already specialized" });
+      return res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
