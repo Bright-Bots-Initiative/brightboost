@@ -5,5 +5,7 @@
   "storageMessage": "Trình duyệt đang chặn bộ nhớ cần thiết để đăng nhập. Hãy cho phép trang web lưu dữ liệu rồi tải lại trang.",
   "reload": "Tải lại trang",
   "home": "Về trang chủ",
-  "loading": "Đang tải Bright Boost…"
+  "loading": "Đang tải Bright Boost…",
+  "slowTitle": "Bright Boost vẫn đang tải",
+  "slowMessage": "Bạn có thể chờ ở đây hoặc tải lại trang."
 }
