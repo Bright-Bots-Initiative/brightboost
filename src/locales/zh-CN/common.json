@@ -1,4 +1,9 @@
 {
+  "homeAccess": {
+    "manage": {
+      "success": "家庭登录信息已更新。请使用家庭邮箱和密码重新登录。"
+    }
+  },
   "skipToContent": "跳到内容",
   "student": "学生",
   "studentLayout": {

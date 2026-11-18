@@ -2792,7 +2792,7 @@
       "parentEmail": "Correo del padre, madre o tutor (opcional)",
       "save": "Guardar cambios",
       "saving": "Guardando...",
-      "success": "Inicio de sesión de casa actualizado.",
+      "success": "Se actualizó el acceso desde casa. Vuelve a iniciar sesión con tu correo y contraseña de casa.",
       "nothing": "Escribe algo para cambiar."
     },
     "errors": {

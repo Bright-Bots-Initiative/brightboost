@@ -1,4 +1,9 @@
 {
+  "homeAccess": {
+    "manage": {
+      "success": "Đã cập nhật thông tin đăng nhập ở nhà. Hãy đăng nhập lại bằng email và mật khẩu dùng ở nhà."
+    }
+  },
   "skipToContent": "Chuyển đến nội dung",
   "student": "Học sinh",
   "studentLayout": {

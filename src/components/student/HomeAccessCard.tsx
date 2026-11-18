@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { postHomeAccess } from "@/services/homeAccessApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 import { readSessionAuth } from "@/utils/sessionAuth";
 
 /**
@@ -59,14 +60,12 @@ function ClassroomNotice() {
 
 function ManageHomeLogin() {
   const { t } = useTranslation();
-  const { token, updateUser } = useAuth();
+  const { token, logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [parentEmail, setParentEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
   const [message, setMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -85,16 +84,9 @@ function ManageHomeLogin() {
     if (parentEmail) body.parentEmail = parentEmail;
 
     try {
-      const result = await postHomeAccess<{
-        user?: { email?: string | null };
-      }>("/auth/home-access/credentials", body, token);
-      if (result?.user?.email) updateUser({ email: result.user.email });
-      setStatus("saved");
-      setMessage(t("homeAccess.manage.success"));
-      setCurrentPassword("");
-      setPassword("");
-      setEmail("");
-      setParentEmail("");
+      await postHomeAccess("/auth/home-access/credentials", body, token);
+      toast({ title: t("homeAccess.manage.success") });
+      logout("/student-login");
     } catch (err) {
       setStatus("error");
       const code = err instanceof Error ? err.message : "";
@@ -177,14 +169,7 @@ function ManageHomeLogin() {
           </Button>
 
           {message ? (
-            <p
-              className={
-                status === "error"
-                  ? "text-sm text-red-600"
-                  : "text-sm text-green-700"
-              }
-              role="status"
-            >
+            <p className="text-sm text-red-600" role="status">
               {message}
             </p>
           ) : null}
