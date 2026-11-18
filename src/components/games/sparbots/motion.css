@@ -10,20 +10,18 @@
 .sparbot-body {
   transform-origin: 110px 180px;
 }
-.sparbot-body {
-  animation: sparbot-breathe 3.6s ease-in-out infinite;
+/* Give a waiting bot a short idle greeting, then let the scene rest. */
+.sparbot:is([data-motion="idle"], [data-motion="wave"], [data-motion="train"])
+  .sparbot-body {
+  animation: sparbot-breathe 3.6s ease-in-out 2;
 }
-.sparbot-shadow {
-  transform-origin: 110px 199px;
-  animation: sparbot-shadow 3.6s ease-in-out infinite;
-}
-.sparbot-eyes {
+.sparbot:is([data-motion="idle"], [data-motion="wave"], [data-motion="train"])
+  .sparbot-eyes {
   transform-origin: 110px 77px;
-  animation: sparbot-blink 5s ease-in-out infinite;
+  animation: sparbot-blink 4s ease-in-out 2;
 }
 .sparbot-antenna {
   transform-origin: 110px 47px;
-  animation: sparbot-antenna 3.6s ease-in-out infinite;
 }
 .sparbot-arm-left {
   transform-origin: 65px 102px;
@@ -65,11 +63,6 @@
 .sparbot[data-motion="handshake"][data-partner="true"] .sparbot-arm-left {
   animation: sparbot-shake 1.6s ease-in-out;
 }
-.sparbots-avatar {
-  position: relative;
-  max-width: 240px;
-  margin: auto;
-}
 .sparbots-training {
   position: absolute;
   inset: 0;
@@ -87,7 +80,7 @@
   border: 2px solid #b35640;
   border-radius: 8px;
   opacity: 0;
-  animation: sparbot-train-card 900ms ease-in-out both;
+  animation: sparbot-train-card 900ms ease-in-out;
 }
 .sparbots-training span:nth-child(2) {
   animation-delay: 180ms;
@@ -105,53 +98,31 @@
   width: 90px;
   margin: 0;
 }
-.sparbots-arena {
-  position: relative;
-  isolation: isolate;
-}
-.sparbots-arena > div:not(.sparbots-spark-flight) {
-  min-width: 0;
-}
-.sparbots-arena-caption {
-  grid-column: 1 / -1;
-  font-weight: 700;
-}
-.sparbots .sparbots-move-label {
-  font-weight: 700;
-  margin: 4px 0;
-}
+/* The flight ends inside the newly filled socket, whatever the screen size. */
 .sparbots-spark-flight {
-  --spark-destination: 25%;
   position: absolute;
   inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-.sparbots-spark-flight[data-outcome="partner"] {
-  --spark-destination: 75%;
-}
-.sparbots-spark-flight[data-outcome="bump"] {
-  --spark-destination: 50%;
-}
-.sparbots-spark-flight span {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  color: #92531b;
-  font-size: 30px;
   opacity: 0;
-  animation: sparbot-spark 950ms 250ms ease-in-out both;
+  pointer-events: none;
+  animation: sparbot-spark 700ms 400ms ease-out;
 }
-.sparbots-spark-flight span:nth-child(2) {
-  animation-delay: 350ms;
-  font-size: 20px;
+.sparbots-bump-left {
+  --bump-x: 3px;
 }
-.sparbots-spark-flight span:nth-child(3) {
-  animation-delay: 450ms;
-  font-size: 14px;
+.sparbots-bump-right {
+  --bump-x: -3px;
 }
-.sparbots-score[data-awarded="true"] {
-  animation: sparbot-score 1.3s ease-out;
+.sparbots-bump circle {
+  animation: sparbot-bump 550ms 220ms ease-in-out;
+}
+.sparbots-decision li {
+  animation: sparbot-choice 400ms ease-out;
+}
+.sparbots-decision li:nth-child(2) {
+  animation-delay: 100ms;
+}
+.sparbots-decision li:nth-child(3) {
+  animation-delay: 200ms;
 }
 .sparbots-next-clue {
   display: flex;
@@ -166,10 +137,6 @@
 }
 .sparbots-next-clue > div {
   min-width: 0;
-}
-/* A learning clue holds still; movement belongs to the resolved beat above. */
-.sparbots-next-clue .sparbot * {
-  animation: none;
 }
 .sparbots-friendly-finish {
   display: flex;
@@ -187,19 +154,15 @@
 .sparbots-explain {
   animation: sparbot-arrive 300ms ease-out;
 }
-.sparbots button:active:not(:disabled) {
-  transform: translateY(2px);
+@media screen and (prefers-reduced-motion: no-preference) {
+  .sparbots:not([data-reduced-effects="true"]) button:active:not(:disabled) {
+    transform: translateY(2px);
+  }
 }
 
 @keyframes sparbot-breathe {
   50% {
     transform: translateY(-4px);
-  }
-}
-@keyframes sparbot-shadow {
-  50% {
-    transform: scaleX(0.93);
-    opacity: 0.07;
   }
 }
 @keyframes sparbot-blink {
@@ -211,11 +174,6 @@
   }
   45% {
     transform: scaleY(0.12);
-  }
-}
-@keyframes sparbot-antenna {
-  50% {
-    transform: rotate(7deg);
   }
 }
 @keyframes sparbot-wave {
@@ -320,25 +278,32 @@
   }
 }
 @keyframes sparbot-spark {
-  15% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.15);
+  0% {
+    opacity: 0;
+    transform: translate(var(--launch-x), -46px) rotate(-20deg) scale(0.6);
   }
-  75% {
+  22% {
     opacity: 1;
+    transform: translate(calc(var(--launch-x) * 0.75), -62px) scale(1.18);
+  }
+  82% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.08);
   }
   100% {
-    left: var(--spark-destination);
-    top: 82%;
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.45);
+    transform: scale(1);
   }
 }
-@keyframes sparbot-score {
-  55%,
-  85% {
-    transform: scale(1.06);
-    color: #236c61;
+@keyframes sparbot-bump {
+  45%,
+  60% {
+    transform: translateX(var(--bump-x));
+  }
+}
+@keyframes sparbot-choice {
+  45% {
+    transform: translateY(-3px);
   }
 }
 @keyframes sparbot-arrive {
@@ -360,17 +325,11 @@
   animation: none !important;
   transition: none !important;
 }
-.sparbots[data-reduced-effects="true"] button:active {
-  transform: none;
-}
 @media (prefers-reduced-motion: reduce), print {
   .sparbots *,
   .sparbots *::before,
   .sparbots *::after {
     animation: none !important;
     transition: none !important;
-  }
-  .sparbots button:active {
-    transform: none;
   }
 }

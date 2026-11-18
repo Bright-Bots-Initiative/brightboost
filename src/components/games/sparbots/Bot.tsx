@@ -1,6 +1,7 @@
-import type { Draft, Move, Signals } from "./model";
+import { CircleDot, Pause, RotateCw, Shield } from "lucide-react";
+import type { Clue, Draft, Move, Signals } from "./model";
 
-type Motion = Move | Draft["finish"] | "idle" | "wave" | "train";
+type Motion = Move | Draft["finish"] | "idle" | "wave" | "train" | "still";
 
 /** Original code-drawn characters; signals never rely on color alone. */
 export function Bot({
@@ -21,15 +22,7 @@ export function Bot({
       data-motion={motion}
       data-partner={partner}
     >
-      <ellipse
-        className="sparbot-shadow"
-        cx="110"
-        cy="199"
-        rx="74"
-        ry="10"
-        fill="#263449"
-        opacity=".1"
-      />
+      <ellipse cx="110" cy="199" rx="74" ry="10" fill="#263449" opacity=".1" />
       <g className="sparbot-motion" key={motion}>
         <g
           className="sparbot-body"
@@ -133,6 +126,40 @@ export function Light({ shape }: { shape: Signals["light"] }) {
       ) : (
         <rect x="3" y="3" width="22" height="22" rx="2" fill="#7650a3" />
       )}
+    </svg>
+  );
+}
+
+/** Use the same visual vocabulary on the coach's buttons, cards and replay. */
+export function MoveMark({ move }: { move: Move | null }) {
+  const Icon =
+    move === null
+      ? Pause
+      : { tap: CircleDot, spin: RotateCw, block: Shield }[move];
+  return <Icon size={22} aria-hidden="true" />;
+}
+
+export function ClueMark({ clue, signal }: { clue: Clue; signal: Signals }) {
+  if (clue === "light") return <Light shape={signal.light} />;
+  const y = { up: 4, wide: 14, low: 23 }[signal.pose];
+  return (
+    <svg
+      viewBox="0 0 28 28"
+      width="28"
+      height="28"
+      aria-hidden="true"
+      data-pose={signal.pose}
+    >
+      <g stroke="#263449" strokeWidth="2.5" strokeLinecap="round">
+        <path d={`M9 14 3 ${y} M19 14 25 ${y}`} fill="none" />
+        <rect x="8" y="9" width="12" height="12" rx="4" fill="#77c6c1" />
+      </g>
+      <path
+        d="M11 14h1m4 0h1"
+        stroke="#263449"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

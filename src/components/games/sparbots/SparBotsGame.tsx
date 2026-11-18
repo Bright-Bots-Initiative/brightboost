@@ -12,7 +12,8 @@ import {
 import type { GameResult } from "../shared/GameShell";
 import { useReducedGameEffects } from "../shared/useReducedGameEffects";
 import CardBench from "./CardBench";
-import { Bot, Light } from "./Bot";
+import { Bot, Light, MoveMark } from "./Bot";
+import SparringArena from "./SparringArena";
 import {
   addCard,
   FINISHES,
@@ -221,11 +222,15 @@ function Game({ config, storageScope, onComplete }: Props) {
       setFinishing(false);
     }
   }
+  const nextSignal =
+    screen === "spar" ? tell(floor, round.index, round.beats.length) : null;
+  const practiceSignal =
+    screen === "show" ? practiceTell(floor, round.index, practice) : null;
   const moveButtons = (onMove: (move: Move) => void, coach = false) => (
     <div className="sparbots-moves">
-      {MOVES.map((move, i) => (
+      {MOVES.map((move) => (
         <button key={move} onClick={() => onMove(move)}>
-          <span aria-hidden="true">{["◎", "↻", "⬡"][i]}</span>
+          <MoveMark move={move} />
           {t(coach ? `sparbots.coachMoves.${move}` : `sparbots.moves.${move}`)}
         </button>
       ))}
@@ -254,7 +259,9 @@ function Game({ config, storageScope, onComplete }: Props) {
         {t(
           beat.coached
             ? "sparbots.coachUsed"
-            : `sparbots.confidence.${beat.decision.confidence}`,
+            : !beat.move
+              ? "sparbots.emptyDecision"
+              : `sparbots.confidence.${beat.decision.confidence}`,
         )}
       </strong>
       <p>{beatDescription(beat)}</p>
@@ -265,7 +272,7 @@ function Game({ config, storageScope, onComplete }: Props) {
           })}
         </p>
       )}
-      {beat.decision.tied && <p>{t("sparbots.tie")}</p>}
+      {!beat.coached && beat.decision.tied && <p>{t("sparbots.tie")}</p>}
     </div>
   );
 
@@ -431,28 +438,22 @@ function Game({ config, storageScope, onComplete }: Props) {
         </>
       )}
 
-      {screen === "show" && (
+      {practiceSignal && (
         <>
           <p>{t("sparbots.practiceBeat", { number: practice + 1 })}</p>
           <div className="sparbots-stage">
             <Bot
               key={`${practice}-${chosenMove ?? "clue"}`}
               partner
-              pose={practiceTell(floor, round.index, practice).pose}
-              motion={
-                chosenMove
-                  ? practiceTell(floor, round.index, practice).move
-                  : "idle"
-              }
+              pose={practiceSignal.pose}
+              motion={chosenMove ? practiceSignal.move : "still"}
             />
             <div>
               <h3>{partner}</h3>
-              {signals(practiceTell(floor, round.index, practice))}
+              {signals(practiceSignal)}
               <p>
                 {t("sparbots.partnerShows", {
-                  move: t(
-                    `sparbots.moves.${practiceTell(floor, round.index, practice).move}`,
-                  ),
+                  move: t(`sparbots.moves.${practiceSignal.move}`),
                 })}
               </p>
             </div>
@@ -471,7 +472,7 @@ function Game({ config, storageScope, onComplete }: Props) {
                   {t("sparbots.practiceResult", {
                     move: t(`sparbots.moves.${chosenMove}`),
                     result: t(
-                      `sparbots.outcomes.${outcome(chosenMove, practiceTell(floor, round.index, practice).move)}`,
+                      `sparbots.outcomes.${outcome(chosenMove, practiceSignal.move)}`,
                     ),
                   })}
                 </p>
@@ -561,103 +562,18 @@ function Game({ config, storageScope, onComplete }: Props) {
         </>
       )}
 
-      {screen === "spar" && (
+      {nextSignal && (
         <>
           <p>{t("sparbots.botPlays")}</p>
           <p>{t("sparbots.rounds", { bot: wins[0], partner: wins[1] })}</p>
-          <div className="sparbots-arena">
-            <p className="sparbots-arena-caption">
-              {t(last ? "sparbots.lastBeat" : "sparbots.readyBeat")}
-            </p>
-            <div>
-              <div className="sparbots-avatar">
-                {!last && (
-                  <div className="sparbots-training" aria-hidden="true">
-                    {draft.cards.slice(0, 3).map((card) => (
-                      <span key={card.id}>
-                        <Light shape={card.light} />
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <Bot
-                  key={round.beats.length}
-                  motion={last ? (last.move ?? "idle") : "train"}
-                />
-              </div>
-              <h3>{name}</h3>
-              {last && (
-                <p className="sparbots-move-label">
-                  {last.move
-                    ? t(`sparbots.moves.${last.move}`)
-                    : t("sparbots.noMove")}
-                </p>
-              )}
-              <div
-                className="sparbots-score"
-                key={`score-${round.beats.length}`}
-                data-awarded={last?.outcome === "bot"}
-              >
-                <meter
-                  min={0}
-                  max={target}
-                  value={round.bot}
-                  aria-label={t("sparbots.yourSparks")}
-                />
-                <p>{t("sparbots.sparks", { count: round.bot, target })}</p>
-              </div>
-            </div>
-            <span className="sparbots-arena-spark" aria-hidden="true">
-              ✧
-            </span>
-            <div>
-              <Bot
-                key={round.beats.length}
-                partner
-                pose={
-                  (last?.signal ?? tell(floor, round.index, round.beats.length))
-                    .pose
-                }
-                motion={last?.signal.move ?? "idle"}
-              />
-              <h3>{partner}</h3>
-              {last && (
-                <p className="sparbots-move-label">
-                  {t(`sparbots.moves.${last.signal.move}`)}
-                </p>
-              )}
-              <div
-                className="sparbots-score"
-                key={`score-${round.beats.length}`}
-                data-awarded={last?.outcome === "partner"}
-              >
-                <meter
-                  min={0}
-                  max={target}
-                  value={round.partner}
-                  aria-label={t("sparbots.partnerSparks")}
-                />
-                <p>{t("sparbots.sparks", { count: round.partner, target })}</p>
-              </div>
-            </div>
-            {last && (
-              <div
-                className="sparbots-spark-flight"
-                data-outcome={last.outcome}
-                key={round.beats.length}
-                aria-hidden="true"
-              >
-                <span>✦</span>
-                <span>✧</span>
-                <span>✦</span>
-              </div>
-            )}
-          </div>
-          {last && (
-            <div role="status" key={round.beats.length}>
-              {trace(last)}
-            </div>
-          )}
+          <SparringArena
+            draft={draft}
+            round={round}
+            target={target}
+            botName={name}
+            partnerName={partner}
+            nextSignal={nextSignal}
+          />
           {coachCard && last?.move && (
             <div className="sparbots-callout">
               <p>{t("sparbots.keepCoach")}</p>
@@ -692,13 +608,10 @@ function Game({ config, storageScope, onComplete }: Props) {
           {!round.result ? (
             <>
               <div className="sparbots-next-clue">
-                <Bot
-                  partner
-                  pose={tell(floor, round.index, round.beats.length).pose}
-                />
+                <Bot partner pose={nextSignal.pose} motion="still" />
                 <div>
                   <h3>{t("sparbots.nextClue")}</h3>
-                  {signals(tell(floor, round.index, round.beats.length))}
+                  {signals(nextSignal)}
                 </div>
               </div>
               {nextDecision(draft, round).confidence === "new" &&
@@ -746,6 +659,16 @@ function Game({ config, storageScope, onComplete }: Props) {
               </button>
             </div>
           )}
+          <div role="status" aria-atomic="true">
+            {last && (
+              <>
+                <span className="sr-only">
+                  {t("sparbots.lastBeat", { number: round.beats.length })}.{" "}
+                </span>
+                {trace(last)}
+              </>
+            )}
+          </div>
         </>
       )}
 

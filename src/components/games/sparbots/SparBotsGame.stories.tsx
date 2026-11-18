@@ -39,7 +39,7 @@ const meta: Meta<typeof SparBotsGame> = {
         <div
           style={{
             maxWidth: "100%",
-            width: context.parameters.mobile ? 390 : 1050,
+            width: context.parameters.mobile ? 320 : 1050,
           }}
         >
           <Story />
@@ -83,6 +83,14 @@ function coachingStory(language: "en" | "es"): Story {
         const body = article.querySelector(".sparbot-body")!;
         const breathing = body.getAnimations()[0];
         await expect(breathing).toBeDefined();
+        const idle = article
+          .querySelector(".sparbot")!
+          .getAnimations({ subtree: true });
+        await expect(
+          idle.every(
+            (a) => Number(a.effect!.getComputedTiming().endTime) <= 8000,
+          ),
+        ).toBe(true);
         breathing.pause();
         breathing.currentTime = 0;
         const rest = getComputedStyle(body).transform;
@@ -120,6 +128,14 @@ function coachingStory(language: "en" | "es"): Story {
       }
       await userEvent.click(canvas.getByRole("button", { name: copy.train }));
       await expect(
+        canvas.getByRole("button", { name: copy.watchAgain }),
+      ).toBeDisabled();
+      await expect(
+        Array.from(article.querySelectorAll(".sparbots-training svg"), (svg) =>
+          svg.getAttribute("data-pose"),
+        ),
+      ).toEqual(["wide", "low", "wide"]);
+      await expect(
         getComputedStyle(article.querySelector(".sparbots-training span")!)
           .animationName,
       ).toBe(systemReduced ? "none" : "sparbot-train-card");
@@ -136,16 +152,67 @@ function coachingStory(language: "en" | "es"): Story {
       await expect(
         within(
           article.querySelector(".sparbots-arena") as HTMLElement,
-        ).getByText(copy.lastBeat),
+        ).getByText(copy.lastBeat.replace("{{number}}", "1")),
       ).toBeVisible();
       await expect(
         getComputedStyle(
           article.querySelector(".sparbots-next-clue .sparbot-body")!,
         ).animationName,
       ).toBe("none");
+      const decision = canvas.getByRole("list", { name: copy.decisionPath });
       await expect(
-        article.querySelector(".sparbots-spark-flight"),
-      ).toHaveAttribute("data-outcome", "bot");
+        within(decision)
+          .getAllByRole("listitem")
+          .map((item) => item.textContent),
+      ).toEqual([
+        copy.poses.wide,
+        copy.votingCards.replace("{{count}}", "3"),
+        copy.moves.tap,
+      ]);
+      const replay = canvas.getByRole("button", { name: copy.watchAgain });
+      replay.focus();
+      await userEvent.keyboard("{Enter}");
+      const flight = article.querySelector<SVGSVGElement>(
+        ".sparbots-spark-flight",
+      )!;
+      const animation = systemReduced ? undefined : flight.getAnimations()[0];
+      animation?.pause();
+      await expect(replay).toHaveFocus();
+      await expect(
+        canvas.getByText(copy.replayBeat.replace("{{number}}", "1")),
+      ).toBeVisible();
+      await expect(flight.closest("[data-side]")).toHaveAttribute(
+        "data-side",
+        "bot",
+      );
+      const slot = flight.parentElement!;
+      await expect(slot).toHaveAttribute("data-filled", "true");
+      await expect(
+        article.querySelectorAll('.sparbots-socket[data-filled="true"]'),
+      ).toHaveLength(1);
+      if (!systemReduced) {
+        // Compare the landing point with its real socket at both viewport widths.
+        await expect(animation).toBeDefined();
+        const timing = animation!.effect!.getTiming();
+        const sample = (fraction: number) => {
+          animation!.currentTime =
+            Number(timing.delay) + Number(timing.duration) * fraction;
+          const { x, y, width, height } = flight.getBoundingClientRect();
+          return { x: x + width / 2, y: y + height / 2 };
+        };
+        const launch = sample(0.22),
+          landing = sample(0.82);
+        const target = slot.getBoundingClientRect();
+        await expect(launch.x).toBeGreaterThan(landing.x + 5);
+        await expect(launch.y).toBeLessThan(landing.y - 5);
+        await expect(
+          Math.abs(landing.x - (target.x + target.width / 2)),
+        ).toBeLessThan(1.5);
+        await expect(
+          Math.abs(landing.y - (target.y + target.height / 2)),
+        ).toBeLessThan(1.5);
+        animation!.play();
+      }
       await expect(article.scrollWidth).toBeLessThanOrEqual(
         article.clientWidth + 1,
       );
@@ -155,10 +222,7 @@ function coachingStory(language: "en" | "es"): Story {
       await waitFor(() =>
         expect(article.getAnimations({ subtree: true })).toHaveLength(0),
       );
-      await expect(
-        getComputedStyle(article.querySelector(".sparbots-spark-flight span")!)
-          .opacity,
-      ).toBe("0");
+      await expect(getComputedStyle(flight).opacity).toBe("0");
       // Less motion still allows the next beat and keeps its result visible.
       await userEvent.click(
         canvas.getByRole("button", { name: copy.nextBeat }),
