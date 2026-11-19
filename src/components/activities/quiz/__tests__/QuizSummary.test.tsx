@@ -2,42 +2,16 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import QuizSummary from "@/components/activities/quiz/QuizSummary";
-import { enTranslate } from "@/test/i18nMock";
 
 vi.mock("react-i18next", async () => {
   const { enMock } = await import("@/test/i18nMock");
-  const base = enMock();
-  return {
-    ...base,
-    useTranslation: () => ({
-      t: (key: string, opts?: Record<string, unknown>) => {
-        let s = enTranslate(key);
-        if (opts) {
-          for (const [k, v] of Object.entries(opts)) {
-            s = s.replace(`{{${k}}}`, String(v));
-          }
-        }
-        return s;
-      },
-      i18n: {
-        language: "en",
-        changeLanguage: () => Promise.resolve(),
-        on: () => {},
-        off: () => {},
-      },
-    }),
-  };
+  return enMock();
 });
 
 describe("QuizSummary", () => {
   it("AC-4.1: shows title, score line, and perfect line only when score equals total", () => {
     const { rerender } = render(
-      <QuizSummary
-        score={2}
-        total={3}
-        submitting={false}
-        onFinish={vi.fn()}
-      />,
+      <QuizSummary score={2} total={3} submitting={false} onFinish={vi.fn()} />,
     );
 
     expect(screen.getByText("Quiz done! 🌟")).toBeInTheDocument();
@@ -47,12 +21,7 @@ describe("QuizSummary", () => {
     ).not.toBeInTheDocument();
 
     rerender(
-      <QuizSummary
-        score={3}
-        total={3}
-        submitting={false}
-        onFinish={vi.fn()}
-      />,
+      <QuizSummary score={3} total={3} submitting={false} onFinish={vi.fn()} />,
     );
 
     expect(screen.getByText("Perfect! Every single one!")).toBeInTheDocument();
@@ -102,14 +71,7 @@ describe("QuizSummary", () => {
   });
 
   it("AC-4.3: Finish disabled when submitting prop is true", () => {
-    render(
-      <QuizSummary
-        score={2}
-        total={3}
-        submitting
-        onFinish={vi.fn()}
-      />,
-    );
+    render(<QuizSummary score={2} total={3} submitting onFinish={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: "Finish" })).toBeDisabled();
   });

@@ -1,35 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import QuestionScreen from "@/components/activities/quiz/QuestionScreen";
-import {
-  threeQuestionFixture,
-  i18nKeyFixture,
-} from "@/test/quizFixtures";
+import { threeQuestionFixture, i18nKeyFixture } from "@/test/quizFixtures";
 import { enTranslate } from "@/test/i18nMock";
 
 vi.mock("react-i18next", async () => {
   const { enMock } = await import("@/test/i18nMock");
-  const base = enMock();
-  return {
-    ...base,
-    useTranslation: () => ({
-      t: (key: string, opts?: Record<string, unknown>) => {
-        let s = enTranslate(key);
-        if (opts) {
-          for (const [k, v] of Object.entries(opts)) {
-            s = s.replace(`{{${k}}}`, String(v));
-          }
-        }
-        return s;
-      },
-      i18n: {
-        language: "en",
-        changeLanguage: () => Promise.resolve(),
-        on: () => {},
-        off: () => {},
-      },
-    }),
-  };
+  return enMock();
 });
 
 describe("QuestionScreen", () => {
@@ -73,12 +50,7 @@ describe("QuestionScreen", () => {
     expect(buttons[1]).toHaveTextContent("Reach the charging station");
     expect(buttons[2]).toHaveTextContent("Go to sleep");
 
-    rerender(
-      <QuestionScreen
-        {...defaultProps}
-        shuffleMap={{}}
-      />,
-    );
+    rerender(<QuestionScreen {...defaultProps} shuffleMap={{}} />);
 
     const identityButtons = screen.getAllByRole("button");
     expect(identityButtons[0]).toHaveTextContent("Reach the charging station");
@@ -176,5 +148,33 @@ describe("QuestionScreen", () => {
     expect(correctButton?.querySelector('[aria-hidden="true"]')).toBeTruthy();
     expect(wrongButton?.querySelector('[aria-hidden="true"]')).toBeTruthy();
     expect(container.innerHTML).not.toMatch(/bg-red-/);
+  });
+});
+
+describe("enTranslate", () => {
+  it("enTranslate fills options and nothing else", () => {
+    const key = "activityPlayer.questionOf";
+
+    expect(enTranslate(key, { current: 1, total: 3 })).toBe("Question 1 of 3");
+    expect(enTranslate(key, { current: 0, total: 3 })).toBe("Question 0 of 3");
+
+    // A missing value stays visible rather than vanishing.
+    expect(enTranslate(key, { current: 1 })).toBe("Question 1 of {{total}}");
+    expect(enTranslate(key, { current: 1, total: undefined })).toBe(
+      "Question 1 of {{total}}",
+    );
+    expect(enTranslate(key, { current: 1, total: null })).toBe(
+      "Question 1 of {{total}}",
+    );
+
+    // `t(key, "Default")` passes a default string, not options.
+    expect(enTranslate(key, "Default")).toBe(
+      "Question {{current}} of {{total}}",
+    );
+
+    // A key that is not found comes back as-is, even when it looks like copy.
+    expect(enTranslate("activityPlayer.missing.{{total}}", { total: 3 })).toBe(
+      "activityPlayer.missing.{{total}}",
+    );
   });
 });
