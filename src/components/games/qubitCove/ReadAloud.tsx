@@ -3,9 +3,14 @@ import { Volume2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import "./readAloud.css";
 
-export default function ReadAloud({ text }: { text: string }) {
-  const { t, i18n } = useTranslation();
-  const language = i18n.resolvedLanguage || i18n.language;
+export default function ReadAloud({
+  text,
+  language,
+}: {
+  text: string;
+  language?: string;
+}) {
+  const { t } = useTranslation();
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
   const supported =
     typeof window !== "undefined" &&
@@ -27,7 +32,7 @@ export default function ReadAloud({ text }: { text: string }) {
     const speech = window.speechSynthesis;
     if (utterance.current) speech.cancel();
     const message = new SpeechSynthesisUtterance(text);
-    message.lang = language;
+    if (language) message.lang = language;
     message.rate = 0.9;
     utterance.current = message;
     const clear = () => {

@@ -6,10 +6,15 @@
  * these tests start needing an auth/api mock to pass, the demo's
  * zero-signup contract has been broken — fix the page, not the test.
  */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import TryDemo, { readDemoBest, writeDemoBest } from "../TryDemo";
+
+// jsdom does not implement Canvas 2D. The game logic and controls remain real.
+vi.mock("@/components/games/qubitCove/scene", () => ({
+  createCoveRenderer: () => ({ draw: () => {} }),
+}));
 
 // Resolve i18n keys against en/common.json so assertions match real text.
 vi.mock("react-i18next", async () => {
@@ -37,9 +42,9 @@ describe("TryDemo (public /try route)", () => {
     fetchSpy.mockRestore();
   });
 
-  function renderTry() {
+  function renderTry(entry = "/try") {
     return render(
-      <MemoryRouter initialEntries={["/try"]}>
+      <MemoryRouter initialEntries={[entry]}>
         <TryDemo />
       </MemoryRouter>,
     );
@@ -53,14 +58,117 @@ describe("TryDemo (public /try route)", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("keeps the grades 3–5 link and unknown game links on Tank Trek", () => {
+    const view = renderTry("/try?band=g3_5");
+    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
+    view.unmount();
+    renderTry("/try?game=unknown");
+    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
+  });
+
+  it("counts a movement press but ignores scrolling, background taps, and secondary clicks", async () => {
+    renderTry("/try?game=qubit_cove");
+    const heading = await screen.findByRole("heading", { name: "Qubit Cove" });
+    const map = screen.getByRole("button", { name: "Island map" });
+    const canvas = screen.getByRole("img", {
+      name: "Qubit Cove island playground",
+    });
+    const move = screen.getByRole("button", { name: "Move left" });
+    // jsdom has mouse events; give the dispatched pointer event a button and primary flag.
+    function press(target: Element, button: number, primary = true) {
+      const event = new MouseEvent("pointerdown", { bubbles: true, button });
+      Object.defineProperty(event, "isPrimary", { value: primary });
+      fireEvent(target, event);
+    }
+    move.setPointerCapture = vi.fn();
+    press(canvas, 0);
+    fireEvent.pointerCancel(canvas);
+    fireEvent.click(canvas);
+    fireEvent.click(heading);
+    press(map, 0);
+    fireEvent.pointerCancel(map);
+    fireEvent.click(map, { button: 2 });
+    press(move, 2);
+    press(move, 0, false);
+    expect(
+      trackSpy.mock.calls.filter(
+        ([event]) => event.kind === "demo_game_started",
+      ),
+    ).toHaveLength(0);
+    press(move, 0);
+    fireEvent.click(move);
+    expect(
+      trackSpy.mock.calls.filter(
+        ([event]) => event.kind === "demo_game_started",
+      ),
+    ).toEqual([[{ kind: "demo_game_started", game_id: "qubit_cove_demo" }]]);
+  });
+
+  it("plays, completes and replays Qubit Cove as a guest without changing Tank Trek’s record", async () => {
+    const existingBest = JSON.stringify({ stars: 1 });
+    localStorage.setItem("bb_try_demo_best_v2", existingBest);
+    localStorage.setItem("bb_access_token", "test-stale-token");
+    try {
+      renderTry("/try?game=qubit_cove");
+      await screen.findByRole("heading", { name: "Qubit Cove" });
+      expect(document.title).toContain("Qubit Cove");
+      expect(screen.queryByText("Tank Trek")).toBeNull();
+      const click = (name: string | RegExp) =>
+        fireEvent.click(screen.getByRole("button", { name }));
+      fireEvent.keyDown(document.body, { code: "ArrowLeft" });
+      fireEvent.keyUp(document.body, { code: "ArrowLeft" });
+      expect(trackSpy).toHaveBeenCalledWith({
+        kind: "demo_game_started",
+        game_id: "qubit_cove_demo",
+      });
+      for (const [name, answer, count] of [
+        ["Zero Garden", "Only 0", 1],
+        ["One Peak", "Only 1", 1],
+        ["Chance Harbor", "0 or 1", 3],
+      ] as const) {
+        click("Island map");
+        click(new RegExp(`Ride to ${name}`));
+        click("Use beacon");
+        for (let i = 0; i < count; i++) {
+          click(i ? "Prepare a fresh qubit" : "Prepare qubit");
+          click("Measure");
+        }
+        click(answer);
+        click("Back to the cove");
+      }
+      click("Finish adventure");
+      await screen.findByRole("link", { name: "For teachers and families" });
+      expect(trackSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "demo_game_completed",
+          game_id: "qubit_cove_demo",
+          stars: 3,
+        }),
+      );
+      expect(localStorage.getItem("bb_try_demo_best_v2")).toBe(existingBest);
+      click("Play again");
+      await screen.findByRole("heading", { name: "Qubit Cove" });
+      expect(trackSpy).toHaveBeenCalledWith({
+        kind: "demo_replayed",
+        game_id: "qubit_cove_demo",
+      });
+      expect(
+        screen.queryByRole("button", { name: "Finish adventure" }),
+      ).toBeNull();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      localStorage.removeItem("bb_try_demo_best_v2");
+      localStorage.removeItem("bb_access_token");
+    }
+  });
+
   it("shows the no-signup tagline and a home link", () => {
     renderTry();
-    expect(
-      screen.getByText(/no signup needed/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /bright boost/i }),
-    ).toHaveAttribute("href", "/");
+    expect(screen.getByText(/no signup needed/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /bright boost/i })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("fires demo_page_viewed on mount and nothing else", () => {

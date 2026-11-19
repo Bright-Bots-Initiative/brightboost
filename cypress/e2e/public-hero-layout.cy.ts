@@ -19,7 +19,7 @@ describe("public hero — rendered text stays inside its column", () => {
             win.localStorage.setItem("brightboost.reducedGameEffects", "true");
           },
         });
-        cy.contains("button", copy.games.shared.startMission).should("exist");
+        cy.get(`canvas[aria-label="${copy.qubitCove.canvas}"]`).should("exist");
         cy.get("#hero-heading").should("contain", copy.home.h1First);
         cy.document()
           .should((doc) => {

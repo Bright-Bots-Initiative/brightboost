@@ -3391,19 +3391,20 @@
   "home": {
     "meta": {
       "title": "Bright Boost — A world you build by learning",
-      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+      "description": "Play Qubit Cove, a free K–2 quantum adventure from Bright Boost. Explore floating islands, then find more STEM games for your classroom or family.",
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     },
     "eyebrow": "Free STEM learning platform",
     "displayLine": "Play. Build. Become.",
     "h1": "A world you build by learning.",
-    "heroSentence": "Program Bolt through a real robot mission. Choose a challenge for K–2 or grades 3–5.",
+    "heroSentence": "Jump across the islands of Qubit Cove and discover what happens when you measure a qubit.",
     "secondaryCta": "For teachers and families",
     "howItWorks": {
       "summary": "How the demo works",
-      "point1": "Three short mazes, played right here on this page.",
+      "point1": "Prepare and measure a qubit at each beacon. Can you tell which numbers it can show?",
       "point2": "No account and no sign-up.",
-      "point3": "It works on a phone."
+      "point3": "It works on a phone.",
+      "tankTrek": "Give Bolt a set of commands and watch where they take him."
     },
     "demo": {
       "loading": "Loading the game…",
@@ -3412,15 +3413,15 @@
       "retry": "Try again",
       "fullScreen": "Open in full screen",
       "openFull": "Open the full-screen demo",
-      "completeTitle": "You finished all three mazes!",
+      "completeTitle": "You finished Tank Trek!",
       "starsLabel": "Stars earned:",
       "playAgain": "Play again",
       "adultsLabel": "For grown-ups",
       "teacherLink": "For teachers",
       "familyLink": "For families",
-      "bandLabel": "Choose a game level",
-      "bandK2": "Grades K–2",
-      "bandG35": "Grades 3–5",
+      "bandLabel": "Choose a game",
+      "bandK2": "Qubit Cove · K–2",
+      "bandG35": "Tank Trek · Grades 3–5",
       "metaTitle": "Try Bright Boost — free STEM game, no signup",
       "metaDescription": "Play a free Bright Boost robot mission for K–2 or grades 3–5. No account needed.",
       "staysLocal": "Play without a name or an account. We send play counts and scores to PostHog, our counting helper.",
@@ -3473,7 +3474,8 @@
       "g68Description": "Coming soon",
       "available": "Available now",
       "coming": "Coming soon"
-    }
+    },
+    "tankTrekHeroSentence": "Guide Bolt through the mazes in Tank Trek. Plan a route, then run your code."
   },
   "publicChrome": {
     "fromNonprofit": "From Bright Bots Initiative",

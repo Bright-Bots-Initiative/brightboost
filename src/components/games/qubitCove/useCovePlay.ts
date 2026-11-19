@@ -29,6 +29,7 @@ export function useCovePlay(
   paused: boolean,
   reduced: boolean,
   onUse: (beacon: BeaconId) => void,
+  embedded: boolean,
 ) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const region = useRef<HTMLElement>(null);
@@ -67,7 +68,8 @@ export function useCovePlay(
   );
 
   useEffect(() => {
-    if (!canvas.current) return;
+    const playArea = region.current;
+    if (!canvas.current || !playArea) return;
     const scene = createCoveRenderer(canvas.current);
     const held = inputs.current;
     const tapped = pulses.current;
@@ -75,6 +77,7 @@ export function useCovePlay(
     let elapsed = 0;
     let animation = 0;
     let lastPaint = -Infinity;
+    let inView = true;
 
     function frame(now: number) {
       const dt = Math.min(Math.max(0, (now - last) / 1000), 0.08);
@@ -105,6 +108,7 @@ export function useCovePlay(
 
     function keyDown(event: KeyboardEvent) {
       if (
+        !inView ||
         options.current.paused ||
         event.ctrlKey ||
         event.altKey ||
@@ -113,7 +117,11 @@ export function useCovePlay(
         return;
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target !== document.body && !region.current?.contains(target)) return;
+      if (
+        !region.current?.contains(target) &&
+        (embedded || target !== document.body)
+      )
+        return;
       if (
         target.isContentEditable ||
         target.closest("input, select, textarea, [role=textbox]")
@@ -145,12 +153,34 @@ export function useCovePlay(
       resetInputs();
       last = performance.now();
     };
+    const leave = (event: FocusEvent) => {
+      if (
+        !(event.relatedTarget instanceof Node) ||
+        !playArea.contains(event.relatedTarget)
+      )
+        resetInputs();
+    };
+    // Stop the embedded simulation while the visitor reads the rest of the page.
+    const observer =
+      embedded && typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(([entry]) => {
+            if (!entry || inView === entry.isIntersecting) return;
+            inView = entry.isIntersecting;
+            visibility();
+            if (inView) animation = requestAnimationFrame(frame);
+            else cancelAnimationFrame(animation);
+          })
+        : null;
+    observer?.observe(playArea);
+    if (embedded) playArea.addEventListener("focusout", leave);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
     window.addEventListener("blur", resetInputs);
     document.addEventListener("visibilitychange", visibility);
     animation = requestAnimationFrame(frame);
     return () => {
+      observer?.disconnect();
+      if (embedded) playArea.removeEventListener("focusout", leave);
       cancelAnimationFrame(animation);
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
@@ -158,7 +188,7 @@ export function useCovePlay(
       document.removeEventListener("visibilitychange", visibility);
       resetInputs();
     };
-  }, [resetInputs, update, world]);
+  }, [embedded, resetInputs, update, world]);
 
   function press(id: number, control: Control) {
     inputs.current.set(String(id), control);

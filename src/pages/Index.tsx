@@ -6,29 +6,8 @@
  * today's activities are for and links the free plans. Nothing else earns a
  * band.
  *
- * The hero's second column is the GAME, not a picture of it. It is one
- * instance of the shipped `TankTrekGame` running the same `DEMO_CONFIG` as
- * `/try` (`src/components/home/PublicDemo.tsx`), loaded after the first paint
- * and mounted with `publicDemo`, so a visitor plays three real mazes here
- * without an account and without the page ever calling the API. A screenshot
- * of a game is a claim about a game; this is the game.
- *
- * What this page deliberately no longer carries, and why each is a decision
- * rather than an omission:
- *
- *  - **the hero screenshot** — replaced by the playable panel;
- *  - **"See what learning looks like"** (a second game, as a still) — one
- *    playable game says more than two pictures, and Rhyme Ride is still in the
- *    authenticated learning surface, where it is played rather than pictured;
- *  - **"Built differently for different ages"** — two columns of bullets and a
- *    grades 6–8 paragraph, collapsed into the one availability line in the
- *    access group. Saying nothing about grades 6–8 claims nothing about them;
- *  - **the teacher/family cards** — replaced by the role panel, which asks the
- *    question once and then shows one audience's actions;
- *  - **the three-competing-CTA hero**, the Early Access Goal, the Free Access
- *    Plans grid, the audience-card grid, the in-page feedback form and the
- *    donation module — removed earlier in this slice, for the reasons recorded
- *    in `docs/brand-refresh/rebrand-slice-1.md`.
+ * The hero opens the signed-out Qubit Cove game, with Tank Trek available
+ * for grades 3–5. Both can be played in the hero or on their own demo page.
  *
  * `index.html` ships title, description, Open Graph, Twitter and canonical
  * metadata before JavaScript. Keep its English title/description byte-identical
@@ -43,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import PublicHeader from "@/components/home/PublicHeader";
 import PublicFooter from "@/components/home/PublicFooter";
 import PublicDemo from "@/components/home/PublicDemo";
+import { homeDemoHref } from "@/components/home/featuredDemo";
 import RolePanel from "@/components/home/RolePanel";
 import {
   PUBLIC_ACTION_QUIET,
@@ -78,12 +58,6 @@ const PLANS = [
   { slug: "learner", key: "home.adults.planLearner" },
   { slug: "classroom", key: "home.adults.planClassroom" },
   { slug: "organization", key: "home.adults.planOrganization" },
-] as const;
-
-const HOW_IT_WORKS = [
-  "home.howItWorks.point1",
-  "home.howItWorks.point2",
-  "home.howItWorks.point3",
 ] as const;
 
 const Index = () => {
@@ -314,18 +288,22 @@ const Index = () => {
                 </span>
               </h1>
               <p className="mt-4 max-w-[62ch] text-lg leading-[1.65]">
-                {t("home.heroSentence")}
+                {t(
+                  demoBand === "k2"
+                    ? "home.heroSentence"
+                    : "home.tankTrekHeroSentence",
+                )}
               </p>
             </div>
 
-            <div className="min-w-0 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+            <div className="min-w-0 [container-type:inline-size] lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
               <PublicDemo
                 onReady={handleDemoReady}
                 onBandChange={setDemoBand}
               />
               <p className="mt-3 text-center">
                 <Link
-                  to={demoBand === "g3_5" ? "/try?band=g3_5" : "/try"}
+                  to={homeDemoHref(demoBand)}
                   className={PUBLIC_ACTION_QUIET}
                 >
                   {t("home.demo.fullScreen")}
@@ -343,9 +321,15 @@ const Index = () => {
               <details className="bb-disclosure">
                 <summary>{t("home.howItWorks.summary")}</summary>
                 <ul className="m-0 mt-2 list-disc space-y-1 pl-5 leading-relaxed">
-                  {HOW_IT_WORKS.map((key) => (
-                    <li key={key}>{t(key)}</li>
-                  ))}
+                  <li>
+                    {t(
+                      demoBand === "k2"
+                        ? "home.howItWorks.point1"
+                        : "home.howItWorks.tankTrek",
+                    )}
+                  </li>
+                  <li>{t("home.howItWorks.point2")}</li>
+                  <li>{t("home.howItWorks.point3")}</li>
                 </ul>
               </details>
 

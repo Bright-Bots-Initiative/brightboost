@@ -1,20 +1,16 @@
-/**
- * The homepage's playable panel.
- *
- * Two halves. The first mounts the REAL Tank Trek through the panel, because
- * the claim on the homepage is that this is the game and not a rendering of
- * one: the briefing has to be the game's briefing, exactly one game area may
- * exist, and an anonymous visitor's browser must produce no request even when
- * it is carrying a token. The second half swaps in a stub module so the
- * panel's own states — loading, failure, completion, replay — can be driven
- * without playing three mazes on a timer.
- */
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import PublicDemo, { type LoadGame } from "../PublicDemo";
 import type { GameResult } from "@/components/games/shared/GameShell";
+import { readDemoBest, writeDemoBest } from "@/components/games/tankTrekDemo";
 import { track } from "@/lib/analytics";
 import { api } from "@/services/api";
 import { __resetPersonalBestCache } from "@/hooks/usePersonalBest";
@@ -24,6 +20,10 @@ vi.mock("react-i18next", async () => {
   return enMock();
 });
 
+// The real UI and world still run in jsdom; only the canvas paint surface is missing.
+vi.mock("@/components/games/qubitCove/scene", () => ({
+  createCoveRenderer: () => ({ draw: () => {} }),
+}));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 vi.mock("@/services/api", () => ({
@@ -80,94 +80,111 @@ afterEach(() => {
 
 /* ── The real game, through the panel ─────────────────────────────────────── */
 
-describe("PublicDemo with the shipped Tank Trek", () => {
-  it("shows a loading state first, then the game's own briefing", async () => {
+describe("PublicDemo with the shipped games", () => {
+  it("loads a single playable Qubit Cove by default after the initial loading state", async () => {
+    const user = userEvent.setup();
     renderPanel();
     expect(screen.getByText("Loading the game…")).toBeInTheDocument();
-
     expect(
-      await screen.findByRole(
-        "button",
-        { name: /start mission/i },
-        { timeout: 5000 },
-      ),
-    ).toBeInTheDocument();
+      await screen.findByRole("heading", { name: "Qubit Cove" }),
+    ).toBeVisible();
+    expect(
+      screen.getAllByRole("img", { name: "Qubit Cove island playground" }),
+    ).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Jump" })).toBeVisible();
     expect(screen.queryByText("Loading the game…")).toBeNull();
-    // The briefing is the game's, not a retelling of it.
-    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Bolt needs YOUR help/i)).toBeInTheDocument();
-  });
-
-  it("mounts exactly one game area, and only after the player starts", async () => {
-    const user = userEvent.setup();
-    renderPanel();
-    const start = await screen.findByRole(
-      "button",
-      { name: /start mission/i },
-      { timeout: 5000 },
-    );
+    expect(screen.queryByRole("button", { name: /start mission/i })).toBeNull();
+    expect(trackMock).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Island map" }));
     expect(
-      screen.queryAllByRole("region", { name: /game area/i }),
-    ).toHaveLength(0);
-
-    await user.click(start);
-    expect(screen.getAllByRole("region", { name: /game area/i })).toHaveLength(
-      1,
-    );
-    // …and the page moves to it once, so the controls are not below the fold.
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
-    // The real controls, not a picture of them.
-    expect(
-      screen.getByRole("button", { name: /forward/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /run/i })).toBeInTheDocument();
-  });
-
-  /**
-   * The boundary that matters on a public page: `usePersonalBest` fetches
-   * whenever `bb_access_token` is present, and a visitor's browser can be
-   * carrying a stale or synthetic one. The panel passes `publicDemo`, so the
-   * question is never asked.
-   */
-  it("issues no request even with a token in localStorage", async () => {
-    localStorage.setItem("bb_access_token", "synthetic");
-    renderPanel();
-    await screen.findByRole(
-      "button",
-      { name: /start mission/i },
-      { timeout: 5000 },
-    );
-    await waitFor(() => expect(personalBests).not.toHaveBeenCalled());
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(screen.queryByText(/best/i)).toBeNull();
-  });
-
-  it("never fires the /try page view from the homepage panel", async () => {
-    const user = userEvent.setup();
-    renderPanel();
-    const start = await screen.findByRole(
-      "button",
-      { name: /start mission/i },
-      { timeout: 5000 },
-    );
-    await user.click(start);
+      screen.getByRole("button", { name: /ride to zero garden/i }),
+    ).toBeVisible();
     expect(trackMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ kind: "demo_page_viewed" }),
     );
   });
 
-  it("unmounts without leaving the game running", async () => {
+  it("ignores a swipe and neutral clicks, and counts a press on a movement control once", async () => {
+    renderPanel();
+    const canvas = await screen.findByRole("img", {
+      name: "Qubit Cove island playground",
+    });
+    const jump = screen.getByRole("button", { name: "Jump" });
+    jump.setPointerCapture = vi.fn();
+    const touch = (target: Element, type: string) =>
+      fireEvent(
+        target,
+        Object.assign(
+          new MouseEvent(type, { bubbles: true, cancelable: true, button: 0 }),
+          { pointerId: 4, pointerType: "touch", isPrimary: true },
+        ),
+      );
+    touch(canvas, "pointerdown");
+    touch(canvas, "pointermove");
+    touch(canvas, "pointercancel");
+    fireEvent.click(canvas);
+    fireEvent.click(screen.getByRole("heading", { name: "Qubit Cove" }));
+    expect(trackMock).not.toHaveBeenCalled();
+    touch(jump.querySelector("svg")!, "pointerdown");
+    expect(trackMock.mock.calls).toEqual([
+      [{ kind: "demo_game_started", game_id: "qubit_cove_demo" }],
+    ]);
+    touch(jump, "pointerup");
+    fireEvent.click(jump);
+    expect(trackMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches to the grade 3–5 Tank Trek and back without stacking games or carrying a start event", async () => {
     const user = userEvent.setup();
-    const view = renderPanel();
-    const start = await screen.findByRole(
-      "button",
-      { name: /start mission/i },
-      { timeout: 5000 },
-    );
+    const onBandChange = vi.fn();
+    renderPanel({ onBandChange });
+    const cove = await screen.findByRole("img", {
+      name: "Qubit Cove island playground",
+    });
+    cove.focus();
+    fireEvent.keyDown(cove, { code: "ArrowRight", key: "ArrowRight" });
+    fireEvent.keyUp(cove, { code: "ArrowRight", key: "ArrowRight" });
+    expect(trackMock).toHaveBeenCalledWith({
+      kind: "demo_game_started",
+      game_id: "qubit_cove_demo",
+    });
+    await user.click(screen.getByRole("button", { name: /3–5/i }));
+    const start = await screen.findByRole("button", { name: /start mission/i });
+    expect(cove).not.toBeInTheDocument();
+    fireEvent.keyDown(start, { code: "ArrowLeft", key: "ArrowLeft" });
+    expect(trackMock).not.toHaveBeenCalledWith({
+      kind: "demo_game_started",
+      game_id: "tank_trek_demo",
+    });
     await user.click(start);
-    await user.click(screen.getByRole("button", { name: /forward/i }));
-    view.unmount();
-    expect(document.body.querySelector(".bb-public-demo")).toBeNull();
+    expect(screen.getAllByRole("region", { name: /game area/i })).toHaveLength(
+      1,
+    );
+    expect(screen.getByRole("button", { name: /forward/i })).toBeVisible();
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(trackMock).toHaveBeenCalledWith({
+      kind: "demo_game_started",
+      game_id: "tank_trek_demo",
+    });
+    await user.click(screen.getByRole("button", { name: /K–2/i }));
+    expect(
+      await screen.findByRole("button", { name: "Island map" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("region", { name: /game area/i })).toBeNull();
+    expect(onBandChange.mock.calls).toEqual([["g3_5"], ["k2"]]);
+  });
+
+  it("makes no learner request for either selectable game even with a stored token", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("bb_access_token", "synthetic");
+    renderPanel();
+    await user.click(await screen.findByRole("button", { name: "Island map" }));
+    await user.click(screen.getByRole("button", { name: /ride to one peak/i }));
+    await user.click(screen.getByRole("button", { name: /3–5/i }));
+    await screen.findByRole("button", { name: /start mission/i });
+    await waitFor(() => expect(personalBests).not.toHaveBeenCalled());
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText(/best/i)).toBeNull();
   });
 });
 
@@ -175,29 +192,34 @@ describe("PublicDemo with the shipped Tank Trek", () => {
 
 interface StubProps {
   onComplete?: (result: GameResult) => void;
-  publicDemo?: boolean;
+  storageScope: string;
+  embedded?: boolean;
+  onReplay?: () => void;
 }
 
 const RESULT: GameResult = {
-  gameKey: "tank_trek",
-  score: 7,
-  total: 9,
+  gameKey: "qubit_cove",
+  score: 3,
+  total: 3,
   streakMax: 3,
   roundsCompleted: 3,
-  starsEarned: 2,
+  starsEarned: 3,
 };
 
 /** Mount counter: "Play again" must REMOUNT the one instance, not add one. */
 let mounts = 0;
-let lastProps: StubProps = {};
+let lastProps: StubProps | undefined;
 
 function StubGame(props: StubProps) {
   lastProps = props;
   mounts += 1;
   return (
-    <div role="region" aria-label="Tank Trek game area">
+    <div role="region" aria-label="Qubit Cove game area">
       <button type="button" onClick={() => {}}>
         in-game control
+      </button>
+      <button type="button" onClick={props.onReplay}>
+        replay inside the game
       </button>
       <button type="button" onClick={() => props.onComplete?.(RESULT)}>
         finish the run
@@ -207,16 +229,13 @@ function StubGame(props: StubProps) {
 }
 
 function stubLoader(): LoadGame {
-  return () =>
-    Promise.resolve({ default: StubGame } as unknown as Awaited<
-      ReturnType<LoadGame>
-    >);
+  return () => Promise.resolve({ default: StubGame });
 }
 
 describe("PublicDemo panel states", () => {
   beforeEach(() => {
     mounts = 0;
-    lastProps = {};
+    lastProps = undefined;
   });
 
   /**
@@ -293,10 +312,11 @@ describe("PublicDemo panel states", () => {
     consoleError.mockRestore();
   });
 
-  it("passes publicDemo down to the game it mounts", async () => {
+  it("embeds Qubit Cove with a dedicated guest scope", async () => {
     renderPanel({ loadGame: stubLoader() });
     await screen.findByRole("region", { name: /game area/i });
-    expect(lastProps.publicDemo).toBe(true);
+    expect(lastProps?.storageScope).toBe("homepage-demo");
+    expect(lastProps?.embedded).toBe(true);
   });
 
   it("fires demo_game_started once on the first interaction inside the game", async () => {
@@ -309,22 +329,24 @@ describe("PublicDemo panel states", () => {
     expect(trackMock).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith({
       kind: "demo_game_started",
-      game_id: "tank_trek_demo",
+      game_id: "qubit_cove_demo",
     });
 
     await user.click(screen.getByRole("button", { name: "in-game control" }));
     expect(trackMock).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the completion card with the stars the run earned", async () => {
+  it("shows the lighthouse completion and keeps the Tank Trek best separate", async () => {
     const user = userEvent.setup();
+    writeDemoBest(1);
     renderPanel({ loadGame: stubLoader() });
     await screen.findByRole("region", { name: /game area/i });
 
     await user.click(screen.getByRole("button", { name: "finish the run" }));
 
-    expect(screen.getByText("You finished all three mazes!")).toBeVisible();
-    expect(screen.getByTestId("demo-stars")).toHaveTextContent("2");
+    expect(screen.getByText("The lighthouse is shining!")).toBeVisible();
+    expect(screen.getByText("Beacons lit: 3 of 3")).toBeVisible();
+    expect(readDemoBest()).toEqual({ stars: 1 });
     expect(
       screen.getByRole("button", { name: "Play again" }),
     ).toBeInTheDocument();
@@ -338,7 +360,7 @@ describe("PublicDemo panel states", () => {
     );
     expect(
       screen.getByRole("link", { name: "Open the full-screen demo" }),
-    ).toHaveAttribute("href", "/try");
+    ).toHaveAttribute("href", "/try?game=qubit_cove");
     // Nothing on this card claims the stars were saved or that finishing
     // unlocks anything.
     expect(screen.queryByText(/sign up/i)).toBeNull();
@@ -348,9 +370,9 @@ describe("PublicDemo panel states", () => {
     expect(trackMock).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: "demo_game_completed",
-        game_id: "tank_trek_demo",
-        score: 7,
-        stars: 2,
+        game_id: "qubit_cove_demo",
+        score: 3,
+        stars: 3,
       }),
     );
   });
@@ -384,7 +406,7 @@ describe("PublicDemo panel states", () => {
     expect(trackMock).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith({
       kind: "demo_replayed",
-      game_id: "tank_trek_demo",
+      game_id: "qubit_cove_demo",
     });
     await screen.findByRole("region", { name: /game area/i });
     // One more mount, and still exactly one game area on the page.
@@ -392,7 +414,7 @@ describe("PublicDemo panel states", () => {
     expect(screen.getAllByRole("region", { name: /game area/i })).toHaveLength(
       1,
     );
-    expect(screen.queryByText("You finished all three mazes!")).toBeNull();
+    expect(screen.queryByText("The lighthouse is shining!")).toBeNull();
 
     // The replay itself is not a start: that waits for the next interaction.
     trackMock.mockClear();
@@ -400,8 +422,25 @@ describe("PublicDemo panel states", () => {
     expect(trackMock).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith({
       kind: "demo_game_started",
-      game_id: "tank_trek_demo",
+      game_id: "qubit_cove_demo",
     });
+  });
+
+  it("counts a native Qubit replay before Finish as a new play", async () => {
+    const user = userEvent.setup();
+    renderPanel({ loadGame: stubLoader() });
+    await user.click(
+      await screen.findByRole("button", { name: "in-game control" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "replay inside the game" }),
+    );
+    await user.click(screen.getByRole("button", { name: "in-game control" }));
+    expect(trackMock.mock.calls.map(([e]) => e.kind)).toEqual([
+      "demo_game_started",
+      "demo_replayed",
+      "demo_game_started",
+    ]);
   });
 
   it("offers a retry and a way out when the game chunk fails, and re-imports on retry", async () => {
@@ -427,7 +466,7 @@ describe("PublicDemo panel states", () => {
     ).toBeInTheDocument();
     expect(
       within(panel).getByRole("link", { name: /full-screen demo/i }),
-    ).toHaveAttribute("href", "/try");
+    ).toHaveAttribute("href", "/try?game=qubit_cove");
 
     await user.click(within(panel).getByRole("button", { name: "Try again" }));
 
@@ -435,6 +474,7 @@ describe("PublicDemo panel states", () => {
       await screen.findByRole("region", { name: /game area/i }),
     ).toBeInTheDocument();
     expect(calls).toBe(2);
+    expect(trackMock).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
 });

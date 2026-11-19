@@ -11,6 +11,24 @@ vi.mock("../scene", () => ({
 const button = (name: string | RegExp) => screen.getByRole("button", { name });
 const click = (name: string | RegExp) => fireEvent.click(button(name));
 
+it("keeps page scrolling available until the embedded game has keyboard focus", () => {
+  const { rerender } = render(<QubitCoveGame storageScope="guest" embedded />);
+  const field = screen.getByRole("img", {
+    name: "Qubit Cove island playground",
+  });
+  const arrow = { code: "ArrowDown", key: "ArrowDown", cancelable: true };
+  expect(fireEvent.keyDown(document.body, arrow)).toBe(true);
+  field.focus();
+  expect(fireEvent.keyDown(field, arrow)).toBe(false);
+  expect(fireEvent.keyDown(field, { code: "Space", cancelable: true })).toBe(
+    false,
+  );
+  field.blur();
+  expect(fireEvent.keyDown(document.body, arrow)).toBe(true);
+  rerender(<QubitCoveGame storageScope="student" />);
+  expect(fireEvent.keyDown(document.body, arrow)).toBe(false);
+});
+
 function visit(name: string) {
   click("Island map");
   click(new RegExp(`Ride to ${name}`));
@@ -18,13 +36,20 @@ function visit(name: string) {
 }
 
 it("accepts repeated chance outcomes, requires all three discoveries and retries a failed save", async () => {
+  const onReplay = vi.fn();
   const finish = vi
     .fn()
     .mockResolvedValueOnce(false)
     .mockResolvedValueOnce(true);
   const random = vi.spyOn(Math, "random").mockReturnValue(0.2);
   try {
-    render(<QubitCoveGame storageScope="explorer" onComplete={finish} />);
+    render(
+      <QubitCoveGame
+        storageScope="explorer"
+        onComplete={finish}
+        onReplay={onReplay}
+      />,
+    );
     visit("Chance Harbor");
     for (let round = 0; round < 3; round++) {
       click(round ? "Prepare a fresh qubit" : "Prepare qubit");
@@ -70,7 +95,9 @@ it("accepts repeated chance outcomes, requires all three discoveries and retries
       total: 3,
       roundsCompleted: 3,
     });
+    expect(onReplay).not.toHaveBeenCalled();
     click("Play again");
+    expect(onReplay).toHaveBeenCalledOnce();
     expect(
       screen.queryByRole("button", { name: "Finish adventure" }),
     ).toBeNull();
