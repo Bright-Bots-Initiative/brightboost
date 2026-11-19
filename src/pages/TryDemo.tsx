@@ -1,27 +1,12 @@
-/**
- * /try — public, zero-signup playable demo (homepage growth lever).
- *
- * Implements Part 3 of docs/audits/k8-engagement-audit.md: a skeptical
- * teacher lands here from a colleague's link, on a phone, with 60 seconds.
- * One tap starts a real K-2 game (Tank Trek — the audit's no-fail gold
- * standard); finishing lands on a "save your stars → sign up free"
- * conversion moment. The URL itself is the share unit.
- *
- * ISOLATION CONTRACT (the critical property of this page):
- *  - No auth context, no user state, no API calls. The only network
- *    traffic permitted from this route is PostHog.
- *  - TankTrekGame is self-contained (config + onComplete props); its
- *    GameShell chrome reads personal bests only when a session token
- *    exists (see usePersonalBest), so anonymous visits stay 401-free.
- *  - Demo level config is hardcoded below — never fetched.
- *
- * Analytics (typed events in src/lib/analytics.ts, documented in
- * docs/analytics.md): demo_page_viewed → demo_game_started →
- * demo_game_completed → demo_signup_cta_clicked, plus demo_replayed.
- * Visitors stay anonymous; PostHog stitches the session to the identity
- * if they later sign up.
- */
-import { useCallback, useEffect, useRef, useState } from "react";
+/** Public games share the anonymous demo funnel. Only Tank Trek uses the local stars record. */
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
@@ -40,65 +25,109 @@ export {
 } from "@/components/games/tankTrekDemo";
 import type { GameResult } from "@/components/games/shared/GameShell";
 import { track } from "@/lib/analytics";
+import DemoErrorBoundary from "@/components/home/DemoErrorBoundary";
+import {
+  isCoveControlClick,
+  isCoveControlPress,
+  isDemoPlayKey,
+  QUBIT_COVE_DEMO_GAME,
+  QUBIT_COVE_DEMO_ID,
+} from "@/components/home/featuredDemo";
 import {
   usePublicPageMeta,
   useRenderedLanguage,
 } from "@/components/home/publicEntry";
 
+const QubitCoveGame = lazy(
+  () => import("@/components/games/qubitCove/QubitCoveGame"),
+);
+type DemoSelection = typeof QUBIT_COVE_DEMO_GAME | "k2" | "g3_5";
+
 export default function TryDemo() {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const selection: DemoSelection =
+    params.get("game") === QUBIT_COVE_DEMO_GAME
+      ? QUBIT_COVE_DEMO_GAME
+      : params.get("band") === "g3_5"
+        ? "g3_5"
+        : "k2";
+  useEffect(() => {
+    track({ kind: "demo_page_viewed", source: "direct" });
+  }, []);
+  return <TrySession key={selection} selection={selection} />;
+}
+
+function TrySession({ selection }: { selection: DemoSelection }) {
   const { t } = useTranslation();
   const lang = useRenderedLanguage();
+  const isCove = selection === QUBIT_COVE_DEMO_GAME;
+  const gameId = isCove ? QUBIT_COVE_DEMO_ID : DEMO_GAME_ID;
   usePublicPageMeta(
-    t("home.demo.metaTitle"),
-    t("home.demo.metaDescription"),
+    isCove
+      ? `${t("qubitCove.title", { lng: lang })} · Bright Boost`
+      : t("home.demo.metaTitle"),
+    t(isCove ? "qubitCove.goal" : "home.demo.metaDescription", { lng: lang }),
     lang,
   );
-  const { search } = useLocation();
-  const band =
-    new URLSearchParams(search).get("band") === "g3_5" ? "g3_5" : "k2";
-  const demoConfig = band === "g3_5" ? G35_DEMO_CONFIG : DEMO_CONFIG;
   const [finished, setFinished] = useState<GameResult | null>(null);
   // Remount key — bumping it restarts the game cleanly for "Play again".
   const [playKey, setPlayKey] = useState(0);
   const startedFired = useRef(false);
   const startMsRef = useRef(Date.now());
 
-  useEffect(() => {
-    track({ kind: "demo_page_viewed", source: "direct" });
-  }, []);
-
-  // demo_game_started fires on the first interaction inside the game area.
-  // GameShell's briefing screen has exactly one interactive element (the
-  // Start Mission button), so the first click is the start tap in practice.
-  // Capture-phase so the game's own handlers are untouched.
   const handleFirstInteraction = useCallback(() => {
     if (startedFired.current) return;
     startedFired.current = true;
     startMsRef.current = Date.now();
-    track({ kind: "demo_game_started", game_id: DEMO_GAME_ID });
-  }, []);
+    track({ kind: "demo_game_started", game_id: gameId });
+  }, [gameId]);
 
-  const handleComplete = useCallback((result: GameResult) => {
-    track({
-      kind: "demo_game_completed",
-      game_id: DEMO_GAME_ID,
-      score: result.score,
-      stars: result.starsEarned ?? 0,
-      time_spent_seconds: Math.max(
-        1,
-        Math.round((Date.now() - startMsRef.current) / 1000),
-      ),
-    });
-    writeDemoBest(result.starsEarned ?? 0);
-    setFinished(result);
-  }, []);
+  const playArea = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isCove || finished) return;
+    // Full-screen Cove also accepts movement before the canvas has focus.
+    function startFromBody(event: KeyboardEvent) {
+      if (
+        event.target === document.body &&
+        isDemoPlayKey(event) &&
+        playArea.current
+      ) {
+        handleFirstInteraction();
+      }
+    }
+    window.addEventListener("keydown", startFromBody);
+    return () => window.removeEventListener("keydown", startFromBody);
+  }, [isCove, finished, handleFirstInteraction]);
 
-  const handlePlayAgain = useCallback(() => {
-    track({ kind: "demo_replayed", game_id: DEMO_GAME_ID });
+  const handleComplete = useCallback(
+    (result: GameResult) => {
+      track({
+        kind: "demo_game_completed",
+        game_id: gameId,
+        score: result.score,
+        stars: result.starsEarned ?? 0,
+        time_spent_seconds: Math.max(
+          1,
+          Math.round((Date.now() - startMsRef.current) / 1000),
+        ),
+      });
+      if (!isCove) writeDemoBest(result.starsEarned ?? 0);
+      setFinished(result);
+    },
+    [gameId, isCove],
+  );
+
+  const trackReplay = useCallback(() => {
+    track({ kind: "demo_replayed", game_id: gameId });
     startedFired.current = false;
+  }, [gameId]);
+
+  function handlePlayAgain() {
+    trackReplay();
     setFinished(null);
     setPlayKey((k) => k + 1);
-  }, []);
+  }
 
   const stars = finished?.starsEarned ?? 0;
 
@@ -119,7 +148,9 @@ export default function TryDemo() {
         </p>
       </header>
 
-      <main className="mx-auto max-w-4xl px-2 sm:px-4 pb-10">
+      <main
+        className={`mx-auto max-w-4xl pb-10 sm:px-4 ${isCove ? "px-4" : "px-2"}`}
+      >
         {finished ? (
           /* ── State 3: results echo + conversion moment ── */
           <div className="max-w-md mx-auto mt-8 space-y-5">
@@ -142,7 +173,7 @@ export default function TryDemo() {
                 })}
               </h1>
               {(() => {
-                const best = readDemoBest();
+                const best = isCove ? null : readDemoBest();
                 return best && best.stars > stars ? (
                   <p className="text-xs font-semibold text-brightboost-navy/60">
                     {t("tryDemo.bestStars", {
@@ -196,17 +227,55 @@ export default function TryDemo() {
             </p>
           </div>
         ) : (
-          /* ── States 1+2: GameShell briefing (the one-tap gate) + play ── */
-          // onClickCapture observes the first interaction without touching
-          // the game's own handlers — see handleFirstInteraction.
-          <div onClickCapture={handleFirstInteraction}>
-            <TankTrekGame
-              key={`${band}-${playKey}`}
-              config={demoConfig}
-              onComplete={handleComplete}
-              publicDemo
-            />
-          </div>
+          <DemoErrorBoundary
+            fallback={
+              <div role="alert" className="space-y-3 p-4 text-center">
+                <p>{t("home.demo.errorTitle")}</p>
+                <button
+                  type="button"
+                  className="font-bold underline"
+                  onClick={() => window.location.reload()}
+                >
+                  {t("home.demo.retry")}
+                </button>
+              </div>
+            }
+          >
+            <Suspense fallback={<p role="status">{t("home.demo.loading")}</p>}>
+              <div
+                ref={playArea}
+                onClickCapture={(event) => {
+                  if (!isCove || isCoveControlClick(event))
+                    handleFirstInteraction();
+                }}
+                onPointerDownCapture={(event) => {
+                  if (isCove && isCoveControlPress(event))
+                    handleFirstInteraction();
+                }}
+                onKeyDownCapture={(event) => {
+                  if (isCove && isDemoPlayKey(event)) handleFirstInteraction();
+                }}
+              >
+                {isCove ? (
+                  <QubitCoveGame
+                    key={playKey}
+                    storageScope="public-demo"
+                    onComplete={handleComplete}
+                    onReplay={trackReplay}
+                  />
+                ) : (
+                  <TankTrekGame
+                    key={playKey}
+                    config={
+                      selection === "g3_5" ? G35_DEMO_CONFIG : DEMO_CONFIG
+                    }
+                    onComplete={handleComplete}
+                    publicDemo
+                  />
+                )}
+              </div>
+            </Suspense>
+          </DemoErrorBoundary>
         )}
       </main>
     </div>

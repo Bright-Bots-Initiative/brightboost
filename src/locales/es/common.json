@@ -3163,19 +3163,20 @@
   "home": {
     "meta": {
       "title": "Bright Boost — Un mundo que construyes al aprender",
-      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+      "description": "Juega a Cala Cúbit, una aventura cuántica gratuita de Bright Boost para kínder a 2.º grado. Explora las islas y descubre más juegos STEM para tu clase o familia.",
       "imageAlt": "La mascota de Bright Boost junto al lema en inglés A world you build by learning."
     },
     "eyebrow": "Plataforma de aprendizaje STEM gratuita",
     "displayLine": "Juega. Construye. Conviértete.",
     "h1": "Un mundo que construyes al aprender.",
-    "heroSentence": "Programa a Bolt en una misión de robótica. Elige entre retos para kínder a 2.º grado o para 3.º a 5.º grado.",
+    "heroSentence": "Salta por las islas de Cala Cúbit y descubre qué pasa cuando mides un cúbit.",
     "secondaryCta": "Para maestros y familias",
     "howItWorks": {
       "summary": "Cómo funciona la demostración",
-      "point1": "Tres laberintos cortos, aquí mismo en esta página.",
+      "point1": "Prepara y mide un cúbit en cada baliza. ¿Qué números pueden salir?",
       "point2": "Sin cuenta y sin registro.",
-      "point3": "Funciona en el teléfono."
+      "point3": "Funciona en el teléfono.",
+      "tankTrek": "Dale instrucciones a Bolt y observa adónde lo llevan."
     },
     "demo": {
       "loading": "Cargando el juego…",
@@ -3184,15 +3185,15 @@
       "retry": "Reintentar",
       "fullScreen": "Abrir en pantalla completa",
       "openFull": "Abrir la demostración en pantalla completa",
-      "completeTitle": "¡Terminaste los tres laberintos!",
+      "completeTitle": "¡Terminaste Tank Trek!",
       "starsLabel": "Estrellas ganadas:",
       "playAgain": "Jugar otra vez",
       "adultsLabel": "Para adultos",
       "teacherLink": "Para maestros",
       "familyLink": "Para familias",
-      "bandLabel": "Elige la edad de la misión",
-      "bandK2": "Kínder–2.º grado",
-      "bandG35": "3.º–5.º grado",
+      "bandLabel": "Elige un juego",
+      "bandK2": "Cala Cúbit · K–2",
+      "bandG35": "Tank Trek · 3.º–5.º",
       "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
       "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
       "staysLocal": "Juega sin dar tu nombre ni crear una cuenta. Enviamos cuántas veces juegas y tus puntos a PostHog, que nos ayuda a contar.",
@@ -3245,7 +3246,8 @@
       "g68Description": "Próximamente",
       "available": "Disponible",
       "coming": "Próximamente"
-    }
+    },
+    "tankTrekHeroSentence": "Guía a Bolt por los laberintos de Tank Trek. Planea una ruta y ejecuta tu código."
   },
   "publicChrome": {
     "fromNonprofit": "Desde Bright Bots Initiative",

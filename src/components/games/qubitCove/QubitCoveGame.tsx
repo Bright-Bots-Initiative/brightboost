@@ -37,6 +37,8 @@ import "./qubitCove.css";
 
 type Props = {
   storageScope: string;
+  embedded?: boolean;
+  onReplay?: () => void;
   onComplete?: (result: GameResult) => void | boolean | Promise<boolean | void>;
 };
 type Panel = "map" | "help" | BeaconId | null;
@@ -71,6 +73,7 @@ function ReadingsStrip({ samples, count }: { samples: Bit[]; count: number }) {
 
 function BeaconLab({
   id,
+  language,
   samples,
   lit,
   onSample,
@@ -78,6 +81,7 @@ function BeaconLab({
   onClose,
 }: {
   id: BeaconId;
+  language?: string;
   samples: Bit[];
   lit: boolean;
   onSample: (value: Bit) => void;
@@ -148,7 +152,7 @@ function BeaconLab({
         </span>
         <div className="qc-lab-copy">
           <Dialog.Description>{lit ? insight : setup}</Dialog.Description>
-          <ReadAloud text={speech} />
+          <ReadAloud text={speech} language={language} />
         </div>
       </div>
       <ReadingsStrip samples={samples} count={target} />
@@ -195,14 +199,22 @@ function BeaconLab({
   );
 }
 
-export default function QubitCoveGame(props: Props) {
-  return (
-    <CoveAdventure key={props.storageScope} onComplete={props.onComplete} />
-  );
+export default function QubitCoveGame({ storageScope, ...props }: Props) {
+  return <CoveAdventure key={storageScope} {...props} />;
 }
 
-function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
-  const { t } = useTranslation();
+function CoveAdventure({
+  embedded = false,
+  onReplay,
+  onComplete,
+}: Omit<Props, "storageScope">) {
+  const { t, i18n } = useTranslation();
+  // A previously saved vi/zh-CN preference can load after i18next resolved
+  // the page's fallback language. Ask which locale supplied the game title.
+  const gameLanguage =
+    t("qubitCove.title", { returnDetails: true }).usedLng ||
+    i18n?.resolvedLanguage ||
+    i18n?.language;
   const [panel, setPanel] = useState<Panel>(null);
   const [readings, setReadings] = useState(freshReadings);
   const [submission, setSubmission] = useState<
@@ -213,7 +225,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
   const victory = useRef<HTMLHeadingElement>(null);
   const { reducedEffects, setReducedEffects } = useReducedGameEffects();
   const { canvas, region, world, hud, update, press, release, pulse } =
-    useCovePlay(panel !== null, reducedEffects, setPanel);
+    useCovePlay(panel !== null, reducedEffects, setPanel, embedded);
   const won = hud.lit.length === 3;
   const activeBeacon =
     panel && panel !== "map" && panel !== "help" ? panel : null;
@@ -229,6 +241,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
     setSubmission("idle");
     latched.current = false;
     canvas.current?.focus({ preventScroll: true });
+    onReplay?.();
   }
   async function finish() {
     if (latched.current || world.current.lit.length !== 3) return;
@@ -262,6 +275,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
         onPointerDown={(event) => {
           if (event.button !== 0) return;
           event.preventDefault();
+          if (embedded) canvas.current?.focus({ preventScroll: true });
           event.currentTarget.setPointerCapture(event.pointerId);
           press(event.pointerId, control);
         }}
@@ -282,6 +296,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
   return (
     <section
       className="qc-game"
+      lang={gameLanguage}
       aria-label={t("qubitCove.title")}
       ref={region}
       data-reduced={reducedEffects}
@@ -419,6 +434,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
           <Dialog.Overlay className="qc-scrim" />
           <Dialog.Content
             className="qc-dialog"
+            lang={gameLanguage}
             data-reduced={reducedEffects}
             onCloseAutoFocus={(event) => {
               event.preventDefault();
@@ -493,6 +509,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
                     {t("qubitCove.cometJump")}
                   </p>
                   <ReadAloud
+                    language={gameLanguage}
                     text={[
                       "goal",
                       "aboutQubits",
@@ -518,6 +535,7 @@ function CoveAdventure({ onComplete }: Pick<Props, "onComplete">) {
               <BeaconLab
                 key={activeBeacon}
                 id={activeBeacon}
+                language={gameLanguage}
                 samples={readings[activeBeacon]}
                 lit={hud.lit.includes(activeBeacon)}
                 onSample={(value) =>

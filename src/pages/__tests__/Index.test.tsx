@@ -10,7 +10,7 @@
  *
  * `PublicDemo` is stubbed here. The page's job is to mount exactly one of it,
  * in the right place, and to leave the demo's own analytics alone; that the
- * panel really is the shipped Tank Trek, really loads it lazily and really
+ * panel really is the featured game, really loads it lazily and really
  * calls nothing is proved against the real game in
  * `src/components/home/__tests__/PublicDemo.test.tsx`.
  */
@@ -61,7 +61,7 @@ vi.mock("@/components/home/PublicDemo", () => {
       <div
         data-testid="public-demo"
         role="region"
-        aria-label="Tank Trek game area"
+        aria-label="Qubit Cove game area"
       >
         demo panel
       </div>
@@ -174,7 +174,7 @@ describe("Index (public / route)", () => {
     renderPage();
     expect(screen.getAllByTestId("public-demo")).toHaveLength(1);
     expect(
-      screen.getAllByRole("region", { name: "Tank Trek game area" }),
+      screen.getAllByRole("region", { name: "Qubit Cove game area" }),
     ).toHaveLength(1);
 
     const images = document.querySelectorAll("img");
@@ -191,7 +191,7 @@ describe("Index (public / route)", () => {
     renderPage();
     expect(
       screen.getByText(
-        "Program Bolt through a real robot mission. Choose a challenge for K–2 or grades 3–5.",
+        "Jump across the islands of Qubit Cove and discover what happens when you measure a qubit.",
       ),
     ).toBeInTheDocument();
 
@@ -203,12 +203,14 @@ describe("Index (public / route)", () => {
     ).toBeNull();
     await user.click(summary);
     expect(
-      screen.getByText("Three short mazes, played right here on this page."),
+      screen.getByText(
+        "Prepare and measure a qubit at each beacon. Can you tell which numbers it can show?",
+      ),
     ).toBeVisible();
 
     expect(
       screen.getByRole("link", { name: "Open in full screen" }),
-    ).toHaveAttribute("href", "/try");
+    ).toHaveAttribute("href", "/try?game=qubit_cove");
     expect(
       screen.getByRole("link", { name: "For teachers and families" }),
     ).toHaveAttribute("href", "#for-adults");
@@ -538,7 +540,7 @@ describe("Index (public / route)", () => {
           .querySelector('meta[name="description"]')
           ?.getAttribute("content"),
       ).toBe(
-        "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+        "Play Qubit Cove, a free K–2 quantum adventure from Bright Boost. Explore floating islands, then find more STEM games for your classroom or family.",
       );
       expect(
         document.head

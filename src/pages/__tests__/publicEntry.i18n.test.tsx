@@ -287,12 +287,12 @@ describe("public entry pages with the real i18n instance", () => {
     const enMeta = {
       title: "Bright Boost — A world you build by learning",
       description:
-        "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+        "Play Qubit Cove, a free K–2 quantum adventure from Bright Boost. Explore floating islands, then find more STEM games for your classroom or family.",
     };
     const esMeta = {
       title: "Bright Boost — Un mundo que construyes al aprender",
       description:
-        "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+        "Juega a Cala Cúbit, una aventura cuántica gratuita de Bright Boost para kínder a 2.º grado. Explora las islas y descubre más juegos STEM para tu clase o familia.",
     };
     const staticTags = [...document.head.querySelectorAll("title, meta, link")];
     const assertSameTags = () => {
