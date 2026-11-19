@@ -1,4 +1,5 @@
 import BioTrailActivity from "./BioTrailActivity";
+import QubitCoveActivity from "./QubitCoveActivity";
 import SparBotsActivity from "./SparBotsActivity";
 import type { ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
@@ -46,7 +47,8 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   fast_lane: FastLaneGame, // "Fast Lane Signals" (Set 2)
   qualify_tune_race: QualifyTuneRaceGame, // "Qualify, Tune, Race" (Set 2)
 
-  // Advanced Biotech: independently gated by server specialty state.
+  // Advanced games are independently gated by server specialty state.
+  qubit_cove: QubitCoveActivity,
   biotrail: BioTrailActivity,
   sparbots: SparBotsActivity,
 

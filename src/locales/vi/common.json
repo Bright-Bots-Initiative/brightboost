@@ -2190,7 +2190,7 @@
     "familiar": "Your classes, creations, and familiar navigation stay right here.",
     "comingTitle": "Your next discoveries are growing.",
     "comingDescription": "New games for this specialty are being built. Your earlier games and creations are ready to revisit.",
-    "play": "Explore Adaptation Islands",
+    "play": "Chơi {{title}}",
     "revisit": "Revisit my games",
     "fieldNote": "A question to take with you",
     "setsComplete": "Foundation, Exploration, Mastery: complete",
@@ -2207,10 +2207,18 @@
     "inviteDescription": "Choose AI/ML, Quantum, or Biotech to explore next.",
     "inviteAction": "Choose my specialty",
     "gameLocked": "BioTrail opens after Set 3 and a Biotech specialty choice. View my specialty.",
-    "previewMode": "Design preview",
-    "resetPreview": "Preview another specialty",
-    "previewLocked": "Show locked state",
-    "previewBack": "Back to specialty preview",
+    "previewMode": "Bản xem thử",
+    "resetPreview": "Xem thử chuyên ngành khác",
+    "previewLocked": "Hiển thị trạng thái khóa",
+    "previewBack": "Quay lại bản xem thử chuyên ngành",
+    "qubitCove": {
+      "title": "Vịnh Qubit",
+      "tagline": "Nhảy qua các đảo và đo một qubit. Em sẽ thấy số 0 hay số 1?",
+      "tag1": "Khám phá",
+      "tag2": "Nhảy",
+      "tag3": "Đo",
+      "gameLocked": "Vịnh Qubit sẽ mở sau khi em hoàn thành Bộ 3 và chọn chuyên ngành Lượng tử. Xem chuyên ngành của em."
+    },
     "tracks": {
       "AI": {
         "name": "AI / ML",
@@ -2230,9 +2238,9 @@
         "verbs": "Wonder · Experiment · Discover",
         "companion": "Quantum guide",
         "previewTitle": "A world of possibilities",
-        "preview": "Violet accents, an atom badge, and experiment prompts give your quantum world its own feel.",
+        "preview": "Ghé thăm Vịnh Qubit. Nhảy qua các đảo và đo một qubit để thấy số 0 hoặc số 1.",
         "welcome": "Your quantum journey begins.",
-        "question": "What could an experiment help you discover that your eyes cannot see?"
+        "question": "Mỗi lần đo có cho cùng một kết quả không?"
       },
       "BIOTECH": {
         "name": "Biotech",
@@ -2442,5 +2450,68 @@
     "logIn": "Đăng nhập",
     "classCodeNote": "Các em hãy dùng mã mà giáo viên hoặc gia đình đã đưa cho mình.",
     "classCodeLink": "Đăng nhập bằng mã lớp"
+  },
+  "qubitCove": {
+    "title": "Vịnh Qubit",
+    "goal": "Thắp sáng cả ba ngọn đèn để đánh thức ngọn hải đăng.",
+    "canvas": "Các đảo để khám phá ở Vịnh Qubit",
+    "lights": "Đèn đã sáng: {{count}} trên 3",
+    "sparks": "Tia sáng: {{count}}",
+    "map": "Bản đồ các đảo",
+    "mapHint": "Chọn một ngọn đèn để đến đó.",
+    "names": {
+      "zero": "Vườn Số 0",
+      "one": "Đỉnh Số 1",
+      "mix": "Bến Bất Ngờ"
+    },
+    "visit": "Đến {{name}}",
+    "lit": "Đã sáng",
+    "unlit": "Chưa sáng",
+    "controls": "Nút điều khiển",
+    "up": "Đi lên",
+    "down": "Đi xuống",
+    "left": "Sang trái",
+    "right": "Sang phải",
+    "jump": "Nhảy",
+    "keyboard": "Dùng phím mũi tên hoặc WASD để di chuyển. Nhấn phím cách để nhảy. Nhấn E để dùng đèn.",
+    "use": "Dùng đèn",
+    "close": "Đóng",
+    "setup": {
+      "zero": "Đặt qubit ở số 0.",
+      "one": "Đặt qubit ở số 1.",
+      "mix": "Cho số 0 và số 1 cơ hội như nhau. Thử ba lần. Mỗi lần dùng một qubit mới nhé."
+    },
+    "prepare": "Chuẩn bị qubit",
+    "prepareAgain": "Chuẩn bị qubit mới",
+    "measure": "Đo",
+    "ready": "Đo được rồi!",
+    "readings": "Kết quả của em",
+    "prediction": "Chuẩn bị như vậy thì em có thể đo được số nào?",
+    "choices": {
+      "zero": "Chỉ số 0",
+      "one": "Chỉ số 1",
+      "mix": "0 hoặc 1"
+    },
+    "retry": "Xem lại cách em chuẩn bị qubit rồi thử lại nhé!",
+    "insight": {
+      "zero": "Đặt ở số 0 thì em đo được số 0.",
+      "one": "Đặt ở số 1 thì em đo được số 1.",
+      "mix": "Số nào cũng có thể xuất hiện. Em có thể đo được cùng một số nhiều lần."
+    },
+    "beaconLit": "Đèn ở {{name}} sáng rồi!",
+    "explore": "Về lại vịnh",
+    "won": "Hải đăng sáng rồi!",
+    "replay": "Chơi lại",
+    "finish": "Hoàn tất chuyến đi",
+    "saveError": "Chưa lưu được tiến trình. Hãy nhấn lại “Hoàn tất chuyến đi”.",
+    "help": "Cách chơi",
+    "reduced": "Giảm chuyển động",
+    "reading": "Em đo được số {{value}}!",
+    "litAlready": "Em đã thắp sáng ngọn đèn này rồi.",
+    "touch": "Giữ nút mũi tên để di chuyển. Chạm vào Nhảy để bật lên. Mở bản đồ các đảo để đi nhờ xe.",
+    "saved": "Đã hoàn tất chuyến đi",
+    "listen": "Nghe đọc",
+    "aboutQubits": "Máy tính lượng tử dùng qubit. Ở đây, mỗi khi đo một qubit, em sẽ thấy một số: 0 hoặc 1.",
+    "cometJump": "Tiếp tục di chuyển và nhảy thêm lần nữa ngay khi chạm đất. Em sẽ bật cao hơn với cú nhảy sao chổi!"
   }
 }

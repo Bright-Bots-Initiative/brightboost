@@ -1,0 +1,20 @@
+.qubit-read-aloud {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  padding: 0.4em 0.8em;
+  border: 1px solid #94b6bc;
+  border-radius: 999px;
+  color: #194d56;
+  background: #f2fcfa;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.qubit-read-aloud:focus-visible {
+  outline: 3px solid #1a6977;
+  outline-offset: 2px;
+}

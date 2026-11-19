@@ -22,12 +22,19 @@ import {
   SPECIALTIES,
   BIOTRAIL_PATH,
   SPARBOTS_PATH,
+  QUBIT_COVE_PATH,
   type Specialty,
   type SpecialtyStatus,
 } from "@/lib/specialty";
 import "./specialty.css";
 
 import { SPECIALTY_ICONS } from "./specialtyIcons";
+
+const FIRST_GAMES: Record<Specialty, { key: string; path: string }> = {
+  AI: { key: "sparbots", path: SPARBOTS_PATH },
+  QUANTUM: { key: "specialty.qubitCove", path: QUBIT_COVE_PATH },
+  BIOTECH: { key: "biotrail", path: BIOTRAIL_PATH },
+};
 
 export function SpecialtyExperience({
   data,
@@ -48,12 +55,7 @@ export function SpecialtyExperience({
   const active = data.specialty ?? preview;
   const Icon = SPECIALTY_ICONS[active];
   const chosen = data.unlocked && data.specialty !== null;
-  const game =
-    active === "AI"
-      ? { key: "sparbots", path: SPARBOTS_PATH }
-      : active === "BIOTECH"
-        ? { key: "biotrail", path: BIOTRAIL_PATH }
-        : null;
+  const game = FIRST_GAMES[active];
   async function commit() {
     if (saving) return;
     setSaving(true);
@@ -191,40 +193,27 @@ export function SpecialtyExperience({
               <Icon size={18} />
               {t(`specialty.tracks.${active}.name`)}
             </p>
-            <h2>{t(game ? `${game.key}.title` : "specialty.comingTitle")}</h2>
-            <p>
-              {t(game ? `${game.key}.tagline` : "specialty.comingDescription")}
-            </p>
-            {game ? (
-              <>
-                <div className="specialty-tags">
-                  <span>{t(`${game.key}.tag1`)}</span>
-                  <span>{t(`${game.key}.tag2`)}</span>
-                  <span>{t(`${game.key}.tag3`)}</span>
-                </div>
-                {onPlay ? (
-                  <Button className="specialty-primary" onClick={onPlay}>
-                    {t("specialty.play")}
-                    <ArrowRight size={19} />
-                  </Button>
-                ) : (
-                  <Link
-                    className={`${buttonVariants()} specialty-primary`}
-                    to={game.path}
-                  >
-                    {t("specialty.play")}
-                    <ArrowRight size={19} />
-                  </Link>
-                )}
-              </>
-            ) : !onPlay ? (
+            <h2>{t(`${game.key}.title`)}</h2>
+            <p>{t(`${game.key}.tagline`)}</p>
+            <div className="specialty-tags">
+              <span>{t(`${game.key}.tag1`)}</span>
+              <span>{t(`${game.key}.tag2`)}</span>
+              <span>{t(`${game.key}.tag3`)}</span>
+            </div>
+            {onPlay ? (
+              <Button className="specialty-primary" onClick={onPlay}>
+                {t("specialty.play", { title: t(`${game.key}.title`) })}
+                <ArrowRight size={19} />
+              </Button>
+            ) : (
               <Link
-                className={buttonVariants({ variant: "outline" })}
-                to="/student/modules"
+                className={`${buttonVariants()} specialty-primary`}
+                to={game.path}
               >
-                {t("specialty.revisit")}
+                {t("specialty.play", { title: t(`${game.key}.title`) })}
+                <ArrowRight size={19} />
               </Link>
-            ) : null}
+            )}
           </div>
           <aside className="specialty-field-note">
             <Telescope size={34} />

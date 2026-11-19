@@ -7,7 +7,7 @@ describe.each([
   "../../prisma/seedAdvanced.cjs",
   "../../backend/prisma/seedAdvanced.cjs",
 ])("advanced seed %s", (file) => {
-  it("seeds both canonical chains idempotently with the first specialty activity", async () => {
+  it("seeds all canonical chains idempotently with the first specialty activity", async () => {
     function table() {
       const rows = new Map<string, Record<string, unknown>>();
       return {
@@ -58,6 +58,7 @@ describe.each([
         gameKey: advanced.activityId,
       });
     }
-    for (const entity of Object.values(db)) expect(entity.rows.size).toBe(2);
+    for (const entity of Object.values(db))
+      expect(entity.rows.size).toBe(ADVANCED_ACTIVITIES.length);
   });
 });

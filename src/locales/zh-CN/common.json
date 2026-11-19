@@ -2295,7 +2295,7 @@
     "familiar": "Your classes, creations, and familiar navigation stay right here.",
     "comingTitle": "Your next discoveries are growing.",
     "comingDescription": "New games for this specialty are being built. Your earlier games and creations are ready to revisit.",
-    "play": "Explore Adaptation Islands",
+    "play": "开始玩《{{title}}》",
     "revisit": "Revisit my games",
     "fieldNote": "A question to take with you",
     "setsComplete": "Foundation, Exploration, Mastery: complete",
@@ -2312,10 +2312,18 @@
     "inviteDescription": "Choose AI/ML, Quantum, or Biotech to explore next.",
     "inviteAction": "Choose my specialty",
     "gameLocked": "BioTrail opens after Set 3 and a Biotech specialty choice. View my specialty.",
-    "previewMode": "Design preview",
-    "resetPreview": "Preview another specialty",
-    "previewLocked": "Show locked state",
-    "previewBack": "Back to specialty preview",
+    "previewMode": "设计预览",
+    "resetPreview": "预览其他方向",
+    "previewLocked": "显示锁定状态",
+    "previewBack": "返回方向预览",
+    "qubitCove": {
+      "title": "量子比特湾",
+      "tagline": "跳过小岛，测量一个量子比特。你会看到 0 还是 1？",
+      "tag1": "探索",
+      "tag2": "跳跃",
+      "tag3": "测量",
+      "gameLocked": "完成第 3 组并选择量子方向后，就可以进入量子比特湾。查看我的方向。"
+    },
     "tracks": {
       "AI": {
         "name": "AI / ML",
@@ -2335,9 +2343,9 @@
         "verbs": "Wonder · Experiment · Discover",
         "companion": "Quantum guide",
         "previewTitle": "A world of possibilities",
-        "preview": "Violet accents, an atom badge, and experiment prompts give your quantum world its own feel.",
+        "preview": "来量子比特湾，跳过小岛，测量一个量子比特，看看结果是 0 还是 1。",
         "welcome": "Your quantum journey begins.",
-        "question": "What could an experiment help you discover that your eyes cannot see?"
+        "question": "每次测量的结果都会一样吗？"
       },
       "BIOTECH": {
         "name": "Biotech",
@@ -2547,5 +2555,68 @@
     "logIn": "登录",
     "classCodeNote": "同学们，请使用老师或家人给你的班级代码。",
     "classCodeLink": "使用班级代码登录"
+  },
+  "qubitCove": {
+    "title": "量子比特湾",
+    "goal": "点亮三盏灯，唤醒灯塔。",
+    "canvas": "量子比特湾的探险小岛",
+    "lights": "已点亮 {{count}} 盏灯，共 3 盏",
+    "sparks": "火花：{{count}}",
+    "map": "小岛地图",
+    "mapHint": "选一盏灯，就能搭车到那里。",
+    "names": {
+      "zero": "零号花园",
+      "one": "一号山峰",
+      "mix": "惊喜港"
+    },
+    "visit": "搭车去{{name}}",
+    "lit": "已点亮",
+    "unlit": "还没亮",
+    "controls": "游戏操作",
+    "up": "向上走",
+    "down": "向下走",
+    "left": "向左走",
+    "right": "向右走",
+    "jump": "跳",
+    "keyboard": "按方向键或 WASD 移动。按空格键跳跃。按 E 使用灯台。",
+    "use": "使用灯台",
+    "close": "关闭",
+    "setup": {
+      "zero": "把量子比特设为 0。",
+      "one": "把量子比特设为 1。",
+      "mix": "让 0 和 1 出现的机会一样大。试三次，每次都用一个新的量子比特。"
+    },
+    "prepare": "准备量子比特",
+    "prepareAgain": "准备新的量子比特",
+    "measure": "测量",
+    "ready": "可以测量啦！",
+    "readings": "你测到的数",
+    "prediction": "这样准备后，可能测到哪些数？",
+    "choices": {
+      "zero": "只有 0",
+      "one": "只有 1",
+      "mix": "0 或 1"
+    },
+    "retry": "看看你是怎么准备量子比特的，再试一次吧！",
+    "insight": {
+      "zero": "设为 0，测到的就是 0。",
+      "one": "设为 1，测到的就是 1。",
+      "mix": "两个数都有可能出现。同一个数也可能连续出现。"
+    },
+    "beaconLit": "{{name}}的灯亮啦！",
+    "explore": "回到海湾",
+    "won": "灯塔亮起来啦！",
+    "replay": "再玩一次",
+    "finish": "完成探险",
+    "saveError": "进度还没保存。请再选一次“完成探险”。",
+    "help": "怎么玩",
+    "reduced": "减少动态效果",
+    "reading": "你测到了 {{value}}！",
+    "litAlready": "你已经点亮了这盏灯。",
+    "touch": "按住箭头移动，轻点“跳”就能跳起来。打开小岛地图就能搭车。",
+    "saved": "探险完成",
+    "listen": "听朗读",
+    "aboutQubits": "量子计算机使用量子比特。在这里，每次测量一个量子比特，你只会看到一个数：0 或 1。",
+    "cometJump": "一边往前走，一边在落地时再跳一次，就能使出更高的彗星跳！"
   }
 }

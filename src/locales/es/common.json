@@ -2571,7 +2571,7 @@
     "familiar": "Tus clases, creaciones y navegación siguen en su lugar.",
     "comingTitle": "Tus próximos descubrimientos están creciendo.",
     "comingDescription": "Estamos creando nuevos juegos para esta especialidad. Puedes volver a tus juegos y creaciones anteriores.",
-    "play": "Explorar las Islas de Adaptación",
+    "play": "Jugar a {{title}}",
     "revisit": "Volver a mis juegos",
     "fieldNote": "Una pregunta para llevar contigo",
     "setsComplete": "Fundamentos, Exploración y Dominio: completos",
@@ -2592,6 +2592,14 @@
     "resetPreview": "Explorar otra especialidad",
     "previewLocked": "Mostrar estado bloqueado",
     "previewBack": "Volver a las especialidades",
+    "qubitCove": {
+      "title": "Cala Cúbit",
+      "tagline": "Salta de isla en isla y mide un cúbit. ¿Verás un 0 o un 1?",
+      "tag1": "Explorar",
+      "tag2": "Saltar",
+      "tag3": "Medir",
+      "gameLocked": "Cala Cúbit se abre después del Set 3 al elegir Cuántica. Ver mi especialidad."
+    },
     "tracks": {
       "AI": {
         "name": "IA / AA",
@@ -2611,9 +2619,9 @@
         "verbs": "Preguntar · Experimentar · Descubrir",
         "companion": "Guía cuántico",
         "previewTitle": "Un mundo de posibilidades",
-        "preview": "Tonos violetas, una insignia de átomo y preguntas para experimentar dan vida a tu mundo cuántico.",
+        "preview": "Visita Cala Cúbit. Salta entre islas y mide un cúbit para ver un 0 o un 1.",
         "welcome": "Tu viaje cuántico comienza.",
-        "question": "¿Qué podría revelar un experimento que tus ojos no pueden ver?"
+        "question": "¿Verás el mismo resultado cada vez que midas?"
       },
       "BIOTECH": {
         "name": "Biotecnología",
@@ -3287,5 +3295,68 @@
     "logIn": "Iniciar sesión",
     "classCodeNote": "Estudiantes, usen el código que les dio su docente o su familia.",
     "classCodeLink": "Entrar con un código de clase"
+  },
+  "qubitCove": {
+    "title": "Cala Cúbit",
+    "goal": "Enciende las tres luces para despertar al faro.",
+    "canvas": "Islas para explorar en Cala Cúbit",
+    "lights": "Luces encendidas: {{count}} de 3",
+    "sparks": "Chispas: {{count}}",
+    "map": "Mapa de las islas",
+    "mapHint": "Elige una luz para viajar hasta ella.",
+    "names": {
+      "zero": "Jardín Cero",
+      "one": "Pico Uno",
+      "mix": "Puerto Sorpresa"
+    },
+    "visit": "Viajar a {{name}}",
+    "lit": "Encendida",
+    "unlit": "Apagada",
+    "controls": "Controles del juego",
+    "up": "Ir arriba",
+    "down": "Ir abajo",
+    "left": "Ir a la izquierda",
+    "right": "Ir a la derecha",
+    "jump": "Saltar",
+    "keyboard": "Muévete con las flechas o con WASD. Pulsa la barra espaciadora para saltar y E para usar una luz.",
+    "use": "Usar la luz",
+    "close": "Cerrar",
+    "setup": {
+      "zero": "Prepara tu cúbit en 0.",
+      "one": "Prepara tu cúbit en 1.",
+      "mix": "Dale la misma oportunidad al 0 y al 1. Prueba tres veces. Usa un cúbit nuevo cada vez."
+    },
+    "prepare": "Preparar cúbit",
+    "prepareAgain": "Preparar un cúbit nuevo",
+    "measure": "Medir",
+    "ready": "¡Ya puedes medir!",
+    "readings": "Tus resultados",
+    "prediction": "¿Qué números pueden salir si lo preparas así?",
+    "choices": {
+      "zero": "Solo 0",
+      "one": "Solo 1",
+      "mix": "0 o 1"
+    },
+    "retry": "Fíjate en cómo preparaste el cúbit. ¡Inténtalo otra vez!",
+    "insight": {
+      "zero": "Si lo preparas en 0, sale 0.",
+      "one": "Si lo preparas en 1, sale 1.",
+      "mix": "Puede salir cualquiera de los dos. Hasta puede repetirse el mismo número."
+    },
+    "beaconLit": "¡Se encendió la luz de {{name}}!",
+    "explore": "Volver a la cala",
+    "won": "¡El faro está brillando!",
+    "replay": "Volver a jugar",
+    "finish": "Terminar la aventura",
+    "saveError": "No se pudo guardar tu progreso. Vuelve a pulsar «Terminar la aventura».",
+    "help": "Cómo jugar",
+    "reduced": "Reducir movimiento",
+    "reading": "¡Salió {{value}}!",
+    "litAlready": "Ya encendiste esta luz.",
+    "touch": "Mantén pulsadas las flechas para moverte. Toca Saltar para dar un salto. Abre el mapa de las islas para viajar.",
+    "saved": "Aventura completada",
+    "listen": "Escuchar",
+    "aboutQubits": "Una computadora cuántica usa cúbits. Aquí, al medir un cúbit, ves un solo número: 0 o 1.",
+    "cometJump": "Sigue en movimiento y salta otra vez al tocar el suelo. ¡Así harás un salto cometa más alto!"
   }
 }
