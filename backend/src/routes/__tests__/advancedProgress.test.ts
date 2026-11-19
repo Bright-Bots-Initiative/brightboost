@@ -130,7 +130,7 @@ describe.each(ADVANCED_ACTIVITIES)(
       expect(mocks.prisma.progress.upsert).toHaveBeenCalledTimes(1);
       mocks.prisma.avatar.findUnique.mockResolvedValue({
         stage: "SPECIALIZED",
-        archetype: "QUANTUM",
+        archetype: advanced.specialty === "QUANTUM" ? "AI" : "QUANTUM",
       });
       expect(
         (await request(app).post("/progress/checkpoint").send(checkpoint))

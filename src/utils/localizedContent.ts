@@ -7,6 +7,11 @@ import i18n from "../i18n";
  */
 const CONTENT_NAMES: Record<string, Record<string, string>> = {
   es: {
+    "Qubit Cove": "Cala Cúbit",
+    "Explore islands and measure a qubit to see a 0 or a 1.":
+      "Explora las islas y mide un cúbit para ver un 0 o un 1.",
+    "The quantum islands": "Las islas cuánticas",
+    "My first qubit": "Mi primer cúbit",
     "SparBots: Training Tower": "SparBots: Torre de Entrenamiento",
     "My First AI Playbook": "Mi primer libro de ejemplos de IA",
     "Show, train, test, improve": "Mostrar, entrenar, probar, mejorar",
@@ -49,6 +54,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Set 2: Qualify, Tune, Race": "Set 2: Califica, Ajusta, Compite",
   },
   vi: {
+    "Qubit Cove": "Vịnh Qubit",
+    "Explore islands and measure a qubit to see a 0 or a 1.":
+      "Khám phá các hòn đảo và đo một qubit để thấy số 0 hoặc số 1.",
+    "The quantum islands": "Những hòn đảo lượng tử",
+    "My first qubit": "Qubit đầu tiên của em",
     "Bounce & Buds": "Nảy và Bạn Bè",
     "Gotcha Gears": "Bánh Răng Gotcha",
     "Rhyme & Ride": "Vần và Đi",
@@ -76,6 +86,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Set 2: Qualify, Tune, Race": "Bộ 2: Thử, Điều Chỉnh, Đua",
   },
   "zh-CN": {
+    "Qubit Cove": "量子比特湾",
+    "Explore islands and measure a qubit to see a 0 or a 1.":
+      "探索小岛，测量一个量子比特，看看结果是 0 还是 1。",
+    "The quantum islands": "量子群岛",
+    "My first qubit": "我的第一个量子比特",
     "Bounce & Buds": "弹跳小伙伴",
     "Gotcha Gears": "齿轮大作战",
     "Rhyme & Ride": "韵律骑行",

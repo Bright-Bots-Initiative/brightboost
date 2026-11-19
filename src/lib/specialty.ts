@@ -6,10 +6,14 @@ export function isSpecialty(value: unknown): value is Specialty {
 import {
   BIOTRAIL_SLUG,
   SPARBOTS_SLUG,
+  QUBIT_COVE_SLUG,
+  QUBIT_COVE_LESSON_ID,
+  QUBIT_COVE_ACTIVITY_ID,
   SPARBOTS_LESSON_ID,
   SPARBOTS_ACTIVITY_ID,
 } from "@shared/progression/advanced";
-export { BIOTRAIL_SLUG, SPARBOTS_SLUG };
+export { BIOTRAIL_SLUG, SPARBOTS_SLUG, QUBIT_COVE_SLUG };
+export const QUBIT_COVE_PATH = `/student/modules/${QUBIT_COVE_SLUG}/lessons/${QUBIT_COVE_LESSON_ID}/activities/${QUBIT_COVE_ACTIVITY_ID}`;
 export const BIOTRAIL_PATH = `/student/modules/${BIOTRAIL_SLUG}/lessons/biotrail-field-lab/activities/biotrail`;
 export const SPARBOTS_PATH = `/student/modules/${SPARBOTS_SLUG}/lessons/${SPARBOTS_LESSON_ID}/activities/${SPARBOTS_ACTIVITY_ID}`;
 export const SPECIALTY_UPDATED = "brightboost:specialty-updated";

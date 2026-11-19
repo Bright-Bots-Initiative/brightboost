@@ -76,6 +76,11 @@ describe("Specialty choice", () => {
       "/student/modules/advanced-ai-sparbots/lessons/sparbots-training-tower/activities/sparbots",
     ],
     [
+      "QUANTUM",
+      "Qubit Cove",
+      "/student/modules/advanced-quantum-qubit-cove/lessons/qubit-cove-expedition/activities/qubit_cove",
+    ],
+    [
       "BIOTECH",
       "BioTrail: Adaptation Islands",
       "/student/modules/advanced-biotech-biotrail/lessons/biotrail-field-lab/activities/biotrail",
@@ -93,7 +98,9 @@ describe("Specialty choice", () => {
       );
       expect(screen.getByRole("heading", { name: title })).toBeInTheDocument();
       expect(
-        screen.getByRole("link", { name: en.specialty.play }),
+        screen.getByRole("link", {
+          name: en.specialty.play.replace("{{title}}", title),
+        }),
       ).toHaveAttribute("href", path);
     },
   );
