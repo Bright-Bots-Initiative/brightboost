@@ -590,14 +590,19 @@ export const api = {
     return res.json();
   },
 
-  getModuleVariants: async (band?: string) => {
+  getModuleVariants: async (
+    band?: string,
+    signal?: AbortSignal,
+    playableOnly = false,
+  ) => {
     const url = new URL(
       join(API_BASE, "/module-catalog/variants"),
       window.location.origin,
     );
     if (band) url.searchParams.append("band", band);
-    const res = await fetch(url.toString(), { headers: getHeaders() });
-    return res.json();
+    if (playableOnly) url.searchParams.set("playable", "true");
+    const res = await fetch(url.toString(), { headers: getHeaders(), signal });
+    return readApiJson(res);
   },
 
   updateCourseBand: async (
@@ -622,10 +627,10 @@ export const api = {
     return { id: data.id, gradeBand: data.gradeBand };
   },
 
-  getCourseAssignments: async (courseId: string) => {
+  getCourseAssignments: async (courseId: string, signal?: AbortSignal) => {
     const res = await fetch(
       join(API_BASE, `/teacher/courses/${courseId}/module-assignments`),
-      { headers: getHeaders() },
+      { headers: getHeaders(), signal },
     );
     return readApiJson(res);
   },
@@ -645,6 +650,25 @@ export const api = {
     );
     return readApiJson(res);
   },
+
+  moveModuleAssignment: async (
+    courseId: string,
+    assignmentId: string,
+    direction: "up" | "down",
+  ) =>
+    readApiJson(
+      await fetch(
+        join(
+          API_BASE,
+          `/teacher/courses/${encodeURIComponent(courseId)}/module-assignments/${encodeURIComponent(assignmentId)}/move`,
+        ),
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({ direction }),
+        },
+      ),
+    ),
 
   removeModuleAssignment: async (courseId: string, assignmentId: string) => {
     const res = await fetch(
@@ -701,11 +725,12 @@ export const api = {
     return res.json();
   },
 
-  getStudentAssignedModules: async () => {
+  getStudentAssignedModules: async (signal?: AbortSignal) => {
     const res = await fetch(join(API_BASE, "/student/assigned-modules"), {
       headers: getHeaders(),
+      signal,
     });
-    return res.json();
+    return readApiJson(res);
   },
 
   selectArchetype: async (archetype: string) => {

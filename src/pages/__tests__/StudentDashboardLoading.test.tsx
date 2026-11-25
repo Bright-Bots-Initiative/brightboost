@@ -21,6 +21,7 @@ vi.mock("@/services/api", () => ({
     getModule: vi.fn(),
     getProgress: vi.fn(),
     getStudentCourses: vi.fn(),
+    getStudentAssignedModules: vi.fn(),
     getStudentAssignments: vi.fn(),
     getStudentBenchmarks: vi.fn(),
   },
@@ -77,6 +78,7 @@ function tree() {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(api.getStudentAssignedModules).mockResolvedValue([]);
   __resetGradeBandCache();
   localStorage.clear();
   auth.user = { id: "student-a", name: "Ada" };

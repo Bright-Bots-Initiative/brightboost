@@ -3575,5 +3575,49 @@
     "listen": "Read aloud",
     "aboutQubits": "A quantum computer uses qubits. Here, measuring a qubit shows one number, 0 or 1.",
     "cometJump": "Keep moving and jump again as you land for a higher comet jump."
+  },
+  "classroom": {
+    "plan": "Assign class modules",
+    "order": "Play order",
+    "catalog": "Available for this class",
+    "loading": "Loading class modules…",
+    "loadFailed": "We couldn’t update the module list. Try again.",
+    "retry": "Try again",
+    "none": "No modules assigned yet.",
+    "noMore": "No more playable modules for this grade band.",
+    "up": "Move {{title}} up",
+    "down": "Move {{title}} down",
+    "remove": "Remove {{title}}",
+    "assign": "Assign {{title}}",
+    "studentTitle": "Class assignments",
+    "unavailable": "Your class assignments couldn’t load.",
+    "notReady": "Not available to play yet",
+    "deleteProtected": "This class has student assessment results or creations. The class and its records were kept.",
+    "deleteFailed": "We couldn’t delete this class. Please try again."
+  },
+  "raceLab": {
+    "intro": "Test a denser slalom. Drive two laps on the same course, change one upgrade, and use your bump counts as evidence.",
+    "question": "Lap 1: {{first}} bumps. Lap 2: {{second}}. What do your results show about lap 2?",
+    "fewer": "Fewer bumps",
+    "same": "The same number of bumps",
+    "more": "More bumps",
+    "explain": "Compare {{first}} with {{second}}: {{comparison}}."
+  },
+  "narration": {
+    "controls": "Read instructions aloud",
+    "listen": "Listen",
+    "pause": "Pause",
+    "resume": "Resume",
+    "repeat": "Repeat from the start",
+    "stop": "Stop",
+    "unavailable": "Audio is unavailable in this language on this device. You can still use the written instructions.",
+    "instructions": {
+      "bounce": "Look at the clue. Aim the ball at the matching gate.",
+      "gears": "Look at the clue. Catch the matching gear.",
+      "rhyme": "Find the word that rhymes. Move into its lane.",
+      "tank": "Choose a move for your robot. Press Run to try your path.",
+      "quantum": "Look at the math puzzle. Tap the answer you think is right.",
+      "choice": "Choose one answer. You can try it by tapping or using the keyboard."
+    }
   }
 }

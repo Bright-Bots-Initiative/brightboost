@@ -2628,5 +2628,49 @@
     "listen": "听朗读",
     "aboutQubits": "量子计算机使用量子比特。在这里，每次测量一个量子比特，你只会看到一个数：0 或 1。",
     "cometJump": "一边往前走，一边在落地时再跳一次，就能使出更高的彗星跳！"
+  },
+  "classroom": {
+    "plan": "安排班级模块",
+    "order": "游玩顺序",
+    "catalog": "本班可用",
+    "loading": "正在加载班级模块…",
+    "loadFailed": "无法更新模块列表，请重试。",
+    "retry": "重试",
+    "none": "还没有安排模块。",
+    "noMore": "该年级组没有其他可玩的模块。",
+    "up": "上移{{title}}",
+    "down": "下移{{title}}",
+    "remove": "移除{{title}}",
+    "assign": "安排{{title}}",
+    "studentTitle": "班级任务",
+    "unavailable": "无法加载班级任务。",
+    "notReady": "暂时无法游玩",
+    "deleteProtected": "班级已有学生测评结果或作品。班级及记录均已保留。",
+    "deleteFailed": "无法删除班级，请重试。"
+  },
+  "raceLab": {
+    "intro": "挑战更密集的绕桩赛道。在同一赛道跑两圈，只改一项升级，再比较碰撞次数。",
+    "question": "第一圈碰撞 {{first}} 次，第二圈 {{second}} 次。第二圈的结果如何？",
+    "fewer": "碰撞更少",
+    "same": "碰撞次数相同",
+    "more": "碰撞更多",
+    "explain": "比较 {{first}} 与 {{second}}：{{comparison}}。"
+  },
+  "narration": {
+    "controls": "朗读说明",
+    "listen": "听一听",
+    "pause": "暂停",
+    "resume": "继续",
+    "repeat": "从头再读",
+    "stop": "停止",
+    "unavailable": "此设备无法用当前语言朗读。你仍可查看文字说明。",
+    "instructions": {
+      "bounce": "看看提示，把球瞄准对应的门。",
+      "gears": "看看提示，接住对应的齿轮。",
+      "rhyme": "找出押韵的词，移到它所在的车道。",
+      "tank": "为机器人选择一步，再按运行试试路线。",
+      "quantum": "看看数学题，轻点你认为正确的答案。",
+      "choice": "选择一个答案，可以轻点，也可以使用键盘。"
+    }
   }
 }

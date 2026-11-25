@@ -10,12 +10,16 @@ import GameShell, {
   ProgressHUD,
 } from "./shared/GameShell";
 import "./shared/game-effects.css";
+import { getGradeBand } from "./gradeBandContent";
 import { pickLocale } from "@/utils/localizedContent";
 import {
   CAR_H,
   CAR_W,
   CONE_SIZE,
   createRaceEngine,
+  raceCones,
+  maxCleanSmoothness,
+  type RaceBand,
   LANE_W,
   laneX,
   MAX_CLEAN_SMOOTHNESS,
@@ -128,7 +132,12 @@ const creditFor = (improved: boolean, heldAtCeiling: boolean): MetricCredit =>
  * strictly faster *and* at its floor): the number visibly moved, so the row
  * should say so.
  */
-export function metricCredit(run1: RunResult, run2: RunResult): RunCredit {
+export function metricCredit(
+  run1: RunResult,
+  run2: RunResult,
+  band: RaceBand = "k2",
+): RunCredit {
+  const ceiling = maxCleanSmoothness(null, band);
   const heldPerfectBumps =
     run1.bumps === PERFECT_BUMPS && run2.bumps === PERFECT_BUMPS;
   // Two cone-free laps. Cones are the only thing that costs lap time in the
@@ -143,8 +152,7 @@ export function metricCredit(run1: RunResult, run2: RunResult): RunCredit {
   // #805 has since translated (the coupling is gone: nothing here reads a label).
   const heldFloorTime = heldPerfectBumps;
   const heldMaxSmoothness =
-    run1.smoothness >= MAX_CLEAN_SMOOTHNESS &&
-    run2.smoothness >= MAX_CLEAN_SMOOTHNESS;
+    run1.smoothness >= ceiling && run2.smoothness >= ceiling;
   return {
     bumps: creditFor(run2.bumps < run1.bumps, heldPerfectBumps),
     time: creditFor(run2.time < run1.time, heldFloorTime),
@@ -180,22 +188,38 @@ export function asksWhatGotBetter(credits: MetricCredit[]): boolean {
   return credits.includes("improved") || !credits.includes("held");
 }
 
+export function raceExitKey(
+  band: RaceBand,
+  first: RunResult | null,
+  second: RunResult | null,
+) {
+  if (band === "k2") return "one";
+  if (!first || !second) return undefined;
+  return second.bumps < first.bumps
+    ? "fewer"
+    : second.bumps > first.bumps
+      ? "more"
+      : "same";
+}
+
 export function calculateQualifyTuneRaceScore(
   run1: RunResult | null,
   run2: RunResult | null,
   exitAnswer: string | null,
+  band: RaceBand = "k2",
 ) {
   if (!run1 || !run2) return { score: 0, total: 10 };
-  const credit = metricCredit(run1, run2);
+  const credit = metricCredit(run1, run2, band);
   let s = 3;
   if (credit.bumps !== "none") s += 2;
   if (credit.time !== "none") s += 2;
   if (credit.smoothness !== "none") s += 1;
-  if (exitAnswer === "one") s += 2;
+  if (exitAnswer === raceExitKey(band, run1, run2)) s += 2;
   return { score: Math.min(s, 10), total: 10 };
 }
 
 export function buildQualifyTuneRaceCompletionPayload(params: {
+  band?: RaceBand;
   run1: RunResult | null;
   run2: RunResult | null;
   exitAnswer: string | null;
@@ -205,6 +229,7 @@ export function buildQualifyTuneRaceCompletionPayload(params: {
     params.run1,
     params.run2,
     params.exitAnswer,
+    params.band,
   );
   return {
     gameKey: "qualify_tune_race",
@@ -217,7 +242,9 @@ export function buildQualifyTuneRaceCompletionPayload(params: {
       upgrade: params.upgrade,
       run1: params.run1,
       run2: params.run2,
-      exitCorrect: params.exitAnswer === "one",
+      exitCorrect:
+        params.exitAnswer ===
+        raceExitKey(params.band ?? "k2", params.run1, params.run2),
     },
   };
 }
@@ -250,9 +277,11 @@ function MetricCard({
 // RacePlayfield
 // ═══════════════════════════════════════════════════════════════════════════
 function RacePlayfield({
+  band,
   onFinish,
   reducedEffects,
 }: {
+  band: RaceBand;
   onFinish: (r: GameResult) => void;
   reducedEffects: boolean;
 }) {
@@ -292,14 +321,14 @@ function RacePlayfield({
     (p: "qualify" | "race") => {
       // The qualifying lap is always driven un-upgraded; only the race run
       // carries the student's one change.
-      engineRef.current = createRaceEngine(p === "race" ? upgrade : null);
+      engineRef.current = createRaceEngine(p === "race" ? upgrade : null, band);
       setPhase(p);
       setCarLane(START_LANE);
       setScrollY(0);
       setBumps(0);
       isRacing.current = true;
     },
-    [upgrade],
+    [upgrade, band],
   );
 
   const finishRun = useCallback(() => {
@@ -387,10 +416,12 @@ function RacePlayfield({
           })}
         </h2>
         <p className="text-lg text-slate-600 max-w-md mx-auto">
-          {t("games.qualifyTuneRace.introText", {
-            defaultValue:
-              "Drive your qualifying lap, pick ONE upgrade, then race again!",
-          })}
+          {band === "g3_5"
+            ? t("raceLab.intro")
+            : t("games.qualifyTuneRace.introText", {
+                defaultValue:
+                  "Drive your qualifying lap, pick ONE upgrade, then race again!",
+              })}
         </p>
         <button
           onClick={() => startRun("qualify")}
@@ -461,7 +492,7 @@ function RacePlayfield({
                   }}
                 />
               ))}
-              {OBSTACLES.map((obs, i) => {
+              {raceCones(band).map((obs, i) => {
                 const sy = obs.y - scrollY + TRACK_H - 100;
                 if (sy < -CONE_SIZE || sy > TRACK_H + CONE_SIZE) return null;
                 return (
@@ -685,7 +716,7 @@ function RacePlayfield({
   // ── Phase: compare ──────────────────────────────────────────────────
   if (phase === "compare" && run1 && run2) {
     // The scorer's own per-metric decision — not a second opinion (#805).
-    const credit = metricCredit(run1, run2);
+    const credit = metricCredit(run1, run2, band);
     const metrics = [
       {
         label: t("games.qualifyTuneRace.timeLabel", { defaultValue: "Time" }),
@@ -797,38 +828,51 @@ function RacePlayfield({
 
   // ── Phase: exitTicket ───────────────────────────────────────────────
   if (phase === "exitTicket") {
-    const opts = [
-      {
-        key: "one",
-        label: t("games.qualifyTuneRace.exitCorrect", { defaultValue: "One" }),
-      },
-      {
-        key: "two",
-        label: t("games.qualifyTuneRace.exitWrongB", { defaultValue: "Two" }),
-      },
-      {
-        key: "all",
-        label: t("games.qualifyTuneRace.exitWrongA", {
-          defaultValue: "All of them",
-        }),
-      },
-    ];
+    const correctKey = raceExitKey(band, run1, run2);
+    const opts =
+      band === "g3_5"
+        ? (["fewer", "same", "more"] as const).map((key) => ({
+            key,
+            label: t(`raceLab.${key}`),
+          }))
+        : [
+            {
+              key: "one",
+              label: t("games.qualifyTuneRace.exitCorrect", {
+                defaultValue: "One",
+              }),
+            },
+            {
+              key: "two",
+              label: t("games.qualifyTuneRace.exitWrongB", {
+                defaultValue: "Two",
+              }),
+            },
+            {
+              key: "all",
+              label: t("games.qualifyTuneRace.exitWrongA", {
+                defaultValue: "All of them",
+              }),
+            },
+          ];
     const answered = exitAnswer !== null,
-      correct = exitAnswer === "one";
+      correct = exitAnswer === correctKey;
     return (
       <div className="slide-up-fade text-center space-y-6 py-6 max-w-md mx-auto">
         <ProgressHUD step={2} totalLevels={LEVELS} />
         <h2 className="text-2xl font-extrabold text-amber-900">
-          {t("games.qualifyTuneRace.exitQuestion", {
-            defaultValue:
-              "To make a fair test, how many things should you change?",
-          })}
+          {band === "g3_5"
+            ? t("raceLab.question", { first: run1?.bumps, second: run2?.bumps })
+            : t("games.qualifyTuneRace.exitQuestion", {
+                defaultValue:
+                  "To make a fair test, how many things should you change?",
+              })}
         </h2>
 
         <div className="grid gap-3">
           {opts.map((o) => {
             const isSel = exitAnswer === o.key,
-              isCorr = o.key === "one";
+              isCorr = o.key === correctKey;
             const showOk = answered && isCorr,
               showBad = answered && isSel && !isCorr;
             return (
@@ -854,15 +898,21 @@ function RacePlayfield({
             <p
               className={`text-lg font-bold ${correct ? "text-emerald-700" : "text-amber-700"}`}
             >
-              {correct
-                ? t("games.qualifyTuneRace.correctAnswer", {
-                    defaultValue:
-                      "That's right! Change only ONE thing for a fair test!",
+              {band === "g3_5"
+                ? t("raceLab.explain", {
+                    first: run1?.bumps,
+                    second: run2?.bumps,
+                    comparison: t(`raceLab.${correctKey}`),
                   })
-                : t("games.qualifyTuneRace.wrongAnswer", {
-                    defaultValue:
-                      "The answer is ONE! Change one thing so you know what made the difference.",
-                  })}
+                : correct
+                  ? t("games.qualifyTuneRace.correctAnswer", {
+                      defaultValue:
+                        "That's right! Change only ONE thing for a fair test!",
+                    })
+                  : t("games.qualifyTuneRace.wrongAnswer", {
+                      defaultValue:
+                        "The answer is ONE! Change one thing so you know what made the difference.",
+                    })}
             </p>
             <button
               onClick={() => setPhase("celebration")}
@@ -911,6 +961,7 @@ function RacePlayfield({
           onClick={() => {
             onFinish(
               buildQualifyTuneRaceCompletionPayload({
+                band,
                 run1,
                 run2,
                 exitAnswer,
@@ -933,12 +984,14 @@ function RacePlayfield({
 // Main Export
 // ═══════════════════════════════════════════════════════════════════════════
 export default function QualifyTuneRaceGame({
+  config,
   onComplete,
 }: {
   config?: unknown;
   onComplete?: (result: GameResult) => void;
 }) {
   const { t } = useTranslation();
+  const band = getGradeBand(config);
   // TODO: add translation keys for the story, tips, control instructions in briefing
   const briefing: MissionBriefing = {
     title: pickLocale(
@@ -950,12 +1003,15 @@ export default function QualifyTuneRaceGame({
       },
       "Qualify, Tune, Race",
     ),
-    story: pickLocale(
-      {
-        en: "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
-      },
-      "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
-    ),
+    story:
+      band === "g3_5"
+        ? t("raceLab.intro")
+        : pickLocale(
+            {
+              en: "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
+            },
+            "First we test. Then we tune. Then we race again! Change one thing and see what happens.",
+          ),
     icon: "🏎️",
     tips: pickLocale(
       {
@@ -1007,7 +1063,11 @@ export default function QualifyTuneRaceGame({
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects }) => (
-        <RacePlayfield onFinish={onFinish} reducedEffects={reducedEffects} />
+        <RacePlayfield
+          band={band}
+          onFinish={onFinish}
+          reducedEffects={reducedEffects}
+        />
       )}
     </GameShell>
   );

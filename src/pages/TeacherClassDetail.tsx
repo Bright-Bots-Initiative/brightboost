@@ -24,6 +24,7 @@ import {
   type ModuleAccessGradeBand,
 } from "@/lib/moduleAccess";
 import PrintLoginCards from "@/components/teacher/PrintLoginCards";
+import ClassModulePlanner from "@/components/teacher/ClassModulePlanner";
 import CourseGradeBandSelect from "@/components/teacher/CourseGradeBandSelect";
 import PrepareSessionLink from "@/components/teacher/PrepareSessionLink";
 import CreationStatusChip, {
@@ -671,6 +672,12 @@ const TeacherClassDetail: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <ClassModulePlanner
+        key={course.id}
+        courseId={course.id}
+        band={course.gradeBand ?? "k2"}
+      />
 
       {/* Encouragement-first reframe (Phase 0): who's ready for a nudge and
           what they've made lead the page; the completion/benchmark widgets are

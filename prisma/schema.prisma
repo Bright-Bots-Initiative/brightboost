@@ -1152,7 +1152,7 @@ model Creation {
   updatedAt DateTime       @updatedAt
 
   author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
 
   // Gallery read: group + visible-status filter
   @@index([courseId, status])

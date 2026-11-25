@@ -87,6 +87,28 @@ export const OBSTACLES: readonly Obstacle[] = [
   { lane: 1, y: 2900 },
 ];
 
+export const G35_OBSTACLES: readonly Obstacle[] = [
+  { lane: 1, y: 240 },
+  { lane: 2, y: 415 },
+  { lane: 0, y: 590 },
+  { lane: 1, y: 775 },
+  { lane: 0, y: 960 },
+  { lane: 2, y: 1145 },
+  { lane: 1, y: 1315 },
+  { lane: 2, y: 1485 },
+  { lane: 0, y: 1670 },
+  { lane: 1, y: 1855 },
+  { lane: 0, y: 2040 },
+  { lane: 2, y: 2220 },
+  { lane: 1, y: 2395 },
+  { lane: 2, y: 2575 },
+  { lane: 0, y: 2770 },
+  { lane: 1, y: 2970 },
+];
+export type RaceBand = "k2" | "g3_5";
+export const raceCones = (band: RaceBand) =>
+  band === "g3_5" ? G35_OBSTACLES : OBSTACLES;
+
 // ── Timing model (#806) ───────────────────────────────────────────────────
 /**
  * World speed. The pre-#806 loop moved 2.5 px per animation frame; at the
@@ -178,11 +200,14 @@ export function minCleanLaneChanges(
  * own transition penalty — the same DP for every configuration, never a
  * hardcoded number, so it moves with `OBSTACLES` and with the upgrade table.
  */
-export function maxCleanSmoothness(upgrade: Upgrade | null): number {
+export function maxCleanSmoothness(
+  upgrade: Upgrade | null,
+  band: RaceBand = "k2",
+): number {
   return (
     100 -
     upgradeTuning(upgrade).transitionPenalty *
-      minCleanLaneChanges(OBSTACLES, START_LANE)
+      minCleanLaneChanges(raceCones(band), START_LANE)
   );
 }
 
@@ -240,7 +265,11 @@ export interface RaceEngine {
   result(): RunResult;
 }
 
-export function createRaceEngine(upgrade: Upgrade | null): RaceEngine {
+export function createRaceEngine(
+  upgrade: Upgrade | null,
+  band: RaceBand = "k2",
+): RaceEngine {
+  const obstacles = raceCones(band);
   const tuning = upgradeTuning(upgrade);
   const unitsPerStep =
     (SCROLL_UNITS_PER_SECOND * tuning.speedMultiplier) / SIMULATION_HZ;
@@ -277,9 +306,9 @@ export function createRaceEngine(upgrade: Upgrade | null): RaceEngine {
     // exactly to |scroll − obs.y| < bumpZone. Lanes are LANE_W = 120 apart and
     // bumpZone ≤ 28, so the horizontal test is "same lane" and nothing else.
     const carX = laneX(lane);
-    for (let i = 0; i < OBSTACLES.length; i++) {
+    for (let i = 0; i < obstacles.length; i++) {
       if (hits.has(i)) continue;
-      const obs = OBSTACLES[i];
+      const obs = obstacles[i];
       if (
         Math.abs(carX - laneX(obs.lane)) < tuning.bumpZone &&
         Math.abs(scroll - obs.y) < tuning.bumpZone

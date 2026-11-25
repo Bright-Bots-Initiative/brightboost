@@ -1,12 +1,10 @@
+import { PilotInstruction } from "../InstructionPilot";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { track } from "@/lib/analytics";
-import {
-  resolveText,
-  resolveChoiceList,
-} from "@/utils/localizedContent";
+import { resolveText, resolveChoiceList } from "@/utils/localizedContent";
 import FeedbackPanel from "./FeedbackPanel";
 import QuestionScreen from "./QuestionScreen";
 import QuizSummary from "./QuizSummary";
@@ -115,7 +113,14 @@ export default function K2InstantFeedbackQuiz({
         quiz_variant: "instant",
       });
     },
-    [state.phase, state.currentIndex, state.selections, questions, answer, trackContext],
+    [
+      state.phase,
+      state.currentIndex,
+      state.selections,
+      questions,
+      answer,
+      trackContext,
+    ],
   );
 
   const handleFinish = useCallback(async () => {
@@ -165,8 +170,7 @@ export default function K2InstantFeedbackQuiz({
     ? (resolvedChoices[currentQuestion.answerIndex] ?? "")
     : "";
 
-  const explanationField =
-    currentQuestion.explanation ?? currentQuestion.hint;
+  const explanationField = currentQuestion.explanation ?? currentQuestion.hint;
   const explanationText = explanationField
     ? resolveText(t, explanationField)
     : undefined;
@@ -175,15 +179,15 @@ export default function K2InstantFeedbackQuiz({
   const selectedChoiceIndex = state.selections[currentQuestion.id];
 
   return (
-    <div
-      data-testid="instant-quiz"
-      className="p-6 max-w-3xl mx-auto space-y-4"
-    >
+    <div data-testid="instant-quiz" className="p-6 max-w-3xl mx-auto space-y-4">
       <ActivityHeader
         title={title}
         visualKey="quiz"
         subtitle={t("activityPlayer.quizSubtitle")}
       />
+      {state.phase !== "feedback" && (
+        <PilotInstruction key={state.currentIndex} surface="choice" />
+      )}
       <Card>
         <CardContent className="p-6 space-y-6">
           <QuestionScreen
@@ -202,9 +206,7 @@ export default function K2InstantFeedbackQuiz({
               cheer={getCheer(currentQuestion, state.lastResult)}
               correctAnswerText={correctAnswerText}
               explanation={
-                state.lastResult === "incorrect"
-                  ? explanationText
-                  : undefined
+                state.lastResult === "incorrect" ? explanationText : undefined
               }
               isLastQuestion={isLastQuestion}
               onNext={next}

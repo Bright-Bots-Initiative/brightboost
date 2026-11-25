@@ -49,6 +49,7 @@ const ClassesPage: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const courseToDelete = courses?.find((c) => c.id === deleteId);
 
   const loadCourses = useCallback(async () => {
@@ -124,19 +125,34 @@ const ClassesPage: React.FC = () => {
   };
 
   const handleDelete = async (courseId: string) => {
+    setDeleteError(null);
     try {
       await api.delete(`/teacher/courses/${courseId}`);
     } catch (err) {
       const is404 =
         (err instanceof ApiError && err.status === 404) ||
         (err instanceof Error && /404/.test(err.message));
-      if (!is404) return;
+      if (!is404) {
+        setDeleteError(
+          err instanceof ApiError &&
+            err.status === 409 &&
+            err.message === "class_has_learning_records"
+            ? "classroom.deleteProtected"
+            : "classroom.deleteFailed",
+        );
+        return;
+      }
     }
     setCourses((prev) => prev?.filter((c) => c.id !== courseId) ?? null);
   };
 
   return (
     <div className="w-full">
+      {deleteError && (
+        <p role="alert" className="mb-3 rounded border p-3 text-red-800">
+          {t(deleteError)}
+        </p>
+      )}
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-brightboost-navy flex items-center">
