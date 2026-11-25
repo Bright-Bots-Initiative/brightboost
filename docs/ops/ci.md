@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29; deployment footprint check 2026-10-05.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29; deployment footprint check 2026-10-05; route transfer budgets 2026-11-24.
 
 # CI jobs and Cypress gates
 
@@ -231,6 +231,21 @@ They are not part of `test:e2e:ci`, `test:e2e:ci:flows`, or any required CI job.
 No runnable Cypress spec runs an automated accessibility audit (axe / WCAG rules) or enforces a page-load performance budget. Some specs check one specific behaviour — for example keyboard operation in `pathways-consent.cy.ts` — but nothing audits a page. `cypress-axe` is still declared in `devDependencies` and imported by nothing; the support entry `cypress/support/e2e.ts` loads only `./commands` and `cypress-real-events`.
 
 The fossil `classRoster.cy.ts` used to call `checkAccessibility` and `checkPerformance` behind `typeof cy.… === "function"` guards. Those commands were defined only in a Cypress 9-era default support file that `supportFile` never pointed at, so every guard was false and each call site logged a "ready for activation" line instead of checking anything. That never-loaded file and the dead guards have been removed. The removed performance command subtracted event start from event end (handler duration, not time-to-load) and treated a missing paint entry as `0`, so it could not fail — do not restore it as a budget. Real coverage needs a spec in the default `specPattern`, baselined against a live stack first.
+
+## Cold route transfer budgets (#906)
+
+The production Vite build measures deduplicated JavaScript and CSS at gzip level 9. It follows static dependencies of the entry, the unconditional bootstrap imports, and each route. A selected game, images, alternate locales and later navigation are outside these figures. These are local artifact sizes, not live timing or server encoding. Before splitting routes on `b6353549`, startup and student login both required **849.8 KiB** (870,144 bytes across nine assets in the clean production manifest).
+
+| Cold visit                               | Measured KiB | Budget KiB |
+| ---------------------------------------- | -----------: | ---------: |
+| Startup                                  |        348.5 |        390 |
+| Landing                                  |        372.1 |        410 |
+| Student login                            |        354.5 |        400 |
+| Class login                              |        357.2 |        400 |
+| Teacher login                            |        351.6 |        400 |
+| Student activity before selecting a game |        400.7 |        455 |
+
+`src/build/routeBudgets.mjs` fails the build for an oversized visit or a teacher/facilitator screen or unselected game in these graphs. After building, CI also opens each public entry and the playable demo in fresh Chromium sessions at 100 ms latency and 200 KB/s download, then blocks a route chunk and verifies that Reload restores the page. Run `node scripts/verify-built-routes.mjs` after `npm run build` with Playwright Chromium installed. The homepage loads the playable Qubit Cove island after first paint, including when the external font service is blocked. Its full-screen link, `/try?game=qubit_cove`, also loads only Qubit Cove. Choosing grades 3–5 shows Tank Trek’s briefing; Start Mission loads the maze. Both `/try` and `/try?band=g3_5` retain their Tank Trek demos. The separate deployment footprint check still covers the entire distribution, including static game assets.
 
 ## Scripts cheat sheet
 

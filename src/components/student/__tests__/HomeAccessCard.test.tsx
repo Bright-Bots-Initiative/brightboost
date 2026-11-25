@@ -34,8 +34,10 @@ const mockAuth = vi.hoisted(() => ({
     homeAccessEnabled?: boolean;
   },
   token: null as string | null,
-  updateUser: vi.fn(),
+  logout: vi.fn(),
 }));
+const toastSpy = vi.hoisted(() => vi.fn());
+vi.mock("@/hooks/use-toast", () => ({ toast: toastSpy }));
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => mockAuth,
 }));
@@ -72,7 +74,8 @@ function tokenWith(auth?: string) {
 describe("HomeAccessCard (#872)", () => {
   beforeEach(() => {
     mockPost.mockReset();
-    mockAuth.updateUser.mockReset();
+    mockAuth.logout.mockReset();
+    toastSpy.mockReset();
   });
 
   it("shows setup guidance and no form when home access is not set up", () => {
@@ -144,15 +147,15 @@ describe("HomeAccessCard (#872)", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("homeAccess.manage.success")).toBeDefined();
+      expect(mockAuth.logout).toHaveBeenCalledWith("/student-login");
     });
     expect(mockPost).toHaveBeenCalledWith(
       "/auth/home-access/credentials",
       { currentPassword: "Current123", email: "new@example.com" },
       mockAuth.token,
     );
-    expect(mockAuth.updateUser).toHaveBeenCalledWith({
-      email: "new@example.com",
+    expect(toastSpy).toHaveBeenCalledWith({
+      title: "homeAccess.manage.success",
     });
   });
 
@@ -184,7 +187,7 @@ describe("HomeAccessCard (#872)", () => {
         screen.getByText("homeAccess.errors.invalid_current_password"),
       ).toBeDefined();
     });
-    expect(mockAuth.updateUser).not.toHaveBeenCalled();
+    expect(mockAuth.logout).not.toHaveBeenCalled();
   });
 
   it("renders nothing for a non-student", () => {

@@ -57,7 +57,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (token: string, userData: User, next?: string) => void;
-  logout: () => void;
+  logout: (destination?: "/student-login") => void;
   updateUser: (patch: Partial<User>) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -260,24 +260,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user, isLoading, shouldRedirect, nextPath, location.search, navigate]);
 
-  const logout = useCallback(() => {
-    cancelValidation();
-    setSessionUnavailable(false);
-    setIsCheckingSession(false);
-    setIsLoading(false);
-    setShouldRedirect(false);
-    setNextPath(undefined);
-    setToken(null);
-    setUser(null);
-    try {
-      localStorage.removeItem("bb_access_token");
-      localStorage.removeItem("user");
-    } catch {
-      setStorageUnavailable(true);
-    }
-    resetAnalytics();
-    navigate("/");
-  }, [navigate, cancelValidation]);
+  const logout = useCallback(
+    (destination?: "/student-login") => {
+      cancelValidation();
+      setSessionUnavailable(false);
+      setIsCheckingSession(false);
+      setIsLoading(false);
+      setShouldRedirect(false);
+      setNextPath(undefined);
+      setToken(null);
+      setUser(null);
+      try {
+        localStorage.removeItem("bb_access_token");
+        localStorage.removeItem("user");
+      } catch {
+        setStorageUnavailable(true);
+      }
+      resetAnalytics();
+      if (destination === "/student-login")
+        navigate(destination, { replace: true });
+      else navigate("/");
+    },
+    [navigate, cancelValidation],
+  );
 
   /**
    * Update user state partially (e.g., after avatar upload).

@@ -1,3 +1,8 @@
+import {
+  ANSWER_MS,
+  RETRY_MS,
+  usePracticeRound,
+} from "./shared/usePracticeRound";
 /**
  * Rhyme & Ride — lane-based reflex / rhythm game (flagship redesign).
  *
@@ -16,7 +21,11 @@ import { useTranslation } from "react-i18next";
 import GameShell, { GameResult, MissionBriefing } from "./shared/GameShell";
 import { cn } from "@/lib/utils";
 import { pickLocale } from "@/utils/localizedContent";
-import { getGradeBand, RHYME_FAMILIES, type GradeBand } from "./gradeBandContent";
+import {
+  getGradeBand,
+  RHYME_FAMILIES,
+  type GradeBand,
+} from "./gradeBandContent";
 import "./shared/game-effects.css";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,17 +34,17 @@ import "./shared/game-effects.css";
 
 interface RhymeFamily {
   id: string;
-  pattern: string;          // e.g. "-at"
-  color: string;            // tailwind bg class
-  icon: string;             // non-color cue
-  words: string[];          // pool of correct rhymes
-  distractors: string[];    // common non-rhyming words
+  pattern: string; // e.g. "-at"
+  color: string; // tailwind bg class
+  icon: string; // non-color cue
+  words: string[]; // pool of correct rhymes
+  distractors: string[]; // common non-rhyming words
 }
 
 interface World {
   id: string;
   names: Record<string, string>;
-  theme: string;            // tailwind gradient stem
+  theme: string; // tailwind gradient stem
   icon: string;
   families: RhymeFamily[];
 }
@@ -47,7 +56,7 @@ interface LaneCard {
   correct: boolean;
   familyColor: string;
   familyIcon: string;
-  y: number;               // 0 = top, progresses toward HIT_ZONE_Y
+  y: number; // 0 = top, progresses toward HIT_ZONE_Y
   state: "falling" | "hit" | "missed" | "wrong";
 }
 
@@ -66,35 +75,113 @@ type Phase =
 const WORLDS: World[] = [
   {
     id: "ai-alley",
-    names: { en: "AI Alley", es: "Callejón de IA", vi: "Ngõ AI", "zh-CN": "AI小巷" },
+    names: {
+      en: "AI Alley",
+      es: "Callejón de IA",
+      vi: "Ngõ AI",
+      "zh-CN": "AI小巷",
+    },
     theme: "from-blue-600 via-indigo-600 to-blue-700",
     icon: "🤖",
     families: [
-      { id: "at", pattern: "-at", color: "bg-blue-400", icon: "🐱", words: ["hat", "bat", "mat", "rat", "sat", "flat"], distractors: ["dog", "sun", "big", "run", "top", "lip"] },
-      { id: "an", pattern: "-an", color: "bg-cyan-400", icon: "🚐", words: ["can", "fan", "man", "pan", "ran", "van"], distractors: ["cup", "red", "hop", "wet", "dig", "pot"] },
-      { id: "ig", pattern: "-ig", color: "bg-sky-400", icon: "🐷", words: ["big", "dig", "fig", "pig", "wig", "jig"], distractors: ["hat", "log", "sun", "net", "hug", "top"] },
+      {
+        id: "at",
+        pattern: "-at",
+        color: "bg-blue-400",
+        icon: "🐱",
+        words: ["hat", "bat", "mat", "rat", "sat", "flat"],
+        distractors: ["dog", "sun", "big", "run", "top", "lip"],
+      },
+      {
+        id: "an",
+        pattern: "-an",
+        color: "bg-cyan-400",
+        icon: "🚐",
+        words: ["can", "fan", "man", "pan", "ran", "van"],
+        distractors: ["cup", "red", "hop", "wet", "dig", "pot"],
+      },
+      {
+        id: "ig",
+        pattern: "-ig",
+        color: "bg-sky-400",
+        icon: "🐷",
+        words: ["big", "dig", "fig", "pig", "wig", "jig"],
+        distractors: ["hat", "log", "sun", "net", "hug", "top"],
+      },
     ],
   },
   {
     id: "quantum-canyon",
-    names: { en: "Quantum Canyon", es: "Cañón Cuántico", vi: "Hẻm Lượng Tử", "zh-CN": "量子峡谷" },
+    names: {
+      en: "Quantum Canyon",
+      es: "Cañón Cuántico",
+      vi: "Hẻm Lượng Tử",
+      "zh-CN": "量子峡谷",
+    },
     theme: "from-purple-600 via-violet-600 to-purple-700",
     icon: "🔮",
     families: [
-      { id: "op", pattern: "-op", color: "bg-purple-400", icon: "🐰", words: ["hop", "mop", "pop", "top", "cop", "stop"], distractors: ["bat", "wig", "fun", "bed", "lip", "van"] },
-      { id: "ug", pattern: "-ug", color: "bg-fuchsia-400", icon: "🐛", words: ["bug", "hug", "mug", "rug", "tug", "dug"], distractors: ["hat", "pen", "sit", "map", "fog", "jet"] },
-      { id: "ip", pattern: "-ip", color: "bg-pink-400", icon: "🚢", words: ["dip", "hip", "lip", "rip", "sip", "tip", "zip"], distractors: ["cat", "log", "bun", "wet", "cot", "van"] },
+      {
+        id: "op",
+        pattern: "-op",
+        color: "bg-purple-400",
+        icon: "🐰",
+        words: ["hop", "mop", "pop", "top", "cop", "stop"],
+        distractors: ["bat", "wig", "fun", "bed", "lip", "van"],
+      },
+      {
+        id: "ug",
+        pattern: "-ug",
+        color: "bg-fuchsia-400",
+        icon: "🐛",
+        words: ["bug", "hug", "mug", "rug", "tug", "dug"],
+        distractors: ["hat", "pen", "sit", "map", "fog", "jet"],
+      },
+      {
+        id: "ip",
+        pattern: "-ip",
+        color: "bg-pink-400",
+        icon: "🚢",
+        words: ["dip", "hip", "lip", "rip", "sip", "tip", "zip"],
+        distractors: ["cat", "log", "bun", "wet", "cot", "van"],
+      },
     ],
   },
   {
     id: "bio-garden",
-    names: { en: "Bio Garden", es: "Jardín Bio", vi: "Vườn Sinh Học", "zh-CN": "生物花园" },
+    names: {
+      en: "Bio Garden",
+      es: "Jardín Bio",
+      vi: "Vườn Sinh Học",
+      "zh-CN": "生物花园",
+    },
     theme: "from-green-600 via-emerald-600 to-green-700",
     icon: "🌿",
     families: [
-      { id: "un", pattern: "-un", color: "bg-green-400", icon: "☀️", words: ["bun", "fun", "run", "sun", "pun", "spun"], distractors: ["hat", "log", "dip", "mop", "wig", "bed"] },
-      { id: "et", pattern: "-et", color: "bg-teal-400", icon: "🐕", words: ["bet", "get", "jet", "net", "pet", "set", "vet", "wet"], distractors: ["hug", "pop", "fan", "dig", "cot", "lip"] },
-      { id: "ot", pattern: "-ot", color: "bg-lime-400", icon: "🍲", words: ["cot", "dot", "got", "hot", "lot", "not", "pot"], distractors: ["bug", "hat", "pen", "sip", "run", "big"] },
+      {
+        id: "un",
+        pattern: "-un",
+        color: "bg-green-400",
+        icon: "☀️",
+        words: ["bun", "fun", "run", "sun", "pun", "spun"],
+        distractors: ["hat", "log", "dip", "mop", "wig", "bed"],
+      },
+      {
+        id: "et",
+        pattern: "-et",
+        color: "bg-teal-400",
+        icon: "🐕",
+        words: ["bet", "get", "jet", "net", "pet", "set", "vet", "wet"],
+        distractors: ["hug", "pop", "fan", "dig", "cot", "lip"],
+      },
+      {
+        id: "ot",
+        pattern: "-ot",
+        color: "bg-lime-400",
+        icon: "🍲",
+        words: ["cot", "dot", "got", "hot", "lot", "not", "pot"],
+        distractors: ["bug", "hat", "pen", "sip", "run", "big"],
+      },
     ],
   },
 ];
@@ -103,7 +190,10 @@ const WORLDS: World[] = [
 // Same three world shells, but the families come from the banded word
 // data in gradeBandContent (suffix/ending patterns instead of CVC rimes).
 
-const G35_PRESENTATION: Record<string, { id: string; color: string; icon: string }> = {
+const G35_PRESENTATION: Record<
+  string,
+  { id: string; color: string; icon: string }
+> = {
   "-tion": { id: "tion", color: "bg-blue-400", icon: "🛰️" },
   "-ment": { id: "ment", color: "bg-cyan-400", icon: "⚙️" },
   "-ight": { id: "ight", color: "bg-purple-400", icon: "💡" },
@@ -124,21 +214,36 @@ function g35Family(pattern: string): RhymeFamily {
 const G35_WORLDS: World[] = [
   {
     id: "ai-alley",
-    names: { en: "AI Alley", es: "Callejón de IA", vi: "Ngõ AI", "zh-CN": "AI小巷" },
+    names: {
+      en: "AI Alley",
+      es: "Callejón de IA",
+      vi: "Ngõ AI",
+      "zh-CN": "AI小巷",
+    },
     theme: "from-blue-600 via-indigo-600 to-blue-700",
     icon: "🤖",
     families: [g35Family("-tion"), g35Family("-ment")],
   },
   {
     id: "quantum-canyon",
-    names: { en: "Quantum Canyon", es: "Cañón Cuántico", vi: "Hẻm Lượng Tử", "zh-CN": "量子峡谷" },
+    names: {
+      en: "Quantum Canyon",
+      es: "Cañón Cuántico",
+      vi: "Hẻm Lượng Tử",
+      "zh-CN": "量子峡谷",
+    },
     theme: "from-purple-600 via-violet-600 to-purple-700",
     icon: "🔮",
     families: [g35Family("-ight"), g35Family("-ound")],
   },
   {
     id: "bio-garden",
-    names: { en: "Bio Garden", es: "Jardín Bio", vi: "Vườn Sinh Học", "zh-CN": "生物花园" },
+    names: {
+      en: "Bio Garden",
+      es: "Jardín Bio",
+      vi: "Vườn Sinh Học",
+      "zh-CN": "生物花园",
+    },
     theme: "from-green-600 via-emerald-600 to-green-700",
     icon: "🌿",
     families: [g35Family("-ence"), g35Family("-ain")],
@@ -151,15 +256,15 @@ export function getWorldsForBand(band: GradeBand): World[] {
 }
 
 const ROUNDS_PER_WORLD = 6;
-const SHOWDOWN_EVERY = 5;         // bonus showdown round after N correct
-const SHOWDOWN_CARDS = 5;          // rapid-fire cards in showdown
-const HIT_ZONE_TOP = 300;          // px — top of hit zone
-const HIT_ZONE_BOTTOM = 380;       // px — bottom of hit zone
+const SHOWDOWN_EVERY = 5; // bonus showdown round after N correct
+const SHOWDOWN_CARDS = 5; // rapid-fire cards in showdown
+const HIT_ZONE_TOP = 300; // px — top of hit zone
+const HIT_ZONE_BOTTOM = 380; // px — bottom of hit zone
 const FIELD_HEIGHT = 420;
-const CARD_HEIGHT = 64;             // taller cards for readability
-const BASE_SPEED = 1.1;            // px per animation frame — slower for K-2
-const SPEED_RAMP = 0.06;           // gentler increase per world
-const SHOWDOWN_SPEED_MULT = 1.2;   // less aggressive showdown speedup
+const CARD_HEIGHT = 64; // taller cards for readability
+const BASE_SPEED = 1.1; // px per animation frame — slower for K-2
+const SPEED_RAMP = 0.06; // gentler increase per world
+const SHOWDOWN_SPEED_MULT = 1.2; // less aggressive showdown speedup
 
 const LANE_LABELS = ["1", "2", "3"];
 const LANE_KEYS_NUM = ["1", "2", "3"];
@@ -196,11 +301,7 @@ function shuffle<T>(arr: T[]): T[] {
 // Lane / card display
 // ═══════════════════════════════════════════════════════════════════════════
 
-const LANE_BG = [
-  "bg-blue-50/70",
-  "bg-purple-50/70",
-  "bg-green-50/70",
-];
+const LANE_BG = ["bg-blue-50/70", "bg-purple-50/70", "bg-green-50/70"];
 const LANE_BORDER = [
   "border-blue-200",
   "border-purple-200",
@@ -254,7 +355,10 @@ function LaneField({
             />
             <div
               className="absolute left-0 right-0 bg-yellow-300/15 pointer-events-none"
-              style={{ top: HIT_ZONE_TOP, height: HIT_ZONE_BOTTOM - HIT_ZONE_TOP }}
+              style={{
+                top: HIT_ZONE_TOP,
+                height: HIT_ZONE_BOTTOM - HIT_ZONE_TOP,
+              }}
             />
 
             {/* Lane label */}
@@ -279,10 +383,16 @@ function LaneField({
               className={cn(
                 "absolute flex items-center justify-center rounded-xl font-extrabold text-lg shadow-md pointer-events-none",
                 "transition-all overflow-hidden",
-                isHit && "scale-125 opacity-0 bg-green-100 border-2 border-green-400 text-green-800",
-                isWrong && "scale-75 opacity-30 bg-red-100 border-2 border-red-300 text-red-800",
-                isMissed && "opacity-20 scale-90 bg-white border-2 border-slate-200",
-                !isHit && !isWrong && !isMissed && `bg-white border-l-4 border-r-0 border-t-0 border-b-0 ${borderAccent} text-slate-900 shadow-lg ring-1 ring-slate-200`,
+                isHit &&
+                  "scale-125 opacity-0 bg-green-100 border-2 border-green-400 text-green-800",
+                isWrong &&
+                  "scale-75 opacity-30 bg-red-100 border-2 border-red-300 text-red-800",
+                isMissed &&
+                  "opacity-20 scale-90 bg-white border-2 border-slate-200",
+                !isHit &&
+                  !isWrong &&
+                  !isMissed &&
+                  `bg-white border-l-4 border-r-0 border-t-0 border-b-0 ${borderAccent} text-slate-900 shadow-lg ring-1 ring-slate-200`,
               )}
               style={{
                 left: `${leftPercent}%`,
@@ -337,7 +447,7 @@ function RhymeHUD({
   familyIcon: string;
   score: number;
   combo: number;
-  lives: number;
+  lives: number | null;
   worldName: string;
   worldIcon: string;
   roundLabel: string;
@@ -348,9 +458,19 @@ function RhymeHUD({
       <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-5 py-3 rounded-xl font-extrabold text-xl text-center shadow-lg border border-white/10 flex items-center justify-center gap-3">
         <span className="text-2xl">{familyIcon}</span>
         <span>
-          {promptLabel} <span className="text-yellow-300 underline decoration-wavy">{prompt}</span>?
+          {promptLabel}{" "}
+          <span className="text-yellow-300 underline decoration-wavy">
+            {prompt}
+          </span>
+          ?
         </span>
-        <span className={cn("px-2 py-0.5 rounded-full text-sm font-bold border", familyColor.replace("bg-", "border-"), "bg-white text-slate-700")}>
+        <span
+          className={cn(
+            "px-2 py-0.5 rounded-full text-sm font-bold border",
+            familyColor.replace("bg-", "border-"),
+            "bg-white text-slate-700",
+          )}
+        >
           {familyPattern}
         </span>
       </div>
@@ -362,23 +482,33 @@ function RhymeHUD({
             {"⭐"} {score}
           </span>
           {combo > 1 && (
-            <span className={cn(
-              "flex items-center gap-1 px-3 py-1.5 rounded-full font-bold shadow-sm",
-              combo >= 5 ? "bg-red-100 text-red-700 streak-fire" : "bg-orange-100 text-orange-700"
-            )}>
+            <span
+              className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded-full font-bold shadow-sm",
+                combo >= 5
+                  ? "bg-red-100 text-red-700 streak-fire"
+                  : "bg-orange-100 text-orange-700",
+              )}
+            >
               {"⚡"} x{combo}
             </span>
           )}
-          <span className="flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-full">
-            {Array.from({ length: Math.max(0, lives) }, (_, i) => (
-              <span key={i}>{"❤️"}</span>
-            ))}
-          </span>
+          {lives !== null && (
+            <span className="flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-full">
+              {Array.from({ length: Math.max(0, lives) }, (_, i) => (
+                <span key={i}>{"❤️"}</span>
+              ))}
+            </span>
+          )}
         </div>
         <div className="flex gap-2 items-center">
           <span className="text-lg">{worldIcon}</span>
-          <span className="text-xs font-medium text-slate-500">{worldName}</span>
-          <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">{roundLabel}</span>
+          <span className="text-xs font-medium text-slate-500">
+            {worldName}
+          </span>
+          <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+            {roundLabel}
+          </span>
         </div>
       </div>
     </div>
@@ -394,16 +524,19 @@ function RhymeRideCore({
   reducedEffects,
   worlds,
   speedMultiplier,
+  isPractice,
   promptLabel,
 }: {
   onFinish: (result: GameResult) => void;
   reducedEffects: boolean;
   worlds: World[];
+  isPractice: boolean;
   speedMultiplier: number;
   promptLabel: string;
 }) {
   const { t } = useTranslation();
 
+  const practice = usePracticeRound();
   // ── State ──
   const [worldIdx, setWorldIdx] = useState(0);
   const [roundIdx, setRoundIdx] = useState(0);
@@ -422,13 +555,18 @@ function RhymeRideCore({
   const [prompt, setPrompt] = useState("");
   const [currentFamily, setCurrentFamily] = useState<RhymeFamily | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackType, setFeedbackType] = useState<"positive" | "negative" | "neutral">("neutral");
+  const [feedbackType, setFeedbackType] = useState<
+    "positive" | "negative" | "neutral"
+  >("neutral");
 
   // Missed families to recycle
   const missedFamiliesRef = useRef<RhymeFamily[]>([]);
   const animRef = useRef<number>(0);
   const cardIdRef = useRef(0);
 
+  const liveCards = useRef(cards);
+  liveCards.current = cards;
+  const onCardsPassed = useRef<(hadCorrect: boolean) => void>(() => {});
   const world = worlds[worldIdx];
   const speed = (BASE_SPEED + worldIdx * SPEED_RAMP) * speedMultiplier;
 
@@ -439,7 +577,10 @@ function RhymeRideCore({
    */
   const registerSuccess = useCallback((points: number): number => {
     let newCombo = 0;
-    setCombo((c) => { newCombo = c + 1; return newCombo; });
+    setCombo((c) => {
+      newCombo = c + 1;
+      return newCombo;
+    });
     setMaxStreak((m) => Math.max(m, newCombo));
     setTotalCorrect((c) => c + 1);
     setScore((s) => s + points);
@@ -469,7 +610,8 @@ function RhymeRideCore({
       const available = fam.words.filter(() => true);
       const promptWord = pick(available);
       const correctPool = available.filter((w) => w !== promptWord);
-      const correctWord = correctPool.length > 0 ? pick(correctPool) : promptWord;
+      const correctWord =
+        correctPool.length > 0 ? pick(correctPool) : promptWord;
 
       // Pick 2 distractors
       const dists = pickN(fam.distractors, 2);
@@ -488,7 +630,7 @@ function RhymeRideCore({
         correct: item.correct,
         familyColor: fam.color,
         familyIcon: fam.icon,
-        y: -CARD_HEIGHT - (Math.random() * 30),
+        y: -CARD_HEIGHT - Math.random() * 30,
         state: "falling" as const,
       }));
 
@@ -500,7 +642,9 @@ function RhymeRideCore({
   );
 
   // ── Spawn showdown round (rapid-fire single cards) ──
-  const showdownQueueRef = useRef<{ word: string; correct: boolean; family: RhymeFamily }[]>([]);
+  const showdownQueueRef = useRef<
+    { word: string; correct: boolean; family: RhymeFamily }[]
+  >([]);
   const [, setShowdownPrompt] = useState("");
 
   const spawnShowdown = useCallback(() => {
@@ -523,32 +667,35 @@ function RhymeRideCore({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worlds, worldIdx]);
 
-  const advanceShowdown = useCallback((queue: typeof showdownQueueRef.current, _w: World) => {
-    void _w;
-    if (queue.length === 0) {
-      // Showdown done — transition back
-      setPhase("worldTransition");
-      return;
-    }
-    const next = queue[0];
-    const fam = next.family;
-    setShowdownPrompt(pick(fam.words));
-    setCurrentFamily(fam);
+  const advanceShowdown = useCallback(
+    (queue: typeof showdownQueueRef.current, _w: World) => {
+      void _w;
+      if (queue.length === 0) {
+        // Showdown done — transition back
+        setPhase("worldTransition");
+        return;
+      }
+      const next = queue[0];
+      const fam = next.family;
+      setShowdownPrompt(pick(fam.words));
+      setCurrentFamily(fam);
 
-    const lane = Math.floor(Math.random() * 3) as 0 | 1 | 2;
-    const card: LaneCard = {
-      id: `sd-${++cardIdRef.current}`,
-      word: next.word,
-      lane,
-      correct: next.correct,
-      familyColor: fam.color,
-      familyIcon: fam.icon,
-      y: -CARD_HEIGHT,
-      state: "falling",
-    };
-    setCards([card]);
-    setPrompt(pick(fam.words));
-  }, []);
+      const lane = Math.floor(Math.random() * 3) as 0 | 1 | 2;
+      const card: LaneCard = {
+        id: `sd-${++cardIdRef.current}`,
+        word: next.word,
+        lane,
+        correct: next.correct,
+        familyColor: fam.color,
+        familyIcon: fam.icon,
+        y: -CARD_HEIGHT,
+        state: "falling",
+      };
+      setCards([card]);
+      setPrompt(pick(fam.words));
+    },
+    [],
+  );
 
   // ── Initial spawn ──
   useEffect(() => {
@@ -564,45 +711,80 @@ function RhymeRideCore({
     const currentSpeed = isShowdown ? speed * SHOWDOWN_SPEED_MULT : speed;
 
     const animate = () => {
-      setCards((prev) => {
-        const next = prev.map((c) => {
-          if (c.state !== "falling") return c;
-          const ny = c.y + currentSpeed;
-          if (ny > FIELD_HEIGHT + CARD_HEIGHT) {
-            return { ...c, y: ny, state: "missed" as const };
-          }
-          return { ...c, y: ny };
-        });
-
-        // Check if all cards passed off-screen
-        const allDone = next.every((c) => c.state !== "falling");
-        if (allDone && prev.some((c) => c.state === "falling")) {
-          if (isShowdown) {
-            // Showdown: only penalise if the card was the correct rhyme.
-            // Letting a distractor pass is neutral/good behaviour.
-            const hadCorrect = prev.some((c) => c.correct && c.state === "falling");
-            if (hadCorrect) {
-              handleMiss();
-            } else {
-              // Distractor fell through — advance showdown without penalty
-              handleShowdownDistractorPass();
-            }
-          } else {
-            // Normal round: missing the correct rhyme is always a miss
-            handleMiss();
-          }
-        }
-
-        return next;
+      const prev = liveCards.current;
+      const next = prev.map((c) => {
+        if (c.state !== "falling") return c;
+        const y = c.y + currentSpeed;
+        return {
+          ...c,
+          y,
+          state:
+            y > FIELD_HEIGHT + CARD_HEIGHT
+              ? ("missed" as const)
+              : ("falling" as const),
+        };
       });
-
+      liveCards.current = next;
+      setCards(next);
+      if (
+        prev.some((c) => c.state === "falling") &&
+        next.every((c) => c.state !== "falling")
+      ) {
+        onCardsPassed.current(
+          prev.some((c) => c.correct && c.state === "falling"),
+        );
+        return;
+      }
       animRef.current = requestAnimationFrame(animate);
     };
 
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, speed, worldIdx]);
+
+  function practiceMiss() {
+    if (practice.waiting) return;
+    const showdown = phase === "showdown";
+    const retry = practice.miss() === "retry";
+    const sameCards = cards.map((c) => ({
+      ...c,
+      state: "falling" as const,
+      y: -CARD_HEIGHT,
+    }));
+    const answer = cards.find((c) => c.correct);
+    setCombo(0);
+    setFeedbackType("neutral");
+    setFeedbackText(
+      retry
+        ? t("games.practice.retry")
+        : answer
+          ? t("games.practice.answer", { answer: answer.word })
+          : t("games.practice.letPass", { word: cards[0]?.word }),
+    );
+    setPhase(showdown ? "showdownFeedback" : "feedback");
+    practice.after(retry ? RETRY_MS : ANSWER_MS, () => {
+      setFeedbackText("");
+      if (retry) {
+        setCards(sameCards);
+        setPhase(showdown ? "showdown" : "playing");
+        return;
+      }
+      practice.reset();
+      if (showdown) {
+        const queue = showdownQueueRef.current;
+        queue.shift();
+        setPhase("showdown");
+        advanceShowdown(queue, worlds[worldIdx]);
+      } else {
+        setTotalRounds((r) => r + 1);
+        if (roundIdx + 1 >= ROUNDS_PER_WORLD) setPhase("worldTransition");
+        else {
+          setRoundIdx((r) => r + 1);
+          spawnRound();
+        }
+      }
+    });
+  }
 
   // ── Miss handler (called when cards fall off screen) ──
   const handleMiss = useCallback(() => {
@@ -610,17 +792,15 @@ function RhymeRideCore({
       missedFamiliesRef.current.push(currentFamily);
     }
     setCombo(0);
-    setLives((l) => {
-      const nl = l - 1;
-      if (nl <= 0) {
-        setPhase("gameOver");
-      }
-      return nl;
-    });
+    setLives(lives - 1);
+    if (lives <= 1) {
+      setPhase("gameOver");
+      return;
+    }
     setFeedbackText(t("games.rhymeRide.tooSlow"));
     setFeedbackType("negative");
     setPhase("feedback");
-    setTimeout(() => {
+    practice.after(1000, () => {
       setFeedbackText("");
       setTotalRounds((r) => r + 1);
       if (roundIdx + 1 >= ROUNDS_PER_WORLD) {
@@ -629,17 +809,22 @@ function RhymeRideCore({
         setRoundIdx((r) => r + 1);
         spawnRound();
       }
-    }, 1000);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFamily, roundIdx, spawnRound]);
+  }, [currentFamily, roundIdx, spawnRound, lives, practice]);
 
   // ── Showdown distractor pass-through (correct decision — reward) ──
   const handleShowdownDistractorPass = useCallback(() => {
+    practice.reset();
     const nc = registerSuccess(15); // reward for correct pass
-    setFeedbackText(nc >= 3 ? `${t("games.rhymeRide.showdownGoodEye")} x${nc}` : t("games.rhymeRide.showdownGoodEye"));
+    setFeedbackText(
+      nc >= 3
+        ? `${t("games.rhymeRide.showdownGoodEye")} x${nc}`
+        : t("games.rhymeRide.showdownGoodEye"),
+    );
     setFeedbackType("positive");
     setPhase("showdownFeedback");
-    setTimeout(() => {
+    practice.after(600, () => {
       setFeedbackText("");
       const queue = showdownQueueRef.current;
       queue.shift();
@@ -649,41 +834,74 @@ function RhymeRideCore({
         setPhase("showdown");
         advanceShowdown(queue, worlds[worldIdx]);
       }
-    }, 600);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [worldIdx, advanceShowdown, registerSuccess]);
+
+  onCardsPassed.current = (hadCorrect) => {
+    if (practice.waiting) return;
+    if (phase === "showdown" && !hadCorrect) handleShowdownDistractorPass();
+    else if (isPractice) practiceMiss();
+    else handleMiss();
+  };
 
   // ── Lane tap handler ──
   const handleLaneTap = useCallback(
     (lane: 0 | 1 | 2) => {
-      if (phase === "feedback" || phase === "worldTransition" || phase === "gameOver" || phase === "showdownFeedback") return;
+      if (
+        practice.waiting ||
+        phase === "feedback" ||
+        phase === "worldTransition" ||
+        phase === "gameOver" ||
+        phase === "showdownFeedback"
+      )
+        return;
 
       // In showdown mode
       if (phase === "showdown") {
-        const card = cards.find((c) => c.lane === lane && c.state === "falling");
+        const card = cards.find(
+          (c) => c.lane === lane && c.state === "falling",
+        );
         if (!card) return;
 
         const queue = showdownQueueRef.current;
         const currentItem = queue[0];
         if (!currentItem) return;
 
+        if (!currentItem.correct && isPractice) {
+          practiceMiss();
+          return;
+        }
+        practice.reset();
         if (currentItem.correct) {
           // Should tap — correct!
-          setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, state: "hit" as const } : c));
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === card.id ? { ...c, state: "hit" as const } : c,
+            ),
+          );
           setShowdownCorrect((c) => c + 1);
           const nc = registerSuccess(20); // reward for correct showdown tap
-          setFeedbackText(nc >= 3 ? `${t("games.rhymeRide.showdownHit")} x${nc}` : t("games.rhymeRide.showdownHit"));
+          setFeedbackText(
+            nc >= 3
+              ? `${t("games.rhymeRide.showdownHit")} x${nc}`
+              : t("games.rhymeRide.showdownHit"),
+          );
           setFeedbackType("positive");
         } else {
           // Shouldn't tap — it's a distractor → gentle penalty
-          setCards((prev) => prev.map((c) => c.id === card.id ? { ...c, state: "wrong" as const } : c));
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === card.id ? { ...c, state: "wrong" as const } : c,
+            ),
+          );
           setCombo(0);
           setFeedbackText(t("games.rhymeRide.showdownNotRhyme"));
           setFeedbackType("negative");
         }
         setPhase("showdownFeedback");
 
-        setTimeout(() => {
+        practice.after(600, () => {
           setFeedbackText("");
           queue.shift();
           if (queue.length === 0) {
@@ -692,13 +910,16 @@ function RhymeRideCore({
             setPhase("showdown");
             advanceShowdown(queue, worlds[worldIdx]);
           }
-        }, 600);
+        });
         return;
       }
 
       // Normal play mode
       const inZone = cards.filter(
-        (c) => c.state === "falling" && c.y >= HIT_ZONE_TOP - 20 && c.y <= HIT_ZONE_BOTTOM + 20,
+        (c) =>
+          c.state === "falling" &&
+          c.y >= HIT_ZONE_TOP - 20 &&
+          c.y <= HIT_ZONE_BOTTOM + 20,
       );
 
       // Find card in tapped lane (prefer ones in hit zone, fallback to any falling)
@@ -709,6 +930,7 @@ function RhymeRideCore({
       if (!target) return; // no card in that lane
 
       if (target.correct) {
+        practice.reset();
         // ── Correct hit ──
         setCards((prev) =>
           prev.map((c) =>
@@ -733,11 +955,14 @@ function RhymeRideCore({
         const nextRound = roundIdx + 1;
         setTotalRounds((r) => r + 1);
 
-        setTimeout(() => {
+        practice.after(900, () => {
           setFeedbackText("");
 
           // Check for showdown trigger
-          if (totalCorrect + 1 > 0 && (totalCorrect + 1) % SHOWDOWN_EVERY === 0) {
+          if (
+            totalCorrect + 1 > 0 &&
+            (totalCorrect + 1) % SHOWDOWN_EVERY === 0
+          ) {
             spawnShowdown();
             return;
           }
@@ -748,8 +973,12 @@ function RhymeRideCore({
             setRoundIdx(nextRound);
             spawnRound();
           }
-        }, 900);
+        });
       } else {
+        if (isPractice) {
+          practiceMiss();
+          return;
+        }
         // ── Wrong hit ──
         setCards((prev) =>
           prev.map((c) =>
@@ -770,19 +999,29 @@ function RhymeRideCore({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phase, cards, combo, prompt, roundIdx, totalCorrect, spawnRound, spawnShowdown, worldIdx],
+    [
+      phase,
+      cards,
+      combo,
+      prompt,
+      roundIdx,
+      totalCorrect,
+      spawnRound,
+      spawnShowdown,
+      worldIdx,
+    ],
   );
 
   // ── World end ──
   const handleWorldEnd = useCallback(() => {
-    if (worldIdx + 1 >= worlds.length) {
+    if (!isPractice && worldIdx + 1 >= worlds.length) {
       // All worlds done — finish
       finishGame();
     } else {
       setPhase("worldTransition");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [worlds, worldIdx]);
+  }, [worlds, worldIdx, isPractice]);
 
   const advanceWorld = useCallback(() => {
     setWorldIdx((w) => w + 1);
@@ -812,7 +1051,11 @@ function RhymeRideCore({
   // ── Keyboard handler ──
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
       const key = e.key.toLowerCase();
       const numIdx = LANE_KEYS_NUM.indexOf(key);
       const alphaIdx = LANE_KEYS_ALPHA.indexOf(key);
@@ -834,11 +1077,15 @@ function RhymeRideCore({
     return (
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{"🎵"}</div>
-        <h3 className="text-2xl font-extrabold text-slate-800">{t("games.rhymeRide.rideComplete")}</h3>
+        <h3 className="text-2xl font-extrabold text-slate-800">
+          {t("games.rhymeRide.rideComplete")}
+        </h3>
         <p className="text-lg text-slate-600">
-          {t("games.rhymeRide.score")}: <span className="font-bold text-purple-600">{score}</span>
+          {t("games.rhymeRide.score")}:{" "}
+          <span className="font-bold text-purple-600">{score}</span>
           {" | "}
-          {t("games.rhymeRide.bestStreak")}: <span className="font-bold text-orange-600">{maxStreak}</span>
+          {t("games.rhymeRide.bestStreak")}:{" "}
+          <span className="font-bold text-orange-600">{maxStreak}</span>
         </p>
         {maxStreak >= 5 && (
           <div className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold rounded-full shadow-lg">
@@ -862,16 +1109,24 @@ function RhymeRideCore({
       <div className="text-center space-y-5 py-8 slide-up-fade max-w-md mx-auto">
         <div className="text-6xl bounce-in">{world?.icon}</div>
         <h3 className="text-2xl font-extrabold text-slate-800">
-          {t("games.rhymeRide.worldComplete", { world: world ? pickLocale(world.names, world.names.en) : "" })}
+          {t("games.rhymeRide.worldComplete", {
+            world: world ? pickLocale(world.names, world.names.en) : "",
+          })}
         </h3>
         <div className="flex gap-4 justify-center">
           <div className="bg-white/80 rounded-xl px-4 py-3 shadow-sm">
             <p className="text-2xl font-extrabold text-yellow-600">{score}</p>
-            <p className="text-xs text-slate-500">{t("games.rhymeRide.score")}</p>
+            <p className="text-xs text-slate-500">
+              {t("games.rhymeRide.score")}
+            </p>
           </div>
           <div className="bg-white/80 rounded-xl px-4 py-3 shadow-sm">
-            <p className="text-2xl font-extrabold text-orange-600">{maxStreak}</p>
-            <p className="text-xs text-slate-500">{t("games.rhymeRide.bestStreak")}</p>
+            <p className="text-2xl font-extrabold text-orange-600">
+              {maxStreak}
+            </p>
+            <p className="text-xs text-slate-500">
+              {t("games.rhymeRide.bestStreak")}
+            </p>
           </div>
         </div>
         {nextWorld ? (
@@ -879,7 +1134,10 @@ function RhymeRideCore({
             className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform"
             onClick={advanceWorld}
           >
-            {"🚀"} {t("games.rhymeRide.nextWorld", { world: pickLocale(nextWorld.names, nextWorld.names.en) })}
+            {"🚀"}{" "}
+            {t("games.rhymeRide.nextWorld", {
+              world: pickLocale(nextWorld.names, nextWorld.names.en),
+            })}
           </button>
         ) : (
           <button
@@ -902,9 +1160,12 @@ function RhymeRideCore({
         <button
           onClick={() => setMuted((m) => !m)}
           className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
-          aria-label={muted ? t("games.rhymeRide.soundOn") : t("games.rhymeRide.soundOff")}
+          aria-label={
+            muted ? t("games.rhymeRide.soundOn") : t("games.rhymeRide.soundOff")
+          }
         >
-          {muted ? "🔇" : "🔊"} {muted ? t("games.rhymeRide.soundOff") : t("games.rhymeRide.soundOn")}
+          {muted ? "🔇" : "🔊"}{" "}
+          {muted ? t("games.rhymeRide.soundOff") : t("games.rhymeRide.soundOn")}
         </button>
       </div>
 
@@ -917,7 +1178,7 @@ function RhymeRideCore({
         familyIcon={currentFamily.icon}
         score={score}
         combo={combo}
-        lives={lives}
+        lives={isPractice ? null : lives}
         worldName={pickLocale(world.names, world.names.en)}
         worldIcon={world.icon}
         roundLabel={
@@ -939,6 +1200,7 @@ function RhymeRideCore({
       {/* Feedback overlay */}
       {feedbackText && (
         <div
+          role="status"
           className={cn(
             "text-center py-2 rounded-xl font-bold text-sm max-w-[480px] mx-auto",
             feedbackType === "positive"
@@ -980,7 +1242,9 @@ export default function RhymeRideGame({
   // so the round prompt asks for the pattern instead of the rhyme.
   const promptLabel =
     band === "g3_5"
-      ? t("games.rhymeRide.whichEndsLike", { defaultValue: "Which word ends like" })
+      ? t("games.rhymeRide.whichEndsLike", {
+          defaultValue: "Which word ends like",
+        })
       : t("games.rhymeRide.whichRhymes");
 
   const briefing: MissionBriefing = {
@@ -996,8 +1260,13 @@ export default function RhymeRideGame({
       t("games.rhymeRide.tipShowdown"),
     ],
     controlInstructions: {
-      keyboard: ["Use Tab to reach lane controls and Enter or Space to choose."],
-      buttons: ["Choose the word that rhymes with the target.", "Say the ending sounds out loud."],
+      keyboard: [
+        "Use Tab to reach lane controls and Enter or Space to choose.",
+      ],
+      buttons: [
+        "Choose the word that rhymes with the target.",
+        "Say the ending sounds out loud.",
+      ],
     },
   };
 
@@ -1013,6 +1282,7 @@ export default function RhymeRideGame({
           onFinish={onFinish}
           reducedEffects={reducedEffects}
           worlds={worlds}
+          isPractice={band === "k2"}
           speedMultiplier={speedMultiplier}
           promptLabel={promptLabel}
         />

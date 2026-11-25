@@ -1513,6 +1513,11 @@
     }
   },
   "games": {
+    "practice": {
+      "retry": "Try this one again.",
+      "answer": "The answer is {{answer}}. Let's try the next one.",
+      "letPass": "Let {{word}} pass. It does not rhyme."
+    },
     "learning": {
       "wordsToKnow": "Words to know"
     },
@@ -3064,7 +3069,7 @@
       "parentEmail": "Parent or guardian email (optional)",
       "save": "Save changes",
       "saving": "Saving...",
-      "success": "Home login updated.",
+      "success": "Home login updated. Sign in again with your home email and password.",
       "nothing": "Enter something to change."
     },
     "errors": {

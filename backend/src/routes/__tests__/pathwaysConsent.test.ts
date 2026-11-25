@@ -21,7 +21,11 @@ import jwt from "jsonwebtoken";
 const SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
 const prismaMock = vi.hoisted(() => ({
-  user: { findUnique: vi.fn() },
+  // Session epoch is current in these route-specific fixtures; revocation uses real PostgreSQL.
+  user: {
+    findFirst: vi.fn().mockResolvedValue({ id: "active-session" }),
+    findUnique: vi.fn(),
+  },
   pathwayCohort: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
   pathwayInvite: {
     upsert: vi.fn(),

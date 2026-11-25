@@ -50,20 +50,20 @@ describe("TryDemo (public /try route)", () => {
     );
   }
 
-  it("renders without an AuthProvider and without any fetch calls", () => {
+  it("renders without an AuthProvider and without any fetch calls", async () => {
     renderTry();
     // The game briefing (GameShell) is on screen — title appears in both
     // the ActivityHeader and the briefing card.
-    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Tank Trek")).length).toBeGreaterThan(0);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("keeps the grades 3–5 link and unknown game links on Tank Trek", () => {
+  it("keeps the grades 3–5 link and unknown game links on Tank Trek", async () => {
     const view = renderTry("/try?band=g3_5");
-    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Tank Trek")).length).toBeGreaterThan(0);
     view.unmount();
     renderTry("/try?game=unknown");
-    expect(screen.getAllByText("Tank Trek").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Tank Trek")).length).toBeGreaterThan(0);
   });
 
   it("counts a movement press but ignores scrolling, background taps, and secondary clicks", async () => {
@@ -188,11 +188,11 @@ describe("TryDemo (public /try route)", () => {
     expect(document.title).toMatch(/Try Bright Boost/);
   });
 
-  it("offers a start affordance (GameShell briefing button)", () => {
+  it("offers a start affordance (GameShell briefing button)", async () => {
     renderTry();
     // GameShell briefing renders the Start Mission button — the one-tap gate.
     expect(
-      screen.getByRole("button", { name: /start mission/i }),
+      await screen.findByRole("button", { name: /start mission/i }),
     ).toBeInTheDocument();
   });
 });

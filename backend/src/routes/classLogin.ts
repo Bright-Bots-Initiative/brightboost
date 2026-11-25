@@ -124,6 +124,7 @@ router.post(
               // parent's contact address; anyone holding the class code can
               // reach this route without a PIN. The K-2 UI never uses it.
               role: true,
+              sessionVersion: true,
               loginIcon: true,
               loginPin: true,
               level: true,
@@ -182,7 +183,7 @@ router.post(
       );
 
       // Return user without sensitive fields
-      const { loginPin, ...userWithoutPin } = student;
+      const { loginPin, sessionVersion, ...userWithoutPin } = student;
 
       res.json({
         message: "Login successful",

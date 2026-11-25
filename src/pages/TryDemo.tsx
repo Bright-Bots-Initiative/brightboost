@@ -10,7 +10,6 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
-import TankTrekGame from "@/components/games/TankTrekGame";
 import {
   DEMO_GAME_ID,
   DEMO_CONFIG,
@@ -38,6 +37,7 @@ import {
   useRenderedLanguage,
 } from "@/components/home/publicEntry";
 
+const TankTrekGame = lazy(() => import("@/components/games/PublicTankTrek"));
 const QubitCoveGame = lazy(
   () => import("@/components/games/qubitCove/QubitCoveGame"),
 );
@@ -270,7 +270,6 @@ function TrySession({ selection }: { selection: DemoSelection }) {
                       selection === "g3_5" ? G35_DEMO_CONFIG : DEMO_CONFIG
                     }
                     onComplete={handleComplete}
-                    publicDemo
                   />
                 )}
               </div>

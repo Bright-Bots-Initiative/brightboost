@@ -1,5 +1,6 @@
 // src/pages/ActivityPlayer.tsx
 import {
+  Suspense,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -12,8 +13,7 @@ import { api, ApiError } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import TankTrekGame from "@/components/games/TankTrekGame";
-import QuantumQuestGame from "@/components/games/QuantumQuestGame";
+import { LoadingScreen } from "@/components/RecoveryScreen";
 import { GAME_COMPONENTS } from "@/components/games/gameRegistry";
 import { useGradeBand } from "@/hooks/useGradeBand";
 import {
@@ -875,22 +875,9 @@ export default function ActivityPlayer() {
       const gameConfig = { ...content, gradeBand };
       return (
         <div className="p-6">
-          <RegistryGame config={gameConfig} onComplete={handleComplete} />
-        </div>
-      );
-    }
-
-    if (key === "tank_trek") {
-      return (
-        <div className="p-6">
-          <TankTrekGame config={content} onComplete={handleComplete} />
-        </div>
-      );
-    }
-    if (key === "quantum_quest") {
-      return (
-        <div className="p-6">
-          <QuantumQuestGame config={content} onComplete={handleComplete} />
+          <Suspense fallback={<LoadingScreen />}>
+            <RegistryGame config={gameConfig} onComplete={handleComplete} />
+          </Suspense>
         </div>
       );
     }

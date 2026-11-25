@@ -39,7 +39,7 @@ export type LoadGame = () => Promise<GameModule>;
 
 const loadQubitCove: LoadGame = () =>
   import("@/components/games/qubitCove/QubitCoveGame");
-const loadTankTrek = () => import("@/components/games/TankTrekGame");
+const loadTankTrek = () => import("@/components/games/PublicTankTrek");
 
 export interface PublicDemoProps {
   loadGame?: LoadGame;
@@ -331,7 +331,6 @@ export default function PublicDemo({
                 ) : (
                   <TankTrek
                     config={G35_DEMO_CONFIG}
-                    publicDemo
                     onComplete={handleComplete}
                   />
                 )}

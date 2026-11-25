@@ -151,6 +151,7 @@ describe("PublicDemo with the shipped games", () => {
     await user.click(screen.getByRole("button", { name: /3–5/i }));
     const start = await screen.findByRole("button", { name: /start mission/i });
     expect(cove).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /game area/i })).toBeNull();
     fireEvent.keyDown(start, { code: "ArrowLeft", key: "ArrowLeft" });
     expect(trackMock).not.toHaveBeenCalledWith({
       kind: "demo_game_started",
@@ -160,7 +161,9 @@ describe("PublicDemo with the shipped games", () => {
     expect(screen.getAllByRole("region", { name: /game area/i })).toHaveLength(
       1,
     );
-    expect(screen.getByRole("button", { name: /forward/i })).toBeVisible();
+    expect(
+      await screen.findByRole("button", { name: /forward/i }),
+    ).toBeVisible();
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     expect(trackMock).toHaveBeenCalledWith({
       kind: "demo_game_started",
@@ -181,7 +184,10 @@ describe("PublicDemo with the shipped games", () => {
     await user.click(await screen.findByRole("button", { name: "Island map" }));
     await user.click(screen.getByRole("button", { name: /ride to one peak/i }));
     await user.click(screen.getByRole("button", { name: /3–5/i }));
-    await screen.findByRole("button", { name: /start mission/i });
+    await user.click(
+      await screen.findByRole("button", { name: /start mission/i }),
+    );
+    await screen.findByRole("button", { name: /forward/i });
     await waitFor(() => expect(personalBests).not.toHaveBeenCalled());
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(screen.queryByText(/best/i)).toBeNull();

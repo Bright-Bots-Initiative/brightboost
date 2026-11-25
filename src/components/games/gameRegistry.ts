@@ -1,24 +1,26 @@
-import BioTrailActivity from "./BioTrailActivity";
-import QubitCoveActivity from "./QubitCoveActivity";
-import SparBotsActivity from "./SparBotsActivity";
-import type { ComponentType } from "react";
+import { lazy, type ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
+const BioTrailActivity = lazy(() => import("./BioTrailActivity"));
+const QubitCoveActivity = lazy(() => import("./QubitCoveActivity"));
+const SparBotsActivity = lazy(() => import("./SparBotsActivity"));
 
 // Lazy-loaded game components
-import BoostPathPlannerGame from "./BoostPathPlannerGame";
-import RhymeRideGame from "./RhymeRideGame";
-import BounceBudsGame from "./BounceBudsGame";
-import GotchaGearsGame from "./GotchaGearsGame";
-import MazeMapsGame from "./MazeMapsGame";
-import MoveMeasureGame from "./MoveMeasureGame";
-import SkyShieldGame from "./SkyShieldGame";
-import FastLaneGame from "./FastLaneGame";
-import QualifyTuneRaceGame from "./QualifyTuneRaceGame";
-import TankTrekGame from "./TankTrekGame";
-import QuantumQuestGame from "./QuantumQuestGame";
-import DataDashSortDiscoverGame from "./DataDashSortDiscoverGame";
-import TrackMakerGame from "./TrackMakerGame";
-import EchoAvenueGame from "./echoAvenue/EchoAvenueGame";
+const BoostPathPlannerGame = lazy(() => import("./BoostPathPlannerGame"));
+const RhymeRideGame = lazy(() => import("./RhymeRideGame"));
+const BounceBudsGame = lazy(() => import("./BounceBudsGame"));
+const GotchaGearsGame = lazy(() => import("./GotchaGearsGame"));
+const MazeMapsGame = lazy(() => import("./MazeMapsGame"));
+const MoveMeasureGame = lazy(() => import("./MoveMeasureGame"));
+const SkyShieldGame = lazy(() => import("./SkyShieldGame"));
+const FastLaneGame = lazy(() => import("./FastLaneGame"));
+const QualifyTuneRaceGame = lazy(() => import("./QualifyTuneRaceGame"));
+const TankTrekGame = lazy(() => import("./TankTrekGame"));
+const QuantumQuestGame = lazy(() => import("./QuantumQuestGame"));
+const DataDashSortDiscoverGame = lazy(
+  () => import("./DataDashSortDiscoverGame"),
+);
+const TrackMakerGame = lazy(() => import("./TrackMakerGame"));
+const EchoAvenueGame = lazy(() => import("./echoAvenue/EchoAvenueGame"));
 
 type GameProps = {
   config?: any;

@@ -1,3 +1,4 @@
+import { routeBudgets } from "./src/build/routeBudgets.mjs";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -37,6 +38,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
     react(),
+    mode === "production" && routeBudgets(__dirname),
     mode === "development" && componentTagger(),
     visualizer({
       filename: "dist/bundle-report.html",

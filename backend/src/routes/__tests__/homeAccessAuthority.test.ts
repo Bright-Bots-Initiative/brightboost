@@ -20,7 +20,9 @@ import bcrypt from "bcryptjs";
 const SECRET = process.env.SESSION_SECRET || "default_dev_secret";
 
 const prismaMock = vi.hoisted(() => ({
+  // Session epoch is current in these route-specific fixtures; revocation uses real PostgreSQL.
   user: {
+    findFirst: vi.fn().mockResolvedValue({ id: "active-session" }),
     findUnique: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
@@ -237,7 +239,7 @@ describe("#872 credential changes — POST /api/auth/home-access/credentials", (
     expect(res.body.user.email).toBe("new@example.com");
 
     const call = prismaMock.user.update.mock.calls[0][0];
-    expect(call.where).toEqual({ id: STUDENT_ID });
+    expect(call.where).toEqual({ id: STUDENT_ID, password: studentHash });
     expect(call.data.email).toBe("new@example.com");
     // Stored as a bcrypt hash, never the plaintext.
     expect(call.data.password).toMatch(/^\$2[aby]\$/);

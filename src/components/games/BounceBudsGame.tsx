@@ -1,3 +1,8 @@
+import {
+  usePracticeRound,
+  ANSWER_MS,
+  RETRY_MS,
+} from "./shared/usePracticeRound";
 /**
  * Bounce & Buds — paddle-and-ball life-science game for K–2.
  *
@@ -40,7 +45,13 @@ import { pickLocale, resolveText } from "@/utils/localizedContent";
  *   transition – brief fade before next round
  *   complete   – game over, no further state changes
  */
-type RoundPhase = "ready" | "waiting" | "active" | "resolved" | "transition" | "complete";
+type RoundPhase =
+  | "ready"
+  | "waiting"
+  | "active"
+  | "resolved"
+  | "transition"
+  | "complete";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
@@ -59,17 +70,17 @@ const GATES_TOTAL_W = 3 * GATE_W + 2 * GATE_GAP;
 const GATE_START_X = (FIELD_W - GATES_TOTAL_W) / 2;
 
 // ── Speed tuning (K–2 friendly) ──
-const INITIAL_SPEED = 2.0;        // px/frame — noticeably slower start
-const SPEED_INCREMENT = 0.08;     // gentle ramp per round
-const MAX_BOUNCE_ANGLE = 0.8;     // radians — softer paddle reflection
+const INITIAL_SPEED = 2.0; // px/frame — noticeably slower start
+const SPEED_INCREMENT = 0.08; // gentle ramp per round
+const MAX_BOUNCE_ANGLE = 0.8; // radians — softer paddle reflection
 const MAX_LIVES = 5;
 const ROUND_TIMEOUT_MS = 25_000;
-const READY_FLASH_MS = 1_000;     // "Get Ready!" overlay
-const AUTO_LAUNCH_MS = 8_000;     // safety auto-launch if no input
+const READY_FLASH_MS = 1_000; // "Get Ready!" overlay
+const AUTO_LAUNCH_MS = 8_000; // safety auto-launch if no input
 const RESOLVE_DELAY_MS = 1_800;
 const TRANSITION_DELAY_MS = 400;
 const PADDLE_KB_SPEED = 8;
-const DRAG_THRESHOLD = 12;        // px — pointer travel below this = tap, above = drag
+const DRAG_THRESHOLD = 12; // px — pointer travel below this = tap, above = drag
 
 // Round data now loaded from gradeBandContent.ts based on config.gradeBand
 
@@ -102,9 +113,17 @@ function gateRanges(): Array<{ left: number; right: number }> {
 }
 
 const GATE_STYLES = [
-  { bg: "from-emerald-300 to-emerald-400", ring: "ring-emerald-500", text: "text-emerald-950" },
+  {
+    bg: "from-emerald-300 to-emerald-400",
+    ring: "ring-emerald-500",
+    text: "text-emerald-950",
+  },
   { bg: "from-sky-300 to-sky-400", ring: "ring-sky-500", text: "text-sky-950" },
-  { bg: "from-amber-300 to-amber-400", ring: "ring-amber-500", text: "text-amber-950" },
+  {
+    bg: "from-amber-300 to-amber-400",
+    ring: "ring-amber-500",
+    text: "text-amber-950",
+  },
 ] as const;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -113,14 +132,36 @@ const GATE_STYLES = [
 
 // TODO: add translation for the story, tips in briefing
 const BRIEFING: MissionBriefing = {
-  title: pickLocale({ en: "Bounce & Buds", es: "Rebota y Amigos", vi: "Nảy và Bạn Bè", "zh-CN": "弹跳小伙伴" }, "Bounce & Buds"),
-  story: pickLocale({
-    en: "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!"
-  }, "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!"),
+  title: pickLocale(
+    {
+      en: "Bounce & Buds",
+      es: "Rebota y Amigos",
+      vi: "Nảy và Bạn Bè",
+      "zh-CN": "弹跳小伙伴",
+    },
+    "Bounce & Buds",
+  ),
+  story: pickLocale(
+    {
+      en: "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!",
+    },
+    "Buddy needs your help! Bounce the ball into the right gate to help plants grow. Read the clue and aim carefully!",
+  ),
   icon: "🌿",
-  tips: pickLocale({
-    en: ["Read the clue at the top", "Move the paddle left and right to aim", "Bounce the ball into the correct gate!",]
-  }, ["Read the clue at the top", "Move the paddle left and right to aim", "Bounce the ball into the correct gate!",]),
+  tips: pickLocale(
+    {
+      en: [
+        "Read the clue at the top",
+        "Move the paddle left and right to aim",
+        "Bounce the ball into the correct gate!",
+      ],
+    },
+    [
+      "Read the clue at the top",
+      "Move the paddle left and right to aim",
+      "Bounce the ball into the correct gate!",
+    ],
+  ),
   chapterLabel: "Life Science",
   themeColor: "emerald",
 };
@@ -140,6 +181,8 @@ function BouncePlayfield({
 }) {
   const { t } = useTranslation();
   const band = getGradeBand(config);
+  const practice = usePracticeRound();
+  const [attempt, setAttempt] = useState(0);
   const ROUNDS = BOUNCE_BUDS_ROUNDS[band];
 
   // ── DOM refs ──
@@ -180,13 +223,19 @@ function BouncePlayfield({
   >([]);
 
   // ── Physics refs (mutated in RAF, never cause re-renders) ──
-  const ball = useRef({ x: FIELD_W / 2, y: PADDLE_Y - BALL_R - 2, vx: 0, vy: 0 });
+  const ball = useRef({
+    x: FIELD_W / 2,
+    y: PADDLE_Y - BALL_R - 2,
+    vx: 0,
+    vy: 0,
+  });
   const paddleXRef = useRef((FIELD_W - PADDLE_W) / 2);
   const outcomeLock = useRef(false);
   const keysDown = useRef<Set<string>>(new Set());
   const rafId = useRef(0);
   const timerIds = useRef<ReturnType<typeof setTimeout>[]>([]);
   const sparkleCounter = useRef(0);
+  const gateRoundRef = useRef(-1);
   const gateLabelsRef = useRef<string[]>([]);
   const finishedRef = useRef(false);
   const phaseRef = useRef<RoundPhase>("ready");
@@ -253,7 +302,10 @@ function BouncePlayfield({
     // Round timeout
     addTimer(() => {
       if (!outcomeLock.current) {
-        resolveRef.current(false, "Time\u2019s up! Let\u2019s try the next one.");
+        resolveRef.current(
+          false,
+          "Time\u2019s up! Let\u2019s try the next one.",
+        );
       }
     }, ROUND_TIMEOUT_MS);
   }
@@ -273,7 +325,13 @@ function BouncePlayfield({
     ball.current.vy = 0;
 
     const newScore = correct ? score + 1 : score;
-    const newLives = correct ? lives : lives - 1;
+    const miss = band === "k2" && !correct ? practice.miss() : null;
+    const newLives = correct || miss ? lives : lives - 1;
+    if (miss === "retry") message = t("games.practice.retry");
+    if (miss === "reveal")
+      message = t("games.practice.answer", {
+        answer: resolveText(t, ROUNDS[roundIndex].correctLabel),
+      });
     const newStreak = correct ? streak + 1 : 0;
     const newMaxStreak = Math.max(maxStreak, correct ? streak + 1 : 0);
 
@@ -297,32 +355,45 @@ function BouncePlayfield({
     }
 
     // Transition → next round or game over
-    addTimer(() => {
-      if (finishedRef.current) return;
-      setPhase("transition");
-
-      addTimer(() => {
+    addTimer(
+      () => {
         if (finishedRef.current) return;
+        setPhase("transition");
 
-        const next = roundIndex + 1;
-        if (next >= ROUNDS.length || newLives <= 0) {
-          // ── Game complete ──
-          finishedRef.current = true;
-          haltEverything();
-          setPhase("complete");
-          onFinish({
-            gameKey: "buddy_garden_sort",
-            score: newScore,
-            total: ROUNDS.length,
-            streakMax: newMaxStreak,
-            roundsCompleted: Math.min(next, ROUNDS.length),
-          });
-        } else {
-          setRoundIndex(next);
-          setPhase("ready");
-        }
-      }, TRANSITION_DELAY_MS);
-    }, RESOLVE_DELAY_MS);
+        addTimer(() => {
+          if (finishedRef.current) return;
+
+          if (miss === "retry") {
+            setAttempt((n) => n + 1);
+            setPhase("ready");
+            return;
+          }
+          practice.reset();
+          const next = roundIndex + 1;
+          if (next >= ROUNDS.length || newLives <= 0) {
+            // ── Game complete ──
+            finishedRef.current = true;
+            haltEverything();
+            setPhase("complete");
+            onFinish({
+              gameKey: "buddy_garden_sort",
+              score: newScore,
+              total: ROUNDS.length,
+              streakMax: newMaxStreak,
+              roundsCompleted: Math.min(next, ROUNDS.length),
+            });
+          } else {
+            setRoundIndex(next);
+            setPhase("ready");
+          }
+        }, TRANSITION_DELAY_MS);
+      },
+      miss === "reveal"
+        ? ANSWER_MS
+        : miss === "retry"
+          ? RETRY_MS
+          : RESOLVE_DELAY_MS,
+    );
   }
 
   const resolveRef = useRef(resolveRound);
@@ -333,7 +404,14 @@ function BouncePlayfield({
     if (roundIndex >= ROUNDS.length || finishedRef.current) return;
 
     const r = ROUNDS[roundIndex];
-    const labels = shuffleArray([resolveText(t, r.correctLabel), ...pickLocale(r.distractors, r.distractors.en)]);
+    const labels =
+      gateRoundRef.current === roundIndex
+        ? gateLabelsRef.current
+        : shuffleArray([
+            resolveText(t, r.correctLabel),
+            ...pickLocale(r.distractors, r.distractors.en),
+          ]);
+    gateRoundRef.current = roundIndex;
     gateLabelsRef.current = labels;
     setGateLabels(labels);
     setHitGateIdx(null);
@@ -367,7 +445,7 @@ function BouncePlayfield({
 
     return () => clearTimeout(readyTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roundIndex]);
+  }, [roundIndex, attempt]);
 
   // ── Main physics loop (active phase only) ──
   useEffect(() => {
@@ -601,26 +679,32 @@ function BouncePlayfield({
       {/* ── HUD ── */}
       {phase !== "complete" && (
         <div className="flex items-center justify-between rounded-xl bg-white/80 border px-4 py-2 text-sm font-bold shadow-sm">
-          <div
-            className="flex items-center gap-0.5 text-lg"
-            aria-label={`${lives} lives remaining`}
-          >
-            {Array.from({ length: MAX_LIVES }, (_, i) => (
-              <span
-                key={i}
-                className={`transition-all duration-300 ${
-                  i < lives ? "text-red-500 scale-100" : "text-gray-300 scale-75"
-                }`}
-              >
-                {i < lives ? "\u2665" : "\u2661"}
-              </span>
-            ))}
-          </div>
+          {band !== "k2" && (
+            <div
+              className="flex items-center gap-0.5 text-lg"
+              aria-label={`${lives} lives remaining`}
+            >
+              {Array.from({ length: MAX_LIVES }, (_, i) => (
+                <span
+                  key={i}
+                  className={`transition-all duration-300 ${
+                    i < lives
+                      ? "text-red-500 scale-100"
+                      : "text-gray-300 scale-75"
+                  }`}
+                >
+                  {i < lives ? "\u2665" : "\u2661"}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="text-emerald-700 tabular-nums">
             Score: {score}/{ROUNDS.length}
           </div>
           {streak >= 2 && (
-            <div className={`${reducedEffects ? "" : "streak-fire"} text-amber-600 tabular-nums`}>
+            <div
+              className={`${reducedEffects ? "" : "streak-fire"} text-amber-600 tabular-nums`}
+            >
               {streak}x combo
             </div>
           )}
@@ -721,13 +805,14 @@ function BouncePlayfield({
             </div>
 
             {/* ── Sparkles ── */}
-            {shouldRenderBounceSparkles(reducedEffects) && sparkles.map((s) => (
-              <div
-                key={s.id}
-                className="absolute w-3 h-3 rounded-full bg-yellow-300 hit-burst pointer-events-none"
-                style={{ left: s.x, top: s.y }}
-              />
-            ))}
+            {shouldRenderBounceSparkles(reducedEffects) &&
+              sparkles.map((s) => (
+                <div
+                  key={s.id}
+                  className="absolute w-3 h-3 rounded-full bg-yellow-300 hit-burst pointer-events-none"
+                  style={{ left: s.x, top: s.y }}
+                />
+              ))}
 
             {/* ── Ready overlay ── */}
             {phase === "ready" && (
@@ -744,8 +829,11 @@ function BouncePlayfield({
             {phase === "waiting" && (
               <div className="absolute inset-0 flex items-end justify-center pb-16 pointer-events-none">
                 <p className="slide-up-fade text-sm font-bold text-emerald-800 bg-white/80 px-4 py-1.5 rounded-full shadow">
-                  { /* TODO: add translations for coach string */ }
-                  { pickLocale({ en: "Drag to aim. Tap anywhere to bounce!" }, "Drag to aim. Tap anywhere to bounce!") }
+                  {/* TODO: add translations for coach string */}
+                  {pickLocale(
+                    { en: "Drag to aim. Tap anywhere to bounce!" },
+                    "Drag to aim. Tap anywhere to bounce!",
+                  )}
                 </p>
               </div>
             )}
@@ -757,6 +845,7 @@ function BouncePlayfield({
                 style={{ bottom: 80 }}
               >
                 <div
+                  role="status"
                   className={`bounce-in rounded-2xl px-6 py-3 text-lg font-bold shadow-xl max-w-[90%] text-center
                     ${
                       feedback.correct
@@ -825,7 +914,11 @@ export default function BounceBudsGame({
       onComplete={onComplete ?? (() => {})}
     >
       {({ onFinish, reducedEffects }) => (
-        <BouncePlayfield onFinish={onFinish} config={config} reducedEffects={reducedEffects} />
+        <BouncePlayfield
+          onFinish={onFinish}
+          config={config}
+          reducedEffects={reducedEffects}
+        />
       )}
     </GameShell>
   );

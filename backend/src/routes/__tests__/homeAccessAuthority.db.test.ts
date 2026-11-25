@@ -542,6 +542,9 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
         data: { role: "teacher" },
       });
     }
+    // Returning to the teacher role must not restore the old session.
+    expect((await invite(ids.kid7, adult)).status).toBe(403);
+    teacherToken = await loginAs(`${ids.teacher}@t.test`);
     expect((await inviteRowOf(ids.kid7)).usedAt).toBeNull();
     const kid7 = await user(ids.kid7);
     expect(kid7.email).toBeNull();

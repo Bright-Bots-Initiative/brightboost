@@ -32,6 +32,7 @@ const EXPECTED_STEP_IDS = [
   "CI-11",
   "CI-12",
   "CI-13",
+  "CI-30",
   "CI-14",
   "CI-15",
   "CI-16",
