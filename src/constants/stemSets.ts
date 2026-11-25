@@ -96,12 +96,13 @@ export const STEM_SET_2_PERKS: Record<StemSet2GameId, string> = {
 // ---------------------------------------------------------------------------
 // Set 3 — Mastery ("mastery through making"; completion gates specialization)
 // track-maker and echo-avenue are implemented but GATED from students via
-// HIDDEN_MODULE_SLUGS above; the remaining slots are still placeholders. The
+// HIDDEN_MODULE_SLUGS above; Great Work is available, and two slots remain. The
 // ID list itself lives in shared/progression/stemSetIds.ts. See #676, #855.
 // ---------------------------------------------------------------------------
 // Partial until all five Set 3 games exist — placeholders have no name/strand.
 export const STEM_SET_3_NAMES: Partial<Record<StemSet3GameId, string>> = {
   "track-maker": "Boost Track Builder",
+  "great-work": "The Great Work",
   "echo-avenue": "Echo Avenue",
 };
 
@@ -113,6 +114,7 @@ export const STEM_SET_3_STRANDS: Partial<Record<StemSet3GameId, string>> = {
 /** Module slugs for Set 3 (grows as the set is built out). */
 export const STEM_SET_3_MODULE_SLUGS = [
   "k2-stem-track-maker",
+  "k2-stem-great-work",
   "k2-stem-echo-avenue",
 ] as const;
 

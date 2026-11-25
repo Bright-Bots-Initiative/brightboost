@@ -1,4 +1,10 @@
 {
+  "classroom": {
+    "choose": "Chọn nhóm cho kệ máy của em",
+    "noGroup": "Tham gia một lớp hoặc nhóm gia đình để lưu máy vào tài khoản.",
+    "demo": "Chơi bản thử trên thiết bị này",
+    "saved": "Máy của em đã ở trên kệ."
+  },
   "title": "The Great Work",
   "kicker": "Your machine workshop",
   "intro": "Give your machine a few instructions. See what it makes.",

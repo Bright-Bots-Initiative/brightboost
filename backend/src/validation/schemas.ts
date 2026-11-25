@@ -95,6 +95,13 @@ export const completeActivitySchema = z.object({
       total: z.number().int().nonnegative().max(10000).optional(),
       streakMax: z.number().int().nonnegative().max(10000).optional(),
       roundsCompleted: z.number().int().nonnegative().max(1000).optional(),
+      greatWorkSave: z
+        .object({
+          id: z.string().uuid(),
+          revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+        })
+        .strict()
+        .optional(),
       // Declared so zod does not strip it; shape enforced by superRefine.
       gameSpecific: z.unknown().optional(),
     })

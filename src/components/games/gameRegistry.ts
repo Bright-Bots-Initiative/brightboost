@@ -19,12 +19,19 @@ const QuantumQuestGame = lazy(() => import("./QuantumQuestGame"));
 const DataDashSortDiscoverGame = lazy(
   () => import("./DataDashSortDiscoverGame"),
 );
+const GreatWorkActivity = lazy(() => import("./greatWork/GreatWorkActivity"));
 const TrackMakerGame = lazy(() => import("./TrackMakerGame"));
 const EchoAvenueGame = lazy(() => import("./echoAvenue/EchoAvenueGame"));
 
+export type ActivityFinishResult = void | boolean | Promise<void | boolean>;
+export type StudioCompletion = {
+  gameKey: "great_work";
+  greatWorkSave: { id: string; revision: number };
+};
+
 type GameProps = {
   config?: any;
-  onComplete?: (result: GameResult) => void;
+  onComplete?: (result: GameResult | StudioCompletion) => ActivityFinishResult;
 };
 
 /**
@@ -55,6 +62,7 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   sparbots: SparBotsActivity,
 
   // ── Set 3 keys ──
+  great_work: GreatWorkActivity,
   track_maker: TrackMakerGame, // "Boost Track Builder" (Set 3, gated)
   echo_avenue: EchoAvenueGame, // "Echo Avenue" (Set 3, gated)
 

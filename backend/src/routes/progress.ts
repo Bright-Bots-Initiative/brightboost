@@ -41,6 +41,7 @@ import {
   upsertCheckpoint,
 } from "../services/progress";
 import { trackServer } from "../services/analytics";
+import { finishGreatWork } from "../services/greatWorkCompletion";
 import { GameError } from "../utils/errors";
 
 const router = Router();
@@ -400,6 +401,47 @@ router.post(
           error: "result.gameKey does not name this activity's game",
         });
       }
+    }
+
+    // The studio is creation-first. Authoritative metrics belong to the saved
+    // machine; the activity records a binary finish without granting XP.
+    if (activityId === "great-work" || declaredKey === "great_work") {
+      if (
+        activityId !== "great-work" ||
+        declaredKey !== "great_work" ||
+        !result?.greatWorkSave
+      )
+        return res
+          .status(400)
+          .json({ error: "A saved Great Work machine is required" });
+      const proof = result.greatWorkSave;
+      const completed = await prisma.$transaction((tx) =>
+        finishGreatWork(tx, {
+          studentId,
+          activityId,
+          moduleSlug,
+          lessonId,
+          timeSpentS,
+          attemptId,
+          proof,
+        }),
+      );
+      if (!completed)
+        return res
+          .status(409)
+          .json({ error: "Save the working machine before finishing" });
+      return res.json({
+        message: completed.isReplay ? "Already completed" : "Machine saved",
+        progress: publicProgress(completed.progress),
+        studioSaved: true,
+        reward: {
+          xpDelta: 0,
+          levelDelta: 0,
+          energyDelta: 0,
+          hpDelta: 0,
+          newAbilitiesDelta: 0,
+        },
+      });
     }
 
     // 1. Ensure avatar exists (with backfill if needed)

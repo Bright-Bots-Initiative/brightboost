@@ -258,13 +258,13 @@ describe("GET /student/stats — specialtyProgress counts real IDs (#855)", () =
     return res.body.specialtyProgress;
   }
 
-  it("counts the real seeded Set 3 activities (track-maker, echo-avenue)", async () => {
+  it("counts each real seeded Set 3 activity", async () => {
     const realSet3 = STEM_SET_3_IDS.filter(
       (id) => !(STEM_SET_3_PLACEHOLDER_IDS as readonly string[]).includes(id),
     );
     // Deliberate forcing function: shipping a new Set 3 game MUST visit this
     // literal, so the real-vs-placeholder split can never go stale silently.
-    expect(realSet3).toEqual(["track-maker", "echo-avenue"]);
+    expect(realSet3).toEqual(["track-maker", "great-work", "echo-avenue"]);
     armCompleted(realSet3);
 
     const progress = await getStats();

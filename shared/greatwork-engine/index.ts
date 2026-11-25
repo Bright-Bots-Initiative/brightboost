@@ -77,3 +77,21 @@ export function* runMachineTraced(
       ...(state.error ? { error: state.error } : {}),
     };
 }
+
+export * from "./studio";
+export * from "./studioNames";
+import { studioLevel } from "./studio";
+import type { StudioDraft } from "./studio";
+
+/** Same tick loop as playback; callers may stop expensive work between ticks. */
+export function verifyStudioDraft(
+  draft: StudioDraft,
+  shouldStop?: () => boolean,
+): RunResult {
+  let state = createSimState(studioLevel(draft), draft.program);
+  while (!state.error && !solved(state)) {
+    if (shouldStop?.()) throw new Error("GW_STUDIO_RUN_TIMEOUT");
+    state = step(state);
+  }
+  return resultOf(state);
+}

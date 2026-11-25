@@ -158,6 +158,32 @@ describe("Modules Page", () => {
     ).toBeDefined();
   });
 
+  it("opens the registered Great Work studio in Set 3 after Set 2", async () => {
+    vi.mocked(api.getModules).mockResolvedValue([
+      {
+        id: "gw",
+        title: "The Great Work",
+        slug: "k2-stem-great-work",
+        level: "K-2",
+      },
+    ]);
+    vi.mocked(api.getProgress).mockResolvedValue({
+      progress: STEM_SET_2_IDS.map((activityId) => ({
+        activityId,
+        status: "COMPLETED",
+      })),
+    });
+    render(
+      <BrowserRouter>
+        <Modules />
+      </BrowserRouter>,
+    );
+    expect(
+      await screen.findByLabelText("Start Learning The Great Work"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Set 3: Mastery — Coming Soon")).toBeNull();
+  });
+
   it("places Track Builder in unlocked Set 3 after the hidden release flag is removed", async () => {
     HIDDEN_MODULE_SLUGS.delete("k2-stem-track-maker");
     (api.getModules as any).mockResolvedValue([

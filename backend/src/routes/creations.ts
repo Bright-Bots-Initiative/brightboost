@@ -8,6 +8,7 @@ import {
   validateCreationContent,
   type CreationType,
 } from "../services/creationContent";
+import { MACHINE_TYPE } from "../services/greatWorkMachines";
 import { serializeCreationContent } from "../services/creationContentSerializer";
 import {
   creationCreateLimiter,
@@ -256,6 +257,11 @@ router.patch(
     // Author-only: even another enrolled kid cannot edit someone else's work.
     if (existing.authorId !== req.user!.id) {
       return res.status(403).json({ error: "not the author" });
+    }
+
+    // The private machine shelf owns versioned writes and verified run results.
+    if (existing.type === MACHINE_TYPE) {
+      return res.status(403).json({ error: "use_machine_shelf" });
     }
 
     const data: {

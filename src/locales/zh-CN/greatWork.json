@@ -1,4 +1,10 @@
 {
+  "classroom": {
+    "choose": "选择存放机器的小组",
+    "noGroup": "加入班级或家庭小组，即可将机器保存到你的账户。",
+    "demo": "在这台设备上试玩",
+    "saved": "你的机器已保存在“我的架子”上。"
+  },
   "title": "The Great Work",
   "kicker": "Your machine workshop",
   "intro": "Give your machine a few instructions. See what it makes.",

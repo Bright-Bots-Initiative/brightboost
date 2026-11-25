@@ -80,6 +80,7 @@ const engineProject = {
     include: [
       "shared/greatwork-engine/index.test.ts",
       "shared/greatwork-engine/__tests__/engine.test.ts",
+      "shared/greatwork-engine/__tests__/studio.test.ts",
       "scripts/__tests__/shared-freshness.test.ts",
     ],
     globalSetup: ["scripts/greatwork/parity-setup.ts"],

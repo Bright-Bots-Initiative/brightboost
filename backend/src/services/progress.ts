@@ -49,7 +49,7 @@ export type ResolvedActivity = {
  * curriculum chain (Activity → Lesson → Unit → Module) before writing.
  *
  * - No Activity row (an orphan id, or a reserved Set 3 placeholder such as
- *   `set3-game-2`) → 404. Progress has no foreign key to Activity, so this is
+ *   `set3-game-4`) → 404. Progress has no foreign key to Activity, so this is
  *   the check that keeps rows for non-activities out of the table.
  * - A module slug or lesson id that is not the activity's own → 400. The
  *   chain's identifiers are what get persisted, so the stored `moduleSlug` /

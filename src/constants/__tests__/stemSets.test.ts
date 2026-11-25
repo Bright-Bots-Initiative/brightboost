@@ -47,7 +47,7 @@ describe("STEM set canon and gating", () => {
   it("reserves five Set 3 slots and assigns the implemented games", () => {
     expect(STEM_SET_3_IDS).toEqual([
       "track-maker",
-      "set3-game-2",
+      "great-work",
       "echo-avenue",
       "set3-game-4",
       "set3-game-5",

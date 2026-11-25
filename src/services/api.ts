@@ -543,6 +543,7 @@ export const api = {
       streakMax?: number;
       roundsCompleted?: number;
       gameSpecific?: unknown;
+      greatWorkSave?: { id: string; revision: number };
       accuracy?: number;
     };
   }) => {
